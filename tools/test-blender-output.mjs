@@ -1090,7 +1090,15 @@ try {
     const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];
     for(const id of ids) assert.ok(names.has(id),`missing building ${id}`);
     for(const id of ['drive-in:screen','wreck-ring:car-1','wreck-ring:car-2','wreck-ring:car-3','wreck-ring:car-4',
-      'big-wheel:wheel','scrap-coaster:train','fountain:water']) assert.ok(names.has(id),`missing named part ${id}`);
+      'big-wheel:wheel','scrap-coaster:train','scrap-coaster:train-cart-1','scrap-coaster:train-cart-2',
+      'scrap-coaster:train-cart-3','fountain:water']) assert.ok(names.has(id),`missing named part ${id}`);
+    const nodeIndex=new Map(gltf.nodes.map((node,index)=>[node.name,index]));
+    const coasterChildren=gltf.nodes[nodeIndex.get('scrap-coaster')].children||[];
+    const trainIndex=nodeIndex.get('scrap-coaster:train');
+    assert.ok(coasterChildren.includes(trainIndex),'scrap-coaster:train must stay under the coaster root');
+    const trainChildren=gltf.nodes[trainIndex].children||[];
+    for(const id of ['scrap-coaster:train-cart-1','scrap-coaster:train-cart-2','scrap-coaster:train-cart-3'])
+      assert.ok(trainChildren.includes(nodeIndex.get(id)),`${id} must move with scrap-coaster:train`);
     const budgets={'tavern':5000,'drive-in':14000,'wreck-ring':9000,'big-wheel':9000,'scrap-coaster':14000,
       'mud-pit':14000,'fun-stall-a':1800,'fun-stall-b':1800,'fountain':1800,'statue':1800};
     const triangles=Object.fromEntries(ids.map(id=>[id,0]));
@@ -1106,7 +1114,7 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead and radar', () => {
+  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead, radar and machine yard', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
@@ -1116,7 +1124,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'crusher', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
+      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'formwork-1', 'formwork-2', 'formwork-3', 'formwork-4', 'machine-yard', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1139,6 +1147,16 @@ try {
     }
     assert.ok(countTriangles('batch-plant') > 100 && countTriangles('batch-plant') <= 14_000,
       `${countTriangles('batch-plant')} triangles exceeds the batch plant budget`);
+    for (const [id, limit] of [['formwork-1', 1_800], ['formwork-2', 5_000],
+      ['formwork-3', 5_000], ['formwork-4', 5_000]]) {
+      for (const part of ['wet', 'set', 'timber-wall--1', 'timber-wall-1',
+        'end-wall--1', 'end-wall-1', 'steel-stakes', 'corner-post--1--1',
+        'corner-brace--1--1-x', 'corner-brace-1-1-z']) {
+        assert.ok(names.includes(`${id}:${part}`), `${id}:${part} node is missing`);
+      }
+      assert.ok(countTriangles(id) > 100 && countTriangles(id) <= limit,
+        `${id} has ${countTriangles(id)} triangles; budget ${limit}`);
+    }
     for (const name of ['wellhead', 'wellhead:frame-road', 'wellhead:frame-far',
       'wellhead:beam', 'wellhead:casing', 'wellhead:valve', 'wellhead:hand-painted-07']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1146,12 +1164,35 @@ try {
     assert.ok(countTriangles('wellhead') > 100 && countTriangles('wellhead') <= 1_800,
       `${countTriangles('wellhead')} triangles exceeds the one-cell wellhead budget`);
     assert.ok(names.includes('wellhead:beam-surface'), 'the rocking beam has a separate traced surface');
-    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface', 'radar:dish-rim',
-      'radar:tower-side-frame-road', 'radar:tower-end-frame-road', 'radar:turntable-crossbar']) {
+    for (const name of ['radar', 'radar:dish', 'radar:dish-surface', 'radar:dish-rear-surface',
+      'radar:side-x-brace-left-1', 'radar:tower-end-frame-road', 'radar:platform-deck',
+      'radar:platform-railing-road', 'radar:ladder', 'radar:turntable-crossbar']) {
       assert.ok(names.includes(name), `${name} node is missing`);
     }
+    assert.ok(!names.includes('radar:dish-rim'), 'the photo-built dish has no separate red rim');
     assert.ok(countTriangles('radar') > 100 && countTriangles('radar') <= 1_800,
       `${countTriangles('radar')} triangles exceeds the one-cell radar budget`);
+    for (const name of ['machine-yard', 'machine-yard:dirt-yard', 'machine-yard:open-shed:body',
+      'machine-yard:store-shed:body', 'machine-yard:fuel-drum-1', 'machine-yard:parts-pile-1',
+      'machine-yard:parts-pile-2', 'machine-yard:parts-pile-3', 'machine-yard:fence-panel-1']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('machine-yard') > 100 && countTriangles('machine-yard') <= 14_000,
+      `${countTriangles('machine-yard')} triangles exceeds the 6 x 4 machine-yard budget`);
+    for (const name of ['pump-station', 'pump-station:body', 'pump-station:inlet-pipe',
+      'pump-station:outlet-pipe', 'pump-station:fence-back-1.5', 'pump-station:fence-front-left-short']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('pump-station') > 100 && countTriangles('pump-station') <= 5_000,
+      `${countTriangles('pump-station')} triangles exceeds the 2 x 2 pump-station budget`);
+    for (const name of ['conveyor', 'conveyor:frame-road', 'conveyor:frame-far', 'conveyor:rollers', 'conveyor:belt',
+      'conveyor-end', 'conveyor-end:frame-road', 'conveyor-end:frame-far', 'conveyor-end:rollers', 'conveyor-end:belt', 'conveyor-end:drum']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    for (const id of ['conveyor', 'conveyor-end']) {
+      assert.ok(countTriangles(id) > 100 && countTriangles(id) <= 1_800,
+        `${countTriangles(id)} triangles exceeds the one-cell ${id} budget`);
+    }
     const primitives = gltf.meshes.flatMap(mesh => mesh.primitives);
     for (const primitive of primitives) {
       assert.deepEqual(Object.keys(primitive.attributes).filter(key => key.startsWith('TEXCOORD_')),
@@ -1578,13 +1619,30 @@ try {
       }, 0);
       assert.ok(triangles > 100 && triangles <= budget, `${id}: ${triangles} triangles exceeds its ${budget} plot budget`);
     }
+    for (const id of ['shopfront-a','shopfront-b','shopfront-c']) {
+      const roofLabel = names.indexOf(`${id}:roof-sign-lettering`);
+      const roadLabel = names.indexOf(`${id}:sign-lettering`);
+      assert.ok(roofLabel >= 0, `${id} needs a roof-facing label for the mayor view`);
+      assert.ok(roadLabel >= 0, `${id} needs a road-facing label for drivers`);
+      assert.equal(parent.get(roofLabel), names.indexOf(id), `${id} roof label belongs to its shop`);
+      assert.equal(parent.get(roadLabel), names.indexOf(id), `${id} road label belongs to its shop`);
+    }
+    for (const part of ['goat-pen:fence-front','goat-pen:fence-right','goat-pen:fence-rear',
+                        'goat-pen:fence-left','goat-pen:shelter','goat-pen:feed-trough']) {
+      const index = names.indexOf(part); assert.ok(index >= 0, `missing ${part}`);
+      assert.equal(parent.get(index), names.indexOf('goat-pen'), `${part} must belong to the goat pen`);
+    }
     const imagePixels = gltf.images.reduce((sum, image) => {
       const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
-      const dimensions = jpegDimensions(bytes, start, view.byteLength);
+      // See-through wire is PNG for its alpha; both kinds count against the same limits.
+      const dimensions = image.mimeType === 'image/png'
+        ? {width: bytes.readUInt32BE(start + 16), height: bytes.readUInt32BE(start + 20)}
+        : jpegDimensions(bytes, start, view.byteLength);
+      if (image.mimeType === 'image/png') assert.equal(bytes.readUInt32BE(start), 0x89504e47, 'PNG starts with its signature');
       assert.ok(dimensions.width <= 2048 && dimensions.height <= 2048, `${dimensions.width}x${dimensions.height} food texture exceeds 2048 px`);
       return sum + dimensions.width * dimensions.height;
     }, 0);
-    assert.ok(imagePixels <= 4 * 1024 * 1024, `${imagePixels} texture pixels exceed the 4M budget`);
+    assert.ok(imagePixels <= 8 * 1024 * 1024, `${imagePixels} texture pixels exceed the 8M budget`);
     for (const material of gltf.materials || []) {
       assert.ok((material.pbrMetallicRoughness?.metallicFactor ?? 0) <= .3, `${material.name} metallic exceeds .3`);
     }

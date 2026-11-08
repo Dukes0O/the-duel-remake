@@ -1,4 +1,4 @@
-"""Build and inspect the Wasteland town funground from welded salvage."""
+﻿"""Build and inspect the Wasteland town funground from welded salvage."""
 import json
 import math
 import subprocess
@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-14'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-08/TOWN-ART-FUN/round-25'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-14.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-25.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -17,7 +17,7 @@ if '--paths-only' in args:
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 if '--review-only' in args:
     bpy.ops.import_scene.gltf(filepath=str(out))
@@ -42,15 +42,203 @@ if '--review-only' in args:
     groundmat=bpy.data.materials.new('Tavern review ground'); groundmat.diffuse_color=(.43,.43,.43,1)
     groundmat.use_nodes=True; groundmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.43,.43,.43,1)
     bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.04)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(groundmat)
-    def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
+    def aim(obj,target):
+        direction=Vector(target)-obj.location
+        obj.rotation_euler=direction.to_track_quat('-Z','Y').to_euler()
     def light(name,loc,power,size):
         data=bpy.data.lights.new(name,'AREA'); data.energy=power; data.shape='DISK'; data.size=size
-        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,3))
+        obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,1.6))
     light('soft studio key',(8,12,17),1800,12); light('soft studio fill',(-10,-6,12),1100,10)
     camera=bpy.data.objects.new('Tavern bounds camera',bpy.data.cameras.new('Tavern bounds camera'))
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--coaster-only' in args:
+        coaster_root=bpy.data.objects.get('scrap-coaster')
+        train_root=bpy.data.objects.get('scrap-coaster:train')
+        if coaster_root is None or train_root is None: raise RuntimeError('exported coaster or train is missing')
+        for child in family.children: hide_tree(child,child!=coaster_root)
+        hide_tree(coaster_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('scrap-coaster:')
+        scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100; scene.render.image_settings.file_format='PNG'
+        scene.render.image_settings.color_mode='RGB'; scene.render.film_transparent=False
+        scene.view_settings.view_transform='Standard'
+        world=bpy.data.worlds.new('Coaster review grey'); world.use_nodes=True
+        world.node_tree.nodes['Background'].inputs['Color'].default_value=(.42,.42,.42,1)
+        world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8; scene.world=world
+        gm=bpy.data.materials.new('Coaster review ground'); gm.diffuse_color=(.42,.42,.42,1); gm.use_nodes=True
+        gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.42,.42,.42,1)
+        bpy.ops.mesh.primitive_plane_add(size=300,location=(0,0,-.035)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(gm)
+        def aim_coaster(obj,target,world_up=(0,0,1)):
+            direction=(Vector(target)-obj.location).normalized()
+            up=Vector(world_up).normalized()
+            right=direction.cross(up).normalized()
+            screen_up=right.cross(direction).normalized()
+            obj.rotation_euler=Matrix((right,screen_up,-direction)).transposed().to_quaternion().to_euler()
+        for name,loc,power,size in [('key',(5,-12,18),2300,13),('fill',(-13,10,14),1200,11)]:
+            ld=bpy.data.lights.new('Coaster '+name,'AREA'); ld.energy=power; ld.shape='DISK'; ld.size=size
+            lo=bpy.data.objects.new('Coaster '+name,ld); scene.collection.objects.link(lo); lo.location=loc; aim_coaster(lo,(0,0,5.5))
+        camera=bpy.data.objects.new('Coaster camera',bpy.data.cameras.new('Coaster camera')); scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
+        evidence.mkdir(parents=True,exist_ok=True)
+        views=[('side',(0,-1,0),'scrap-coaster-side.jpg',43),
+               ('front',(-1,0,0),'scrap-coaster-front.jpg',13.2),
+               ('rear',(1,0,0),'scrap-coaster-rear.jpg',13.2),
+               ('above',(0,0,1),'scrap-coaster-top.jpg',43)]
+        target=Vector((0,0,5.9))
+        for name,direction,photo_name,ortho in views:
+            direction=Vector(direction).normalized(); camera.location=target+direction*52
+            aim_coaster(camera,target,(0,1,0) if name=='above' else (0,0,1))
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size; bpy.data.images.remove(ref)
+            camera.data.ortho_scale=ortho; scene.render.filepath=str(evidence/f'scrap-coaster-{name}-model.png')
+            bpy.ops.render.render(write_still=True); print('rendered scrap-coaster',name)
+        for name,direction,ortho in [('three-quarter-a',(-1,-1,.55),45),('three-quarter-b',(1,1,.55),45),
+                                    ('mayor',(-1,-1,math.sqrt(2)),46)]:
+            direction=Vector(direction).normalized(); camera.location=target+direction*58; aim_coaster(camera,target)
+            scene.render.resolution_x,scene.render.resolution_y=1000,700; camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'scrap-coaster-{name}.png'); bpy.ops.render.render(write_still=True)
+            print('rendered scrap-coaster',name)
+        raise SystemExit(0)
+    if '--mud-pit-only' in args:
+        pit_root=bpy.data.objects.get('mud-pit')
+        if pit_root is None:raise RuntimeError('exported mud-pit building is missing')
+        for child in family.children:hide_tree(child,child!=pit_root)
+        hide_tree(pit_root,False)
+        old_ground=bpy.data.objects.get('Review ground')
+        if old_ground is not None:bpy.data.objects.remove(old_ground,do_unlink=True)
+        ground_mesh=bpy.data.meshes.new('Review ground ring around the excavated pit')
+        ground_verts=[];ground_faces=[]
+        def ground_quad(x0,x1,y0,y1):
+            n=len(ground_verts);ground_verts.extend(((x0,y0,-.04),(x1,y0,-.04),(x1,y1,-.04),(x0,y1,-.04)));ground_faces.append((n,n+1,n+2,n+3))
+        ground_quad(-16,16,-16,-10.2);ground_quad(-16,16,10.2,16)
+        ground_quad(-16,-10.2,-10.2,10.2);ground_quad(10.2,16,-10.2,10.2)
+        ground_mesh.from_pydata(ground_verts,[],ground_faces);ground_mesh.materials.append(groundmat);ground_mesh.update()
+        ground_obj=bpy.data.objects.new('Review ground',ground_mesh);scene.collection.objects.link(ground_obj)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':obj.hide_render=not obj.name.startswith('mud-pit:')
+        target=Vector((0,0,.8));camera.data.type='ORTHO';camera.data.lens=50
+        scene.render.resolution_percentage=100
+        for obj in scene.objects:
+            if obj.type=='MESH':obj.hide_render=obj.name not in ('mud-pit:earth-bowl','Review ground')
+        views=[('side',(1,0,0),'mud-pit-side.jpg'),('front',(0,1,0),'mud-pit-front.jpg'),
+               ('rear',(0,-1,0),'mud-pit-rear.jpg'),('above',(0,0,1),'mud-pit-top.jpg')]
+        for name,direction,photo_name in views:
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size;bpy.data.images.remove(ref)
+            direction=Vector(direction).normalized();camera.location=target+direction*42;aim(camera,target)
+            camera.data.ortho_scale=23.5
+            scene.render.filepath=str(evidence/f'mud-pit-{name}-model.png');bpy.ops.render.render(write_still=True)
+            print('rendered mud-pit',name)
+        for obj in scene.objects:
+            if obj.type=='MESH':obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith('mud-pit:'))
+        scene.render.resolution_x,scene.render.resolution_y=1000,700
+        target=Vector((0,-3.2,.8))
+        for name,direction,ortho in [('three-quarter-a',(1,1,.72),32),('three-quarter-b',(-1,-1,.72),32),('mayor',(1,1,1),32)]:
+            direction=Vector(direction).normalized();camera.location=target+direction*48;aim(camera,target)
+            camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'mud-pit-{name}.png');bpy.ops.render.render(write_still=True)
+            print('rendered mud-pit',name)
+        stand_root=Vector((0,-13,1.55))
+        for obj in scene.objects:
+            if obj.type=='MESH':obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith('mud-pit:grandstand'))
+        for name,direction,photo_name in [('stand-side',(1,0,0),'mud-pit-stand-side.jpg'),
+                ('stand-front',(0,1,0),'mud-pit-stand-front.jpg'),
+                ('stand-rear',(0,-1,0),'mud-pit-stand-rear.jpg'),('stand-above',(0,0,1),'mud-pit-stand-top.jpg')]:
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size;bpy.data.images.remove(ref)
+            direction=Vector(direction).normalized();camera.location=stand_root+direction*16;aim(camera,stand_root)
+            camera.data.ortho_scale=5.5 if name=='stand-side' else 9.2
+            scene.render.filepath=str(evidence/f'mud-pit-{name}-model.png');bpy.ops.render.render(write_still=True)
+            print('rendered mud-pit',name)
+        raise SystemExit(0)
+    if '--stalls-only' in args:
+        scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100;scene.render.resolution_x=1024;scene.render.resolution_y=1024
+        scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
+        scene.view_settings.view_transform='Standard'
+        camera.data.type='ORTHO';target=Vector((0,0,1.6))
+        # Blender imports glTF Y-up as its native Z-up. Check one exported
+        # stall piece before judging the family: its .68 m height must return
+        # on Blender Z, which is exported Y, not on either horizontal axis.
+        probe=bpy.data.objects.get('fun-stall-a:counter-kick')
+        if probe is None: raise RuntimeError('exported stall lost counter-kick axis probe')
+        probe_bounds=[probe.matrix_world @ Vector(c) for c in probe.bound_box]
+        probe_size=[max(p[i] for p in probe_bounds)-min(p[i] for p in probe_bounds) for i in range(3)]
+        if abs(probe_size[2]-.68)>.03 or abs(probe_size[1]-1.04)>.03 or probe_size[2]>=probe_size[1]:
+            raise RuntimeError(f'counter-kick height is not exported Y: imported dimensions {probe_size}')
+        print('EXPORTED Y-UP AXIS CHECK fun-stall-a:counter-kick',tuple(round(v,3) for v in probe_size))
+        # The source named "side" is the broad facade/elevation view. Match
+        # that exact view for silhouette; keep the true narrow profile too.
+        views=[('side',(.15,1,.12)),('profile',(1,0,0)),('rear',(0,-1,0)),('above',(0,0,1))]
+        for stall_id in ('fun-stall-a','fun-stall-b'):
+            for obj in scene.objects:
+                if obj.type not in ('CAMERA','LIGHT'):
+                    obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith(stall_id+':'))
+            for name,direction in views:
+                photo_view={'side':'side','rear':'rear','above':'top'}.get(name)
+                if photo_view:
+                    source=bpy.data.images.load(str(textures/f'{stall_id}-{photo_view}.jpg'),check_existing=True)
+                    scene.render.resolution_x,scene.render.resolution_y=source.size
+                    bpy.data.images.remove(source)
+                else:
+                    scene.render.resolution_x=1000;scene.render.resolution_y=1000
+                camera.location=target+Vector(direction)*10
+                camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
+                camera.data.ortho_scale=(3.2 if name in ('side','rear') else 6.7) if photo_view else 4.3
+                scene.render.filepath=str(evidence/f'{stall_id}-{name}-model.png');bpy.ops.render.render(write_still=True)
+            scene.render.resolution_x=1000;scene.render.resolution_y=720
+            for label,direction in [('three-left',(-1,-1,.65)),('three-right',(1,-1,.65)),('mayor',(1,1,1))]:
+                camera.location=target+Vector(direction).normalized()*20
+                aim(camera,target)
+                camera.data.ortho_scale=7.3
+                scene.render.filepath=str(evidence/f'{stall_id}-{label}.png');bpy.ops.render.render(write_still=True)
+        raise SystemExit(0)
+    if '--wreck-only' in args:
+        wreck_root=bpy.data.objects.get('wreck-ring')
+        if wreck_root is None: raise RuntimeError('exported wreck-ring is missing')
+        for child in family.children: hide_tree(child,child!=wreck_root)
+        hide_tree(wreck_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('wreck-ring:')
+        car_root=bpy.data.objects.get('wreck-ring:car-1')
+        if car_root is None: raise RuntimeError('exported wreck-ring car-1 is missing')
+        for child in wreck_root.children: hide_tree(child,True)
+        hide_tree(car_root,False)
+        car_target=car_root.matrix_world.translation+Vector((0,.48,0))
+        match_views=[('match-side',(1,0,.03),'wreck-ring-shell-side.jpg',3.0),
+                     ('match-front',(0,-1,.03),'wreck-ring-shell-front.jpg',2.7),
+                     ('match-rear',(0,1,.03),'wreck-ring-shell-rear.jpg',2.7),
+                     ('match-above',(0,0,1),'wreck-ring-shell-above.jpg',3.0)]
+        for name,direction,photo_name,ortho in match_views:
+            direction=Vector(direction).normalized()
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size
+            bpy.data.images.remove(ref)
+            camera.location=car_target+direction*8; aim(camera,car_target); camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'wreck-ring-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'rendered wreck-ring {name}')
+        hide_tree(wreck_root,False)
+        scene.render.resolution_x,scene.render.resolution_y=1000,700
+        ring_views=[('three-quarter-a',(1,1,.65),10.2),
+                    ('three-quarter-b',(-1,-1,.65),10.2),
+                    ('mayor',(1,1,1),10.2),
+                    ('whole-above',(0,0,1),9.8)]
+        target=Vector((0,0,.4))
+        for name,direction,ortho in ring_views:
+            if name=='whole-above':
+                scene.render.resolution_x=900; scene.render.resolution_y=900
+                ortho=9.6
+            direction=Vector(direction).normalized()
+            camera.location=target+direction*18; aim(camera,target); camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'wreck-ring-{name}.png')
+            bpy.ops.render.render(write_still=True)
+            print(f'rendered wreck-ring {name}')
+        raise SystemExit(0)
     if '--fountain-only' in args:
         fountain_root=bpy.data.objects.get('fountain')
         if fountain_root is None: raise RuntimeError('exported fountain is missing')
@@ -78,6 +266,46 @@ if '--review-only' in args:
             scene.render.filepath=str(evidence/f'fountain-{name}.png')
             bpy.ops.render.render(write_still=True)
             print(f'rendered fountain {name}')
+        raise SystemExit(0)
+    if '--statue-only' in args:
+        statue_root=bpy.data.objects.get('statue')
+        if statue_root is None: raise RuntimeError('exported statue is missing')
+        for child in family.children: hide_tree(child,child!=statue_root)
+        hide_tree(statue_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('statue:')
+        scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100; scene.render.image_settings.file_format='PNG'
+        scene.render.image_settings.color_mode='RGB'; scene.render.film_transparent=False
+        scene.view_settings.view_transform='Standard'
+        world=bpy.data.worlds.new('Statue review grey'); world.use_nodes=True
+        world.node_tree.nodes['Background'].inputs['Color'].default_value=(.42,.42,.42,1)
+        world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8; scene.world=world
+        gm=bpy.data.materials.new('Statue review ground'); gm.diffuse_color=(.42,.42,.42,1); gm.use_nodes=True
+        gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.42,.42,.42,1)
+        bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.035)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(gm)
+        def aim_statue(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
+        for name,loc,power,size in [('key',(7,-8,13),1600,9),('fill',(-7,6,9),900,8)]:
+            ld=bpy.data.lights.new('Statue '+name,'AREA'); ld.energy=power; ld.shape='DISK'; ld.size=size
+            lo=bpy.data.objects.new('Statue '+name,ld); scene.collection.objects.link(lo); lo.location=loc; aim_statue(lo,(0,0,2.7))
+        camera=bpy.data.objects.new('Statue camera',bpy.data.cameras.new('Statue camera')); scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
+        evidence.mkdir(parents=True,exist_ok=True)
+        views=[('side',(1,0,0),'statue-side.jpg',6.0),('front',(0,1,0),'statue-front.jpg',6.0),
+               ('rear',(0,-1,0),'statue-rear.jpg',6.0),('above',(0,0,1),'statue-above-r16.jpg',6.0),
+               ('three-quarter-a',(1,-1,.65),None,7.2),('three-quarter-b',(-1,1,.65),None,7.2),
+               ('mayor',(1,-1,1),None,7.2)]
+        for name,direction,photo_name,ortho in views:
+            target=Vector((0,-.15,2.8)); direction=Vector(direction).normalized()
+            camera.location=target+direction*24; aim_statue(camera,target); camera.data.ortho_scale=ortho
+            if photo_name:
+                ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+                scene.render.resolution_x,scene.render.resolution_y=ref.size
+                bpy.data.images.remove(ref)
+            else:
+                scene.render.resolution_x,scene.render.resolution_y=900,650
+            scene.render.filepath=str(evidence/f'statue-{name}.png'); bpy.ops.render.render(write_still=True)
+            print('rendered statue',name)
         raise SystemExit(0)
     truck_bounds=[]
     for obj in truck_root.children_recursive:
@@ -207,6 +435,7 @@ if '--review-only' in args:
 
 sys.path.insert(0, str(root / 'tools/blender'))
 import town_base as town
+import photo_carve
 from photo_carve import carve_object, lift_if_dark
 from photo_model import Mesh as PhotoMesh, Photo, lathe, slab, trace
 from hull_model import tyre
@@ -223,6 +452,60 @@ mat = town.make_materials({
     'sand': tex / 'wet-brown-earth.jpg',
     'patched-canvas': tex / 'patched-canvas.jpg',
 })
+def flat_material(name, color, alpha=1.0, metallic=0.0):
+    material=bpy.data.materials.new(name); material.diffuse_color=(*color,alpha); material.use_nodes=True
+    shader=material.node_tree.nodes.get('Principled BSDF')
+    shader.inputs['Base Color'].default_value=(*color,alpha);shader.inputs['Roughness'].default_value=.84
+    shader.inputs['Metallic'].default_value=metallic
+    if alpha<1:
+        shader.inputs['Alpha'].default_value=alpha;material.surface_render_method='DITHERED'
+    return material
+
+def photo_crop_material(name, source_path, crop):
+    """Pack a useful photo crop as a real material swatch in the GLB."""
+    source=bpy.data.images.load(str(source_path),check_existing=True)
+    sw,sh=source.size
+    source_pixels=np.empty(sw*sh*4,dtype=np.float32);source.pixels.foreach_get(source_pixels)
+    source_pixels=source_pixels.reshape((sh,sw,4))
+    x0,y0,x1,y1=crop
+    # Blender's image buffer starts at the bottom row; crop coordinates in the
+    # recipe are read from the photographed image's top-left origin.
+    pixels=source_pixels[sh-y1:sh-y0,x0:x1,:3].copy()
+    bpy.data.images.remove(source)
+    height,width=pixels.shape[:2]
+    image=bpy.data.images.new(name+' photo crop',width=width,height=height,alpha=False)
+    rgba=np.ones((height,width,4),dtype=np.float32);rgba[:,:,:3]=pixels
+    image.pixels.foreach_set(rgba.ravel());image.pack()
+    material=bpy.data.materials.new(name);material.use_nodes=True
+    material.node_tree.nodes.clear()
+    texture=material.node_tree.nodes.new('ShaderNodeTexImage');texture.image=image
+    texture.interpolation='Linear';texture.extension='REPEAT'
+    shader=material.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+    shader.inputs['Roughness'].default_value=.91
+    output=material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    material.node_tree.links.new(texture.outputs['Color'],shader.inputs['Base Color'])
+    material.node_tree.links.new(shader.outputs[0],output.inputs['Surface'])
+    return material
+
+awning_photo={
+    'fun-stall-a':photo_crop_material('Hit-the-can / red and cream striped awning',tex/'fun-stall-a-side.jpg',(104,32,914,228)),
+    'fun-stall-b':photo_crop_material('Sweets / yellow and red striped awning',tex/'fun-stall-b-side.jpg',(106,22,919,250)),
+}
+counter_photo={
+    'fun-stall-a':photo_crop_material('Hit-the-can / weathered plank counter photo',tex/'fun-stall-a-front.jpg',(112,600,914,914)),
+    'fun-stall-b':photo_crop_material('Sweets / painted plank counter photo',tex/'fun-stall-b-front.jpg',(112,592,912,914)),
+}
+mat['dirty-glass']=flat_material('Town Fun / soot-dulled jar glass',(.26,.32,.28),.55)
+mat['letter-paint']=flat_material('Town Fun / old cream paint',(.57,.39,.19))
+mat['red-paint']=flat_material('Town Fun / bruised red candy',(.46,.10,.06))
+mat['ochre-paint']=flat_material('Town Fun / faded yellow candy',(.65,.38,.08))
+mat['blue-paint']=flat_material('Town Fun / dull blue candy',(.10,.23,.27))
+stall_source_photos=[]
+for stall_id in ('fun-stall-a','fun-stall-b'):
+    for view in ('side','front','rear','top'):
+        photo=Photo(tex/f'{stall_id}-{view}.jpg')
+        photo.image['credit']='OpenAI image generation; prompt and source retained in town-fun.py'
+        stall_source_photos.append(photo)
 mat['tire'] = bpy.data.materials.new('Town Fun / worn rubber')
 mat['tire'].use_nodes = True
 mat['tire'].diffuse_color = (.045, .047, .042, 1)
@@ -279,9 +562,9 @@ def cyl(name, c, radius, depth, material='rusted-steel', sides=16, parent=None):
     o=bpy.context.object; o.name=name; o.data.materials.append(mat[material]);
     for f in o.data.polygons: f.use_smooth = len(f.vertices)>4
     return keep(o, parent)
-def torus(name,c,major,minor,material='rusted-steel',parent=None):
-    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=10,
-        minor_segments=5, location=town.game_vector(c))
+def torus(name,c,major,minor,material='rusted-steel',parent=None,major_segments=10,minor_segments=5):
+    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=major_segments,
+        minor_segments=minor_segments, location=town.game_vector(c))
     o=bpy.context.object; o.name=name; o.data.materials.append(mat[material]); return keep(o,parent)
 def pipe(name, points, radius=.12, material='rusted-steel', parent=None):
     for i,(a,b) in enumerate(zip(points,points[1:])):
@@ -726,15 +1009,83 @@ for piece in drive_pieces:
     print('DRIVE-IN CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
     if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
-# Four shell bumper cars inside a bank of real tyres, each a separately movable node.
+# Wreck ring, round 19: two low courses of flat tyres around four bumper cars.
 building_root('wreck-ring','3x3')
-for i in range(32):
-    a=math.tau*i/32; x=8.2*math.cos(a); z=8.2*math.sin(a)
-    wheel(f'wreck-ring:tyre-wall-{i+1}',(x,.72,z),.82,'tire')
-    wheel(f'wreck-ring:upper-tyre-{i+1}',(x,1.72,z),.82,'tire')
-for i,a in enumerate((.25,1.82,3.40,4.95),1):
-    p=bpy.data.objects.new(f'wreck-ring:car-{i}',None); bpy.context.collection.objects.link(p); p.parent=current
-    car(f'wreck-ring:bumper-car-{i}',(4.1*math.cos(a),.12,4.1*math.sin(a)),.76,('faded-hand-paint','galvanised-tin','rusted-steel','patched-canvas')[i-1],p)
+ring_root=current
+ring_count=21
+ring_radius=3.65
+ring_side=Photo(tex/'wreck-ring-shell-side.jpg')
+ring_end=Photo(tex/'wreck-ring-shell-front.jpg')
+tyre_courses=((.175,0),(.525,math.pi/ring_count))
+for course,(height,offset) in enumerate(tyre_courses,1):
+    for i in range(ring_count):
+        angle=math.tau*i/ring_count+offset
+        x=ring_radius*math.cos(angle); z=ring_radius*math.sin(angle)
+        tyre_mesh=PhotoMesh()
+        tyre(tyre_mesh,'side',ring_side,337,397,36,.55,.175,'tread',ring_end,
+             512,178,434,598,sides=16)
+        tyre_obj=tyre_mesh.finish(f'wreck-ring:tyre-{course}-{i+1}',
+                                  {'side':ring_side.material(),'tread':ring_end.material()})
+        tyre_obj.location=town.game_vector((x,height,z))
+        tyre_obj.rotation_euler[1]=math.pi/2
+        keep(tyre_obj,ring_root)
+        tyre_obj['part']='flat salvaged tyre with photo-worn tread'
+# Dust covers the arena floor, with a darker worn centre.
+cyl('wreck-ring:dusty-floor',(0,.05,0),ring_radius-.36,.10,'sand',48,ring_root)
+
+# The same four generated shell photographs are measured at each view. The front
+# is +Z as for a vehicle; each shell is carved once, then receives a rubber ring.
+wreck_recipe={
+    'photos':{'side':'wreck-ring-shell-side.jpg','front':'wreck-ring-shell-front.jpg',
+              'rear':'wreck-ring-shell-rear.jpg','top':'wreck-ring-shell-above.jpg'},
+    'length':1.70,'width':1.00,'height':.92,'forward':1,'round':2,
+    'side':{'start':55,'end':963,'ground':454},
+    'front':{'centre':512,'ground':590,'top':155},
+    'rear':{'centre':512,'ground':590,'top':155},
+    'top':{'front':104,'rear':600,'centre':512,'x_scale':1.00/820},
+    'grey':8,'tolerance':30,'voxel':.07,'target':400,
+    'mask_dir':str(root/'.qa-dist/wreck-ring-masks'),
+}
+car_slots=[(-1.25,0,.20),(0,-1.25,1.83),(1.25,0,-1.17),(0,1.25,3.02)]
+for i,(x,z,turn) in enumerate(car_slots,1):
+    car_root=bpy.data.objects.new(f'wreck-ring:car-{i}',None)
+    bpy.context.collection.objects.link(car_root); car_root.parent=ring_root
+    shell=carve_object(f'wreck-ring:car-{i}:shell',tex,wreck_recipe)
+    keep(shell,car_root)
+    # The bumper sits around the carved shell's perimeter, below its floor.
+    bumper=torus(f'wreck-ring:car-{i}:bumper',(0,.12,0),.54,.12,'tire',car_root,16,6)
+    bumper.scale=(1.0,1.5,1.0)
+    box(f'wreck-ring:car-{i}:seat-cushion',(0,.31,-.23),(.38,.12,.36),'weathered-plank',0,car_root)
+    box(f'wreck-ring:car-{i}:seat-back',(0,.49,-.42),(.38,.34,.10),'patched-canvas',0,car_root)
+    steering_wheel=torus(f'wreck-ring:car-{i}:steering-wheel',(0,.66,.37),.14,.025,'rusted-steel',car_root,16,6)
+    steering_wheel.rotation_euler[0]=math.pi/2
+    beam(f'wreck-ring:car-{i}:steering-column',(0,.42,.21),(0,.64,.35),.035,'rusted-steel',car_root)
+    car_root.location=town.game_vector((x,0,z)); car_root.rotation_euler[2]=turn
+    shell['source']='four generated orthographic photos of one bumper-car shell'
+    bumper['source']='continuous separate rubber bumper around the shell'
+
+# Print every wreck-ring piece in game axes and prove it fits the 3x3 grid.
+bpy.context.view_layer.update()
+wreck_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('wreck-ring:')]
+def wreck_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return ((min(p.x for p in pts),max(p.x for p in pts)),
+            (min(p.z for p in pts),max(p.z for p in pts)),
+            (min(p.y for p in pts),max(p.y for p in pts)))
+def wreck_overlap(a,b,p=.04):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in wreck_pieces:
+    b=wreck_bounds(piece)
+    report={'x':list(map(lambda v:round(v,3),b[0])),
+            'y':list(map(lambda v:round(v,3),b[1])),
+            'z':list(map(lambda v:round(-v,3),reversed(b[2])))}
+    print('WRECK-RING BOUNDS',piece.name,json.dumps(report))
+    if b[0][0]<-11.5 or b[0][1]>11.5 or b[2][0]<-11.5 or b[2][1]>11.5 or b[1][0]<-.03:
+        raise RuntimeError(f'{piece.name} leaves the 3x3 footprint or extends below ground: {report}')
+    grounded=b[1][0]<=.04
+    touches=grounded or any(other is not piece and wreck_overlap(b,wreck_bounds(other)) for other in wreck_pieces)
+    print('WRECK-RING CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} is floating without contact')
 
 # Big wheel: retain open photo-carved spokes, but make the two rims complete
 # torus rings. The round-8 white box was studio background enclosed by the
@@ -878,74 +1229,472 @@ for i in range(8):
     touching=any(overlap(seat_bounds,rb) for rb in hanger_bounds)
     print(f'BIG-WHEEL SEAT {i+1} BOUNDS',json.dumps(game_seat),'touches hanger:',touching)
     if not touching: raise RuntimeError(f'big wheel seat {i+1} misses its hangers')
-# Compact coaster: welded tower, inclined lead-in, broad loop, steep return drop, and movable train.
+# The coaster's two open scaffold faces are traced from one measured side photo.
+# The grey studio is flood-masked, so the loop and lattice openings stay empty.
 building_root('scrap-coaster','6x4')
-for x in (-18,-12,-6,0,6,12,18):
-    for z in (-10,0,10):
-        h=4.0+3.0*(1-abs(x)/20)+2.5*(z==0)
-        beam(f'scrap-coaster:scaffold-post-{x}-{z}',(x,.1,z),(x,h,z),.22,'rusted-steel')
-        if abs(x)<18: beam(f'scrap-coaster:cross-brace-{x}-{z}',(x,.3,z),(x+6,h*.68,z),.11,'galvanised-tin')
-        beam(f'scrap-coaster:bay-tie-{x}-{z}',(x,h*.53,-10),(x,h*.53,10),.12,'weathered-plank')
-# Thick track rails: a high approach, a full loop, then a sharp falling return.
-track=[(-20,2.5,0),(-15,4,0),(-10,7,0),(-6,12,0),(-3,13,0),(0,12,0)]
-for i in range(1,17):
-    a=math.pi*2*i/16; track.append((5+4.4*math.cos(a),7.2+4.4*math.sin(a),0))
-track.extend([(10,11,0),(13,8,0),(16,3.2,0),(20,2.4,0)])
-for rail in (-.46,.46):
-    pts=[(x,y,z+rail) for x,y,z in track]
-    pipe(f'scrap-coaster:track-rail-{rail}',pts,.10,'galvanised-tin')
-for i,(x,y,z) in enumerate(track[::2]): beam(f'scrap-coaster:cross-tie-{i}',(x,y-.15,z-.55),(x,y-.15,z+.55),.12,'rusted-steel')
+coaster_photo=Photo(tex/'scrap-coaster-side.jpg')
+coaster_photo.image['credit']='OpenAI ImageGen, 8 November 2026; original: C:/Users/kyleb/.codex/generated_images/01a1ba53-faf0-7211-958a-533c01f29a14/exec-0831b0c5-4bde-4064-bf5a-700eba73e097.png'
+lift_if_dark(coaster_photo)
+coaster_ground=320; coaster_start=12; coaster_end=1012
+COASTER_SCALE=39.0/(coaster_end-coaster_start)
+# The side photo's open scaffold cells do not all reach its frame. These
+# measured neutral background patches seed each pocket so `trace` keeps the
+# space between welded members open instead of turning it into a grey plate.
+coaster_open_cells=[(251,216),(250,267),(272,239),(277,287),(337,196),(370,112),(371,167),
+                    (376,231),(398,133),(399,76),(414,236),(449,186),(499,82),(504,226),
+                    (514,169),(545,212),(760,170)]
+coaster_mask=~coaster_photo.sky(photo_carve.edge_seeds(coaster_photo)+coaster_open_cells,
+                               tolerance=22,grey=20)
+coaster_mask[coaster_ground:,:]=False
+# The main-body photo has an empty station; the separately carved train never
+# enters either traced scaffold face.
+photo_carve.save_mask(coaster_mask,evidence/'scrap-coaster-side-mask.png')
+coaster_photo.bleed(coaster_mask)
+coaster_loops=trace(coaster_mask,(8,8,1018,coaster_ground),tolerance=2.5,min_area=28)
+if not coaster_loops: raise RuntimeError('scrap-coaster side silhouette did not trace')
+def coaster_side_world(px,py,depth):
+    return (-19.5+(px-coaster_start)*COASTER_SCALE,
+            max(0,(coaster_ground-py)*COASTER_SCALE),depth-2.5)
+for side,z in (('near',-.62),('far',.62)):
+    face=PhotoMesh(); slab(face,'photo',coaster_photo,coaster_loops,coaster_side_world,z-.025,z+.025,wall_scale=COASTER_SCALE)
+    obj=face.finish(f'scrap-coaster:scaffold-face-{side}',{'photo':coaster_photo.material()}); keep(obj)
+
+# Station: a small timber deck, with steel legs and a short stair at the road end.
+box('scrap-coaster:station-platform',(-17.0,2.55,-2.5),(6.0,.26,3.1),'weathered-plank',.04)
+for x in (-19.6,-17.0,-14.4):
+    for z in (-3.85,-1.15): beam(f'scrap-coaster:station-leg-{x}-{z}',(x,.04,z),(x,2.4,z),.16,'rusted-steel')
+for step in range(5):
+    x=-20.55+step*.34; y=.27+step*.36
+    box(f'scrap-coaster:station-stair-{step+1}',(x,y,-2.5),(.44,.54,2.45),'weathered-plank',.025)
+
+# Real twin rails sit over the traced side profiles. Cross ties connect the two
+# 1.2 m separated scaffold faces; every support in the photo reaches grade.
+track_pixels=[(12,247),(48,247),(88,247),(140,247),(192,246),(220,239),(250,219),(292,192),(338,160),
+              (385,123),(430,87),(470,55),(505,35),(532,29),(552,41),(570,91),
+              (585,150),(600,207),(615,245),(642,260),(675,263)]
+for i in range(1,25):
+    angle=math.pi/2+math.tau*i/24
+    track_pixels.append((786+83*math.cos(angle),194+83*math.sin(angle)))
+track_pixels.extend([(877,263),(916,263),(960,263),(1000,263)])
+track=[]
+for px,py in track_pixels:
+    x=-19.5+(px-coaster_start)*COASTER_SCALE; y=max(.18,(coaster_ground-py)*COASTER_SCALE)
+    track.append((x,y,-2.5))
+for side,z in (('near',-2.5-.42),('far',-2.5+.42)):
+    points=[(x,y,z) for x,y,_ in track]
+    pipe(f'scrap-coaster:rail-{side}',points,.075,'galvanised-tin')
+for i,(x,y,_) in enumerate(track[::2]):
+    beam(f'scrap-coaster:cross-tie-{i+1}',(x,max(.06,y-.12),-3.0),(x,max(.06,y-.12),-2.0),.10,'rusted-steel')
+
 train=bpy.data.objects.new('scrap-coaster:train',None);bpy.context.collection.objects.link(train);train.parent=current
-for i in range(3):
-    car(f'scrap-coaster:salvage-car-{i+1}',(-15+i*1.35,4.3,0),.56,'faded-hand-paint',train)
-    beam(f'scrap-coaster:coupler-{i}',(-14+i*1.35,4.0,0),(-13.6+i*1.35,4.0,0),.09,'rusted-steel',train)
+train.location=town.game_vector((-17.0,2.85,-2.5))
+cart_table={
+    'photos':{'side':'scrap-coaster-cart-side.jpg','front':'scrap-coaster-cart-front.jpg',
+              'rear':'scrap-coaster-cart-rear.jpg','top':'scrap-coaster-cart-top.jpg'},
+    'length':1.55,'width':.82,'height':.88,
+    # The cart's nose is on the right of the side photo; reversed pixel ends
+    # keep the front and rear projections inside the same measured image.
+    'side':{'start':969,'end':55,'ground':649},
+    'front':{'centre':512,'ground':890,'top':73},
+    'rear':{'centre':512,'ground':890,'top':73},
+    'top':{'front':860,'rear':105,'centre':512},
+    'forward':1,'side_front_on_left':False,
+    'grey':20,'tolerance':30,'bleed_tolerance':34,'voxel':.035,'target':1800,
+    'mask_dir':str(evidence/'scrap-coaster-cart-masks'),
+}
+first_cart=carve_object('scrap-coaster:train-cart-1',tex,cart_table)
+for photo in cart_table['_photos'].values():
+    photo.image['credit']='OpenAI ImageGen, 8 November 2026; original reference paths in textures/scrap-coaster-CREDITS.md'
+first_cart.parent=train; first_cart.rotation_euler[2]=math.pi/2; first_cart.location=(-1.58,0,0)
+for i,offset in ((2,0),(3,1.58)):
+    copy=first_cart.copy(); copy.data=first_cart.data
+    copy.name=f'scrap-coaster:train-cart-{i}'; bpy.context.collection.objects.link(copy)
+    copy.parent=train; copy.rotation_euler[2]=math.pi/2; copy.location=(offset,0,0)
+for i,x in enumerate((-17.0-1.58,-17.0,-17.0+1.58),1):
+    if i<3: beam(f'scrap-coaster:train-coupler-{i}',(x+.60,2.77,-2.5),(x+1.00,2.77,-2.5),.065,'rusted-steel',train)
 
-# Sunken mud oval with sloped scarps and the one small timber viewing stand.
+# Print and check every coaster mesh in game metres. Its 6 by 4 footprint is
+# 48 by 32 m; retain a half-metre margin and prove each piece meets a support.
+coaster_pieces=[o for o in bpy.data.objects if o.type=='MESH' and o.name.startswith('scrap-coaster:')]
+def coaster_bounds(obj):
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    values=[(min(p[axis] for p in points),max(p[axis] for p in points)) for axis in range(3)]
+    # Blender Z up; exported game coordinates are X, Y-up, Z.
+    return (values[0],values[2],(-values[1][1],-values[1][0]))
+def coaster_overlap(a,b):
+    return all(a[i][0]<=b[i][1]+.055 and b[i][0]<=a[i][1]+.055 for i in range(3))
+coaster_boxes={piece:coaster_bounds(piece) for piece in coaster_pieces}
+for piece,bounds in coaster_boxes.items():
+    game_bounds={'min':[round(v[0],3) for v in bounds],'max':[round(v[1],3) for v in bounds]}
+    print('SCRAP-COASTER BOUNDS',piece.name,json.dumps(game_bounds))
+    if bounds[0][0]<-23.5 or bounds[0][1]>23.5 or bounds[2][0]<-15.5 or bounds[2][1]>15.5:
+        raise RuntimeError(f'{piece.name} leaves the 6x4 footprint: {game_bounds}')
+    if bounds[1][0]<-.06: raise RuntimeError(f'{piece.name} extends below ground: {game_bounds}')
+    grounded=bounds[1][0]<=.035
+    touches=grounded or any(other is not piece and coaster_overlap(bounds,other_bounds)
+                            for other,other_bounds in coaster_boxes.items())
+    print('SCRAP-COASTER CONTACT',piece.name,'ground' if grounded else 'another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} floats without support')
+coaster_triangles=sum(sum(len(poly.vertices)-2 for poly in piece.data.polygons) for piece in coaster_pieces)
+print('SCRAP-COASTER TRIANGLES',coaster_triangles)
+if coaster_triangles>14000: raise RuntimeError(f'scrap-coaster has {coaster_triangles} triangles; limit 14000')
+if bpy.data.objects.get('scrap-coaster:train') is None: raise RuntimeError('scrap-coaster:train moving part is missing')
+
+# TOWN-ART-FUN round 24: keep the churned-mud photo, but set the rim at grade
+# and carry the hollow 1.5 m below it. The stand has its own generated views.
 building_root('mud-pit','4x4')
-for i in range(24):
-    a=math.tau*i/24; x=13.1*math.cos(a);z=12.7*math.sin(a)
-    beam(f'mud-pit:rim-post-{i}',(x,.2,z),(x*.92,2.2,z*.92),.20,'weathered-plank')
-    if i%2==0: beam(f'mud-pit:scarp-brace-{i}',(x,.4,z),(x*.92,2.1,z*.92),.11,'rusted-steel')
-for side in (-1,1):
-    ramp=box(f'mud-pit:jump-ramp-{side}',(side*7,1.0,-4),(6.6,1.5,4.8),'sand',.2)
-    ramp.rotation_euler[2]=side*.25
-for x in (-2.0,0,2.0):
-    beam(f'mud-pit:grandstand-leg-{x}',(x,1.0,-12),(x,3.0,-14),.12,'weathered-plank')
-box('mud-pit:grandstand-bench',(0,3.05,-13),(5.6,.18,2.5),'weathered-plank',.05)
-for y in (1.9,2.5): beam(f'mud-pit:grandstand-rail-{y}',(-2.5,y,-14),(2.5,y,-14),.09,'rusted-steel')
-for i in range(4): box(f'mud-pit:tyre-chicane-{i}',(-5+i*3,.28,2.2),(.95,.55,.72),'tire',.05)
+mud_photo=Photo(tex/'mud-pit-top.jpg')
+mud_photo.image['credit']='OpenAI image generation; original: C:/Users/kyleb/.codex/generated_images/01a1b9e1-3291-7a32-876e-9f29d2981d3c/exec-fccfe036-6b86-43b2-8b88-60f7fd570883.png'
+lift_if_dark(mud_photo)
+mud_solid=~mud_photo.sky(photo_carve.edge_seeds(mud_photo),tolerance=34,grey=30)
+mud_photo.bleed(mud_solid)
+mud_mesh=bpy.data.meshes.new('mud-pit concave earth and churned-mud photo surface')
+mud_verts=[];mud_uvs=[];mud_faces=[]
+grid=48;outer=10.2;floor_edge=6.35;pit_depth=1.5
+def mud_surface(x,z):
+    d=max(abs(x),abs(z))
+    if d<=floor_edge:y=-pit_depth
+    else:y=-pit_depth+pit_depth*min(1,(d-floor_edge)/(outer-floor_edge))
+    if floor_edge<d<outer:y=max(-pit_depth,y+.035*math.sin(x*.83)*math.sin(z*.67)*min(1,(outer-d)/.65))
+    return y
+for j in range(grid+1):
+    z=-outer+2*outer*j/grid
+    for i in range(grid+1):
+        x=-outer+2*outer*i/grid
+        y=mud_surface(x,z)
+        mud_verts.append(tuple(town.game_vector((x,y,z))))
+        mud_uvs.append(mud_photo.uv(512+x*(455/outer),512+z*(480/outer)))
+for j in range(grid):
+    for i in range(grid):
+        k=j*(grid+1)+i;mud_faces.append((k,k+grid+1,k+grid+2,k+1))
+mud_mesh.from_pydata(mud_verts,[],mud_faces);mud_mesh.materials.append(mud_photo.material());mud_mesh.update()
+mud_uv=mud_mesh.uv_layers.new(name='UVMap')
+for poly in mud_mesh.polygons:
+    for li in poly.loop_indices:mud_uv.data[li].uv=mud_uvs[mud_mesh.loops[li].vertex_index]
+mud_body=bpy.data.objects.new('mud-pit:earth-bowl',mud_mesh);bpy.context.collection.objects.link(mud_body);keep(mud_body)
 
-# Two roadside stalls: one hand-painted can target range, one patched sweets counter.
-for stall in ('fun-stall-a','fun-stall-b'):
-    building_root(stall,'1x1')
-    if stall.endswith('a'):
-        for x in (-2.3,2.3): beam(f'{stall}:lean-post-{x}',(x,.15,-2),(x+.15,3.4,-2),.12,'weathered-plank')
-        for i in range(3): box(f'{stall}:hit-can-{i}',(-1.35+i*.6,.28,-.4),(.28,.38,.28),'galvanised-tin',.025)
-        beam(f'{stall}:throw-line',(-2.5,.04,1.4),(2.5,.04,1.4),.08,'rusted-steel')
-        for x in (-1.5,0,1.5): box(f'{stall}:hand-painted-target-{x}',(x,1.4,-.15),(.8,.7,.05),'faded-hand-paint',.03)
+# One small stand sits on the ground beside the north rim, facing into the pit.
+stand_photos={view:Photo(tex/f'mud-pit-stand-{view}.jpg') for view in ('side','front','rear','top')}
+stand_originals={
+    'side':'exec-434a8c6a-382b-4ea4-acf4-7021d3610c3a.png',
+    'front':'exec-e01a69d6-d5c3-4252-8f52-6dd5f9234c34.png',
+    'rear':'exec-fbfecc9e-3f49-469c-86b3-11dbc4095349.png',
+    'top':'exec-a3f3ed62-933e-434a-92c6-789f865a2a51.png',
+}
+for view,photo in stand_photos.items():
+    photo.image['credit']='OpenAI image generation; original: C:/Users/kyleb/.codex/generated_images/01a1ba23-4765-7201-81ca-91ce2d743b83/'+stand_originals[view]
+stand_side=stand_photos['side'];stand_front=stand_photos['front']
+for photo in stand_photos.values():lift_if_dark(photo)
+stand_center_z=13.0;stand_width=8.2;stand_height=3.15
+
+# Trace three separate plank rows from the generated front photo. Staggering
+# each narrow seat toward the back keeps the underside visibly open.
+front_mask=~stand_front.sky([(8,8),(1245,8),(8,1245),(1245,1245),
+    (600,550),(600,745),(600,960),(600,1080)],tolerance=38,grey=30)
+front_mask[1170:,:]=False
+row_bands=((790,890,-1.18),(598,690,0),(410,500,1.18))
+for row_index,(y0,y1,z_offset) in enumerate(row_bands,1):
+    loops=trace(front_mask,(85,y0,1170,y1),tolerance=2.0,min_area=70)
+    if not loops:raise RuntimeError(f'mud-pit stand seat row {row_index} did not trace')
+    seat_mesh=PhotoMesh()
+    def seat_point(px,py,depth,z_offset=z_offset):
+        x=-stand_width/2+(px-105)*(stand_width/(1145-105))
+        y=max(0,(1170-py)*(stand_height/(1170-75)))
+        return (x,y,stand_center_z+z_offset+depth)
+    slab(seat_mesh,'front',stand_front,loops,seat_point,-.38,.38,wall_scale=.003)
+    seat=seat_mesh.finish(f'mud-pit:grandstand-plank-row-{row_index}',{'front':stand_front.material()})
+    keep(seat)
+
+# Pipe scaffold stays open under every seat. Its stepped uprights, cross rails
+# and alternating braces follow the three measured seat levels.
+seat_levels=(.94,1.52,2.10)
+seat_z=(stand_center_z-1.18,stand_center_z,stand_center_z+1.18)
+support_z=(stand_center_z-2.35,*seat_z,stand_center_z+2.35)
+support_y=(.72,*seat_levels,2.72)
+for x in (-3.82,3.82):
+    for i,(z,y) in enumerate(zip(support_z,support_y)):
+        beam(f'mud-pit:grandstand-post-{x}-{i}',(x,.05,z),(x,y,z),.09,'rusted-steel')
+    for i in range(len(support_z)-1):
+        z0,z1=support_z[i],support_z[i+1];y0,y1=support_y[i],support_y[i+1]
+        beam(f'mud-pit:grandstand-side-rail-low-{x}-{i}',(x,.28,z0),(x,.28,z1),.065,'rusted-steel')
+        beam(f'mud-pit:grandstand-side-rail-high-{x}-{i}',(x,y0*.78,z0),(x,y1*.78,z1),.065,'rusted-steel')
+        if i%2==0:beam(f'mud-pit:grandstand-side-brace-{x}-{i}',(x,.28,z0),(x,y1*.78,z1),.065,'rusted-steel')
+        else:beam(f'mud-pit:grandstand-side-brace-{x}-{i}',(x,y0*.78,z0),(x,.28,z1),.065,'rusted-steel')
+for i,(z,y) in enumerate(zip(support_z,support_y)):
+    beam(f'mud-pit:grandstand-cross-rail-{i}',(-3.82,y,z),(3.82,y,z),.075,'rusted-steel')
+    beam(f'mud-pit:grandstand-seat-ledger-{i}',(-3.82,max(.25,y-.13),z),(3.82,max(.25,y-.13),z),.065,'rusted-steel')
+
+# Four edge tyres are the only pieces that rise above the level rim.
+for i,(x,z) in enumerate(((0,-10.05),(0,10.05),(-10.05,0),(10.05,0)),1):
+    torus(f'mud-pit:edge-tyre-{i}',(x,.18,z),.48,.18,'tire',parent=current,major_segments=16,minor_segments=6)
+
+# TOWN-ART-FUN round 22: the stalls follow their own photographed canvas and
+# counter planks. The GLB read-back above proves game Y remains height.
+# Their source
+# elevations and plan photos are kept in textures; pieces follow measured
+# structural landmarks rather than projecting goods onto the stall body.
+def stall_awning(name, x0, x1, back_z, front_z, material):
+    # One sewn roof slopes down from the rear rail toward the road. The front
+    # edge has eight soft scallops, shaped from the reference silhouette.
+    nx=24; nz=8; verts=[];faces=[];uvs=[]
+    for j in range(nz+1):
+        v=j/nz; z=back_z+(front_z-back_z)*v
+        for i in range(nx+1):
+            u=i/nx; x=x0+(x1-x0)*u
+            scallop=(.13*(.5-.5*math.cos(math.tau*8*u)) if j==nz else 0)
+            sag=.085*math.sin(math.pi*v)+.025*math.sin(math.tau*4*u)
+            y=2.92-.32*v-sag-scallop
+            verts.append(tuple(town.game_vector((x,y,z))))
+            uvs.append((u,v))
+    for j in range(nz):
+        for i in range(nx):
+            k=j*(nx+1)+i;faces.append((k,k+1,k+nx+2,k+nx+1))
+    mesh=bpy.data.meshes.new(name+' photo-striped roof cloth');mesh.from_pydata(verts,[],faces);mesh.materials.append(material);mesh.update()
+    layer=mesh.uv_layers.new(name='Reference-photo canvas UV')
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vi=mesh.loops[loop_index].vertex_index;layer.data[loop_index].uv=uvs[vi]
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);keep(obj)
+    # A short vertical valance makes the photo's scalloped edge visible from
+    # the road, instead of showing only the thin edge of the roof plane.
+    vverts=[];vfaces=[];vuvs=[]
+    for i in range(nx+1):
+        u=i/nx;x=x0+(x1-x0)*u
+        top=2.60-.11*math.sin(math.pi*u*8)**2
+        bottom=top-.24-.12*(.5-.5*math.cos(math.tau*8*u))
+        vverts.extend((tuple(town.game_vector((x,top,front_z-.025))),
+                       tuple(town.game_vector((x,bottom,front_z-.025)))))
+        vuvs.extend(((u,.78),(u,1.0)))
+    for i in range(nx):
+        k=i*2;vfaces.append((k,k+2,k+3,k+1))
+    valance_mesh=bpy.data.meshes.new(name+' scalloped photo valance');valance_mesh.from_pydata(vverts,[],vfaces)
+    valance_mesh.materials.append(material);valance_mesh.update()
+    valance_uv=valance_mesh.uv_layers.new(name='Reference-photo hem UV')
+    for polygon in valance_mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vi=valance_mesh.loops[loop_index].vertex_index;valance_uv.data[loop_index].uv=vuvs[vi]
+    valance=bpy.data.objects.new(name.replace('striped-awning-photo','scalloped-photo-hem'),valance_mesh)
+    bpy.context.collection.objects.link(valance);return keep(valance)
+
+def stall_counter_photo(name, material, width_scale):
+    # The photo supplies the worn board pattern on the full-depth box front.
+    verts=[tuple(town.game_vector(p)) for p in (
+        (-2.13*width_scale,.36,-.635),(2.13*width_scale,.36,-.635),
+        (2.13*width_scale,1.02,-.635),(-2.13*width_scale,1.02,-.635))]
+    mesh=bpy.data.meshes.new(name+' photo-faced plank panel');mesh.from_pydata(verts,[],[(0,1,2,3)]);mesh.materials.append(material);mesh.update()
+    layer=mesh.uv_layers.new(name='Front-photo counter UV')
+    for poly in mesh.polygons:
+        for loop_index,uv in zip(poly.loop_indices,((0,0),(1,0),(1,1),(0,1))):layer.data[loop_index].uv=uv
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);return keep(obj)
+
+def build_fun_stall(name, sweets=False):
+    stall_root=building_root(name,'1x1')
+    width_scale=.53
+    sx=lambda x:x*width_scale
+    def stall_box(part,center,size,material,bevel=.025):
+        # Small repeated stall boards stay crisp; bevel modifiers multiply
+        # their exported triangle cost without changing the photo silhouette.
+        return box(part,(sx(center[0]),center[1],center[2]),(size[0]*width_scale,size[1],size[2]),material,0)
+    def stall_pipe(part,points,radius,material):
+        return pipe(part,[(sx(x),y,z) for x,y,z in points],radius,material)
+    # Four corner posts frame a 1.2 m stall. The canopy slopes from the 2.92 m
+    # rear rail to the 2.60 m road-side rail, as in the photographed profile.
+    front_z,back_z=-.60,.60
+    for x in (-2.35,2.35):
+        for z,top in ((front_z,2.60),(back_z,2.92)):
+            stall_pipe(f'{name}:pipe-post-{x}-{z}',[(x,.05,z),(x,top,z)],.075,'rusted-steel')
+    for y,z in ((2.92,back_z),(2.60,front_z),(1.02,front_z),(1.02,back_z)):
+        stall_pipe(f'{name}:pipe-rail-{y}-{z}',[(-2.35,y,z),(2.35,y,z)],.065,'rusted-steel')
+    for x in (-2.35,2.35):
+        stall_pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,back_z),(x,2.60,front_z)],.06,'rusted-steel')
+        stall_pipe(f'{name}:counter-depth-rail-{x}',[(x,1.02,front_z),(x,1.02,back_z)],.055,'rusted-steel')
+        stall_pipe(f'{name}:base-depth-rail-{x}',[(x,.12,front_z),(x,.12,back_z)],.045,'rusted-steel')
+    # A full-depth wooden counter box replaces the thin facade strip. The
+    # upper face keeps the same weathered plank material as the front boards.
+    stall_box(f'{name}:counter-kick',(0,.69,-.06),(4.45,.68,1.04),'weathered-plank',.035)
+    if sweets:
+        # Raised seams follow the red and yellow vertical boards in the photo.
+        for i in range(10):
+            x=-2.10+i*.467
+            stall_box(f'{name}:painted-board-seam-{i}',(x,.69,-.646),(.025,.62,.025),'rusted-steel',0)
     else:
-        for x in (-2.4,2.4): beam(f'{stall}:awning-post-{x}',(x,.15,-2),(x,3.6,-2),.12,'rusted-steel')
-        for x in (-1.6,0,1.6):
-            box(f'{stall}:sweets-crate-{x}',(x,1.25,-.8),(1.25,.75,.8),'weathered-plank',.04)
-            for i in range(4): cyl(f'{stall}:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
-        for i in range(5): box(f'{stall}:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
+        # The hit-the-can photo has four broad horizontal weathered planks.
+        for i in range(4):
+            y=.36+i*.213
+            stall_box(f'{name}:weathered-plank-seam-{i}',(0,y,-.646),(4.28,.025,.025),'rusted-steel',0)
+    stall_counter_photo(f'{name}:counter-photo-face',counter_photo[name],width_scale)
+    # Photo-mapped striped cloth replaces the false blue/grey patches.
+    stall_awning(f'{name}:striped-awning-photo',sx(-2.34),sx(2.34),back_z,front_z,awning_photo[name])
+    if not sweets:
+        # A lower return shelf and a raised rear shelf carry the can target stack.
+        stall_box(f'{name}:can-shelf-bracket-left',(-1.55,1.18,-.18),(.12,.7,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf-bracket-right',(1.55,1.18,-.18),(.12,.7,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf',(0,1.05,-.18),(3.35,.14,.70),'weathered-plank',.025)
+        for row,count in enumerate((3,2,1)):
+            for i in range(count):
+                x=(i-(count-1)/2)*.68; y=1.29+row*.39; z=-.18
+                cyl(f'{name}:stacked-tin-{row}-{i}',(sx(x),y,z),.245,.34,'galvanised-tin',12)
+                cyl(f'{name}:can-lid-{row}-{i}',(sx(x),y+.18,z),.222,.035,'rusted-steel',8)
+    else:
+        # Sweets are individually jarred; colored candy pieces remain visible above the counter.
+        for i,x in enumerate((-1.72,-.86,0,.86,1.72)):
+            cyl(f'{name}:glass-jar-{i}',(sx(x),1.34,-.18),.245,.62,'dirty-glass',10)
+            cyl(f'{name}:jar-candy-{i}',(sx(x),1.34,-.18),.205,.40,('red-paint','ochre-paint','red-paint','ochre-paint','red-paint')[i],12)
+            cyl(f'{name}:jar-lid-{i}',(sx(x),1.68,-.18),.26,.09,'rusted-steel',8)
+        stall_box(f'{name}:rear-sweets-shelf',(0,2.0,.26),(3.8,.13,.35),'weathered-plank',.025)
+        for i,x in enumerate((-1.35,0,1.35)):
+            cyl(f'{name}:shelf-sweets-jar-{i}',(sx(x),2.33,.26),.27,.53,'dirty-glass',10)
+            cyl(f'{name}:shelf-candy-{i}',(sx(x),2.33,.26),.225,.37,('ochre-paint','red-paint','letter-paint')[i],8)
+            cyl(f'{name}:shelf-lid-{i}',(sx(x),2.63,.26),.29,.08,'rusted-steel',8)
+    # The supplied side elevation is about 0.85 as wide as it is tall. At the
+    # 2.92 m roof height that puts the stall at roughly 2.5 m wide.
+    return stall_root
 
-# First Wasteland scrap portrait: joined steel limbs with one raised arm and a blank plaque.
+stall_a=build_fun_stall('fun-stall-a',False)
+stall_b=build_fun_stall('fun-stall-b',True)
+
+def stall_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+def stall_touch(a,b,p=.035):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for stall_name in ('fun-stall-a','fun-stall-b'):
+    pieces=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith(stall_name+':')]
+    for piece in pieces:
+        b=stall_bounds(piece)
+        gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+            'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+        print('STALL BOUNDS',piece.name,json.dumps(gb))
+        if gb['min'][0]<-3.5 or gb['max'][0]>3.5 or gb['min'][2]<-3.5 or gb['max'][2]>3.5 or gb['min'][1]<-.03:
+            raise RuntimeError(f'{piece.name} leaves its 1x1-cell footprint or ground: {gb}')
+        if piece.data.uv_layers.active is None:
+            piece.data.uv_layers.new(name='UVMap')
+    for piece in pieces:
+        b=stall_bounds(piece);grounded=b[2][0]<=.025
+        touching=grounded or any(other is not piece and stall_touch(b,stall_bounds(other)) for other in pieces)
+        print('STALL CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touching else 'NO CONTACT')
+        if not touching: raise RuntimeError(f'{piece.name} floats without contact')
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    triangles=0
+    for piece in pieces:
+        evaluated=piece.evaluated_get(depsgraph);mesh=evaluated.to_mesh()
+        triangles+=sum(len(poly.vertices)-2 for poly in mesh.polygons)
+        evaluated.to_mesh_clear()
+    print('STALL TRIANGLES',stall_name,triangles)
+    if triangles>1800: raise RuntimeError(f'{stall_name} has {triangles} triangles (limit 1800)')
+
+# Round 17: round the figure's cross-sections and favour the front/rear views
+# on their respective halves. Keep the box-shaped plinth as a separate carve.
 building_root('statue','1x1')
-box('statue:plinth',(0,.48,.15),(2.8,.85,2.5),'cracked-concrete',.12)
-for i in range(4): box(f'statue:plinth-patch-{i}',(i*.55-1.0,.94,-.9),(.48,.08,.08),'galvanised-tin',.01)
-cyl('statue:waist-hub',(0,2.0,0),.58,.5,'rusted-steel',12)
-beam('statue:torso',(-.08,1.95,0),(.12,4.15,0),.52,'rusted-steel')
-cyl('statue:head',(.10,4.66,0),.62,.68,'galvanised-tin',12)
-beam('statue:neck',(.10,4.3,0),(.1,4.4,0),.25,'rusted-steel')
-for s in (-1,1):
-    beam(f'statue:leg-{s}',(-.12,2.05,0),(s*.48,1.08,-.02),.29,'rusted-steel')
-    box(f'statue:boot-{s}',(s*.50,.96,-.18),(.52,.2,.62),'galvanised-tin',.05)
-beam('statue:lower-arm-left',(-.28,3.55,0),(-1.0,2.7,0),.24,'rusted-steel')
-beam('statue:lower-arm-right',(.35,3.65,0),(1.15,4.55,0),.24,'rusted-steel')
-beam('statue:raised-forearm',(1.15,4.55,0),(1.25,5.55,0),.20,'galvanised-tin')
-for i in range(4): beam(f'statue:raised-finger-{i}',(1.25+i*.06,5.45,0),(1.22+i*.08,5.82,0),.07,'rusted-steel')
-box('statue:blank-plaque',(0,1.58,-1.18),(1.25,.8,.10),'weathered-plank',.04)
+statue_root=current
+class StatuePhoto(Photo):
+    def sky(self, seeds, tolerance=20, grey=13):
+        rgb=self.rgb()
+        h,w=rgb.shape[:2]
+        corners=np.concatenate((rgb[:48,:48].reshape(-1,3),rgb[:48,-48:].reshape(-1,3),
+                                rgb[-48:,:48].reshape(-1,3),rgb[-48:,-48:].reshape(-1,3)))
+        background=np.median(corners,axis=0)
+        chroma=rgb.max(axis=2)-rgb.min(axis=2)
+        return (np.max(np.abs(rgb-background),axis=2)<=24)&(chroma<=18)&(rgb.mean(axis=2)>=125)
+
+photo_carve.Photo=StatuePhoto
+plinth_top=.76
+def statue_figure_keep(x,y,z):
+    return y >= plinth_top
+def statue_plinth_keep(x,y,z):
+    return y <= plinth_top
+statue_table={
+    'photos':{'side':'statue-side.jpg','front':'statue-front.jpg',
+              'rear':'statue-rear.jpg','top':'statue-above-r16.jpg'},
+    'length':1.5,'width':1.8,'height':5.55,
+    'side':{'start':285,'end':690,'ground':1515},
+    'front':{'centre':512,'ground':1515,'top':22},
+    'rear':{'centre':512,'ground':1515,'top':22,'top_height':5.55},
+    # Grid landmarks on the straight-down view: plinth x=452..799, y=431..750.
+    # Town front (-Z) is the top edge of the plan photo (front precedes rear).
+    'top':{'front':431,'rear':750,'centre':625,'x_scale':1.8/347},
+    'cut':{
+        'front':[(375,1370,650,1515)],
+    },
+    'grey':26,'tolerance':34,'bleed_tolerance':28,
+    'ends_split':0,'front_favour':3,'rear_favour':3,'round':2,
+    'keep':statue_figure_keep,
+    'voxel':.095,'target':900,
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-17/figure-masks'),
+}
+statue_body=carve_object('statue:figure',textures,statue_table)
+photo_carve.Photo=Photo
+keep(statue_body,statue_root)
+statue_body['source']='three generated orthographic photos and one straight-down render reference; round 17 rounded figure carve'
+plinth_table={**statue_table,'keep':statue_plinth_keep,
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-17/plinth-masks'),'target':550}
+for key in ('ends_split','front_favour','rear_favour','round'):
+    plinth_table.pop(key,None)
+statue_plinth=carve_object('statue:plinth',textures,plinth_table)
+keep(statue_plinth,statue_root)
+statue_plinth['source']='separate square photo carve of the statue plinth'
+statue_photo=statue_table['_photos']['front']
+plaque_mesh=PhotoMesh()
+plaque_loops=trace(
+    ~statue_photo.sky([(8,8),(1015,8),(8,1510),(1015,1510)],tolerance=34,grey=26),
+    (375,1370,650,1515))
+slab(
+    plaque_mesh,'front',statue_photo,plaque_loops,
+    lambda px,py,d: ((px-512)*(.00372),(1515-py)*(.00372),-.75+d),-.045,.045)
+plaque=plaque_mesh.finish('statue:blank-plaque',{'front':statue_photo.material()})
+keep(plaque,statue_root)
+plaque['blank']=True
+statue_root.location.z=.05
+bpy.context.view_layer.update()
+
+def statue_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+statue_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('statue:')]
+for piece in statue_pieces:
+    b=statue_bounds(piece)
+    gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+        'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+    print('STATUE BOUNDS',piece.name,json.dumps(gb))
+    if gb['min'][0]<-3.5 or gb['max'][0]>3.5 or gb['min'][2]<-3.5 or gb['max'][2]>3.5 or gb['min'][1]<-.03:
+        raise RuntimeError(f'{piece.name} leaves the 1x1 footprint or ground: {gb}')
+def statue_touch(a,b,p=.04):
+    return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in statue_pieces:
+    b=statue_bounds(piece)
+    grounded=b[2][0]<=.025
+    touches=grounded or any(o is not piece and statue_touch(b,statue_bounds(o)) for o in statue_pieces)
+    print('STATUE CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} floats without contact')
+statue_tris=sum(len(p.vertices)-2 for o in statue_pieces for p in o.data.polygons)
+print('STATUE TRIANGLES',statue_tris)
+if statue_tris>1800: raise RuntimeError(f'statue has {statue_tris} triangles (limit 1800)')
+
+def mud_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+mud_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('mud-pit:')]
+def mud_touch(a,b,p=.045):return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in mud_pieces:
+    b=mud_bounds(piece)
+    gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+        'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+    print('MUD-PIT BOUNDS',piece.name,json.dumps(gb))
+    if gb['min'][0]<-15.5 or gb['max'][0]>15.5 or gb['min'][2]<-15.5 or gb['max'][2]>15.5:
+        raise RuntimeError(f'{piece.name} leaves the 4x4 footprint or extends below ground: {gb}')
+    if piece.name=='mud-pit:earth-bowl':
+        if gb['min'][1]<-1.52 or gb['min'][1]>-1.45 or abs(gb['max'][1])>.01:
+            raise RuntimeError(f'mud-pit bowl must reach 1.5 m below grade and end at the grade-level rim: {gb}')
+        print('MUD-PIT RIM',json.dumps({'Y':0,'hollow_floor_Y':gb['min'][1]}))
+    elif gb['min'][1]<-.03:
+        raise RuntimeError(f'{piece.name} extends below grade: {gb}')
+    grounded=gb['min'][1]<=.025
+    touches=grounded or any(other is not piece and mud_touch(b,mud_bounds(other)) for other in mud_pieces)
+    print('MUD-PIT CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches:raise RuntimeError(f'{piece.name} floats without support')
+mud_triangles=sum(len(poly.vertices)-2 for obj in mud_pieces for poly in obj.data.polygons)
+print('MUD-PIT TRIANGLES',mud_triangles)
+if mud_triangles>14000:raise RuntimeError(f'mud-pit has {mud_triangles} triangles; limit 14000')
 
 # Assign every mesh the one shared picture-coordinate layer name before export.
 for obj in bpy.data.objects:
@@ -954,7 +1703,7 @@ for obj in bpy.data.objects:
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
         image_name=Path(image.filepath).name
-        if not image_name.startswith(('drive-in-','fountain-')):
+        if not image_name.startswith(('drive-in-','fountain-','statue-','mud-pit','scrap-coaster-')):
             image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
@@ -964,6 +1713,6 @@ import subprocess
 blender=r'C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe'
 if '--build-only' not in args:
     with (root/'.qa-dist/town-art-fun-review.log').open('w',encoding='utf-8') as log:
-        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--fountain-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
-    if result.returncode: raise RuntimeError('imported-GLB view render failed; see .qa-dist/town-art-fun-review.log')
+        result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--wreck-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
+    if result.returncode: raise RuntimeError('imported-GLB wreck-ring render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))

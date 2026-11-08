@@ -3,6 +3,8 @@ import argparse
 import json
 import math
 import random
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -11,10 +13,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-12'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-20'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-12.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-20.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -25,7 +27,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
-from photo_carve import carve_object, lift_if_dark
+from photo_carve import carve_object, lift_if_dark, save_mask
 from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -42,14 +44,14 @@ mat = town.make_materials({
 # Town base darkens rusted steel for general utility work. This family uses
 # the unfiltered food-specific photograph to keep worn red-brown oxide legible.
 steel_photo = bpy.data.images.load(str(textures / 'town-food-steel.jpg'), check_existing=False)
-steel_photo.scale(192, 192); steel_photo.file_format='JPEG'; steel_photo.pack()
+steel_photo.scale(128, 128); steel_photo.file_format='JPEG'; steel_photo.pack()
 mat['rusted-steel'].node_tree.nodes.get('Image Texture').image = steel_photo
 mat['rusted-steel'].node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = .22
 # Compact utility swatches stay small. The source photographs below keep enough
 # detail for their mapped pipework, boards, patched canvas and market structure.
 for material in mat.values():
     image = material.node_tree.nodes.get('Image Texture').image
-    image.scale(192, 192)
+    image.scale(128, 128)
     image.pack()
 
 def simple(name, color, roughness=.88, metallic=0):
@@ -84,6 +86,17 @@ mat['crate'] = mat['weathered-plank']
 mat['wire'] = simple('Town / dark wire', (.12, .13, .115), .78, .14)
 mat['rubber'] = simple('Town / dusty tire rubber', (.075, .078, .071), .95)
 mat['glass'] = simple('Town / dirty greenhouse glass', (.22, .28, .245), .32, .05)
+mat['greenhouse-glass'] = simple('Town / salvaged translucent greenhouse glass', (.22, .31, .29), .32, .05)
+glass_bsdf=mat['greenhouse-glass'].node_tree.nodes.get('Principled BSDF')
+glass_bsdf.inputs['Base Color'].default_value=(.22,.31,.29,.42)
+glass_bsdf.inputs['Alpha'].default_value=.42
+mat['greenhouse-glass'].surface_render_method='DITHERED'
+mat['greenhouse-plastic'] = simple('Town / pale cloudy greenhouse plastic', (.82,.76,.60), .91)
+plastic_bsdf=mat['greenhouse-plastic'].node_tree.nodes.get('Principled BSDF')
+plastic_bsdf.inputs['Base Color'].default_value=(.82,.76,.60,.8)
+plastic_bsdf.inputs['Alpha'].default_value=.8
+mat['greenhouse-plastic'].surface_render_method='DITHERED'
+mat['greenhouse-steel'] = simple('Town / exposed rust on greenhouse frame', (.39,.145,.055), .88, .15)
 mat['brick'] = mat['salvaged-brick']
 mat['letter-paint'] = simple('Town / muted ochre hand lettering', (.42, .29, .15), .92)
 mat['canteen-canvas'] = simple('Town / soot-dulled serving canvas', (.09, .055, .028), .96)
@@ -174,31 +187,37 @@ def tin_wall(name, x, y, z, width, height):
         faces.extend((face,tuple(reversed(tuple(k+front for k in face)))))
     return mesh_object(name,verts,faces,mat['galvanised-tin'],'wall')
 
-def sign(name, center, text, width=1.3):
+def sign(name, center, text, width=2.35):
     x,y,z=center
-    if name == 'shopfront-a':
-        # This shop's large hand-painted board is a thin, independent slab.
-        slab_verts=[(x-width/2,y-.24,z-.045),(x-width/2,y+.24,z-.045),
-                    (x+width/2,y+.24,z-.045),(x+width/2,y-.24,z-.045),
-                    (x-width/2,y-.24,z+.045),(x-width/2,y+.24,z+.045),
-                    (x+width/2,y+.24,z+.045),(x+width/2,y-.24,z+.045)]
-        slab_faces=[(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
-        board=mesh_object(name+':hand-painted-sign-slab',slab_verts,slab_faces,mat['weathered-plank'],'wall')
-    else:
-        board=box(name+':sign-board',(x,y,z),(width,.42,.085),mat['weathered-plank'],.025)
+    board=box(name+':hand-painted-sign-board',(x,y,z),(width,.56,.095),mat['weathered-plank'],.018)
     font=bpy.data.curves.new(name+' hand lettering','FONT');font.body=text
-    font.size=.31 if name == 'shopfront-a' else .23;font.extrude=0;font.resolution_u=4
+    font.size=.39;font.extrude=.003;font.resolution_u=4
+    font.align_x='CENTER';font.align_y='CENTER'
     obj=bpy.data.objects.new(name+':sign-lettering',font);bpy.context.collection.objects.link(obj)
-    obj.location=town.game_vector((x-width*.44,y-.105,z-.052))
-    if name == 'shopfront-a':
-        # Turn the lettering toward the road and undo the X reversal from the
-        # 180-degree face turn so FOOD reads normally from the front.
-        obj.rotation_euler=(0,math.pi,0);obj.scale.x=-1
-    else:
-        obj.rotation_euler=(-math.pi/2,0,0)
+    # Face roadward, with glyphs upright and correctly ordered from the road.
+    obj.location=town.game_vector((x,y,z-.055))
+    obj.rotation_euler=Matrix(((-1,0,0),(0,0,1),(0,1,0))).to_euler()
     font.materials.append(mat['letter-paint']); bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
     bpy.ops.object.convert(target='MESH');keep(bpy.context.object)
     return board
+
+def roof_sign(name, text):
+    # This second, weathered label lies over the ridge so the mayor can read
+    # each shop from above. Four short legs sit on the pitched tin roof.
+    for x in (-.34,.34):
+        for z in (-1.62,1.62):
+            box(f'{name}:roof-sign-leg-{x}-{z}',(x,2.65,z),(.055,.20,.055),mat['rusted-steel'],0)
+    box(f'{name}:roof-facing-sign-board',(0,2.80,0),(.94,.10,3.8),mat['weathered-plank'],0)
+    font=bpy.data.curves.new(name+' roof lettering','FONT');font.body=text
+    font.size=.70 if len(text)<=5 else .62;font.extrude=0;font.resolution_u=2
+    font.align_x='CENTER';font.align_y='CENTER'
+    obj=bpy.data.objects.new(name+':roof-sign-lettering',font);bpy.context.collection.objects.link(obj)
+    obj.location=town.game_vector((0,2.856,0))
+    # Turn the baseline so the top-down view reads left to right.
+    obj.rotation_euler[2]=-math.pi/2
+    font.materials.append(mat['letter-paint']);bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
+    bpy.ops.object.convert(target='MESH');keep(bpy.context.object)
+    return obj
 
 def ground_clutter(name,x,z,material=mat['sand']):
     # Low irregular packed dirt that stays in the marked building footprint.
@@ -360,74 +379,318 @@ lamp_bsdf=mat['fire-yellow'].node_tree.nodes.get('Principled BSDF')
 if lamp_bsdf.inputs.get('Emission Color'):
     lamp_bsdf.inputs['Emission Color'].default_value=(1.0,.22,.025,1)
     lamp_bsdf.inputs['Emission Strength'].default_value=1.5
-# Supporting food buildings use the same welded framing, separate materials and real-thickness parts.
+# TOWN-ART-FOOD greenhouse round 14: one opaque photo-carved shell wears all
+# four views. Its side and end photos now agree on the ridge and eaves in metres.
 add_building('greenhouse',(-16,0,-14))
 ground_clutter('greenhouse',0,0)
-for x in (-3.0,-1.0,1.0,3.0):
-    beam(f'greenhouse:upright-{x}',(x,.12,-2.2),(x,2.35,-2.2),.065,mat['rusted-steel'])
-    beam(f'greenhouse:back-post-{x}',(x,.12,2.2),(x,2.35,2.2),.065,mat['rusted-steel'])
-    beam(f'greenhouse:roof-rafter-{x}',(x,2.35,-2.2),(x,2.70,0),.06,mat['weathered-plank'])
-    beam(f'greenhouse:roof-rafter-back-{x}',(x,2.35,2.2),(x,2.70,0),.06,mat['weathered-plank'])
-for y in (.15,1.15,2.3):
-    for z in (-2.2,2.2): beam(f'greenhouse:long-rail-{y}-{z}',(-3.1,y,z),(3.1,y,z),.045,mat['rusted-steel'])
-for i in range(6):
-    z=-1.75+i*.70
-    box(f'greenhouse:growing-bed-{i+1}',(0,.28,z),(5.75,.38,.48),mat['weathered-plank'],.09)
-    for j in range(9):
-        x=-2.55+j*.62
-        sphere(f'greenhouse:leaf-{i+1}-{j+1}',(x,.62,z),(.20,.24,.20),mat['leaf'],8,5)
-for z in (-2.15,0,2.15):
-    panel=box(f'greenhouse:glazed-roof-panel-{z}',(0,2.43,z),(6.3,.045,.82),mat['glass'],.008)
-    panel.rotation_euler[0]=.17 if z>0 else -.17
-# One salvaged car windscreen, retained with its curved pressed-glass profile,
-# replaces a missing roof sheet. The opening beside it lets warm air escape.
-windshield_verts=[];windshield_faces=[]
-for row,z in enumerate((-.64,.64)):
-    for i in range(13):
-        x=-1.0+2.0*i/12
-        y=2.40+.11*(1-(x/.98)**2)+(0.012 if row else 0)
-        windshield_verts.append((x,y,z))
-for i in range(12): windshield_faces.append((i,i+1,14+i,13+i))
-mesh_object('greenhouse:salvaged-windscreen',windshield_verts,windshield_faces,mat['glass'],'canvas')
-for z in (-.66,.66): beam(f'greenhouse:windscreen-rim-{z}',(-1,2.40,z),(1,2.40,z),.045,mat['rusted-steel'])
-for z in (-1.9,0,1.9): box(f'greenhouse:roof-patch-{z}',(2.65,2.49,z),(.72,.06,.8),mat['patched-canvas'],.02)
-box('greenhouse:water-butt',(2.45,.57,1.55),(.52,1.04,.52),mat['rusted-steel'],.1)
+GREENHOUSE_HEIGHT = (640 - 24) * (2 / 305)
+GREENHOUSE_WIDTH = 840 * (2 / 305)
+GREENHOUSE_LENGTH = (956 - 150) * GREENHOUSE_HEIGHT / (560 - 76)
+GREENHOUSE = {
+    # Grid measurements: the front ridge is row 24 above ground row 640;
+    # 616 px / 305 px per 2 m gives the ridge height. The new side photo has
+    # ridge row 76 and ground row 560, across x=150..956. Calibrate its length
+    # from that same ridge height; its eaves then differ from the front by <2%.
+    'photos': {'side': 'greenhouse-side.jpg', 'front': 'greenhouse-front.jpg',
+               'rear': 'greenhouse-rear.jpg', 'top': 'greenhouse-top.jpg'},
+    'height': GREENHOUSE_HEIGHT,
+    'length': GREENHOUSE_LENGTH,
+    'width': GREENHOUSE_WIDTH,
+    'side': {'start': 150, 'end': 956, 'ground': 560},
+    'front': {'centre': 512, 'ground': 640, 'top': 24},
+    'rear': {'centre': 512, 'ground': 640, 'top': 31},
+    'top': {'front': 56, 'rear': 968, 'centre': 326, 'along': 'x',
+            'x_scale': GREENHOUSE_WIDTH / (640 - 12)},
+    # The low-chroma glass patch near one roof corner nearly matches the studio
+    # grey. A narrower chroma gate keeps it in the roof mask; bleed still pulls
+    # the studio colour out beyond the model edge.
+    'voxel': .055, 'target': 4500, 'grey': 8, 'tolerance': 40,
+    'bleed_tolerance': 48,
+    'mask_dir': str(evidence / 'masks'),
+}
+greenhouse_body=carve_object('greenhouse:body',textures,GREENHOUSE)
+keep(greenhouse_body)
+# Masking and UVs use the full grid measured source; pack a smaller in-memory
+# material copy to stay within the family's shared embedded texture budget.
+for greenhouse_photo in GREENHOUSE['_photos'].values():
+    greenhouse_photo.image.scale(256,171)
+    greenhouse_photo.image.pack()
+
+# Record each piece in building-local metres. AABB contact is checked against
+# the soil/ground or another greenhouse piece; no panel or plant may float.
+bpy.context.view_layer.update()
+greenhouse_root=building_roots['greenhouse']
+greenhouse_parts=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==greenhouse_root]
+greenhouse_bounds={}
+for obj in greenhouse_parts:
+    corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    b=(min(p.x-greenhouse_root.location.x for p in corners),max(p.x-greenhouse_root.location.x for p in corners),
+       min(p.z-greenhouse_root.location.z for p in corners),max(p.z-greenhouse_root.location.z for p in corners),
+       min(-(p.y-greenhouse_root.location.y) for p in corners),max(-(p.y-greenhouse_root.location.y) for p in corners))
+    greenhouse_bounds[obj.name]=b
+    print('greenhouse piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+        'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)]},sort_keys=True))
+    if b[0]<-11.5 or b[1]>11.5 or b[2]<-.03 or b[3]>10.5 or b[4]<-7.5 or b[5]>7.5:
+        raise RuntimeError(f'{obj.name} lies outside greenhouse footprint or below ground: {b}')
+for name,b in greenhouse_bounds.items():
+    if b[2]<=.035: continue
+    touching=any(other_name!=name and all(max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.04
+        for axis in range(3)) for other_name,other in greenhouse_bounds.items())
+    if not touching:
+        raise RuntimeError(f'{name} does not touch ground or another greenhouse piece: {b}')
 
 add_building('goat-pen',(8,0,-14))
-ground_clutter('goat-pen',0,0)
-for x in (-1.9,0,1.9):
-    for z in (-1.9,1.9): beam(f'goat-pen:post-{x}-{z}',(x,.1,z),(x,1.35,z),.13,mat['weathered-plank'])
-for z in (-1.9,1.9):
-    for y in (.40,.85,1.25): beam(f'goat-pen:rail-{z}-{y}',(-1.9,y,z),(1.9,y,z),.095,mat['weathered-plank'])
-for x in (-1.9,1.9):
-    for y in (.4,.85): beam(f'goat-pen:side-rail-{x}-{y}',(x,y,-1.9),(x,y,1.9),.09,mat['weathered-plank'])
-# Pitched low shelter with salvaged roof plates, hay bedding and a trough.
-beam('goat-pen:shelter-ridge',(-1.0,2.05,.72),(1.0,2.05,.72),.10,mat['rusted-steel'])
-for side in (-1,1):
-    p=box(f'goat-pen:shelter-roof-{side}',(0,1.86,.72+side*.45),(2.35,.08,1.08),mat['galvanised-tin'],.02)
-    p.rotation_euler[0]=side*.30
-box('goat-pen:shelter-back',(0,1.0,1.18),(2.1,1.8,.08),mat['weathered-plank'],.03)
-box('goat-pen:hay-bale',(0,.22,.85),(1.3,.35,.75),mat['patched-canvas'],.10)
-box('goat-pen:feed-trough',(0,.38,-1.10),(2.2,.52,.55),mat['rusted-steel'],.09)
-for x in (-1.5,1.5): beam(f'goat-pen:gate-hinge-{x}',(x,.18,-1.91),(x,1.2,-1.91),.11,mat['iron-dark'])
-beam('goat-pen:gate-upper',(-1.45,1.05,-1.91),(1.35,1.05,-1.91),.10,mat['weathered-plank'])
-beam('goat-pen:gate-brace',(-1.35,.30,-1.91),(1.25,1.0,-1.91),.08,mat['rusted-steel'])
+
+# Round 18: four photographed fence runs come from the same side photo. The
+# neutral studio background is colour-masked, so each pallet gap stays open.
+PEN_SIDE = Photo(textures / 'goat-fence-side.jpg')
+lift_if_dark(PEN_SIDE)
+pen_sky = PEN_SIDE.sky([(8,8),(600,8),(1190,8),(8,590),(1190,590),
+                        (600,118),(600,205),(600,294),(600,382),(600,470)],
+                       tolerance=18, grey=20)
+pen_solid = ~pen_sky
+save_mask(pen_solid, evidence/'goat-fence-colour-mask.png')
+PEN_RECT = (46, 14, 1152, 580)
+pen_loops = trace(pen_solid, PEN_RECT, tolerance=2.0, min_area=18)
+if not pen_loops:
+    raise RuntimeError('goat pen side photo produced no fence outlines')
+PEN_X_SCALE = 8.0 / (PEN_RECT[2] - PEN_RECT[0])
+PEN_HEIGHT = 1.9
+PEN_Y_SCALE = PEN_HEIGHT / (PEN_RECT[3] - PEN_RECT[1])
+PEN_GROUND = PEN_RECT[3]
+PEN_HALF = 4.0
+
+def fence_run(name, placement):
+    run = PhotoMesh()
+    def to_world(px, py, depth):
+        along = (px - PEN_RECT[0]) * PEN_X_SCALE - PEN_HALF
+        y = max(0, (PEN_GROUND - py) * PEN_Y_SCALE)
+        if placement == 'front': return along, y, -PEN_HALF + depth
+        if placement == 'rear': return -along, y, PEN_HALF - depth
+        if placement == 'left': return -PEN_HALF + depth, y, along
+        return PEN_HALF - depth, y, -along
+    slab(run, 'photo', PEN_SIDE, pen_loops, to_world, -.065, .065)
+    keep(run.finish(f'goat-pen:fence-{name}', {'photo': PEN_SIDE.material()}))
+
+for fence_side in ('front','right','rear','left'):
+    fence_run(fence_side, fence_side)
+
+# The shelter's silhouette, roof and board detail are carved from its own four
+# photographs. Keep the front bay open so the carve does not turn it into a box.
+SHELTER = {
+    'photos': {'side':'goat-shelter-side.jpg','front':'goat-shelter-front.jpg',
+               'rear':'goat-shelter-rear.jpg','top':'goat-shelter-top.jpg'},
+    'length':3.4,'width':3.4,'height':2.8,'forward':-1,
+    'side':{'start':185,'end':1120,'ground':850},
+    'front':{'centre':600,'ground':850,'top':92},
+    'rear':{'centre':600,'ground':850,'top':92},
+    'top':{'front':78,'rear':824,'centre':600},
+    'voxel':.055,'target':1500,'grey':12,'tolerance':26,'bleed_tolerance':38,
+    'keep':lambda x,y,z: ~((x > -1.18) & (x < 1.18) & (y > .18) & (y < 2.18) & (z < .72)),
+    'mask_dir':str(evidence/'goat-shelter-masks'),
+}
+shelter=carve_object('goat-pen:shelter',textures,SHELTER)
+shelter.location=town.game_vector((1.9,-.15,1.9))
+keep(shelter)
+for shelter_photo in SHELTER['_photos'].values():
+    shelter_photo.image.scale(256,192)
+    shelter_photo.image.pack()
+
+# Trace the metal trough from the overhead photo and give that contour a shallow
+# body. Its local position follows the trough visible near the front gate.
+PEN_TOP=Photo(textures/'goat-pen-top.jpg')
+top_rgb=PEN_TOP.rgb()
+top_spread=top_rgb.max(axis=2)-top_rgb.min(axis=2)
+trough_mask=(top_spread<24)&(top_rgb.mean(axis=2)>105)&(top_rgb.mean(axis=2)<220)
+trough_loops=trace(trough_mask,(735,690,885,760),tolerance=1.8,min_area=250)
+if not trough_loops:
+    raise RuntimeError('goat pen overhead photo produced no trough outline')
+trough_mesh=PhotoMesh()
+def trough_world(px,py,depth):
+    x=4.0-(px-209)*(8.0/(985-209))
+    z=4.0-(py-75)*(8.0/(840-75))
+    return x,.12+depth,z
+slab(trough_mesh,'trough',PEN_TOP,trough_loops,trough_world,-.10,.10)
+keep(trough_mesh.finish('goat-pen:feed-trough',{'trough':PEN_TOP.material()}))
+PEN_SIDE.image.scale(256,round(256*PEN_SIDE.h/PEN_SIDE.w));PEN_SIDE.image.pack()
+PEN_TOP.image.scale(256,192);PEN_TOP.image.pack()
 
 add_building('chicken-run',(20,0,-14))
-ground_clutter('chicken-run',0,0)
-for x in (-1.25,1.25):
-    for z in (-1.25,1.25): beam(f'chicken-run:frame-post-{x}-{z}',(x,.12,z),(x,1.65,z),.085,mat['rusted-steel'])
-for y in (.18,.58,1.0,1.42,1.62):
-    for z in (-1.25,1.25): beam(f'chicken-run:wire-rail-{y}-{z}',(-1.25,y,z),(1.25,y,z),.028,mat['wire'])
-    for x in (-1.25,1.25): beam(f'chicken-run:wire-rail-side-{y}-{x}',(x,y,-1.25),(x,y,1.25),.028,mat['wire'])
-# A hatchback tailgate shell becomes the coop, with curved roof and a low egg box.
-box('chicken-run:boot-shell',(0,.48,.42),(1.25,.72,.75),mat['rusted-steel'],.16)
-box('chicken-run:boot-roof',(0,.96,.42),(1.1,.10,.68),mat['galvanised-tin'],.06)
-box('chicken-run:coop-dark-opening',(0,.42,.035),(.68,.40,.035),mat['iron-dark'],.04)
-for x in (-.4,.4): beam(f'chicken-run:boot-hinge-{x}',(x,.78,.06),(x,1.2,.06),.045,mat['rusted-steel'])
-box('chicken-run:nest-box',(0,.32,-.90),(.98,.42,.48),mat['weathered-plank'],.055)
-for x in (-.25,.25): sphere(f'chicken-run:egg-{x}',(x,.56,-.88),(.10,.07,.08),mat['faded-hand-paint'],8,5)
-box('chicken-run:feed-tray',(0,.16,1.05),(.85,.19,.30),mat['galvanised-tin'],.045)
+def chicken_beam(name,a,b,width,material):
+    va=town.game_vector(a);vb=town.game_vector(b);delta=vb-va
+    obj=town.cube(name,((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2),
+                  (width,delta.length,width),material,0)
+    obj.rotation_euler=delta.to_track_quat('Z','Y').to_euler()
+    return keep(obj)
+
+# Round 20 replaces the box-and-bars coop with the cut-down hatchback boot in
+# its own four-photo carve. These reference views contain no wire run.
+CHICKEN_COOP = {
+    'photos': {'side':'chicken-run-side.png','front':'chicken-run-front.png',
+               'rear':'chicken-run-rear.png','top':'chicken-coop-top.png'},
+    'length':1.28,'width':1.28,'height':1.42,'forward':-1,
+    'side':{'start':440,'end':1060,'ground':1028},
+    'front':{'centre':724,'ground':1027,'top':35},
+    'rear':{'centre':724,'ground':1027,'top':35},
+    # The photographed rear of the car is at the bottom of the view; front is
+    # therefore the high pixel row in object space, and rear the low pixel row.
+    'top':{'front':35,'rear':1020,'centre':724,'x_scale':1.28/850},
+    'round':2,'voxel':.045,'target':950,'grey':12,'tolerance':30,
+    'bleed_tolerance':42,
+    # Remove the hen doorway from all elevations; the bay stays open through
+    # the cut-down car shell instead of becoming a dark painted patch.
+    'cut': {'side':[(515,830,672,962)],
+            'front':[(635,845,810,1000)],
+            'rear':[(635,845,810,1000)]},
+    'mask_dir':str(evidence/'chicken-coop-masks'),
+}
+chicken_coop=carve_object('chicken-run:carved-coop',textures,CHICKEN_COOP)
+chicken_coop.location=town.game_vector((0,0,-2.05))
+keep(chicken_coop)
+for coop_photo in CHICKEN_COOP['_photos'].values():
+    coop_photo.image.scale(256,round(256*coop_photo.h/coop_photo.w))
+    coop_photo.image.pack()
+
+# Trace the measured timber outlines in the run's side photo. The mask follows
+# the real rails, posts and diagonal; measuring its boards rather than every
+# weathering fleck keeps the frame solid without spending triangles on noise.
+CHICKEN_RUN_SIDE=Photo(textures/'chicken-run-photo-side.png')
+chicken_rgb=CHICKEN_RUN_SIDE.rgb()
+chicken_wood=np.zeros((CHICKEN_RUN_SIDE.h,CHICKEN_RUN_SIDE.w),dtype=bool)
+for x0,y0,x1,y1 in ((80,300,1238,365),(80,760,1238,818),
+                    (80,335,130,810),(400,335,435,810),(735,335,770,810),
+                    (1000,335,1040,810),(1198,335,1238,810)):
+    chicken_wood[y0:y1,x0:x1]=True
+def chicken_poly(points):
+    x0=max(0,int(min(p[0] for p in points)));x1=min(CHICKEN_RUN_SIDE.w,int(max(p[0] for p in points))+1)
+    y0=max(0,int(min(p[1] for p in points)));y1=min(CHICKEN_RUN_SIDE.h,int(max(p[1] for p in points))+1)
+    yy,xx=np.mgrid[y0:y1,x0:x1];inside=np.zeros(xx.shape,dtype=bool)
+    for (ax,ay),(bx,by) in zip(points,points[1:]+points[:1]):
+        crossing=((ay>yy)!=(by>yy)) & (xx < (bx-ax)*(yy-ay)/(by-ay+1e-12)+ax)
+        inside ^= crossing
+    chicken_wood[y0:y1,x0:x1] |= inside
+chicken_poly([(1015,750),(1050,750),(1190,390),(1160,390)])
+save_mask(chicken_wood,evidence/'chicken-run-side-wood-mask.png')
+chicken_frame_loops=trace(chicken_wood,(72,270,1245,830),tolerance=1.8,min_area=35)
+if not chicken_frame_loops: raise RuntimeError('chicken run side photo produced no timber outlines')
+CHICKEN_RUN_LENGTH=3.2;CHICKEN_RUN_WIDTH=2.4;CHICKEN_RUN_HEIGHT=1.7
+def chicken_side_world(px,py,depth):
+    z=CHICKEN_RUN_LENGTH/2-(px-80)*(CHICKEN_RUN_LENGTH/(1238-80))
+    y=max(0,(820-py)*(CHICKEN_RUN_HEIGHT/(820-280)))
+    return depth,y,z
+for side_name,d0,d1 in (('right',1.16,1.22),('left',-1.22,-1.16)):
+    frame=PhotoMesh()
+    slab(frame,'side',CHICKEN_RUN_SIDE,chicken_frame_loops,
+         chicken_side_world,d0,d1)
+    keep(frame.finish(f'chicken-run:traced-timber-{side_name}',{'side':CHICKEN_RUN_SIDE.material()}))
+
+# The mesh uses the same side photo. Grey studio ground is transparent; only
+# photographed wire contrast remains, at low opacity, so both sides show the
+# world through it. Panel outlines are traced and slabbed from that photo too.
+import numpy as np
+wire_pixels=np.empty(CHICKEN_RUN_SIDE.image_w*CHICKEN_RUN_SIDE.image_h*4,dtype=np.float32)
+CHICKEN_RUN_SIDE.image.pixels.foreach_get(wire_pixels)
+wire_pixels=wire_pixels.reshape(CHICKEN_RUN_SIDE.image_h,CHICKEN_RUN_SIDE.image_w,4).copy()
+wire_top=wire_pixels[::-1]
+grey=wire_top[:,:,:3].mean(axis=2)
+contrast=np.maximum.reduce((np.abs(grey-np.roll(grey,1,axis=0)),
+                            np.abs(grey-np.roll(grey,-1,axis=0)),
+                            np.abs(grey-np.roll(grey,1,axis=1)),
+                            np.abs(grey-np.roll(grey,-1,axis=1))))
+wire_region=np.zeros(grey.shape,dtype=bool)
+wire_region[350:790,105:1015]=True
+wire_alpha=np.where(wire_region & (contrast>.035) & (chicken_rgb.max(axis=2)-chicken_rgb.min(axis=2)<.14),.20,0)
+wire_top[:,:,3]=wire_alpha
+wire_image=bpy.data.images.new('Chicken run / transparent side wire photo',CHICKEN_RUN_SIDE.image_w,CHICKEN_RUN_SIDE.image_h,alpha=True)
+wire_image.pixels.foreach_set(wire_pixels.ravel())
+wire_material=bpy.data.materials.new('Chicken run / faint photo wire mesh');wire_material.use_nodes=True
+wire_nodes=wire_material.node_tree.nodes;wire_bsdf=wire_nodes.get('Principled BSDF')
+wire_tex=wire_nodes.new('ShaderNodeTexImage');wire_tex.image=wire_image
+wire_material.node_tree.links.new(wire_tex.outputs['Color'],wire_bsdf.inputs['Base Color'])
+wire_material.node_tree.links.new(wire_tex.outputs['Alpha'],wire_bsdf.inputs['Alpha'])
+wire_bsdf.inputs['Roughness'].default_value=.92
+wire_material.surface_render_method='BLENDED'
+panel_mask=np.zeros((CHICKEN_RUN_SIDE.h,CHICKEN_RUN_SIDE.w),dtype=bool)
+for x0,x1 in ((112,408),(430,744),(766,997)):
+    panel_mask[370:772,x0:x1]=True
+panel_loops=trace(panel_mask,(100,360,1010,780),tolerance=1.2,min_area=40)
+for side_name,d0,d1 in (('right',1.155,1.158),('left',-1.158,-1.155)):
+    mesh=PhotoMesh()
+    slab(mesh,'wire',CHICKEN_RUN_SIDE,panel_loops,chicken_side_world,d0,d1)
+    keep(mesh.finish(f'chicken-run:photo-wire-{side_name}',{'wire':wire_material}))
+
+# The mesh roof is its own overhead trace and photo alpha layer. It spans the
+# three-wire-bay section only; the carved car body remains open to the sky.
+CHICKEN_RUN_TOP=Photo(textures/'chicken-run-top.png')
+top_pixels=np.empty(CHICKEN_RUN_TOP.image_w*CHICKEN_RUN_TOP.image_h*4,dtype=np.float32)
+CHICKEN_RUN_TOP.image.pixels.foreach_get(top_pixels)
+top_pixels=top_pixels.reshape(CHICKEN_RUN_TOP.image_h,CHICKEN_RUN_TOP.image_w,4).copy()
+top_rgb=top_pixels[::-1,:,:3]
+top_grey=top_rgb.mean(axis=2)
+top_contrast=np.maximum.reduce((np.abs(top_grey-np.roll(top_grey,1,axis=0)),
+                                np.abs(top_grey-np.roll(top_grey,-1,axis=0)),
+                                np.abs(top_grey-np.roll(top_grey,1,axis=1)),
+                                np.abs(top_grey-np.roll(top_grey,-1,axis=1))))
+top_region=np.zeros(top_grey.shape,dtype=bool);top_region[220:900,100:930]=True
+top_pixels[::-1,:,3]=np.where(top_region & (top_contrast>.035),.18,0)
+top_wire_image=bpy.data.images.new('Chicken run / transparent roof wire photo',CHICKEN_RUN_TOP.image_w,CHICKEN_RUN_TOP.image_h,alpha=True)
+top_wire_image.pixels.foreach_set(top_pixels.ravel())
+top_wire_material=bpy.data.materials.new('Chicken run / overhead photo wire mesh');top_wire_material.use_nodes=True
+top_wire_nodes=top_wire_material.node_tree.nodes;top_wire_bsdf=top_wire_nodes.get('Principled BSDF')
+top_wire_tex=top_wire_nodes.new('ShaderNodeTexImage');top_wire_tex.image=top_wire_image
+top_wire_material.node_tree.links.new(top_wire_tex.outputs['Color'],top_wire_bsdf.inputs['Base Color'])
+top_wire_material.node_tree.links.new(top_wire_tex.outputs['Alpha'],top_wire_bsdf.inputs['Alpha'])
+top_wire_bsdf.inputs['Roughness'].default_value=.92;top_wire_material.surface_render_method='BLENDED'
+roof_mask=np.zeros((CHICKEN_RUN_TOP.h,CHICKEN_RUN_TOP.w),dtype=bool)
+roof_mask[220:900,100:930]=True
+roof_loops=trace(roof_mask,(100,220,930,900),tolerance=1.4,min_area=80)
+def chicken_roof_world(px,py,depth):
+    x=-1.18+(py-220)*(2.36/(900-220))
+    z=1.6-(px-100)*(3.2/(930-100))
+    return x,1.70+depth,z
+roof_mesh=PhotoMesh();slab(roof_mesh,'roof-wire',CHICKEN_RUN_TOP,roof_loops,chicken_roof_world,-.003,.003)
+keep(roof_mesh.finish('chicken-run:photo-wire-roof',{'roof-wire':top_wire_material}))
+
+# Solid cut timber closes the short ends and crowns the roof. The side-photo
+# trace remains the main frame; these measured beams join its corners.
+for z in (-1.6,1.6):
+    for x in (-1.18,1.18): chicken_beam(f'chicken-run:end-post-{x}-{z}',(x,.02,z),(x,1.68,z),.075,mat['weathered-plank'])
+    chicken_beam(f'chicken-run:end-bottom-rail-{z}',(-1.18,.10,z),(1.18,.10,z),.075,mat['weathered-plank'])
+    chicken_beam(f'chicken-run:end-top-rail-{z}',(-1.18,1.65,z),(1.18,1.65,z),.075,mat['weathered-plank'])
+for x in (-1.18,1.18): chicken_beam(f'chicken-run:roof-side-rail-{x}',(x,1.68,-1.6),(x,1.68,1.6),.075,mat['weathered-plank'])
+for i,z in enumerate((-1.05,-.35,.35,1.05),1):
+    chicken_beam(f'chicken-run:roof-cross-rail-{i}',(-1.18,1.68,z),(1.18,1.68,z),.055,mat['weathered-plank'])
+
+# A low nest shelf and a scuffed feed tin sit inside the coop opening.
+box('chicken-run:nest-shelf',(0,.34,-1.53),(.62,.06,.34),mat['weathered-plank'],0)
+box('chicken-run:feed-trough',(0,.09,.75),(.58,.18,.22),mat['galvanised-tin'],0)
+
+# Keep every named piece inside each plot and joined to soil or a neighbour.
+bpy.context.view_layer.update()
+for building_id, half_cell in (('goat-pen',7.5),('chicken-run',3.5)):
+    root_obj=building_roots[building_id]
+    members=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==root_obj]
+    measured={}
+    triangles=sum(sum(len(poly.vertices)-2 for poly in obj.data.polygons) for obj in members)
+    if building_id=='chicken-run':
+        print('chicken-run total triangles:',triangles)
+        if triangles>1800: raise RuntimeError(f'chicken-run has {triangles} triangles; budget is 1800')
+    for obj in members:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        measured[obj.name]=b
+        print(f'{building_id} piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)]},sort_keys=True))
+        if b[0]<-half_cell+.5 or b[1]>half_cell-.5 or b[2]<-.03 or b[3]>4.0 or b[4]<-half_cell+.5 or b[5]>half_cell-.5:
+            raise RuntimeError(f'{obj.name} leaves the {building_id} footprint or falls below ground: {b}')
+    for name,b in measured.items():
+        if b[2]<=.035: continue
+        joined=any(other_name!=name and all(
+            max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.035
+            for axis in range(3)) for other_name,other in measured.items())
+        if not joined: raise RuntimeError(f'{name} does not touch ground or another {building_id} piece: {b}')
 
 stall_front_photo=Photo(textures/'stall-front.jpg')
 stall_side_photo=Photo(textures/'stall-side.jpg')
@@ -628,40 +891,78 @@ market_stall('stall-a',(20,0,2),'fruit')
 market_stall('stall-b',(28,0,2),'tools')
 market_stall('stall-c',(36,0,2),'tyres')
 
-def shopfront(building, offset, label):
-    add_building(building,offset)
-    for x in (-1.12,1.12):
-        beam(f'{building}:corner-post-{x}',(x,.12,-.68),(x,2.5,-.68),.10,mat['rusted-steel'])
-        beam(f'{building}:rear-post-{x}',(x,.12,.72),(x,2.05,.72),.075,mat['weathered-plank'])
-    for y in (.18,1.26,2.12):
-        beam(f'{building}:back-wall-rail-{y}',(-1.1,y,.72),(1.1,y,.72),.07,mat['rusted-steel'])
-    for i in range(4):
-        box(f'{building}:patched-back-wall-{i+1}',(-.84+i*.56,1.26,.73),(.54,1.62,.045),mat['galvanised-tin'] if i%2 else mat['rusted-steel'],.015)
-    tin_roof(f'{building}:roof',0,2.48,.02,2.75,2.0,.10)
-    for x in (-.62,.62): beam(f'{building}:awning-arm-{x}',(x,2.2,-.60),(x,2.48,-.02),.05,mat['rusted-steel'])
-    box(f'{building}:front-awning',(0,2.42,-.36),(2.45,.065,.80),mat['patched-canvas'],.025)
-    box(f'{building}:serving-hatch',(0,1.5,.69),(1.18,.72,.08),mat['iron-dark'],.025)
-    for x in (-.35,.35): beam(f'{building}:hatch-shutter-chain-{x}',(x,1.94,.70),(x,2.18,.16),.025,mat['rusted-steel'])
-    sign(building,(0,2.12,-.72),label,1.85)
-    box(f'{building}:counter',(0,.98,-.90),(2.0,.18,.55),mat['weathered-plank'],.035)
-    if label=='FOOD':
-        for i,x in enumerate((-.58,.08,.62),1):
-            box(f'{building}:food-crate-{i}',(x,1.23,-.91),(.48,.32,.42),mat['weathered-plank'],.045)
-            for j in range(3):
-                sphere(f'{building}:root-veg-{i}-{j}',(x-.13+j*.13,1.44,-.90),(.09,.13,.09),mat['fruit-yellow'] if j%2 else mat['leaf'],8,5)
-    elif label=='TOOLS':
-        for i,x in enumerate((-.62,-.2,.25,.62),1):
-            beam(f'{building}:hanging-tool-shaft-{i}',(x,1.55,.60),(x+.08,1.96,.60),.045,mat['weathered-plank'])
-            beam(f'{building}:hanging-tool-head-{i}',(x-.10,1.90,.60),(x+.18,1.90,.60),.06,mat['rusted-steel'])
-    else:
-        for i,x in enumerate((-.55,.05,.61),1):
-            cylinder(f'{building}:repair-pipe-{i}',(x,1.33,-.91),.11,.58,mat['rusted-steel'],12)
-            bpy.ops.mesh.primitive_torus_add(major_segments=14,minor_segments=5,major_radius=.22,minor_radius=.06,location=town.game_vector((x,1.36,.62)))
-            obj=bpy.context.object;obj.name=f'{building}:repair-tyre-{i}';obj.rotation_euler[0]=math.pi/2;obj.data.materials.append(mat['rubber']);keep(obj)
+# TOWN-ART-FOOD round 15. OpenAI image generation created one orthographic
+# side/front/rear/plan photograph each on 7 November 2026. The unscaled 1024 px
+# references stay in textures; the same carved body is instanced for all signs.
+SHOP_START, SHOP_END, SHOP_GROUND, SHOP_ROOF = 28, 997, 620, 228
+SHOP_LEN=6.55
+SHOP_SCALE=SHOP_LEN/(SHOP_END-SHOP_START)
+SHOP_H=(SHOP_GROUND-SHOP_ROOF)*SHOP_SCALE
+SHOP_FRONT={'centre':511,'ground':670,'top':101}
+SHOP_REAR={'centre':511,'ground':670,'top':101}
+SHOP_W=SHOP_H*(840-180)/(670-101)
+SHOP_TABLE={
+    'photos':{'side':'shopfront-side.jpg','front':'shopfront-front.jpg',
+              'rear':'shopfront-rear.jpg','top':'shopfront-top.jpg'},
+    'length':SHOP_LEN,'width':SHOP_W,'height':SHOP_H,
+    'side':{'start':SHOP_START,'end':SHOP_END,'ground':SHOP_GROUND},
+    'front':SHOP_FRONT,'rear':SHOP_REAR,
+    'top':{'front':49,'rear':979,'centre':382,'along':'x','x_scale':SHOP_W/(580-184)},
+    # The studio is nearly neutral; lower chroma keeps cool silver roof panels
+    # from joining the background flood through their narrow colour range.
+    'voxel':.055,'target':1150,'grey':5,'tolerance':38,'bleed_tolerance':44,
+    'mask_dir':str(evidence/'shopfront-masks'),
+}
+shop_template=carve_object('shopfront:carved-body',textures,SHOP_TABLE)
+shop_photos=tuple(SHOP_TABLE['_photos'].values())
+for photo in shop_photos:
+    # The source references remain full size on disk; embedded copies share the
+    # family texture cap while staying detailed enough for a road-height view.
+    photo.image.scale(1024,768)
+    photo.image.pack()
 
-shopfront('shopfront-a',(20,0,12),'FOOD')
-shopfront('shopfront-b',(28,0,12),'TOOLS')
-shopfront('shopfront-c',(36,0,12),'FIX-IT')
+SHOP_LABELS=(('shopfront-a',(20,0,12),'FOOD'),
+             ('shopfront-b',(28,0,12),'TOOLS'),
+             ('shopfront-c',(36,0,12),'FIX-IT'))
+for index,(building,offset,label) in enumerate(SHOP_LABELS):
+    add_building(building,offset)
+    body=shop_template if index==0 else bpy.data.objects.new(f'{building}:body',shop_template.data)
+    if index: bpy.context.collection.objects.link(body)
+    body.name=f'{building}:body'
+    keep(body)
+    body.parent=current;body.matrix_parent_inverse=Matrix.Identity(4);body.location=(0,0,-.03)
+    # A broad board stands on the road-facing roof edge; lettering is a mesh
+    # painted on its front, so the word reads normally from the driver's seat.
+    sign(building,(0,2.20,-SHOP_LEN/2-.01),label)
+    roof_sign(building,label)
+
+SHOP_BOUNDS={}
+bpy.context.view_layer.update()
+for building,_,_ in SHOP_LABELS:
+    root_obj=building_roots[building]
+    parts=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==root_obj]
+    by_name={};triangles=0
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    for obj in parts:
+        corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+        b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
+           min(p.z-root_obj.location.z for p in corners),max(p.z-root_obj.location.z for p in corners),
+           min(-(p.y-root_obj.location.y) for p in corners),max(-(p.y-root_obj.location.y) for p in corners))
+        evaluated=obj.evaluated_get(depsgraph);evaluated_mesh=evaluated.to_mesh()
+        count=sum(len(poly.vertices)-2 for poly in evaluated_mesh.polygons);evaluated.to_mesh_clear()
+        triangles+=count;by_name[obj.name]=b
+        print('shopfront piece bounds:',json.dumps({'piece':obj.name,'x':[round(b[0],3),round(b[1],3)],
+            'y':[round(b[2],3),round(b[3],3)],'z':[round(b[4],3),round(b[5],3)],'triangles':count},sort_keys=True))
+        if b[0]<-3.5 or b[1]>3.5 or b[4]<-3.5 or b[5]>3.5 or b[2]<-.02:
+            raise RuntimeError(f'{obj.name} lies outside the shop footprint or below ground: {b}')
+    if triangles>1800: raise RuntimeError(f'{building} has {triangles} triangles; budget is 1800')
+    for name,b in by_name.items():
+        if b[2]<=.02: continue
+        joined=any(other_name!=name and all(max(b[axis*2],other[axis*2])<=min(b[axis*2+1],other[axis*2+1])+.025 for axis in range(3))
+                   for other_name,other in by_name.items())
+        if not joined: raise RuntimeError(f'{name} does not touch the ground or another shopfront piece')
+    SHOP_BOUNDS[building]={'triangles':triangles,'pieces':len(parts)}
+    print(f'{building} total triangles:',triangles)
 
 # Bus canteen: keep the accepted side photo and measure the broad, boxy front
 # from its grid. The road-side hatch is cut into the carved shell; its counter
@@ -900,6 +1201,12 @@ for photo in (front,left,overhead):
     photo.image.scale(256,192)
     photo.image.pack()
 wall_photo.image.pack()
+for photo in (CHICKEN_RUN_SIDE,CHICKEN_RUN_TOP):
+    photo.image.scale(256,round(256*photo.h/photo.w))
+    photo.image.pack()
+for image in (wire_image,top_wire_image):
+    image.scale(256,round(256*image.size[1]/image.size[0]))
+    image.pack()
 for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_side_photo,
               *canteen_table['_photos'].values()):
     if photo in (stall_front_photo, stall_side_photo, stall_photo):
@@ -1129,6 +1436,94 @@ render_match('model-front',target+Vector((0,18,0)),Vector((0,0,1)),13)
 render_match('model-side',target+Vector((18,0,0)),Vector((0,0,1)),13)
 render_match('model-rear',target+Vector((0,-18,0)),Vector((0,0,1)),13)
 render_match('model-top',target+Vector((0,0,18)),Vector((0,1,0)),13)
+
+# Round 18 comparison uses only the goat pen and the exported GLB. Four
+# matched orthographic pairs are followed by the three-quarter and mayor views.
+goat_evidence=root/'.evidence/2026-11-07/town-art-food/round-19'
+goat_evidence.mkdir(parents=True,exist_ok=True)
+goat_root=next(obj for obj in scene.objects if obj.name=='goat-pen')
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or under(obj,goat_root))
+scene.objects['review ground'].hide_render=False
+goat_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,goat_root)]
+goat_corners=[obj.matrix_world @ Vector(corner) for obj in goat_members for corner in obj.bound_box]
+goat_lo=Vector((min(p.x for p in goat_corners),min(p.y for p in goat_corners),min(p.z for p in goat_corners)))
+goat_hi=Vector((max(p.x for p in goat_corners),max(p.y for p in goat_corners),max(p.z for p in goat_corners)))
+target=(goat_lo+goat_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-8,11,12)),900,18),
+    ('soft sky fill',Vector((8,7,9)),700,22),
+    ('open aisle bounce',Vector((0,3,4)),450,8)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=900;scene.render.resolution_y=680
+evidence=goat_evidence
+render_match('goat-front-model',target+Vector((0,16,0)),Vector((0,0,1)),10.4)
+render_match('goat-side-model',target+Vector((-16,0,0)),Vector((0,0,1)),10.4)
+render_match('goat-rear-model',target+Vector((0,-16,0)),Vector((0,0,1)),10.4)
+render_match('goat-top-model',target+Vector((0,0,16)),Vector((0,-1,0)),10.4)
+render_match('goat-three-quarter',target+Vector((-9,-10,7)),Vector((0,0,1)),11.2)
+render_match('goat-mayor',target+Vector((-42,-42,60)),Vector((0,0,1)),14.2)
+
+# Round 20 sheet: four source/model pairs share exact orthographic cameras,
+# followed by the same exported chicken-run from three-quarter and mayor views.
+chicken_evidence=root/'.evidence/2026-11-07/town-art-food/round-20'
+chicken_evidence.mkdir(parents=True,exist_ok=True)
+chicken_root=next(obj for obj in scene.objects if obj.name=='chicken-run')
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT'):
+        obj.hide_render=not (obj.name=='review ground' or under(obj,chicken_root))
+scene.objects['review ground'].hide_render=False
+chicken_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,chicken_root)]
+chicken_corners=[obj.matrix_world @ Vector(corner) for obj in chicken_members for corner in obj.bound_box]
+chicken_lo=Vector((min(p.x for p in chicken_corners),min(p.y for p in chicken_corners),min(p.z for p in chicken_corners)))
+chicken_hi=Vector((max(p.x for p in chicken_corners),max(p.y for p in chicken_corners),max(p.z for p in chicken_corners)))
+target=(chicken_lo+chicken_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-6,9,11)),850,16),
+    ('soft sky fill',Vector((7,6,8)),700,20),
+    ('open aisle bounce',Vector((0,2,4)),400,7)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=1000;scene.render.resolution_y=720
+evidence=chicken_evidence
+render_match('chicken-model-side',target+Vector((13,0,0)),Vector((0,0,1)),5.0)
+render_match('chicken-model-front',target+Vector((0,13,0)),Vector((0,0,1)),5.8)
+render_match('chicken-model-rear',target+Vector((0,-13,0)),Vector((0,0,1)),5.8)
+render_match('chicken-model-above',target+Vector((0,0,13)),Vector((-1,0,0)),5.8)
+render_match('chicken-model-three-quarter',target+Vector((-4,-5,3)),Vector((0,0,1)),5.7)
+render_match('chicken-model-mayor',target+Vector((-42,-42,60)),Vector((0,0,1)),15)
+sheet_code=r'''from pathlib import Path
+import sys
+from PIL import Image,ImageDraw,ImageFont,ImageOps
+root=Path(sys.argv[1]);evidence=Path(sys.argv[2]);textures=Path(sys.argv[3]);sheet=Path(sys.argv[4])
+sheet_image=Image.new('RGB',(1600,2390),(28,29,27));draw=ImageDraw.Draw(sheet_image);fontdir=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fontdir/'segoeuib.ttf'),31);label=ImageFont.truetype(str(fontdir/'segoeuib.ttf'),21);body=ImageFont.truetype(str(fontdir/'segoeui.ttf'),17)
+draw.text((32,16),'TOWN FOOD | CHICKEN RUN | ROUND 20',font=title,fill=(239,226,201))
+draw.text((32,56),'Boot-lid coop carved from its own photos | timber frame and transparent photo wire',font=body,fill=(218,208,183))
+panels=[('SIDE','chicken-run-photo-side.png','chicken-model-side.png'),('FRONT','chicken-run-photo-front.png','chicken-model-front.png'),('REAR','chicken-run-photo-rear.png','chicken-model-rear.png'),('OVERHEAD','chicken-run-top.png','chicken-model-above.png')]
+pw,ph=748,420
+for row,(caption,photo_name,model_name) in enumerate(panels):
+ y=96+row*448;draw.text((32,y),f'{caption} | SOURCE AND EXPORTED MODEL, SAME CAMERA',font=label,fill=(231,189,126))
+ for col,(path,tag) in enumerate(((textures/photo_name,'SOURCE PHOTO'),(evidence/model_name,'EXPORTED GLB'))):
+  x=32+col*768;image=ImageOps.contain(Image.open(path).convert('RGB'),(pw,ph),method=Image.Resampling.LANCZOS)
+  sheet_image.paste(image,(x+(pw-image.width)//2,y+34+(ph-image.height)//2));draw.rectangle((x+8,y+42,x+245,y+69),fill=(20,22,20));draw.text((x+16,y+43),tag,font=body,fill=(245,229,196))
+last_y=96+4*448;draw.text((32,last_y),'THREE-QUARTER AND MAYOR VIEWS | EXPORTED MODEL',font=label,fill=(231,189,126))
+for col,name in enumerate(('chicken-model-three-quarter.png','chicken-model-mayor.png')):
+ x=32+col*768;image=ImageOps.fit(Image.open(evidence/name).convert('RGB'),(pw,ph),method=Image.Resampling.LANCZOS,centering=(.5,.55));sheet_image.paste(image,(x,last_y+34));draw.rectangle((x+8,last_y+42,x+330,last_y+69),fill=(20,22,20))
+ draw.text((x+16,last_y+43),'THREE-QUARTER' if col==0 else 'MAYOR | 60 M, 45 DEG DOWN',font=body,fill=(245,229,196))
+sheet.parent.mkdir(parents=True,exist_ok=True)
+for quality in (76,72,68,64,60,56,52):
+ sheet_image.save(sheet,'JPEG',quality=quality,optimize=True,progressive=True)
+ if sheet.stat().st_size<=500_000:break
+if sheet.stat().st_size>500_000:raise RuntimeError(f'chicken run sheet is {sheet.stat().st_size} bytes; limit is 500 KB')
+print(f'Round 20 sheet: {sheet} ({sheet.stat().st_size} bytes)')
+'''
+python_exe=shutil.which('python')
+if not python_exe:raise RuntimeError('host Python with Pillow is required to assemble the round 20 review sheet')
+subprocess.run([python_exe,'-c',sheet_code,str(root),str(chicken_evidence),str(textures),str(sheet)],check=True)
+
 render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
 render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
@@ -1199,5 +1594,102 @@ render_match('canteen-front',front_target+Vector((0,12,1)),Vector((0,0,1)),8.5,l
 scene.render.resolution_x=900;scene.render.resolution_y=680
 render_match('canteen-side',target+Vector((12,0,3)),Vector((0,0,1)),8.5)
 render_match('canteen-mayor',target+Vector((8,12,11)),Vector((0,0,1)),10.5)
+# Isolated greenhouse review renders after GLB export, using the same orthographic
+# directions and flat grey ground as the source photographs.
+greenhouse_root=next(obj for obj in scene.objects if obj.name=='greenhouse')
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT') and obj.name!='review ground':
+        obj.hide_render=not under(obj,greenhouse_root)
+scene.objects['review ground'].hide_render=False
+greenhouse_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,greenhouse_root)]
+greenhouse_corners=[obj.matrix_world @ Vector(corner) for obj in greenhouse_members for corner in obj.bound_box]
+greenhouse_lo=Vector((min(p.x for p in greenhouse_corners),min(p.y for p in greenhouse_corners),min(p.z for p in greenhouse_corners)))
+greenhouse_hi=Vector((max(p.x for p in greenhouse_corners),max(p.y for p in greenhouse_corners),max(p.z for p in greenhouse_corners)))
+target=(greenhouse_lo+greenhouse_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-8,14,15)),1100,22),
+    ('soft sky fill',Vector((12,9,11)),850,26),
+    ('open aisle bounce',Vector((0,5,4)),600,10)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+# The rear orthographic comparison faces away from the original three lamps.
+# Add a soft studio fill behind it so front/rear texture colour is comparable.
+rear_fill_data=bpy.data.lights.new('greenhouse rear studio fill','AREA')
+rear_fill_data.energy=2200;rear_fill_data.shape='DISK';rear_fill_data.size=20
+rear_fill=bpy.data.objects.new('greenhouse rear studio fill',rear_fill_data)
+scene.collection.objects.link(rear_fill);rear_fill.location=target+Vector((0,-10,9))
+rear_fill.rotation_euler=(target-rear_fill.location).to_track_quat('-Z','Y').to_euler()
+greenhouse_dir=root/'.evidence/2026-11-07/town-art-food/round-14'
+greenhouse_dir.mkdir(parents=True,exist_ok=True)
+evidence=greenhouse_dir
+scene.render.resolution_x=1000;scene.render.resolution_y=700
+render_match('greenhouse-side',target+Vector((15,0,0)),Vector((0,0,1)),8)
+render_match('greenhouse-front',target+Vector((0,15,0)),Vector((0,0,1)),5.5)
+render_match('greenhouse-rear',target+Vector((0,-15,0)),Vector((0,0,1)),5.5)
+render_match('greenhouse-above',target+Vector((0,0,15)),Vector((1,0,0)),8.5)
+render_match('greenhouse-three-left',target+Vector((-9,-10,7)),Vector((0,0,1)),10.5)
+render_match('greenhouse-three-right',target+Vector((9,-10,7)),Vector((0,0,1)),10.5)
+render_match('greenhouse-mayor',target+Vector((-12,-13,14)),Vector((0,0,1)),15)
+# Isolated shop renders use the exported GLB and the exact orthographic cameras
+# needed for the four photo comparisons. Explicit visibility reset prevents a
+# previous building's hidden descendants from leaking into or hiding this view.
+evidence=root/'.evidence/2026-11-07/town-art-food/round-16'
+evidence.mkdir(parents=True,exist_ok=True)
+shop_root=next(obj for obj in scene.objects if obj.name=='shopfront-a')
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or obj.name=='shopfront-a' or obj.name.startswith('shopfront-a:'))
+scene.objects['review ground'].hide_render=False
+shop_members=[obj for obj in scene.objects if obj.type=='MESH' and obj.name.startswith('shopfront-a:')]
+shop_corners=[obj.matrix_world @ Vector(corner) for obj in shop_members for corner in obj.bound_box]
+shop_lo=Vector((min(p.x for p in shop_corners),min(p.y for p in shop_corners),min(p.z for p in shop_corners)))
+shop_hi=Vector((max(p.x for p in shop_corners),max(p.y for p in shop_corners),max(p.z for p in shop_corners)))
+target=(shop_lo+shop_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-5,8,9)),900,14),
+    ('soft sky fill',Vector((6,-8,7)),850,16),
+    ('open aisle bounce',Vector((0,0,9)),350,6)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=1000;scene.render.resolution_y=720
+render_match('shopfront-side',target+Vector((12,0,0)),Vector((0,0,1)),7.6)
+render_match('shopfront-front',target+Vector((0,12,0)),Vector((0,0,1)),4.3)
+render_match('shopfront-rear',target+Vector((0,-12,0)),Vector((0,0,1)),4.3)
+render_match('shopfront-above',target+Vector((0,0,12)),Vector((1,0,0)),7.4)
+render_match('shopfront-three-left',target+Vector((-8,9,6)),Vector((0,0,1)),8.2)
+render_match('shopfront-three-right',target+Vector((8,9,6)),Vector((0,0,1)),8.2)
+render_match('shopfront-mayor',target+Vector((-8,8,11.3)),Vector((0,0,1)),9.0)
+# Front views confirm each of the two remaining painted words independently.
+for building in ('shopfront-b','shopfront-c'):
+    variant_root=next(obj for obj in scene.objects if obj.name==building)
+    for obj in scene.objects:
+        if obj.type in ('CAMERA','LIGHT'): continue
+        obj.hide_render=not (obj.name=='review ground' or obj.name==building or obj.name.startswith(building+':'))
+    scene.objects['review ground'].hide_render=False
+    variant_members=[obj for obj in scene.objects if obj.type=='MESH' and obj.name.startswith(building+':')]
+    variant_corners=[obj.matrix_world @ Vector(corner) for obj in variant_members for corner in obj.bound_box]
+    v_lo=Vector((min(p.x for p in variant_corners),min(p.y for p in variant_corners),min(p.z for p in variant_corners)))
+    v_hi=Vector((max(p.x for p in variant_corners),max(p.y for p in variant_corners),max(p.z for p in variant_corners)))
+    target=(v_lo+v_hi)*.5
+    render_match(building+'-front',target+Vector((0,12,0)),Vector((0,0,1)),4.3)
+# Prove that the roof words stay readable at the nearest mayor-camera distance
+# named on the card: 60 m and 45 degrees down, with the 85 mm sheet lens.
+shop_roots=[next(obj for obj in scene.objects if obj.name==name)
+            for name in ('shopfront-a','shopfront-b','shopfront-c')]
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or any(under(obj,r) for r in shop_roots))
+scene.objects['review ground'].hide_render=False
+town_members=[obj for obj in scene.objects if obj.type=='MESH' and any(under(obj,r) for r in shop_roots)]
+town_corners=[obj.matrix_world @ Vector(corner) for obj in town_members for corner in obj.bound_box]
+town_lo=Vector((min(p.x for p in town_corners),min(p.y for p in town_corners),min(p.z for p in town_corners)))
+town_hi=Vector((max(p.x for p in town_corners),max(p.y for p in town_corners),max(p.z for p in town_corners)))
+target=(town_lo+town_hi)*.5
+camera_data=bpy.data.cameras.new('shopfront-mayor-60m');camera_data.type='PERSP';camera_data.lens=85
+camera=bpy.data.objects.new('shopfront-mayor-60m',camera_data);scene.collection.objects.link(camera)
+camera.location=target+Vector((-30,30,42.4264068712))
+camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler();scene.camera=camera
+scene.render.resolution_x=2000;scene.render.resolution_y=1400
+scene.render.filepath=str(evidence/'shopfront-mayor-60m.png');bpy.ops.render.render(write_still=True)
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet),
-                  'evidence':str(evidence),'market_pieces':market_bounds}))
+                  'evidence':str(evidence),'market_pieces':market_bounds,'shopfronts':SHOP_BOUNDS}))

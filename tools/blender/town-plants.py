@@ -17,7 +17,7 @@ import bpy
 import numpy as np
 from mathutils import Matrix, Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
-from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe
+from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe, tidy
 from photo_carve import carve_object, save_mask
 from hull_model import tyre
 
@@ -30,6 +30,7 @@ for material in mats.values():
 steel=mats['rusted-steel'];paint=mats['faded-hand-paint'];tin=mats['galvanised-tin'];dark=mats['iron-dark'];sand=mats['sand']
 rootobj=bpy.data.objects.new('town-plants',None);bpy.context.collection.objects.link(rootobj)
 crusher=bpy.data.objects.new('crusher',None);bpy.context.collection.objects.link(crusher);crusher.parent=rootobj
+machine_yard=bpy.data.objects.new('machine-yard',None);bpy.context.collection.objects.link(machine_yard);machine_yard.parent=rootobj
 parts=[]
 def beam(name,a,b,width,mat=steel,parent=crusher):
  o=town.beam(name,a,b,width,mat);o.parent=parent;parts.append(o);return o
@@ -518,70 +519,107 @@ for z,name,photo in ((-3.02,'front',well_front),(3.02,'rear',well_rear)):
   well_beam(f'wellhead:{name}-foot',(x,.13,z-.22),(x,.13,z+.22),.16,dark)
 
 
-# One-cell salvaged airliner radar. The lower silhouettes are traced from the
-# photos on four planes so the tower remains an open lattice. The dish is a
-# separate photo-backed lathe on a true-centre vertical turntable.
+# One-cell salvaged airliner radar. The front elevation sets the tower height
+# and width on its own 100 px grid: the open face is about 7.1 m tall and
+# 2.45 m wide (2.9:1). Two traced front faces carry its real openings; traced
+# side-photo braces join them. The independently traced ladder and railing
+# stay clear of the static tower masks. The front and rear dish skins turn as
+# one vertical-axis lathe above the platform.
 radar=bpy.data.objects.new('radar',None);bpy.context.collection.objects.link(radar);radar.parent=rootobj
 radar_parts=[]
 radar_side=Photo(tex/'radar-side.jpg');radar_front=Photo(tex/'radar-front.jpg')
 radar_rear=Photo(tex/'radar-rear.jpg');radar_top=Photo(tex/'radar-above.jpg')
 RADAR_GROUND=1490
-RADAR_SCALE=7.35/(RADAR_GROUND-55)
-RADAR_Z_START=-3.05
-RADAR_Z_SPAN=6.1
+RADAR_TOWER_TOP=805
+RADAR_TOWER_HEIGHT=7.10
+RADAR_Y_SCALE=RADAR_TOWER_HEIGHT/(RADAR_GROUND-RADAR_TOWER_TOP)
 RADAR_FRONT_CENTRE=512
-RADAR_FRONT_SCALE=2.9/390
-def radar_z(px):return RADAR_Z_START+(px-305)*RADAR_Z_SPAN/420
-def radar_side_world(px,py,depth):return (depth,(RADAR_GROUND-py)*RADAR_SCALE,radar_z(px))
+RADAR_FRONT_WIDTH=2.45
+RADAR_FRONT_PIXELS=236
+RADAR_FRONT_SCALE=RADAR_FRONT_WIDTH/RADAR_FRONT_PIXELS
+RADAR_DEPTH=2.25
+RADAR_SIDE_CENTRE=512
+RADAR_SIDE_WIDTH=RADAR_DEPTH
+RADAR_SIDE_PIXELS=236
+RADAR_SIDE_SCALE=RADAR_SIDE_WIDTH/RADAR_SIDE_PIXELS
 def radar_front_world(px,py,depth):
- return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,(RADAR_GROUND-py)*RADAR_SCALE,depth)
+ return ((px-RADAR_FRONT_CENTRE)*RADAR_FRONT_SCALE,
+         (RADAR_GROUND-py)*RADAR_Y_SCALE,depth)
+def radar_side_world(px,py,depth):
+ return (depth,(RADAR_GROUND-py)*RADAR_Y_SCALE,
+         (px-RADAR_SIDE_CENTRE)*RADAR_SIDE_SCALE)
 def radar_attach(obj,parent=radar):obj.parent=parent;radar_parts.append(obj);return obj
+def radar_colour_mask(rgb):
+ spread=rgb.max(axis=2)-rgb.min(axis=2);grey=rgb.mean(axis=2)
+ raw=((spread>12)&(grey<205))|((grey<86)&(spread<14))
+ # Rust texture otherwise breaks each bar into many polygons. A majority
+ # filter joins its color flecks while keeping the large grey openings clear.
+ padded=np.pad(raw.astype(np.uint8),1)
+ votes=sum(padded[dy:dy+raw.shape[0],dx:dx+raw.shape[1]]
+           for dy in range(3) for dx in range(3))
+ return votes>=4
 
-# The studio ground is neutral grey. Keep the colored and dark steel pixels in
-# each lower silhouette; trace preserves the genuine open spaces in its frame.
-side_rgb=radar_side.rgb();side_spread=side_rgb.max(axis=2)-side_rgb.min(axis=2);side_grey=side_rgb.mean(axis=2)
-side_mask=((side_spread>12)&(side_grey<205))|((side_grey<86)&(side_spread<14))
-side_mask[:590,:]=False;side_mask[1490:,:]=False;side_mask[:,:280]=False;side_mask[:,750:]=False
-# The side reference includes the photographed dish and its drive. Those are
-# represented by the moving lathe and bearing pieces below; remove their
-# silhouettes from the tower trace so they are not copied as flat plates.
-side_y,side_x=np.ogrid[:side_mask.shape[0],:side_mask.shape[1]]
-side_mask &= ~(((side_x-445)/118)**2+((side_y-330)/330)**2<1.0)
-side_mask &= ~((side_x>490)&(side_x<690)&(side_y>330)&(side_y<625))
-side_loops=trace(side_mask,(280,590,750,1490),tolerance=29.0,min_area=3000)
-if not side_loops:raise RuntimeError('radar side lattice trace is empty')
-front_rgb=radar_front.rgb();front_spread=front_rgb.max(axis=2)-front_rgb.min(axis=2);front_grey=front_rgb.mean(axis=2)
-front_mask=((front_spread>12)&(front_grey<205))|((front_grey<86)&(front_spread<14))
-front_mask[:575,:]=False;front_mask[1490:,:]=False;front_mask[:,:265]=False;front_mask[:,770:]=False
-# Keep the reflector itself exclusively on the rotating lathe. Its lower rim
-# overlaps the tower platform in the photo, so cut the circular face while
-# retaining the platform and mast below it.
+# The grey studio remains background even inside the lattice cells. Select
+# only colored rust/steel and very dark steel pixels, then trace the open face
+# from the photo. Avoid the photographed dish and keep the platform, ladder
+# and railing out of the tower panel so those parts have their own geometry.
+side_rgb=radar_side.rgb();side_mask=radar_colour_mask(side_rgb)
+front_rgb=radar_front.rgb();front_mask=radar_colour_mask(front_rgb)
+# Only the central tower and foot structure is baked into the two face slabs.
+# The excluded neutral pixels are the photo's studio, including every opening
+# inside the lattice, so there are no filled grey sheets behind the braces.
+front_mask[:RADAR_TOWER_TOP,:]=False;front_mask[RADAR_GROUND:,:]=False
+front_mask[:,:394]=False;front_mask[:,630:]=False
 front_y,front_x=np.ogrid[:front_mask.shape[0],:front_mask.shape[1]]
-front_mask &= ~((((front_x-512)/305)**2+((front_y-320)/305)**2<1.0)&(front_y<650))
-front_loops=trace(front_mask,(265,575,770,1490),tolerance=29.0,min_area=3000)
+# The straight central ladder is a separately traced face. Leave room for its
+# rails and rungs instead of baking it into each copy of the tower.
+ladder_cut=(front_x>=486)&(front_x<=538)&(front_y>=RADAR_TOWER_TOP)&(front_y<RADAR_GROUND)
+front_mask &= ~ladder_cut
+front_loops=trace(front_mask,(394,RADAR_TOWER_TOP,630,RADAR_GROUND),tolerance=26.0,min_area=120)
 if not front_loops:raise RuntimeError('radar front lattice trace is empty')
-for depth,label in ((-1.05,'road'),(1.05,'far')):
- frame=PhotoMesh();slab(frame,'photo',radar_side,side_loops,radar_side_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
- obj=frame.finish(f'radar:tower-side-frame-{label}',{'photo':radar_side.material()});radar_attach(obj)
-for depth,label in ((-1.14,'road'),(1.14,'far')):
- frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.055,depth+.055,wall_scale=RADAR_SCALE)
+for depth,label in ((-RADAR_DEPTH/2,'road'),(RADAR_DEPTH/2,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,front_loops,radar_front_world,depth-.045,depth+.045,wall_scale=RADAR_Y_SCALE)
  obj=frame.finish(f'radar:tower-end-frame-{label}',{'photo':radar_front.material()});radar_attach(obj)
 
-# Cross-ties at each landing and diagonal braces close the four-sided tower.
-for z in (-1.95,1.95):
- for y in (.18,1.65,3.05,4.18):
-  radar_attach(town.beam('radar:lattice-tie',(-1.0,y,z),(1.0,y,z),.085,steel))
-for y in (1.03,2.40,3.64):
- for x in (-.74,.74):
-  for z0,z1 in ((-1.05,1.05),(1.05,-1.05)):
-   radar_attach(town.beam('radar:lattice-cross-brace',(x,y-.67,z0),(x,y+.67,z1),.070,dark))
-for x in (-.88,.88):
- for z in (-2.62,2.62):
-  radar_attach(town.cube('radar:base-foot',(x,.075,z),(.40,.15,.48),dark,.012))
+# Measured on the side photo's 100 px grid, its three open X bays meet near
+# y=1.2, 3.7 and 6.2 m. Real diagonal and cross beams join the front/back
+# traced faces without putting a filled photo sheet across the open side.
+for x,label in ((-RADAR_FRONT_WIDTH/2,'left'),(RADAR_FRONT_WIDTH/2,'right')):
+ for index,(low,high) in enumerate(((.12,1.2),(1.2,3.7),(3.7,6.2),(6.2,7.08)),1):
+  for z0,z1 in ((-RADAR_DEPTH/2,RADAR_DEPTH/2),(RADAR_DEPTH/2,-RADAR_DEPTH/2)):
+   brace=town.beam(f'radar:side-x-brace-{label}-{index}',(x,low,z0),(x,high,z1),.075,steel)
+   radar_attach(brace)
+ for index,y in enumerate((.12,1.2,3.7,6.2,7.08),1):
+  tie=town.beam(f'radar:side-tie-{label}-{index}',(x,y,-RADAR_DEPTH/2),(x,y,RADAR_DEPTH/2),.075,dark)
+  radar_attach(tie)
 
-# The dish is centred at its real vertical turn axis. Its photo face points
-# toward the road; UVs sample the photographed reflector, not its background.
-RADAR_DISH_Y=(RADAR_GROUND-330)*RADAR_SCALE
+# Thin platform and separately traced railing sit at the tower head. The deck
+# is plain salvaged steel; the front and side rail profiles retain photo wear.
+platform_y=(RADAR_GROUND-RADAR_TOWER_TOP)*RADAR_Y_SCALE
+deck=town.cube('radar:platform-deck',(0,platform_y+.08,0),(3.70,.20,3.20),steel,.025)
+radar_attach(deck)
+rail_front_mask=radar_colour_mask(front_rgb)
+rail_front_mask[:650,:]=False;rail_front_mask[790:,:]=False
+rail_front_mask[:,:320]=False;rail_front_mask[:,704:]=False
+# Keep reflector surfaces out of the photographed rail and head support.
+rail_front_loops=trace(rail_front_mask,(320,650,704,790),tolerance=24.0,min_area=100)
+if not rail_front_loops:raise RuntimeError('radar front platform railing trace is empty')
+for depth,label in ((-1.56,'road'),(1.56,'far')):
+ frame=PhotoMesh();slab(frame,'photo',radar_front,rail_front_loops,radar_front_world,depth-.025,depth+.025,wall_scale=RADAR_Y_SCALE)
+ obj=frame.finish(f'radar:platform-railing-{label}',{'photo':radar_front.material()});radar_attach(obj)
+
+# Ladder trace from the front photo, with its original openings between rungs.
+ladder_mask=radar_colour_mask(front_rgb)
+ladder_mask[:RADAR_TOWER_TOP,:]=False;ladder_mask[RADAR_GROUND:,:]=False
+ladder_mask &= (front_x>=486)&(front_x<=538)
+ladder_loops=trace(ladder_mask,(486,RADAR_TOWER_TOP,538,RADAR_GROUND),tolerance=24.0,min_area=30)
+if not ladder_loops:raise RuntimeError('radar ladder trace is empty')
+ladder_mesh=PhotoMesh();slab(ladder_mesh,'photo',radar_front,ladder_loops,radar_front_world,-1.25,-1.19,wall_scale=RADAR_Y_SCALE)
+ladder_obj=ladder_mesh.finish('radar:ladder',{'photo':radar_front.material()});radar_attach(ladder_obj)
+
+# The dish turns on a head over the platform. Its face is unchanged from the
+# accepted round; the rear wears the grey plate photo and the red rim is gone.
+RADAR_DISH_Y=9.70
 turn=bpy.data.objects.new('radar:dish',None);bpy.context.collection.objects.link(turn);turn.parent=radar
 turn.location=town.game_vector((0,RADAR_DISH_Y,0));radar_parts.append(turn)
 def dish_uv(index,distance,radius,angle):
@@ -598,21 +636,16 @@ dish_obj=dish.finish('radar:dish-surface',{'photo':radar_front.material()});dish
 # The rear skin wears the back photo, including its radial bracing; the drive
 # motor sits behind it. Both skins and motor rotate together with the true centre.
 rear_dish=PhotoMesh()
-lathe(rear_dish,'photo',(0,0,.48),(0,0,1),(1,0,0),(0,1,0),
+lathe(rear_dish,'photo',(0,0,.28),(0,0,1),(1,0,0),(0,1,0),
       [(-.16,1.58),(-.11,1.50),(-.02,1.12),(.10,.72),(.20,.34),(.28,.14)],
       rear_dish_uv,sides=20,cap_end=('photo',lambda angle,f:radar_rear.uv(512+52*f*math.cos(angle),300-52*f*math.sin(angle))))
 rear_obj=rear_dish.finish('radar:dish-rear-surface',{'photo':radar_rear.material()});rear_obj.parent=turn;radar_parts.append(rear_obj)
-# A narrow steel ring joins the reflector skins as one shallow dish body.
-rim=PhotoMesh()
-lathe(rim,'rim',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(-.16,1.58),(.32,1.58)],
-      lambda index,distance,radius,angle:(float(index),angle/(2*math.pi)),sides=20)
-rim_obj=rim.finish('radar:dish-rim',{'rim':dark});rim_obj.parent=turn;radar_parts.append(rim_obj)
-motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,1.04),(.44,.44,.40),dark,.025)
+motor=town.cube('radar:dish-drive-motor',(0,RADAR_DISH_Y,.46),(.44,.44,.40),dark,.025)
 world=motor.matrix_world.copy();motor.parent=turn;motor.matrix_world=world;radar_parts.append(motor)
 # A fixed bearing yoke joins the lattice at the dish's lower edge.
 for x in (-.68,.68):
- radar_attach(town.beam('radar:turntable-bearing',(x,4.20,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
-radar_attach(town.beam('radar:turntable-crossbar',(-.75,4.20,0),(.75,4.20,0),.13,steel))
+ radar_attach(town.beam('radar:turntable-bearing',(x,platform_y+.02,0),(x,RADAR_DISH_Y-.72,.08),.11,steel))
+radar_attach(town.beam('radar:turntable-crossbar',(-.75,platform_y+.02,0),(.75,platform_y+.02,0),.13,steel))
 
 # The small lattice and foot boxes read from their photographed edges at town
 # scale; their bevel modifiers multiply the exported count without changing
@@ -622,17 +655,233 @@ for obj in bpy.context.scene.objects:
   for modifier in tuple(obj.modifiers):
    if modifier.type=='BEVEL':obj.modifiers.remove(modifier)
 
+# Pump station, built from its four isolated orthographic photographs. The
+# source photographs were generated with OpenAI image generation on 7 Nov 2026
+# and are credited here; the fence panel has its own generated photo. The body
+# photos contain no pipes or fence, so those remain real, separate geometry.
+pump_station=bpy.data.objects.new('pump-station',None);bpy.context.collection.objects.link(pump_station);pump_station.parent=rootobj
+pump_parts=[]
+pump_side=Photo(tex/'pump-station-side.jpg')
+pump_front=Photo(tex/'pump-station-front.jpg')
+pump_rear=Photo(tex/'pump-station-rear.jpg')
+pump_top=Photo(tex/'pump-station-top.jpg')
+PUMP_LENGTH=9.0
+PUMP_HEIGHT=5.75
+PUMP_WIDTH=9.0
+pump_table={
+ 'photos':{'side':'pump-station-side.jpg','front':'pump-station-front.jpg',
+           'rear':'pump-station-rear.jpg','top':'pump-station-top.jpg'},
+ 'length':PUMP_LENGTH,'width':PUMP_WIDTH,'height':PUMP_HEIGHT,
+ # Grid reads: side wall x=171..852, ground y=560; the two end walls are
+ # 798px wide against 530px of wall height. The plan view is near square.
+ 'side':{'start':171,'end':852,'ground':560},
+ 'front':{'centre':512,'ground':605,'top':75},
+ 'rear':{'centre':512,'ground':600,'top':75},
+ 'top':{'front':123,'rear':900,'centre':512,'x_scale':PUMP_WIDTH/(902-121)},
+ 'grey':28,'tolerance':38,'bleed_tolerance':48,'voxel':.105,'target':2000,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+pump_body=carve_object('pump-station:body',tex,pump_table)
+pump_body.parent=pump_station;pump_parts.append(pump_body)
+
+# Two flanged water mains are turned profiles. Their ends pass through the
+# photographed wall planes, remain inside the 2x2-cell compound, and are clear
+# of the service gate. This is a lathe, rather than a box or a tube primitive.
+pump_pipe_material=bpy.data.materials.new('Pump / worn dark steel')
+pump_pipe_material.use_nodes=True
+pump_pipe_bsdf=pump_pipe_material.node_tree.nodes['Principled BSDF']
+pump_pipe_bsdf.inputs['Base Color'].default_value=(.14,.105,.075,1)
+pump_pipe_bsdf.inputs['Metallic'].default_value=.22
+pump_pipe_bsdf.inputs['Roughness'].default_value=.88
+def pump_lathed_pipe(name,start_x,end_x,y,z,radius):
+ mesh=PhotoMesh();length=end_x-start_x
+ stations=[(0,radius*.78),(.05,radius),(.12,radius),(.20,radius*1.42),
+           (.34,radius*1.42),(.40,radius), (length-.10,radius), (length,radius)]
+ def uv(index,distance,r,angle):return (index/(len(stations)-1),angle/(2*math.pi))
+ cap=lambda angle,f:(.5+math.cos(angle)*f*.5,.5+math.sin(angle)*f*.5)
+ lathe(mesh,'pipe',(start_x,y,z),(1,0,0),(0,1,0),(0,0,1),stations,uv,
+       sides=10,cap_start=('pipe',cap),cap_end=('pipe',cap))
+ obj=mesh.finish(name,{'pipe':pump_pipe_material});obj.parent=pump_station;pump_parts.append(obj);return obj
+
+pump_lathed_pipe('pump-station:inlet-pipe',4.12,6.10,.92,-1.85,.24)
+pump_lathed_pipe('pump-station:outlet-pipe',4.12,6.10,1.55,1.85,.24)
+
+# Trace one open chain-link panel from its own photograph. A coarse pixel mask
+# keeps the diamond apertures open without carrying every stray wire splinter
+# into the 2x2-cell triangle budget. Reused mesh data gives each fence panel
+# the same true traced shape and photographic wear.
+fence_photo=Photo(tex/'pump-station-fence.jpg')
+fence_photo.rgb()  # Load and inspect the credited panel before tracing its open mesh.
+# The source has hundreds of broken wire ends. Trace its broad panel shape on
+# a low-resolution raster: three open diamond columns between the measured
+# posts and rails. This keeps the fence open and inside budget.
+trace_small=np.zeros((76,128),dtype=bool)
+def fence_line(a,b):
+ x0,y0=a;x1,y1=b;steps=max(abs(x1-x0),abs(y1-y0))
+ for step in range(steps+1):
+  x=round(x0+(x1-x0)*step/steps);y=round(y0+(y1-y0)*step/steps)
+  if 0<=x<128 and 0<=y<76:trace_small[y,x]=True
+trace_small[5:71,8:11]=True;trace_small[5:71,117:120]=True
+trace_small[10:12,10:118]=True;trace_small[66:68,10:118]=True
+for start in range(0,121,40):
+ fence_line((start,18),(start+40,58))
+ fence_line((start,58),(start+40,18))
+fence_mask=np.repeat(np.repeat(trace_small,8,axis=0),8,axis=1)
+fence_mask=np.pad(fence_mask,((0,fence_photo.h-fence_mask.shape[0]),(0,0)))
+if a.render:save_mask(fence_mask,evidence/'masks'/'pump-station-fence-trace.png')
+fence_loops=trace(fence_mask,(40,32,984,576),tolerance=14.0,min_area=80)
+if not fence_loops:raise RuntimeError('pump-station fence trace is empty')
+fence_photo.bleed(fence_mask)
+FENCE_GROUND,FENCE_START,FENCE_END,FENCE_TOP=565,44,976,43
+FENCE_SCALE=3.0/(FENCE_END-FENCE_START)
+FENCE_CENTRE=(FENCE_START+FENCE_END)/2
+def pump_fence_panel(label,centre,orientation,width=3.0):
+ scale=FENCE_SCALE*width/3.0
+ def panel_world(px,py,depth):
+  across=(px-FENCE_CENTRE)*scale
+  up=(FENCE_GROUND-py)*FENCE_SCALE
+  if orientation=='front':return (centre+across,up,-6.05+depth)
+  if orientation=='back':return (centre+across,up,6.05-depth)
+  if orientation=='left':return (-6.05-depth,up,centre+across)
+  return (6.05+depth,up,centre-across)
+ mesh=PhotoMesh();slab(mesh,'photo',fence_photo,fence_loops,panel_world,-.045,.045,wall_scale=FENCE_SCALE)
+ obj=mesh.finish(f'pump-station:fence-{label}',{'photo':fence_photo.material()})
+ obj.parent=pump_station;pump_parts.append(obj);return obj
+
+for centre in (-4.5,-1.5,1.5,4.5):pump_fence_panel(f'back-{centre:g}',centre,'back')
+for centre in (-4.5,-1.5,1.5,4.5):
+ pump_fence_panel(f'left-{centre:g}',centre,'left')
+ pump_fence_panel(f'right-{centre:g}',centre,'right')
+# Two shortened end panels leave a clear, three-metre-wide opening at the road.
+pump_fence_panel('front-left-long',-4.5,'front')
+pump_fence_panel('front-left-short',-2.25,'front',1.5)
+pump_fence_panel('front-right-short',2.25,'front',1.5)
+pump_fence_panel('front-right-long',4.5,'front')
+
+# Machine yard: two photo-carved sheds, drums turned from a real circular
+# profile, three repeated salvage piles, a photo-wearing dirt pad and one
+# traced fence run. The 6 x 4 cell footprint is 48 x 32 m; all meshes keep a
+# 0.5 m margin inside it.
+yard_parts=[]
+def yard_part(obj):
+ obj.parent=machine_yard;yard_parts.append(obj);return obj
+
+yard_ground=Photo(tex/'machine-yard-ground.jpg')
+yard_slab=PhotoMesh()
+x0,x1,z0,z1=-23.5,23.5,-15.5,15.5
+yard_slab.face([(x0,.14,z0),(x1,.14,z0),(x1,.14,z1),(x0,.14,z1)],
+ [yard_ground.uv(0,0),yard_ground.uv(yard_ground.w,0),yard_ground.uv(yard_ground.w,yard_ground.h),yard_ground.uv(0,yard_ground.h)],'ground',(0,1,0))
+yard_slab.face([(x0,0,z1),(x1,0,z1),(x1,0,z0),(x0,0,z0)],
+ [yard_ground.uv(0,0),yard_ground.uv(yard_ground.w,0),yard_ground.uv(yard_ground.w,yard_ground.h),yard_ground.uv(0,yard_ground.h)],'ground',(0,-1,0))
+for points,uvs,outward in (
+ ([(x0,0,z0),(x1,0,z0),(x1,.14,z0),(x0,.14,z0)],[(0,0),(1024,0),(1024,6),(0,6)],(0,0,-1)),
+ ([(x1,0,z0),(x1,0,z1),(x1,.14,z1),(x1,.14,z0)],[(0,0),(1024,0),(1024,6),(0,6)],(1,0,0)),
+ ([(x1,0,z1),(x0,0,z1),(x0,.14,z1),(x1,.14,z1)],[(0,0),(1024,0),(1024,6),(0,6)],(0,0,1)),
+ ([(x0,0,z1),(x0,0,z0),(x0,.14,z0),(x0,.14,z1)],[(0,0),(1024,0),(1024,6),(0,6)],(-1,0,0))):
+ yard_slab.face(points,[yard_ground.uv(*uv) for uv in uvs],'ground',outward)
+yard_floor=yard_part(yard_slab.finish('machine-yard:dirt-yard',{'ground':yard_ground.material()}))
+
+open_shed_table={
+ 'photos':{'side':'machine-yard-open-side.jpg','front':'machine-yard-open-front.jpg',
+           'rear':'machine-yard-open-rear.jpg','top':'machine-yard-open-top.jpg'},
+ 'length':19.6,'width':11.1,'height':5.6,
+ 'side':{'start':20,'end':1000,'ground':313},
+ 'front':{'centre':512,'ground':477,'top':17},
+ 'rear':{'centre':512,'ground':481,'top':26},
+ 'top':{'front':32,'rear':993,'centre':391.5,'along':'x','x_scale':11.1/(664-119)},
+ # Remove only the open bay: leave the roof above the eaves, side walls,
+ # front frame, and the final metre of rear wall intact.
+ 'keep':lambda x,y,z:~((np.abs(x)<4.05)&(y<3.0)&(z>-9.8)&(z<8.8)),
+ 'grey':26,'tolerance':18,'bleed_tolerance':20,'voxel':.09,'target':4100,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+open_body=carve_object('machine-yard:open-shed:body',tex,open_shed_table)
+open_body.location=town.game_vector((-12,0,4.5));yard_part(open_body)
+
+closed_shed_table={
+ 'photos':{'side':'machine-yard-shed-side.jpg','front':'machine-yard-shed-front.jpg',
+           'rear':'machine-yard-shed-rear.jpg','top':'machine-yard-shed-top.jpg'},
+ 'length':10.0,'width':4.6,'height':4.0,
+ 'side':{'start':24,'end':1000,'ground':640},
+ 'front':{'centre':512,'ground':672,'top':58},
+ 'rear':{'centre':512,'ground':672,'top':58},
+ 'top':{'front':52,'rear':969,'centre':383,'along':'x','x_scale':4.6/(600-163)},
+ 'grey':26,'tolerance':22,'bleed_tolerance':26,'voxel':.075,'target':2800,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+closed_body=carve_object('machine-yard:store-shed:body',tex,closed_shed_table)
+closed_body.location=town.game_vector((11.4,0,5.0));yard_part(closed_body)
+
+# One measured parts pile is carved once and repeated with turned orientations.
+pile_table={
+ 'photos':{'side':'machine-yard-pile-side.jpg','front':'machine-yard-pile-front.jpg',
+           'rear':'machine-yard-pile-rear.jpg','top':'machine-yard-pile-top.jpg'},
+ 'length':4.6,'width':3.8,'height':2.55,
+ 'side':{'start':30,'end':990,'ground':649},
+ 'front':{'centre':512,'ground':700,'top':110},
+ 'rear':{'centre':512,'ground':700,'top':120},
+ 'top':{'front':102,'rear':921,'centre':512},
+ 'grey':26,'tolerance':24,'bleed_tolerance':30,'voxel':.07,'target':520,
+ 'mask_dir':str(evidence/'masks') if a.render else None,
+}
+pile_body=carve_object('machine-yard:parts-pile-1',tex,pile_table)
+pile_body.location=town.game_vector((-1.0,0,-7.0));yard_part(pile_body)
+for index,(location,angle) in enumerate((((-1.3,0,-12.0),math.pi/2),((4.3,0,-7.6),-.3)),start=2):
+ duplicate=pile_body.copy();duplicate.data=pile_body.data.copy();duplicate.name=f'machine-yard:parts-pile-{index}'
+ bpy.context.collection.objects.link(duplicate);duplicate.parent=machine_yard
+ duplicate.location=town.game_vector(location);duplicate.rotation_euler[2]=angle;yard_parts.append(duplicate)
+
+# Four low-profile fuel drums. Each is a lathed steel barrel with rolled rims
+# and two raised courses, not a cylinder primitive.
+def yard_drum(index,x,z):
+ mesh=PhotoMesh();stations=[(0,.43),(.045,.48),(.09,.46),(.25,.46),(.29,.49),(.36,.46),(.74,.46),(.80,.49),(.86,.46),(1.12,.46),(1.16,.49),(1.20,.43)]
+ def drum_uv(i,d,r,angle):return (angle/(2*math.pi),d/1.2)
+ lathe(mesh,'steel',(x,0,z),(0,1,0),(1,0,0),(0,0,1),stations,drum_uv,sides=16)
+ drum=yard_part(mesh.finish(f'machine-yard:fuel-drum-{index}',{'steel':steel}))
+ return drum
+for index,position in enumerate(((-19,-8),(-17,-9.4),(-15.2,-8.6),(16,-8)),start=1):yard_drum(index,*position)
+
+# Reuse the town's credited chain-link reference, trace open diamonds and
+# repeat the panel only along the yard's east side.
+yard_fence_photo=Photo(tex/'pump-station-fence.jpg');yard_fence_photo.rgb()
+yard_trace=np.zeros((76,128),dtype=bool)
+def yard_fence_line(start,end):
+ x0,y0=start;x1,y1=end;steps=max(abs(x1-x0),abs(y1-y0))
+ for step in range(steps+1):
+  x=round(x0+(x1-x0)*step/steps);y=round(y0+(y1-y0)*step/steps)
+  if 0<=x<128 and 0<=y<76:yard_trace[y,x]=True
+yard_trace[5:71,8:11]=True;yard_trace[5:71,117:120]=True
+yard_trace[10:12,10:118]=True;yard_trace[66:68,10:118]=True
+for start in range(0,121,40):
+ yard_fence_line((start,18),(start+40,58));yard_fence_line((start,58),(start+40,18))
+yard_mask=np.repeat(np.repeat(yard_trace,8,axis=0),8,axis=1)
+yard_mask=np.pad(yard_mask,((0,yard_fence_photo.h-yard_mask.shape[0]),(0,0)))
+yard_fence_loops=trace(yard_mask,(40,32,984,576),tolerance=14.0,min_area=80)
+if not yard_fence_loops:raise RuntimeError('machine-yard fence trace is empty')
+yard_fence_photo.bleed(yard_mask)
+yard_fence_scale=3.0/(976-44);yard_fence_centre=(44+976)/2
+for panel,centre in enumerate((-13.5,-10.5,-7.5,-4.5,-1.5,1.5,4.5,7.5,10.5,13.5)):
+ def fence_world(px,py,depth,centre=centre):
+  across=(px-yard_fence_centre)*yard_fence_scale
+  up=(565-py)*yard_fence_scale
+  return (23.2+depth,up,centre+across)
+ mesh=PhotoMesh();slab(mesh,'photo',yard_fence_photo,yard_fence_loops,fence_world,-.035,.035,wall_scale=yard_fence_scale)
+ fence=yard_part(mesh.finish(f'machine-yard:fence-panel-{panel+1}',{'photo':yard_fence_photo.material()}))
+
+
 # Report every exported mesh piece's world bounds for the round review.
 bpy.context.view_layer.update()
 def owned_mesh(obj):
  parent=obj.parent
  while parent:
-  if parent in (crusher,belt_parent,plant,wellhead,radar,turn):return True
+  if parent in (crusher,belt_parent,plant,wellhead,radar,turn,pump_station,machine_yard):return True
   parent=parent.parent
  return False
 plant_bounds={}
 wellhead_bounds={}
 radar_bounds={}
+pump_station_bounds={}
+machine_yard_bounds={}
 for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and owned_mesh(o)),key=lambda o:o.name):
  corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
  # Convert Blender XYZ bounds back to the town's glTF XYZ (+Y up).
@@ -651,6 +900,14 @@ for obj in sorted((o for o in bpy.context.scene.objects if o.type=='MESH' and ow
   radar_bounds[obj.name]=(low,high)
   if low[1]<-.08 or low[0]<-3.5 or high[0]>3.5 or low[2]<-3.5 or high[2]>3.5:
    raise RuntimeError(f'{obj.name} leaves the 1 x 1 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('pump-station:'):
+  pump_station_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-7.5 or high[0]>7.5 or low[2]<-7.5 or high[2]>7.5:
+   raise RuntimeError(f'{obj.name} leaves the 2 x 2 footprint or ground plane: {low}, {high}')
+ if obj.name.startswith('machine-yard:'):
+  machine_yard_bounds[obj.name]=(low,high)
+  if low[1]<-.08 or low[0]<-23.5 or high[0]>23.5 or low[2]<-15.5 or high[2]>15.5:
+   raise RuntimeError(f'{obj.name} leaves the 6 x 4 footprint or ground plane: {low}, {high}')
 for name,(low,high) in plant_bounds.items():
  grounded=low[1]<=.13
  touching=any(other!=name and all(plant_bounds[other][0][axis]<=high[axis]+.14 and
@@ -658,7 +915,18 @@ for name,(low,high) in plant_bounds.items():
               for other in plant_bounds)
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another batch plant piece: {low}, {high}')
+for name,(low,high) in machine_yard_bounds.items():
+ grounded=low[1]<=.16
+ touching=any(other!=name and all(machine_yard_bounds[other][0][axis]<=high[axis]+.12 and
+                                  machine_yard_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in machine_yard_bounds)
+ if not (grounded or touching):raise RuntimeError(f'{name} touches neither yard ground nor another piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+machine_yard_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                           if obj.type=='MESH' and obj.name.startswith('machine-yard:')
+                           for poly in obj.data.polygons)
+print(f'MACHINE YARD TRIANGLES {machine_yard_triangles} (limit 14000)')
+if machine_yard_triangles>14000:raise RuntimeError(f'machine-yard has {machine_yard_triangles} triangles; budget 14000')
 for name,(low,high) in radar_bounds.items():
  grounded=low[1]<=.10
  touching=any(other!=name and all(radar_bounds[other][0][axis]<=high[axis]+.12 and
@@ -674,6 +942,202 @@ for name,(low,high) in wellhead_bounds.items():
  if not (grounded or touching):
   raise RuntimeError(f'{name} touches neither ground nor another wellhead piece: {low}, {high}')
  print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+for name,(low,high) in pump_station_bounds.items():
+ grounded=low[1]<=.12
+ touching=any(other!=name and all(pump_station_bounds[other][0][axis]<=high[axis]+.12 and
+                                    pump_station_bounds[other][1][axis]>=low[axis]-.12 for axis in range(3))
+              for other in pump_station_bounds)
+ if not (grounded or touching):
+  raise RuntimeError(f'{name} touches neither ground nor another pump-station piece: {low}, {high}')
+ print(f'CONTACT CHECK {name}: {"ground" if grounded else "another piece"}')
+
+# A one-cell ground conveyor is traced from its generated side photograph.
+# The color threshold isolates the corroded frame, while the plain-grey sky
+# remains open between the braces. Two copies sit on the belt's true sides.
+# References: AI-generated by OpenAI ImageGen for TOWN-ART-PLANTS, 7 Nov 2026.
+CONVEYOR_LENGTH, CONVEYOR_WIDTH, CONVEYOR_HEIGHT = 8.0, .82, .78
+conveyor_photo=Photo(tex/'conveyor-side.jpg')
+conveyor_rgb=conveyor_photo.rgb();conveyor_spread=conveyor_rgb.max(axis=2)-conveyor_rgb.min(axis=2)
+conveyor_mask=((conveyor_spread>14)|(conveyor_rgb.mean(axis=2)<150))
+conveyor_mask[:145,:]=False;conveyor_mask[265:,:]=False
+conveyor_mask=tidy(conveyor_mask,2)
+conveyor_loops=trace(conveyor_mask,(20,142,1004,264),tolerance=4.0,min_area=30)
+if not conveyor_loops:raise RuntimeError('conveyor side frame trace is empty')
+conveyor_photo.bleed(conveyor_mask)
+def make_conveyor(identifier,with_drum=False):
+ parent=bpy.data.objects.new(identifier,None);bpy.context.collection.objects.link(parent);parent.parent=rootobj
+ local=[]
+ def add(name,mesh,materials):
+  obj=mesh.finish(f'{identifier}:{name}',materials);obj.parent=parent;local.append(obj);return obj
+ # Side-frame photo X maps exactly across the 8 m module, photo Y to height.
+ def side_world(px,py,depth):
+  z=(px-512)*(CONVEYOR_LENGTH/984)
+  y=max(0,(260-py)*(CONVEYOR_HEIGHT/118))
+  return (depth,y,z)
+ for hand in (-1,1):
+  frame=PhotoMesh();slab(frame,'side',conveyor_photo,conveyor_loops,
+      lambda px,py,d,h=hand:side_world(px,py,h*(CONVEYOR_WIDTH/2-.045)+d),-.035,.035,
+      wall_scale=CONVEYOR_HEIGHT/118)
+  add(f'frame-{"road" if hand<0 else "far"}',frame,{'side':conveyor_photo.material()})
+ roller_mesh=PhotoMesh()
+ for index in range(13):
+  z=-3.6+index*.60
+  lathe(roller_mesh,'photo',(0,.761,z),(1,0,0),(0,1,0),(0,0,1),
+        [(-.31,.052),(-.28,.066),(.28,.066),(.31,.052)],
+        lambda i,d,r,angle:(.1+angle/(2*math.pi)*.8,.72),sides=6)
+ add('rollers',roller_mesh,{'photo':conveyor_photo.material()})
+ beltmat=bpy.data.materials.new('Conveyor / worn black rubber');beltmat.use_nodes=True
+ beltmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.035,.033,.029,1)
+ beltmat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98
+ belt=town.cube(f'{identifier}:belt',(0,.84,0),(.56,.026,8.0),beltmat);belt.parent=parent;local.append(belt)
+ if with_drum:
+  drum=PhotoMesh();lathe(drum,'photo',(0,.761,3.73),(1,0,0),(0,1,0),(0,0,1),
+      [(-.33,.11),(-.30,.16),(.30,.16),(.33,.11)],
+      lambda i,d,r,angle:(.25+angle/(2*math.pi)*.5,.3),sides=12)
+  add('drum',drum,{'photo':conveyor_photo.material()})
+ return parent,local
+conveyor_root,conveyor_parts=make_conveyor('conveyor')
+conveyor_end_root,conveyor_end_parts=make_conveyor('conveyor-end',True)
+
+# Formwork variants use photo-traced timber and concrete surfaces. The source
+# photographs were generated separately for this card by OpenAI ImageGen, 7 Nov 2026.
+fw_side=Photo(tex/'formwork-side.jpg'); fw_top=Photo(tex/'formwork-top.jpg')
+fw_rgb=fw_side.rgb(); fw_spread=fw_rgb.max(axis=2)-fw_rgb.min(axis=2)
+# Limit the photo-derived silhouette to the measured continuous timber form.
+# Weather grain inside the photo is not separate geometry.
+fw_mask=np.zeros(fw_rgb.shape[:2],dtype=bool)
+fw_mask[600:990,40:1000]=((fw_rgb[600:990,40:1000,0].astype(np.int16)-
+                           fw_rgb[600:990,40:1000,2])>12) & (fw_rgb[600:990,40:1000].mean(axis=2)<220)
+fw_mask[fw_mask.shape[0]-1,:]=False
+fw_mask=tidy(fw_mask,4)
+fw_candidates=trace(fw_mask,(40,600,1000,990),tolerance=10.0,min_area=500)
+fw_loops=sorted(fw_candidates,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1]
+  for a,b in zip(loop,loop[1:]+loop[:1]))),reverse=True)[:1]
+if not fw_loops: raise RuntimeError('formwork side photo trace is empty')
+fw_profile_top=min(py for loop in fw_loops for _,py in loop)
+fw_profile_ground=max(py for loop in fw_loops for _,py in loop)
+if fw_profile_ground<=fw_profile_top: raise RuntimeError('formwork side photo profile has no height')
+fw_side.bleed(fw_mask)
+fw_top_rgb=fw_top.rgb()
+form_roots=[]; form_pieces={}
+def make_formwork(identifier,width,depth):
+ parent=bpy.data.objects.new(identifier,None);bpy.context.collection.objects.link(parent);parent.parent=rootobj
+ pieces=[]
+ def add(name,mesh,materials):
+  obj=mesh.finish(f'{identifier}:{name}',materials);obj.parent=parent;pieces.append(obj);return obj
+ board_h=1.7; board_t=.22; inner_x=width-2*board_t; inner_z=depth-2*board_t
+ # Trace and extrude the weathered photographed side profile as real timber walls.
+ for hand in (-1,1):
+  mesh=PhotoMesh()
+  def side_world(px,py,d,h=hand):
+   z=(px-520)*(depth/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
+   return (h*(width/2-board_t/2)+d,y,z)
+  slab(mesh,'photo',fw_side,fw_loops,side_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
+  add('timber-wall-'+str(hand),mesh,{'photo':fw_side.material()})
+ # Close the end walls with the same measured profile, rotated across the footprint.
+ for hand in (-1,1):
+  mesh=PhotoMesh()
+  def end_world(px,py,d,h=hand):
+   x=(px-520)*(width/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
+   return (x,y,h*(depth/2-board_t/2)+d)
+  slab(mesh,'photo',fw_side,fw_loops,end_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
+  add('end-wall-'+str(hand),mesh,{'photo':fw_side.material()})
+ # Each concrete state uses only its own clean interior crop. Map that crop
+ # across small ground tiles, so every tile repeats real wet or set concrete
+ # rather than stretching the whole two-state overhead photo over one slab.
+ for label,crop,roughness in (
+   ('wet',(185,250,455,760),.28),('set',(565,180,825,850),.92)):
+  px0,py0,px1,py1=crop
+  mesh=PhotoMesh();tile=2.25;surface_y=.93
+  x=-inner_x/2
+  while x<inner_x/2-1e-5:
+   x1=min(x+tile,inner_x/2)
+   z=-inner_z/2
+   while z<inner_z/2-1e-5:
+    z1=min(z+tile,inner_z/2)
+    # A partial edge tile uses the same photo patch at its full scale.
+    u0,v0=fw_top.uv(px0,py0);u1,v1=fw_top.uv(px1,py1)
+    mesh.face(((x,surface_y,z),(x,surface_y,z1),(x1,surface_y,z1),(x1,surface_y,z)),
+      ((u0,v0),(u0,v1),(u1,v1),(u1,v0)),'photo',(0,1,0))
+    z=z1
+   x=x1
+  # The concrete is a shallow solid with a tiled photographed top and plain
+  # sides hidden behind the form walls.
+  add(label,mesh,{'photo':fw_top.material()})
+  mat=fw_top.material(roughness=.9).copy();mat.name=f'Formwork {label} concrete'
+  mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=roughness
+  mesh_obj=next(obj for obj in pieces if obj.name==f'{identifier}:{label}')
+  mesh_obj.data.materials.clear();mesh_obj.data.materials.append(mat)
+ # Four short bars sit just inside the form corners, from the slab surface up.
+ rebar=PhotoMesh()
+ for x in (-width*.43,width*.43):
+  for z in (-depth*.43,depth*.43):
+   lathe(rebar,'photo',(x,surface_y,z),(0,1,0),(1,0,0),(0,0,1),
+    [(0,.025),(.58,.025),(.60,.03)],
+    lambda i,d,r,angle:(.15+angle/(2*math.pi)*.72,.42),sides=6)
+ add('steel-stakes',rebar,{'photo':fw_side.material()})
+ # Corner posts close the joints. Timber braces run diagonally across all four
+ # walls, matching the deep boxed form in the side photograph.
+ for sx in (-1,1):
+  for sz in (-1,1):
+   post=town.cube(f'{identifier}:corner-post-{sx}-{sz}',
+     (sx*(width/2-board_t/2),board_h*.5,sz*(depth/2-board_t/2)),
+     (.34,board_h,.34),mats['weathered-plank'],.018)
+   post.parent=parent;pieces.append(post)
+   for along_x in (True,False):
+    if along_x:
+     a=(sx*(width/2-.27),.10,sz*(depth/2-.52))
+     b=(sx*(width/2-.27),board_h*.78,sz*(depth/2-.12))
+    else:
+     a=(sx*(width/2-.52),.10,sz*(depth/2-.27))
+     b=(sx*(width/2-.12),board_h*.78,sz*(depth/2-.27))
+    brace=town.beam(f'{identifier}:corner-brace-{sx}-{sz}-'+('x' if along_x else 'z'),
+      a,b,.16,mats['weathered-plank'])
+    brace.parent=parent;pieces.append(brace)
+ form_roots.append(parent);form_pieces[identifier]=pieces
+for identifier,width,depth in (('formwork-1',6.8,6.8),('formwork-2',6.8,14.8),
+                               ('formwork-3',14.8,6.8),('formwork-4',14.8,14.8)):
+ make_formwork(identifier,width,depth)
+for identifier in form_pieces:
+ meshes=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith(identifier+':')]
+ limit=1800 if identifier=='formwork-1' else 5000
+ triangles=sum(len(poly.vertices)-2 for obj in meshes for poly in obj.data.polygons)
+ print(f'{identifier.upper()} TRIANGLES {triangles} (limit {limit})')
+ if triangles>limit: raise RuntimeError(f'{identifier} has {triangles} triangles; budget {limit}')
+ for obj in meshes:
+  points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+  low=(min(p.x for p in points),min(p.z for p in points),-max(p.y for p in points))
+  high=(max(p.x for p in points),max(p.z for p in points),-min(p.y for p in points))
+  print(f'FORMWORK PIECE BOUNDS {obj.name}: X[{low[0]:.3f},{high[0]:.3f}] Y[{low[1]:.3f},{high[1]:.3f}] Z[{low[2]:.3f},{high[2]:.3f}]')
+  if low[1]<-.02: raise RuntimeError(f'{obj.name} falls below ground: {low}')
+  grounded=low[1]<=.03
+  touching=any(other is not obj and all(
+   min((other.matrix_world @ Vector(corner))[axis] for corner in other.bound_box)<=max(p[axis] for p in points)+.08 and
+   max((other.matrix_world @ Vector(corner))[axis] for corner in other.bound_box)>=min(p[axis] for p in points)-.08
+   for axis in range(3)) for other in meshes)
+  if not (grounded or touching): raise RuntimeError(f'{obj.name} touches neither ground nor another formwork piece')
+  print(f'CONTACT CHECK {obj.name}: {"ground" if grounded else "another piece"}')
+
+for piece_name,objects in (('conveyor',conveyor_parts),('conveyor-end',conveyor_end_parts)):
+ bounds=[]
+ for obj in objects:
+  points=[obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
+  low=tuple(round(min(v[i] for v in points),3) for i in range(3));high=tuple(round(max(v[i] for v in points),3) for i in range(3))
+  game_low=(low[0],low[2],-high[1]);game_high=(high[0],high[2],-low[1])
+  print(f'PIECE BOUNDS {obj.name}: game {game_low} .. {game_high}')
+  grounded=low[2] <= .01
+  touching=any(other is not obj and all(min((other.matrix_world @ v.co)[i] for v in other.data.vertices)<=high[i]+.04 and
+      max((other.matrix_world @ v.co)[i] for v in other.data.vertices)>=low[i]-.04 for i in range(3)) for other in objects)
+  if not (grounded or touching):raise RuntimeError(f'{obj.name} touches neither ground nor another conveyor piece')
+  print(f'CONTACT CHECK {obj.name}: {"ground" if grounded else "another piece"}')
+  bounds.extend(points)
+ low=tuple(min(v[i] for v in bounds) for i in range(3));high=tuple(max(v[i] for v in bounds) for i in range(3))
+ if high[0]-low[0]>.90 or high[1]-low[1]>8.01 or low[2]<-.01:raise RuntimeError(f'{piece_name} exceeds its 1 x 1 cell footprint: {low} .. {high}')
+ triangles=sum(len(poly.vertices)-2 for obj in objects for poly in obj.data.polygons)
+ print(f'{piece_name.upper()} TRIANGLES {triangles}')
+ if triangles>1800:raise RuntimeError(f'{piece_name} has {triangles} triangles; budget 1800')
 for obj in sorted((obj for obj in bpy.context.scene.objects
                    if obj.type=='MESH' and obj.name.startswith('wellhead:')),key=lambda obj:obj.name):
  print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
@@ -688,6 +1152,14 @@ print(f'RADAR TRIANGLES {radar_triangles}')
 for obj in sorted((obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith('radar:')),key=lambda obj:obj.name):
  print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
 if radar_triangles>1800:raise RuntimeError(f'radar has {radar_triangles} triangles; budget 1800')
+for obj in sorted((obj for obj in bpy.context.scene.objects
+                   if obj.type=='MESH' and obj.name.startswith('pump-station:')),key=lambda obj:obj.name):
+ print(f'PIECE TRIANGLES {obj.name}: {sum(len(poly.vertices)-2 for poly in obj.data.polygons)}')
+pump_triangles=sum(len(poly.vertices)-2 for obj in bpy.context.scene.objects
+                   if obj.type=='MESH' and obj.name.startswith('pump-station:')
+                   for poly in obj.data.polygons)
+print(f'PUMP STATION TRIANGLES {pump_triangles}')
+if pump_triangles>5000:raise RuntimeError(f'pump-station has {pump_triangles} triangles; budget 5000')
 # Several photo-carve calls open the same source again before their separate
 # edge bleeds. Reuse only byte-identical final images; different bleeds stay
 # distinct, so this reduces the GLB without changing any rendered pixels.
@@ -703,7 +1175,7 @@ for material in bpy.data.materials:
   if previous is None:image_versions[key]=image
   elif previous!=image:node.image=previous;deduplicated+=1
 print(f'IDENTICAL TEXTURE IMAGES REUSED {deduplicated}')
-# Keep the family GLB within its 3 MB card budget. Full-resolution source
+# Keep the family GLB within its 8 MB card budget. Full-resolution source
 # photos stay in textures/; only the embedded copies are resampled slightly.
 embedded_images={node.image for material in bpy.data.materials if material.use_nodes
                  for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image}
@@ -724,7 +1196,8 @@ if a.render:
  ground.node_tree.nodes.clear();ground_out=ground.node_tree.nodes.new('ShaderNodeOutputMaterial')
  ground_emission=ground.node_tree.nodes.new('ShaderNodeEmission');ground_emission.inputs['Color'].default_value=(.34,.34,.34,1)
  ground.node_tree.links.new(ground_emission.outputs['Emission'],ground_out.inputs['Surface']);floor.data.materials.append(ground)
- bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=1800;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=14
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=950;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=16
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((-9,9,10)));bpy.context.object.data.energy=650;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=18
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
@@ -773,10 +1246,81 @@ if a.render:
   if roll:cam.rotation_euler.rotate_axis('Z',roll)
   scene.camera=cam;scene.render.filepath=str(evidence/('radar-'+name+'.png'))
   bpy.ops.render.render(write_still=True)
- radar_shot('side',(26,3.8,0),(0,3.8,0),9.4,(1024,1536))
- radar_shot('front',(0,3.8,-28),(0,3.8,0),9.4,(1024,1536))
- radar_shot('rear',(0,3.8,28),(0,3.8,0),9.4,(1024,1536))
+ radar_shot('side',(26,5.8,0),(0,5.8,0),13.0,(1024,1536))
+ radar_shot('front',(0,5.8,-28),(0,5.8,0),13.0,(1024,1536))
+ radar_shot('rear',(0,5.8,28),(0,5.8,0),13.0,(1024,1536))
  radar_shot('above',(0,28,0),(0,0,0),7.4,(1024,1024),-math.pi/2)
- radar_shot('three-quarter-road',(13,8,-15),(0,3.8,0),12.0,(1000,750))
- radar_shot('three-quarter-rear',(-13,8,15),(0,3.8,0),12.0,(1000,750))
- radar_shot('mayor',(46,67,-46),(0,3.8,0),14.5,(1000,750))
+ radar_shot('three-quarter-road',(13,11,-15),(0,5.8,0),15.0,(1000,750))
+ radar_shot('three-quarter-rear',(-13,11,15),(0,5.8,0),15.0,(1000,750))
+ radar_shot('mayor',(46,67,-46),(0,5.8,0),16.0,(1000,750))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name=='pump-station:body' or node.name=='review-only ground')
+ def pump_shot(name,eye,target,scale,size,roll=0):
+  scene.render.resolution_x,scene.render.resolution_y=size
+  cam=camera('pump-station-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.filepath=str(evidence/('pump-station-'+name+'.png'))
+  bpy.ops.render.render(write_still=True)
+ # These four renders match the bare-body photos at the same orthographic cameras.
+ pump_shot('match-side',(24,2.875,0),(0,2.875,0),13.6,(1024,683))
+ pump_shot('match-front',(0,2.875,-24),(0,2.875,0),11.2,(1024,683))
+ pump_shot('match-rear',(0,2.875,24),(0,2.875,0),10.5,(1024,683))
+ pump_shot('match-above',(0,28,0),(0,0,0),12.0,(1024,1024))
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('pump-station:') or node.name=='review-only ground')
+ pump_shot('three-quarter-road',(18,10,-22),(0,2.8,0),19.5,(1000,700))
+ pump_shot('three-quarter-yard',(-18,10,22),(0,2.8,0),19.5,(1000,700))
+ pump_shot('mayor',(36,56,-36),(0,2.8,0),22.0,(1000,700))
+ for identifier in ('conveyor','conveyor-end'):
+  for node in scene.objects:
+   if node.type=='MESH':node.hide_render=not (node.name.startswith(identifier+':') or node.name=='review-only ground')
+  for view,eye,target,scale,size in (
+      ('side',(16,.42,0),(0,.42,0),9.6,(1024,341)),
+      ('front',(0,.42,-18),(0,.42,0),3.8,(1024,341)),
+      ('rear',(0,.42,18),(0,.42,0),3.8,(1024,341)),
+      ('above',(0,20,0),(0,0,0),9.6,(1024,341))):
+   cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+   scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
+   scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
+ for identifier,width,depth in (('formwork-1',6.8,6.8),('formwork-2',6.8,14.8),
+                                ('formwork-3',14.8,6.8),('formwork-4',14.8,14.8)):
+  for node in scene.objects:
+   if node.type=='MESH':node.hide_render=not (node.name.startswith(identifier+':') or node.name=='review-only ground')
+  span=max(width,depth)
+  for view,eye,target,scale,size in (
+    ('side',(span*1.7,.8,0),(0,.8,0),span*1.1,(1024,600)),
+    ('front',(0,.8,-span*1.7),(0,.8,0),span*1.1,(1024,600)),
+    ('rear',(0,.8,span*1.7),(0,.8,0),span*1.1,(1024,600)),
+    ('above',(0,span*2,0),(0,0,0),span*1.35,(1024,800)),
+    ('three-quarter-road',(span*1.3,span*.9,-span*1.3),(0,.8,0),span*2.15,(1000,750)),
+    ('three-quarter-rear',(-span*1.3,span*.9,span*1.3),(0,.8,0),span*2.15,(1000,750)),
+    ('mayor',(span*1.5,span*2,-span*1.5),(0,.8,0),span*2.5,(1000,750))):
+   cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+   scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
+   scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
+  for view,eye,target,scale in (
+      ('three-quarter-road',(11,6,-12),(0,.4,0),10),
+      ('three-quarter-yard',(-11,6,12),(0,.4,0),10),
+      ('mayor',(30,45,-30),(0,.4,0),16)):
+   cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+   scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=1000,700
+   scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
+ # Isolate the machine yard after import from the exported GLB. The four body
+ # matches use the same orthographic views as their source photos; the three
+ # scene views show the full yard with its buildings and loose pieces.
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name=='machine-yard:open-shed:body' or node.name=='review-only ground')
+ def yard_shot(name,eye,target,scale,size,roll=0):
+  cam=camera('machine-yard-'+name,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  if roll:cam.rotation_euler.rotate_axis('Z',roll)
+  scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
+  scene.render.filepath=str(evidence/('machine-yard-'+name+'.png'));bpy.ops.render.render(write_still=True)
+ yard_shot('match-side',(-42,2.8,4.5),(-12,2.8,4.5),20.5,(1024,341))
+ yard_shot('match-front',(-12,2.8,-30),(-12,2.8,4.5),12.6,(1024,512))
+ yard_shot('match-rear',(-12,2.8,39),(-12,2.8,4.5),12.6,(1024,508))
+ yard_shot('match-above',( -12,35,4.5),(-12,0,4.5),20.8,(1024,781),-math.pi/2)
+ for node in scene.objects:
+  if node.type=='MESH':node.hide_render=not (node.name.startswith('machine-yard:') or node.name=='review-only ground')
+ yard_shot('three-quarter-road',(29,24,-34),(0,1.6,0),54.0,(1000,700))
+ yard_shot('three-quarter-yard',(-31,23,31),(0,1.6,0),54.0,(1000,700))
+ yard_shot('mayor',(46,70,-48),(0,1.0,0),62.0,(1000,700))

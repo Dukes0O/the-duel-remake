@@ -1606,3 +1606,7 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - - 7 Nov: WW-ART-DAM-2 merged: the dam's hoist wheels, the old gear in its silt, and a deep spillway against the wall with its wrecks as one part. Lane tier 47/47 and build on afa2b6a04.
 - - 7 Nov: WW-ART-SEA merged: the gears, harbour wall, causeway, gate, ramp and arch, the Mule's gear wagon, the works camp, Mrs Vane, Magnus's big magnet and the water front. Lane tier 47/47 and build on 9d03f886e.
 - 7 Nov: TOWN-ART-OUTPOSTS done: diner, plane school, hermit camp, deck town, rail halt.
+- 7 Nov: TOWN-ART-SAFETY done: watchtower, clinic, fire station, guard post, gate, searchlight, hydrant, fences and walls.
+- 7 Nov: TOWN-ART-FOOD done: soup kitchen, market hall, canteen, stalls, greenhouse, shopfronts, goat pen, chicken run.
+- 8 Nov: TOWN-ART-PLANTS done: crusher, batch plant, conveyor, formwork, wellhead, pump station, radar, machine yard.
+- 8 Nov: TOWN-ART-FUN done: tavern, drive-in, wreck ring, big wheel, scrap coaster, mud pit, fun stalls, fountain, statue.

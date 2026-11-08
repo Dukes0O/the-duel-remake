@@ -1,0 +1,10 @@
+﻿OpenAI image-generation references for TOWN-ART-FUN. Each generated image was saved as an individual JPG at 1024 px maximum width. Sources are the built-in image generator outputs; prompts asked for one dead-on orthographic view on a plain grey studio ground, with no collage or perspective.
+
+fun-stall-a-side.jpg — single side elevation of a red-and-cream patched canvas pipe-frame stall.
+fun-stall-a-front.jpg — single front elevation of an empty rustic stall body.
+fun-stall-a-rear.jpg — single rear elevation of the patched stall body.
+fun-stall-a-top.jpg — straight-down plan view of the stall body.
+fun-stall-b-side.jpg — single side elevation of a mustard-and-red patched sweets stall.
+fun-stall-b-front.jpg — single front elevation of the empty sweets stall body.
+fun-stall-b-rear.jpg — single rear elevation of the stall body.
+fun-stall-b-top.jpg — straight-down plan view of the stall body.

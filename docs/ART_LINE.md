@@ -39,6 +39,9 @@ stop adjusting and change the method.
 6. **Moving parts are their own pieces,** with their origin on their true pivot.
 7. **Render from the exported model,** imported into an empty scene, beside the
    photo at the same camera, in flat light with the Standard view transform.
+   In Blender, give cameras a valid local up axis. For a camera tracking local
+   `-Z`, use local `Y` as up; using `Z` for both track and up creates an arbitrary
+   roll and can make a correct Y-up model look tipped.
 8. **Look at it yourself before you submit.** Then commit, including a poor
    result with honest scores. Never delete work because it falls short: Claude
    judges. Commit after every piece.
@@ -93,6 +96,10 @@ stop adjusting and change the method.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
   people). Generate a real photo set for a new colour.
+- **A photo shows two material states side by side.** Do not map that full
+  picture onto either state: both surfaces will show both materials. Crop the
+  requested state and repeat only that crop across its surface (formwork,
+  TOWN-ART-PLANTS, 7 November).
 
 ### Vehicles
 
@@ -150,8 +157,11 @@ stop adjusting and change the method.
 - **Dark studio pixels are rejected as sky.** `Photo.sky` ignores seeds whose mean is below 185. Use `lift_if_dark` on the measuring photo before flood-filling, and inspect the saved mask; this changes only the in-memory mask copy, not the packed source photo. Without it, a tower traced from the original fire-station composite includes the grey studio as a solid plate.
 - **Mirrored.** Check the front photo's `pick` direction: cans on a shelf swapping sides show it.
 - **Separately generated orthographic views can describe different aircraft.** Even with a shared prompt, front/rear/plan references may disagree with the side view on fuselage proportions, wing sweep, tail or engine placement. Compare landmarks across all grids before carving; a mathematically measured but unrelated end photo still produces broken geometry.
+- **Separate generated views can have different image sizes, framing and details.** A front photo with a taller canvas than the side photo can give the same figure two different measured heights; separate generations can also produce different faces and plate layouts. Use the first photo as an image reference for later views, check image dimensions and landmarks, scale each view to a shared physical landmark, and inspect the masks before carving.
 
 ### People
+
+- **A figure shows its face or arm twice from three-quarter views.** Flat views carve each limb square, and its corner faces wear the front and side photos at a slant. Set `round` to 2, and `ends_split` at the middle with `front_favour` and `rear_favour` at 3; carve a square plinth separately (the statue, 7 November).
 
 - **Legs shifted out from the hips, wide stance** (Kyle, 6 November). A leg pivot's
   offset was counted twice. Check each foot's world position against the photo.
@@ -166,9 +176,14 @@ stop adjusting and change the method.
   Blender render scene is Z-up. Convert camera positions and targets with the
   same game-to-Blender transform as the model before judging framing; inspect
   one whole-object shot before assembling the sheet. (WW-ART-SEA, 7 November.)
+- **A top-down comparison can be rolled a quarter turn.** The top photo may
+  already put the building's front at the top of the frame. Check the roof
+  courses and front edge against the source before copying another camera's
+  roll; a needless 90-degree roll turns both. (TOWN-ART-PLANTS, 7 November.)
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
+- **Wide seat-band cuts break a scaffold.** Removing horizontal seat bands from one whole stand mask also cuts through the posts and braces where they cross those bands, leaving broken supports. Trace seat rows as separate pieces and build or trace the open frame independently; inspect the full side view.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
@@ -200,6 +215,7 @@ stop adjusting and change the method.
 - **Check open drift meshes before UV export.** In Blender 4.5.13, the joined two-sided ship sand bank had loops pointing beyond its vertex list. `mesh.validate()` repaired the mesh before export; use a coarser source grid for this broad surface and validate meshes before assigning UVs.
 
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
+- A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,
   with labels off the pictures and no white gaps.
 - Photo beside model at the same camera, three-quarter views, the mayor's view
@@ -218,4 +234,11 @@ stop adjusting and change the method.
 - Never stop processes by matching a folder name: name each job's own process.
 
 - **Four-view generator sheets** (Kyle, 7 November). A prompt for multiple orthographic views can return a perspective collage or incompatible panel geometry, which cannot serve as measured photo references. Generate one dead-on orthographic view per image call; inspect it and regenerate any grid, extra view or perspective result.
+
+- **Isolated render sets can inherit hidden objects.** When rendering several buildings from one imported family scene, visibility flags left by a previous building can hide every piece of the next one and produce an empty grey view. Before each isolated render, explicitly show the selected root's descendants, hide other buildings, and show the review ground.
 - **A separately modeled moving assembly is duplicated in a tower trace.** Remove its measured silhouette from each static photo mask before 	race; otherwise dish faces and drive housings become fixed flat plates beside the real moving part. Check side and end masks against their photos.
+- **Low-chroma greenhouse glass can match a pale grey studio background and be carved out as a hole.** Compare the photo and mask at the same grid coordinates. Lower the `grey` chroma threshold enough to keep the pane in the silhouette while keeping the photo edge background outside; then check the roof mask and bleed in the render.
+- **Low-chroma silver steel can be flooded as sky in the top mask.** A pale studio and a roof of galvanized panels can make connected silver patches disappear from a top carve. The shopfront roof needed `grey: 5`; check that its top mask stays whole and all four silhouettes still match (7 November).
+- **Bevel modifiers can hide real triangle growth.** Count the evaluated meshes or read the exported GLB; raw cube faces undercount rounded parts. The shop sign bevels added 192 triangles per shop after export (7 November).
+
+- **Photo-mapped surfaces need the photo material assigned at export.** A surface can have measured UVs and still render as a flat colour if its shader is replaced after carving. Keep the source image on the exported material, then tune each copy's roughness for the intended state (TOWN-ART-PLANTS, 7 November).
