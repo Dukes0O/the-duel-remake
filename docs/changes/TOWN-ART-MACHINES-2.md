@@ -1,29 +1,22 @@
-# TOWN-ART-MACHINES-2 ? round 7
+# TOWN-ART-MACHINES-2 — round 8
 
 ## Changed
 
-- Rebuilt the mixer truck as a photo-carved cab/chassis with its photo-lathed drum, six individual photo-measured tyres, water tank, ladder, fenders and pivoting chute. The other six machines are unchanged.
-- Removed an unnecessary `ends_split`/`front_favour` treatment: the truck is one continuous body, and the cab-only front-photo weighting was producing a visible transition seam.
-- Corrected the drum's three-quarter work-pose rotation to use its local Blender Z axis. Added this review-axis fault to `docs/ART_LINE.md`.
-- Raised only the machines-2 family byte limit in `tools/test-blender-output.mjs` from 3 MB to 8 MB, as Claude approved on 8 November. No shape, joint, part or triangle assertion changed.
-- The rebuilt family is 3,879,516 bytes. The photo/model comparisons and rest/work views are in `docs/board/looks/town-art-machines-2/round-7.jpg` and its review note.
+- Generated and credited separate cab-only side, front, rear and overhead references. Replaced the mislabeled initial side reference with the correct side elevation after comparing its mask.
+- Replaced the round 7 full-truck carve with a `carve_object` cab carve. Added paired box chassis rails and cross members, a lathed fuel tank, cab glazing and weld details, a rear platform and loading hopper. Kept the round 7 wheels, drum lathe, drum rollers and chute pivot.
+- The cab masks intersect in a shallow shell about 0.47 m high. Added the welded shell and windows to make the cab readable; the result remains boxy and is submitted for Claude's judgment, not claimed as a pass.
+- Removed the unused full-truck top reference. The three full-truck side/end views still supply wheel measurements; the isolated drum photo still supplies the drum lathe.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: 384 checks passed, 0 failed.
-- Blender family export completed. Bounds printed for the body, drum, six wheels, water tank, ladder, fenders and chute. The six tyres meet the ground.
-- Reviewed the exported model beside the side, front, rear and top photos and in two three-quarter poses. The review note records the remaining seams, body gaps and view mismatches for Claude.
-- Browser checks: none run; Claude owns the look review for this art card.
-
-## Changed assertions
-
-- The machines-2 family size assertion changed from 3,000,000 to 8,000,000 bytes, including the registered generator size cap. This applies Claude's 8 November decision. All other assertions remain unchanged.
-
-## Race fingerprints
-
-Unchanged; no race or simulation code was edited.
+- Blender model export and six comparison renders completed on Blender 4.5.13.
+- `node tools/test-blender-output.mjs`: **384 checks passed, 0 failed** (complete run).
+- Exported family: **3,897,688 bytes** (8 MB cap). Mixer truck: **12,196 triangles** (15,000 cap). The truck bounds and wheel-ground bounds were printed by the recipe; all six tyres have a zero-height lower bound.
+- `round-8.jpg`: 231,820 bytes, below the 500 KB limit. It places each of the four photo/model views beside its paired render and includes both three-quarter poses.
+- No test assertions changed. No gameplay code changed; no race fingerprints apply.
+- Browser and in-game look checks were not run in this art lane. Claude should inspect the cab carve, front and overhead symmetry, wheel position under the body, and drum/chute motion on the sheet.
 
 ## Removed
 
-- Removed the obsolete `machines2-mixer-truck-views.jpg` credit line. The separate mixer-truck photo references remain credited.
-- Replaced the prior machines-2 family GLB with the rebuilt family export.
+- Removed `mixer-truck-top.jpg` and its credit line because the cab-only carve no longer uses it.
+- Removed the static photo-carved full-truck body from the round 7 recipe; the moving drum remains only as the named lathe assembly.
