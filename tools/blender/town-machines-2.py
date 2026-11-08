@@ -249,7 +249,7 @@ def basic_family():
    yy=lo+(hi-lo)*j/(count-1)
    box(id+' lower track pad',(x,yy,.18),(.68,.20,.11),steel,track_parent,.03)
    box(id+' upper track pad',(x,yy,.98),(.68,.20,.11),black,track_parent,.03)
-# Mixer: three real axles carry a tilted tapered drum; spiral flights, ladder and chute read at a distance.
+# Mixer: a whole-truck photo carve leaves the drum as its only turning part.
  mixer=empty('mixer-truck',(0,0,0),root)
  from photo_model import Photo, Mesh as PhotoMesh, lathe
  from photo_carve import carve_object
@@ -258,16 +258,42 @@ def basic_family():
  side_photo=Photo(mixer_textures/'mixer-truck-side.jpg')
  front_photo=Photo(mixer_textures/'mixer-truck-front.jpg')
  rear_photo=Photo(mixer_textures/'mixer-truck-rear.jpg')
+ top_photo=Photo(mixer_textures/'mixer-truck-top.jpg')
  drum_photo=Photo(mixer_textures/'mixer-drum-side.jpg')
- # Grid measurements: 8.5 m between x=20 and x=991; 0.62 m wheel radius
- # from the 70 px side radius. The full front and rear views set their own tops.
- mixer_length,mixer_width,mixer_height=8.5,4.0,4.0
- side_scale=mixer_length/(991-20)
- wheel_radius=(486-415)*side_scale
- wheel_half=.21
- track=1.16
- axle_rows=[(178,415),(618,415),(784,415)]
- axle_z=[-mixer_length/2+(px-20)*side_scale for px,_ in axle_rows]
+ # Grid measurements: 8.5 m across side pixels 26–1945; 0.69 m wheel radius
+ # from the 155 px side radius. End views use their own stated top rows.
+ mixer_length,mixer_width,mixer_height=8.5,2.35,3.10
+ side_scale=mixer_length/(1945-26)
+ wheel_radius=(757-602)*side_scale
+ wheel_half=.19
+ track=.74
+ axle_rows=[(231,602),(1195,602),(1620,602)]
+ axle_z=[-mixer_length/2+(px-26)*side_scale for px,_ in axle_rows]
+ mixer_wheels=[(z,wheel_radius,track-wheel_half) for z in axle_z]
+ def keep_mixer_body(x,y,z):
+  # The side and plan silhouettes enclose the open channel between the rails.
+  frame_gap=(abs(x)<.53)&(y<1.22)&(z>-.35)&(z<3.28)
+  return ~frame_gap
+ mixer_body_table={
+  'photos':{'side':'mixer-truck-side.jpg','front':'mixer-truck-front.jpg',
+            'rear':'mixer-truck-rear.jpg','top':'mixer-truck-top.jpg'},
+  'length':mixer_length,'width':mixer_width,'height':mixer_height,
+  'side':{'start':26,'end':1945,'ground':757},
+  'front':{'centre':622,'ground':1333,'top':74},
+  'rear':{'centre':627,'ground':1325,'top':68},
+  'top':{'front':26,'rear':1945,'centre':396,'along':'x','x_scale':2.35/(620-140)},
+  'underside':.12,'wheels':mixer_wheels,'keep':keep_mixer_body,
+  'cut':{'side':[(0,740,1983,793)],'front':[(0,1295,1241,1408)],'rear':[(0,1290,1254,1394)]},
+  'voxel':.035,'target':8200,'grey':20,'tolerance':30,'bleed_tolerance':32,
+  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-9/masks')}
+ mixer_body=carve_object('mixer-truck:body',mixer_textures,mixer_body_table)
+ parent(mixer_body,mixer)
+ mixer_piece_roots=[('mixer-truck:body',mixer_body)]
+ bpy.context.view_layer.update()
+ body_vertices=[vertex.co[:] for vertex in mixer_body.data.vertices]
+ print('MIXER BODY BOUNDS','min',tuple(round(min(v[i] for v in body_vertices),3) for i in range(3)),
+       'max',tuple(round(max(v[i] for v in body_vertices),3) for i in range(3)))
+
  def mixer_material(name,color,roughness,metallic=0):
   material=bpy.data.materials.new(name);material.diffuse_color=(*color,1);material.use_nodes=True
   bsdf=material.node_tree.nodes['Principled BSDF'];bsdf.inputs['Base Color'].default_value=(*color,1)
@@ -282,127 +308,49 @@ def basic_family():
   return beam(name,game_vector(a),game_vector(b),radius,material,par)
  def mixer_attach(obj,par,point=(0,0,0)):
   obj.parent=par;obj.matrix_parent_inverse.identity();obj.location=game_vector(point)
- def mixer_game_cylinder(name,center,radius,depth,material,axis='X',vertices=32,par=None):
-  direction=Vector((1,0,0)) if axis=='X' else Vector((0,0,1))
-  bpy.ops.mesh.primitive_cylinder_add(vertices=vertices,radius=radius,depth=depth,location=game_vector(center))
-  obj=bpy.context.object;obj.name=name;obj.rotation_euler=direction.to_track_quat('Z','Y').to_euler()
-  obj.data.materials.append(material);obj.data.uv_layers.new(name='UVMap')
-  if par:parent(obj,par)
-  return obj
-
- # The cab is the only photo-carved shell. Chassis, tank and drum are built parts.
- # The truck references are retained only for wheel treads and the drum lathe.
- drum_center=(0,2.38,.75)
- mixer_piece_roots=[]
- cab_table={
-  'photos':{'side':'mixer-cab-side.jpg','front':'mixer-cab-front.jpg',
-            'rear':'mixer-cab-rear.jpg','top':'mixer-cab-top.jpg'},
-  'length':3.35,'width':2.95,'height':3.12,
-  'side':{'start':74,'end':951,'ground':622},
-  'front':{'centre':512,'ground':642,'top':32},
-  'rear':{'centre':512,'ground':642,'top':32},
-  'top':{'front':628,'rear':58,'centre':512},
-  'underside':.18,'round':2,'voxel':.035,'target':6200,
-  'grey':12,'tolerance':22,'bleed_tolerance':24,
-  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-8/masks')}
- cab_body=carve_object('mixer-truck:cab',mixer_textures,cab_table)
- parent(cab_body,mixer);cab_body.location=game_vector((0,0,-2.05))
- mixer_piece_roots.append(('mixer-truck:cab',cab_body))
- # Welded cab fittings reinforce the photo-carved shell at its seams and glazing.
- mixer_game_box('mixer cab lower yellow shell',(0,1.28,-2.05),(2.78,.72,2.64),paint,mixer,.10)
- mixer_game_box('mixer cab roof',(0,3.25,-2.05),(2.86,.22,2.72),paint,mixer,.10)
- mixer_game_box('mixer cab windscreen',(0,2.48,-3.40),(2.34,1.22,.045),glass,mixer,.035)
- mixer_game_box('mixer cab rear window',(0,2.48,-.70),(2.22,1.12,.045),glass,mixer,.035)
- for sx in (-1,1):
-  mixer_game_box('mixer cab side window',(sx*1.39,2.48,-2.05),(.045,1.06,1.70),glass,mixer,.03)
-  for zz in (-3.37,-.73):mixer_game_box('mixer cab welded window pillar',(sx*1.36,2.46,zz),(.14,1.43,.18),paint,mixer,.035)
- # Rear service platform and the hopper mouth sit on the chassis, clear of the drum.
- mixer_game_box('mixer rear steel service platform',(0,1.14,3.12),(1.74,.16,1.02),mixer_steel,mixer,.04)
- mixer_game_box('mixer concrete loading hopper',(0,3.05,-.12),(1.72,.86,.82),mixer_yellow,mixer,.07)
- mixer_game_box('mixer hopper throat',(0,2.56,-.12),(1.02,.22,.58),mixer_steel,mixer,.04)
- # Twin ladder rails and three cross-members carry the drum cradles and cab.
- for sx in (-1,1):
-  rail=mixer_game_box('mixer chassis box rail',(sx*.78,.76,-.68),(.25,.42,7.25),black,mixer,.055)
-  mixer_piece_roots.append((f'mixer-truck:chassis-rail-{sx}',rail))
- for yy in (-2.95,-1.55,.15,1.55,2.95):
-  mixer_game_box('mixer chassis cross member',(0,.76,yy),(1.82,.32,.22),mixer_steel,mixer,.035)
- # Fuel tank and water tank are independent turned drums strapped to the rails.
- fuel=empty('mixer-truck:fuel-tank',(0,0,0),mixer);mixer_piece_roots.append(('mixer-truck:fuel-tank',fuel))
- fuel_mesh=PhotoMesh();lathe(fuel_mesh,'steel',(0,0,0),(1,0,0),(0,1,0),(0,0,1),
-  [(-.67,.30),(-.60,.38),(.60,.38),(.67,.30)],lambda i,d,r,a:(.5+d,.5+.5*math.sin(a)),sides=24)
- fuel_body=fuel_mesh.finish('mixer fuel tank lathe',{'steel':mixer_steel});mixer_attach(fuel_body,fuel,(0,1.16,-2.0))
- for sx in (-1,1):mixer_game_beam('mixer fuel tank strap',(sx*.45,1.02,-2.0),(sx*.45,1.38,-2.0),.035,mixer_steel,fuel)
+ # The body photo carve includes the bonnet, cab, frame, empty drum supports,
+ # hopper, ladder and tanks. The drum below is a separate turning assembly.
+ drum_center=(0,2.30,.75)
  drum=empty('mixer-truck:drum',game_vector(drum_center),mixer)
  mixer_piece_roots.append(('mixer-truck:drum',drum))
  drum.rotation_euler[0]=-.17
  drum_mesh=PhotoMesh()
- drum_stations=[(-2.14,.13),(-1.90,.33),(-1.48,.58),(-.98,.80),(-.40,.96),(.72,.96),(1.42,.93),(1.93,1.01),(2.13,1.08)]
+ drum_stations=[(-2.14,.31),(-2.02,.48),(-1.78,.72),(-1.48,.89),(-1.16,.97),(.55,.97),(1.15,.99),(1.52,.96),(1.82,.82),(2.02,.57),(2.13,.31)]
  def drum_uv(index,distance,radius,angle):
   px=512+distance*(1002/4.27)
   py=310-radius*math.sin(angle)*(228/1.08)
   return drum_photo.uv(px,py)
- lathe(drum_mesh,'drum',(0,0,0),(0,0,1),(1,0,0),(0,1,0),drum_stations,drum_uv,sides=48)
+ lathe(drum_mesh,'drum',(0,0,0),(0,0,1),(1,0,0),(0,1,0),drum_stations,drum_uv,sides=48,
+       cap_start=('drum',lambda angle,fraction:drum_photo.uv(12,310-.31*fraction*(228/1.08))))
  drum_shell=drum_mesh.finish('mixer-truck:drum:photo-lathe',{'drum':drum_photo.material()})
  mixer_attach(drum_shell,drum)
+ # The inside wall tapers to a closed front while the rear mouth stays open.
  drum_inner=PhotoMesh()
- lathe(drum_inner,'concrete',(0,0,0),(0,0,1),(1,0,0),(0,1,0),[(1.98,.80)],
-       lambda i,d,r,a:drum_photo.uv(512+d*(1002/4.27),310-r*math.sin(a)*(228/1.08),),
-       cap_end=('concrete',lambda a,f:drum_photo.uv(512+1.98*(1002/4.27),310-.80*f*math.sin(a)*(228/1.08))))
- inner=drum_inner.finish('mixer drum grey concrete inside',{'concrete':mixer_dark});mixer_attach(inner,drum)
- # Reinforcing hoops and roller contact bands follow the same tilted axis.
- for idx,(dist,rad) in enumerate(((-1.28,.88),(1.32,.87))):
-  band=PhotoMesh()
-  lathe(band,'drum',(0,0,0),(0,0,1),(1,0,0),(0,1,0),
-        [(dist-.055,rad-.035),(dist-.035,rad),(dist+.035,rad),(dist+.055,rad-.035)],drum_uv,sides=40)
-  obj=band.finish(f'mixer drum steel wear hoop {idx+1}',{'drum':drum_photo.material()});mixer_attach(obj,drum)
- # Four rollers seat the drum on the welded cradle, and two rails tie it to chassis.
- for zi in (-.55,1.95):
-  axis_y=2.38+.17*(zi-.75)
-  for sx in (-1,1):
-   mixer_game_cylinder('mixer drum support roller',(sx*.68,axis_y-.62,zi),.18,.30,mixer_steel,'X',24,mixer)
- for sx in (-1,1):
-  mixer_game_beam('mixer welded drum cradle rail',(sx*.72,.94,-.80),(sx*.72,1.50,2.80),.075,steel,mixer)
-
+ inner_stations=[(2.12,.23),(1.98,.48),(1.70,.70),(1.42,.83),(1.05,.89),(-1.08,.89),(-1.43,.78),(-1.70,.56),(-1.82,.27)]
+ lathe(drum_inner,'concrete',(0,0,0),(0,0,1),(1,0,0),(0,1,0),inner_stations,
+       lambda i,d,r,a:drum_photo.uv(512+d*(1002/4.27),310-r*math.sin(a)*(228/1.08)),sides=40,
+       cap_end=('concrete',lambda a,f:drum_photo.uv(512-1.82*(1002/4.27),310-.27*f*math.sin(a)*(228/1.08))))
+ inner=drum_inner.finish('mixer drum dark inner wall and closed nose',{'concrete':mixer_dark});mixer_attach(inner,drum)
  # Six individual photo-measured tyres, one at each of the three axle stations.
- end_scales={'front':mixer_height/(913-37),'rear':mixer_height/(916-32)}
+ end_scales={'front':mixer_height/(1333-74),'rear':mixer_height/(1325-68)}
  for axle_index,((side_px,side_py),z) in enumerate(zip(axle_rows,axle_z)):
   end_key='front' if axle_index==0 else 'rear'
-  end_photo={'front':front_photo,'rear':rear_photo}[end_key]
-  end_centre=512;end_scale=end_scales[end_key]
+  end_photo=mixer_body_table['_photos'][end_key]
+  end_centre=622 if end_key=='front' else 627;end_scale=end_scales[end_key]
   for sx in (-1,1):
    tire_mesh=PhotoMesh();end_cx=end_centre+sx*track/end_scale
-   tyre(tire_mesh,'side',side_photo,side_px,side_py,70,wheel_radius,wheel_half,
+   tyre(tire_mesh,'side',side_photo,side_px,side_py,155,wheel_radius,wheel_half,
         end_key,end_photo,end_cx,wheel_half/end_scale*.9,
-        (913 if end_key=='front' else 916)-wheel_radius/end_scale,
-        (913 if end_key=='front' else 916)-wheel_radius*.08/end_scale,sides=32)
+        (1333 if end_key=='front' else 1325)-wheel_radius/end_scale,
+        (1333 if end_key=='front' else 1325)-wheel_radius*.08/end_scale,sides=32)
    wheel=tire_mesh.finish(f'mixer-truck:wheel-{axle_index+1}-{"left" if sx<0 else "right"}',
        {'side':side_photo.material(),end_key:end_photo.material()})
    mixer_attach(wheel,mixer,(sx*track,wheel_radius,z))
    mixer_piece_roots.append((wheel.name,wheel))
    print('MIXER WHEEL BOUNDS',axle_index+1,sx,round(sx*track-wheel_half,3),round(sx*track+wheel_half,3),0,round(2*wheel_radius,3),round(z,3))
 
- # The tank, ladder and fenders are separate fittings seated on the carved frame.
- water_tank=empty('mixer-truck:water-tank',(0,0,0),mixer)
- mixer_piece_roots.append(('mixer-truck:water-tank',water_tank))
- mixer_game_cylinder('mixer strapped water tank',(0,2.28,-1.48),.47,1.00,mixer_yellow,'X',32,water_tank)
- for sx in (-1,1):
-  mixer_game_beam('water tank cradle strap',(sx*.52,1.86,-1.86),(sx*.52,1.86,-1.10),.035,mixer_steel,water_tank)
- ladder=empty('mixer-truck:ladder',(0,0,0),mixer)
- mixer_piece_roots.append(('mixer-truck:ladder',ladder))
- for lx in (-.12,.30):
-  mixer_game_beam('mixer ladder rail',(lx,.93,2.82),(lx,3.30,2.96),.045,mixer_yellow,ladder)
- for rung in range(8):
-  yy=.12+rung*.29+.93
-  mixer_game_beam('mixer ladder rung',(-.14,yy,2.84),(.32,yy,2.84),.035,mixer_steel,ladder)
- fenders=empty('mixer-truck:fenders',(0,0,0),mixer)
- mixer_piece_roots.append(('mixer-truck:fenders',fenders))
- for axle_index,z in enumerate(axle_z):
-  for sx in (-1,1):
-   points=[]
-   for step in range(9):
-    angle=math.radians(22+step*17)
-    points.append((sx*(track+.02),wheel_radius+.08+math.sin(angle)*.70,z+math.cos(angle)*.70))
-   for p0,p1 in zip(points,points[1:]):mixer_game_beam('mixer pressed steel wheel fender',p0,p1,.055,mixer_yellow,fenders)
+ # Pedestals, support rollers, tanks, ladder and fenders are already present
+ # in the truck carve, so only the separately moving drum and chute are added.
 
  # A latched return chute pivots just below the drum mouth. Positive X rotation
  # lowers its rear end into the work position used by the review render.
@@ -427,9 +375,7 @@ def basic_family():
   if not points:return None
   game=[(point[0],point[2],-point[1]) for point in points]
   return tuple(min(p[i] for p in game) for i in range(3)),tuple(max(p[i] for p in game) for i in range(3))
- # Each fitting stays inside the measured whole-truck envelope; the chassis
- # rails run beneath the cab and drum so all assemblies have a physical seat.
- body_bounds=((-1.65,0,-4.35),(1.65,4.5,4.35))
+ body_bounds=mixer_bounds(mixer_body)
  for label,piece in mixer_piece_roots:
   bounds=mixer_bounds(piece)
   if bounds is None:raise RuntimeError(f'{label} has no mesh')
@@ -439,7 +385,7 @@ def basic_family():
    raise RuntimeError(f'{label} extends outside the mixer truck 2x2-cell footprint')
   if label.startswith('mixer-truck:wheel-') and (abs(lo[1])>.035 or abs(hi[1]-2*wheel_radius)>.08):
    raise RuntimeError(f'{label} does not touch the ground at its measured radius')
-  if label!='mixer-truck:cab' and label.startswith('mixer-truck:wheel-') is False:
+  if label!='mixer-truck:body' and label.startswith('mixer-truck:wheel-') is False:
    if any(hi[i] < body_bounds[0][i]-.18 or lo[i] > body_bounds[1][i]+.18 for i in range(3)):
     raise RuntimeError(f'{label} does not touch the carved chassis/body envelope')
  # Roller: smooth drum, sculpted rear hood, open canopy and a visible yoke.
@@ -633,24 +579,20 @@ if a.render:
   light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((11,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
  ev.mkdir(parents=True,exist_ok=True)
  joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('mixer-truck:')}
- def mixer_cam(label,location,target,scale,width,height,ortho=True):
+ def mixer_cam(label,location,target,scale,width,height,ortho=True,up='Y'):
   scene.render.resolution_x=width;scene.render.resolution_y=height
   bpy.ops.object.camera_add(location=location);cam=bpy.context.object
-  cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z','Y').to_euler()
+  cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler()
   cam.data.type='ORTHO' if ortho else 'PERSP'
   if ortho:cam.data.ortho_scale=scale
   else:cam.data.lens=56
   scene.camera=cam;scene.render.filepath=str(ev/f'mixer-truck-{label}-model.png')
   bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
- mixer_cam('side',(-7,0,2.05),(11,0,2.05),10.7,1024,576)
+ mixer_cam('side',(-7,0,2.05),(11,0,2.05),10.7,1600,640)
  mixer_cam('front',(11,15,2.0),(11,0,2.0),5.2,1024,1024)
  mixer_cam('rear',(11,-15,2.0),(11,0,2.0),5.2,1024,1024)
- bpy.ops.object.camera_add(location=(11,0,18));top_cam=bpy.context.object
- top_cam.rotation_euler=(Vector((11,0,0))-top_cam.location).to_track_quat('-Z','Y').to_euler()
- top_cam.data.type='ORTHO';top_cam.data.ortho_scale=10.7
- scene.camera=top_cam;scene.render.resolution_x=1024;scene.render.resolution_y=1024
- scene.render.filepath=str(ev/'mixer-truck-top-model.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(top_cam,do_unlink=True)
+ mixer_cam('top',(11,0,18),(11,0,0),10.7,640,1600)
  joints['mixer-truck:drum'].rotation_euler[2]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
  mixer_cam('three-quarter-rest',(23,-14,10),(11,0,1.9),10.5,1024,768,False)
  joints['mixer-truck:drum'].rotation_euler[2]=1.0;joints['mixer-truck:chute'].rotation_euler[0]=.55
