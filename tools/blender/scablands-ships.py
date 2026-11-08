@@ -113,6 +113,8 @@ if args.render_view:
     bpy.ops.wm.open_mainfile(filepath=str(review_scene))
     scene = bpy.context.scene
     camera_view = args.render_view
+    if camera_view.startswith('pilot-boat-'):
+        camera_view = 'whole'
     if camera_view.startswith(('port-', 'starboard-')):
         camera_view = {'good-hope':'hope','marigold':'marigold','patience':'patience'}[camera_view.split('-',1)[1]]
     scene.camera = bpy.data.objects[f'review-camera-{camera_view}']
@@ -133,15 +135,15 @@ if args.render_view:
             set_tree_visibility(name, False)
         for obj in scene.objects:
             if obj.name == 'lake-bed geometry': obj.hide_render = True
-        target = Vector((230, 1.1, -430))
+        target = Vector((230, 430, 1.1))
         if args.render_view == 'pilot-boat-road':
-            scene.camera.location = Vector((246, -1.2, -446))
+            scene.camera.location = Vector((247.9, 445, -1.2))
             scene.camera.data.lens = 38
         elif args.render_view == 'pilot-boat-side':
-            scene.camera.location = Vector((230, -1.2, -452))
+            scene.camera.location = Vector((230, 452, -1.2))
             scene.camera.data.lens = 45
         else:
-            scene.camera.location = Vector((246, 20, -446))
+            scene.camera.location = Vector((251, 451, 22.3))
             scene.camera.data.lens = 38
         scene.camera.rotation_euler = (target-scene.camera.location).to_track_quat('-Z','Y').to_euler()
         scene.render.resolution_x, scene.render.resolution_y = 1200, 900
@@ -1806,7 +1808,11 @@ if args.stage == 'family':
         for j in range(9):
             a=i*9+j; b=i*9+(j+1)%9
             faces.append((a,b,b+9,a+9))
-            uvs.append(((stations[i][0]+.5, j/9),(stations[i][0]+.5,(j+1)/9),(stations[i+1][0]+.5,(j+1)/9),(stations[i+1][0]+.5,j/9)))
+            def hull_uv(vertex_index):
+                station_index=vertex_index//9; section_index=vertex_index%9
+                yy=rings[station_index][section_index][1]
+                return (stations[station_index][0]+.5,.12+(yy+.50)/2.08*.70)
+            uvs.append(tuple(hull_uv(index) for index in (a,b,b+9,a+9)))
     faces.extend((tuple(range(8,-1,-1)),tuple((len(rings)-1)*9+j for j in range(9))))
     hull_mesh=bpy.data.meshes.new('twelve-station deep vee hull'); hull_mesh.from_pydata(verts,[],faces); hull_mesh.materials.append(pilot_photo); hull_mesh.update()
     hull=bpy.data.objects.new('pilot-boat:floatable-hull',hull_mesh); scene.collection.objects.link(hull); hull['part']='pilot-boat'; parent(hull,boat)
@@ -1826,11 +1832,11 @@ if args.stage == 'family':
     # side windows and forward raked panes set behind the painted house face
     for side in (-1,1):
         for i,x in enumerate((-1.65,-.72,.22,1.18)):
-            pane=cube(f'pilot-boat-side-glass-{side}-{i}',(x,2.72,side*1.215),(.72,.48,.025),glass,'pilot-boat',.025); parent(pane,boat)
+            pane=cube(f'pilot-boat-side-glass-{side}-{i}',(x,2.72,side*1.36),(.72,.48,.025),glass,'pilot-boat',.025); parent(pane,boat)
         rail(f'pilot-boat-foredeck-rail-{side}',(3.4,1.92,side*1.3),(5.4,1.92,side*1.1),.035,steel,'pilot-boat')
         rail(f'pilot-boat-aft-rail-{side}',(-5.8,1.92,side*1.15),(-3.25,1.92,side*1.30),.035,steel,'pilot-boat')
         for x in (-5.8,-4.8,3.2,4.4): rail(f'pilot-boat-rail-post-{side}-{x}',(x,1.58,side*1.18),(x,1.92,side*1.18),.035,steel,'pilot-boat')
-    wind=cube('pilot-boat-raked-windscreen',(2.28,2.75,0),(.025,.68,2.16),glass,'pilot-boat',.01); wind.rotation_euler[2]=math.radians(-7); parent(wind,boat)
+    wind=cube('pilot-boat-raked-windscreen',(2.59,2.75,0),(.025,.68,2.16),glass,'pilot-boat',.01); wind.rotation_euler[2]=math.radians(-7); parent(wind,boat)
     # mast, searchlight, horn and aft life rings
     rail('pilot-boat-mast',(0,3.66,0),(0,4.72,0),.035,steel,'pilot-boat')
     rail('pilot-boat-searchlight',(0,3.55,0),(0,3.78,.2),.12,iron,'pilot-boat')
@@ -1844,8 +1850,10 @@ if args.stage == 'family':
         beam(f'pilot-trailer-timber-bunk-{side}',(-5.5,.36,side*1.12),(5.6,.36,side*1.12),.20,wood,'pilot-boat',.16)
         for axle,x in enumerate((-4.2,0,4.2)):
             z=side*1.9; wheel_y=-.83
-            torus(f'pilot-trailer-road-tyre-{side}-{axle}',(x,wheel_y,z),.65,.22,iron,'pilot-boat','Y',20,8)
-            torus(f'pilot-trailer-inner-dual-{side}-{axle}',(x,wheel_y,z-side*.42),.65,.19,iron,'pilot-boat','Y',20,8)
+            wheel=torus(f'pilot-trailer-road-tyre-{side}-{axle}',(x,wheel_y,z),.65,.22,iron,'pilot-boat','Z',16,6)
+            wheel.rotation_euler[0]=math.pi/2
+            dual=torus(f'pilot-trailer-inner-dual-{side}-{axle}',(x,wheel_y,z-side*.42),.65,.19,iron,'pilot-boat','Z',16,6)
+            dual.rotation_euler[0]=math.pi/2
             cylinder(f'pilot-trailer-rim-{side}-{axle}',(x,wheel_y,z+side*.20),.38,.10,steel,'pilot-boat',16,'Z')
     for x in (-4.8,-1.8,1.6,4.4):
         # bright ratchet webbing arcs above the load and anchors to the frame
@@ -1853,10 +1861,15 @@ if args.stage == 'family':
         beam(f'pilot-boat-yellow-ratchet-strap-return-{x}',(x,2.85,0),(x,-.02,1.25),.055,strap_yellow,'pilot-boat',.04)
     sign=cube('pilot-trailer-wide-load-board',(-6.2,.52,0),(1.45,.68,2.5),wood,'pilot-boat',.03); parent(sign,boat)
     signmat=matte_material('Pilot boat / sign lettering red',(.72,.08,.025))
-    text_data=bpy.data.curves.new('WIDE LOAD hand painted','FONT'); text_data.body='WIDE LOAD'; text_data.size=.28; text_data.extrude=.003
+    text_data=bpy.data.curves.new('WIDE LOAD hand painted','FONT'); text_data.body='WIDE LOAD'; text_data.size=.28; text_data.extrude=0; text_data.resolution_u=1
     text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((-6.9,.56,0)); text_obj.rotation_euler=(math.pi/2,0,math.pi/2); text_obj.data.materials.append(signmat); text_obj['part']='pilot-boat'; parent(text_obj,boat)
     trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
     hitch=beam('pilot-trailer-hitch-coupler',(10.5,-.02,0),(11.4,-.02,0),.20,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
+    # Geometry helpers create world-scoped objects; keep every named fitting
+    # under the boat root so the exported boat view carries its trailer along.
+    for obj in list(scene.objects):
+        if obj.name.startswith(('pilot-boat-', 'pilot-trailer-')) and obj.parent is None:
+            parent(obj, boat)
 
 # Separate heaps bank the bows and one quarter point on both sides. Each foot
 # reaches 8 m onto the ground; the gaps expose the hull against a flat bed.

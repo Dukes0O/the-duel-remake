@@ -556,3 +556,16 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - `round-18.jpg` and `round-18-review.md`; round 19 is the single current sheet.
+
+## Pilot boat round 1 (8 November 2026)
+
+- Replaced the photo-box hull with a 12-station, deep-vee loft; added a separate raked pilot house with dark side and forward glazing, rails, roof mast and light, life rings, a high steel ladder-frame trailer with three dual-wheel axles, timber bunks, four yellow straps, an A-frame hitch and a `WIDE LOAD` board. Kept the source pilot-boat photograph as hull paint. No new image was added.
+- Rendered and inspected `.qa-dist/check-pilot-boat-road.png`, `check-pilot-boat-side.png` and `check-pilot-boat-above.png`, each 1200 x 900. The road view shows the hull and wheels; the overhead view shows the full frame and hitch. Claude should judge the blank-looking pilot-house body, rails crossing the hull in the low views, the small sign, and the funny factor. No sheet was made; Claude makes it.
+- Final GLB read-back: pilot boat and trailer 4,150 triangles (including the hitch and lettering); whole file 35,925 triangles and 2,755,580 bytes. Budgets pass. No automatic reduction was used. Named trims: tyre torus detail changed from 20 x 8 to 16 x 6 segments, and the `WIDE LOAD` lettering curve resolution was lowered to 1 (66 triangles).
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. Browser checks and final art judgment are Claude's. Lane tier and build were not run, as required for art cards.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Replaced the old box-like photo hull, cabin overlays and short trailer with the lofted hull and 14 m trailer assembly. Removed no source photos or prior ship and lighthouse parts.
+- No trial models or new images remain in runtime folders. Round 20 render evidence is in `.qa-dist/` for Claude's review.
