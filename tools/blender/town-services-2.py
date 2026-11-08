@@ -149,15 +149,6 @@ for n in ids:
    box('toll-bank:barrier-stripe',(x,1.10,-5.29),(.60,.18,.035),paint if index%2==0 else dark,.012,b)
   box('toll-bank:barrier-catcher',(-4.05,.32,-5.18),(.18,.64,.18),steel,.025,b)
 
-  # Fastener heads add depth to the photographed plate seams without filling
-  # the door opening. The front and side carry their own rows.
-  for x in (-3.35,-2.25,2.25,3.35):
-   for y in (.42,.82,1.45,1.72):
-    rivet=cyl('toll-bank:wall-rivet',(x,y,front_z+.12),.045,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
-  for z in (-3.3,-2.0,0,2.0,3.3):
-   for y in (.45,1.65):
-    for xside in (-3.77,3.77):
-     rivet=cyl('toll-bank:side-rivet',(xside,y,z),.035,.05,tin,8,b);rivet.rotation_euler[1]=math.pi/2
   continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
@@ -338,16 +329,22 @@ if a.review:
   if obj==ground or obj==light or obj==fill:continue
   obj.hide_render=not within(obj,target_root)
  camera_data=bpy.data.cameras.new('orthographic matched review camera');camera=bpy.data.objects.new('orthographic matched review camera',camera_data);scene.collection.objects.link(camera);scene.camera=camera
- def render(name,eye,look,scale,resolution):
+ def render(name,eye,look,scale,resolution,body_only=False):
   camera.location=town.game_vector(eye);camera.rotation_euler=(town.game_vector(look)-camera.location).to_track_quat('-Z','Y').to_euler()
   camera_data.type='ORTHO';camera_data.ortho_scale=scale
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
+  body_prefixes=('toll-bank:body','toll-bank:roof-panel-','toll-bank:roof-crown')
+  if name=='model-front':body_prefixes+=('toll-bank:door',)
+  for obj in bpy.data.objects:
+   if obj==ground or obj==light or obj==fill:continue
+   is_body_piece=obj.name.startswith(body_prefixes)
+   obj.hide_render=(not within(obj,target_root) or (body_only and not is_body_piece))
   bpy.ops.render.render(write_still=True)
  shots=[
-  ('model-side',(30,2.6,0),(0,2.6,0),11.0,(1024,512)),
-  ('model-front',(0,2.6,-30),(0,2.6,0),11.0,(1024,512)),
-  ('model-rear',(0,2.6,30),(0,2.6,0),11.0,(1024,512)),
-  ('model-above',(0,36,0),(0,0,0),11.0,(1024,1024)),
+  ('model-side',(30,2.6,0),(0,2.6,0),8.7,(1024,512),True),
+  ('model-front',(0,2.6,-30),(0,2.6,0),8.7,(1024,512),True),
+  ('model-rear',(0,2.6,30),(0,2.6,0),8.7,(1024,512),True),
+  ('model-above',(0,36,0),(0,0,0),9.1,(1024,1024),True),
   ('three-quarter-road',(20,12,-22),(0,2.5,0),14.0,(1024,768)),
   ('three-quarter-yard',(-20,12,22),(0,2.5,0),14.0,(1024,768)),
   ('mayor-view',(55,68,-55),(0,0,0),14.0,(1024,768)),
