@@ -587,6 +587,7 @@ for y in range(blend_y):
     tile_pixels[y,:,:]=bottom*(1-t)+top*t
     tile_pixels[-blend_y+y,:,:]=bottom*(1-t)+top*t
 stone_tile.pixels[:] = tile_pixels.reshape(-1)
+stone_tile.scale(32,40)
 stone_tile.pack()
 stone_photo.node_tree.nodes.get('Image Texture').image = stone_tile
 pilot_photo = photo_material('Pilot boat / projected workboat photograph', photos['pilot-boat-photo'])
@@ -1354,7 +1355,7 @@ if args.stage == 'family':
     # Lighthouse profile measured from lighthouse-stone-photo.jpg on a 50 px grid.
     # The 1024 px tower height reads as about 27 m: radius is sampled at 15 heights.
     light_root=root_obj('lighthouse',(170,0,-395),'lighthouse')
-    N=32
+    N=20
     LIGHT_PROFILE = ((-2.0, 5.25), (-1.0, 5.20), (0.0, 5.05), (2.0, 4.78),
                      (4.0, 4.51), (6.0, 4.25), (8.0, 4.03), (10.0, 3.82),
                      (12.0, 3.61), (14.0, 3.42), (16.0, 3.26), (18.0, 3.12),
@@ -1403,12 +1404,24 @@ if args.stage == 'family':
     parent(tower,light_root)
     # Whitewashed inner face keeps every stair and landing detail behind stone.
     inner_stone = matte_material('Lighthouse / whitewashed inner stone',(.70,.68,.59),.96)
+    inner_nodes=inner_stone.node_tree.nodes; inner_links=inner_stone.node_tree.links
+    inner_shader=inner_nodes.get('Principled BSDF')
+    whitewash_pixels=tile_pixels.copy()
+    whitewash_pixels[:,:,:3]=whitewash_pixels[:,:,:3]*.48+np.array((.84,.82,.75),dtype=np.float32)*.52
+    whitewash_tile=bpy.data.images.new('Lighthouse whitewashed stone tile',width=tile_w,height=tile_h,alpha=False)
+    whitewash_tile.pixels[:]=whitewash_pixels.reshape(-1); whitewash_tile.scale(32,40); whitewash_tile.pack()
+    inner_nodes.clear()
+    inner_out=inner_nodes.new('ShaderNodeOutputMaterial'); inner_shader=inner_nodes.new('ShaderNodeBsdfPrincipled')
+    inner_texture=inner_nodes.new('ShaderNodeTexImage'); inner_texture.image=whitewash_tile
+    inner_links.new(inner_texture.outputs['Color'],inner_shader.inputs['Base Color'])
+    inner_links.new(inner_shader.outputs['BSDF'],inner_out.inputs['Surface'])
     inner_verts=[]; inner_faces=[]
     for y in profile_y:
         radius=light_radius(y)-.72
         for i in range(N):
             a=i*2*math.pi/N
             inner_verts.append(gv((math.cos(a)*radius,y,math.sin(a)*radius)))
+    inner_face_uv=[]
     for row in range(len(profile_y)-1):
         for i in range(N):
             y0,y1=profile_y[row],profile_y[row+1]
@@ -1416,7 +1429,15 @@ if args.stage == 'family':
             if in_light_opening(y0,y1,a): continue
             j=(i+1)%N
             inner_faces.append((row*N+i,row*N+j,(row+1)*N+j,(row+1)*N+i))
+            r0,r1=light_radius(y0)-.72,light_radius(y1)-.72
+            offset=.5 if int(math.floor((y0+2)/2.0))%2 else 0.0
+            a0,a1=i*2*math.pi/N,(i+1)*2*math.pi/N
+            inner_face_uv.append(((a0*r0/2.5+offset,(y0+2)/2.0),(a1*r0/2.5+offset,(y0+2)/2.0),
+                                  (a1*r1/2.5+offset,(y1+2)/2.0),(a0*r1/2.5+offset,(y1+2)/2.0)))
     inner_mesh=bpy.data.meshes.new('lighthouse whitewashed inner face'); inner_mesh.from_pydata(inner_verts,[],inner_faces); inner_mesh.materials.append(inner_stone); inner_mesh.update()
+    inner_uv=inner_mesh.uv_layers.new(name='Whitewashed stone courses')
+    for poly,coords in zip(inner_mesh.polygons,inner_face_uv):
+        for li,coord in zip(poly.loop_indices,coords): inner_uv.data[li].uv=coord
     inner_wall=bpy.data.objects.new('lighthouse whitewashed inner face',inner_mesh); scene.collection.objects.link(inner_wall); inner_wall['part']='lighthouse'; parent(inner_wall,light_root)
     # Slightly flared plinth and corbelled stone band under the gallery.
     for y, radius, depth in ((-1.75,5.34,.45),(24.65,3.04,.20),(24.90,3.25,.18),(25.12,3.48,.18)):
@@ -1498,15 +1519,28 @@ if args.stage == 'family':
     for y,rad in ((8,light_radius(8)),(16,light_radius(16)),(24,light_radius(24))):
         floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad-.30,.22,inner_stone,'lighthouse',32)
         parent(floor,light_root)
-        for i in range(24):
-            a=i*2*math.pi/24
-            post=beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad-.96),y+.03,math.sin(a)*(rad-.96)),(math.cos(a)*(rad-.96),y+.95,math.sin(a)*(rad-.96)),.035,iron,'lighthouse'); parent(post,light_root)
-        handrail=torus_local(f'lighthouse-landing-handrail-{y}',(0,y+.68,0),rad-1.03,.045,iron,'lighthouse',axis='Y',major_segments=24,minor_segments=6); parent(handrail,light_root)
+        if y != 8:
+            for i in range(24):
+                a=i*2*math.pi/24
+                post=beam(f'lighthouse-landing-post-{y}-{i}',(math.cos(a)*(rad-.96),y+.03,math.sin(a)*(rad-.96)),(math.cos(a)*(rad-.96),y+.95,math.sin(a)*(rad-.96)),.035,iron,'lighthouse'); parent(post,light_root)
+        if y != 8:
+            handrail=torus_local(f'lighthouse-landing-handrail-{y}',(0,y+.68,0),rad-1.03,.045,iron,'lighthouse',axis='Y',major_segments=24,minor_segments=6); parent(handrail,light_root)
     for i in range(66):
         y=-1.6+i*.38; a=-math.pi/2+i*.135; radius=2.25
         x,z=math.cos(a)*radius,math.sin(a)*radius
         tread=beam(f'lighthouse-spiral-stair-{i}',(x,y,z),(x+math.cos(a+.4)*.45,y+.20,z+math.sin(a+.4)*.45),.12,wood,'lighthouse',.8); parent(tread,light_root)
+    # A short handrail follows the first stair turn instead of circling the room.
+    for i in range(23,29):
+        y0=-1.6+i*.38+.86; y1=-1.6+(i+1)*.38+.86
+        a0=-math.pi/2+i*.135; a1=-math.pi/2+(i+1)*.135
+        stair_rail=beam(f'lighthouse-stair-handrail-{i}',(2.02*math.cos(a0),y0,2.02*math.sin(a0)),
+                        (2.02*math.cos(a1),y1,2.02*math.sin(a1)),.055,iron,'lighthouse'); parent(stair_rail,light_root)
     step=cube('lighthouse-swept-step',(0,-1.78,-5.65),(3.2,.25,1.1),steel,'lighthouse',.04); parent(step,light_root)
+    # Worn timber boards make the first landing legible at the foot of the view.
+    landing_wood=matte_material('Lighthouse / worn landing boards',(.28,.18,.095),.94)
+    for i in range(9):
+        z=-2.9+i*.47
+        plank=cube(f'lighthouse-landing-plank-{i}',(0,8.17,z),(5.2,.07,.43),landing_wood,'lighthouse',.025); parent(plank,light_root)
     # The letters crate is behind the inner wall on the second landing.
     letters=cube('lighthouse-box-of-letters',(1.6,17,-3.15),(1.05,.65,.72),wood,'lighthouse',.06); parent(letters,light_root)
     warm_glow=bpy.data.materials.new('Lighthouse / warm landing glow'); warm_glow.use_nodes=True
@@ -1546,6 +1580,37 @@ if args.stage == 'family':
     for i in range(8):
         a=i*math.pi/4; x,z=1.40,-2.50
         stroke(f'lighthouse-drawing-sun-ray-{i}',(x+math.cos(a)*.22,9.285+math.sin(a)*.22,z),(x+math.cos(a)*.34,9.285+math.sin(a)*.34,z),crayon_red,.04)
+    for drawing in list(scene.objects):
+        if drawing.name.startswith('lighthouse-drawing-'):
+            bpy.data.objects.remove(drawing,do_unlink=True)
+    # Cream paper pinned flat to the curved wall, with filled crayon pictures.
+    paper=matte_material('Lighthouse / cream drawing paper',(.82,.73,.55),.92)
+    paper_shadow=matte_material('Lighthouse / paper edge',(.30,.25,.18),.96)
+    pin=matte_material('Lighthouse / drawing pins',(.18,.16,.13),.72)
+    def paper_sheet(name,x,cy,width,height):
+        rad=light_radius(cy)-.72
+        z=-math.sqrt(max(.1,rad*rad-x*x))+.20
+        board=cube(name,(x,cy,z),(width,height,.055),paper,'lighthouse',.025); parent(board,light_root)
+        for dx,dy in ((-width*.5+.04,-height*.5+.04),(width*.5-.04,height*.5-.04)):
+            curl=cube(f'{name}-curled-corner-{dx}-{dy}',(x+dx,cy+dy,z+.035),(.13,.13,.035),paper_shadow,'lighthouse',.018); parent(curl,light_root)
+        tack=bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=6,radius=.055,location=gv((x,cy+height*.5-.08,z+.07)))
+        tack_obj=bpy.context.object; tack_obj.name=f'{name}-pin'; tack_obj.data.materials.append(pin); tack_obj['part']='lighthouse'; parent(tack_obj,light_root)
+        return z
+    def filled_picture(name,coords,color):
+        verts=[gv((x,y,z)) for x,y,z in coords]
+        mesh=bpy.data.meshes.new(name+' mesh'); mesh.from_pydata(verts,[],[tuple(range(len(verts)))]); mesh.materials.append(color); mesh.update()
+        obj=bpy.data.objects.new(name,mesh); scene.collection.objects.link(obj); obj['part']='lighthouse'; parent(obj,light_root)
+    ship_paper_z=paper_sheet('lighthouse-drawing-paper-ship',-1.9,9.0,.9,1.12)
+    house_paper_z=paper_sheet('lighthouse-drawing-paper-house',-.85,9.0,.9,1.12)
+    sun_paper_z=paper_sheet('lighthouse-drawing-paper-sun',1.75,9.0,.9,1.12)
+    filled_picture('lighthouse-drawing-filled-ship',[(-2.27,8.78,ship_paper_z+.06),(-1.53,8.78,ship_paper_z+.06),(-1.63,8.57,ship_paper_z+.06),(-2.17,8.57,ship_paper_z+.06)],crayon_red)
+    filled_picture('lighthouse-drawing-filled-mast',[(-1.93,8.75,ship_paper_z+.075),(-1.86,8.75,ship_paper_z+.075),(-1.86,9.34,ship_paper_z+.075),(-1.93,9.34,ship_paper_z+.075)],crayon_blue)
+    filled_picture('lighthouse-drawing-filled-sail',[(-1.89,8.83,ship_paper_z+.07),(-1.89,9.35,ship_paper_z+.07),(-1.63,8.87,ship_paper_z+.07)],crayon_yellow)
+    filled_picture('lighthouse-drawing-filled-house',[(-1.17,8.72,house_paper_z+.06),(-.53,8.72,house_paper_z+.06),(-.53,9.08,house_paper_z+.06),(-1.17,9.08,house_paper_z+.06)],crayon_blue)
+    filled_picture('lighthouse-drawing-filled-roof',[(-1.23,9.05,house_paper_z+.07),(-.85,9.36,house_paper_z+.07),(-.47,9.05,house_paper_z+.07)],crayon_red)
+    sun_centre=(1.75,9.03,sun_paper_z+.065)
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=.20,location=gv(sun_centre))
+    sun_disk=bpy.context.object; sun_disk.name='lighthouse-drawing-filled-sun'; sun_disk.scale=(1,.12,1); sun_disk.data.materials.append(crayon_yellow); sun_disk['part']='lighthouse'; parent(sun_disk,light_root)
     lamp_mesh=cylinder('lighthouse:lamp',(0,27.0,0),.62,1.65,lamp,'lighthouse:lamp',24)
     for poly in lamp_mesh.data.polygons: poly.use_smooth=True
     lamp_root=root_obj('lighthouse:lamp',(0,0,0),'lighthouse:lamp'); parent(lamp_root,light_root); parent(lamp_mesh,lamp_root)
@@ -1568,7 +1633,7 @@ if args.stage == 'family':
     beam_mat.node_tree.links.new(beam_separate.outputs['Y'],beam_map.inputs['Value'])
     beam_mat.node_tree.links.new(beam_map.outputs['Result'],beam_shader.inputs['Alpha'])
     beam_mat.surface_render_method='DITHERED'; beam_mat.node_tree.links.new(beam_shader.outputs['BSDF'],beam_out.inputs['Surface'])
-    beam_verts=[]; beam_faces=[]; beam_sides=48; beam_rings=12
+    beam_verts=[]; beam_faces=[]; beam_sides=24; beam_rings=12
     for ring in range(beam_rings):
         t=ring/(beam_rings-1); z=-.55-13.45*t; radius=.09+.49*t
         if ring == beam_rings-1: radius=.008
@@ -1856,8 +1921,10 @@ def render_imported_review():
     add_camera('review-camera-deck-marigold', (45, 5.7, -455), (45, 8.5, -440), 32, (1200, 900))
     add_camera('review-camera-lighthouse-road', (194, 1.2, -426), (170, 13, -395), 40, (900, 1200))
     add_camera('review-camera-lighthouse-dusk', (194, 1.2, -426), (170, 13, -395), 40, (900, 1200))
-    landing_camera=add_camera('review-camera-lighthouse-landing', (170, 9.71, -395), (171, 9.35, -397.5), 14, (900, 900))
-    landing_camera.data.lens=14
+    landing_camera=add_camera('review-camera-lighthouse-landing', (170, 9.7, -395.0), (170, 8.9, -398.2), 14, (900, 900))
+    landing_camera.data.lens=28
+    landing_camera.location=gv((170,9.7,-395.0))
+    landing_camera.rotation_euler=(gv((170,8.9,-398.2))-landing_camera.location).to_track_quat('-Z','Y').to_euler()
 
     raw.mkdir(parents=True, exist_ok=True)
     review_scene.camera = review_scene.objects['review-camera-whole']

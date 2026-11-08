@@ -502,11 +502,18 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ## Lighthouse round 2 (8 November 2026)
 
 - Point 1: remapped the lighthouse stone from a clean, unmirrored crop at 2.5 m by 2 m scale, staggered course rows, and fixed the cylindrical UV seam and radius mapping. Rebuilt the window and door recesses with dark backing, painted panes and a set-back wood door. Replaced the capped beam with a tapered, alpha-faded cone.
-- Built the `family` stage for round 18. Blender read back 39,145 triangles total and 2,982,420 bytes; the lighthouse is within its 6,000-triangle budget (final exact per-part count to be confirmed after point 2).
+- Built the `family` stage for round 18. Blender read back 39,145 triangles total and 2,982,420 bytes; the lighthouse is within its 6,000-triangle budget; the final per-part count is recorded below.
 - Rendered and inspected `.qa-dist/check-lighthouse-road.png` and `.qa-dist/check-lighthouse-dusk.png`. The road view has a clean tower silhouette and visible texture, though the masonry still looks uneven at this distance and the door surround reads pale. Dusk shows a tapered light with a pointed end and visible fade; its edges remain harder than ideal. Claude should review the road stone and the beam softness.
 - Checks `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs`: deferred until point 2 and will be recorded in its update. Browser and look checks: Claude runs. Lane tier and build were not run, as required for art cards.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+- Point 2: made the landing floor readable with wood-colored boards, added a whitewashed textured inner wall, set the camera to a 28 mm lens, and replaced the stick drawings with three pinned cream sheets carrying filled crayon pictures. Removed the old loose drawing strokes and the first-landing ring rail; added a stair-following rail, though it remains hard to see in the current camera view.
+- Rebuilt and rendered all three final views: `.qa-dist/check-lighthouse-road.png`, `.qa-dist/check-lighthouse-dusk.png`, and `.qa-dist/check-lighthouse-landing.png`. Road view: the tower silhouette holds, but the masonry remains visibly uneven and faceted, and the door surround still reads pale. Dusk: the beam tapers to a point and fades, but its edge remains hard. Landing: floor, curved pale wall and filled drawings are visible; the stair rail is not clearly legible and the window daylight is subdued. Claude should judge those three views before acceptance.
+- Final GLB read-back: 5,864 lighthouse triangles; 37,919 triangles total; 2,916,012 bytes. All budgets pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks; 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. Browser and look checks: Claude runs. Lane tier and build were not run, as required for art cards.
 - Changed assertions: none. Race fingerprints: none; art only.
 
 ### Removed
 
 - Removed the mirrored 0.8 m stone tile, the exposed white opening backings, and the capped beam mesh.
+- Removed the first-landing ring rail and the old loose crayon strokes when pinned filled drawings replaced them.
