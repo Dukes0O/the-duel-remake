@@ -68,7 +68,9 @@ parser.add_argument('--round', type=int, default=1)
 parser.add_argument('--stage', choices=('patience', 'fleet', 'family'), default='patience')
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--compose-sheet', action='store_true')
-parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold'), default=None)
+parser.add_argument('--render-view', choices=('whole', 'hope', 'marigold', 'patience', 'above', 'deck-good-hope', 'deck-marigold',
+                                               'port-good-hope', 'starboard-good-hope', 'port-marigold', 'starboard-marigold',
+                                               'port-patience', 'starboard-patience'), default=None)
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/scablands/ships.glb'
@@ -106,7 +108,10 @@ if args.render_view:
     review_scene = root / f'.qa-dist/ships-round-{args.round}/review.blend'
     bpy.ops.wm.open_mainfile(filepath=str(review_scene))
     scene = bpy.context.scene
-    scene.camera = bpy.data.objects[f'review-camera-{args.render_view}']
+    camera_view = args.render_view
+    if camera_view.startswith(('port-', 'starboard-')):
+        camera_view = {'good-hope':'hope','marigold':'marigold','patience':'patience'}[camera_view.split('-',1)[1]]
+    scene.camera = bpy.data.objects[f'review-camera-{camera_view}']
     def set_tree_visibility(name, visible):
         root_obj = scene.objects.get(name)
         if root_obj is None:
@@ -118,6 +123,21 @@ if args.render_view:
             stack.extend(obj.children)
     set_tree_visibility('lighthouse', False)
     set_tree_visibility('pilot-boat', False)
+    if args.render_view.startswith(('port-', 'starboard-')):
+        side, ship_name = args.render_view.split('-', 1)
+        subject_name = {'good-hope': 'ship-good-hope', 'marigold': 'ship-marigold',
+                        'patience': 'ship-patience'}[ship_name]
+        for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
+            set_tree_visibility(name, name == subject_name)
+        subject = scene.objects[subject_name]
+        rotation = subject.matrix_world.to_3x3()
+        bow = subject.matrix_world @ Vector((22.0, 1.0, 0.0))
+        forward = rotation @ Vector((1, 0, 0))
+        outboard = rotation @ Vector((0, 0, 1)) * (1 if side == 'starboard' else -1)
+        scene.camera.location = bow + forward * 28.3 + outboard * 28.3
+        scene.camera.location.z = -1.2
+        scene.camera.rotation_euler = (bow - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.camera.data.lens = 35
     close_subject = {
         'hope': 'ship-good-hope',
         'marigold': 'ship-marigold',
@@ -165,6 +185,15 @@ if args.render_view:
     elif args.render_view == 'above':
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(root / '.qa-dist/check-ships-above.png')
+    elif args.render_view.startswith(('port-', 'starboard-')):
+        side, ship_name = args.render_view.split('-', 1)
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.resolution_x, scene.render.resolution_y = 1200, 900
+        scene.render.filepath = str(root / f'.qa-dist/check-{ship_name}-{side}.png')
+    elif args.render_view == 'deck-good-hope':
+        scene.render.image_settings.file_format = 'PNG'
+        scene.render.resolution_x, scene.render.resolution_y = 1200, 900
+        scene.render.filepath = str(root / '.qa-dist/check-good-hope-deck.png')
     else:
         scene.render.filepath = str(root / f'.qa-dist/ships-round-{args.round}/{args.render_view}.jpg')
     bpy.ops.render.render(write_still=True)
@@ -337,9 +366,9 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             material_ids.append(3 if above_deck else 0)
     # Carry the side plating around the stems; the end-board photos read pale.
     faces.append(tuple(range(section_size - 1, -1, -1)))
-    material_ids.append(0)
+    material_ids.append(4)
     faces.append(tuple((len(section) - 1) * section_size + j for j in range(section_size)))
-    material_ids.append(0)
+    material_ids.append(4)
 
     mesh = bpy.data.meshes.new(name + ' station-faired hull')
     mesh.from_pydata(verts, [], faces)
@@ -351,14 +380,18 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
     side_image = next(node.image for node in side_mat.node_tree.nodes if node.type == 'TEX_IMAGE')
     uv = mesh.uv_layers.new(name='Station hull photo projection')
     for poly, material_index in zip(mesh.polygons, material_ids):
-        poly.material_index = material_index
+        poly.material_index = 0 if material_index == 4 else material_index
         for loop_index in poly.loop_indices:
             vi = mesh.loops[loop_index].vertex_index
             station_index, section_index = divmod(vi, section_size)
             t = HULL_STATIONS[station_index][0]
             y, z = section[station_index][section_index]
             edge_y = deck_heights[station_index]
-            if material_index == 0:
+            if material_index == 4:
+                u_center = .08 if station_index == 0 else .92
+                uv.data[loop_index].uv = (u_center + .035 * z / width,
+                                          1 - min(1.0, max(0.0, y / edge_y)))
+            elif material_index == 0:
                 # Source side photographs show the bow at the left edge.
                 row = 155 - 110 * min(1.0, max(0.0, y / edge_y))
                 longitudinal = (.035 if station_index == 0 else .965 if station_index == len(section)-1 else 1-(t+.5))
@@ -399,6 +432,10 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             base_rotation = Quaternion((1, 0, 0), math.pi / 2 if side > 0 else -math.pi / 2)
             obj.rotation_mode = 'QUATERNION'
             obj.rotation_quaternion = base_rotation
+            if side > 0:
+                # Mirror the far-side glyphs in their plane so both bows read
+                # left to right from outside the hull.
+                obj.scale.x = -1
             label_obj.materials.append(name_paint); obj['part'] = name
             parent(obj, root)
     return hull
@@ -503,6 +540,35 @@ def cube(name, center, dims, material, part, bevel=.04):
         mod=o.modifiers.new('rolled plate edges','BEVEL'); mod.width=bevel; mod.segments=2
         o.modifiers.new('weighted worn normals','WEIGHTED_NORMAL')
     return attach(o,name,part)
+
+def photo_box(name, center, dims, side, bow, stern, top, part):
+    """A crisp photo-projected box; no carving, masks or rounded voxel walls."""
+    obj = cube(name, center, dims, steel, part, 0)
+    obj.data.materials.clear()
+    mats = [side, bow, stern, top]
+    for mat in mats:
+        obj.data.materials.append(mat)
+    uv = obj.data.uv_layers.active
+    length, height, width = dims
+    for poly in obj.data.polygons:
+        n = poly.normal
+        if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
+            mat_index = 1 if n.x > 0 else 2
+        elif abs(n.y) >= abs(n.z):
+            mat_index = 0
+        else:
+            mat_index = 3
+        poly.material_index = mat_index
+        for li in poly.loop_indices:
+            co = obj.data.vertices[obj.data.loops[li].vertex_index].co
+            if mat_index == 0:
+                u, v = (co.x / length + .5), (co.z / height + .5)
+            elif mat_index in (1, 2):
+                u, v = (co.y / width + .5), (co.z / height + .5)
+            else:
+                u, v = (co.x / length + .5), (co.y / width + .5)
+            uv.data[li].uv = (u, v)
+    return obj
 
 def beam(name,a,b,width,material,part,depth=None):
     va,vb=gv(a),gv(b); d=vb-va
@@ -726,32 +792,29 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
                 table.update({'ends_split':0.0,'front_favour':10,'rear_favour':3})
             return table
         table=sister_cabin_table(ident)
-        cabin=carve_object(ident+':upperworks',tex,table)
-        if ident == 'ship-good-hope':
-            correct_end_face_photos(cabin, table)
-        elif ident == 'ship-marigold':
-            for material in cabin.data.materials:
-                retone_photo_material(material)
-        # Four measured photographs per cabin are enough at this scale;
-        # keep source JPEGs intact and pack 320 px working copies.
-        for photo in table['_photos'].values():
-            image=photo.image
-            scale=min(1.0,320/max(image.size))
-            if scale < 1:
-                image.scale(max(1,round(image.size[0]*scale)),
-                            max(1,round(image.size[1]*scale)))
-                image.pack()
-        cabin.data.transform(Matrix(((0,1,0),(-1,0,0),(0,0,1))).to_4x4())
-        # The old -25.5 m local-X offset became a 25.5 m map-Z shift when the
-        # ship root turned to its map heading. Center the cabin over the broad
-        # midship deck instead of hanging it over the tapered stern.
-        cabin.location=gv((0,deck,0)); cabin['part']=ident+':upperworks'
-        if ident in ('ship-good-hope', 'ship-marigold'):
-            # After the sister hulls turn to the shared northbound heading,
-            # their accommodation blocks sit aft, with the after wall near
-            # the stern rather than over the bow.
-            cabin.location = gv((22.0, deck, 0))
-        parent(cabin,r)
+        cabin_length, cabin_width, cabin_height = table['length'], table['width'], table['height']
+        prefix='good-hope' if ident=='ship-good-hope' else 'marigold'
+        photo_mats={view:photo_material(f'{ident} upperworks / {view}',tex/file)
+                    for view,file in table['photos'].items()}
+        cabin_root=root_obj(ident+':upperworks',(0,0,0),ident+':upperworks')
+        parent(cabin_root,r)
+        cabin=photo_box(ident+':upperworks-block',(0,0,0),
+                        (cabin_length,cabin_height,cabin_width),
+                        photo_mats['side'],photo_mats['front'],photo_mats['rear'],
+                        photo_mats['top'],ident+':upperworks')
+        cabin.location=gv((22.0,deck+cabin_height*.5,0)); parent(cabin,cabin_root)
+        roof=photo_box(ident+':upperworks-deck',(0,0,0),
+                       (cabin_length+.8,.26,cabin_width+.6),photo_mats['side'],
+                       photo_mats['front'],photo_mats['rear'],photo_mats['top'],
+                       ident+':upperworks')
+        roof.location=gv((22.0,deck+cabin_height-.10,0)); parent(roof,cabin_root)
+        # Straight bridge wings continue the deck to the measured cabin width.
+        for side in (-1,1):
+            wing=photo_box(f'{ident}:bridge-wing-{side}',(0,0,0),
+                           (3.2,.22,2.0),photo_mats['side'],photo_mats['front'],
+                           photo_mats['rear'],photo_mats['top'],ident+':upperworks')
+            wing.location=gv((22.0,deck+cabin_height*.58,side*(cabin_width*.5+.55)))
+            parent(wing,cabin_root)
         if args.stage != 'fleet' and ident=='ship-good-hope':
             funnel=cylinder('good-hope-rusted-funnel',(18.5,13.1,0),1.05,4.2,rust,ident,16)
             parent(funnel,r)
@@ -1193,77 +1256,36 @@ if args.stage == 'family':
             for spring in range(3):
                 beam(f'pilot-leaf-spring-{side}-{i}-{spring}',(x-1,-.05-spring*.10,z),(x+1,-.05-spring*.10,z),.10,rust,'pilot-boat',.08)
 
-# Low sandy approach merges into the buried hulls instead of a raised display base.
+# Separate heaps bank the bows and one quarter point on both sides. Each foot
+# reaches 8 m onto the ground; the gaps expose the hull against a flat bed.
 ship_ground=sand
-if args.stage in ('patience','fleet','family'):
-    # Side-specific phase-shifted wavelengths roughen the edge. The outer row
-    # lies on the shared bed; the inner row overlaps the plating.
-    rng = __import__('random').Random(10410)
-    verts=[]; faces=[]; stations=73; rows=15
-    for side in (-1, 1):
-        base=len(verts)
-        phases=[rng.uniform(0, 2*math.pi) for _ in range(6)]
-        for i in range(stations):
-            t=i/(stations-1); along=-36 + 72*t
-            bow=max(0,(t-.70)/.30); stern=max(0,(.18-t)/.18)
-            edge_noise=(.42*math.sin(t*2*math.pi*72/29+phases[0])
-                        +.25*math.sin(t*2*math.pi*72/13+phases[1])
-                        +.13*math.sin(t*2*math.pi*72/5.5+phases[2])
-                        +.10*math.sin(t*2*math.pi*72/2.4+phases[3]))
-            crest=-.45 + 1.35*bow + .28*stern + edge_noise
-            if side < 0: crest += .60
-            crest *= math.sin(math.pi*t)**.28
-            drift_width=5.5 + 3.0*bow - 1.0*stern + (2.0 if side < 0 else 0)
-            for row in range(rows):
-                u=row/(rows-1)
-                lateral=side*(5.35 + drift_width*u + u*(
-                    .55*math.sin(t*2*math.pi*72/21+phases[2])
-                    +.28*math.sin(t*2*math.pi*72/7.5+phases[4])
-                    +.16*math.sin(t*2*math.pi*72/3.2+phases[5])))
-                along_wobble=u*(.8*math.sin(t*2*math.pi*72/27+phases[1])
-                                +.35*math.sin(t*2*math.pi*72/8+phases[3]))
-                ripple=.20*math.sin(t*2*math.pi*72/9+u*4+phases[4])
-                y=-2 + (crest+2+ripple)*(math.cos(u*math.pi/2)**.82)
-                if row == rows-1: y=-2.0
-            verts.append(gv((5+lateral,y,-470+along+along_wobble)))
-        for i in range(stations-1):
-            for row in range(rows-1):
-                a=base+i*rows+row; b=a+rows
-                faces.append((a,b,b+1,a+1) if side > 0 else (a,a+1,b+1,b))
-    drift_mesh=bpy.data.meshes.new('ship-patience drifts mesh')
-    drift_mesh.from_pydata(verts,[],faces); drift_mesh.materials.append(sand); drift_mesh.update()
-    for polygon in drift_mesh.polygons: polygon.use_smooth=True
-    drift=bpy.data.objects.new('ship-patience:drifts',drift_mesh); scene.collection.objects.link(drift)
-    drift['part']='ship-patience:drifts'
-    if args.stage in ('fleet','family'):
-        for ship_index,(ident,bank_side) in enumerate((('ship-good-hope',1),('ship-marigold',-1))):
-            ship_root=roots[ident]
-            vertices=[]; faces=[]; stations=49; rows=15
-            for side in (-1,1):
-                base=len(vertices)
-                for i in range(stations):
-                    t=i/(stations-1); along=-36+72*t
-                    edge=.24*math.sin(t*2*math.pi*72/13+ship_index)
-                    for row in range(rows):
-                        u=row/(rows-1)
-                        z=side*(6.25+10*u+edge*u)
-                        crest=.95+(.65 if side==bank_side else .20)*math.sin(math.pi*t)**.7
-                        if ship_index==1 and side>0 and t<.30:
-                            crest=-1.72+.12*(t/.30)
-                        crest *= math.sin(math.pi*t)**.28
-                        y=-2+(crest+2)*(math.cos(u*math.pi/2)**.82)
-                        y += .10*math.sin(t*2*math.pi*9+u*3+ship_index)*math.sin(u*math.pi)
-                        if row==rows-1: y=-2
-                        vertices.append(gv((along,y,z)))
-                for i in range(stations-1):
-                    for row in range(rows-1):
-                        a=base+i*rows+row; b=a+rows
-                        faces.append((a,b,b+1,a+1) if side>0 else (a,a+1,b+1,b))
-            drift_mesh=bpy.data.meshes.new(ident+' wind-bank mesh')
-            drift_mesh.from_pydata(vertices,[],faces); drift_mesh.materials.append(sand); drift_mesh.update()
-            for polygon in drift_mesh.polygons: polygon.use_smooth=True
-            drift=bpy.data.objects.new(ident+':drifts',drift_mesh); scene.collection.objects.link(drift)
-            drift['part']=ident+':drifts'; parent(drift,ship_root)
+for ident,_,_,length,width,_,_,_ in ships:
+    if ident not in roots:
+        continue
+    ship_root=roots[ident]
+    for mound_index,t in enumerate((.43,.25)):
+        station_t, breadth = min(HULL_STATIONS, key=lambda row: abs(row[0]-t))
+        center_x=length*t
+        inner=width*breadth*.5+.12
+        for side in (-1,1):
+            verts=[]; faces=[]; along_steps=13; out_steps=9
+            for ai in range(along_steps):
+                v=-1+2*ai/(along_steps-1)
+                for oi in range(out_steps):
+                    u=oi/(out_steps-1)
+                    x=center_x+v*(8.5 if mound_index==0 else 6.5)
+                    z=side*(inner+8*u)
+                    y=-2+.72*(math.cos(math.pi*u/2)**1.4)*(math.cos(math.pi*v/2)**1.6)
+                    verts.append(gv((x,y,z)))
+            for ai in range(along_steps-1):
+                for oi in range(out_steps-1):
+                    a=ai*out_steps+oi; b=a+out_steps
+                    faces.append((a,b,b+1,a+1) if side>0 else (a,a+1,b+1,b))
+            mesh=bpy.data.meshes.new(f'{ident} sand mound {mound_index} {side}')
+            mesh.from_pydata(verts,[],faces); mesh.validate(); mesh.materials.append(sand); mesh.update()
+            for polygon in mesh.polygons: polygon.use_smooth=True
+            mound=bpy.data.objects.new(f'{ident}:drifts mound {mound_index} {side}',mesh)
+            scene.collection.objects.link(mound); mound['part']=ident+':drifts'; parent(mound,ship_root)
 for index,(x,z,rx,rz) in enumerate(((-45,-415,53,19),(45,-440,51,20),(5,-470,55,22),(170,-395,14,12),(230,-430,20,15)) if args.stage == 'family' else ()):
     # Blender Z is map-up. A low, irregular radial heap fades into the bed
     # rather than ending as an oval slab at the hull.

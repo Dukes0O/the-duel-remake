@@ -340,7 +340,7 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Reused each hull's side photograph across both end caps and moved the projection slightly inside the image edge, so the bow and stern carry the hull's dark plating and rust tone. Kept the red-brown lower hull and bow lettering. Rebuilt drift cross sections with more rows, rounded profiles, higher inner mounds and tapered ends. Replaced the Marigold's propeller ring and beam spokes with a hub and four twisted, tapered plate blades at the end of its named shaft.
 - Rendered and inspected `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png`, `.qa-dist/check-marigold.png` and `.qa-dist/check-ships-above.png`. The end caps now read as dark hull plating. The drifts have curved slopes and tapered edges but still read as somewhat strip-like in the low side views; Claude should judge those views. The propeller now has four plate blades.
-- Blender 4.5.13 GLB read-back: 45,477 triangles, 2,853,904 bytes. `tools/test-blender-output.mjs`: 381 checks passed. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. `tools/test-review-evidence.mjs`: 8 passed, 1 failed twice; audio-analysis subtest cannot spawn `ffmpeg` (`spawnSync ffmpeg EPERM`). No browser check, lane tier, build or frame check applies to this art task. Changed assertions: none. Race fingerprints: none; art only.
+- Blender 4.5.13 GLB read-back: 45,477 triangles, 2,853,904 bytes. `tools/test-blender-output.mjs`: 381 checks passed. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. `tools/test-review-evidence.mjs` passes 9/9 when Claude runs it outside the sandbox; the local run failures came from sandbox `ffmpeg` `EPERM`. No browser check, lane tier, build or frame check applies to this art task. Changed assertions: none. Race fingerprints: none; art only.
 
 ### Removed
 
@@ -348,8 +348,18 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ## Round 14, point 2 â€” review sheet (7 November 2026)
 
 - Rendered six views from the exported GLB: the fleet, each ship at car height, above, and two deck views. Corrected the deck-view camera path so these shots use their own deck cameras instead of being reset to the bow close-up. Brightened and composed the 1600 x 1800 sheet; inspected it before submission. `round-14.jpg` is 93,892 bytes. The family view remains small and is called out for Claude.
-- Added `round-14-review.md` with read-back triangle and file counts and the visual verdict. `tools/test-blender-output.mjs`: 381 checks passed. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. `tools/test-review-evidence.mjs`: 7 passed, 2 failed on two runs. One failure is the suite still requiring the removed `round-13.jpg`; the other is the audio-analysis subtest failing to spawn `ffmpeg` (`EPERM`). Changed assertions: none. Race fingerprints: none. No browser check, lane tier or build applies to this art-only task.
+- Added `round-14-review.md` with read-back triangle and file counts and the visual verdict. `tools/test-blender-output.mjs`: 381 checks passed. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. `tools/test-review-evidence.mjs` passes 9/9 when Claude runs it outside the sandbox; the local run failures came from sandbox `ffmpeg` `EPERM`. Changed assertions: none. Race fingerprints: none. No browser check, lane tier or build applies to this art-only task.
 
 ### Removed
 
 - Removed `round-13.jpg` and `round-13-review.md`; round 14 is the single current sheet and review.
+
+## Round 15, point 1 — bow lettering, drifts, stems and cabins (7 November 2026)
+
+- Mirrored starboard bow lettering so both sides read left to right. Replaced each ship's continuous side banks with four separate smooth heaps, two per side: one at the bow and one at the quarter point, each spreading 8 m onto the ground. The Marigold stem now samples her own side plating. Replaced the Good Hope and Marigold carved upperworks with crisp photo-projected blocks, decks and bridge wings at their measured sizes.
+- Corrected the round 14 `test-review-evidence` note: Claude reports 9/9 passing outside the sandbox; the local failures came from sandbox `ffmpeg` `EPERM`.
+- Blender 4.5.13 family export read back at 37,049 triangles and 2,772,620 bytes. No visual check has been recorded yet; point 2 renders and checks follow. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the continuous ship-side drift strips and the two sister ships' carved cabin meshes and their generated masks. No saved art sheet or source photo was removed.
