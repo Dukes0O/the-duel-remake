@@ -162,6 +162,7 @@ stop adjusting and change the method.
 ### People
 
 - **A figure shows its face or arm twice from three-quarter views.** Flat views carve each limb square, and its corner faces wear the front and side photos at a slant. Set `round` to 2, and `ends_split` at the middle with `front_favour` and `rear_favour` at 3; carve a square plinth separately (the statue, 7 November).
+- **A part the game moves must not also be carved into the body.** The mixer truck (round 7, 8 November) was carved whole from photos that showed its drum, then given a turning drum as well: two drums from above, a hole at the rear, the work pose turning one drum through the other. Carve only what is one solid (a cab from photos of the cab alone); build each moving part separately, and keep it out of the carve photos.
 
 - **Legs shifted out from the hips, wide stance** (Kyle, 6 November). A leg pivot's
   offset was counted twice. Check each foot's world position against the photo.
