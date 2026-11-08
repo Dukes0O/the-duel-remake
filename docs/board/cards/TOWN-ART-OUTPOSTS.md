@@ -29,3 +29,9 @@ People who live out in the Wasteland, each one a place worth driving to.
 - `rail-halt` 4x2: a tiny station with a clock that works, a signal arm (`rail-halt:signal`), a bench, a water crane.
 
 ## Claude answers
+
+Hermit camp, 7 November (Claude): **round 1 passes, merged.** The stone hut matches its photos from every side, with its door, slate roof and ridge beam; the goat shed, bonnet dish on its leaning pole and the lone chair stand where they should. Round 2 shrank every picture to 192 pixels to fit a 3 MB limit and blurred the hut, so Claude put round 1 back: this family's file limit stays 5 MB (it is 4.0 MB). Its sheet is renamed `round-10.jpg` to fit the repository's names. The deck town and the rail halt remain.
+
+Deck town, 7 November (Claude): **round 14 passes, merged.** Four patched tin homes stand on a ship's deck inside 1.1 m rails, with ladders, washing and the bell, and read from the road and the mayor's view. Short of the photos: the roofs are a streaky pinkish red, paler than the photo's rusty red. The rail halt remains.
+
+Rail halt, 7 November (Claude): **round 15 passes, merged; the card is done.** The rusted tin station hut matches its photos from every side, with its clock on the wall, a platform, a bench, the signal on its hinge and the water crane. Short of the brief: the signal and water crane are plain dark posts, not yet the photo's ironwork. Test change reviewed: the family file limit rises to 8 MB like every photo-built family, the family total to 56,000 with the rail halt's own 12,000; new checks require the halt's named parts; nothing is loosened per building.

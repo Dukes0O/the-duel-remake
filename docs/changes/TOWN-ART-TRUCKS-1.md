@@ -1,37 +1,24 @@
-# TOWN-ART-TRUCKS-1, round 11
+# TOWN-ART-TRUCKS-1
 
-Kept the approved fire truck and tanker. The three photo-carved truck hulls
-now bleed each measured image's background with the fire truck's wider colour
-match. Hull faces fall back to the next photo that covers them.
+## Changed
 
-The supply load is a photo-carved `supply-truck:load` child, measured from
-four generated loaded-truck views. It sits above the retained bed floor and
-fits within the bed. The tow crane is traced and thickened from its side photo;
-its open lattice, vertical cable and hook line up below the measured boom tip.
-The round 11 sheet uses larger comparisons and the round 9 side road camera.
+- Removed the water tanker's two black raised walkway strips. The hatch stays on the tank, and tanker fittings are now parented to the tanker root so they do not appear in other truck renders.
+- Corrected the supply cargo overhead mask crop, excluded the neighboring vehicle edge from the body mask, and kept all family fittings under their own truck roots.
+- Removed the photographed hook block and hoist line from the tow boom mask, leaving the separately built named hook and cable. Small disconnected photo-mask flecks under 35 pixels are ignored.
+- Added three new mask and parenting lessons to `docs/ART_LINE.md`.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs` — passed, 292 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs` — passed.
-- Fresh Blender import render — passed visual review; the family GLB is
-  3,400,356 bytes. Truck triangle counts: fire 10,352; tanker 10,092;
-  supply 11,252; tow 10,360. Each is under 12,000.
-- Browser and game look check — Claude runs after merge; inspect the tanker,
-  supply load with `supply-truck:load` visible and hidden, and tow boom, cable
-  and hook from the side and road views. The fire truck remains unchanged.
-- Assertions changed: none.
-- Race fingerprints: not applicable to this art-only change.
+- Blender render from imported GLB: passed; 40,882 total triangles. Family GLB: 3,289,624 bytes. Review sheet: 221,936 bytes.
+- `tools/test-blender-output.mjs`: passed, 312 checks.
+- `tools/test-repo-hygiene.mjs`: passed.
+- `tools/test-review-evidence.mjs`: 7/9 subtests passed; one older `town-art-power/round-4.jpg` note is missing, and the audio subtest cannot start `ffmpeg` (`EPERM`). Both failed again on the single rerun. Its round JPG publication check passed.
+- Browser and in-game look checks: Claude should judge round 13; no browser run in this art lane.
+- Changed assertions: none. Race fingerprints: not applicable; static art only.
 
 ## Removed
 
-Removed the supply truck's plain crate boxes and sphere sacks, and the floating
-tow hook path. The round 10 sheet and review note are superseded by round 11.
+- Round 12 sheet and note are removed. Round 9 is retained.
+- The tanker walkway boxes and duplicated tow hook pixels are removed from the recipe.
 
-## Tyres (Claude, 6 November, from Kyle's eye)
 
-Kyle found the tyres wrong in their cutouts. Up close: the arch's wall still wore the photo's tyre, the tread showed the photo's background, an axle's end poked through the wheel face, and three trucks' wheel measurements were up to 40 pixels out. `hull_model.py` now has `tyre` and `wheel_well`; the wheel numbers were measured again from grids over the photos. The undersides are dark. Lamps: the pale blobs are gone, and the glowing lenses now sit inside the bodies until the night look is built.
-
-Checks: `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs`, build. No assertion changed.
-
-Removed: the old tread and wheel-face code.

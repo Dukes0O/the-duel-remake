@@ -198,3 +198,7 @@ galvanised tin and sand tiles are built from two original images generated on
 5 November 2026 with OpenAI's built-in image generation tool. No third-party
 photographs, models or textures are included. The prompts and original image
 locations are recorded in `docs/changes/TOWN-ART-BASE.md`.
+
+## Wasteland town walkers
+
+`wasteland/town/walkers.glb` and its recipe `tools/blender/town-walkers.py` reuse the Quaternius **Universal Base Characters, Standard** figures, CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). The recipe imports the existing standing models from `heli/people/`, applies low-poly reduction and town pivots, then adds the town's original outfit details. It does not include Quaternius source textures. Photo-cloth crops and their prompts are recorded in `wasteland/town/textures/CREDITS.md`.

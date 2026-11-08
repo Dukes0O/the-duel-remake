@@ -35,3 +35,13 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `notice-board` under 1x1.
 
 ## Claude answers
+
+Round 6, 7 November (Claude): **the Town Hall and the Forge pass, and the Workshop will do for now.** The Town Hall is the best carve of the family. The Forge's fire stands proud of its wall as a block; the Workshop's roof is plain grey. The scrapyard and the other eight buildings remain. The six rounds count per building. Test change reviewed: this family's file limit rises from 3 MB to 8 MB, as every photo-carved family has, because each building now carries its own photos; no check of shape, parts or triangles is loosened. Size targets are advisory, and 4.14 MB is fine.
+
+Scrapyard, 7 November (Claude): **round 4 passes, merged.** The traced gantry crane with its hook and magnet stands over two piles of separate crushed wrecks, dark and rusty in three kinds, inside the fence with scrap on the ground. Short of the photo: the piles are a little neat, with the cars lying flatter and squarer than the photo's tumbled heap. The motor pool, paint shop, trading post, toll bank, school, radio mast, helipad and notice board remain.
+
+Motor pool, 7 November (Claude): **round 7 passes, merged.** A long rusted tin shed, closed at the back and ends, open along the road side on its posts, under a patched pitched roof, with the concrete floor, the inspection pit and drums inside. Short of the photo: the front posts are thinner than the photo's and its cross braces are missing. The paint shop, trading post, toll bank, school, radio mast, helipad and notice board remain.
+
+Trading post, 7 November (Claude): **round 9 passes, merged.** The patched store matches its photos; a porch of the store's width now stands against its front under a sloping tin roof, the TRADING POST sign is on the roof edge facing the road, and crates, drums and tyres stand about. Short of the brief: the sign is small from the mayor's view and the porch roof is plainer than the store's. The paint shop, toll bank, school, radio mast, helipad and notice board remain.
+
+Paint shop, 7 November (Claude): **round 10 passes, merged.** A rusted tin shed splashed with red, yellow, blue and green paint, its booth door dark inside, drums outside, matching its photos from every side. The family file is now 7.7 MB of its 8 MB: the six buildings that remain on this card need it split into two files, or their pictures shared, before they are built.

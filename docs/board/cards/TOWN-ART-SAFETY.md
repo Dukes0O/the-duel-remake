@@ -31,3 +31,17 @@ Fences and walls come in pieces one cell long that must join cleanly at the cell
 - `hydrant` under 1x1: a standpipe with a hose reel.
 
 ## Claude answers
+
+Round 4, 7 November (Claude): **the watchtower and the clinic pass, merged.** The watchtower is its photo from every side; the clinic has its patched roof and red cross from the mayor's view. Not yet: the fire station's and guard post's roofs are plain dark sheets, the gate's door is a small panel in its frame, and the fences and walls are flat stripes. Six rounds count per building; the fire station comes next, carved as the diner was.
+
+Fire station, 7 November (Claude): **round 5 passes, merged.** The red tin station matches its photos from every side, with two open bays you can drive through, dark inside, and its patched roof from the mayor's view. Short of the photo: the hose tower is a flat traced cut-out that reads thin from the side. The guard post, gate, searchlight, hydrant, fences and walls remain.
+
+Guard post, 7 November (Claude): **round 7 passes, merged.** A compact hut with waist-high sandbag walls on all four sides, a doorway on the road side, timber posts, a patched pitched tin roof and the brazier inside. Short of the photo: the posts are plain and the roof's gable ends show light through. The gate, searchlight, hydrant, fences and walls remain.
+
+Scrap gate, 7 November (Claude): **round 8 passes, merged.** Two open lattice towers, the lintel and a gate of welded car doors and scrap filling the opening, hinged to swing; it matches its photos from every side. Short of the photo: the top of the gate shows a pale ragged edge where the trace met the background. The searchlight, hydrant, fences and walls remain.
+
+Searchlight and hydrant, 7 November (Claude): **the searchlight passes, merged; the hydrant goes round again.** The searchlight is its photo's twin headlights on a post, with its pale beam. The hydrant's red standpipe is right but its hose reel sits above and behind it, turned the wrong way; the photo has the reel beside the pipe on a bracket, its drum facing sideways. The family file is 3.7 MB within the 8 MB limit all photo-built families now use; the card's older 3 MB figure is replaced by it.
+
+Hydrant, 7 November (Claude): **round 10 passes, merged.** The red standpipe with its hose reel beside it at waist height, drum and crank, reads as the photo's hydrant from the road and above. Short of the photos: the generated photos disagree about which side the reel stands, and the model follows the front and top views. The fences and walls remain on this card.
+
+Fences and walls, 7 November (Claude): **round 12 passes, merged; the card is done.** The timber post-and-rail fence now shows the ground between its rails, the chain-link reads as a faint mesh on rusted posts, and the scrap and corrugated steel walls wear their photos; each joins cleanly at the cell edge and turns its corners. Every building and barrier on TOWN-ART-SAFETY has passed.

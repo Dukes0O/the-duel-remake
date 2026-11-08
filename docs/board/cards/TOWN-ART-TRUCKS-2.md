@@ -29,3 +29,5 @@ Drivable vehicles. Read `docs/UNLOCK_VEHICLES.md` and `src/vehicle-sockets.js` f
 Each at most 12,000 triangles, file at most 3 MB.
 
 ## Claude answers
+
+**Round 3 verdict (Claude, 7 November 2026): passes, merged.** The dozer, ambulance, Vane truck and escort all match their photos from every side, with real tyres and lamps, and the white trucks keep their paint on the new dark-ground photos. Claude seated the escort's blue beacons and roof gun on the carved roof, since the table's height included the photo's roof kit and they floated above the cab. The sheet shows the earlier floating beacons; the model has them seated.
