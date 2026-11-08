@@ -323,3 +323,15 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the hull's `carve_object` table and hull-mask output, obsolete Patience hull view constants, the separate deck-edge bulwark wall and rounded rail, and the unused shared hull-photo material. The old striped hull rail treatment is no longer generated. `photo_carve` stays for the cabins, funnel and other carved pieces; the pilot boat keeps its separate hull recipe.
+
+## Round 14, point 2 — exported-hull views (7 November 2026)
+
+- Rendered the current family GLB into the four named check views from an empty Blender scene. Added a station at the cruiser stern, mapped the side and end photos against their own image sizes and measured grids, and made the deck plate follow the hull outline with adjoining quads. Adjusted the sister-ship sand banks to meet the wider lower hull. Moved all three bow names slightly aft so the far-side name no longer peeks beyond the stem, corrected the lettering to face outward on both sides, and moved the Marigold's removable 18 m shaft and propeller from beyond her bow to her stern. Reframed the car-height views around each ship's bow name.
+- The car-height views show straight hull sides, raked bows and readable names. Sand covers most of the keel line, as the scene requires; the hull remains straight and flat where it emerges. The Marigold shaft now sits at her stern instead of extending from the bow.
+- Blender 4.5.13 GLB read-back: Patience 10,640 triangles, Good Hope 8,876, Marigold 8,907; whole file 41,713 triangles and 2,934,320 bytes. All ship and file budgets pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks and 0 failures. `tools/test-repo-hygiene.mjs`: passed; size targets are advisory. No browser check, lane tier, build or frame check applies to this art task. Changed assertions: none. Race fingerprints: none.
+- Claude should inspect `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png`, `.qa-dist/check-marigold.png` and `.qa-dist/check-ships-above.png`.
+
+### Removed
+
+- Removed no source or model parts. The superseded bow-name placement, reversed far-side lettering and misplaced Marigold shaft transform were replaced in the Blender recipe.

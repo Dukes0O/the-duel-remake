@@ -23,7 +23,7 @@ from pathlib import Path
 HULL_LENGTH = 72.0
 HULL_WIDTH = 12.0
 HULL_STATIONS = (
-    (-.500, .035), (-.467, .42), (-.433, .65), (-.400, .79), (-.367, .88),
+    (-.500, .14), (-.483, .28), (-.467, .42), (-.433, .65), (-.400, .79), (-.367, .88),
     (-.333, .94), (-.300, .975), (-.267, .992), (-.233, 1.0), (-.200, 1.0),
     (-.167, 1.0), (-.133, 1.0), (-.100, 1.0), (-.067, 1.0), (-.033, 1.0),
     (0.000, 1.0), (.033, 1.0), (.067, .998), (.100, .994), (.133, .988),
@@ -101,7 +101,7 @@ if args.compose_sheet:
 
 import bpy
 import numpy as np
-from mathutils import Vector, Matrix
+from mathutils import Vector, Matrix, Quaternion
 if args.render_view:
     review_scene = root / f'.qa-dist/ships-round-{args.round}/review.blend'
     bpy.ops.wm.open_mainfile(filepath=str(review_scene))
@@ -128,6 +128,21 @@ if args.render_view:
     if close_subject:
         for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
             set_tree_visibility(name, name == close_subject)
+        # Put the car-height camera 40 m out from the photographed bow name,
+        # looking back across the stem and along the side plating.
+        subject_root = scene.objects.get(close_subject)
+        t = .367
+        _, breadth = min(HULL_STATIONS, key=lambda station: abs(station[0] - t))
+        side_sign = -1
+        local_point = Vector((72.0 * t, side_sign * (12.0 * breadth * .5 + .025), -2.35))
+        target = subject_root.matrix_world @ local_point
+        rotation = subject_root.matrix_world.to_3x3()
+        forward = rotation @ Vector((1, 0, 0))
+        outboard = rotation @ Vector((0, 1, 0))
+        scene.camera.location = target + forward * 28.0 + outboard * (28.0 * side_sign)
+        scene.camera.location.z = -1.2
+        scene.camera.rotation_euler = (target - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
+        scene.camera.data.lens = 20
     if args.render_view == 'whole':
         scene.camera.location = Vector((80, 350, 1.2))
         scene.camera.rotation_euler = (
@@ -311,7 +326,6 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             verts.append(gv((station_x + rake, y, z)))
 
     faces, material_ids = [], []
-    side_uv_points, end_uv_points = [], []
     for i in range(len(section) - 1):
         for j in range(section_size):
             if deck_start <= j < deck_end:
@@ -336,6 +350,7 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
     stern_mat = photo_material(name + ' hull / stern photograph', tex / f'{photo_prefix}-hull-stern.jpg')
     for material in (side_mat, bow_mat, stern_mat, rust):
         mesh.materials.append(material)
+    side_image = next(node.image for node in side_mat.node_tree.nodes if node.type == 'TEX_IMAGE')
     uv = mesh.uv_layers.new(name='Station hull photo projection')
     for poly, material_index in zip(mesh.polygons, material_ids):
         poly.material_index = material_index
@@ -348,7 +363,17 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
             if material_index == 0:
                 # Source side photographs show the bow at the left edge.
                 row = 155 - 110 * min(1.0, max(0.0, y / edge_y))
-                uv.data[loop_index].uv = (1 - (t + .5), 1 - row / 213)
+                uv.data[loop_index].uv = (1 - (t + .5), 1 - row / side_image.size[1])
+            elif material_index == 1:
+                # Bow grid: 12 m beam x=10..645, centre=328; deck/keel y=20/431.
+                image_x = min(645, max(10, 328 + z * (635 / 12)))
+                image_y = min(431, max(45, 431 - (411 / 8) * y))
+                uv.data[loop_index].uv = (image_x / 656, 1 - image_y / 437)
+            elif material_index == 2:
+                # Stern grid: 12 m beam x=70..680, centre=384; deck/keel y=41/450.
+                image_x = min(680, max(70, 384 + z * (610 / 12)))
+                image_y = min(450, max(70, 450 - (409 / 8) * y))
+                uv.data[loop_index].uv = (image_x / 768, 1 - image_y / 464)
             else:
                 uv.data[loop_index].uv = (.5 + z / width, min(1.0, y / (deck - keel + 2.0)))
     mesh.update()
@@ -361,15 +386,20 @@ def faired_hull(name, root, length, width, deck, keel, photo_prefix, label):
     deck_plate(root, name + ':weather-deck', length, width, deck)
     if label:
         for side in (-1, 1):
-            t = .36
+            t = .30
             _, factor = min(HULL_STATIONS, key=lambda station: abs(station[0] - t))
             label_obj = bpy.data.curves.new(name + ' bow name', 'FONT')
-            label_obj.body = label; label_obj.size = 1.45; label_obj.resolution_u = 3
+            label_obj.body = label
+            label_obj.size = 1.45; label_obj.resolution_u = 3
             label_obj.bevel_resolution = 1; label_obj.extrude = .006
             obj = bpy.data.objects.new(name + ' bow name ' + str(side), label_obj)
             scene.collection.objects.link(obj)
             obj.location = gv((length * t, deck - 1.65, side * (width * factor * .5 + .025)))
-            obj.rotation_euler = (math.pi / 2 if side > 0 else -math.pi / 2, 0, 0)
+            # Keep the baseline pointing along the bow on both sides while
+            # turning the lettering outward from the hull.
+            base_rotation = Quaternion((1, 0, 0), math.pi / 2 if side > 0 else -math.pi / 2)
+            obj.rotation_mode = 'QUATERNION'
+            obj.rotation_quaternion = base_rotation
             label_obj.materials.append(name_paint); obj['part'] = name
             parent(obj, root)
     return hull
@@ -616,11 +646,10 @@ def deck_plate(root, name, length, width, deck):
         rake=3.5*max(0.0,1-(deck+sheer+4.0)/10.0)*min(1.0,max(0.0,(t-.30)/.20))
         left.append((x+rake,deck+sheer-.25,-half))
         right.append((x+rake,deck+sheer-.25,half))
-    outline=left+right[::-1]
-    verts=[gv(point) for point in outline]
+    verts=[gv(point) for pair in zip(left,right) for point in pair]
     faces=[]
-    for index in range(1,len(outline)-1):
-        faces.append((0,index,index+1))
+    for index in range(len(left)-1):
+        faces.append((2*index,2*index+1,2*index+3,2*index+2))
     mesh=bpy.data.meshes.new(name+' hull-outline plate mesh')
     mesh.from_pydata(verts,[],faces); mesh.materials.append(rust); mesh.update()
     plate=bpy.data.objects.new(name,mesh); scene.collection.objects.link(plate)
@@ -1025,12 +1054,12 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             parent(rail_obj,r)
         # Exposed, removable 18 m propeller shaft at her stern.
         shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
-        shaft=cylinder('marigold-removable-18m-shaft',(41,-1.55,6.5),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
+        shaft=cylinder('marigold-removable-18m-shaft',(-44,-1.55,0),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
         prop_root=root_obj('ship-marigold:propeller',(0,0,0),'ship-marigold:propeller'); parent(prop_root,r)
-        prop=torus('ship-marigold-propeller-ring',(50,-1.55,6.5),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
+        prop=torus('ship-marigold-propeller-ring',(-53,-1.55,0),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
         for blade in range(4):
             a=blade*math.pi/2
-            b=beam(f'marigold-propeller-blade-{blade}',(50,-1.55,6.5),(50,-1.55+math.sin(a)*1.3,6.5+math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
+            b=beam(f'marigold-propeller-blade-{blade}',(-53,-1.55,0),(-53,-1.55+math.sin(a)*1.3,math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
 
 # Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
 # the main deck is y=11 and the platform is y=25.
@@ -1206,7 +1235,7 @@ if args.stage in ('patience','fleet','family'):
                     edge=.24*math.sin(t*2*math.pi*72/13+ship_index)
                     for row in range(rows):
                         u=row/(rows-1)
-                        z=side*(5.25+11*u+edge*u)
+                        z=side*(6.25+10*u+edge*u)
                         crest=.55+(.62 if side==bank_side else .12)*math.sin(math.pi*t)**.7
                         if ship_index==1 and side>0 and t<.30:
                             crest=-1.72+.12*(t/.30)
@@ -1397,9 +1426,9 @@ def render_imported_review():
 
     add_camera('review-camera-whole', (-35, 1.2, -330), (5, 4, -440), 120, (1200, 900))
     review_scene.objects['review-camera-whole'].data.lens = 24
-    add_camera('review-camera-hope', (-73, 1.2, -444), (-45, 8, -415), 40, (1200, 900))
-    add_camera('review-camera-marigold', (70, 1.2, -365), (38, 4, -400), 40, (1200, 900))
-    add_camera('review-camera-patience', (-23, 1.2, -500), (5, 7, -470), 40, (1200, 900))
+    add_camera('review-camera-hope', (-73, 1.2, -444), (-45, 4, -415), 18, (1200, 900))
+    add_camera('review-camera-marigold', (70, 1.2, -470), (45, 4, -440), 18, (1200, 900))
+    add_camera('review-camera-patience', (-23, 1.2, -500), (5, 4, -470), 18, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
     add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 8.5, -415), 32, (1200, 900))
     add_camera('review-camera-deck-marigold', (45, 5.7, -455), (45, 8.5, -440), 32, (1200, 900))
