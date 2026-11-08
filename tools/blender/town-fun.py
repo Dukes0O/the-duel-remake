@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-20'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-21'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-20.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-21.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -57,6 +57,16 @@ if '--review-only' in args:
         scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
         scene.view_settings.view_transform='Standard'
         camera.data.type='ORTHO';target=Vector((0,0,1.6))
+        # Blender imports glTF Y-up as its native Z-up. Check one exported
+        # stall piece before judging the family: its .40 m height must return
+        # on Blender Z, which is exported Y, not on either horizontal axis.
+        probe=bpy.data.objects.get('fun-stall-a:counter-kick')
+        if probe is None: raise RuntimeError('exported stall lost counter-kick axis probe')
+        probe_bounds=[probe.matrix_world @ Vector(c) for c in probe.bound_box]
+        probe_size=[max(p[i] for p in probe_bounds)-min(p[i] for p in probe_bounds) for i in range(3)]
+        if abs(probe_size[2]-.40)>.03 or abs(probe_size[1]-.18)>.03 or probe_size[2]<=probe_size[1]:
+            raise RuntimeError(f'counter-kick height is not exported Y: imported dimensions {probe_size}')
+        print('EXPORTED Y-UP AXIS CHECK fun-stall-a:counter-kick',tuple(round(v,3) for v in probe_size))
         views=[('side',(1,0,0)),('front',(0,1,0)),('rear',(0,-1,0)),('above',(0,0,1))]
         for stall_id in ('fun-stall-a','fun-stall-b'):
             for obj in scene.objects:
@@ -68,7 +78,10 @@ if '--review-only' in args:
                 scene.render.resolution_x,scene.render.resolution_y=source.size
                 bpy.data.images.remove(source)
                 camera.location=target+Vector(direction)*10
-                up_axis='Y' if name=='above' else 'Z'
+                # A camera tracks local -Z; local Y is its valid up axis.
+                # Passing Z for both track and up makes Blender choose an
+                # arbitrary roll and falsely makes the upright model look tipped.
+                up_axis='Y'
                 camera.rotation_euler=(target-camera.location).to_track_quat('-Z',up_axis).to_euler()
                 camera.data.ortho_scale=6.7
                 scene.render.filepath=str(evidence/f'{stall_id}-{name}-model.png');bpy.ops.render.render(write_still=True)
@@ -343,6 +356,41 @@ def flat_material(name, color, alpha=1.0, metallic=0.0):
     if alpha<1:
         shader.inputs['Alpha'].default_value=alpha;material.surface_render_method='DITHERED'
     return material
+
+def photo_crop_material(name, source_path, crop):
+    """Pack a useful photo crop as a real material swatch in the GLB."""
+    source=bpy.data.images.load(str(source_path),check_existing=True)
+    sw,sh=source.size
+    source_pixels=np.empty(sw*sh*4,dtype=np.float32);source.pixels.foreach_get(source_pixels)
+    source_pixels=source_pixels.reshape((sh,sw,4))
+    x0,y0,x1,y1=crop
+    # Blender's image buffer starts at the bottom row; crop coordinates in the
+    # recipe are read from the photographed image's top-left origin.
+    pixels=source_pixels[sh-y1:sh-y0,x0:x1,:3].copy()
+    bpy.data.images.remove(source)
+    height,width=pixels.shape[:2]
+    image=bpy.data.images.new(name+' photo crop',width=width,height=height,alpha=False)
+    rgba=np.ones((height,width,4),dtype=np.float32);rgba[:,:,:3]=pixels
+    image.pixels.foreach_set(rgba.ravel());image.pack()
+    material=bpy.data.materials.new(name);material.use_nodes=True
+    material.node_tree.nodes.clear()
+    texture=material.node_tree.nodes.new('ShaderNodeTexImage');texture.image=image
+    texture.interpolation='Linear';texture.extension='REPEAT'
+    shader=material.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+    shader.inputs['Roughness'].default_value=.91
+    output=material.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    material.node_tree.links.new(texture.outputs['Color'],shader.inputs['Base Color'])
+    material.node_tree.links.new(shader.outputs[0],output.inputs['Surface'])
+    return material
+
+awning_photo={
+    'fun-stall-a':photo_crop_material('Hit-the-can / red and cream striped awning',tex/'fun-stall-a-side.jpg',(104,32,914,228)),
+    'fun-stall-b':photo_crop_material('Sweets / yellow and red striped awning',tex/'fun-stall-b-side.jpg',(106,22,919,250)),
+}
+counter_photo={
+    'fun-stall-a':photo_crop_material('Hit-the-can / weathered plank counter photo',tex/'fun-stall-a-front.jpg',(112,600,914,914)),
+    'fun-stall-b':photo_crop_material('Sweets / painted plank counter photo',tex/'fun-stall-b-front.jpg',(112,592,912,914)),
+}
 mat['dirty-glass']=flat_material('Town Fun / soot-dulled jar glass',(.26,.32,.28),.55)
 mat['letter-paint']=flat_material('Town Fun / old cream paint',(.57,.39,.19))
 mat['red-paint']=flat_material('Town Fun / bruised red candy',(.46,.10,.06))
@@ -1114,21 +1162,63 @@ box('mud-pit:grandstand-bench',(0,3.05,-13),(5.6,.18,2.5),'weathered-plank',.05)
 for y in (1.9,2.5): beam(f'mud-pit:grandstand-rail-{y}',(-2.5,y,-14),(2.5,y,-14),.09,'rusted-steel')
 for i in range(4): box(f'mud-pit:tyre-chicane-{i}',(-5+i*3,.28,2.2),(.95,.55,.72),'tire',.05)
 
-# TOWN-ART-FUN round 20: two independently built market stalls. Their source
+# TOWN-ART-FUN round 21: the stalls follow their own photographed canvas and
+# counter planks. The GLB read-back above proves game Y remains height.
+# Their source
 # elevations and plan photos are kept in textures; pieces follow measured
 # structural landmarks rather than projecting goods onto the stall body.
-def stall_cloth(name, x0, x1, z0, z1, y, material):
-    # Sagging, scalloped canvas surface built as individual stitched panels.
-    verts=[]; faces=[]; n=8
-    for row,z in enumerate((z0,(z0+z1)*.5,z1)):
-        for i in range(n+1):
-            x=x0+(x1-x0)*i/n
-            sag=.13*math.sin(math.pi*i/n) + (.07 if row==1 else 0)
-        verts.append(tuple(town.game_vector((x,y-sag,z))))
-    for row in range(2):
-        for i in range(n):
-            k=row*(n+1)+i; faces.append((k,k+1,k+n+2,k+n+1))
-    mesh=bpy.data.meshes.new(name+' stitched cloth'); mesh.from_pydata(verts,[],faces); mesh.materials.append(mat[material]);mesh.update()
+def stall_awning(name, x0, x1, back_z, front_z, material):
+    # One sewn roof slopes down from the rear rail toward the road. The front
+    # edge has eight soft scallops, shaped from the reference silhouette.
+    nx=24; nz=8; verts=[];faces=[];uvs=[]
+    for j in range(nz+1):
+        v=j/nz; z=back_z+(front_z-back_z)*v
+        for i in range(nx+1):
+            u=i/nx; x=x0+(x1-x0)*u
+            scallop=(.13*(.5-.5*math.cos(math.tau*8*u)) if j==nz else 0)
+            sag=.085*math.sin(math.pi*v)+.025*math.sin(math.tau*4*u)
+            y=2.92-.32*v-sag-scallop
+            verts.append(tuple(town.game_vector((x,y,z))))
+            uvs.append((u,v))
+    for j in range(nz):
+        for i in range(nx):
+            k=j*(nx+1)+i;faces.append((k,k+1,k+nx+2,k+nx+1))
+    mesh=bpy.data.meshes.new(name+' photo-striped roof cloth');mesh.from_pydata(verts,[],faces);mesh.materials.append(material);mesh.update()
+    layer=mesh.uv_layers.new(name='Reference-photo canvas UV')
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vi=mesh.loops[loop_index].vertex_index;layer.data[loop_index].uv=uvs[vi]
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);keep(obj)
+    # A short vertical valance makes the photo's scalloped edge visible from
+    # the road, instead of showing only the thin edge of the roof plane.
+    vverts=[];vfaces=[];vuvs=[]
+    for i in range(nx+1):
+        u=i/nx;x=x0+(x1-x0)*u
+        top=2.60-.11*math.sin(math.pi*u*8)**2
+        bottom=top-.24-.12*(.5-.5*math.cos(math.tau*8*u))
+        vverts.extend((tuple(town.game_vector((x,top,front_z-.025))),
+                       tuple(town.game_vector((x,bottom,front_z-.025)))))
+        vuvs.extend(((u,.78),(u,1.0)))
+    for i in range(nx):
+        k=i*2;vfaces.append((k,k+2,k+3,k+1))
+    valance_mesh=bpy.data.meshes.new(name+' scalloped photo valance');valance_mesh.from_pydata(vverts,[],vfaces)
+    valance_mesh.materials.append(material);valance_mesh.update()
+    valance_uv=valance_mesh.uv_layers.new(name='Reference-photo hem UV')
+    for polygon in valance_mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vi=valance_mesh.loops[loop_index].vertex_index;valance_uv.data[loop_index].uv=vuvs[vi]
+    valance=bpy.data.objects.new(name.replace('striped-awning-photo','scalloped-photo-hem'),valance_mesh)
+    bpy.context.collection.objects.link(valance);return keep(valance)
+
+def stall_counter_photo(name, material):
+    # The photo supplies the worn board pattern; the face is actual geometry,
+    # set behind the counter edge with a narrow gap from the rear face.
+    verts=[tuple(town.game_vector(p)) for p in (
+        (-2.13,.36,-2.025),(2.13,.36,-2.025),(2.13,1.00,-2.025),(-2.13,1.00,-2.025))]
+    mesh=bpy.data.meshes.new(name+' photo-faced plank panel');mesh.from_pydata(verts,[],[(0,1,2,3)]);mesh.materials.append(material);mesh.update()
+    layer=mesh.uv_layers.new(name='Front-photo counter UV')
+    for poly in mesh.polygons:
+        for loop_index,uv in zip(poly.loop_indices,((0,0),(1,0),(1,1),(0,1))):layer.data[loop_index].uv=uv
     obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);return keep(obj)
 
 def build_fun_stall(name, sweets=False):
@@ -1145,36 +1235,36 @@ def build_fun_stall(name, sweets=False):
         pipe(f'{name}:pipe-rail-{y}-{z}',[(-2.35,y,z),(2.35,y,z)],.065,'rusted-steel')
     for x in (-2.35,2.35):
         pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,1.75),(x,2.72,-2.25)],.06,'rusted-steel')
-    # Counter plank stack is its own grounded sales piece, with a dark kick plate.
-    stall_box(f'{name}:counter-kick',(0,.52,-1.84),(4.45,.62,.18),'weathered-plank',.035)
-    for i in range(3): stall_box(f'{name}:counter-plank-{i}',(0,.88+i*.14,-1.82),(4.7,.12,.48),'weathered-plank',.025)
-    # Patched awning has a shallow fall toward the road and a ragged stitched hem.
-    for i,material in enumerate(('patched-canvas','faded-hand-paint','patched-canvas','weathered-plank')):
-        z0=-2.10+i*.98; z1=z0+.99
-        stall_cloth(f'{name}:awning-patch-{i}',-2.38,2.38,z0,z1,2.78-(i*.06),material)
-        # A thin cloth-backed patch keeps the awning readable at grazing road
-        # cameras while the stitched surface supplies the shaped outer edge.
-        stall_box(f'{name}:awning-cloth-panel-{i}',(0,2.75-(i*.055),z0+.495),(4.68,.075,.97),material,.018)
-    for i in range(9):
-        x=-2.34+i*.585; y=2.75+.11*math.sin(math.pi*i/8)
-        stall_box(f'{name}:awning-hem-tab-{i}',(x,y,-2.14),(.51,.09,.13),'patched-canvas',.018)
+    stall_box(f'{name}:counter-kick',(0,.20,-1.84),(4.45,.40,.18),'rusted-steel',.035)
+    if sweets:
+        # Raised seams follow the red and yellow vertical boards in the photo.
+        for i in range(10):
+            x=-2.10+i*.467
+            stall_box(f'{name}:painted-board-seam-{i}',(x,.68,-2.065),(.025,.62,.025),'rusted-steel',0)
+    else:
+        # The hit-the-can photo has four broad horizontal weathered planks.
+        for i in range(4):
+            y=.36+i*.213
+            stall_box(f'{name}:weathered-plank-seam-{i}',(0,y,-2.065),(4.28,.025,.025),'rusted-steel',0)
+    stall_counter_photo(f'{name}:counter-photo-face',counter_photo[name])
+    # Photo-mapped striped cloth replaces the false blue/grey patches.
+    stall_awning(f'{name}:striped-awning-photo',-2.34,2.34,1.75,-2.20,awning_photo[name])
     if not sweets:
         # A lower return shelf and a raised rear shelf carry the can target stack.
         stall_box(f'{name}:can-shelf-bracket-left',(-1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
         stall_box(f'{name}:can-shelf-bracket-right',(1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
-        stall_box(f'{name}:can-shelf',(0,1.50,-.62),(3.35,.14,.70),'weathered-plank',.025)
+        stall_box(f'{name}:can-shelf',(0,1.05,-.62),(3.35,.14,.70),'weathered-plank',.025)
         for row,count in enumerate((3,2,1)):
             for i in range(count):
-                x=(i-(count-1)/2)*.68; y=1.70+row*.39; z=-.65
+                x=(i-(count-1)/2)*.68; y=1.29+row*.39; z=-.65
                 cyl(f'{name}:stacked-tin-{row}-{i}',(x,y,z),.245,.34,'galvanised-tin',12)
                 cyl(f'{name}:can-lid-{row}-{i}',(x,y+.18,z),.222,.035,'rusted-steel',8)
     else:
         # Sweets are individually jarred; colored candy pieces remain visible above the counter.
         for i,x in enumerate((-1.72,-.86,0,.86,1.72)):
-            stall_box(f'{name}:jar-base-{i}',(x,1.24,-1.45),(.67,.48,.56),'weathered-plank',.025)
-            cyl(f'{name}:glass-jar-{i}',(x,1.75,-1.45),.245,.62,'dirty-glass',10)
-            cyl(f'{name}:jar-candy-{i}',(x,1.75,-1.45),.205,.40,('faded-hand-paint','letter-paint','red-paint','ochre-paint','blue-paint')[i],12)
-            cyl(f'{name}:jar-lid-{i}',(x,2.09,-1.45),.26,.09,'rusted-steel',8)
+            cyl(f'{name}:glass-jar-{i}',(x,1.34,-1.45),.245,.62,'dirty-glass',10)
+            cyl(f'{name}:jar-candy-{i}',(x,1.34,-1.45),.205,.40,('red-paint','ochre-paint','red-paint','ochre-paint','red-paint')[i],12)
+            cyl(f'{name}:jar-lid-{i}',(x,1.68,-1.45),.26,.09,'rusted-steel',8)
         stall_box(f'{name}:rear-sweets-shelf',(0,2.34,1.22),(3.8,.13,.56),'weathered-plank',.025)
         for i,x in enumerate((-1.35,0,1.35)):
             cyl(f'{name}:shelf-sweets-jar-{i}',(x,2.67,1.22),.27,.53,'dirty-glass',10)
@@ -1322,4 +1412,3 @@ if '--build-only' not in args:
         result=subprocess.run([blender,'--background','--python',str(Path(__file__).resolve()),'--','--review-only','--wreck-only'],cwd=root,stdout=log,stderr=subprocess.STDOUT)
     if result.returncode: raise RuntimeError('imported-GLB wreck-ring render failed; see .qa-dist/town-art-fun-review.log')
 print(json.dumps({'glb':str(out),'bytes':out.stat().st_size,'sheet':str(sheet)}))
-

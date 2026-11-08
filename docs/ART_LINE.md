@@ -39,6 +39,9 @@ stop adjusting and change the method.
 6. **Moving parts are their own pieces,** with their origin on their true pivot.
 7. **Render from the exported model,** imported into an empty scene, beside the
    photo at the same camera, in flat light with the Standard view transform.
+   In Blender, give cameras a valid local up axis. For a camera tracking local
+   `-Z`, use local `Y` as up; using `Z` for both track and up creates an arbitrary
+   roll and can make a correct Y-up model look tipped.
 8. **Look at it yourself before you submit.** Then commit, including a poor
    result with honest scores. Never delete work because it falls short: Claude
    judges. Commit after every piece.
