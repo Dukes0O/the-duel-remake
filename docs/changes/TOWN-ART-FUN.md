@@ -1,21 +1,22 @@
-﻿# TOWN-ART-FUN follow-up: statue round 16
+# TOWN-ART-FUN follow-up: statue round 17
 
 ## Design and change
 
-The side, front and rear reference photos remain unchanged. The prior overhead image did not give a reliable standing plan view. The new `statue-above-r16.jpg` is a straight-down orthographic render from the exported standing statue, measured on a 100-pixel grid (plinth bounds x=452..799, y=431..750). It replaces the high-angle reference in the carve.
+The statue figure and plinth now use two `carve_object` calls. The figure is carved with `round: 2`, an `ends_split` at its middle, and `front_favour` and `rear_favour` set to 3. Its keep mask starts at the measured plinth top. The separate plinth carve has no round option and retains its square sides. The blank plaque remains a separate piece.
 
-All four statue masks use a neutral-grey colour key sampled from the photo corners. This takes the enclosed grey between the legs and under the raised arm out of the silhouette. `largest_part` keeps the largest connected upper body before the lower plinth is restored. The separate blank plaque remains.
+The imported model has 1,462 triangles against the 1,800 limit. Figure, plinth and plaque pass the recipe's footprint and contact guards. Blender 4.5.13 exported the family GLB (4,290,288 bytes) and rendered the imported statue from side, front, rear, above, both three-quarter angles and the mayor view.
 
-## Results
+## Review
 
-- Blender 4.5.13 recipe export and imported-GLB renders completed. The GLB is 3,990,164 bytes. The statue has 1,712 triangles (limit 1,800); both pieces pass footprint and contact checks.
-- `node tools/test-blender-output.mjs`: passed, 377 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed. One failure expects the round-15 sheet, which this task explicitly removes. The other is the known `spawnSync ffmpeg EPERM` audio-analysis failure. No assertions changed.
-- Browser checks: Claude should review the overhead pair and both three-quarter views. The front three-quarter render still reads as overlapping figures, so the requested one-figure look is not fully met. The overhead reference is an orthographic render, not a newly generated photo; the generated overhead attempts remained oblique or showed a lying figure.
-- Lane tier and application build were not run, as directed for this art card. Changed assertions: none. Race fingerprints: not applicable.
+The straight views show one statue. Three-quarter A reads as one face and one raised arm; three-quarter B still reads as overlapping face profiles. The sheet includes both angles so Claude can judge the remaining doubled-profile issue and whether the round figure carve improved it. Claude should inspect the three-quarter views, especially B, and the raised arm at town distance.
+
+- Blender recipe export and its built-in footprint, contact and triangle guards: passed.
+- Imported-GLB statue renders: completed for seven views.
+- Lane tier and application build: not run, as directed for this art card.
+- Browser checks: Claude's visual review only; no browser run by this job.
+- Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- Removed `round-15.jpg` and `round-15-review.md` as requested.
-- Removed the round-15 plinth-only top-mask cuts; the measured round-16 top view now shapes the full carve.
+- Removed the round-16 sheet as requested. No round-16 review note existed in the looks folder.
+- Removed round-16's combined figure-plinth carve and its temporary normal-weight override; replaced them with separate figure and square-plinth carves.

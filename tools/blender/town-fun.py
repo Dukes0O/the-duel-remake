@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-16'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-17'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-16.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-17.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -971,9 +971,8 @@ for stall in ('fun-stall-a','fun-stall-b'):
             for i in range(4): cyl(f'{stall}:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
         for i in range(5): box(f'{stall}:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
 
-# Round 16: carve background by its studio-grey colour, including enclosed
-# gaps between the legs and beneath the raised arm. This avoids treating the
-# unreachable pale patches as part of the statue.
+# Round 17: round the figure's cross-sections and favour the front/rear views
+# on their respective halves. Keep the box-shaped plinth as a separate carve.
 building_root('statue','1x1')
 statue_root=current
 class StatuePhoto(Photo):
@@ -987,26 +986,11 @@ class StatuePhoto(Photo):
         return (np.max(np.abs(rgb-background),axis=2)<=24)&(chroma<=18)&(rgb.mean(axis=2)>=125)
 
 photo_carve.Photo=StatuePhoto
-_carve_hull=photo_carve.carve_hull
-def _statue_carve_hull(name,views,materials,solid,xs,ys,zs,voxel,target,dark=None):
-    # The straight photos are excellent but differ slightly at their seams.
-    # Let the matching end photo carry farther around diagonal faces, while a
-    # true side view still selects the side photo at its straight-on normal.
-    for view in views:
-        if view.name in ('front','rear'): view.normal*=2.0
-    return _carve_hull(name,views,materials,solid,xs,ys,zs,voxel,target,dark=dark)
-photo_carve.carve_hull=_statue_carve_hull
-_largest_part=photo_carve.largest_part
-def _statue_largest_part(solid):
-    # Let the plinth join to the statue only after selecting one upper body;
-    # otherwise two bodies that touch the same plinth look like one component.
-    base_layers=max(1,round(.70/.085))
-    body=solid.copy()
-    body[:,:base_layers,:]=False
-    body=_largest_part(body)
-    body[:,:base_layers,:]=solid[:,:base_layers,:]
-    return body
-photo_carve.largest_part=_statue_largest_part
+plinth_top=.76
+def statue_figure_keep(x,y,z):
+    return y >= plinth_top
+def statue_plinth_keep(x,y,z):
+    return y <= plinth_top
 statue_table={
     'photos':{'side':'statue-side.jpg','front':'statue-front.jpg',
               'rear':'statue-rear.jpg','top':'statue-above-r16.jpg'},
@@ -1021,15 +1005,22 @@ statue_table={
         'front':[(375,1370,650,1515)],
     },
     'grey':26,'tolerance':34,'bleed_tolerance':28,
-    'voxel':.085,'target':1700,
-    'mask_dir':str(root/'.qa-dist/town-art-fun-round-16/masks'),
+    'ends_split':0,'front_favour':3,'rear_favour':3,'round':2,
+    'keep':statue_figure_keep,
+    'voxel':.095,'target':900,
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-17/figure-masks'),
 }
-statue_body=carve_object('statue:figure-plinth',textures,statue_table)
+statue_body=carve_object('statue:figure',textures,statue_table)
 photo_carve.Photo=Photo
-photo_carve.carve_hull=_carve_hull
-photo_carve.largest_part=_largest_part
 keep(statue_body,statue_root)
-statue_body['source']='three generated orthographic photos and one straight-down render reference'
+statue_body['source']='three generated orthographic photos and one straight-down render reference; round 17 rounded figure carve'
+plinth_table={**statue_table,'keep':statue_plinth_keep,
+    'mask_dir':str(root/'.qa-dist/town-art-fun-round-17/plinth-masks'),'target':550}
+for key in ('ends_split','front_favour','rear_favour','round'):
+    plinth_table.pop(key,None)
+statue_plinth=carve_object('statue:plinth',textures,plinth_table)
+keep(statue_plinth,statue_root)
+statue_plinth['source']='separate square photo carve of the statue plinth'
 statue_photo=statue_table['_photos']['front']
 plaque_mesh=PhotoMesh()
 plaque_loops=trace(
