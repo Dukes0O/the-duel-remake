@@ -1608,3 +1608,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 7 Nov: TOWN-ART-OUTPOSTS done: diner, plane school, hermit camp, deck town, rail halt.
 - 7 Nov: TOWN-ART-SAFETY done: watchtower, clinic, fire station, guard post, gate, searchlight, hydrant, fences and walls.
 - 7 Nov: TOWN-ART-FOOD done: soup kitchen, market hall, canteen, stalls, greenhouse, shopfronts, goat pen, chicken run.
+- 8 Nov: TOWN-ART-PLANTS done: crusher, batch plant, conveyor, formwork, wellhead, pump station, radar, machine yard.

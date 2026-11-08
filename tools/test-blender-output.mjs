@@ -1094,7 +1094,7 @@ try {
     for(const [id,budget] of Object.entries(budgets)) assert.ok(triangles[id]>0&&triangles[id]<=budget,`${id}: ${triangles[id]} triangles; budget ${budget}`);
     for(const material of gltf.materials||[]) assert.ok((material.pbrMetallicRoughness?.metallicFactor??0)<=.3,`${material.name} metallic exceeds .3`);
   });
-  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead and radar', () => {
+  check('TOWN-ART-PLANTS keeps passed buildings and exports the photo-built wellhead, radar and machine yard', () => {
     const bytes = readFileSync(join(root, 'public/assets/models/wasteland/town/plants.glb'));
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
@@ -1104,7 +1104,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'formwork-1', 'formwork-2', 'formwork-3', 'formwork-4', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
+      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'formwork-1', 'formwork-2', 'formwork-3', 'formwork-4', 'machine-yard', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1152,6 +1152,13 @@ try {
     assert.ok(!names.includes('radar:dish-rim'), 'the photo-built dish has no separate red rim');
     assert.ok(countTriangles('radar') > 100 && countTriangles('radar') <= 1_800,
       `${countTriangles('radar')} triangles exceeds the one-cell radar budget`);
+    for (const name of ['machine-yard', 'machine-yard:dirt-yard', 'machine-yard:open-shed:body',
+      'machine-yard:store-shed:body', 'machine-yard:fuel-drum-1', 'machine-yard:parts-pile-1',
+      'machine-yard:parts-pile-2', 'machine-yard:parts-pile-3', 'machine-yard:fence-panel-1']) {
+      assert.ok(names.includes(name), `${name} node is missing`);
+    }
+    assert.ok(countTriangles('machine-yard') > 100 && countTriangles('machine-yard') <= 14_000,
+      `${countTriangles('machine-yard')} triangles exceeds the 6 x 4 machine-yard budget`);
     for (const name of ['pump-station', 'pump-station:body', 'pump-station:inlet-pipe',
       'pump-station:outlet-pipe', 'pump-station:fence-back-1.5', 'pump-station:fence-front-left-short']) {
       assert.ok(names.includes(name), `${name} node is missing`);
