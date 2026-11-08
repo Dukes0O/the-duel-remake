@@ -394,3 +394,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed `round-14.jpg` and `round-14-review.md`; round 15 is the current sheet and review.
+
+## Round 15, sheet (Claude): sand from the true ground, cabin ends restored (7 November 2026)
+
+- Drift heaps are parented to each leaning ship, so their feet lifted off the ground on one side and showed as a flat slab at the waterline (and a plank by the Marigold's bow). Each heap's height is now measured from the real ground at y = -2, and the fuller heap shape (1.4 m against the hull, 8 m foot) is back, 12 m long at the bow and 9 m at the quarter.
+- The job's `766756ed0` and `9d2606e12` painted the cabin end walls with a stretched strip of side plating, which blurred the fronts seen from the deck. Each end wall keeps its own photo again, trimmed 7% at the sides and top to drop white edges. Its lowering of the oval ground heaps to y = -2.0 stays.
+- Recomposed `round-15.jpg` (1600 x 2404, 166,627 bytes) from the corrected model and rewrote `round-15-review.md`. Read-back: 35,019 triangles, 2,719,296 bytes. `tools/test-blender-output.mjs`, `tools/test-repo-hygiene.mjs` and `tools/test-review-evidence.mjs` (9 of 9, outside the sandbox) pass. Changed assertions: none. Race fingerprints: none.
+
+### Removed
+
+- The stretched-strip mapping of the cabin end walls and the shrunken 0.55 m drift heaps.

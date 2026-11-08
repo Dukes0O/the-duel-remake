@@ -604,7 +604,8 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
         n = poly.normal
         roof_deck = name.endswith(':upperworks-deck')
         if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
-            mat_index = 0
+            # Each end wall keeps its own photo (windows, rails, ladders).
+            mat_index = 1 if n.x > 0 else 2
         elif roof_deck and abs(n.z) >= abs(n.x) and abs(n.z) >= abs(n.y):
             mat_index = 0
         elif abs(n.y) >= abs(n.z):
@@ -616,9 +617,11 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
         image_w,image_h=images[mat_index].size
         for li in poly.loop_indices:
             co = obj.data.vertices[obj.data.loops[li].vertex_index].co
-            if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
-                across = .5 + .08 * co.y / width
-                up = .55 + .18 * (co.z / height + .5)
+            if mat_index in (1, 2):
+                # Trim 7% off each side and the top of the end photo, where
+                # its crop meets white sky or background.
+                across = .07 + .86 * (co.y / width + .5)
+                up = .93 * (co.z / height + .5)
             elif mat_index == 0:
                 across, up = (co.x / length + .5), (co.z / height + .5)
             elif mat_index in (1, 2):
@@ -1343,15 +1346,26 @@ for ident,_,_,length,width,_,_,_ in ships:
                 v=-1+2*ai/(along_steps-1)
                 for oi in range(out_steps):
                     u=oi/(out_steps-1)
-                    x=center_x+v*(2.0 if mound_index==0 else 1.7)
-                    z=side*(inner+4*u)
-                    mound_shape=max(0.0,1-v*v)*max(0.0,1-(2*u-1)**2)
-                    y=-2+.55*math.sqrt(mound_shape)
+                    # A heap banked against the plating: highest at the hull,
+                    # sloping to the ground at its foot and at both ends.
+                    x=center_x+v*(6.0 if mound_index==0 else 4.5)
+                    z=side*(inner+8*u)
+                    y=-2+1.4*(math.cos(math.pi*u/2)**1.4)*(math.cos(math.pi*v/2)**1.6)
                     verts.append(gv((x,y,z)))
             for ai in range(along_steps-1):
                 for oi in range(out_steps-1):
                     a=start+ai*out_steps+oi; b=a+out_steps
                     faces.append((a,b,b+1,a+1) if side>0 else (a,a+1,b+1,b))
+    # The ship leans, so a heap built in her own frame would lift its foot
+    # off the ground on one side and bury it on the other. Measure each
+    # heap's height from the real ground (y = -2, Blender z = -2) instead.
+    bpy.context.view_layer.update()
+    to_world=ship_root.matrix_world.copy(); to_local=to_world.inverted()
+    for i,v in enumerate(verts):
+        height=v.z+2.0
+        w=to_world @ v
+        w.z=-2.0+height
+        verts[i]=to_local @ w
     # All of one ship's heaps form one part, `<ship>:drifts`.
     mesh=bpy.data.meshes.new(f'{ident} drifts mesh')
     mesh.from_pydata(verts,[],faces); mesh.validate(); mesh.materials.append(sand); mesh.update()
