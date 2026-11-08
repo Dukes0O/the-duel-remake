@@ -1,60 +1,32 @@
-# TOWN-ART-FOOD: shopfront round 16
+# TOWN-ART-FOOD: goat pen, round 19
 
 Task: TOWN-ART-FOOD
-Status: acceptance review passed; Claude art verdict pending. Lane tier is
-blocked by an unrelated FFmpeg loudness-measurement failure.
+Status: model and sheet ready for Claude's art verdict.
 Kind: art
 Flag: none; this family is not wired into the game in this card.
 
-## Design
+## Design and changes
 
-- **Codex decided (Claude to review):** keep the road-facing sign and add a
-  weathered roof label over the ridge. The card requires the shop names to read
-  from above and from the road. Round 15 showed that its vertical signs were
-  not readable from the mayor view.
-- Use the same ochre lettering and weathered plank for both labels. The roof
-  sign runs along the ridge and sits within the 1 by 1 plot.
-- Count evaluated Blender geometry so bevel modifiers are included. The first
-  roof-sign export added 192 triangles per shop after export; removing bevels
-  from its board and supports leaves each shop within the 1,800 cap.
-
-## Review
-
-The 1500×3300 round sheet is 277,691 bytes. It compares the side, front, rear
-and roof plan with their references, then shows all three roofs from 60 m at
-45 degrees down and the other two road signs. The camera uses an 85 mm lens to
-show the town view at useful size; the road board still reads in the front
-view.
-
-Codex self-review: silhouette/proportions 4/5, material resemblance 4/5,
-grounding 4/5, town-scale readability 4/5. The exported shop counts are 1,688,
-1,784 and 1,428 triangles. Largest differences remain the reversed door/window
-order in the side match, flatter roof corrugation and clean font. The roof
-placard is a simple handmade board with exposed supports.
+- Replaced the four goat-pen references with front, side, rear and overhead views of one square weathered pallet pen. Added four shelter-only views and a separate fence-panel photo with plain grey visible through its gaps.
+- Replaced the box-built fence with four traced slab runs using colour-masked, open gaps. Carved the timber shelter from its four photos and traced the trough from the pen's overhead photo.
+- Left the chicken run source and model recipe unchanged.
+- Fixed the photo/model orientation mismatch found on round 18: the shelter now matches the front, side and rear references; the side and overhead review cameras face the same directions as their photos; the plan-mapped trough keeps its photographed side.
+- Round 19 sheet: 1200 × 2380 pixels, 292,617 bytes. It compares four source/model camera pairs and shows the model in three-quarter and mayor views.
+- Exported family: 2,941,856 bytes and 29,492 triangles total. Goat pen: 3,512 triangles, within its 5,000 plot limit.
 
 ## Checks
 
-- Blender 4.5 export completed. `food.glb` is 2,728,120 bytes.
-- `node tools/test-blender-output.mjs`: passed, 377 checks.
-- `node tools/test-repo-hygiene.mjs`: passed; placement passed and size targets
-  remain advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. The audio
-  analysis test could not start `ffmpeg` (`spawnSync ffmpeg EPERM`); the same
-  failure repeated on its one rerun.
-- `node tools/run-tests.mjs --tier lane --changed --jobs 4`: 13 suites passed,
-  then `tools/test-circuit-eifel.mjs` failed at FFmpeg loudness measurement.
-  Its standalone rerun passed 17 of 18 tests and failed at the same measurement;
-  the remaining 33 suites did not run.
-- `npm.cmd run build`: passed. PowerShell blocked the `npm` wrapper by execution
-  policy, so the Windows command entry point was used.
-- Added readback assertions for both roof-facing and road-facing lettering on
-  all three shops. No assertion was loosened.
-- No game or browser check, frame timing or race fingerprint applies; this
-  model is not wired into the game here.
+- Blender 4.5.13 export: passed. The first export showed the shelter 14 cm above ground; the source placement was lowered. A later output check measured 30,790 family triangles; the shelter carve target was reduced while keeping it photo-carved. Round 19 keeps the goat pen within its 5,000-triangle plot limit.
+- `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement passed and size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: final run passed 8 of 9 subtests, including the retained JPG/review-note check. Audio analysis could not start FFmpeg (`spawnSync ffmpeg EPERM`). No assertions or tolerances changed.
+- Lane tier: 13 suites passed; `tools/test-circuit-eifel.mjs` failed and the remaining 33 did not run. Its one same-commit rerun passed 17 of 18 checks and failed the Eifel loudness check because FFmpeg could not start (`spawnSync ffmpeg EPERM`).
+- `npm.cmd run build`: passed.
+- Added readback checks for the four fence runs, shelter and trough. No existing assertion or tolerance was changed or loosened.
+- No browser check or look verdict was run here. Claude should review the six panels listed in `docs/board/looks/town-art-food/round-19-review.md`, especially shelter and trough placement, open fence gaps, photo/model matches and mayor scale.
+- No race fingerprint applies; this art is not wired into the game.
 
 ## Removed
 
-- Removed the procedural box-built shopfronts and their board and counter
-  geometry; the photo-carved shells replace them.
-- Removed the superseded round-14 greenhouse-only change note. Its verdict is
-  recorded beside the round-14 comparison sheet.
+- Removed the former box-built goat fence, gate, shelter and trough from the Blender recipe.
+- Replaced the round-18 goat-pen candidate in `food.glb`; both round-18 and round-19 comparison sheets remain as round evidence.

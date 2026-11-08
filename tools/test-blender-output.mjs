@@ -1590,6 +1590,11 @@ try {
       assert.equal(parent.get(roofLabel), names.indexOf(id), `${id} roof label belongs to its shop`);
       assert.equal(parent.get(roadLabel), names.indexOf(id), `${id} road label belongs to its shop`);
     }
+    for (const part of ['goat-pen:fence-front','goat-pen:fence-right','goat-pen:fence-rear',
+                        'goat-pen:fence-left','goat-pen:shelter','goat-pen:feed-trough']) {
+      const index = names.indexOf(part); assert.ok(index >= 0, `missing ${part}`);
+      assert.equal(parent.get(index), names.indexOf('goat-pen'), `${part} must belong to the goat pen`);
+    }
     const imagePixels = gltf.images.reduce((sum, image) => {
       const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
       const dimensions = jpegDimensions(bytes, start, view.byteLength);

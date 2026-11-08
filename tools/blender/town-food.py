@@ -11,10 +11,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-16'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-19'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-16.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-19.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -25,7 +25,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_base as town
 from photo_model import Photo, Mesh as PhotoMesh, lathe as photo_lathe, trace, slab
-from photo_carve import carve_object, lift_if_dark
+from photo_carve import carve_object, lift_if_dark, save_mask
 from hull_model import tyre
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -438,48 +438,80 @@ for name,b in greenhouse_bounds.items():
         raise RuntimeError(f'{name} does not touch ground or another greenhouse piece: {b}')
 
 add_building('goat-pen',(8,0,-14))
-ground_clutter('goat-pen',0,0)
-def pallet_fence_side(label, a, b, count, gate=False):
-    # Individual salvaged boards leave clear gaps instead of a solid rail wall.
-    direction=Vector((b[0]-a[0],0,b[2]-a[2])); length=direction.length
-    unit=direction.normalized()
-    for level, y in enumerate((.42,1.05)):
-        for i in range(count):
-            t=(i+.5)/count
-            if gate and .42<t<.63: continue
-            centre=(a[0]+direction.x*t,y,a[2]+direction.z*t)
-            width=length/count*.80
-            box(f'goat-pen:{label}-pallet-{level}-{i}',centre,
-                (width,.205,.075) if abs(unit.x)>.5 else (.075,.205,width),
-                mat['weathered-plank'],0)
-    for i in range(count+1):
-        t=i/count
-        x=a[0]+direction.x*t;z=a[2]+direction.z*t
-        beam(f'goat-pen:{label}-stake-{i}',(x,.02,z),(x,1.40,z),.10,mat['weathered-plank'])
-pallet_fence_side('front',(-2.8,0,-2.8),(2.8,0,-2.8),9,True)
-pallet_fence_side('rear',(-2.8,0,2.8),(2.8,0,2.8),9)
-pallet_fence_side('left',(-2.8,0,-2.8),(-2.8,0,2.8),9)
-pallet_fence_side('right',(2.8,0,-2.8),(2.8,0,2.8),9)
-# A narrow, separately built pallet gate hangs in the front opening.
-for i,y in enumerate((.28,.75,1.22)):
-    box(f'goat-pen:gate-pallet-{i}',(0,y,-2.78),(1.18,.205,.075),mat['weathered-plank'],0)
-beam('goat-pen:gate-top-rail',(-.66,1.36,-2.78),(.66,1.36,-2.78),.07,mat['rusted-steel'])
-beam('goat-pen:gate-bottom-rail',(-.66,.12,-2.78),(.66,.12,-2.78),.07,mat['rusted-steel'])
-beam('goat-pen:gate-diagonal',(-.58,.17,-2.73),(.58,1.31,-2.73),.065,mat['weathered-plank'])
-# A three-sided shelter with an open front and two mismatched roof sheets.
-for x in (-1.15,1.15): beam(f'goat-pen:shelter-front-post-{x}',(x,.02,-.10),(x,1.75,-.10),.12,mat['weathered-plank'])
-for x in (-1.15,1.15): beam(f'goat-pen:shelter-rear-post-{x}',(x,.02,1.65),(x,1.75,1.65),.12,mat['weathered-plank'])
-for y in (.42,.82,1.22,1.62):
-    for x in (-1.15,1.15): box(f'goat-pen:shelter-back-board-{x}-{y}',(x,y,1.65),(.98,.34,.085),mat['weathered-plank'],.02)
-beam('goat-pen:shelter-ridge',(-1.3,1.95,.74),(1.3,1.95,.74),.09,mat['rusted-steel'])
-for side in (-1,1):
-    p=box(f'goat-pen:shelter-roof-{side}',(0,1.76,.74+side*.47),(2.75,.075,1.12),mat['galvanised-tin'],.018)
-    p.rotation_euler[0]=side*.30
-box('goat-pen:hay-bale',(0,.20,1.05),(1.2,.35,.65),mat['patched-canvas'],.08)
-box('goat-pen:feed-trough-bottom',(0,.18,-1.10),(1.72,.07,.38),mat['iron-dark'],.015)
-for x in (-.86,.86):box(f'goat-pen:feed-trough-end-{x}',(x,.39,-1.10),(.07,.39,.38),mat['rusted-steel'],.02)
-for z in (-1.29,-.91):box(f'goat-pen:feed-trough-side-{z}',(0,.39,z),(1.72,.39,.06),mat['rusted-steel'],.02)
-for x in (-.68,.68): beam(f'goat-pen:feed-trough-leg-{x}',(x,.02,-1.10),(x,.19,-1.10),.065,mat['weathered-plank'])
+
+# Round 18: four photographed fence runs come from the same side photo. The
+# neutral studio background is colour-masked, so each pallet gap stays open.
+PEN_SIDE = Photo(textures / 'goat-fence-side.jpg')
+lift_if_dark(PEN_SIDE)
+pen_sky = PEN_SIDE.sky([(8,8),(600,8),(1190,8),(8,590),(1190,590),
+                        (600,118),(600,205),(600,294),(600,382),(600,470)],
+                       tolerance=18, grey=20)
+pen_solid = ~pen_sky
+save_mask(pen_solid, evidence/'goat-fence-colour-mask.png')
+PEN_RECT = (46, 14, 1152, 580)
+pen_loops = trace(pen_solid, PEN_RECT, tolerance=2.0, min_area=18)
+if not pen_loops:
+    raise RuntimeError('goat pen side photo produced no fence outlines')
+PEN_X_SCALE = 8.0 / (PEN_RECT[2] - PEN_RECT[0])
+PEN_HEIGHT = 1.9
+PEN_Y_SCALE = PEN_HEIGHT / (PEN_RECT[3] - PEN_RECT[1])
+PEN_GROUND = PEN_RECT[3]
+PEN_HALF = 4.0
+
+def fence_run(name, placement):
+    run = PhotoMesh()
+    def to_world(px, py, depth):
+        along = (px - PEN_RECT[0]) * PEN_X_SCALE - PEN_HALF
+        y = max(0, (PEN_GROUND - py) * PEN_Y_SCALE)
+        if placement == 'front': return along, y, -PEN_HALF + depth
+        if placement == 'rear': return -along, y, PEN_HALF - depth
+        if placement == 'left': return -PEN_HALF + depth, y, along
+        return PEN_HALF - depth, y, -along
+    slab(run, 'photo', PEN_SIDE, pen_loops, to_world, -.065, .065)
+    keep(run.finish(f'goat-pen:fence-{name}', {'photo': PEN_SIDE.material()}))
+
+for fence_side in ('front','right','rear','left'):
+    fence_run(fence_side, fence_side)
+
+# The shelter's silhouette, roof and board detail are carved from its own four
+# photographs. Keep the front bay open so the carve does not turn it into a box.
+SHELTER = {
+    'photos': {'side':'goat-shelter-side.jpg','front':'goat-shelter-front.jpg',
+               'rear':'goat-shelter-rear.jpg','top':'goat-shelter-top.jpg'},
+    'length':3.4,'width':3.4,'height':2.8,'forward':-1,
+    'side':{'start':185,'end':1120,'ground':850},
+    'front':{'centre':600,'ground':850,'top':92},
+    'rear':{'centre':600,'ground':850,'top':92},
+    'top':{'front':78,'rear':824,'centre':600},
+    'voxel':.055,'target':1500,'grey':12,'tolerance':26,'bleed_tolerance':38,
+    'keep':lambda x,y,z: ~((x > -1.18) & (x < 1.18) & (y > .18) & (y < 2.18) & (z < .72)),
+    'mask_dir':str(evidence/'goat-shelter-masks'),
+}
+shelter=carve_object('goat-pen:shelter',textures,SHELTER)
+shelter.location=town.game_vector((1.9,-.15,1.9))
+keep(shelter)
+for shelter_photo in SHELTER['_photos'].values():
+    shelter_photo.image.scale(256,192)
+    shelter_photo.image.pack()
+
+# Trace the metal trough from the overhead photo and give that contour a shallow
+# body. Its local position follows the trough visible near the front gate.
+PEN_TOP=Photo(textures/'goat-pen-top.jpg')
+top_rgb=PEN_TOP.rgb()
+top_spread=top_rgb.max(axis=2)-top_rgb.min(axis=2)
+trough_mask=(top_spread<24)&(top_rgb.mean(axis=2)>105)&(top_rgb.mean(axis=2)<220)
+trough_loops=trace(trough_mask,(735,690,885,760),tolerance=1.8,min_area=250)
+if not trough_loops:
+    raise RuntimeError('goat pen overhead photo produced no trough outline')
+trough_mesh=PhotoMesh()
+def trough_world(px,py,depth):
+    x=4.0-(px-209)*(8.0/(985-209))
+    z=4.0-(py-75)*(8.0/(840-75))
+    return x,.12+depth,z
+slab(trough_mesh,'trough',PEN_TOP,trough_loops,trough_world,-.10,.10)
+keep(trough_mesh.finish('goat-pen:feed-trough',{'trough':PEN_TOP.material()}))
+PEN_SIDE.image.scale(256,round(256*PEN_SIDE.h/PEN_SIDE.w));PEN_SIDE.image.pack()
+PEN_TOP.image.scale(256,192);PEN_TOP.image.pack()
 
 add_building('chicken-run',(20,0,-14))
 for x in (-1.25,1.25):
@@ -1274,6 +1306,36 @@ render_match('model-front',target+Vector((0,18,0)),Vector((0,0,1)),13)
 render_match('model-side',target+Vector((18,0,0)),Vector((0,0,1)),13)
 render_match('model-rear',target+Vector((0,-18,0)),Vector((0,0,1)),13)
 render_match('model-top',target+Vector((0,0,18)),Vector((0,1,0)),13)
+
+# Round 18 comparison uses only the goat pen and the exported GLB. Four
+# matched orthographic pairs are followed by the three-quarter and mayor views.
+goat_evidence=root/'.evidence/2026-11-07/town-art-food/round-19'
+goat_evidence.mkdir(parents=True,exist_ok=True)
+goat_root=next(obj for obj in scene.objects if obj.name=='goat-pen')
+for obj in scene.objects:
+    if obj.type in ('CAMERA','LIGHT'): continue
+    obj.hide_render=not (obj.name=='review ground' or under(obj,goat_root))
+scene.objects['review ground'].hide_render=False
+goat_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,goat_root)]
+goat_corners=[obj.matrix_world @ Vector(corner) for obj in goat_members for corner in obj.bound_box]
+goat_lo=Vector((min(p.x for p in goat_corners),min(p.y for p in goat_corners),min(p.z for p in goat_corners)))
+goat_hi=Vector((max(p.x for p in goat_corners),max(p.y for p in goat_corners),max(p.z for p in goat_corners)))
+target=(goat_lo+goat_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-8,11,12)),900,18),
+    ('soft sky fill',Vector((8,7,9)),700,22),
+    ('open aisle bounce',Vector((0,3,4)),450,8)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=900;scene.render.resolution_y=680
+evidence=goat_evidence
+render_match('goat-front-model',target+Vector((0,16,0)),Vector((0,0,1)),10.4)
+render_match('goat-side-model',target+Vector((-16,0,0)),Vector((0,0,1)),10.4)
+render_match('goat-rear-model',target+Vector((0,-16,0)),Vector((0,0,1)),10.4)
+render_match('goat-top-model',target+Vector((0,0,16)),Vector((0,-1,0)),10.4)
+render_match('goat-three-quarter',target+Vector((-9,-10,7)),Vector((0,0,1)),11.2)
+render_match('goat-mayor',target+Vector((-42,-42,60)),Vector((0,0,1)),14.2)
+
 render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
 render_match('market-road',target+Vector((2,15,3)),Vector((0,0,1)),13)
