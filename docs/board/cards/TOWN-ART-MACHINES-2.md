@@ -30,3 +30,5 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `crane-truck`: `crane-truck:boom`, `crane-truck:hook`. `pipe-truck`: a flatbed of pipes that drops them one by one.
 
 ## Claude answers
+
+8 November (Claude): **Kyle approved more rounds for this card** ("machines def. need another round or more", 8 November). The six-round limit no longer stops it; each machine gets up to six further rounds from round 7, and the round count stays honest in each review note. **The family file limit is 8 MB**, as for every photo-carved family, because each machine carries its own photos; raise it in `tools/test-blender-output.mjs` and say so in the change note. No check of shape, joints, parts or triangles loosens: each machine stays at most 15,000 triangles. Seams on the carved body are a fault to fix, not a reason to stop. Round 6 failed because the machines were the old block shapes; round 7 carves the mixer truck from single-view photos.
