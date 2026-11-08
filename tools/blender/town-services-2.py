@@ -82,7 +82,7 @@ for n in ids:
    # The rear photograph has a lower peak than the front photograph.
    'rear':{'centre':512,'ground':381,'top':137,'top_height':2.0},
    'top':{'front':61,'rear':961,'centre':512,'x_scale':8.0/900},
-   'grey':26,'tolerance':40,'bleed_tolerance':42,'voxel':.09,'target':2700,
+   'grey':26,'tolerance':40,'bleed_tolerance':42,'voxel':.09,'target':1800,
    'keep':lambda x,y,z:y<=1.82,
    'mask_dir':str(root/'.qa-dist/town-services-2/toll-bank-masks')}
   body=carve_object('toll-bank:body',tex,body_table);parent_keep(body,b)
