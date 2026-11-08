@@ -179,6 +179,27 @@ boat remain unbuilt because Patience did not pass the photo comparison.
 - Removed `round-10.jpg` and `round-10-review.md`; round 11 is the current sheet and review.
 - Removed this round's temporary renders, Blender review file and logs from `.qa-dist/`; retained the supplied task briefs.
 
+## Lighthouse round 1 part 2 (7 November 2026)
+
+- Point 1: wrapped the measured stone photo around the full shaft using a
+  mirrored, embedded tile at about a 0.8 m repeat; made the stone matte.
+- Recessed the spiral stair and landing rails behind the inner wall, removed
+  the stray external spiral, reshaped the gallery deck and corbels, and made
+  the lantern cap dark iron with a ventilator ball. Replaced the old beam bar
+  with a translucent 14 m widening mesh on `lighthouse:beam`.
+- Blender family export succeeded: 39,787 total triangles and 2,986,824 bytes
+  read back from the GLB. Point 2, inspection renders and named checks remain.
+- Tests: not run yet; art card checks follow point 2. Lane tier and build are
+  not run, as required for art cards.
+- Browser checks: Claude handles them. Claude should inspect the three named
+  lighthouse check pictures after point 2.
+- Changed assertions: none. Race fingerprints: none; art only.
+
+## Removed
+
+- Removed the straight yellow beam cube and the exposed outer spiral stair.
+- Removed temporary point-one Blender build logs after the final commit.
+
 ## Round 12 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Patience funnel, cabins and drifts (7 November 2026)
 
 - Added three measured, dead-on funnel reference photos and replaced the box shell and separate pipes with one oval `carve_object` named `ship-patience:funnel`. The old funnel crop is removed. Reduced only the accommodation carve target to keep the hull untouched and stay within the triangle budget.
