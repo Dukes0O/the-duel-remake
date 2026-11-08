@@ -565,21 +565,28 @@ stone_photo = photo_material('Lighthouse / projected local stonework', photos['l
 stone_shader = stone_photo.node_tree.nodes.get('Principled BSDF')
 stone_shader.inputs['Roughness'].default_value = .94
 stone_image = stone_photo.node_tree.nodes.get('Image Texture').image
-# A course-height crop of the measured stone photo is mirrored on both axes,
-# making a seamless tile that can wrap around the full tower circumference.
+# Use unmirrored stone from the measured photo at a broad, readable scale.
 stone_w, stone_h = stone_image.size
-tile_x0, tile_x1, tile_y0, tile_y1 = int(stone_w*.20), int(stone_w*.80), int(stone_h*.49), int(stone_h*.504)
+# This clean masonry patch sits between photographed windows and the gallery.
+tile_x0, tile_x1 = int(stone_w*.44), int(stone_w*.54)
+tile_y0, tile_y1 = int(stone_h*.54), int(stone_h*.62)
 tile_w, tile_h = tile_x1-tile_x0, tile_y1-tile_y0
-stone_tile = bpy.data.images.new('Lighthouse stone course tile', width=tile_w*2, height=tile_h*2, alpha=False)
-source_pixels = stone_image.pixels[:]
-tile_pixels = [0.0] * (tile_w*2*tile_h*2*4)
-for ty in range(tile_h*2):
-    sy = tile_y0 + (ty if ty < tile_h else tile_h*2-1-ty)
-    for tx in range(tile_w*2):
-        sx = tile_x0 + (tx if tx < tile_w else tile_w*2-1-tx)
-        src = (sy*stone_w+sx)*4; dst = (ty*tile_w*2+tx)*4
-        tile_pixels[dst:dst+4] = source_pixels[src:src+4]
-stone_tile.pixels[:] = tile_pixels
+stone_tile = bpy.data.images.new('Lighthouse unmirrored stone tile', width=tile_w, height=tile_h, alpha=False)
+source_pixels = np.asarray(stone_image.pixels[:], dtype=np.float32).reshape((stone_h, stone_w, 4))
+tile_pixels = source_pixels[tile_y0:tile_y1, tile_x0:tile_x1, :].copy()
+# Crossfade opposite edges into a seamless repeat without mirroring the photo.
+blend_x, blend_y = max(1,tile_w//8), max(1,tile_h//8)
+for x in range(blend_x):
+    t=x/blend_x
+    left=tile_pixels[:,x,:].copy(); right=tile_pixels[:,-blend_x+x,:].copy()
+    tile_pixels[:,x,:]=right*(1-t)+left*t
+    tile_pixels[:,-blend_x+x,:]=right*(1-t)+left*t
+for y in range(blend_y):
+    t=y/blend_y
+    top=tile_pixels[y,:,:].copy(); bottom=tile_pixels[-blend_y+y,:,:].copy()
+    tile_pixels[y,:,:]=bottom*(1-t)+top*t
+    tile_pixels[-blend_y+y,:,:]=bottom*(1-t)+top*t
+stone_tile.pixels[:] = tile_pixels.reshape(-1)
 stone_tile.pack()
 stone_photo.node_tree.nodes.get('Image Texture').image = stone_tile
 pilot_photo = photo_material('Pilot boat / projected workboat photograph', photos['pilot-boat-photo'])
@@ -1379,11 +1386,13 @@ if args.stage == 'family':
             if in_light_opening(y0,y1,(a0+a1)/2): continue
             faces.append((row*N+i,(row+1)*N+i,(row+1)*N+(i+1)%N,row*N+(i+1)%N))
             angle=(a0+a1)/2
-            tile_width_metres = (tile_w*2) / (stone_h / 29.0)
-            face_uv.append((((a0%(2*math.pi))*radius/tile_width_metres,(y0+2)/.8),
-                            ((a0%(2*math.pi))*radius/tile_width_metres,(y1+2)/.8),
-                            ((a1%(2*math.pi))*radius/tile_width_metres,(y1+2)/.8),
-                            ((a1%(2*math.pi))*radius/tile_width_metres,(y0+2)/.8)))
+            tile_width_metres = 2.5
+            row_offset = .5 if int(math.floor((y0 + 2) / 2.0)) % 2 else 0.0
+            radius0, radius1 = light_radius(y0), light_radius(y1)
+            face_uv.append(((a0*radius0/tile_width_metres + row_offset,(y0+2)/2.0),
+                            (a0*radius1/tile_width_metres + row_offset,(y1+2)/2.0),
+                            (a1*radius1/tile_width_metres + row_offset,(y1+2)/2.0),
+                            (a1*radius0/tile_width_metres + row_offset,(y0+2)/2.0)))
             face_material.append(0)
     mesh=bpy.data.meshes.new('lighthouse measured profile masonry'); mesh.from_pydata(verts,[],faces); mesh.materials.append(stone_photo); mesh.update()
     tower=bpy.data.objects.new('lighthouse measured profile',mesh); scene.collection.objects.link(tower); tower['part']='lighthouse'
@@ -1456,25 +1465,36 @@ if args.stage == 'family':
     ventilator=cylinder('lighthouse-ventilator-neck',(0,29.86,0),.26,.65,iron,'lighthouse',16); parent(ventilator,light_root)
     bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=8, radius=.42, location=gv((0,30.24,0)))
     vent_ball=bpy.context.object; vent_ball.name='lighthouse-ventilator-ball'; vent_ball.data.materials.append(iron); vent_ball['part']='lighthouse'; parent(vent_ball,light_root)
-    # Deep window wells: dark inset backing sits 0.55 m behind the outer face;
-    # stone jambs, sills and heads bridge the reveal at each opening.
-    recess=matte_material('Lighthouse / deep window shadow',(.075,.085,.082))
+    # Dark, weathered recesses sit behind painted panes and the set-back door.
+    recess=matte_material('Lighthouse / deep window shadow',(.055,.065,.062))
+    frame_stone=matte_material('Lighthouse / darker reveal stone',(.27,.25,.21),.96)
+    dark_glass=matte_material('Lighthouse / dark window glass',(.035,.065,.068),.22)
+    dark_glass_shader=dark_glass.node_tree.nodes.get('Principled BSDF')
+    if dark_glass_shader:
+        dark_glass_shader.inputs['Metallic'].default_value=.12
+        dark_glass_shader.inputs['Roughness'].default_value=.2
     for index,(low,high,width) in enumerate(openings):
         rad=light_radius((low+high)/2)
         if index == 0:
-            back=cube('lighthouse door recess',(0,.0,-(rad-.58)),(1.35,2.0,.05),recess,'lighthouse',0)
-            door=cube('lighthouse:door',(0,-.05,-(rad-.70)),(1.22,1.92,.10),wood,'lighthouse',.06); parent(door,light_root)
+            # Set the door back, keep its surround in the tower's stone family.
+            back=cube('lighthouse door recess',(0,.0,-(rad-.55)),(1.30,1.94,.05),frame_stone,'lighthouse',0)
+            door=cube('lighthouse:door',(0,-.05,-(rad-.20)),(1.08,1.78,.08),wood,'lighthouse',.06); parent(door,light_root)
             parent(back,light_root)
+            for side in (-1,1):
+                surround=cube(f'lighthouse-door-reveal-{side}',(side*.68,-.02,-(rad-.02)),(.20,2.05,.28),frame_stone,'lighthouse',.035); parent(surround,light_root)
+            head=cube('lighthouse-door-stone-head',(0,1.00,-(rad-.02)),(1.55,.22,.28),frame_stone,'lighthouse',.035); parent(head,light_root)
             continue
-        backing=cube(f'lighthouse-window-{index}-deep-recess',(0,(low+high)/2,-(rad-.58)),(width-.20,high-low-.24,.05),recess,'lighthouse',0)
+        backing=cube(f'lighthouse-window-{index}-deep-recess',(0,(low+high)/2,-(rad-.55)),(width-.18,high-low-.18,.05),frame_stone,'lighthouse',0)
         parent(backing,light_root)
-        if index == 0:
-            door=cube('lighthouse:door',(0,-.05,-(rad-.68)),(1.30,1.92,.10),wood,'lighthouse',.06); parent(door,light_root)
-            continue
         for side in (-1,1):
-            jamb=cube(f'lighthouse-window-{index}-jamb-{side}',(side*width*.5,(low+high)/2,-(rad-.20)),(.13,high-low,.38),recess,'lighthouse',.02); parent(jamb,light_root)
+            jamb=cube(f'lighthouse-window-{index}-jamb-{side}',(side*width*.5,(low+high)/2,-(rad-.02)),(.12,high-low,.30),frame_stone,'lighthouse',.02); parent(jamb,light_root)
         for y in (low+.08,high-.08):
-            sill=cube(f'lighthouse-window-{index}-reveal-{y}',(0,y,-(rad-.20)),(width,.13,.38),recess,'lighthouse',.02); parent(sill,light_root)
+            sill=cube(f'lighthouse-window-{index}-reveal-{y}',(0,y,-(rad-.02)),(width,.12,.30),frame_stone,'lighthouse',.02); parent(sill,light_root)
+        pane=cube(f'lighthouse-window-{index}-glazed-pane',(0,(low+high)/2,-(rad-.20)),(width-.28,high-low-.30,.035),dark_glass,'lighthouse',.015); parent(pane,light_root)
+        for side in (-1,1):
+            painted=cube(f'lighthouse-window-{index}-painted-frame-{side}',(side*(width*.5-.045),(low+high)/2,-(rad-.07)),(.045,high-low-.18,.045),iron,'lighthouse',.01); parent(painted,light_root)
+        for y in (low+.09,high-.09):
+            painted=cube(f'lighthouse-window-{index}-painted-frame-{y}',(0,y,-(rad-.07)),(width-.12,.045,.045),iron,'lighthouse',.01); parent(painted,light_root)
     for y,rad in ((8,light_radius(8)),(16,light_radius(16)),(24,light_radius(24))):
         floor=cylinder(f'lighthouse-landing-{y}',(0,y,0),rad-.30,.22,inner_stone,'lighthouse',32)
         parent(floor,light_root)
@@ -1537,15 +1557,28 @@ if args.stage == 'family':
     beam_mat=bpy.data.materials.new('Lighthouse / soft translucent beam'); beam_mat.use_nodes=True
     beam_nodes=beam_mat.node_tree.nodes; beam_nodes.clear()
     beam_out=beam_nodes.new('ShaderNodeOutputMaterial'); beam_shader=beam_nodes.new('ShaderNodeBsdfPrincipled')
-    beam_shader.inputs['Base Color'].default_value=(1.0,.69,.31,1); beam_shader.inputs['Emission Color'].default_value=(1.0,.57,.18,1); beam_shader.inputs['Emission Strength'].default_value=.65; beam_shader.inputs['Alpha'].default_value=.12; beam_shader.inputs['Roughness'].default_value=.8
+    beam_shader.inputs['Base Color'].default_value=(1.0,.69,.31,1); beam_shader.inputs['Emission Color'].default_value=(1.0,.57,.18,1); beam_shader.inputs['Emission Strength'].default_value=.5; beam_shader.inputs['Roughness'].default_value=.8
+    beam_texcoord=beam_nodes.new('ShaderNodeTexCoord')
+    beam_separate=beam_nodes.new('ShaderNodeSeparateXYZ')
+    beam_nodes.new('ShaderNodeMapRange')
+    beam_map=beam_nodes.get('Map Range')
+    beam_map.inputs['From Min'].default_value=0.0; beam_map.inputs['From Max'].default_value=1.0
+    beam_map.inputs['To Min'].default_value=0.0; beam_map.inputs['To Max'].default_value=.18
+    beam_mat.node_tree.links.new(beam_texcoord.outputs['Generated'],beam_separate.inputs['Vector'])
+    beam_mat.node_tree.links.new(beam_separate.outputs['Y'],beam_map.inputs['Value'])
+    beam_mat.node_tree.links.new(beam_map.outputs['Result'],beam_shader.inputs['Alpha'])
     beam_mat.surface_render_method='DITHERED'; beam_mat.node_tree.links.new(beam_shader.outputs['BSDF'],beam_out.inputs['Surface'])
-    beam_verts=[]; beam_faces=[]; beam_sides=24
-    for z,radius in ((-.7,.12),(-14.0,.75)):
+    beam_verts=[]; beam_faces=[]; beam_sides=48; beam_rings=12
+    for ring in range(beam_rings):
+        t=ring/(beam_rings-1); z=-.55-13.45*t; radius=.09+.49*t
+        if ring == beam_rings-1: radius=.008
         for i in range(beam_sides):
             a=2*math.pi*i/beam_sides
             beam_verts.append(gv((radius*math.cos(a),27.5+radius*math.sin(a),z)))
-    for i in range(beam_sides):
-        j=(i+1)%beam_sides; beam_faces.append((i,j,beam_sides+j,beam_sides+i))
+    for ring in range(beam_rings-1):
+        for i in range(beam_sides):
+            j=(i+1)%beam_sides
+            beam_faces.append((ring*beam_sides+i,ring*beam_sides+j,(ring+1)*beam_sides+j,(ring+1)*beam_sides+i))
     beam_mesh=bpy.data.meshes.new('lighthouse soft widening light shaft'); beam_mesh.from_pydata(beam_verts,[],beam_faces); beam_mesh.materials.append(beam_mat); beam_mesh.update()
     beam_obj=bpy.data.objects.new('lighthouse rotating beam',beam_mesh); scene.collection.objects.link(beam_obj); beam_obj['part']='lighthouse:beam'; parent(beam_obj,lightpart)
 
