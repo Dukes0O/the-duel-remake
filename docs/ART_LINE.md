@@ -93,6 +93,10 @@ stop adjusting and change the method.
 - **Top-view front and rear pixel order follows `forward`.** With `forward: -1`, the top view's front pixel is before its rear pixel; with `forward: 1`, it is after. Reversing them can leave only a thin sliver where the top mask overlaps the elevations. Print the carved bounds and check the mask overlap before trusting the export.
 - **Whole-picture recolouring** dyes faces and boots too (a green face, Kyle's
   people). Generate a real photo set for a new colour.
+- **A photo shows two material states side by side.** Do not map that full
+  picture onto either state: both surfaces will show both materials. Crop the
+  requested state and repeat only that crop across its surface (formwork,
+  TOWN-ART-PLANTS, 7 November).
 
 ### Vehicles
 
@@ -229,3 +233,5 @@ stop adjusting and change the method.
 - **Low-chroma greenhouse glass can match a pale grey studio background and be carved out as a hole.** Compare the photo and mask at the same grid coordinates. Lower the `grey` chroma threshold enough to keep the pane in the silhouette while keeping the photo edge background outside; then check the roof mask and bleed in the render.
 - **Low-chroma silver steel can be flooded as sky in the top mask.** A pale studio and a roof of galvanized panels can make connected silver patches disappear from a top carve. The shopfront roof needed `grey: 5`; check that its top mask stays whole and all four silhouettes still match (7 November).
 - **Bevel modifiers can hide real triangle growth.** Count the evaluated meshes or read the exported GLB; raw cube faces undercount rounded parts. The shop sign bevels added 192 triangles per shop after export (7 November).
+
+- **Photo-mapped surfaces need the photo material assigned at export.** A surface can have measured UVs and still render as a flat colour if its shader is replaced after carving. Keep the source image on the exported material, then tune each copy's roughness for the intended state (TOWN-ART-PLANTS, 7 November).

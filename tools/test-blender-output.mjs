@@ -1104,7 +1104,7 @@ try {
     const names = gltf.nodes.map(node => node.name || '');
     assert.ok(names.includes('town-plants'), 'family root');
     assert.deepEqual((gltf.nodes[names.indexOf('town-plants')].children || []).map(index => gltf.nodes[index].name).sort(),
-      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
+      ['batch-plant', 'conveyor', 'conveyor-end', 'crusher', 'formwork-1', 'formwork-2', 'formwork-3', 'formwork-4', 'pump-station', 'radar', 'wellhead'], 'the passed buildings and new buildings stay separate');
     for (const name of ['crusher:jaw', 'crusher:belt', 'crusher:body', 'crusher:jaw-surface',
       'crusher-gravel-cone']) {
       assert.ok(names.includes(name), `${name} node is missing`);
@@ -1127,6 +1127,16 @@ try {
     }
     assert.ok(countTriangles('batch-plant') > 100 && countTriangles('batch-plant') <= 14_000,
       `${countTriangles('batch-plant')} triangles exceeds the batch plant budget`);
+    for (const [id, limit] of [['formwork-1', 1_800], ['formwork-2', 5_000],
+      ['formwork-3', 5_000], ['formwork-4', 5_000]]) {
+      for (const part of ['wet', 'set', 'timber-wall--1', 'timber-wall-1',
+        'end-wall--1', 'end-wall-1', 'steel-stakes', 'corner-post--1--1',
+        'corner-brace--1--1-x', 'corner-brace-1-1-z']) {
+        assert.ok(names.includes(`${id}:${part}`), `${id}:${part} node is missing`);
+      }
+      assert.ok(countTriangles(id) > 100 && countTriangles(id) <= limit,
+        `${id} has ${countTriangles(id)} triangles; budget ${limit}`);
+    }
     for (const name of ['wellhead', 'wellhead:frame-road', 'wellhead:frame-far',
       'wellhead:beam', 'wellhead:casing', 'wellhead:valve', 'wellhead:hand-painted-07']) {
       assert.ok(names.includes(name), `${name} node is missing`);

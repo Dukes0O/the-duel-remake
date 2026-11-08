@@ -870,6 +870,128 @@ def make_conveyor(identifier,with_drum=False):
  return parent,local
 conveyor_root,conveyor_parts=make_conveyor('conveyor')
 conveyor_end_root,conveyor_end_parts=make_conveyor('conveyor-end',True)
+
+# Formwork variants use photo-traced timber and concrete surfaces. The source
+# photographs were generated separately for this card by OpenAI ImageGen, 7 Nov 2026.
+fw_side=Photo(tex/'formwork-side.jpg'); fw_top=Photo(tex/'formwork-top.jpg')
+fw_rgb=fw_side.rgb(); fw_spread=fw_rgb.max(axis=2)-fw_rgb.min(axis=2)
+# Limit the photo-derived silhouette to the measured continuous timber form.
+# Weather grain inside the photo is not separate geometry.
+fw_mask=np.zeros(fw_rgb.shape[:2],dtype=bool)
+fw_mask[600:990,40:1000]=((fw_rgb[600:990,40:1000,0].astype(np.int16)-
+                           fw_rgb[600:990,40:1000,2])>12) & (fw_rgb[600:990,40:1000].mean(axis=2)<220)
+fw_mask[fw_mask.shape[0]-1,:]=False
+fw_mask=tidy(fw_mask,4)
+fw_candidates=trace(fw_mask,(40,600,1000,990),tolerance=10.0,min_area=500)
+fw_loops=sorted(fw_candidates,key=lambda loop:abs(sum(a[0]*b[1]-b[0]*a[1]
+  for a,b in zip(loop,loop[1:]+loop[:1]))),reverse=True)[:1]
+if not fw_loops: raise RuntimeError('formwork side photo trace is empty')
+fw_profile_top=min(py for loop in fw_loops for _,py in loop)
+fw_profile_ground=max(py for loop in fw_loops for _,py in loop)
+if fw_profile_ground<=fw_profile_top: raise RuntimeError('formwork side photo profile has no height')
+fw_side.bleed(fw_mask)
+fw_top_rgb=fw_top.rgb()
+form_roots=[]; form_pieces={}
+def make_formwork(identifier,width,depth):
+ parent=bpy.data.objects.new(identifier,None);bpy.context.collection.objects.link(parent);parent.parent=rootobj
+ pieces=[]
+ def add(name,mesh,materials):
+  obj=mesh.finish(f'{identifier}:{name}',materials);obj.parent=parent;pieces.append(obj);return obj
+ board_h=1.7; board_t=.22; inner_x=width-2*board_t; inner_z=depth-2*board_t
+ # Trace and extrude the weathered photographed side profile as real timber walls.
+ for hand in (-1,1):
+  mesh=PhotoMesh()
+  def side_world(px,py,d,h=hand):
+   z=(px-520)*(depth/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
+   return (h*(width/2-board_t/2)+d,y,z)
+  slab(mesh,'photo',fw_side,fw_loops,side_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
+  add('timber-wall-'+str(hand),mesh,{'photo':fw_side.material()})
+ # Close the end walls with the same measured profile, rotated across the footprint.
+ for hand in (-1,1):
+  mesh=PhotoMesh()
+  def end_world(px,py,d,h=hand):
+   x=(px-520)*(width/960); y=max(0,(fw_profile_ground-py)*(board_h/(fw_profile_ground-fw_profile_top)))
+   return (x,y,h*(depth/2-board_t/2)+d)
+  slab(mesh,'photo',fw_side,fw_loops,end_world,-.11,.11,
+    wall_scale=board_h/(fw_profile_ground-fw_profile_top))
+  add('end-wall-'+str(hand),mesh,{'photo':fw_side.material()})
+ # Each concrete state uses only its own clean interior crop. Map that crop
+ # across small ground tiles, so every tile repeats real wet or set concrete
+ # rather than stretching the whole two-state overhead photo over one slab.
+ for label,crop,roughness in (
+   ('wet',(185,250,455,760),.28),('set',(565,180,825,850),.92)):
+  px0,py0,px1,py1=crop
+  mesh=PhotoMesh();tile=2.25;surface_y=.93
+  x=-inner_x/2
+  while x<inner_x/2-1e-5:
+   x1=min(x+tile,inner_x/2)
+   z=-inner_z/2
+   while z<inner_z/2-1e-5:
+    z1=min(z+tile,inner_z/2)
+    # A partial edge tile uses the same photo patch at its full scale.
+    u0,v0=fw_top.uv(px0,py0);u1,v1=fw_top.uv(px1,py1)
+    mesh.face(((x,surface_y,z),(x,surface_y,z1),(x1,surface_y,z1),(x1,surface_y,z)),
+      ((u0,v0),(u0,v1),(u1,v1),(u1,v0)),'photo',(0,1,0))
+    z=z1
+   x=x1
+  # The concrete is a shallow solid with a tiled photographed top and plain
+  # sides hidden behind the form walls.
+  add(label,mesh,{'photo':fw_top.material()})
+  mat=fw_top.material(roughness=.9).copy();mat.name=f'Formwork {label} concrete'
+  mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=roughness
+  mesh_obj=next(obj for obj in pieces if obj.name==f'{identifier}:{label}')
+  mesh_obj.data.materials.clear();mesh_obj.data.materials.append(mat)
+ # Four short bars sit just inside the form corners, from the slab surface up.
+ rebar=PhotoMesh()
+ for x in (-width*.43,width*.43):
+  for z in (-depth*.43,depth*.43):
+   lathe(rebar,'photo',(x,surface_y,z),(0,1,0),(1,0,0),(0,0,1),
+    [(0,.025),(.58,.025),(.60,.03)],
+    lambda i,d,r,angle:(.15+angle/(2*math.pi)*.72,.42),sides=6)
+ add('steel-stakes',rebar,{'photo':fw_side.material()})
+ # Corner posts close the joints. Timber braces run diagonally across all four
+ # walls, matching the deep boxed form in the side photograph.
+ for sx in (-1,1):
+  for sz in (-1,1):
+   post=town.cube(f'{identifier}:corner-post-{sx}-{sz}',
+     (sx*(width/2-board_t/2),board_h*.5,sz*(depth/2-board_t/2)),
+     (.34,board_h,.34),mats['weathered-plank'],.018)
+   post.parent=parent;pieces.append(post)
+   for along_x in (True,False):
+    if along_x:
+     a=(sx*(width/2-.27),.10,sz*(depth/2-.52))
+     b=(sx*(width/2-.27),board_h*.78,sz*(depth/2-.12))
+    else:
+     a=(sx*(width/2-.52),.10,sz*(depth/2-.27))
+     b=(sx*(width/2-.12),board_h*.78,sz*(depth/2-.27))
+    brace=town.beam(f'{identifier}:corner-brace-{sx}-{sz}-'+('x' if along_x else 'z'),
+      a,b,.16,mats['weathered-plank'])
+    brace.parent=parent;pieces.append(brace)
+ form_roots.append(parent);form_pieces[identifier]=pieces
+for identifier,width,depth in (('formwork-1',6.8,6.8),('formwork-2',6.8,14.8),
+                               ('formwork-3',14.8,6.8),('formwork-4',14.8,14.8)):
+ make_formwork(identifier,width,depth)
+for identifier in form_pieces:
+ meshes=[obj for obj in bpy.context.scene.objects if obj.type=='MESH' and obj.name.startswith(identifier+':')]
+ limit=1800 if identifier=='formwork-1' else 5000
+ triangles=sum(len(poly.vertices)-2 for obj in meshes for poly in obj.data.polygons)
+ print(f'{identifier.upper()} TRIANGLES {triangles} (limit {limit})')
+ if triangles>limit: raise RuntimeError(f'{identifier} has {triangles} triangles; budget {limit}')
+ for obj in meshes:
+  points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+  low=(min(p.x for p in points),min(p.z for p in points),-max(p.y for p in points))
+  high=(max(p.x for p in points),max(p.z for p in points),-min(p.y for p in points))
+  print(f'FORMWORK PIECE BOUNDS {obj.name}: X[{low[0]:.3f},{high[0]:.3f}] Y[{low[1]:.3f},{high[1]:.3f}] Z[{low[2]:.3f},{high[2]:.3f}]')
+  if low[1]<-.02: raise RuntimeError(f'{obj.name} falls below ground: {low}')
+  grounded=low[1]<=.03
+  touching=any(other is not obj and all(
+   min((other.matrix_world @ Vector(corner))[axis] for corner in other.bound_box)<=max(p[axis] for p in points)+.08 and
+   max((other.matrix_world @ Vector(corner))[axis] for corner in other.bound_box)>=min(p[axis] for p in points)-.08
+   for axis in range(3)) for other in meshes)
+  if not (grounded or touching): raise RuntimeError(f'{obj.name} touches neither ground nor another formwork piece')
+  print(f'CONTACT CHECK {obj.name}: {"ground" if grounded else "another piece"}')
+
 for piece_name,objects in (('conveyor',conveyor_parts),('conveyor-end',conveyor_end_parts)):
  bounds=[]
  for obj in objects:
@@ -946,8 +1068,8 @@ if a.render:
  ground.node_tree.nodes.clear();ground_out=ground.node_tree.nodes.new('ShaderNodeOutputMaterial')
  ground_emission=ground.node_tree.nodes.new('ShaderNodeEmission');ground_emission.inputs['Color'].default_value=(.34,.34,.34,1)
  ground.node_tree.links.new(ground_emission.outputs['Emission'],ground_out.inputs['Surface']);floor.data.materials.append(ground)
- bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=4400;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=16
- bpy.ops.object.light_add(type='AREA',location=town.game_vector((-9,9,10)));bpy.context.object.data.energy=2600;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=18
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((4,14,-5)));bpy.context.object.data.energy=950;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=16
+ bpy.ops.object.light_add(type='AREA',location=town.game_vector((-9,9,10)));bpy.context.object.data.energy=650;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=18
  def camera(name,location,target,lens=45):
   data=bpy.data.cameras.new(name);cam=bpy.data.objects.new(name,data);scene.collection.objects.link(cam);cam.location=town.game_vector(location);cam.rotation_euler=(town.game_vector(target)-cam.location).to_track_quat('-Z','Y').to_euler();data.lens=lens;return cam
  for name,loc,target,lens in [('side-photo-match',(-14,1.55,0),(0,1.55,0),52),('front-three-quarter',(8,5,-9),(0,1.55,0),40),('rear-three-quarter',(-8,5,9),(0,1.55,0),40),('mayor-view',(32,60,-42),(0,1.4,0),220)]:
@@ -1030,7 +1152,22 @@ if a.render:
       ('rear',(0,.42,18),(0,.42,0),3.8,(1024,341)),
       ('above',(0,20,0),(0,0,0),9.6,(1024,341))):
    cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
-   if view=='above':cam.rotation_euler.rotate_axis('Z',-math.pi/2)
+   scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
+   scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
+ for identifier,width,depth in (('formwork-1',6.8,6.8),('formwork-2',6.8,14.8),
+                                ('formwork-3',14.8,6.8),('formwork-4',14.8,14.8)):
+  for node in scene.objects:
+   if node.type=='MESH':node.hide_render=not (node.name.startswith(identifier+':') or node.name=='review-only ground')
+  span=max(width,depth)
+  for view,eye,target,scale,size in (
+    ('side',(span*1.7,.8,0),(0,.8,0),span*1.1,(1024,600)),
+    ('front',(0,.8,-span*1.7),(0,.8,0),span*1.1,(1024,600)),
+    ('rear',(0,.8,span*1.7),(0,.8,0),span*1.1,(1024,600)),
+    ('above',(0,span*2,0),(0,0,0),span*1.35,(1024,800)),
+    ('three-quarter-road',(span*1.3,span*.9,-span*1.3),(0,.8,0),span*2.15,(1000,750)),
+    ('three-quarter-rear',(-span*1.3,span*.9,span*1.3),(0,.8,0),span*2.15,(1000,750)),
+    ('mayor',(span*1.5,span*2,-span*1.5),(0,.8,0),span*2.5,(1000,750))):
+   cam=camera(identifier+'-'+view,eye,target);cam.data.type='ORTHO';cam.data.ortho_scale=scale
    scene.camera=cam;scene.render.resolution_x,scene.render.resolution_y=size
    scene.render.filepath=str(evidence/(identifier+'-'+view+'.png'));bpy.ops.render.render(write_still=True)
   for view,eye,target,scale in (
