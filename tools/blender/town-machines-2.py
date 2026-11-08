@@ -589,10 +589,12 @@ if a.render:
   scene.camera=cam;scene.render.filepath=str(ev/f'mixer-truck-{label}-model.png')
   bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
+ hide_tree(joints['mixer-truck:drum'],True)
  mixer_cam('side',(-7,0,2.05),(11,0,2.05),10.7,1600,640)
  mixer_cam('front',(11,15,2.0),(11,0,2.0),5.2,1024,1024)
  mixer_cam('rear',(11,-15,2.0),(11,0,2.0),5.2,1024,1024)
  mixer_cam('top',(11,0,18),(11,0,0),10.7,640,1600)
+ hide_tree(joints['mixer-truck:drum'],False)
  joints['mixer-truck:drum'].rotation_euler[2]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
  mixer_cam('three-quarter-rest',(23,-14,10),(11,0,1.9),10.5,1024,768,False)
  joints['mixer-truck:drum'].rotation_euler[2]=1.0;joints['mixer-truck:chute'].rotation_euler[0]=.55
