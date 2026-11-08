@@ -1078,7 +1078,15 @@ try {
     const ids=['tavern','drive-in','wreck-ring','big-wheel','scrap-coaster','mud-pit','fun-stall-a','fun-stall-b','fountain','statue'];
     for(const id of ids) assert.ok(names.has(id),`missing building ${id}`);
     for(const id of ['drive-in:screen','wreck-ring:car-1','wreck-ring:car-2','wreck-ring:car-3','wreck-ring:car-4',
-      'big-wheel:wheel','scrap-coaster:train','fountain:water']) assert.ok(names.has(id),`missing named part ${id}`);
+      'big-wheel:wheel','scrap-coaster:train','scrap-coaster:train-cart-1','scrap-coaster:train-cart-2',
+      'scrap-coaster:train-cart-3','fountain:water']) assert.ok(names.has(id),`missing named part ${id}`);
+    const nodeIndex=new Map(gltf.nodes.map((node,index)=>[node.name,index]));
+    const coasterChildren=gltf.nodes[nodeIndex.get('scrap-coaster')].children||[];
+    const trainIndex=nodeIndex.get('scrap-coaster:train');
+    assert.ok(coasterChildren.includes(trainIndex),'scrap-coaster:train must stay under the coaster root');
+    const trainChildren=gltf.nodes[trainIndex].children||[];
+    for(const id of ['scrap-coaster:train-cart-1','scrap-coaster:train-cart-2','scrap-coaster:train-cart-3'])
+      assert.ok(trainChildren.includes(nodeIndex.get(id)),`${id} must move with scrap-coaster:train`);
     const budgets={'tavern':5000,'drive-in':14000,'wreck-ring':9000,'big-wheel':9000,'scrap-coaster':14000,
       'mud-pit':14000,'fun-stall-a':1800,'fun-stall-b':1800,'fountain':1800,'statue':1800};
     const triangles=Object.fromEntries(ids.map(id=>[id,0]));

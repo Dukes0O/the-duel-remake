@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-08/TOWN-ART-FUN/round-24'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-08/TOWN-ART-FUN/round-25'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-24.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-25.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -17,7 +17,7 @@ if '--paths-only' in args:
 
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 if '--review-only' in args:
     bpy.ops.import_scene.gltf(filepath=str(out))
@@ -53,6 +53,55 @@ if '--review-only' in args:
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--coaster-only' in args:
+        coaster_root=bpy.data.objects.get('scrap-coaster')
+        train_root=bpy.data.objects.get('scrap-coaster:train')
+        if coaster_root is None or train_root is None: raise RuntimeError('exported coaster or train is missing')
+        for child in family.children: hide_tree(child,child!=coaster_root)
+        hide_tree(coaster_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':
+                obj.hide_render=not obj.name.startswith('scrap-coaster:')
+        scene.render.engine='BLENDER_EEVEE_NEXT'; scene.eevee.taa_render_samples=24
+        scene.render.resolution_percentage=100; scene.render.image_settings.file_format='PNG'
+        scene.render.image_settings.color_mode='RGB'; scene.render.film_transparent=False
+        scene.view_settings.view_transform='Standard'
+        world=bpy.data.worlds.new('Coaster review grey'); world.use_nodes=True
+        world.node_tree.nodes['Background'].inputs['Color'].default_value=(.42,.42,.42,1)
+        world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8; scene.world=world
+        gm=bpy.data.materials.new('Coaster review ground'); gm.diffuse_color=(.42,.42,.42,1); gm.use_nodes=True
+        gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.42,.42,.42,1)
+        bpy.ops.mesh.primitive_plane_add(size=300,location=(0,0,-.035)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(gm)
+        def aim_coaster(obj,target,world_up=(0,0,1)):
+            direction=(Vector(target)-obj.location).normalized()
+            up=Vector(world_up).normalized()
+            right=direction.cross(up).normalized()
+            screen_up=right.cross(direction).normalized()
+            obj.rotation_euler=Matrix((right,screen_up,-direction)).transposed().to_quaternion().to_euler()
+        for name,loc,power,size in [('key',(5,-12,18),2300,13),('fill',(-13,10,14),1200,11)]:
+            ld=bpy.data.lights.new('Coaster '+name,'AREA'); ld.energy=power; ld.shape='DISK'; ld.size=size
+            lo=bpy.data.objects.new('Coaster '+name,ld); scene.collection.objects.link(lo); lo.location=loc; aim_coaster(lo,(0,0,5.5))
+        camera=bpy.data.objects.new('Coaster camera',bpy.data.cameras.new('Coaster camera')); scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
+        evidence.mkdir(parents=True,exist_ok=True)
+        views=[('side',(0,-1,0),'scrap-coaster-side.jpg',43),
+               ('front',(-1,0,0),'scrap-coaster-front.jpg',13.2),
+               ('rear',(1,0,0),'scrap-coaster-rear.jpg',13.2),
+               ('above',(0,0,1),'scrap-coaster-top.jpg',43)]
+        target=Vector((0,0,5.9))
+        for name,direction,photo_name,ortho in views:
+            direction=Vector(direction).normalized(); camera.location=target+direction*52
+            aim_coaster(camera,target,(0,1,0) if name=='above' else (0,0,1))
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size; bpy.data.images.remove(ref)
+            camera.data.ortho_scale=ortho; scene.render.filepath=str(evidence/f'scrap-coaster-{name}-model.png')
+            bpy.ops.render.render(write_still=True); print('rendered scrap-coaster',name)
+        for name,direction,ortho in [('three-quarter-a',(-1,-1,.55),45),('three-quarter-b',(1,1,.55),45),
+                                    ('mayor',(-1,-1,math.sqrt(2)),46)]:
+            direction=Vector(direction).normalized(); camera.location=target+direction*58; aim_coaster(camera,target)
+            scene.render.resolution_x,scene.render.resolution_y=1000,700; camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'scrap-coaster-{name}.png'); bpy.ops.render.render(write_still=True)
+            print('rendered scrap-coaster',name)
+        raise SystemExit(0)
     if '--mud-pit-only' in args:
         pit_root=bpy.data.objects.get('mud-pit')
         if pit_root is None:raise RuntimeError('exported mud-pit building is missing')
@@ -1180,27 +1229,116 @@ for i in range(8):
     touching=any(overlap(seat_bounds,rb) for rb in hanger_bounds)
     print(f'BIG-WHEEL SEAT {i+1} BOUNDS',json.dumps(game_seat),'touches hanger:',touching)
     if not touching: raise RuntimeError(f'big wheel seat {i+1} misses its hangers')
-# Compact coaster: welded tower, inclined lead-in, broad loop, steep return drop, and movable train.
+# The coaster's two open scaffold faces are traced from one measured side photo.
+# The grey studio is flood-masked, so the loop and lattice openings stay empty.
 building_root('scrap-coaster','6x4')
-for x in (-18,-12,-6,0,6,12,18):
-    for z in (-10,0,10):
-        h=4.0+3.0*(1-abs(x)/20)+2.5*(z==0)
-        beam(f'scrap-coaster:scaffold-post-{x}-{z}',(x,.1,z),(x,h,z),.22,'rusted-steel')
-        if abs(x)<18: beam(f'scrap-coaster:cross-brace-{x}-{z}',(x,.3,z),(x+6,h*.68,z),.11,'galvanised-tin')
-        beam(f'scrap-coaster:bay-tie-{x}-{z}',(x,h*.53,-10),(x,h*.53,10),.12,'weathered-plank')
-# Thick track rails: a high approach, a full loop, then a sharp falling return.
-track=[(-20,2.5,0),(-15,4,0),(-10,7,0),(-6,12,0),(-3,13,0),(0,12,0)]
-for i in range(1,17):
-    a=math.pi*2*i/16; track.append((5+4.4*math.cos(a),7.2+4.4*math.sin(a),0))
-track.extend([(10,11,0),(13,8,0),(16,3.2,0),(20,2.4,0)])
-for rail in (-.46,.46):
-    pts=[(x,y,z+rail) for x,y,z in track]
-    pipe(f'scrap-coaster:track-rail-{rail}',pts,.10,'galvanised-tin')
-for i,(x,y,z) in enumerate(track[::2]): beam(f'scrap-coaster:cross-tie-{i}',(x,y-.15,z-.55),(x,y-.15,z+.55),.12,'rusted-steel')
+coaster_photo=Photo(tex/'scrap-coaster-side.jpg')
+coaster_photo.image['credit']='OpenAI ImageGen, 8 November 2026; original: C:/Users/kyleb/.codex/generated_images/01a1ba53-faf0-7211-958a-533c01f29a14/exec-0831b0c5-4bde-4064-bf5a-700eba73e097.png'
+lift_if_dark(coaster_photo)
+coaster_ground=320; coaster_start=12; coaster_end=1012
+COASTER_SCALE=39.0/(coaster_end-coaster_start)
+# The side photo's open scaffold cells do not all reach its frame. These
+# measured neutral background patches seed each pocket so `trace` keeps the
+# space between welded members open instead of turning it into a grey plate.
+coaster_open_cells=[(251,216),(250,267),(272,239),(277,287),(337,196),(370,112),(371,167),
+                    (376,231),(398,133),(399,76),(414,236),(449,186),(499,82),(504,226),
+                    (514,169),(545,212),(760,170)]
+coaster_mask=~coaster_photo.sky(photo_carve.edge_seeds(coaster_photo)+coaster_open_cells,
+                               tolerance=22,grey=20)
+coaster_mask[coaster_ground:,:]=False
+# The main-body photo has an empty station; the separately carved train never
+# enters either traced scaffold face.
+photo_carve.save_mask(coaster_mask,evidence/'scrap-coaster-side-mask.png')
+coaster_photo.bleed(coaster_mask)
+coaster_loops=trace(coaster_mask,(8,8,1018,coaster_ground),tolerance=2.5,min_area=28)
+if not coaster_loops: raise RuntimeError('scrap-coaster side silhouette did not trace')
+def coaster_side_world(px,py,depth):
+    return (-19.5+(px-coaster_start)*COASTER_SCALE,
+            max(0,(coaster_ground-py)*COASTER_SCALE),depth-2.5)
+for side,z in (('near',-.62),('far',.62)):
+    face=PhotoMesh(); slab(face,'photo',coaster_photo,coaster_loops,coaster_side_world,z-.025,z+.025,wall_scale=COASTER_SCALE)
+    obj=face.finish(f'scrap-coaster:scaffold-face-{side}',{'photo':coaster_photo.material()}); keep(obj)
+
+# Station: a small timber deck, with steel legs and a short stair at the road end.
+box('scrap-coaster:station-platform',(-17.0,2.55,-2.5),(6.0,.26,3.1),'weathered-plank',.04)
+for x in (-19.6,-17.0,-14.4):
+    for z in (-3.85,-1.15): beam(f'scrap-coaster:station-leg-{x}-{z}',(x,.04,z),(x,2.4,z),.16,'rusted-steel')
+for step in range(5):
+    x=-20.55+step*.34; y=.27+step*.36
+    box(f'scrap-coaster:station-stair-{step+1}',(x,y,-2.5),(.44,.54,2.45),'weathered-plank',.025)
+
+# Real twin rails sit over the traced side profiles. Cross ties connect the two
+# 1.2 m separated scaffold faces; every support in the photo reaches grade.
+track_pixels=[(12,247),(48,247),(88,247),(140,247),(192,246),(220,239),(250,219),(292,192),(338,160),
+              (385,123),(430,87),(470,55),(505,35),(532,29),(552,41),(570,91),
+              (585,150),(600,207),(615,245),(642,260),(675,263)]
+for i in range(1,25):
+    angle=math.pi/2+math.tau*i/24
+    track_pixels.append((786+83*math.cos(angle),194+83*math.sin(angle)))
+track_pixels.extend([(877,263),(916,263),(960,263),(1000,263)])
+track=[]
+for px,py in track_pixels:
+    x=-19.5+(px-coaster_start)*COASTER_SCALE; y=max(.18,(coaster_ground-py)*COASTER_SCALE)
+    track.append((x,y,-2.5))
+for side,z in (('near',-2.5-.42),('far',-2.5+.42)):
+    points=[(x,y,z) for x,y,_ in track]
+    pipe(f'scrap-coaster:rail-{side}',points,.075,'galvanised-tin')
+for i,(x,y,_) in enumerate(track[::2]):
+    beam(f'scrap-coaster:cross-tie-{i+1}',(x,max(.06,y-.12),-3.0),(x,max(.06,y-.12),-2.0),.10,'rusted-steel')
+
 train=bpy.data.objects.new('scrap-coaster:train',None);bpy.context.collection.objects.link(train);train.parent=current
-for i in range(3):
-    car(f'scrap-coaster:salvage-car-{i+1}',(-15+i*1.35,4.3,0),.56,'faded-hand-paint',train)
-    beam(f'scrap-coaster:coupler-{i}',(-14+i*1.35,4.0,0),(-13.6+i*1.35,4.0,0),.09,'rusted-steel',train)
+train.location=town.game_vector((-17.0,2.85,-2.5))
+cart_table={
+    'photos':{'side':'scrap-coaster-cart-side.jpg','front':'scrap-coaster-cart-front.jpg',
+              'rear':'scrap-coaster-cart-rear.jpg','top':'scrap-coaster-cart-top.jpg'},
+    'length':1.55,'width':.82,'height':.88,
+    # The cart's nose is on the right of the side photo; reversed pixel ends
+    # keep the front and rear projections inside the same measured image.
+    'side':{'start':969,'end':55,'ground':649},
+    'front':{'centre':512,'ground':890,'top':73},
+    'rear':{'centre':512,'ground':890,'top':73},
+    'top':{'front':860,'rear':105,'centre':512},
+    'forward':1,'side_front_on_left':False,
+    'grey':20,'tolerance':30,'bleed_tolerance':34,'voxel':.035,'target':1800,
+    'mask_dir':str(evidence/'scrap-coaster-cart-masks'),
+}
+first_cart=carve_object('scrap-coaster:train-cart-1',tex,cart_table)
+for photo in cart_table['_photos'].values():
+    photo.image['credit']='OpenAI ImageGen, 8 November 2026; original reference paths in textures/scrap-coaster-CREDITS.md'
+first_cart.parent=train; first_cart.rotation_euler[2]=math.pi/2; first_cart.location=(-1.58,0,0)
+for i,offset in ((2,0),(3,1.58)):
+    copy=first_cart.copy(); copy.data=first_cart.data
+    copy.name=f'scrap-coaster:train-cart-{i}'; bpy.context.collection.objects.link(copy)
+    copy.parent=train; copy.rotation_euler[2]=math.pi/2; copy.location=(offset,0,0)
+for i,x in enumerate((-17.0-1.58,-17.0,-17.0+1.58),1):
+    if i<3: beam(f'scrap-coaster:train-coupler-{i}',(x+.60,2.77,-2.5),(x+1.00,2.77,-2.5),.065,'rusted-steel',train)
+
+# Print and check every coaster mesh in game metres. Its 6 by 4 footprint is
+# 48 by 32 m; retain a half-metre margin and prove each piece meets a support.
+coaster_pieces=[o for o in bpy.data.objects if o.type=='MESH' and o.name.startswith('scrap-coaster:')]
+def coaster_bounds(obj):
+    points=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    values=[(min(p[axis] for p in points),max(p[axis] for p in points)) for axis in range(3)]
+    # Blender Z up; exported game coordinates are X, Y-up, Z.
+    return (values[0],values[2],(-values[1][1],-values[1][0]))
+def coaster_overlap(a,b):
+    return all(a[i][0]<=b[i][1]+.055 and b[i][0]<=a[i][1]+.055 for i in range(3))
+coaster_boxes={piece:coaster_bounds(piece) for piece in coaster_pieces}
+for piece,bounds in coaster_boxes.items():
+    game_bounds={'min':[round(v[0],3) for v in bounds],'max':[round(v[1],3) for v in bounds]}
+    print('SCRAP-COASTER BOUNDS',piece.name,json.dumps(game_bounds))
+    if bounds[0][0]<-23.5 or bounds[0][1]>23.5 or bounds[2][0]<-15.5 or bounds[2][1]>15.5:
+        raise RuntimeError(f'{piece.name} leaves the 6x4 footprint: {game_bounds}')
+    if bounds[1][0]<-.06: raise RuntimeError(f'{piece.name} extends below ground: {game_bounds}')
+    grounded=bounds[1][0]<=.035
+    touches=grounded or any(other is not piece and coaster_overlap(bounds,other_bounds)
+                            for other,other_bounds in coaster_boxes.items())
+    print('SCRAP-COASTER CONTACT',piece.name,'ground' if grounded else 'another piece' if touches else 'NO CONTACT')
+    if not touches: raise RuntimeError(f'{piece.name} floats without support')
+coaster_triangles=sum(sum(len(poly.vertices)-2 for poly in piece.data.polygons) for piece in coaster_pieces)
+print('SCRAP-COASTER TRIANGLES',coaster_triangles)
+if coaster_triangles>14000: raise RuntimeError(f'scrap-coaster has {coaster_triangles} triangles; limit 14000')
+if bpy.data.objects.get('scrap-coaster:train') is None: raise RuntimeError('scrap-coaster:train moving part is missing')
 
 # TOWN-ART-FUN round 24: keep the churned-mud photo, but set the rim at grade
 # and carry the hollow 1.5 m below it. The stand has its own generated views.
@@ -1565,7 +1703,7 @@ for obj in bpy.data.objects:
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
         image_name=Path(image.filepath).name
-        if not image_name.startswith(('drive-in-','fountain-','statue-','mud-pit')):
+        if not image_name.startswith(('drive-in-','fountain-','statue-','mud-pit','scrap-coaster-')):
             image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,

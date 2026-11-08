@@ -210,6 +210,7 @@ stop adjusting and change the method.
 - **Triangles run away in traces and rings.** A traced seat at a fine tolerance cost 4,880 triangles and a ring of 128 by 12 steps 6,144 (the big wheel). Count each piece's triangles before submitting, and coarsen what the mayor's camera cannot see.
 
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
+- A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,
   with labels off the pictures and no white gaps.
 - Photo beside model at the same camera, three-quarter views, the mayor's view
