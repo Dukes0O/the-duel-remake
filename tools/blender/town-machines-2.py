@@ -284,7 +284,6 @@ def basic_family():
   'front':{'centre':512,'ground':913,'top':37},
   'rear':{'centre':512,'ground':916,'top':32},
   'top':{'front':30,'rear':987,'centre':512},
-  'ends_split':-1.28,'front_favour':3,
   'underside':.45,'wheels':mixer_wheels,'keep':keep_mixer_body,
   'cut':{'side':[(274,178,377,324),(925,215,1010,334)]},
   'voxel':.035,'target':7000,'grey':20,'tolerance':28,'bleed_tolerance':30,
@@ -639,9 +638,9 @@ if a.render:
  top_cam.data.type='ORTHO';top_cam.data.ortho_scale=10.7
  scene.camera=top_cam;scene.render.resolution_x=1024;scene.render.resolution_y=1024
  scene.render.filepath=str(ev/'mixer-truck-top-model.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(top_cam,do_unlink=True)
- joints['mixer-truck:drum'].rotation_euler[1]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
+ joints['mixer-truck:drum'].rotation_euler[2]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
  mixer_cam('three-quarter-rest',(19,-10,7),(11,0,1.9),10.5,1024,768,False)
- joints['mixer-truck:drum'].rotation_euler[1]=1.0;joints['mixer-truck:chute'].rotation_euler[0]=.55
+ joints['mixer-truck:drum'].rotation_euler[2]=1.0;joints['mixer-truck:chute'].rotation_euler[0]=.55
  mixer_cam('three-quarter-work',(19,-10,7),(11,0,1.9),10.5,1024,768,False)
  print('Rendered mixer truck photo comparisons and both articulated poses from the imported GLB')
  raise SystemExit(0)
@@ -665,7 +664,7 @@ if a.render:
    if name=='loader':
     joints['loader:arms'].rotation_euler[0]=0 if pose=='rest' else -.32;joints['loader:bucket'].rotation_euler[0]=0 if pose=='rest' else .24
    elif name=='mixer-truck':
-    joints['mixer-truck:drum'].rotation_euler[1]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
+    joints['mixer-truck:drum'].rotation_euler[2]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
    elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
    elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
    elif name=='drill-rig':

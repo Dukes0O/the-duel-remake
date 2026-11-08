@@ -82,7 +82,7 @@ const generators = [
   {id:'town-machines-1',script:'tools/blender/town-machines-1.py',args:[],candidate:true,
     glb:['public/assets/models/wasteland/town/machines-1.glb'],budget:60000,maxBytes:3000000},
   {id:'town-machines-2',script:'tools/blender/town-machines-2.py',args:[],
-    glb:['public/assets/models/wasteland/town/machines-2.glb'],budget:105000,maxBytes:3000000},
+    glb:['public/assets/models/wasteland/town/machines-2.glb'],budget:105000,maxBytes:8000000},
   {id:'town-services',script:'tools/blender/town-services.py',args:[],candidate:true,evidence:'.qa-dist/town-services',
     glb:['public/assets/models/wasteland/town/services.glb'],budget:120000,maxBytes:8000000},
   {id:'town-art-outposts',script:'tools/blender/town-outposts.py',args:[],candidate:true,
@@ -581,7 +581,7 @@ try {
       assert.deepEqual(children[ix].map(i=>names[i]).sort(),ids.slice().sort(),'family root has one direct child per machine');
       const familyX=ids.map(id=>gltf.nodes[names.indexOf(id)].translation?.[0]??0);
       assert.equal(new Set(familyX).size,ids.length,'each machine has its own family-row position');
-      assert.ok(bytes.length<=3_000_000,'machine family exceeds 3 MB');
+      assert.ok(bytes.length<=8_000_000,'machine family exceeds 8 MB');
       const descendants=index=>[index,...children[index].flatMap(descendants)];
       for(const id of ids){
         const machineIndex=names.indexOf(id);

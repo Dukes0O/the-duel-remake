@@ -187,6 +187,7 @@ stop adjusting and change the method.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.
+- **A drum spins around the wrong axis in a Blender review.** Town models convert game Y-up to Blender Z-up, so a part whose long axis is game Y spins around Blender Z (local Euler Z), after checking its imported joint orientation. The mixer-truck review pose originally rotated around Blender Y and looked unchanged end-on.
 - **A small bank becomes a ramp.** Blender Euler rotations take radians. Passing a value converted to degrees into a rotation field turned a half-metre ship bow slope into a steep ramp; keep the `asin` result in radians.
 - **A horizontal beam turns upright.** `to_track_quat('Z', 'Y')` is ambiguous
   when the beam points along Blender Y. Use an axis-aligned box or a different
