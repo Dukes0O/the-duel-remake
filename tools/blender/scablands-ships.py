@@ -1800,7 +1800,7 @@ if args.stage == 'family':
     deck_paint=matte_material('Pilot boat / grey non-slip deck',(.31,.33,.32),.95)
     photo=bpy.data.images.load(str(photos['pilot-boat-photo'].resolve()),check_existing=True)
     photo_w,photo_h=photo.size
-    stations=((-0.50,.10),(-.44,.43),(-.36,.72),(-.27,.88),(-.16,.96),(-.04,1),(.10,1),(.22,.97),(.32,.90),(.40,.76),(.46,.50),(.50,.03))
+    stations=((-0.50,.58),(-.44,.66),(-.36,.78),(-.27,.88),(-.16,.96),(-.04,1),(.10,1),(.22,.97),(.32,.90),(.40,.76),(.46,.50),(.50,.03))
     def hull_photo_uv(t,y):
         along=max(0,min(1,t+.5)); px=10+1510*along
         sheer=345+(190-345)*along; keel=470+(500-470)*along
@@ -1829,30 +1829,64 @@ if args.stage == 'family':
         side_face=poly.index < (len(stations)-1)*9 and poly.index%9 in (1,2,6,7)
         poly.material_index=2 if side_face else (1 if poly.index%9 in (3,4,5) else 0)
         for li,coord in zip(poly.loop_indices,coords): uv.data[li].uv=coord
-    # Black rubbing strake follows the sheer; the green boot band hugs the lower hull.
+    # Black rubbing strake follows the sheer; the photo itself carries the boot stripe.
     for side in (-1,1):
-        beam(f'pilot-boat-black-rubbing-strake-{side}',(-5.5,2.10,side*1.72),(5.1,2.10,side*1.72),.12,iron,'pilot-boat',.09)
-        beam(f'pilot-boat-green-boot-stripe-{side}',(-5.4,.82,side*1.12),(5.3,.82,side*1.12),.10,boat_stripe,'pilot-boat',.06)
+        for i in range(len(stations)-1):
+            (t0,b0),(t1,b1)=stations[i],stations[i+1]
+            beam(f'pilot-boat-black-rubbing-strake-{side}-{i}',(t0*12.2,2.10,side*1.92*b0*1.05),(t1*12.2,2.10,side*1.92*b1*1.05),.12,iron,'pilot-boat',.09)
+    for name,y,width,material in (('transom-strake',2.10,.12,iron),('transom-boot-stripe',.82,.10,boat_stripe)):
+        beam(f'pilot-boat-{name}',(-6.12,y,-1.92*.58),(-6.12,y,1.92*.58),width,material,'pilot-boat',.06)
     # Faceted house shell with a raked bow; dark recessed glazing is separate.
-    house_vertices=[(-3.78,2.34,-1.30),(1.10,2.34,-1.30),(1.10,2.34,1.30),(-3.78,2.34,1.30),(-4.10,4.64,-1.18),(.78,4.64,-1.18),(.78,4.64,1.18),(-4.10,4.64,1.18)]
-    house_faces=((0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7))
+    house_vertices=[(-3.78,2.34,-1.30),(1.10,2.34,-1.30),(1.10,2.34,1.30),(-3.78,2.34,1.30),(-4.10,4.64,-1.18),(-.51,4.64,-1.18),(-.51,4.64,1.18),(-4.10,4.64,1.18)]
+    # Bottom, roof and stern transom; both sides and the raked bow are built
+    # around their window openings below.
+    house_faces=((0,3,2,1),(4,5,6,7),(3,0,4,7))
     mesh=bpy.data.meshes.new('raked pilot house'); mesh.from_pydata([gv(v) for v in house_vertices],[],house_faces); mesh.materials.append(boat_paint); mesh.update()
     cabin=bpy.data.objects.new('pilot-boat-pilot-house',mesh); scene.collection.objects.link(cabin); cabin['part']='pilot-boat'; parent(cabin,boat)
-    roof=cube('pilot-boat-pilot-house-roof',(-1.66,4.68,0),(5.0,.12,2.42),boat_paint,'pilot-boat',.035); parent(roof,boat)
-    # Five dark side panes sit just behind the sloping cream shell.
+    roof=cube('pilot-boat-pilot-house-roof',(-2.25,4.68,0),(3.7,.12,2.35),boat_paint,'pilot-boat',.035); parent(roof,boat)
+    # Side walls are tiled around five cutouts; glass is set 0.06 m behind the skin.
+    window_x=(-3.35,-2.53,-1.71,-.89,-.07); win_w=.52; win_lo,win_hi=3.25,3.78
     for side in (-1,1):
-        for i,x in enumerate((-3.35,-2.53,-1.71,-.89,-.07)):
-            pane=cube(f'pilot-boat-recessed-side-glass-{side}-{i}',(x,3.52,side*1.285),(.52,.53,.025),glass,'pilot-boat',.025); parent(pane,boat)
+        def house_side_z(y): return side*(1.30-.12*(y-2.34)/(4.64-2.34))
+        x_edges=[-3.78]
+        for x in window_x: x_edges.extend((x-win_w/2,x+win_w/2))
+        x_edges.append(1.10)
+        y_edges=(2.34,win_lo,win_hi,4.64)
+        side_verts=[]; side_faces=[]
+        for row in range(3):
+            for col in range(len(x_edges)-1):
+                if row==1 and col%2==1: continue
+                start=len(side_verts); x0,x1=x_edges[col:col+2]; y0,y1=y_edges[row:row+2]
+                side_verts.extend((gv((x0,y0,house_side_z(y0))),gv((x1,y0,house_side_z(y0))),gv((x1,y1,house_side_z(y1))),gv((x0,y1,house_side_z(y1)))))
+                face=tuple(range(start,start+4))
+                side_faces.append(face if side>0 else tuple(reversed(face)))
+        side_mesh=bpy.data.meshes.new(f'pilot house windowed side {side}'); side_mesh.from_pydata(side_verts,[],side_faces); side_mesh.materials.append(boat_paint); side_mesh.update()
+        side_obj=bpy.data.objects.new(f'pilot-boat-windowed-side-{side}',side_mesh); scene.collection.objects.link(side_obj); side_obj['part']='pilot-boat'; parent(side_obj,boat)
+        for i,x in enumerate(window_x):
+            pane=cube(f'pilot-boat-recessed-side-glass-{side}-{i}',(x,(win_lo+win_hi)/2,side*(abs(house_side_z((win_lo+win_hi)/2))-.06)),(win_w-.04,win_hi-win_lo-.04,.025),glass,'pilot-boat',.02); parent(pane,boat)
         rail(f'pilot-boat-foredeck-rail-{side}',(3.4,2.62,side*1.3),(5.4,2.62,side*1.1),.035,steel,'pilot-boat')
         rail(f'pilot-boat-aft-rail-{side}',(-5.8,2.62,side*1.15),(-4.0,2.62,side*1.30),.035,steel,'pilot-boat')
         for x in (-5.8,-4.8,3.2,4.4): rail(f'pilot-boat-rail-post-{side}-{x}',(x,2.34,side*1.18),(x,2.62,side*1.18),.025,steel,'pilot-boat')
-    # Three raked front panes replace the old full-height glass box.
+    # Cut three real openings through the steeply raked front face.
+    front_centres=(-.72,0,.72); front_w=.46; front_lo,front_hi=3.25,3.81
+    z_edges=[-1.30]
+    for z in front_centres: z_edges.extend((z-front_w/2,z+front_w/2))
+    z_edges.append(1.30)
+    def front_x(y): return 1.10-(1.10+.51)*(y-2.34)/(4.64-2.34)
+    front_verts=[]; front_faces=[]; fy=(2.34,front_lo,front_hi,4.64)
+    for row in range(3):
+        for col in range(len(z_edges)-1):
+            if row==1 and col%2==1: continue
+            start=len(front_verts); z0,z1=z_edges[col:col+2]; y0,y1=fy[row:row+2]
+            front_verts.extend((gv((front_x(y0),y0,z0)),gv((front_x(y0),y0,z1)),gv((front_x(y1),y1,z1)),gv((front_x(y1),y1,z0))))
+            front_faces.append(tuple(reversed(range(start,start+4))))
+    front_mesh=bpy.data.meshes.new('pilot house raked front with three openings'); front_mesh.from_pydata(front_verts,[],front_faces); front_mesh.materials.append(boat_paint); front_mesh.update()
+    front_obj=bpy.data.objects.new('pilot-boat-windowed-raked-front',front_mesh); scene.collection.objects.link(front_obj); front_obj['part']='pilot-boat'; parent(front_obj,boat)
     for i,z in enumerate((-.72,0,.72)):
-        pane=cube(f'pilot-boat-recessed-front-glass-{i}',(.99,3.55,z),(.025,.56,.46),glass,'pilot-boat',.02); parent(pane,boat)
-    deck=cube('pilot-boat-grey-non-slip-deck',(-.05,2.35,0),(11.7,.04,3.55),deck_paint,'pilot-boat',0); parent(deck,boat)
+        pane=cube(f'pilot-boat-recessed-front-glass-{i}',(front_x(3.53)-.06,3.53,z),(.025,.52,.42),glass,'pilot-boat',.02); pane.rotation_euler[1]=math.radians(-35); parent(pane,boat)
     # Roof gear.
-    rail('pilot-boat-mast',(-1.66,4.70,0),(-1.66,5.55,0),.035,steel,'pilot-boat')
-    cylinder('pilot-boat-radar-dome',(-1.66,5.62,0),.20,.18,boat_paint,'pilot-boat',16,'Y')
+    rail('pilot-boat-mast',(-2.25,4.70,0),(-2.25,5.55,0),.035,steel,'pilot-boat')
+    cylinder('pilot-boat-radar-dome',(-2.25,5.62,0),.20,.18,boat_paint,'pilot-boat',16,'Y')
     cylinder('pilot-boat-searchlight',(-.95,4.80,.38),.12,.18,iron,'pilot-boat',16,'X')
     rail('pilot-boat-horn',(-1.0,4.86,-.38),(-.55,5.00,-.38),.045,steel,'pilot-boat')
     for side in (-1,1): torus(f'pilot-boat-life-ring-{side}',(-4.8,2.65,side*.98),.28,.06,materials['faded-hand-paint'],'pilot-boat','Z',16,6)
@@ -1869,8 +1903,16 @@ if args.stage == 'family':
             hub=cylinder(f'pilot-trailer-hub-{side}-{axle}',(x,wheel_y,z+side*.19),.105,.06,steel,'pilot-boat',12,'Y'); hub.rotation_euler[0]=math.pi/2
             inner=cylinder(f'pilot-trailer-inner-solid-tyre-{side}-{axle}',(x,wheel_y,z-side*.34),.525,.28,iron,'pilot-boat',24,'Y'); inner.rotation_euler[0]=math.pi/2
             rail(f'pilot-trailer-axle-{side}-{axle}',(x,wheel_y,side*.85),(x,wheel_y,side*1.48),.085,steel,'pilot-boat')
-            rail(f'pilot-trailer-mudguard-front-{side}-{axle}',(x-.57,-.20,z),(x,-.05,z),.06,rust,'pilot-boat')
-            rail(f'pilot-trailer-mudguard-rear-{side}-{axle}',(x,-.05,z),(x+.57,-.20,z),.06,rust,'pilot-boat')
+            guard_verts=[]; guard_faces=[]; guard_segments=8
+            for edge_z in (side*1.30,side*2.00):
+                for step in range(guard_segments+1):
+                    angle=math.radians(30+120*step/guard_segments)
+                    guard_verts.append(gv((x+.65*math.cos(angle),wheel_y+.65*math.sin(angle),edge_z)))
+            for step in range(guard_segments):
+                a=step; b=step+guard_segments+1
+                guard_faces.append((a,a+1,b+1,b))
+            guard_mesh=bpy.data.meshes.new(f'pilot trailer mudguard mesh {side} {axle}'); guard_mesh.from_pydata(guard_verts,[],guard_faces); guard_mesh.materials.append(rust); guard_mesh.update()
+            guard=bpy.data.objects.new(f'pilot-trailer-mudguard-{side}-{axle}',guard_mesh); scene.collection.objects.link(guard); guard['part']='pilot-boat'; parent(guard,boat)
     for x in (-4.4,-.5,3.8):
         for side in (-1,1):
             block=cube(f'pilot-trailer-keel-block-{x}-{side}',(x,.27,side*.62),(.48,.42,.38),wood,'pilot-boat',.035); parent(block,boat)
@@ -1879,10 +1921,12 @@ if args.stage == 'family':
         beam(f'pilot-boat-yellow-strap-across-deck-{i}',(x,2.42,-1.18),(x,2.42,1.18),.05,strap_yellow,'pilot-boat',.025)
         beam(f'pilot-boat-yellow-strap-side-b-{i}',(x,2.42,1.18),(x,.10,1.45),.05,strap_yellow,'pilot-boat',.025)
         box=cube(f'pilot-boat-strap-ratchet-{i}',(x,.24,-1.45),(.18,.09,.12),steel,'pilot-boat',.01); parent(box,boat)
-    sign=cube('pilot-trailer-wide-load-board',(-6.03,1.22,0),(.16,.66,2.1),wood,'pilot-boat',.025); parent(sign,boat)
+    sign=cube('pilot-trailer-wide-load-board',(-6.20,1.22,0),(.16,.66,2.1),wood,'pilot-boat',.025); parent(sign,boat)
+    for z in (-.78,.78):
+        bolt=cylinder(f'pilot-boat-sign-bolt-{z}',(-6.40,1.24,z),.045,.045,steel,'pilot-boat',12,'X'); parent(bolt,boat)
     signmat=matte_material('Pilot boat / sign lettering red',(.72,.08,.025))
     text_data=bpy.data.curves.new('WIDE LOAD hand painted','FONT'); text_data.body='WIDE LOAD'; text_data.size=.28; text_data.extrude=0; text_data.resolution_u=1
-    text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((-6.14,1.22,0)); text_obj.rotation_euler=(math.pi/2,0,math.pi/2); text_obj.data.materials.append(signmat); text_obj['part']='pilot-boat'; parent(text_obj,boat)
+    text_obj=bpy.data.objects.new('pilot-trailer-wide-load-lettering',text_data); scene.collection.objects.link(text_obj); text_obj.location=gv((-6.40,1.22,0)); text_obj.rotation_euler=(math.pi/2,0,-math.pi/2); text_obj.data.materials.append(signmat); text_obj['part']='pilot-boat'; parent(text_obj,boat)
     trailer_hitch=root_obj('pilot-boat:hitch',(0,0,0),'pilot-boat:hitch'); parent(trailer_hitch,boat)
     hitch=beam('pilot-trailer-hitch-coupler',(10.5,-.02,0),(11.4,-.02,0),.20,steel,'pilot-boat:hitch'); parent(hitch,trailer_hitch)
     # Geometry helpers create world-scoped objects; keep every named fitting
