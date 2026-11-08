@@ -154,19 +154,20 @@ if args.render_view:
         side_sign = -1
         local_point = Vector((72.0 * t, side_sign * (12.0 * breadth * .5 + .025), -2.35))
         target = subject_root.matrix_world @ local_point
+        target.z += 12.0
         rotation = subject_root.matrix_world.to_3x3()
         forward = rotation @ Vector((1, 0, 0))
         outboard = rotation @ Vector((0, 1, 0))
         scene.camera.location = target + forward * 28.0 + outboard * (28.0 * side_sign)
         scene.camera.location.z = -1.2
         scene.camera.rotation_euler = (target - scene.camera.location).to_track_quat('-Z', 'Y').to_euler()
-        scene.camera.data.lens = 20
+        scene.camera.data.lens = 27
     if args.render_view == 'whole':
-        scene.camera.location = Vector((80, 350, 1.2))
+        scene.camera.location = Vector((80, 330, 1.2))
         scene.camera.rotation_euler = (
-            Vector((5, 440, 4)) - scene.camera.location
+            Vector((5, 440, 60)) - scene.camera.location
         ).to_track_quat('-Z', 'Y').to_euler()
-        scene.camera.data.lens = 18
+        scene.camera.data.lens = 20
     if args.render_view == 'above':
         scene.camera.data.type = 'PERSP'
         scene.camera.data.lens = 18
@@ -598,12 +599,13 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
         obj.data.materials.append(mat)
     uv = obj.data.uv_layers.active
     length, height, width = dims
-    images=[next(n.image for n in mat.node_tree.nodes if n.type=='TEX_IMAGE') for mat in mats]
+    images=[next(n.image for n in mat.node_tree.nodes if n.type=='TEX_IMAGE') for mat in mats[:4]]
     for poly in obj.data.polygons:
         n = poly.normal
+        roof_deck = name.endswith(':upperworks-deck')
         if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
-            # The end photos leave white edges on the compact cabin blocks.
-            # Continue the painted side plating over both end faces.
+            mat_index = 0
+        elif roof_deck and abs(n.z) >= abs(n.x) and abs(n.z) >= abs(n.y):
             mat_index = 0
         elif abs(n.y) >= abs(n.z):
             mat_index = 0
@@ -615,16 +617,17 @@ def photo_box(name, center, dims, side, bow, stern, top, part, crops):
         for li in poly.loop_indices:
             co = obj.data.vertices[obj.data.loops[li].vertex_index].co
             if abs(n.x) >= abs(n.y) and abs(n.x) >= abs(n.z):
-                across = co.y / width + .5
-                up = .12 + .72 * (co.z / height + .5)
+                across = .5 + .08 * co.y / width
+                up = .55 + .18 * (co.z / height + .5)
             elif mat_index == 0:
                 across, up = (co.x / length + .5), (co.z / height + .5)
             elif mat_index in (1, 2):
                 across, up = (co.y / width + .5), (co.z / height + .5)
             else:
                 across, up = (co.y / width + .5), (1 - (co.x / length + .5))
-            if name.endswith(':upperworks-deck') and mat_index == 0:
-                up = .30 + .42 * up
+            if roof_deck and abs(n.z) >= abs(n.x) and abs(n.z) >= abs(n.y):
+                across = .5 + .2 * (co.x / length + .5)
+                up = .55 + .1 * (co.y / width + .5)
             px=px0+across*(px1-px0)
             py=py1-up*(py1-py0)
             uv.data[li].uv=(px/image_w,1-py/image_h)

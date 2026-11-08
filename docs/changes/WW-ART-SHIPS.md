@@ -384,3 +384,13 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the above-ground center vertex from each oval ground heap and replaced the long, taller side-bank profiles with short rounded profiles. Removed the former end-photo UV mapping from cabin end faces.
+
+## Round 15, part 2, point 2 — review sheet (7 November 2026)
+
+- Rendered the six round 14 views from the exported family GLB, reframed the family and two close ship views, composed and inspected a 1600 x 1800 JPG. The ships fill at least half their panels, and the horizon sits in the lower third. `round-15.jpg` is 92,216 bytes. Cabin ends now sample painted side-plating crops; roof edges no longer sample the bright photo background.
+- GLB read-back by named ship root: Patience 10,755 triangles, Good Hope 5,576, Marigold 5,650; whole file 35,019 triangles and 2,587,396 bytes. All budgets pass.
+- `tools/test-blender-output.mjs`: passed, 381 checks, 0 failed. `tools/test-repo-hygiene.mjs`: passed; size targets remain advisory. `tools/test-review-evidence.mjs`: 8 passed, 1 failed with sandbox `ffmpeg` `EPERM`; Claude should rerun it. No browser check, lane tier or build applies to this art card. Changed assertions: none. Race fingerprints: none. Claude should review the residual texture stretch on cabin ends and the low hull-side mounds.
+
+### Removed
+
+- Removed `round-14.jpg` and `round-14-review.md`; round 15 is the current sheet and review.
