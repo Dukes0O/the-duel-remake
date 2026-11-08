@@ -3,6 +3,8 @@ import argparse
 import json
 import math
 import random
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -11,10 +13,10 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 root = Path(args.root).resolve()
-evidence = root / '.evidence/2026-11-07/town-art-food/round-19'
+evidence = root / '.evidence/2026-11-07/town-art-food/round-20'
 out = root / 'public/assets/models/wasteland/town/food.glb'
 blend = root / 'art-build/town/food.blend'
-sheet = root / 'docs/board/looks/town-art-food/round-19.jpg'
+sheet = root / 'docs/board/looks/town-art-food/round-20.jpg'
 if args.paths_only:
     print(json.dumps({'blend': [str(blend)], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': str(sheet)}))
     raise SystemExit(0)
@@ -514,36 +516,154 @@ PEN_SIDE.image.scale(256,round(256*PEN_SIDE.h/PEN_SIDE.w));PEN_SIDE.image.pack()
 PEN_TOP.image.scale(256,192);PEN_TOP.image.pack()
 
 add_building('chicken-run',(20,0,-14))
-for x in (-1.25,1.25):
-    for z in (-1.25,1.25): beam(f'chicken-run:frame-post-{x}-{z}',(x,.02,z),(x,1.65,z),.065,mat['weathered-plank'])
-# Open wire panels: a measured rectangular lattice, with the gaps left empty.
-for y in (.18,1.58):
-    for z in (-1.25,1.25): beam(f'chicken-run:wire-rail-{y}-{z}',(-1.25,y,z),(1.25,y,z),.022,mat['rusted-steel'])
-    for x in (-1.25,1.25): beam(f'chicken-run:wire-rail-side-{y}-{x}',(x,y,-1.25),(x,y,1.25),.022,mat['rusted-steel'])
-for i in range(1,4):
-    x=-1.25+i*2.5/4
-    beam(f'chicken-run:wire-front-v-{i}',(x,.12,-1.25),(x,1.60,-1.25),.009,mat['wire'])
-    beam(f'chicken-run:wire-rear-v-{i}',(x,.12,1.25),(x,1.60,1.25),.009,mat['wire'])
-for i in range(1,3):
-    z=-1.25+i*2.5/3
-    for x in (-1.25,1.25): beam(f'chicken-run:wire-end-v-{i}-{x}',(x,.12,z),(x,1.60,z),.009,mat['wire'])
-# Salvaged hatchback body reads as a rounded boot shell, open at the tailgate.
-for x in (-.49,.49):
-    box(f'chicken-run:boot-quarter-{x}',(x,.56,.32),(.14,.72,.88),mat['rusted-steel'],.025)
-box('chicken-run:boot-floor',(0,.22,.32),(.96,.13,.90),mat['iron-dark'],.015)
-box('chicken-run:boot-roof',(0,.94,.35),(.93,.13,.80),mat['galvanised-tin'],.03)
-box('chicken-run:boot-windscreen',(0,.70,-.10),(.82,.40,.07),mat['dirty-glass'],.025)
-box('chicken-run:boot-tailgate',(0,.50,.79),(.92,.58,.12),mat['rusted-steel'],.025)
-box('chicken-run:coop-dark-opening',(0,.40,1.01),(.58,.37,.035),mat['iron-dark'],.01)
-# Rear hatch details identify the shell as a cut-down car boot at road scale.
-box('chicken-run:boot-rear-window',(0,.76,.862),(.54,.20,.025),mat['dirty-glass'],.01)
-for x in (-.34,.34):
-    box(f'chicken-run:boot-tail-lamp-{x}',(x,.47,.858),(.12,.18,.035),mat['faded-hand-paint'],.01)
-box('chicken-run:boot-bumper',(0,.23,.91),(1.02,.105,.10),mat['iron-dark'],.01)
-for x in (-.4,.4): beam(f'chicken-run:boot-hinge-{x}',(x,.78,.88),(x,1.2,.88),.035,mat['rusted-steel'])
-box('chicken-run:nest-box',(0,.32,-.90),(.78,.38,.42),mat['weathered-plank'],.02)
-for x in (-.29,.29): beam(f'chicken-run:nest-box-leg-{x}',(x,.02,-.90),(x,.15,-.90),.045,mat['weathered-plank'])
-box('chicken-run:feed-tray',(0,.16,1.05),(.70,.17,.24),mat['galvanised-tin'],.015)
+def chicken_beam(name,a,b,width,material):
+    va=town.game_vector(a);vb=town.game_vector(b);delta=vb-va
+    obj=town.cube(name,((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2),
+                  (width,delta.length,width),material,0)
+    obj.rotation_euler=delta.to_track_quat('Z','Y').to_euler()
+    return keep(obj)
+
+# Round 20 replaces the box-and-bars coop with the cut-down hatchback boot in
+# its own four-photo carve. These reference views contain no wire run.
+CHICKEN_COOP = {
+    'photos': {'side':'chicken-run-side.png','front':'chicken-run-front.png',
+               'rear':'chicken-run-rear.png','top':'chicken-coop-top.png'},
+    'length':1.28,'width':1.28,'height':1.42,'forward':-1,
+    'side':{'start':440,'end':1060,'ground':1028},
+    'front':{'centre':724,'ground':1027,'top':35},
+    'rear':{'centre':724,'ground':1027,'top':35},
+    # The photographed rear of the car is at the bottom of the view; front is
+    # therefore the high pixel row in object space, and rear the low pixel row.
+    'top':{'front':35,'rear':1020,'centre':724,'x_scale':1.28/850},
+    'round':2,'voxel':.045,'target':950,'grey':12,'tolerance':30,
+    'bleed_tolerance':42,
+    # Remove the hen doorway from all elevations; the bay stays open through
+    # the cut-down car shell instead of becoming a dark painted patch.
+    'cut': {'side':[(515,830,672,962)],
+            'front':[(635,845,810,1000)],
+            'rear':[(635,845,810,1000)]},
+    'mask_dir':str(evidence/'chicken-coop-masks'),
+}
+chicken_coop=carve_object('chicken-run:carved-coop',textures,CHICKEN_COOP)
+chicken_coop.location=town.game_vector((0,0,-2.05))
+keep(chicken_coop)
+for coop_photo in CHICKEN_COOP['_photos'].values():
+    coop_photo.image.scale(256,round(256*coop_photo.h/coop_photo.w))
+    coop_photo.image.pack()
+
+# Trace the measured timber outlines in the run's side photo. The mask follows
+# the real rails, posts and diagonal; measuring its boards rather than every
+# weathering fleck keeps the frame solid without spending triangles on noise.
+CHICKEN_RUN_SIDE=Photo(textures/'chicken-run-photo-side.png')
+chicken_rgb=CHICKEN_RUN_SIDE.rgb()
+chicken_wood=np.zeros((CHICKEN_RUN_SIDE.h,CHICKEN_RUN_SIDE.w),dtype=bool)
+for x0,y0,x1,y1 in ((80,300,1238,365),(80,760,1238,818),
+                    (80,335,130,810),(400,335,435,810),(735,335,770,810),
+                    (1000,335,1040,810),(1198,335,1238,810)):
+    chicken_wood[y0:y1,x0:x1]=True
+def chicken_poly(points):
+    x0=max(0,int(min(p[0] for p in points)));x1=min(CHICKEN_RUN_SIDE.w,int(max(p[0] for p in points))+1)
+    y0=max(0,int(min(p[1] for p in points)));y1=min(CHICKEN_RUN_SIDE.h,int(max(p[1] for p in points))+1)
+    yy,xx=np.mgrid[y0:y1,x0:x1];inside=np.zeros(xx.shape,dtype=bool)
+    for (ax,ay),(bx,by) in zip(points,points[1:]+points[:1]):
+        crossing=((ay>yy)!=(by>yy)) & (xx < (bx-ax)*(yy-ay)/(by-ay+1e-12)+ax)
+        inside ^= crossing
+    chicken_wood[y0:y1,x0:x1] |= inside
+chicken_poly([(1015,750),(1050,750),(1190,390),(1160,390)])
+save_mask(chicken_wood,evidence/'chicken-run-side-wood-mask.png')
+chicken_frame_loops=trace(chicken_wood,(72,270,1245,830),tolerance=1.8,min_area=35)
+if not chicken_frame_loops: raise RuntimeError('chicken run side photo produced no timber outlines')
+CHICKEN_RUN_LENGTH=3.2;CHICKEN_RUN_WIDTH=2.4;CHICKEN_RUN_HEIGHT=1.7
+def chicken_side_world(px,py,depth):
+    z=CHICKEN_RUN_LENGTH/2-(px-80)*(CHICKEN_RUN_LENGTH/(1238-80))
+    y=max(0,(820-py)*(CHICKEN_RUN_HEIGHT/(820-280)))
+    return depth,y,z
+for side_name,d0,d1 in (('right',1.16,1.22),('left',-1.22,-1.16)):
+    frame=PhotoMesh()
+    slab(frame,'side',CHICKEN_RUN_SIDE,chicken_frame_loops,
+         chicken_side_world,d0,d1)
+    keep(frame.finish(f'chicken-run:traced-timber-{side_name}',{'side':CHICKEN_RUN_SIDE.material()}))
+
+# The mesh uses the same side photo. Grey studio ground is transparent; only
+# photographed wire contrast remains, at low opacity, so both sides show the
+# world through it. Panel outlines are traced and slabbed from that photo too.
+import numpy as np
+wire_pixels=np.empty(CHICKEN_RUN_SIDE.image_w*CHICKEN_RUN_SIDE.image_h*4,dtype=np.float32)
+CHICKEN_RUN_SIDE.image.pixels.foreach_get(wire_pixels)
+wire_pixels=wire_pixels.reshape(CHICKEN_RUN_SIDE.image_h,CHICKEN_RUN_SIDE.image_w,4).copy()
+wire_top=wire_pixels[::-1]
+grey=wire_top[:,:,:3].mean(axis=2)
+contrast=np.maximum.reduce((np.abs(grey-np.roll(grey,1,axis=0)),
+                            np.abs(grey-np.roll(grey,-1,axis=0)),
+                            np.abs(grey-np.roll(grey,1,axis=1)),
+                            np.abs(grey-np.roll(grey,-1,axis=1))))
+wire_region=np.zeros(grey.shape,dtype=bool)
+wire_region[350:790,105:1015]=True
+wire_alpha=np.where(wire_region & (contrast>.035) & (chicken_rgb.max(axis=2)-chicken_rgb.min(axis=2)<.14),.20,0)
+wire_top[:,:,3]=wire_alpha
+wire_image=bpy.data.images.new('Chicken run / transparent side wire photo',CHICKEN_RUN_SIDE.image_w,CHICKEN_RUN_SIDE.image_h,alpha=True)
+wire_image.pixels.foreach_set(wire_pixels.ravel())
+wire_material=bpy.data.materials.new('Chicken run / faint photo wire mesh');wire_material.use_nodes=True
+wire_nodes=wire_material.node_tree.nodes;wire_bsdf=wire_nodes.get('Principled BSDF')
+wire_tex=wire_nodes.new('ShaderNodeTexImage');wire_tex.image=wire_image
+wire_material.node_tree.links.new(wire_tex.outputs['Color'],wire_bsdf.inputs['Base Color'])
+wire_material.node_tree.links.new(wire_tex.outputs['Alpha'],wire_bsdf.inputs['Alpha'])
+wire_bsdf.inputs['Roughness'].default_value=.92
+wire_material.surface_render_method='BLENDED'
+panel_mask=np.zeros((CHICKEN_RUN_SIDE.h,CHICKEN_RUN_SIDE.w),dtype=bool)
+for x0,x1 in ((112,408),(430,744),(766,997)):
+    panel_mask[370:772,x0:x1]=True
+panel_loops=trace(panel_mask,(100,360,1010,780),tolerance=1.2,min_area=40)
+for side_name,d0,d1 in (('right',1.155,1.158),('left',-1.158,-1.155)):
+    mesh=PhotoMesh()
+    slab(mesh,'wire',CHICKEN_RUN_SIDE,panel_loops,chicken_side_world,d0,d1)
+    keep(mesh.finish(f'chicken-run:photo-wire-{side_name}',{'wire':wire_material}))
+
+# The mesh roof is its own overhead trace and photo alpha layer. It spans the
+# three-wire-bay section only; the carved car body remains open to the sky.
+CHICKEN_RUN_TOP=Photo(textures/'chicken-run-top.png')
+top_pixels=np.empty(CHICKEN_RUN_TOP.image_w*CHICKEN_RUN_TOP.image_h*4,dtype=np.float32)
+CHICKEN_RUN_TOP.image.pixels.foreach_get(top_pixels)
+top_pixels=top_pixels.reshape(CHICKEN_RUN_TOP.image_h,CHICKEN_RUN_TOP.image_w,4).copy()
+top_rgb=top_pixels[::-1,:,:3]
+top_grey=top_rgb.mean(axis=2)
+top_contrast=np.maximum.reduce((np.abs(top_grey-np.roll(top_grey,1,axis=0)),
+                                np.abs(top_grey-np.roll(top_grey,-1,axis=0)),
+                                np.abs(top_grey-np.roll(top_grey,1,axis=1)),
+                                np.abs(top_grey-np.roll(top_grey,-1,axis=1))))
+top_region=np.zeros(top_grey.shape,dtype=bool);top_region[220:900,100:930]=True
+top_pixels[::-1,:,3]=np.where(top_region & (top_contrast>.035),.18,0)
+top_wire_image=bpy.data.images.new('Chicken run / transparent roof wire photo',CHICKEN_RUN_TOP.image_w,CHICKEN_RUN_TOP.image_h,alpha=True)
+top_wire_image.pixels.foreach_set(top_pixels.ravel())
+top_wire_material=bpy.data.materials.new('Chicken run / overhead photo wire mesh');top_wire_material.use_nodes=True
+top_wire_nodes=top_wire_material.node_tree.nodes;top_wire_bsdf=top_wire_nodes.get('Principled BSDF')
+top_wire_tex=top_wire_nodes.new('ShaderNodeTexImage');top_wire_tex.image=top_wire_image
+top_wire_material.node_tree.links.new(top_wire_tex.outputs['Color'],top_wire_bsdf.inputs['Base Color'])
+top_wire_material.node_tree.links.new(top_wire_tex.outputs['Alpha'],top_wire_bsdf.inputs['Alpha'])
+top_wire_bsdf.inputs['Roughness'].default_value=.92;top_wire_material.surface_render_method='BLENDED'
+roof_mask=np.zeros((CHICKEN_RUN_TOP.h,CHICKEN_RUN_TOP.w),dtype=bool)
+roof_mask[220:900,100:930]=True
+roof_loops=trace(roof_mask,(100,220,930,900),tolerance=1.4,min_area=80)
+def chicken_roof_world(px,py,depth):
+    x=-1.18+(py-220)*(2.36/(900-220))
+    z=1.6-(px-100)*(3.2/(930-100))
+    return x,1.70+depth,z
+roof_mesh=PhotoMesh();slab(roof_mesh,'roof-wire',CHICKEN_RUN_TOP,roof_loops,chicken_roof_world,-.003,.003)
+keep(roof_mesh.finish('chicken-run:photo-wire-roof',{'roof-wire':top_wire_material}))
+
+# Solid cut timber closes the short ends and crowns the roof. The side-photo
+# trace remains the main frame; these measured beams join its corners.
+for z in (-1.6,1.6):
+    for x in (-1.18,1.18): chicken_beam(f'chicken-run:end-post-{x}-{z}',(x,.02,z),(x,1.68,z),.075,mat['weathered-plank'])
+    chicken_beam(f'chicken-run:end-bottom-rail-{z}',(-1.18,.10,z),(1.18,.10,z),.075,mat['weathered-plank'])
+    chicken_beam(f'chicken-run:end-top-rail-{z}',(-1.18,1.65,z),(1.18,1.65,z),.075,mat['weathered-plank'])
+for x in (-1.18,1.18): chicken_beam(f'chicken-run:roof-side-rail-{x}',(x,1.68,-1.6),(x,1.68,1.6),.075,mat['weathered-plank'])
+for i,z in enumerate((-1.05,-.35,.35,1.05),1):
+    chicken_beam(f'chicken-run:roof-cross-rail-{i}',(-1.18,1.68,z),(1.18,1.68,z),.055,mat['weathered-plank'])
+
+# A low nest shelf and a scuffed feed tin sit inside the coop opening.
+box('chicken-run:nest-shelf',(0,.34,-1.53),(.62,.06,.34),mat['weathered-plank'],0)
+box('chicken-run:feed-trough',(0,.09,.75),(.58,.18,.22),mat['galvanised-tin'],0)
 
 # Keep every named piece inside each plot and joined to soil or a neighbour.
 bpy.context.view_layer.update()
@@ -551,6 +671,10 @@ for building_id, half_cell in (('goat-pen',7.5),('chicken-run',3.5)):
     root_obj=building_roots[building_id]
     members=[obj for obj in export_objects if obj.type=='MESH' and obj.parent==root_obj]
     measured={}
+    triangles=sum(sum(len(poly.vertices)-2 for poly in obj.data.polygons) for obj in members)
+    if building_id=='chicken-run':
+        print('chicken-run total triangles:',triangles)
+        if triangles>1800: raise RuntimeError(f'chicken-run has {triangles} triangles; budget is 1800')
     for obj in members:
         corners=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
         b=(min(p.x-root_obj.location.x for p in corners),max(p.x-root_obj.location.x for p in corners),
@@ -1077,6 +1201,12 @@ for photo in (front,left,overhead):
     photo.image.scale(256,192)
     photo.image.pack()
 wall_photo.image.pack()
+for photo in (CHICKEN_RUN_SIDE,CHICKEN_RUN_TOP):
+    photo.image.scale(256,round(256*photo.h/photo.w))
+    photo.image.pack()
+for image in (wire_image,top_wire_image):
+    image.scale(256,round(256*image.size[1]/image.size[0]))
+    image.pack()
 for photo in (*market_photos.values(), stall_photo, stall_front_photo, stall_side_photo,
               *canteen_table['_photos'].values()):
     if photo in (stall_front_photo, stall_side_photo, stall_photo):
@@ -1335,6 +1465,64 @@ render_match('goat-rear-model',target+Vector((0,-16,0)),Vector((0,0,1)),10.4)
 render_match('goat-top-model',target+Vector((0,0,16)),Vector((0,-1,0)),10.4)
 render_match('goat-three-quarter',target+Vector((-9,-10,7)),Vector((0,0,1)),11.2)
 render_match('goat-mayor',target+Vector((-42,-42,60)),Vector((0,0,1)),14.2)
+
+# Round 20 sheet: four source/model pairs share exact orthographic cameras,
+# followed by the same exported chicken-run from three-quarter and mayor views.
+chicken_evidence=root/'.evidence/2026-11-07/town-art-food/round-20'
+chicken_evidence.mkdir(parents=True,exist_ok=True)
+chicken_root=next(obj for obj in scene.objects if obj.name=='chicken-run')
+for obj in scene.objects:
+    if obj.type not in ('CAMERA','LIGHT'):
+        obj.hide_render=not (obj.name=='review ground' or under(obj,chicken_root))
+scene.objects['review ground'].hide_render=False
+chicken_members=[obj for obj in scene.objects if obj.type=='MESH' and under(obj,chicken_root)]
+chicken_corners=[obj.matrix_world @ Vector(corner) for obj in chicken_members for corner in obj.bound_box]
+chicken_lo=Vector((min(p.x for p in chicken_corners),min(p.y for p in chicken_corners),min(p.z for p in chicken_corners)))
+chicken_hi=Vector((max(p.x for p in chicken_corners),max(p.y for p in chicken_corners),max(p.z for p in chicken_corners)))
+target=(chicken_lo+chicken_hi)*.5
+for light_name,offset,power,size in (
+    ('bright overcast key',Vector((-6,9,11)),850,16),
+    ('soft sky fill',Vector((7,6,8)),700,20),
+    ('open aisle bounce',Vector((0,2,4)),400,7)):
+    light=scene.objects[light_name];light.location=target+offset;light.data.energy=power;light.data.size=size
+    light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+scene.render.resolution_x=1000;scene.render.resolution_y=720
+evidence=chicken_evidence
+render_match('chicken-model-side',target+Vector((13,0,0)),Vector((0,0,1)),5.0)
+render_match('chicken-model-front',target+Vector((0,13,0)),Vector((0,0,1)),5.8)
+render_match('chicken-model-rear',target+Vector((0,-13,0)),Vector((0,0,1)),5.8)
+render_match('chicken-model-above',target+Vector((0,0,13)),Vector((-1,0,0)),5.8)
+render_match('chicken-model-three-quarter',target+Vector((-4,-5,3)),Vector((0,0,1)),5.7)
+render_match('chicken-model-mayor',target+Vector((-42,-42,60)),Vector((0,0,1)),15)
+sheet_code=r'''from pathlib import Path
+import sys
+from PIL import Image,ImageDraw,ImageFont,ImageOps
+root=Path(sys.argv[1]);evidence=Path(sys.argv[2]);textures=Path(sys.argv[3]);sheet=Path(sys.argv[4])
+sheet_image=Image.new('RGB',(1600,2390),(28,29,27));draw=ImageDraw.Draw(sheet_image);fontdir=Path('C:/Windows/Fonts')
+title=ImageFont.truetype(str(fontdir/'segoeuib.ttf'),31);label=ImageFont.truetype(str(fontdir/'segoeuib.ttf'),21);body=ImageFont.truetype(str(fontdir/'segoeui.ttf'),17)
+draw.text((32,16),'TOWN FOOD | CHICKEN RUN | ROUND 20',font=title,fill=(239,226,201))
+draw.text((32,56),'Boot-lid coop carved from its own photos | timber frame and transparent photo wire',font=body,fill=(218,208,183))
+panels=[('SIDE','chicken-run-photo-side.png','chicken-model-side.png'),('FRONT','chicken-run-photo-front.png','chicken-model-front.png'),('REAR','chicken-run-photo-rear.png','chicken-model-rear.png'),('OVERHEAD','chicken-run-top.png','chicken-model-above.png')]
+pw,ph=748,420
+for row,(caption,photo_name,model_name) in enumerate(panels):
+ y=96+row*448;draw.text((32,y),f'{caption} | SOURCE AND EXPORTED MODEL, SAME CAMERA',font=label,fill=(231,189,126))
+ for col,(path,tag) in enumerate(((textures/photo_name,'SOURCE PHOTO'),(evidence/model_name,'EXPORTED GLB'))):
+  x=32+col*768;image=ImageOps.contain(Image.open(path).convert('RGB'),(pw,ph),method=Image.Resampling.LANCZOS)
+  sheet_image.paste(image,(x+(pw-image.width)//2,y+34+(ph-image.height)//2));draw.rectangle((x+8,y+42,x+245,y+69),fill=(20,22,20));draw.text((x+16,y+43),tag,font=body,fill=(245,229,196))
+last_y=96+4*448;draw.text((32,last_y),'THREE-QUARTER AND MAYOR VIEWS | EXPORTED MODEL',font=label,fill=(231,189,126))
+for col,name in enumerate(('chicken-model-three-quarter.png','chicken-model-mayor.png')):
+ x=32+col*768;image=ImageOps.fit(Image.open(evidence/name).convert('RGB'),(pw,ph),method=Image.Resampling.LANCZOS,centering=(.5,.55));sheet_image.paste(image,(x,last_y+34));draw.rectangle((x+8,last_y+42,x+330,last_y+69),fill=(20,22,20))
+ draw.text((x+16,last_y+43),'THREE-QUARTER' if col==0 else 'MAYOR | 60 M, 45 DEG DOWN',font=body,fill=(245,229,196))
+sheet.parent.mkdir(parents=True,exist_ok=True)
+for quality in (76,72,68,64,60,56,52):
+ sheet_image.save(sheet,'JPEG',quality=quality,optimize=True,progressive=True)
+ if sheet.stat().st_size<=500_000:break
+if sheet.stat().st_size>500_000:raise RuntimeError(f'chicken run sheet is {sheet.stat().st_size} bytes; limit is 500 KB')
+print(f'Round 20 sheet: {sheet} ({sheet.stat().st_size} bytes)')
+'''
+python_exe=shutil.which('python')
+if not python_exe:raise RuntimeError('host Python with Pillow is required to assemble the round 20 review sheet')
+subprocess.run([python_exe,'-c',sheet_code,str(root),str(chicken_evidence),str(textures),str(sheet)],check=True)
 
 render_match('market-three-left',target+Vector((-13,14,7)),Vector((0,0,1)),16)
 render_match('market-three-right',target+Vector((13,14,7)),Vector((0,0,1)),16)
