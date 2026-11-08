@@ -180,6 +180,7 @@ stop adjusting and change the method.
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.
+- **Wide seat-band cuts break a scaffold.** Removing horizontal seat bands from one whole stand mask also cuts through the posts and braces where they cross those bands, leaving broken supports. Trace seat rows as separate pieces and build or trace the open frame independently; inspect the full side view.
 
 - **Double-counted positions.** Set a child's position from its true world point,
   as `attach` does. Subtracting a parent's position in a chain doubles it.

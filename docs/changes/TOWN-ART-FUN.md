@@ -1,26 +1,30 @@
-﻿# TOWN-ART-FUN change note
+# TOWN-ART-FUN change note
 
 ## Design
 
-Built only `mud-pit`, as a 4 by 4 cell hollow earth bowl. The bowl uses a 48 by 48 grid for a sunken churned-mud floor, rising banks, and two opposite ramps. Four tyres mark the edges. A three-row plank stand is carved from its own photos, with its scaffold traced separately so it stays open underneath. Existing attractions remain unchanged.
+Built the `mud-pit` attraction in the 4 by 4 cell footprint from `docs/WASTELAND_TOWN.md`. The edge is level with the ground; the bowl is excavated below it and has two opposing ramps. One small grandstand sits beside the pit and faces it.
 
 ## Changed
 
-- Added the generated orthographic mud-pit photo set and the stand's four-view photo set with source credits in the recipe.
-- Added the 9,116-triangle bowl, carved seat rows, traced stand frame, and four bank tyres to `fun.glb`.
-- Added the round-23 imported-GLB comparison renders and 1600 by 2070 JPEG review sheet (197,006 bytes).
-- Added per-piece world bounds and ground/contact checks. No assertion or tolerance changed.
+- Preserved the round-23 churned-mud photo and overhead look. The generated earth surface now meets grade at Y 0 around its full perimeter and reaches Y -1.5 m at the floor. Its two opposite approach ramps descend into the pit.
+- Replaced the old stand carve with one small structure: three plank rows traced from a new generated photo set, on an open pipe scaffold. The stand stands beside the north edge on the ground and faces the pit.
+- Replaced the stand's four source photos with separately generated side, front, rear and overhead images. The Blender recipe records their original paths and image-generation credit.
+- Added recipe read-back bounds checks for the ground-level rim, 1.5 m floor and pieces that remain above grade. The mud pit has 6,172 triangles. The family GLB is 5,346,740 bytes.
+- Added a new art-line note: cutting broad seat bands from a whole scaffold mask can cut through the supports too.
+- Added the round-24 comparison sheet at 275,925 bytes. It compares pit and stand photos with imported-GLB views and includes three full-scene views.
 
 ## Checks
 
-- Export/read-back evidence in `.qa-dist/town-art-fun-round-23-build.log`: completed. The pit bounds/contact checks printed for every piece; the pit total was 9,116 triangles. Family GLB: 5,243,804 bytes.
+- Blender export: passed. The read-back printed rim Y 0, floor Y -1.5, 6,172 mud-pit triangles and 5,346,740 family bytes.
 - `node tools/test-blender-output.mjs`: passed, 377 checks, 0 failures.
 - `node tools/test-repo-hygiene.mjs`: passed; size targets remain advisory.
-- `node tools/test-review-evidence.mjs`: 7 passed, 2 failed, 568 checks. Existing unrelated failures: the crew browser and Blender manifests disagree on the evidence date (`2026-11-07` vs `2026-11-08`), and audio analysis could not launch ffmpeg (`spawnSync ffmpeg EPERM`). The review-JPG publication check passed. No test assertions changed.
-- Lane tier and `npm run build`: not run; the card brief says art work does not run them.
-- Claude should inspect the side and end comparisons for the hidden floor, the stand's three seat rows and open frame, and both three-quarter and mayor views in-game.
-- Race fingerprints: not applicable; no race logic changed.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed (621 checks). The audio-analysis subtest failed because the environment returned `spawnSync ffmpeg EPERM`; it failed the same way on one rerun. The review-JPG publication check passed and accepted the sheet under 500 KB.
+- Lane tier and `npm run build`: not run; the art-card instructions assign those to the merge.
+- Browser check: not run; Claude should check the pit's Y 0 rim, hollow depth, ramps, tyres and stand placement in the game.
+- Changed assertions: none. Race fingerprints: not applicable; no race code changed.
 
 ## Removed
 
-- No earlier attraction was removed or changed. Temporary Blender renders, masks, and logs for round 23 are removed after the sheet and note are committed.
+- Deleted `docs/board/looks/town-art-fun/round-23.jpg` and `round-23-review.md` as requested.
+- Removed the previous crate-like stand carve and replaced the four earlier stand photos. No other attraction changed.
+- Temporary renders, grids and test logs are removed before handoff.
