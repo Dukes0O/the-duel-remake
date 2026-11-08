@@ -1148,12 +1148,7 @@ def build_fun_stall(name, sweets=False):
     return current
 
 stall_a=build_fun_stall('fun-stall-a',False)
-building_root('fun-stall-b','1x1')
-for x in (-2.4,2.4): beam(f'fun-stall-b:awning-post-{x}',(x,.15,-2),(x,3.6,-2),.12,'rusted-steel')
-for x in (-1.6,0,1.6):
-    box(f'fun-stall-b:sweets-crate-{x}',(x,1.25,-.8),(1.25,.75,.8),'weathered-plank',.04)
-    for i in range(4): cyl(f'fun-stall-b:jar-{x}-{i}',(x-.42+i*.28,1.86,-.8),.10,.28,'galvanised-tin',12)
-for i in range(5): box(f'fun-stall-b:patchwork-awning-{i}',(i*.9-1.8,3.45,-.65),(1.0,.10,2.8),'patched-canvas',.01)
+stall_b=build_fun_stall('fun-stall-b',True)
 
 def stall_bounds(obj):
     pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
