@@ -74,76 +74,90 @@ for n in ids:
   body_table={
    'photos':{'side':'toll-bank-side.jpg','front':'toll-bank-front.jpg',
              'rear':'toll-bank-rear.jpg','top':'toll-bank-top.jpg'},
-   'length':12.6,'width':12.6,'height':5.2,
-   'side':{'start':39,'end':983,'ground':432},
-   'front':{'centre':512,'ground':438,'top':43,'top_height':5.2},
-   'rear':{'centre':512,'ground':418,'top':119,'top_height':4.05},
-   'top':{'front':61,'rear':961,'centre':512,'x_scale':12.6/900},
+   # The front door is about 2 m tall: its 245 px height gives about 8 m
+   # across the 940 px elevation and a 2.8 m front roof peak.
+   'length':8.0,'width':8.0,'height':2.8,
+   'side':{'start':39,'end':983,'ground':412},
+   'front':{'centre':512,'ground':438,'top':93,'top_height':2.8},
+   # The rear photograph has a lower peak than the front photograph.
+   'rear':{'centre':512,'ground':381,'top':137,'top_height':2.0},
+   'top':{'front':61,'rear':961,'centre':512,'x_scale':8.0/900},
    'grey':26,'tolerance':40,'bleed_tolerance':42,'voxel':.09,'target':2700,
+   'keep':lambda x,y,z:y<=1.82,
    'mask_dir':str(root/'.qa-dist/town-services-2/toll-bank-masks')}
   body=carve_object('toll-bank:body',tex,body_table);parent_keep(body,b)
 
   # A deep 2.4 m door sits over its photographed opening, with a real wheel,
   # hinges and an uneven bolted frame.
-  front_z=-6.3
-  door=box('toll-bank:door',(0,1.45,front_z-.14),(2.85,2.55,.24),dark,.12,b)
-  box('toll-bank:door-face',(0,1.45,front_z-.28),(2.55,2.25,.06),steel,.055,b)
-  for x in (-1.55,1.55):box('toll-bank:door-frame',(x,1.48,front_z-.20),(.20,2.95,.22),tin,.04,b)
-  box('toll-bank:door-frame',(0,2.98,front_z-.20),(3.3,.20,.22),tin,.04,b)
-  wheel=tube('toll-bank:door-wheel',(0,1.52,front_z-.34),.43,.075,dark,b,24,8);wheel.rotation_euler[0]=math.pi/2
-  hub=cyl('toll-bank:door-wheel-hub',(0,1.52,front_z-.36),.12,.12,tin,12,b);hub.rotation_euler[0]=math.pi/2
-  box('toll-bank:door-wheel-spoke',(0,1.52,front_z-.405),(.70,.055,.055),tin,.015,b)
-  box('toll-bank:door-wheel-spoke',(0,1.52,front_z-.41),(.055,.70,.055),tin,.015,b)
+  front_z=-4.0
+  door=box('toll-bank:door',(0,1.12,front_z-.14),(2.4,2.12,.24),dark,.12,b)
+  box('toll-bank:door-face',(0,1.12,front_z-.28),(2.14,1.88,.06),steel,.055,b)
+  for x in (-1.35,1.35):box('toll-bank:door-frame',(x,1.22,front_z-.20),(.18,2.38,.22),tin,.04,b)
+  box('toll-bank:door-frame',(0,2.38,front_z-.20),(2.88,.18,.22),tin,.04,b)
+  wheel=tube('toll-bank:door-wheel',(0,1.12,front_z-.34),.34,.065,dark,b,24,8);wheel.rotation_euler[0]=math.pi/2
+  hub=cyl('toll-bank:door-wheel-hub',(0,1.12,front_z-.36),.10,.12,tin,12,b);hub.rotation_euler[0]=math.pi/2
+  box('toll-bank:door-wheel-spoke',(0,1.12,front_z-.405),(.57,.05,.05),tin,.015,b)
+  box('toll-bank:door-wheel-spoke',(0,1.12,front_z-.41),(.05,.57,.05),tin,.015,b)
   for x in (-1.2,1.2):
-   for y in (.48,2.42):
+   for y in (.42,1.92):
     hinge=box('toll-bank:door-hinge',(x,y,front_z-.36),(.24,.50,.16),dark,.04,b)
     for dy in (-.14,.14):
      rivet=cyl('toll-bank:door-hinge-rivet',(x,y+dy,front_z-.46),.055,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
 
-  # Raised roof plates sit directly on the carved roof; every sheet follows
-  # the photographed ridge and remains an addressable patch for later repairs.
-  ridge,eave=5.2,4.12
-  for side in (-1,1):
-   for section in range(3):
-    za=-6.15+section*4.1;zb=za+4.08
-    xa,xb=(0,6.05) if side>0 else (-6.05,0)
-    ya,yb=(ridge,eave) if side>0 else (eave,ridge)
-    points=[(xa,ya+.025,za),(xb,yb+.025,za),(xb,yb+.025,zb),(xa,ya+.025,zb)]
-    mesh=bpy.data.meshes.new('toll-bank roof repair sheet');mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,2,3)]);mesh.materials.append(tin if section%2 else steel);mesh.update()
-    uv=mesh.uv_layers.new(name='UVMap')
-    for poly in mesh.polygons:
-     for li in poly.loop_indices:
-      q=points[mesh.loops[li].vertex_index];uv.data[li].uv=((q[0]+6.05)/12.1,(q[2]+6.15)/12.3)
-    obj=bpy.data.objects.new(f'toll-bank:roof-panel-{side}-{section+1}',mesh);bpy.context.collection.objects.link(obj);parent_keep(obj,b)
-  box('toll-bank:roof-ridge',(0,ridge+.045,0),(.16,.12,12.5),dark,.025,b)
+  # Four roof plates follow the measured rise from the middle to every eave.
+  # The side and end photographs both show a central crown, so this is a
+  # shallow hipped roof rather than a long gable ridge.
+  ridge,eave=2.38,1.82
+  top_photo=body_table['_photos']['top']
+  corners={
+   'front':((-3.86,eave,-3.90),(3.86,eave,-3.90),(0,ridge,0)),
+   'right':((3.86,eave,-3.90),(3.86,eave,3.90),(0,ridge,0)),
+   'rear':((3.86,eave,3.90),(-3.86,eave,3.90),(0,ridge,0)),
+   'left':((-3.86,eave,3.90),(-3.86,eave,-3.90),(0,ridge,0)),
+  }
+  for side,points in corners.items():
+   points=[(x,y+.025,z) for x,y,z in points]
+   mesh=bpy.data.meshes.new('toll-bank hipped roof repair plate')
+   mesh.from_pydata([town.game_vector(q) for q in points],[],[(0,1,2)])
+   mesh.materials.append(top_photo.material());mesh.update()
+   uv=mesh.uv_layers.new(name='UVMap')
+   for poly in mesh.polygons:
+    for li in poly.loop_indices:
+     q=points[mesh.loops[li].vertex_index]
+     px=512+q[0]/(8.0/900);py=61+(q[2]+4.0)/(8.0/900)
+     uv.data[li].uv=top_photo.uv(px,py)
+   obj=bpy.data.objects.new(f'toll-bank:roof-panel-{side}',mesh)
+   bpy.context.collection.objects.link(obj);parent_keep(obj,b)
+  box('toll-bank:roof-crown',(0,ridge-.03,0),(.28,.06,.28),dark,.018,b)
 
   # The porch canopy meets the strongroom eave and rests on two steel posts.
-  box('toll-bank:porch-deck',(0,.15,-6.73),(6.4,.30,1.45),dark,.04,b)
-  for x in (-3.0,3.0):box('toll-bank:porch-post',(x,1.93,-7.34),(.16,3.86,.16),steel,.025,b)
-  box('toll-bank:porch-canopy',(0,3.82,-6.75),(6.6,.16,1.35),tin,.035,b)
-  for x in (-2.8,-1.4,0,1.4,2.8):box('toll-bank:canopy-rib',(x,3.91,-6.82),(.045,.045,1.28),dark,.008,b)
+  box('toll-bank:porch-deck',(0,.15,-4.40),(5.8,.30,1.55),dark,.04,b)
+  for x in (-2.7,2.7):box('toll-bank:porch-post',(x,1.18,-5.08),(.16,2.36,.16),steel,.025,b)
+  box('toll-bank:porch-canopy',(0,2.30,-4.42),(5.95,.16,1.50),tin,.035,b)
+  for x in (-2.5,-1.25,0,1.25,2.5):box('toll-bank:canopy-rib',(x,2.39,-4.48),(.045,.045,1.40),dark,.008,b)
 
   # A small booth sits beside the barrier. Its roof touches both side walls.
-  box('toll-bank:booth-body',(5.05,1.09,-5.40),(1.65,2.18,1.45),wood,.07,b)
-  box('toll-bank:booth-window',(5.05,1.72,-6.15),(1.14,.70,.035),glass,.035,b)
-  box('toll-bank:booth-sill',(5.05,1.31,-6.19),(1.34,.11,.12),steel,.015,b)
-  box('toll-bank:booth-roof',(5.05,2.28,-5.40),(1.95,.18,1.78),tin,.045,b)
+  box('toll-bank:booth-body',(3.05,.92,-3.10),(1.45,1.84,1.50),wood,.07,b)
+  box('toll-bank:booth-window',(3.05,1.34,-3.88),(1.02,.56,.035),glass,.035,b)
+  box('toll-bank:booth-sill',(3.05,1.04,-3.92),(1.22,.10,.12),steel,.015,b)
+  box('toll-bank:booth-roof',(3.05,1.98,-3.10),(1.75,.18,1.80),tin,.045,b)
 
   # The striped arm pivots at the booth and rests on a low catcher at its tip.
-  box('toll-bank:barrier-post',(3.96,.82,-7.20),(.20,1.64,.20),steel,.025,b)
-  box('toll-bank:barrier-arm',(-.345,1.24,-7.20),(8.61,.18,.18),wood,.025,b)
-  for index,x in enumerate((-3.75,-2.25,-.75,.75,2.25,3.55)):
-   box('toll-bank:barrier-stripe',(x,1.24,-7.31),(.72,.20,.035),paint if index%2==0 else dark,.012,b)
-  box('toll-bank:barrier-catcher',(-4.65,.37,-7.20),(.18,.74,.18),steel,.025,b)
+  box('toll-bank:barrier-post',(2.45,.72,-5.18),(.20,1.44,.20),steel,.025,b)
+  box('toll-bank:barrier-arm',(-.70,1.10,-5.18),(6.50,.16,.16),wood,.025,b)
+  for index,x in enumerate((-3.30,-2.15,-1.0,.15,1.30,2.15)):
+   box('toll-bank:barrier-stripe',(x,1.10,-5.29),(.60,.18,.035),paint if index%2==0 else dark,.012,b)
+  box('toll-bank:barrier-catcher',(-4.05,.32,-5.18),(.18,.64,.18),steel,.025,b)
 
   # Fastener heads add depth to the photographed plate seams without filling
   # the door opening. The front and side carry their own rows.
-  for x in (-5.35,-3.45,3.45,5.35):
-   for y in (.52,1.05,3.62,4.02):
-    rivet=cyl('toll-bank:wall-rivet',(x,y,front_z-.015),.045,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
-  for z in (-5.3,-3.0,0,3.0,5.3):
-   for y in (.55,3.82):
-    rivet=cyl('toll-bank:side-rivet',(6.14,y,z),.045,.05,tin,8,b);rivet.rotation_euler[1]=math.pi/2
+  for x in (-3.35,-2.25,2.25,3.35):
+   for y in (.42,.82,1.45,1.72):
+    rivet=cyl('toll-bank:wall-rivet',(x,y,front_z+.12),.045,.05,tin,8,b);rivet.rotation_euler[0]=math.pi/2
+  for z in (-3.3,-2.0,0,2.0,3.3):
+   for y in (.45,1.65):
+    for xside in (-3.77,3.77):
+     rivet=cyl('toll-bank:side-rivet',(xside,y,z),.035,.05,tin,8,b);rivet.rotation_euler[1]=math.pi/2
   continue
  if n=='radio-mast':
   # 19 m guyed triangular lattice, real-section angle steel, warning lamp.
@@ -301,16 +315,16 @@ if a.review:
  scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB';scene.render.resolution_percentage=100
  scene.view_settings.view_transform='Standard';scene.view_settings.look='None';scene.view_settings.exposure=0;scene.view_settings.gamma=1
  scene.world=bpy.data.worlds.new('even neutral grey studio');scene.world.use_nodes=True
- scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.34,.34,.34,1)
+ scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.20,.20,.20,1)
  scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
- ground_mat=bpy.data.materials.new('plain grey review ground');ground_mat.diffuse_color=(.34,.34,.34,1);ground_mat.use_nodes=True
- ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.34,.34,.34,1)
+ ground_mat=bpy.data.materials.new('plain grey review ground');ground_mat.diffuse_color=(.20,.20,.20,1);ground_mat.use_nodes=True
+ ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.20,.20,.20,1)
  ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
  ground=town.cube('review-only neutral grey ground',(0,-.10,0),(500,.2,500),ground_mat,0)
- light_data=bpy.data.lights.new('large soft review light','AREA');light_data.energy=36000;light_data.shape='DISK';light_data.size=35
+ light_data=bpy.data.lights.new('large soft review light','AREA');light_data.energy=14000;light_data.shape='DISK';light_data.size=35
  light=bpy.data.objects.new('large soft review light',light_data);scene.collection.objects.link(light)
  light.location=town.game_vector((14,28,-24));light.rotation_euler=(town.game_vector((0,2,0))-light.location).to_track_quat('-Z','Y').to_euler()
- fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=15000;fill_data.shape='DISK';fill_data.size=30
+ fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=5000;fill_data.shape='DISK';fill_data.size=30
  fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
  fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
  target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='toll-bank')
@@ -330,13 +344,13 @@ if a.review:
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
   bpy.ops.render.render(write_still=True)
  shots=[
-  ('model-side',(30,2.6,0),(0,2.6,0),15.1,(1024,512)),
-  ('model-front',(0,2.6,-30),(0,2.6,0),15.1,(1024,512)),
-  ('model-rear',(0,2.6,30),(0,2.6,0),15.1,(1024,512)),
-  ('model-above',(0,36,0),(0,0,0),15.1,(1024,1024)),
-  ('three-quarter-road',(20,12,-22),(0,2.5,0),19.5,(1024,768)),
-  ('three-quarter-yard',(-20,12,22),(0,2.5,0),19.5,(1024,768)),
-  ('mayor-view',(55,68,-55),(0,0,0),20.0,(1024,768)),
+  ('model-side',(30,2.6,0),(0,2.6,0),11.0,(1024,512)),
+  ('model-front',(0,2.6,-30),(0,2.6,0),11.0,(1024,512)),
+  ('model-rear',(0,2.6,30),(0,2.6,0),11.0,(1024,512)),
+  ('model-above',(0,36,0),(0,0,0),11.0,(1024,1024)),
+  ('three-quarter-road',(20,12,-22),(0,2.5,0),14.0,(1024,768)),
+  ('three-quarter-yard',(-20,12,22),(0,2.5,0),14.0,(1024,768)),
+  ('mayor-view',(55,68,-55),(0,0,0),14.0,(1024,768)),
  ]
  for shot in shots:render(*shot)
  print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))
