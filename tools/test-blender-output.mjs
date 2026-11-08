@@ -1597,7 +1597,11 @@ try {
     }
     const imagePixels = gltf.images.reduce((sum, image) => {
       const view = gltf.bufferViews[image.bufferView]; const start = 28 + bytes.readUInt32LE(12) + (view.byteOffset || 0);
-      const dimensions = jpegDimensions(bytes, start, view.byteLength);
+      // See-through wire is PNG for its alpha; both kinds count against the same limits.
+      const dimensions = image.mimeType === 'image/png'
+        ? {width: bytes.readUInt32BE(start + 16), height: bytes.readUInt32BE(start + 20)}
+        : jpegDimensions(bytes, start, view.byteLength);
+      if (image.mimeType === 'image/png') assert.equal(bytes.readUInt32BE(start), 0x89504e47, 'PNG starts with its signature');
       assert.ok(dimensions.width <= 2048 && dimensions.height <= 2048, `${dimensions.width}x${dimensions.height} food texture exceeds 2048 px`);
       return sum + dimensions.width * dimensions.height;
     }, 0);
