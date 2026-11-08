@@ -285,3 +285,11 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 ### Removed
 
 - Removed the incorrect bow-to-rear material-slot assignment and the previous Good Hope front-photo mapping in the carve. The replaced source file is retained; it is no longer loaded by the Good Hope.
+
+## Round 13, heading correction (7 November 2026)
+
+- Turned the Good Hope and Marigold to share the Patience's northbound heading without changing their map positions. Moved both accommodation blocks, funnels and masts aft; moved the Marigold's shaft and propeller to her stern. The straight-above GLB render shows the three bows aligned north and cabins aft; Claude should judge `.qa-dist/check-ships-above.png`. Changed assertions: none. Race fingerprints: none; art only. Blender lane tier and build were not run per art-card rules. `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs` remain for the completed card checks.
+
+### Removed
+
+- Removed no source or model parts; no earlier asset was replaced.

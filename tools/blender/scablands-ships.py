@@ -667,22 +667,27 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         # ship root turned to its map heading. Center the cabin over the broad
         # midship deck instead of hanging it over the tapered stern.
         cabin.location=gv((0,deck,0)); cabin['part']=ident+':upperworks'
+        if ident in ('ship-good-hope', 'ship-marigold'):
+            # After the sister hulls turn to the shared northbound heading,
+            # their accommodation blocks sit aft, with the after wall near
+            # the stern rather than over the bow.
+            cabin.location = gv((22.0, deck, 0))
         parent(cabin,r)
         if args.stage != 'fleet' and ident=='ship-good-hope':
-            funnel=cylinder('good-hope-rusted-funnel',(-3.5,13.1,0),1.05,4.2,rust,ident,16)
+            funnel=cylinder('good-hope-rusted-funnel',(18.5,13.1,0),1.05,4.2,rust,ident,16)
             parent(funnel,r)
-            cap=cylinder('good-hope-funnel-cap',(-3.5,15.25,0),1.18,.20,iron,ident,16)
+            cap=cylinder('good-hope-funnel-cap',(18.5,15.25,0),1.18,.20,iron,ident,16)
             parent(cap,r)
         if ident=='ship-good-hope':
-            mast=cylinder('good-hope-short-mast',(0,14.6,-6.5),.09,3.2,steel,ident,8)
+            mast=cylinder('good-hope-short-mast',(22,14.6,-6.5),.09,3.2,steel,ident,8)
             parent(mast,r)
             for side in (-1,1):
-                stay=beam(f'good-hope-mast-stay-{side}',(0,13.0,-6.5),(0,16.0,-6.5+side*1.6),.045,iron,ident)
+                stay=beam(f'good-hope-mast-stay-{side}',(22,13.0,-6.5),(22,16.0,-6.5+side*1.6),.045,iron,ident)
                 parent(stay,r)
         elif args.stage != 'fleet':
-            funnel=cylinder('marigold-weathered-funnel',(-3.5,10.9,0),.95,3.0,rust,ident,16)
+            funnel=cylinder('marigold-weathered-funnel',(18.5,10.9,0),.95,3.0,rust,ident,16)
             parent(funnel,r)
-            cap=cylinder('marigold-funnel-cap',(-3.5,12.45,0),1.05,.18,iron,ident,16)
+            cap=cylinder('marigold-funnel-cap',(18.5,12.45,0),1.05,.18,iron,ident,16)
             parent(cap,r)
     if ident=='ship-patience':
         # Dot's Diner pattern: one measured carve table, followed by a named
@@ -957,11 +962,11 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
         r.rotation_euler[0]=math.radians(4)
         # Blender Euler fields use radians; keep the half-metre slope in that unit.
         r.rotation_euler[1]=math.asin(.5/length)
-        r.rotation_euler[2]=math.radians(90)
+        r.rotation_euler[2]=math.radians(270)
     if ident=='ship-marigold':
         r.rotation_euler[0]=math.radians(-6)
         r.rotation_euler[1]=-math.asin(1.0/length)
-        r.rotation_euler[2]=math.radians(90)
+        r.rotation_euler[2]=math.radians(270)
         # The missing half of the rail exposes the old working deck.
         for i in range(5):
             x=-length*.29+i*length*.08
@@ -969,12 +974,12 @@ for ident,loc,label,length,width,deck,keel,lean in ships:
             parent(rail_obj,r)
         # Exposed, removable 18 m propeller shaft at her stern.
         shaft_root=root_obj('ship-marigold:shaft',(0,0,0),'ship-marigold:shaft'); parent(shaft_root,r)
-        shaft=cylinder('marigold-removable-18m-shaft',(-41,-1.55,6.5),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
+        shaft=cylinder('marigold-removable-18m-shaft',(41,-1.55,6.5),.22,18,steel,'ship-marigold:shaft',16,'X'); parent(shaft,shaft_root)
         prop_root=root_obj('ship-marigold:propeller',(0,0,0),'ship-marigold:propeller'); parent(prop_root,r)
-        prop=torus('ship-marigold-propeller-ring',(-50,-1.55,6.5),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
+        prop=torus('ship-marigold-propeller-ring',(50,-1.55,6.5),1.35,.12,rust,'ship-marigold:propeller','X',16,4); parent(prop,prop_root)
         for blade in range(4):
             a=blade*math.pi/2
-            b=beam(f'marigold-propeller-blade-{blade}',(-50,-1.55,6.5),(-50,-1.55+math.sin(a)*1.3,6.5+math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
+            b=beam(f'marigold-propeller-blade-{blade}',(50,-1.55,6.5),(50,-1.55+math.sin(a)*1.3,6.5+math.cos(a)*1.3),.32,steel,'ship-marigold:propeller',.10); parent(b,prop_root)
 
 # Patience's mast, kingposts, platform and bell. With the ship root at +6 m,
 # the main deck is y=11 and the platform is y=25.
