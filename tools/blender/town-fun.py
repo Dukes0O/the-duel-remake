@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-22'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-23'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-22.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-23.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -53,6 +53,31 @@ if '--review-only' in args:
     scene.collection.objects.link(camera); scene.camera=camera; camera.data.type='ORTHO'
     evidence.mkdir(parents=True,exist_ok=True)
     textures=root/'public/assets/models/wasteland/town/textures'
+    if '--mud-pit-only' in args:
+        pit_root=bpy.data.objects.get('mud-pit')
+        if pit_root is None:raise RuntimeError('exported mud-pit building is missing')
+        for child in family.children:hide_tree(child,child!=pit_root)
+        hide_tree(pit_root,False)
+        for obj in scene.objects:
+            if obj.type=='MESH' and obj.name!='Review ground':obj.hide_render=not obj.name.startswith('mud-pit:')
+        target=Vector((0,0,1.15));camera.data.type='ORTHO';camera.data.lens=50
+        scene.render.resolution_percentage=100
+        views=[('side',(1,0,0),'mud-pit-side.jpg'),('front',(0,1,0),'mud-pit-front.jpg'),
+               ('rear',(0,-1,0),'mud-pit-rear.jpg'),('above',(0,0,1),'mud-pit-top.jpg')]
+        for name,direction,photo_name in views:
+            ref=bpy.data.images.load(str(textures/photo_name),check_existing=True)
+            scene.render.resolution_x,scene.render.resolution_y=ref.size;bpy.data.images.remove(ref)
+            direction=Vector(direction).normalized();camera.location=target+direction*42;aim(camera,target)
+            camera.data.ortho_scale=31.5
+            scene.render.filepath=str(evidence/f'mud-pit-{name}-model.png');bpy.ops.render.render(write_still=True)
+            print('rendered mud-pit',name)
+        scene.render.resolution_x,scene.render.resolution_y=1000,700
+        for name,direction,ortho in [('three-quarter-a',(1,1,.72),34),('three-quarter-b',(-1,-1,.72),34),('mayor',(1,1,1),37)]:
+            direction=Vector(direction).normalized();camera.location=target+direction*48;aim(camera,target)
+            camera.data.ortho_scale=ortho
+            scene.render.filepath=str(evidence/f'mud-pit-{name}.png');bpy.ops.render.render(write_still=True)
+            print('rendered mud-pit',name)
+        raise SystemExit(0)
     if '--stalls-only' in args:
         scene.render.engine='BLENDER_EEVEE_NEXT';scene.eevee.taa_render_samples=24
         scene.render.resolution_percentage=100;scene.render.resolution_x=1024;scene.render.resolution_y=1024
@@ -1150,20 +1175,76 @@ for i in range(3):
     car(f'scrap-coaster:salvage-car-{i+1}',(-15+i*1.35,4.3,0),.56,'faded-hand-paint',train)
     beam(f'scrap-coaster:coupler-{i}',(-14+i*1.35,4.0,0),(-13.6+i*1.35,4.0,0),.09,'rusted-steel',train)
 
-# Sunken mud oval with sloped scarps and the one small timber viewing stand.
+# TOWN-ART-FUN round 23: the hollow earth surface wears the generated plan
+# photo. Original generated PNGs remain credited by path in this recipe.
 building_root('mud-pit','4x4')
-for i in range(24):
-    a=math.tau*i/24; x=13.1*math.cos(a);z=12.7*math.sin(a)
-    beam(f'mud-pit:rim-post-{i}',(x,.2,z),(x*.92,2.2,z*.92),.20,'weathered-plank')
-    if i%2==0: beam(f'mud-pit:scarp-brace-{i}',(x,.4,z),(x*.92,2.1,z*.92),.11,'rusted-steel')
-for side in (-1,1):
-    ramp=box(f'mud-pit:jump-ramp-{side}',(side*7,1.0,-4),(6.6,1.5,4.8),'sand',.2)
-    ramp.rotation_euler[2]=side*.25
-for x in (-2.0,0,2.0):
-    beam(f'mud-pit:grandstand-leg-{x}',(x,1.0,-12),(x,3.0,-14),.12,'weathered-plank')
-box('mud-pit:grandstand-bench',(0,3.05,-13),(5.6,.18,2.5),'weathered-plank',.05)
-for y in (1.9,2.5): beam(f'mud-pit:grandstand-rail-{y}',(-2.5,y,-14),(2.5,y,-14),.09,'rusted-steel')
-for i in range(4): box(f'mud-pit:tyre-chicane-{i}',(-5+i*3,.28,2.2),(.95,.55,.72),'tire',.05)
+mud_photo=Photo(tex/'mud-pit-top.jpg')
+mud_photo.image['credit']='OpenAI image generation; original: C:/Users/kyleb/.codex/generated_images/01a1b9e1-3291-7a32-876e-9f29d2981d3c/exec-fccfe036-6b86-43b2-8b88-60f7fd570883.png'
+mud_mesh=bpy.data.meshes.new('mud-pit concave earth and churned-mud photo surface')
+mud_verts=[];mud_uvs=[];mud_faces=[]
+grid=32;outer=14.2
+for j in range(grid+1):
+    z=-outer+2*outer*j/grid
+    for i in range(grid+1):
+        x=-outer+2*outer*i/grid
+        d=max(abs(x),abs(z))
+        if d<=7.2:y=.12
+        elif d<=12.1:y=.12+(.91-.12)*(d-7.2)/(12.1-7.2)
+        else:y=.91*(outer-d)/(outer-12.1)
+        if 7.2<d<outer:y+=.025*math.sin(x*.83)*math.sin(z*.67)
+        if abs(x)<2.45 and abs(z)>7.2:
+            az=abs(z)
+            y=.12+.79*(az-7.2)/(12.1-7.2) if az<=12.1 else .91*(outer-az)/(outer-12.1)
+        mud_verts.append(tuple(town.game_vector((x,y,z))))
+        mud_uvs.append(mud_photo.uv(512+x*(455/outer),512+z*(480/outer)))
+for j in range(grid):
+    for i in range(grid):
+        k=j*(grid+1)+i;mud_faces.append((k,k+grid+1,k+grid+2,k+1))
+mud_mesh.from_pydata(mud_verts,[],mud_faces);mud_mesh.materials.append(mud_photo.material());mud_mesh.update()
+mud_uv=mud_mesh.uv_layers.new(name='UVMap')
+for poly in mud_mesh.polygons:
+    for li in poly.loop_indices:mud_uv.data[li].uv=mud_uvs[mud_mesh.loops[li].vertex_index]
+mud_body=bpy.data.objects.new('mud-pit:earth-bowl',mud_mesh);bpy.context.collection.objects.link(mud_body);keep(mud_body)
+
+# The stand is a four-photo carve. Only its three seat bands remain in that
+# carve; its open scaffold is traced from the stand's own side photo.
+stand_photos={view:Photo(tex/f'mud-pit-stand-{view}.jpg') for view in ('side','front','rear','top')}
+stand_originals={
+    'side':'exec-9ec9d733-7f0b-4258-a3e3-a7e56fa13c81.png',
+    'front':'exec-ad2e73ac-64f7-4de9-af87-b52026350669.png',
+    'rear':'exec-8ffd7361-e697-4556-8269-9039872aae0e.png',
+    'top':'exec-7c243dc6-f2f7-469a-82ab-123f10ac5008.png',
+}
+for view,photo in stand_photos.items():
+    photo.image['credit']='OpenAI image generation; original: C:/Users/kyleb/.codex/generated_images/01a1b9e1-3291-7a32-876e-9f29d2981d3c/'+stand_originals[view]
+stand_table={
+    'photos':{view:f'mud-pit-stand-{view}.jpg' for view in stand_photos},
+    'length':8.2,'width':4.8,'height':2.55,
+    'side':{'start':34,'end':855,'ground':382},
+    'front':{'centre':512,'ground':477,'top':74},
+    'rear':{'centre':512,'ground':477,'top':74},
+    'top':{'front':70,'rear':444,'centre':256,'along':'x','x_scale':4.8/570},
+    'side_front_on_left':False,
+    'keep':lambda x,y,z: (abs(y-.68)<.14)|(abs(y-1.42)<.14)|(abs(y-2.16)<.14),
+    'grey':28,'tolerance':38,'bleed_tolerance':38,
+    'voxel':.075,'target':1800,'mask_dir':str(root/'.qa-dist/town-art-fun-round-23/masks'),
+}
+stand=carve_object('mud-pit:grandstand-seats-source',tex,stand_table)
+stand.location=town.game_vector((0,.10,8.4));stand.name='mud-pit:grandstand-seats';stand.parent=current
+stand_side=stand_table['_photos']['side'];lift_if_dark(stand_side)
+stand_mask=~stand_side.sky(photo_carve.edge_seeds(stand_side)+[(260,205),(495,205),(735,205),(270,325),(510,325),(755,325)],tolerance=38,grey=28)
+stand_mask[60:112,:]=False;stand_mask[185:237,:]=False;stand_mask[305:357,:]=False
+stand_loops=trace(stand_mask,(28,112,870,383),tolerance=2.5,min_area=18)
+if not stand_loops:raise RuntimeError('mud-pit stand support photo did not trace')
+frame_photo_mesh=PhotoMesh()
+def stand_frame_point(px,py,depth):return (depth,(382-py)*(2.55/(382-64)),4.2+(855-px)*(8.2/(855-34)))
+for side_x in (-2.35,2.35):
+    slab(frame_photo_mesh,'side',stand_side,stand_loops,lambda px,py,d,side_x=side_x:stand_frame_point(px,py,side_x+d),-.09,.09,wall_scale=.002)
+stand_frame=frame_photo_mesh.finish('mud-pit:grandstand-traced-frame',{'side':stand_side.material()});keep(stand_frame)
+
+# Four old tyres mark two edges and sit flat on the soil.
+for i,(x,z) in enumerate(((-10,-3),(10,-3),(-10,3),(10,3)),1):
+    torus(f'mud-pit:edge-tyre-{i}',(x,.18,z),.48,.18,'tire',parent=current,major_segments=16,minor_segments=6)
 
 # TOWN-ART-FUN round 22: the stalls follow their own photographed canvas and
 # counter planks. The GLB read-back above proves game Y remains height.
@@ -1407,6 +1488,26 @@ statue_tris=sum(len(p.vertices)-2 for o in statue_pieces for p in o.data.polygon
 print('STATUE TRIANGLES',statue_tris)
 if statue_tris>1800: raise RuntimeError(f'statue has {statue_tris} triangles (limit 1800)')
 
+def mud_bounds(obj):
+    pts=[obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+    return [(min(p[i] for p in pts),max(p[i] for p in pts)) for i in range(3)]
+mud_pieces=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('mud-pit:')]
+def mud_touch(a,b,p=.045):return all(a[i][0]<=b[i][1]+p and b[i][0]<=a[i][1]+p for i in range(3))
+for piece in mud_pieces:
+    b=mud_bounds(piece)
+    gb={'min':[round(b[0][0],3),round(b[2][0],3),round(-b[1][1],3)],
+        'max':[round(b[0][1],3),round(b[2][1],3),round(-b[1][0],3)]}
+    print('MUD-PIT BOUNDS',piece.name,json.dumps(gb))
+    if gb['min'][0]<-15.5 or gb['max'][0]>15.5 or gb['min'][2]<-15.5 or gb['max'][2]>15.5 or gb['min'][1]<-.03:
+        raise RuntimeError(f'{piece.name} leaves the 4x4 footprint or extends below ground: {gb}')
+    grounded=gb['min'][1]<=.025
+    touches=grounded or any(other is not piece and mud_touch(b,mud_bounds(other)) for other in mud_pieces)
+    print('MUD-PIT CONTACT',piece.name,'grounded' if grounded else 'touches another piece' if touches else 'NO CONTACT')
+    if not touches:raise RuntimeError(f'{piece.name} floats without support')
+mud_triangles=sum(len(poly.vertices)-2 for obj in mud_pieces for poly in obj.data.polygons)
+print('MUD-PIT TRIANGLES',mud_triangles)
+if mud_triangles>14000:raise RuntimeError(f'mud-pit has {mud_triangles} triangles; limit 14000')
+
 # Assign every mesh the one shared picture-coordinate layer name before export.
 for obj in bpy.data.objects:
     if obj.type=='MESH' and obj.data.uv_layers.active:
@@ -1414,7 +1515,7 @@ for obj in bpy.data.objects:
 for image in bpy.data.images:
     if image.packed_file and image.size[0] > 256:
         image_name=Path(image.filepath).name
-        if not image_name.startswith(('drive-in-','fountain-','statue-')):
+        if not image_name.startswith(('drive-in-','fountain-','statue-','mud-pit')):
             image.scale(256,256)
         image.pack()
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',export_yup=True,
