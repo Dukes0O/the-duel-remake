@@ -7,9 +7,9 @@ from pathlib import Path
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
 root = Path(args[args.index('--root') + 1]).resolve() if '--root' in args else Path.cwd().resolve()
-evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-21'
+evidence = Path(args[args.index('--evidence') + 1]).resolve() if '--evidence' in args else root / '.evidence/2026-11-07/TOWN-ART-FUN/round-22'
 out = root / 'public/assets/models/wasteland/town/fun.glb'
-sheet = root / 'docs/board/looks/town-art-fun/round-21.jpg'
+sheet = root / 'docs/board/looks/town-art-fun/round-22.jpg'
 textures = root / 'public/assets/models/wasteland/town/textures'
 if '--paths-only' in args:
     print(json.dumps({'blend': [], 'glb': [str(out)], 'evidence': [str(evidence)], 'summary': [str(sheet)]}))
@@ -42,7 +42,9 @@ if '--review-only' in args:
     groundmat=bpy.data.materials.new('Tavern review ground'); groundmat.diffuse_color=(.43,.43,.43,1)
     groundmat.use_nodes=True; groundmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.43,.43,.43,1)
     bpy.ops.mesh.primitive_plane_add(size=100,location=(0,0,-.04)); bpy.context.object.name='Review ground'; bpy.context.object.data.materials.append(groundmat)
-    def aim(obj,target): obj.rotation_euler=(Vector(target)-obj.location).to_track_quat('-Z','Y').to_euler()
+    def aim(obj,target):
+        direction=Vector(target)-obj.location
+        obj.rotation_euler=direction.to_track_quat('-Z','Y').to_euler()
     def light(name,loc,power,size):
         data=bpy.data.lights.new(name,'AREA'); data.energy=power; data.shape='DISK'; data.size=size
         obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=loc; aim(obj,(0,0,1.6))
@@ -58,37 +60,38 @@ if '--review-only' in args:
         scene.view_settings.view_transform='Standard'
         camera.data.type='ORTHO';target=Vector((0,0,1.6))
         # Blender imports glTF Y-up as its native Z-up. Check one exported
-        # stall piece before judging the family: its .40 m height must return
+        # stall piece before judging the family: its .68 m height must return
         # on Blender Z, which is exported Y, not on either horizontal axis.
         probe=bpy.data.objects.get('fun-stall-a:counter-kick')
         if probe is None: raise RuntimeError('exported stall lost counter-kick axis probe')
         probe_bounds=[probe.matrix_world @ Vector(c) for c in probe.bound_box]
         probe_size=[max(p[i] for p in probe_bounds)-min(p[i] for p in probe_bounds) for i in range(3)]
-        if abs(probe_size[2]-.40)>.03 or abs(probe_size[1]-.18)>.03 or probe_size[2]<=probe_size[1]:
+        if abs(probe_size[2]-.68)>.03 or abs(probe_size[1]-1.04)>.03 or probe_size[2]>=probe_size[1]:
             raise RuntimeError(f'counter-kick height is not exported Y: imported dimensions {probe_size}')
         print('EXPORTED Y-UP AXIS CHECK fun-stall-a:counter-kick',tuple(round(v,3) for v in probe_size))
-        views=[('side',(1,0,0)),('front',(0,1,0)),('rear',(0,-1,0)),('above',(0,0,1))]
+        # The source named "side" is the broad facade/elevation view. Match
+        # that exact view for silhouette; keep the true narrow profile too.
+        views=[('side',(.15,1,.12)),('profile',(1,0,0)),('rear',(0,-1,0)),('above',(0,0,1))]
         for stall_id in ('fun-stall-a','fun-stall-b'):
             for obj in scene.objects:
                 if obj.type not in ('CAMERA','LIGHT'):
                     obj.hide_render=not (obj.name=='Review ground' or obj.name.startswith(stall_id+':'))
             for name,direction in views:
-                photo_name=f'{stall_id}-{name if name != "above" else "top"}.jpg'
-                source=bpy.data.images.load(str(textures/photo_name),check_existing=True)
-                scene.render.resolution_x,scene.render.resolution_y=source.size
-                bpy.data.images.remove(source)
+                photo_view={'side':'side','rear':'rear','above':'top'}.get(name)
+                if photo_view:
+                    source=bpy.data.images.load(str(textures/f'{stall_id}-{photo_view}.jpg'),check_existing=True)
+                    scene.render.resolution_x,scene.render.resolution_y=source.size
+                    bpy.data.images.remove(source)
+                else:
+                    scene.render.resolution_x=1000;scene.render.resolution_y=1000
                 camera.location=target+Vector(direction)*10
-                # A camera tracks local -Z; local Y is its valid up axis.
-                # Passing Z for both track and up makes Blender choose an
-                # arbitrary roll and falsely makes the upright model look tipped.
-                up_axis='Y'
-                camera.rotation_euler=(target-camera.location).to_track_quat('-Z',up_axis).to_euler()
-                camera.data.ortho_scale=6.7
+                camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
+                camera.data.ortho_scale=(3.2 if name in ('side','rear') else 6.7) if photo_view else 4.3
                 scene.render.filepath=str(evidence/f'{stall_id}-{name}-model.png');bpy.ops.render.render(write_still=True)
             scene.render.resolution_x=1000;scene.render.resolution_y=720
             for label,direction in [('three-left',(-1,-1,.65)),('three-right',(1,-1,.65)),('mayor',(1,1,1))]:
                 camera.location=target+Vector(direction).normalized()*20
-                camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Z').to_euler()
+                aim(camera,target)
                 camera.data.ortho_scale=7.3
                 scene.render.filepath=str(evidence/f'{stall_id}-{label}.png');bpy.ops.render.render(write_still=True)
         raise SystemExit(0)
@@ -1162,7 +1165,7 @@ box('mud-pit:grandstand-bench',(0,3.05,-13),(5.6,.18,2.5),'weathered-plank',.05)
 for y in (1.9,2.5): beam(f'mud-pit:grandstand-rail-{y}',(-2.5,y,-14),(2.5,y,-14),.09,'rusted-steel')
 for i in range(4): box(f'mud-pit:tyre-chicane-{i}',(-5+i*3,.28,2.2),(.95,.55,.72),'tire',.05)
 
-# TOWN-ART-FUN round 21: the stalls follow their own photographed canvas and
+# TOWN-ART-FUN round 22: the stalls follow their own photographed canvas and
 # counter planks. The GLB read-back above proves game Y remains height.
 # Their source
 # elevations and plan photos are kept in textures; pieces follow measured
@@ -1210,11 +1213,11 @@ def stall_awning(name, x0, x1, back_z, front_z, material):
     valance=bpy.data.objects.new(name.replace('striped-awning-photo','scalloped-photo-hem'),valance_mesh)
     bpy.context.collection.objects.link(valance);return keep(valance)
 
-def stall_counter_photo(name, material):
-    # The photo supplies the worn board pattern; the face is actual geometry,
-    # set behind the counter edge with a narrow gap from the rear face.
+def stall_counter_photo(name, material, width_scale):
+    # The photo supplies the worn board pattern on the full-depth box front.
     verts=[tuple(town.game_vector(p)) for p in (
-        (-2.13,.36,-2.025),(2.13,.36,-2.025),(2.13,1.00,-2.025),(-2.13,1.00,-2.025))]
+        (-2.13*width_scale,.36,-.635),(2.13*width_scale,.36,-.635),
+        (2.13*width_scale,1.02,-.635),(-2.13*width_scale,1.02,-.635))]
     mesh=bpy.data.meshes.new(name+' photo-faced plank panel');mesh.from_pydata(verts,[],[(0,1,2,3)]);mesh.materials.append(material);mesh.update()
     layer=mesh.uv_layers.new(name='Front-photo counter UV')
     for poly in mesh.polygons:
@@ -1222,55 +1225,67 @@ def stall_counter_photo(name, material):
     obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj);return keep(obj)
 
 def build_fun_stall(name, sweets=False):
-    building_root(name,'1x1')
+    stall_root=building_root(name,'1x1')
+    width_scale=.53
+    sx=lambda x:x*width_scale
     def stall_box(part,center,size,material,bevel=.025):
         # Small repeated stall boards stay crisp; bevel modifiers multiply
         # their exported triangle cost without changing the photo silhouette.
-        return box(part,center,size,material,0)
-    # Four welded round-tube uprights and rails trace the photo's open frame.
+        return box(part,(sx(center[0]),center[1],center[2]),(size[0]*width_scale,size[1],size[2]),material,0)
+    def stall_pipe(part,points,radius,material):
+        return pipe(part,[(sx(x),y,z) for x,y,z in points],radius,material)
+    # Four corner posts frame a 1.2 m stall. The canopy slopes from the 2.92 m
+    # rear rail to the 2.60 m road-side rail, as in the photographed profile.
+    front_z,back_z=-.60,.60
     for x in (-2.35,2.35):
-        for z in (-2.05,1.75):
-            pipe(f'{name}:pipe-post-{x}-{z}',[(x,.05,z),(x,3.0,z)],.075,'rusted-steel')
-    for y,z in ((2.92,1.75),(2.82,-2.05),(1.55,-2.05),(1.45,1.75)):
-        pipe(f'{name}:pipe-rail-{y}-{z}',[(-2.35,y,z),(2.35,y,z)],.065,'rusted-steel')
+        for z,top in ((front_z,2.60),(back_z,2.92)):
+            stall_pipe(f'{name}:pipe-post-{x}-{z}',[(x,.05,z),(x,top,z)],.075,'rusted-steel')
+    for y,z in ((2.92,back_z),(2.60,front_z),(1.02,front_z),(1.02,back_z)):
+        stall_pipe(f'{name}:pipe-rail-{y}-{z}',[(-2.35,y,z),(2.35,y,z)],.065,'rusted-steel')
     for x in (-2.35,2.35):
-        pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,1.75),(x,2.72,-2.25)],.06,'rusted-steel')
-    stall_box(f'{name}:counter-kick',(0,.20,-1.84),(4.45,.40,.18),'rusted-steel',.035)
+        stall_pipe(f'{name}:awning-depth-rail-{x}',[(x,2.92,back_z),(x,2.60,front_z)],.06,'rusted-steel')
+        stall_pipe(f'{name}:counter-depth-rail-{x}',[(x,1.02,front_z),(x,1.02,back_z)],.055,'rusted-steel')
+        stall_pipe(f'{name}:base-depth-rail-{x}',[(x,.12,front_z),(x,.12,back_z)],.045,'rusted-steel')
+    # A full-depth wooden counter box replaces the thin facade strip. The
+    # upper face keeps the same weathered plank material as the front boards.
+    stall_box(f'{name}:counter-kick',(0,.69,-.06),(4.45,.68,1.04),'weathered-plank',.035)
     if sweets:
         # Raised seams follow the red and yellow vertical boards in the photo.
         for i in range(10):
             x=-2.10+i*.467
-            stall_box(f'{name}:painted-board-seam-{i}',(x,.68,-2.065),(.025,.62,.025),'rusted-steel',0)
+            stall_box(f'{name}:painted-board-seam-{i}',(x,.69,-.646),(.025,.62,.025),'rusted-steel',0)
     else:
         # The hit-the-can photo has four broad horizontal weathered planks.
         for i in range(4):
             y=.36+i*.213
-            stall_box(f'{name}:weathered-plank-seam-{i}',(0,y,-2.065),(4.28,.025,.025),'rusted-steel',0)
-    stall_counter_photo(f'{name}:counter-photo-face',counter_photo[name])
+            stall_box(f'{name}:weathered-plank-seam-{i}',(0,y,-.646),(4.28,.025,.025),'rusted-steel',0)
+    stall_counter_photo(f'{name}:counter-photo-face',counter_photo[name],width_scale)
     # Photo-mapped striped cloth replaces the false blue/grey patches.
-    stall_awning(f'{name}:striped-awning-photo',-2.34,2.34,1.75,-2.20,awning_photo[name])
+    stall_awning(f'{name}:striped-awning-photo',sx(-2.34),sx(2.34),back_z,front_z,awning_photo[name])
     if not sweets:
         # A lower return shelf and a raised rear shelf carry the can target stack.
-        stall_box(f'{name}:can-shelf-bracket-left',(-1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
-        stall_box(f'{name}:can-shelf-bracket-right',(1.55,1.08,-.62),(.12,.9,.12),'rusted-steel',.02)
-        stall_box(f'{name}:can-shelf',(0,1.05,-.62),(3.35,.14,.70),'weathered-plank',.025)
+        stall_box(f'{name}:can-shelf-bracket-left',(-1.55,1.18,-.18),(.12,.7,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf-bracket-right',(1.55,1.18,-.18),(.12,.7,.12),'rusted-steel',.02)
+        stall_box(f'{name}:can-shelf',(0,1.05,-.18),(3.35,.14,.70),'weathered-plank',.025)
         for row,count in enumerate((3,2,1)):
             for i in range(count):
-                x=(i-(count-1)/2)*.68; y=1.29+row*.39; z=-.65
-                cyl(f'{name}:stacked-tin-{row}-{i}',(x,y,z),.245,.34,'galvanised-tin',12)
-                cyl(f'{name}:can-lid-{row}-{i}',(x,y+.18,z),.222,.035,'rusted-steel',8)
+                x=(i-(count-1)/2)*.68; y=1.29+row*.39; z=-.18
+                cyl(f'{name}:stacked-tin-{row}-{i}',(sx(x),y,z),.245,.34,'galvanised-tin',12)
+                cyl(f'{name}:can-lid-{row}-{i}',(sx(x),y+.18,z),.222,.035,'rusted-steel',8)
     else:
         # Sweets are individually jarred; colored candy pieces remain visible above the counter.
         for i,x in enumerate((-1.72,-.86,0,.86,1.72)):
-            cyl(f'{name}:glass-jar-{i}',(x,1.34,-1.45),.245,.62,'dirty-glass',10)
-            cyl(f'{name}:jar-candy-{i}',(x,1.34,-1.45),.205,.40,('red-paint','ochre-paint','red-paint','ochre-paint','red-paint')[i],12)
-            cyl(f'{name}:jar-lid-{i}',(x,1.68,-1.45),.26,.09,'rusted-steel',8)
-        stall_box(f'{name}:rear-sweets-shelf',(0,2.34,1.22),(3.8,.13,.56),'weathered-plank',.025)
+            cyl(f'{name}:glass-jar-{i}',(sx(x),1.34,-.18),.245,.62,'dirty-glass',10)
+            cyl(f'{name}:jar-candy-{i}',(sx(x),1.34,-.18),.205,.40,('red-paint','ochre-paint','red-paint','ochre-paint','red-paint')[i],12)
+            cyl(f'{name}:jar-lid-{i}',(sx(x),1.68,-.18),.26,.09,'rusted-steel',8)
+        stall_box(f'{name}:rear-sweets-shelf',(0,2.0,.26),(3.8,.13,.35),'weathered-plank',.025)
         for i,x in enumerate((-1.35,0,1.35)):
-            cyl(f'{name}:shelf-sweets-jar-{i}',(x,2.67,1.22),.27,.53,'dirty-glass',10)
-            cyl(f'{name}:shelf-candy-{i}',(x,2.67,1.22),.225,.37,('ochre-paint','red-paint','letter-paint')[i],8)
-            cyl(f'{name}:shelf-lid-{i}',(x,2.97,1.22),.29,.08,'rusted-steel',8)
-    return current
+            cyl(f'{name}:shelf-sweets-jar-{i}',(sx(x),2.33,.26),.27,.53,'dirty-glass',10)
+            cyl(f'{name}:shelf-candy-{i}',(sx(x),2.33,.26),.225,.37,('ochre-paint','red-paint','letter-paint')[i],8)
+            cyl(f'{name}:shelf-lid-{i}',(sx(x),2.63,.26),.29,.08,'rusted-steel',8)
+    # The supplied side elevation is about 0.85 as wide as it is tall. At the
+    # 2.92 m roof height that puts the stall at roughly 2.5 m wide.
+    return stall_root
 
 stall_a=build_fun_stall('fun-stall-a',False)
 stall_b=build_fun_stall('fun-stall-b',True)
