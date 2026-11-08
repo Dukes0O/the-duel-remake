@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-14.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-14/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-15.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-15/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -259,46 +259,47 @@ for n in ids:
    school_beam(f'school:chalk-mark-{index+1}',(x0,y,board_z-.132),(x1,y,board_z-.132),.028,paint)
   continue
  if n=='radio-mast':
-  # Thirty metre salvaged lattice, guyed to anchors within the 1x1 plot.
-  # The crossed faces retain open bays; the cross-section turns 90 degrees
-  # between the front and side faces rather than becoming a solid mast.
-  rust=m['rusted-steel'];wire=m['iron-dark'];
-  def mast_beam(name,p0,p1,w,material):
-   a0=town.game_vector(p0);b0=town.game_vector(p1);direction=b0-a0
-   obj=box(name,((p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2),(w,direction.length,w),material,.008,b)
-   # Thin lattice bars need square, honest sections; bevel modifiers multiply
-   # their exported triangles without improving these subpixel edges.
-   for modifier in list(obj.modifiers):obj.modifiers.remove(modifier)
-   obj.rotation_euler=direction.to_track_quat('Z','Y').to_euler();return obj
-  levels=[.35,4.5,8.7,12.9,17.1,21.3,25.5,29.4]
-  def width_at(y):return .92-(.72*y/30)
-  for face in range(2):
-   ang=face*math.pi/2
-   c,sn=math.cos(ang),math.sin(ang)
-   def pt(u,y):return (u*c,y,u*sn)
-   # Two weathered legs on each open face.
-   for side in (-1,1):
-    for y0,y1 in zip(levels,levels[1:]):
-     mast_beam(f'radio-mast:leg-{face}-{side}-{y0}',pt(side*width_at(y0),y0),pt(side*width_at(y1),y1),.105,rust)
-   for low,high in zip(levels,levels[1:]):
-    w0,w1=width_at(low),width_at(high)
-    for side in (-1,1):
-     mast_beam(f'radio-mast:crossbar-{face}-{low}-{side}',pt(side*w0,low),pt(-side*w0,low),.075,steel)
-    mast_beam(f'radio-mast:brace-{face}-{low}-a',pt(-w0,low),pt(w1,high),.075,rust)
-    mast_beam(f'radio-mast:brace-{face}-{low}-b',pt(w0,low),pt(-w1,high),.075,rust)
-  mast_beam('radio-mast:lamp-spindle',(0,29.4,0),(0,30.0,0),.12,rust)
-  # Small independent corrugated hut at the rear edge of the base.
-  box('radio-mast:hut-body',(1.62,1.12,1.62),(1.55,2.24,1.5),tin,.035,b)
-  box('radio-mast:hut-door',(1.62,.95,.855),(.48,1.75,.035),wood,.02,b)
-  box('radio-mast:hut-window',(1.18,1.55,.825),(.48,.46,.035),glass,.02,b)
-  roof=box('radio-mast:hut-roof',(1.62,2.31,1.62),(1.8,.14,1.75),rust,.025,b);roof.rotation_euler[0]=.025
-  # Four stays use fine steel beams; anchor blocks and stay ends land on ground.
-  anchors=[(-2.70,-2.70),(2.70,-2.70),(-2.70,2.70),(2.70,2.70)]
+  # Trace both open lattice faces from the committed side photograph. The
+  # narrow crop excludes the hut and guy wires; the grey studio is identified
+  # by colour distance because this source's neutral grey is below Photo.sky's
+  # bright-background threshold.
+  rust=m['rusted-steel'];wire=m['iron-dark'];side=Photo(tex/'radio-mast-side.jpg')
+  rgb=side.rgb();studio=np.array([123,123,123]);
+  mask=np.max(np.abs(rgb-studio),axis=2)>18
+  mask[:7,:]=False;mask[1000:,:]=False;mask[:,:420]=False;mask[:,588:]=False
+  # Keep only the mast silhouette; the isolated upper lamp is a separate part.
+  mask[4:36,:]=False
+  loops=photo_trace(photo_tidy(mask,1),(420,30,588,1000),tolerance=14.0,min_area=750)
+  print('RADIO-MAST traced loops',len(loops),'points',sum(len(loop) for loop in loops))
+  scale_y=30.0/(1000-34);scale_x=4.8/(588-420)
+  def mast_world(px,py,depth,turn=0):
+   x=(px-504)*scale_x;y=max(0,(1000-py)*scale_y)
+   return (x*math.cos(turn)+depth*math.sin(turn),y,-x*math.sin(turn)+depth*math.cos(turn))
+  for face,turn in (('front',0),('side',math.pi/2)):
+   mesh=PhotoMesh();photo_slab(mesh,'side',side,loops,lambda px,py,d,turn=turn:mast_world(px,py,d,turn),-.045,.045)
+   obj=mesh.finish(f'radio-mast:lattice-{face}',{'side':side.material()});parent_keep(obj,b)
+  # Hut body and its road-facing wall wear the photographed hut crop. Its
+  # isolated placement is between the cardinal guy lines, outside their paths.
+  hut=box('radio-mast:hut-body',(1.80,1.22,-1.80),(1.95,2.44,1.95),tin,0,b)
+  hut_photo=Photo(tex/'radio-mast-side.jpg')
+  hutmesh=PhotoMesh();hutmask=np.max(np.abs(rgb-studio),axis=2)>18
+  hutloops=photo_trace(hutmask,(580,846,744,1000),tolerance=2,min_area=80)
+  # The photo facade is traced as a shallow, separate slab at the hut front.
+  if hutloops:
+   photo_slab(hutmesh,'side',hut_photo,hutloops,lambda px,py,d:(1.80+(px-662)*.0118, max(0,(1000-py)*.0145), -2.79+d),-.025,.025)
+   facade=hutmesh.finish('radio-mast:hut-photo-face',{'side':hut_photo.material()});parent_keep(facade,b)
+  # Concrete stays have visible pale weathered tops and all sit 1 m inside
+  # the one-cell plot edge. Cardinal placement leaves the hut unobstructed.
+  concrete=bpy.data.materials.new('radio mast weathered concrete anchors');concrete.diffuse_color=(.42,.40,.36,1);concrete.use_nodes=True;concrete.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.42,.40,.36,1)
+  anchors=[(-2.75,0),(2.75,0),(0,-2.75),(0,2.75)]
   for i,(ax,az) in enumerate(anchors):
-   box(f'radio-mast:anchor-{i}',(ax,.18,az),(.48,.36,.48),dark,.04,b)
-   mast_beam(f'radio-mast:guy-wire-{i}',(ax,.36,az),(0,22.4,0),.035,wire)
+   box(f'radio-mast:anchor-{i}',(ax,.24,az),(.42,.48,.42),concrete,0,b)
+   stay=beam(f'radio-mast:guy-wire-{i}',(ax,.48,az),(0,18.2,0),.035,wire,b)
+   for modifier in list(stay.modifiers):stay.modifiers.remove(modifier)
   lamp=bpy.data.materials.new('Town service red warning lamp');lamp.use_nodes=True;bs=lamp.node_tree.nodes.get('Principled BSDF');bs.inputs['Base Color'].default_value=(.35,.012,.008,1);bs.inputs['Emission Color'].default_value=(1,.012,.004,1);bs.inputs['Emission Strength'].default_value=3
-  sphere('radio-mast:lamp',(0,30.18,0),.18,lamp,b);continue
+  box('radio-mast:lamp-spindle',(0,29.98,0),(.14,.70,.14),rust,.01,b)
+  bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=5,radius=.18,location=town.game_vector((0,30.18,0)))
+  beacon=bpy.context.object;beacon.name='radio-mast:lamp';beacon.data.materials.append(lamp);parent_keep(beacon,b);continue
  if n=='helipad':
   box('Helipad earth plinth',(0,.15,0),(w,d,.3),sand,.08,b);box('Helipad welded steel deck',(0,.42,0),(w-1,d-1,.24),steel,.045,b)
   for x in range(-int(w/2)+1,int(w/2),2):beam('Deck plate weld',(x,.56,-d/2+1),(x,.56,d/2-1),.035,tin,b)

@@ -77,6 +77,39 @@ the sheet records the remaining difference for Claude's review.
   the carved photos already show them.
 - No other assets or checks were removed.
 
+## Radio mast, round 15
+
+Replaced the radio mast's plain beam lattice with two orthogonal `trace` and
+`slab` faces cut from the committed side photo. The silhouette mask excludes
+the photographed hut and stays, and its area/tolerance limits retain nine open
+lattice bays within the 1,800-triangle budget. The small hut now has a traced
+photo facade, four thin stays land on concrete anchor blocks, and the separate
+red emissive lamp stays at the mast top. No other building or its photo changed.
+
+The Blender builder printed each mast piece's bounds and passed the grounding,
+contact and 1x1 plot checks. The mast has 1,524 triangles. The final family GLB
+is 1,895,708 bytes. The 2,048 by 2,792 round-15 sheet is 162,924 bytes and pairs
+the reused photos with exported views, then shows both three-quarter views and
+the mayor view with the other family buildings hidden.
+
+### Checks and review
+
+- Blender 4.5.13 export and radio-mast bounds/contact/triangle audit: passed.
+- `node tools/test-blender-output.mjs`: passed, 386 checks, 0 failed.
+- Browser checks were not run. Claude should review whether the nine traced
+  openings preserve enough lattice detail and whether the hut facade reads
+  from the mayor's view. The reused source photos still show the hut/stays and
+  their overhead view includes the ground, as noted in the review sheet.
+- Changed assertions: none. Race fingerprints: not applicable; race code is
+  unchanged.
+
+## Removed
+
+- Removed the radio mast's hand-built lattice beams and dark box hut, plus its
+  black anchor blocks. Replaced these with traced photo geometry, a photographed
+  hut facade and concrete anchors.
+- No passed building, reference photo, or check was removed.
+
 ## Toll bank, round 12
 
 The seven passed buildings in `services.glb` remain byte-for-byte unchanged.
