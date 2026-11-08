@@ -286,6 +286,14 @@ Cabins: carved the Good Hope's 14 x 9 x 9 m accommodation block and the Marigold
 
 - Removed the incorrect bow-to-rear material-slot assignment and the previous Good Hope front-photo mapping in the carve. The replaced source file is retained; it is no longer loaded by the Good Hope.
 
+## Round 13, points 1 and 2 — heading and bulwarks (7 November 2026)
+
+- Turned the Good Hope and Marigold 180 degrees at their existing map positions, moved their cabins, funnels and masts aft, and moved the Marigold's shaft and propeller to the stern. Lowered all three deck plates by 0.15 m and added hull-painted bulwarks with rounded caps. The above render shows northbound bows and aft cabins; the three 40 m close views show the hull edge rising to the cap, though the existing Good Hope rail remains visually prominent. Claude should inspect `.qa-dist/check-ships-above.png`, `.qa-dist/check-patience.png`, `.qa-dist/check-good-hope.png` and `.qa-dist/check-marigold.png`. Blender 4.5.13 GLB read-back: Patience 8,568 triangles, Good Hope 10,064, Marigold 9,790; whole file 42,668 triangles and 2,770,512 bytes. `tools/test-blender-output.mjs`: 381 checks passed, 0 failed after restoring family-stage drift parts. `tools/test-repo-hygiene.mjs`: passed; size targets advisory. Browser checks: Claude look review requested; no browser check run. Lane tier and build not run per art-card rules. Changed assertions: none. Race fingerprints: none; art only.
+
+### Removed
+
+- Removed the family-stage omission of the ships' standalone drift parts from the export path; no prior model parts were deleted.
+
 ## Round 13, heading correction (7 November 2026)
 
 - Turned the Good Hope and Marigold to share the Patience's northbound heading without changing their map positions. Moved both accommodation blocks, funnels and masts aft; moved the Marigold's shaft and propeller to her stern. The straight-above GLB render shows the three bows aligned north and cabins aft; Claude should judge `.qa-dist/check-ships-above.png`. Changed assertions: none. Race fingerprints: none; art only. Blender lane tier and build were not run per art-card rules. `tools/test-blender-output.mjs` and `tools/test-repo-hygiene.mjs` remain for the completed card checks.

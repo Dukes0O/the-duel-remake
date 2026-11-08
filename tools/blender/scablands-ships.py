@@ -505,8 +505,8 @@ def deck_plate(root, name, length, width, deck):
         half=width*breadth*.47*flare-.30
         stem=max(0,(t-.34)/.16)
         x-=1.42*stem
-        left.append((x,deck-.10,-half))
-        right.append((x,deck-.10,half))
+        left.append((x,deck-.25,-half))
+        right.append((x,deck-.25,half))
     outline=left+right[::-1]
     verts=[gv(point) for point in outline]
     faces=[]
@@ -516,6 +516,32 @@ def deck_plate(root, name, length, width, deck):
     mesh.from_pydata(verts,[],faces); mesh.materials.append(rust); mesh.update()
     plate=bpy.data.objects.new(name,mesh); scene.collection.objects.link(plate)
     plate['part']=root.name+':deck'; parent(plate,root)
+    hull = scene.objects.get(root.name + ':hull') or scene.objects.get(root.name + ' hull')
+    hull_paint = hull.data.materials[1] if hull and len(hull.data.materials) > 1 else rust
+    wall_bottom, wall_top = deck-.25, deck+.75
+    wall_vertices=[]; wall_faces=[]
+    for i, point in enumerate(outline):
+        nxt=outline[(i+1)%len(outline)]
+        side=1 if point[2]+nxt[2] >= 0 else -1
+        offset=.42*side
+        base=len(wall_vertices)
+        wall_vertices.extend(gv(p) for p in ((point[0],wall_bottom,point[2]+offset),
+                                              (nxt[0],wall_bottom,nxt[2]+offset),
+                                              (nxt[0],wall_top,nxt[2]+offset),
+                                              (point[0],wall_top,point[2]+offset)))
+        wall_faces.append((base,base+1,base+2,base+3))
+    wall_mesh=bpy.data.meshes.new(root.name+' bulwark plate mesh')
+    wall_mesh.from_pydata(wall_vertices,[],wall_faces); wall_mesh.materials.append(hull_paint); wall_mesh.update()
+    wall=bpy.data.objects.new(root.name+' painted bulwark',wall_mesh); scene.collection.objects.link(wall)
+    wall['part']=root.name+':bulwark'; parent(wall,root)
+    cap_data=bpy.data.curves.new(root.name+' rounded bulwark rail','CURVE')
+    cap_data.dimensions='3D'; cap_data.bevel_depth=.12; cap_data.bevel_resolution=3
+    spline=cap_data.splines.new('POLY'); spline.points.add(len(outline)-1)
+    for i,(x,y,z) in enumerate(outline):
+        spline.points[i].co=(*gv((x,wall_top,z+(.42 if z>=0 else -.42))),1)
+    spline.use_cyclic_u=True; cap_data.materials.append(hull_paint)
+    cap=bpy.data.objects.new(root.name+' rounded bulwark cap',cap_data); scene.collection.objects.link(cap)
+    cap['part']=root.name+':bulwark'; parent(cap,root)
     return plate
 
 ships=[
@@ -1105,7 +1131,7 @@ if args.stage == 'family':
 
 # Low sandy approach merges into the buried hulls instead of a raised display base.
 ship_ground=sand
-if args.stage in ('patience','fleet'):
+if args.stage in ('patience','fleet','family'):
     # Side-specific phase-shifted wavelengths roughen the edge. The outer row
     # lies on the shared bed; the inner row overlaps the plating.
     rng = __import__('random').Random(10410)
@@ -1144,7 +1170,7 @@ if args.stage in ('patience','fleet'):
     for polygon in drift_mesh.polygons: polygon.use_smooth=True
     drift=bpy.data.objects.new('ship-patience:drifts',drift_mesh); scene.collection.objects.link(drift)
     drift['part']='ship-patience:drifts'
-    if args.stage=='fleet':
+    if args.stage in ('fleet','family'):
         for ship_index,(ident,bank_side) in enumerate((('ship-good-hope',1),('ship-marigold',-1))):
             ship_root=roots[ident]
             vertices=[]; faces=[]; stations=49; rows=5

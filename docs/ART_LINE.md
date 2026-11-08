@@ -45,6 +45,8 @@ stop adjusting and change the method.
 
 ## What to watch for
 
+- **A family export can omit special-stage geometry.** When a recipe conditionally adds shared ground or drift meshes, include the family/export stage as well as the review stages; the GLB check caught missing standalone ship drifts in `scablands-ships.py`.
+
 ### Flat photographed shapes
 
 - **Smoothing turns flat things into cushions.** A carve rounds the edge of a
