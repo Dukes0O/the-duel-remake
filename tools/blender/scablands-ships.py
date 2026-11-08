@@ -127,13 +127,14 @@ if args.render_view:
         for name in ('ship-patience', 'ship-good-hope', 'ship-marigold'):
             set_tree_visibility(name, name == close_subject)
     if args.render_view == 'whole':
-        scene.camera.location = Vector((-35, 330, 1.2))
+        scene.camera.location = Vector((80, 350, 1.2))
         scene.camera.rotation_euler = (
             Vector((5, 440, 4)) - scene.camera.location
         ).to_track_quat('-Z', 'Y').to_euler()
-        scene.camera.data.lens = 24
+        scene.camera.data.lens = 18
     if args.render_view == 'above':
         scene.camera.data.type = 'PERSP'
+        scene.camera.data.lens = 18
     if args.render_view == 'whole':
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(root / '.qa-dist/check-fleet.png')
@@ -1376,7 +1377,7 @@ def render_imported_review():
     add_camera('review-camera-marigold', (17, 1.2, -410), (45, 6, -440), 40, (1200, 900))
     add_camera('review-camera-patience', (-23, 1.2, -500), (5, 7, -470), 40, (1200, 900))
     add_camera('review-camera-above', (5, 150, -440), (5, 3, -440), 150, (1200, 900))
-    add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 11.5, -415), 32, (1200, 900))
+    add_camera('review-camera-deck-good-hope', (-45, 5.7, -430), (-45, 8.5, -415), 32, (1200, 900))
     add_camera('review-camera-deck-marigold', (45, 5.7, -455), (45, 8.5, -440), 32, (1200, 900))
 
     raw.mkdir(parents=True, exist_ok=True)
