@@ -1,24 +1,32 @@
-# TOWN-ART-MACHINES-2
+# TOWN-ART-MACHINES-2 — stopped at round limit
 
 ## Changed
 
-Round 6 adds seven generated, unbranded mustard-yellow machine reference sheets to `public/assets/models/wasteland/town/textures/`, with credits. Each source is about 1,024 px on its long side and shows side, front, rear and overhead views. Numbered 64 px grids were made in scratch output for reference.
-
-The exported family is 2,877,980 bytes. Exported triangle counts: mixer-truck 5,457; crane-truck 5,592; pipe-truck 5,590; roller 5,600; loader 11,624; paver 5,600; drill-rig 5,600. The output test confirmed only `TEXCOORD_0` per primitive, ranged UVs and metallic factors at or below 0.3.
-
-**Acceptance remains incomplete.** These models still use the prior procedural construction. None of the machine bodies was rebuilt with `carve_hull`; the crane boom and drill mast were not traced and slabbed from their photos. The numbered measurement overlays were scratch aids, not a world-measurement recipe. All seven keep the prior model geometry. No old model code was removed. The generated photos and the existing models differ substantially in silhouette and paint. Round 6 is the final allowed art round, so Claude should judge whether to merge these review assets or stop this card as unmet.
-
-The round 6 sheet is `docs/board/looks/town-art-machines-2/round-6.jpg` (252,469 bytes), pairing each photo reference with the exported model at rest and work. Claude should inspect the photo/model mismatch, whole-machine framing, separate named joints, crane and drill lattice, and work poses. Browser and in-game checks were not run in this lane.
+- The lane contains an in-progress mixer-truck photo-model attempt and a rebuilt family GLB. The round-7 renders are diagnostic evidence only; they are not a submitted look sheet or an accepted result.
+- The current GLB is 3,883,496 bytes. The card caps the family at 3 MB. Restored the test entry to that 3 MB limit.
+- Round 6 is the last submitted sheet. Its review records that the family still uses procedural machine geometry instead of the required photo modeling. The card allows six rounds per vehicle, so this lane cannot submit another round without a new decision.
+- The shared texture `CREDITS.md` still names the removed combined mixer image. Updating that shared file is outside this card's owned files; the Director must assign that edit before any merge.
 
 ## Checks
 
-- Blender export and 14 imported-GLB rest/work renders: passed; 2,877,980-byte family output.
-- `node tools/test-blender-output.mjs`: passed, 303 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; placement checks passed.
-- Browser, in-game look and lane-tier checks: not run, as instructed.
-- Changed assertions: none.
-- Race fingerprints: not applicable; art only.
+- Inspected the round-7 imported-GLB views. They show obvious seams and detached-looking pieces, so the candidate is not ready for a look verdict.
+- `node tools/test-review-evidence.mjs`: 8 passed, 1 failed. The audio-analysis check could not start `ffmpeg` (`spawnSync ffmpeg EPERM`).
+- `node tools/test-blender-output.mjs`, `node tools/test-repo-hygiene.mjs`, lane tier and build were not run. The work is stopped at the card's round limit and the current candidate exceeds its stated file budget.
+- No browser, game, or frame check applies to this art-only card.
+
+## Claude review / decision needed
+
+Round 6 does not pass. Please decide whether to close this card as not accepted or issue a revised card with a new round budget and explicit asset budget. Do not merge or use the current candidate as finished art.
+
+## Changed assertions
+
+- Restored the GLB size assertion from 8 MB to the card's 3 MB limit. No assertion was loosened.
+
+## Race fingerprints
+
+Unchanged; no race or simulation files were edited.
 
 ## Removed
 
-Removed the round 5 sheet and review note as requested. No model geometry code was removed because no machine was replaced with photo-carved geometry.
+- Removed the combined `machines2-mixer-truck-views.jpg` source from the working tree and replaced the mixer truck's top reference image with a standalone top view. The standalone references and their credit note remain in the texture folder.
+- The prior family GLB is replaced in the working tree by the current diagnostic candidate; it has not been approved for integration.
