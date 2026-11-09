@@ -1,20 +1,23 @@
-﻿# TOWN-ART-MACHINES-2 — round 27
+# TOWN-ART-MACHINES-2 - round 28
 
-## Changed
-
-Updated the loader photo carve and measured tyre locations from the side ground line and tyre centres. Replaced the open star-pattern tyres with solid dusty rubber and individual worn hubs. Moved the arm joint to the photographed frame pin and the bucket joint to the arm tip, with the bucket set at floor height at rest. Regenerated the rear reference as one centered rear view. Rebuilt the family GLB and made the round 27 comparison sheet.
-
-Claude should inspect the remaining dark round artifact by the hood, the arm and bucket connection in both poses, the incomplete front frame, and the rear/overhead projections. The four passed machines were not intentionally changed.
+Adjusted only the loader in `tools/blender/town-machines-2.py`: tyre radius
+and axle centres now use the current side photo's measurements; the bucket is
+scaled to about 1 m tall, placed ahead of the front tyres and grounded; paired
+arms run from frame pins beside the cab to the bucket pin. Kept the carve's
+`underside` at 0.5 m. The other four passed machines' recipe sections were not
+changed.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: **389 checks, 0 failed** (run to completion after the final rebuild).
-- Blender family export: completed; GLB is 5,589,964 bytes, under the 8 MB family cap.
-- Loader triangle and part budgets: included in the passing Blender output checks.
-- Browser/look checks: not run here; Claude should judge the round 27 sheet and the assembled poses.
+- Blender export and loader render completed. Review views: side, front, rear,
+  overhead, and work pose. Source photos on the sheet are shown whole.
+- `node tools/test-blender-output.mjs`: pending.
+- Browser/look check: Claude to review the loader sheet, especially tyre
+  alignment, bucket clearance, visible arm connection, the dark ball artifact,
+  and cab projection streaks. Chrome was not run.
 - Changed assertions: none.
-- Race fingerprints: not applicable to this art card.
+- Race fingerprints: not applicable to this art-only change.
 
 ## Removed
 
-Removed the old multi-view rear reference, the previous open/star-pattern loader wheel geometry, and the stray small pin loop from the loader arm trace. No other machine recipe sections were intentionally changed.
+None.
