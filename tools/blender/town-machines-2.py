@@ -623,8 +623,8 @@ def basic_family():
  # The pivot tower rises directly from the photo-faced table; the old floating
  # yellow block that stood in for the slew assembly is removed.
  for sx in (-1,1):
-  crane_box('crane pivot tower cheek',(sx*.39,2.30,1.62),(.22,1.04,.62),steel,.055,turret)
-  crane_beam('crane pivot cheek wear edge',(sx*.39,1.82,1.62),(sx*.39,2.82,1.62),.06,tin,turret)
+  crane_box('crane pivot tower cheek',(sx*.39,2.30,1.62),(.18,1.04,.48),tin,.055,turret)
+  crane_beam('crane pivot cheek wear edge',(sx*.39,1.82,1.62),(sx*.39,2.82,1.62),.045,steel,turret)
   crane_beam('crane pivot pin',(-.46,2.82,1.62),(.46,2.82,1.62),.11,tin,turret)
  # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
  from photo_carve import lift_if_dark
@@ -815,10 +815,10 @@ if a.render:
  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
  boom_joint=joints['crane-truck:boom'];hook_joint=joints['crane-truck:hook']
  hide_tree(boom_joint,True)
- crane_cam('side',(35,0,2.0),(55,0,2.0),10.2,1500,640,up='Y')
- crane_cam('front',(55,15,2.0),(55,0,2.0),4.0,900,900,up='Y')
- crane_cam('rear',(55,-15,2.0),(55,0,2.0),4.0,900,900,up='Y')
- crane_cam('overhead',(55,0,17),(55,0,0),6.2,900,1200,up='Y')
+ crane_cam('side',(35,0,2.0),(55,0,2.0),9.4,1500,640,up='Y')
+ crane_cam('front',(55,15,2.0),(55,0,2.0),5.8,900,650,up='Y')
+ crane_cam('rear',(55,-15,2.0),(55,0,2.0),5.8,900,650,up='Y')
+ crane_cam('overhead',(55,0,17),(55,0,0),9.0,1200,685,up='Y')
  hide_tree(boom_joint,False)
  hook_base=hook_joint.location.z
  boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
