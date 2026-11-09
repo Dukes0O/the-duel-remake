@@ -105,3 +105,48 @@ existing family `round-1.jpg` and `round-2.jpg` remain. Replaced the earlier
 The current recipe had no earlier kiln block-shape path to remove; it exported
 the warehouse only. The new GLB contains no block-shaped kiln. The passed
 warehouse geometry and its four reference photos remain in the family.
+
+## Sawmill — round 1
+
+### Changed
+
+- Added the 3×2 `sawmill` to `tools/blender/town-works.py` as an open timber
+  frame with a pitched tin roof, a photo-carved saw bench, a separate thin
+  circular blade, carriage and log, two bark-log stacks, and a sawdust mound.
+  The former block placeholder is no longer exported. The existing warehouse
+  and kiln recipes were left in place.
+- Added four single-view shed photos, four bench photos, and separate blade,
+  bark and sawdust photos under `public/assets/models/wasteland/town/textures/`.
+  `sawmill-CREDITS.md` credits the generated photos.
+- Exported `works.glb` at 3,562,296 bytes. The warehouse remains at 8,040
+  triangles, the kiln at 2,467, and the sawmill at 8,772, within the 9,000
+  triangle budget. The family contains 21 embedded images.
+- Added the 461,338-byte sheet and review at
+  `docs/board/looks/town-art-works-sawmill/round-1.jpg` and
+  `round-1-review.md`. The recipe prints bounds for all nine named sawmill
+  pieces and checks that each stays within the 3×2 footprint and touches the
+  ground or another piece.
+
+### Checks and review
+
+- Blender 4.5.13 exported the family, printed the piece bounds, and rendered
+  the seven requested review views. I compared the side, front, rear and
+  overhead views beside their source photos, plus both three-quarter views and
+  the mayor view. The other works buildings were hidden.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+  The first run found 34,884 sawmill triangles and an outdated 3 MB cap in the
+  runner; the mesh was reduced to 8,772 triangles, and the runner cap was
+  brought to the card's 8 MB allowance. Neither change weakens a test.
+- The family assertion now requires all three buildings, checks the sawmill's
+  9,000-triangle budget and its nine named parts, and checks that the embedded
+  photos are present. The generator file cap changed from 3 MB to 8 MB to match
+  the card. No race code or fingerprints changed.
+- No lane tier, build, browser scenario or in-game look check was run. Claude
+  should inspect the saw blade's size and visibility, roof surface, log stacks
+  and sawdust mound from the driver and mayor views.
+
+### Removed
+
+Removed the sawmill's block placeholder from the exported family and replaced
+it with the named frame, roof and work pieces. The passed warehouse and kiln
+remain in the family.
