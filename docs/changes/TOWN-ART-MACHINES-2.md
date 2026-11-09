@@ -2,19 +2,21 @@
 
 ## Changed
 
-- Round 16 photo references and a photo-carved pipe truck with a separate empty-bed carve, built chassis and tyres, five named pipe cylinders, and a work pose that rolls four pipes onto the ground.
-- Added the round 16 image credit and the two photo-carve lessons found during this round to `docs/ART_LINE.md`.
-- Added the six-view comparison sheet and review note.
-- Mixer and crane geometry stayed unchanged.
+- Round 17 adjusts only the pipe truck: wheel faces use measured centers and radii from the side photo, the six tyres sit at ground level, and the slab-like rails are replaced with narrow round frame rails inside the wheels.
+- Kept five named pipe joints stacked on the bed at rest; the work pose moves three separate pipes onto the ground.
+- Replaced the comparison sheet with large side-by-side orthographic photo/model panels and three-quarter rest/work views.
+- Mixer and crane recipe sections were not changed.
 
 ## Checks
 
-- Blender 4.5.13 candidate export, bounds/contact output and imported-model renders completed.
-- `node tools/test-blender-output.mjs`: 389 checks, 0 failed on the final family GLB.
-- No lane tier, build, browser check or look test was run. Claude should review the six sheet panels, especially the cab/crane seams, the frame rails, and the work-pose pipe separation.
-- No assertions changed. No race fingerprints apply.
+- Blender 4.5.13 export and six imported-GLB renders completed.
+- `node tools/test-blender-output.mjs`: 389 checks passed, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed.
+- `node tools/test-review-evidence.mjs`: 8 passed, 1 failed; one rerun failed the same way. Windows blocked the audio-analysis `ffmpeg` subprocess with `spawnSync ffmpeg EPERM`. Review JPG publication passed both runs.
+- No lane tier, build, browser check or look test was run. Claude should inspect side wheel clearance and grounding, the frame beneath the bed, the five-pipe rest stack, all three dropped pipes, and front/rear wheel appearance.
+- No assertions changed. Race fingerprints do not apply.
 
 ## Removed
 
-- Removed obsolete block geometry for the pipe truck.
-- Removed `machines2-pipe-truck-views.jpg` and its credit line after replacement references were wired into the recipe.
+- Removed the pipe truck's broad slab-like frame rails and replaced them with narrow round rails.
+- Replaced the earlier work pose with four unloaded pipes by a pose with three pipes on the ground.
