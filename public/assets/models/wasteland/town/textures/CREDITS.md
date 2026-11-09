@@ -399,7 +399,6 @@ background, no perspective, no labels, no people or logos, no watermark."
 
 Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
 
-- `machines2-pipe-truck-views.jpg`: flatbed pipe carrier with an unloading frame.
 - `machines2-roller-views.jpg`: single-drum road roller with rear tires.
 - `machines2-loader-views.jpg`: articulated wheel loader with raised arms and scoop.
 - `machines2-paver-views.jpg`: tracked asphalt paver with front hopper and rear screed.
@@ -815,3 +814,10 @@ Hydrant-side.jpg, hydrant-front.jpg, hydrant-rear.jpg and hydrant-top.jpg are in
 ## TOWN-ART-MACHINES-2 crane-truck references (round 12)
 
 Four individual orthographic views, `crane-truck-side.jpg`, `crane-truck-front.jpg`, `crane-truck-rear.jpg` and `crane-truck-overhead.jpg`, were cropped from one OpenAI ImageGen contact sheet on 8 November 2026. They show the same worn yellow crane truck with its boom and hook removed, on a plain grey studio ground. `crane-truck-boom.jpg` is a separate generated side photograph of the lattice boom. The references are original and use no third-party source photographs.
+
+## TOWN-ART-MACHINES-2, round 16 pipe truck references
+
+Generated with the built-in OpenAI ImageGen tool on 8 November 2026. The truck contact sheet shows one unbranded worn yellow salvage flatbed in side, front, rear and overhead orthographic views, with the pipes removed. `pipe-truck-pipe.jpg` shows one rusty steel pipe in side profile.
+
+- `pipe-truck-side.jpg`, `pipe-truck-front.jpg`, `pipe-truck-rear.jpg`, `pipe-truck-overhead.jpg`: cropped orthographic views from one contact sheet.
+- `pipe-truck-pipe.jpg`: single rusty steel pipe.
