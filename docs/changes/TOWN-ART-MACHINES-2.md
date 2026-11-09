@@ -1,30 +1,23 @@
-# TOWN-ART-MACHINES-2 — round 30
+# TOWN-ART-MACHINES-2 - round 32
 
 ## Changed
 
-Turned the loader's front and rear frame positions, arm pivot, arm geometry,
-bucket position and bucket photo mapping to Blender +Y, matching the carve.
-Re-signed the work-pose rotations. Lowered the arm tips and bucket pivot
-together so the scoop rests on the ground. Added GLB readback bounds output
-and checks for `loader:arms` and `loader:bucket`. Updated only loader review
-cameras; the other machines' geometry and poses are unchanged.
+Replaced only the old block drill rig with a photo-carved worn yellow truck, six measured dark tyres, frame rails, outriggers, a traced open-lattice mast and a steel feed string. The cab end is at Blender +Y; the mast hinge origin is at the rear at Blender -Y. The mast rests along the deck, raises upright, and carries a sliding pipe that reaches below ground in the work pose. Added the four mast-free truck photos and the separate mast photo, with credits. Other six machines were left unchanged.
 
-Exported GLB readback bounds at rest:
-
-- `loader:arms`: min `(-1.300, 0.710, -0.001)`, max `(1.300, 3.943, 1.631)`.
-- `loader:bucket`: min `(-1.300, 2.995, -0.001)`, max `(1.300, 3.943, 0.999)`.
-- Both are at Y > 0; bucket min Y exceeds 2.6. Its low Z is within 1 mm of ground.
-- `round-30.jpg` is 223,360 bytes. All machines remain within the 15,000-triangle cap.
+Exported rest bounds (Blender metres): body `(-1.462, -3.436, 0.383)` to `(1.508, 3.372, 2.795)`; cab end `(-1.462, 1.575, 0.383)` to `(1.508, 3.372, 2.767)`; mast `(-0.120, -2.812, 1.249)` to `(0.120, 3.041, 2.130)`; string `(-0.105, -2.700, 1.825)` to `(0.105, 3.000, 2.035)`. Mast pivot: `(0, -2.700, 1.750)`. Raised work string minimum Z: `-0.250`.
 
 ## Checks
 
-- Blender 4.5.13 recipe export and loader renders: passed; GLB readback bounds passed.
+- Blender recipe export and rig bounds/contact checks: passed.
 - `node tools/test-blender-output.mjs`: 389 checks, 0 failed.
-- Lane tier and build: not run, as this art card forbids them.
-- Browser/look review: not run; Claude should review the four photo comparisons,
-  loader at rest, work pose, and the listed points in the round review.
-- Changed assertions: none. Race fingerprints: not applicable; no simulation code changed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement clean, size targets advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed. One unrelated audio-analysis subtest failed twice at `spawnSync ffmpeg EPERM`; no game code or test assertions changed.
+- Lane tier and build: not run, as directed.
+- Browser/look checks: Claude runs. Claude should review the four photo comparisons, axle spacing, cab/deck seams, +Y cab end, rear mast hinge, rest/work poses, and below-ground string.
+- Changed assertions: none. Race fingerprints: not applicable.
 
 ## Removed
 
-- No prior model parts, files, tests or docs were removed.
+- Removed the old drill-rig reference picture and its credit entry after replacing its recipe references.
+- Removed the drill rig's old block geometry and crawler-track assembly.
+- No other machine geometry, tests, or files were removed.

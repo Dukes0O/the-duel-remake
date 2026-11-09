@@ -753,6 +753,8 @@ def basic_family():
  parent(drill_body,drill)
  # Frame rails and outriggers meet the body and ground. The photos show a
  # three-axle road truck, not the previous crawler base.
+ drill_yellow=bpy.data.materials.new('Drill rig / chipped yellow enamel');drill_yellow.diffuse_color=(.62,.34,.055,1);drill_yellow.use_nodes=True
+ drill_yellow.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.62,.34,.055,1);drill_yellow.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.14;drill_yellow.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.84
  def drill_box(label,center,size,material=steel,bevel=.035):return box(label,game_vector(center),(size[0],size[2],size[1]),material,drill,bevel)
  def drill_beam(label,start,end,radius,material=steel):return beam(label,game_vector(start),game_vector(end),radius,material,drill)
  for side in (-1,1):
@@ -761,7 +763,7 @@ def basic_family():
    drill_beam(f'drill-rig axle {axle_index+1}',(side*.35,.64,zpos),(side*.98,.64,zpos),.10,steel)
   # Four yellow stabilizer beams, chrome hydraulic rams, and broad pads.
   for zpos in (-2.65,2.10):
-   drill_box('drill-rig yellow outrigger',(side*1.24,.92,zpos),(1.55,.20,.22),paint,.025)
+   drill_box('drill-rig yellow outrigger',(side*1.24,.92,zpos),(1.55,.20,.22),drill_yellow,.025)
    drill_beam('drill-rig silver stabilizer ram',(side*1.84,.82,zpos),(side*1.84,.12,zpos),.075,tin)
    drill_box('drill-rig outrigger foot',(side*1.84,.07,zpos),(.48,.10,.48),steel,.025)
  drill_rubber=bpy.data.materials.new('Drill rig / black rubber');drill_rubber.diffuse_color=(.025,.027,.026,1);drill_rubber.use_nodes=True
@@ -777,8 +779,8 @@ def basic_family():
    wheel=tire_mesh.finish('drill-rig photo-width black rubber tyre',{'side':drill_side.material(),'rubber':drill_rubber})
    wheel.name=f'drill-rig:wheel-{axle_index+1}-'+('left' if side_sign<0 else 'right');parent(wheel,drill)
    wheel.location=game_vector((side_sign*.94,drill_radius,zpos))
- for side in (-1,1):drill_beam('drill-rig mast pivot pin',(side*.58,1.08,2.57),(side*.58,1.08,2.84),.13,tin)
- mast=empty('drill-rig:mast',(0,-2.70,1.08),drill)
+ for side in (-1,1):drill_beam('drill-rig mast pivot pin',(side*.58,1.75,2.57),(side*.58,1.75,2.84),.13,tin)
+ mast=empty('drill-rig:mast',(0,-2.70,1.75),drill)
  mast_photo=DrillPhoto(drill_textures/'drill-rig-mast.jpg');rgb=mast_photo.rgb()
  mast_mask=(rgb[:,:,0]>rgb[:,:,1]*1.12)&(rgb[:,:,0]>95)&(rgb[:,:,0]>rgb[:,:,2]*1.08)
  mast_loops=drill_trace(mast_mask,(8,12,mast_photo.w-8,mast_photo.h-12),tolerance=2.2,min_area=55)
@@ -793,10 +795,10 @@ def basic_family():
  mast_obj=mast_mesh.finish('drill-rig:mast:photo-traced-lattice',{'mast':mast_photo.material()});mast_obj.location=mast.location.copy();parent(mast_obj,mast)
  # Mast head sits 5.7 m toward the cab at rest; the steel drill pipe is a
  # separate sliding joint whose lower end travels below the ground in work.
- string=empty('drill-rig:string',(0,3.0,1.26),mast);string.rotation_euler[0]=math.pi
+ string=empty('drill-rig:string',(0,3.0,1.93),mast);string.rotation_euler[0]=math.pi
  string_mesh=DrillMesh()
  from photo_model import lathe as drill_lathe
- drill_lathe(string_mesh,'steel', (0,0,0),(0,0,1),(1,0,0),(0,1,0),[(0,.105),(7.0,.105)],
+ drill_lathe(string_mesh,'steel', (0,0,0),(0,0,1),(1,0,0),(0,1,0),[(0,.105),(5.70,.105)],
   lambda i,d,r,a:(drill_front.uv(367+math.cos(a)*22,220+math.sin(a)*22)),sides=16,cap_start=('steel',lambda a,f:drill_front.uv(367,220)),cap_end=('steel',lambda a,f:drill_front.uv(367,220)))
  string_obj=string_mesh.finish('drill-rig:string:steel-feed-pipe',{'steel':m['galvanised-tin']});string_obj.location=string.matrix_world.translation.copy();parent(string_obj,string)
  def drill_piece_bounds(piece):
@@ -1476,7 +1478,7 @@ for name in machine_names:
   elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
   elif name=='drill-rig':
    joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else math.pi/2
-   joints['drill-rig:string'].location.z=.18 if pose=='rest' else -1.45
+   joints['drill-rig:string'].location.y=5.70 if pose=='rest' else 3.70
   elif name=='crane-truck':
    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
    joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
