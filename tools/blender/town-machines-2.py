@@ -722,26 +722,104 @@ def basic_family():
   neighbours=[other for other,other_bounds in paver_bounds.items() if other!=label and all(bounds[0][i]<=other_bounds[1][i]+.04 and other_bounds[0][i]<=bounds[1][i]+.04 for i in range(3))]
   if not neighbours:raise RuntimeError(f'paver piece {label} touches neither the ground nor another piece')
   print('PAVER PIECE CONTACT',label,', '.join(neighbours[:3]))
- # Drill rig: low crawler chassis and a braced lattice mast with a rotary head.
- drill=empty('drill-rig',(0,0,0),root);tracks=empty('drill-rig:undercarriage',(0,0,0),drill)
- box('drill rig tracked base',(0,.52,.92),(2.06,3.10,.72),black,drill,.10)
- for s in (-1,1):band_track('drill-rig',s,.45,3.65,tracks)
- box('drill engine rear housing',(0,1.63,1.65),(1.72,1.10,.92),paint,drill,.16)
- for s in (-1,1):
-  box('drill perforated side service panel',(s*.88,1.55,1.64),(.055,.76,.58),steel,drill,.08)
-  beam('drill mast hinge trunnion',(s*.50,-.10,1.50),(s*.50,.08,1.50),.14,tin,drill)
- mast=empty('drill-rig:mast',(0,-.14,1.50),drill)
- for s in (-1,1):
-  beam('drill mast outer chord',(s*.60,-.14,1.50),(s*.47,-.02,6.25),.075,paint,mast)
-  for h in (.40,.92,1.44,1.96,2.48,3.0,3.52,4.04,4.56):
-   beam('drill lattice crossmember',(s*.60,-.14,1.50+h),(s*.60,-.14,1.60+h),.04,steel,mast)
-  for h in (.25,.77,1.29,1.81,2.33,2.85,3.37,3.89,4.41):beam('drill lattice diagonal',(s*.60,-.14,1.50+h),(0,-.09,2.02+h),.045,tin,mast)
- beam('drill mast crown axle',(-.68,-.02,6.22),(.68,-.02,6.22),.11,steel,mast)
- bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=8,major_radius=.25,minor_radius=.06,location=(0,-.02,6.22),rotation=(0,math.pi/2,0));pulley=bpy.context.object;pulley.name='drill crown pulley';pulley.data.materials.append(black);pulley.data.uv_layers.active.name='UVMap';parent(pulley,mast)
- string=empty('drill-rig:string',(0,-.22,6.16),mast)
- box('drill rotary head',(0,-.22,5.68),(.62,.38,.74),steel,string,.08)
- beam('drill feed string',(0,-.22,5.38),(0,-.22,2.98),.075,tin,string)
- bpy.ops.mesh.primitive_cone_add(vertices=12,radius1=.17,radius2=.03,depth=.34,location=(0,-.22,2.84));bit=bpy.context.object;bit.name='drill bit';bit.data.materials.append(steel);bit.data.uv_layers.active.name='UVMap';parent(bit,string)
+ # Drill rig: one photo-carved truck, six measured tyres, and a traced open
+ # lattice mast whose hinge origin is the rear cradle pin.
+ drill=empty('drill-rig',(0,0,0),root)
+ from photo_model import Photo as DrillPhoto, Mesh as DrillMesh, trace as drill_trace, slab as drill_slab
+ from photo_carve import carve_object
+ from hull_model import tyre as drill_tyre
+ drill_textures=project_root/'public/assets/models/wasteland/town/textures'
+ drill_side=DrillPhoto(drill_textures/'drill-rig-side.jpg');drill_front=DrillPhoto(drill_textures/'drill-rig-front.jpg')
+ drill_rear=DrillPhoto(drill_textures/'drill-rig-rear.jpg');drill_top=DrillPhoto(drill_textures/'drill-rig-top.jpg')
+ drill_length,drill_width,drill_height=7.2,2.70,2.95
+ drill_scale=drill_length/(912-26);drill_radius=67*drill_scale
+ drill_axles=[-drill_length/2+(px-26)*drill_scale for px in (181,620,761)]
+ drill_table={'photos':{'side':'drill-rig-side.jpg','front':'drill-rig-front.jpg','rear':'drill-rig-rear.jpg','top':'drill-rig-top.jpg'},
+  'length':drill_length,'width':drill_width,'height':drill_height,
+  'side':{'start':26,'end':912,'ground':397},'front':{'centre':367,'ground':400,'top':54},
+  'rear':{'centre':344,'ground':402,'top':49},
+  'top':{'front':82,'rear':895,'centre':235,'along':'x','x_scale':.0090},
+  'ends_split':-drill_length/2+(289-26)*drill_scale,
+  'underside':.38,'wheels':[(z,drill_radius,.78) for z in drill_axles],
+  'cut':{'front':[(0,0,734,46),(0,398,734,470),(0,210,110,395),(621,210,734,395)],
+   'rear':[(0,0,689,45),(0,405,689,470),(78,220,224,405),(453,220,604,405)],
+   'top':[(0,0,982,36),(0,431,982,470),(0,120,175,360),(803,120,982,360)]},
+  'voxel':.045,'target':5500,'grey':24,'tolerance':38,'bleed_tolerance':30,
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-32/masks')}
+ drill_body=carve_object('drill-rig:body',drill_textures,drill_table)
+ for photo in drill_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ parent(drill_body,drill)
+ # Frame rails and outriggers meet the body and ground. The photos show a
+ # three-axle road truck, not the previous crawler base.
+ def drill_box(label,center,size,material=steel,bevel=.035):return box(label,game_vector(center),(size[0],size[2],size[1]),material,drill,bevel)
+ def drill_beam(label,start,end,radius,material=steel):return beam(label,game_vector(start),game_vector(end),radius,material,drill)
+ for side in (-1,1):
+  drill_box('drill-rig frame rail',(side*.53,.72,0),(.18,.34,5.9),black,.025)
+  for axle_index,zpos in enumerate(drill_axles):
+   drill_beam(f'drill-rig axle {axle_index+1}',(side*.35,.64,zpos),(side*.98,.64,zpos),.10,steel)
+  # Four yellow stabilizer beams, chrome hydraulic rams, and broad pads.
+  for zpos in (-2.65,2.10):
+   drill_box('drill-rig yellow outrigger',(side*1.24,.92,zpos),(1.55,.20,.22),paint,.025)
+   drill_beam('drill-rig silver stabilizer ram',(side*1.84,.82,zpos),(side*1.84,.12,zpos),.075,tin)
+   drill_box('drill-rig outrigger foot',(side*1.84,.07,zpos),(.48,.10,.48),steel,.025)
+ drill_rubber=bpy.data.materials.new('Drill rig / black rubber');drill_rubber.diffuse_color=(.025,.027,.026,1);drill_rubber.use_nodes=True
+ drill_rubber.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.025,.027,.026,1);drill_rubber.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.94
+ drill_axle_rows=((181,312,112,564),(620,312,170,455),(761,312,190,493))
+ for axle_index,(zpos,(side_px,side_py,front_x,rear_x)) in enumerate(zip(drill_axles,drill_axle_rows)):
+  end_photo=drill_front if axle_index==0 else drill_rear;end_meta=drill_table['front' if axle_index==0 else 'rear']
+  end_scale=drill_height/(end_meta['ground']-end_meta['top']);half_width=.19 if axle_index==0 else .16
+  for side_sign in (-1,1):
+   tire_mesh=DrillMesh();end_cx=front_x if side_sign<0 else end_photo.w-front_x
+   drill_tyre(tire_mesh,'side',drill_side,side_px,side_py,67,drill_radius,half_width,'rubber',end_photo,
+    end_cx,half_width/end_scale*.92,end_meta['ground']-drill_radius/end_scale,end_meta['ground']-drill_radius*.08/end_scale,sides=32)
+   wheel=tire_mesh.finish('drill-rig photo-width black rubber tyre',{'side':drill_side.material(),'rubber':drill_rubber})
+   wheel.name=f'drill-rig:wheel-{axle_index+1}-'+('left' if side_sign<0 else 'right');parent(wheel,drill)
+   wheel.location=game_vector((side_sign*.94,drill_radius,zpos))
+ for side in (-1,1):drill_beam('drill-rig mast pivot pin',(side*.58,1.08,2.57),(side*.58,1.08,2.84),.13,tin)
+ mast=empty('drill-rig:mast',(0,-2.70,1.08),drill)
+ mast_photo=DrillPhoto(drill_textures/'drill-rig-mast.jpg');rgb=mast_photo.rgb()
+ mast_mask=(rgb[:,:,0]>rgb[:,:,1]*1.12)&(rgb[:,:,0]>95)&(rgb[:,:,0]>rgb[:,:,2]*1.08)
+ mast_loops=drill_trace(mast_mask,(8,12,mast_photo.w-8,mast_photo.h-12),tolerance=2.2,min_area=55)
+ print('DRILL MAST TRACE',mast_photo.w,mast_photo.h,'loops',len(mast_loops),'extents',[(round(min(p[0] for p in loop)),round(min(p[1] for p in loop)),round(max(p[0] for p in loop)),round(max(p[1] for p in loop))) for loop in mast_loops[:12]])
+ mast_mesh=DrillMesh();mast_pin_px,mast_pin_py=mast_photo.w-54,355;mast_scale=5.70/(mast_pin_px-35)
+ # Mesh.finish converts game (x, up, forward) to Blender (x, -forward, up).
+ def mast_world(px,py,depth):return (depth,(mast_pin_py-py)*mast_scale,-(mast_pin_px-px)*mast_scale)
+ for loop in mast_loops:
+  # Traced photo silhouettes keep the lattice gaps between the welded rails open.
+  if abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2<100:continue
+  drill_slab(mast_mesh,'mast',mast_photo,[loop],mast_world,-.12,.12)
+ mast_obj=mast_mesh.finish('drill-rig:mast:photo-traced-lattice',{'mast':mast_photo.material()});mast_obj.location=mast.location.copy();parent(mast_obj,mast)
+ # Mast head sits 5.7 m toward the cab at rest; the steel drill pipe is a
+ # separate sliding joint whose lower end travels below the ground in work.
+ string=empty('drill-rig:string',(0,3.0,1.26),mast);string.rotation_euler[0]=math.pi
+ string_mesh=DrillMesh()
+ from photo_model import lathe as drill_lathe
+ drill_lathe(string_mesh,'steel', (0,0,0),(0,0,1),(1,0,0),(0,1,0),[(0,.105),(7.0,.105)],
+  lambda i,d,r,a:(drill_front.uv(367+math.cos(a)*22,220+math.sin(a)*22)),sides=16,cap_start=('steel',lambda a,f:drill_front.uv(367,220)),cap_end=('steel',lambda a,f:drill_front.uv(367,220)))
+ string_obj=string_mesh.finish('drill-rig:string:steel-feed-pipe',{'steel':m['galvanised-tin']});string_obj.location=string.matrix_world.translation.copy();parent(string_obj,string)
+ def drill_piece_bounds(piece):
+  points=[];deps=bpy.context.evaluated_depsgraph_get()
+  for node in [piece]+list(piece.children_recursive):
+   if node.type!='MESH':continue
+   evaluated=node.evaluated_get(deps);mesh=evaluated.to_mesh();points.extend(node.matrix_world@v.co for v in mesh.vertices);evaluated.to_mesh_clear()
+  if not points:return None
+  return (tuple(round(min(v[i] for v in points),3) for i in range(3)),tuple(round(max(v[i] for v in points),3) for i in range(3)))
+ drill_parts=[drill_body]+[o for o in drill.children if o.type=='MESH']+[mast,string]
+ body_bounds=drill_piece_bounds(drill_body);body_vertices=[drill_body.matrix_world@v.co for v in drill_body.data.vertices]
+ cab_vertices=[v for v in body_vertices if v.y>=max(p.y for p in body_vertices)-1.8]
+ cab_bounds=(tuple(round(min(v[i] for v in cab_vertices),3) for i in range(3)),tuple(round(max(v[i] for v in cab_vertices),3) for i in range(3)))
+ for label,bounds in [('body',body_bounds),('cab end',cab_bounds),('mast',drill_piece_bounds(mast_obj)),('string',drill_piece_bounds(string))]:
+  print('DRILL EXPORTED BOUNDS',label,bounds)
+  if label=='cab end' and bounds[0][1]<=0:raise RuntimeError('drill rig cab end must face Blender +Y')
+ print('DRILL MAST PIVOT BLENDER',tuple(round(v,3) for v in mast.matrix_world.translation))
+ if mast.matrix_world.translation.y>=0:raise RuntimeError('drill mast pivot must be at the rear (-Y)')
+ for piece in [o for o in drill.children_recursive if o.type=='MESH']:
+  bounds=drill_piece_bounds(piece);print('DRILL PIECE BOUNDS BEFORE JOIN',piece.name,bounds)
+  if bounds[0][2]<=.035:continue
+  others=[q for q in [o for o in drill.children_recursive if o.type=='MESH' and o!=piece] if all(bounds[0][i]<=drill_piece_bounds(q)[1][i]+.05 and drill_piece_bounds(q)[0][i]<=bounds[1][i]+.05 for i in range(3))]
+  if not others:raise RuntimeError(f'{piece.name} touches neither ground nor another piece')
  # Crane truck: the body is carved with the boom and stabilizers absent;
  # chassis, wheels, outriggers, turntable, boom and hook are separate pieces.
  from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe
@@ -1397,7 +1475,8 @@ for name in machine_names:
   elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
   elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
   elif name=='drill-rig':
-   joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .22;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
+   joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else math.pi/2
+   joints['drill-rig:string'].location.z=.18 if pose=='rest' else -1.45
   elif name=='crane-truck':
    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
    joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
