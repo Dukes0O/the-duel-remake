@@ -1283,6 +1283,9 @@ if a.render_machine=='paver':
  bpy.ops.mesh.primitive_plane_add(size=80,location=(33,0,-.045));floor=bpy.context.object;floor.name='temporary paver grey ground'
  floor_mat=bpy.data.materials.new('paver plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
+ for loc,power,size in [((27,-7,12),1800,8),((39,6,9),900,7)]:
+  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
+  light.rotation_euler=(Vector((33,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
  paver_joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('paver:')}
  def paver_review_cam(label,location,target,scale,width,height,up='Y'):
   scene.render.resolution_x=width;scene.render.resolution_y=height
