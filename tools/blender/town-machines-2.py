@@ -187,7 +187,7 @@ def articulated_loader():
  # bucket pin. The side photo's pins are about 0.75 m apart and 0.07 m lower.
  for side_sign in (-1,1):
   box_beam('loader lift arm '+('left' if side_sign<0 else 'right'),
-   (side_sign*.70,-.75,1.05),(side_sign*.70,-1.50,.98),.24,.22,paint,arms,.035)
+   (side_sign*1.17,-.75,1.05),(side_sign*1.17,-1.50,.98),.20,.18,paint,arms,.03)
  beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
  beam('loader arm hinge pin',(-.90,-1.12,1.55),(.90,-1.12,1.55),.12,tin,front)
@@ -197,7 +197,7 @@ def articulated_loader():
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
  bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
- bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=1.0/(950-bucket_pin_py)
+ bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=1.0/(1160-bucket_pin_py)
  def bucket_world(px,py,depth):return (depth,-(bucket_pin_px-px)*bucket_scale,(bucket_pin_py-py)*bucket_scale)
  for loop in bucket_loops:
   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
