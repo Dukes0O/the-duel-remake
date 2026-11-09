@@ -441,17 +441,19 @@ def basic_family():
  roller_table={
   'photos':{'side':'roller-side.jpg','front':'roller-front.jpg','rear':'roller-rear.jpg','top':'roller-top.jpg'},
   'length':roller_length,'width':roller_width,'height':roller_height,
-  'side':{'start':48,'end':577,'ground':492},
+  # Grid measurements from the new bare-body side photo: the body spans x=46..588;
+  # the rear tyre centre is x=453. The carve's own 5.1 m length sets the axle.
+  'side':{'start':46,'end':588,'ground':492},
   'front':{'centre':310,'ground':523,'top':80},
   'rear':{'centre':310,'ground':523,'top':80},
   'top':{'front':14,'rear':607,'centre':310,'along':'x','x_scale':roller_width/(500-120)},
   'underside':.55,
   'wheels':[(-.75,roller_tyre_radius,.70)],
-  # Discard empty margins only; no crop crosses the bare body.
-  'cut':{'side':[(0,0,621,54),(0,520,621,621)],
-   'front':[(0,0,621,54),(0,520,621,621)],
-   'rear':[(0,0,621,54),(0,520,621,621)],
-   'top':[(0,0,621,40),(0,580,621,621)]},
+  # Remove the photographed rear tyres so only the separately-built tyres show.
+  'cut':{'side':[(0,0,621,54),(0,520,621,621),(357,255,550,560)],
+   'front':[(0,0,621,54),(0,520,621,621),(91,250,211,560),(410,250,540,560)],
+   'rear':[(0,0,621,54),(0,520,621,621),(110,275,230,560),(399,275,530,560)],
+   'top':[(0,0,621,40),(0,580,621,621),(390,35,535,175),(390,450,535,600)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
   'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-22/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
@@ -477,7 +479,7 @@ def basic_family():
  print('ROLLER CARVED BODY EXTENTS m length',round(body_extents[2],3),'width',round(body_extents[0],3),'height',round(body_extents[1],3),'against bare-body targets 4.50 x 2.00 x 1.90 m')
  if not (3.8<=body_extents[2]<=5.1 and 1.55<=body_extents[0]<=2.4 and 1.5<=body_extents[1]<=2.2):
   raise RuntimeError(f'roller body is outside printed bounds: {body_extents}')
- axle_z=(430-30)*roller_side_scale-roller_length/2
+ axle_z=((453-46)/(588-46))*roller_length-roller_length/2
  print('ROLLER BODY/AXLE CHECK: rear axle z',round(axle_z,3),'body bounds',tuple(round(v,3) for v in roller_body_bounds[0]),tuple(round(v,3) for v in roller_body_bounds[1]))
  if not (roller_body_bounds[0][2] < axle_z < roller_body_bounds[1][2] and roller_body_bounds[0][1] <= roller_tyre_radius+.45):
   raise RuntimeError('roller body does not sit on the rear axle')
@@ -524,9 +526,9 @@ def basic_family():
              535-roller_tyre_radius/roller_end_scale,535-roller_tyre_radius*.08/roller_end_scale,sides=32)
   tire=tire_mesh.finish('roller rear tyre',{'side':roller_side.material(),'rubber':rubber})
   tire.name='roller rear tyre '+('left' if side<0 else 'right');parent(tire,roller)
-  # Side-photo x=430 is the rear axle; map it through the same 4.5 m length
-  # used by the carve instead of placing the tyres beside the front drum.
-  roller_rear_axle_z=(430-30)*roller_side_scale-roller_length/2
+  # Map the measured side-photo rear-tyre centre through the carve's own
+  # start, end and length so the built tyres share the photographed axle.
+  roller_rear_axle_z=((453-46)/(588-46))*roller_length-roller_length/2
   tire.location=game_vector((side*.78,roller_tyre_radius,roller_rear_axle_z))
  roller_parts=[('carved body',roller_body),('drum',drum)]
  for label,obj in roller_parts:
