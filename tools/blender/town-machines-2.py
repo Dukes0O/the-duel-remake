@@ -193,7 +193,7 @@ def articulated_loader():
  beam('loader lift ram barrels left',(-.60,.30,1.52),(-.60,1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,.30,1.52),(.60,1.32,1.58),.09,steel,front)
  beam('loader arm hinge pin',(-.90,.75,1.55),(.90,.75,1.55),.12,tin,front)
- # The bucket hinge is 1.75 m ahead and 0.57 m below the arm pivot. In world
+ # The bucket hinge is 2.35 m ahead and 1.16 m below the arm pivot. In world
  # space it lands at y=+3.10, with the 1 m scoop resting on the ground.
  bucket=empty('loader:bucket',(0,3.10,.39),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
