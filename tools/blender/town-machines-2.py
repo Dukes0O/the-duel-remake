@@ -520,7 +520,7 @@ def basic_family():
  def keep_crane_body(x,y,z):
   # The body carve stops at the lower frame rails; clear the full slew deck
   # footprint so no photo-carved island floats above the built turntable.
-  ring=(abs(x)<1.08)&(z>.35)&(z<3.18)&(y>1.45)
+  ring=(x*x+(z-1.58)**2<1.08**2)&(y>.35)&(y<3.18)
   floating_block=(abs(x)<.46)&(y>3.68)&(z>1.62)&(z<2.70)
   return (y>=1.02)&~ring&~floating_block
  crane_body_table={
@@ -542,7 +542,7 @@ def basic_family():
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
    'rear':[(0,0,613,467)],
-   'top':[(0,0,827,96),(0,405,827,473),(443,155,650,337)]},
+   'top':[(0,0,827,96),(0,405,827,473)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
  crane_body=carve_object('crane-truck:body',crane_textures,crane_body_table)
@@ -555,7 +555,7 @@ def basic_family():
  # the photographed tail panel at the true rear, instead of extruding those parts.
  rear_photo=crane_body_table['_photos']['rear']
  rear_panel=PhotoMesh()
- rear_panel.face(((-1.28,.74,4.18),(1.28,.74,4.18),(1.28,1.62,4.18),(-1.28,1.62,4.18)),
+ rear_panel.face(((-1.28,.74,4.34),(1.28,.74,4.34),(1.28,1.62,4.34),(-1.28,1.62,4.34)),
                  (rear_photo.uv(161,340),rear_photo.uv(452,340),rear_photo.uv(452,246),rear_photo.uv(161,246)),
                  'rear',(0,0,1))
  rear_panel_obj=rear_panel.finish('crane flat photo-faced rear counterweight panel',{'rear':rear_photo.material()})
