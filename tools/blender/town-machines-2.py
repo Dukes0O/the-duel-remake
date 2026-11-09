@@ -568,7 +568,7 @@ def basic_family():
  def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
  # The end photo shows the rear cab and hoist behind the counterweight. Build
  # the counterweight as a solid box and map only its outward face to the tail.
- rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),steel,.045)
+ rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),crane_yellow,.045)
  # carve_object bleeds each projection for edge filtering; reload the original
  # rear photo because its mask is intentionally empty in this recipe.
  rear_photo=Photo(crane_textures/'crane-truck-rear.jpg');rear_photo_material=rear_photo.material()
