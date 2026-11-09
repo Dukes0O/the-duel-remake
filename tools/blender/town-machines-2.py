@@ -568,7 +568,9 @@ def basic_family():
  # The end photo shows the rear cab and hoist behind the counterweight. Build
  # the counterweight as a solid box and map only its outward face to the tail.
  rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),steel,.045)
- rear_photo=crane_body_table['_photos']['rear'];rear_photo_material=rear_photo.material()
+ # carve_object bleeds each projection for edge filtering; reload the original
+ # rear photo because its mask is intentionally empty in this recipe.
+ rear_photo=Photo(crane_textures/'crane-truck-rear.jpg');rear_photo_material=rear_photo.material()
  rear_counterweight.data.materials.append(rear_photo_material)
  rear_face_index=len(rear_counterweight.data.materials)-1
  rear_crop=(140,244,478,347)
