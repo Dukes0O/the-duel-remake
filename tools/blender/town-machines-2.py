@@ -518,8 +518,9 @@ def basic_family():
  crane_track=1.08
  crane_wheels=[(z,crane_radius,.78) for z in crane_axle_z]
  def keep_crane_body(x,y,z):
-  # The body carve stops at the lower frame rails; open the rear slew ring for its own turntable.
-  ring=(abs(x)<.86)&(z>.55)&(z<2.65)&(y>1.5)
+  # The body carve stops at the lower frame rails; clear the full slew deck
+  # footprint so no photo-carved island floats above the built turntable.
+  ring=(abs(x)<1.08)&(z>.35)&(z<3.18)&(y>1.45)
   return (y>=1.02)&~ring
  crane_body_table={
   'photos':{'side':'crane-truck-side.jpg','front':'crane-truck-front.jpg',
@@ -531,7 +532,7 @@ def basic_family():
   'top':{'front':22,'rear':806,'centre':237,'along':'x','x_scale':.0088},
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
-  'ends_split':0,'front_favour':3,'rear_favour':3,
+  'ends_split':0,'front_favour':3,'rear_favour':5,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
@@ -586,18 +587,38 @@ def basic_family():
   ('fuel-tank',(-.52,.91,-.82),(.42,.44,.92)),('hydraulic-tank',(.52,.91,-.72),(.42,.44,.82)),
   ('tool-box-left',(-.99,1.43,-.02),(.32,.60,.90)),('tool-box-right',(.99,1.43,-.02),(.32,.60,.90))]:
   crane_add_part('crane-truck:'+label,crane_box('crane '+label.replace('-',' '),center,size,steel,.07))
- # Stabilizers are built steel pieces, with wide feet resting directly on the ground.
+ # Box-beam stabilizers telescope from the chassis. Vertical jacks end in broad pads.
  for sx in (-1,1):
   for z in (-.55,2.85):
-   stem=crane_box('crane outrigger beam',(sx*1.67,1.08,z),(1.55,.20,.36),crane_yellow,.045)
+   stem=crane_box('crane outrigger box beam',(sx*1.67,1.08,z),(1.55,.28,.40),steel,.045)
    crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
-   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane stabilizer ram',(sx*2.38,1.00,z),(sx*2.38,.16,z),.11,steel))
-   foot=crane_box('crane stabilizer foot',(sx*2.38,.08,z),(.58,.16,.58),black,.04)
+   telescoping=crane_box('crane outrigger sliding box',(sx*2.25,1.08,z),(.62,.19,.30),crane_yellow,.025)
+   crane_add_part(f'crane-truck:outrigger-slide-{sx}-{z}',telescoping)
+   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane vertical stabilizer jack',(sx*2.42,.94,z),(sx*2.42,.20,z),.105,tin))
+   collar=crane_box('crane jack foot collar',(sx*2.42,.15,z),(.30,.18,.30),steel,.025)
+   foot=crane_box('crane wide stabilizer pad',(sx*2.42,.07,z),(.70,.14,.70),black,.035)
+   crane_add_part(f'crane-truck:jack-collar-{sx}-{z}',collar)
    crane_add_part(f'crane-truck:outrigger-foot-{sx}-{z}',foot)
- # Round slew ring and deck carry the photographed pivot pin; the boom is not carved into either.
+ # Photo-faced lathed slew ring. The overhead photo supplies its toothed face;
+ # the boom hinge pin sits at the top centre of this turntable.
  turret=empty('crane truck turntable',(0,0,0),crane)
- crane_add_part('crane-truck:turntable',crane_box('crane slew ring',(0,1.57,1.58),(1.65,.25,1.60),steel,.09,turret))
- crane_box('crane turret deck',(0,1.77,1.58),(1.52,.20,1.48),crane_yellow,.08,turret)
+ slew_photo=Photo(crane_textures/'crane-truck-overhead.jpg')
+ slew_mesh=PhotoMesh();slew_centre=(570,218);slew_r=94
+ def slew_side_uv(index,distance,radius,angle):
+  u=.43+index*.14;v=.55+angle/math.tau
+  return slew_photo.uv(u*slew_photo.width,v*slew_photo.height)
+ def slew_cap_uv(angle,fraction):
+  px=slew_centre[0]+math.cos(angle)*slew_r*fraction
+  py=slew_centre[1]+math.sin(angle)*slew_r*fraction
+  return slew_photo.uv(px,py)
+ lathe(slew_mesh,'slew-face',(0,1.58,1.58),(0,1,0),(1,0,0),(0,0,1),
+       [(0,.94),(.10,1.00),(.22,.94)],slew_side_uv,sides=48,
+       cap_start=('slew-face',slew_cap_uv),cap_end=('slew-face',slew_cap_uv))
+ slew_obj=slew_mesh.finish('crane photo-faced toothed turntable',{'slew-face':slew_photo.material()})
+ parent(slew_obj,turret);crane_add_part('crane-truck:turntable',slew_obj)
+ # The photographed circle is held by a low steel support ring; no block stands in for it.
+ crane_add_part('crane-truck:slew-support',crane_box('crane slew support ring',(0,1.48,1.58),(1.72,.16,1.72),steel,.045,turret))
+ crane_box('crane turret deck',(0,1.77,1.58),(1.52,.20,1.48),steel,.08,turret)
  crane_box('crane rear counterweight',(0,1.96,2.33),(1.42,.62,.80),crane_yellow,.12,turret)
  for sx in (-1,1):
   crane_beam('crane pivot cheek',(sx*.39,2.50,1.62),(sx*.39,3.02,1.62),.14,steel,turret)
@@ -791,10 +812,10 @@ if a.render:
  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
  boom_joint=joints['crane-truck:boom'];hook_joint=joints['crane-truck:hook']
  hide_tree(boom_joint,True)
- crane_cam('side',(35,0,2.0),(55,0,2.0),14.0,1500,640,up='Y')
- crane_cam('front',(55,15,2.0),(55,0,2.0),7.0,900,900,up='Y')
- crane_cam('rear',(55,-15,2.0),(55,0,2.0),7.0,900,900,up='Y')
- crane_cam('overhead',(55,0,17),(55,0,0),12.0,900,1200,up='Y')
+ crane_cam('side',(35,0,2.0),(55,0,2.0),10.2,1500,640,up='Y')
+ crane_cam('front',(55,15,2.0),(55,0,2.0),4.0,900,900,up='Y')
+ crane_cam('rear',(55,-15,2.0),(55,0,2.0),4.0,900,900,up='Y')
+ crane_cam('overhead',(55,0,17),(55,0,0),6.2,900,1200,up='Y')
  hide_tree(boom_joint,False)
  hook_base=hook_joint.location.z
  boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
