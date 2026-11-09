@@ -649,6 +649,23 @@ def basic_family():
    for li in poly.loop_indices:uv.data[li].uv=uvs[mesh.loops[li].vertex_index]
   parent(obj,paver);return obj
  paver_tracks=[paver_track(side) for side in (-1,1)]
+ # Seven steel rollers and one larger sprocket/idler show through each belt.
+ for side in (-1,1):
+  for index,track_y in enumerate((-2.14,-1.43,-.72,0,.72,1.43,2.14)):
+   radius=.43 if abs(track_y)>2 else .31
+   bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=radius,depth=.64,location=(side*1.62,track_y,.70),rotation=(0,math.pi/2,0))
+   roller=bpy.context.object;roller.name=f'paver crawler roller {side} {index}';roller.data.materials.append(black);roller.data.uv_layers.active.name='UVMap';parent(roller,paver)
+   bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=radius*.73,minor_radius=.035,location=(side*1.62+side*.34,track_y,.70),rotation=(0,math.pi/2,0))
+   rim=bpy.context.object;rim.name=f'paver crawler roller rim {side} {index}';rim.data.materials.append(tin);rim.data.uv_layers.active.name='UVMap';parent(rim,paver)
+  # Raised tread cleats cross each straight run and wrap around the end rollers.
+  for index in range(19):
+   track_y=-2.15+index*4.30/18
+   for z in (.035,1.385):
+    box('paver crawler tread shoe',(side*1.62,track_y,z),(.80,.17,.075),steel,paver,.025)
+  for sign in (-1,1):
+   for index in range(8):
+    angle=math.pi*index/7;track_y=sign*(2.15+.66*math.cos(angle));z=.715+.66*math.sin(angle)
+    shoe=box('paver crawler curved tread shoe',(side*1.62,track_y,z),(.80,.16,.075),steel,paver,.022)
  # Tow pin axis is the paver:screed origin. Plate and fittings are built once;
  # local offsets put the broad strike plate on the ground at rest.
  screed=empty('paver:screed',(0,-3.86,1.62),paver)
@@ -661,14 +678,17 @@ def basic_family():
    for poly in obj.data.polygons:
     for li in poly.loop_indices:
      co=obj.data.vertices[obj.data.loops[li].vertex_index].co
-     uv.data[li].uv=(.05+(co.x/size[0]+.5)*.90,1-(co.z/size[2]+.5)*.90)
+     uv.data[li].uv=(.02+(co.x/size[0]+.5)*.96,.16+(co.z/size[2]+.5)*.40)
   parent(obj,screed);return obj
  paver_screed_box('paver wide photo-faced screed plate',(0,-4.45,.38),(5.55,.22,.72),screed_mat,.035)
  paver_screed_box('paver screed lower strike edge',(0,-4.43,.045),(5.48,.28,.12),black,.018)
  paver_screed_box('paver screed upper yellow beam',(0,-4.39,.82),(5.38,.30,.18),paint,.025)
  for side in (-1,1):
   paver_screed_box('paver screed end plate',(side*2.70,-4.43,.43),(.18,.34,.78),screed_mat,.02)
-  beam('paver screed tow pin',(side*1.34,-3.86,1.62),(side*1.34,-4.05,1.62),.10,tin,screed)
+  beam('paver fixed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.86,1.62),.095,paint,paver)
+  bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.12,depth=.28,location=(side*1.34,-3.86,1.62),rotation=(0,math.pi/2,0))
+  pin=bpy.context.object;pin.name='paver screed tow pin';pin.data.materials.append(tin);pin.data.uv_layers.active.name='UVMap';parent(pin,screed)
+  beam('paver screed angled tow link',(side*1.34,-3.86,1.62),(side*2.35,-4.28,.79),.085,steel,screed)
  # Export-space bounds are checked before the family join. The screed must be
  # at the rear (Blender -Y) and its plate must touch the floor at rest.
  bpy.context.view_layer.update()
@@ -684,10 +704,18 @@ def basic_family():
  if not paver_screed_bounds or paver_screed_bounds[1][1]>=paver_body_bounds[0][1]:
   raise RuntimeError('paver:screed must be behind the body at Blender -Y')
  if paver_screed_bounds[0][2]>.06:raise RuntimeError('paver:screed must rest on the ground')
- for label,piece in [('body',paver_body),('left track',paver_tracks[0]),('right track',paver_tracks[1]),('screed',screed)]:
-  bounds=paver_piece_bounds(piece)
-  if not bounds:raise RuntimeError(f'paver {label} has no exported mesh')
+ paver_meshes=sorted((obj for obj in paver.children_recursive if obj.type=='MESH'),key=lambda obj:obj.name)
+ paver_bounds={obj.name:paver_piece_bounds(obj) for obj in paver_meshes}
+ for label,bounds in paver_bounds.items():
+  if not bounds:raise RuntimeError(f'paver piece {label} has no exported mesh')
   print('PAVER PIECE BOUNDS BEFORE JOIN',label,'min',tuple(round(v,3) for v in bounds[0]),'max',tuple(round(v,3) for v in bounds[1]))
+ for label,bounds in paver_bounds.items():
+  if bounds[0][2]<=.035:
+   print('PAVER PIECE CONTACT',label,'ground')
+   continue
+  neighbours=[other for other,other_bounds in paver_bounds.items() if other!=label and all(bounds[0][i]<=other_bounds[1][i]+.04 and other_bounds[0][i]<=bounds[1][i]+.04 for i in range(3))]
+  if not neighbours:raise RuntimeError(f'paver piece {label} touches neither the ground nor another piece')
+  print('PAVER PIECE CONTACT',label,', '.join(neighbours[:3]))
  # Drill rig: low crawler chassis and a braced lattice mast with a rotary head.
  drill=empty('drill-rig',(0,0,0),root);tracks=empty('drill-rig:undercarriage',(0,0,0),drill)
  box('drill rig tracked base',(0,.52,.92),(2.06,3.10,.72),black,drill,.10)
@@ -1173,7 +1201,7 @@ for mat in bpy.data.materials:
  for node in mat.node_tree.nodes if mat.use_nodes else []:
   if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
    filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
-   if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-','pipe-truck-')):node.image.scale(192,192)
+   if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-','pipe-truck-','paver-')):node.image.scale(192,192)
 blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
 if not a.render:
  print('exported',glb,glb.stat().st_size)
