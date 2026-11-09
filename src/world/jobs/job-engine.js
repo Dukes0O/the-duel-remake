@@ -7,9 +7,16 @@ import { stepHeist } from './steps/heist.js';
 import { stepRescue } from './steps/rescue.js';
 import { stepDefend } from './steps/defend.js';
 import { stepExplore } from './steps/explore.js';
+import { stepBoard } from './steps/board.js';
+import { stepDrivetrain } from './steps/drivetrain.js';
+import { stepRunaway } from './steps/runaway.js';
+import { stepDig } from './steps/dig.js';
+import { stepWhistle } from './steps/whistle.js';
+import { stepLines, stepLineTriggers } from './step-lines.js';
 
 const runners = { reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
-  onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore };
+  onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
+  board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle };
 
 function clone(value) {
   if (Array.isArray(value)) return value.map(clone);
@@ -30,17 +37,43 @@ export function stepJob(job, view = {}, dt = 0) {
   const result = { ...job, stepState: clone(job.stepState), events: [], requests: [], failedStep: false };
   if (result.done || result.stepIndex >= result.steps.length) { result.done = true; return result; }
   const step = result.steps[result.stepIndex];
-  const outcome = runners[step.kind](step, result.stepState, view, dt, result.seed);
-  result.stepState = outcome.state ?? result.stepState;
-  result.events = outcome.events ?? [];
-  result.requests = outcome.requests ?? [];
-  result.lineId = outcome.lineId ?? step.lineId ?? result.lineId;
-  if (outcome.restart) {
-    result.stepState = outcome.state ?? {};
+  if(!result.stepState.linesStarted&&!result.stepState.lineBlocking&&step.opening?.length) {
+    const openingOutcome=runners[step.kind](step,result.stepState,
+      {...view,controls:{...(view.controls??{}),throttle:0,brake:0}},0,result.seed);
+    const opening=stepLines(step,result.stepState,view,dt,{...openingOutcome,complete:false});
+    result.stepState=opening.state??result.stepState;result.requests=opening.requests??[];
+    if(result.stepState.lineBlocking)return result;
+  }
+  if(result.stepState.lineBlocking) {
+    const held=stepLines(step,result.stepState,view,dt,{state:result.stepState,complete:false,events:[],requests:[]});
+    result.stepState=held.state??result.stepState;result.requests=held.requests??[];
+    return result;
+  }
+  const stepView=result.storyMarks?.lastStopMetres!==undefined&&view.playerStopMetres===undefined
+    ?{...view,playerStopMetres:result.storyMarks.lastStopMetres}:view;
+  const outcome = runners[step.kind](step, result.stepState, stepView, dt, result.seed);
+  const triggered = stepLineTriggers(step, result.stepState, view, outcome);
+  const lined = stepLines(step, result.stepState, view, dt, triggered);
+  result.stepState = lined.state ?? result.stepState;
+  result.events = lined.events ?? [];
+  result.requests = lined.requests ?? [];
+  const stopRequest=result.requests.find(request=>request.type==='stopMark');
+  if(stopRequest) {
+    const marks={...(result.storyMarks?.stopMarks??{})},previous=marks[stopRequest.id];
+    const error=Math.abs(stopRequest.metres);
+    if(previous===undefined||error<previous)marks[stopRequest.id]=error;
+    result.storyMarks={...(result.storyMarks??{}),stopMarks:marks,lastStopMetres:stopRequest.metres};
+  }
+  result.lineId = lined.lineId ?? step.lineId ?? result.lineId;
+  if (lined.restart) {
+    result.stepState = lined.state ?? {};
     result.failedStep = true;
-  } else if (outcome.complete) {
+  } else if (lined.complete) {
+    const waiting = result.stepState.lineQueue ?? [], showing = result.stepState.lineRemaining ?? 0;
     result.stepIndex += 1;
-    result.stepState = {};
+    const following = result.steps[result.stepIndex];
+    if (following?.opening?.length) result.stepState = waiting.length ? { carriedLines: waiting } : {};
+    else result.stepState = waiting.length || showing > 0 ? { lineQueue: waiting, lineRemaining: showing } : {};
     result.done = result.stepIndex >= result.steps.length;
     result.lineId = result.steps[result.stepIndex]?.lineId ?? result.lineId;
     if (result.done) result.events = [...result.events, { type: 'done' }];

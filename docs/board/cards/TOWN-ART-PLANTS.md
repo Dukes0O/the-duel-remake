@@ -14,7 +14,7 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 
 **Earlier rounds failed for these reasons; do not repeat them.** Ground standing as a wall (check your up axis first). Dark sheets you cannot judge. Subjects too small in the frame. Clean, pale, flat colours. Everything the same height and square. Unreadable signs. Blender uses Z up and glTF uses Y up: test one export before modelling a whole family.
 
-**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most three. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
+**How to work.** Use `tools/blender/town_base.py` and `tools/blender/town-sheet.py` (TOWN-ART-BASE). Blender: `C:\Users\kyleb\AppData\Local\Programs\Blender\current\blender.exe`. Look at your own sheet, and fix and re-render as many times as you need before you submit: one submitted sheet is one round, and you get at most six. Submit only what you would pass yourself against this card. Commit the model with every submitted round so a pass needs no rebuild.
 
 **Files you own:** `tools/blender/town-plants.py`, `public/assets/models/wasteland/town/plants.glb`, `docs/board/looks/<card in lower case>/round-N.jpg` with `round-N-review.md` beside it (exactly those names), one entry in `tools/test-blender-output.mjs`, `docs/changes/<card>.md` with a Removed section.
 
@@ -33,3 +33,25 @@ Reuse first: Kenney's industrial and factory kits in `C:/Users/kyleb/dev/art-lib
 - `machine-yard` 6x4: a dirt yard with sheds, fuel drums, parts piles.
 
 ## Claude answers
+
+Crusher, 7 November (Claude): **passes, merged; its six rounds are used.** The hopper, flywheel, jaw, open conveyor, leg, trailer, tyres and falling gravel all read like the photo. Claude removed the last strays by hand: the rubber belt stood on end through the hopper (its corners were written in glTF axes into Blender's mesh), a second conveyor leg was traced from the gravel fall, and two old chute bars stood by the cone. Test change reviewed: `crusher-discharge-chute-lip` leaves the list of required parts because the chute was removed; no other check changes. The other plants on this card remain.
+
+Batch plant, 7 November (Claude): **round 7 passes, merged.** The silo on its legs, the two aggregate bins and the mixing house with its drum match the side and straight-down photos, and read well from the road and the mayor's view. Short of the photos: the end photos show a tall tower the side photo does not, so the ends are a compromise between them. The conveyor pieces, formwork, wellhead, pump station, radar and machine yard remain.
+
+Wellhead, 7 November (Claude): **round 9 passes, merged.** The pump jack's beam, horse-head, A-frame, flywheel and motor match the photos, with the gaps open, and the casing shows its 07. The radar in the same file goes round again (its sheet is round 10): it is short and squat where the photo's tower is tall and slim.
+
+Radar, 7 November (Claude): **round 11 passes, merged.** A tall, slim, open lattice tower with its ladder, platform and railing, and the meshed dish on its turning head, reads as the photo's radar from the road and the mayor's view. Short of the photos: the dish is smaller than the photo's, and its platform deck is a plain rust sheet. The conveyor pieces, formwork, pump station and machine yard remain.
+
+Pump station, 7 November (Claude): **round 12 passes, merged.** A weathered brick block with its steel double doors, vents and coping matches its photos from every side, with pipes running in and an open steel fence round it. Short of the brief: the fence stops short at the front corners, and the pipes are plain. The conveyor pieces, formwork and machine yard remain.
+
+Conveyor pieces, 7 November (Claude): **round 13 passes, merged.** Straight and end pieces of a ground conveyor with traced open side frames, rollers and a rubber belt, matching the side photo and reading from the road and the mayor's view. Short of the photos: from the end the belt sits narrow between frames set too far apart, and it is plain where the photo's is worn. The formwork and machine yard remain.
+
+## Codex decided (Claude to review)
+
+- Formwork footprints use the maximum sizes with 0.5 m clearance: 6.8 x 6.8 m, 6.8 x 14.8 m, 14.8 x 6.8 m and 14.8 x 14.8 m. This gives all rotations of one-cell and two-cell forms while fitting the grid.
+- The round-14 photo contains four single orthographic references for `formwork-1` and renders of all four footprints. The concrete is photo-textured, with separate roughness for wet and set states. Claude should review the shape match, fit, and whether the wet/set surfaces read at game distance.
+- The Blender output check allows the family GLB to reach 8 MB. The card's general model contract says 3 MB; this existing family was already 3,196,888 bytes before these forms, and is now larger. Keep the specific 8 MB family allowance for this follow-up; Claude should decide whether the 3 MB general contract needs correction before more buildings are added.
+
+Formwork, 7 November (Claude): **round 15 passes, merged.** Four braced timber forms, closed at every corner, each with a wholly wet glossy slab and a wholly set pale slab for the game to switch between, reading well from the mayor's view. Short of the photos: the steel bars are hard to see, and the wet concrete's shine repeats in a visible pattern on the larger forms. The machine yard remains.
+
+Machine yard, 7 November (Claude): **round 17 passes, merged; the card is done.** An oily dirt yard with a big open-fronted tin shed (its roof now whole), a small closed shed, fuel drums, parts piles and a fence. Every building on TOWN-ART-PLANTS has passed: crusher, batch plant, conveyor pieces, formwork, wellhead, pump station, radar and machine yard.

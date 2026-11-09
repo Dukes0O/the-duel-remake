@@ -1,10 +1,12 @@
 import {BUILDINGS} from './content/registry.js';
 import {registerTownCommand} from './town-commands.js';
 import {registerTownSystem} from './town-sim.js';
+import {townOutpostProtectionIncome} from './town-outposts.js';
+import {hasTownDeedPerk} from './town-deeds.js';
 
 const GRANT = 1_500n;
 const INTEREST_BASIS_POINTS = 100n;
-const ACCOUNT_NAMES = Object.freeze(['cash','grant-income','opening-equity','rent-income','shop-income','ticket-income','scrap-in','scrap-out','levy-income','wages-expense','upkeep-expense','interest-expense','loan-payable']);
+const ACCOUNT_NAMES = Object.freeze(['cash','grant-income','opening-equity','rent-income','shop-income','ticket-income','protection-income','scrap-in','scrap-out','levy-income','wages-expense','upkeep-expense','interest-expense','loan-payable']);
 const RENT_BY_TIER = Object.freeze({tent:6,canvas:6,shack:10,tin:14,container:16,brick:20});
 export const TOWN_MONEY_PRICES = Object.freeze({ticket:Object.freeze({Cheap:2,Fair:5,Dear:10}),shop:Object.freeze({Cheap:2,Fair:5,Dear:10})});
 const PRICE_TIERS = new Set(['Cheap','Fair','Dear']);
@@ -84,13 +86,17 @@ function personRent(person) {
 }
 function finishedBuildings(town) { return town.buildings.filter(building=>building.state==='finished'); }
 function amountOf(value) { return asAmount(value)||0n; }
+function buildingUpkeep(town,building,definition) {
+  const base=amountOf(building.upkeepMonthly??definition.upkeepMonthly);
+  return hasTownDeedPerk(town,'upkeep-cost')?base*95n/100n:base;
+}
 function monthlyDemand(town) {
   const catalog=new Map(BUILDINGS.map(row=>[row.id,row]));
   const buildings=finishedBuildings(town);
   let upkeep=0n,wages=0n;
   for(const building of buildings) {
     const row=catalog.get(building.buildingId)||{};
-    upkeep+=amountOf(building.upkeepMonthly??row.upkeepMonthly);
+    upkeep+=buildingUpkeep(town,building,row);
     wages+=amountOf(building.staff??row.staff)*8n*12n;
   }
   return {buildings,upkeep,wages};
@@ -119,6 +125,7 @@ function settleMonth(town,calendar) {
   bookIncome(town,'rent-income',income.rent);
   bookIncome(town,'shop-income',income.shops);
   bookIncome(town,'ticket-income',income.tickets);
+  bookIncome(town,'protection-income',townOutpostProtectionIncome(town));
   const demand=upkeep+wages;
   const interest=(money.loans*INTEREST_BASIS_POINTS+9_999n)/10_000n;
   if(interest) post(town,'interest-expense','loan-payable',interest,'monthly-interest',calendar);
@@ -131,10 +138,10 @@ function settleMonth(town,calendar) {
   let available=town.till,upkeepPaid=0n,wagesPaid=0n;
   for(const building of buildings) {
     const row=BUILDINGS.find(item=>item.id===building.buildingId)||{};
-    const buildingUpkeep=amountOf(building.upkeepMonthly??row.upkeepMonthly);
+    const upkeep=buildingUpkeep(town,building,row);
     const buildingWages=amountOf(building.staff??row.staff)*96n;
-    const costs=buildingUpkeep+buildingWages;
-    if(available>=costs) { available-=costs;upkeepPaid+=buildingUpkeep;wagesPaid+=buildingWages;building.operational=true;delete building.whyNot; }
+    const costs=upkeep+buildingWages;
+    if(available>=costs) { available-=costs;upkeepPaid+=upkeep;wagesPaid+=buildingWages;building.operational=true;delete building.whyNot; }
     else { building.operational=false;building.whyNot='The town cannot pay this building’s monthly bill.'; }
   }
   // Unpaid costs stay on the buildings, which remain stopped until a later

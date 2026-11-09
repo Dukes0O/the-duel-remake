@@ -19,6 +19,7 @@ export function createTown(seed, name, founders=[]) {
     version:TOWN_SAVE_VERSION, id:`town-${normalizedSeed}`, name:name.trim(), seed:normalizedSeed,
     rngState:normalizedSeed, tick:0n, calendar:townCalendarAt(0),
     founders:JSON.parse(JSON.stringify(founders)), people:[], buildings:[], nextBuildingNumber:1,
+    homePlots:[], campPlaces:12,
     regions:createTownRegions(),
   };
 }
@@ -39,6 +40,9 @@ export function deserializeTown(serialized) {
   if (typeof town.name !== 'string' || !town.name || !(typeof town.tick==='bigint'&&town.tick>=0n) && (!Number.isSafeInteger(town.tick) || town.tick < 0))
     throw new TypeError('This town save is missing its name or date.');
   town.tick=BigInt(town.tick);
+  if (town.dispatch && Array.isArray(town.dispatch.completed)) town.dispatch.completed=town.dispatch.completed.slice(-40);
+  for (const outpost of Object.values(town.outposts || {}))
+    if (Array.isArray(outpost?.trucks)) outpost.trucks=outpost.trucks.filter(truck=>truck?.status==='on-road');
   town.calendar = townCalendarAt(town.tick);
   return town;
 }

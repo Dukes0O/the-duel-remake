@@ -16,12 +16,13 @@ import {deepWorldPose} from './deep-journey.js';
 import {deepMapGeometry, deepMapData, drawDeepMap} from './deep-map.js';
 import {deepObjectives, deepNextStep, SIRENA_PARTS} from './deep-objectives.js'; // DEEP-EXPLORER, FINISH-DEEP
 import {liftPrompt} from './deep-sirena.js'; // FINISH-DEEP
+import {createVascaVehicle} from '../vasca-vehicle.js';
 
 export const SIRENA_MODEL = Object.freeze({'sirena-badge': 'badge', 'sirena-steering-wheel': 'steering-wheel',
-  'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck'});
+  'sirena-wheel': 'wheel', 'sirena-bonnet': 'bonnet', 'sirena-door': 'door', 'sirena-car': 'wreck', 'falcone-vasca':'vasca'});
 const MODEL_URL = id => `/assets/models/sirena/${id}.glb`;
 const defaultLoad = id => new GLTFLoader().loadAsync(MODEL_URL(id));
-export const RISE_SPEED = Object.freeze({part: 2.4, car: 1.1});   // metres a second, to the surface
+export const RISE_SPEED = Object.freeze({part: 2.4, car: 1.1, joke:.55});   // metres a second, to the surface
 // The bag is drawn larger than the model so it reads from the chase camera (Claude, look round 1).
 export const BAG_DRAW_SCALE = 1.8;
 const SURFACE = -0.4;                                             // a raised piece is gone here (sea level is 0)
@@ -88,7 +89,7 @@ function createGlint() {
 
 // Hooked into the dive's private scene by createDeepView (deep-ui.js) through
 // render3d. `deep` is the dive's underwater scene ({look, shape}).
-export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = defaultLoad}) {
+export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = id => id === 'vasca' ? Promise.resolve({scene:createVascaVehicle({tethered:true})}) : defaultLoad(id)}) {
   const group = new THREE.Group();
   group.name = 'The Sirena story';
   scene.add(group);
@@ -162,11 +163,13 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
         const entry = piece(find);
         if (entry.object) entry.object.visible = true;
       }
+      const duckNode=pieces.get('falcone-vasca')?.object?.getObjectByName('duck');
+      if(duckNode)duckNode.position.y=3+Math.sin(seconds*1.7)*.07;
       // A piece raised since the last frame starts its rise with its bags.
       for (const [id, entry] of pieces) {
         if (wanted.has(id) || entry.rising || !entry.object?.visible) continue;
         entry.rising = true;
-        const count = id === 'sirena-car' ? 4 : id === 'sirena-badge' ? 0 : 1;
+        const count = id === 'sirena-car' || id === 'falcone-vasca' ? 4 : id === 'sirena-badge' ? 0 : 1;
         const lift = [];
         for (let i = 0; i < count && bagSource; i++) {
           const bag = wear(bagSource.clone(true)), angle = count > 1 ? i / count * Math.PI * 2 + .6 : 0, spread = count > 1 ? 2.2 : 0;
@@ -179,7 +182,7 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
         entry.object.position.set(0, 0, 0);
         carrier.add(entry.object, ...lift);
         group.add(carrier);
-        rising.push({carrier, speed: id === 'sirena-car' ? RISE_SPEED.car : RISE_SPEED.part, badge: id === 'sirena-badge'});
+        rising.push({carrier, speed: id === 'sirena-car' ? RISE_SPEED.car : id === 'falcone-vasca' ? RISE_SPEED.joke : RISE_SPEED.part, badge: id === 'sirena-badge'});
       }
       for (const item of rising) {
         if (item.badge) { item.carrier.visible = false; continue; }   // the badge comes up in the hand, no bag
@@ -188,7 +191,7 @@ export function createSirenaScene({scene, zone, deep, rampHeading = 0, load = de
       }
       // The lift under way.
       const lift = view?.lift, target = lift && view.finds.find(find => find.id === lift.find);
-      if (target) setBags(lift.find === 'sirena-car' ? 4 : 1, pieces.get(lift.find)?.pose ?? restingPose(target, deep.shape), lift.elapsed / lift.seconds);
+      if (target) setBags(lift.find === 'sirena-car' || lift.find === 'falcone-vasca' ? 4 : 1, pieces.get(lift.find)?.pose ?? restingPose(target, deep.shape), lift.elapsed / lift.seconds);
       else setBags(0);
       // The glint: a short flash every few seconds where the badge lies.
       const badge = view?.finds.find(find => find.id === 'sirena-badge');
@@ -260,6 +263,7 @@ export function createAnaPhone({audio = null, now = () => performance.now() / 10
       queue.push(id);
       return true;
     },
+    isBusy() { return !!current || queue.length > 0; },
     // Each frame. `blocked` while a title card shows: a line waits until it has gone.
     update({blocked = false} = {}) {
       if (disposed) return null;
@@ -356,7 +360,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
   let headingUp = false;
   const toggleOrient = () => { headingUp = !headingUp; orient.textContent = headingUp ? 'Whole coast, north up' : 'Turn with the car'; mapDrawAt = -Infinity; };
   toggle.addEventListener('click', toggleMap); home.addEventListener('click', requestHome); orient.addEventListener('click', toggleOrient);
-  let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false;
+  let sonarUntil = 0, logUntil = 0, titleUntil = 0, disposed = false, surfaced = false, vascaTitlePending = false;
   const stop = app?.duel?.onChange?.((state, event) => {
     if (disposed) return;
     const t = now();
@@ -371,6 +375,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
     }
     if (event.deepLogged) { log.innerHTML = logCardMarkup(event.deepLogged.creature); log.hidden = false; logUntil = t + 6; }
     if (event.deepPhone) phone.say(event.deepPhone.line);
+    if (event.deepRaised?.find === 'falcone-vasca') vascaTitlePending = true;
     if (event.deepPlace?.title && app.getDeepDiscovery()?.enabled === true) {
       title.querySelector('p').textContent = 'KELP COAST';
       title.querySelector('h2').textContent = event.deepPlace.place.name;
@@ -413,7 +418,7 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
         const name = SIRENA_PARTS[lift.find]?.name ?? 'Part';
         lifting.querySelector('span').textContent = !lift.ready
           ? (lift.bags > 1 ? `${name}: lift bag ${lift.bag} of ${lift.bags}` : `${name}: filling the lift bag`)
-          : lift.still ? `${name}: press F for ${lift.find === 'sirena-car' ? 'the lift bags' : 'a lift bag'}` : `${name}: stop here, then press F`;
+          : lift.still ? `${name}: press F for ${lift.find === 'sirena-car' || lift.find === 'falcone-vasca' ? 'the lift bags' : 'a lift bag'}` : `${name}: stop here, then press F`;
         lifting.querySelector('i').style.background = `conic-gradient(#ffd36a ${(lift.fraction ?? 0) * 360}deg,#365764 0deg)`;
       }
       if (!active) { mapVisit = null; previousObjectives = null; ticks.length = 0; tick.hidden = true; }
@@ -430,7 +435,8 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
             save: discovery, charted: d.deepStory?.charted ?? discovery.charted?.[d.deepRuntime.zone.id] }); // DEEP-EXPLORER
           if (showMap) drawDeepMap(ctx, data);
           // DEEP-EXPLORER: saved goals, with live survey progress before its next save.
-          const rows = deepObjectives(discovery, data.percent, app.profile?.unlockedCars?.includes('falcone_sirena'));
+          const rows = deepObjectives(discovery, data.percent, app.profile?.unlockedCars?.includes('falcone_sirena'),
+            {duck:app._switches?.().enabled('deep-vasca')===true && app.profile?.deep?.raised?.includes('sirena-car')===true});
           if (previousObjectives) for (const row of rows)
             if (row.done && !previousObjectives.find(old => old.id === row.id)?.done) ticks.push(row.tick);
           previousObjectives = rows;
@@ -462,6 +468,11 @@ export function createSirenaHud({host, app, phone = createAnaPhone({audio: app?.
       const line = phone.update({blocked: !title.hidden});
       caption.hidden = !line || !title.hidden;
       if (line) caption.querySelector('span').textContent = line.text;
+      if(vascaTitlePending&&!phone.isBusy()&&title.hidden){
+        vascaTitlePending=false;title.querySelector('p').textContent='FALCONE VASCA, 1966';
+        title.querySelector('h2').textContent='One careful owner. No doors.';
+        title.className='sirena-title sirena-title-cup';title.hidden=false;titleUntil=t+5;
+      }
     },
     dispose() { if (disposed) return; disposed = true; stop?.(); phone.dispose(); toggle.removeEventListener('click', toggleMap); orient.removeEventListener('click', toggleOrient); home.removeEventListener('click', requestHome); surface.removeEventListener('click', surfaceNow); root.remove(); },
   };

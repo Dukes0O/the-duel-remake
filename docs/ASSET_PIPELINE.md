@@ -371,3 +371,38 @@ Style: premium automotive visualization and environment concept art, physically 
 ### Expanded scene reference
 
 `public/assets/reference/expanded-scenes.png` guides the coast lighthouse, station trim, harbor warehouses, driver and chickens. Generated `alpine-granite.png` and alpha `pine-bough.png` are used directly by the renderer. Import these images into Blender as material references; model in metres, +Y up and +Z forward for the current game adapter. Falcone Heritage retains the former F42 sport version of the licensed concept body. Aurora shares that source with original carbon aero and gold-wheel materials; neither is a separately scanned vehicle. The other six cars retain their separate original bodies and matching portable exports.
+
+## Models from photos (Claude, 6 November 2026)
+
+This is how to build anything that has to look like a real, worn object. Tiling swatches cut from a photo failed on every card that tried it, and so did modelling a shape by eye and projecting a photo on it: the shape misses the picture, and the sky shows on the model.
+
+Use `tools/blender/photo_model.py`, and copy `tools/blender/rail-trains.py`, the worked example:
+
+1. Generate dead-on photos of one object (side, front, rear, or overhead) in flat light on a plain pale background. Measure in them.
+2. Make the mask with `Photo.sky(seeds)`. Give one seed for each opening where sky shows through, and look at the mask. A pale, slightly coloured sky may need a larger `grey`.
+3. Build each part: `trace` and `slab` for anything flat, with its real holes; `box` for plain blocks, naming one picture rectangle per face; `lathe` for anything round, with its radius read off the mask.
+4. Each part has its own place in the picture, so nothing is drawn twice and no face shows the background. A face that cannot see a part of the photo takes a rectangle of real material at about true size, never the UVs of the edge beside it, which make streaks.
+5. Avoid the edge pixels of a lathe's picture: they are the outline, and often the sky. Scale the arc by about 0.85.
+6. Render from the exported GLB in an empty scene, with the view transform set to Standard and flat light, beside the photo at the same angle.
+
+Two faces in the same place flicker, so the underside of a shell needs a real gap from its top.
+
+### Vehicles and anything that curves in every direction
+
+Flat parts come apart at an angle on a cab, bonnet or wing. Use `tools/blender/hull_model.py` instead, with the fire truck in `tools/blender/town-trucks-1.py` as the worked example (`docs/board/looks/town-art-trucks-1/round-9.jpg`):
+
+1. Generate dead-on photos of one object: side, front, rear and overhead. Keep them in the model's `textures` folder, not in `.evidence`.
+2. Measure each photo by hand: where the ground is, where the subject starts and ends, and each wheel's centre and radius. Give each view a `pick` function from metres to pixels.
+3. Trim what is not the body from each mask: ground shadow, thin mirrors, and anything you will build as its own moving part.
+4. Keep only voxels above the frame, with room cut for the wheels. Let `carve_hull` do the rest.
+5. Build wheels, axles and moving parts as round parts at their true world positions, and bleed each photo's background out using a wider colour match that takes in the ground shadow.
+
+Lessons from Wednesday, a small engine carved with the hull kit (Claude, 6 November 2026). `tools/blender/rail-trains.py` has her recipe.
+
+- Carve only the solid body. Above it, a chimney in the side photo meets the cab roof in the end photos and becomes a wide plate, and anything joined by thin posts is lost to `largest_part`. Build the roof, thin sheets, chimney and dome with the photo kit.
+- A symmetrical object reads the same place in the photo from both sides. A far-side `pick` that mirrors X cuts one end's openings through the other end.
+- Keep the sky tolerance narrow, about 20. A wide one treats pale highlights on metal as sky and carves them away.
+- A top-facing view must read real material, never the photo's sky.
+- Scale pictures in memory. Never save over a source photo.
+6. Look at every mask beside its photo. Background walled in by the subject (between legs, inside a frame, under a body) is not reached by the flood from the frame's edge, may not match the studio's colour, and would be carved as if it were the subject. Take each patch out by a measured shape. (Kyle, 6 November.)
+7. Wheels: use `tyre` and `wheel_well` from `tools/blender/hull_model.py`. Measure each wheel on a grid over the photo: its centre, its radius, and where the ground is. Numbers read by eye were 40 pixels out, and that is what made tyres sit wrong in their arches. The tread wears the end photo's tyre, and the arch's wall and the underside are dark. An axle stops inside the tyre.

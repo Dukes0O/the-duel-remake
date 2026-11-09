@@ -162,7 +162,8 @@ export function normalizeProfile(value) {
     ...new Set([
       ...FREE_CARS,
       ...(Array.isArray(value.unlockedCars)
-        ? value.unlockedCars.filter(car => Object.hasOwn(CARS, car))
+        // Gated earned cars stay owned while their catalog entry is disabled.
+        ? value.unlockedCars.filter(car => car === 'falcone_vasca' || Object.hasOwn(CARS, car))
         : [])
     ])
   ];

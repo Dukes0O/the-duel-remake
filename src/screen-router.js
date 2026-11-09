@@ -62,7 +62,7 @@ import {createProfile, isCarUnlocked} from './progression.js';
 import {RouteMap} from './route-map.js';
 import {CoursePreview} from './course-preview.js';
 import {createCourseCardMaps} from './course-card-maps.js';
-import {PAINT_PRESETS} from './paint-presets.js';
+import {paintPresetFor} from './paint-presets.js';
 import {getRouteVariantForSeed, supportsRouteVariants} from './route-variants.js';
 import {createJumpHeightReadout} from './jump-height.js';
 import {createBuildUpdateChecker} from './build-update.js';
@@ -286,7 +286,7 @@ root.addEventListener('click',e => {
   if(button.dataset.challenge!=null){const stageIndex=Number(button.dataset.challenge);if(!isCourseUnlocked(profile(),stageIndex)){garageOpen=false;coursesOpen=true;courseMessage='Unlock the recommended course here, then select it.';lastScreen=null;renderState(app.duel.state);return;}choices.startStage=stageIndex;updateMenuScene();closeGarage();return;}
   if (button.dataset.garageCar) { garageCar = button.dataset.garageCar; app.menuCar = garageCar; garageMessage = ''; lastScreen = null; renderState(app.duel.state); return; }
   if(button.dataset.roofLook){const selected=app.selectRoofLook(garageCar,button.dataset.roofLook==='none'?null:button.dataset.roofLook);refreshGarage(selected.ok?'Roof look selected.':selected.reason);return;}
-  if(button.dataset.paint){const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${PAINT_PRESETS[button.dataset.paint].name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} credits.`:''}`:result.reason);return;}
+  if(button.dataset.paint){const options={muddyHollowEnabled:true,yetiEnabled:app._switches().enabled('yeti'),labEnabled:app._switches().enabled('lab'),deepEnabled:app._switches().enabled('the-deep'),wastelandTownEnabled:app._switches().enabled('wasteland-town')},preset=paintPresetFor(profile(),garageCar,button.dataset.paint,options);if(!preset)return;const result=app.purchasePaint(garageCar,button.dataset.paint);refreshGarage(result.ok?`${preset.name} applied to ${CARS[garageCar].name}.${result.purchased?` Purchased for ${credits(result.cost)} ${preset.currency==='scrap'?'scrap':'credits'}.`:''}`:result.reason);return;}
   if(handleDriverAction(button,{app,refreshGarage,root,garageCar,credits}))return;
   if(handleGarageUpgrade(button,{app,garageCar,refreshGarage,profile,credits}))return;
   if(handleTuneAction(button,{app,garageCar,refreshGarage,root}))return; // LAB-TUNE-VIEW
@@ -321,6 +321,19 @@ root.addEventListener('click',e => {
     case 'yard-armory': openYardPanel('armory'); return;
     case 'yard-crew': openYardPanel('crew'); return;
     case 'yard-scrapdome': if(app.arenaAvailable?.())openYardPanel('scrapdome'); return;
+    case 'yard-the-dig': {
+      if(!app.isYardHomeActive()||app._switches().enabled('wasteland-town')!==true)return;
+      void import('./machines/dig-game.js').then(({startTheDig})=>startTheDig({app,onExit:()=>{lastScreen=null;renderState(app.duel.state);}}))
+        .then(game=>{if(game)window.__theDig=game;})
+        .catch(error=>{garageMessage='The machine yard could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);console.warn('THE DIG failed to open:',error?.message||error);});
+      return;
+    }
+    case 'yard-the-town': {
+      if(!app.isYardHomeActive?.()||app._switches().enabled('wasteland-town')!==true)return;
+      void import('./town/town-entry.js').then(({startTown})=>startTown({app,onExit:()=>{lastScreen=null;renderState(app.duel.state);}}))
+        .catch(error=>{garageMessage=error?.message||'The town could not open. Return to the yard and try again.';lastScreen=null;renderState(app.duel.state);});
+      return;
+    }
     case 'arena-start':
       if (arenaMode === 'fuel-run' && !app.fuelRunAvailable?.()) arenaMode = 'last-car-rolling';
       if (arenaMode === 'bounty-hunt' && !app.bountyHuntAvailable?.()) arenaMode = 'last-car-rolling';
@@ -422,6 +435,9 @@ root.addEventListener('change',event=>{
 },{signal:domEvents.signal});
 function renderState(s) {
   buildUpdates.syncState();
+  if(app._openTownScrapdomePanel&&app.isYardHomeActive?.()){
+    yardPanel='scrapdome';app._openTownScrapdomePanel=false;lastScreen=null;
+  }
   if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
       !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   const yardActive=app.isYardHomeActive?.()===true;

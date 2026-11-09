@@ -12,6 +12,7 @@ const model=townScreenModel(town,{next:'Build a road.',speed:2});
 equal(model.date,'Year 1, Spring, day 1','the first town date is clear');
 equal(model.people,1,'people count comes from current town data');
 const html=townScreenMarkup(model);
+ok(html.includes('data-town-action="visit">VISIT</button>')&&!html.includes('THE BOOK: VISIT'),'the visit button has its short label');
 ok(html.includes('NEXT')&&html.includes('Build a road.'),'the next line stays visible');
 ok(html.includes('Rustwall &lt;Camp&gt;'),'town names are escaped');
 for(const label of ['TILL','PEOPLE','MOOD','WATER IN','WATER OUT','POWER IN','POWER OUT','THE YARD','THE BOOK']) ok(html.includes(label),`${label} is on the screen`);
@@ -24,13 +25,18 @@ ok(menu.entries[0].needs.includes('40 kg Timber'),'material amounts are visible'
 ok(menu.entries.some(entry=>entry.locked&&entry.reason?.startsWith('Opens with')),'locked plans say what opens them');
 const menuHtml=townBuildMenuMarkup(menu);
 ok(menuHtml.includes('role="tab"')&&menuHtml.includes('disabled aria-disabled="true"'),'tabs and locked plans are accessible');
+const homesModel=townScreenModel(town,{tab:'homes'}),homesHtml=townScreenMarkup(homesModel);
+ok(homesModel.menu.tab==='homes'&&homesHtml.includes('data-town-home-tool="paint"'),'the selected Homes and Shops tab shows its paint tool');
 
 const listeners=new Map(),commands=[],views=[];
 const root={addEventListener:(type,fn)=>listeners.set(type,fn),removeEventListener:type=>listeners.delete(type),querySelector:()=>null};
 const controls=bindTownInput(root,{command:value=>commands.push(value),viewAction:value=>views.push(value)});
-const target=(data,classes=[])=>({dataset:data,closest(selector){return selector.includes('data-town-build')&&data.townBuild?this:selector.split(',').some(part=>part.trim()==='.town-map'&&classes.includes('town-map'))?this:null;}});
+const target=(data,classes=[])=>({dataset:data,closest(selector){return (selector.includes('data-town-build')&&data.townBuild)||(selector.includes('data-town-tab')&&data.townTab)?this:selector.split(',').some(part=>part.trim()==='.town-map'&&classes.includes('town-map'))?this:null;}});
 listeners.get('click')({target:target({townBuild:'soup-kitchen'})});
 equal(controls.getPlacement().buildingId,'soup-kitchen','choosing a plan starts placement');
+listeners.get('click')({target:target({townTab:'homes'})});
+equal(views.at(-1).type,'showBuildTab','choosing a build tab updates view state');
+equal(views.at(-1).tab,'homes','the selected build tab is passed to view state');
 listeners.get('keydown')({key:'r'});
 equal(controls.getPlacement().rotation,90,'R rotates the placement preview');
 const cell={dataset:{cellX:'12',cellZ:'-3'},closest:selector=>selector.includes('[data-cell-x]')?cell:null};

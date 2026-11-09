@@ -49,7 +49,7 @@ function unique(id, seen, path) {
 }
 
 export function defineZone(data) {
-  record(data, ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots', 'finds'], 'zone');
+  record(data, ['id', 'circuit', 'switch', 'ramp', 'trail', 'places', 'pearls', 'spots', 'finds', 'joke'], 'zone');
   const id = slug(data.id, 'id', 80), circuit = slug(data.circuit, 'circuit');
   if (data.switch !== 'the-deep') invalid('switch', 'must be the-deep');
 
@@ -124,6 +124,14 @@ export function defineZone(data) {
         trailIndex: index(value.trailIndex, trail.length, `${path}.trailIndex`),
         offset: number(value.offset, `${path}.offset`), below });
     });
+  }
+  if (Object.hasOwn(data, 'joke')) {
+    const value = record(data.joke, ['id', 'trailIndex', 'offset', 'below'], 'joke');
+    const below = Object.hasOwn(value, 'below') ? number(value.below, 'joke.below') : 0;
+    if (below < 0 || below > 10) invalid('joke.below', 'must be between 0 and 10');
+    zone.joke = Object.freeze({id: unique(slug(value.id, 'joke.id', 80), new Set(), 'joke.id'),
+      trailIndex: index(value.trailIndex, trail.length, 'joke.trailIndex'),
+      offset: number(value.offset, 'joke.offset'), below});
   }
   return Object.freeze(zone);
 }

@@ -22,76 +22,70 @@ def game_vector(p):
     return Vector((p[0], -p[2], p[1]))
 
 def make_materials(texture_sources=None):
-    """Build the shared 1K atlas, painting tin and sand from photo sources.
+    """Build one small tiling picture per material, painting from photo sources.
 
-    ``texture_sources`` maps material names to image paths. Photo tiles are
-    packed into the exported GLB; the original references stay outside Git.
+    ``texture_sources`` maps material names to image paths. Each material keeps
+    its own repeating picture because a glTF file cannot repeat one cell of a
+    shared sheet: Blender's node maths for that is lost on export, and the game
+    then samples the whole sheet.
     """
     import numpy as np
     texture_sources = texture_sources or {}
     rng = np.random.default_rng(1405)
-    image = bpy.data.images.new('Scablands shared town wear atlas 1K', 1024, 1024, alpha=True)
-    pixels = np.ones((1024,1024,4), dtype=np.float32)
-    cell=256
-    materials={}
-    for i,(name,(color,metal)) in enumerate(PALETTE.items()):
-        col=i%4; row=i//4; y0=row*cell; x0=col*cell
-        # Broad pigment variation plus sparse chips keeps the atlas readable
-        # and compact when embedded in the runtime GLB.
-        base=np.array(color,dtype=np.float32)[None,None,:]
-        swatch=np.broadcast_to(base,(cell,cell,3)).copy()
-        source_path=texture_sources.get(name)
+    materials = {}
+    for name, (color, metal) in PALETTE.items():
+        source_path = texture_sources.get(name)
+        cell = 512 if source_path else 128
+        base = np.array(color, dtype=np.float32)[None, None, :]
+        swatch = np.broadcast_to(base, (cell, cell, 3)).copy()
         if source_path:
-            source=bpy.data.images.load(str(Path(source_path).resolve()),check_existing=False)
-            source.scale(cell,cell)
-            source_pixels=np.empty(cell*cell*4,dtype=np.float32)
+            source = bpy.data.images.load(str(Path(source_path).resolve()), check_existing=False)
+            source.scale(cell, cell)
+            source_pixels = np.empty(cell * cell * 4, dtype=np.float32)
             source.pixels.foreach_get(source_pixels)
-            swatch=source_pixels.reshape((cell,cell,4))[:,:,:3].copy()
+            swatch = source_pixels.reshape((cell, cell, 4))[:, :, :3].copy()
             bpy.data.images.remove(source)
-            if name=='rusted-steel':
-                swatch=np.clip(swatch*np.array([.68,.46,.28],dtype=np.float32)[None,None,:],0,1)
-            elif name=='sand':
-                luminance=(swatch[:,:,0:1]*.30+swatch[:,:,1:2]*.59+swatch[:,:,2:3]*.11)
-                swatch=np.clip((swatch*.78+luminance*.22)*1.04,0,1)
+            if name == 'rusted-steel':
+                swatch = np.clip(swatch * np.array([.68, .46, .28], dtype=np.float32)[None, None, :], 0, 1)
+            elif name == 'sand':
+                luminance = (swatch[:, :, 0:1] * .30 + swatch[:, :, 1:2] * .59 + swatch[:, :, 2:3] * .11)
+                swatch = np.clip((swatch * .78 + luminance * .22) * 1.04, 0, 1)
         else:
-            # Quiet pigment variation only for materials without a photo input.
-            noise=rng.normal(0,.012,(cell,cell,1)).astype(np.float32)
-            swatch=np.clip(swatch+noise,0,1)
-        if name in ('galvanised-tin','rusted-steel'):
-            if not source_path:
-                yy=np.arange(cell,dtype=np.float32)[:,None]
-                xx=np.arange(cell,dtype=np.float32)[None,:]
-                fade=np.clip(1.12-yy/cell*.34,.72,1.10)[...,None]
-                oxide=np.array([.29,.105,.025],dtype=np.float32)[None,None,:]
-                streak=np.clip((yy/cell-.25)*.55,0,.46)[...,None]
-                swatch=np.clip(swatch*fade*(1-streak)+oxide*streak,0,1)
-                for bx in (34,91,155,219):
-                    drip=np.exp(-((xx-bx)/2.5)**2)*np.clip((yy-38)/150,0,1)
-                    swatch=np.clip(swatch*(1-drip[...,None]*.50)+oxide*drip[...,None]*.50,0,1)
-        if name=='weathered-plank':
-            stripes=(np.sin(np.arange(cell,dtype=np.float32)[None,:]*.23)*.045)[...,None]
-            swatch=np.clip(swatch+stripes,0,1)
-        pixels[y0:y0+cell,x0:x0+cell,:3]=swatch
-    image.pixels.foreach_set(pixels.ravel()); image.pack()
-    for i,(name,(color,metal)) in enumerate(PALETTE.items()):
-        mat=bpy.data.materials.new('Town / '+name); mat.diffuse_color=(*color,1); mat.use_nodes=True
-        nodes=mat.node_tree.nodes; bsdf=nodes.get('Principled BSDF'); bsdf.inputs['Metallic'].default_value=metal
-        bsdf.inputs['Roughness'].default_value=.88
-        tex=nodes.new('ShaderNodeTexImage'); tex.image=image; tex.interpolation='Linear'; tex.extension='EXTEND'
-        coord=nodes.new('ShaderNodeTexCoord');split=nodes.new('ShaderNodeSeparateXYZ');combine=nodes.new('ShaderNodeCombineXYZ')
-        mat.node_tree.links.new(coord.outputs['UV'],split.inputs[0])
-        for axis in 'XYZ':
-            wrap=nodes.new('ShaderNodeMath');wrap.operation='FRACT';mat.node_tree.links.new(split.outputs[axis],wrap.inputs[0])
-            mat.node_tree.links.new(wrap.outputs[0],combine.inputs[axis])
-        scale=nodes.new('ShaderNodeVectorMath');scale.operation='SCALE';scale.inputs[3].default_value=.24
-        mat.node_tree.links.new(combine.outputs['Vector'],scale.inputs[0])
-        offset=nodes.new('ShaderNodeVectorMath'); offset.operation='ADD'
-        offset.inputs[1].default_value=((i%4)*.25+.003,(i//4)*.25+.003,0)
-        mat.node_tree.links.new(scale.outputs['Vector'],offset.inputs[0])
-        mat.node_tree.links.new(offset.outputs['Vector'],tex.inputs['Vector'])
-        # Photo detail stays crisp. Corrugated sheets provide their own depth.
-        mat.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color'])
-        materials[name]=mat
+            # Slight pigment variation for materials without a photo input.
+            noise = rng.normal(0, .012, (cell, cell, 1)).astype(np.float32)
+            swatch = np.clip(swatch + noise, 0, 1)
+        if name in ('galvanised-tin', 'rusted-steel') and not source_path:
+            yy = np.arange(cell, dtype=np.float32)[:, None]
+            xx = np.arange(cell, dtype=np.float32)[None, :]
+            fade = np.clip(1.12 - yy / cell * .34, .72, 1.10)[..., None]
+            oxide = np.array([.29, .105, .025], dtype=np.float32)[None, None, :]
+            streak = np.clip((yy / cell - .25) * .55, 0, .46)[..., None]
+            swatch = np.clip(swatch * fade * (1 - streak) + oxide * streak, 0, 1)
+            for fraction in (.13, .36, .61, .86):
+                drip = np.exp(-((xx - fraction * cell) / (cell / 100)) ** 2) * np.clip((yy - cell * .15) / (cell * .6), 0, 1)
+                swatch = np.clip(swatch * (1 - drip[..., None] * .50) + oxide * drip[..., None] * .50, 0, 1)
+        if name == 'weathered-plank':
+            stripes = (np.sin(np.arange(cell, dtype=np.float32)[None, :] * (59 / cell)) * .045)[..., None]
+            swatch = np.clip(swatch + stripes, 0, 1)
+        image = bpy.data.images.new('Town tile / ' + name, cell, cell, alpha=False)
+        pixels = np.ones((cell, cell, 4), dtype=np.float32)
+        pixels[:, :, :3] = swatch
+        image.pixels.foreach_set(pixels.ravel())
+        image.file_format = 'JPEG'
+        image.pack()
+        mat = bpy.data.materials.new('Town / ' + name)
+        mat.diffuse_color = (*color, 1)
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        bsdf = nodes.get('Principled BSDF')
+        bsdf.inputs['Metallic'].default_value = metal
+        bsdf.inputs['Roughness'].default_value = .88
+        tex = nodes.new('ShaderNodeTexImage')
+        tex.image = image
+        tex.interpolation = 'Linear'
+        tex.extension = 'REPEAT'
+        mat.node_tree.links.new(tex.outputs['Color'], bsdf.inputs['Base Color'])
+        materials[name] = mat
     return materials
 
 def cube(name, center, size, mat, bevel=.025):
@@ -239,7 +233,8 @@ def footprint(objects, name='footprint'):
 def export_glb(path):
     path=Path(path); path.parent.mkdir(parents=True,exist_ok=True)
     bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',export_yup=True,
-                              export_apply=True,export_materials='EXPORT')
+                              export_apply=True,export_materials='EXPORT',
+                              export_image_format='JPEG',export_image_quality=80)
 
 def building_variation(seed):
     """Return a repeatable roof and clutter recipe for one town building."""

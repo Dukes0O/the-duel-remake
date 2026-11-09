@@ -10,6 +10,16 @@ same(TOWN_MONEY_PRICES.ticket,{Cheap:2,Fair:5,Dear:10},'ticket prices have three
 const town=createTown(1001,'Pay Day');
 stepTown(town);
 same(town.till,1500n,'Hollis adds the founding grant once');
+const routedTown=createTown(1002,'Routed Till');stepTown(routedTown);
+const routedProfile={wasteland:{scrap:350}};
+check(stepTown(routedTown,{type:'tillIn',amount:300},{profile:routedProfile})[0].ok,'stepTown passes its optional context to the command dispatcher');
+same(routedProfile.wasteland.scrap,50,"a routed deposit comes from the player's wallet exactly");
+same(routedTown.till,1800n,'a routed deposit reaches the town till exactly');
+const walletBefore=routedProfile.wasteland.scrap,tillBefore=routedTown.till;
+const routedRefusal=stepTown(routedTown,{type:'tillIn',amount:100},{profile:routedProfile})[0];
+check(!routedRefusal.ok,'stepTown refuses a deposit when the wallet is too small');
+same(routedProfile.wasteland.scrap,walletBefore,'a refused routed deposit leaves the wallet unchanged');
+same(routedTown.till,tillBefore,'a refused routed deposit leaves the till unchanged');
 const profile={wasteland:{scrap:700}};
 check(dispatchTownCommand(town,{type:'tillIn',amount:200},{profile}).ok,'the player can put scrap in the till');
 same(profile.wasteland.scrap,500,'a deposit comes from the player wallet');
@@ -47,6 +57,12 @@ const spareProfile={wasteland:{scrap:1000}};
 check(dispatchTownCommand(unpaid,{type:'tillIn',amount:1000},{profile:spareProfile}).ok,'the player can restore the town till');
 month(unpaid);
 check(unpaid.buildings[0].operational===true,'a stopped building can return to work once its bill is paid');
+
+const deedMaintenance=createTown(17,'Deed maintenance');
+deedMaintenance.deeds={version:1,items:{'vultures-road':{ownerId:'player'},'vultures-works':{ownerId:'player'},'vultures-outpost':{ownerId:'player'}}};
+deedMaintenance.buildings=[{id:'maintained',buildingId:'hand-well',state:'finished',upkeepMonthly:100,staff:0}];
+month(deedMaintenance);
+check(townLedger(deedMaintenance).entries.some(entry=>entry.kind==='monthly-upkeep'&&entry.amount===95n),'the Twin Vultures set reduces upkeep by five percent');
 
 const loanTown=createTown(16,'Hollis Keeps Count');
 loanTown.buildings=[{id:'pump',buildingId:'pump-house',state:'finished',upkeepMonthly:600,staff:0}];

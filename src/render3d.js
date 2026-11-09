@@ -3,6 +3,7 @@ import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
 import {createDeepView,deepPresentation} from './deep/deep-ui.js';
 import {createUnderwaterScene} from './deep/underwater-scene.js';
+import {applySaltStormFog} from './world/the-whites-scene.js';
 import {createSirenaScene} from './deep/sirena-view.js'; // DEEP-SIRENA-VIEW: the story drawn in the dive
 import {createWaterline} from './deep/waterline.js';
 import {createHeliView} from './heli/heli-scene.js';
@@ -59,6 +60,7 @@ import { createRoadsideDebris } from './roadside-debris.js';
 import {createFuelRunView} from './arena/modes/fuel-run-view.js';
 import {createBountyHuntView} from './arena/modes/bounty-hunt-view.js';
 import {createAmbushAlleyView} from './arena/modes/ambush-alley-view.js';
+import {createBowlView} from './bowl/bowl-view.js';
 import { updateArenaTells, updateArenaMarkers } from './arena/arena-tell-view.js';
 import { ARENA_FEEL } from './arena/arena-brains.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -478,6 +480,8 @@ export function attachRenderer(host, app) {
   const fuelEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const bountyView=createBountyHuntView();scene.add(bountyView.group);
   const ambushView=createAmbushAlleyView(disposeTree);scene.add(ambushView.group);
+  // The Bowl view owns only course art; its switch never participates in race rules.
+  const bowlView=createBowlView();scene.add(bowlView.group);
   const bountyEntries=Array.from({length:4},()=>({id:null,mesh:null,actor:null}));
   const firstPersonGear=createFirstPersonGear();scene.add(firstPersonGear.group);
   const firstPersonEntry={fighter:null,input:null,weapons:null};
@@ -802,6 +806,8 @@ export function attachRenderer(host, app) {
     // Arena event weather only closes the fog in.
     if(st.arena?.weather==='dust-storm'&&scene.fog){scene.fog.near=Math.min(scene.fog.near,40);
       scene.fog.far=Math.min(scene.fog.far,220);scene.fog.color.lerp(DUST_STORM_FOG,1-Math.exp(-dt*1.5));}
+    const railMarks=st.storyMarks??st.arena?.storyMarks??st.arena?.worldJob?.storyMarks??[];
+    applySaltStormFog(scene,st.arena?.weather,dt,railMarks);
     const tall=carKey==='titan_monster';
     const speed=Math.abs(st.speedMph);
     // Keep travel signed for both the live car and recorded reverse ghost poses.
@@ -1082,6 +1088,9 @@ export function attachRenderer(host, app) {
       bountyView.update(st,bountyEntries);
     }else bountyView.group.visible=false;
     ambushView.update(st);
+    const flags=app._switches?.()??app.duel.featureFlags;
+    bowlView.update(course,menu?{crushedProps:[]}:st,ambientNow,
+      flags?.enabled('titan-bowl')===true);
     firstPersonEntry.fighter=st.fighter;
     firstPersonEntry.input=st.fighterInput;
     firstPersonEntry.weapons=st.footWeapons;
@@ -1269,6 +1278,7 @@ export function attachRenderer(host, app) {
     const release = () => {
       bountyView.dispose();
       ambushView.dispose();
+      bowlView.dispose();
       fuelView.dispose();
       tanker?.dispose();
       rearView.dispose();

@@ -8,7 +8,8 @@ function perkStatus(member, gearEnabled) {
 }
 
 function crewCard(member, {rank, selected, ready, scrapCareer, owned, scrap, escapeHTML, gearEnabled}) {
-  const unlocked = member.id === 'vesper' || rank >= member.rank || ready && member.id === 'tusk' && owned.includes(member.id);
+  const unlocked = member.id === 'vesper' || rank >= member.rank || ready &&
+    ['tusk','cinder','jax'].includes(member.id) && owned.includes(member.id);
   const chosen = ready && selected === member.id;
   const accent = `#${member.appearance.accent.toString(16).padStart(6, '0')}`;
   const price = scrapCareer && member.id !== 'rook' && member.id !== 'vesper' && !owned.includes(member.id) ? 300 : 0;

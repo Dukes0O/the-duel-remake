@@ -154,7 +154,7 @@ export function jobLegFlyable(from, to, options = {}, fuel = (a, b) => legFuelKg
 // helicopter on, they race only where last set down. Medal cars start at the
 // home pad; the Sirena starts at Pacific Canyon (heli-save FIRST_PLACE).
 // Kyle, 25 October 2026: the Jesko races anywhere again, regardless of carsAt.
-export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena', 'mcmurtry_speirling']);
+export const AIR_ONLY_CARS = Object.freeze([...MEDAL_CARS, 'falcone_sirena', 'falcone_vasca', 'mcmurtry_speirling']);
 
 export function isAirOnlyCar(carId) {
   return AIR_ONLY_CARS.includes(carId);
