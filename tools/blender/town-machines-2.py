@@ -557,7 +557,7 @@ def basic_family():
  rear_panel=PhotoMesh()
  rear_panel.face(((-1.28,.74,4.18),(1.28,.74,4.18),(1.28,1.62,4.18),(-1.28,1.62,4.18)),
                  (rear_photo.uv(161,340),rear_photo.uv(452,340),rear_photo.uv(452,246),rear_photo.uv(161,246)),
-                 rear_photo.material(),(0,0,1))
+                 'rear',(0,0,1))
  rear_panel_obj=rear_panel.finish('crane flat photo-faced rear counterweight panel',{'rear':rear_photo.material()})
  parent(rear_panel_obj,crane);crane_parts.append(('crane-truck:rear-counterweight-panel',rear_panel_obj))
  crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
