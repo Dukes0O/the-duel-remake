@@ -134,7 +134,7 @@ def articulated_loader():
   'length':length,'width':width,'height':height,'side':{'start':side_start,'end':side_end,'ground':side_ground},
   'front':{'centre':319,'ground':431,'top':20},'rear':{'centre':319,'ground':431,'top':24},
   'top':{'front':45,'rear':570,'centre':285,'along':'x','x_scale':width/(430-168)},
-  'underside':1.05,'wheels':[(z,wheel_radius,track) for z in axle_z],
+  'underside':.50,'wheels':[(z,wheel_radius,track) for z in axle_z],
   # The front and rear tyres hide frame faces; leave the side tyre pixels in
   # place so the body behind them is not cut away.
   'cut':{'front':[(85,160,225,445),(416,160,565,445)],'rear':[(82,165,225,445),(415,165,565,445)],
