@@ -521,7 +521,8 @@ def basic_family():
   # The body carve stops at the lower frame rails; clear the full slew deck
   # footprint so no photo-carved island floats above the built turntable.
   ring=(abs(x)<1.08)&(z>.35)&(z<3.18)&(y>1.45)
-  return (y>=1.02)&~ring
+  floating_block=(abs(x)<.46)&(y>3.68)&(z>1.62)&(z<2.70)
+  return (y>=1.02)&~ring&~floating_block
  crane_body_table={
   'photos':{'side':'crane-truck-side.jpg','front':'crane-truck-front.jpg',
             'rear':'crane-truck-rear.jpg','top':'crane-truck-overhead.jpg'},
@@ -532,7 +533,7 @@ def basic_family():
   'top':{'front':22,'rear':806,'centre':237,'along':'x','x_scale':.0088},
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
-  'ends_split':0,'front_favour':3,'rear_favour':5,
+  'ends_split':0,'front_favour':3,'rear_favour':8,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
@@ -619,9 +620,11 @@ def basic_family():
  # The photographed circle is held by a low steel support ring; no block stands in for it.
  crane_add_part('crane-truck:slew-support',crane_box('crane slew support ring',(0,1.48,1.58),(1.72,.16,1.72),steel,.045,turret))
  crane_box('crane turret deck',(0,1.77,1.58),(1.52,.20,1.48),steel,.08,turret)
- crane_box('crane rear counterweight',(0,1.96,2.33),(1.42,.62,.80),crane_yellow,.12,turret)
+ # The pivot tower rises directly from the photo-faced table; the old floating
+ # yellow block that stood in for the slew assembly is removed.
  for sx in (-1,1):
-  crane_beam('crane pivot cheek',(sx*.39,2.50,1.62),(sx*.39,3.02,1.62),.14,steel,turret)
+  crane_box('crane pivot tower cheek',(sx*.39,2.30,1.62),(.22,1.04,.62),steel,.055,turret)
+  crane_beam('crane pivot cheek wear edge',(sx*.39,1.82,1.62),(sx*.39,2.82,1.62),.06,tin,turret)
   crane_beam('crane pivot pin',(-.46,2.82,1.62),(.46,2.82,1.62),.11,tin,turret)
  # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
  from photo_carve import lift_if_dark
