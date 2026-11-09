@@ -19,7 +19,7 @@ bucket pin. The four passed machines were not edited in the recipe.
 | Readability | 3/5 | The bucket is ahead of the tyres and the two arms now connect the frame pins to its pin. The arms look like plain painted beams. |
 | Grounding | 3/5 | Built tyres meet the ground; the bucket lower edge is at the ground line. |
 | Scene consistency | 3/5 | Worn photo paint and dark tyres are retained. A dark ball artifact remains below the machine. |
-| Frame cost | 4/5 | The loader and family triangle/file budgets are to be confirmed by `test-blender-output.mjs`. |
+| Frame cost | 4/5 | `test-blender-output.mjs` passed: 389 checks, 0 failures. |
 
 ## Biggest differences for Claude to review
 
@@ -29,5 +29,5 @@ bucket pin. The four passed machines were not edited in the recipe.
 4. The dark ball below the loader and streaked/doubled cab are still visible; they were outside this round's three requested fixes.
 5. Check the front, rear and overhead views against the whole source photos on the sheet.
 
-The sheet shows all four source photos uncropped. The test result will be added
-after the named Blender output check completes.
+The sheet shows all four source photos uncropped. The Blender output check
+passed: 389 checks, 0 failures.

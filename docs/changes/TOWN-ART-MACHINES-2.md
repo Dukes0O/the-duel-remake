@@ -11,7 +11,7 @@ changed.
 
 - Blender export and loader render completed. Review views: side, front, rear,
   overhead, and work pose. Source photos on the sheet are shown whole.
-- `node tools/test-blender-output.mjs`: pending.
+- `node tools/test-blender-output.mjs`: passed, 389 checks and 0 failures.
 - Browser/look check: Claude to review the loader sheet, especially tyre
   alignment, bucket clearance, visible arm connection, the dark ball artifact,
   and cab projection streaks. Chrome was not run.
