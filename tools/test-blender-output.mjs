@@ -1566,7 +1566,7 @@ try {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
     }
   });
-  check('TOWN-ART-WORKS exports the carved warehouse as the only named building', () => {
+  check('TOWN-ART-WORKS keeps the warehouse and adds the photographed kiln', () => {
     const path = join(root, 'public/assets/models/wasteland/town/works.glb');
     const bytes = readFileSync(path);
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
@@ -1578,11 +1578,14 @@ try {
     const byName = new Map(nodes.map((node, index) => [node.name, index]));
     const family = byName.get('town-works');
     const warehouse = byName.get('warehouse');
+    const kiln = byName.get('kiln');
     assert.ok(Number.isInteger(family), 'town-works root exists');
     assert.ok(Number.isInteger(warehouse), 'warehouse building exists');
+    assert.ok(Number.isInteger(kiln), 'kiln building exists');
     assert.ok((nodes[family].children || []).includes(warehouse), 'warehouse is a direct child of town-works');
-    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name), ['warehouse'],
-      'this card slice exports only the warehouse');
+    assert.ok((nodes[family].children || []).includes(kiln), 'kiln is a direct child of town-works');
+    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name).sort(), ['kiln', 'warehouse'],
+      'the passed warehouse remains and the kiln is the only added building');
     const trianglesUnder = index => {
       const node = nodes[index];
       const own = Number.isInteger(node.mesh)
@@ -1592,7 +1595,12 @@ try {
     };
     const triangles = trianglesUnder(warehouse);
     assert.ok(triangles > 100 && triangles <= 9_000, `warehouse has ${triangles} triangles; budget 9,000`);
-    assert.ok((gltf.images || []).length <= 4, 'four carved reference photos are embedded');
+    const kilnTriangles = trianglesUnder(kiln);
+    assert.ok(kilnTriangles > 100 && kilnTriangles <= 5_000, `kiln has ${kilnTriangles} triangles; budget 5,000`);
+    assert.equal((gltf.images || []).length, 10, 'the four warehouse images stay and six kiln images are embedded');
+    for (const id of ['kiln:body', 'kiln:chimney', 'kiln:door', 'kiln:lamp', 'kiln:brick-stacks', 'kiln:woodpile']) {
+      assert.ok(byName.has(id), `${id} is exported as an individual piece`);
+    }
   });
 
   check('TOWN-ART-SERVICES GLB exports the seven passed buildings with individual footprint budgets', () => {

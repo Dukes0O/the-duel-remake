@@ -1,4 +1,4 @@
-"""Build and review the carved warehouse in the Scablands works family."""
+"""Build and review the warehouse and beehive kiln in the Scablands works family."""
 import argparse
 import json
 import math
@@ -17,7 +17,7 @@ out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works-warehouse/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-works-kiln/round-1.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:
@@ -34,7 +34,7 @@ if args.assemble_sheet:
     draw = ImageDraw.Draw(canvas)
     font = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 27)
     small = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 21)
-    draw.text((28, 15), 'TOWN WORKS | WAREHOUSE | ROUND 1', font=font, fill=(238, 223, 198))
+    draw.text((28, 15), 'TOWN WORKS | BEEHIVE KILN | ROUND 1', font=font, fill=(238, 223, 198))
     def fit_panel(path, xy, size):
         with Image.open(path) as source:
             image = ImageOps.contain(source.convert('RGB'), size, method=Image.Resampling.LANCZOS)
@@ -43,14 +43,14 @@ if args.assemble_sheet:
     row_y = 65
     for view, label in labels:
         draw.text((28, row_y), f'{label} | SOURCE PHOTO  /  EXPORTED GLB, SAME ORTHOGRAPHIC CAMERA', font=small, fill=(223, 184, 132))
-        fit_panel(textures / f'warehouse-{"top" if view == "above" else view}.jpg', (16, row_y + 31), (1000, panel_h))
+        fit_panel(textures / f'kiln-dome-{"top" if view == "above" else view}.jpg', (16, row_y + 31), (1000, panel_h))
         fit_panel(evidence / f'{view}.png', (1032, row_y + 31), (1000, panel_h))
         row_y += panel_h + 34
     draw.text((28, row_y), 'THREE-QUARTER VIEWS | EXPORTED GLB', font=small, fill=(223, 184, 132))
     fit_panel(evidence / 'front-three-quarter.png', (16, row_y + 31), (1000, panel_h))
     fit_panel(evidence / 'rear-three-quarter.png', (1032, row_y + 31), (1000, panel_h))
     row_y += panel_h + 34
-    draw.text((28, row_y), 'MAYOR VIEW | 45° DOWN, ROOF AND LOADING DOCK', font=small, fill=(223, 184, 132))
+    draw.text((28, row_y), 'MAYOR VIEW | 45° DOWN, KILN DOME AND CHIMNEY', font=small, fill=(223, 184, 132))
     fit_panel(evidence / 'mayor.png', (16, row_y + 31), (2016, panel_h))
     sheet.parent.mkdir(parents=True, exist_ok=True)
     for quality in (88, 84, 80, 76, 72, 68, 64, 60):
@@ -69,6 +69,7 @@ sys.path.insert(0, str(root / 'tools/blender'))
 from photo_carve import carve_object
 from photo_model import Photo
 import town_base as town
+from photo_model import Mesh, Photo, lathe
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -200,6 +201,120 @@ for index, z in enumerate((-3.5, 3.8), 1):
     cap = bpy.context.object; cap.name = f'warehouse-roof-vent-{index}-cap'; cap.data.materials.append(tin)
     cap.parent = parent
 
+# TOWN-ART-WORKS, round 1: brick beehive kiln. Original reference photos were
+# generated with OpenAI image generation on 9 November 2026: kiln-dome-side.jpg,
+# kiln-dome-front.jpg, kiln-dome-rear.jpg, kiln-dome-top.jpg, kiln-chimney.jpg,
+# and kiln-door.jpg.
+kiln = bpy.data.objects.new('kiln', None); bpy.context.collection.objects.link(kiln); kiln.parent = family
+dome_side = Photo(textures / 'kiln-dome-side.jpg')
+dome_front = Photo(textures / 'kiln-dome-front.jpg')
+dome_rear = Photo(textures / 'kiln-dome-rear.jpg')
+dome_top = Photo(textures / 'kiln-dome-top.jpg')
+chimney_photo = Photo(textures / 'kiln-chimney.jpg')
+
+def kiln_piece(name):
+    parent = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(parent)
+    parent.parent = kiln
+    return parent
+
+dome_piece = kiln_piece('kiln:body')
+dome_mesh = Mesh()
+dome_px_m = .00632
+dome_stations = [((633 - py) * dome_px_m, radius_px * dome_px_m) for py, radius_px in
+                 ((633, 446), (590, 445), (550, 446), (510, 444), (470, 439),
+                  (430, 432), (390, 423), (350, 410), (310, 394), (270, 375),
+                  (230, 352), (190, 325), (150, 292), (110, 248), (70, 188),
+                  (30, 20))]
+def dome_uv(index, distance, radius, angle):
+    # Map the side photo's silhouette around the lathe; 0.85 keeps edge pixels out.
+    px = dome_side.w / 2 + (radius / dome_px_m) * math.cos(angle) * .85
+    py = 633 - distance / dome_px_m
+    return dome_side.uv(px, py)
+lathe(dome_mesh, 'dome', (0, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+      dome_stations, dome_uv, sides=32,
+      cap_start=('dome', lambda angle, fraction: dome_side.uv(512, 615)),
+      cap_end=('top', lambda angle, fraction: dome_top.uv(512 + math.cos(angle) * fraction * 360,
+                                                           342 + math.sin(angle) * fraction * 360)))
+dome_obj = dome_mesh.finish('kiln-dome-brick-shell', {'dome': dome_side.material(), 'top': dome_top.material()})
+dome_obj.parent = dome_piece
+
+chimney_piece = kiln_piece('kiln:chimney')
+chimney_mesh = Mesh()
+chimney_stations = [(0, .61), (.26, .60), (.90, .59), (1.8, .57),
+                    (2.6, .54), (3.4, .51), (4.2, .49), (4.6, .48),
+                    (4.85, .57), (4.98, .58), (5.02, .55)]
+def chimney_uv(index, distance, radius, angle):
+    px = chimney_photo.w / 2 + (radius / .0061) * math.cos(angle) * .85
+    py = 1000 - distance / 5.02 * 965
+    return chimney_photo.uv(px, py)
+lathe(chimney_mesh, 'chimney', (3.35, 0, 0), (0, 1, 0), (1, 0, 0), (0, 0, 1),
+      chimney_stations, chimney_uv, sides=20,
+      cap_start=('chimney', lambda angle, fraction: chimney_photo.uv(340, 990)),
+      cap_end=('chimney', lambda angle, fraction: chimney_photo.uv(340, 45)))
+chimney_obj = chimney_mesh.finish('kiln-brick-chimney', {'chimney': chimney_photo.material()})
+chimney_obj.parent = chimney_piece
+
+# The arch is a separate photographed facing set into the curved front. Its
+# own backing remains dark; the named emitter is visible just inside it.
+door_piece = kiln_piece('kiln:door')
+door_mesh = Mesh()
+door_photo = Photo(textures / 'kiln-door.jpg')
+cx, floor_px, scale = 512, 620, .00315
+outer = []; inner = []
+for i in range(13):
+    theta = math.pi - i * math.pi / 12
+    outer.append((cx + math.cos(theta) * 235, 360 - math.sin(theta) * 235))
+    inner.append((cx + math.cos(theta) * 167, 395 - math.sin(theta) * 167))
+outer += [(cx + 235, floor_px), (cx - 235, floor_px)]
+inner += [(cx + 167, 585), (cx - 167, 585)]
+def door_point(pixel):
+    px, py = pixel
+    x = (px - cx) * scale
+    y = (floor_px - py) * scale
+    z = -math.sqrt(max(.01, 2.82 * 2.82 - x * x)) - .04
+    return (x, y, z)
+for i in range(len(outer)):
+    j = (i + 1) % len(outer)
+    door_mesh.face([door_point(outer[i]), door_point(outer[j]), door_point(inner[j]), door_point(inner[i])],
+                    [door_photo.uv(*p) for p in (outer[i], outer[j], inner[j], inner[i])], 'door', (0, 0, -1))
+door_mesh.face([door_point(p) for p in inner], [door_photo.uv(*p) for p in inner], 'door', (0, 0, -1))
+door_obj = door_mesh.finish('kiln-arched-firedoor-photo', {'door': door_photo.material()})
+door_obj.parent = door_piece
+
+lamp_piece = kiln_piece('kiln:lamp')
+lamp_mat = bpy.data.materials.new('Kiln / fire glow')
+lamp_mat.use_nodes = True
+nodes = lamp_mat.node_tree.nodes; nodes.clear()
+emission = nodes.new('ShaderNodeEmission'); emission.inputs['Color'].default_value = (1.0, .12, .008, 1)
+emission.inputs['Strength'].default_value = 2.5
+output = nodes.new('ShaderNodeOutputMaterial'); lamp_mat.node_tree.links.new(emission.outputs[0], output.inputs['Surface'])
+bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1, location=town.game_vector((0, .42, -2.86)))
+fire = bpy.context.object; fire.name = 'kiln-door-fire-glow'; fire.scale = (.26, .035, .30)
+bpy.ops.object.transform_apply(location=False, rotation=False, scale=True); fire.data.materials.append(lamp_mat); fire.parent = lamp_piece
+
+brick_piece = kiln_piece('kiln:brick-stacks')
+kiln_mats = town.make_materials()
+for row, (count, y) in enumerate(((4, .12), (3, .38), (2, .64)), 1):
+    offset = -(count - 1) * .34 / 2
+    for n in range(count):
+        x = -3.25 + offset + n * .34
+        brick = town.cube(f'kiln-fired-brick-{row}-{n+1}', (x, y, -1.15 + (row % 2) * .11),
+                          (.32, .24, .22), kiln_mats['salvaged-brick'], .012)
+        brick.parent = brick_piece
+
+wood_piece = kiln_piece('kiln:woodpile')
+for row in range(3):
+    for n in range(3 - row):
+        x0 = -3.35 + n * .54 + row * .27
+        z0 = 2.05 + row * .28
+        log = town.beam(f'kiln-seasoned-log-{row+1}-{n+1}', (x0, .10 + row * .29, z0),
+                        (x0 + 1.08, .10 + row * .29, z0), .20, kiln_mats['weathered-plank'])
+        log.parent = wood_piece
+for index in range(3):
+    end = town.cube(f'kiln-log-end-ring-{index+1}', (-3.2 + index * .54, .10 + index * .29, 2.05 + index * .28),
+                    (.07, .20, .20), kiln_mats['salvaged-brick'], .012)
+    end.parent = wood_piece
+
 out.parent.mkdir(parents=True, exist_ok=True)
 town.export_glb(out)
 
@@ -232,16 +347,36 @@ for item in all_piece_roots:
         touches_ground = b[1][0] <= .03
         assert touching or touches_ground, f'{item.name} floats free of the body and ground'
 
+kiln_bounds = {}
+for item in kiln.children:
+    meshes = [obj for obj in descendants(item) if obj.type == 'MESH']
+    if item.type == 'MESH': meshes.append(item)
+    b = bounds_for(meshes)
+    kiln_bounds[item.name] = b
+    print(f'{item.name} bounds x/y/z', b)
+    assert b[0][0] >= -7.5 and b[0][1] <= 7.5 and b[2][0] >= -7.5 and b[2][1] <= 7.5, f'{item.name} exceeds the 2x2 footprint margin'
+for item in kiln.children:
+    b = kiln_bounds[item.name]
+    touches_ground = b[1][0] <= .03
+    touches_other = any(other_name != item.name and all(
+        b[axis][0] <= other[axis][1] + .01 and b[axis][1] >= other[axis][0] - .01
+        for axis in range(3)) for other_name, other in kiln_bounds.items())
+    assert touches_ground or touches_other, f'{item.name} floats free of the ground and other pieces'
+assert len(kiln_bounds) == 6, 'kiln body and five separate pieces are present'
+
 if args.render:
     # Re-import the exported GLB in a clean scene; all review renders use that file.
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(out))
+    for obj in bpy.data.objects:
+        if obj.name == 'warehouse' or obj.name.startswith('warehouse:') or obj.name.startswith('warehouse-'):
+            obj.hide_render = True
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'; scene.cycles.samples = 12; scene.cycles.use_denoising = True
     scene.render.resolution_x = 1024; scene.render.resolution_y = 768; scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
     scene.view_settings.view_transform = 'Standard'; scene.view_settings.look = 'Medium High Contrast'
-    scene.world = bpy.data.worlds.new('Warehouse soft grey studio'); scene.world.use_nodes = True
+    scene.world = bpy.data.worlds.new('Kiln soft grey studio'); scene.world.use_nodes = True
     scene.world.node_tree.nodes['Background'].inputs['Color'].default_value = (.43, .43, .41, 1)
     scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = .8
     bpy.ops.mesh.primitive_plane_add(size=100, location=(0, -.025, 0))
@@ -252,11 +387,13 @@ if args.render:
         bpy.ops.object.light_add(type='AREA', location=game_loc(location))
         light = bpy.context.object; light.data.energy = power; light.data.shape = 'DISK'; light.data.size = size
         light.rotation_euler = (game_loc((0, 3.5, 0)) - light.location).to_track_quat('-Z', 'Y').to_euler()
-    bpy.ops.object.camera_add(location=game_loc((0, 12, -30)))
+    bpy.ops.object.camera_add(location=game_loc((0, 5, -12)))
     camera = bpy.context.object; camera.data.type = 'ORTHO'; scene.camera = camera
     def render_view(name, location, target, scale):
         camera.location = game_loc(location)
         camera.rotation_euler = (game_loc(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
+        if name == 'above':
+            camera.rotation_euler.rotate_axis('Z', math.pi)
         camera.data.ortho_scale = scale
         if name == 'side':
             scene.render.resolution_x, scene.render.resolution_y = 1024, 512
@@ -271,13 +408,13 @@ if args.render:
         scene.render.filepath = str(evidence / f'{name}.png')
         bpy.ops.render.render(write_still=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    render_view('side', (24, 4, 0), (0, 3.3, 0), 23.5)
-    render_view('front', (0, 4, -27), (0, 3.6, 0), 14.5)
-    render_view('rear', (0, 4, 27), (0, 3.6, 0), 14.5)
-    render_view('above', (0, 37, 0), (0, 0, 0), 16)
-    render_view('front-three-quarter', (22, 15, -24), (0, 3.5, 0), 28)
-    render_view('rear-three-quarter', (-22, 15, 22), (0, 3.5, 0), 28)
-    render_view('mayor', (42, 62, -42), (0, 3.2, 0), 34)
+    render_view('side', (12, 2.1, 0), (0, 2.0, 0), 8.8)
+    render_view('front', (0, 2.1, -12), (0, 2.0, 0), 8.8)
+    render_view('rear', (0, 2.1, 12), (0, 2.0, 0), 8.8)
+    render_view('above', (0, 15, 0), (0, 0, 0), 9.2)
+    render_view('front-three-quarter', (8, 7, -9), (0, 2.0, 0), 9.6)
+    render_view('rear-three-quarter', (-8, 7, 9), (0, 2.0, 0), 9.6)
+    render_view('mayor', (42, 56, -42), (0, 1.5, 0), 11.5)
     blend.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
     import subprocess

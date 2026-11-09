@@ -59,3 +59,49 @@ Removed the recipe geometry for the later card buildings from this first-slice
 export. Their IDs are not included yet and will return in later rounds. The
 existing family `round-1.jpg` and `round-2.jpg` remain. Replaced the earlier
 3 MB family cap in the check with the card's 8 MB cap; this GLB is under 1 MB.
+
+## Kiln — round 1
+
+### Changed
+
+- Added one `kiln` child beside the existing `warehouse` in
+  `tools/blender/town-works.py`. The 2×2 kiln has a round brick dome lathed from
+  its measured side photo, a separate lathed chimney, a photo-faced arched
+  firing door, emissive `kiln:lamp`, stacked bricks and a woodpile.
+- Added six single-view JPG references (dome side, front, rear and top, chimney,
+  and door) under `public/assets/models/wasteland/town/textures/`. Each is at
+  most 1024 pixels wide. The recipe credits their OpenAI image generation.
+- Exported `public/assets/models/wasteland/town/works.glb` at 1,801,204 bytes.
+  The sheet is 473,043 bytes at 2048×2734 in
+  `docs/board/looks/town-art-works-kiln/round-1.jpg`.
+- The recipe prints bounds for the body and every named piece. Every piece
+  touches the ground or another piece and stays within the 2×2 footprint.
+- Blender 4.5.13 exported and rendered the GLB in a clean scene. I compared the
+  side, front, rear, straight-down, two three-quarter and 45° mayor views with
+  the source photos, then corrected the saved-photo pixel scale, doorway photo
+  and top-view orientation. The review is beside the sheet.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+  Two earlier runs exposed outdated expectations for child order and the
+  preserved warehouse photos; the final assertion checks the exact two roots
+  without relying on export order and keeps all ten embedded images accounted
+  for.
+- `node tools/test-repo-hygiene.mjs`: passed repository placement; size targets
+  are advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 passed. The audio-analysis
+  subtest failed because the sandbox returned `spawnSync ffmpeg EPERM`; review
+  JPG publication passed.
+- No lane tier, build, browser scenario or in-game look check was run. Claude
+  should inspect the firing-door opening and glow, the mayor view, and the
+  spacing and readability of the brick and wood piles.
+- Changed assertions: the family check now requires both `warehouse` and
+  `kiln`, verifies the kiln's 5,000-triangle budget and named pieces, and counts
+  the four preserved warehouse photos, four kiln photos and two material
+  tiles. This extends the card's acceptance and keeps its checks exact; no
+  race rules or fingerprints changed. Claude should review this assertion
+  update before merge.
+
+### Removed
+
+The current recipe had no earlier kiln block-shape path to remove; it exported
+the warehouse only. The new GLB contains no block-shaped kiln. The passed
+warehouse geometry and its four reference photos remain in the family.
