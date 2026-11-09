@@ -534,14 +534,14 @@ def basic_family():
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
   # The rear photo contains the cab, exhaust and hoist behind the counterweight.
-  # Exclude it from the carve; the flat rear panel below uses its true end view.
-  'ends_split':0,'front_favour':3,'rear_favour':8,
+  # Its mask keeps only the central tail panel, for the rear-most body section.
+  'ends_split':2.35,'front_favour':3,'rear_favour':8,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
-   'rear':[(0,0,613,467)],
+   'rear':[(0,0,613,235),(0,350,613,467),(0,235,140,350),(475,235,613,350)],
    'top':[(0,0,827,96),(0,405,827,473)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
@@ -551,15 +551,6 @@ def basic_family():
    if node.type=='TEX_IMAGE':node.interpolation='Cubic'
  parent(crane_body,crane)
  crane_parts=[('crane-truck:body',crane_body)]
- # The rear view includes cab and hoist above the tail counterweight. Face only
- # the photographed tail panel at the true rear, instead of extruding those parts.
- rear_photo=crane_body_table['_photos']['rear']
- rear_panel=PhotoMesh()
- rear_panel.face(((-1.28,.74,4.34),(1.28,.74,4.34),(1.28,1.62,4.34),(-1.28,1.62,4.34)),
-                 (rear_photo.uv(161,340),rear_photo.uv(452,340),rear_photo.uv(452,246),rear_photo.uv(161,246)),
-                 'rear',(0,0,1))
- rear_panel_obj=rear_panel.finish('crane flat photo-faced rear counterweight panel',{'rear':rear_photo.material()})
- parent(rear_panel_obj,crane);crane_parts.append(('crane-truck:rear-counterweight-panel',rear_panel_obj))
  crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
  crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
  crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
