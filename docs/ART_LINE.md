@@ -211,6 +211,10 @@ stop adjusting and change the method.
 - **Shared mesh instance moved on the wrong up axis.** `Mesh.finish` converts
   Y-up vertices into Blender's Z-up coordinates. Convert an instance's Y-up
   translation too: `(x, -z, y)`. Otherwise a reused load can float above its deck.
+- `carve_object` already returns a Blender Z-up mesh: `voxel_surface` maps the
+  photo grid's game coordinates while it builds the vertices. Applying
+  `game_vector` to that mesh a second time swaps length and height and separates
+  it from Blender-built parts (roller, round 21).
 - **Which way is forward.** A town object's front is -Z; a car's is +Z. Check one
   box before modelling. A model that lies on its side, or a side view running
   backwards, is this.

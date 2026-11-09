@@ -425,8 +425,18 @@ def basic_family():
  from hull_model import tyre as photo_tyre
  from photo_carve import carve_object
  roller_textures=project_root/'public/assets/models/wasteland/town/textures'
- roller_length,roller_width,roller_height=4.35,2.55,3.75
- roller_scale=roller_length/(610-30)
+ # Round 21 dimensions are measured before the carve. The rear tyre is 1.3 m
+ # across; its 108 px half-height in the end photo sets that photo's scale.
+ # The side photo spans 580 px for the 4.5 m overall length.
+ roller_target_length,roller_width,roller_height=4.5,2.0,2.9
+ roller_tyre_radius=1.3/2
+ roller_rear_tyre_px=535-427
+ roller_rear_scale=roller_tyre_radius/roller_rear_tyre_px
+ roller_side_scale=roller_rear_scale
+ roller_length=roller_side_scale*(610-30)
+ roller_drum_z=(130-30)*roller_side_scale-roller_length/2
+ print('ROLLER MEASURED TARGET m length 4.50 width 2.00 canopy-height 2.90; rear-tyre diameter 1.30; drum diameter 1.50 width 1.80')
+ print('ROLLER PHOTO SCALE from rear tyre',roller_rear_tyre_px,'px radius ->',round(roller_rear_scale,6),'m/px; side silhouette length',round(roller_length,3),'m vs target',roller_target_length,'m; side tyre diameter',round(2*roller_side_scale*112,3),'m')
  roller_table={
   'photos':{'side':'roller-side.jpg','front':'roller-front.jpg','rear':'roller-rear.jpg','top':'roller-top.jpg'},
   'length':roller_length,'width':roller_width,'height':roller_height,
@@ -435,22 +445,20 @@ def basic_family():
   'rear':{'centre':310,'ground':535,'top':50},
   'top':{'front':14,'rear':607,'centre':310,'along':'x','x_scale':roller_width/(500-120)},
   'underside':.55,
-  'wheels':[(-.75,.82,.70)],
+  'wheels':[(-.75,roller_tyre_radius,.70)],
   'cut':{
-   'side':[(0,45,621,111),(0,302,246,550),(277,304,514,550),(240,155,368,330)],
-   'front':[(0,0,621,112),(70,300,178,536),(440,300,552,536)],
-   'rear':[(0,0,621,112),(70,300,178,536),(440,300,552,536)],
+   'side':[(0,45,621,111),(42,370,224,445)],
+   'front':[(0,0,621,112)],
+   'rear':[(0,0,621,112)],
    'top':[(210,145,460,390),(0,320,190,515),(450,105,535,245)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
-  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-20/masks')}
+  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-21/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
- def roller_box(name,center,size,material,bevel=.04):
-  return box(name,game_vector(center),(size[0],size[2],size[1]),material,roller,bevel)
- def roller_beam(name,start,end,radius,material):
-  return beam(name,game_vector(start),game_vector(end),radius,material,roller)
+ # carve_hull already maps the photo grid from game axes into Blender's Z-up
+ # mesh coordinates in voxel_surface. Do not transform the returned vertices again.
  def roller_bounds(obj):
   deps=bpy.context.evaluated_depsgraph_get();pts=[]
-  nodes=[obj];
+  nodes=[obj]
   while nodes:
    node=nodes.pop();nodes.extend(node.children)
    if node.type!='MESH':continue
@@ -458,32 +466,57 @@ def basic_family():
   if not pts:return None
   game=[(p.x,p.z,-p.y) for p in pts]
   return tuple(min(p[i] for p in game) for i in range(3)),tuple(max(p[i] for p in game) for i in range(3))
- # The canopy is a flat roof on four posts; the station stays open.
+ roller_body_bounds=roller_bounds(roller_body)
+ print('ROLLER CARVED BODY BOUNDS m min',tuple(round(v,3) for v in roller_body_bounds[0]),'max',tuple(round(v,3) for v in roller_body_bounds[1]))
+ body_extents=tuple(roller_body_bounds[1][i]-roller_body_bounds[0][i] for i in range(3))
+ print('ROLLER CARVED BODY EXTENTS m length',round(body_extents[2],3),'width',round(body_extents[0],3),'height',round(body_extents[1],3),'against whole-machine targets 4.50 x 2.00 x 2.90 m')
+ def roller_box(name,center,size,material,bevel=.04):
+  return box(name,game_vector(center),(size[0],size[2],size[1]),material,roller,bevel)
+ def roller_beam(name,start,end,radius,material):
+  return beam(name,game_vector(start),game_vector(end),radius,material,roller)
+ # The canopy is a flat roof on four posts, photo-mapped from the worn yellow
+ # roof and uprights. No old olive-green canopy meshes are retained.
+ roller_photo=roller_table['_photos']['side']
+ roller_photo_mat=roller_photo.material()
+ def map_box_to_photo(obj,rect,size_x,size_z):
+  x0,y0,x1,y1=rect
+  uv=obj.data.uv_layers.active or obj.data.uv_layers.new(name='UVMap')
+  for poly in obj.data.polygons:
+   for li in poly.loop_indices:
+    co=obj.data.vertices[obj.data.loops[li].vertex_index].co
+    uv.data[li].uv=(x0/roller_photo.w+(co.x/size_x+.5)*(x1-x0)/roller_photo.w,
+                    1-(y0/roller_photo.h+(co.z/size_z+.5)*(y1-y0)/roller_photo.h))
  for x in (-.69,.69):
-  for z in (-.44,.52):roller_beam('roller canopy post',(x,1.88,z),(x,3.47,z),.055,paint)
- roller_box('roller flat canopy roof',(0,3.54,.04),(1.72,.13,1.35),paint,.045)
+  for z in (-.44,.52):
+   post=roller_box('roller canopy post',(x,2.33,z),(.12,.90,.12),roller_photo_mat,.018)
+   map_box_to_photo(post,(308 if x<0 else 418,96,330 if x<0 else 440,252),.12,.12)
+ roller_roof=roller_box('roller flat canopy roof',(0,2.84,.04),(1.72,.13,1.35),roller_photo_mat,.045)
+ map_box_to_photo(roller_roof,(190,52,470,98),1.72,1.35)
  roller_box('roller seat pan',(0,1.15,.02),(.52,.16,.48),black,.045)
  roller_box('roller seat back',(0,1.43,.26),(.52,.56,.15),black,.045)
  roller_beam('roller steering column',(0,1.65,-.35),(0,2.24,-.35),.035,steel)
  bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=6,major_radius=.22,minor_radius=.025,location=game_vector((0,2.26,-.35)),rotation=(0,math.pi/2,0));wheel=bpy.context.object;wheel.name='roller steering wheel';wheel.data.materials.append(black);parent(wheel,roller)
  # Drum photo is wrapped around one closed, wide steel cylinder on its axle origin.
  drum_photo=RollerPhoto(roller_textures/'roller-drum-side.jpg')
- drum_center=game_vector((0,.82,-1.47));drum_mat=drum_photo.material();drum=empty('roller:drum',drum_center,roller)
- bpy.ops.mesh.primitive_cylinder_add(vertices=64,radius=.82,depth=2.02,location=drum_center,rotation=(0,math.pi/2,0))
+ drum_center=game_vector((0,.75,roller_drum_z));drum_mat=drum_photo.material();drum=empty('roller:drum',drum_center,roller)
+ bpy.ops.mesh.primitive_cylinder_add(vertices=64,radius=.75,depth=1.80,location=drum_center,rotation=(0,math.pi/2,0))
  o=bpy.context.object;o.name='roller photo-wrapped steel drum';o.data.materials.append(drum_mat);o.data.uv_layers.active.name='UVMap';parent(o,drum)
  # Crosswise cylinder axle is the joint origin; work turns around it.
  for side in (-1,1):
-  roller_beam('roller drum yoke',(side*.91,.84,-1.47),(side*.91,1.57,-1.47),.13,paint)
+  roller_beam('roller drum yoke',(side*.91,.75,roller_drum_z),(side*.91,1.53,roller_drum_z),.13,roller_photo_mat)
  roller_side=roller_table['_photos']['side'];roller_ends=roller_table['_photos']['rear']
  roller_end_scale=roller_height/(535-50)
  for side in (-1,1):
   tire_mesh=PhotoMesh()
-  photo_tyre(tire_mesh,'side',roller_side,430,438,112,.82,.20,'rubber',roller_ends,
+  photo_tyre(tire_mesh,'side',roller_side,430,438,112,roller_tyre_radius,.20,'rubber',roller_ends,
              198 if side<0 else 425,.20/roller_end_scale*.90,
-             535-.82/roller_end_scale,535-.82*.08/roller_end_scale,sides=32)
+             535-roller_tyre_radius/roller_end_scale,535-roller_tyre_radius*.08/roller_end_scale,sides=32)
   tire=tire_mesh.finish('roller rear tyre',{'side':roller_side.material(),'rubber':rubber})
   tire.name='roller rear tyre '+('left' if side<0 else 'right');parent(tire,roller)
-  tire.location=game_vector((side*.78,.82,-.75))
+  # Side-photo x=430 is the rear axle; map it through the same 4.5 m length
+  # used by the carve instead of placing the tyres beside the front drum.
+  roller_rear_axle_z=(430-30)*roller_side_scale-roller_length/2
+  tire.location=game_vector((side*.78,roller_tyre_radius,roller_rear_axle_z))
  roller_parts=[('carved body',roller_body),('drum',drum)]
  for label,obj in roller_parts:
   b=roller_bounds(obj);print('ROLLER PIECE BOUNDS',label,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
@@ -1012,19 +1045,22 @@ for obj in bpy.context.scene.objects:
   bpy.ops.mesh.primitive_plane_add(size=100,location=(22,0,-.04));floor=bpy.context.object;floor.name='temporary roller grey ground'
   floor_mat=bpy.data.materials.new('roller plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
   floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
-  scene.render.resolution_x=1000;scene.render.resolution_y=560;scene.render.resolution_percentage=100
-  def roller_cam(label,location,target,scale,ortho=True,up='Y'):
+  for loc,power,size in [((16,-8,10),1800,7),((27,4,7),950,6)]:
+   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
+   light.rotation_euler=(Vector((22,0,1.3))-light.location).to_track_quat('-Z','Z').to_euler()
+  scene.render.resolution_x=1200;scene.render.resolution_y=720;scene.render.resolution_percentage=100
+  def roller_cam(label,location,target,scale,ortho=True,up='Z'):
    bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO' if ortho else 'PERSP'
    if ortho:cam.data.ortho_scale=scale
    else:cam.data.lens=56
    scene.camera=cam;scene.render.filepath=str(ev/f'roller-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
-  roller_cam('side',(35,0,1.9),(22,0,1.9),4.7)
-  roller_cam('front',(22,15,1.9),(22,0,1.9),3.8)
-  roller_cam('rear',(22,-15,1.9),(22,0,1.9),3.8)
-  roller_cam('overhead',(22,0,15),(22,0,0),4.8,up='X')
+  roller_cam('side',(9,0,1.45),(22,0,1.45),12.0,up='Z')
+  roller_cam('front',(22,15,1.45),(22,0,1.45),8.0,up='Z')
+  roller_cam('rear',(22,-15,1.45),(22,0,1.45),8.0,up='Z')
+  roller_cam('overhead',(22,0,15),(22,0,0),12.0,up='X')
   drum_joint=next(o for o in bpy.data.objects if o.name=='roller:drum');drum_joint.rotation_mode='XYZ';drum_joint.rotation_euler=(0,0,0)
-  roller_cam('rest',(31,-10,7),(22,0,1.9),8.6,False)
-  drum_joint.rotation_euler[0]=.65;roller_cam('work',(31,-10,7),(22,0,1.9),8.6,False)
+  roller_cam('rest',(29,-9,6),(22,0,1.45),10.0,up='Z')
+  drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Z')
   print('Rendered roller side, front, rear, overhead, rest and work views from imported family GLB')
   raise SystemExit(0)
  if a.render_machine=='pipe-truck':
