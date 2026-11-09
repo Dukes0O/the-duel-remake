@@ -729,6 +729,8 @@ def basic_family():
   # Leave the whole stake-bed silhouette open. Its rails, headboard and tailgate
   # are traced as thin pieces below, so the carve cannot turn them into walls.
   keep &= ~((y>1.48)&(z>-.78))
+  # The folded loading crane is restored as its own traced photo piece.
+  keep &= ~((y>1.40)&(z> -1.55)&(z<-.55))
   return keep
  pipe_body_table={
   'photos':{'side':'pipe-truck-side.jpg','front':'pipe-truck-front.jpg',
@@ -740,13 +742,14 @@ def basic_family():
   'top':{'front':49,'rear':850,'centre':222,'along':'x','x_scale':pipe_length/(850-49)},
   'ends_split':-pipe_length/2+(367-25)*pipe_scale,
   'underside':1.12,'wheels':pipe_wheels,'keep':keep_pipe_body,
-  'cut':{'side':[(420,153,876,264)],
+  'cut':{'side':[(351,12,431,326),(420,153,876,264)],
          'front':[(0,0,887,50),(320,50,586,87)],
          'rear':[(0,0,887,58),(274,137,623,258)],
          'top':[(0,0,887,50),(0,410,887,444),(335,75,875,112),(335,332,875,370)]},
   'voxel':.045,'target':3200,'grey':25,'tolerance':36,'bleed_tolerance':38,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-16/masks')}
  pipe_body=carve_object('pipe-truck:body',pipe_textures,pipe_body_table)
+ print('ROUND 19 TRACE: pipe body carved',flush=True)
  split=pipe_body_table['ends_split']
  print('PIPE TRUCK REAR PHOTO SPLIT',round(split,3),'m at cab back wall (side photo x=367 px)')
  print('PIPE TRUCK BODY PHOTO MAP: cab volume=side/top with front end view; rear bed volume=side/top with rear end view')
@@ -758,57 +761,53 @@ def basic_family():
  def pipe_box(name,center,size,material=steel,bevel=.04):return box(name,game_vector(center),(size[0],size[2],size[1]),material,pipes,bevel)
  def pipe_beam(name,start,end,radius,material=steel):return beam(name,game_vector(start),game_vector(end),radius,material,pipes)
  def pipe_add(label,obj):pipe_parts.append((label,obj));return obj
- # Trace the open stake rails from full-size photo crops of each painted bar.
- from photo_carve import save_mask
- pipe_side_rgb=pipe_side.rgb();side_crop=pipe_side_rgb[153:264,425:876]
- side_chroma=side_crop.max(axis=2)-side_crop.min(axis=2)
- side_mask=np.zeros((pipe_side.h,pipe_side.w),dtype=bool)
- for y0,y1 in ((162,181),(188,204),(213,230),(238,256)):
-  side_mask[y0:y1,425:876]=side_chroma[y0-153:y1-153,:]>16
- side_loops=trace(side_mask,(425,153,876,264),tolerance=1.8,min_area=30)
- if len(side_loops)<4:raise RuntimeError(f'pipe side stake trace retained only {len(side_loops)} loops')
- save_mask(side_mask,project_root/'.qa-dist/town-machines-2/round-18/pipe-side-stake-mask.png')
- side_scale=pipe_scale
- def pipe_side_world(px,py,depth):
-  return (depth,(389-py)*side_scale,-pipe_length/2+(px-25)*side_scale)
+ # Restore the folded loading crane as a fitted, separate piece traced from the
+ # same photo as round 17. It remains outside the body carve.
+ crane_node=empty('pipe-truck:loading-crane',game_vector((0,0,0)),pipes)
+ from photo_carve import lift_if_dark
+ lift_if_dark(pipe_side)
+ crane_crop=(351,12,431,326)
+ crane_sky=pipe_side.sky([(8,8),(pipe_side.w-9,8),(8,pipe_side.h-9),(pipe_side.w-9,pipe_side.h-9)],tolerance=44,grey=32)
+ crane_mask=np.zeros((pipe_side.h,pipe_side.w),dtype=bool)
+ crane_mask[crane_crop[1]:crane_crop[3],crane_crop[0]:crane_crop[2]]=~crane_sky[crane_crop[1]:crane_crop[3],crane_crop[0]:crane_crop[2]]
+ crane_loops=trace(crane_mask,crane_crop,tolerance=1.5,min_area=12)
+ if not crane_loops:raise RuntimeError('pipe truck loading crane photo trace is empty')
+ crane_scale=pipe_scale
+ def crane_world(px,py,depth):return (depth,(389-py)*crane_scale,-pipe_length/2+(px-25)*crane_scale)
+ crane_mesh=PhotoMesh();slab(crane_mesh,'folded-loading-crane',pipe_side,crane_loops,crane_world,-.30,.30,wall_scale=crane_scale)
+ crane_obj=crane_mesh.finish('pipe truck round 17 folded loading crane photo trace',{'folded-loading-crane':pipe_side.material()})
+ parent(crane_obj,crane_node)
+ pipe_add('pipe-truck:loading-crane',crane_node)
+ print('ROUND 19 TRACE: loading crane restored',flush=True)
+ def photo_painted_box(name,center,size,photo,crop,direction='wide'):
+  obj=box(name,game_vector(center),(size[0],size[2],size[1]),steel,pipes,.018)
+  obj.data.materials.clear();obj.data.materials.append(photo.material())
+  uv=obj.data.uv_layers.active;x0,y0,x1,y1=crop
+  for poly in obj.data.polygons:
+   for li in poly.loop_indices:
+    co=obj.data.vertices[obj.data.loops[li].vertex_index].co
+    u=max(0,min(1,(co.y/size[2] if direction=='long' else co.x/size[0])+.5));v=max(0,min(1,co.z/size[1]+.5))
+    uv.data[li].uv=photo.uv(x0+u*(x1-x0),y0+v*(y1-y0))
+  return obj
+ # Posts and three open rails per side, plus the front rack and rear gate, are
+ # separate worn-yellow box beams. Their UVs use tight crops from each photo.
  for side in (-1,1):
-  side_mesh=PhotoMesh();slab(side_mesh,'stake-side',pipe_side,side_loops,pipe_side_world,-1.46 if side<0 else 1.32,-1.32 if side<0 else 1.46,wall_scale=side_scale)
-  side_obj=side_mesh.finish(f'pipe truck open traced stake side {side}',{'stake-side':pipe_side.material()})
-  pipe_add(f'pipe-truck:stake-side-{side}',side_obj)
- # The headboard rack is traced from the front end photo. Split the crop around
- # the folded loader crane so only the two uprights and the top crossrail remain.
- head_scale=pipe_height/(399-65)
- head_mesh=PhotoMesh()
- for rect in ((329,53,347,172),(556,53,574,172),(329,53,416,72),(467,53,574,72)):
-  region=np.zeros((pipe_front.h,pipe_front.w),dtype=bool)
-  x0,y0,x1,y1=rect
-  rgb=pipe_front.rgb()[y0:y1,x0:x1]
-  # Warm, chromatic painted steel is retained; the pale studio and cab glass
-  # are excluded by their low chroma or low value.
-  chroma=rgb.max(axis=2)-rgb.min(axis=2)
-  region[y0:y1,x0:x1]=(rgb.mean(axis=2)>72)&(chroma>18)
-  head_loops=trace(region,rect,tolerance=1.6,min_area=18)
-  def head_world(px,py,depth):return ((px-443)*head_scale,(399-py)*head_scale,depth)
-  slab(head_mesh,'headboard',pipe_front,head_loops,head_world,-.96,-.81,wall_scale=head_scale)
- head_obj=head_mesh.finish('pipe truck open traced headboard rack',{'headboard':pipe_front.material()})
- pipe_add('pipe-truck:headboard-rack',head_obj)
- # The rear gate gaps are shaded rather than studio-bright. Isolate its rusted
- # steel by chroma within the measured gate crop instead of flooding that shade.
- tailgate_rect=(274,137,623,258);tailgate_rgb=pipe_rear.rgb();tailgate_crop=tailgate_rgb[137:258,274:623]
- tailgate_chroma=tailgate_crop.max(axis=2)-tailgate_crop.min(axis=2)
- tailgate_mask=np.zeros((pipe_rear.h,pipe_rear.w),dtype=bool)
- for y0,y1 in ((145,167),(176,194),(201,222),(229,254)):
-  tailgate_mask[y0:y1,274:623]=tailgate_chroma[y0-137:y1-137,:]>16
- for x0,x1 in ((276,301),(380,399),(486,506),(594,620)):
-  tailgate_mask[143:255,x0:x1]=tailgate_chroma[:,x0-274:x1-274][6:118,:]>16
- tailgate_loops=trace(tailgate_mask,tailgate_rect,tolerance=1.8,min_area=32)
- if len(tailgate_loops)<8:raise RuntimeError(f'pipe rear tailgate trace retained only {len(tailgate_loops)} loops')
- save_mask(tailgate_mask,project_root/'.qa-dist/town-machines-2/round-18/pipe-rear-tailgate-mask.png')
- tail_scale=pipe_height/(399-75);tail_x_scale=pipe_width/(623-274)
- def tailgate_world(px,py,depth):return ((px-443)*tail_x_scale,(399-py)*tail_scale,depth)
- tailgate_mesh=PhotoMesh();slab(tailgate_mesh,'tailgate',pipe_rear,tailgate_loops,tailgate_world,4.43,4.58,wall_scale=tail_scale)
- tailgate_obj=tailgate_mesh.finish('pipe truck open traced tailgate',{'tailgate':pipe_rear.material()})
- pipe_add('pipe-truck:tailgate',tailgate_obj)
+  for y in (-.55,.70,1.95,3.18,4.20):
+   pipe_add(f'pipe-truck:stake-{side}-{y}',photo_painted_box('pipe truck worn yellow bed post',(side*1.38,2.05,y),(.09,1.20,.09),pipe_side,(331,150,358,179)))
+  for rail_index,height in enumerate((1.80,2.16,2.52),1):
+   rail=photo_painted_box(f'pipe truck worn yellow side rail {side} {rail_index}',(side*1.38,height,1.84),(.075,.10,4.86),pipe_side,(445,164,790,181),'long')
+   pipe_add(f'pipe-truck:side-rail-{side}-{rail_index}',rail)
+ # Open headboard rack uses the front photo's painted cross members.
+ for x in (-1.10,1.10):
+  pipe_add(f'pipe-truck:headboard-post-{x}',photo_painted_box('pipe truck headboard rack post',(x,2.12,-.82),(.10,1.24,.10),pipe_front,(330,55,348,168)))
+ for index,height in enumerate((1.68,2.08,2.48),1):
+  pipe_add(f'pipe-truck:headboard-rail-{index}',photo_painted_box('pipe truck headboard rack rail',(0,height,-.82),(2.25,.09,.09),pipe_front,(330,54,416,72)))
+ # Tailgate stands across the open rear of the flatbed.
+ for x in (-1.12,-.38,.38,1.12):
+  pipe_add(f'pipe-truck:tailgate-post-{x}',photo_painted_box('pipe truck tailgate upright',(x,2.10,4.24),(.09,1.15,.09),pipe_rear,(276,143,301,254)))
+ for index,height in enumerate((1.72,2.08,2.44),1):
+  pipe_add(f'pipe-truck:tailgate-rail-{index}',photo_painted_box('pipe truck worn yellow tailgate rail',(0,height,4.24),(2.35,.10,.09),pipe_rear,(280,145,615,165)))
+ print('ROUND 19 TRACE: bed rails built',flush=True)
  frame_y=1.08
  for side in (-1,1):pipe_add(f'pipe-truck:frame-rail-{side}',pipe_beam('pipe frame ladder rail',(side*.54,.76,-3.78),(side*.54,.76,3.78),.055,steel))
  for index,axle_z in enumerate(pipe_axles):
