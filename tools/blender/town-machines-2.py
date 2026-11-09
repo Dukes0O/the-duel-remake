@@ -117,7 +117,7 @@ def cab(id,par,x=0,y=-.1,z=1.8):
  for s in (-1,1):
   bpy.ops.object.light_add(type='AREA',location=(x+s*.42,y-.66,z+1.80));lamp=bpy.context.object;lamp.name=id+':lamp';lamp.data.energy=18;lamp.data.color=(1.0,.78,.42);lamp.data.shape='DISK';lamp.data.size=.12;parent(lamp,par)
 def articulated_loader():
- root=empty('loader',(0,0,0));front=empty('loader:front-frame',(0,-.74,0),root);rear=empty('loader:rear-frame',(0,.74,0),root)
+ root=empty('loader',(0,0,0));front=empty('loader:front-frame',(0,.74,0),root);rear=empty('loader:rear-frame',(0,-.74,0),root)
  # Round 26 replaces the old block body with a photo carve. Attachments stay
  # in their named joints so the arm and bucket can move independently.
  from photo_model import Photo as LoaderPhoto, Mesh as LoaderMesh, slab as photo_slab, trace as photo_trace
@@ -180,7 +180,7 @@ def articulated_loader():
  # The articulated headstock and moving assemblies have real pin origins.
  # The side-photo frame pins beside the cab are at about x=300, y=255.
  # The arm joint origin is that pin; its photo-mapped arms run forward/down.
- arms=empty('loader:arms',(0,-.75,1.55),front)
+ arms=empty('loader:arms',(0,.75,1.55),front)
  arm_photo=LoaderPhoto(loader_textures/'loader-arm-side.jpg')
  from photo_carve import lift_if_dark
  arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
@@ -189,18 +189,18 @@ def articulated_loader():
  # bucket pin ahead of the front tyres. Their shared pivot is the arm origin.
  for side_sign in (-1,1):
   box_beam('loader lift arm '+('left' if side_sign<0 else 'right'),
-   (side_sign*1.17,-.75,1.55),(side_sign*1.17,-2.50,.98),.20,.18,loader_arm_paint,arms,.03)
- beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
- beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
- beam('loader arm hinge pin',(-.90,-.75,1.55),(.90,-.75,1.55),.12,tin,front)
+   (side_sign*1.17,.75,1.55),(side_sign*1.17,3.10,.39),.20,.18,loader_arm_paint,arms,.03)
+ beam('loader lift ram barrels left',(-.60,.30,1.52),(-.60,1.32,1.58),.09,steel,front)
+ beam('loader lift ram barrels right',(.60,.30,1.52),(.60,1.32,1.58),.09,steel,front)
+ beam('loader arm hinge pin',(-.90,.75,1.55),(.90,.75,1.55),.12,tin,front)
  # The bucket hinge is 1.75 m ahead and 0.57 m below the arm pivot. In world
- # space it lands at y=-2.50, with the 1 m scoop resting on the ground.
- bucket=empty('loader:bucket',(0,-2.50,.98),arms)
+ # space it lands at y=+3.10, with the 1 m scoop resting on the ground.
+ bucket=empty('loader:bucket',(0,3.10,.39),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
  bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
  bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=1.0/(1160-bucket_pin_py)
- def bucket_world(px,py,depth):return (depth,-(bucket_pin_px-px)*bucket_scale,(bucket_pin_py-py)*bucket_scale)
+ def bucket_world(px,py,depth):return (depth,(bucket_pin_px-px)*bucket_scale,(bucket_pin_py-py)*bucket_scale)
  for loop in bucket_loops:
   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
   if area<20000:continue
@@ -216,7 +216,7 @@ def articulated_loader():
  # then parent it so the bucket curls around that pin at work.
  traced_bucket.location+=bucket.matrix_world.translation
  parent(traced_bucket,bucket)
- beam('loader bucket hinge pin',(-.65,-2.50,.98),(.65,-2.50,.98),.105,tin,bucket)
+ beam('loader bucket hinge pin',(-.65,3.10,.39),(.65,3.10,.39),.105,tin,bucket)
  print('LOADER MEASURED PHOTO BOUNDS m length',round(length,3),'width',round(width,3),'height',round(height,3),'tyre radius',round(wheel_radius,3),'axle centres',tuple(round(v,3) for v in axle_z))
  # Report every mesh part before rigid assemblies are joined, with neighbour
  # contacts used to check that the structure is connected and grounded.
@@ -1112,17 +1112,27 @@ if a.render_machine=='loader':
  floor_mat=bpy.data.materials.new('loader plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
  loader_obj=bpy.data.objects['loader']; joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('loader:')}
+ bpy.context.view_layer.update()
+ for joint_name in ('loader:arms','loader:bucket'):
+  joint=joints[joint_name]
+  meshes=[child for child in joint.children_recursive if child.type=='MESH']
+  vertices=[child.matrix_world@Vector(corner) for child in meshes for corner in child.bound_box]
+  low=tuple(round(min(v[i] for v in vertices),3) for i in range(3));high=tuple(round(max(v[i] for v in vertices),3) for i in range(3))
+  print('EXPORTED LOADER BOUNDS',joint_name,'min',low,'max',high)
+  if low[1]<=0:raise RuntimeError(f'{joint_name} must lie at Blender y > 0')
+  if joint_name=='loader:bucket' and low[1]<=2.6:raise RuntimeError('loader:bucket must lie beyond Blender y +2.6')
  for loc,power,size in [((7,8,11),1700,7),((-5,-3,7),800,5)]:
   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((0,0,1.4))-light.location).to_track_quat('-Z','Y').to_euler()
  scene.render.resolution_x=900;scene.render.resolution_y=560;scene.render.resolution_percentage=100
  def loader_cam(label,location,target,scale,up='Y'):
   bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=scale;scene.camera=cam;scene.render.filepath=str(ev/f'loader-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
- loader_cam('side',(12,0,1.55),(0,-.1,1.55),6.0)
- loader_cam('front',(0,-13,1.55),(0,-.1,1.55),4.5)
- loader_cam('rear',(0,13,1.55),(0,-.1,1.55),4.5)
- loader_cam('overhead',(0,0,13),(0,-.1,0),6.5,'X')
- joints['loader:arms'].rotation_euler[0]=-.38;joints['loader:bucket'].rotation_euler[0]=.25
- loader_cam('work',(8,-9,7),(0,-1.4,1.5),8.0)
+ loader_cam('side',(12,0,1.55),(0,1.0,1.55),7.6)
+ loader_cam('front',(0,13,1.55),(0,.1,1.55),4.5)
+ loader_cam('rear',(0,-13,1.55),(0,.1,1.55),4.5)
+ loader_cam('overhead',(0,0,13),(0,1.0,0),8.0,'X')
+ loader_cam('rest',(8,9,7),(0,1.4,1.5),8.0)
+ joints['loader:arms'].rotation_euler[0]=.38;joints['loader:bucket'].rotation_euler[0]=-.25
+ loader_cam('work',(8,9,7),(0,1.4,1.5),8.0)
  print('Rendered loader orthographic views, rest comparison, and work pose with camera up Y')
  raise SystemExit(0)
 if a.render_machine=='roller':
@@ -1235,7 +1245,7 @@ for name in machine_names:
   road.hide_render=not(name=='paver' and pose=='work')
   for joint in joints.values():joint.rotation_mode='XYZ'
   if name=='loader':
-   joints['loader:arms'].rotation_euler[0]=0 if pose=='rest' else -.32;joints['loader:bucket'].rotation_euler[0]=0 if pose=='rest' else .24
+   joints['loader:arms'].rotation_euler[0]=0 if pose=='rest' else .32;joints['loader:bucket'].rotation_euler[0]=0 if pose=='rest' else -.24
   elif name=='mixer-truck':
    joints['mixer-truck:drum'].rotation_euler[2]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
   elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
@@ -1254,9 +1264,11 @@ for name in machine_names:
       x,height,long_pos=drop_positions[index];pipe.location.x=x;pipe.location.z=height;pipe.location.y=-long_pos;pipe.rotation_euler[1]=-.48 if index%2 else .48
      else:
       pipe.location.x=[-.55,0,.55,-.275,.275][index-1];pipe.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];pipe.location.y=-1.92;pipe.rotation_euler[1]=0
-  target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
+  target=origin+Vector((0,1.0 if name=='loader' else -1.0,3.2 if name=='drill-rig' else 1.8))
   for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
   view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
-  bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=70;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+  camera_side=8 if name!='loader' else -8
+  camera_front=-8.65 if name!='loader' else 8.65
+  bpy.ops.object.camera_add(location=target+Vector((camera_side,camera_front,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=70;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
 print('Rendered all seven machines at rest and work poses from imported GLB')
 print('exported',glb,glb.stat().st_size)
