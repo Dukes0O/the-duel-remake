@@ -31,6 +31,12 @@ and it still says nothing goes live without Kyle's word, which rule 18 ended on 
 
 No game code changes, so no lane tier, build or browser check.
 
+## Result (Claude, 9 November 2026)
+
+Done; see `docs/changes/RULES-REWRITE.md`. The page is 207 lines, not 120: every rule kept its
+content. Rule numbers were kept because other files cite them, so point 1's "one numbering"
+means one unbroken list from 1 to 22 with no rule numbered twice.
+
 ## Removed
 
 The dated amendment sections of `AGENTS.md` and the old `next-run.md` text. Git keeps both.

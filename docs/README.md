@@ -18,8 +18,8 @@ sizes. A status snapshot applies only to its stated commit.
 | [playtest-inbox.md](playtest-inbox.md) | Player feedback and release trial notes. |
 
 The live game is the separate `master` checkout. Development merges into
-`integration/wasteland`; only a written release approval permits work in the
-live checkout. The cleanup phase is finished; `next-run.md` sets the current order.
+`integration/wasteland`; only the Release Manager works in the live checkout,
+after the release gate (AGENTS rule 18). `next-run.md` sets the current order.
 The active plan and board take priority over older prompts in the playbook.
 
 ## Technical reference

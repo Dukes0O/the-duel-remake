@@ -39,7 +39,7 @@ The Director keeps these lines supplied within their limits and lock ownership.
 
 | Role | Responsibility |
 | --- | --- |
-| Kyle | Direction, play notes, release approval |
+| Kyle | Direction and play notes; AGENTS rule 18 lists the few things that wait for him |
 | Claude | Design packets, art and sound picks, finishing passes |
 | Director | Cards, ownership, locks and immediate shared metadata commits |
 | Builder | Card files, meaningful tests, implementation and targeted gate/build |
@@ -76,11 +76,10 @@ replaced or explicitly dropped; being idle is not permission to remove one.
    --jobs 4 and npm run build once in the lane. Keep the original result and
    build log pinned to that clean commit. Fix a real failure in the lane.
 5. Get one clear review. Use additional required save/art helpers only when
-   rule 6 or the card calls for them. Claude judges art within three rounds.
+   rule 6 or the card calls for them. Claude judges art within six rounds (SPEC 0.11).
    Daytime builds do not add full, frame, browser or balance checks; the full
    check owns those checks. `tools/full-check.mjs` uses a detached source copy;
    builders keep merging and only its frame step requires a quiet laptop.
-   Tonight's direct pause in next-run.md remains in force.
 6. Hand the exact source, green lane/build evidence and review to the Integrator.
    An independent clean lane can merge after another lane without syncing
    or rerunning solely because integration advanced.
@@ -168,16 +167,16 @@ Never force-remove a worktree or rewrite history without explicit authorization.
 ## 8. Feature switches and releases
 
 New features remain dev until their accepted design and applicable checks are
-complete. Claude makes art and sound picks; nothing waits on Kyle except a
-release. Kyle can overrule a pick and must say “go live” before live installation.
+complete. Claude makes art and sound picks and decides go-live (AGENTS rule 18);
+Kyle hears about each release afterwards and can overrule any pick.
 The Release Manager follows OPERATIONS: exact release full, master fast-forward,
 staged build, no retained rollback build, hashed assets before index/manifest, and no
-forced reload of an open race. Push or history changes require their applicable
-authorization; this integrator performs neither.
+forced reload of an open race. The Release Manager pushes integration/wasteland
+after every release as a plain fast-forward; AGENTS rule 22 covers history.
 
 ## 9. Player touchpoints
 
-Kyle can play Preview, leave notes in playtest-inbox or stop work at any time.
+Kyle plays the live game, leaves notes in playtest-inbox and can stop work at any time.
 The Director routes notes into cards. Lost progress, crashes and broken races
 go first. After release, the inbox states what changed in plain language.
 

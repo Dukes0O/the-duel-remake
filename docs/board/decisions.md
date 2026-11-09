@@ -14,6 +14,45 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle's decisions on how we work (moved here from AGENTS.md, 9 November 2026)
+
+`AGENTS.md` now states today's rules only. These are the decisions behind them, oldest first.
+
+- **24 September 2026.** AI-written code: redoing is cheap, so fix forward, keep the recipe and
+  not the output, one version of every binary, evidence used once, replace means remove, delete
+  and do not archive (SPEC 0.7 and 0.8). History was rewritten that day (CLEAN-09).
+- **4 October.** Build more, record less: this is a game for two people on one laptop. Check
+  once, 30 minutes at most on one failure, one run-log line per merge, extra helpers only for
+  saves, releases, money and pay, and art rounds (rules 1 to 6).
+- **11 October.** "Yes", after one shared test slot held every team's merges back for hours:
+  only frame timing needs a quiet laptop; a frame check is one simple run; no frame checks on
+  art; no new test machinery without a card (rules 7 to 10).
+- **12 October.** The factory (`docs/FACTORY.md`): test by what changed, merge as soon as it is
+  green, one daily full check, limits on lanes, Kyle sets direction (rules 11 to 15). Claude
+  answers a question on its card (rule 16). Reviews by kind (rule 17). Kyle follows the build
+  in Cockpit (rule 20; merged 25 October).
+- **13 October.** Codex's lead may settle a small question after an hour (rule 16). The Release
+  Manager pushes `integration/wasteland` after every release, replacing D8 of 24 September.
+  Claude may run the binary compaction and force-push it without asking; `master` is never
+  rewritten (rule 22).
+- **14 October.** A first-race load over 5 seconds is a warning, not a failure (rule 8).
+- **15 October.** Ship when green: "many things are being held up because they need my
+  explicit approval to merge or go live after tests pass... it's a bottle neck when I'm not
+  around, and it's a bottle neck when I am around... I trust yours and Codex' ability to run
+  these builds together. I don't need much involvement during the building phase." Standing
+  approval and never redo a passing check (rules 18 and 19). Fix forward covers live releases.
+- **24 October.** Right-sized checks replace "lane tier before every merge" (Gates). At most
+  two heavy jobs at once: three caused timeouts that cost reruns (rule 7). Cloud sessions start
+  from `integration/wasteland` and never merge.
+- **30 October.** "Use Performance": the frame check gates on Performance on the HDMI screen
+  alone; High keeps its pass while its scene and code are unchanged (rule 8).
+- **5 November.** "We don't have to recreate absolutely everything": a permissively licensed
+  library may be named on a card by Claude (`docs/MACHINES.md` section 12).
+- **6 November.** Art generally needs more than three rounds; six rounds per art card (SPEC
+  0.11). The factory learns: what we learn goes where the next job will read it (rule 21).
+- **Undated.** Stop rule: if a card cannot meet its acceptance with the tools we have, stop
+  and ask; never ship a placeholder or stub as the finished thing.
+
 ## 2026-09-22 PDT — FND-10/FND-11 order
 
 - Decision: Use FND-10's integrated seven historical fixtures as the

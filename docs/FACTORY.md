@@ -25,10 +25,11 @@ and SPEC text about test tiers, merge order and when heavy checks run.
    building and merging while it runs; only its frame step needs the laptop
    to itself. A short report names any merge that broke something; its fix
    goes first and other merges continue. (FAC-03, then FAC-FULL-CHECK)
-4. **Release is unchanged.** Full tier on the exact release commit, real
-   saves never touched, `dist-previous` kept. Kyle says "go live".
+4. **Release.** A full-tier pass that covers the release commit (AGENTS rule
+   19), real saves never touched, no rollback build kept. Claude decides
+   go-live (AGENTS rule 18, Kyle, 15 October).
 5. **Kyle sets direction.** Art and sound picks are Claude's within the
-   three-round cap. Kyle can overrule anything and keeps "go live".
+   six-round limit (SPEC 0.11). Kyle can overrule anything.
 6. **Work in progress limits.** At most six build lanes at once across all
    lines, no more than three of them course lanes, each test run `--jobs 4`
    or fewer. The laptop has 20 threads; the full check's frame step runs alone. A world
@@ -88,7 +89,7 @@ flowchart LR
 | C1 reference and reuse | Photos or descriptions of the real place (landforms, trees, buildings, road edges, light) and a reuse list: which existing kits, models, textures and sounds fit, from `public/assets/`, `C:/Users/kyleb/dev/art-library/` and other courses. New art only where nothing fits | Claude |
 | C2 rough road | `src/circuits/<id>.js` drives end to end with existing kits; drive-through check clean; `test-circuits.mjs` passes; a lap feels right on the keyboard (Claude drives it) | Claude |
 | C3 pace | Field pace and the reference lap file; computer drivers finish without crashes on every difficulty | Tests |
-| C4 scenery | Reused kits placed first; new models as Blender recipes, at most three rounds, one comparison sheet per round under `docs/board/looks/<id>/` | Claude, on pictures |
+| C4 scenery | Reused kits placed first; new models as Blender recipes, at most six rounds, one comparison sheet per round under `docs/board/looks/<id>/` | Claude, on pictures |
 | C5 landmark, water, sound | The signature landmark, the lake or water body (fire bucket), burnable forest decision, ambient sound cues | Claude |
 | C6 finishing pass | Claude drives every sector on Casual and Pro; pictures to Kyle | Claude |
 | C7 release | Switch on behind `dev`, full check including frames, then live with the next batch | Release Manager |
@@ -120,7 +121,7 @@ flowchart LR
 |---|---|---|
 | V0 packet | `docs/cars/<id>.md`: what the car is, class, top speed and acceleration targets against the current cars, price or earn rule, sound character | Claude |
 | V1 photos and donor | At least six reference photos (front, rear, sides, three-quarter, interior glimpse) noted by source; the closest existing model or recipe to start from | Claude |
-| V2 shape | Blender recipe; side, front, top and three-quarter compared against the photos on one sheet; at most three rounds | Claude, against photos |
+| V2 shape | Blender recipe; side, front, top and three-quarter compared against the photos on one sheet; at most six rounds | Claude, against photos |
 | V3 detail | Lights, wheels, mirrors, paint options, damage and dirt; triangle and texture budgets met | Claude |
 | V4 handling | Car numbers in config; lap times against two current cars on two courses inside the packet targets; replay fingerprints of other cars unchanged | Tests |
 | V5 sound | Engine and shift sounds from the sound catalog recipe; loudness matched | Claude, by listening tool numbers |
@@ -213,9 +214,8 @@ FAC-01, FAC-06 and FAC-07 can start at once. FAC-04 and FAC-05 need the
   approves the Windows scheduled task himself. FAC-FULL-CHECK runs the
   stages in a detached sibling copy of one commit while builders keep
   merging. Only frames need the laptop alone; other stages count toward
-  the three-heavy-job limit. The command is
-  `node tools/full-check.mjs --idle-awake --no-push`. Tonight's direct pause
-  remains in force (see `docs/board/next-run.md`).
+  the two-heavy-job limit. The command is
+  `node tools/full-check.mjs --idle-awake --no-push`.
 - **FAC-04 Course kit (Claude design, Codex build, SIM).** Each circuit file
   exports its manifest (id, flag, state, price, grandPrix, releaseOrder,
   driver). `src/circuits/index.js` discovers circuit files and sorts by
@@ -272,7 +272,7 @@ and `docs/THE_DEEP.md` section 10.
 ## 8. Taking a heavy-job turn (every chat, Claude QA-SHARED-HEAVY-ADMISSION, 15 October 2026)
 
 A heavy job is a lane or full gate, a build, a balance run, a browser check
-or a Blender render. At most three run at once across every chat (AGENTS 7).
+or a Blender render. At most two run at once across every chat (AGENTS 7).
 Every session, Claude or Codex, follows the same four steps; no other tool
 or queue exists.
 
@@ -281,9 +281,9 @@ or queue exists.
    already running. A job counts once, by its outermost process; its
    children are never counted again:
    `$p = Get-CimInstance Win32_Process -Filter "name='node.exe' or name='blender.exe'" | ? { $_.CommandLine -match 'run-tests|vite build|combat-balance|browser-harness|run-browser|blender' }; $ids = $p.ProcessId; ($p | ? { $ids -notcontains $_.ParentProcessId }).Count`
-2. **Start** only when the count is under three and no hold or slot
+2. **Start** only when the count is under two and no hold or slot
    reservation for someone else is open. Always `--jobs 4` or fewer.
-3. **Check again one minute later.** If the count is now over three, the
+3. **Check again one minute later.** If the count is now over two, the
    session whose job started last stops its own job and waits for the next
    turn. Never stop another session's job. A release full tier and the 04:00
    full check are never the job that stops.
@@ -295,4 +295,4 @@ or queue exists.
    waits until it clears.
 
 Frame timing still needs the laptop alone (AGENTS 8), and a release full
-tier still runs alone (AGENTS 1).
+tier still runs alone (AGENTS 2).
