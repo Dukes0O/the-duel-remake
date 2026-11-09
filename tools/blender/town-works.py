@@ -17,7 +17,7 @@ out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works/warehouse/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-works-warehouse/round-1.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:

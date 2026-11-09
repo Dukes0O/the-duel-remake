@@ -23,4 +23,39 @@ The card fixes the footprints, axes, object IDs, movable and lit child names, an
 
 Replaced the recipe's shared generic material treatment for the town works atlas with the eight photo-backed material crops. No runtime model IDs or parts were removed.
 
+## Warehouse — round 1
 
+### Changed
+
+- Replaced the earlier all-building recipe output with the card's first slice:
+  one photo-carved warehouse under `town-works`, with separate front, side and
+  rear loading doors, a loading dock and two roof vents.
+- Added four original single-view reference photos to the town texture folder
+  and credited them in `CREDITS.md`. The overhead photo is rotated 180° after
+  grid measurement so its front edge matches `carve_object`'s row convention.
+- The exported GLB is 837,976 bytes with 8,040 triangles and four embedded
+  photos. The round-1 sheet is 451,806 bytes at 2048×2734 in
+  `docs/board/looks/town-art-works-warehouse/round-1.jpg`. Bounds and contact
+  checks pass; their envelope and the self-review are in the adjacent review
+  note.
+- Blender 4.5.13 exported and rendered the GLB in a clean scene. I inspected
+  side, front, rear, straight-down, both three-quarter and mayor views.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+- `node tools/test-repo-hygiene.mjs`: passed; placement passed and size targets
+  remain advisory.
+- `node tools/test-review-evidence.mjs`: 8/9 passed on both runs. The only
+  failure is its audio-analysis subtest (`spawnSync ffmpeg EPERM`) in the
+  sandbox. The JPG publication subtest passed.
+- Browser checks and the game look check were not run in this art lane. Claude
+  should review the listed details in `round-1-review.md`.
+- The family check now asserts the warehouse is the only direct child and has
+  at most 9,000 triangles. This narrows the prior 20-building expectation to
+  the card's one-building slice; it does not lower the warehouse threshold.
+  The family byte cap is the card's 8 MB allowance. No race fingerprints apply.
+
+### Removed
+
+Removed the recipe geometry for the later card buildings from this first-slice
+export. Their IDs are not included yet and will return in later rounds. The
+existing family `round-1.jpg` and `round-2.jpg` remain. Replaced the earlier
+3 MB family cap in the check with the card's 8 MB cap; this GLB is under 1 MB.

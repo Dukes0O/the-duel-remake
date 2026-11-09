@@ -885,6 +885,6 @@ Four original single-view orthographic studio photographs generated with OpenAI 
 - `warehouse-side.jpg` ? long side, with two loading-door panels removed from the carve.
 - `warehouse-front.jpg` ? front gable and open loading doorway.
 - `warehouse-rear.jpg` ? rear gable, with the loading panel removed from the carve.
-- `warehouse-top.jpg` ? true straight-down roof view, front edge at the bottom.
+- `warehouse-top.jpg` ? true straight-down roof view, front edge at the top after carve alignment.
 
 Warehouse plan-view alignment note: after measuring the grid, the overhead photo was rotated 180 degrees so the front edge is the first row used by `carve_object`; the generated image itself remains an unaltered true orthographic view.
