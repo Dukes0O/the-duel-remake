@@ -75,4 +75,4 @@
 ## Removed
 
 - Removed the square deck plate and old crane outrigger bars, dark jack collars and feet. No mixer truck geometry or recipe was removed.
-- Removed this round's temporary renders, candidate GLB, helper output and check logs from ignored qa-dist after recording the review. Kept the runtime GLB, round sheet and review note.
+- Round 14 temporary renders, candidate GLB and check logs remain in ignored qa-dist. Cleanup was rejected because the attempted command would permanently delete them; the lane instructions require Recycle Bin deletion.
