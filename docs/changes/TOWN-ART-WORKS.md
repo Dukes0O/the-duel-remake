@@ -150,3 +150,35 @@ warehouse geometry and its four reference photos remain in the family.
 Removed the sawmill's block placeholder from the exported family and replaced
 it with the named frame, roof and work pieces. The passed warehouse and kiln
 remain in the family.
+
+## Sawmill — round 2
+
+### Changed
+
+- Resized the sawmill from the side and front photo proportions: 15 m long,
+  7.5 m wide, 5.7 m to the ridge, with about a 30° pitch. It remains inside
+  the 3×2 footprint.
+- Mapped the roof photo across the full length and both slopes. Traced the
+  photographed timber posts, braces and trusses, then slabbed the frame at
+  each of five post lines with the gaps kept open.
+- Increased the vertical saw disc to 1.2 m across and raised it through the
+  bench so more of it shows. Warehouse and kiln source sections were untouched.
+- Added `round-2.jpg` (420,969 bytes) and `round-2-review.md` beside the
+  sawmill sheets. The review records remaining visual questions for Claude.
+
+### Checks and review
+
+- Blender 4.5.13 exported the GLB and rendered side, front, rear, overhead,
+  two three-quarter and mayor views. I inspected the exported model in each.
+- `node tools/test-blender-output.mjs`: **394 checks passed, 0 failed**.
+  This includes the sawmill's 9,000-triangle limit and the family GLB readback.
+- No lane tier, build, browser scenario or in-game look check was run. Claude
+  should inspect the roof photo mapping, timber texture, blade visibility,
+  stacks and sawdust from driver and mayor views.
+- No assertions changed. Race code and fingerprints do not apply.
+
+### Removed
+
+Replaced the sawmill's round-1 shed dimensions, beam-built frame, roof mapping
+and blade placement with the photo-proportioned round-2 version. The warehouse
+and kiln remain unchanged in the exported family.

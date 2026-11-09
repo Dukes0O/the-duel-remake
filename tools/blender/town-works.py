@@ -10,14 +10,14 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', action='store_true')
 parser.add_argument('--assemble-sheet', action='store_true')
-parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-1')
+parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-2')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works-sawmill/round-1.jpg'
+sheet = root / 'docs/board/looks/town-art-works-sawmill/round-2.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:
@@ -34,7 +34,7 @@ if args.assemble_sheet:
     draw = ImageDraw.Draw(canvas)
     font = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 27)
     small = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 21)
-    draw.text((28, 15), 'TOWN WORKS | SAWMILL | ROUND 1', font=font, fill=(238, 223, 198))
+    draw.text((28, 15), 'TOWN WORKS | SAWMILL | ROUND 2', font=font, fill=(238, 223, 198))
     def fit_panel(path, xy, size):
         with Image.open(path) as source:
             image = ImageOps.contain(source.convert('RGB'), size, method=Image.Resampling.LANCZOS)
@@ -67,9 +67,8 @@ import numpy as np
 from mathutils import Vector
 sys.path.insert(0, str(root / 'tools/blender'))
 from photo_carve import carve_object
-from photo_model import Photo
+from photo_model import Photo, Mesh, Photo, lathe, trace, slab
 import town_base as town
-from photo_model import Mesh, Photo, lathe
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.preferences.filepaths.save_version = 0
@@ -315,8 +314,8 @@ for index in range(3):
                     (.07, .20, .20), kiln_mats['salvaged-brick'], .012)
     end.parent = wood_piece
 
-# TOWN-ART-WORKS, round 1: Sal's open saw shed. The roof and frame are built
-# pieces so the open bays stay open. The workbench is the only carved body;
+# TOWN-ART-WORKS, round 2: Sal's open saw shed. The roof and photographed frame
+# are separate so the open bays stay open. The workbench is the only carved body;
 # the blade, carriage log, log stacks and sawdust are separate round pieces.
 sawmill = bpy.data.objects.new('sawmill', None); bpy.context.collection.objects.link(sawmill); sawmill.parent = family
 sawmill.empty_display_type = 'CUBE'
@@ -339,29 +338,58 @@ def frame_beam(name, a, b, width):
     obj.parent = frame_piece
     return obj
 
-# Six full-height posts carry the eave beams. Knee braces keep the roof load
-# legible from the open ends and from the mayor's view.
-for x in (-10.15, 10.15):
-    for z in (-6.05, 0, 6.05):
-        frame_beam(f'post-{x}-{z}', (x, 0, z), (x, 5.45, z), .34)
-    frame_beam(f'eave-{x}', (x, 5.30, -6.2), (x, 5.30, 6.2), .32)
-for z in (-6.05, 0, 6.05):
-    frame_beam(f'cross-tie-{z}', (-10.1, 5.45, z), (10.1, 5.45, z), .27)
-    frame_beam(f'ridge-truss-{z}', (0, 7.43, z), (-10.12, 5.38, z), .22)
-    frame_beam(f'ridge-truss-other-{z}', (0, 7.43, z), (10.12, 5.38, z), .22)
-frame_beam('ridge-purlin', (0, 7.42, -6.3), (0, 7.42, 6.3), .25)
-for x in (-10.1, 10.1):
-    for z in (-6.05, 0, 6.05):
-        frame_beam(f'knee-{x}-{z}', (x, 3.95, z), (x + (-1 if x > 0 else 1) * 1.05, 5.27, z), .17)
-for z in (-6.05, 6.05):
-    for hand in (-1, 1):
-        frame_beam(f'end-knee-{z}-{hand}', (hand * 10.05, 3.95, z), (hand * 8.7, 5.3, z), .17)
+# The side photo is 2.63 times its ground-to-ridge height; the front photo's
+# measured span is 15.0 m and its roof pitch is 37 degrees. These dimensions
+# fit the 3 by 2 cells with 0.5 m clearance: 16.0 m long, 15.0 m wide.
+mill_length = 15.0
+mill_half_span = 3.75
+mill_eave = 3.55
+mill_ridge = 5.7
+front = Photo(textures / 'sawmill-front.jpg')
+front_rgb = front.rgb()
+timber_mask = np.zeros(front_rgb.shape[:2], dtype=bool)
+# Keep only the measured timber members. The spaces between them are studio
+# background and must stay open even where the truss encloses them.
+timber_polygons = [
+    [(117,300),(153,300),(153,735),(117,735)],
+    [(870,300),(907,300),(907,735),(870,735)],
+    [(501,91),(523,91),(523,339),(501,339)],
+    [(132,295),(892,295),(892,329),(132,329)],
+    [(499,25),(520,25),(153,310),(132,300)],
+    [(505,25),(525,25),(892,300),(871,310)],
+    [(141,390),(163,400),(260,310),(239,300)],
+    [(879,390),(857,400),(760,310),(781,300)],
+    [(158,365),(177,376),(263,321),(248,307)],
+    [(862,365),(843,376),(757,321),(772,307)],
+]
+for polygon in timber_polygons:
+    xx, yy = np.meshgrid(np.arange(front.w), np.arange(front.h))
+    inside_poly = np.zeros_like(timber_mask)
+    for (x0, y0), (x1, y1) in zip(polygon, polygon[1:] + polygon[:1]):
+        crossing = ((y0 > yy) != (y1 > yy)) & (
+            xx < (x1 - x0) * (yy - y0) / (y1 - y0 + 1e-12) + x0)
+        inside_poly ^= crossing
+    timber_mask |= inside_poly
+front_loops = trace(timber_mask, (65, 75, 955, 395), tolerance=2.0, min_area=70)
+side_scale = mill_length / (1000 - 20)
+front_ground, front_centre, front_span_px = 735, 512, 930
+front_scale = (mill_half_span * 2) / front_span_px
+def gable_world(px, py, d):
+    return ((px-front_centre)*front_scale, (front_ground-py)*front_scale,
+            d)
+for line_index, z in enumerate((-7.25, -3.625, 0.0, 3.625, 7.25)):
+    frame_mesh = Mesh()
+    slab(frame_mesh, 'frame', front, front_loops, gable_world,
+         z-.20, z+.20, wall_scale=front_scale)
+    traced = frame_mesh.finish(f'sawmill-timber-frame-line-{line_index+1}',
+                               {'frame': front.material()})
+    traced.parent = frame_piece
 
 # A corrugated pitched skin carries a roof-plan photograph outside and the
 # saw shed's side photograph below. The folded strip geometry catches light.
 roof_piece = sawmill_piece('sawmill:tin-roof')
 verts = []; faces = []; uv_top = []; uv_under = []; material_ids = []
-steps = 12; across = 16; half_run = 10.8; ridge_y = 7.62; eave_y = 5.73; half_depth = 6.8
+steps = 12; across = 16; half_run = mill_half_span; ridge_y = mill_ridge; eave_y = mill_eave; half_depth = mill_length / 2
 top_base = []; bottom_base = []
 for hand in (-1, 1):
     start = len(top_base)
@@ -388,10 +416,10 @@ for hand in (-1, 1):
                     ti = px - start
                     row = ti // (steps + 1); col = ti % (steps + 1)
                     t = row / across; z = -half_depth + 2 * half_depth * col / steps
-                    # The source photo shows the ridge across its centre and
-                    # the two roof slopes above and below it; exclude the grey studio.
-                    py_uv = roof_top.h * .5 + (t * roof_top.h * .40 * (-1 if hand < 0 else 1))
-                    px_uv = roof_top.w * .03 + (z + half_depth) / (2 * half_depth) * roof_top.w * .94
+                    # Repeat the full photographed roof width across both
+                    # slopes and map its full length to the shed's full length.
+                    py_uv = roof_top.h * (0.26 + t * .55)
+                    px_uv = roof_top.w * (z + half_depth) / (2 * half_depth)
                     uv_top.append(roof_top.uv(px_uv, py_uv))
                     side_x = col / steps * (roof_side.w - 1)
                     side_y = 215 + t * 120
@@ -431,11 +459,11 @@ bench_body.parent = bench_piece
 # bench. Both faces use the actual single-face blade photo.
 blade_piece = sawmill_piece('sawmill:circular-saw')
 blade_mesh = Mesh()
-blade_radius = .96
+blade_radius = .60
 def blade_uv(index, distance, radius, angle):
     return blade_photo.uv(blade_photo.w / 2 + math.cos(angle) * (radius / blade_radius) * blade_photo.w * .35,
                           blade_photo.h / 2 + math.sin(angle) * (radius / blade_radius) * blade_photo.h * .35)
-lathe(blade_mesh, 'blade', (0, 1.30, -.25), (0, 0, 1), (1, 0, 0), (0, 1, 0),
+lathe(blade_mesh, 'blade', (0, 1.60, -.25), (0, 0, 1), (1, 0, 0), (0, 1, 0),
       [(-.045, blade_radius), (.045, blade_radius)], blade_uv, sides=40,
       cap_start=('blade', lambda a, f: blade_photo.uv(blade_photo.w/2 + math.cos(a)*f*blade_photo.w*.35,
                                                         blade_photo.h/2 + math.sin(a)*f*blade_photo.h*.35)),
@@ -443,7 +471,7 @@ lathe(blade_mesh, 'blade', (0, 1.30, -.25), (0, 0, 1), (1, 0, 0), (0, 1, 0),
                                                       blade_photo.h/2 + math.sin(a)*f*blade_photo.h*.35)))
 blade_obj = blade_mesh.finish('sawmill-thin-circular-blade', {'blade': blade_photo.material()})
 blade_obj.parent = blade_piece
-bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.21, depth=.13, location=town.game_vector((0, 1.30, -.31)))
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=.21, depth=.13, location=town.game_vector((0, 1.60, -.31)))
 hub = bpy.context.object; hub.name = 'sawmill-blade-arbor-hub'; hub.rotation_euler[0] = math.pi / 2
 hub.data.materials.append(sawmill_mats['iron-dark']); hub.parent = blade_piece
 
