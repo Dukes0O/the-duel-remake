@@ -455,7 +455,7 @@ def basic_family():
    'rear':[(0,0,621,54),(0,520,621,621),(110,275,230,560),(399,275,530,560)],
    'top':[(0,0,621,40),(0,580,621,621),(390,35,535,175),(390,450,535,600)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
-  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-22/masks')}
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-23/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
  for photo in roller_table['_photos'].values():
   for node in photo.material().node_tree.nodes:
