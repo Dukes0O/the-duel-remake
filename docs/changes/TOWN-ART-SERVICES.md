@@ -230,3 +230,23 @@ The exported-model sheet is `docs/board/looks/town-art-services/round-14.jpg` (2
 
 - Removed the old 19 m simple triangular mast and its three guy stays. Replaced them with the lattice tower, hut, four plot-contained guy wires and anchors, and named warning lamp.
 - No passed building, source asset or test was removed.
+
+## Helipad, round 17
+
+Added four separate generated orthographic photos and credits, then replaced the old simple helipad shape with a 24 m square photo-mapped plate deck on welded girders and lathed oil drums. The H and circle are on the flat overhead-textured deck. The windsock, three-drum fuel stack, hand pump and four corner floodlights are separate pieces; the four light lenses use an emissive material. The pad sits inside its 4 by 4 cell footprint and remains below 1.5 m overall. The toll bank, school and radio mast source branches were left unchanged.
+
+The exported model has 2,628 helipad triangles. The full `services-2.glb` is 2,641,460 bytes. The bounds audit printed 42 piece bounds; every piece touches ground or another piece, stays inside the footprint, and reaches no higher than 1.49 m. The final sheet, `docs/board/looks/town-art-services/round-17.jpg`, is 1,600 by 2,580 pixels and 298,980 bytes. It shows all four photo/model pairs, both three-quarter views, and the mayor view. The four source JPEGs are at most 1,024 pixels wide.
+
+### Checks and review
+
+- Blender 4.5.13 export, all piece bounds/contact checks, and triangle budget: passed (2,628 triangles; 42 pieces; no contact failures).
+- `node tools/test-blender-output.mjs`: 389 checks passed, 0 failed.
+- Lane tier and build were not run, as required for art cards.
+- Browser and in-game checks were not run. Claude should review the side profile against the low-height requirement and check the small windsock, fuel stack, pump and emissive lamps in both three-quarter views and the mayor view.
+- Changed assertions: none. Race fingerprints: not applicable; race code is unchanged.
+- No new art fault was found. The source elevation photos depict a taller assembly than the 1.5 m cap permits, so the model follows the cap and has a visibly lower side profile.
+
+### Removed
+
+- Replaced the old plain helipad plinth/deck, bar H, weld bars, perimeter rails, tall light poles and untextured cylinders with the photographed deck, girders, drum supports and separate accessories.
+- No passed buildings, old review sheets or checks were removed.
