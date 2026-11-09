@@ -537,8 +537,9 @@ def basic_family():
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
   # The rear photo contains the cab, exhaust and hoist behind the counterweight.
-  # Exclude it from the carve; a built counterweight carries its flat tail face.
-  'ends_split':0,'front_favour':3,'rear_favour':8,
+  # Keep its carve empty; the front silhouette closes the body under side/top
+  # views, while the built counterweight carries the rear photo's flat tail face.
+  'ends_split':None,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
