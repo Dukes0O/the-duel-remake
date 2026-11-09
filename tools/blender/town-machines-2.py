@@ -436,6 +436,7 @@ def basic_family():
  # in perspective; keep tyre scale for height and set the body length explicitly.
  roller_length=5.1
  roller_drum_z=(128-30)*roller_side_scale-roller_length/2
+ roller_rear_axle_z=((453-46)/(588-46))*roller_length-roller_length/2
  print('ROLLER MEASURED TARGET m body 4.50 x 2.00 x 1.90; canopy-height 2.90; rear-tyre diameter 1.30; drum diameter 1.50 width 1.80')
  print('ROLLER PHOTO SCALE from rear tyre',roller_rear_tyre_px,'px radius ->',round(roller_rear_scale,6),'m/px; side silhouette length',round(roller_length,3),'m vs target',roller_target_length,'m; side tyre diameter',round(2*roller_side_scale*112,3),'m')
  roller_table={
@@ -448,7 +449,7 @@ def basic_family():
   'rear':{'centre':310,'ground':523,'top':80},
   'top':{'front':14,'rear':607,'centre':310,'along':'x','x_scale':roller_width/(500-120)},
   'underside':.55,
-  'wheels':[(-.75,roller_tyre_radius,.70)],
+  'wheels':[(roller_rear_axle_z,roller_tyre_radius,.70)],
   # Remove the photographed rear tyres so only the separately-built tyres show.
   'cut':{'side':[(0,0,621,54),(0,520,621,621),(357,255,550,560)],
    'front':[(0,0,621,54),(0,520,621,621),(91,250,211,560),(410,250,540,560)],
@@ -479,7 +480,7 @@ def basic_family():
  print('ROLLER CARVED BODY EXTENTS m length',round(body_extents[2],3),'width',round(body_extents[0],3),'height',round(body_extents[1],3),'against bare-body targets 4.50 x 2.00 x 1.90 m')
  if not (3.8<=body_extents[2]<=5.1 and 1.55<=body_extents[0]<=2.4 and 1.5<=body_extents[1]<=2.2):
   raise RuntimeError(f'roller body is outside printed bounds: {body_extents}')
- axle_z=((453-46)/(588-46))*roller_length-roller_length/2
+ axle_z=roller_rear_axle_z
  print('ROLLER BODY/AXLE CHECK: rear axle z',round(axle_z,3),'body bounds',tuple(round(v,3) for v in roller_body_bounds[0]),tuple(round(v,3) for v in roller_body_bounds[1]))
  if not (roller_body_bounds[0][2] < axle_z < roller_body_bounds[1][2] and roller_body_bounds[0][1] <= roller_tyre_radius+.45):
   raise RuntimeError('roller body does not sit on the rear axle')
@@ -521,14 +522,13 @@ def basic_family():
  roller_end_scale=roller_height/(535-50)
  for side in (-1,1):
   tire_mesh=PhotoMesh()
-  photo_tyre(tire_mesh,'side',roller_side,430,438,112,roller_tyre_radius,.20,'rubber',roller_ends,
+  photo_tyre(tire_mesh,'side',roller_side,453,412,140,roller_tyre_radius,.20,'rubber',roller_ends,
              198 if side<0 else 425,.20/roller_end_scale*.90,
              535-roller_tyre_radius/roller_end_scale,535-roller_tyre_radius*.08/roller_end_scale,sides=32)
   tire=tire_mesh.finish('roller rear tyre',{'side':roller_side.material(),'rubber':rubber})
   tire.name='roller rear tyre '+('left' if side<0 else 'right');parent(tire,roller)
   # Map the measured side-photo rear-tyre centre through the carve's own
   # start, end and length so the built tyres share the photographed axle.
-  roller_rear_axle_z=((453-46)/(588-46))*roller_length-roller_length/2
   tire.location=game_vector((side*.78,roller_tyre_radius,roller_rear_axle_z))
  roller_parts=[('carved body',roller_body),('drum',drum)]
  for label,obj in roller_parts:
