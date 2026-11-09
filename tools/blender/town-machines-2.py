@@ -522,7 +522,10 @@ def basic_family():
   # footprint so no photo-carved island floats above the built turntable.
   ring=(x*x+(z-1.58)**2<1.08**2)&(y>.35)&(y<3.18)
   floating_block=(abs(x)<.46)&(y>3.68)&(z>1.62)&(z<2.70)
-  return (y>=1.02)&~ring&~floating_block
+  # Side and roof projections leave high slabs behind the cab; the rear deck
+  # is built separately, so keep its carved body below the rail tops.
+  rear_slabs=(z>1.10)&(y>1.90)
+  return (y>=1.02)&~ring&~floating_block&~rear_slabs
  crane_body_table={
   'photos':{'side':'crane-truck-side.jpg','front':'crane-truck-front.jpg',
             'rear':'crane-truck-rear.jpg','top':'crane-truck-overhead.jpg'},
@@ -662,9 +665,9 @@ def basic_family():
  parent(support,turret);crane_add_part('crane-truck:slew-support',support)
  # Twin cheek plates carry one crosswise hinge pin over the photographed disc.
  for sx in (-1,1):
-  crane_box('crane painted boom cheek plate',(sx*.39,2.30,1.62),(.22,.78,.48),crane_yellow,.045,turret)
-  crane_beam('crane silver cheek wear edge',(sx*.39,1.93,1.62),(sx*.39,2.67,1.62),.035,crane_silver,turret)
- crane_beam('crane cheek plate pivot pin',(-.48,2.67,1.62),(.48,2.67,1.62),.105,crane_silver,turret)
+  crane_box('crane painted boom cheek plate',(sx*.39,2.32,1.62),(.22,1.00,.48),crane_yellow,.045,turret)
+  crane_beam('crane silver cheek wear edge',(sx*.39,1.82,1.62),(sx*.39,2.82,1.62),.035,crane_silver,turret)
+ crane_beam('crane cheek plate pivot pin',(-.48,2.82,1.62),(.48,2.82,1.62),.105,crane_silver,turret)
  # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
  from photo_carve import lift_if_dark
  from photo_carve import lift_if_dark
