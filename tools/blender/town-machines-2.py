@@ -591,7 +591,7 @@ def basic_family():
  # Box-beam stabilizers telescope from the chassis. Vertical jacks end in broad pads.
  for sx in (-1,1):
   for z in (-.55,2.85):
-   stem=crane_box('crane outrigger box beam',(sx*1.67,1.08,z),(1.55,.28,.40),steel,.045)
+   stem=crane_box('crane outrigger box beam',(sx*1.67,1.08,z),(1.55,.28,.40),crane_yellow,.045)
    crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
    telescoping=crane_box('crane outrigger sliding box',(sx*2.25,1.08,z),(.62,.19,.30),crane_yellow,.025)
    crane_add_part(f'crane-truck:outrigger-slide-{sx}-{z}',telescoping)
@@ -818,7 +818,7 @@ if a.render:
  crane_cam('side',(35,0,2.0),(55,0,2.0),9.4,1500,640,up='Y')
  crane_cam('front',(55,15,2.0),(55,0,2.0),5.8,900,650,up='Y')
  crane_cam('rear',(55,-15,2.0),(55,0,2.0),5.8,900,650,up='Y')
- crane_cam('overhead',(55,0,17),(55,0,0),9.0,1200,685,up='Y')
+ crane_cam('overhead',(55,0,17),(55,0,0),9.4,1200,685,up='X')
  hide_tree(boom_joint,False)
  hook_base=hook_joint.location.z
  boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
