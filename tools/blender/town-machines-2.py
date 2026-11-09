@@ -536,13 +536,13 @@ def basic_family():
   # The rear photo contains the cab, exhaust and hoist above the counterweight.
   # Let the side and roof views shape those shared parts; use the rear view only
   # for the low counterweight and bumper at the back of the chassis.
-  'ends_split':2.35,'front_favour':3,'rear_favour':8,
+  'ends_split':2.75,'front_favour':3,'rear_favour':8,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
-   'rear':[(0,240,137,467),(474,238,613,467),(0,0,613,205),(213,82,409,242),(380,0,422,115)],
+   'rear':[(0,240,137,467),(474,238,613,467),(0,0,613,250),(213,82,409,242),(380,0,422,115)],
    'top':[(0,0,827,96),(0,405,827,473),(443,155,650,337)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
@@ -556,6 +556,8 @@ def basic_family():
  crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
  crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
  crane_dark_bsdf=crane_dark.node_tree.nodes['Principled BSDF'];crane_dark_bsdf.inputs['Base Color'].default_value=(.018,.019,.018,1);crane_dark_bsdf.inputs['Roughness'].default_value=.96
+ crane_silver=bpy.data.materials.new('Crane truck / worn hydraulic silver');crane_silver.diffuse_color=(.48,.51,.50,1);crane_silver.use_nodes=True
+ crane_silver_bsdf=crane_silver.node_tree.nodes['Principled BSDF'];crane_silver_bsdf.inputs['Base Color'].default_value=(.48,.51,.50,1);crane_silver_bsdf.inputs['Metallic'].default_value=.62;crane_silver_bsdf.inputs['Roughness'].default_value=.48
  def crane_box(name,center,size,material=steel,bevel=.04,parent_obj=crane):
   return box(name,game_vector(center),(size[0],size[2],size[1]),material,parent_obj,bevel)
  def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
@@ -615,9 +617,9 @@ def basic_family():
    crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
    telescoping=crane_photo_box('crane painted sliding outrigger box',(sx*2.25,1.08,z),(.62,.28,.36),crop)
    crane_add_part(f'crane-truck:outrigger-slide-{sx}-{z}',telescoping)
-   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane silver vertical stabilizer jack',(sx*2.42,.94,z),(sx*2.42,.20,z),.105,tin))
-   collar=crane_box('crane silver jack foot collar',(sx*2.42,.15,z),(.30,.18,.30),tin,.025)
-   foot=crane_box('crane square silver stabilizer foot plate',(sx*2.42,.07,z),(.56,.14,.56),tin,.035)
+   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane silver vertical stabilizer jack',(sx*2.42,.94,z),(sx*2.42,.20,z),.105,crane_silver))
+   collar=crane_box('crane silver jack foot collar',(sx*2.42,.15,z),(.30,.18,.30),crane_silver,.025)
+   foot=crane_box('crane square silver stabilizer foot plate',(sx*2.42,.07,z),(.56,.14,.56),crane_silver,.035)
    crane_add_part(f'crane-truck:jack-collar-{sx}-{z}',collar)
    crane_add_part(f'crane-truck:outrigger-foot-{sx}-{z}',foot)
  # Photo-faced round slew disc; both circular caps stay inside the photographed
@@ -646,8 +648,8 @@ def basic_family():
  # Twin cheek plates carry one crosswise hinge pin over the photographed disc.
  for sx in (-1,1):
   crane_box('crane painted boom cheek plate',(sx*.39,2.30,1.62),(.22,.78,.48),crane_yellow,.045,turret)
-  crane_beam('crane silver cheek wear edge',(sx*.39,1.93,1.62),(sx*.39,2.67,1.62),.035,tin,turret)
- crane_beam('crane cheek plate pivot pin',(-.48,2.67,1.62),(.48,2.67,1.62),.105,tin,turret)
+  crane_beam('crane silver cheek wear edge',(sx*.39,1.93,1.62),(sx*.39,2.67,1.62),.035,crane_silver,turret)
+ crane_beam('crane cheek plate pivot pin',(-.48,2.67,1.62),(.48,2.67,1.62),.105,crane_silver,turret)
  # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
  from photo_carve import lift_if_dark
  from photo_carve import lift_if_dark
@@ -800,15 +802,17 @@ for machine_name in machine_names:
 # Export exactly the gameplay joint hierarchy; preserve all mesh UVs as UVMap.
 for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.data.uv_layers.active:obj.data.uv_layers.active.name='UVMap'
-for mat in bpy.data.materials:
- for node in mat.node_tree.nodes if mat.use_nodes else []:
-  if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
-   filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
-   if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-')):node.image.scale(192,192)
- blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
-if a.render:
- from mathutils import Vector
- scene=bpy.context.scene
+ for mat in bpy.data.materials:
+  for node in mat.node_tree.nodes if mat.use_nodes else []:
+   if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
+    filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
+    if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-')):node.image.scale(192,192)
+  blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
+ if a.render:
+  from mathutils import Vector
+  bpy.ops.wm.read_factory_settings(use_empty=True)
+  bpy.ops.import_scene.gltf(filepath=str(glb))
+  scene=bpy.context.scene
  scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
  scene.view_settings.view_transform='Standard';scene.view_settings.look='None'
  scene.world=bpy.data.worlds.new('neutral even crane studio');scene.world.use_nodes=True
