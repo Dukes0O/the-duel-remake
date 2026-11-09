@@ -290,3 +290,24 @@ all pieces within the plot and below 1.5 m.
 - Replaced the undersized support stubs and on-deck fuel props with full-size
   photographed drum supports and a ground-side fuel stack. No prior review
   sheet, other building model, or check was removed.
+
+## Notice board, round 19
+
+Added the notice board as a separate named assembly in `services-2.glb`. The main panel wears four credited orthographic photos: the NOTICE front, timber rear, narrow side and overhead edge. Two timber posts stand on grade; a pitched tin sheet rests on timber supports, and a photo-covered crate sits in front as a step. Replaced the old simple notice plate and paper geometry. The recipe branches for toll bank, school, radio mast and helipad were not edited.
+
+All 13 mesh bounds print during export. Each mesh touches grade or another piece and stays within the 1 by 1 cell plot. The notice board has 316 triangles. The final family GLB is 3,835,288 bytes. The four board photos are at most 1,024 pixels wide, and the crate has its own photo. The round-19 comparison sheet is 1,600 by 2,547 pixels and 257,322 bytes.
+
+### Checks and review
+
+- Blender 4.5 export and seven clean-scene renders: passed. The bounds/contact audit passed for all 13 pieces; the notice board is 316 triangles.
+- `node tools/test-blender-output.mjs`: passed to completion, 389 checks, 0 failed.
+- Lane tier and build: not run, per the art-card rules.
+- Browser check: not run here. Claude should review roof visibility from both three-quarter views and the mayor view, step placement, and whether the few neutral grey pixels at the photo's rounded front edge read as background.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement is clean and size targets remain advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed (657 checks). The audio-analysis subtest failed on both the first run and its one rerun with `spawnSync ffmpeg EPERM`; this runner could not launch `ffmpeg`. The JPG evidence publication subtest passed, and no assertions changed.
+- Changed assertions: none. Race fingerprints: not applicable; race code is unchanged.
+- Added a note to `docs/ART_LINE.md`: an unconditional branch-level `continue` had skipped the registered notice-board building after the helipad branch.
+
+### Removed
+
+- Removed the old simple notice plate and paper shape in the same recipe change. No passed building, previous review sheet or test assertion was removed.

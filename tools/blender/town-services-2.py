@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-18.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-18/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-19.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-19/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -44,6 +44,53 @@ def beam(name,p0,p1,w,mat=steel,parent=None):
  o=box(name,((p0[0]+p1[0])/2,(p0[1]+p1[1])/2,(p0[2]+p1[2])/2),(w,d.length,w),mat,.012)
  o.rotation_euler=d.to_track_quat('Z','Y').to_euler()
  return parent_keep(o,parent) if parent else o
+def notice_photo_box(name,center,size,face_materials,parent):
+ # Six photographed faces on one low-poly box. Face UVs map the whole photo,
+ # so the timber grain and pinned paper stay at a consistent physical scale.
+ x,y,z=center;w,h,d=size
+ points=[(x-w/2,y,z-d/2),(x+w/2,y,z-d/2),(x+w/2,y+h,z-d/2),(x-w/2,y+h,z-d/2),
+         (x-w/2,y,z+d/2),(x+w/2,y,z+d/2),(x+w/2,y+h,z+d/2),(x-w/2,y+h,z+d/2)]
+ vertices=[tuple(town.game_vector(point)) for point in points]
+ # The face maps below are ordered for their outward normals. In particular,
+ # front is -Z and rear is +Z in game coordinates.
+ faces=[(0,3,2,1),(4,5,6,7),(0,4,7,3),(1,2,6,5),(3,7,6,2),(0,1,5,4)]
+ kinds=['front','rear','side','side','top','top']
+ mesh=bpy.data.meshes.new(name+' photo box mesh');mesh.from_pydata(vertices,[],faces);mesh.update()
+ mat_order=[]
+ for kind in kinds:
+  material=face_materials[kind]
+  if material not in mat_order:mat_order.append(material)
+ mesh.materials.clear()
+ for material in mat_order:mesh.materials.append(material)
+ uv=mesh.uv_layers.new(name='Photo face UV')
+ uv_by_vertex={
+  # The camera at -Z reads its screen left from +X, so mirror the front UVs.
+  'front':{0:(1,0),3:(1,1),2:(0,1),1:(0,0)},
+  'rear':{4:(0,0),5:(1,0),6:(1,1),7:(0,1)},
+  'side':{0:(0,0),4:(1,0),7:(1,1),3:(0,1),1:(0,0),5:(1,0),6:(1,1),2:(0,1)},
+  'top':{3:(0,0),2:(1,0),6:(1,1),7:(0,1),0:(0,0),1:(1,0),5:(1,1),4:(0,1)},
+ }
+ for polygon,kind in zip(mesh.polygons,kinds):
+  polygon.material_index=mat_order.index(face_materials[kind])
+  for loop_index in polygon.loop_indices:
+   vertex_index=mesh.loops[loop_index].vertex_index
+   uv.data[loop_index].uv=uv_by_vertex[kind][vertex_index]
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+ return parent_keep(obj,parent)
+def notice_strut(name,p0,p1,width,material,parent):
+ start=town.game_vector(p0);end=town.game_vector(p1);direction=(end-start).normalized()
+ reference=Vector((0,0,1)) if abs(direction.z)<.94 else Vector((1,0,0))
+ u=direction.cross(reference).normalized()*width/2;v=direction.cross(u).normalized()*width/2
+ verts=[tuple(point+offset) for point in (start,end) for offset in (u+v,u-v,-u-v,-u+v)]
+ faces=[(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+ mesh=bpy.data.meshes.new(name+' timber prism');mesh.from_pydata(verts,[],faces);mesh.materials.append(material);mesh.update()
+ uv=mesh.uv_layers.new(name='Timber UV')
+ for poly in mesh.polygons:
+  for loop_index in poly.loop_indices:
+   point=mesh.vertices[mesh.loops[loop_index].vertex_index].co
+   uv.data[loop_index].uv=(point.x/2,point.z/2)
+ obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+ return parent_keep(obj,parent)
 def cable(name,p0,p1,radius,mat,parent=None):
  # Build the prism in world coordinates so a thin guy cable follows its full
  # diagonal in the Y-up export, independent of the beam helper's axis remap.
@@ -412,8 +459,38 @@ for n in ids:
    box(lens_name,(x,1.478,z-.02),(.24,.025,.14),lamp,.008,b)
   continue
  if n=='notice-board':
-  for x in (-2.4,2.4):beam('Notice post',(x,.1,-2),(x,2.7,-2),.15,wood,b)
-  box('Public notice plate',(0,1.75,-2),(4.8,1.5,.2),steel,.045,b);box('Notice paper',(0,1.75,-2.15),(3.9,.82,.04),paint,.015,b);continue
+  notice_photos={view:Photo(tex/f'notice-board-{view}.jpg') for view in ('front','rear','side','top')}
+  notice_materials={view:photo.material() for view,photo in notice_photos.items()}
+  crate_photo=Photo(tex/'notice-board-crate.jpg');crate_material=crate_photo.material()
+  # The photo itself is the flat board face; the two ground-set posts and
+  # shelter remain real pieces behind it.
+  notice_photo_box('notice-board:board-panel',(0,.56,0),(2.78,2.50,.26),notice_materials,b)
+  post_x=(-1.08,1.08)
+  for i,x in enumerate(post_x,1):
+   box(f'notice-board:timber-post-{i}',(x,1.62,.16),(.18,3.24,.22),wood,.018,b)
+   box(f'notice-board:roof-eave-support-{i}',(x,3.19,.16),(.12,.12,1.34),wood,.012,b)
+  # Two shallow slopes meet along a raised ridge. Each tin sheet is a real
+  # thin quad shell, with the weathered corrugation material on both sides.
+  for side in (-1,1):
+   inner=(0,3.49,.12);outer=(side*1.55,3.19,.12);z0,z1=-.76,.76;thick=.025
+   top=[(inner[0],inner[1],z0),(outer[0],outer[1],z0),(outer[0],outer[1],z1),(inner[0],inner[1],z1)]
+   bottom=[(x,y-thick,z) for x,y,z in top]
+   verts=[tuple(town.game_vector(point)) for point in top+bottom]
+   faces=[(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+   roof_mesh=bpy.data.meshes.new('notice-board pitched tin sheet mesh');roof_mesh.from_pydata(verts,[],faces);roof_mesh.materials.append(tin);roof_mesh.update()
+   roof_uv=roof_mesh.uv_layers.new(name='Salvaged tin UV')
+   for poly in roof_mesh.polygons:
+    for loop_index in poly.loop_indices:
+     vertex=roof_mesh.vertices[roof_mesh.loops[loop_index].vertex_index].co
+     roof_uv.data[loop_index].uv=(vertex.x/1.6,vertex.y/1.6)
+   roof=bpy.data.objects.new(f'notice-board:pitched-tin-roof-{1 if side<0 else 2}',roof_mesh);bpy.context.collection.objects.link(roof);parent_keep(roof,b)
+   notice_strut(f'notice-board:roof-rafter-{1 if side<0 else 2}-front',(side*1.05,3.21,-.50),(0,3.41,-.50),.10,wood,b)
+   notice_strut(f'notice-board:roof-rafter-{1 if side<0 else 2}-rear',(side*1.05,3.21,.50),(0,3.41,.50),.10,wood,b)
+  box('notice-board:ridge timber',(0,3.42,.16),(.24,.11,.11),wood,.012,b)
+  # A low empty crate sits at the board's front edge as a step and has its own photo.
+  notice_photo_box('notice-board:standing-crate',(0,0,-1.22),(.94,.52,.62),
+            {view:crate_material for view in ('front','rear','side','top')},b)
+  continue
  heights={'toll-bank':4.4,'school':5.2}
  ht=heights.get(n,5.0);mat=brick if n=='toll-bank' else wood if n=='school' else tin
  if n!='scrapyard':shell(n,x0+.5,x1-.5,z0+.5,z1-.5,ht,mat,b)
@@ -601,6 +678,30 @@ def audit_helipad_pieces():
 
 audit_helipad_pieces()
 
+def audit_notice_board_pieces():
+ target=building_roots['notice-board'];pieces=[obj for obj in bpy.data.objects if obj.parent==target and obj.type=='MESH']
+ bpy.context.view_layer.update();bounds={}
+ for obj in pieces:
+  points=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  values=[(p.x,p.z,-p.y) for p in points]
+  lo=tuple(min(p[i] for p in values) for i in range(3));hi=tuple(max(p[i] for p in values) for i in range(3))
+  bounds[obj]=(lo,hi)
+ for obj,(lo,hi) in bounds.items():
+  assert lo[0]>=-3.5 and hi[0]<=3.5 and lo[2]>=-3.5 and hi[2]<=3.5, f'{obj.name} exceeds the notice-board plot: {lo}..{hi}'
+  grounded=abs(lo[1])<=.035
+  touching=any(obj!=other and all(max(0,other_box[0][axis]-hi[axis],lo[axis]-other_box[1][axis])<=.08 for axis in range(3))
+               for other,other_box in bounds.items())
+  contact='ground' if grounded else 'another piece' if touching else 'FAIL'
+  print(f'NOTICE-BOARD PIECE {obj.name}: x={lo[0]:.3f}..{hi[0]:.3f} y={lo[1]:.3f}..{hi[1]:.3f} z={lo[2]:.3f}..{hi[2]:.3f} contact={contact}')
+  assert grounded or touching, f'{obj.name} floats without touching ground or another piece'
+ triangles=0;depsgraph=bpy.context.evaluated_depsgraph_get()
+ for obj in pieces:
+  evaluated=obj.evaluated_get(depsgraph);mesh=evaluated.to_mesh();mesh.calc_loop_triangles();triangles+=len(mesh.loop_triangles);evaluated.to_mesh_clear()
+ print(f'NOTICE-BOARD TRIANGLES {triangles}')
+ assert triangles<=1800, f'notice-board exceeds 1800 triangles: {triangles}'
+
+audit_notice_board_pieces()
+
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
@@ -625,7 +726,7 @@ if a.review:
  fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=5000;fill_data.shape='DISK';fill_data.size=30
  fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
  fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
- target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='helipad')
+ target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='notice-board')
  def within(obj,target):
   parent=obj
   while parent:
@@ -648,21 +749,22 @@ if a.review:
   backdrop.rotation_euler=(-view_direction).to_track_quat('Z','Y').to_euler()
   camera_data.type='ORTHO';camera_data.ortho_scale=scale
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
-  body_prefixes=('helipad:body-','helipad:body-girder-')
+  body_prefixes=('notice-board:board-panel',)
   for obj in bpy.data.objects:
    if obj==ground or obj==light or obj==fill or obj==backdrop:continue
    is_body_piece=obj.name.startswith(body_prefixes)
    obj.hide_render=(not within(obj,target_root) or (body_only and not is_body_piece))
   bpy.ops.render.render(write_still=True)
  shots=[
-  # Photo comparisons use the same orthographic cameras as their source views.
-  ('model-side',(48,2.2,0),(0,.70,0),25.5,(1024,683),True),
-  ('model-front',(0,2.2,-48),(0,.70,0),25.5,(1024,683),True),
-  ('model-rear',(0,2.2,48),(0,.70,0),25.5,(1024,683),True),
-  ('model-above',(0,48,0),(0,0,0),29.0,(1024,1024),True),
-  ('three-quarter-road',(24,22,-28),(0,.75,0),31.0,(1024,683)),
-  ('three-quarter-yard',(-24,22,28),(0,.75,0),31.0,(1024,683)),
-  ('mayor-view',(45,55,-45),(0,.75,0),38.0,(1024,683)),
+  # Orthographic views match the generated reference camera directions. The
+  # body-only switch keeps the separate posts, tin and step out of the photos.
+  ('model-side',(-40,1.8,.35),(0,1.8,.35),2.5,(1024,1024),True),
+  ('model-front',(0,1.8,-40),(0,1.8,0),3.0,(1024,1024),True),
+  ('model-rear',(0,1.8,40),(0,1.8,0),3.0,(1024,1024),True),
+  ('model-above',(0,40,.35),(0,3.06,.35),3.0,(1024,1024),True),
+  ('three-quarter-road',(5.5,4.7,-6.0),(0,1.55,-.1),7.2,(1024,683)),
+  ('three-quarter-yard',(-5.5,4.7,6.0),(0,1.55,.1),7.2,(1024,683)),
+  ('mayor-view',(6.5,7.0,-6.5),(0,1.55,-.1),7.4,(1024,683)),
  ]
  for shot in shots:render(*shot)
  print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))
