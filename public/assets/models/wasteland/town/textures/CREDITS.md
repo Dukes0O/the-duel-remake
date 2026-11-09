@@ -827,3 +827,7 @@ Four matching orthographic views of the same worn yellow road roller body were g
 
 - `roller-side.jpg`, `roller-front.jpg`, `roller-rear.jpg`, `roller-top.jpg`: bare body with seat, steering wheel and rear tyres.
 - `roller-drum-side.jpg`: existing isolated steel drum reference, retained from round 20.
+
+## TOWN-ART-MACHINES-2 loader, round 26
+
+Generated with built-in OpenAI ImageGen on 9 November 2026. The side, front, rear and top JPEGs are measured crops of four independent orthographic views in one generated contact sheet, all of one worn yellow loader with its lift arms and bucket removed. Bucket and lift-arm side photos were generated separately. Prompt: original salvage wheel loader, faded chipped yellow paint, dark tires, plain grey studio, exact orthographic views, no logos or text; separate references show the detached bucket and lift arm in side elevation.
