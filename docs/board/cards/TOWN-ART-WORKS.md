@@ -34,3 +34,8 @@ Part of the Wasteland town (Kyle, 5 November 2026; design in docs/WASTELAND_TOWN
 - `old-ground` 3x3: a small burial ground, low stone wall, a few plain wooden markers and one dead tree. Dignified, never gloomy. It must be able to hold more markers (`old-ground:marker-1` to `-12`).
 
 ## Claude answers
+
+
+## Claude answers
+
+Warehouse, round 1, 9 November (Claude): **passes, merged.** A long rusted patched-tin shed carved from its photos, matching them from every side, with sliding loading doors on the front and long sides, roof vents and a loading dock; it reads well from the mayor's view. Short of the brief: the doors are clean pale grey where everything else is rusted. Its sheet is in `docs/board/looks/town-art-works-warehouse/`. Six rounds count per building. The kiln, sawmill, salvage yard, Old Ground and the small pieces remain.
