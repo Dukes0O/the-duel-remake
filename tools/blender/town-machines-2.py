@@ -554,6 +554,17 @@ def basic_family():
    if node.type=='TEX_IMAGE':node.interpolation='Cubic'
  parent(crane_body,crane)
  crane_parts=[('crane-truck:body',crane_body)]
+ crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
+ crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
+ crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
+ crane_dark_bsdf=crane_dark.node_tree.nodes['Principled BSDF'];crane_dark_bsdf.inputs['Base Color'].default_value=(.018,.019,.018,1);crane_dark_bsdf.inputs['Roughness'].default_value=.96
+ crane_silver=bpy.data.materials.new('Crane truck / worn hydraulic silver');crane_silver.diffuse_color=(.48,.51,.50,1);crane_silver.use_nodes=True
+ crane_silver_bsdf=crane_silver.node_tree.nodes['Principled BSDF'];crane_silver_bsdf.inputs['Base Color'].default_value=(.48,.51,.50,1);crane_silver_bsdf.inputs['Metallic'].default_value=.62;crane_silver_bsdf.inputs['Roughness'].default_value=.48
+ def crane_box(name,center,size,material=steel,bevel=.04,parent_obj=crane):
+  return box(name,game_vector(center),(size[0],size[2],size[1]),material,parent_obj,bevel)
+ def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
+  return beam(name,game_vector(start),game_vector(end),radius,material,parent_obj)
+ def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
  # The end photo shows the rear cab and hoist behind the counterweight. Build
  # the counterweight as a solid box and map only its outward face to the tail.
  rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),steel,.045)
@@ -570,17 +581,6 @@ def basic_family():
    rear_counterweight.data.uv_layers.active.data[loop_index].uv=rear_photo.uv(
     rear_crop[0]+fx*(rear_crop[2]-rear_crop[0]),rear_crop[3]-fy*(rear_crop[3]-rear_crop[1]))
  crane_parts.append(('crane-truck:rear-counterweight',rear_counterweight))
- crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
- crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
- crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
- crane_dark_bsdf=crane_dark.node_tree.nodes['Principled BSDF'];crane_dark_bsdf.inputs['Base Color'].default_value=(.018,.019,.018,1);crane_dark_bsdf.inputs['Roughness'].default_value=.96
- crane_silver=bpy.data.materials.new('Crane truck / worn hydraulic silver');crane_silver.diffuse_color=(.48,.51,.50,1);crane_silver.use_nodes=True
- crane_silver_bsdf=crane_silver.node_tree.nodes['Principled BSDF'];crane_silver_bsdf.inputs['Base Color'].default_value=(.48,.51,.50,1);crane_silver_bsdf.inputs['Metallic'].default_value=.62;crane_silver_bsdf.inputs['Roughness'].default_value=.48
- def crane_box(name,center,size,material=steel,bevel=.04,parent_obj=crane):
-  return box(name,game_vector(center),(size[0],size[2],size[1]),material,parent_obj,bevel)
- def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
-  return beam(name,game_vector(start),game_vector(end),radius,material,parent_obj)
- def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
  def crane_photo_box(name,center,size,crop):
   """Build a yellow box beam with its front face sampled from the front photo."""
   obj=crane_box(name,center,size,crane_yellow,.035)
