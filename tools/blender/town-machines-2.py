@@ -533,13 +533,16 @@ def basic_family():
   'top':{'front':22,'rear':806,'centre':237,'along':'x','x_scale':.0088},
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
-  'ends_split':0,'front_favour':3,'rear_favour':8,
+  # The rear photo contains the cab, exhaust and hoist above the counterweight.
+  # Let the side and roof views shape those shared parts; use the rear view only
+  # for the low counterweight and bumper at the back of the chassis.
+  'ends_split':2.35,'front_favour':3,'rear_favour':8,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
-   'rear':[(0,240,137,467),(474,238,613,467),(213,82,409,242),(380,0,422,115)],
+   'rear':[(0,240,137,467),(474,238,613,467),(0,0,613,205),(213,82,409,242),(380,0,422,115)],
    'top':[(0,0,827,96),(0,405,827,473),(443,155,650,337)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
@@ -558,6 +561,22 @@ def basic_family():
  def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
   return beam(name,game_vector(start),game_vector(end),radius,material,parent_obj)
  def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
+ def crane_photo_box(name,center,size,crop):
+  """Build a yellow box beam with its front face sampled from the front photo."""
+  obj=crane_box(name,center,size,crane_yellow,.035)
+  photo_material=crane_front.material()
+  obj.data.materials.append(photo_material)
+  image_index=len(obj.data.materials)-1
+  x0,y0,x1,y1=crop
+  for polygon in obj.data.polygons:
+   if polygon.normal.y<.9:continue  # game front (-Z) is Blender +Y
+   polygon.material_index=image_index
+   for loop_index in polygon.loop_indices:
+    vertex=obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
+    fx=(vertex.x+size[0]/2)/size[0]
+    fy=(vertex.z+size[1]/2)/size[1]
+    obj.data.uv_layers.active.data[loop_index].uv=crane_front.uv(x0+fx*(x1-x0),y1-fy*(y1-y0))
+  return obj
  # Ladder rails, crossmembers, suspension and axles meet the bottom edge of the photo carve.
  frame_y=1.08
  for sx in (-1,1):crane_add_part(f'crane-truck:frame-rail-{sx}',crane_box('crane frame ladder rail',(sx*.77,frame_y,.08),(.18,.17,7.45),steel,.025))
@@ -591,17 +610,18 @@ def basic_family():
  # Box-beam stabilizers telescope from the chassis. Vertical jacks end in broad pads.
  for sx in (-1,1):
   for z in (-.55,2.85):
-   stem=crane_box('crane outrigger box beam',(sx*1.67,1.08,z),(1.55,.28,.40),crane_yellow,.045)
+   crop=(35,244,153,300) if sx<0 else (460,244,579,300)
+   stem=crane_photo_box('crane photo-faced outrigger box beam',(sx*1.67,1.08,z),(1.55,.34,.46),crop)
    crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
-   telescoping=crane_box('crane outrigger sliding box',(sx*2.25,1.08,z),(.62,.19,.30),crane_yellow,.025)
+   telescoping=crane_photo_box('crane painted sliding outrigger box',(sx*2.25,1.08,z),(.62,.28,.36),crop)
    crane_add_part(f'crane-truck:outrigger-slide-{sx}-{z}',telescoping)
-   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane vertical stabilizer jack',(sx*2.42,.94,z),(sx*2.42,.20,z),.105,tin))
-   collar=crane_box('crane jack foot collar',(sx*2.42,.15,z),(.30,.18,.30),steel,.025)
-   foot=crane_box('crane wide stabilizer pad',(sx*2.42,.07,z),(.70,.14,.70),black,.035)
+   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane silver vertical stabilizer jack',(sx*2.42,.94,z),(sx*2.42,.20,z),.105,tin))
+   collar=crane_box('crane silver jack foot collar',(sx*2.42,.15,z),(.30,.18,.30),tin,.025)
+   foot=crane_box('crane square silver stabilizer foot plate',(sx*2.42,.07,z),(.56,.14,.56),tin,.035)
    crane_add_part(f'crane-truck:jack-collar-{sx}-{z}',collar)
    crane_add_part(f'crane-truck:outrigger-foot-{sx}-{z}',foot)
- # Photo-faced lathed slew ring. The overhead photo supplies its toothed face;
- # the boom hinge pin sits at the top centre of this turntable.
+ # Photo-faced round slew disc; both circular caps stay inside the photographed
+ # tooth ring, with the boom hinge pin seated directly above its centre.
  turret=empty('crane truck turntable',(0,0,0),crane)
  slew_photo=Photo(crane_textures/'crane-truck-overhead.jpg')
  slew_mesh=PhotoMesh();slew_centre=(570,218);slew_r=94
@@ -617,15 +637,17 @@ def basic_family():
        cap_start=('slew-face',slew_cap_uv),cap_end=('slew-face',slew_cap_uv))
  slew_obj=slew_mesh.finish('crane photo-faced toothed turntable',{'slew-face':slew_photo.material()})
  parent(slew_obj,turret);crane_add_part('crane-truck:turntable',slew_obj)
- # The photographed circle is held by a low steel support ring; no block stands in for it.
- crane_add_part('crane-truck:slew-support',crane_box('crane slew support ring',(0,1.48,1.58),(1.72,.16,1.72),steel,.045,turret))
- crane_box('crane turret deck',(0,1.77,1.58),(1.52,.20,1.48),steel,.08,turret)
- # The pivot tower rises directly from the photo-faced table; the old floating
- # yellow block that stood in for the slew assembly is removed.
+ # A circular lower race supports the disc; no square deck overlays its cap.
+ support_mesh=PhotoMesh()
+ lathe(support_mesh,'slew-face',(0,1.47,1.58),(0,1,0),(1,0,0),(0,0,1),
+       [(0,.96),(.14,.96)],slew_side_uv,sides=48)
+ support=support_mesh.finish('crane circular slew race',{'slew-face':slew_photo.material()})
+ parent(support,turret);crane_add_part('crane-truck:slew-support',support)
+ # Twin cheek plates carry one crosswise hinge pin over the photographed disc.
  for sx in (-1,1):
-  crane_box('crane pivot tower cheek',(sx*.39,2.30,1.62),(.18,1.04,.48),tin,.055,turret)
-  crane_beam('crane pivot cheek wear edge',(sx*.39,1.82,1.62),(sx*.39,2.82,1.62),.045,steel,turret)
-  crane_beam('crane pivot pin',(-.46,2.82,1.62),(.46,2.82,1.62),.11,tin,turret)
+  crane_box('crane painted boom cheek plate',(sx*.39,2.30,1.62),(.22,.78,.48),crane_yellow,.045,turret)
+  crane_beam('crane silver cheek wear edge',(sx*.39,1.93,1.62),(sx*.39,2.67,1.62),.035,tin,turret)
+ crane_beam('crane cheek plate pivot pin',(-.48,2.67,1.62),(.48,2.67,1.62),.105,tin,turret)
  # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
  from photo_carve import lift_if_dark
  from photo_carve import lift_if_dark
