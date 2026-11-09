@@ -83,7 +83,8 @@ table = {
     # is 286 px high and sets a 3.6 m door on a 6.8 m body.
     'front': {'centre': 512, 'ground': 612, 'top': 78},
     'rear': {'centre': 512, 'ground': 612, 'top': 78},
-    'top': {'front': 953, 'rear': 57, 'centre': 340, 'x_scale': 9.4 / 400},
+    # The straight-down photo is turned 180 degrees for carve_object's front-first row order.
+    'top': {'front': 57, 'rear': 953, 'centre': 266, 'x_scale': 9.4 / 400},
     'cut': {
         # Remove the two side loading-door panels; they are separate pieces.
         'side': [(300, 265, 435, 423), (744, 265, 878, 423)],
@@ -147,7 +148,7 @@ def piece(name):
 # Front road-side sliding doors: two leaves meet over the 3.7 m opening.
 for side in (-1, 1):
     parent = piece(f'warehouse:loading-door-front-{"left" if side < 0 else "right"}')
-    door = add_door(f'warehouse-front-door-leaf-{side}', (side * .91, .10, -10.18), 1.88, 3.62)
+    door = add_door(f'warehouse-front-door-leaf-{side}', (side * .91, 1.91, -10.18), 1.88, 3.62)
     door.parent = parent
     rail = add_box(f'warehouse-front-door-rail-{side}', (side * .91, 3.86, -10.22), (2.0, .13, .12), dark, .02)
     rail.parent = parent
@@ -186,11 +187,11 @@ for x in (-2.7, 2.7):
 for index, z in enumerate((-3.5, 3.8), 1):
     parent = piece(f'warehouse:roof-vent-{index}')
     bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=.26, depth=1.05,
-                                        location=game_loc((0, 7.56, z)))
+                                        location=game_loc((0, 7.27, z)))
     tube = bpy.context.object; tube.name = f'warehouse-roof-vent-{index}-stack'; tube.data.materials.append(oxide)
     tube.parent = parent
     bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=.40, depth=.12,
-                                        location=game_loc((0, 8.15, z)))
+                                        location=game_loc((0, 7.84, z)))
     cap = bpy.context.object; cap.name = f'warehouse-roof-vent-{index}-cap'; cap.data.materials.append(tin)
     cap.parent = parent
 
@@ -213,17 +214,17 @@ def descendants(parent):
 
 all_piece_roots = [body, *piece_names]
 body_bounds = bounds_for([body])
-print('warehouse:body bounds x/z/y', body_bounds)
-assert body_bounds[2][0] <= .03, 'carved shell must touch the ground'
+print('warehouse:body bounds x/y/z', body_bounds)
+assert body_bounds[1][0] <= .03, 'carved shell must touch the ground'
 for item in all_piece_roots:
     meshes = [item] if item == body else [obj for obj in descendants(item) if obj.type == 'MESH']
     if item != body and item.type == 'MESH': meshes.append(item)
     b = bounds_for(meshes)
-    print(f'{item.name} bounds x/z/y', b)
-    assert b[0][0] >= -11.5 and b[0][1] <= 11.5 and b[1][0] >= -11.5 and b[1][1] <= 11.5, f'{item.name} exceeds the 3x3 m footprint margin'
+    print(f'{item.name} bounds x/y/z', b)
+    assert b[0][0] >= -11.5 and b[0][1] <= 11.5 and b[2][0] >= -11.5 and b[2][1] <= 11.5, f'{item.name} exceeds the 3x3 m footprint margin'
     if item != body:
         touching = all(b[axis][0] <= body_bounds[axis][1] + .08 and b[axis][1] >= body_bounds[axis][0] - .08 for axis in range(3))
-        touches_ground = b[2][0] <= .03
+        touches_ground = b[1][0] <= .03
         assert touching or touches_ground, f'{item.name} floats free of the body and ground'
 
 if args.render:
