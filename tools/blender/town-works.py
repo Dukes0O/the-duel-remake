@@ -94,7 +94,7 @@ table = {
     },
     # Silver tin is close to the grey studio; a tight match keeps it in the mask.
     'grey': 22, 'tolerance': 26, 'bleed_tolerance': 38,
-    'voxel': .11, 'target': 9000, 'mask_dir': str(render_masks),
+    'voxel': .11, 'target': 6000, 'mask_dir': str(render_masks),
 }
 body = carve_object('warehouse:body', textures, table)
 # Voxel centres leave an 8 cm lower edge above the measured floor; seat it on y=0.
