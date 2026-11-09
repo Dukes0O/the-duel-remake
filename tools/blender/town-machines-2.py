@@ -807,6 +807,7 @@ if a.render:
   scene.render.resolution_x=width;scene.render.resolution_y=height
   bpy.ops.object.camera_add(location=location);cam=bpy.context.object
   cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler()
+  if label=='overhead':cam.rotation_euler.rotate_axis('Z',math.pi/2)
   cam.data.type='ORTHO' if ortho else 'PERSP'
   if ortho:cam.data.ortho_scale=scale
   else:cam.data.lens=56
