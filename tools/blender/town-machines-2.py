@@ -692,7 +692,6 @@ def basic_family():
   obj.data.uv_layers.active.name='UVMap';parent(obj,owner);return obj
  for side in (-1,1):
   paver_screed_box('paver screed end plate',(side*2.70,-4.43,.43),(.18,.34,.78),screed_mat,.02)
-  paver_link('paver screed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.98,1.62),.15,paint,screed)
   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.12,depth=.28,location=(side*1.34,-3.98,1.62),rotation=(0,math.pi/2,0))
   pin=bpy.context.object;pin.name='paver screed tow pin';pin.data.materials.append(tin);pin.data.uv_layers.active.name='UVMap';parent(pin,screed)
   paver_link('paver screed angled tow link',(side*1.34,-3.98,1.62),(side*2.35,-4.28,.79),.13,steel,screed)
