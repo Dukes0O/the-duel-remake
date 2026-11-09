@@ -135,7 +135,7 @@ def add_door(name, center, width, height, owner, rotation=0):
     x, y, z = center
     if abs(rotation) < .1:
         for edge in (-1, 1):
-            rail = add_box(name + f'-edge-{edge}', (x + edge * width * .48, y + height / 2, z - .035),
+            rail = add_box(name + f'-edge-{edge}', (x + edge * width * .48, y, z - .035),
                            (.09, height, .08), oxide, .01)
             rail.parent = owner
         for row in (1, 2, 3):
