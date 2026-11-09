@@ -425,34 +425,35 @@ def basic_family():
  from hull_model import tyre as photo_tyre
  from photo_carve import carve_object
  roller_textures=project_root/'public/assets/models/wasteland/town/textures'
- # Round 21 dimensions are measured before the carve. The rear tyre is 1.3 m
- # across; its 108 px half-height in the end photo sets that photo's scale.
- # The side photo spans 580 px for the 4.5 m overall length.
- roller_target_length,roller_width,roller_height=4.5,2.0,2.9
+ # Round 22 uses new bare-body views. The drum, yoke and canopy remain
+ # separately built pieces, outside the body carve.
+ roller_target_length,roller_width,roller_height=4.5,2.0,2.2
  roller_tyre_radius=1.3/2
- roller_rear_tyre_px=535-427
+ roller_rear_tyre_px=492-368
  roller_rear_scale=roller_tyre_radius/roller_rear_tyre_px
  roller_side_scale=roller_rear_scale
- roller_length=roller_side_scale*(610-30)
- roller_drum_z=(130-30)*roller_side_scale-roller_length/2
- print('ROLLER MEASURED TARGET m length 4.50 width 2.00 canopy-height 2.90; rear-tyre diameter 1.30; drum diameter 1.50 width 1.80')
+ # The photo's tyre-based width and the bare body's measured length disagree
+ # in perspective; keep tyre scale for height and set the body length explicitly.
+ roller_length=5.1
+ roller_drum_z=(128-30)*roller_side_scale-roller_length/2
+ print('ROLLER MEASURED TARGET m body 4.50 x 2.00 x 1.90; canopy-height 2.90; rear-tyre diameter 1.30; drum diameter 1.50 width 1.80')
  print('ROLLER PHOTO SCALE from rear tyre',roller_rear_tyre_px,'px radius ->',round(roller_rear_scale,6),'m/px; side silhouette length',round(roller_length,3),'m vs target',roller_target_length,'m; side tyre diameter',round(2*roller_side_scale*112,3),'m')
  roller_table={
   'photos':{'side':'roller-side.jpg','front':'roller-front.jpg','rear':'roller-rear.jpg','top':'roller-top.jpg'},
   'length':roller_length,'width':roller_width,'height':roller_height,
-  'side':{'start':30,'end':610,'ground':550},
-  'front':{'centre':310,'ground':535,'top':50},
-  'rear':{'centre':310,'ground':535,'top':50},
+  'side':{'start':48,'end':577,'ground':492},
+  'front':{'centre':310,'ground':523,'top':80},
+  'rear':{'centre':310,'ground':523,'top':80},
   'top':{'front':14,'rear':607,'centre':310,'along':'x','x_scale':roller_width/(500-120)},
   'underside':.55,
   'wheels':[(-.75,roller_tyre_radius,.70)],
-  'cut':{
-   'side':[(0,45,621,111),(42,370,224,445)],
-   'front':[(0,0,621,112)],
-   'rear':[(0,0,621,112)],
-   'top':[(210,145,460,390),(0,320,190,515),(450,105,535,245)]},
+  # Discard empty margins only; no crop crosses the bare body.
+  'cut':{'side':[(0,0,621,54),(0,520,621,621)],
+   'front':[(0,0,621,54),(0,520,621,621)],
+   'rear':[(0,0,621,54),(0,520,621,621)],
+   'top':[(0,0,621,40),(0,580,621,621)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
-  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-21/masks')}
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-22/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
  # carve_hull already maps the photo grid from game axes into Blender's Z-up
  # mesh coordinates in voxel_surface. Do not transform the returned vertices again.
@@ -469,7 +470,13 @@ def basic_family():
  roller_body_bounds=roller_bounds(roller_body)
  print('ROLLER CARVED BODY BOUNDS m min',tuple(round(v,3) for v in roller_body_bounds[0]),'max',tuple(round(v,3) for v in roller_body_bounds[1]))
  body_extents=tuple(roller_body_bounds[1][i]-roller_body_bounds[0][i] for i in range(3))
- print('ROLLER CARVED BODY EXTENTS m length',round(body_extents[2],3),'width',round(body_extents[0],3),'height',round(body_extents[1],3),'against whole-machine targets 4.50 x 2.00 x 2.90 m')
+ print('ROLLER CARVED BODY EXTENTS m length',round(body_extents[2],3),'width',round(body_extents[0],3),'height',round(body_extents[1],3),'against bare-body targets 4.50 x 2.00 x 1.90 m')
+ if not (3.8<=body_extents[2]<=5.1 and 1.55<=body_extents[0]<=2.4 and 1.5<=body_extents[1]<=2.2):
+  raise RuntimeError(f'roller body is outside printed bounds: {body_extents}')
+ axle_z=(430-30)*roller_side_scale-roller_length/2
+ print('ROLLER BODY/AXLE CHECK: rear axle z',round(axle_z,3),'body bounds',tuple(round(v,3) for v in roller_body_bounds[0]),tuple(round(v,3) for v in roller_body_bounds[1]))
+ if not (roller_body_bounds[0][2] < axle_z < roller_body_bounds[1][2] and roller_body_bounds[0][1] <= roller_tyre_radius+.45):
+  raise RuntimeError('roller body does not sit on the rear axle')
  def roller_box(name,center,size,material,bevel=.04):
   return box(name,game_vector(center),(size[0],size[2],size[1]),material,roller,bevel)
  def roller_beam(name,start,end,radius,material):

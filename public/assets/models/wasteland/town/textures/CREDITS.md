@@ -821,9 +821,9 @@ Generated with the built-in OpenAI ImageGen tool on 8 November 2026. The truck c
 - `pipe-truck-side.jpg`, `pipe-truck-front.jpg`, `pipe-truck-rear.jpg`, `pipe-truck-overhead.jpg`: cropped orthographic views from one contact sheet.
 - `pipe-truck-pipe.jpg`: single rusty steel pipe.
 
-## TOWN-ART-MACHINES-2, round 20 roller references
+## TOWN-ART-MACHINES-2 roller references (round 22)
 
-Generated with OpenAI image generation on 8 November 2026. The four individual references were cropped from one four-view image of the same unbranded worn yellow salvage road roller with its front drum removed; the drum photo was generated separately.
+Four matching orthographic views of the same worn yellow road roller body were generated with OpenAI ImageGen on 9 November 2026. The drum, yoke arms, canopy and canopy posts are removed from every view. The source was cropped into side, front, rear and overhead JPEGs on neutral grey studio ground.
 
-- `roller-side.jpg`, `roller-front.jpg`, `roller-rear.jpg`, `roller-top.jpg`: side, front, rear and true overhead orthographic views, neutral grey studio.
-- `roller-drum-side.jpg`: isolated worn steel road roller drum, dead-on side orthographic view, neutral grey studio.
+- `roller-side.jpg`, `roller-front.jpg`, `roller-rear.jpg`, `roller-top.jpg`: bare body with seat, steering wheel and rear tyres.
+- `roller-drum-side.jpg`: existing isolated steel drum reference, retained from round 20.
