@@ -178,7 +178,7 @@ def articulated_loader():
  # The articulated headstock and moving assemblies have real pin origins.
  # The side-photo frame pins beside the cab are at about x=300, y=255.
  # The arm joint origin is that pin; its photo-mapped arms run forward/down.
- arms=empty('loader:arms',(0,-.75,1.05),front)
+ arms=empty('loader:arms',(0,-.75,1.20),front)
  arm_photo=LoaderPhoto(loader_textures/'loader-arm-side.jpg')
  from photo_carve import lift_if_dark
  arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
@@ -187,13 +187,13 @@ def articulated_loader():
  # bucket pin. The side photo's pins are about 0.75 m apart and 0.07 m lower.
  for side_sign in (-1,1):
   box_beam('loader lift arm '+('left' if side_sign<0 else 'right'),
-   (side_sign*1.17,-.75,1.05),(side_sign*1.17,-1.50,.98),.20,.18,paint,arms,.03)
+   (side_sign*1.17,-.75,1.20),(side_sign*1.17,-2.50,.98),.20,.18,paint,arms,.03)
  beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
  beam('loader arm hinge pin',(-.90,-1.12,1.55),(.90,-1.12,1.55),.12,tin,front)
  # The bucket pin is about 0.9 m ahead of the frame pin. Its lower edge
  # reaches the ground when the arms are at rest.
- bucket=empty('loader:bucket',(0,-1.50,.98),arms)
+ bucket=empty('loader:bucket',(0,-2.50,.98),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
  bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
