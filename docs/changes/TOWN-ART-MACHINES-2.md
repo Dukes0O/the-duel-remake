@@ -21,3 +21,32 @@ changed.
 ## Removed
 
 None.
+
+---
+
+## Round 29
+
+Changed the loader only. Corrected the front arm hinge pin, relocated the
+bucket hinge pin from the model origin to the bucket, placed the bucket ahead
+of the front tyres, set the scoop to 2.6 m wide by 1.0 m tall with its bottom
+on the ground, and changed the paired lift arms to worn ochre yellow. The
+four passed machines were left unchanged. The emitted bounds confirm the
+bucket spans x=-1.3..1.3 m and y=-0.005..0.995 m vertically; the bucket hinge
+pin is centered at x=0, y=-2.5 m, z=0.98 m. The stray origin pin that appeared
+as a floating dark ball is removed.
+
+## Checks
+
+- `node tools/test-blender-output.mjs`: passed, 389 checks, 0 failed.
+- `node tools/test-repo-hygiene.mjs`: passed; placement clean and size targets advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; the audio-analysis subtest failed twice because starting `ffmpeg` returned `EPERM` (`spawnSync ffmpeg EPERM`). The review JPG size and publication checks passed.
+- Browser and in-game look checks: not run here; Claude should review the
+  exported views and work pose in `docs/board/looks/town-art-machines-2/round-29.jpg`.
+- Changed assertions: none.
+- Race fingerprints: not applicable; art-only change.
+- Lane tier and build: not run, as instructed for art rounds.
+
+## Removed
+
+- Removed the bucket hinge pin from the model origin; it is now parented at
+  the actual bucket pivot.
