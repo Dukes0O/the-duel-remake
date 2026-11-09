@@ -1,3 +1,26 @@
+# TOWN-ART-MACHINES-2 — round 15: crane truck
+
+## Changed
+
+- Split the end-view carve at the cab back wall (side photo x=320; z=-1.208 m). The cab and rear deck now use separate end views, with the rear photo's cab/hoist pixels cut above the deck.
+- Removed the standalone rear counterweight block. Outrigger beams now use tight worn-paint crops from the front photo across all beam faces.
+- Added the round 15 comparison sheet and review note. The mixer recipe and model were not changed.
+
+## Checks
+
+- Blender 5.2.1 exported the family and rendered six views from the exported GLB, including rest and work poses. The recipe selects the available Eevee engine name for Blender 5.x.
+- `node tools/test-blender-output.mjs`: **389 checks passed, 0 failed** (complete run). All seven machine roots/joints exist and each machine is within the 15,000-triangle cap.
+- Family GLB: 5,363,768 bytes (8 MB limit). `round-15.jpg`: 260,720 bytes (500 KB limit).
+- `node tools/test-repo-hygiene.mjs`: passed. `node tools/test-review-evidence.mjs`: 8 passed, 1 failed; its one rerun failed the same way because Windows blocked the audio-analysis `ffmpeg` subprocess (`spawnSync ffmpeg EPERM`). The JPG publication check passed both times.
+- No lane tier or build was run. No browser check was run. Claude should inspect the rear cab projection and deck, the side-view boom pivot silhouette, the photo wear on every outrigger face, and both working poses.
+- No assertions changed. No gameplay changes; race fingerprints do not apply.
+
+## Removed
+
+- Removed the standalone rear-counterweight box and its one-face rear-photo mapping, plus flat-yellow outrigger faces. No mixer truck parts or photos were removed.
+
+---
+
 # TOWN-ART-MACHINES-2 — round 11
 
 ## Changed

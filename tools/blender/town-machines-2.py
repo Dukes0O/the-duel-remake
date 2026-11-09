@@ -9,6 +9,7 @@ if a.paths_only:
 import bpy
 import numpy as np
 from mathutils import Vector
+eevee_engine='BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in bpy.types.RenderSettings.bl_rna.properties['engine'].enum_items else 'BLENDER_EEVEE'
 def game_vector(point):return Vector((point[0],-point[2],point[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
@@ -522,8 +523,8 @@ def basic_family():
   # footprint so no photo-carved island floats above the built turntable.
   ring=(x*x+(z-1.58)**2<1.08**2)&(y>.35)&(y<3.18)
   floating_block=(abs(x)<.46)&(y>3.68)&(z>1.62)&(z<2.70)
-  # Side and roof projections leave high slabs behind the cab; the rear deck
-  # is built separately, so keep its carved body below the rail tops.
+  # Side and roof projections leave high slabs behind the cab; let the rear
+  # photo shape the deck and keep its carve below the rail tops.
   rear_slabs=(z>1.10)&(y>1.90)
   return (y>=1.02)&~ring&~floating_block&~rear_slabs
  crane_body_table={
@@ -534,22 +535,22 @@ def basic_family():
   'front':{'centre':292,'ground':399,'top':17},
   'rear':{'centre':307,'ground':416,'top':22},
   'top':{'front':22,'rear':806,'centre':237,'along':'x','x_scale':.0088},
-  # Keep the end-view textures on the end half of the truck. This avoids
-  # slicing the rear deck and counterweight across unrelated projections.
-  # The rear photo contains the cab, exhaust and hoist behind the counterweight.
-  # Keep its carve empty; the front silhouette closes the body under side/top
-  # views, while the built counterweight carries the rear photo's flat tail face.
-  'ends_split':None,
+  # Split at the cab's back wall: side and top shape the cab, and the rear
+  # photo shapes only the open deck behind it.
+  'ends_split':-crane_length/2+(320-18)*crane_scale,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
-   'rear':[(0,0,613,467)],
+   'rear':[(0,0,613,210)],
    'top':[(0,0,827,96),(0,405,827,473)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
  crane_body=carve_object('crane-truck:body',crane_textures,crane_body_table)
+ split=crane_body_table['ends_split']
+ print('CRANE REAR PHOTO SPLIT',round(split,3),'m at cab back wall (side photo x=320 px)')
+ print('CRANE BODY PHOTO MAP: cab volume=side/top with front end view; rear deck volume=side/top with rear end view; rear face pixels above y=210 are cut')
  for photo in crane_body_table['_photos'].values():
   for node in photo.material().node_tree.nodes:
    if node.type=='TEX_IMAGE':node.interpolation='Cubic'
@@ -566,38 +567,23 @@ def basic_family():
  def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
   return beam(name,game_vector(start),game_vector(end),radius,material,parent_obj)
  def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
- # The end photo shows the rear cab and hoist behind the counterweight. Build
- # the counterweight as a solid box and map only its outward face to the tail.
- rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),crane_yellow,.045)
- # carve_object bleeds each projection for edge filtering; reload the original
- # rear photo because its mask is intentionally empty in this recipe.
- rear_photo=Photo(crane_textures/'crane-truck-rear.jpg');rear_photo_material=rear_photo.material()
- rear_counterweight.data.materials.append(rear_photo_material)
- rear_face_index=len(rear_counterweight.data.materials)-1
- rear_crop=(140,244,478,347)
- for polygon in rear_counterweight.data.polygons:
-  if polygon.normal.y<-.9:  # the rear face is game +Z / Blender -Y
-   polygon.material_index=rear_face_index
-   for loop_index in polygon.loop_indices:
-    vertex=rear_counterweight.data.vertices[rear_counterweight.data.loops[loop_index].vertex_index].co
-    fx=(vertex.x+2.55/2)/2.55;fy=(vertex.z+.96/2)/.96
-    rear_counterweight.data.uv_layers.active.data[loop_index].uv=rear_photo.uv(
-     rear_crop[0]+fx*(rear_crop[2]-rear_crop[0]),rear_crop[3]-fy*(rear_crop[3]-rear_crop[1]))
- crane_parts.append(('crane-truck:rear-counterweight',rear_counterweight))
  def crane_photo_box(name,center,size,crop):
-  """Build a yellow box beam with its front face sampled from the front photo."""
+  """Build a box beam with every face painted from one worn photo crop."""
   obj=crane_box(name,center,size,crane_yellow,.035)
   photo_material=crane_front.material()
   obj.data.materials.append(photo_material)
   image_index=len(obj.data.materials)-1
   x0,y0,x1,y1=crop
   for polygon in obj.data.polygons:
-   if polygon.normal.y<.9:continue  # game front (-Z) is Blender +Y
    polygon.material_index=image_index
    for loop_index in polygon.loop_indices:
     vertex=obj.data.vertices[obj.data.loops[loop_index].vertex_index].co
-    fx=(vertex.x+size[0]/2)/size[0]
-    fy=(vertex.z+size[1]/2)/size[1]
+    if abs(polygon.normal.y)>.9:
+     fx=(vertex.x+size[0]/2)/size[0];fy=(vertex.z+size[1]/2)/size[1]
+    elif abs(polygon.normal.x)>.9:
+     fx=(vertex.y+size[1]/2)/size[1];fy=(vertex.z+size[2]/2)/size[2]
+    else:
+     fx=(vertex.x+size[0]/2)/size[0];fy=(vertex.y+size[1]/2)/size[1]
     obj.data.uv_layers.active.data[loop_index].uv=crane_front.uv(x0+fx*(x1-x0),y1-fy*(y1-y0))
   return obj
  # Ladder rails, crossmembers, suspension and axles meet the bottom edge of the photo carve.
@@ -633,7 +619,7 @@ def basic_family():
  # Box-beam stabilizers telescope from the chassis. Vertical jacks end in broad pads.
  for sx in (-1,1):
   for z in (-.55,2.85):
-   crop=(35,244,153,300) if sx<0 else (460,244,579,300)
+   crop=(55,260,115,285) if sx<0 else (470,260,525,285)
    stem=crane_photo_box('crane photo-faced outrigger box beam',(sx*1.67,1.08,z),(1.55,.34,.46),crop)
    crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
    telescoping=crane_photo_box('crane painted sliding outrigger box',(sx*2.25,1.08,z),(.62,.28,.36),crop)
@@ -834,7 +820,7 @@ for obj in bpy.context.scene.objects:
   bpy.ops.wm.read_factory_settings(use_empty=True)
   bpy.ops.import_scene.gltf(filepath=str(glb))
   scene=bpy.context.scene
- scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
+ scene.render.engine=eevee_engine;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
  scene.view_settings.view_transform='Standard';scene.view_settings.look='None'
  scene.world=bpy.data.worlds.new('neutral even crane studio');scene.world.use_nodes=True
  scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.36,.36,.36,1)
@@ -875,7 +861,7 @@ for obj in bpy.context.scene.objects:
  crane_cam('assembled-work',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
  print('Rendered crane truck photo comparisons and both articulated poses from the imported GLB')
  raise SystemExit(0)
- bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
+ bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine=eevee_engine;scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
  lights=[]
  for loc,power,size in [((7,-8,12),2600,9),((-6,-2,7),1100,8)]:bpy.ops.object.light_add(type='AREA',location=loc);l=bpy.context.object;l.data.energy=power;l.data.shape='DISK';l.data.size=size;lights.append((l,Vector(loc)))
  bpy.ops.mesh.primitive_plane_add(size=500,location=(0,0,-.06));g=bpy.context.object;g.name='temporary floor';mat=bpy.data.materials.new('plain mid-grey ground');mat.diffuse_color=(.38,.38,.38,1);mat.use_nodes=True;mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.38,.38,1);mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;g.data.materials.append(mat)
