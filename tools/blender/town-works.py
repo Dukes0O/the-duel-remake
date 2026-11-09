@@ -17,7 +17,7 @@ out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works/round-3.jpg'
+sheet = root / 'docs/board/looks/town-art-works/warehouse/round-1.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:
@@ -92,7 +92,8 @@ table = {
         'front': [(367, 322, 650, 613)],
         'rear': [(402, 352, 607, 613)],
     },
-    'grey': 26, 'tolerance': 46, 'bleed_tolerance': 38,
+    # Silver tin is close to the grey studio; a tight match keeps it in the mask.
+    'grey': 22, 'tolerance': 26, 'bleed_tolerance': 38,
     'voxel': .11, 'target': 9000, 'mask_dir': str(render_masks),
 }
 body = carve_object('warehouse:body', textures, table)
@@ -256,16 +257,26 @@ if args.render:
         camera.location = game_loc(location)
         camera.rotation_euler = (game_loc(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
         camera.data.ortho_scale = scale
+        if name == 'side':
+            scene.render.resolution_x, scene.render.resolution_y = 1024, 512
+        elif name in ('front', 'rear'):
+            scene.render.resolution_x, scene.render.resolution_y = 1024, 683
+        elif name == 'above':
+            scene.render.resolution_x, scene.render.resolution_y = 683, 1024
+        elif name == 'mayor':
+            scene.render.resolution_x, scene.render.resolution_y = 1280, 720
+        else:
+            scene.render.resolution_x, scene.render.resolution_y = 1024, 768
         scene.render.filepath = str(evidence / f'{name}.png')
         bpy.ops.render.render(write_still=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    render_view('side', (24, 4, 0), (0, 3.3, 0), 24)
-    render_view('front', (0, 4, -27), (0, 3.6, 0), 14)
-    render_view('rear', (0, 4, 27), (0, 3.6, 0), 14)
-    render_view('above', (0, 37, 0), (0, 0, 0), 26)
+    render_view('side', (24, 4, 0), (0, 3.3, 0), 23.5)
+    render_view('front', (0, 4, -27), (0, 3.6, 0), 14.5)
+    render_view('rear', (0, 4, 27), (0, 3.6, 0), 14.5)
+    render_view('above', (0, 37, 0), (0, 0, 0), 16)
     render_view('front-three-quarter', (22, 15, -24), (0, 3.5, 0), 28)
     render_view('rear-three-quarter', (-22, 15, 22), (0, 3.5, 0), 28)
-    render_view('mayor', (32, 44, -32), (0, 3.2, 0), 30)
+    render_view('mayor', (42, 62, -42), (0, 3.2, 0), 34)
     blend.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(blend))
     import subprocess
