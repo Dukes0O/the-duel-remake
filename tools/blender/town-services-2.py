@@ -12,13 +12,13 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-16.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-16/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-17.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-17/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
 from mathutils import Vector
 sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
-from photo_model import Mesh as PhotoMesh, Photo, fill as photo_fill, slab as photo_slab, tidy as photo_tidy, trace as photo_trace
+from photo_model import Mesh as PhotoMesh, Photo, fill as photo_fill, slab as photo_slab, tidy as photo_tidy, trace as photo_trace, box as photo_box, lathe as photo_lathe
 from hull_model import tyre
 from photo_carve import carve_object
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
@@ -318,15 +318,87 @@ for n in ids:
   bpy.ops.mesh.primitive_uv_sphere_add(segments=8,ring_count=5,radius=.18,location=town.game_vector((0,30.18,0)))
   beacon=bpy.context.object;beacon.name='radio-mast:lamp';beacon.data.materials.append(lamp);parent_keep(beacon,b);continue
  if n=='helipad':
-  box('Helipad earth plinth',(0,.15,0),(w,d,.3),sand,.08,b);box('Helipad welded steel deck',(0,.42,0),(w-1,d-1,.24),steel,.045,b)
-  for x in range(-int(w/2)+1,int(w/2),2):beam('Deck plate weld',(x,.56,-d/2+1),(x,.56,d/2-1),.035,tin,b)
-  # Bold letter H from real painted bars and perimeter stop rails.
-  for x in (-5,5):box('Landing H upright',(x,.58,0),(.85,.08,8),paint,.025,b)
-  box('Landing H crossbar',(0,.59,0),(10,.09,.85),paint,.025,b)
-  for x in (-w/2+1,w/2-1):beam('Pad perimeter rail',(x,.68,-d/2+1),(x,.68,d/2-1),.12,tin,b)
-  for x in (-w/2+2,w/2-2):
-   beam('Floodlight post',(x,.5,-d/2+1),(x,4,-d/2+1),.10,steel,b);box('Floodlight hood',(x,4,-d/2+1),(.45,.24,.7),dark,.03,b)
-  for x in (-6,6):cyl('Fuel drum',(x,.95,5),.37,.9,steel,20,b)
+  # The measured side elevations set the low deck and its drum supports. The
+  # straight-down photo carries the H, circle, seams and weathering on one
+  # flat slab; the old plain box-and-stripe pad is fully replaced.
+  photos={view:Photo(tex/f'helipad-{view}.jpg') for view in ('side','front','rear','top')}
+  side,front,rear,top=(photos[key] for key in ('side','front','rear','top'))
+  deck_y=.82;deck_half=12.0;frame_half=11.72
+  plate_crop=(88,88,936,934)
+  side_band=(19,329,1005,371);front_band=(28,295,996,364);rear_band=(29,306,994,367)
+  materials={key:photos[key].material() for key in ('side','front','rear','top')}
+  part=PhotoMesh();photo_box(part,-deck_half,deck_half,deck_y-.12,deck_y,-deck_half,deck_half,{
+   '+y':('top',top,plate_crop),'-y':('side',side,(45,370,80,400)),
+   '+z':('front',front,front_band),'-z':('rear',rear,rear_band),
+   '+x':('side',side,side_band),'-x':('side',side,side_band)})
+  deck=part.finish('helipad:body-deck',materials);parent_keep(deck,b)
+
+  # Welded perimeter rails and cross members stop at the deck edge.
+  girder_specs=[('road',-frame_half,-frame_half,-frame_half,frame_half,'long'),
+                ('yard',frame_half,-frame_half,frame_half,frame_half,'long'),
+                ('west',-frame_half,-frame_half,frame_half,-frame_half,'cross'),
+                ('east',-frame_half,frame_half,frame_half,frame_half,'cross'),
+                ('middle',-frame_half,0,frame_half,0,'cross')]
+  for label,x0,z0,x1,z1,kind in girder_specs:
+   if kind=='long':
+    lo,hi=sorted((z0,z1));bounds=(x0-.16,x0+.16,.45,.69,lo,hi)
+    faces={'+x':('side',side,side_band),'-x':('side',side,side_band),
+           '+z':('front',front,front_band),'-z':('rear',rear,rear_band)}
+   else:
+    lo,hi=sorted((x0,x1));bounds=(lo,hi,.45,.69,z0-.16,z0+.16)
+    faces={'+z':('side',side,side_band),'-z':('side',side,side_band),
+           '+x':('front',front,front_band),'-x':('rear',rear,rear_band)}
+   part=PhotoMesh();photo_box(part,*bounds,faces)
+   girder=part.finish(f'helipad:body-girder-{label}',materials);parent_keep(girder,b)
+
+  # Turn each drum from one measured drum in the side photo, keeping the
+  # photograph on its circumference instead of stretching a flat box.
+  support_crop=(22,371,101,425)
+  def photographed_drum(name,x,z,bottom,height,radius):
+   mesh=PhotoMesh();stations=[(0,radius*.84),(.025,radius),(height-.035,radius),(height,radius*.86)]
+   def drum_uv(index,distance,r,angle):
+    return side.uv(support_crop[0]+(support_crop[2]-support_crop[0])*angle/(2*math.pi),
+                   support_crop[3]-(support_crop[3]-support_crop[1])*distance/height)
+   cap=('side',lambda angle,fraction:side.uv((support_crop[0]+support_crop[2])/2+(support_crop[2]-support_crop[0])*.04*fraction*math.cos(angle),
+                                             support_crop[1]+(support_crop[3]-support_crop[1])*.48))
+   photo_lathe(mesh,'side',(x,bottom,z),(0,1,0),(1,0,0),(0,0,1),stations,drum_uv,
+               sides=12,cap_start=cap,cap_end=cap)
+   obj=mesh.finish(name,materials);parent_keep(obj,b);return obj
+  supports=[]
+  for x in (-frame_half,frame_half):
+   supports.extend((x,z) for z in (-9,-4.5,0,4.5,9))
+  for z in (-frame_half,frame_half):
+   supports.extend((x,z) for x in (-7.5,0,7.5))
+  for index,(x,z) in enumerate(supports,1):
+   photographed_drum(f'helipad:body-support-drum-{index}',x,z,0,.45,.34)
+
+  # Three separately turned fuel drums: two below and one resting across them.
+  for index,(x,z,bottom) in enumerate(((8.2,7.7,deck_y),(8.8,7.7,deck_y),(8.5,7.7,deck_y+.32)),1):
+   photographed_drum(f'helipad:fuel-drum-{index}',x,z,bottom,.32,.30)
+  pump_x,pump_z=9.65,7.6
+  box('helipad:pump-body',(pump_x,1.08,pump_z),(.18,.52,.18),tin,.025,b)
+  box('helipad:pump-handle',(pump_x-.15,1.37,pump_z),(.45,.07,.07),steel,.012,b)
+  box('helipad:pump-spout',(pump_x,1.13,pump_z-.14),(.055,.055,.28),dark,.008,b)
+
+  # Short pole and horizontal sleeve keep the windsock below 1.5 m overall.
+  sock_x,sock_z=-10.4,8.4
+  beam('helipad:windsock-pole',(sock_x,deck_y,sock_z),(sock_x,1.46,sock_z),.055,steel,b)
+  canvas=bpy.data.materials.new('Worn orange helipad windsock');canvas.use_nodes=True
+  canvas_bsdf=canvas.node_tree.nodes['Principled BSDF'];canvas_bsdf.inputs['Base Color'].default_value=(.78,.20,.035,1);canvas_bsdf.inputs['Roughness'].default_value=.9
+  mesh=PhotoMesh();sock_stations=[(0,.09),(.32,.077),(.75,.047),(1.15,.012)]
+  photo_lathe(mesh,'canvas',(sock_x,1.39,sock_z),(1,0,0),(0,0,1),(0,-1,0),sock_stations,
+              lambda i,d,r,angle:(i/3,angle/(2*math.pi)),sides=8)
+  sock=mesh.finish('helipad:windsock',{'canvas':canvas});parent_keep(sock,b)
+
+  # Emissive lenses and their short corner posts remain individually named.
+  lamp=bpy.data.materials.new('Helipad emissive floodlight');lamp.use_nodes=True
+  lamp_bsdf=lamp.node_tree.nodes['Principled BSDF'];lamp_bsdf.inputs['Base Color'].default_value=(1,.55,.16,1)
+  lamp_bsdf.inputs['Emission Color'].default_value=(1,.36,.08,1);lamp_bsdf.inputs['Emission Strength'].default_value=4
+  for index,(x,z) in enumerate(((-10.8,-10.8),(10.8,-10.8),(-10.8,10.8),(10.8,10.8)),1):
+   beam(f'helipad:floodlight-pole-{index}',(x,deck_y,z),(x,1.35,z),.07,steel,b)
+   box(f'helipad:floodlight-housing-{index}',(x,1.41,z),(.34,.12,.24),dark,.025,b)
+   lens_name='helipad:lamp' if index==1 else f'helipad:lamp-{index}'
+   box(lens_name,(x,1.478,z-.02),(.24,.025,.14),lamp,.008,b)
   continue
  if n=='notice-board':
   for x in (-2.4,2.4):beam('Notice post',(x,.1,-2),(x,2.7,-2),.15,wood,b)
@@ -493,6 +565,31 @@ def audit_radio_mast_pieces():
 
 audit_radio_mast_pieces()
 
+def audit_helipad_pieces():
+ target=building_roots['helipad'];pieces=[obj for obj in bpy.data.objects if obj.parent==target and obj.type=='MESH']
+ bpy.context.view_layer.update();bounds={}
+ for obj in pieces:
+  points=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  values=[(p.x,p.z,-p.y) for p in points]
+  lo=tuple(min(p[i] for p in values) for i in range(3));hi=tuple(max(p[i] for p in values) for i in range(3))
+  bounds[obj]=(lo,hi)
+ for obj,(lo,hi) in bounds.items():
+  assert lo[0]>=-15.5 and hi[0]<=15.5 and lo[2]>=-15.5 and hi[2]<=15.5, f'{obj.name} exceeds the helipad footprint clearance: {lo}..{hi}'
+  assert lo[1]>=-.025 and hi[1]<=1.5, f'{obj.name} exceeds the 1.5 m helipad height: {lo}..{hi}'
+  grounded=abs(lo[1])<=.035
+  touching=any(obj!=other and all(max(0,other_box[0][axis]-hi[axis],lo[axis]-other_box[1][axis])<=.065 for axis in range(3))
+               for other,other_box in bounds.items())
+  contact='ground' if grounded else 'another piece' if touching else 'FAIL'
+  print(f'HELIPAD PIECE {obj.name}: x={lo[0]:.3f}..{hi[0]:.3f} y={lo[1]:.3f}..{hi[1]:.3f} z={lo[2]:.3f}..{hi[2]:.3f} contact={contact}')
+  assert grounded or touching, f'{obj.name} floats without touching ground or another piece'
+ triangles=0;depsgraph=bpy.context.evaluated_depsgraph_get()
+ for obj in pieces:
+  evaluated=obj.evaluated_get(depsgraph);mesh=evaluated.to_mesh();mesh.calc_loop_triangles();triangles+=len(mesh.loop_triangles);evaluated.to_mesh_clear()
+ print(f'HELIPAD TRIANGLES {triangles}')
+ assert triangles<=14000, f'helipad exceeds 14000 triangles: {triangles}'
+
+audit_helipad_pieces()
+
 glb.parent.mkdir(parents=True,exist_ok=True);town.export_glb(glb)
 blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 if a.review:
@@ -506,7 +603,8 @@ if a.review:
  scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.20,.20,.20,1)
  scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.8
  ground_mat=bpy.data.materials.new('plain grey review ground');ground_mat.diffuse_color=(.20,.20,.20,1);ground_mat.use_nodes=True
- ground_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.20,.20,.20,1)
+ ground_bsdf=ground_mat.node_tree.nodes['Principled BSDF'];ground_bsdf.inputs['Base Color'].default_value=(0,0,0,1)
+ ground_bsdf.inputs['Emission Color'].default_value=(.20,.20,.20,1);ground_bsdf.inputs['Emission Strength'].default_value=1
  ground_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.95
  bpy.ops.mesh.primitive_plane_add(size=20000,location=town.game_vector((0,-.10,0)))
  ground=bpy.context.object;ground.name='review-only neutral grey ground';ground.data.materials.append(ground_mat)
@@ -516,7 +614,7 @@ if a.review:
  fill_data=bpy.data.lights.new('soft fill','AREA');fill_data.energy=5000;fill_data.shape='DISK';fill_data.size=30
  fill=bpy.data.objects.new('soft fill',fill_data);scene.collection.objects.link(fill)
  fill.location=town.game_vector((-20,18,14));fill.rotation_euler=(town.game_vector((0,2,0))-fill.location).to_track_quat('-Z','Y').to_euler()
- target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='radio-mast')
+ target_root=next(o for o in bpy.data.objects if o.name.split('.')[0]=='helipad')
  def within(obj,target):
   parent=obj
   while parent:
@@ -527,25 +625,33 @@ if a.review:
   if obj==ground or obj==light or obj==fill:continue
   obj.hide_render=not within(obj,target_root)
  camera_data=bpy.data.cameras.new('orthographic matched review camera');camera=bpy.data.objects.new('orthographic matched review camera',camera_data);scene.collection.objects.link(camera);scene.camera=camera
+ bpy.ops.mesh.primitive_plane_add(size=300,location=(0,0,0));backdrop=bpy.context.object;backdrop.name='review seamless grey backdrop'
+ backdrop_mat=bpy.data.materials.new('review neutral backdrop emission');backdrop_mat.use_nodes=True
+ backdrop_bsdf=backdrop_mat.node_tree.nodes['Principled BSDF'];backdrop_bsdf.inputs['Base Color'].default_value=(0,0,0,1)
+ backdrop_bsdf.inputs['Emission Color'].default_value=(.20,.20,.20,1);backdrop_bsdf.inputs['Emission Strength'].default_value=1
+ backdrop.data.materials.append(backdrop_mat)
  def render(name,eye,look,scale,resolution,body_only=False):
   camera.location=town.game_vector(eye);camera.rotation_euler=(town.game_vector(look)-camera.location).to_track_quat('-Z','Y').to_euler()
+  target_world=town.game_vector(look);view_direction=(target_world-camera.location).normalized()
+  backdrop.location=target_world+view_direction*80
+  backdrop.rotation_euler=(-view_direction).to_track_quat('Z','Y').to_euler()
   camera_data.type='ORTHO';camera_data.ortho_scale=scale
   scene.render.resolution_x,scene.render.resolution_y=resolution;scene.render.filepath=str(review_output/(name+'.png'))
-  body_prefixes=('radio-mast:')
+  body_prefixes=('helipad:body-','helipad:body-girder-')
   for obj in bpy.data.objects:
-   if obj==ground or obj==light or obj==fill:continue
+   if obj==ground or obj==light or obj==fill or obj==backdrop:continue
    is_body_piece=obj.name.startswith(body_prefixes)
    obj.hide_render=(not within(obj,target_root) or (body_only and not is_body_piece))
   bpy.ops.render.render(write_still=True)
  shots=[
   # Photo comparisons use the same orthographic cameras as their source views.
-  ('model-side',(-46,15,0),(0,15,0),34.0,(900,900),True),
-  ('model-front',(0,15,-46),(0,15,0),34.0,(900,900),True),
-  ('model-rear',(0,15,46),(0,15,0),34.0,(900,900),True),
-  ('model-above',(0,48,0),(0,0,0),8.2,(900,900),True),
-  ('three-quarter-road',(22,35,-32),(0,14,0),38.0,(900,900)),
-  ('three-quarter-yard',(-22,35,32),(0,14,0),38.0,(900,900)),
-  ('mayor-view',(48,65,-48),(0,12,0),38.0,(900,900)),
+  ('model-side',(48,2.2,0),(0,.70,0),25.5,(1024,683),True),
+  ('model-front',(0,2.2,-48),(0,.70,0),25.5,(1024,683),True),
+  ('model-rear',(0,2.2,48),(0,.70,0),25.5,(1024,683),True),
+  ('model-above',(0,48,0),(0,0,0),29.0,(1024,1024),True),
+  ('three-quarter-road',(24,22,-28),(0,.75,0),31.0,(1024,683)),
+  ('three-quarter-yard',(-24,22,28),(0,.75,0),31.0,(1024,683)),
+  ('mayor-view',(45,55,-45),(0,.75,0),38.0,(1024,683)),
  ]
  for shot in shots:render(*shot)
  print(json.dumps({'glb':str(glb),'renders':[str(review_output/(shot[0]+'.png')) for shot in shots]}))
