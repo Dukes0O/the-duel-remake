@@ -572,17 +572,27 @@ def basic_family():
  # carve_object bleeds each projection for edge filtering; reload the original
  # rear photo because its mask is intentionally empty in this recipe.
  rear_photo=Photo(crane_textures/'crane-truck-rear.jpg');rear_photo_material=rear_photo.material()
+ counterweight_side=Photo(crane_textures/'crane-truck-side.jpg');side_material=counterweight_side.material()
  rear_counterweight.data.materials.append(rear_photo_material)
- rear_face_index=len(rear_counterweight.data.materials)-1
+ rear_counterweight.data.materials.append(side_material)
+ rear_face_index=len(rear_counterweight.data.materials)-2;side_face_index=len(rear_counterweight.data.materials)-1
  rear_crop=(140,244,478,347)
+ side_crop=(780,275,850,365)
  for polygon in rear_counterweight.data.polygons:
-  if polygon.normal.y>-.9:continue  # the rear face is game +Z / Blender -Y
-  polygon.material_index=rear_face_index
-  for loop_index in polygon.loop_indices:
-   vertex=rear_counterweight.data.vertices[rear_counterweight.data.loops[loop_index].vertex_index].co
-   fx=(vertex.x+2.55/2)/2.55;fy=(vertex.z+.96/2)/.96
-   rear_counterweight.data.uv_layers.active.data[loop_index].uv=rear_photo.uv(
-    rear_crop[0]+fx*(rear_crop[2]-rear_crop[0]),rear_crop[3]-fy*(rear_crop[3]-rear_crop[1]))
+  if polygon.normal.y<-.9:  # the rear face is game +Z / Blender -Y
+   polygon.material_index=rear_face_index
+   for loop_index in polygon.loop_indices:
+    vertex=rear_counterweight.data.vertices[rear_counterweight.data.loops[loop_index].vertex_index].co
+    fx=(vertex.x+2.55/2)/2.55;fy=(vertex.z+.96/2)/.96
+    rear_counterweight.data.uv_layers.active.data[loop_index].uv=rear_photo.uv(
+     rear_crop[0]+fx*(rear_crop[2]-rear_crop[0]),rear_crop[3]-fy*(rear_crop[3]-rear_crop[1]))
+  elif abs(polygon.normal.x)>.9:
+   polygon.material_index=side_face_index
+   for loop_index in polygon.loop_indices:
+    vertex=rear_counterweight.data.vertices[rear_counterweight.data.loops[loop_index].vertex_index].co
+    fx=(vertex.y+1.34/2)/1.34;fy=(vertex.z+.96/2)/.96
+    rear_counterweight.data.uv_layers.active.data[loop_index].uv=counterweight_side.uv(
+     side_crop[0]+fx*(side_crop[2]-side_crop[0]),side_crop[3]-fy*(side_crop[3]-side_crop[1]))
  crane_parts.append(('crane-truck:rear-counterweight',rear_counterweight))
  def crane_photo_box(name,center,size,crop):
   """Build a yellow box beam with its front face sampled from the front photo."""
