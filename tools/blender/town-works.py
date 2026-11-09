@@ -126,20 +126,22 @@ def add_box(name, center, size, material, bevel=.025):
     obj.parent = building
     return obj
 
-def add_door(name, center, width, height, rotation=0):
+def add_door(name, center, width, height, owner, rotation=0):
     obj = town.corrugated_sheet(name, center, width, height,
                                 {'galvanised-tin': tin, 'iron-dark': dark}, bent=.035)
     obj.rotation_euler[2] = rotation
-    obj.parent = building
+    obj.parent = owner
     # Dark edge rails and three formed ribs make the leaves read as sliding doors.
     x, y, z = center
     if abs(rotation) < .1:
         for edge in (-1, 1):
             rail = add_box(name + f'-edge-{edge}', (x + edge * width * .48, y + height / 2, z - .035),
                            (.09, height, .08), oxide, .01)
+            rail.parent = owner
         for row in (1, 2, 3):
-            add_box(name + f'-rib-{row}', (x, y + row * height / 4, z - .075),
-                    (width * .91, .065, .06), oxide, .01)
+            rib = add_box(name + f'-rib-{row}', (x, y + row * height / 4, z - .075),
+                          (width * .91, .065, .06), oxide, .01)
+            rib.parent = owner
     return obj
 
 piece_names = []
@@ -151,8 +153,7 @@ def piece(name):
 # Front road-side sliding doors: two leaves meet over the 3.7 m opening.
 for side in (-1, 1):
     parent = piece(f'warehouse:loading-door-front-{"left" if side < 0 else "right"}')
-    door = add_door(f'warehouse-front-door-leaf-{side}', (side * .91, 1.91, -10.18), 1.88, 3.62)
-    door.parent = parent
+    door = add_door(f'warehouse-front-door-leaf-{side}', (side * .91, 1.91, -10.18), 1.88, 3.62, parent)
     rail = add_box(f'warehouse-front-door-rail-{side}', (side * .91, 3.86, -10.22), (2.0, .13, .12), dark, .02)
     rail.parent = parent
 
