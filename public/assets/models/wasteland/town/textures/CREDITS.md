@@ -394,13 +394,14 @@ background, no perspective, no labels, no people or logos, no watermark."
   `supply-truck:load`; the empty-bed photos remain the body and bed rebuild
   inputs.
 
-<<<<<<< HEAD
-## TOWN-ART-MACHINES-2, round 6 reference photographs
+## TOWN-ART-MACHINES-2, round 32 drill rig references
 
-Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
+Generated with OpenAI ImageGen on 9 November 2026. The truck reference was generated as one four-view contact sheet of one mast-free yellow salvage drill truck, then cropped into four individual orthographic photos: side, front, rear and top. The mast is a separate side-on photo, lying flat. These photos are packed into the machine model.
 
-- `machines2-drill-rig-views.jpg`: truck-mounted well rig with an open lattice mast.
-=======
+- `drill-rig-side.jpg`, `drill-rig-front.jpg`, `drill-rig-rear.jpg`, `drill-rig-top.jpg`: one matching truck, with the mast and drill string removed.
+- `drill-rig-mast.jpg`: detached lattice mast lying flat.
+- `drill-rig-views-source.png`, `drill-rig-mast-source.png`: generated originals used to make the modeling photos.
+
 ## TOWN-ART-FUN round 2 references
 
 Generated with the built-in ImageGen tool, 6 November 2026. Original development references; compressed JPEGs are stored here for recipe rebuilds and the review sheet.
