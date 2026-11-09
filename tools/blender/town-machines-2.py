@@ -123,12 +123,12 @@ def articulated_loader():
  from hull_model import tyre as photo_tyre
  loader_textures=project_root/'public/assets/models/wasteland/town/textures'
  side=LoaderPhoto(loader_textures/'loader-side.jpg');front_photo=LoaderPhoto(loader_textures/'loader-front.jpg');rear_photo=LoaderPhoto(loader_textures/'loader-rear.jpg');top=LoaderPhoto(loader_textures/'loader-top.jpg')
- # Measured from the common four-view sheet: side silhouette x=44..830,
- # ground y=430; front/rear roof row and ground are measured per end image.
- length=5.0;width=2.55;height=2.62;side_start,side_end,side_ground=42,835,430
+ # Measured on the current full loader-side photo: silhouette x=58..748,
+ # ground y=400; rear/front tyre centres x=160/540 at y=321, radius 80 px.
+ length=5.0;width=2.55;height=2.62;side_start,side_end,side_ground=58,748,400
  side_scale=length/(side_end-side_start)
- wheel_radius=90*side_scale;wheel_width=.42;track=1.22
- axle_pixels=(175,526);axle_centres=(345,345)
+ wheel_radius=80*side_scale;wheel_width=.42;track=1.22
+ axle_pixels=(160,540);axle_centres=(321,321)
  axle_z=[-length/2+((px-side_start)/(side_end-side_start))*length for px in axle_pixels]
  table={'photos':{'side':'loader-side.jpg','front':'loader-front.jpg','rear':'loader-rear.jpg','top':'loader-top.jpg'},
   'length':length,'width':width,'height':height,'side':{'start':side_start,'end':side_end,'ground':side_ground},
@@ -176,12 +176,14 @@ def articulated_loader():
    bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=wheel_radius*.53,depth=wheel_width*.12,location=(x+(-1 if x<0 else 1)*wheel_width*.48,z,wheel_height),rotation=(0,math.pi/2,0))
    hub=bpy.context.object;hub.name='loader worn photo-hub';hub.data.materials.append(tin);parent(hub,front if z==axle_z[0] else rear)
  # The articulated headstock and moving assemblies have real pin origins.
- arms=empty('loader:arms',(0,-1.12,1.55),front)
+ # The side-photo frame pins beside the cab are at about x=300, y=255.
+ # The arm joint origin is that pin; its photo-mapped arms run forward/down.
+ arms=empty('loader:arms',(0,-.75,1.05),front)
  arm_photo=LoaderPhoto(loader_textures/'loader-arm-side.jpg')
  from photo_carve import lift_if_dark
  arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
  arm_loops=photo_trace(arm_mask,(20,20,arm_photo.w-20,arm_photo.h-20),tolerance=2.5,min_area=120)
- arm_mesh=LoaderMesh();arm_pin_px,arm_pin_py=120,255;arm_scale=3.30/(2070-120)
+ arm_mesh=LoaderMesh();arm_pin_px,arm_pin_py=120,255;arm_scale=.0008
  def arm_world(px,py,depth):return (depth,-(px-arm_pin_px)*arm_scale,(arm_pin_py-py)*arm_scale)
  for loop in arm_loops:
   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
@@ -193,11 +195,13 @@ def articulated_loader():
  beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
  beam('loader arm hinge pin',(-.90,-1.12,1.55),(.90,-1.12,1.55),.12,tin,front)
- bucket=empty('loader:bucket',(0,-3.10,.43),arms)
+ # The bucket pin is about 0.9 m ahead of the frame pin. Its lower edge
+ # reaches the ground when the arms are at rest.
+ bucket=empty('loader:bucket',(0,-.92,.12),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
  bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
- bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=2.45/(bucket_pin_px-95)
+ bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=1.0/(950-bucket_pin_py)
  def bucket_world(px,py,depth):return (depth,-(bucket_pin_px-px)*bucket_scale,(bucket_pin_py-py)*bucket_scale)
  for loop in bucket_loops:
   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
