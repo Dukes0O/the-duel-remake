@@ -602,7 +602,9 @@ def basic_family():
   'side':{'start':28,'end':1372,'ground':665},
   'front':{'centre':700,'ground':913,'top':18},
   'rear':{'centre':700,'ground':913,'top':18},
-  'top':{'front':34,'rear':1310,'centre':600},
+  # In the photo's straight-down projection, row 1310 is the game-front
+  # edge; carve_object's town-forward mapping therefore uses the reversed pair.
+  'top':{'front':1310,'rear':34,'centre':600},
   'underside':1.43,
   # Tracks hide the lower body in side view, so that view is never cut there.
   # End and plan views see the tracks outside the body; remove those copies.
@@ -683,12 +685,18 @@ def basic_family():
  paver_screed_box('paver wide photo-faced screed plate',(0,-4.45,.38),(5.55,.22,.72),screed_mat,.035)
  paver_screed_box('paver screed lower strike edge',(0,-4.43,.045),(5.48,.28,.12),black,.018)
  paver_screed_box('paver screed upper yellow beam',(0,-4.39,.82),(5.38,.30,.18),paint,.025)
+ def paver_link(name,start,end,width,material,owner):
+  delta=Vector(end)-Vector(start);mid=(Vector(end)+Vector(start))/2
+  bpy.ops.mesh.primitive_cube_add(size=1,location=mid);obj=bpy.context.object;obj.name=name
+  obj.dimensions=(width,width,delta.length);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+  obj.rotation_euler=delta.to_track_quat('Z','X').to_euler();obj.data.materials.append(material)
+  obj.data.uv_layers.active.name='UVMap';parent(obj,owner);return obj
  for side in (-1,1):
   paver_screed_box('paver screed end plate',(side*2.70,-4.43,.43),(.18,.34,.78),screed_mat,.02)
-  beam('paver fixed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.98,1.62),.095,paint,paver)
+  paver_link('paver screed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.98,1.62),.15,paint,screed)
   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.12,depth=.28,location=(side*1.34,-3.98,1.62),rotation=(0,math.pi/2,0))
   pin=bpy.context.object;pin.name='paver screed tow pin';pin.data.materials.append(tin);pin.data.uv_layers.active.name='UVMap';parent(pin,screed)
-  beam('paver screed angled tow link',(side*1.34,-3.98,1.62),(side*2.35,-4.28,.79),.085,steel,screed)
+  paver_link('paver screed angled tow link',(side*1.34,-3.98,1.62),(side*2.35,-4.28,.79),.13,steel,screed)
  # Export-space bounds are checked before the family join. The screed must be
  # at the rear (Blender -Y) and its plate must touch the floor at rest.
  bpy.context.view_layer.update()
