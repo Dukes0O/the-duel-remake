@@ -587,23 +587,107 @@ def basic_family():
  for obj in sorted((child for child in roller.children_recursive if child.type=='MESH'),key=lambda piece:piece.name):
   b=roller_bounds(obj)
   if b:print('ROLLER PIECE BOUNDS BEFORE JOIN',obj.name,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
- # Paver: low wide feed hopper, tracked chassis, screed and open operator's station.
- paver=empty('paver',(0,0,0),root);tracks=empty('paver:tracks',(0,0,0),paver)
- box('paver low steel chassis',(0,.14,1.04),(2.34,3.10,.60),black,paver,.12)
- for s in (-1,1):band_track('paver',s,0,3.70,tracks)
- box('paver wide front hopper floor',(0,-1.52,1.34),(3.25,1.08,.18),steel,paver,.08)
- for s in (-1,1):
-  box_beam('paver sloped hopper side',(s*.72,-1.90,1.42),(s*1.54,-1.12,2.05),.11,.82,paint,paver,.045)
-  beam('paver hopper rolled lip',(s*1.55,-1.72,1.86),(s*1.55,-.92,2.31),.07,tin,paver)
- box('paver rear hopper bulkhead',(0,-.93,1.72),(2.92,.16,.85),paint,paver,.06)
- box('paver open operator deck',(0,.56,1.42),(1.60,1.10,.18),steel,paver,.04)
- box('paver operator seat',(0,.36,1.72),(.48,.38,.48),black,paver,.08)
- for s in (-1,1):
-  beam('paver handrail post',(s*.72,.13,1.50),(s*.72,.13,2.28),.035,tin,paver);beam('paver platform rail',(s*.72,.13,2.28),(s*.72,1.0,2.28),.035,tin,paver)
- screed=empty('paver:screed',(0,1.70,.76),paver)
- box('paver rear screed deck',(0,1.90,.76),(3.60,.42,.25),steel,screed,.08)
- box('paver screed wear plate',(0,2.02,.58),(3.52,.18,.08),black,screed,.025)
- for s in (-1,1):beam('paver screed end wing',(s*1.70,1.76,.67),(s*1.94,2.12,.67),.07,tin,screed)
+ # Paver round 31: carve only the machine above the track tops; the detached
+ # screed stays outside these four photos and moves on its tow-pin origin.
+ from photo_model import Photo as PaverPhoto
+ from photo_carve import carve_object
+ paver=empty('paver',(0,0,0),root)
+ paver_textures=project_root/'public/assets/models/wasteland/town/textures'
+ paver_length,paver_width,paver_height=8.0,4.8,3.8
+ paver_table={
+  'photos':{'side':'paver-side.jpg','front':'paver-front.jpg','rear':'paver-rear.jpg','top':'paver-top.jpg'},
+  'length':paver_length,'width':paver_width,'height':paver_height,
+  # Pixel grid is measured on the source JPEGs (1400 px wide). The side photo
+  # sets length and ground; each end states its own roof row as required.
+  'side':{'start':28,'end':1372,'ground':665},
+  'front':{'centre':700,'ground':913,'top':18},
+  'rear':{'centre':700,'ground':913,'top':18},
+  'top':{'front':34,'rear':1310,'centre':600,'along':'x','x_scale':paver_width/(980-220)},
+  'underside':1.43,
+  # Tracks hide the lower body in side view, so that view is never cut there.
+  # End and plan views see the tracks outside the body; remove those copies.
+  'cut':{'front':[(0,0,1400,110),(0,660,365,933),(1035,660,1400,933)],
+         'rear':[(0,0,1400,105),(0,670,360,933),(1040,670,1400,933)],
+         'top':[(0,0,1400,34),(0,1310,1400,1400),(0,285,220,1040),(980,280,1400,1050)]},
+  'voxel':.045,'target':7200,'grey':24,'tolerance':38,'bleed_tolerance':36,
+  'mask_dir':str(project_root/'.qa-dist/town-machines-2/round-31/masks')}
+ paver_body=carve_object('paver:body',paver_textures,paver_table);parent(paver_body,paver)
+ for photo in paver_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ paver_side=paver_table['_photos']['side'];paver_front=paver_table['_photos']['front']
+ # Two closed rounded belts are cut from the photographed side-track region.
+ # Each ring is a true capsule loop with an open centre for the rollers.
+ def paver_track(side):
+  center_x=side*1.62;track_length=5.72;center_z=.715;outer_r=.715;inner_r=.47
+  straight=track_length/2-outer_r
+  def capsule(radius):
+   points=[]
+   for i in range(25):
+    angle=-math.pi/2+math.pi*i/24
+    points.append((straight+radius*math.cos(angle),center_z+radius*math.sin(angle)))
+   for i in range(25):
+    angle=math.pi/2+math.pi*i/24
+    points.append((-straight+radius*math.cos(angle),center_z+radius*math.sin(angle)))
+   return points
+  outer=capsule(outer_r);inner=capsule(inner_r);verts=[];faces=[];uvs=[]
+  px0,px1,py0,py1=280,1235,418,650
+  for x in (center_x-.39,center_x+.39):
+   for y,z in outer+inner:
+    verts.append((x,y,z));px=px1-(y+track_length/2)/track_length*(px1-px0);py=py1-(z/1.45)*(py1-py0);uvs.append(paver_side.uv(px,py))
+  count=len(outer)
+  for i in range(count):
+   k=(i+1)%count
+   faces.extend(((i,k,count+k,count+i),(2*count+i,3*count+i,3*count+k,2*count+k),
+                 (i,2*count+i,2*count+k,k),(count+i,count+k,3*count+k,3*count+i)))
+  mesh=bpy.data.meshes.new('paver rounded crawler belt mesh');mesh.from_pydata(verts,[],faces);mesh.update()
+  obj=bpy.data.objects.new('paver rounded photo-worn crawler belt '+('left' if side<0 else 'right'),mesh);bpy.context.collection.objects.link(obj)
+  obj.data.materials.append(paver_side.material());obj.data.materials.append(rubber);uv=mesh.uv_layers.new(name='UVMap')
+  # The visible side wears the actual tread photo; edge faces use dark rubber.
+  for poly in mesh.polygons:
+   poly.material_index=0 if poly.index%4 in (0,1) else 1
+   for li in poly.loop_indices:uv.data[li].uv=uvs[mesh.loops[li].vertex_index]
+  parent(obj,paver);return obj
+ paver_tracks=[paver_track(side) for side in (-1,1)]
+ # Tow pin axis is the paver:screed origin. Plate and fittings are built once;
+ # local offsets put the broad strike plate on the ground at rest.
+ screed=empty('paver:screed',(0,-3.86,1.62),paver)
+ screed_photo=PaverPhoto(paver_textures/'paver-screed-rear.jpg')
+ screed_mat=screed_photo.material();screed_bsdf=screed_mat.node_tree.nodes['Principled BSDF'];screed_bsdf.inputs['Metallic'].default_value=.12
+ def paver_screed_box(name,center,size,material=steel,bevel=.025):
+  obj=box(name,center,size,material,None,bevel)
+  if material==screed_mat:
+   uv=obj.data.uv_layers.active
+   for poly in obj.data.polygons:
+    for li in poly.loop_indices:
+     co=obj.data.vertices[obj.data.loops[li].vertex_index].co
+     uv.data[li].uv=(.05+(co.x/size[0]+.5)*.90,1-(co.z/size[2]+.5)*.90)
+  parent(obj,screed);return obj
+ paver_screed_box('paver wide photo-faced screed plate',(0,-4.45,.38),(5.55,.22,.72),screed_mat,.035)
+ paver_screed_box('paver screed lower strike edge',(0,-4.43,.045),(5.48,.28,.12),black,.018)
+ paver_screed_box('paver screed upper yellow beam',(0,-4.39,.82),(5.38,.30,.18),paint,.025)
+ for side in (-1,1):
+  paver_screed_box('paver screed end plate',(side*2.70,-4.43,.43),(.18,.34,.78),screed_mat,.02)
+  beam('paver screed tow pin',(side*1.34,-3.86,1.62),(side*1.34,-4.05,1.62),.10,tin,screed)
+ # Export-space bounds are checked before the family join. The screed must be
+ # at the rear (Blender -Y) and its plate must touch the floor at rest.
+ bpy.context.view_layer.update()
+ def paver_piece_bounds(obj):
+  nodes=[obj]+list(obj.children_recursive);points=[];deps=bpy.context.evaluated_depsgraph_get()
+  for node in nodes:
+   if node.type!='MESH':continue
+   evaluated=node.evaluated_get(deps);mesh=evaluated.to_mesh();points.extend(node.matrix_world@v.co for v in mesh.vertices);evaluated.to_mesh_clear()
+  if not points:return None
+  return tuple(min(v[i] for v in points) for i in range(3)),tuple(max(v[i] for v in points) for i in range(3))
+ paver_body_bounds=paver_piece_bounds(paver_body);print('PAVER BODY BOUNDS BLENDER m',paver_body_bounds)
+ paver_screed_bounds=paver_piece_bounds(screed);print('PAVER SCREED EXPORTED BOUNDS BLENDER m',paver_screed_bounds)
+ if not paver_screed_bounds or paver_screed_bounds[1][1]>=paver_body_bounds[0][1]:
+  raise RuntimeError('paver:screed must be behind the body at Blender -Y')
+ if paver_screed_bounds[0][2]>.06:raise RuntimeError('paver:screed must rest on the ground')
+ for label,piece in [('body',paver_body),('left track',paver_tracks[0]),('right track',paver_tracks[1]),('screed',screed)]:
+  bounds=paver_piece_bounds(piece)
+  if not bounds:raise RuntimeError(f'paver {label} has no exported mesh')
+  print('PAVER PIECE BOUNDS BEFORE JOIN',label,'min',tuple(round(v,3) for v in bounds[0]),'max',tuple(round(v,3) for v in bounds[1]))
  # Drill rig: low crawler chassis and a braced lattice mast with a rotary head.
  drill=empty('drill-rig',(0,0,0),root);tracks=empty('drill-rig:undercarriage',(0,0,0),drill)
  box('drill rig tracked base',(0,.52,.92),(2.06,3.10,.72),black,drill,.10)
