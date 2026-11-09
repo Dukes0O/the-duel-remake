@@ -668,7 +668,7 @@ def basic_family():
     shoe=box('paver crawler curved tread shoe',(side*1.62,track_y,z),(.80,.16,.075),steel,paver,.022)
  # Tow pin axis is the paver:screed origin. Plate and fittings are built once;
  # local offsets put the broad strike plate on the ground at rest.
- screed=empty('paver:screed',(0,-3.86,1.62),paver)
+ screed=empty('paver:screed',(0,-3.98,1.62),paver)
  screed_photo=PaverPhoto(paver_textures/'paver-screed-rear.jpg')
  screed_mat=screed_photo.material();screed_bsdf=screed_mat.node_tree.nodes['Principled BSDF'];screed_bsdf.inputs['Metallic'].default_value=.12
  def paver_screed_box(name,center,size,material=steel,bevel=.025):
@@ -685,10 +685,10 @@ def basic_family():
  paver_screed_box('paver screed upper yellow beam',(0,-4.39,.82),(5.38,.30,.18),paint,.025)
  for side in (-1,1):
   paver_screed_box('paver screed end plate',(side*2.70,-4.43,.43),(.18,.34,.78),screed_mat,.02)
-  beam('paver fixed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.86,1.62),.095,paint,paver)
-  bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.12,depth=.28,location=(side*1.34,-3.86,1.62),rotation=(0,math.pi/2,0))
+  beam('paver fixed tow arm',(side*1.34,-3.38,1.48),(side*1.34,-3.98,1.62),.095,paint,paver)
+  bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.12,depth=.28,location=(side*1.34,-3.98,1.62),rotation=(0,math.pi/2,0))
   pin=bpy.context.object;pin.name='paver screed tow pin';pin.data.materials.append(tin);pin.data.uv_layers.active.name='UVMap';parent(pin,screed)
-  beam('paver screed angled tow link',(side*1.34,-3.86,1.62),(side*2.35,-4.28,.79),.085,steel,screed)
+  beam('paver screed angled tow link',(side*1.34,-3.98,1.62),(side*2.35,-4.28,.79),.085,steel,screed)
  # Export-space bounds are checked before the family join. The screed must be
  # at the rear (Blender -Y) and its plate must touch the floor at rest.
  bpy.context.view_layer.update()
