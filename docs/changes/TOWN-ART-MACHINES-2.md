@@ -1,52 +1,30 @@
-# TOWN-ART-MACHINES-2 - round 28
+# TOWN-ART-MACHINES-2 — round 30
 
-Adjusted only the loader in `tools/blender/town-machines-2.py`: tyre radius
-and axle centres now use the current side photo's measurements; the bucket is
-scaled to about 1 m tall, placed ahead of the front tyres and grounded; paired
-arms run from frame pins beside the cab to the bucket pin. Kept the carve's
-`underside` at 0.5 m. The other four passed machines' recipe sections were not
-changed.
+## Changed
 
-## Checks
+Turned the loader's front and rear frame positions, arm pivot, arm geometry,
+bucket position and bucket photo mapping to Blender +Y, matching the carve.
+Re-signed the work-pose rotations. Lowered the arm tips and bucket pivot
+together so the scoop rests on the ground. Added GLB readback bounds output
+and checks for `loader:arms` and `loader:bucket`. Updated only loader review
+cameras; the other machines' geometry and poses are unchanged.
 
-- Blender export and loader render completed. Review views: side, front, rear,
-  overhead, and work pose. Source photos on the sheet are shown whole.
-- `node tools/test-blender-output.mjs`: passed, 389 checks and 0 failures.
-- Browser/look check: Claude to review the loader sheet, especially tyre
-  alignment, bucket clearance, visible arm connection, the dark ball artifact,
-  and cab projection streaks. Chrome was not run.
-- Changed assertions: none.
-- Race fingerprints: not applicable to this art-only change.
+Exported GLB readback bounds at rest:
 
-## Removed
-
-None.
-
----
-
-## Round 29
-
-Changed the loader only. Corrected the front arm hinge pin, relocated the
-bucket hinge pin from the model origin to the bucket, placed the bucket ahead
-of the front tyres, set the scoop to 2.6 m wide by 1.0 m tall with its bottom
-on the ground, and changed the paired lift arms to worn ochre yellow. The
-four passed machines were left unchanged. The emitted bounds confirm the
-bucket spans x=-1.3..1.3 m and y=-0.005..0.995 m vertically; the bucket hinge
-pin is centered at x=0, y=-2.5 m, z=0.98 m. The stray origin pin that appeared
-as a floating dark ball is removed.
+- `loader:arms`: min `(-1.300, 0.710, -0.001)`, max `(1.300, 3.943, 1.631)`.
+- `loader:bucket`: min `(-1.300, 2.995, -0.001)`, max `(1.300, 3.943, 0.999)`.
+- Both are at Y > 0; bucket min Y exceeds 2.6. Its low Z is within 1 mm of ground.
+- `round-30.jpg` is 223,360 bytes. All machines remain within the 15,000-triangle cap.
 
 ## Checks
 
-- `node tools/test-blender-output.mjs`: passed, 389 checks, 0 failed.
-- `node tools/test-repo-hygiene.mjs`: passed; placement clean and size targets advisory.
-- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; the audio-analysis subtest failed twice because starting `ffmpeg` returned `EPERM` (`spawnSync ffmpeg EPERM`). The review JPG size and publication checks passed.
-- Browser and in-game look checks: not run here; Claude should review the
-  exported views and work pose in `docs/board/looks/town-art-machines-2/round-29.jpg`.
-- Changed assertions: none.
-- Race fingerprints: not applicable; art-only change.
-- Lane tier and build: not run, as instructed for art rounds.
+- Blender 4.5.13 recipe export and loader renders: passed; GLB readback bounds passed.
+- `node tools/test-blender-output.mjs`: 389 checks, 0 failed.
+- Lane tier and build: not run, as this art card forbids them.
+- Browser/look review: not run; Claude should review the four photo comparisons,
+  loader at rest, work pose, and the listed points in the round review.
+- Changed assertions: none. Race fingerprints: not applicable; no simulation code changed.
 
 ## Removed
 
-- Removed the bucket hinge pin from the model origin; it is now parented at
-  the actual bucket pivot.
+- No prior model parts, files, tests or docs were removed.
