@@ -48,3 +48,31 @@
 
 - Removed the unused composite `machines2-crane-truck-views.jpg`; the model now uses the four separate view photos and the boom photo.
 - Removed this round's temporary renders, masks, logs, candidate GLB and generated `.blend` after recording the review. The kept output is the runtime GLB and the compressed comparison sheet.
+
+
+---
+
+# TOWN-ART-MACHINES-2 ? round 14: crane truck
+
+## Changed
+
+- Replaced the square turntable cover with a photo-cropped circular disc and circular race; aligned the paired cheek plates and pivot pin with the boom hinge.
+- Rebuilt the outriggers as photo-faced yellow box beams with sliding sections, silver hydraulic jacks and square silver foot plates.
+- Reworked the rear into a solid counterweight with a rear-photo face. The rear cab and boom-support projections remain visibly imperfect for Claude's review.
+- The mixer truck recipe and shape were left unchanged.
+- Added the round 14 six-view comparison and review note.
+
+## Checks
+
+- Blender 4.5.13 generated the candidate GLB and six imported-GLB views.
+- node tools/test-blender-output.mjs: 389 checks passed, 0 failed; complete run. All seven machine roots and joints are present, and every machine is at or below 15,000 triangles. Crane truck: 5,600 triangles.
+- Family GLB: 5,449,472 bytes. Round 14 sheet: 426,148 bytes.
+- node tools/test-repo-hygiene.mjs: passed.
+- node tools/test-review-evidence.mjs: 8 passed, 1 failed because Windows blocked the audio-analysis ffmpeg subprocess (spawnSync ffmpeg EPERM). The JPG publication check passed; no assertion changed.
+- No lane tier or build was run. No browser check was run; Claude should inspect all six panels, especially the rear projection, circular turntable and pivot, and outrigger faces and feet.
+- No assertions changed. No gameplay changes; race fingerprints do not apply.
+
+## Removed
+
+- Removed the square deck plate and old crane outrigger bars, dark jack collars and feet. No mixer truck geometry or recipe was removed.
+- Removed this round's temporary renders, candidate GLB, helper output and check logs from ignored qa-dist after recording the review. Kept the runtime GLB, round sheet and review note.
