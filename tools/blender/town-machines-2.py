@@ -455,6 +455,10 @@ def basic_family():
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
   'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-22/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
+ for photo in roller_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ parent(roller_body,roller)
  # carve_hull already maps the photo grid from game axes into Blender's Z-up
  # mesh coordinates in voxel_surface. Do not transform the returned vertices again.
  def roller_bounds(obj):
@@ -1054,20 +1058,20 @@ for obj in bpy.context.scene.objects:
   floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
   for loc,power,size in [((16,-8,10),1800,7),((27,4,7),950,6)]:
    bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
-   light.rotation_euler=(Vector((22,0,1.3))-light.location).to_track_quat('-Z','Z').to_euler()
+   light.rotation_euler=(Vector((22,0,1.3))-light.location).to_track_quat('-Z','Y').to_euler()
   scene.render.resolution_x=1200;scene.render.resolution_y=720;scene.render.resolution_percentage=100
-  def roller_cam(label,location,target,scale,ortho=True,up='Z'):
+  def roller_cam(label,location,target,scale,ortho=True,up='Y'):
    bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO' if ortho else 'PERSP'
    if ortho:cam.data.ortho_scale=scale
    else:cam.data.lens=56
    scene.camera=cam;scene.render.filepath=str(ev/f'roller-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
-  roller_cam('side',(9,0,1.45),(22,0,1.45),12.0,up='Z')
-  roller_cam('front',(22,15,1.45),(22,0,1.45),8.0,up='Z')
-  roller_cam('rear',(22,-15,1.45),(22,0,1.45),8.0,up='Z')
+  roller_cam('side',(9,0,1.45),(22,0,1.45),12.0,up='Y')
+  roller_cam('front',(22,15,1.45),(22,0,1.45),8.0,up='Y')
+  roller_cam('rear',(22,-15,1.45),(22,0,1.45),8.0,up='Y')
   roller_cam('overhead',(22,0,15),(22,0,0),12.0,up='X')
   drum_joint=next(o for o in bpy.data.objects if o.name=='roller:drum');drum_joint.rotation_mode='XYZ';drum_joint.rotation_euler=(0,0,0)
-  roller_cam('rest',(29,-9,6),(22,0,1.45),10.0,up='Z')
-  drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Z')
+  roller_cam('rest',(29,-9,6),(22,0,1.45),10.0,up='Y')
+  drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Y')
   print('Rendered roller side, front, rear, overhead, rest and work views from imported family GLB')
   raise SystemExit(0)
  if a.render_machine=='pipe-truck':
