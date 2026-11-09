@@ -84,7 +84,7 @@ table = {
     'front': {'centre': 512, 'ground': 612, 'top': 78},
     'rear': {'centre': 512, 'ground': 612, 'top': 78},
     # The straight-down photo is turned 180 degrees for carve_object's front-first row order.
-    'top': {'front': 57, 'rear': 953, 'centre': 266, 'x_scale': 9.4 / 400},
+    'top': {'front': 57, 'rear': 953, 'centre': 342, 'x_scale': 9.4 / 400},
     'cut': {
         # Remove the two side loading-door panels; they are separate pieces.
         'side': [(300, 265, 435, 423), (744, 265, 878, 423)],
@@ -166,11 +166,12 @@ for hand in (-1, 1):
         for y in (.12, 3.00):
             rail = add_box(f'warehouse-side-door-frame-{hand}-{index}-{y}',
                            (hand * 4.69, y, z), (3.04, .10, .12), oxide, .01)
+            rail.rotation_euler[2] = math.pi / 2
             rail.parent = parent
 
 # The rear loading leaf is a separate, closed panel.
 rear_door = piece('warehouse:loading-door-rear')
-leaf = town.corrugated_sheet('warehouse-rear-door-leaf', (0, 1.85, 10.22), 2.65, 3.05,
+leaf = town.corrugated_sheet('warehouse-rear-door-leaf', (0, 1.85, 10.10), 2.65, 3.05,
                              {'galvanised-tin': tin, 'iron-dark': dark}, bent=.02)
 leaf.rotation_euler[2] = math.pi; leaf.parent = rear_door
 
@@ -189,11 +190,11 @@ for x in (-2.7, 2.7):
 for index, z in enumerate((-3.5, 3.8), 1):
     parent = piece(f'warehouse:roof-vent-{index}')
     bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=.26, depth=1.05,
-                                        location=game_loc((0, 7.27, z)))
+                                        location=game_loc((0, 7.18, z)))
     tube = bpy.context.object; tube.name = f'warehouse-roof-vent-{index}-stack'; tube.data.materials.append(oxide)
     tube.parent = parent
     bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=.40, depth=.12,
-                                        location=game_loc((0, 7.84, z)))
+                                        location=game_loc((0, 7.75, z)))
     cap = bpy.context.object; cap.name = f'warehouse-roof-vent-{index}-cap'; cap.data.materials.append(tin)
     cap.parent = parent
 
