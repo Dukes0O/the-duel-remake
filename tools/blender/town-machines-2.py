@@ -116,102 +116,92 @@ def cab(id,par,x=0,y=-.1,z=1.8):
   bpy.ops.object.light_add(type='AREA',location=(x+s*.42,y-.66,z+1.80));lamp=bpy.context.object;lamp.name=id+':lamp';lamp.data.energy=18;lamp.data.color=(1.0,.78,.42);lamp.data.shape='DISK';lamp.data.size=.12;parent(lamp,par)
 def articulated_loader():
  root=empty('loader',(0,0,0));front=empty('loader:front-frame',(0,-.74,0),root);rear=empty('loader:rear-frame',(0,.74,0),root)
- # Two distinct articulated halves with a full-height kingpin and two steering rams.
- box('loader front ladder chassis',(0,-1.20,1.02),(1.72,2.60,.48),black,front,.14)
- box('loader rear ladder chassis',(0,1.20,1.02),(1.72,2.60,.48),black,rear,.14)
- tyre_pair('loader',front,-1.88,.80);tyre_pair('loader',rear,1.88,.80)
- box('loader front axle housing',(0,-1.35,1.18),(1.82,.52,.56),steel,front,.12)
- box('loader rear axle housing',(0,1.35,1.18),(1.82,.52,.56),steel,rear,.12)
- # Rear counterweight, long engine hood and a real rear grille.
- box('loader rear counterweight lower',(0,2.58,1.37),(2.10,.85,.90),paint,rear,.24)
- box('loader rear counterweight cap',(0,2.94,1.76),(1.86,.18,.22),steel,rear,.07)
- box('loader engine hood',(0,1.63,2.12),(1.75,1.68,.94),paint,rear,.16)
- box('loader engine hood crown',(0,1.63,2.62),(1.45,1.42,.12),tin,rear,.04)
- box('loader rear grille backing',(0,2.48,2.18),(1.18,.035,.58),black,rear,.02)
- for x in (-.52,-.39,-.26,-.13,0,.13,.26,.39,.52):box('loader rear grille bar '+str(x),(x,2.455,2.18),(.035,.035,.52),tin,rear,.01)
- # Cab: 1.1 m wide, 1.7 m high above its sill, dark glazing and roof lamps.
- cab('loader',rear,0,.25,2.18)
- # The door is a real painted lower panel with a seam, hinges and a latch.
- box('loader operator seat base',(0,.13,2.58),(.48,.40,.12),black,rear,.035)
- box('loader operator seat cushion',(0,.19,2.73),(.50,.18,.18),paint,rear,.055)
- box('loader operator seat back',(0,.35,2.99),(.50,.16,.46),black,rear,.045)
- beam('loader steering column',(0,-.28,2.60),(0,-.40,3.05),.045,black,rear)
- beam('loader steering rim',(-.22,-.42,3.06),(.22,-.42,3.06),.035,black,rear)
- for s in (-1,1):
-  box('loader cab door lower panel',(s*.558,.25,2.57),(.026,.72,.47),paint,rear,.025)
-  beam('loader cab door front seam',(s*.578,-.11,2.34),(s*.578,-.11,2.81),.018,black,rear)
-  beam('loader cab door rear seam',(s*.578,.61,2.34),(s*.578,.61,2.81),.018,black,rear)
-  beam('loader cab door lower seam',(s*.578,-.11,2.34),(s*.578,.61,2.34),.018,black,rear)
-  beam('loader cab door upper seam',(s*.578,-.11,2.81),(s*.578,.61,2.81),.018,black,rear)
-  box('loader cab door handle',(s*.60,.48,2.74),(.028,.12,.035),tin,rear,.012)
- for x in (-.42,.42):beam('loader roof lamp bracket',(x,-.47,3.93),(x,-.72,4.03),.035,steel,rear);beam('loader roof work lamp',(x,-.70,4.03),(x,-.79,4.03),.105,tin,rear)
- beam('loader articulation kingpin',(0,-.03,.84),(0,-.03,1.62),.17,tin,root)
- for s in (-1,1):
-  beam('loader steering ram barrel',(s*.57,-.38,1.12),(s*.57,.36,1.12),.095,steel,root)
-  beam('loader steering chrome rod',(s*.57,-.06,1.12),(s*.57,.34,1.12),.040,tin,root)
- # The arms pivot at their real pins, 2.4 m above ground, and reach 3 m to the bucket.
- arms=empty('loader:arms',(0,-.83,2.42),front)
- for s in (-1,1):
-  box_beam('loader lift arm pedestal',(s*.78,-1.02,1.28),(s*.83,-.86,2.39),.18,.44,paint,front,.03)
-  beam('loader arm pivot pin',(s*.78,-.86,2.40),(s*.89,-.86,2.40),.16,tin,front)
- def arm_pt(p):return (p[0],p[1]-.83,p[2]+2.42)
- def arm_beam(name,a,b,r,mat=steel):return beam(name,arm_pt(a),arm_pt(b),r,mat,arms)
- def arm_box_beam(name,a,b,w,h,mat=steel,bevel=.03):return box_beam(name,arm_pt(a),arm_pt(b),w,h,mat,arms,bevel)
- for s in (-1,1):
-  pin_x=s*.83
-  arm_box_beam('loader boxed lift arm lower dogleg',(pin_x,0,-.03),(pin_x,-.50,.24),.22,.29,loader_enamel,.035)
-  arm_box_beam('loader boxed lift arm reach',(pin_x,-.50,.24),(pin_x,-3.12,-.68),.23,.31,loader_enamel,.035)
-  arm_box_beam('loader outer arm wear cheek',(s*.98,-.48,.23),(s*.98,-3.02,-.64),.045,.27,tin,.012)
-  # Large hinge bosses and cross-tube make the arm set read as welded machinery.
-  arm_beam('loader lift arm hinge boss',(s*.83,-.03,-.02),(s*.83,-.03,.42),.21,steel)
-  arm_beam('loader arm cross tube',(-.86,-.18,.12),(.86,-.18,.12),.14,steel)
-  # Hydraulic barrels stay on the front frame; polished rods follow the arm.
-  beam('loader lift ram barrel',(s*.60,-.28,1.55),(s*.60,-1.42,1.62),.13,steel,front)
-  arm_beam('loader lift ram bright rod',(s*.60,-.66,-.72),(s*.60,-1.52,-.55),.060,tin)
-  # Z-bar bell crank and bucket link, with pivots and cross pins.
-  arm_beam('loader Z bar rocker',(s*.42,-1.12,-.10),(s*.42,-1.67,-.25),.075,black)
-  arm_beam('loader Z bar link',(s*.42,-1.67,-.25),(s*.42,-3.00,-.75),.065,tin)
-  arm_beam('loader grease hose',(s*.64,-.38,.16),(s*.64,-.72,.20),.025,black)
- # Bucket hinge is nested under the arms; its local origin is the actual hinge pin.
- bucket=empty('loader:bucket',(0,-3.95,1.40),arms)
- def bucket_pt(p):return (p[0],p[1]-3.95,p[2]+1.40)
- # Deep formed scoop: a rolled cutting lip curls through a curved floor and back.
- # The inside and outside skins are real surfaces with a visible plate thickness.
- outer=[(-1.02,-.38),(-.99,-.22),(-.90,-.04),(-.74,.12),(-.52,.28),(-.25,.39),(.04,.44),(.30,.43)]
- inner=[(-.91,-.29),(-.89,-.19),(-.82,-.06),(-.67,.08),(-.48,.21),(-.23,.31),(.03,.35),(.20,.34)]
- verts=[]
- width=2.38;faces=[];n=len(outer)
- for x in (-width/2,width/2):verts.extend([(x,y,z) for y,z in outer])
- # Outer formed plate.
- for i in range(n-1):faces.append((i,i+1,n+i+1,n+i))
- mesh=bpy.data.meshes.new('loader rolled bucket outer shell');mesh.from_pydata(verts,[],faces);mesh.update();shell=bpy.data.objects.new('loader rolled bucket outer shell',mesh);bpy.context.collection.objects.link(shell);shell.location=(0,-3.95,1.40);shell.data.materials.append(steel);uv=mesh.uv_layers.new(name='UVMap')
- for poly in mesh.polygons:
-  for li in poly.loop_indices:
-   co=verts[mesh.loops[li].vertex_index];uv.data[li].uv=(co[0]/2,co[1]/2)
- parent(shell,bucket)
- # Darker inner skin makes the open scoop legible from above and at wheel height.
- inside_verts=[];inside_faces=[]
- for x in (-width/2+.055,width/2-.055):inside_verts.extend([(x,y,z) for y,z in inner])
- for i in range(n-1):inside_faces.append((i,n+i,n+i+1,i+1))
- im=bpy.data.meshes.new('loader bucket worn inner plate');im.from_pydata(inside_verts,[],inside_faces);im.update();inside=bpy.data.objects.new('loader bucket worn inner plate',im);bpy.context.collection.objects.link(inside);inside.location=(0,-3.95,1.40);inside.data.materials.append(m['rusted-steel']);im.uv_layers.new(name='UVMap');parent(inside,bucket)
- for side in (-1,1):
-  # Profiled cheek plates follow the scoop's real curve rather than a box.
-  outline=[(outer[0][0],outer[0][1]),(outer[-1][0],outer[-1][1]),(inner[-1][0],inner[-1][1]),(inner[-2][0],inner[-2][1]),(inner[-3][0],inner[-3][1]),(inner[-4][0],inner[-4][1]),(inner[-5][0],inner[-5][1]),(inner[-6][0],inner[-6][1]),(inner[-7][0],inner[-7][1]),(inner[-8][0],inner[-8][1])]
-  cheek_x=side*(width/2+.012);cv=[(cheek_x,y,z) for y,z in outline];cm=bpy.data.meshes.new('loader bucket profiled cheek');cm.from_pydata(cv,[],[tuple(range(len(cv)))]);cm.update();cheek=bpy.data.objects.new('loader bucket profiled cheek',cm);bpy.context.collection.objects.link(cheek);cheek.location=(0,-3.95,1.40);cheek.data.materials.append(paint);parent(cheek,bucket)
-  for j in (1,3,5,7):
-   y0,z0=outline[j];y1,z1=outline[j+1];beam('loader bucket cheek rib '+str(side)+' '+str(j),bucket_pt((side*(width/2+.035),y0,z0)),bucket_pt((side*(width/2+.035),y1,z1)),.055,tin,bucket)
- # Thick replaceable lip and separate forged teeth.
- box_beam('loader thick replaceable cutting edge',bucket_pt((-1.27,-1.00,-.38)),bucket_pt((1.27,-1.00,-.38)),.22,.25,tin,bucket,.035)
- for i in range(9):
-  x=-1.08+i*.27
-  tooth_verts=[(x-.085,-1.02,-.30),(x+.085,-1.02,-.30),(x+.085,-1.02,-.49),(x-.085,-1.02,-.49),(x-.04,-1.36,-.40),(x+.04,-1.36,-.40)]
-  tooth_faces=[(0,1,5,4),(1,2,5),(2,3,4,5),(3,0,4),(0,3,2,1)]
-  tm=bpy.data.meshes.new('loader forged pointed bucket tooth');tm.from_pydata(tooth_verts,[],tooth_faces);tm.update();tooth_obj=bpy.data.objects.new('loader forged pointed bucket tooth '+str(i),tm);bpy.context.collection.objects.link(tooth_obj);tooth_obj.location=(0,-3.95,1.40);tm.materials.append(steel);tm.uv_layers.new(name='UVMap');parent(tooth_obj,bucket)
- for s in (-1,1):
-  beam('loader bucket hinge pin',bucket_pt((s*1.26,.0,.02)),bucket_pt((s*1.30,.0,.02)),.11,tin,bucket)
-  arm_beam('loader bucket curl ram barrel',(s*.70,-.88,-.05),(s*.70,-1.62,-.35),.085,steel)
-  beam('loader bucket curl ram bright rod',bucket_pt((s*.70,-.30,.20)),bucket_pt((s*.70,-.78,-.20)),.038,tin,bucket)
-  beam('loader bucket Z-bar link',bucket_pt((s*.57,-.06,.32)),bucket_pt((s*.57,.47,.10)),.065,black,bucket)
+ # Round 26 replaces the old block body with a photo carve. Attachments stay
+ # in their named joints so the arm and bucket can move independently.
+ from photo_model import Photo as LoaderPhoto, Mesh as LoaderMesh, slab as photo_slab, trace as photo_trace
+ from photo_carve import carve_object
+ from hull_model import tyre as photo_tyre
+ loader_textures=project_root/'public/assets/models/wasteland/town/textures'
+ side=LoaderPhoto(loader_textures/'loader-side.jpg');front_photo=LoaderPhoto(loader_textures/'loader-front.jpg');rear_photo=LoaderPhoto(loader_textures/'loader-rear.jpg');top=LoaderPhoto(loader_textures/'loader-top.jpg')
+ # Measured from the common four-view sheet: side silhouette x=44..830,
+ # ground y=430; front/rear roof row and ground are measured per end image.
+ length=5.0;width=2.55;height=3.10;side_start,side_end,side_ground=42,835,430
+ side_scale=length/(side_end-side_start)
+ wheel_radius=93*side_scale;wheel_width=.42;track=1.22
+ axle_pixels=(175,526)
+ axle_z=[-length/2+((px-side_start)/(side_end-side_start))*length for px in axle_pixels]
+ table={'photos':{'side':'loader-side.jpg','front':'loader-front.jpg','rear':'loader-rear.jpg','top':'loader-top.jpg'},
+  'length':length,'width':width,'height':height,'side':{'start':side_start,'end':side_end,'ground':side_ground},
+  'front':{'centre':319,'ground':431,'top':20},'rear':{'centre':319,'ground':431,'top':24},
+  'top':{'front':45,'rear':570,'centre':285,'along':'x','x_scale':width/(430-168)},
+  'underside':1.05,'wheels':[(z,wheel_radius,track) for z in axle_z],
+  # The front and rear tyres hide frame faces; leave the side tyre pixels in
+  # place so the body behind them is not cut away.
+  'cut':{'front':[(85,160,225,445),(416,160,565,445)],'rear':[(82,165,225,445),(415,165,565,445)],
+         'top':[(0,0,875,40),(0,470,875,570),(105,70,238,202),(620,70,742,202)]},
+  'voxel':.04,'target':6200,'grey':22,'tolerance':35,'bleed_tolerance':32,
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-26/masks')}
+ # A centre articulation is a real break in the body silhouette. Carve each
+ # half against the same photo set, trimming only its opposite half in side
+ # and plan masks so largest_part never discards the front frame.
+ front_table=dict(table);rear_table=dict(table)
+ front_table['photos']=dict(table['photos']);rear_table['photos']=dict(table['photos'])
+ front_table['cut']={key:list(rects) for key,rects in table['cut'].items()};rear_table['cut']={key:list(rects) for key,rects in table['cut'].items()}
+ middle_side=(side_start+side_end)//2;middle_top=(45+570)//2
+ front_table['cut'].setdefault('side',[]).append((middle_side,0,side.w,side.h))
+ rear_table['cut'].setdefault('side',[]).append((0,0,middle_side,side.h))
+ front_table['cut'].setdefault('top',[]).append((middle_top,0,top.w,top.h))
+ rear_table['cut'].setdefault('top',[]).append((0,0,middle_top,top.h))
+ front_body=carve_object('loader:front-body',loader_textures,front_table)
+ rear_body=carve_object('loader:rear-body',loader_textures,rear_table)
+ for photo in front_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ for photo in rear_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ parent(front_body,front);parent(rear_body,rear)
+ # Articulated centre and paired cross axles connect the two photo-carved
+ # halves. The pivot is in the centre of the two frames.
+ beam('loader articulation kingpin',(0,-.03,.80),(0,-.03,1.65),.16,tin,root)
+ for axle_index,z in enumerate(axle_z):
+  beam('loader axle housing',(-.88,z,.80),(.88,z,.80),.14,steel,root)
+  for x in (-track,track):
+   mesh=LoaderMesh(); photo_tyre(mesh,'side',side,axle_pixels[axle_index],345,93,wheel_radius,wheel_width/2,'rubber',front_photo,155 if x<0 else 480,82,235,415,sides=32)
+   wheel_obj=mesh.finish('loader dark photo-width tyre',{'side':side.material(),'rubber':rubber})
+   wheel_obj.location=(x,z,wheel_radius);parent(wheel_obj,front if z==axle_z[0] else rear)
+ # The articulated headstock and moving assemblies have real pin origins.
+ arms=empty('loader:arms',(0,-1.90,2.38),front)
+ arm_photo=LoaderPhoto(loader_textures/'loader-arm-side.jpg')
+ from photo_carve import lift_if_dark
+ arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
+ arm_loops=photo_trace(arm_mask,(20,20,arm_photo.w-20,arm_photo.h-20),tolerance=2.5,min_area=120)
+ arm_mesh=LoaderMesh();arm_pin_px,arm_pin_py=120,255;arm_scale=3.30/(2070-120)
+ def arm_world(px,py,depth):return (depth,(arm_pin_py-py)*arm_scale,-(px-arm_pin_px)*arm_scale)
+ for loop in arm_loops:
+  photo_slab(arm_mesh,'arm',arm_photo,[loop],arm_world,-.86,-.68)
+  photo_slab(arm_mesh,'arm',arm_photo,[loop],arm_world,.68,.86)
+ traced_arms=arm_mesh.finish('loader:arms:photo-traced-pair',{'arm':arm_photo.material()});parent(traced_arms,arms)
+ beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
+ beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
+ beam('loader arm hinge pin',(-.90,-1.90,2.38),(.90,-1.90,2.38),.12,tin,front)
+ bucket=empty('loader:bucket',(0,-4.30,1.72),arms)
+ bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
+ bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
+ bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
+ bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=2.45/(bucket_pin_px-95)
+ def bucket_world(px,py,depth):return (depth,(bucket_pin_py-py)*bucket_scale,-(bucket_pin_px-px)*bucket_scale)
+ for loop in bucket_loops:photo_slab(bucket_mesh,'bucket',bucket_photo,[loop],bucket_world,-1.16,1.16)
+ traced_bucket=bucket_mesh.finish('loader:bucket:photo-traced-scoop',{'bucket':bucket_photo.material()});parent(traced_bucket,bucket)
+ beam('loader bucket hinge pin',(-1.12,0,0),(1.12,0,0),.105,tin,bucket)
+ print('LOADER MEASURED PHOTO BOUNDS m length',round(length,3),'width',round(width,3),'height',round(height,3),'tyre radius',round(wheel_radius,3),'axle centres',tuple(round(v,3) for v in axle_z))
+ # Report every mesh part before rigid assemblies are joined, with neighbour
+ # contacts used to check that the structure is connected and grounded.
+ bpy.context.view_layer.update()
+ for obj in [o for o in bpy.context.scene.objects if o.type=='MESH' and (o.name.startswith('loader') or o.parent and o.parent.name.startswith('loader'))]:
+  bounds=[obj.matrix_world@Vector(corner) for corner in obj.bound_box]
+  low=tuple(round(min(v[i] for v in bounds),3) for i in range(3));high=tuple(round(max(v[i] for v in bounds),3) for i in range(3))
+  print('LOADER PIECE BOUNDS',obj.name,'min',low,'max',high)
  return root,arms,bucket
 def basic_family():
  root=empty('town-machines-2',(0,0,0));loader,arms,bucket=articulated_loader();parent(loader,root)
@@ -242,7 +232,7 @@ def basic_family():
  rear_photo=Photo(mixer_textures/'mixer-truck-rear.jpg')
  top_photo=Photo(mixer_textures/'mixer-truck-top.jpg')
  drum_photo=Photo(mixer_textures/'mixer-drum-side.jpg')
- # Grid measurements: 8.5 m across side pixels 26–1945; 0.69 m wheel radius
+ # Grid measurements: 8.5 m across side pixels 26â€“1945; 0.69 m wheel radius
  # from the 155 px side radius. End views use their own measured roof and ground.
  mixer_length,mixer_width,mixer_height=8.5,2.35,3.10
  side_scale=mixer_length/(1945-26)
@@ -1072,155 +1062,178 @@ for machine_name in machine_names:
 # Export exactly the gameplay joint hierarchy; preserve all mesh UVs as UVMap.
 for obj in bpy.context.scene.objects:
  if obj.type=='MESH' and obj.data.uv_layers.active:obj.data.uv_layers.active.name='UVMap'
- for mat in bpy.data.materials:
-  for node in mat.node_tree.nodes if mat.use_nodes else []:
-   if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
-    filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
-    if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-','pipe-truck-')):node.image.scale(192,192)
-  blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
- if a.render:
-  from mathutils import Vector
-  bpy.ops.wm.read_factory_settings(use_empty=True)
-  bpy.ops.import_scene.gltf(filepath=str(glb))
-  scene=bpy.context.scene
- scene.render.engine=eevee_engine;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
- scene.view_settings.view_transform='Standard';scene.view_settings.look='None'
- scene.world=bpy.data.worlds.new('neutral even crane studio');scene.world.use_nodes=True
- scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.36,.36,.36,1)
- scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.62
- def hide_tree(node,value):node.hide_render=value;[hide_tree(child,value) for child in node.children]
- if a.render_machine=='roller':
-  ev.mkdir(parents=True,exist_ok=True)
-  roller_obj=bpy.data.objects['roller'];hide_tree(roller_obj,False)
-  for name in machine_names:hide_tree(bpy.data.objects[name],name!='roller')
-  bpy.ops.mesh.primitive_plane_add(size=100,location=(22,0,-.04));floor=bpy.context.object;floor.name='temporary roller grey ground'
-  floor_mat=bpy.data.materials.new('roller plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
-  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
-  for loc,power,size in [((16,-8,10),1800,7),((27,4,7),950,6)]:
-   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
-   light.rotation_euler=(Vector((22,0,1.3))-light.location).to_track_quat('-Z','Y').to_euler()
-  scene.render.resolution_x=1200;scene.render.resolution_y=720;scene.render.resolution_percentage=100
-  def roller_cam(label,location,target,scale,ortho=True,up='Y'):
-   bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO' if ortho else 'PERSP'
-   if ortho:cam.data.ortho_scale=scale
-   else:cam.data.lens=56
-   scene.camera=cam;scene.render.filepath=str(ev/f'roller-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
-  roller_cam('side',(9,0,1.45),(22,0,1.45),12.0,up='Y')
-  roller_cam('front',(22,15,1.45),(22,0,1.45),8.0,up='Y')
-  roller_cam('rear',(22,-15,1.45),(22,0,1.45),8.0,up='Y')
-  roller_cam('overhead',(22,0,15),(22,0,0),12.0,up='X')
-  drum_joint=next(o for o in bpy.data.objects if o.name=='roller:drum');drum_joint.rotation_mode='XYZ';drum_joint.rotation_euler=(0,0,0)
-  roller_cam('rest',(29,-9,6),(22,0,1.45),10.0,up='Y')
-  drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Y')
-  print('Rendered roller side, front, rear, overhead, rest and work views from imported family GLB')
-  raise SystemExit(0)
- if a.render_machine=='pipe-truck':
-  for name in machine_names:hide_tree(bpy.data.objects[name],name!='pipe-truck')
-  bpy.ops.mesh.primitive_plane_add(size=200,location=(66,0,-.045));floor=bpy.context.object;floor.name='pipe truck review grey ground'
-  floor_mat=bpy.data.materials.new('pipe truck plain grey ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
-  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
-  joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('pipe-truck:')}
-  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
-  def pipe_review_cam(label,location,look_at,scale,width,height,up='Y',perspective=False):
-   scene.render.resolution_x=width;scene.render.resolution_y=height
-   bpy.ops.object.camera_add(location=location);review_cam=bpy.context.object
-   review_cam.rotation_euler=(Vector(look_at)-review_cam.location).to_track_quat('-Z',up).to_euler()
-   if label=='overhead':review_cam.rotation_euler.rotate_axis('Z',math.pi/2)
-   review_cam.data.type='PERSP' if perspective else 'ORTHO'
-   if perspective:review_cam.data.lens=56
-   else:review_cam.data.ortho_scale=scale
-   scene.camera=review_cam
-   scene.render.filepath=str(ev/f'pipe-truck-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(review_cam,do_unlink=True)
-  for loc,power,size in [((61,-7,12),1400,9),((73,5,8),700,7)]:
-   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((66,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
-  pipe_review_cam('side',(50,0,1.9),(66,0,1.9),10.3,887,443)
-  pipe_review_cam('front',(66,15,1.9),(66,0,1.9),8.8,887,443)
-  pipe_review_cam('rear',(66,-15,1.9),(66,0,1.9),8.8,887,443)
-  pipe_review_cam('overhead',(66,0,18),(66,0,0),10.2,887,443,'X')
-  for index in range(1,6):
-   joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=[-.55,0,.55,-.275,.275][index-1];joint.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];joint.rotation_euler=(0,0,0)
-  pipe_review_cam('rest',(74,-11,7.5),(66,0,1.8),11.3,1400,720)
-  drop_positions={1:(1.72,.205,-.5),2:(2.24,.205,-.5),3:(2.76,.205,-.5)}
-  for index,(x,height,long_pos) in drop_positions.items():
-   joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=x;joint.location.z=height;joint.location.y=-long_pos;joint.rotation_euler[1]=-.48 if index%2 else .48
-  pipe_review_cam('work',(74,-11,7.5),(66,0,1.8),11.3,1400,720)
-  print('Rendered pipe truck side, front, rear, overhead, rest and work comparisons from the imported family GLB')
-  raise SystemExit(0)
- for name in machine_names:hide_tree(bpy.data.objects[name],name!='crane-truck')
- bpy.ops.mesh.primitive_plane_add(size=200,location=(55,0,-.045));floor=bpy.context.object;floor.name='crane review grey ground'
- floor_mat=bpy.data.materials.new('plain medium grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
- floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1)
- floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
- for loc,power,size in [((50,-5,12),1300,9),((60,3,8),650,7)]:
-  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power
-  light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((55,0,2.0))-light.location).to_track_quat('-Z','Y').to_euler()
+for mat in bpy.data.materials:
+ for node in mat.node_tree.nodes if mat.use_nodes else []:
+  if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
+   filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
+   if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-','pipe-truck-')):node.image.scale(192,192)
+blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
+if not a.render:
+ print('exported',glb,glb.stat().st_size)
+ raise SystemExit(0)
+if a.render:
+ from mathutils import Vector
+ bpy.ops.wm.read_factory_settings(use_empty=True)
+ bpy.ops.import_scene.gltf(filepath=str(glb))
+ scene=bpy.context.scene
+scene.render.engine=eevee_engine;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
+scene.view_settings.view_transform='Standard';scene.view_settings.look='None'
+scene.world=bpy.data.worlds.new('neutral even crane studio');scene.world.use_nodes=True
+scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.36,.36,.36,1)
+scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.62
+def hide_tree(node,value):node.hide_render=value;[hide_tree(child,value) for child in node.children]
+if a.render_machine=='loader':
  ev.mkdir(parents=True,exist_ok=True)
- joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('crane-truck:')}
- def crane_cam(label,location,target,scale,width,height,ortho=True,up='Y'):
-  scene.render.resolution_x=width;scene.render.resolution_y=height
-  bpy.ops.object.camera_add(location=location);cam=bpy.context.object
-  cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler()
-  if label=='overhead':cam.rotation_euler.rotate_axis('Z',math.pi/2)
-  cam.data.type='ORTHO' if ortho else 'PERSP'
+ for name in machine_names:hide_tree(bpy.data.objects[name],name!='loader')
+ bpy.ops.mesh.primitive_plane_add(size=80,location=(0,-.04,0));floor=bpy.context.object;floor.name='temporary loader grey ground'
+ floor_mat=bpy.data.materials.new('loader plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+ floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
+ loader_obj=bpy.data.objects['loader']; joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('loader:')}
+ for loc,power,size in [((7,8,11),1700,7),((-5,-3,7),800,5)]:
+  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((0,0,1.4))-light.location).to_track_quat('-Z','Y').to_euler()
+ scene.render.resolution_x=900;scene.render.resolution_y=560;scene.render.resolution_percentage=100
+ def loader_cam(label,location,target,scale,up='Y'):
+  bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=scale;scene.camera=cam;scene.render.filepath=str(ev/f'loader-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+ loader_cam('side',(12,0,1.55),(0,-.1,1.55),6.0)
+ loader_cam('front',(0,-13,1.55),(0,-.1,1.55),4.5)
+ loader_cam('rear',(0,13,1.55),(0,-.1,1.55),4.5)
+ loader_cam('overhead',(0,0,13),(0,-.1,0),6.5,'X')
+ joints['loader:arms'].rotation_euler[0]=-.38;joints['loader:bucket'].rotation_euler[0]=.25
+ loader_cam('work',(8,-9,7),(0,-1.4,1.5),8.0)
+ print('Rendered loader orthographic views, rest comparison, and work pose with camera up Y')
+ raise SystemExit(0)
+if a.render_machine=='roller':
+ ev.mkdir(parents=True,exist_ok=True)
+ roller_obj=bpy.data.objects['roller'];hide_tree(roller_obj,False)
+ for name in machine_names:hide_tree(bpy.data.objects[name],name!='roller')
+ bpy.ops.mesh.primitive_plane_add(size=100,location=(22,0,-.04));floor=bpy.context.object;floor.name='temporary roller grey ground'
+ floor_mat=bpy.data.materials.new('roller plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+ floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
+ for loc,power,size in [((16,-8,10),1800,7),((27,4,7),950,6)]:
+  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size
+  light.rotation_euler=(Vector((22,0,1.3))-light.location).to_track_quat('-Z','Y').to_euler()
+ scene.render.resolution_x=1200;scene.render.resolution_y=720;scene.render.resolution_percentage=100
+ def roller_cam(label,location,target,scale,ortho=True,up='Y'):
+  bpy.ops.object.camera_add(location=location);cam=bpy.context.object;cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO' if ortho else 'PERSP'
   if ortho:cam.data.ortho_scale=scale
   else:cam.data.lens=56
-  scene.camera=cam;scene.render.filepath=str(ev/f'crane-truck-{label}.png')
-  bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
- for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
- boom_joint=joints['crane-truck:boom'];hook_joint=joints['crane-truck:hook']
- hide_tree(boom_joint,True)
- crane_cam('side',(35,0,2.0),(55,0,2.0),9.4,1500,640,up='Y')
- crane_cam('front',(55,15,2.0),(55,0,2.0),5.8,900,650,up='Y')
- crane_cam('rear',(55,-15,2.0),(55,0,2.0),5.8,900,650,up='Y')
- crane_cam('overhead',(55,0,17),(55,0,0),9.4,1200,685,up='X')
- hide_tree(boom_joint,False)
- hook_base=hook_joint.location.z
- boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
- crane_cam('assembled-rest',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
- boom_joint.rotation_euler[0]=-.45;hook_joint.location.z=hook_base-.62
- crane_cam('assembled-work',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
- print('Rendered crane truck photo comparisons and both articulated poses from the imported GLB')
+  scene.camera=cam;scene.render.filepath=str(ev/f'roller-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+ roller_cam('side',(9,0,1.45),(22,0,1.45),12.0,up='Y')
+ roller_cam('front',(22,15,1.45),(22,0,1.45),8.0,up='Y')
+ roller_cam('rear',(22,-15,1.45),(22,0,1.45),8.0,up='Y')
+ roller_cam('overhead',(22,0,15),(22,0,0),12.0,up='X')
+ drum_joint=next(o for o in bpy.data.objects if o.name=='roller:drum');drum_joint.rotation_mode='XYZ';drum_joint.rotation_euler=(0,0,0)
+ roller_cam('rest',(29,-9,6),(22,0,1.45),10.0,up='Y')
+ drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Y')
+ print('Rendered roller side, front, rear, overhead, rest and work views from imported family GLB')
  raise SystemExit(0)
- bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine=eevee_engine;scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
- lights=[]
- for loc,power,size in [((7,-8,12),2600,9),((-6,-2,7),1100,8)]:bpy.ops.object.light_add(type='AREA',location=loc);l=bpy.context.object;l.data.energy=power;l.data.shape='DISK';l.data.size=size;lights.append((l,Vector(loc)))
- bpy.ops.mesh.primitive_plane_add(size=500,location=(0,0,-.06));g=bpy.context.object;g.name='temporary floor';mat=bpy.data.materials.new('plain mid-grey ground');mat.diffuse_color=(.38,.38,.38,1);mat.use_nodes=True;mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.38,.38,1);mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;g.data.materials.append(mat)
- def hide(node,v):node.hide_render=v;[hide(c,v) for c in node.children]
- ev.mkdir(parents=True,exist_ok=True)
- machine_names=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck']
- def aim(cam,p):cam.rotation_euler=(Vector(p)-cam.location).to_track_quat('-Z','Y').to_euler()
+if a.render_machine=='pipe-truck':
+ for name in machine_names:hide_tree(bpy.data.objects[name],name!='pipe-truck')
+ bpy.ops.mesh.primitive_plane_add(size=200,location=(66,0,-.045));floor=bpy.context.object;floor.name='pipe truck review grey ground'
+ floor_mat=bpy.data.materials.new('pipe truck plain grey ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+ floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
+ joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('pipe-truck:')}
+ for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
+ def pipe_review_cam(label,location,look_at,scale,width,height,up='Y',perspective=False):
+  scene.render.resolution_x=width;scene.render.resolution_y=height
+  bpy.ops.object.camera_add(location=location);review_cam=bpy.context.object
+  review_cam.rotation_euler=(Vector(look_at)-review_cam.location).to_track_quat('-Z',up).to_euler()
+  if label=='overhead':review_cam.rotation_euler.rotate_axis('Z',math.pi/2)
+  review_cam.data.type='PERSP' if perspective else 'ORTHO'
+  if perspective:review_cam.data.lens=56
+  else:review_cam.data.ortho_scale=scale
+  scene.camera=review_cam
+  scene.render.filepath=str(ev/f'pipe-truck-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(review_cam,do_unlink=True)
+ for loc,power,size in [((61,-7,12),1400,9),((73,5,8),700,7)]:
+  bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((66,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
+ pipe_review_cam('side',(50,0,1.9),(66,0,1.9),10.3,887,443)
+ pipe_review_cam('front',(66,15,1.9),(66,0,1.9),8.8,887,443)
+ pipe_review_cam('rear',(66,-15,1.9),(66,0,1.9),8.8,887,443)
+ pipe_review_cam('overhead',(66,0,18),(66,0,0),10.2,887,443,'X')
+ for index in range(1,6):
+  joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=[-.55,0,.55,-.275,.275][index-1];joint.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];joint.rotation_euler=(0,0,0)
+ pipe_review_cam('rest',(74,-11,7.5),(66,0,1.8),11.3,1400,720)
+ drop_positions={1:(1.72,.205,-.5),2:(2.24,.205,-.5),3:(2.76,.205,-.5)}
+ for index,(x,height,long_pos) in drop_positions.items():
+  joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=x;joint.location.z=height;joint.location.y=-long_pos;joint.rotation_euler[1]=-.48 if index%2 else .48
+ pipe_review_cam('work',(74,-11,7.5),(66,0,1.8),11.3,1400,720)
+ print('Rendered pipe truck side, front, rear, overhead, rest and work comparisons from the imported family GLB')
+ raise SystemExit(0)
+for name in machine_names:hide_tree(bpy.data.objects[name],name!='crane-truck')
+bpy.ops.mesh.primitive_plane_add(size=200,location=(55,0,-.045));floor=bpy.context.object;floor.name='crane review grey ground'
+floor_mat=bpy.data.materials.new('plain medium grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1)
+floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
+for loc,power,size in [((50,-5,12),1300,9),((60,3,8),650,7)]:
+ bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power
+ light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((55,0,2.0))-light.location).to_track_quat('-Z','Y').to_euler()
+ev.mkdir(parents=True,exist_ok=True)
+joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('crane-truck:')}
+def crane_cam(label,location,target,scale,width,height,ortho=True,up='Y'):
+ scene.render.resolution_x=width;scene.render.resolution_y=height
+ bpy.ops.object.camera_add(location=location);cam=bpy.context.object
+ cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler()
+ if label=='overhead':cam.rotation_euler.rotate_axis('Z',math.pi/2)
+ cam.data.type='ORTHO' if ortho else 'PERSP'
+ if ortho:cam.data.ortho_scale=scale
+ else:cam.data.lens=56
+ scene.camera=cam;scene.render.filepath=str(ev/f'crane-truck-{label}.png')
+ bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
+boom_joint=joints['crane-truck:boom'];hook_joint=joints['crane-truck:hook']
+hide_tree(boom_joint,True)
+crane_cam('side',(35,0,2.0),(55,0,2.0),9.4,1500,640,up='Y')
+crane_cam('front',(55,15,2.0),(55,0,2.0),5.8,900,650,up='Y')
+crane_cam('rear',(55,-15,2.0),(55,0,2.0),5.8,900,650,up='Y')
+crane_cam('overhead',(55,0,17),(55,0,0),9.4,1200,685,up='X')
+hide_tree(boom_joint,False)
+hook_base=hook_joint.location.z
+boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
+crane_cam('assembled-rest',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
+boom_joint.rotation_euler[0]=-.45;hook_joint.location.z=hook_base-.62
+crane_cam('assembled-work',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
+print('Rendered crane truck photo comparisons and both articulated poses from the imported GLB')
+raise SystemExit(0)
+bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine=eevee_engine;scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
+lights=[]
+for loc,power,size in [((7,-8,12),2600,9),((-6,-2,7),1100,8)]:bpy.ops.object.light_add(type='AREA',location=loc);l=bpy.context.object;l.data.energy=power;l.data.shape='DISK';l.data.size=size;lights.append((l,Vector(loc)))
+bpy.ops.mesh.primitive_plane_add(size=500,location=(0,0,-.06));g=bpy.context.object;g.name='temporary floor';mat=bpy.data.materials.new('plain mid-grey ground');mat.diffuse_color=(.38,.38,.38,1);mat.use_nodes=True;mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.38,.38,.38,1);mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;g.data.materials.append(mat)
+def hide(node,v):node.hide_render=v;[hide(c,v) for c in node.children]
+ev.mkdir(parents=True,exist_ok=True)
+machine_names=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck']
+def aim(cam,p):cam.rotation_euler=(Vector(p)-cam.location).to_track_quat('-Z','Y').to_euler()
 # The paver's work image includes a short fresh road behind its screed.
- bpy.ops.mesh.primitive_plane_add(size=1,location=(33,2.65,-.045));road=bpy.context.object;road.name='temporary fresh asphalt';road.scale=(1.7,2.0,1);asphalt=bpy.data.materials.new('temporary laid asphalt');asphalt.diffuse_color=(.055,.058,.052,1);asphalt.roughness=.96;road.data.materials.append(asphalt);road.hide_render=True
- for name in machine_names:
-  machine=bpy.data.objects[name];joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith(name+':')}
-  for pose in ('rest','work'):
-   bpy.context.view_layer.update();origin=machine.matrix_world.translation.copy()
-   for other in machine_names:hide(bpy.data.objects[other],other!=name)
-   road.hide_render=not(name=='paver' and pose=='work')
-   for joint in joints.values():joint.rotation_mode='XYZ'
-   if name=='loader':
-    joints['loader:arms'].rotation_euler[0]=0 if pose=='rest' else -.32;joints['loader:bucket'].rotation_euler[0]=0 if pose=='rest' else .24
-   elif name=='mixer-truck':
-    joints['mixer-truck:drum'].rotation_euler[2]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
-   elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
-   elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
-   elif name=='drill-rig':
-    joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .22;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
-   elif name=='crane-truck':
-    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
-    joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
-   elif name=='pipe-truck':
-     # Three pipes roll clear together while two remain on the bed.
-     drop_positions={1:(1.72,.205,-.5),2:(2.24,.205,-.5),3:(2.76,.205,-.5)}
-     for index in range(1,6):
-      pipe=joints[f'pipe-truck:pipe-{index}']
-      if pose=='work' and index<=3:
-       x,height,long_pos=drop_positions[index];pipe.location.x=x;pipe.location.z=height;pipe.location.y=-long_pos;pipe.rotation_euler[1]=-.48 if index%2 else .48
-      else:
-       pipe.location.x=[-.55,0,.55,-.275,.275][index-1];pipe.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];pipe.location.y=-1.92;pipe.rotation_euler[1]=0
-   target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
-   for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
-   view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
-   bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=70;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
- print('Rendered all seven machines at rest and work poses from imported GLB')
+bpy.ops.mesh.primitive_plane_add(size=1,location=(33,2.65,-.045));road=bpy.context.object;road.name='temporary fresh asphalt';road.scale=(1.7,2.0,1);asphalt=bpy.data.materials.new('temporary laid asphalt');asphalt.diffuse_color=(.055,.058,.052,1);asphalt.roughness=.96;road.data.materials.append(asphalt);road.hide_render=True
+for name in machine_names:
+ machine=bpy.data.objects[name];joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith(name+':')}
+ for pose in ('rest','work'):
+  bpy.context.view_layer.update();origin=machine.matrix_world.translation.copy()
+  for other in machine_names:hide(bpy.data.objects[other],other!=name)
+  road.hide_render=not(name=='paver' and pose=='work')
+  for joint in joints.values():joint.rotation_mode='XYZ'
+  if name=='loader':
+   joints['loader:arms'].rotation_euler[0]=0 if pose=='rest' else -.32;joints['loader:bucket'].rotation_euler[0]=0 if pose=='rest' else .24
+  elif name=='mixer-truck':
+   joints['mixer-truck:drum'].rotation_euler[2]=0 if pose=='rest' else 1.0;joints['mixer-truck:chute'].rotation_euler[0]=0 if pose=='rest' else -.55
+  elif name=='roller':joints['roller:drum'].rotation_euler[0]=0 if pose=='rest' else .65
+  elif name=='paver':joints['paver:screed'].rotation_euler[0]=0 if pose=='rest' else -.24
+  elif name=='drill-rig':
+   joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .22;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
+  elif name=='crane-truck':
+   joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
+   joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
+  elif name=='pipe-truck':
+    # Three pipes roll clear together while two remain on the bed.
+    drop_positions={1:(1.72,.205,-.5),2:(2.24,.205,-.5),3:(2.76,.205,-.5)}
+    for index in range(1,6):
+     pipe=joints[f'pipe-truck:pipe-{index}']
+     if pose=='work' and index<=3:
+      x,height,long_pos=drop_positions[index];pipe.location.x=x;pipe.location.z=height;pipe.location.y=-long_pos;pipe.rotation_euler[1]=-.48 if index%2 else .48
+     else:
+      pipe.location.x=[-.55,0,.55,-.275,.275][index-1];pipe.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];pipe.location.y=-1.92;pipe.rotation_euler[1]=0
+  target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
+  for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
+  view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
+  bpy.ops.object.camera_add(location=target+Vector((8,-8.65,2.5))*view_scale);cam=bpy.context.object;cam.data.lens=70;aim(cam,target);scene.camera=cam;scene.render.filepath=str(ev/f'{name}-{pose}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+print('Rendered all seven machines at rest and work poses from imported GLB')
 print('exported',glb,glb.stat().st_size)

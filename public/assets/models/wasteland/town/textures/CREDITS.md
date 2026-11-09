@@ -399,7 +399,6 @@ background, no perspective, no labels, no people or logos, no watermark."
 
 Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
 
-- `machines2-loader-views.jpg`: articulated wheel loader with raised arms and scoop.
 - `machines2-paver-views.jpg`: tracked asphalt paver with front hopper and rear screed.
 - `machines2-drill-rig-views.jpg`: truck-mounted well rig with an open lattice mast.
 =======
@@ -831,3 +830,7 @@ Four matching orthographic views of the same worn yellow road roller body were g
 ## TOWN-ART-MACHINES-2 loader, round 26
 
 Generated with built-in OpenAI ImageGen on 9 November 2026. The side, front, rear and top JPEGs are measured crops of four independent orthographic views in one generated contact sheet, all of one worn yellow loader with its lift arms and bucket removed. Bucket and lift-arm side photos were generated separately. Prompt: original salvage wheel loader, faded chipped yellow paint, dark tires, plain grey studio, exact orthographic views, no logos or text; separate references show the detached bucket and lift arm in side elevation.
+
+## TOWN-ART-MACHINES-2 loader, round 26
+
+Generated with built-in OpenAI ImageGen on 9 November 2026. The side, front, rear and top JPEGs are measured crops of four independent orthographic views in one generated contact sheet, all of one worn yellow loader with its lift arms and bucket removed. Bucket and lift-arm side photos were generated separately. Prompt: original salvage wheel loader, faded chipped yellow paint, dark tyres, plain grey studio, exact orthographic views, no logos or text; separate references show the detached bucket and lift arm in side elevation.
