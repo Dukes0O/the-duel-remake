@@ -534,14 +534,14 @@ def basic_family():
   # Keep the end-view textures on the end half of the truck. This avoids
   # slicing the rear deck and counterweight across unrelated projections.
   # The rear photo contains the cab, exhaust and hoist behind the counterweight.
-  # Its mask keeps only the central tail panel, for the rear-most body section.
-  'ends_split':2.35,'front_favour':3,'rear_favour':8,
+  # Exclude it from the carve; a built counterweight carries its flat tail face.
+  'ends_split':0,'front_favour':3,'rear_favour':8,
   'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
   # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
   'cut':{
    'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
    'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
-   'rear':[(0,0,613,235),(0,350,613,467),(0,235,140,350),(475,235,613,350)],
+   'rear':[(0,0,613,467)],
    'top':[(0,0,827,96),(0,405,827,473)]},
   'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
@@ -551,6 +551,22 @@ def basic_family():
    if node.type=='TEX_IMAGE':node.interpolation='Cubic'
  parent(crane_body,crane)
  crane_parts=[('crane-truck:body',crane_body)]
+ # The end photo shows the rear cab and hoist behind the counterweight. Build
+ # the counterweight as a solid box and map only its outward face to the tail.
+ rear_counterweight=crane_box('crane solid rear counterweight',(0,1.25,3.45),(2.55,.96,1.34),steel,.045)
+ rear_photo=crane_body_table['_photos']['rear'];rear_photo_material=rear_photo.material()
+ rear_counterweight.data.materials.append(rear_photo_material)
+ rear_face_index=len(rear_counterweight.data.materials)-1
+ rear_crop=(140,244,478,347)
+ for polygon in rear_counterweight.data.polygons:
+  if polygon.normal.y>-.9:continue  # the rear face is game +Z / Blender -Y
+  polygon.material_index=rear_face_index
+  for loop_index in polygon.loop_indices:
+   vertex=rear_counterweight.data.vertices[rear_counterweight.data.loops[loop_index].vertex_index].co
+   fx=(vertex.x+2.55/2)/2.55;fy=(vertex.z+.96/2)/.96
+   rear_counterweight.data.uv_layers.active.data[loop_index].uv=rear_photo.uv(
+    rear_crop[0]+fx*(rear_crop[2]-rear_crop[0]),rear_crop[3]-fy*(rear_crop[3]-rear_crop[1]))
+ crane_parts.append(('crane-truck:rear-counterweight',rear_counterweight))
  crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
  crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
  crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
