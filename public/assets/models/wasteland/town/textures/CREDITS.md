@@ -399,7 +399,6 @@ background, no perspective, no labels, no people or logos, no watermark."
 
 Generated with OpenAI image generation on 6 November 2026. Each image shows one original, unbranded worn mustard-yellow construction machine in four orthographic views (side, front, rear and overhead) on a pale studio background. The generated 2x2 contact sheet is retained as the measurement and review source at about 1,024 px on its long side. Prompt family: neutral photorealistic catalog views of the named original machine, exact orthographic cameras, flat diffuse light, no logos, maker names, readable text or watermark.
 
-- `machines2-roller-views.jpg`: single-drum road roller with rear tires.
 - `machines2-loader-views.jpg`: articulated wheel loader with raised arms and scoop.
 - `machines2-paver-views.jpg`: tracked asphalt paver with front hopper and rear screed.
 - `machines2-drill-rig-views.jpg`: truck-mounted well rig with an open lattice mast.
@@ -821,3 +820,10 @@ Generated with the built-in OpenAI ImageGen tool on 8 November 2026. The truck c
 
 - `pipe-truck-side.jpg`, `pipe-truck-front.jpg`, `pipe-truck-rear.jpg`, `pipe-truck-overhead.jpg`: cropped orthographic views from one contact sheet.
 - `pipe-truck-pipe.jpg`: single rusty steel pipe.
+
+## TOWN-ART-MACHINES-2, round 20 roller references
+
+Generated with OpenAI image generation on 8 November 2026. The four individual references were cropped from one four-view image of the same unbranded worn yellow salvage road roller with its front drum removed; the drum photo was generated separately.
+
+- `roller-side.jpg`, `roller-front.jpg`, `roller-rear.jpg`, `roller-top.jpg`: side, front, rear and true overhead orthographic views, neutral grey studio.
+- `roller-drum-side.jpg`: isolated worn steel road roller drum, dead-on side orthographic view, neutral grey studio.
