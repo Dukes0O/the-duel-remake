@@ -18,7 +18,7 @@ exported GLB, then shows both three-quarter views and the mayor's roof view.
 
 ## Bounds and budgets
 
-- GLB: 837,976 bytes, 8,040 triangles, four embedded photo images.
+- GLB: 838,044 bytes, 8,040 triangles, four embedded photo images.
 - `warehouse` is the only direct child of `town-works`.
 - Shell bounds (metres, X/Y/Z): X −4.64 to 4.67, Y −0.025 to 6.68,
   Z −10.22 to 10.09. Its 2.5 cm voxel overlap seats it on the ground.
@@ -26,6 +26,8 @@ exported GLB, then shows both three-quarter views and the mayor's roof view.
 - Front door leaves, four side leaves, rear door, dock and both roof vents each
   have separate named piece roots. The recipe prints every piece's bounds and
   checks ground/body contact and the footprint margin.
+- The front leaves and all attached ribs and edge rails stay under their door
+  roots; each front-door root tops out at 3.925 m.
 
 ## Claude should inspect
 

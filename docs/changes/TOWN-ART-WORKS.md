@@ -33,8 +33,8 @@ Replaced the recipe's shared generic material treatment for the town works atlas
 - Added four original single-view reference photos to the town texture folder
   and credited them in `CREDITS.md`. The overhead photo is rotated 180° after
   grid measurement so its front edge matches `carve_object`'s row convention.
-- The exported GLB is 837,976 bytes with 8,040 triangles and four embedded
-  photos. The round-1 sheet is 451,806 bytes at 2048×2734 in
+- The exported GLB is 838,044 bytes with 8,040 triangles and four embedded
+  photos. The round-1 sheet is 452,301 bytes at 2048×2734 in
   `docs/board/looks/town-art-works-warehouse/round-1.jpg`. Bounds and contact
   checks pass; their envelope and the self-review are in the adjacent review
   note.
