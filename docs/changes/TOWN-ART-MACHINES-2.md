@@ -38,3 +38,24 @@
 ## Removed
 
 - No files or separate model parts were removed. The canopy overhang was shortened; the previously removed photographed tyre discs remain excluded from the carve masks.
+
+# TOWN-ART-MACHINES-2 — round 25
+
+## Changed
+
+- Added a pre-join bounds print for every roller mesh. The false rearward strip is part of the carved `roller:body` bounds (x -0.78..0.90 m, y 0.54..2.26 m, z -2.33..2.16 m); no built roller piece spans that area.
+- Kept the round 24 roller photo masks after trial cuts did not isolate the strip. The failed cuts and the bounds list are recorded in `round-25-review.md`; the strip remains unresolved for Claude's review.
+- Exported `machines-2.glb` (5,818,568 bytes) and `round-25.jpg` (207,137 bytes). The three other truck recipe sections were not edited.
+- Claude should inspect the side elevation and decide the next source-photo or carve approach. Also compare the mixer, crane and pipe trucks with their prior sheets.
+
+## Checks
+
+- Blender 4.5.13 family export and six roller renders completed. All roller parts printed bounds before the rigid assembly join.
+- `node tools/test-blender-output.mjs`: **389 checks passed, 0 failed**.
+- `node tools/test-repo-hygiene.mjs`: passed; repository placement is valid.
+- `node tools/test-review-evidence.mjs`: 8 subtests passed, 1 failed because audio analysis could not start `ffmpeg` (`spawnSync EPERM`). The review-JPG publication check passed.
+- No lane tier, build, browser scenario or look check was run. Claude should review `round-25.jpg`; no assertion changed. Race fingerprints: not applicable to this art change.
+
+## Removed
+
+- No files or model pieces were removed. Experimental mask cuts were discarded; round 24's cut regions remain.

@@ -456,7 +456,7 @@ def basic_family():
    'rear':[(0,0,621,54),(0,520,621,621),(110,275,230,560),(399,275,530,560)],
    'top':[(0,0,621,40),(0,580,621,621),(390,35,535,175),(390,450,535,600)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
-  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-24/masks')}
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-25/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
  for photo in roller_table['_photos'].values():
   for node in photo.material().node_tree.nodes:
@@ -568,9 +568,9 @@ def basic_family():
  roller_parts=[('carved body',roller_body),('drum',drum)]
  for label,obj in roller_parts:
   b=roller_bounds(obj);print('ROLLER PIECE BOUNDS',label,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
- for obj in [child for child in roller.children if child.type=='MESH']:
+ for obj in sorted((child for child in roller.children_recursive if child.type=='MESH'),key=lambda piece:piece.name):
   b=roller_bounds(obj)
-  if b:print('ROLLER PIECE BOUNDS',obj.name,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
+  if b:print('ROLLER PIECE BOUNDS BEFORE JOIN',obj.name,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
  # Paver: low wide feed hopper, tracked chassis, screed and open operator's station.
  paver=empty('paver',(0,0,0),root);tracks=empty('paver:tracks',(0,0,0),paver)
  box('paver low steel chassis',(0,.14,1.04),(2.34,3.10,.60),black,paver,.12)
