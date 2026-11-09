@@ -12,7 +12,7 @@ p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argumen
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 glb=root/'public/assets/models/wasteland/town/services-2.glb';blend=Path(a.evidence)/'services-2.blend'
 if not blend.is_absolute():blend=root/blend
-sheet=root/'docs/board/looks/town-art-services/round-17.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-17/rendered'
+sheet=root/'docs/board/looks/town-art-services/round-18.jpg';review_output=root/'.evidence/2026-11-08/TOWN-ART-SERVICES/round-18/rendered'
 if a.paths_only:
  print(json.dumps({'blend':[str(blend)],'glb':[str(glb)],'evidence':[] if not a.review else [str(review_output)],'summary':str(sheet)}));raise SystemExit(0)
 import bpy
@@ -323,11 +323,13 @@ for n in ids:
   # flat slab; the old plain box-and-stripe pad is fully replaced.
   photos={view:Photo(tex/f'helipad-{view}.jpg') for view in ('side','front','rear','top')}
   side,front,rear,top=(photos[key] for key in ('side','front','rear','top'))
-  deck_y=.82;deck_half=12.0;frame_half=11.72
+  # Keep the painted deck's 24 m plan and photo mapping unchanged. Its top is
+  # now 1.18 m, over a 0.30 m girder/deck edge and full-height drum supports.
+  deck_y=1.18;deck_half=12.0;frame_half=11.72;deck_bottom=deck_y-.30
   plate_crop=(88,88,936,934)
   side_band=(19,329,1005,371);front_band=(28,295,996,364);rear_band=(29,306,994,367)
   materials={key:photos[key].material() for key in ('side','front','rear','top')}
-  part=PhotoMesh();photo_box(part,-deck_half,deck_half,deck_y-.12,deck_y,-deck_half,deck_half,{
+  part=PhotoMesh();photo_box(part,-deck_half,deck_half,deck_bottom,deck_y,-deck_half,deck_half,{
    '+y':('top',top,plate_crop),'-y':('side',side,(45,370,80,400)),
    '+z':('front',front,front_band),'-z':('rear',rear,rear_band),
    '+x':('side',side,side_band),'-x':('side',side,side_band)})
@@ -341,11 +343,11 @@ for n in ids:
                 ('middle',-frame_half,0,frame_half,0,'cross')]
   for label,x0,z0,x1,z1,kind in girder_specs:
    if kind=='long':
-    lo,hi=sorted((z0,z1));bounds=(x0-.16,x0+.16,.45,.69,lo,hi)
+    lo,hi=sorted((z0,z1));bounds=(x0-.16,x0+.16,deck_bottom-.30,deck_bottom,lo,hi)
     faces={'+x':('side',side,side_band),'-x':('side',side,side_band),
            '+z':('front',front,front_band),'-z':('rear',rear,rear_band)}
    else:
-    lo,hi=sorted((x0,x1));bounds=(lo,hi,.45,.69,z0-.16,z0+.16)
+    lo,hi=sorted((x0,x1));bounds=(lo,hi,deck_bottom-.30,deck_bottom,z0-.16,z0+.16)
     faces={'+z':('side',side,side_band),'-z':('side',side,side_band),
            '+x':('front',front,front_band),'-x':('rear',rear,rear_band)}
    part=PhotoMesh();photo_box(part,*bounds,faces)
@@ -354,14 +356,14 @@ for n in ids:
   # Turn each drum from one measured drum in the side photo, keeping the
   # photograph on its circumference instead of stretching a flat box.
   support_crop=(22,371,101,425)
-  def photographed_drum(name,x,z,bottom,height,radius):
+  def photographed_drum(name,x,z,bottom,height,radius,axis=(0,1,0),axis_u=(1,0,0),axis_v=(0,0,1)):
    mesh=PhotoMesh();stations=[(0,radius*.84),(.025,radius),(height-.035,radius),(height,radius*.86)]
    def drum_uv(index,distance,r,angle):
     return side.uv(support_crop[0]+(support_crop[2]-support_crop[0])*angle/(2*math.pi),
                    support_crop[3]-(support_crop[3]-support_crop[1])*distance/height)
    cap=('side',lambda angle,fraction:side.uv((support_crop[0]+support_crop[2])/2+(support_crop[2]-support_crop[0])*.04*fraction*math.cos(angle),
                                              support_crop[1]+(support_crop[3]-support_crop[1])*.48))
-   photo_lathe(mesh,'side',(x,bottom,z),(0,1,0),(1,0,0),(0,0,1),stations,drum_uv,
+   photo_lathe(mesh,'side',(x,bottom,z),axis,axis_u,axis_v,stations,drum_uv,
                sides=12,cap_start=cap,cap_end=cap)
    obj=mesh.finish(name,materials);parent_keep(obj,b);return obj
   supports=[]
@@ -370,15 +372,19 @@ for n in ids:
   for z in (-frame_half,frame_half):
    supports.extend((x,z) for x in (-7.5,0,7.5))
   for index,(x,z) in enumerate(supports,1):
-   photographed_drum(f'helipad:body-support-drum-{index}',x,z,0,.45,.34)
+   photographed_drum(f'helipad:body-support-drum-{index}',x,z,0,.88,.285)
 
-  # Three separately turned fuel drums: two below and one resting across them.
-  for index,(x,z,bottom) in enumerate(((8.2,7.7,deck_y),(8.8,7.7,deck_y),(8.5,7.7,deck_y+.32)),1):
-   photographed_drum(f'helipad:fuel-drum-{index}',x,z,bottom,.32,.30)
-  pump_x,pump_z=9.65,7.6
-  box('helipad:pump-body',(pump_x,1.08,pump_z),(.18,.52,.18),tin,.025,b)
-  box('helipad:pump-handle',(pump_x-.15,1.37,pump_z),(.45,.07,.07),steel,.012,b)
-  box('helipad:pump-spout',(pump_x,1.13,pump_z-.14),(.055,.055,.28),dark,.008,b)
+  # Fuel is stored on the ground just outside the east deck edge, not on the
+  # landing surface. Three real-size drums form a two-high stack.
+  fuel_x,fuel_z=13.0,7.7
+  photographed_drum('helipad:fuel-drum-1',fuel_x-.30,fuel_z,0,.88,.285)
+  photographed_drum('helipad:fuel-drum-2',fuel_x+.30,fuel_z,0,.88,.285)
+  photographed_drum('helipad:fuel-drum-3',fuel_x-.44,fuel_z,1.165,.88,.285,
+                    axis=(1,0,0),axis_u=(0,1,0),axis_v=(0,0,1))
+  pump_x,pump_z=14.0,7.7
+  box('helipad:pump-body',(pump_x,.45,pump_z),(.18,.52,.18),tin,.025,b)
+  box('helipad:pump-handle',(pump_x-.15,.74,pump_z),(.45,.07,.07),steel,.012,b)
+  box('helipad:pump-spout',(pump_x,.50,pump_z-.14),(.055,.055,.28),dark,.008,b)
 
   # Short pole and horizontal sleeve keep the windsock below 1.5 m overall.
   sock_x,sock_z=-10.4,8.4
@@ -395,8 +401,8 @@ for n in ids:
   lamp_bsdf=lamp.node_tree.nodes['Principled BSDF'];lamp_bsdf.inputs['Base Color'].default_value=(1,.55,.16,1)
   lamp_bsdf.inputs['Emission Color'].default_value=(1,.36,.08,1);lamp_bsdf.inputs['Emission Strength'].default_value=4
   for index,(x,z) in enumerate(((-10.8,-10.8),(10.8,-10.8),(-10.8,10.8),(10.8,10.8)),1):
-   beam(f'helipad:floodlight-pole-{index}',(x,deck_y,z),(x,1.35,z),.07,steel,b)
-   box(f'helipad:floodlight-housing-{index}',(x,1.41,z),(.34,.12,.24),dark,.025,b)
+   beam(f'helipad:floodlight-pole-{index}',(x,deck_y,z),(x,1.39,z),.07,steel,b)
+   box(f'helipad:floodlight-housing-{index}',(x,1.43,z),(.34,.08,.24),dark,.025,b)
    lens_name='helipad:lamp' if index==1 else f'helipad:lamp-{index}'
    box(lens_name,(x,1.478,z-.02),(.24,.025,.14),lamp,.008,b)
   continue
