@@ -451,7 +451,10 @@ def basic_family():
   'underside':.55,
   'wheels':[(roller_rear_axle_z,roller_tyre_radius,.70)],
   # Remove the photographed rear tyres so only the separately-built tyres show.
-  'cut':{'side':[(0,0,621,54),(0,520,621,621),(357,255,550,560)],
+  # The side photo keeps its tyre: the tyre hides the body's rear in that view, and
+  # cutting it removed the body behind it, leaving a strip at 2 m (rounds 23 to 25).
+  # The front, rear and top photos still cut the tyres, so they add no bulk.
+  'cut':{'side':[(0,0,621,54),(0,520,621,621)],
    'front':[(0,0,621,54),(0,520,621,621),(91,250,211,560),(410,250,540,560)],
    'rear':[(0,0,621,54),(0,520,621,621),(110,275,230,560),(399,275,530,560)],
    'top':[(0,0,621,40),(0,580,621,621),(390,35,535,175),(390,450,535,600)]},
