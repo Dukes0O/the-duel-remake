@@ -602,7 +602,7 @@ def basic_family():
   'side':{'start':28,'end':1372,'ground':665},
   'front':{'centre':700,'ground':913,'top':18},
   'rear':{'centre':700,'ground':913,'top':18},
-  'top':{'front':34,'rear':1310,'centre':600,'along':'x','x_scale':paver_width/(980-220)},
+  'top':{'front':34,'rear':1310,'centre':600},
   'underside':1.43,
   # Tracks hide the lower body in side view, so that view is never cut there.
   # End and plan views see the tracks outside the body; remove those copies.
