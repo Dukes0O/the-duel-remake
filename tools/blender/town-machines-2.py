@@ -1278,6 +1278,31 @@ if a.render_machine=='roller':
  drum_joint.rotation_euler[0]=.65;roller_cam('work',(29,-9,6),(22,0,1.45),10.0,up='Y')
  print('Rendered roller side, front, rear, overhead, rest and work views from imported family GLB')
  raise SystemExit(0)
+if a.render_machine=='paver':
+ for name in machine_names:hide_tree(bpy.data.objects[name],name!='paver')
+ bpy.ops.mesh.primitive_plane_add(size=80,location=(33,0,-.045));floor=bpy.context.object;floor.name='temporary paver grey ground'
+ floor_mat=bpy.data.materials.new('paver plain grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+ floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor.data.materials.append(floor_mat)
+ paver_joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('paver:')}
+ def paver_review_cam(label,location,target,scale,width,height,up='Y'):
+  scene.render.resolution_x=width;scene.render.resolution_y=height
+  bpy.ops.object.camera_add(location=location);cam=bpy.context.object
+  cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=scale
+  scene.camera=cam;scene.render.filepath=str(ev/f'paver-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
+ for joint in paver_joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
+ screed_joint=paver_joints['paver:screed'];hide_tree(screed_joint,True)
+ paver_review_cam('side',(19,0,1.9),(33,0,1.9),8.45,1400,700)
+ paver_review_cam('front',(33,15,1.9),(33,0,1.9),5.6,1400,933)
+ paver_review_cam('rear',(33,-15,1.9),(33,0,1.9),5.6,1400,933)
+ paver_review_cam('overhead',(33,0,15),(33,0,0),7.65,1199,1312,'Y')
+ hide_tree(screed_joint,False);hide_tree(bpy.data.objects['paver'],True);hide_tree(screed_joint,False)
+ paver_review_cam('screed',(33,-15,1.1),(33,-4.3,.9),8.2,1400,467)
+ hide_tree(bpy.data.objects['paver'],False);screed_joint.rotation_euler=(0,0,0)
+ paver_review_cam('rest',(39,-11,7.4),(33,-.2,1.8),12.4,1400,720)
+ screed_joint.rotation_euler[0]=-.38
+ paver_review_cam('work',(39,-11,7.4),(33,-.2,1.8),12.4,1400,720)
+ print('Rendered paver photo-scale side/front/rear/overhead and screed views, plus exported rest and raised work poses with camera up Y')
+ raise SystemExit(0)
 if a.render_machine=='pipe-truck':
  for name in machine_names:hide_tree(bpy.data.objects[name],name!='pipe-truck')
  bpy.ops.mesh.primitive_plane_add(size=200,location=(66,0,-.045));floor=bpy.context.object;floor.name='pipe truck review grey ground'
