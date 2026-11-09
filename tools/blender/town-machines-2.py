@@ -456,7 +456,7 @@ def basic_family():
    'rear':[(0,0,621,54),(0,520,621,621),(110,275,230,560),(399,275,530,560)],
    'top':[(0,0,621,40),(0,580,621,621),(390,35,535,175),(390,450,535,600)]},
   'voxel':.04,'target':5600,'grey':20,'tolerance':34,'bleed_tolerance':32,
-  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-23/masks')}
+  'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-24/masks')}
  roller_body=carve_object('roller:body',roller_textures,roller_table)
  for photo in roller_table['_photos'].values():
   for node in photo.material().node_tree.nodes:
@@ -504,8 +504,8 @@ def basic_family():
   for z in (-.44,.52):
    post=roller_box('roller canopy post',(x,2.33,z),(.12,.90,.12),roller_photo_mat,.018)
    map_box_to_photo(post,(308 if x<0 else 418,96,330 if x<0 else 440,252),.12,.12)
- roller_roof=roller_box('roller flat canopy roof',(0,2.84,.04),(1.72,.13,1.35),roller_photo_mat,.045)
- map_box_to_photo(roller_roof,(190,52,470,98),1.72,1.35)
+ roller_roof=roller_box('roller flat canopy roof',(0,2.84,.04),(1.72,.13,.98),roller_photo_mat,.045)
+ map_box_to_photo(roller_roof,(190,52,470,98),1.72,.98)
  roller_box('roller seat pan',(0,1.15,.02),(.52,.16,.48),black,.045)
  roller_box('roller seat back',(0,1.43,.26),(.52,.56,.15),black,.045)
  roller_beam('roller steering column',(0,1.65,-.35),(0,2.24,-.35),.035,steel)
@@ -517,7 +517,7 @@ def basic_family():
  o=bpy.context.object;o.name='roller photo-wrapped steel drum';o.data.materials.append(drum_mat);o.data.uv_layers.active.name='UVMap';parent(o,drum)
  # Crosswise cylinder axle is the joint origin; work turns around it.
  for side in (-1,1):
-  roller_beam('roller drum yoke',(side*.91,.75,roller_drum_z),(side*.91,1.53,roller_drum_z),.13,roller_photo_mat)
+  roller_beam('roller drum yoke',(side*.91,1.62,roller_drum_z+.48),(side*.91,.75,roller_drum_z),.13,roller_photo_mat)
  roller_side=roller_table['_photos']['side'];roller_ends=roller_table['_photos']['rear']
  roller_end_scale=roller_height/(535-50)
  for side in (-1,1):
@@ -530,6 +530,41 @@ def basic_family():
   # Map the measured side-photo rear-tyre centre through the carve's own
   # start, end and length so the built tyres share the photographed axle.
   tire.location=game_vector((side*.78,roller_tyre_radius,roller_rear_axle_z))
+  # The photographed wheel is elliptical in the generated side view. Keep its
+  # hub at the measured centre, but use a dark rubber face and a compact photo
+  # hub so the background and yellow body cannot fill the whole tyre face.
+  tire_center=tire.location.copy()
+  for face_side in (-1,1):
+   face_x=tire_center.x+face_side*(.20+.008)
+   verts=[(face_x,tire_center.y,tire_center.z)]
+   for i in range(48):
+    angle=math.tau*i/48
+    verts.append((face_x,tire_center.y+math.cos(angle)*roller_tyre_radius*.96,
+                  tire_center.z+math.sin(angle)*roller_tyre_radius*.96))
+   faces=[(0,i+1,((i+1)%48)+1) for i in range(48)]
+   mesh=bpy.data.meshes.new('roller dark rubber sidewall mesh');mesh.from_pydata(verts,[],faces);mesh.update()
+   face_obj=bpy.data.objects.new('roller dark rubber tyre face',mesh);bpy.context.collection.objects.link(face_obj)
+   face_obj.data.materials.append(rubber);face_obj.data.uv_layers.new(name='UVMap');parent(face_obj,roller)
+   hub_verts=[(face_x+face_side*.004,tire_center.y,tire_center.z)]
+   hub_radius=roller_tyre_radius*.56
+   for i in range(48):
+    angle=math.tau*i/48
+    hub_verts.append((face_x+face_side*.004,tire_center.y+math.cos(angle)*hub_radius,
+                      tire_center.z+math.sin(angle)*hub_radius))
+   hub_mesh=bpy.data.meshes.new('roller photo hub mesh');hub_mesh.from_pydata(hub_verts,[],faces);hub_mesh.update()
+   hub_obj=bpy.data.objects.new('roller side photo hub',hub_mesh);bpy.context.collection.objects.link(hub_obj)
+   hub_obj.data.materials.append(roller_side.material());hub_uv=hub_obj.data.uv_layers.new(name='UVMap')
+   hub_center_x,hub_center_y,hub_source_radius=453,412,80
+   for poly in hub_mesh.polygons:
+    for li in poly.loop_indices:
+     vi=hub_mesh.loops[li].vertex_index
+     if vi==0:uv_x,uv_y=hub_center_x,hub_center_y
+     else:
+      angle=math.tau*(vi-1)/48
+      uv_x=hub_center_x+math.cos(angle)*hub_source_radius
+      uv_y=hub_center_y-math.sin(angle)*hub_source_radius
+     hub_uv.data[li].uv=roller_side.uv(uv_x,uv_y)
+   parent(hub_obj,roller)
  roller_parts=[('carved body',roller_body),('drum',drum)]
  for label,obj in roller_parts:
   b=roller_bounds(obj);print('ROLLER PIECE BOUNDS',label,'min',tuple(round(v,3) for v in b[0]),'max',tuple(round(v,3) for v in b[1]))
