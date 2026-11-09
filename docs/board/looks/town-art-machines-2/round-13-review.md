@@ -2,7 +2,8 @@
 
 ## Result
 
-This is an improvement, but it does not pass yet. The round-scaled side, front,
+This is the crane's second round on this method (card sheet 13). It is an
+improvement, but it does not pass yet. The round-scaled side, front,
 rear and overhead views are shown beside the same source photos. The turntable
 is a lathed part wearing the overhead photo, with the boom pivot tower joined
 to it. The outriggers are box beams with vertical jacks and ground pads. The
