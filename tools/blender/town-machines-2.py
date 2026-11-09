@@ -606,7 +606,7 @@ def basic_family():
  slew_mesh=PhotoMesh();slew_centre=(570,218);slew_r=94
  def slew_side_uv(index,distance,radius,angle):
   u=.43+index*.14;v=.55+angle/math.tau
-  return slew_photo.uv(u*slew_photo.width,v*slew_photo.height)
+  return slew_photo.uv(u*slew_photo.w,v*slew_photo.h)
  def slew_cap_uv(angle,fraction):
   px=slew_centre[0]+math.cos(angle)*slew_r*fraction
   py=slew_centre[1]+math.sin(angle)*slew_r*fraction
