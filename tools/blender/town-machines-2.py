@@ -125,10 +125,10 @@ def articulated_loader():
  side=LoaderPhoto(loader_textures/'loader-side.jpg');front_photo=LoaderPhoto(loader_textures/'loader-front.jpg');rear_photo=LoaderPhoto(loader_textures/'loader-rear.jpg');top=LoaderPhoto(loader_textures/'loader-top.jpg')
  # Measured from the common four-view sheet: side silhouette x=44..830,
  # ground y=430; front/rear roof row and ground are measured per end image.
- length=5.0;width=2.55;height=3.10;side_start,side_end,side_ground=42,835,430
+ length=5.0;width=2.55;height=2.62;side_start,side_end,side_ground=42,835,430
  side_scale=length/(side_end-side_start)
- wheel_radius=93*side_scale;wheel_width=.42;track=1.22
- axle_pixels=(175,526)
+ wheel_radius=90*side_scale;wheel_width=.42;track=1.22
+ axle_pixels=(175,526);axle_centres=(345,345)
  axle_z=[-length/2+((px-side_start)/(side_end-side_start))*length for px in axle_pixels]
  table={'photos':{'side':'loader-side.jpg','front':'loader-front.jpg','rear':'loader-rear.jpg','top':'loader-top.jpg'},
   'length':length,'width':width,'height':height,'side':{'start':side_start,'end':side_end,'ground':side_ground},
@@ -139,7 +139,7 @@ def articulated_loader():
   # place so the body behind them is not cut away.
   'cut':{'front':[(85,160,225,445),(416,160,565,445)],'rear':[(82,165,225,445),(415,165,565,445)],
          'top':[(0,0,875,40),(0,470,875,570),(105,70,238,202),(620,70,742,202)]},
-  'voxel':.04,'target':6200,'grey':22,'tolerance':35,'bleed_tolerance':32,
+ 'voxel':.04,'target':6200,'grey':22,'tolerance':35,'bleed_tolerance':32,
   'mask_dir':str(project_root/'.evidence/2026-11-09/TOWN-ART-MACHINES-2/round-26/masks')}
  # A centre articulation is a real break in the body silhouette. Carve each
  # half against the same photo set, trimming only its opposite half in side
@@ -165,35 +165,46 @@ def articulated_loader():
  # halves. The pivot is in the centre of the two frames.
  beam('loader articulation kingpin',(0,-.03,.80),(0,-.03,1.65),.16,tin,root)
  for axle_index,z in enumerate(axle_z):
-  beam('loader axle housing',(-.88,z,.80),(.88,z,.80),.14,steel,root)
+  wheel_height=(side_ground-axle_centres[axle_index])*side_scale
+  beam('loader axle housing',(-.88,z,wheel_height),(.88,z,wheel_height),.14,steel,root)
   for x in (-track,track):
-   mesh=LoaderMesh(); photo_tyre(mesh,'side',side,axle_pixels[axle_index],345,93,wheel_radius,wheel_width/2,'rubber',front_photo,155 if x<0 else 480,82,235,415,sides=32)
-   wheel_obj=mesh.finish('loader dark photo-width tyre',{'side':side.material(),'rubber':rubber})
-   wheel_obj.location=(x,z,wheel_radius);parent(wheel_obj,front if z==axle_z[0] else rear)
+   wheel_parent=front if z==axle_z[0] else rear
+   bpy.ops.mesh.primitive_cylinder_add(vertices=36,radius=wheel_radius*.98,depth=wheel_width*.90,location=(x,z,wheel_height),rotation=(0,math.pi/2,0))
+   tyre_core=bpy.context.object;tyre_core.name='loader solid dusty rubber tyre';tyre_core.data.materials.append(rubber);parent(tyre_core,wheel_parent)
+   bpy.ops.mesh.primitive_torus_add(major_radius=wheel_radius*.82,minor_radius=wheel_radius*.18,major_segments=36,minor_segments=10,location=(x,z,wheel_height),rotation=(0,math.pi/2,0))
+   wheel_obj=bpy.context.object;wheel_obj.name='loader dark rubber tyre shoulder';wheel_obj.data.materials.append(rubber);parent(wheel_obj,wheel_parent)
+   bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=wheel_radius*.53,depth=wheel_width*.12,location=(x+(-1 if x<0 else 1)*wheel_width*.48,z,wheel_height),rotation=(0,math.pi/2,0))
+   hub=bpy.context.object;hub.name='loader worn photo-hub';hub.data.materials.append(tin);parent(hub,front if z==axle_z[0] else rear)
  # The articulated headstock and moving assemblies have real pin origins.
- arms=empty('loader:arms',(0,-1.90,2.38),front)
+ arms=empty('loader:arms',(0,-1.12,1.55),front)
  arm_photo=LoaderPhoto(loader_textures/'loader-arm-side.jpg')
  from photo_carve import lift_if_dark
  arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
  arm_loops=photo_trace(arm_mask,(20,20,arm_photo.w-20,arm_photo.h-20),tolerance=2.5,min_area=120)
  arm_mesh=LoaderMesh();arm_pin_px,arm_pin_py=120,255;arm_scale=3.30/(2070-120)
- def arm_world(px,py,depth):return (depth,(arm_pin_py-py)*arm_scale,-(px-arm_pin_px)*arm_scale)
+ def arm_world(px,py,depth):return (depth,-(px-arm_pin_px)*arm_scale,(arm_pin_py-py)*arm_scale)
  for loop in arm_loops:
+  area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
+  centre_x=sum(p[0] for p in loop)/len(loop);centre_y=sum(p[1] for p in loop)/len(loop)
+  if area<20000 or centre_x<250:continue
   photo_slab(arm_mesh,'arm',arm_photo,[loop],arm_world,-.86,-.68)
   photo_slab(arm_mesh,'arm',arm_photo,[loop],arm_world,.68,.86)
  traced_arms=arm_mesh.finish('loader:arms:photo-traced-pair',{'arm':arm_photo.material()});parent(traced_arms,arms)
  beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
- beam('loader arm hinge pin',(-.90,-1.90,2.38),(.90,-1.90,2.38),.12,tin,front)
- bucket=empty('loader:bucket',(0,-4.30,1.72),arms)
+ beam('loader arm hinge pin',(-.90,-1.12,1.55),(.90,-1.12,1.55),.12,tin,front)
+ bucket=empty('loader:bucket',(0,-3.10,.43),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
  bucket_loops=photo_trace(bucket_mask,(10,10,bucket_photo.w-10,bucket_photo.h-10),tolerance=2.3,min_area=100)
  bucket_mesh=LoaderMesh();bucket_pin_px,bucket_pin_py=1110,95;bucket_scale=2.45/(bucket_pin_px-95)
- def bucket_world(px,py,depth):return (depth,(bucket_pin_py-py)*bucket_scale,-(bucket_pin_px-px)*bucket_scale)
- for loop in bucket_loops:photo_slab(bucket_mesh,'bucket',bucket_photo,[loop],bucket_world,-1.16,1.16)
+ def bucket_world(px,py,depth):return (depth,-(bucket_pin_px-px)*bucket_scale,(bucket_pin_py-py)*bucket_scale)
+ for loop in bucket_loops:
+  area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
+  if area<20000:continue
+  photo_slab(bucket_mesh,'bucket',bucket_photo,[loop],bucket_world,-1.16,1.16)
  traced_bucket=bucket_mesh.finish('loader:bucket:photo-traced-scoop',{'bucket':bucket_photo.material()});parent(traced_bucket,bucket)
- beam('loader bucket hinge pin',(-1.12,0,0),(1.12,0,0),.105,tin,bucket)
+ beam('loader bucket hinge pin',(-.50,0,0),(.50,0,0),.105,tin,bucket)
  print('LOADER MEASURED PHOTO BOUNDS m length',round(length,3),'width',round(width,3),'height',round(height,3),'tyre radius',round(wheel_radius,3),'axle centres',tuple(round(v,3) for v in axle_z))
  # Report every mesh part before rigid assemblies are joined, with neighbour
  # contacts used to check that the structure is connected and grounded.
