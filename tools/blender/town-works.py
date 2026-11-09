@@ -10,14 +10,14 @@ parser.add_argument('--root', required=True)
 parser.add_argument('--paths-only', action='store_true')
 parser.add_argument('--render', action='store_true')
 parser.add_argument('--assemble-sheet', action='store_true')
-parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-2')
+parser.add_argument('--evidence', default='.evidence/2026-11-09/TOWN-ART-WORKS/round-3')
 args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
 root = Path(args.root).resolve()
 out = root / 'public/assets/models/wasteland/town/works.glb'
 textures = root / 'public/assets/models/wasteland/town/textures'
 evidence = Path(args.evidence)
 evidence = evidence if evidence.is_absolute() else root / evidence
-sheet = root / 'docs/board/looks/town-art-works-sawmill/round-2.jpg'
+sheet = root / 'docs/board/looks/town-art-works-sawmill/round-3.jpg'
 blend = root / 'art-build/town/works.blend'
 
 if args.paths_only:
@@ -34,7 +34,7 @@ if args.assemble_sheet:
     draw = ImageDraw.Draw(canvas)
     font = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 27)
     small = ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf', 21)
-    draw.text((28, 15), 'TOWN WORKS | SAWMILL | ROUND 2', font=font, fill=(238, 223, 198))
+    draw.text((28, 15), 'TOWN WORKS | SAWMILL | ROUND 3', font=font, fill=(238, 223, 198))
     def fit_panel(path, xy, size):
         with Image.open(path) as source:
             image = ImageOps.contain(source.convert('RGB'), size, method=Image.Resampling.LANCZOS)
@@ -338,21 +338,20 @@ def frame_beam(name, a, b, width):
     obj.parent = frame_piece
     return obj
 
-# The side photo is 2.63 times its ground-to-ridge height; the front photo's
-# measured span is 15.0 m and its roof pitch is 37 degrees. These dimensions
-# fit the 3 by 2 cells with 0.5 m clearance: 16.0 m long, 15.0 m wide.
-mill_length = 15.0
-mill_half_span = 3.75
-mill_eave = 3.55
-mill_ridge = 5.7
+# The 3 x 2 plot is 24 m along X and 16 m along Z. The 20 m
+# shed runs along X; the photographed end frame spans 9 m across Z.
+mill_length = 20.0
+mill_half_span = 4.5
+mill_eave = 4.0
+mill_ridge = 6.5
 front = Photo(textures / 'sawmill-front.jpg')
 front_rgb = front.rgb()
 timber_mask = np.zeros(front_rgb.shape[:2], dtype=bool)
 # Keep only the measured timber members. The spaces between them are studio
 # background and must stay open even where the truss encloses them.
 timber_polygons = [
-    [(117,300),(153,300),(153,735),(117,735)],
-    [(870,300),(907,300),(907,735),(870,735)],
+    [(153,300),(196,300),(196,735),(153,735)],
+    [(825,300),(870,300),(870,735),(825,735)],
     [(501,91),(523,91),(523,339),(501,339)],
     [(132,295),(892,295),(892,329),(132,329)],
     [(499,25),(520,25),(153,310),(132,300)],
@@ -370,20 +369,25 @@ for polygon in timber_polygons:
             xx < (x1 - x0) * (yy - y0) / (y1 - y0 + 1e-12) + x0)
         inside_poly ^= crossing
     timber_mask |= inside_poly
-front_loops = trace(timber_mask, (65, 75, 955, 395), tolerance=2.0, min_area=70)
-side_scale = mill_length / (1000 - 20)
-front_ground, front_centre, front_span_px = 735, 512, 930
-front_scale = (mill_half_span * 2) / front_span_px
+# Include the entire outline: the old crop cut off the ridge and post feet.
+front_loops = trace(timber_mask, (65, 0, 955, 740), tolerance=2.0, min_area=70)
+front_ground, front_centre = 735, 512
+front_scale = (mill_half_span * 2) / (847 - 175)
 def gable_world(px, py, d):
-    return ((px-front_centre)*front_scale, (front_ground-py)*front_scale,
-            d)
-for line_index, z in enumerate((-7.25, -3.625, 0.0, 3.625, 7.25)):
+    # Anchor the photographed feet, eaves and ridge to the specified heights.
+    height = ((front_ground - py) * mill_eave / (front_ground - 312)
+              if py >= 312 else
+              mill_eave + (312 - py) * (mill_ridge - mill_eave) / (312 - 25))
+    return (d, height, (px - front_centre) * front_scale)
+frame_lines = []
+for line_index, x in enumerate((-9.75, -4.875, 0.0, 4.875, 9.75)):
     frame_mesh = Mesh()
     slab(frame_mesh, 'frame', front, front_loops, gable_world,
-         z-.20, z+.20, wall_scale=front_scale)
+         x - .20, x + .20, wall_scale=front_scale)
     traced = frame_mesh.finish(f'sawmill-timber-frame-line-{line_index+1}',
                                {'frame': front.material()})
     traced.parent = frame_piece
+    frame_lines.append(traced)
 
 # A corrugated pitched skin carries a roof-plan photograph outside and the
 # saw shed's side photograph below. The folded strip geometry catches light.
@@ -401,8 +405,8 @@ for hand in (-1, 1):
         y = base_y + wave
         for i in range(steps + 1):
             z = -half_depth + 2 * half_depth * i / steps
-            top_base.append(town.game_vector((x, y, z)))
-            bottom_base.append(town.game_vector((x, y - .07, z)))
+            top_base.append(town.game_vector((z, y, x)))
+            bottom_base.append(town.game_vector((z, y - .07, x)))
     for j in range(across):
         for i in range(steps):
             a = start + j * (steps + 1) + i
@@ -593,6 +597,28 @@ for item in sawmill.children:
     assert touches_ground or touches_other, f'{item.name} floats free of the ground and other pieces'
 assert len(sawmill_bounds) == 9, 'sawmill frame, roof, bench, blade, carriage, log, two stacks and heap are present'
 
+roof_bounds = sawmill_bounds['sawmill:tin-roof']
+print('sawmill roof bounds x/y/z', roof_bounds)
+assert roof_bounds[1][0] > 3.5, 'roof must clear 3.5 m everywhere'
+# Check matching cross-sections at both ends, not just the overall bounds.
+roof_vertices = [obj.matrix_world @ v.co for v in obj.data.vertices]
+end_heights = []
+for x in (-half_depth, half_depth):
+    heights = sorted(round(v.z, 5) for v in roof_vertices if abs(v.x - x) < .001)
+    assert heights, 'roof end has no vertices'
+    end_heights.append(heights)
+assert end_heights[0] == end_heights[1], 'roof slopes along its length'
+print('sawmill roof ends: identical height profiles; no lengthwise slope')
+for frame in frame_lines:
+    b = bounds_for([frame])
+    print(f'{frame.name} bounds x/y/z', b)
+    for side in (-1, 1):
+        feet = [frame.matrix_world @ v.co for v in frame.data.vertices
+                if side * (frame.matrix_world @ v.co).y < -3.5]
+        assert feet and abs(min(v.z for v in feet)) < .04, f'{frame.name} post {side} does not reach ground'
+    assert b[1][1] > 6.3, f'{frame.name} does not reach ridge'
+
+
 if args.render:
     # Re-import the exported GLB in a clean scene; all review renders use that file.
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -621,8 +647,6 @@ if args.render:
     def render_view(name, location, target, scale):
         camera.location = game_loc(location)
         camera.rotation_euler = (game_loc(target) - camera.location).to_track_quat('-Z', 'Y').to_euler()
-        if name == 'above':
-            camera.rotation_euler.rotate_axis('Z', math.pi / 2)
         camera.data.ortho_scale = scale
         if name == 'side':
             scene.render.resolution_x, scene.render.resolution_y = 1024, 512
@@ -637,9 +661,9 @@ if args.render:
         scene.render.filepath = str(evidence / f'{name}.png')
         bpy.ops.render.render(write_still=True)
     evidence.mkdir(parents=True, exist_ok=True)
-    render_view('side', (20, 5.5, 0), (0, 3.8, 0), 17)
-    render_view('front', (0, 6, -22), (0, 3.7, 0), 19)
-    render_view('rear', (0, 6, 22), (0, 3.7, 0), 19)
+    render_view('side', (0, 6, -30), (0, 3.5, 0), 23)
+    render_view('front', (-30, 6, 0), (0, 3.4, 0), 19)
+    render_view('rear', (30, 6, 0), (0, 3.4, 0), 19)
     render_view('above', (0, 28, 0), (0, 0, 0), 25)
     render_view('front-three-quarter', (18, 12, -19), (0, 3.4, 0), 26)
     render_view('rear-three-quarter', (-18, 12, 19), (0, 3.4, 0), 26)
