@@ -124,7 +124,7 @@ def add_box(name, center, size, material, bevel=.025):
 
 def add_door(name, center, width, height, rotation=0):
     obj = town.corrugated_sheet(name, center, width, height,
-                                {'galvanised-tin': tin}, bent=.035)
+                                {'galvanised-tin': tin, 'iron-dark': dark}, bent=.035)
     obj.rotation_euler[2] = rotation
     obj.parent = building
     # Dark edge rails and three formed ribs make the leaves read as sliding doors.
@@ -158,7 +158,7 @@ for hand in (-1, 1):
         parent = piece(f'warehouse:loading-door-side-{hand}-{index}')
         angle = math.pi / 2 if hand > 0 else -math.pi / 2
         leaf = town.corrugated_sheet(f'warehouse-side-door-{hand}-{index}', (hand * 4.68, 1.52, z),
-                                     2.9, 3.05, {'galvanised-tin': tin}, bent=.02)
+                                     2.9, 3.05, {'galvanised-tin': tin, 'iron-dark': dark}, bent=.02)
         leaf.rotation_euler[2] = angle; leaf.parent = parent
         for y in (.12, 3.00):
             rail = add_box(f'warehouse-side-door-frame-{hand}-{index}-{y}',
@@ -168,7 +168,7 @@ for hand in (-1, 1):
 # The rear loading leaf is a separate, closed panel.
 rear_door = piece('warehouse:loading-door-rear')
 leaf = town.corrugated_sheet('warehouse-rear-door-leaf', (0, 1.85, 10.22), 2.65, 3.05,
-                             {'galvanised-tin': tin}, bent=.02)
+                             {'galvanised-tin': tin, 'iron-dark': dark}, bent=.02)
 leaf.rotation_euler[2] = math.pi; leaf.parent = rear_door
 
 # Low loading dock and three steel supports; the supports reach the ground.
