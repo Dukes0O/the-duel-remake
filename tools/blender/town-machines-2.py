@@ -27,6 +27,8 @@ rubber=bpy.data.materials.new('Machines / dusty black rubber');rubber.diffuse_co
 rubber_tex=rubber.node_tree.nodes.new('ShaderNodeTexImage');rubber_tex.image=rubber_image;rubber_tex.extension='REPEAT';rubber.node_tree.links.new(rubber_tex.outputs['Color'],rubber_bsdf.inputs['Base Color'])
 loader_enamel=bpy.data.materials.new('Loader / faded olive enamel');loader_enamel.diffuse_color=(.10,.12,.04,1);loader_enamel.use_nodes=True
 loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.10,.12,.04,1);loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Metallic'].default_value=.16;loader_enamel.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.78
+loader_arm_paint=bpy.data.materials.new('Loader / worn ochre yellow lift arms');loader_arm_paint.diffuse_color=(.58,.36,.08,1);loader_arm_paint.use_nodes=True
+arm_bsdf=loader_arm_paint.node_tree.nodes['Principled BSDF'];arm_bsdf.inputs['Base Color'].default_value=(.58,.36,.08,1);arm_bsdf.inputs['Metallic'].default_value=.18;arm_bsdf.inputs['Roughness'].default_value=.86
 steel=m['rusted-steel'];tin=m['galvanised-tin'];paint=m['faded-hand-paint'];glass=m['dirty-glass']
 def parent(o,p):
  bpy.context.view_layer.update();world=o.matrix_world.copy();parent_world=p.matrix_world.copy();o.parent=p;o.matrix_parent_inverse.identity();o.matrix_basis=parent_world.inverted_safe()@world
@@ -183,16 +185,16 @@ def articulated_loader():
  from photo_carve import lift_if_dark
  arm_rgb=arm_photo.rgb();arm_chroma=arm_rgb.max(axis=2)-arm_rgb.min(axis=2);arm_mask=(arm_chroma>14)|(arm_rgb.mean(axis=2)<145)
  arm_loops=photo_trace(arm_mask,(20,20,arm_photo.w-20,arm_photo.h-20),tolerance=2.5,min_area=120)
- # Two welded lift arms connect the measured frame pins beside the cab to the
- # bucket pin. The side photo's pins are about 0.75 m apart and 0.07 m lower.
+ # Two worn-yellow lift arms connect the measured pins beside the cab to the
+ # bucket pin ahead of the front tyres. Their shared pivot is the arm origin.
  for side_sign in (-1,1):
   box_beam('loader lift arm '+('left' if side_sign<0 else 'right'),
-   (side_sign*1.17,-.75,1.55),(side_sign*1.17,-2.50,.98),.20,.18,paint,arms,.03)
+   (side_sign*1.17,-.75,1.55),(side_sign*1.17,-2.50,.98),.20,.18,loader_arm_paint,arms,.03)
  beam('loader lift ram barrels left',(-.60,-.30,1.52),(-.60,-1.32,1.58),.09,steel,front)
  beam('loader lift ram barrels right',(.60,-.30,1.52),(.60,-1.32,1.58),.09,steel,front)
- beam('loader arm hinge pin',(-.90,-1.12,1.55),(.90,-1.12,1.55),.12,tin,front)
- # The bucket pin is about 0.9 m ahead of the frame pin. Its lower edge
- # reaches the ground when the arms are at rest.
+ beam('loader arm hinge pin',(-.90,-.75,1.55),(.90,-.75,1.55),.12,tin,front)
+ # The bucket hinge is 1.75 m ahead and 0.57 m below the arm pivot. In world
+ # space it lands at y=-2.50, with the 1 m scoop resting on the ground.
  bucket=empty('loader:bucket',(0,-2.50,.98),arms)
  bucket_photo=LoaderPhoto(loader_textures/'loader-bucket-side.jpg')
  bucket_rgb=bucket_photo.rgb();bucket_chroma=bucket_rgb.max(axis=2)-bucket_rgb.min(axis=2);bucket_mask=(bucket_chroma>14)|(bucket_rgb.mean(axis=2)<145)
@@ -202,13 +204,19 @@ def articulated_loader():
  for loop in bucket_loops:
   area=abs(sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(loop,loop[1:]+loop[:1])))/2
   if area<20000:continue
-  photo_slab(bucket_mesh,'bucket',bucket_photo,[loop],bucket_world,-1.16,1.16)
+  photo_slab(bucket_mesh,'bucket',bucket_photo,[loop],bucket_world,-1.30,1.30)
  traced_bucket=bucket_mesh.finish('loader:bucket:photo-traced-scoop',{'bucket':bucket_photo.material()})
+ # Keep the photographed scoop's lower edge on the ground while setting its
+ # measured overall height to exactly one metre.
+ bucket_z=[vertex.co.z for vertex in traced_bucket.data.vertices]
+ bucket_low=min(bucket_z);bucket_high=max(bucket_z);bucket_height=bucket_high-bucket_low
+ if bucket_height>0:
+  for vertex in traced_bucket.data.vertices:vertex.co.z=bucket_low+(vertex.co.z-bucket_low)/bucket_height
  # The photo mesh is pin-local: translate it to the measured arm-tip pin,
  # then parent it so the bucket curls around that pin at work.
  traced_bucket.location+=bucket.matrix_world.translation
  parent(traced_bucket,bucket)
- beam('loader bucket hinge pin',(-.50,0,0),(.50,0,0),.105,tin,bucket)
+ beam('loader bucket hinge pin',(-.65,-2.50,.98),(.65,-2.50,.98),.105,tin,bucket)
  print('LOADER MEASURED PHOTO BOUNDS m length',round(length,3),'width',round(width,3),'height',round(height,3),'tyre radius',round(wheel_radius,3),'axle centres',tuple(round(v,3) for v in axle_z))
  # Report every mesh part before rigid assemblies are joined, with neighbour
  # contacts used to check that the structure is connected and grounded.
