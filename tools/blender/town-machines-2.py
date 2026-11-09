@@ -2,7 +2,7 @@
 import argparse, json, math, sys
 from pathlib import Path
 
-p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--candidate',action='store_true');p.add_argument('--paths-only',action='store_true')
+p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--render-machine',default='crane-truck');p.add_argument('--candidate',action='store_true');p.add_argument('--paths-only',action='store_true')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve();project_root=root;glb=root/('.qa-dist/town-machines-2/candidate.glb' if a.candidate else 'public/assets/models/wasteland/town/machines-2.glb');ev=Path(a.render);ev=ev if ev.is_absolute() else root/ev
 if a.paths_only:
  print(json.dumps({'blend':[str(root/'art-build/town/machines-2.blend')],'glb':[str(glb)],'evidence':[],'summary':[]}));raise SystemExit(0)
@@ -215,25 +215,6 @@ def articulated_loader():
  return root,arms,bucket
 def basic_family():
  root=empty('town-machines-2',(0,0,0));loader,arms,bucket=articulated_loader();parent(loader,root)
- def road_truck(id,length=7.2,axles=3):
-  r=empty(id,(0,0,0),root)
-  for side in (-1,1):box(id+' deep ladder rail',(side*.82,0,.74),(.24,length,.44),black,r,.08)
-  for yy in (-length*.40,-length*.20,0,length*.20,length*.40):box(id+' welded crossmember',(0,yy,.73),(1.75,.18,.28),steel,r,.045)
-  # The cab is a closed, steel-framed work cab with dark panes and an inset roof.
-  cab(id,r,0,-length*.27,1.34)
-  hood=box(id+' chamfered flat-faced bonnet',(0,-length*.39,1.30),(1.78,1.52,.92),paint,r,.18)
-  box(id+' recessed radiator',(0,-length*.39-.87,1.29),(1.00,.045,.58),black,r,.04)
-  for x in (-.42,-.30,-.18,-.06,.06,.18,.30,.42):box(id+' radiator vertical bar '+str(x),(x,-length*.39-.90,1.29),(.035,.025,.51),tin,r,.01)
-  for s in (-1,1):
-   box(id+' headlamp',(s*.68,-length*.39-.88,1.62),(.24,.10,.20),tin,r,.055)
-   # Rolled fenders follow the wheel instead of forming a thin lower frame.
-   bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=1,location=(s*1.0,-length*.35,.98));f=bpy.context.object;f.name=id+' pressed wheel arch';f.scale=(.23,1.02,.16);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);f.data.materials.append(paint);f.data.uv_layers.active.name='UVMap';parent(f,r)
-   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.20,depth=1.05,location=(s*.90,.35,.94),rotation=(0,math.pi/2,0));tank=bpy.context.object;tank.name=id+' oval fuel tank';tank.data.materials.append(steel);tank.data.uv_layers.active.name='UVMap';parent(tank,r)
-   box(id+' steel access step',(s*1.05,-.92,.82),(.28,.94,.13),black,r,.035)
-  box(id+' forged front bumper',(0,-length*.39-1.12,.72),(2.52,.24,.30),steel,r,.09)
-  axles_y=[-length*.32] + ([length*.23,length*.37] if axles==3 else [length*.31])
-  for yy in axles_y:tyre_pair(id,r,yy,.62 if axles==3 else .66)
-  return r
  def band_track(id,side,center_y,length,track_parent):
   # A continuous rounded belt wraps front and rear rollers; tread shoes sit on it.
   x=side*1.22;radius=.46;lo=center_y-length/2+radius;hi=center_y+length/2-radius
@@ -723,22 +704,120 @@ def basic_family():
    neighbours=[other for other,other_bounds in crane_measured.items() if other!=label and other_bounds and crane_bounds_touch(bounds,other_bounds)]
    if not neighbours:raise RuntimeError(f'{label} does not touch the ground or another crane piece')
    print('CRANE PIECE CONTACT',label,', '.join(neighbours[:4]))
- # Pipe truck: long deck, stakes, crosswise steel pipes in a tied-down stack.
- pipes=road_truck('pipe-truck',9.4,3);box('pipe truck flatbed deck',(0,.26,1.40),(2.40,5.72,.20),steel,pipes,.07)
- for s in (-1,1):
-  for y in (-2.30,-.90,.50,1.90,2.72):
-   beam('pipe stake socket',(s*1.02,y,1.48),(s*1.02,y,1.72),.09,black,pipes)
-   beam('pipe truck upright stake',(s*1.02,y,1.62),(s*1.02,y,2.62),.06,paint,pipes)
-   beam('stake gusset',(s*.78,y,1.58),(s*1.02,y,1.86),.045,tin,pipes)
- # Nine pipes sit in a stable triangular stack; first five have independent drop pivots.
- pipe_index=0
- for row,count in enumerate((3,2,1)):
-  for j in range(count):
-   pipe_index+=1;x=(j-(count-1)/2)*.49;y=-1.70+((row+j)%3)*1.58;z=1.69+row*.37
-   node=empty('pipe-truck:pipe-'+str(pipe_index),(x+.94,y,z),pipes) if pipe_index<=5 else pipes
-   bpy.ops.mesh.primitive_cylinder_add(vertices=24,radius=.205,depth=1.94,location=(x,y,z),rotation=(0,math.pi/2,0));q=bpy.context.object;q.name='pipe truck round steel pipe '+str(pipe_index);q.data.materials.append(tin);q.data.uv_layers.active.name='UVMap';parent(q,node)
-   for s in (-1,1):
-    bpy.ops.mesh.primitive_torus_add(major_segments=24,minor_segments=5,major_radius=.17,minor_radius=.018,location=(x+s*.83,y,z),rotation=(0,math.pi/2,0));o=bpy.context.object;o.name='pipe rolled end lip';o.data.materials.append(steel);o.data.uv_layers.active.name='UVMap';parent(o,node)
+ # Pipe truck: only the empty cab, folded loader crane, frame and stake bed are
+ # carved. The steel pipes are separate photo-faced cylinders with drop pivots.
+ from photo_model import Photo, Mesh as PhotoMesh, lathe
+ from photo_carve import carve_object
+ from hull_model import tyre
+ pipes=empty('pipe-truck',(0,0,0),root)
+ pipe_textures=project_root/'public/assets/models/wasteland/town/textures'
+ pipe_side=Photo(pipe_textures/'pipe-truck-side.jpg')
+ pipe_front=Photo(pipe_textures/'pipe-truck-front.jpg')
+ pipe_rear=Photo(pipe_textures/'pipe-truck-rear.jpg')
+ pipe_top=Photo(pipe_textures/'pipe-truck-overhead.jpg')
+ pipe_photo=Photo(pipe_textures/'pipe-truck-pipe.jpg')
+ pipe_length,pipe_width,pipe_height=9.4,3.05,3.45
+ pipe_scale=pipe_length/(856-25)
+ pipe_radius=.48
+ pipe_axles=[-pipe_length/2+(px-25)*pipe_scale for px in (145,594,704)]
+ pipe_wheels=[(axle,pipe_radius,.83) for axle in pipe_axles]
+ def keep_pipe_body(x,y,z):
+  # Frame rails and wheel wells stay open below the photographed body.
+  keep=y>=1.12
+  for axle in pipe_axles:
+   keep &= ~((np.abs(x)<1.30)&((z-axle)**2+(y-pipe_radius)**2<(.59)**2))
+  # The stake walls enclose a pale studio patch, so the side silhouette alone
+  # would fill the cargo bed and bury the separately modeled pipe cylinders.
+  keep &= ~((y>1.53)&(np.abs(x)<1.0)&(z>.20))
+  return keep
+ pipe_body_table={
+  'photos':{'side':'pipe-truck-side.jpg','front':'pipe-truck-front.jpg',
+            'rear':'pipe-truck-rear.jpg','top':'pipe-truck-overhead.jpg'},
+  'length':pipe_length,'width':pipe_width,'height':pipe_height,
+  'side':{'start':25,'end':856,'ground':389},
+  'front':{'centre':443,'ground':399,'top':65},
+  'rear':{'centre':443,'ground':399,'top':75},
+  'top':{'front':49,'rear':850,'centre':222,'along':'x','x_scale':pipe_length/(850-49)},
+  'ends_split':-pipe_length/2+(367-25)*pipe_scale,
+  'underside':1.12,'wheels':pipe_wheels,'keep':keep_pipe_body,
+  'cut':{'front':[(0,0,887,50)],'rear':[(0,0,887,58)],
+         'top':[(0,0,887,50),(0,410,887,444)]},
+  'voxel':.045,'target':3200,'grey':25,'tolerance':36,'bleed_tolerance':38,
+  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-16/masks')}
+ pipe_body=carve_object('pipe-truck:body',pipe_textures,pipe_body_table)
+ split=pipe_body_table['ends_split']
+ print('PIPE TRUCK REAR PHOTO SPLIT',round(split,3),'m at cab back wall (side photo x=367 px)')
+ print('PIPE TRUCK BODY PHOTO MAP: cab volume=side/top with front end view; rear bed volume=side/top with rear end view')
+ for photo in pipe_body_table['_photos'].values():
+  for image_node in photo.material().node_tree.nodes:
+   if image_node.type=='TEX_IMAGE':image_node.interpolation='Cubic'
+ parent(pipe_body,pipes)
+ pipe_parts=[('pipe-truck:body',pipe_body)]
+ def pipe_box(name,center,size,material=steel,bevel=.04):return box(name,game_vector(center),(size[0],size[2],size[1]),material,pipes,bevel)
+ def pipe_beam(name,start,end,radius,material=steel):return beam(name,game_vector(start),game_vector(end),radius,material,pipes)
+ def pipe_add(label,obj):pipe_parts.append((label,obj));return obj
+ frame_y=1.08
+ for side in (-1,1):pipe_add(f'pipe-truck:frame-rail-{side}',pipe_box('pipe frame ladder rail',(side*.91,.76,0),(.20,.44,7.55),steel,.025))
+ for index,axle_z in enumerate(pipe_axles):
+  pipe_add(f'pipe-truck:crossmember-{index+1}',pipe_beam('pipe frame crossmember',(-.96,frame_y,axle_z),(.96,frame_y,axle_z),.09,steel))
+  pipe_add(f'pipe-truck:axle-{index+1}',pipe_beam('pipe heavy axle',(-1.24,pipe_radius,axle_z),(1.24,pipe_radius,axle_z),.13,black))
+  for side in (-1,1):pipe_beam('pipe truck leaf spring',(side*.85,.86,axle_z-.45),(side*.85,.86,axle_z+.45),.045,steel)
+ # Built tanks and six wide dark tyres; each rear axle carries dual pairs.
+ for name,center,size in [('fuel-tank',(-.60,.84,-.64),(.44,.46,.88)),('air-tank',(.60,.84,-.56),(.38,.40,.78))]:
+  pipe_add('pipe-truck:'+name,pipe_box('pipe truck '+name.replace('-',' '),center,size,steel,.08))
+ pipe_dark=bpy.data.materials.new('Pipe truck / dusty dark rubber');pipe_dark.diffuse_color=(.025,.027,.025,1);pipe_dark.use_nodes=True
+ pipe_dark.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.025,.027,.025,1);pipe_dark.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.94
+ for axle_index,(axle_z,side_px) in enumerate(zip(pipe_axles,(145,594,704))):
+  centres=[-1.0,1.0] if axle_index==0 else [-1.26,-.86,.86,1.26]
+  width=.31 if axle_index==0 else .20
+  for tire_x in centres:
+   end_photo=pipe_body_table['_photos']['front' if axle_index==0 else 'rear']
+   meta=pipe_body_table['front' if axle_index==0 else 'rear'];end_scale=pipe_height/(meta['ground']-meta['top'])
+   tyre_mesh=PhotoMesh();tyre(tyre_mesh,'side',pipe_side,side_px,389,65,pipe_radius,width,'rubber',end_photo,
+      330 if tire_x<0 else 555,width/end_scale*.94,meta['ground']-pipe_radius/end_scale,
+      meta['ground']-pipe_radius*.08/end_scale,sides=32)
+   wheel=tyre_mesh.finish('pipe truck photo-width rubber tyre',{'side':pipe_side.material(),'rubber':pipe_dark})
+   wheel.name=f'pipe-truck:wheel-{axle_index+1}-'+('left' if tire_x<0 else 'right')+('-inner' if axle_index and abs(tire_x)<1 else '-outer' if axle_index else '')
+   parent(wheel,pipes);wheel.location=game_vector((tire_x,pipe_radius,axle_z));pipe_add(wheel.name,wheel)
+ # Bed deck and five stake stations along both sides.
+ pipe_add('pipe-truck:flatbed',pipe_box('pipe truck photo-width flatbed deck',(0,1.40,1.92),(2.54,.18,5.60),steel,.05))
+ for side in (-1,1):
+  for y in (-.55,.70,1.95,3.18,4.20):
+   pipe_beam('pipe stake socket',(side*1.10,1.48,y),(side*1.10,1.72,y),.09,black)
+   pipe_add(f'pipe-truck:stake-{side}-{y}',pipe_beam('pipe truck worn yellow upright stake',(side*1.10,1.48,y),(side*1.10,2.62,y),.06,paint))
+   pipe_beam('pipe stake gusset',(side*.82,1.58,y),(side*1.10,1.86,y),.045,tin)
+ def pipe_uv_x(index,distance,radius,angle):
+  px=pipe_photo.w*(.025+.95*(distance/5.10));py=pipe_photo.h*(.39+.20*(angle/math.tau));return pipe_photo.uv(px,py)
+ def pipe_cap_uv(angle,fraction):
+  px=pipe_photo.w*(.025+.95*fraction);py=pipe_photo.h*(.39+.20*(angle/math.tau));return pipe_photo.uv(px,py)
+ pipe_roots=[]
+ # Five longitudinal pipes, each centered on its own joint. Three lie in the
+ # bottom course and two sit in the upper course between the stake rails.
+ for index,(x,height) in enumerate(((-.55,1.69),(0,1.69),(.55,1.69),(-.275,2.04),(.275,2.04)),1):
+  long_pos=1.92; joint=empty(f'pipe-truck:pipe-{index}',game_vector((x,height,long_pos)),pipes);pipe_roots.append((f'pipe-truck:pipe-{index}',joint))
+  mesh=PhotoMesh();lathe(mesh,'pipe', (x,height,long_pos-2.55),(0,0,1),(1,0,0),(0,1,0),[(0,.205),(5.10,.205)],pipe_uv_x,sides=32,cap_start=('pipe',pipe_cap_uv),cap_end=('pipe',pipe_cap_uv))
+  obj=mesh.finish(f'pipe-truck:pipe-{index}:rusty-cylinder',{'pipe':pipe_photo.material()});parent(obj,joint)
+ pipe_parts.extend(pipe_roots)
+ # The frame, bed, tyres, body and cargo are measured in game metres.
+ def pipe_bounds(piece):
+  nodes=[piece]+list(piece.children_recursive);points=[];graph=bpy.context.evaluated_depsgraph_get()
+  for node in nodes:
+   if node.type!='MESH':continue
+   evaluated=node.evaluated_get(graph);mesh=evaluated.to_mesh();points.extend((node.matrix_world@vertex.co)[:] for vertex in mesh.vertices);evaluated.to_mesh_clear()
+  if not points:return None
+  gp=[(point[0],point[2],-point[1]) for point in points];return tuple(min(q[i] for q in gp) for i in range(3)),tuple(max(q[i] for q in gp) for i in range(3))
+ measured={label:pipe_bounds(piece) for label,piece in pipe_parts}
+ for label,piece in pipe_parts:
+  bounds=measured[label]
+  if bounds is None:raise RuntimeError(f'{label} has no mesh')
+  lo,hi=bounds;print('PIPE PIECE BOUNDS',label,'min',tuple(round(v,3) for v in lo),'max',tuple(round(v,3) for v in hi))
+  if label.startswith('pipe-truck:wheel-'):
+   if abs(lo[1])>.04:raise RuntimeError(f'{label} does not touch the ground')
+   print('PIPE PIECE CONTACT',label,'ground')
+  else:
+   neighbours=[other for other,other_bounds in measured.items() if other!=label and other_bounds and all(bounds[0][i]<=other_bounds[1][i]+.05 and other_bounds[0][i]<=bounds[1][i]+.05 for i in range(3))]
+   if not neighbours:raise RuntimeError(f'{label} does not touch the ground or another piece')
+   print('PIPE PIECE CONTACT',label,', '.join(neighbours[:4]))
  # Each root remains a separate family child with a real-scale local origin.
  mixer.location.x=11;roller.location.x=22;paver.location.x=33;drill.location.x=44;crane.location.x=55;pipes.location.x=66
  return root
@@ -826,6 +905,35 @@ for obj in bpy.context.scene.objects:
  scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.36,.36,.36,1)
  scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.62
  def hide_tree(node,value):node.hide_render=value;[hide_tree(child,value) for child in node.children]
+ if a.render_machine=='pipe-truck':
+  for name in machine_names:hide_tree(bpy.data.objects[name],name!='pipe-truck')
+  bpy.ops.mesh.primitive_plane_add(size=200,location=(66,0,-.045));floor=bpy.context.object;floor.name='pipe truck review grey ground'
+  floor_mat=bpy.data.materials.new('pipe truck plain grey ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
+  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1);floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
+  joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('pipe-truck:')}
+  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
+  def pipe_review_cam(label,location,look_at,scale,width,height,up='Y'):
+   scene.render.resolution_x=width;scene.render.resolution_y=height
+   bpy.ops.object.camera_add(location=location);review_cam=bpy.context.object
+   review_cam.rotation_euler=(Vector(look_at)-review_cam.location).to_track_quat('-Z',up).to_euler()
+   if label=='overhead':review_cam.rotation_euler.rotate_axis('Z',math.pi/2)
+   review_cam.data.type='ORTHO';review_cam.data.ortho_scale=scale;scene.camera=review_cam
+   scene.render.filepath=str(ev/f'pipe-truck-{label}.png');bpy.ops.render.render(write_still=True);bpy.data.objects.remove(review_cam,do_unlink=True)
+  for loc,power,size in [((61,-7,12),1400,9),((73,5,8),700,7)]:
+   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power;light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((66,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
+  pipe_review_cam('side',(50,0,1.9),(66,0,1.9),10.3,887,443)
+  pipe_review_cam('front',(66,15,1.9),(66,0,1.9),8.8,887,443)
+  pipe_review_cam('rear',(66,-15,1.9),(66,0,1.9),8.8,887,443)
+  pipe_review_cam('overhead',(66,0,18),(66,0,0),10.2,887,443,'X')
+  for index in range(1,6):
+   joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=[-.55,0,.55,-.275,.275][index-1];joint.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];joint.rotation_euler=(0,0,0)
+  pipe_review_cam('rest',(50,0,1.9),(66,0,1.9),10.3,887,443)
+  drop_positions={1:(-1.65,.205,-1.5),2:(1.65,.205,-.5),3:(-1.90,.205,.5),4:(1.90,.205,1.5)}
+  for index,(x,height,long_pos) in drop_positions.items():
+   joint=joints[f'pipe-truck:pipe-{index}'];joint.location.x=x;joint.location.z=height;joint.location.y=-long_pos;joint.rotation_euler[1]=-.48 if index%2 else .48
+  pipe_review_cam('work',(50,0,1.9),(66,0,1.9),10.3,887,443)
+  print('Rendered pipe truck side, front, rear, overhead, rest and work comparisons from the imported family GLB')
+  raise SystemExit(0)
  for name in machine_names:hide_tree(bpy.data.objects[name],name!='crane-truck')
  bpy.ops.mesh.primitive_plane_add(size=200,location=(55,0,-.045));floor=bpy.context.object;floor.name='crane review grey ground'
  floor_mat=bpy.data.materials.new('plain medium grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
@@ -869,7 +977,7 @@ for obj in bpy.context.scene.objects:
  ev.mkdir(parents=True,exist_ok=True)
  machine_names=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck']
  def aim(cam,p):cam.rotation_euler=(Vector(p)-cam.location).to_track_quat('-Z','Y').to_euler()
- # The paver's work image includes a short fresh road behind its screed.
+# The paver's work image includes a short fresh road behind its screed.
  bpy.ops.mesh.primitive_plane_add(size=1,location=(33,2.65,-.045));road=bpy.context.object;road.name='temporary fresh asphalt';road.scale=(1.7,2.0,1);asphalt=bpy.data.materials.new('temporary laid asphalt');asphalt.diffuse_color=(.055,.058,.052,1);asphalt.roughness=.96;road.data.materials.append(asphalt);road.hide_render=True
  for name in machine_names:
   machine=bpy.data.objects[name];joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith(name+':')}
@@ -890,8 +998,14 @@ for obj in bpy.context.scene.objects:
     joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
     joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
    elif name=='pipe-truck':
+     # Successive pipes roll clear in order, with the outer pair reaching the ground.
+     drop_positions={1:(-1.65,.205,-1.5),2:(1.65,.205,-.5),3:(-1.90,.205,.5),4:(1.90,.205,1.5),5:(.275,2.04,1.92)}
      for index in range(1,6):
-      pipe=joints[f'pipe-truck:pipe-{index}'];pipe.rotation_euler[1]=0 if pose=='rest' or index!=1 else -.78
+      pipe=joints[f'pipe-truck:pipe-{index}']
+      if pose=='work' and index<=4:
+       x,height,long_pos=drop_positions[index];pipe.location.x=x;pipe.location.z=height;pipe.location.y=-long_pos;pipe.rotation_euler[1]=-.48 if index%2 else .48
+      else:
+       pipe.location.x=[-.55,0,.55,-.275,.275][index-1];pipe.location.z=[1.69,1.69,1.69,2.04,2.04][index-1];pipe.location.y=-1.92;pipe.rotation_euler[1]=0
    target=origin+Vector((0,-1.0,3.2 if name=='drill-rig' else 1.8))
    for light,offset in lights:light.location=origin+offset;light.rotation_euler=(target-light.location).to_track_quat('-Z','Y').to_euler()
    view_scale=1.65 if name=='loader' else 1.55 if name in ('mixer-truck','roller','paver','pipe-truck') else 2.55 if name=='drill-rig' else 1.75
