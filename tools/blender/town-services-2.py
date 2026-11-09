@@ -355,11 +355,16 @@ for n in ids:
 
   # Turn each drum from one measured drum in the side photo, keeping the
   # photograph on its circumference instead of stretching a flat box.
-  support_crop=(22,371,101,425)
-  def photographed_drum(name,x,z,bottom,height,radius,axis=(0,1,0),axis_u=(1,0,0),axis_v=(0,0,1)):
+  # Five individually measured patches preserve the photo's blue, rust,
+  # white and green drum finishes without wrapping its grey studio background.
+  drum_crops=((27,374,82,422),(267,374,331,422),(485,374,539,422),
+              (700,374,757,422),(932,374,995,422))
+  def photographed_drum(name,x,z,bottom,height,radius,crop=0,axis=(0,1,0),axis_u=(1,0,0),axis_v=(0,0,1)):
+   support_crop=drum_crops[crop%len(drum_crops)]
    mesh=PhotoMesh();stations=[(0,radius*.84),(.025,radius),(height-.035,radius),(height,radius*.86)]
    def drum_uv(index,distance,r,angle):
-    return side.uv(support_crop[0]+(support_crop[2]-support_crop[0])*angle/(2*math.pi),
+    width=support_crop[2]-support_crop[0]
+    return side.uv(support_crop[0]+width*(.075+.85*angle/(2*math.pi)),
                    support_crop[3]-(support_crop[3]-support_crop[1])*distance/height)
    cap=('side',lambda angle,fraction:side.uv((support_crop[0]+support_crop[2])/2+(support_crop[2]-support_crop[0])*.04*fraction*math.cos(angle),
                                              support_crop[1]+(support_crop[3]-support_crop[1])*.48))
@@ -372,15 +377,15 @@ for n in ids:
   for z in (-frame_half,frame_half):
    supports.extend((x,z) for x in (-7.5,0,7.5))
   for index,(x,z) in enumerate(supports,1):
-   photographed_drum(f'helipad:body-support-drum-{index}',x,z,0,.88,.285)
+   photographed_drum(f'helipad:body-support-drum-{index}',x,z,0,.88,.285,index-1)
 
   # Fuel is stored on the ground just outside the east deck edge, not on the
   # landing surface. Three real-size drums form a two-high stack.
   fuel_x,fuel_z=13.0,7.7
-  photographed_drum('helipad:fuel-drum-1',fuel_x-.30,fuel_z,0,.88,.285)
-  photographed_drum('helipad:fuel-drum-2',fuel_x+.30,fuel_z,0,.88,.285)
+  photographed_drum('helipad:fuel-drum-1',fuel_x-.30,fuel_z,0,.88,.285,0)
+  photographed_drum('helipad:fuel-drum-2',fuel_x+.30,fuel_z,0,.88,.285,3)
   photographed_drum('helipad:fuel-drum-3',fuel_x-.44,fuel_z,1.165,.88,.285,
-                    axis=(1,0,0),axis_u=(0,1,0),axis_v=(0,0,1))
+                    crop=2,axis=(1,0,0),axis_u=(0,1,0),axis_v=(0,0,1))
   pump_x,pump_z=14.0,7.7
   box('helipad:pump-body',(pump_x,.45,pump_z),(.18,.52,.18),tin,.025,b)
   box('helipad:pump-handle',(pump_x-.15,.74,pump_z),(.45,.07,.07),steel,.012,b)
