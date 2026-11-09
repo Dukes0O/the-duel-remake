@@ -726,9 +726,9 @@ def basic_family():
   keep=y>=1.12
   for axle in pipe_axles:
    keep &= ~((np.abs(x)<1.30)&((z-axle)**2+(y-pipe_radius)**2<(.82)**2))
-  # The stake walls enclose a pale studio patch, so the side silhouette alone
-  # would fill the cargo bed and bury the separately modeled pipe cylinders.
-  keep &= ~((y>1.53)&(np.abs(x)<1.0)&(z>.20))
+  # Leave the whole stake-bed silhouette open. Its rails, headboard and tailgate
+  # are traced as thin pieces below, so the carve cannot turn them into walls.
+  keep &= ~((y>1.48)&(z>-.78))
   return keep
  pipe_body_table={
   'photos':{'side':'pipe-truck-side.jpg','front':'pipe-truck-front.jpg',
@@ -740,8 +740,10 @@ def basic_family():
   'top':{'front':49,'rear':850,'centre':222,'along':'x','x_scale':pipe_length/(850-49)},
   'ends_split':-pipe_length/2+(367-25)*pipe_scale,
   'underside':1.12,'wheels':pipe_wheels,'keep':keep_pipe_body,
-  'cut':{'front':[(0,0,887,50)],'rear':[(0,0,887,58)],
-         'top':[(0,0,887,50),(0,410,887,444)]},
+  'cut':{'side':[(420,153,876,264)],
+         'front':[(0,0,887,50),(320,50,586,87)],
+         'rear':[(0,0,887,58),(274,137,623,258)],
+         'top':[(0,0,887,50),(0,410,887,444),(335,75,875,112),(335,332,875,370)]},
   'voxel':.045,'target':3200,'grey':25,'tolerance':36,'bleed_tolerance':38,
   'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-16/masks')}
  pipe_body=carve_object('pipe-truck:body',pipe_textures,pipe_body_table)
@@ -756,6 +758,57 @@ def basic_family():
  def pipe_box(name,center,size,material=steel,bevel=.04):return box(name,game_vector(center),(size[0],size[2],size[1]),material,pipes,bevel)
  def pipe_beam(name,start,end,radius,material=steel):return beam(name,game_vector(start),game_vector(end),radius,material,pipes)
  def pipe_add(label,obj):pipe_parts.append((label,obj));return obj
+ # Trace the open stake rails from full-size photo crops of each painted bar.
+ from photo_carve import save_mask
+ pipe_side_rgb=pipe_side.rgb();side_crop=pipe_side_rgb[153:264,425:876]
+ side_chroma=side_crop.max(axis=2)-side_crop.min(axis=2)
+ side_mask=np.zeros((pipe_side.h,pipe_side.w),dtype=bool)
+ for y0,y1 in ((162,181),(188,204),(213,230),(238,256)):
+  side_mask[y0:y1,425:876]=side_chroma[y0-153:y1-153,:]>16
+ side_loops=trace(side_mask,(425,153,876,264),tolerance=1.8,min_area=30)
+ if len(side_loops)<4:raise RuntimeError(f'pipe side stake trace retained only {len(side_loops)} loops')
+ save_mask(side_mask,project_root/'.qa-dist/town-machines-2/round-18/pipe-side-stake-mask.png')
+ side_scale=pipe_scale
+ def pipe_side_world(px,py,depth):
+  return (depth,(389-py)*side_scale,-pipe_length/2+(px-25)*side_scale)
+ for side in (-1,1):
+  side_mesh=PhotoMesh();slab(side_mesh,'stake-side',pipe_side,side_loops,pipe_side_world,-1.46 if side<0 else 1.32,-1.32 if side<0 else 1.46,wall_scale=side_scale)
+  side_obj=side_mesh.finish(f'pipe truck open traced stake side {side}',{'stake-side':pipe_side.material()})
+  pipe_add(f'pipe-truck:stake-side-{side}',side_obj)
+ # The headboard rack is traced from the front end photo. Split the crop around
+ # the folded loader crane so only the two uprights and the top crossrail remain.
+ head_scale=pipe_height/(399-65)
+ head_mesh=PhotoMesh()
+ for rect in ((329,53,347,172),(556,53,574,172),(329,53,416,72),(467,53,574,72)):
+  region=np.zeros((pipe_front.h,pipe_front.w),dtype=bool)
+  x0,y0,x1,y1=rect
+  rgb=pipe_front.rgb()[y0:y1,x0:x1]
+  # Warm, chromatic painted steel is retained; the pale studio and cab glass
+  # are excluded by their low chroma or low value.
+  chroma=rgb.max(axis=2)-rgb.min(axis=2)
+  region[y0:y1,x0:x1]=(rgb.mean(axis=2)>72)&(chroma>18)
+  head_loops=trace(region,rect,tolerance=1.6,min_area=18)
+  def head_world(px,py,depth):return ((px-443)*head_scale,(399-py)*head_scale,depth)
+  slab(head_mesh,'headboard',pipe_front,head_loops,head_world,-.96,-.81,wall_scale=head_scale)
+ head_obj=head_mesh.finish('pipe truck open traced headboard rack',{'headboard':pipe_front.material()})
+ pipe_add('pipe-truck:headboard-rack',head_obj)
+ # The rear gate gaps are shaded rather than studio-bright. Isolate its rusted
+ # steel by chroma within the measured gate crop instead of flooding that shade.
+ tailgate_rect=(274,137,623,258);tailgate_rgb=pipe_rear.rgb();tailgate_crop=tailgate_rgb[137:258,274:623]
+ tailgate_chroma=tailgate_crop.max(axis=2)-tailgate_crop.min(axis=2)
+ tailgate_mask=np.zeros((pipe_rear.h,pipe_rear.w),dtype=bool)
+ for y0,y1 in ((145,167),(176,194),(201,222),(229,254)):
+  tailgate_mask[y0:y1,274:623]=tailgate_chroma[y0-137:y1-137,:]>16
+ for x0,x1 in ((276,301),(380,399),(486,506),(594,620)):
+  tailgate_mask[143:255,x0:x1]=tailgate_chroma[:,x0-274:x1-274][6:118,:]>16
+ tailgate_loops=trace(tailgate_mask,tailgate_rect,tolerance=1.8,min_area=32)
+ if len(tailgate_loops)<8:raise RuntimeError(f'pipe rear tailgate trace retained only {len(tailgate_loops)} loops')
+ save_mask(tailgate_mask,project_root/'.qa-dist/town-machines-2/round-18/pipe-rear-tailgate-mask.png')
+ tail_scale=pipe_height/(399-75);tail_x_scale=pipe_width/(623-274)
+ def tailgate_world(px,py,depth):return ((px-443)*tail_x_scale,(399-py)*tail_scale,depth)
+ tailgate_mesh=PhotoMesh();slab(tailgate_mesh,'tailgate',pipe_rear,tailgate_loops,tailgate_world,4.43,4.58,wall_scale=tail_scale)
+ tailgate_obj=tailgate_mesh.finish('pipe truck open traced tailgate',{'tailgate':pipe_rear.material()})
+ pipe_add('pipe-truck:tailgate',tailgate_obj)
  frame_y=1.08
  for side in (-1,1):pipe_add(f'pipe-truck:frame-rail-{side}',pipe_beam('pipe frame ladder rail',(side*.54,.76,-3.78),(side*.54,.76,3.78),.055,steel))
  for index,axle_z in enumerate(pipe_axles):
@@ -783,9 +836,9 @@ def basic_family():
  pipe_add('pipe-truck:flatbed',pipe_box('pipe truck photo-width flatbed deck',(0,1.40,1.92),(2.54,.18,5.60),steel,.05))
  for side in (-1,1):
   for y in (-.55,.70,1.95,3.18,4.20):
-   pipe_beam('pipe stake socket',(side*1.10,1.48,y),(side*1.10,1.72,y),.09,black)
-   pipe_add(f'pipe-truck:stake-{side}-{y}',pipe_beam('pipe truck worn yellow upright stake',(side*1.10,1.48,y),(side*1.10,2.62,y),.06,paint))
-   pipe_beam('pipe stake gusset',(side*.82,1.58,y),(side*1.10,1.86,y),.045,tin)
+   pipe_beam('pipe stake socket',(side*1.38,1.48,y),(side*1.38,1.72,y),.09,black)
+   pipe_add(f'pipe-truck:stake-{side}-{y}',pipe_beam('pipe truck worn yellow upright stake',(side*1.38,1.48,y),(side*1.38,2.62,y),.06,paint))
+   pipe_beam('pipe stake gusset',(side*1.10,1.58,y),(side*1.38,1.86,y),.045,tin)
  def pipe_uv_x(index,distance,radius,angle):
   px=pipe_photo.w*(.025+.95*(distance/5.10));py=pipe_photo.h*(.39+.20*(angle/math.tau));return pipe_photo.uv(px,py)
  def pipe_cap_uv(angle,fraction):
@@ -892,7 +945,7 @@ for obj in bpy.context.scene.objects:
   for node in mat.node_tree.nodes if mat.use_nodes else []:
    if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
     filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
-    if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-')):node.image.scale(192,192)
+    if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-','pipe-truck-')):node.image.scale(192,192)
   blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
  if a.render:
   from mathutils import Vector
