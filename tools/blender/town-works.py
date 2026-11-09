@@ -96,6 +96,8 @@ table = {
     'voxel': .11, 'target': 9000, 'mask_dir': str(render_masks),
 }
 body = carve_object('warehouse:body', textures, table)
+# Voxel centres leave an 8 cm lower edge above the measured floor; seat it on y=0.
+body.location.z -= .08
 
 def simple_material(name, colour, metallic=.1):
     material = bpy.data.materials.new(name)
@@ -174,13 +176,13 @@ leaf.rotation_euler[2] = math.pi; leaf.parent = rear_door
 
 # Low loading dock and three steel supports; the supports reach the ground.
 dock = piece('warehouse:dock')
-deck = add_box('warehouse-loading-dock-slab', (0, .62, -10.92), (6.0, .24, 2.05), oxide, .035)
+deck = add_box('warehouse-loading-dock-slab', (0, .62, -10.80), (6.0, .24, 1.20), oxide, .035)
 deck.parent = dock
 for x in (-2.65, 0, 2.65):
-    support = add_box(f'warehouse-dock-foot-{x}', (x, .30, -10.95), (.30, .60, 1.65), dark, .025)
+    support = add_box(f'warehouse-dock-foot-{x}', (x, .30, -10.80), (.30, .60, 1.00), dark, .025)
     support.parent = dock
 for x in (-2.7, 2.7):
-    bumper = add_box(f'warehouse-dock-bumper-{x}', (x, .82, -9.94), (.28, .45, .16), tin, .025)
+    bumper = add_box(f'warehouse-dock-bumper-{x}', (x, .82, -10.18), (.28, .45, .16), tin, .025)
     bumper.parent = dock
 
 # Roof vents sit on the ridge skin. Their bases overlap the carved roof slightly.
