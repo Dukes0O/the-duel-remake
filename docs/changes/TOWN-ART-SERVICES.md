@@ -250,3 +250,43 @@ The exported model has 2,628 helipad triangles. The full `services-2.glb` is 2,6
 
 - Replaced the old plain helipad plinth/deck, bar H, weld bars, perimeter rails, tall light poles and untextured cylinders with the photographed deck, girders, drum supports and separate accessories.
 - No passed buildings, old review sheets or checks were removed.
+
+## Helipad, round 18
+
+Raised the helipad deck top to 1.18 m and kept its 24 m plan, photo mapping,
+H and circle unchanged. Added the 0.30 m riveted edge girder and sixteen
+photo-colored lathed drum legs, each 0.88 m tall and 0.57 m across. Tightened
+the drum photo crops to remove studio background and used the blue, rust, white
+and green drums shown in the reference. Added three fuel drums and a hand pump
+on the ground beside the deck, the windsock on its pole, and four emissive
+corner floodlights including `helipad:lamp`. The toll bank, school and radio
+mast were not edited.
+
+The helipad has 2,628 triangles. The family GLB is 2,642,436 bytes. The review
+sheet is 1,600 ? 2,440 pixels and 333,111 bytes. Blender's model audit reported
+all pieces within the plot and below 1.5 m.
+
+### Checks and review
+
+- Blender 4.5 export and seven rendered GLB review views: passed; 2,628 helipad
+  triangles and all part bounds passed the recipe audit.
+- `node tools/test-blender-output.mjs`: passed, 389 checks, 0 failures.
+- `node tools/test-repo-hygiene.mjs`: passed. Size targets are advisory.
+- `node tools/test-review-evidence.mjs`: 8 of 9 subtests passed; the audio
+  analysis subtest failed twice with `spawnSync ffmpeg EPERM`. Both runs ended
+  at 655 checks. The failure is an execution permission issue in the test's
+  child process; no assertions were changed.
+- Browser and in-game look checks were not run here. Claude should check the
+  drum scale and colors against the side photos, fuel stack and pump readability
+  beside the deck, windsock visibility, emissive corner lamps, and unchanged H
+  orientation from above.
+- Changed assertions: none. Race fingerprints: not applicable; art-only work
+  changed no race code.
+- No new kind of art fault was found; the wide drum crop included studio
+  background, which was fixed using tight photo crops.
+
+### Removed
+
+- Replaced the undersized support stubs and on-deck fuel props with full-size
+  photographed drum supports and a ground-side fuel stack. No prior review
+  sheet, other building model, or check was removed.
