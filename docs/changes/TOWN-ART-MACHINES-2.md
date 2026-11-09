@@ -45,7 +45,7 @@
 
 - Added a pre-join bounds print for every roller mesh. The false rearward strip is part of the carved `roller:body` bounds (x -0.78..0.90 m, y 0.54..2.26 m, z -2.33..2.16 m); no built roller piece spans that area.
 - Kept the round 24 roller photo masks after trial cuts did not isolate the strip. The failed cuts and the bounds list are recorded in `round-25-review.md`; the strip remains unresolved for Claude's review.
-- Exported `machines-2.glb` (5,818,568 bytes) and `round-25.jpg` (207,137 bytes). The three other truck recipe sections were not edited.
+- Exported `machines-2.glb` (5,818,552 bytes) and `round-25.jpg` (207,137 bytes). The three other truck recipe sections were not edited.
 - Claude should inspect the side elevation and decide the next source-photo or carve approach. Also compare the mixer, crane and pipe trucks with their prior sheets.
 
 ## Checks
