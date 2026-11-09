@@ -139,7 +139,7 @@ def add_door(name, center, width, height, owner, rotation=0):
                            (.09, height, .08), oxide, .01)
             rail.parent = owner
         for row in (1, 2, 3):
-            rib = add_box(name + f'-rib-{row}', (x, y + row * height / 4, z - .075),
+            rib = add_box(name + f'-rib-{row}', (x, y - height / 2 + row * height / 4, z - .075),
                           (width * .91, .065, .06), oxide, .01)
             rib.parent = owner
     return obj
