@@ -602,9 +602,8 @@ def basic_family():
   'side':{'start':28,'end':1372,'ground':665},
   'front':{'centre':700,'ground':913,'top':18},
   'rear':{'centre':700,'ground':913,'top':18},
-  # In the photo's straight-down projection, row 1310 is the game-front
-  # edge; carve_object's town-forward mapping therefore uses the reversed pair.
-  'top':{'front':1310,'rear':34,'centre':600},
+  # forward=-1 means the top photo's front row comes before its rear row.
+  'top':{'front':34,'rear':1310,'centre':600},
   'underside':1.43,
   # Tracks hide the lower body in side view, so that view is never cut there.
   # End and plan views see the tracks outside the body; remove those copies.
