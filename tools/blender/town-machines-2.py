@@ -497,25 +497,177 @@ def basic_family():
  box('drill rotary head',(0,-.22,5.68),(.62,.38,.74),steel,string,.08)
  beam('drill feed string',(0,-.22,5.38),(0,-.22,2.98),.075,tin,string)
  bpy.ops.mesh.primitive_cone_add(vertices=12,radius1=.17,radius2=.03,depth=.34,location=(0,-.22,2.84));bit=bpy.context.object;bit.name='drill bit';bit.data.materials.append(steel);bit.data.uv_layers.active.name='UVMap';parent(bit,string)
- # Crane truck: long chassis, genuine slew turret and a braced telescopic boom.
- crane=road_truck('crane-truck',9.0,3)
- turret=empty('crane rotating turret',(0,.82,1.22),crane)
- box('crane slew ring',(0,.82,1.28),(1.76,1.78,.22),steel,turret,.11)
- box('crane turret counterweight',(0,1.52,1.83),(1.45,.70,.98),paint,turret,.16)
- for s in (-1,1):beam('crane cab grab rail',(s*.80,.20,1.50),(s*.80,.60,2.30),.05,tin,turret)
- box('crane boom heel yoke',(0,.35,2.34),(.88,.90,.78),steel,turret,.10)
- boom=empty('crane-truck:boom',(0,.35,2.34),turret)
- box_beam('crane telescopic outer boom',(0,.38,2.70),(0,-2.35,3.45),.50,.44,paint,boom,.055)
- box_beam('crane sliding inner boom',(0,-1.58,3.24),(0,-3.60,3.82),.30,.27,tin,boom,.035)
- for s in (-1,1):
-  beam('crane boom gusset',(s*.37,.20,2.82),(s*.22,-1.00,3.10),.07,steel,boom)
-  box_beam('crane hydraulic outrigger',(s*.84,.84,.72),(s*1.82,.84,.72),.15,.20,steel,crane,.025)
-  beam('crane outrigger support leg',(s*1.82,.84,.70),(s*1.82,.84,.20),.075,steel,crane);box('crane outrigger foot',(s*1.82,.84,.12),(.48,.50,.16),black,crane,.045)
- beam('crane ram barrel',(0,.85,1.98),(0,-.50,2.75),.13,steel,turret);beam('crane ram rod',(0,-.12,2.63),(0,-1.34,3.05),.06,tin,turret)
- hook=empty('crane-truck:hook',(0,-3.60,3.82),boom)
- beam('crane hoist cable',(0,-3.60,3.82),(0,-3.60,2.60),.028,black,hook)
- for s in (-1,1):beam('crane forged hook shank',(s*.10,-3.60,2.62),(s*.10,-3.60,2.39),.075,tin,hook)
- beam('crane hook curve',(-.10,-3.60,2.39),(0,-3.60,2.30),.06,tin,hook);beam('crane hook curve',(0,-3.60,2.30),(.10,-3.60,2.39),.06,tin,hook)
+ # Crane truck: the body is carved with the boom and stabilizers absent;
+ # chassis, wheels, outriggers, turntable, boom and hook are separate pieces.
+ from photo_model import Photo, Mesh as PhotoMesh, trace, slab, lathe
+ from photo_carve import carve_object
+ from hull_model import tyre
+ crane=empty('crane-truck',(0,0,0),root)
+ crane_textures=project_root/'public/assets/models/wasteland/town/textures'
+ crane_length,crane_width,crane_height=8.4,2.70,3.55
+ crane_side=Photo(crane_textures/'crane-truck-side.jpg')
+ crane_front=Photo(crane_textures/'crane-truck-front.jpg')
+ crane_rear=Photo(crane_textures/'crane-truck-rear.jpg')
+ crane_top=Photo(crane_textures/'crane-truck-overhead.jpg')
+ crane_boom_photo=Photo(crane_textures/'crane-truck-boom.jpg')
+ # All measured from the four-photo contact sheet after confirming its matching landmarks.
+ crane_side_rows=[(151,316),(581,316),(715,316)]
+ crane_scale=crane_length/(866-18)
+ crane_radius=65*crane_scale
+ crane_axle_z=[-crane_length/2+(x-18)*crane_scale for x,_ in crane_side_rows]
+ crane_track=1.08
+ crane_wheels=[(z,crane_radius,.78) for z in crane_axle_z]
+ def keep_crane_body(x,y,z):
+  # The body carve stops at the lower frame rails; open the rear slew ring for its own turntable.
+  ring=(abs(x)<.86)&(z>.55)&(z<2.65)&(y>1.5)
+  return (y>=1.02)&~ring
+ crane_body_table={
+  'photos':{'side':'crane-truck-side.jpg','front':'crane-truck-front.jpg',
+            'rear':'crane-truck-rear.jpg','top':'crane-truck-overhead.jpg'},
+  'length':crane_length,'width':crane_width,'height':crane_height,
+  'side':{'start':18,'end':866,'ground':382},
+  'front':{'centre':292,'ground':399,'top':17},
+  'rear':{'centre':307,'ground':416,'top':22},
+  'top':{'front':22,'rear':806,'centre':237,'along':'x','x_scale':.0088},
+  # Keep the end-view textures on the end half of the truck. This avoids
+  # slicing the rear deck and counterweight across unrelated projections.
+  'ends_split':0,'front_favour':3,'rear_favour':3,
+  'underside':1.02,'wheels':crane_wheels,'keep':keep_crane_body,
+  # Cut the outriggers, exhaust and turntable out so none is doubled by a built part.
+  'cut':{
+   'side':[(304,0,365,165),(295,294,375,390),(792,292,858,390),(530,138,754,232)],
+   'front':[(0,235,142,410),(437,235,583,410),(151,0,207,111)],
+   'rear':[(0,240,137,467),(474,238,613,467),(213,82,409,242),(380,0,422,115)],
+   'top':[(0,0,827,96),(0,405,827,473),(443,155,650,337)]},
+  'voxel':.04,'target':3100,'grey':23,'tolerance':30,'bleed_tolerance':34,
+  'mask_dir':str(project_root/'.evidence/2026-11-08/TOWN-ART-MACHINES-2/round-12/masks')}
+ crane_body=carve_object('crane-truck:body',crane_textures,crane_body_table)
+ for photo in crane_body_table['_photos'].values():
+  for node in photo.material().node_tree.nodes:
+   if node.type=='TEX_IMAGE':node.interpolation='Cubic'
+ parent(crane_body,crane)
+ crane_parts=[('crane-truck:body',crane_body)]
+ crane_yellow=bpy.data.materials.new('Crane truck / worn safety yellow');crane_yellow.diffuse_color=(.52,.32,.055,1);crane_yellow.use_nodes=True
+ crane_yellow_bsdf=crane_yellow.node_tree.nodes['Principled BSDF'];crane_yellow_bsdf.inputs['Base Color'].default_value=(.52,.32,.055,1);crane_yellow_bsdf.inputs['Roughness'].default_value=.84;crane_yellow_bsdf.inputs['Metallic'].default_value=.10
+ crane_dark=bpy.data.materials.new('Crane truck / dark rubber');crane_dark.diffuse_color=(.018,.019,.018,1);crane_dark.use_nodes=True
+ crane_dark_bsdf=crane_dark.node_tree.nodes['Principled BSDF'];crane_dark_bsdf.inputs['Base Color'].default_value=(.018,.019,.018,1);crane_dark_bsdf.inputs['Roughness'].default_value=.96
+ def crane_box(name,center,size,material=steel,bevel=.04,parent_obj=crane):
+  return box(name,game_vector(center),(size[0],size[2],size[1]),material,parent_obj,bevel)
+ def crane_beam(name,start,end,radius,material=steel,parent_obj=crane):
+  return beam(name,game_vector(start),game_vector(end),radius,material,parent_obj)
+ def crane_add_part(name,obj):crane_parts.append((name,obj));return obj
+ # Ladder rails, crossmembers, suspension and axles meet the bottom edge of the photo carve.
+ frame_y=1.08
+ for sx in (-1,1):crane_add_part(f'crane-truck:frame-rail-{sx}',crane_box('crane frame ladder rail',(sx*.77,frame_y,.08),(.18,.17,7.45),steel,.025))
+ for i,z in enumerate(crane_axle_z):
+  crane_add_part(f'crane-truck:crossmember-{i+1}',crane_beam('crane frame crossmember',(-.79,frame_y,z),(.79,frame_y,z),.09,steel))
+  crane_add_part(f'crane-truck:axle-{i+1}',crane_beam('crane heavy axle',(-.86,.70,z),(.86,.70,z),.13,black))
+  for sx in (-1,1):
+   crane_beam('crane leaf spring',(sx*.75,.90,z-.54),(sx*.75,.90,z+.54),.045,steel)
+   crane_beam('crane suspension hanger',(sx*.75,.92,z),(sx*.75,1.12,z),.055,paint)
+ # Six side-view tyre stations: the two rear axles use dual tyres on each side.
+ for axle_index,((side_px,side_py),z) in enumerate(zip(crane_side_rows,crane_axle_z)):
+  end_key='front' if axle_index==0 else 'rear';end_photo=crane_body_table['_photos'][end_key]
+  end_meta=crane_body_table[end_key];end_scale=crane_height/(end_meta['ground']-end_meta['top'])
+  tire_centres=([-crane_track,crane_track] if axle_index==0 else [-1.18,-.82,.82,1.18])
+  half_width=.31 if axle_index==0 else .20
+  for tire_x in tire_centres:
+   photo_centre=170 if tire_x<0 else 414
+   if axle_index>0:photo_centre=(186 if tire_x<0 else 424)+(-1 if abs(tire_x)<1 else 1)*19
+   tire_mesh=PhotoMesh();tyre(tire_mesh,'side',crane_side,side_px,side_py,65,crane_radius,half_width,
+    'rubber',end_photo,photo_centre,half_width/end_scale*.94,
+    end_meta['ground']-crane_radius/end_scale,
+    end_meta['ground']-crane_radius*.08/end_scale,sides=32)
+   wheel=tire_mesh.finish(f'crane-truck:wheel-{axle_index+1}',{'side':crane_side.material(),'rubber':crane_dark})
+   wheel.name=f'crane-truck:wheel-{axle_index+1}-'+('left' if tire_x<0 else 'right')+('-inner' if axle_index>0 and abs(tire_x)<1 else '-outer' if axle_index>0 else '')
+   parent(wheel,crane);wheel.location=game_vector((tire_x,crane_radius,z));crane_parts.append((wheel.name,wheel))
+ # Fuel tank, hydraulic reservoir and service boxes hang from, or sit on, the rails.
+ for label,center,size in [
+  ('fuel-tank',(-.52,.91,-.82),(.42,.44,.92)),('hydraulic-tank',(.52,.91,-.72),(.42,.44,.82)),
+  ('tool-box-left',(-.99,1.43,-.02),(.32,.60,.90)),('tool-box-right',(.99,1.43,-.02),(.32,.60,.90))]:
+  crane_add_part('crane-truck:'+label,crane_box('crane '+label.replace('-',' '),center,size,steel,.07))
+ # Stabilizers are built steel pieces, with wide feet resting directly on the ground.
+ for sx in (-1,1):
+  for z in (-.55,2.85):
+   stem=crane_box('crane outrigger beam',(sx*1.67,1.08,z),(1.55,.20,.36),crane_yellow,.045)
+   crane_add_part(f'crane-truck:outrigger-{sx}-{z}',stem)
+   crane_add_part(f'crane-truck:stabilizer-ram-{sx}-{z}',crane_beam('crane stabilizer ram',(sx*2.38,1.00,z),(sx*2.38,.16,z),.11,steel))
+   foot=crane_box('crane stabilizer foot',(sx*2.38,.08,z),(.58,.16,.58),black,.04)
+   crane_add_part(f'crane-truck:outrigger-foot-{sx}-{z}',foot)
+ # Round slew ring and deck carry the photographed pivot pin; the boom is not carved into either.
+ turret=empty('crane truck turntable',(0,0,0),crane)
+ crane_add_part('crane-truck:turntable',crane_box('crane slew ring',(0,1.57,1.58),(1.65,.25,1.60),steel,.09,turret))
+ crane_box('crane turret deck',(0,1.77,1.58),(1.52,.20,1.48),crane_yellow,.08,turret)
+ crane_box('crane rear counterweight',(0,1.96,2.33),(1.42,.62,.80),crane_yellow,.12,turret)
+ for sx in (-1,1):
+  crane_beam('crane pivot cheek',(sx*.39,2.50,1.62),(sx*.39,3.02,1.62),.14,steel,turret)
+  crane_beam('crane pivot pin',(-.46,2.82,1.62),(.46,2.82,1.62),.11,tin,turret)
+ # Trace the open lattice from its own side photo. Its local origin is the pivot pin.
+ from photo_carve import lift_if_dark
+ from photo_carve import lift_if_dark
+ lift_if_dark(crane_boom_photo)
+ boom_rgb=crane_boom_photo.rgb();boom_h,boom_w=boom_rgb.shape[:2]
+ # Each triangular lattice opening is enclosed by welded braces, so the outside
+ # flood cannot reach it. Seed the pale grey background patches as well.
+ boom_rgb=np.clip(boom_rgb+22,0,255).astype(np.int16);crane_boom_photo._rgb=boom_rgb
+ edge_colour=boom_rgb[8,8].astype(np.int16);boom_seeds=[(8,8),(boom_w-9,8),(8,boom_h-9),(boom_w-9,boom_h-9)]
+ for sy in range(300,boom_h-230,28):
+  for sx in range(160,boom_w-170,42):
+   sample=boom_rgb[sy-2:sy+3,sx-2:sx+3].reshape(-1,3).mean(axis=0)
+   if sample.mean()>185 and sample.max()-sample.min()<32 and np.abs(sample-edge_colour).max()<48:
+    boom_seeds.append((sx,sy))
+ boom_sky=crane_boom_photo.sky(boom_seeds,tolerance=54,grey=40)
+ from photo_carve import save_mask
+ save_mask(~boom_sky,project_root/'.qa-dist/town-machines-2/round-12/boom-trace-mask.png')
+ boom_loops=trace(~boom_sky,(0,0,boom_w,boom_h),tolerance=2.2,min_area=65)
+ print('CRANE BOOM MASK',int(boom_sky.sum()),'sky pixels of',boom_w*boom_h,'loops',len(boom_loops),'seeds',len(boom_seeds),'edge',boom_rgb[8,8].tolist(),'lattice',boom_rgb[400,600].tolist())
+ if len(boom_loops)<8:raise RuntimeError(f'crane boom trace retained only {len(boom_loops)} loops; lattice openings were lost')
+ boom_scale=7.85/(boom_w-160);boom_pivot_px=110;boom_pivot_py=410;boom_tip_px=boom_w-102;boom_tip_py=409
+ boom=empty('crane-truck:boom',game_vector((0,2.82,1.62)),turret)
+ boom_mesh=PhotoMesh()
+ def crane_boom_world(px,py,depth):
+  # PhotoMesh.finish converts these game-space points into Blender Z-up.
+  return (depth,(boom_pivot_py-py)*boom_scale,(px-boom_pivot_px)*boom_scale)
+ slab(boom_mesh,'boom',crane_boom_photo,boom_loops,crane_boom_world,-.25,.25,wall_scale=boom_scale)
+ boom_obj=boom_mesh.finish('crane-truck:boom:lattice-photo-trace',{'boom':crane_boom_photo.material()})
+ bpy.context.view_layer.update();boom_obj.location=boom.matrix_world.translation.copy()
+ parent(boom_obj,boom)
+ hook_origin=(0,-(boom_tip_px-boom_pivot_px)*boom_scale,(boom_pivot_py-boom_tip_py)*boom_scale)
+ crane_hook_world=(0,2.82+hook_origin[2],1.62-hook_origin[1])
+ hook=empty('crane-truck:hook',game_vector(crane_hook_world),boom)
+ crane_beam('crane hoist cable',crane_hook_world,(crane_hook_world[0],crane_hook_world[1]-1.18,crane_hook_world[2]),.025,black,hook)
+ crane_beam('crane hook shank',(crane_hook_world[0]-.08,crane_hook_world[1]-1.18,crane_hook_world[2]),(crane_hook_world[0]-.08,crane_hook_world[1]-1.52,crane_hook_world[2]),.07,tin,hook)
+ crane_beam('crane hook shank',(crane_hook_world[0]+.08,crane_hook_world[1]-1.18,crane_hook_world[2]),(crane_hook_world[0]+.08,crane_hook_world[1]-1.52,crane_hook_world[2]),.07,tin,hook)
+ crane_beam('crane forged hook curve',(crane_hook_world[0]-.08,crane_hook_world[1]-1.52,crane_hook_world[2]),(crane_hook_world[0],crane_hook_world[1]-1.67,crane_hook_world[2]),.055,tin,hook)
+ crane_beam('crane forged hook curve',(crane_hook_world[0],crane_hook_world[1]-1.67,crane_hook_world[2]),(crane_hook_world[0]+.08,crane_hook_world[1]-1.52,crane_hook_world[2]),.055,tin,hook)
+ crane_parts.extend((('crane-truck:boom',boom),('crane-truck:hook',hook)))
+ print('CRANE BOOM TRACE',len(boom_loops),'loops','pivot',tuple(round(v,3) for v in game_vector((0,2.82,1.62))),
+       'tip',tuple(round(v,3) for v in hook_origin),'length',round((boom_tip_px-boom_pivot_px)*boom_scale,3))
+ def crane_bounds(piece):
+  nodes=[piece]+list(piece.children_recursive);points=[];graph=bpy.context.evaluated_depsgraph_get()
+  for node in nodes:
+   if node.type!='MESH':continue
+   evaluated=node.evaluated_get(graph);mesh=evaluated.to_mesh()
+   points.extend((node.matrix_world@vertex.co)[:] for vertex in mesh.vertices)
+   evaluated.to_mesh_clear()
+  if not points:return None
+  game_points=[(point[0],point[2],-point[1]) for point in points]
+  return tuple(min(point[i] for point in game_points) for i in range(3)),tuple(max(point[i] for point in game_points) for i in range(3))
+ def crane_bounds_touch(a,b,epsilon=.05):
+  return all(a[0][axis]<=b[1][axis]+epsilon and b[0][axis]<=a[1][axis]+epsilon for axis in range(3))
+ crane_measured={label:crane_bounds(piece) for label,piece in crane_parts}
+ for label,piece in crane_parts:
+  bounds=crane_measured[label]
+  if bounds is None:raise RuntimeError(f'{label} has no mesh')
+  lo,hi=bounds
+  print('CRANE PIECE BOUNDS',label,'min',tuple(round(v,3) for v in lo),'max',tuple(round(v,3) for v in hi))
+  if label.startswith('crane-truck:wheel-'):
+   if abs(lo[1])>.035:raise RuntimeError(f'{label} does not touch the ground')
+   print('CRANE PIECE CONTACT',label,'ground')
+  else:
+   neighbours=[other for other,other_bounds in crane_measured.items() if other!=label and other_bounds and crane_bounds_touch(bounds,other_bounds)]
+   if not neighbours:raise RuntimeError(f'{label} does not touch the ground or another crane piece')
+   print('CRANE PIECE CONTACT',label,', '.join(neighbours[:4]))
  # Pipe truck: long deck, stakes, crosswise steel pipes in a tied-down stack.
  pipes=road_truck('pipe-truck',9.4,3);box('pipe truck flatbed deck',(0,.26,1.40),(2.40,5.72,.20),steel,pipes,.07)
  for s in (-1,1):
@@ -606,49 +758,50 @@ for mat in bpy.data.materials:
  for node in mat.node_tree.nodes if mat.use_nodes else []:
   if node.type=='TEX_IMAGE' and node.image and max(node.image.size)>192:
    filename=node.image.filepath.lower().replace('\\','/').rsplit('/',1)[-1]
-   if not filename.startswith(('mixer-truck-','mixer-drum-side')):node.image.scale(192,192)
+   if not filename.startswith(('mixer-truck-','mixer-drum-side','crane-truck-')):node.image.scale(192,192)
  blend=(root/'.qa-dist/town-machines-2/candidate.blend' if a.candidate else root/'art-build/town/machines-2.blend');blend.parent.mkdir(parents=True,exist_ok=True);bpy.ops.wm.save_as_mainfile(filepath=str(blend));town.export_glb(glb)
 if a.render:
  from mathutils import Vector
- bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene
+ scene=bpy.context.scene
  scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=24
  scene.view_settings.view_transform='Standard';scene.view_settings.look='None'
- scene.world=bpy.data.worlds.new('neutral even mixer studio');scene.world.use_nodes=True
+ scene.world=bpy.data.worlds.new('neutral even crane studio');scene.world.use_nodes=True
  scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.36,.36,.36,1)
  scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.62
- machine_names=['loader','mixer-truck','roller','paver','drill-rig','crane-truck','pipe-truck']
  def hide_tree(node,value):node.hide_render=value;[hide_tree(child,value) for child in node.children]
- for name in machine_names:hide_tree(bpy.data.objects[name],name!='mixer-truck')
- bpy.ops.mesh.primitive_plane_add(size=200,location=(11,0,-.045));floor=bpy.context.object;floor.name='mixer review grey ground'
+ for name in machine_names:hide_tree(bpy.data.objects[name],name!='crane-truck')
+ bpy.ops.mesh.primitive_plane_add(size=200,location=(55,0,-.045));floor=bpy.context.object;floor.name='crane review grey ground'
  floor_mat=bpy.data.materials.new('plain medium grey review ground');floor_mat.diffuse_color=(.36,.36,.36,1);floor_mat.use_nodes=True
  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.36,.36,.36,1)
  floor_mat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.98;floor.data.materials.append(floor_mat)
- for loc,power,size in [((5,-4,12),1100,8),((16,2,8),520,7)]:
+ for loc,power,size in [((50,-5,12),1300,9),((60,3,8),650,7)]:
   bpy.ops.object.light_add(type='AREA',location=loc);light=bpy.context.object;light.data.energy=power
-  light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((11,0,1.8))-light.location).to_track_quat('-Z','Y').to_euler()
+  light.data.shape='DISK';light.data.size=size;light.rotation_euler=(Vector((55,0,2.0))-light.location).to_track_quat('-Z','Y').to_euler()
  ev.mkdir(parents=True,exist_ok=True)
- joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('mixer-truck:')}
- def mixer_cam(label,location,target,scale,width,height,ortho=True,up='Y'):
+ joints={obj.name:obj for obj in bpy.data.objects if obj.name.startswith('crane-truck:')}
+ def crane_cam(label,location,target,scale,width,height,ortho=True,up='Y'):
   scene.render.resolution_x=width;scene.render.resolution_y=height
   bpy.ops.object.camera_add(location=location);cam=bpy.context.object
   cam.rotation_euler=(Vector(target)-cam.location).to_track_quat('-Z',up).to_euler()
   cam.data.type='ORTHO' if ortho else 'PERSP'
   if ortho:cam.data.ortho_scale=scale
   else:cam.data.lens=56
-  scene.camera=cam;scene.render.filepath=str(ev/f'mixer-truck-{label}-model.png')
+  scene.camera=cam;scene.render.filepath=str(ev/f'crane-truck-{label}.png')
   bpy.ops.render.render(write_still=True);bpy.data.objects.remove(cam,do_unlink=True)
  for joint in joints.values():joint.rotation_mode='XYZ';joint.rotation_euler=(0,0,0)
- hide_tree(joints['mixer-truck:drum'],True)
- mixer_cam('side',(-7,0,2.05),(11,0,2.05),10.7,1600,640)
- mixer_cam('front',(11,15,2.0),(11,0,2.0),3.8,1024,1024)
- mixer_cam('rear',(11,-15,2.0),(11,0,2.0),3.8,1024,1024)
- mixer_cam('top',(11,0,18),(11,0,0),8.5,640,1600)
- hide_tree(joints['mixer-truck:drum'],False)
- joints['mixer-truck:drum'].rotation_euler[2]=0;joints['mixer-truck:chute'].rotation_euler[0]=0
- mixer_cam('three-quarter-rest',(23,-14,10),(11,0,1.9),10.5,1024,768,False)
- joints['mixer-truck:drum'].rotation_euler[2]=1.0;joints['mixer-truck:chute'].rotation_euler[0]=.55
- mixer_cam('three-quarter-work',(23,-14,10),(11,0,1.9),10.5,1024,768,False)
- print('Rendered mixer truck photo comparisons and both articulated poses from the imported GLB')
+ boom_joint=joints['crane-truck:boom'];hook_joint=joints['crane-truck:hook']
+ hide_tree(boom_joint,True)
+ crane_cam('side',(35,0,2.0),(55,0,2.0),14.0,1500,640,up='Y')
+ crane_cam('front',(55,15,2.0),(55,0,2.0),7.0,900,900,up='Y')
+ crane_cam('rear',(55,-15,2.0),(55,0,2.0),7.0,900,900,up='Y')
+ crane_cam('overhead',(55,0,17),(55,0,0),12.0,900,1200,up='Y')
+ hide_tree(boom_joint,False)
+ hook_base=hook_joint.location.z
+ boom_joint.rotation_euler[0]=0;hook_joint.location.z=hook_base
+ crane_cam('assembled-rest',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
+ boom_joint.rotation_euler[0]=-.45;hook_joint.location.z=hook_base-.62
+ crane_cam('assembled-work',(70,-12,8),(55,0,1.9),20.5,1400,720,True,up='Y')
+ print('Rendered crane truck photo comparisons and both articulated poses from the imported GLB')
  raise SystemExit(0)
  bpy.ops.wm.read_factory_settings(use_empty=True);bpy.ops.import_scene.gltf(filepath=str(glb));scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE_NEXT';scene.render.resolution_x=900;scene.render.resolution_y=680;scene.render.resolution_percentage=100;scene.eevee.taa_render_samples=12;scene.view_settings.view_transform='Standard';scene.world=bpy.data.worlds.new('neutral even studio');scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs['Color'].default_value=(.38,.38,.38,1);scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value=.85
  lights=[]
@@ -676,7 +829,8 @@ if a.render:
    elif name=='drill-rig':
     joints['drill-rig:mast'].rotation_euler[0]=0 if pose=='rest' else .22;joints['drill-rig:string'].location.z=4.35 if pose=='rest' else 2.95
    elif name=='crane-truck':
-    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45;joints['crane-truck:hook'].location.z=1.12 if pose=='rest' else .57
+    joints['crane-truck:boom'].rotation_euler[0]=0 if pose=='rest' else -.45
+    joints['crane-truck:hook'].location.z+=0 if pose=='rest' else -.62
    elif name=='pipe-truck':
      for index in range(1,6):
       pipe=joints[f'pipe-truck:pipe-{index}'];pipe.rotation_euler[1]=0 if pose=='rest' or index!=1 else -.78
