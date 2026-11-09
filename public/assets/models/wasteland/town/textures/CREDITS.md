@@ -876,3 +876,13 @@ Generated with built-in OpenAI ImageGen on 9 November 2026. The side, front, rea
 
 Generated with the built-in OpenAI ImageGen tool on 9 November 2026. Four individual dead-on orthographic studio photos show the same worn yellow tracked asphalt paver with its screed removed: paver-side.jpg, paver-front.jpg, paver-rear.jpg and paver-top.jpg. A separate rear orthographic photo shows the detached screed alone: paver-screed-rear.jpg. All use plain grey studio ground. Original generated references; no third-party photographs.
 >>>>>>> integration/wasteland
+
+
+## TOWN-ART-WORKS warehouse references (round 1)
+
+Four original single-view orthographic studio photographs generated with OpenAI ImageGen on 9 November 2026. The same rusted corrugated-metal warehouse is shown from the long side, front end, rear end and directly overhead on a plain grey ground. The views have no people or loose foreground props. The end photos state the roof-peak row in the carve table; the front doorway is about 3.6 m tall, and its door, side and rear leaves, loading dock and roof vents are separate geometry. No third-party source photographs were used.
+
+- `warehouse-side.jpg` ? long side, with two loading-door panels removed from the carve.
+- `warehouse-front.jpg` ? front gable and open loading doorway.
+- `warehouse-rear.jpg` ? rear gable, with the loading panel removed from the carve.
+- `warehouse-top.jpg` ? true straight-down roof view, front edge at the bottom.
