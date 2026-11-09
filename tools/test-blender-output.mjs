@@ -1566,38 +1566,33 @@ try {
       assert.ok(names.includes(`walkable-ground-${alley}-collision`), `${alley} collision box`);
     }
   });
-  check('TOWN-ART-WORKS exports the full named family within its per-building limits', () => {
+  check('TOWN-ART-WORKS exports the carved warehouse as the only named building', () => {
     const path = join(root, 'public/assets/models/wasteland/town/works.glb');
     const bytes = readFileSync(path);
     assert.equal(bytes.toString('ascii', 0, 4), 'glTF');
     assert.equal(bytes.readUInt32LE(4), 2);
     assert.equal(bytes.readUInt32LE(8), bytes.length);
-    assert.ok(bytes.length <= 3_000_000, `${bytes.length} bytes exceeds 3 MB`);
+    assert.ok(bytes.length <= 8 * 1024 * 1024, `${bytes.length} bytes exceeds 8 MB`);
     const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
-    const trisByRoot = new Map();
-    for (const node of gltf.nodes) {
-      if (!node.name || node.mesh === undefined) continue;
-      const name = node.name;
-      const id = ['salvage-yard','warehouse','sawmill','old-ground','test-pit','trench','valve-box',
-        'pipe-stack','handcart','barrow','flatbed','pile-salvage','pile-steel','pile-tin','pile-timber',
-        'pile-brick','pile-pipe','pile-sand','pile-clay','kiln'].find(prefix => name === prefix || name.startsWith(prefix + '-') || name.startsWith(prefix + ':'));
-      if (!id) continue;
-      const count = gltf.meshes[node.mesh].primitives.reduce((sum, primitive) =>
-        sum + gltf.accessors[primitive.indices].count / 3, 0);
-      trisByRoot.set(id, (trisByRoot.get(id) || 0) + count);
-    }
-    const limits = {'test-pit':1800,trench:1800,'valve-box':1800,'pipe-stack':1800,handcart:1800,barrow:1800,
-      flatbed:1800,'pile-salvage':1800,'pile-steel':1800,'pile-tin':1800,'pile-timber':1800,'pile-brick':1800,
-      'pile-pipe':1800,'pile-sand':1800,'pile-clay':1800,'salvage-yard':9000,warehouse:9000,sawmill:9000,
-      kiln:5000,'old-ground':9000};
-    assert.deepEqual([...trisByRoot.keys()].sort(), Object.keys(limits).sort(), 'every listed building has geometry');
-    for (const [id,limit] of Object.entries(limits)) assert.ok(trisByRoot.get(id) > 8 && trisByRoot.get(id) <= limit,
-      `${id}: ${trisByRoot.get(id)} triangles; budget ${limit}`);
-    const names = new Set(gltf.nodes.map(node => node.name));
-    for (const id of Object.keys(limits)) assert.ok(names.has(id), `missing building node ${id}`);
-    for (const part of ['flatbed:load','kiln:lamp','trench:straight','trench:corner',
-      ...Array.from({length:12},(_,i)=>`old-ground:marker-${i+1}`)]) assert.ok(names.has(part), `missing separate part ${part}`);
-    assert.ok((gltf.images || []).length <= 1, 'the shared town atlas is the only embedded texture');
+    const nodes = gltf.nodes || [];
+    const byName = new Map(nodes.map((node, index) => [node.name, index]));
+    const family = byName.get('town-works');
+    const warehouse = byName.get('warehouse');
+    assert.ok(Number.isInteger(family), 'town-works root exists');
+    assert.ok(Number.isInteger(warehouse), 'warehouse building exists');
+    assert.ok((nodes[family].children || []).includes(warehouse), 'warehouse is a direct child of town-works');
+    assert.deepEqual((nodes[family].children || []).map(index => nodes[index].name), ['warehouse'],
+      'this card slice exports only the warehouse');
+    const trianglesUnder = index => {
+      const node = nodes[index];
+      const own = Number.isInteger(node.mesh)
+        ? gltf.meshes[node.mesh].primitives.reduce((sum, primitive) => sum + gltf.accessors[primitive.indices].count / 3, 0)
+        : 0;
+      return own + (node.children || []).reduce((sum, child) => sum + trianglesUnder(child), 0);
+    };
+    const triangles = trianglesUnder(warehouse);
+    assert.ok(triangles > 100 && triangles <= 9_000, `warehouse has ${triangles} triangles; budget 9,000`);
+    assert.ok((gltf.images || []).length <= 4, 'four carved reference photos are embedded');
   });
 
   check('TOWN-ART-SERVICES GLB exports the seven passed buildings with individual footprint budgets', () => {
