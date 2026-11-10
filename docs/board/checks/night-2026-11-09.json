@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "date": "2026-11-09",
+  "source": "dd7e09c97a653ad4d897bb643558c01f97f06fa6",
+  "started": "2026-11-10T04:59:13.400Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE/full.log",
+      "started": "2026-11-10T04:59:18.733Z",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "passed": 639,
+        "failed": 0,
+        "unrun": 0,
+        "total": 639
+      },
+      "failureNames": [],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE/full-tier.json",
+      "finished": "2026-11-10T05:49:39.089Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--scenarios",
+        "frame-pacing,tremblant-snow,tremblant-views",
+        "--timing-only",
+        "--headed",
+        "--jobs",
+        "1",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-8HdVMh/source/.evidence/2026-11-09/FAC-03/night-SnmGmE/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE/frames.log",
+      "started": "2026-11-10T05:49:39.090Z",
+      "passed": false,
+      "exitCode": 1,
+      "warnings": [
+        "Performance: full first-race load 5405.20000000298 ms exceeds 5000 ms (warning only)."
+      ],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 34.29999999999927,
+          "worldBuildMs": 312,
+          "constructionMs": 4224.60000000149
+        },
+        {
+          "quality": "Performance",
+          "p95": 18.200000000000728,
+          "worldBuildMs": 316,
+          "constructionMs": 5405.20000000298
+        }
+      ],
+      "reportError": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "finished": "2026-11-10T05:51:25.327Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE/combat.log",
+      "started": "2026-11-10T05:51:25.327Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-11-10T05:56:28.795Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--all",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-8HdVMh/source/.evidence/2026-11-09/FAC-03/night-SnmGmE/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE/browser.log",
+      "started": "2026-11-10T05:56:28.795Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 195,
+        "failed": 8,
+        "total": 203
+      },
+      "failureNames": [
+        "browser: arena-shove",
+        "browser: arsenal-wave1-audio",
+        "browser: deep-frames",
+        "browser: drive-lesson-run",
+        "browser: everburn",
+        "browser: frame-pacing",
+        "browser: p4-audio",
+        "browser: ski-finish"
+      ],
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "finished": "2026-11-10T07:43:43.887Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "frames",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arena-shove",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arsenal-wave1-audio",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: deep-frames",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: drive-lesson-run",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: frame-pacing",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: p4-audio",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: ski-finish",
+      "error": "Cannot read properties of undefined (reading 'commit')\nActual moving flight loop did not travel and retire once.\nDeep frames require headed mode\nUnowned corner choice did not respond: panorama-ridge\nEverburn screen facts failed: the yard offers the back gate and free driving | the hooks expose the Everburn result tick\nNight frame reuse requires the same owned evidence leaf.\nBrowser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672} Error: Missing or duplicated native sample frames: mix {\"segment\":8,\"startFrame\":7850240,\"endFrame\":8822656,\"expected\":8343808,\"actual\":8343680,\"chunkFrame\":8343680,\"previousFrames\":[8339712,8341760,8343680,8345856],\"callbacks\":[8343680,8343936,8344064,8344192,8344320,8344448,8344576,8344704,8344832,8344960,8345088,8345216,8345344,8345472,8345600,8345728],\"witnessFirst\":0.1893281489610672}\n    at demand (<anonymous>:237:54)\n    at close (<anonymous>:305:9)\nRuntime.evaluate timed out.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-09/FAC-03/night-SnmGmE",
+  "finished": "2026-11-10T07:43:46.269Z",
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-11-09.json",
+      "docs/board/checks/night-2026-11-09.md",
+      "docs/board/STATUS.md"
+    ]
+  }
+}

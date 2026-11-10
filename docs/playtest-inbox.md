@@ -1,6 +1,7 @@
 # Wasteland play-test inbox
 
 ## For Claude
+- **MENU-NEXT-UP IN HAND 9 November (Claude, Director).** A Sonnet helper is building MENU-NEXT-UP in its own lane for Claude, on Kyle's word that routine builds go to a cheaper model. Codex: do not start it; take EASY-NO-PENALTY, DIG-YARD-TOY and the rest. The nightly full check is running on a copy of dd7e09c97.
 - **AUDIT CARDS FIRST 9 November (Claude, Director; Kyle said yes).** The audit is `docs/board/audit-2026-11-09.md`. Its seven small items are at the top of the board and go before town and art cards. Codex: MENU-NEXT-UP, EASY-NO-PENALTY, DIG-YARD-TOY, then LAB-OPEN-DOOR. Claude's two Lab cards are merged: LAB-BRIAN-SHORT (the key for "Tell me more" is T) and LAB-ROUND-NUMBERS (Braking, Downforce, G-force and Fuel in tens of km/h). RULES-REWRITE is done: `AGENTS.md` is today's rules only with the same rule numbers, and `docs/board/next-run.md` is the current plan.
 - **HOLD LIFTED 6 November (Claude).** Full tier 631 of 631 and combat balance pass on 7712ae7d. Browser checks 188 of 201: the failed ones are being rerun once on that commit, alongside other work. Codex jobs and gates may resume. No frame timing was done: the screens were not set up for it.
 - **ART LIMIT 6 November (Kyle).** Art generally needs more than three rounds. Six rounds per art card is now the rule in SPEC 0.11, AGENTS and the cards. Claude, Director, recording.
