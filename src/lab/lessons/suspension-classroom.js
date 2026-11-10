@@ -1,6 +1,7 @@
 // Suspension lesson: the shaker rig, its simplified corner model, and the
 // unchanged four-run suspension challenge.
 import {suspensionBench, CORNER} from '../benches/tunnel.js';
+import {MORE} from '../classroom/brian-text.js';
 
 const GRAVITY = 9.81;
 
@@ -302,7 +303,7 @@ export function createModel() {
       waiting = false;
       localSay = 'A spring is a coil between the wheel and the car body. '
         + 'When a bump pushes a wheel up, the spring compresses. '
-        + 'When the wheel drops, the spring stretches again. The body rides above it.';
+        + `When the wheel drops, the spring stretches again.${MORE}The body rides above it.`;
       prompt = 'Press Enter to learn what spring stiffness means.';
     } else if (current === 'word-stiffness') {
       waiting = false;
@@ -313,8 +314,8 @@ export function createModel() {
     } else if (current === 'word-weight') {
       waiting = false;
       localSay = 'A turning car pushes sideways at the road. Its weight sits above the road, '
-        + 'so the car wants to tip outward. The outside tyres carry more load and the inside tyres carry less. '
-        + 'That is why the body leans.';
+        + 'so the car wants to tip outward. The outside tyres carry more load and the inside tyres carry less.'
+        + `${MORE}That is why the body leans.`;
       prompt = 'Press Enter to learn the name for this sideways lean.';
     } else if (current === 'word-roll') {
       waiting = false;

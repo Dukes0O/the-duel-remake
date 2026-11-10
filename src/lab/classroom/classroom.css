@@ -85,3 +85,15 @@
 .lc-actions button[aria-pressed="true"] { border-color: #edc557; color: #edc557; }
 .lc-actions .primary { border-color: #edc557; background: #edc557; color: #1d2224; }
 .lc-actions .primary:disabled { border-color: #4a524e; background: #2a302e; color: #7d857f; }
+/* LAB-BRIAN-SHORT: an earlier step is its heading and first sentence until it is clicked; "Tell me more" opens the rest of Brian's words. */
+.lc-past h4 button { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+.lc-past h4 button::before { content: '▸'; flex: none; width: 12px; color: #8f9791; }
+.lc-past h4 button[aria-expanded="true"]::before { content: '▾'; }
+.lc-past h4 button:hover { color: #fff2c8; }
+.lc-past section.folded { margin-bottom: 7px; }
+.lc-past section.folded p { margin-bottom: 0; padding-left: 18px; font-size: 16px; color: #aab2ad; }
+.lc-past section.open p { padding-left: 18px; }
+.lc-past section.folded p.longer::after { content: ' …'; color: #8f9791; }
+.lc-more > span { display: block; margin-top: 9px; }
+.lc-more[hidden], .lc-more-button[hidden] { display: none; }
+.lc-more-button { display: block; margin: 0 0 4px auto; padding: 5px 12px; border: 2px solid #edc557; border-radius: 7px; background: #3a3420; font-size: 16px; font-weight: 700; }

@@ -3,6 +3,7 @@
 // the rule the challenge's rustOf uses); "clean" is the challenge's own line (RUST_OK). The challenge itself is the Lab's parts panel.
 import {JARS, RUST, jarAfter} from '../benches/rust.js';
 import {RUST_OK, RUST_WEEK} from '../lab-workshop.js';
+import {MORE} from '../classroom/brian-text.js';
 
 // The calendar turns a day about every half second; a free test of many days runs faster, so it is not a wait.
 export const DAY_S = .45, HOLD_S = .8;
@@ -330,7 +331,7 @@ export function createModel() {
     }
     if (id === 'word-salt') {
       m.phase = 'done'; seen.add(id);
-      m.say = `After ${dayWord(days)} the nail in salt water has ${pct(shareOf('salt', days))} rust and the nail in fresh water has ${pct(shareOf('fresh', days))} rust, so the salt water has made ${TIMES} times as much rust. Salt water rusts the nail at ${pct(SALT_DAY)} a day and fresh water at ${pct(FRESH_DAY)} a day, because the salt helps the water carry electric charge. You can choose other days and run them, or press Enter to continue.`;
+      m.say = `After ${dayWord(days)} the nail in salt water has ${pct(shareOf('salt', days))} rust and the nail in fresh water has ${pct(shareOf('fresh', days))} rust, so the salt water has made ${TIMES} times as much rust. Salt water rusts the nail at ${pct(SALT_DAY)} a day and fresh water at ${pct(FRESH_DAY)} a day, because the salt helps the water carry electric charge.${MORE}You can choose other days and run them, or press Enter to continue.`;
       return {kind: 'right', say: m.say};
     }
     if (id === 'word-zinc') {
@@ -465,16 +466,16 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, actions: ['replay'], focus: 'shelf', sirena: true,
         say: done ? `The two nails are made of the same steel and sat for the same week, but the nail in the dry jar has ${pct(W('dry'))} rust and the nail in salt water has ${pct(W('salt'))} rust. What did the salt water do to the nail?`
-          : 'The Sirena is a car that lay wrecked on the sea floor for sixty years, and it came up crusted in rust, the flaky orange material that forms on iron. To find out why, we will watch two nails made of steel, which is mostly iron, for a week, one in a dry jar and one in a jar of salt water. The number above each jar shows how much of its nail has rusted, given as a percentage, which means a number of parts out of every 100. So 50% rust means that 50 parts out of every 100 of the nail have turned to rust, which is half of the nail.',
+          : `The Sirena is a car that lay wrecked on the sea floor for sixty years, and it came up crusted in rust, the flaky orange material that forms on iron.${MORE}To find out why, we will watch two nails made of steel, which is mostly iron, for a week, one in a dry jar and one in a jar of salt water. The number above each jar shows how much of its nail has rusted, given as a percentage, which means a number of parts out of every 100. So 50% rust means that 50 parts out of every 100 of the nail have turned to rust, which is half of the nail.`,
         prompt: done ? 'Press Enter when you are ready to find out, or press R to watch again.' : 'Watch the nails.',
         hints: ['Watch the two nails.', 'One jar has water in it.', done ? 'Press Enter when you are ready to find out.' : 'Watch, then press Enter.']};
     }
     if (isWord(id)) {
       const open = wordOpen(), ready = m.phase === 'ready', done = m.phase === 'done';
       const intro = {
-        'word-rust': `Rust is the flaky orange material that forms when water and oxygen reach iron. Oxygen is a gas in the air, and some of it dissolves in water. Steel is made mostly of iron, which is why a steel nail can rust. We measure how quickly a nail rusts by its rate, which is the percentage of the nail that rusts during one day. In fresh water the rate in this game is ${pct(FRESH_DAY)} a day, so the sum is rust = rate × days. Choose the number of days with ↑ and ↓, watch the sum change, then press Space to run the days.`,
-        'word-salt': 'Salt water is water with salt dissolved in it. Rusting works a little like a very slow battery. Tiny particles called electrons, which carry electric charge, pass from the iron to the oxygen, and electric charge must also travel through the water for the rusting to continue. When salt dissolves, it breaks up into charged particles, which carry electric charge through the water easily, so salt water carries charge far better than fresh water does, and the rust forms faster. Here are two nails, one in fresh water and one in salt water. Choose the days, then press Space.',
-        'word-zinc': 'To corrode means to be slowly eaten away by a chemical change, and rust is the name for the corrosion of iron. A zinc coat is a thin layer of the metal zinc on the steel. Zinc gives up its electrons more easily than iron does, so while the two metals touch in water, the zinc corrodes instead of the iron. Electrons from the zinc flow into the steel, and that protects the iron from rusting. Here are a bare nail and a nail with a zinc coat, both in salt water. Choose the days, then press Space.',
+        'word-rust': `Rust is the flaky orange material that forms when water and oxygen reach iron. Oxygen is a gas in the air, and some of it dissolves in water. Steel is made mostly of iron, which is why a steel nail can rust.${MORE}We measure how quickly a nail rusts by its rate, which is the percentage of the nail that rusts during one day. In fresh water the rate in this game is ${pct(FRESH_DAY)} a day, so the sum is rust = rate × days. Choose the number of days with ↑ and ↓, watch the sum change, then press Space to run the days.`,
+        'word-salt': `Salt water is water with salt dissolved in it. Here are two nails, one in fresh water and one in salt water. Choose the days, then press Space.${MORE}Rusting works a little like a very slow battery. Tiny particles called electrons, which carry electric charge, pass from the iron to the oxygen, and electric charge must also travel through the water for the rusting to continue. When salt dissolves, it breaks up into charged particles, which carry electric charge through the water easily, so salt water carries charge far better than fresh water does, and the rust forms faster.`,
+        'word-zinc': `A zinc coat is a thin layer of the metal zinc on the steel. Here are a bare nail and a nail with a zinc coat, both in salt water. Choose the days, then press Space.${MORE}To corrode means to be slowly eaten away by a chemical change, and rust is the name for the corrosion of iron. Zinc gives up its electrons more easily than iron does, so while the two metals touch in water, the zinc corrodes instead of the iron. Electrons from the zinc flow into the steel, and that protects the iron from rusting.`,
       }[id];
       return {...base, focus: 'shelf', low: {'word-rust': 'rust', 'word-salt': 'salt', 'word-zinc': 'coat'}[id], chart: true, dial: {days: set.days, locked: !open},
         ...(open ? {keys: {...DAY_KEYS, Space: 'go'}, repeat: ['↑', '↓'], buttons: [RUN]} : {}),
@@ -485,7 +486,7 @@ export function createModel() {
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], focus: 'shelf',
-        say: done ? `After a week the nail in dry air has ${pct(W('dry'))} rust, the nail in fresh water has ${pct(W('fresh'))} rust and the nail in salt water has ${pct(W('salt'))} rust. The nail with a zinc coat in salt water has ${pct(W('zinc'))} rust, and ${pct(coatOf('zinc', RUST_WEEK))} of its coat is left. So rust needs water, salt makes the rust form faster, and zinc protects the steel while the coat lasts.`
+        say: done ? `After a week the nail in dry air has ${pct(W('dry'))} rust, the nail in fresh water has ${pct(W('fresh'))} rust and the nail in salt water has ${pct(W('salt'))} rust. The nail with a zinc coat in salt water has ${pct(W('zinc'))} rust, and ${pct(coatOf('zinc', RUST_WEEK))} of its coat is left.${MORE}So rust needs water, salt makes the rust form faster, and zinc protects the steel while the coat lasts.`
           : 'Four steel nails will now sit in jars for a week. One is in dry air, one is in fresh water, one is in salt water, and one has a zinc coat and is in salt water. Watch the nails and the table.',
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the nails.',
         hints: ['Watch the orange rust grow on the nails.', 'Which jar rusts its nail fastest, and which does not rust its nail at all?', done ? 'Press R to watch again.' : 'Wait a moment.']};
@@ -520,7 +521,7 @@ export function createModel() {
       const v = {...base, dial: {days: set.days, locked: !setNow}, switch: {coat: set.coat, locked: !setNow}, jarPick: {jar: set.jar, locked: !setNow}, best: goal(),
         keys: setNow ? {...DAY_KEYS, ...COAT_KEYS, ...JAR_KEYS, Space: 'go'} : {}, repeat: setNow ? ['↑', '↓'] : [], buttons: setNow ? [RUN] : [], target: !setNow ? null : testedNow() ? 'set:best' : 'go', glow: setNow ? 'set' : null, waiting: setNow && !seen.has(id)};
       if (m.phase === 'running') return {...v, focus: 'shelf', say: m.say, prompt: 'Watch the nail.', hints: ['Watch the nail.', 'Compare this result with the table.', 'Wait a moment.']};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press 1, 2 or 3 to choose the jar, ↑ and ↓ to choose the days, up to ${FREE_MAX_DAYS}, and ← and → to choose bare steel or a zinc coat. The sums beside the picture change as you change the settings, so you can work out the rust before you press Space. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
+      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press 1, 2 or 3 to choose the jar, ↑ and ↓ to choose the days, up to ${FREE_MAX_DAYS}, and ← and → to choose bare steel or a zinc coat. Test at least ${FREE_TRIES} different settings.${MORE}The sums beside the picture change as you change the settings, so you can work out the rust before you press Space. The table keeps your results so that you can compare them.`,
         prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to run the days. Different settings tested so far: ${m.tries} of ${FREE_TRIES}.`,
         hints: ['Change at least one setting, then press Space to test it.', `Try a zinc coat for more than ${ZINC_DAYS} days, and see what happens after the coat has gone.`, 'Watch my pointer. I will test a setting that you have not tested yet.']};
     }
@@ -532,7 +533,7 @@ export function createModel() {
       target: !setNow ? null : set.coat === g.coat ? 'go' : 'set:best', glow: setNow ? 'set' : null, waiting: setNow};
     if (m.phase === 'done') return {...jv, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
     if (m.phase === 'running') return {...jv, focus: 'shelf', say: m.say, prompt: 'Watch the week.', hints: ['Watch the nail.', `Clean means ${pct(RUST_OK)} rust or less after a week.`, 'Wait a moment.']};
-    const intro = `Here is a job for you. Three things stand in the yard, and each one must stay clean, which means that it has ${pct(RUST_OK)} rust or less after a week. Give each one the least protection that keeps it clean, because a zinc coat costs time and money to put on. The first thing is ${thing.thing}, ${thing.where}.`;
+    const intro = `Here is a job for you. Three things stand in the yard, and each one must stay clean, which means that it has ${pct(RUST_OK)} rust or less after a week. Give each one the least protection that keeps it clean, because a zinc coat costs time and money to put on.${MORE}The first thing is ${thing.thing}, ${thing.where}.`;
     return {...jv,
       say: m.auto ? autoSay() : m.job === 0 && !m.say ? intro : m.say,
       prompt: `${thing.name} ${thing.where.replace('which ', '')}. ${set.coat === 'zinc' ? 'It has a zinc coat.' : 'It is bare.'} Press ← for bare or → for a zinc coat, then press Space to run the week.`,

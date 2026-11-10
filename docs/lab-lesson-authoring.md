@@ -97,3 +97,23 @@ inputs, including successful runs. It saves only word ids, through
 `learnLabWord` and `app.labCommit`. Old saves read as an empty notebook without
 rewriting their stored shape (`labNotebookOf` supplies that read default);
 future Lab versions are never overwritten.
+
+## Classroom lessons: three sentences at a time
+
+This rule is for the classroom lessons (`src/lab/lessons/*-classroom.js`), from card
+LAB-BRIAN-SHORT (9 November 2026).
+
+- Brian's newest words are at most three sentences, about 45 words and never more than 60.
+  This holds for a step's opening words, a question, a result and a hint.
+- A text that needs more puts `${MORE}` (from `src/lab/classroom/brian-text.js`) where the
+  opening ends. The player reads the rest by pressing "Tell me more" (M). One mark per text.
+- The opening holds what the player needs now: the sentence that defines the step's new
+  word, the question, and what to do. The reason why, a comparison, a second example and
+  how a unit is read can wait behind the mark.
+- Shorten by moving sentences behind the mark, never by cutting what the lesson teaches.
+  Every defined word keeps its definition, and a word is still defined before it is used.
+- The screen cuts any unmarked text after three sentences by itself, so a text built from
+  parts never shows more. Mark a built text where that cut would hide the next instruction.
+- An earlier step stays on the page as its heading and first sentence, and a click opens it
+  in full. Write a step's first sentence so that it makes sense alone.
+- `tools/test-lab-brian-short.mjs` checks every step's opening words in all sixteen lessons.

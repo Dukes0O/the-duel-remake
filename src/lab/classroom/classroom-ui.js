@@ -3,6 +3,7 @@
 // Notebook words go through app.labCommit; challenges go through the Lab's own challenge path.
 import {createClassroomSession} from './classroom-frame.js';
 import {KEY_NAMES} from './classroom-keys.js';
+import {splitSay, fullText, firstSentence, paragraphs} from './brian-text.js';
 import {brianPortrait} from './brian-portrait.js';
 import {learnLabWord, labNotebookOf} from '../lab-save.js';
 import './classroom.css';
@@ -23,7 +24,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
     <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b></div>
-      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
+      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('M')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
@@ -33,6 +34,10 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
   // A lesson passed in the classroom (a bench challenge): what Brian says, and the sparks it throws.
   let passed = null, burst = false;
+  // LAB-BRIAN-SHORT: Brian says three sentences at a time. toldMore holds the texts of this step whose rest the player asked for;
+  // openRows holds the earlier steps the player has clicked open. keepPlace stops the page jumping when a step is opened or folded.
+  let toldMore = new Set(), toldStep = -1, moreText = null, keepPlace = false;
+  const openRows = new Set();
 
   brianPortrait(doc).then(url => {
     if (!url || disposed) return;
@@ -43,6 +48,12 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const physicsOpen = () => physicsChoice ?? win.innerWidth >= 1500;
   function setHtml(element, key, html) { if (last[key] !== html) { element.innerHTML = html; last[key] = html; return true; } return false; }
   function act(action) {
+    if (action === 'more') { if (moreText !== null && !toldMore.has(moreText)) { toldMore.add(moreText); onCue('lab.tick'); } return; }
+    if (action.startsWith('row:')) {
+      const row = Number(action.slice(4));
+      if (openRows.has(row)) openRows.delete(row); else openRows.add(row);
+      keepPlace = true; onCue('lab.tick'); return;
+    }
     note = '';
     if (action === 'leave') { onLeave(); return; }
     if (action === 'physics') { physicsChoice = !physicsOpen(); return; }
@@ -73,6 +84,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.code === 'Escape') action = 'leave';
     else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
+    else if (event.code === 'KeyM') action = moreText !== null && !toldMore.has(moreText) ? 'more' : null;
     else if (event.code === 'KeyF' && v.formulas?.length) action = 'physics';
     else if (event.code === 'Backspace') action = v.index > 0 && !(passed && v.last) ? 'back' : null;
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';
@@ -178,16 +190,33 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const page = $('.lc-page'), words = $('.lc-bubble');
     page.scrollTop = words.offsetHeight > page.clientHeight ? words.offsetTop : page.scrollHeight;
   }
-  // The running page: every step so far, oldest first, with the newest words last.
+  // The running page: every step so far, oldest first, with the newest words last. An earlier step is its heading and first
+  // sentence until it is clicked (its other words stay in the page's text, hidden, as the bubble's do); the newest words are at most three sentences, with the rest behind "Tell me more".
   function paintPage(v, brian) {
+    if (toldStep !== v.index) { toldStep = v.index; toldMore = new Set(); }
+    const told = text => (toldMore.has(text) ? paragraphs(text) : [splitSay(text).opening]).map(part => `<p>${escape(part)}</p>`).join('');
     const rows = v.page.map((row, i) => {
+      const newest = i === v.page.length - 1;
+      if (!newest) {
+        const open = openRows.has(i), texts = [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n), lines = texts.map(fullText);
+        const whole = lines.join(' '), first = firstSentence(row.setup), rest = whole.startsWith(first) ? whole.slice(first.length).trim() : whole;
+        const body = open ? texts.flatMap(paragraphs).map(text => `<p>${escape(text)}</p>`).join('') : `<p class="${rest ? 'longer' : ''}">${escape(first)}${rest ? ` <span class="lc-more" hidden>${escape(rest)}</span>` : ''}</p>`;
+        return `<section class="${open ? 'open' : 'folded'}"><h4><button type="button" data-lc="row:${i}" aria-expanded="${open}" title="${open ? 'Show less' : 'Show all of this step'}">${escape(row.title)}</button></h4>${body}</section>`;
+      }
       // The newest step shows only what comes before Brian's words now, so a step done again starts from its opening words.
-      const newest = i === v.page.length - 1, again = newest && brian.text === row.setup;
-      const lines = again ? [] : [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && !(newest && text === brian.text));
-      return `<section class="${i === v.page.length - 1 ? 'now' : ''}"><h4>${escape(row.title)}</h4>${lines.map(text => `<p>${escape(text)}</p>`).join('')}</section>`;
+      const again = brian.text === row.setup;
+      const lines = again ? [] : [row.setup, row.result].filter((text, n, all) => text && all.indexOf(text) === n && text !== brian.text);
+      return `<section class="now"><h4>${escape(row.title)}</h4>${lines.map(told).join('')}</section>`;
     }).join('');
-    const moved = setHtml($('.lc-past'), 'past', rows);
-    if (setHtml($('.lc-bubble'), 'bubble', escape(brian.text)) || moved) pageMoved = true;
+    const moved = setHtml($('.lc-past'), 'past', rows) && !keepPlace;
+    keepPlace = false;
+    // The rest of Brian's words stays in the bubble, hidden, so a reader of the page's text still finds every word.
+    const [opening = '', ...rest] = paragraphs(brian.text), more = rest.length > 0, open = toldMore.has(brian.text);
+    moreText = more ? brian.text : null;
+    const words = setHtml($('.lc-bubble'), 'bubble', `${escape(opening)}${more ? ` <span class="lc-more"${open ? '' : ' hidden'}>${rest.map(part => `<span>${escape(part)}</span>`).join(' ')}</span>` : ''}`);
+    const offer = more && !open;
+    if ($('.lc-more-button').hidden === offer) $('.lc-more-button').hidden = !offer;
+    if (words || moved) pageMoved = true;
   }
   function paintPhysics(v) {
     const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();

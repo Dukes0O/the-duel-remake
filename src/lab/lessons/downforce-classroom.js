@@ -6,6 +6,7 @@
 import {downforceBench, downforce, tunnelCar, kgForce, WING} from '../benches/tunnel.js';
 import {DRIVE} from '../../config.js';
 import {LAB_TUNE} from '../lab-tune.js';
+import {MORE} from '../classroom/brian-text.js';
 
 // The fan dial moves one bench step a press.
 export const SPEED_STEP = 10, MIN_SPEED = 50, MAX_SPEED = 150;
@@ -493,7 +494,7 @@ export function createModel() {
         say: check.question, prompt: answered ? 'Press Enter to continue.' : 'Pick a card by clicking it, or press 1, 2 or 3.', hints: answered ? DONE : check.hints};
     }
     if (id === 'recap') return {...base, scene: 'recap', ready: true, ideas: KEY_IDEAS, rig: null,
-      say: 'A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend. The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.',
+      say: `A racing wing turns the air upward, so the air pushes the wing and the car downward, and that push is called downforce. Downforce presses the tyres harder onto the road, so the tyres grip harder in a bend.${MORE}The push grows with the square of the speed, so twice the speed gives four times the push. A wing also adds drag, which lowers the top speed, so you choose more wing for fast bends and less wing for long straights.`,
       prompt: 'Enter finishes the lesson and opens Wing angle on the Tune page in the garage.', hints: KEY_IDEAS.map(i => i.text)};
     if (id === 'wonder') {
       const done = m.phase === 'done';
@@ -507,7 +508,7 @@ export function createModel() {
       const done = m.phase === 'done';
       return {...base, dial: dialOf(false), focus: 'dial', low: 'speed', best: goal(), keys: DIAL_KEYS, repeat: ['↑', '↓'],
         ...(done ? {} : {waiting: !m.auto, target: m.auto ? null : 'set:best', glow: 'dial'}),
-        say: done ? m.say : m.auto ? autoSay() : `A speed in kilometres per hour, written km/h, is the number of kilometres travelled in one hour. The sums in this lesson use metres per second, written m/s, which is the number of metres travelled during each second. To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The fan dial starts at ${K50} km/h. Turn the dial up to ${K100} km/h, and watch the sum beside the picture change.`,
+        say: done ? m.say : m.auto ? autoSay() : `A speed in kilometres per hour, written km/h, is the number of kilometres travelled in one hour. The sums in this lesson use metres per second, written m/s, which is the number of metres travelled during each second. Turn the dial up to ${K100} km/h, and watch the sum beside the picture change.${MORE}To change m/s into km/h you multiply by 3.6, because an hour has 3,600 seconds and a kilometre has 1,000 metres. The fan dial starts at ${K50} km/h.`,
         prompt: done ? 'Press Enter to continue, or keep turning the dial with ↑ and ↓.' : `The dial reads ${kmh(set.speed)} km/h. Press ↑ for faster or ↓ for slower, or click Faster or Slower.`,
         hints: done ? DONE : ['The fan dial is on the right.', `Press ↑ until the dial reads ${K100} km/h.`, 'Watch my pointer. I will turn the dial.']};
     }
@@ -532,7 +533,7 @@ export function createModel() {
     if (id === 'watch') {
       const done = m.phase === 'done';
       return {...base, actions: ['replay', 'slow'], dial: dialOf(true), wingPanel: {wing: set.wing, locked: true}, focus: 'scale', times: true,
-        say: done ? `The steep wing pushed ${kg(P50)} at ${K50} km/h and ${kg(P100)} at ${K100} km/h, which is about twice the speed and about four times the push. At ${K150} km/h the steep wing pushed ${kg(P150)}, which is about three times the speed and about nine times the push. There are two reasons for the four times. When the air moves twice as fast, the wing meets twice as much air during each second, and the wing has to turn each kilogram of that air twice as hard. Two times two makes four. The drag on the rope grew in the same way, with the square of the speed.`
+        say: done ? `The steep wing pushed ${kg(P50)} at ${K50} km/h and ${kg(P100)} at ${K100} km/h, which is about twice the speed and about four times the push. At ${K150} km/h the steep wing pushed ${kg(P150)}, which is about three times the speed and about nine times the push.${MORE}There are two reasons for the four times. When the air moves twice as fast, the wing meets twice as much air during each second, and the wing has to turn each kilogram of that air twice as hard. Two times two makes four. The drag on the rope grew in the same way, with the square of the speed.`
           : `The wing is now steep, and the fan will run at ${K50} km/h, then at ${K100} km/h and then at ${K150} km/h. Watch the scale and the table.`,
         prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the scale.',
         hints: ['Watch the push in the table.', 'How many times greater is each push than the first one?', done ? 'Press R to watch again.' : 'Wait a moment.']};
@@ -545,7 +546,7 @@ export function createModel() {
       glow: setNow ? 'set' : null, waiting: setNow || m.phase === 'guess', best: g};
     if (id === 'try-free') {
       if (m.phase === 'running') return {...v, focus: 'scale', say: m.say, prompt: 'Watch the scale and the rope.', hints: ['Read the scale and the rope.', 'The table keeps each run.', 'Wait a moment.']};
-      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press ↑ and ↓ to change the fan speed, and ← and → to tilt the wing. Watch the sums change as you do, and predict what the scale and the rope will read before you press Space. Try doubling the speed with the same wing. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
+      return {...v, say: m.auto ? autoSay() : m.say || `Now you can experiment. Press ↑ and ↓ to change the fan speed, and ← and → to tilt the wing. Watch the sums change as you do, and predict what the scale and the rope will read before you press Space.${MORE}Try doubling the speed with the same wing. Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
         waiting: !seen.has(id), prompt: seen.has(id) ? 'Press Enter to continue, or test another setting.' : `Change the settings, then press Space to run the fan. You have tested ${m.tries} of ${FREE_TRIES} different settings so far.`,
         hints: ['Press Space to test the settings as they are.', `Try ${K50} km/h and then ${K100} km/h with the same wing, and try a different wing as well.`, atGoal ? 'Watch my pointer. I will run the fan with the settings as they are.' : 'Watch my pointer. I will change to a setting you have not tested and run the fan.']};
     }
@@ -580,7 +581,7 @@ export function createModel() {
     if (m.phase === 'done') return {...jv, ready: true, mood: 'cheer', say: m.say, prompt: 'Press Enter to continue.', hints: DONE};
     if (m.phase === 'running' || m.phase === 'driving') return {...jv, say: m.say, prompt: m.phase === 'running' ? 'Watch the scale.' : 'Watch the car on the course.',
       hints: ['Read the push on the scale.', course.bend ? 'Does the car hold the bend?' : 'How fast does the car go?', 'Wait a moment.']};
-    const intro = `Here is a job for you, with three courses. I will set the fan to the speed of each course, and you choose the least wing that lets the car hold the course, because more wing means a lower top speed. Course 1 is a bend taken at ${kmh(COURSES[0].speed)} km/h, and the car needs ${kg(COURSES[0].needKg)} of push to hold it.`;
+    const intro = `Here is a job for you, with three courses. I will set the fan to the speed of each course, and you choose the least wing that lets the car hold the course, because more wing means a lower top speed.${MORE}Course 1 is a bend taken at ${kmh(COURSES[0].speed)} km/h, and the car needs ${kg(COURSES[0].needKg)} of push to hold it.`;
     return {...jv,
       say: m.auto ? autoSay() : m.course === 0 && !m.say ? intro : m.say,
       prompt: course.bend ? `Course ${at + 1} is the bend at ${courseKmh} km/h, which needs ${kg(course.needKg)} of push. The wing is ${wingWord(set.wing)}. Press ← for flatter or → for steeper, then Space to run the fan.`
