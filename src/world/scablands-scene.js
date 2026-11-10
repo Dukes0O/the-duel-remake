@@ -44,6 +44,13 @@ const placeAssets={
 };
 const vehiclePart={'boneyard':'Big Bess gas truck','everburn':"Old Smoke's rolling furnace"};
 const detailCounts=Object.freeze({near:30,far:10});
+// The model loader renames every part: a space becomes an underscore and a full stop is dropped
+// ("Furnace side armor.001" arrives as "Furnace_side_armor001"). Part names are compared in this plain form.
+const plainName=name=>String(name??'').replace(/_/g,' ');
+function findPart(root,name){
+  let found=null;root.traverse(node=>{if(!found&&plainName(node.name)===name)found=node;});
+  return found;
+}
 
 function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
   const positions=[],uv=[],indices=[];
@@ -197,15 +204,16 @@ export function createScablandsScene(course,options={}){
       assets.forEach((asset,index)=>{
         const key=placeAssets[place.id][index];
         if(!asset?.scene)throw Error(`Scablands ${key} art has no scene.`);
-        const source=key==='vehicles'?asset.scene.getObjectByName(vehiclePart[place.id]):asset.scene;
+        const source=key==='vehicles'?findPart(asset.scene,vehiclePart[place.id]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         const model=source.clone(true);tintArt(model,place.id);
         if(key==='vehicles'&&place.id==='everburn'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.
-            if(/^(Furnace side armor|Furnace torn corner plate|Hanging torn furnace plate)(\.\d+)?$/.test(node.name))furnacePlates.push(node);
+            const name=plainName(node.name);
+            if(/^(Furnace side armor|Furnace torn corner plate|Hanging torn furnace plate)[ .\d]*$/.test(name))furnacePlates.push(node);
             // The three rear vents are the rear door; the flank vents on each side are the left and right doors.
-            const ventMatch=node.name.match(/old-smoke-vent-\d+-glow|Flank vent ([+-]?)1 \d+ ember/i);
+            const ventMatch=name.match(/old-smoke-vent-\d+-glow|Flank vent ([+-]?)1 \d+ ember/i);
             if(!node.isMesh||!ventMatch)return;
             node.material=Array.isArray(node.material)?node.material.map(material=>material.clone()):node.material.clone();
             furnaceVents.push({door:ventMatch[1]===undefined?'rear':ventMatch[1]==='-'?'right':'left',material:node.material});
@@ -229,7 +237,8 @@ export function createScablandsScene(course,options={}){
       if(place.id==='dead-mall')addMallRubble(group,place);
     }));
     group.userData.assetStatus='ready';return true;
-  })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));}return false;});
+  })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));
+    console.error('Scablands art did not load:',String(error?.message||error));}return false;});
   registerSceneSystem(group,{
     animate(seconds){
       if(!furnaceEffects)return;

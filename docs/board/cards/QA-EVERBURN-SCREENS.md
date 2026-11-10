@@ -6,3 +6,4 @@ From the full check of 6 November 2026 (`docs/changes/FIX-EVERBURN-CARD.md`). `t
 
 Job 6's defend step shows its opening line as the raw id "everburn-job-6-start". WW-BOSS gave the chase step real words through
 `captionFor` in `src/arena/modes/world-job.js`; the other steps' line ids still have none.
+- Job 6 starts the car inside the well's derrick (Claude, 10 November, after EVERBURN-WELL-ART drew the well).

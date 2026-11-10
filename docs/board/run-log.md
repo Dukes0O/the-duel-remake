@@ -983,6 +983,7 @@ Janitor: removed Ambush lane/evidence and 274 MB scratch; retained unmerged lane
 
 2026-10-11 full: integration79ba1a96,388/388 passed,0failed/notrun,898.40s,jobs4alone. New Kyle rules7–10 received; Snow placement approved and work resumes; no release.
 
+- 10 Nov: EVERBURN-WELL-ART merged (Claude). Scablands scene finds model parts under the loader's names; lane tier 29 of 29, build, browser check everburn-well pass. Cockpit: 17 tasks added for 70 cards.
 - Merge P4-SNOW + QA-LANE-SCOPE (source7c60f577): lane395/395 in1552.33s/jobs4, build503ms, one review clear; accepted Snow native/art reused, hidden component not frame-timed; full rules unchanged, no release.
 
 - Janitor: removed3mergedbranches/2lane folders and owned consumed Snow/selector evidence; unfinished lanes kept. Audit1759tracked/325351760B (prior322558666B; growth2793094B for delivered code/reviews and Claude work),0module/removed-test candidates;50asset/80export/258doc candidates remain advisory. No uncertain deletion or history rewrite.

@@ -23,6 +23,13 @@ What is known:
 - Laptop only (Claude): a look at the furnace during the chase, with a door glowing, the smoke turning orange in the stoke and
   plates gone after a hit; then the chase driven by hand on Easy and on Medium.
 
+## Result (Claude, 10 November 2026)
+
+Done by Claude, because Codex was short of quota. The game's model loader renames every part (a space becomes an underscore,
+a full stop is dropped), so the scene's search for "Old Smoke's rolling furnace" and "Big Bess gas truck" found nothing and the
+loading step stopped for the Everburn well and the Boneyard. The scene now compares names in a plain form. See
+`docs/changes/EVERBURN-WELL-ART.md`. The look at the furnace found a new fault, card EVERBURN-FURNACE-LOOK.
+
 ## Removed
 
 Nothing.

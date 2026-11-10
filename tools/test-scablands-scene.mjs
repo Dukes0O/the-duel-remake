@@ -132,4 +132,29 @@ assert.ok(scene.group.getObjectByName('Dead Mall sand drifts and rubble'),'mall 
 assert.equal(scene.group.userData.solids,SCABLANDS_SOLIDS,'scene exposes the tested static collision set');
 scene.dispose();
 assert.equal(scene.group.children.length,0,'disposing the scene releases its presentation graph');
+// EVERBURN-WELL-ART: the game's model loader renames parts (a space becomes an underscore, a full stop is dropped).
+// The scene must find the furnace, its six plates and its nine vent lights under those names too.
+const loaderName=name=>THREE.PropertyBinding.sanitizeNodeName(name);
+const renamed=createScablandsScene(course,{loadAsset:async path=>{
+  const root=new THREE.Group();
+  if(path===SCABLANDS_ASSETS.vehicles)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){
+    const part=new THREE.Group();part.name=loaderName(name);root.add(part);
+    if(name!=="Old Smoke's rolling furnace")continue;
+    for(const plateName of ['Furnace side armor','Furnace side armor.001','Hanging torn furnace plate','Hanging torn furnace plate.001','Furnace torn corner plate','Furnace torn corner plate.001']){
+      const plate=new THREE.Group();plate.name=loaderName(plateName);part.add(plate);}
+    for(let index=1;index<=3;index++)for(const ventName of [`old-smoke-vent-${index}-glow`,`Flank vent 1 ${index} ember`,`Flank vent -1 ${index} ember`]){
+      const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({emissive:0xff8020,emissiveIntensity:2}));
+      vent.name=loaderName(ventName);part.add(vent);}
+  }
+  return {scene:root};
+}});
+assert.equal(await renamed.ready,true,'the art loads when parts carry the loader\'s names');
+const renamedRig=renamed.group.getObjectByName("Old Smoke's moving furnace rig");
+assert.ok(renamedRig,'the furnace is placed when its part carries the loader\'s name');
+syncScene(renamed.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'chase'}]},
+  actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:0,y:0,z:0},heading:0,furnace:{phase:'glow',door:'right',hits:1,phaseSec:0}}]}}});
+const renamedParts=[];renamedRig.traverse(node=>renamedParts.push(node));
+assert.equal(renamedParts.filter(node=>/plate|armor/.test(node.name)&&!node.visible).length,2,'two of the six renamed plates fall with the first hit');
+assert.equal(renamedParts.filter(node=>node.isMesh&&node.material.emissiveIntensity===2.8).length,3,'the three renamed vents of the glowing door light up');
+renamed.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
