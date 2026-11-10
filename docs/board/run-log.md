@@ -1,5 +1,7 @@
 # Wasteland run log
 
+9 November, LAB-BRIAN-SHORT and LAB-ROUND-NUMBERS merged (Claude): lane tier 45 of 45, build, 23 of 23 Lab browser checks; Pendulums read by hand. Not released yet.
+
 26 October, LAB-LESSONS-SNOW lane janitor: recycled 838,992,081 bytes of own QA/build output and verified interrupted Chrome profile (generated output now zero); kept the 430,080-byte sheet and 30 final captures for Claude. New named runtime props add 1,335,804 bytes; no unused new module found, existing advisory audit candidates retained. Lane coverage and build green; no merge back or push.
 
 26 October, HELI-LOGBOOK round 2 janitor: recycled own 347,344,294-byte build and 427,229 bytes of consumed round 1 logs; art helper recycled its raw captures/originals/QA bundle. Kept both compact sheets (round 2: 494,163 bytes) and current handoff logs. Five runtime maps total 5,001,151 bytes, down 86,447. Lane 103/103 and build pass; stopped for Claude's round 2 verdict. No merge back or push.
