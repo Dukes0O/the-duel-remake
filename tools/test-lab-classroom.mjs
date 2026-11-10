@@ -22,7 +22,7 @@ import {tyreSlipGrip} from '../src/config.js';
 import {STEPS as SUSPENSION_STEPS, WORDS as SUSPENSION_WORDS, createModel as createSuspensionModel} from '../src/lab/lessons/suspension-classroom.js';
 import * as suspensionBoard from '../src/lab/lessons/suspension-board.js';
 import {suspensionBench} from '../src/lab/benches/tunnel.js';
-import {lessonOpenState} from '../src/lab/lab-lessons.js';
+import {lessonOpenState, challengeOpenState, CHALLENGE_NEEDS_DRIVING} from '../src/lab/lab-lessons.js';
 
 const lesson = CLASSROOM_LESSONS.pendulum;
 const fakeCanvas = (labels = null) => new Proxy({}, {
@@ -583,10 +583,11 @@ test('Suspension keeps its notebook terms, bench challenge and ordered classroom
   assert.equal(suspension.challengeCard.text, 'Run the suspension rig with soft and stiff springs on the bumpy and smooth roads. Complete all four setting pairs.');
 });
 
-test('Suspension opens only after driving lesson 1, matching the Lab lesson gate', () => {
+test('Suspension is open from the start, and its challenge needs driving lesson 1 (LAB-OPEN-DOOR)', () => {
   const flags={enabled:name=>name==='lab'};
-  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:false,note:'Opens after driving lesson 1'});
-  assert.deepEqual(lessonOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
+  assert.deepEqual(lessonOpenState({},'suspension',flags),{open:true,note:''});
+  assert.deepEqual(challengeOpenState({},'suspension',flags),{open:false,note:CHALLENGE_NEEDS_DRIVING});
+  assert.deepEqual(challengeOpenState({drivingLessons:{version:1,done:{corner:true}}},'suspension',flags),{open:true,note:''});
 });
 
 test('the Suspension classroom challenge submits the same four settings to the unchanged bench goal', () => {
@@ -1208,7 +1209,8 @@ test('Grip is registered as the classroom lesson with the kept notebook ids and 
   assert.equal(GRIP_STEPS.at(-1).voice, 'lab.brian.grip.explain');
   const flags = {enabled: name => name === 'lab' || name === 'lab-classroom' || name === 'lab-tuning'};
   assert.deepEqual(lessonOpenState({drivingLessons: {version: 1, done: {corner: true}}}, 'grip', flags), {open: true, note: ''});
-  assert.equal(lessonOpenState({}, 'grip', flags).open, false, 'the Wind tunnel remains locked before driving lesson 1');
+  assert.equal(lessonOpenState({}, 'grip', flags).open, true, 'the Wind tunnel lesson is open before driving lesson 1');
+  assert.deepEqual(challengeOpenState({}, 'grip', flags), {open: false, note: CHALLENGE_NEEDS_DRIVING}, 'its challenge still needs driving lesson 1');
 });
 
 test('a player can follow each Grip prompt, compare three settings, and pass the real two-run challenge', () => {

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
-import {screenMarkup, menuNewMarks, menuNextUpInner, syncNewMarks} from '../src/screen-menu.js';
+import {screenMarkup, menuNewMarks, menuNextUpInner, syncNewMarks, syncLabButton} from '../src/screen-menu.js';
 import {frontDoorFacts} from '../src/menu-front-door.js';
 import {FEATURE_STATES, createFeatureFlags} from '../src/feature-flags.js';
 import {createProfile} from '../src/progression.js';
@@ -41,8 +41,9 @@ test('switch on: the old menu holds the Next up line, and its controls are the s
   assert.deepEqual(actionsOf(on.replace(SECTION, '')), before);
   assert.equal(after.length, before.length + 1, 'one new control: the line');
   assert.ok(before.length > 8, 'the old menu\'s controls were really counted');
-  assert.ok(!before.includes('lab-open'));
-  assert.deepEqual(after.filter(action => action !== 'lab-open'), before, 'the old controls keep their order; the line is the only addition');
+  // LAB-OPEN-DOOR: the old menu now has its own LAB button, so it holds one 'lab-open' before the line is added.
+  assert.equal(before.filter(action => action === 'lab-open').length, 1);
+  assert.equal(after.filter(action => action === 'lab-open').length, 2, 'the LAB button and the line');
 });
 
 test('the line comes after the lesson button, so the lesson window keeps finding its own button first', () => {
@@ -144,20 +145,45 @@ test('NEW tags are put on existing buttons and taken off again, and only once', 
     get html() { return html; },
     querySelector: selector => selector === '.menu-new' && html.includes('menu-new') ? {remove: () => { html = ''; }} : null,
     insertAdjacentHTML: (where, text) => { assert.equal(where, 'beforeend'); html += text; }}; };
-  const buttons = {'#heli-visit': makeButton(), '#story-visit': makeButton(), '#garage-open': makeButton(), '.course-store-button': makeButton()};
+  const buttons = {'#lab-visit': makeButton(), '#heli-visit': makeButton(), '#story-visit': makeButton(), '#garage-open': makeButton(), '.course-store-button': makeButton()};
   const root = {querySelector: selector => buttons[selector] ?? null};
   syncNewMarks(root, {lab: true, story: false, garage: true, courses: false});
   syncNewMarks(root, {lab: true, story: false, garage: true, courses: false});
-  assert.equal(buttons['#heli-visit'].html, '<i class="menu-new">NEW</i>', 'the Lab tag is on the Helipad button, once');
+  assert.equal(buttons['#lab-visit'].html, '<i class="menu-new">NEW</i>', 'LAB-OPEN-DOOR: the Lab tag is on the LAB button, once');
+  assert.equal(buttons['#heli-visit'].html, '', 'HELIPAD has no tag of its own to show, and no longer carries the Lab tag');
   assert.equal(buttons['#garage-open'].html, '<i class="menu-new">NEW</i>');
   assert.equal(buttons['#story-visit'].html, '');
   syncNewMarks(root, {lab: false, story: true, garage: false, courses: true});
+  assert.equal(buttons['#lab-visit'].html, '');
   assert.equal(buttons['#heli-visit'].html, '');
   assert.equal(buttons['#garage-open'].html, '');
   assert.equal(buttons['#story-visit'].html, '<i class="menu-new">NEW</i>');
   assert.equal(buttons['.course-store-button'].html, '<i class="menu-new">NEW</i>');
   // A button the menu does not show (no helicopter, no story) is skipped without error.
   assert.doesNotThrow(() => syncNewMarks({querySelector: () => null}, {lab: true, story: true, garage: true, courses: true}));
+});
+
+test('LAB-OPEN-DOOR: the old menu holds a LAB button when the Lab is available, and none when it is not', () => {
+  const on = screenMarkup(base);
+  assert.match(on, /<button id="lab-visit" type="button" class="secondary-button lab-entry" data-action="lab-open" hidden>LAB <span>→<\/span><\/button>/);
+  // It sits in the existing row of buttons, between INSTRUCTOR and HELIPAD, so nothing already there moves.
+  const order = ['id="wasteland-visit"', 'id="driving-instructor"', 'id="lab-visit"', 'id="heli-visit"', 'class="start-note"'].map(part => on.indexOf(part));
+  assert.ok(order.every(index => index > 0) && order.every((index, i) => i === 0 || index > order[i - 1]), 'the button order');
+  const button = {hidden: true};
+  syncLabButton(button, true);
+  assert.equal(button.hidden, false, 'Lab available: the button is shown');
+  syncLabButton(button, false);
+  assert.equal(button.hidden, true, 'Lab not available: no button');
+  syncLabButton(button, true);
+  syncLabButton(button, undefined);
+  assert.equal(button.hidden, true, 'a game that cannot say is the same as not available');
+  assert.doesNotThrow(() => syncLabButton(null, true));
+  // The menu draws it from the game's own answer, with no helicopter needed.
+  const source = readFileSync(new URL('../src/screen-menu.js', import.meta.url), 'utf8');
+  assert.match(source, /syncLabButton\(ui\['lab-visit'\],app\.labAvailable\?\.\(\)\)/);
+  // The front door keeps its own Lab door and hides this button.
+  const css = readFileSync(new URL('../src/screen-front-door.css', import.meta.url), 'utf8');
+  assert.match(css, /\.front-door-on #lab-visit/);
 });
 
 test('the styles place the line on its own and float the tags, so no layout rule of the old menu changes', () => {
