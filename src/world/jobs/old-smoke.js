@@ -13,6 +13,11 @@ export const OLD_SMOKE = Object.freeze({
   // story allows (the Titan Monster, 116 mph) is more than three times faster.
   baseSpeed: 14,
   speedUp: Object.freeze({easy: 1, medium: 1.1, hard: 1.1}),
+  // After a door breaks the furnace runs for the next leg's ground at this pace, so the
+  // player chases it there instead of trailing it for a minute or two with no door to hit
+  // (seen in Claude's play of 10 November: 113 s and 85 s of plain following). Still slower
+  // than the Titan Monster's 52 m/s.
+  boltSpeed: Object.freeze({easy: 36, medium: 45, hard: 45}),
   // The two opening lines (2.2 seconds each) play before the first stoke begins.
   introSec: 4.5,
   stokeSec: 4,
@@ -92,7 +97,7 @@ export function createFurnace(def, difficulty = 'medium') {
     phase: 'idle', phaseSec: 0, door: null, staggerLeft: 0,
     cinders: [], dropMetres: 0, burnDebt: 0,
     shoulder: {sitSec: 0, warnSec: 0, side: 0, cooldownSec: 0},
-    rollIn: null, won: false, fallen: false, escaped: false, holding: false, laps: 0, pending: []};
+    rollIn: null, boltedFor: 0, won: false, fallen: false, escaped: false, holding: false, laps: 0, pending: []};
 }
 
 export function furnaceSpeed(difficulty, hits) {
@@ -102,6 +107,11 @@ export function furnaceSpeed(difficulty, hits) {
 
 // The health the job engine sees: three doors, and it stays above zero until the
 // furnace has actually rolled into the well, so the job ends at the fall.
+// True while the furnace, after a hit, has not yet reached the ground of the leg whose door is next.
+export const furnaceBolting = f => f.hits > 0 && !f.won && f.run === null && f.staggerLeft <= 0 && f.legIndex >= 0 && f.legIndex < f.hits;
+// The pace the furnace wants right now, before the stagger's share is taken.
+export const furnacePace = f => furnaceBolting(f) ? byDifficulty(OLD_SMOKE.boltSpeed, f.difficulty) : furnaceSpeed(f.difficulty, f.hits);
+
 export const furnaceHealth = f => f.fallen ? 0 : Math.max(1, OLD_SMOKE.hitsToWin - f.hits);
 // The door of the leg the furnace is working on, for the Easy arrow.
 export const furnaceNextDoor = f => f.won ? null : f.legs[f.hits]?.door ?? null;
@@ -173,7 +183,12 @@ function dropCinders(f, advance) {
 // Drive along the path (or along a straight run back to the start of a leg).
 function move(f, dt, out) {
   const share = f.staggerLeft > 0 ? OLD_SMOKE.staggerSpeedShare : 1;
-  const advance = furnaceSpeed(f.difficulty, f.hits) * share * dt;
+  const bolting = furnaceBolting(f);
+  if (bolting && f.boltedFor !== f.hits) {
+    f.boltedFor = f.hits;
+    out.events.push({type: 'bolt', toLeg: f.legs[f.hits].id, door: f.legs[f.hits].door});
+  }
+  const advance = furnacePace(f) * share * dt;
   if (f.run) {
     const run = f.run, remaining = run.length - run.done;
     const step = Math.min(advance, remaining);
@@ -358,7 +373,7 @@ export function stepFurnace(f, dt, ctx = {}) {
       f.burnDebt += burn * dt;
       if (f.burnDebt >= rule.chunkArmor) { out.armor += f.burnDebt; f.burnDebt = 0; }
     } else {
-      out.speedCapMph = furnaceSpeed(f.difficulty, f.hits) * OLD_SMOKE.mphPerMps + rule.easyOvertakeMph;
+      out.speedCapMph = furnacePace(f) * OLD_SMOKE.mphPerMps + rule.easyOvertakeMph;
     }
   }
   shoulder(f, dt, car, out);

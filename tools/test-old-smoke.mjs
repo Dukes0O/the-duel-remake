@@ -160,7 +160,18 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     check(f.phase !== 'stagger', `${difficulty}: the stagger ends after 2 seconds`);
     const resumed = f.metres;
     run(f, 1);
-    near(f.metres - resumed, furnaceSpeed(difficulty, 1), .2, `${difficulty}: it then runs at its new pace`);
+    // After a hit it runs for the next leg's ground (Claude, 10 November), and only there drops to its new pace.
+    near(f.metres - resumed, OLD_SMOKE.boltSpeed[difficulty], .2, `${difficulty}: after the stagger it runs for the next leg's ground`);
+    check(OLD_SMOKE.boltSpeed[difficulty] < slowestMps, `${difficulty}: that run is slower than the slowest car the story allows`);
+    check(f.phase === 'idle' && f.door === null, `${difficulty}: no door stokes during the run`);
+    const startedRun = f.timeSec;
+    while (f.legIndex < 1 && f.timeSec - startedRun < 120) run(f, .5);
+    check(f.legIndex === 1 && f.timeSec - startedRun <= 50, `${difficulty}: it reaches the Boneyard ground within 50 seconds of the hit (took ${(f.timeSec - startedRun).toFixed(1)})`);
+    run(f, .5);
+    const onGround = f.metres;
+    run(f, 1);
+    near(f.metres - onGround, furnaceSpeed(difficulty, 1), .2, `${difficulty}: on the new ground it runs at its new pace`);
+    check(f.phase === 'stoke' && f.door === 'right', `${difficulty}: and the right door begins to stoke`);
   }
   // The roll-in distance is the leg-3 ground, so even that dash is no faster than the slowest car.
   const f = fresh('medium');
@@ -251,7 +262,8 @@ for (const [difficulty, armor] of [['easy', 0], ['medium', 15], ['hard', 20]]) {
   };
   for (const [difficulty, armor] of [['easy', 10], ['medium', 20], ['hard', 20]]) {
     const f = calm(difficulty);
-    const {events, effects} = run(f, 6, furnace => beside(furnace, 0, 4.5));
+    // 4.5 seconds: this furnace is running for the next ground, and must still be on its first straight when the check below reads its heading.
+    const {events, effects} = run(f, 4.5, furnace => beside(furnace, 0, 4.5));
     const warn = events.find(event => event.type === 'shoveWarning'), shove = events.find(event => event.type === 'shove');
     near(warn.atSec, 3, DT * 2, `${difficulty}: the chimney leans after 3 seconds beside the furnace`);
     near(shove.atSec - warn.atSec, 1.2, DT * 2, `${difficulty}: the swerve comes 1.2 seconds after the horn`);

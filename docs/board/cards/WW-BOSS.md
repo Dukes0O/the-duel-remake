@@ -83,6 +83,16 @@ drawing code changes the chase.
 - A scripted Easy driver who only rams wins 8 times in 10.
 - Laptop only (Claude): the chase played once on Easy and once on Medium in the browser.
 
+## Result (Claude, 10 November 2026)
+
+Built by a Sonnet helper and merged with `story-everburn` still off; see `docs/changes/WW-BOSS.md`. Changed from the design
+above after play: when a door breaks, the furnace runs for the next leg's ground (36 m/s Easy, 45 m/s Medium and Hard) and
+only there slows and stokes, because trailing it for a minute or two with no door to hit was dull. The changed assertions are
+reviewed in the change note (rule 18). The chase was played on Easy and on Medium by a scripted driver pressing the arrow
+keys, since the desktop's browser pane draws nothing while the screen is unattended. The furnace model and the well's
+buildings were not drawn in any picture, with or without this card's code: card EVERBURN-WELL-ART. A look at the doors, smoke
+and plates, and a drive by hand, wait for that card.
+
 ## Art notes to carry out here (Claude)
 
 The art merged at the three-round cap with fixes left for this card. Read the last "Round 3" verdict on `docs/board/cards/WW-ART-VEHICLES.md` and do those fixes here, as materials, placement or the look of props. They are not new art rounds.

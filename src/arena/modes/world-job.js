@@ -3,7 +3,7 @@ import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
-import {oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
+import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor} from '../../world/jobs/old-smoke.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
@@ -216,6 +216,7 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
     duel.emit({combatHit: true, strength: .4, enemy: true, victim: 'player',
       hitPosition: {x: actor.position.x, y: actor.position.y, z: actor.position.z}});
   }
+  else if (event.type === 'bolt') duel._callout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
   else if (event.type === 'turnAround') duel._callout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
   return furnace;
 }
@@ -250,7 +251,7 @@ function stepFurnaceActor(duel, worldJob, actor, actorDef, dt) {
     shoveCar(duel, out.shove);
   }
   if (out.speedCapMph !== null && state.speedMph > out.speedCapMph)
-    state.speedMph = Math.max(out.speedCapMph, state.speedMph - 40 * dt);
+    state.speedMph = Math.max(out.speedCapMph, state.speedMph - OLD_SMOKE.cinder.easySlowMphPerSec * dt);
 }
 
 function spawnWave(duel, worldJob, request, key) {

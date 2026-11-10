@@ -137,6 +137,50 @@ Nothing was loosened. Each removed assertion tested the stub's three vents that 
 - The furnace model still shares Big Bess's cab (needs Blender).
 - Hard has only been played by a scripted driver; its glow of 3.5 seconds and cinders at 8 armour a second are for Claude's play to judge.
 
+## Claude's review and play (10 November 2026)
+
+A Sonnet helper built this from the card's design. Claude read the rules file and the job runner's changes, then had a scripted
+driver play the chase in the check runner's browser on Easy and on Medium, pressing the arrow keys as a player does, with a
+picture at each event. The desktop's own browser pane draws no frames while the screen is unattended, so nobody steered by hand.
+
+- **The chase plays through on both levels.** Three stokes, three doors (left, right, rear), each broken by a ram while it
+  glowed, the roll into the well, and the job's result screen. The call-outs appear when they should: the Easy arrow at each
+  stoke, Cinder's and Old Smoke's lines at each hit, "Get clear!" at the third.
+- **Fault found and fixed: nothing to do between doors.** A door broken early left the furnace driving the rest of that leg at
+  14 m/s with no door to hit: 113 seconds, then 85 seconds, of plain following on Easy. After a hit and the 2-second stagger the
+  furnace now **runs for the next leg's ground** (36 m/s on Easy, 45 m/s on Medium and Hard, still slower than the Titan
+  Monster's 52 m/s), drops to its usual pace there and begins to stoke. The player chases it across the flats or back toward the
+  well, and hears "HE IS RUNNING FOR THE BONEYARD. AFTER HIM!" or "...BACK TO THE WELL". The wait between doors is now about 45
+  seconds on Easy and 36 on Medium, all of it driving at speed. On Easy the cinders' speed limit follows the furnace's pace of
+  the moment. No new sound: the call-out only.
+- **Fault found and fixed: the HUD line.** It read "Stop Old Smoke's furnace before it reaches Tin Town", which this chase
+  never does. It now reads "Break the furnace's three doors. Hit a door while it glows."
+- **Armour on Medium.** The scripted driver, which does not avoid cinders, lost 40 of 121 armour by the second hit. Before the
+  run was added the same driver reached the fall with 1 left, because the long legs kept it in the cinders.
+- **Not seen: the furnace itself.** In every picture the ground, the car, the HUD and the orange ring that marks the furnace
+  are drawn, but the furnace model is not, and neither are the buildings at the Everburn well, in a hidden browser and in a
+  visible one. The same is true with the code from before this card, so this card did not cause it. Its cause is not known
+  (30 minutes spent, rule 4); card EVERBURN-WELL-ART carries it. Until that is fixed the doors, the smoke's colour and the
+  falling plates have been checked only by `tools/test-scablands-scene.mjs`, not by eye.
+- **Not seen: the shove.** The warning call-out appeared ("HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!"); the scripted
+  driver then drifted out of reach, so the shove itself was not seen in the browser. The rules test covers it.
+- **Also seen, not this card's:** the defend step's opening line shows its raw id, "everburn-job-6-start" (noted on
+  QA-EVERBURN-SCREENS), and the yard's call-out "LOOSE SURFACE" keeps appearing during the chase.
+
+### Changed assertions, reviewed (rule 18)
+
+- The builder's list above: each removed assertion tested the stub's 3-second vent cycle, which the design replaces. Nothing
+  is loosened; the new file checks more (295 checks).
+- Claude's own, for the run after a hit: "it then runs at its new pace" straight after the stagger became four checks: it runs
+  for the next ground at the run pace, that pace is slower than the slowest story car, no door stokes during the run, and it
+  reaches the Boneyard ground within 50 seconds and there runs at its new pace with the right door stoking. The shove check
+  runs 4.5 seconds, not 6, so the furnace is still on its first straight when its heading is read.
+
+### Checks after Claude's changes
+
+`tools/test-old-smoke.mjs` 295 checks; `tools/test-everburn-easy.mjs` all nine jobs 10 of 10; `tools/test-scablands-scene.mjs`
+passes; lane tier 61 passed, 0 failed, 0 not run; `npm run build` passes.
+
 ## Removed
 
 - The stub's three vents that took turns every 3 seconds (`glowSeconds`, `ventOffsets`, `oldSmokeGlowingVent` and the old
