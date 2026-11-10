@@ -2019,3 +2019,13 @@ Full tier alone on 8aa0b620: 584 passed, 1 failed. The failure was test-review-e
 Browser scenarios on 7f957dee, 13 of 15: lab-classroom-grip, lab-classroom-suspension, lab-walk, lab-restore, lab-view, career-writer-lock, lap-telemetry, warlord-pay, warlord-cards, wildlife-view, arena-shove, heli-jobs, ski-finish. Failing, both carded and no fix attempted here: preview-storage (QA-PREVIEW-STORAGE-SEED) and drive-lesson-run (QA-DRIVE-LESSON-RUN-BOARD).
 No frame check: the new code in game.js, render3d.js, course.js, sim-driving.js and vehicle-grounding.js runs only for world jobs, the Scablands and the Bowl, all off, so no reachable race scene changed. race-field.js moves one Medium field pace from .858 to .862. The night check of d292a621 recorded a frame failure whose log is gone, so it was not read; WILD-FRAMES and QA-HARBOUR-PERFORMANCE-PACING remain open. Combat balance --check on f12a474d, after the install: passed.
 Build 26.11.05 13:44 UTC, master f12a474d; staged build checked on 5188.
+
+
+## Release, 10 November 2026, the menu's Next up line and two Lab cards (Claude, Release Manager)
+
+MENU-NEXT-UP (switch `menu-next-up` on), LAB-BRIAN-SHORT and LAB-ROUND-NUMBERS. `story-everburn`, `titan-bowl`, `wasteland-town` and `deep-vasca` stay off. The range also holds town, Iron Mule and art work that players cannot reach yet.
+Full tier in the night check on dd7e09c97: 639 passed, 0 failed, 0 not run. Since then only the menu card's code changed; its lane tier passed 60 of 60 with the switch on, and the build passes (rule 19).
+Combat balance: pass, same night check.
+Browser scenarios, same night check: 195 of 203, all 23 Lab checks among the passes. arena-shove, drive-lesson-run, everburn and ski-finish have QA cards (ski-finish passes alone); deep-frames, frame-pacing, arsenal-wave1-audio and p4-audio need the laptop alone. After the menu merge: drive-lessons-view-2, earned-cars, heli-first-flight, lessons-v2-view, menu-front-door, story-kogane, hidden-road and lab-classroom-braking pass, 8 of 8.
+Frames: no race scene changed (rule 9 for the lesson boards; the menu line is one row of text). The night check's own run had a menu build beside it and is not counted; it read Performance p95 18.2 ms.
+Seen by Claude: Pendulums read start to finish, one changed board in each of the four lessons, and the menu at 1920 by 1000 and 1440 by 900 with the line pressed.

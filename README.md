@@ -6,6 +6,12 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The menu says what to do next.** A "Next up" line under the top bar names one thing to try and
+  takes you there, and a small NEW tag marks a button with something new behind it. Nothing else on
+  the menu has moved.
+- **Brian says three sentences at a time.** Each Lab step opens with at most three sentences; press T
+  for "Tell me more". Braking, Downforce, G-force and Fuel now use round speeds such as 100 and
+  200 km/h.
 - **European animals.** Roe deer, red deer, red foxes and wild boar beside the Ardennes, Eifel Crown and
   Azure Riviera roads (a black stork now and then at Eifel; gulls by the sea on the Riviera); chamois,
   ibex, alpine marmots and red deer on the Alpine Serpent, with a golden eagle as its rare sight.
