@@ -6,6 +6,9 @@ export const MORE = '\n';
 export const OPENING_SENTENCES = 3;
 // The opening is about 45 words; the test allows this many before it fails.
 export const OPENING_WORDS = 60;
+// What Brian says after his pointer has pressed a control for the player. It comes before the step's own words and is not counted
+// as one of the three sentences, so the question that follows stays in the opening.
+export const SHOWN = 'That is how it is done.';
 
 // A sentence ends at a full stop, a question mark or an exclamation mark that is followed by a space. "9.81" and "m/s²" stay whole.
 const SENTENCE_END = /(?<=[.?!][”’"')\]]*)\s+/;
@@ -19,8 +22,8 @@ export const firstSentence = text => sentences(fullText(text))[0] ?? '';
 // so the screen never shows more than three at once, whatever a lesson builds.
 export function splitSay(text) {
   const [head = '', ...tail] = String(text ?? '').split(MORE);
-  const list = sentences(head);
-  return {opening: list.slice(0, OPENING_SENTENCES).join(' '), more: [...list.slice(OPENING_SENTENCES), ...tail.map(part => part.trim()).filter(Boolean)].join(' ')};
+  const list = sentences(head), lead = list[0] === SHOWN && list.length > 1 ? 1 : 0;
+  return {opening: list.slice(0, OPENING_SENTENCES + lead).join(' '), more: [...list.slice(OPENING_SENTENCES + lead), ...tail.map(part => part.trim()).filter(Boolean)].join(' ')};
 }
 // A whole text as short paragraphs: the opening, then the rest three sentences at a time, so an opened text is never one block.
 export function paragraphs(text) {

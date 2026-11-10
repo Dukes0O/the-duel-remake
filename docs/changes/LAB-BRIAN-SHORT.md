@@ -13,7 +13,7 @@ the classroom lessons that are already live under `lab-classroom`; it adds no ne
 ## What changed
 
 - **Three sentences at a time.** Brian's newest words are cut to an opening of at most three sentences. When a text has more, a
-  "Tell me more" button (key M) sits under his words and opens the rest, drawn as paragraphs of three sentences. The rest stays
+  "Tell me more" button (key T) sits under his words and opens the rest, drawn as paragraphs of three sentences. The rest stays
   in the page's text while hidden, so the browser checks that read Brian's words still find every word.
 - **Earlier steps fold.** Every earlier step stays on the page, as Kyle asked on 4 November, drawn as its heading and first
   sentence (its other words stay in the page's text, hidden). A click on the heading opens the step in full, and a second click folds it. Opening or folding a step does not move
@@ -52,6 +52,20 @@ Lesson rules, numbers, challenges, keys, notebook words and saves are unchanged.
 - Result texts that a lesson builds while it runs are not walked by the new test. The screen's own cut covers them.
 - In a few steps the sentence that says what to press waits behind "Tell me more" because it refers to the sentence before it
   (Headings `word-heading`, Launch `word-speed`, Fire `word-retardant`, Braking `watch`). The "Your move" bar says the same thing.
+
+## Read by hand after the merge (Claude, 9 November)
+
+Claude played Pendulums from the first step to the recap in a visible browser at 1920 by 1000, on the test page with saves in
+memory, and opened Downforce. The lesson reads as the card asks. Two faults showed and are fixed in a second commit:
+
+- **The key is T, not M.** M switches the game's sound off. With M, a press when no more words were waiting switched the
+  sound off. One line of this card's new test names the key and changed with it; nothing is loosened.
+- **After "Show me" the question stays in the opening.** The frame puts "That is how it is done." before the step's words, which
+  pushed the question behind "Tell me more" (Pendulums, the short string). That sentence is no longer counted as one of the
+  three. The new test covers it.
+
+The "Not checked" line about a visible window no longer applies to Pendulums. The other fifteen lessons were seen through
+the browser checks' pictures; LAB-ROUND-NUMBERS looks at one board in each lesson it changes.
 
 ## Removed
 

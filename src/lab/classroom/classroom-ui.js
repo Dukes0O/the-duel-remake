@@ -24,7 +24,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
     <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b></div>
-      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('M')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
+      <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('T')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
@@ -84,7 +84,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     if (event.code === 'Escape') action = 'leave';
     else if (event.code === 'Enter' || event.code === 'NumpadEnter') action = v.last ? passed ? 'leave' : 'challenge' : v.ready ? 'next' : null;
     else if (event.code === 'KeyH') action = 'help';
-    else if (event.code === 'KeyM') action = moreText !== null && !toldMore.has(moreText) ? 'more' : null;
+    else if (event.code === 'KeyT') action = moreText !== null && !toldMore.has(moreText) ? 'more' : null;
     else if (event.code === 'KeyF' && v.formulas?.length) action = 'physics';
     else if (event.code === 'Backspace') action = v.index > 0 && !(passed && v.last) ? 'back' : null;
     else if (event.code === 'KeyR' && v.actions.includes('replay')) action = 'replay';

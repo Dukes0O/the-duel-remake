@@ -14,7 +14,7 @@ Kyle said yes to these on 9 November. They go before town and art cards.
 | EASY-NO-PENALTY | Codex | Touches credits: one independent review |
 | DIG-YARD-TOY | Codex, then Claude plays it | Released on its own switch |
 | LAB-OPEN-DOOR | Codex | After MENU-NEXT-UP (same menu files) |
-| LAB-BRIAN-SHORT | Claude | Pendulums first, one look sheet, then the other fifteen |
+| LAB-BRIAN-SHORT | Claude | Done and merged on 9 November |
 | LAB-ROUND-NUMBERS | Claude | After LAB-BRIAN-SHORT (same lesson files) |
 
 Each one goes live when it is green (rule 18). One release a day at most is enough.

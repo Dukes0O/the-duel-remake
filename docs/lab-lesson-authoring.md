@@ -106,7 +106,7 @@ LAB-BRIAN-SHORT (9 November 2026).
 - Brian's newest words are at most three sentences, about 45 words and never more than 60.
   This holds for a step's opening words, a question, a result and a hint.
 - A text that needs more puts `${MORE}` (from `src/lab/classroom/brian-text.js`) where the
-  opening ends. The player reads the rest by pressing "Tell me more" (M). One mark per text.
+  opening ends. The player reads the rest by pressing "Tell me more" (T). One mark per text.
 - The opening holds what the player needs now: the sentence that defines the step's new
   word, the question, and what to do. The reason why, a comparison, a second example and
   how a unit is read can wait behind the mark.

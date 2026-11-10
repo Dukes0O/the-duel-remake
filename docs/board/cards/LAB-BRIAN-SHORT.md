@@ -34,6 +34,11 @@ narrow strip beside a small picture. A slower reader meets a wall of text.
 - Laptop only: Claude reads Pendulums start to finish in a visible browser, then one lesson
   from each other group.
 
+## Result (Claude, 9 November 2026)
+
+Done and merged; see `docs/changes/LAB-BRIAN-SHORT.md`. Claude read Pendulums by hand in a visible browser after the merge.
+The key for "Tell me more" is T, because M switches the sound off.
+
 ## Removed
 
 Nothing is deleted from the lessons. Any lesson text that says the same thing twice goes.

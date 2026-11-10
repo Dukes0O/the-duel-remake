@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {createClassroomSession} from '../src/lab/classroom/classroom-frame.js';
-import {MORE, OPENING_SENTENCES, OPENING_WORDS, sentences, wordCount, splitSay, fullText, firstSentence, paragraphs} from '../src/lab/classroom/brian-text.js';
+import {MORE, SHOWN, OPENING_SENTENCES, OPENING_WORDS, sentences, wordCount, splitSay, fullText, firstSentence, paragraphs} from '../src/lab/classroom/brian-text.js';
 
 test('a sentence ends at a full stop, a question mark or an exclamation mark, and a number with a decimal point stays whole', () => {
   assert.deepEqual(sentences('One swing needs 7.8 s. Is 9.81 m/s² the pull? Yes! It said “stop.” Then it stopped.'),
@@ -24,6 +24,7 @@ test('a text opens with what comes before the mark, and the rest waits behind "T
 test('a text with no mark, or with a long opening, is still cut after three sentences', () => {
   assert.deepEqual(splitSay('One. Two. Three. Four.'), {opening: 'One. Two. Three.', more: 'Four.'});
   assert.deepEqual(splitSay(`One. Two. Three. Four.${MORE}Five.`), {opening: 'One. Two. Three.', more: 'Four. Five.'});
+  assert.deepEqual(splitSay(`${SHOWN} One. Two. Three?${MORE}Four.`), {opening: `${SHOWN} One. Two. Three?`, more: 'Four.'}, 'the words Brian says after his pointer do not push the question out of the opening');
 });
 
 test('all sixteen classroom lessons: every step opens with at most three sentences, and a longer step marks where "Tell me more" begins', () => {
@@ -66,9 +67,9 @@ test('the page keeps every word of a marked step, and Brian’s words reach the 
   assert.equal(v.page.at(-1).setup, v.brian.text, 'the page keeps the whole text for the opened step');
 });
 
-test('the classroom screen offers "Tell me more" on M and opens an earlier step with a click', () => {
+test('the classroom screen offers "Tell me more" on T (M switches the sound off) and opens an earlier step with a click', () => {
   const source = readFileSync(new URL('../src/lab/classroom/classroom-ui.js', import.meta.url), 'utf8');
-  assert.match(source, /data-lc="more"[^>]*>Tell me more \$\{kbd\('M'\)\}/);
-  assert.match(source, /event\.code === 'KeyM'/);
+  assert.match(source, /data-lc="more"[^>]*>Tell me more \$\{kbd\('T'\)\}/);
+  assert.match(source, /event\.code === 'KeyT'/);
   assert.match(source, /data-lc="row:\$\{i\}" aria-expanded/);
 });
