@@ -479,7 +479,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
     needs: [WW-HOOKS, WW-ART-VEHICLES]
     locks: []
     flag: "story-everburn"
