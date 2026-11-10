@@ -23,7 +23,7 @@ export function hitTest(view, x, y) {
 
 export function hoverInfo(view, x, y) {
   if (hit(x, y, CIRCLE.x, CIRCLE.y, 205, 205)) return `The car follows the marked circle. The radius from the centre is ${view.radiusM} m.`;
-  if (hit(x, y, ...SPEED.down) || hit(x, y, ...SPEED.up)) return `The speed dial reads ${view.speedKmh.toFixed(1)} km/h.`;
+  if (hit(x, y, ...SPEED.down) || hit(x, y, ...SPEED.up)) return `The speed dial reads ${view.speedKmh} km/h.`;
   if (hit(x, y, ...RADIUS.down) || hit(x, y, ...RADIUS.up)) return `The radius is ${view.radiusM} m from the turn centre to the car.`;
   if (hit(x, y, ...RUN, 120, 36) && view.keys.Space) return 'Run the turn and record the meter reading.';
   return null;
@@ -123,7 +123,7 @@ function drawControls(ctx, view) {
   // are x=632..748 and 852..968, y=126..164.
   panel(ctx, 560, 48, 410, 130);
   text(ctx, 'SPEED', 590, 76, {size: 14, align: 'left', weight: 900, colour: '#d6bd79'});
-  text(ctx, `${view.speedKmh.toFixed(1)} km/h`, 790, 76, {size: 27, weight: 900});
+  text(ctx, `${view.speedKmh} km/h`, 790, 76, {size: 27, weight: 900});
   button(ctx, SPEED.down, 'Slower', '←', Boolean(view.keys['←'])); button(ctx, SPEED.up, 'Faster', '→', Boolean(view.keys['→']));
 
   // Radius panel y=194..324: label/value at 222; buttons occupy y=272..310.
@@ -148,7 +148,7 @@ function drawRows(ctx, view) {
   text(ctx, 'RECORDED TURNS', 350, 535, {size: 13, align: 'left', weight: 900, colour: '#d6bd79'});
   view.rows.slice(-3).forEach((item, i) => {
     const rowNumber = view.rows.length - Math.min(3, view.rows.length) + i + 1;
-    text(ctx, `Run ${rowNumber}: ${Number(item.speed).toFixed(1)} km/h  ·  ${item.radius} m  ·  ${item.g} g`, 352, 563 + i * 25, {size: 14, align: 'left', weight: 700});
+    text(ctx, `Run ${rowNumber}: ${item.speed} km/h  ·  ${item.radius} m  ·  ${item.g} g`, 352, 563 + i * 25, {size: 14, align: 'left', weight: 700});
   });
 }
 

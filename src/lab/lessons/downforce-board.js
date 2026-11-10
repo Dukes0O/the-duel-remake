@@ -7,6 +7,9 @@ export {BOARD};
 export const pressMovesDrag = false;
 
 const CAR = '#c8402f', GREEN = '#9ff0b4', ORANGE = '#f0a24a';
+// The pictures' scales. The bars run to PUSH_TOP kg, a little over the steep wing's push at the top of the dial, and the
+// rope's gauge runs to DRAG_TOP kg. The arrows in the tunnel are PUSH_PX and DRAG_PX board units long for each kilogram.
+const PUSH_TOP = 200, DRAG_TOP = 120, PUSH_PX = .5, DRAG_PX = .78;
 // The tunnel: the fan on the left, the car facing it (nose left) on its scale, the post its rope is tied to.
 const TUNNEL = Object.freeze({x: 30, y: 30, w: 560, h: 330, floor: 292});
 const FAN = Object.freeze({x: 96, y: 178, r: 70});
@@ -122,7 +125,7 @@ function smoke(ctx, view, {x0, x1, rows, wingX, wingY, chord, tilt, clip, most =
   const r = view.rig, slope = Math.tan(tilt), half = chord / 2, frontX = wingX - half * Math.cos(tilt), frontY = wingY + half * Math.sin(tilt), reach = chord * 1.1;
   ctx.save(); ctx.beginPath(); ctx.rect(...clip); ctx.clip();
   ctx.lineWidth = 2.5; ctx.setLineDash([22, 14]);
-  ctx.lineDashOffset = -(view.time * r.ms * 7.2) % 36;
+  ctx.lineDashOffset = -(view.time * r.ms * 11.6) % 36;
   ctx.strokeStyle = r.on && r.ms > 0 ? 'rgba(225,232,236,.6)' : 'rgba(225,232,236,.12)';
   for (const row of rows) {
     const above = row < 0, near = Math.max(0, 1 - Math.abs(row) / reach), from = above ? frontX - chord * .3 : wingX - chord * .1, ease = chord * .7;
@@ -141,7 +144,7 @@ function smoke(ctx, view, {x0, x1, rows, wingX, wingY, chord, tilt, clip, most =
 function fan(ctx, view) {
   const {x, y, r} = FAN, on = view.rig.on && view.rig.ms > 0;
   ctx.fillStyle = '#1b2023'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.save(); ctx.translate(x, y); ctx.rotate(on ? view.time * view.rig.ms * .27 : 0);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(on ? view.time * view.rig.ms * .43 : 0);
   ctx.fillStyle = theme.iron[1];
   for (let k = 0; k < 5; k++) { ctx.rotate(Math.PI * 2 / 5); ctx.beginPath(); ctx.ellipse(0, -r * .48, r * .15, r * .42, .35, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
@@ -174,18 +177,21 @@ function tunnelScene(ctx, view) {
   car(ctx, CAR_AT.nose, carGround(), CAR_AT.scale, {facing: -1});
   wingShape(ctx, WING_AT.x, WING_AT.y, WING_AT.chord, tilt);
   // The air leaving the wing, the push down from the wing and the drag back from the tail. The push and the drag arrows are
-  // drawn to scale, so four times the push is an arrow four times as long.
+  // drawn to scale, so four times the push is an arrow four times as long. The white arrow rises behind the wing and carries
+  // its own name, "air". The green push arrow points down onto the car, and its label sits beside its head, below the wing,
+  // so that the word "push" cannot be read as the name of the rising white arrow.
   if (r.on && r.ms > 0 && tilt > 0) {
-    const tx = WING_AT.x + WING_AT.chord / 2 * Math.cos(tilt), ty = WING_AT.y - WING_AT.chord / 2 * Math.sin(tilt) - 4;
-    arrowLine(ctx, tx + 2, ty, tx + 42, ty - 42 * Math.tan(tilt) * 1.3, 'rgba(240,244,246,.95)', 3);
+    const tx = WING_AT.x + WING_AT.chord / 2 * Math.cos(tilt), ty = WING_AT.y - WING_AT.chord / 2 * Math.sin(tilt) - 4, rise = 42 * Math.tan(tilt) * 1.3;
+    arrowLine(ctx, tx + 2, ty, tx + 42, ty - rise, 'rgba(240,244,246,.95)', 3);
+    label(ctx, 'air', tx + 50, ty - rise, {weight: 600});
   }
   if (r.push > .5) {
-    arrowLine(ctx, WING_AT.x, WING_AT.y + 14, WING_AT.x, WING_AT.y + 14 + r.push * .2, theme.good);
-    label(ctx, `push ${kg(r.push)}`, WING_AT.x + 34, WING_AT.y + 22, {colour: GREEN});
+    arrowLine(ctx, WING_AT.x, WING_AT.y + 14, WING_AT.x, WING_AT.y + 14 + r.push * PUSH_PX, theme.good);
+    label(ctx, `push ${kg(r.push)}`, WING_AT.x + 28, WING_AT.y + 46, {colour: GREEN});
   }
   if (r.drag > .5 && view.dragKnown) {
     const ay = carGround() - 8;
-    arrowLine(ctx, tail + 6, ay, Math.min(x + w - 6, tail + 6 + r.drag * .3), ay, ORANGE);
+    arrowLine(ctx, tail + 6, ay, Math.min(x + w - 6, tail + 6 + r.drag * DRAG_PX), ay, ORANGE);
     text(ctx, 'drag', tail + 10, ay + 18, {size: 15, align: 'left', colour: ORANGE});
   }
   // The readouts.
@@ -249,14 +255,14 @@ function closeWing(ctx, view) {
   if (tilt > 0) {
     arrowLine(ctx, tx + 10, ty - 6, tx + 100, ty - 6 - 90 * Math.tan(tilt), 'rgba(240,244,246,.95)', 5);
     label(ctx, 'The wing turns the air upward.', LOW.x + LOW.w - 16, LOW.y + 18, {align: 'right'});
-    arrowLine(ctx, cx, cy + 34, cx, cy + 34 + r.push * 1.6, theme.good, 8);
+    arrowLine(ctx, cx, cy + 34, cx, cy + 34 + r.push * 4.1, theme.good, 8);
     label(ctx, 'The air pushes the wing down.', cx + 20, cy + 62, {colour: GREEN});
     label(ctx, `push ${kg(r.push)}`, cx + 20, cy + 88, {size: 20, colour: GREEN, weight: 800});
   } else label(ctx, 'The flat wing does not turn the air, so the air does not push the wing down.', cx, LOW.y + LOW.h - 22, {size: 16, align: 'center'});
 }
 // The fan speed in km/h and in m/s, and a tape that shows how far the air moves during each second.
 function closeSpeed(ctx, view) {
-  const d = view.dial, x0 = 90, x1 = 910, most = 70, at = m => x0 + m / most * (x1 - x0), y = 590, flown = (view.time % 1) * d.ms;
+  const d = view.dial, x0 = 90, x1 = 910, most = 50, at = m => x0 + m / most * (x1 - x0), y = 590, flown = (view.time % 1) * d.ms;
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   text(ctx, 'WHAT THE SPEED MEANS', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   text(ctx, `${d.kmh} km/h`, 300, LOW.y + 56, {size: 34, colour: theme.accent, weight: 800});
@@ -275,10 +281,10 @@ function closeReadout(ctx, view, kind) {
   panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
   if (kind === 'rope') {
     text(ctx, 'THE ROPE’S GAUGE', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-    const cx = 330, cy = 530, rad = 100, share = Math.min(1, r.drag / 300);
+    const cx = 330, cy = 530, rad = 100, share = Math.min(1, r.drag / DRAG_TOP);
     ctx.fillStyle = theme.dial; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#2b3236'; ctx.lineWidth = 2;
-    for (let k = 0; k <= 6; k++) { const a = Math.PI * (.75 + 1.5 * k / 6); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * rad * .8, cy + Math.sin(a) * rad * .8); ctx.lineTo(cx + Math.cos(a) * rad * .95, cy + Math.sin(a) * rad * .95); ctx.stroke(); text(ctx, String(k * 50), cx + Math.cos(a) * rad * .64, cy + Math.sin(a) * rad * .64, {size: 13, colour: '#2b3236'}); }
+    for (let k = 0; k <= 6; k++) { const a = Math.PI * (.75 + 1.5 * k / 6); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * rad * .8, cy + Math.sin(a) * rad * .8); ctx.lineTo(cx + Math.cos(a) * rad * .95, cy + Math.sin(a) * rad * .95); ctx.stroke(); text(ctx, String(k * DRAG_TOP / 6), cx + Math.cos(a) * rad * .64, cy + Math.sin(a) * rad * .64, {size: 13, colour: '#2b3236'}); }
     const a = Math.PI * (.75 + 1.5 * share);
     ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * rad * .85, cy + Math.sin(a) * rad * .85); ctx.stroke();
     text(ctx, 'kg', cx, cy + 40, {size: 14, colour: '#2b3236'});
@@ -289,11 +295,11 @@ function closeReadout(ctx, view, kind) {
   }
   text(ctx, 'THE SCALE', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
   text(ctx, kg(r.scale), 500, 470, {size: 54, weight: 800});
-  const barW = 700, x0 = 150, carW = barW * CAR_KG / (CAR_KG + 520);
+  const barW = 700, x0 = 150, carW = barW * CAR_KG / (CAR_KG + PUSH_TOP);
   ctx.fillStyle = theme.iron[1]; ctx.fillRect(x0, 540, carW, 34);
   text(ctx, `the car ${kg(CAR_KG)}`, x0 + carW / 2, 557, {size: 16});
   if (r.push > .5) {
-    const pw = barW * r.push / (CAR_KG + 520);
+    const pw = barW * r.push / (CAR_KG + PUSH_TOP);
     ctx.fillStyle = theme.good; ctx.fillRect(x0 + carW, 540, pw, 34);
     text(ctx, `+ push ${kg(r.push)}`, x0 + carW + pw + 10, 557, {size: 16, align: 'left', colour: GREEN});
   }
@@ -377,7 +383,7 @@ function drawCheck(ctx, view) {
       const y = 240 + i * 150;
       text(ctx, `The steep wing at ${p.kmh} km/h`, 60, y - 50, {size: 20, align: 'left'});
       ctx.fillStyle = '#23272a'; ctx.fillRect(60, y - 24, 880, 48);
-      if (view.answered) { ctx.fillStyle = theme.good; ctx.fillRect(60, y - 24, 880 * p.kg / 520, 48); text(ctx, kg(p.kg), 70 + 880 * p.kg / 520, y, {size: 20, align: 'left', colour: GREEN}); }
+      if (view.answered) { ctx.fillStyle = theme.good; ctx.fillRect(60, y - 24, 880 * p.kg / PUSH_TOP, 48); text(ctx, kg(p.kg), 70 + 880 * p.kg / PUSH_TOP, y, {size: 20, align: 'left', colour: GREEN}); }
       else text(ctx, '?', 500, y, {size: 26, colour: theme.faint});
     });
     return;
@@ -388,7 +394,7 @@ function drawCheck(ctx, view) {
       panel(ctx, x - 140, y - 140, 280, 260);
       text(ctx, `${b.name} at ${b.kmh} km/h`, x, y - 110, {size: 20});
       bendPicture(ctx, x, y + 40, [46, 72, 100][i]);
-      if (view.answered) { arrowLine(ctx, x, y - 70, x, y - 60 + b.kg * .2, theme.good); text(ctx, `push ${kg(b.kg)}`, x, y + 100, {size: 20, colour: GREEN}); }
+      if (view.answered) { arrowLine(ctx, x, y - 70, x, y - 60 + b.kg * PUSH_PX, theme.good); text(ctx, `push ${kg(b.kg)}`, x, y + 100, {size: 20, colour: GREEN}); }
     });
     return;
   }
@@ -422,7 +428,7 @@ function drawRecap(ctx, view) {
       // The steep wing's push at the watch's three speeds, to the same scale.
       [50, 100, 150].forEach((speed, k) => {
         const y = 130 + k * 70, kgNow = pushKg(speed, 'big');
-        ctx.fillStyle = theme.good; ctx.fillRect(x + 30, y, kgNow * .46, 16);
+        ctx.fillStyle = theme.good; ctx.fillRect(x + 30, y, kgNow * 240 / PUSH_TOP, 16);
         text(ctx, `${kmh(speed)} km/h: ${kg(kgNow)}`, x + 30, y - 14, {size: 15, align: 'left'});
       });
     }
@@ -457,8 +463,8 @@ export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
   if (picture.kind === 'push') {
-    // Up to 520 kg across the card.
-    const per = (w - 40) / 520;
+    // Up to PUSH_TOP kg across the card.
+    const per = (w - 40) / PUSH_TOP;
     picture.kg.forEach((value, i) => {
       const y = 34 + i * 42;
       ctx.fillStyle = '#23272a'; ctx.fillRect(20, y - 13, w - 40, 26);

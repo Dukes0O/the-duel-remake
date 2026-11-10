@@ -2,12 +2,15 @@
 import {lateralG} from '../benches/gforce.js';
 
 const GRAVITY = 9.81;
-const KMH_PER_SETTING = 1.609344;
+// The dial holds whole kilometres per hour. The challenge's rule takes the game's miles per hour.
+const KMH_PER_MPH = 1.609344;
 const KMH_PER_MS = 3.6;
-const BASE = Object.freeze({speed: 40, radius: 50});
-const MIN_SPEED = 10;
-const MAX_SPEED = 150;
-const SPEED_STEP = 5;
+const BASE = Object.freeze({speed: 50, radius: 50});
+const TWICE_SPEED = 2 * BASE.speed;
+const THREE_TIMES_SPEED = 3 * BASE.speed;
+const MIN_SPEED = 20;
+const MAX_SPEED = 240;
+const SPEED_STEP = 10;
 const MIN_RADIUS = 10;
 const MAX_RADIUS = 200;
 const RADIUS_STEP = 25;
@@ -55,24 +58,22 @@ export const WORDS = Object.freeze([
   {id: 'gforce-acceleration', word: 'Acceleration', meaning: 'Acceleration is how quickly velocity changes. Velocity is speed in a direction.'},
 ].map(Object.freeze));
 
-const kmh = setting => Number((setting * KMH_PER_SETTING).toFixed(1));
-const mpsFromDial = speed => kmh(speed) / KMH_PER_MS;
-const meter = (speed, radius) => lateralG(speed, radius);
+const mpsFromDial = speed => speed / KMH_PER_MS;
+const meter = (speed, radius) => lateralG(speed / KMH_PER_MPH, radius);
 const shown = value => value.toFixed(2);
 const settingsKey = (speed, radius) => `${speed}/${radius}`;
 const FORMULA = 'G-force (g) = (speed in m/s)² ÷ radius in m ÷ 9.81 m/s²';
 
 function formulaRows(speed, radius, {worked = true, includeSpeed = true} = {}) {
   const entries = [];
-  const shownKmh = kmh(speed);
-  const roundedMps = Number((shownKmh / KMH_PER_MS).toFixed(2));
+  const roundedMps = Number(mpsFromDial(speed).toFixed(2));
   const sumFromShownSpeed = (roundedMps ** 2 / radius / GRAVITY).toFixed(2);
   if (includeSpeed) {
     entries.push({
       title: 'Change the speed unit',
       formula: 'speed in m/s = speed in km/h ÷ 3.6',
-      worked: worked ? `${shownKmh.toFixed(1)} km/h ÷ 3.6 = ${roundedMps.toFixed(2)} m/s` : '',
-      note: 'The meter uses the same setting. The sum is approximate because the displayed speed and m/s are rounded.',
+      worked: worked ? `${speed} km/h ÷ 3.6 = ${roundedMps.toFixed(2)} m/s` : '',
+      note: 'The meter uses the same setting. The sum is approximate because the speed in m/s is rounded.',
     });
   }
   entries.push({
@@ -93,18 +94,18 @@ const baseReading = reading(BASE.speed, BASE.radius);
 
 const CHECKS = Object.freeze({
   'check-speed': Object.freeze({
-    question: 'At the same 50 m radius, which speed gives the larger reading: 32.2 km/h or 64.4 km/h?',
-    answers: ['64.4 km/h gives the larger reading.', '32.2 km/h gives the larger reading.', 'Both speeds give the same reading.'],
+    question: `At the same 50 m radius, which speed gives the larger reading: ${BASE.speed} km/h or ${TWICE_SPEED} km/h?`,
+    answers: [`${TWICE_SPEED} km/h gives the larger reading.`, `${BASE.speed} km/h gives the larger reading.`, 'Both speeds give the same reading.'],
     correct: 0,
-    right: `That is right. At 64.4 km/h the meter reads ${reading(40, 50)} g. At 32.2 km/h it reads ${reading(20, 50)} g, because half the speed makes one quarter the reading when the rule squares speed.`,
-    wrong: `At 64.4 km/h the meter reads ${reading(40, 50)} g. At 32.2 km/h it reads ${reading(20, 50)} g, because half the speed makes one quarter the reading when the rule squares speed.`,
+    right: `That is right. At ${TWICE_SPEED} km/h the meter reads ${reading(TWICE_SPEED, 50)} g. At ${BASE.speed} km/h it reads ${reading(BASE.speed, 50)} g, because half the speed makes one quarter the reading when the rule squares speed.`,
+    wrong: `At ${TWICE_SPEED} km/h the meter reads ${reading(TWICE_SPEED, 50)} g. At ${BASE.speed} km/h it reads ${reading(BASE.speed, 50)} g, because half the speed makes one quarter the reading when the rule squares speed.`,
   }),
   'check-radius': Object.freeze({
-    question: 'At 64.4 km/h, which turn radius gives the larger reading: 25 m or 100 m?',
+    question: `At ${BASE.speed} km/h, which turn radius gives the larger reading: 25 m or 100 m?`,
     answers: ['25 m gives the larger reading.', '100 m gives the larger reading.', 'Both radii give the same reading.'],
     correct: 0,
-    right: `That is right. At 25 m the meter reads ${reading(40, 25)} g, and at 100 m it reads ${reading(40, 100)} g. A larger radius is a larger number to divide by, so the reading falls.`,
-    wrong: `At 25 m the meter reads ${reading(40, 25)} g, and at 100 m it reads ${reading(40, 100)} g. A larger radius is a larger number to divide by, so the reading falls.`,
+    right: `That is right. At 25 m the meter reads ${reading(BASE.speed, 25)} g, and at 100 m it reads ${reading(BASE.speed, 100)} g. A larger radius is a larger number to divide by, so the reading falls.`,
+    wrong: `At 25 m the meter reads ${reading(BASE.speed, 25)} g, and at 100 m it reads ${reading(BASE.speed, 100)} g. A larger radius is a larger number to divide by, so the reading falls.`,
   }),
   'check-rule': Object.freeze({
     question: 'Which sentence describes the G-force rule used in this game?',
@@ -135,7 +136,7 @@ export function createModel() {
   const result = () => meter(speed, radius);
 
   function row(kind, currentSpeed, currentRadius, g) {
-    return {kind, speed: kmh(currentSpeed), radius: currentRadius, g: shown(g)};
+    return {kind, speed: currentSpeed, radius: currentRadius, g: shown(g)};
   }
 
   function enter(index) {
@@ -187,14 +188,14 @@ export function createModel() {
     switch (id()) {
       case 'word-speed': return {speed: BASE.speed, radius};
       case 'word-radius': return {speed, radius: BASE.radius};
-      case 'try-speed': return {speed: 60, radius: BASE.radius};
+      case 'try-speed': return {speed: THREE_TIMES_SPEED, radius: BASE.radius};
       case 'try-radius': return {speed: BASE.speed, radius: 75};
-      case 'alone': return {speed: 80, radius: BASE.radius};
+      case 'alone': return {speed: THREE_TIMES_SPEED, radius: BASE.radius};
       case 'try-free': {
         const preferred = [
-          {speed: 50, radius: 50},
-          {speed: 40, radius: 75},
-          {speed: 60, radius: 50},
+          {speed: TWICE_SPEED, radius: BASE.radius},
+          {speed: BASE.speed, radius: 75},
+          {speed: THREE_TIMES_SPEED, radius: BASE.radius},
         ];
         const nextPreferred = preferred.find(choice => !tested.has(settingsKey(choice.speed, choice.radius)));
         if (nextPreferred) return nextPreferred;
@@ -214,7 +215,7 @@ export function createModel() {
 
   function autoText(target) {
     const changes = [];
-    if (target.speed !== speed) changes.push(`set the speed dial to ${kmh(target.speed).toFixed(1)} km/h`);
+    if (target.speed !== speed) changes.push(`set the speed dial to ${target.speed} km/h`);
     if (target.radius !== radius) changes.push(`set the turn radius to ${target.radius} m`);
     const action = id() === 'try-free' || id() === 'alone' ? ' and run the turn' : '';
     return changes.length
@@ -247,14 +248,14 @@ export function createModel() {
     if (before === after) {
       if (held) return null;
       m.say = kind === 'speed'
-        ? `${direction > 0 ? 'The speed dial is already at its top' : 'The speed dial is already at its bottom'}, ${kmh(speed).toFixed(1)} km/h.`
+        ? `${direction > 0 ? 'The speed dial is already at its top' : 'The speed dial is already at its bottom'}, ${speed} km/h.`
         : `The radius control is already at its ${direction > 0 ? 'outer' : 'inner'} limit, ${radius} m.`;
       return {kind: 'note', say: m.say};
     }
     m.lastPress = m.time;
     if (id() === 'word-speed' && speed === BASE.speed && m.phase !== 'done') {
       m.phase = 'done';
-      m.say = `The dial now shows ${kmh(speed).toFixed(1)} km/h. The formula changes that speed to ${mpsFromDial(speed).toFixed(2)} m/s by dividing by 3.6.`;
+      m.say = `The dial now shows ${speed} km/h. The formula changes that speed to ${mpsFromDial(speed).toFixed(2)} m/s by dividing by 3.6.`;
       return {kind: 'right', say: m.say};
     }
     if (id() === 'word-radius' && radius === BASE.radius && m.phase !== 'done') {
@@ -262,7 +263,7 @@ export function createModel() {
       m.say = `The radius is now ${radius} m, measured from the marked centre to the car.`;
       return {kind: 'right', say: m.say};
     }
-    m.say = `The dial shows ${kmh(speed).toFixed(1)} km/h, and the radius is ${radius} m. The turning rule gives ${reading(speed, radius)} g.`;
+    m.say = `The dial shows ${speed} km/h, and the radius is ${radius} m. The turning rule gives ${reading(speed, radius)} g.`;
     return {kind: 'progress', say: m.say};
   }
 
@@ -279,23 +280,24 @@ export function createModel() {
       }
       tested.add(key);
       rows.push(row('free', speed, radius, result()));
-      m.say = `At ${kmh(speed).toFixed(1)} km/h and ${radius} m, the meter reads ${reading(speed, radius)} g. Change a setting before you run a different turn.`;
+      m.say = `At ${speed} km/h and ${radius} m, the meter reads ${reading(speed, radius)} g. Change a setting before you run a different turn.`;
       if (tested.size >= FREE_TRIES) m.phase = 'done';
       return {kind: 'right', say: m.say};
     }
     if (id() === 'try-speed' || id() === 'try-radius') {
       const expected = goal();
       if (speed !== expected.speed || radius !== expected.radius) {
-        m.say = `Set the speed to ${kmh(expected.speed).toFixed(1)} km/h and the radius to ${expected.radius} m, then run the turn.`;
+        m.say = `Set the speed to ${expected.speed} km/h and the radius to ${expected.radius} m, then run the turn.`;
         return {kind: 'note', say: m.say};
       }
       rows.push(row(id(), speed, radius, result()));
       m.phase = 'done';
       const correct = m.guess === 0;
       if (id() === 'try-speed') {
+        const times = speed / BASE.speed;
         m.say = correct
-          ? `That is right. At 96.6 km/h the meter reads ${reading(speed, radius)} g, about 2.25 times the ${baseReading} g at 64.4 km/h because 1.5 × 1.5 = 2.25.`
-          : `At 96.6 km/h the meter reads ${reading(speed, radius)} g, about 2.25 times the ${baseReading} g at 64.4 km/h. That follows because 96.6 ÷ 64.4 = 1.5, and 1.5 × 1.5 = 2.25.`;
+          ? `That is right. At ${speed} km/h the meter reads ${reading(speed, radius)} g, about ${times * times} times the ${baseReading} g at ${BASE.speed} km/h because ${times} × ${times} = ${times * times}.`
+          : `At ${speed} km/h the meter reads ${reading(speed, radius)} g, about ${times * times} times the ${baseReading} g at ${BASE.speed} km/h. That follows because ${speed} ÷ ${BASE.speed} = ${times}, and ${times} × ${times} = ${times * times}.`;
       } else {
         m.say = correct
           ? `That is right. At 75 m the meter reads ${reading(speed, radius)} g, two thirds of the ${baseReading} g at 50 m because 50 ÷ 75 = 2 ÷ 3.`
@@ -343,9 +345,9 @@ export function createModel() {
       m.guess = picked;
       m.phase = 'set';
       if (id() === 'try-speed') {
-        m.say = `Your prediction is recorded. Now raise the speed to ${kmh(60).toFixed(1)} km/h, keep the radius at 50 m, and run the turn.`;
+        m.say = `Your prediction is recorded. Now raise the speed to ${THREE_TIMES_SPEED} km/h, keep the radius at 50 m, and run the turn.`;
       } else {
-        m.say = `Your prediction is recorded. Now keep the speed at 64.4 km/h, set the radius to 75 m, and run the turn.`;
+        m.say = `Your prediction is recorded. Now keep the speed at ${BASE.speed} km/h, set the radius to 75 m, and run the turn.`;
       }
       return {kind: 'progress', say: m.say};
     }
@@ -359,7 +361,7 @@ export function createModel() {
         speed = BASE.speed;
         radius = BASE.radius;
       } else if (m.time < 3.5) {
-        speed = 80;
+        speed = TWICE_SPEED;
         radius = BASE.radius;
       } else if (m.time < 4.5) {
         speed = BASE.speed;
@@ -384,9 +386,9 @@ export function createModel() {
     if ((id() === 'wonder' || id() === 'watch') && m.phase !== 'done' && m.time >= (id() === 'wonder' ? 2.5 : 6)) {
       m.phase = 'done';
       if (id() === 'watch') {
-        rows.push(row('watch-speed', 80, 50, meter(80, 50)));
-        rows.push(row('watch-radius', 40, 100, meter(40, 100)));
-        m.say = `At 64.4 km/h and 50 m, the meter reads ${baseReading} g; at 128.7 km/h and 50 m, it reads ${reading(80, 50)} g, about four times as much. At 64.4 km/h and 100 m, it reads ${reading(40, 100)} g, about half as much.`;
+        rows.push(row('watch-speed', TWICE_SPEED, 50, meter(TWICE_SPEED, 50)));
+        rows.push(row('watch-radius', BASE.speed, 100, meter(BASE.speed, 100)));
+        m.say = `At ${BASE.speed} km/h and 50 m, the meter reads ${baseReading} g; at ${TWICE_SPEED} km/h and 50 m, it reads ${reading(TWICE_SPEED, 50)} g, about four times as much. At ${BASE.speed} km/h and 100 m, it reads ${reading(BASE.speed, 100)} g, about half as much.`;
         return {kind: 'right', say: m.say};
       }
       m.say = 'Which change could make the meter show a larger reading?';
@@ -446,7 +448,7 @@ export function createModel() {
       scene: current,
       time: m.time,
       setting: speed,
-      speedKmh: kmh(speed),
+      speedKmh: speed,
       radiusM: radius,
       g: answersOpen ? null : result(),
       formulas: formulasForView(),
@@ -490,8 +492,8 @@ export function createModel() {
         target,
         glow: 'speed',
         say: done ? m.say : m.auto ? m.say : 'Speed is distance travelled during a set time, and the dial shows kilometres per hour, written km/h. The formula uses metres per second, written m/s, which counts metres travelled each second; divide km/h by 3.6 because a kilometre is 1,000 metres and an hour is 3,600 seconds.',
-        prompt: done ? 'Press Enter to continue, or keep changing the speed.' : `The dial reads ${kmh(speed).toFixed(1)} km/h. Press ← to lower it or → to raise it until it reads 64.4 km/h.`,
-        hints: ['The speed is shown on the right dial.', 'Use ← to lower the reading or → to raise it until it shows 64.4 km/h.', 'Watch my pointer. I will set the speed dial to 64.4 km/h.'],
+        prompt: done ? 'Press Enter to continue, or keep changing the speed.' : `The dial reads ${speed} km/h. Press ← to lower it or → to raise it until it reads ${BASE.speed} km/h.`,
+        hints: ['The speed is shown on the right dial.', `Use ← to lower the reading or → to raise it until it shows ${BASE.speed} km/h.`, `Watch my pointer. I will set the speed dial to ${BASE.speed} km/h.`],
       };
     }
 
@@ -535,7 +537,7 @@ export function createModel() {
       ...base,
       waiting: !done,
       ready: done,
-      say: done ? m.say : 'I will raise the speed from 64.4 to 128.7 km/h while the radius stays at 50 m; then I will restore the speed and widen the radius to 100 m. Watch the cord, arrow, meter and formula as I change one setting at a time.',
+      say: done ? m.say : `I will raise the speed from ${BASE.speed} to ${TWICE_SPEED} km/h while the radius stays at 50 m; then I will restore the speed and widen the radius to 100 m. Watch the cord, arrow, meter and formula as I change one setting at a time.`,
       prompt: done ? 'Press Enter to continue, or press R to watch again.' : 'Watch the car turn and the readings change.',
       hints: ['Watch the sideways arrow as the car goes faster.', 'Then watch the cord and meter as the turn radius grows.', 'Wait for Brian to finish.'],
     };
@@ -544,8 +546,8 @@ export function createModel() {
       const speedTry = current === 'try-speed';
       if (answersOpen) {
         const labels = speedTry
-          ? [`About ${reading(60, 50)} g.`, `About ${reading(50, 50)} g.`, `About ${baseReading} g.`]
-          : [`About ${reading(40, 75)} g.`, `About ${reading(40, 100)} g.`, `About ${baseReading} g.`];
+          ? [`About ${reading(THREE_TIMES_SPEED, 50)} g.`, `About ${reading(TWICE_SPEED, 50)} g.`, `About ${baseReading} g.`]
+          : [`About ${reading(BASE.speed, 75)} g.`, `About ${reading(BASE.speed, 100)} g.`, `About ${baseReading} g.`];
         return {
           ...base,
           g: null,
@@ -553,13 +555,13 @@ export function createModel() {
           ready: false,
           target: 'answer:0',
           say: speedTry
-          ? 'The car starts at 64.4 km/h and 50 m. What reading will the meter show if speed becomes 96.6 km/h and radius stays at 50 m?'
-            : 'The car starts at 64.4 km/h and 50 m. What reading will the meter show if radius becomes 75 m and speed stays at 64.4 km/h?',
+          ? `The car starts at ${BASE.speed} km/h and 50 m. What reading will the meter show if speed becomes ${THREE_TIMES_SPEED} km/h and radius stays at 50 m?`
+            : `The car starts at ${BASE.speed} km/h and 50 m. What reading will the meter show if radius becomes 75 m and speed stays at ${BASE.speed} km/h?`,
           prompt: 'Pick a card by clicking it, or press 1, 2 or 3.',
           cards: labels.map((label, i) => ({id: `answer:${i}`, key: String(i + 1), label, picture: {kind: 'reading', g: null}, state: null})),
           hints: speedTry
-            ? ['A faster car changes its direction sooner.', 'Use the rule with 96.6 km/h and 50 m, but do not run the turn yet.', 'Pick the answer that matches the formula.']
-            : ['Radius is the distance from the centre to the car.', 'Use the rule with 64.4 km/h and 75 m, but do not run the turn yet.', 'Pick the answer that matches the formula.'],
+            ? ['A faster car changes its direction sooner.', `Use the rule with ${THREE_TIMES_SPEED} km/h and 50 m, but do not run the turn yet.`, 'Pick the answer that matches the formula.']
+            : ['Radius is the distance from the centre to the car.', `Use the rule with ${BASE.speed} km/h and 75 m, but do not run the turn yet.`, 'Pick the answer that matches the formula.'],
         };
       }
       const g = goal();
@@ -571,10 +573,10 @@ export function createModel() {
         target,
         glow: speedTry ? 'speed' : 'radius',
         say: m.say || (speedTry
-          ? 'Your prediction is recorded. Change the speed to 96.6 km/h, keep the radius at 50 m, and run the turn.'
-          : 'Your prediction is recorded. Keep the speed at 64.4 km/h, change the radius to 75 m, and run the turn.'),
-        prompt: done ? 'Press Enter to continue.' : `Set the speed to ${kmh(g.speed).toFixed(1)} km/h and the radius to ${g.radius} m, then press Space to run the turn.`,
-        hints: ['The formula follows the two settings.', speedTry ? 'Use ← or → to set 96.6 km/h.' : 'Use ↑ or ↓ to set 75 m.', 'Watch my pointer. I will set the requested value and run the turn.'],
+          ? `Your prediction is recorded. Change the speed to ${THREE_TIMES_SPEED} km/h, keep the radius at 50 m, and run the turn.`
+          : `Your prediction is recorded. Keep the speed at ${BASE.speed} km/h, change the radius to 75 m, and run the turn.`),
+        prompt: done ? 'Press Enter to continue.' : `Set the speed to ${g.speed} km/h and the radius to ${g.radius} m, then press Space to run the turn.`,
+        hints: ['The formula follows the two settings.', speedTry ? `Use ← or → to set ${THREE_TIMES_SPEED} km/h.` : 'Use ↑ or ↓ to set 75 m.', 'Watch my pointer. I will set the requested value and run the turn.'],
       };
     }
 
@@ -595,9 +597,9 @@ export function createModel() {
       ready: done,
       target: done ? null : targetAction(),
       glow: 'settings',
-      say: done ? m.say : 'This test starts at 64.4 km/h and 50 m; change at least one setting, then find a turn that reaches 2 g or more. Predict from the formula and press Space to run the turn.',
+      say: done ? m.say : `This test starts at ${BASE.speed} km/h and 50 m; change at least one setting, then find a turn that reaches 2 g or more. Predict from the formula and press Space to run the turn.`,
       prompt: done ? 'Press Enter to continue.' : `The meter reads ${reading(speed, radius)} g. Change speed or radius, then press Space to run the turn.`,
-      hints: ['A higher speed or a shorter radius raises the reading.', 'Use ← or → to raise speed, or ↑ or ↓ to change the radius; then run the turn.', 'Watch my pointer. I will set 128.7 km/h and run the turn.'],
+      hints: ['A higher speed or a shorter radius raises the reading.', 'Use ← or → to raise speed, or ↑ or ↓ to change the radius; then run the turn.', `Watch my pointer. I will set ${THREE_TIMES_SPEED} km/h and run the turn.`],
     };
 
     if (check) return {
@@ -621,8 +623,8 @@ export function createModel() {
       waiting: false,
       ideas: KEY_IDEAS,
       ideaRows: {
-        speed: [`${kmh(40).toFixed(1)} km/h: ${reading(40, 50)} g`, `${kmh(80).toFixed(1)} km/h: ${reading(80, 50)} g`, 'Both at a 50 m radius'],
-        radius: [`50 m: ${reading(40, 50)} g`, `100 m: ${reading(40, 100)} g`, `Both at ${kmh(40).toFixed(1)} km/h`],
+        speed: [`${BASE.speed} km/h: ${reading(BASE.speed, 50)} g`, `${TWICE_SPEED} km/h: ${reading(TWICE_SPEED, 50)} g`, 'Both at a 50 m radius'],
+        radius: [`50 m: ${reading(BASE.speed, 50)} g`, `100 m: ${reading(BASE.speed, 100)} g`, `Both at ${BASE.speed} km/h`],
       },
       say: 'A turning car keeps changing direction, so it needs a sideways push that the driver feels. In this game the reading rises with the square of speed and falls as radius grows, and the G-force lap still asks you to reach at least 2 g in three different corners without leaving the road.',
       prompt: 'Press Enter to finish the lesson and open the G-force lap challenge.',

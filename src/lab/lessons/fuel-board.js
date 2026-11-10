@@ -3,7 +3,7 @@
 // timed to the lesson's speed with a photo finish, force and speed arrows and each car's sum, a graph of the speed, the
 // litre jug and its box, the free test's car and table, and the job card for Brian's job. Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
-import {HALF, WEIGH_KG, ABOUT_KMH, TARGET_MS, kg1, kg2, s2, pct, pctAbout, gapWords} from './fuel-classroom.js';
+import {HALF, WEIGH_KG, TARGET_TEXT, TARGET_KMH, TARGET_MS, kg1, kg2, s2, pct, pctAbout, gapWords} from './fuel-classroom.js';
 import {TANK_LITRES, POUR_LITRES, PETROL_KG_PER_LITRE, WATER_KG_PER_LITRE, GRAND_PRIX} from '../benches/fuel.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -15,8 +15,8 @@ const n0 = value => value.toLocaleString('en-GB', {maximumFractionDigits: 0}), n
 // The tank and its scale, on the left.
 const TANK = Object.freeze({x: 95, y: 190, w: 170, h: 240});
 const NOZZLE = Object.freeze([180, 150]), TAP = Object.freeze([300, 418]), CAN = Object.freeze({x: 318, y: 470, w: 80, h: 92});
-// The drag strip: 46 m across, on the right beside the tank, or the whole board on its own.
-const STRIP = Object.freeze({metres: 46, top: 160, gap: 100});
+// The drag strip: 50 m across, on the right beside the tank, or the whole board on its own.
+export const STRIP = Object.freeze({metres: 50, top: 160, gap: 100});
 const RIGHT = Object.freeze({x: 450, w: 510}), WIDE = Object.freeze({x: 80, w: 840});
 const stripOf = view => view.tank || view.job ? RIGHT : WIDE;
 const JUGS = Object.freeze({water: [300, 400], petrol: [700, 400]});
@@ -58,7 +58,7 @@ export function hoverInfo(view, x, y) {
   const g = stripOf(view);
   if (view.job && x > g.x && x < g.x + g.w && y > 30 && y < 240) return 'The race card shows how far this race goes and how far your petrol lasts.';
   for (const [i, l] of view.lanes.entries()) if (y > laneY(i) - 40 && y < laneY(i) + 30 && x > g.x && x < g.x + g.w)
-    return `This ${l.carName} carries ${l.litres} litres of petrol, which is ${kg1(l.kg)}, and is timed from a standstill to ${ABOUT_KMH}.`;
+    return `This ${l.carName} carries ${l.litres} litres of petrol, which is ${kg1(l.kg)}, and is timed from a standstill to ${TARGET_TEXT}.`;
   return null;
 }
 export function targetPoint(view, action) {
@@ -195,7 +195,7 @@ function strip(ctx, view) {
   ctx.stroke();
   text(ctx, 'start', stripX(g, 0), laneY(n - 1) + 60, {size: 13, colour: DIM});
   for (const m of [10, 20, 30, 40]) text(ctx, `${m} m`, stripX(g, m), laneY(n - 1) + 60, {size: 12, colour: DIM});
-  text(ctx, `From a standstill to ${ABOUT_KMH}, timed at real speed`, g.x + g.w / 2, laneY(0) - 72, {size: 16, colour: DIM});
+  text(ctx, `From a standstill to ${TARGET_TEXT}, timed at real speed`, g.x + g.w / 2, laneY(0) - 72, {size: 16, colour: DIM});
   view.lanes.forEach((l, i) => {
     const y = laneY(i), nose = stripX(g, l.metres);
     // The car's nose is where it has got to; the stopwatch and the speed ride above the lane, clear of the car.
@@ -208,7 +208,7 @@ function strip(ctx, view) {
       text(ctx, 'force', nose - 92 - 24, y + 16, {size: 12, colour: theme.accent, weight: 800});
       text(ctx, `${n0(l.sums.force)} N ÷ ${n1(l.sums.total)} kg = ${l.sums.accel.toFixed(3)} m/s²`, g.x + 12, y + 37, {size: 13, align: 'left', colour: theme.accent});
     }
-    if (l.seconds != null && l.kmh > 3) roadArrow(ctx, nose + 4, y + 2, Math.max(12, 44 * l.kmh / 97), GREEN);
+    if (l.seconds != null && l.kmh > 3) roadArrow(ctx, nose + 4, y + 2, Math.max(12, 44 * l.kmh / TARGET_KMH), GREEN);
     const sx = g.x + g.w - 8;
     if (l.seconds != null) {
       ctx.fillStyle = 'rgba(10,14,15,.85)'; ctx.beginPath(); ctx.roundRect(sx - 118, y - 42, 118, 26, 5); ctx.fill();
@@ -289,7 +289,7 @@ function photo(ctx, view, g) {
   // Close up: a metre is 150 board units, or less so the furthest car still fits behind its name.
   const perM = Math.min(150, (noseX - x - 200) / Math.max(gap, .01));
   ctx.fillStyle = 'rgba(10,14,15,.92)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
-  text(ctx, `PHOTO FINISH, when the first car reached ${ABOUT_KMH}`, x + 12, y + 16, {size: 13, align: 'left', colour: DIM, weight: 800});
+  text(ctx, `PHOTO FINISH, when the first car reached ${TARGET_TEXT}`, x + 12, y + 16, {size: 13, align: 'left', colour: DIM, weight: 800});
   lanes.forEach((l, i) => {
     const cy = y + 54 + i * 36, nx = noseX - (lead - l.photoM) * perM;
     text(ctx, l.label, x + 14, cy - 2, {size: 14, align: 'left'});

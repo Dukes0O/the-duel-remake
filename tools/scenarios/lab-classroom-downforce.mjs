@@ -41,7 +41,7 @@ export async function passDownforce(c) {
   await d.at('try-free'); await d.press('Space'); await d.saying('test a different one', 'the first setting ran');
   await d.press('ArrowUp', 5); await d.press('Space'); await d.prompt('You have tested 2 of', 'the second setting ran');
   await d.press('ArrowLeft'); await d.press('Space'); await d.next('try-free');
-  await d.at('try-speed'); await d.press('ArrowUp', 6); await d.prompt('193 km/h', 'the dial reads 193 km/h'); await d.press('Space');
+  await d.at('try-speed'); await d.press('ArrowUp', 6); await d.prompt('120 km/h', 'the dial reads 120 km/h'); await d.press('Space');
   await d.at('try-speed', 's.cards === 3'); await d.press('Digit2'); await d.next('try-speed');
   // The cost: the tilted wing carries over; run it, then flat, then steep.
   await d.at('try-cost', 's.cards === 3'); await d.press('Digit1');
@@ -77,12 +77,12 @@ export async function run(c) {
   await open();
   if (await c.evaluate(`!!document.querySelector('.lab-teaching:not([hidden])')`)) throw Error('The old lesson panel opened beside the classroom.');
   await wait(1800); await shot('wonder-fan'); await at('wonder', 's.ready'); await shot('wonder');
-  if (!(await bubble()).includes('1,475 kg')) throw Error('The wonder should end on the scale’s reading: ' + await bubble());
+  if (!(await bubble()).includes('1,337 kg')) throw Error('The wonder should end on the scale’s reading: ' + await bubble());
   await next('wonder');
   // Fan speed: km/h and m/s are defined, and the dial moves the sum.
   await at('word-speed'); await shot('word-speed');
   await press('ArrowUp'); await wait(200);
-  if (!(await sums('26.82 m/s'))) throw Error('The sum did not follow the fan dial.');
+  if (!(await sums('16.67 m/s'))) throw Error('The sum did not follow the fan dial.');
   await press('ArrowUp', 4); await at('word-speed', 's.ready'); await wait(300); await shot('word-speed-done');
   await next('word-speed');
   // Wing: one click on the wing panel's Steeper, then → once more.
@@ -96,11 +96,11 @@ export async function run(c) {
   await press('ArrowRight'); await at('word-wing', 's.ready'); await wait(300); await shot('word-wing-done');
   await next('word-wing');
   await at('word-downforce'); await shot('word-downforce'); await press('Space'); await at('word-downforce', 's.ready');
-  await saying('1,306 kg', 'the scale reads the car and the push'); await wait(300); await shot('word-downforce-done');
+  await saying('1,272 kg', 'the scale reads the car and the push'); await wait(300); await shot('word-downforce-done');
   // The word stays open: the dial moves the sum and the scale, and doubling the speed gives four times the push.
-  if (!(await sums('0.11239 × 22.35'))) throw Error('The push sum should show the fan’s speed.');
+  if (!(await sums('0.11239 × 13.89'))) throw Error('The push sum should show the fan’s speed.');
   await press('ArrowUp', 5); await prompt('keep turning the dial', 'the word stays open'); await wait(300);
-  if (!(await sums('0.11239 × 44.70'))) throw Error('The push sum did not follow the dial.');
+  if (!(await sums('0.11239 × 27.78'))) throw Error('The push sum did not follow the dial.');
   await shot('word-downforce-doubled');
   // Backspace goes back one step, which stays done; Enter comes forward again.
   await press('Backspace'); await at('word-wing', 's.ready'); await press('Enter');
@@ -118,9 +118,9 @@ export async function run(c) {
   await press('ArrowDown', 5); await press('Space'); await prompt('You have tested 2 of', 'two settings counted'); await wait(300);
   await press('ArrowLeft'); await press('Space'); await at('try-free', 's.ready'); await wait(300); await shot('try-free-three');
   await next('try-free');
-  // Twice the speed: Space at 97 km/h says to turn the dial; 193 km/h, a wrong guess says why.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 193 km/h', 'the wrong speed says why');
-  await press('ArrowUp', 6); await prompt('193 km/h', 'the dial reads 193 km/h'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
+  // Twice the speed: Space at 60 km/h says to turn the dial; 120 km/h, a wrong guess says why.
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 120 km/h', 'the wrong speed says why');
+  await press('ArrowUp', 6); await prompt('120 km/h', 'the dial reads 120 km/h'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
   await press('Digit1'); await at('try-speed', 's.ready'); await saying('not twice as much', 'a wrong guess says why'); await wait(300); await shot('try-speed-done');
   await next('try-speed');
   // The cost: guess steep (wrong), run the tilted wing, try it twice (refused), then flat and steep.

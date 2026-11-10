@@ -108,7 +108,7 @@ export async function run(c) {
   await at('try-speed');
   await shot('gforce-speed-question');
   await press('Digit2');
-  await press('ArrowRight', 4);
+  await press('ArrowRight', 10);
   await press('Space');
   await at('try-speed', 'value.ready');
   await shot('gforce-speed-result');

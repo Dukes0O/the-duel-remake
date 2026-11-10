@@ -15,7 +15,7 @@ Kyle said yes to these on 9 November. They go before town and art cards.
 | DIG-YARD-TOY | Codex, then Claude plays it | Released on its own switch |
 | LAB-OPEN-DOOR | Codex | After MENU-NEXT-UP (same menu files) |
 | LAB-BRIAN-SHORT | Claude | Done and merged on 9 November |
-| LAB-ROUND-NUMBERS | Claude | After LAB-BRIAN-SHORT (same lesson files) |
+| LAB-ROUND-NUMBERS | Claude | Done and merged on 9 November |
 
 Each one goes live when it is green (rule 18). One release a day at most is enough.
 
@@ -23,15 +23,21 @@ Each one goes live when it is green (rule 18). One release a day at most is enou
 
 The audit suggests this order. None of it is decided yet, and direction is Kyle's.
 
-1. Claude plays all sixteen Lab lessons in a visible browser, as a child would (L1). Easy that
-   a young driver wins 8 times in 10 (EASY-YOUNG-DRIVER, W1). Finish and release the Everburn
-   (W2).
+1. Claude plays all sixteen Lab lessons in a visible browser, as a child would (L1). Finish
+   and release the Everburn (W2). W1 (an Easy that a young driver wins 8 times in 10) is dropped:
+   Kyle said on 9 November that Gratian is now good, and better than Kyle at the Scrapdome.
 2. One Lab lesson, Pendulums, taught on the real machine in the hangar, for Kyle and Gratian to
    try before any other lesson is rebuilt (L5). Brian brings a lesson back after a race (L7).
    The Bowl's smallest Show Night (W4).
 3. Kyle's choice: one played slice of the town with the tunnel trial (W6), or more Lab.
 
-Until Kyle decides, Codex's other ready cards run as the board lists them.
+Kyle, 9 November: finish what has been started before opening new lines, and Claude chooses the
+order. Routine build work goes to a cheaper model (Sonnet 5.5 or Codex) with a written brief;
+Claude's own turns go to graphics, story and design. For art, try both routes on two or three
+comparable pieces and write the scores in `docs/ART_LINE.md`: Claude builds in one or two turns,
+against Claude designs, a cheaper model builds and Claude judges.
+
+Until then, Codex's other ready cards run as the board lists them.
 
 ## Switched off, and staying off until its card says otherwise
 

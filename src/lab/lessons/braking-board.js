@@ -4,7 +4,7 @@
 // The word steps add a mark for each second, a mark for each half second of braking, and gold blocks of energy that
 // disappear along the road. Draws and hit-tests only.
 import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
-import {m1, pct, kmh, msOf, metresFrom, S50, SLOW, FRONT_LOAD, REAR_LOAD, STEADY_FRONT, MIN_FRONT, MAX_FRONT} from './braking-classroom.js';
+import {m1, pct, kmh, msOf, metresFrom, S_SLOW, SLOW, FAST, SPEED_STEP, FRONT_LOAD, REAR_LOAD, STEADY_FRONT, MIN_FRONT, MAX_FRONT} from './braking-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
 
@@ -47,13 +47,13 @@ export function hitTest(view, x, y) {
 }
 export function hoverInfo(view, x, y) {
   if (!rig(view)) return null;
-  if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'This is the speed dial, and Brian has set it for this test.' : 'This is the speed dial. Each press makes the speed about 16 km/h faster or slower.';
+  if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'This is the speed dial, and Brian has set it for this test.' : `This is the speed dial. Each press makes the speed ${SPEED_STEP} km/h faster or slower.`;
   if (view.car && inRect(x, y, LEVER)) return 'These buttons choose the car. Each car has its own brake strength, which changes its deceleration.';
   if (view.lever && inRect(x, y, LEVER)) return view.lever.locked ? 'This is the brake lever, and Brian has set it for this test.' : 'This is the brake lever. It divides the braking between the front and back brakes, and each press moves it 10%.';
   if (view.close && !view.close.plain && y > CLOSE.ground - 8 && y < CLOSE.ground + 92 && x > 100 && x < 520) return 'These weighing pads show the share of the car’s weight on each pair of tyres.';
   if (view.close && x > 150 && x < 500 && y > 110 && y < CLOSE.ground) return 'This is the Falcone F42 close up.';
   if (view.table && inRect(x, y, LEFT)) return 'This table keeps the result of each test.';
-  if (view.energy && inRect(x, y, LEFT)) return 'Each gold block is the energy of motion of this car at 80 km/h.';
+  if (view.energy && inRect(x, y, LEFT)) return `Each gold block is the energy of motion of this car at ${kmh(SLOW)} km/h.`;
   if (view.energy && x > 90 && x < 950 && y > STRIP.top && y < STRIP.bottom) return 'Each numbered stretch of road is the length that the brakes need to remove one block of energy.';
   if (x > 90 && x < 950 && y > STRIP.top && y < STRIP.bottom) return 'This test strip is 80 m long and drawn to scale. The brakes go on at the yellow line, and there is a mark every 10 m.';
   return null;
@@ -268,7 +268,8 @@ function strip(ctx, view) {
     laneName(ctx, l.label, y);
     const reading = l.waiting ? 'ready' : l.done ? `stopped in ${m1(l.stopMetres)}${l.slides ? ', and the back slid' : ''}` : `${Math.round(l.ms * 3.6)} km/h`;
     text(ctx, reading, 952, y - 28, {size: 15, align: 'right', colour: l.done ? (l.slides ? theme.bad : GREEN) : theme.text});
-    if (l.done) text(ctx, l.stopMetres > STRIP.metres ? `${m1(l.stopMetres)}, past the end ▶` : m1(l.stopMetres), Math.min(stripX(l.metres), 900) + 12, y - 22, {size: 15, align: l.stopMetres > STRIP.metres ? 'right' : 'left', colour: theme.accent});
+    // A stop far along the strip sits under the reading on the right, which already gives the distance.
+    if (l.done && (l.stopMetres > STRIP.metres || stripX(l.metres) < 700)) text(ctx, l.stopMetres > STRIP.metres ? `${m1(l.stopMetres)}, past the end ▶` : m1(l.stopMetres), Math.min(stripX(l.metres), 900) + 12, y - 22, {size: 15, align: l.stopMetres > STRIP.metres ? 'right' : 'left', colour: theme.accent});
   });
   if (view.keys.Space === 'go' && !view.lanes.length && !view.perSecond) text(ctx, 'Press Space to brake', stripX(20), laneY(0, 1) + 4, {size: 15, align: 'left', colour: theme.faint});
 }
@@ -284,7 +285,7 @@ function blocks(ctx, x, y, count, left) {
 }
 function energyScene(ctx, view) {
   const {x, y, w, h} = LEFT, d = view.dial, slowKmh = kmh(SLOW), slowMs = msOf(SLOW);
-  const rows = [{label: `${slowKmh} km/h`, ms: slowMs, stop: S50, lane: view.lanes[0]}, {label: `${d.kmh} km/h`, ms: d.ms, stop: metresFrom(d.speed), lane: view.lanes[1]}];
+  const rows = [{label: `${slowKmh} km/h`, ms: slowMs, stop: S_SLOW, lane: view.lanes[0]}, {label: `${d.kmh} km/h`, ms: d.ms, stop: metresFrom(d.speed), lane: view.lanes[1]}];
   if (view.lanes[1]) { rows[1].label = view.lanes[1].label.replace('From ', ''); rows[1].ms = msOf(view.lanes[1].speed); rows[1].stop = view.lanes[1].stopMetres; }
   panel(ctx, x, y, w, h);
   text(ctx, 'ENERGY OF MOTION', x + 14, y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
@@ -295,10 +296,10 @@ function energyScene(ctx, view) {
     text(ctx, `${count.toFixed(2)} times the energy of the car at ${slowKmh} km/h`, x + 110, ry + 8, {size: 14, align: 'left', colour: 'rgba(245,240,220,.75)'});
     blocks(ctx, x + 14, ry + 28, count, count * share);
   });
-  wrap(ctx, together(`Each block needs the same ${m1(S50)} of road.`), LEVER.x + LEVER.w / 2, 230, LEVER.w - 30, {size: 22});
+  wrap(ctx, together(`Each block needs the same ${m1(S_SLOW)} of road.`), LEVER.x + LEVER.w / 2, 230, LEVER.w - 30, {size: 22});
   // The road: one numbered stretch for each block.
   rows.forEach((row, i) => {
-    const ry = ROAD.y[i], l = row.lane, stretch = S50 * ROAD.perM, count = row.stop / S50;
+    const ry = ROAD.y[i], l = row.lane, stretch = S_SLOW * ROAD.perM, count = row.stop / S_SLOW;
     ctx.fillStyle = '#23272a'; ctx.fillRect(40, ry - 40, 920, 74);
     for (let k = 0; k < Math.ceil(count - 1e-3); k++) {
       const sx = ROAD.x0 + k * stretch, sw = Math.min(stretch, ROAD.x0 + row.stop * ROAD.perM - sx);
@@ -383,9 +384,9 @@ function drawRecap(ctx, view) {
     ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     if (idea.id === 'four') {
-      // Each stop to the same scale, 4.8 board units a metre, one stretch of road for each block of energy.
-      for (const [k, speed] of [[0, 50], [1, 100]]) {
-        const y = 170 + k * 90, metres = metresFrom(speed), stretches = Math.round(metres / S50), one = metres * 4.8 / stretches;
+      // Each stop to the same scale, 3.2 board units a metre, one stretch of road for each block of energy.
+      for (const [k, speed] of [[0, SLOW], [1, FAST]]) {
+        const y = 170 + k * 90, metres = metresFrom(speed), stretches = Math.round(metres / S_SLOW), one = metres * 3.2 / stretches;
         for (let n = 0; n < stretches; n++) { ctx.fillStyle = n % 2 ? '#b38f3a' : theme.accent; ctx.fillRect(x + 30 + n * one, y, one, 14); }
         text(ctx, `${kmh(speed)} km/h: ${m1(metres)}`, x + 30, y - 16, {size: 15, align: 'left'});
       }
@@ -416,8 +417,8 @@ export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
   if (picture.kind === 'stops') {
-    // 100 m across the card, the brake line on the left.
-    const x0 = 22, per = (w - 40) / 100;
+    // 160 m across the card, the brake line on the left.
+    const x0 = 22, per = (w - 40) / 160;
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, 14); ctx.lineTo(x0, h - 10); ctx.stroke();
     picture.metres.forEach((metres, i) => {
       const y = 36 + i * 44;

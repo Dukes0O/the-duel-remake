@@ -39,10 +39,10 @@ export async function run(c) {
   await next('wonder');
   // Speed: km/h on the dial, m/s in the sums, and each press changes the sum at once.
   await at('word-speed'); await shot('word-speed');
-  if (!(await worked('22.35 m/s × 3.6 = 80.46 km/h'))) throw Error('The sum should start at the dial’s speed.');
+  if (!(await worked('100 km/h ÷ 3.6 = 27.78 m/s'))) throw Error('The sum should start at the dial’s speed.');
   await press('ArrowUp');
-  if (!(await worked('26.82 m/s × 3.6 = 96.55 km/h'))) throw Error('The sum did not follow the dial.');
-  await press('ArrowUp', 4); await at('word-speed', 's.ready'); await shot('word-speed-done');
+  if (!(await worked('110 km/h ÷ 3.6 = 30.56 m/s'))) throw Error('The sum did not follow the dial.');
+  await press('ArrowUp', 9); await at('word-speed', 's.ready'); await shot('word-speed-done');
   await next('word-speed');
   // Stopping distance. Brian's "Stuck?" offer comes after 12 s, under his words, which stay.
   await at('word-stopping'); const words = await bubble(); await shot('word-stopping');
@@ -65,23 +65,23 @@ export async function run(c) {
   await next('word-balance');
   await at('watch'); await wait(1300); await shot('watch-braking'); await at('watch', 's.ready'); await shot('watch');
   await next('watch');
-  // Twice the speed: Space at 80 km/h says to turn the dial; 161 km/h, a wrong guess says why. The panel keeps the answer until the car stops.
-  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 161', 'the wrong speed says why');
-  await press('ArrowUp', 5); await prompt('161 km/h', 'the dial reads 161'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
-  if (await c.evaluate(`document.querySelector('.lc-formulas').textContent.includes('47.')`)) throw Error('The panel gave away the guess.');
+  // Twice the speed: Space at 100 km/h says to turn the dial; 200 km/h, a wrong guess says why. The panel keeps the answer until the car stops.
+  await at('try-speed'); await shot('try-speed'); await press('Space'); await saying('press ↑ until the dial reads 200', 'the wrong speed says why');
+  await press('ArrowUp', 10); await prompt('200 km/h', 'the dial reads 200'); await press('Space'); await at('try-speed', 's.cards === 3'); await wait(300); await shot('try-speed-guess');
+  if (await c.evaluate(`document.querySelector('.lc-formulas').textContent.includes('72.')`)) throw Error('The panel gave away the guess.');
   await press('Digit1'); await at('try-speed', 's.ready'); await saying('It needed four times the road', 'a wrong guess says why'); await shot('try-speed-done');
   await next('try-speed');
   // Energy of motion explains the result: the blocks empty along the road.
   await at('word-energy'); await shot('word-energy'); await press('Space'); await wait(1700); await shot('word-energy-braking'); await at('word-energy', 's.ready'); await shot('word-energy-done');
   await press('ArrowUp');
-  if (!(await worked('(49.17 m/s)'))) throw Error('The energy sums did not follow the dial.');
+  if (!(await worked('(58.33 m/s)'))) throw Error('The energy sums did not follow the dial.');
   await press('ArrowDown');
   await next('word-energy');
   // The free test: the dial and the car move the sums at once, and three different settings open Continue.
   await at('try-free'); await shot('try-free');
   await press('ArrowUp', 2); await wait(200);
-  if (!(await worked('(31.29 m/s)'))) throw Error('The sums did not follow the dial.');
-  await press('Space'); await saying('stopped from 113 km/h', 'the first test says its result'); await shot('try-free-one');
+  if (!(await worked('(33.33 m/s)'))) throw Error('The sums did not follow the dial.');
+  await press('Space'); await saying('stopped from 120 km/h', 'the first test says its result'); await shot('try-free-one');
   await press('ArrowRight'); await wait(200);
   if (!(await worked('2 × 23.52 m/s'))) throw Error('The sums did not follow the car.');
   await shot('try-free-car');
@@ -100,12 +100,12 @@ export async function run(c) {
   await next('try-slide');
   // Brian's job: too fast at the first corner, then right; Show me on the second; the third by hand.
   await at('alone'); await shot('alone'); await press('ArrowUp', 2); await press('Space'); await saying('past the corner', 'too fast says why'); await shot('alone-too-fast');
-  await press('ArrowDown'); await press('Space'); await saying('At the next corner', 'corner one passes');
+  await press('ArrowDown', 3); await press('Space'); await saying('At the next corner', 'corner one passes');
   for (let i = 0; i < 3 && !(await c.evaluate(`${state}?.help === 3`)); i++) await press('KeyH');
   await wait(1500); await shot('alone-show-me');
-  await saying('From 161 km/h the car stops', 'Show me sets and brakes the second corner');
-  await press('ArrowUp', 2); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
-  if (!(await bubble()).includes('97, 161 and 193 km/h')) throw Error('The job should end on its three speeds: ' + await bubble());
+  await saying('From 150 km/h the car stops', 'Show me sets and brakes the second corner');
+  await press('ArrowUp', 3); await press('Space'); await at('alone', 's.ready'); await shot('alone-done');
+  if (!(await bubble()).includes('90, 150 and 180 km/h')) throw Error('The job should end on its three speeds: ' + await bubble());
   await next('alone');
   for (const [step, answer] of [['check-four', 'Digit2'], ['check-balance', 'Digit3'], ['check-game', 'Digit1']]) {
     await at(step); await wait(300); await shot(step);

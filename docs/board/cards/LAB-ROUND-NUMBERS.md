@@ -20,6 +20,17 @@ speed, four times the push" far more easily at 100 and 200.
   points up and away while the words say the air pushes the car down.
 - Look through all sixteen classroom lessons, not only Downforce and Braking.
 
+## Scope after looking through all sixteen (Claude, 9 November)
+
+- **Changed: Braking, Downforce, G-force and Fuel.** These four hold their speeds in the game's
+  miles per hour and show the converted number (80, 97, 113, 161, 241 km/h).
+- **Left as it is: Launch.** Its dial steps in whole metres per second (13 to 24 m/s), which is
+  the unit of its sums, and shows the km/h beside it (65, 72). A dial in tens of km/h would
+  leave four settings where the lesson needs twelve. A later card may show that dial in m/s.
+- **Already round:** Headings (50 m/s, 180 km/h), Projectile (5, 10, 15, 20 m/s), Pendulums,
+  Strength, Rust, Fire, Lift, Altitude, Ski wax, Grip and Suspension show no converted speed.
+- The new test is one check in each changed lesson's own test file, not one shared file.
+
 ## Files
 
 `src/lab/lessons/*-classroom.js` and their board files, tests. Needs LAB-BRIAN-SHORT first,
@@ -34,6 +45,18 @@ because both cards change the same lesson files.
 - Every `lab-*` browser scenario.
 - Laptop only: Claude looks at Downforce's opening step and one changed board in each lesson
   that moved.
+
+## Claude's review of the changed assertions (rule 18)
+
+Two tests compared a lesson's numbers with a bench run at the same speed. A bench snaps a speed to its own steps of 10 mph, so
+that comparison cannot hold for a dial in km/h. Each test now compares the lesson with the rule the bench runs on at the exact
+speed, and also checks that the bench equals that rule on its own steps. Nothing is loosened; the lists are in
+`docs/changes/LAB-ROUND-NUMBERS.md`.
+
+## Result (Claude, 9 November 2026)
+
+Done; see `docs/changes/LAB-ROUND-NUMBERS.md`. Braking teaches with 100 and 200 km/h, because the rounded stops from 50 and
+100 do not multiply out to four times on the page.
 
 ## Removed
 

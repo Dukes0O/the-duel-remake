@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
-import {STEPS, DAYS, HALF, WEIGH_LITRES, WEIGH_KG, HALF_TANK_LINE, FREE_CARS, FREE_TRIES, TARGET_KMH, TARGET_MS, leastLitres, secondsTo60, secondsOf, sumsOf, gapAtWin, benchAttempts, KEY_IDEAS, CHALLENGE_CARD, WORDS, PASS_SAY} from '../src/lab/lessons/fuel-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/fuel-board.js';
+import {STEPS, DAYS, HALF, WEIGH_LITRES, WEIGH_KG, HALF_TANK_LINE, FREE_CARS, FREE_TRIES, TARGET_KMH, TARGET_MS, toTarget, leastLitres, secondsTo100, secondsOf, sumsOf, gapAtWin, benchAttempts, KEY_IDEAS, CHALLENGE_CARD, WORDS, PASS_SAY} from '../src/lab/lessons/fuel-classroom.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, STRIP} from '../src/lab/lessons/fuel-board.js';
 import {fuelBench, zeroToSixty, FUEL_RIG, PETROL_KG_PER_LITRE} from '../src/lab/benches/tunnel.js';
 import {dragAt, lastsShare, SIXTY_MS, TANK_LITRES} from '../src/lab/benches/fuel.js';
 import {LAB_TUNE} from '../src/lab/lab-tune.js';
@@ -72,16 +72,18 @@ test('the lesson walks the seven parts in order, keeps the old notebook words, a
 test('every number is the fuel bench’s own run, and Brian’s job is the game’s Grand Prix tank', () => {
   for (const litres of [0, 35, 50, 70]) {
     const r = fuelBench.run({litres});
-    assert.equal(secondsTo60(litres), r.zeroToSixtyS);
+    assert.equal(secondsTo100(litres), toTarget(r.zeroToSixtyS));
+    assert.ok(Math.abs(secondsTo100(litres) - r.zeroToSixtyS * (100 / 3.6) / SIXTY_MS) < 1e-9, 'the bench’s time, carried on to 100 km/h');
+    assert.ok(Math.abs(100 / 3.6 / secondsTo100(litres) - SIXTY_MS / r.zeroToSixtyS) < 1e-9, 'at the bench’s own acceleration');
     assert.equal(r.zeroToSixtyS, zeroToSixty(fuelBench.controls[0].value, litres).seconds);
     assert.equal(r.fuelKg, litres * PETROL_KG_PER_LITRE);
   }
-  assert.equal(secondsTo60(70).toFixed(2), '3.16'); assert.equal(secondsTo60(35).toFixed(2), '3.09'); assert.equal(secondsTo60(0).toFixed(2), '3.03');
+  assert.equal(secondsTo100(70).toFixed(2), '3.27'); assert.equal(secondsTo100(35).toFixed(2), '3.20'); assert.equal(secondsTo100(0).toFixed(2), '3.13');
   assert.equal(WEIGH_KG.toFixed(1), '37.0');
-  assert.equal(Math.round(gapAtWin(35, 70) * 100), 86, 'the half tank is 86 cm ahead when it reaches the speed');
+  assert.equal(Math.round(gapAtWin(35, 70) * 100), 92, 'the half tank is 92 cm ahead when it reaches the speed');
   // The drag strip: the same push all the way, and the bench's speed at the bench's own time.
-  const d = dragAt(70, secondsTo60(70));
-  assert.ok(Math.abs(d.mph - FUEL_RIG.upToMph) < 1e-9 && Math.abs(d.metres - SIXTY_MS * secondsTo60(70) / 2) < 1e-9);
+  const benchS = fuelBench.run({litres: 70}).zeroToSixtyS, d = dragAt(70, benchS);
+  assert.ok(Math.abs(d.mph - FUEL_RIG.upToMph) < 1e-9 && Math.abs(d.metres - SIXTY_MS * benchS / 2) < 1e-9);
   // The Grand Prix: a full tank lasts 110%, so the least the pump pours for each race is 35, 50 and 65 litres.
   assert.equal(lastsShare(TANK_LITRES), LAB_TUNE.fuel.fullTankRaceShare);
   assert.equal(lastsShare(HALF), LAB_TUNE.fuel.fullTankRaceShare * (1 - 2 * LAB_TUNE.fuel.loadPerStep), 'half a tank lasts what the Tune page says');
@@ -91,10 +93,10 @@ test('every number is the fuel bench’s own run, and Brian’s job is the game�
 });
 
 test('the sums: the speed is honest in km/h and m/s, and every sum comes out on a calculator and agrees with the stopwatch', () => {
-  assert.equal(TARGET_KMH, 96.56, 'the bench’s speed in km/h');
-  assert.equal(Math.round(TARGET_KMH), 97);
-  assert.equal(TARGET_MS, Number((96.56 / 3.6).toFixed(3)));
-  assert.equal(TARGET_MS, 26.822);
+  assert.equal(TARGET_KMH, 100, 'the lesson’s speed in km/h');
+  assert.equal(Math.round(TARGET_KMH), TARGET_KMH, 'a whole number, so nothing is rounded');
+  assert.equal(TARGET_MS, Number((100 / 3.6).toFixed(3)));
+  assert.equal(TARGET_MS, 27.778);
   for (const car of FREE_CARS) for (let litres = 0; litres <= TANK_LITRES; litres += 5) {
     const s = sumsOf(litres, car), r = fuelBench.run({car, litres});
     assert.equal(s.fuel, Number((litres * .74).toFixed(2)));
@@ -102,7 +104,8 @@ test('the sums: the speed is honest in km/h and m/s, and every sum comes out on 
     assert.equal(s.total.toFixed(1), r.carMassKg.toFixed(1), `${car}/${litres}: the total mass is the bench’s`);
     assert.equal(s.accel, Number((s.force / s.total).toFixed(3)));
     assert.equal(s.time, Number((TARGET_MS / s.accel).toFixed(2)));
-    assert.equal(s.time.toFixed(2), r.zeroToSixtyS.toFixed(2), `${car}/${litres}: the sum and the stopwatch agree`);
+    assert.equal(s.time.toFixed(2), secondsOf(litres, car).toFixed(2), `${car}/${litres}: the sum and the stopwatch agree`);
+    assert.equal(secondsOf(litres, car), toTarget(r.zeroToSixtyS), `${car}/${litres}: the stopwatch is the bench’s run carried on to 100 km/h`);
   }
   assert.deepEqual([70, 35, 0].map(l => sumsOf(l).accel), [8.494, 8.673, 8.861]);
   assert.equal(sumsOf(70).force, 10617);
@@ -174,12 +177,12 @@ test('the tries: a wrong pour says why with the real litres, kilograms and times
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-half');
   pourTo(session, 50); session.act('go'); until(session, v => v.step.id === 'try-half' && v.lanes.every(l => l.done) && !/Watch/.test(v.brian.text));
-  assert.equal(session.view().brian.text, '50 litres is more than half, and that car stopped the stopwatch at 3.12 s against 3.16 s for the full tank. Half of 70 is 35, so pour out 15 more litres with ↓ and race again.');
+  assert.equal(session.view().brian.text, '50 litres is more than half, and that car stopped the stopwatch at 3.23 s against 3.27 s for the full tank. Half of 70 is 35, so pour out 15 more litres with ↓ and race again.');
   assert.equal(session.view().ready, false);
   pourTo(session, 20); session.act('go'); until(session, v => /less than half/.test(v.brian.text));
-  assert.equal(session.view().brian.text, '20 litres is less than half. That car won, stopping the stopwatch at 3.06 s against 3.16 s for the full tank, but half of 70 is 35, so pour in 15 litres with ↑ and race again.');
+  assert.equal(session.view().brian.text, '20 litres is less than half. That car won, stopping the stopwatch at 3.17 s against 3.27 s for the full tank, but half of 70 is 35, so pour in 15 litres with ↑ and race again.');
   pourTo(session, 35); session.act('go'); until(session, v => v.ready);
-  assert.equal(session.view().brian.text, 'A tank holding 35 litres, half of 70, carries 25.9 kg of petrol. That car reached about 97 km/h in 3.09 s and the full tank reached it in 3.16 s, so the car with half a tank was 86 cm ahead when it got there.');
+  assert.equal(session.view().brian.text, 'A tank holding 35 litres, half of 70, carries 25.9 kg of petrol. That car reached 100 km/h in 3.20 s and the full tank reached it in 3.27 s, so the car with half a tank was 92 cm ahead when it got there.');
   session.act('next');
   assert.equal(session.view().covered, true, 'the second try covers the gauge');
   // By mass: the player can pour past the mass; Space weighs it and the scale says how far off, and which way.
@@ -294,18 +297,18 @@ test('the free test: the sums show first, every press changes them, the table ke
   assert.equal(v.ready, false);
   assert.equal(sumOf(v, 'Total mass'), '1,198.2 kg + 51.8 kg = 1,250.0 kg', 'the sum shows before any race');
   assert.equal(sumOf(v, 'Acceleration'), '10,617 N ÷ 1,250.0 kg = 8.494 m/s^2');
-  assert.equal(sumOf(v, 'Time'), '26.822 m/s ÷ 8.494 m/s^2 = 3.16 s');
+  assert.equal(sumOf(v, 'Time'), '27.778 m/s ÷ 8.494 m/s^2 = 3.27 s');
   session.act('pour:out');
   assert.equal(sumOf(session.view(), 'Mass of the petrol'), '65 litres × 0.74 kg per litre = 48.1 kg', 'the gauge moves the sums');
   assert.equal(sumOf(session.view(), 'Total mass'), '1,198.2 kg + 48.1 kg = 1,246.3 kg');
   pourTo(session, 35);
   assert.equal(sumOf(session.view(), 'Acceleration'), '10,617 N ÷ 1,224.1 kg = 8.673 m/s^2');
-  assert.equal(sumOf(session.view(), 'Time'), '26.822 m/s ÷ 8.673 m/s^2 = 3.09 s');
+  assert.equal(sumOf(session.view(), 'Time'), '27.778 m/s ÷ 8.673 m/s^2 = 3.20 s');
   session.act('car:next');
   assert.equal(session.view().free.car, 'Falcone Sirena');
   assert.equal(sumOf(session.view(), 'Acceleration'), '7,329 N ÷ 784.1 kg = 9.347 m/s^2', 'the car moves the sums');
   raceFree(session);
-  assert.match(session.view().brian.text, /^The Falcone Sirena with 35 litres has a total mass of 784\.1 kg and an acceleration of 9\.347 m\/s², and the stopwatch stopped at 2\.87 s\. With a full tank this car stops the stopwatch at 2\.96 s, so carrying 35 fewer litres saved 0\.09 s\. Change a setting and test a different one\./);
+  assert.match(session.view().brian.text, /^The Falcone Sirena with 35 litres has a total mass of 784\.1 kg and an acceleration of 9\.347 m\/s², and the stopwatch stopped at 2\.97 s\. With a full tank this car stops the stopwatch at 3\.07 s, so carrying 35 fewer litres saved 0\.10 s\. Change a setting and test a different one\./);
   assert.equal(session.view().ready, false);
   raceFree(session);
   assert.equal(session.view().ready, false, 'the same setting again does not count as a different one');
@@ -346,11 +349,11 @@ test('the panel: every step after the first has sums, and they are only what has
   const speed = createClassroomSession(lesson);
   playThroughTo(speed, 'word-speed');
   assert.deepEqual(speed.view().formulas.map(f => f.title), ['Speed in metres per second']);
-  assert.equal(speed.view().formulas[0].worked, '96.56 km/h ÷ 3.6 = 26.822 m/s');
+  assert.equal(speed.view().formulas[0].worked, '100 km/h ÷ 3.6 = 27.778 m/s');
   speed.act('go'); run(speed, 1);
   assert.equal(speed.view().formulas.length, 1, 'acceleration is not in the panel until Brian has defined it');
   until(speed, v => v.ready);
-  assert.equal(sumOf(speed.view(), 'Acceleration'), '26.822 m/s ÷ 3.16 s = 8.49 m/s^2');
+  assert.equal(sumOf(speed.view(), 'Acceleration'), '27.778 m/s ÷ 3.27 s = 8.49 m/s^2');
   assert.match(speed.view().brian.text, /This car’s acceleration is 8\.49 m\/s², which means that its speed rises by 8\.49 m\/s during every second/);
   assert.equal(speed.view().graph.rise, 8.49);
   speed.act('replay');
@@ -397,7 +400,7 @@ test('a word appears only after the step that defines it, and a step’s opening
     for (const step of STEPS.slice(0, until)) assert.ok(!pattern.test(stepWords(step.id)), `${step.id} uses ${pattern} before ${definer} defines it: ${stepWords(step.id).match(pattern)?.[0]}`);
     assert.ok(pattern.test(stepWords(definer)), `${definer} defines ${pattern}`);
   }
-  assert.match(stepWords('wonder'), /about 97 kilometres per hour, which is written km\/h/);
+  assert.match(stepWords('wonder'), /reach 100 kilometres per hour, which is written km\/h/);
   assert.match(stepWords('word-speed'), /metres per second, written m\/s/);
   assert.ok(!/acceleration|m\/s²|m\/s\^2/i.test(stepWords('word-speed')), 'acceleration waits for the race on the graph');
   // The wonder's board has no litres or kilograms on its labels yet.
@@ -432,7 +435,7 @@ test('the words: metric only, whole sentences, nothing without a mind decides, a
 test('every check says why a wrong answer is wrong, then shows it', () => {
   const answers = {
     'check-water': [1, /^A litre of petrol has a mass of 0\.74 kg and a litre of water has a mass of 1\.00 kg\./],
-    'check-race': [2, /^They do not arrive together\. The car with half a tank reached about 97 km\/h in 3\.09 s, and the car with a full tank reached it in 3\.16 s\. That left a gap of 86 cm/],
+    'check-race': [2, /^They do not arrive together\. The car with half a tank reached 100 km\/h in 3\.20 s, and the car with a full tank reached it in 3\.27 s\. That left a gap of 92 cm/],
     'check-game': [1, /^A full tank lasts 110% of a Grand Prix, so half a tank lasts 55% and its petrol runs out just past half way\. With an empty tank the car has 40% of its acceleration until it stops in the pit lane\./],
   };
   for (const [id, [pick, why]] of Object.entries(answers)) {
@@ -518,9 +521,10 @@ test('the races: one clock for every car, the lighter car ahead all the way, and
   until(session, v => v.ready);
   [full, half] = session.view().lanes;
   assert.equal(half.winner, true); assert.equal(full.winner, false);
-  assert.ok(half.metres > full.metres && half.metres < 46, 'they park on the strip, the winner in front');
-  assert.equal(full.seconds, secondsTo60(70)); assert.equal(half.seconds, secondsTo60(35));
-  assert.equal(Math.round(full.kmh), 97, 'the speed reads about 97 km/h at the end');
+  assert.ok(half.metres > full.metres && half.metres < STRIP.metres, 'they park on the strip, the winner in front');
+  assert.equal(full.seconds, secondsTo100(70)); assert.equal(half.seconds, secondsTo100(35));
+  assert.equal(Math.round(full.kmh), 100, 'the speed reads 100 km/h at the end');
+  assert.ok(Math.abs(full.kmh - 100) < 1e-9 && Math.abs(half.kmh - 100) < 1e-9);
   session.act('replay');
   assert.ok(session.view().lanes.every(l => l.seconds == null), 'the race starts again');
   session.act('next') ; playThroughTo(session, 'watch');
@@ -529,9 +533,10 @@ test('the races: one clock for every car, the lighter car ahead all the way, and
   until(session, v => v.ready);
   assert.deepEqual(session.view().lanes.map(l => l.winner), [false, false, true], 'the empty tank wins');
   assert.match(session.view().brian.text, /each kilogram receives a larger share of the force, so the whole car accelerates faster/);
-  assert.match(session.view().brian.text, /the empty tank beat the full tank by only 1\.7 m/);
+  assert.match(session.view().brian.text, /the empty tank beat the full tank by only 1\.8 m/);
   assert.deepEqual(session.view().formulas.map(f => f.worked).filter(Boolean), ['10,617 N ÷ 1,250.0 kg = 8.494 m/s^2', '10,617 N ÷ 1,224.1 kg = 8.673 m/s^2', '10,617 N ÷ 1,198.2 kg = 8.861 m/s^2']);
-  for (const car of FREE_CARS) assert.ok(SIXTY_MS * secondsOf(70, car) / 2 < 46, `${car} stays on the strip`);
+  assert.equal(STRIP.metres, 50);
+  for (const car of FREE_CARS) assert.ok(TARGET_KMH / 3.6 * secondsOf(70, car) / 2 < STRIP.metres, `${car} stays on the strip`);
 });
 
 test('review fixes: the can holds only what went out of the tap; clicks land where things are drawn; Show me says what it did', () => {
@@ -614,4 +619,61 @@ test('review fixes: the weighing try draws no race strip, so nothing on the boar
   session.act('pour:out'); session.act('pour:out'); session.act('pour:out');
   drawBoard(fake, session.view(), 1000, 680);
   assert.deepEqual(texts.filter(t => /\d+ (L|litres)\b/.test(t) && !/^Each press pours/.test(t)), []);
+});
+
+test('LAB-ROUND-NUMBERS: every speed in km/h that the lesson shows is a multiple of 10, and the race ends at exactly 100 km/h', () => {
+  assert.equal(TARGET_KMH % 10, 0);
+  const found = [];
+  const drawn = view => {
+    const texts = [];
+    const fake = new Proxy({}, {get: (target, name) => {
+      if (name in target) return target[name];
+      if (name === 'measureText') return value => ({width: String(value).length * 9});
+      if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+      if (name === 'fillText') return value => texts.push(String(value));
+      return () => {};
+    }, set: (target, name, value) => { target[name] = value; return true; }});
+    drawBoard(fake, view, 1000, 680);
+    return texts;
+  };
+  // The words of a view: Brian, the prompt, the hints, the panel, the cards and the recap's ideas.
+  const words = v => [v.say, v.prompt, v.brian?.text, ...v.hints, ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]), ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text)];
+  // The board is read only while no car is moving, because a moving car's speed reading is a result.
+  const still = v => v.lanes.every(l => l.seconds == null || l.done);
+  const hovers = v => v.lanes.map((_, i) => hoverInfo(v, 700, 160 + i * 100));
+  const collect = (v, where) => {
+    for (const l of v.lanes) if (l.done) assert.ok(Math.abs(l.kmh - TARGET_KMH) < 1e-9, `${where}: a finished car reads ${TARGET_KMH} km/h`);
+    for (const text of [...words(v), ...(still(v) ? [...drawn(v), ...hovers(v)] : [])].filter(Boolean))
+      // "1 m/s is the same as 3.6 km/h" is how the two units compare, not a speed of the car.
+      for (const [, n] of String(text).replace('1 m/s is the same as 3.6 km/h', '').matchAll(/(\d[\d.,]*) ?(?:km\/h|kilometres per hour)/g)) found.push({where, n: Number(n.replace(/,/g, '')), text});
+  };
+  for (const text of [...KEY_IDEAS.map(i => i.text), CHALLENGE_CARD.title, CHALLENGE_CARD.text, PASS_SAY]) collect({lanes: [], hints: [], formulas: [], cards: [], say: text}, 'cards');
+  // Each step as it opens and as it stands when it is done, with the right answers.
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    collect(session.view(), `${step.id} opening`);
+    for (let rung = 0; rung < 2; rung++) { session.act('help'); collect(session.view(), `${step.id} hint`); }
+    const next = STEPS[STEPS.indexOf(step) + 1];
+    if (!next) continue;
+    const done = createClassroomSession(lesson);
+    playThroughTo(done, step.id);
+    const tick = done.tick;
+    done.tick = dt => { const r = tick(dt); collect(done.view(), `${step.id} playing`); return r; };
+    playThroughTo(done, next.id);
+  }
+  // The wrong pours and the wrong answers say their own sentences.
+  const half = createClassroomSession(lesson);
+  playThroughTo(half, 'try-half');
+  for (const litres of [70, 50, 20]) { pourTo(half, litres); half.act('go'); collect(half.view(), 'try-half racing'); until(half, v => v.lanes.every(l => l.done) && !/Watch/.test(v.brian.text)); collect(half.view(), `try-half ${litres}`); }
+  for (const pick of [0, 2]) {
+    const race = createClassroomSession(lesson);
+    playThroughTo(race, 'check-race');
+    race.act(`answer:${pick}`); collect(race.view(), `check-race ${pick}`);
+    until(race, v => v.lanes.every(l => l.done), 15); collect(race.view(), `check-race ${pick} raced`);
+  }
+  assert.ok(found.length > 20, `the walk reads the lesson’s speeds: ${found.length}`);
+  for (const where of ['wonder opening', 'word-speed opening', 'watch playing', 'try-half 50', 'check-race 2']) assert.ok(found.some(f => f.where === where), `${where} shows a speed`);
+  for (const f of found) assert.ok(Number.isInteger(f.n) && f.n % 10 === 0, `${f.where}: ${f.n} km/h in “${f.text}”`);
+  assert.deepEqual([...new Set(found.map(f => f.n))], [TARGET_KMH], 'the lesson has one speed, 100 km/h');
 });
