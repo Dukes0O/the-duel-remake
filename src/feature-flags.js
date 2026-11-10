@@ -57,6 +57,8 @@ export const FEATURE_STATES = Object.freeze({
   'pilot-map': 'on',
   // MENU-FRONT-DOOR: the main menu as a front door (Drive card, Next up, eight doors). Off in the game until Kyle has tried it.
   'menu-front-door': 'dev',
+  // MENU-NEXT-UP: a Next up line under the masthead of the old menu and NEW tags on buttons that already exist. Moves nothing else on the menu. Released by Claude (rule 18); the front door keeps its own line.
+  'menu-next-up': 'dev',
   // STORY-KOGANE-SCREENS: the Kogane Invitation story (docs/story/kogane-invitation.md). Off in the game; also needs Kogane Pass and its Night version, the Nissan Skyline, the helicopter, the pilot's map and driving lessons.
   'kogane-invitation': 'on',
   // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.

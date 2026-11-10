@@ -16,14 +16,49 @@ import {syncRaceChoiceButtons, qualifyingChoiceMarkup, syncQualifyingChoice, syn
 import {courseHasWinterSurfaces} from './race-surfaces.js';
 import {COURSE_PRICES, isCourseUnlocked} from './course-access.js';
 import {speedKph, formatSpeed} from './speed-format.js';
-import {frontDoorMarkup} from './menu-front-door.js';
+import {frontDoorMarkup, chooseNextUp, nextUpMarkup} from './menu-front-door.js';
+import {medalCarsToGrant} from './medals.js';
 import {createStoryUi, storyOn, storyButtonMarkup, syncStoryButton} from './story/story-ui.js';
 import './story/water-ui.js'; // WATER-SCREENS: the Water Road's card joins the Story button
 import './story/ember-ui.js'; // WW-SCREENS: registers the Everburn card without affecting it while switched off
 import {KOGANE_SKYLINE} from './story/story-save.js';
+// MENU-NEXT-UP (behind the 'menu-next-up' switch): one Next up line under the masthead and NEW tags on buttons the menu
+// already has. Both are worked out from the profile each time the menu is drawn; nothing here is saved.
+// The line is hidden when Next up has only its plain "pick a course" sentence to offer.
+export function menuNextUpInner(facts) {
+  const next = chooseNextUp(facts);
+  return next.kind === 'none' ? '' : nextUpMarkup(next);
+}
+const menuNextUpSection = facts => { const inner = menuNextUpInner(facts); return `<section id="menu-next-up" class="menu-next-up" aria-label="Next up"${inner ? '' : ' hidden'}>${inner}</section>`; };
 
+// A car the player has earned (medals, or every other car fully upgraded) that is not in the garage yet.
+function earnedCarWaiting(profile, earnedCars) {
+  if (earnedCars === true && medalCarsToGrant(profile).length) return true;
+  return Object.keys(CARS).some(id => CARS[id].unlockRequirement === 'max-all-other-cars' && !isCarUnlocked(profile, id) && completionCarProgress(profile, id).eligible);
+}
+// A course the player bought that has no finished race yet. The free starter course never counts.
+function ownedCourseWithoutFinish(profile) {
+  const history = Array.isArray(profile?.history) ? profile.history : [], bests = Object.keys(profile?.personalBests ?? {});
+  return COURSE.some(course => !course.practice && COURSE_PRICES[course.id] > 0 && isCourseUnlocked(profile, course)
+    && !history.some(row => row?.eventId === course.id && row.completed === true) && !bests.some(key => key.startsWith(`${course.id}|`)));
+}
+// facts are the front door's facts (src/menu-front-door.js frontDoorFacts): an open Lab lesson not yet passed, a story step waiting.
+export function menuNewMarks({profile, facts = {}, earnedCars = false} = {}) {
+  return {lab: !!facts.labLesson, story: !!facts.story, garage: earnedCarWaiting(profile, earnedCars), courses: ownedCourseWithoutFinish(profile)};
+}
+// The Lab is reached through the Helipad on this menu, so its tag sits on that button.
+const NEW_MARK_BUTTONS = Object.freeze({lab: '#heli-visit', story: '#story-visit', garage: '#garage-open', courses: '.course-store-button'});
+export function syncNewMarks(root, marks) {
+  for (const [key, selector] of Object.entries(NEW_MARK_BUTTONS)) {
+    const button = root.querySelector(selector);
+    if (!button) continue;
+    const tag = button.querySelector('.menu-new');
+    if (marks[key] === true && !tag) button.insertAdjacentHTML('beforeend', '<i class="menu-new">NEW</i>');
+    else if (marks[key] !== true && tag) tag.remove();
+  }
+}
 // frontDoor is null with the 'menu-front-door' switch off: the markup is then exactly today's.
-export function screenMarkup({choices, arrow, sound, escapeHTML, earnedCars = false, frontDoor = null}) {
+export function screenMarkup({choices, arrow, sound, escapeHTML, earnedCars = false, frontDoor = null, nextUp = null}) {
   const listed = shownCars(earnedCars);
   const fd = frontDoor !== null;
 return `<div id="stage" class="in-menu"><div id="view3d" aria-label="Three-dimensional driving scene"></div><div class="film-grain"></div><div id="overlay">
@@ -31,7 +66,7 @@ return `<div id="stage" class="in-menu"><div id="view3d" aria-label="Three-dimen
   <main id="menu-screen" class="menu-screen${fd?' front-door-on':''}">
     <div class="menu-intro"><p class="eyebrow"><i></i> YOUR GARAGE. YOUR NAME. YOUR RACE.</p><h1>THE<span>DUEL</span><em>REDLINE</em></h1><p class="menu-description">Two laps. New horizons.<br>Build your way to the arena.</p></div>
     ${fd?frontDoorMarkup({facts:frontDoor.facts,arrow})+'<div id="race-options" class="front-door-options" hidden>':''}<section class="race-setup" aria-label="Race setup"><div class="player-controls"><label class="field-label" for="player-select">PLAYER</label><select id="player-select" aria-label="Choose local player"></select><button data-action="new-player" class="small-action">+ NEW</button><button data-action="leaderboard" class="small-action">SCORES ↗</button></div><div class="setup-line scene-line"><label class="field-label" for="scene-select">CIRCUIT</label><select id="scene-select" aria-label="Choose a scene">${COURSE.map((scene,index)=>`<option value="${index}">${scene.name}</option>`).join('')}</select></div><div id="route-choice" class="setup-line route-choice"><span id="route-choice-label" class="field-label">ROUTE</span><div class="segmented" role="group" aria-label="Course route">${ROUTE_VARIANTS.map(route=>`<button class="choice" data-route-variant="${route.id}" aria-pressed="false">${route.label.toUpperCase()}</button>`).join('')}</div></div><div id="tyre-choice" class="setup-line tyre-choice" hidden><span class="field-label">TYRES</span><div class="segmented" role="group" aria-label="Tyres"><button class="choice on" data-tyre="summer" aria-pressed="true">SUMMER</button><button class="choice" data-tyre="winter" aria-pressed="false">WINTER</button></div></div><div class="setup-line"><span class="field-label">THE CHALLENGE</span><div class="segmented" role="group" aria-label="Race mode"><button class="choice on" data-mode="duel" aria-pressed="true">RIVAL DUEL</button><button class="choice" data-mode="wasteland" aria-pressed="false">MAD MAX DUEL</button><button class="choice" data-mode="timetrial" aria-pressed="false">TIME TRIAL</button><button class="choice" data-mode="grandprix" aria-pressed="false" hidden>GRAND PRIX</button></div></div><div class="setup-line"><span id="cpu-target-label" class="field-label">CPU RIVAL</span><div class="segmented" role="group" aria-label="CPU difficulty">${Object.entries(CPU_DIFFICULTY).map(([key,item])=>`<button class="choice ${choices.cpuDifficulty===key?'on':''}" data-cpu-difficulty="${key}" aria-pressed="${choices.cpuDifficulty===key}">${item.name.toUpperCase()}</button>`).join('')}</div></div><div class="setup-line"><span class="field-label">TRANSMISSION</span><div class="segmented" role="group" aria-label="Difficulty">${Object.entries(DIFFICULTY).map(([key,d]) => `<button class="choice ${choices.difficulty === key ? 'on' : ''}" data-difficulty="${key}" aria-pressed="${choices.difficulty === key}">${d.autoShift ? 'ARCADE / AUTO' : 'PRO / MANUAL'}</button>`).join('')}</div></div><div id="lap-choice" class="setup-line" hidden><span class="field-label">LAPS</span><div class="segmented" role="group" aria-label="Race laps"></div></div>${qualifyingChoiceMarkup()}<p class="entry-reward" id="entry-reward"></p><p id="event-brief" class="event-brief" hidden></p><label id="ghost-control" class="ghost-control" hidden><input id="ghost-toggle" type="checkbox"><span>BEST GHOST <b id="ghost-record-label"></b></span></label><p id="ghost-hint" class="ghost-hint" hidden>Finish a Time Trial personal best to record your ghost.</p><button id="start-engine" disabled class="start-button" data-action="start"><span>START ENGINE</span>${arrow}</button><button id="wasteland-visit" type="button" class="secondary-button wasteland-entry" data-action="wasteland-visit" hidden>WASTELAND <span>→</span></button><button id="driving-instructor" type="button" class="secondary-button" data-drive-open hidden>INSTRUCTOR <span>→</span></button><button id="heli-visit" type="button" class="secondary-button heli-entry" data-action="heli-visit" hidden>HELIPAD <span>→</span></button><p class="start-note">2 LAPS <span>·</span> ${listed.filter(([,car])=>car.price>0||car.unlockRequirement).length} EARNABLE CARS <span>·</span> LOCAL PLAYER PROGRESS</p></section>
-    <section class="garage" aria-label="Choose your car"><div class="garage-heading"><span class="field-label">${fd?'YOUR CAR':'CHOOSE YOUR WEAPON'}</span><label class="graphics-control"><span>GRAPHICS</span><select id="graphics-quality" aria-label="Graphics quality"><option value="high">High</option><option value="performance">Performance</option></select></label><span id="garage-count">01 / ${String(listed.length).padStart(2,'0')}</span></div><label class="car-picker"><span class="visually-hidden">Choose your car</span><select id="car-select" aria-label="Choose your car">${listed.map(([key,c])=>`<option value="${key}">${c.name}</option>`).join('')}</select><span class="car-picker-arrow" aria-hidden="true">⌄</span></label><div class="car-specs"><div><b id="car-speed"></b><span>TOP SPEED / km/h</span></div><div><b id="car-gears"></b><span>GEARS</span></div><div><b id="car-character"></b><span>DRIVING CHARACTER</span></div></div><label class="lighting-control"><span>LIGHTING</span><select id="lighting-mood" aria-label="Outdoor lighting">${Object.entries(LIGHTING_MOODS).map(([id,mood])=>`<option value="${id}">${mood.label}</option>`).join('')}<option value="night" disabled hidden>Night event</option></select></label><div class="course-preview" aria-label="Selected course preview"><canvas id="menu-course-map" width="320" height="200" role="img" aria-label="Selected course outline"></canvas><div class="course-preview-details"><div class="course-preview-top"><span id="menu-route-label">ROUTE A</span><span id="scene-length"></span></div><b id="scene-name">${COURSE[0].name}</b><div id="menu-biome-legend" class="menu-biome-legend"></div><div class="course-preview-bottom"><span id="menu-shortcuts"></span><span id="menu-elevation" class="menu-elevation"><canvas id="menu-elevation-profile" width="180" height="28" aria-hidden="true"></canvas><span id="menu-relief"></span></span></div></div></div><button class="garage-tune" data-action="garage">TUNE YOUR CAR <span>→</span></button></section>${fd?'</div>':''}
+    <section class="garage" aria-label="Choose your car"><div class="garage-heading"><span class="field-label">${fd?'YOUR CAR':'CHOOSE YOUR WEAPON'}</span><label class="graphics-control"><span>GRAPHICS</span><select id="graphics-quality" aria-label="Graphics quality"><option value="high">High</option><option value="performance">Performance</option></select></label><span id="garage-count">01 / ${String(listed.length).padStart(2,'0')}</span></div><label class="car-picker"><span class="visually-hidden">Choose your car</span><select id="car-select" aria-label="Choose your car">${listed.map(([key,c])=>`<option value="${key}">${c.name}</option>`).join('')}</select><span class="car-picker-arrow" aria-hidden="true">⌄</span></label><div class="car-specs"><div><b id="car-speed"></b><span>TOP SPEED / km/h</span></div><div><b id="car-gears"></b><span>GEARS</span></div><div><b id="car-character"></b><span>DRIVING CHARACTER</span></div></div><label class="lighting-control"><span>LIGHTING</span><select id="lighting-mood" aria-label="Outdoor lighting">${Object.entries(LIGHTING_MOODS).map(([id,mood])=>`<option value="${id}">${mood.label}</option>`).join('')}<option value="night" disabled hidden>Night event</option></select></label><div class="course-preview" aria-label="Selected course preview"><canvas id="menu-course-map" width="320" height="200" role="img" aria-label="Selected course outline"></canvas><div class="course-preview-details"><div class="course-preview-top"><span id="menu-route-label">ROUTE A</span><span id="scene-length"></span></div><b id="scene-name">${COURSE[0].name}</b><div id="menu-biome-legend" class="menu-biome-legend"></div><div class="course-preview-bottom"><span id="menu-shortcuts"></span><span id="menu-elevation" class="menu-elevation"><canvas id="menu-elevation-profile" width="180" height="28" aria-hidden="true"></canvas><span id="menu-relief"></span></span></div></div></div><button class="garage-tune" data-action="garage">TUNE YOUR CAR <span>→</span></button></section>${fd?'</div>':''}${nextUp&&!fd?menuNextUpSection(nextUp.facts):''}
     <aside id="build-update" class="build-update" aria-label="Game update" hidden><div><p id="build-update-message" role="status" aria-live="polite" aria-atomic="true"></p><span id="build-update-help">Reload at the menu. Your saved progress and settings stay here.</span></div><button type="button" data-action="reload-update" aria-describedby="build-update-help">RELOAD</button></aside>
     ${fd?'<footer class="menu-footer front-door-credits"><a class="build-label audio-credits" href="/assets/audio/credits.html" target="_blank" rel="noopener">ASSET CREDITS ↗</a></footer>':`<footer class="menu-footer"><span class="footer-label">BUILT FOR THE DRIVE</span><div class="controls-strip"><span title="Hold S / Down / LT at rest to reverse. W / Up / RT brakes reverse and returns to first gear."><kbd>ARROWS</kbd> DRIVE / REVERSE</span><span><kbd>SPACE</kbd> BOOST</span><span><kbd>C</kbd> CHANGE CAMERA</span><span><kbd>Q / E</kbd> MANUAL SHIFT</span><span><kbd>ESC</kbd> PAUSE</span></div><div class="build-meta"><span id="build-version" class="build-version" title="Build ${escapeHTML(BUILD_VERSION.id)}">BUILD ${escapeHTML(BUILD_VERSION.label)}</span><a class="build-label audio-credits" href="/assets/audio/credits.html" target="_blank" rel="noopener">ASSET CREDITS ↗</a></div></footer>`}
   </main>
@@ -55,7 +90,7 @@ export function createMenuScreen(ctx) {
     const press=id=>()=>root.querySelector(id)?.click();
     // "Race Daichi" changes the app's setup (road, mode, level): the menu shows it, and the first look at that road is not a change of road by the player.
     const showStoryRace=()=>{previousSetupCourse=COURSE[app.getRaceChoices().startStage]?.id;ctx.onRaceSetup?.();};
-    storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>syncStory(),onRaceSetup:showStoryRace,
+    storyUi=createStoryUi({host:root.querySelector('#stage')??root,app,onChange:()=>{syncStory();refreshNextUp();},onRaceSetup:showStoryRace,
       actions:{lesson:press('[data-drive-open]'),supplies:press('[data-action="heli-visit"]'),
         // The Water Road's chapters: a race fills the setup here; Scrapdome games and fights go to the yard; a road not owned opens Your Courses.
         ember:()=>press('[data-action="wasteland-visit"]')(),
@@ -69,6 +104,15 @@ export function createMenuScreen(ctx) {
     root.addEventListener('click',event=>{if(event.target.closest?.('[data-story-open]'))storyUi.open();});
   }
   function syncStory(){syncStoryButton(storyButton,storyOn(app)?storyUi?.view():null);}
+  // MENU-NEXT-UP: ctx.nextUpFacts is given only with the switch on and the front door off. The line and the NEW tags are
+  // redrawn only when they changed, so a focused button keeps its focus.
+  function refreshNextUp(){
+    if(!ctx.nextUpFacts||!ui['menu-next-up'])return;
+    const facts=ctx.nextUpFacts(),inner=menuNextUpInner(facts),host=ui['menu-next-up'];
+    if(host.innerHTML!==inner)host.innerHTML=inner;
+    if(host.hidden!==(inner===''))host.hidden=inner==='';
+    syncNewMarks(root,menuNewMarks({profile:profile(),facts,earnedCars:app._switches?.().enabled('earned-cars')===true}));
+  }
   let previousSetupCourse;
 function updateMenuCar() {
   const earnedOn = app._switches?.().enabled('earned-cars') === true;
@@ -115,6 +159,7 @@ function updateMenuCar() {
   ui['driver-select'].value=drivers.selected;text('driver-skill-note',driverSkillLabel(drivers.selected,choices.car));
   refreshEntryReward();
   ctx.onFrontDoor?.();
+  refreshNextUp();
 }
 function updateEntryReward(){
   const tyreSlipRules=COURSE[choices.startStage]?.kind==='drift'&&choices.difficulty==='pro'&&app._switches?.().enabled('tyre-slip')===true;
@@ -232,7 +277,7 @@ function updateMenuScene() {
     root.querySelector('.start-note').textContent='SUMMIT TIME ATTACK · SOLO · ONE RUN · NO PAY';
   }
 }
-  return {updateMenuCar, updateMenuScene, updatePlayers};
+  return {updateMenuCar, updateMenuScene, updatePlayers, refreshNextUp};
 }
 
 export function updateBuildNotice(ui, disposed, {available, version}) {

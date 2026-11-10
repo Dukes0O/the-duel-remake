@@ -92,7 +92,9 @@ const frontDoorOn=app._switches?.().enabled('menu-front-door')===true;
 const currentDoorFacts=()=>frontDoorFacts({profile:profile(),flags:app._switches?.(),
   wastelandOpen:hiddenRoadHints(app.getHiddenRoadDiscovery?.()).showMenu===true,heliOn:app.heliAvailable?.()===true,
   labOn:app.labAvailable?.()===true,lessonsOn:app.drivingLessonsAvailable?.()===true,story:app._switches?.().enabled('kogane-invitation')===true?app.storyProps?.():null,...app.menuNextUpExtras?.()});
-root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null});
+// MENU-NEXT-UP: the old menu's Next up line and NEW tags, only with their switch on and the front door off.
+const nextUpOn=app._switches?.().enabled('menu-next-up')===true&&!frontDoorOn;
+root.innerHTML = screenMarkup({choices, arrow, sound, escapeHTML, earnedCars: app._switches?.().enabled('earned-cars') === true, frontDoor: frontDoorOn?{facts:currentDoorFacts()}:null, nextUp: nextUpOn?{facts:currentDoorFacts()}:null});
 const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
@@ -151,8 +153,9 @@ const text = (id,v) => { if (ui[id].textContent !== String(v)) ui[id].textConten
 const clamp = v => Math.max(0,Math.min(1,Number(v)||0));
 const time = seconds => { const t = Math.floor(Math.max(0, Number(seconds)||0)*100); return `${String(Math.floor(t/6000)).padStart(2,'0')}:${String(Math.floor(t/100)%60).padStart(2,'0')}.${String(t%100).padStart(2,'0')}`; };
 
-const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor, onRaceSetup:()=>refreshRaceSetup()});
-const {updateMenuCar, updateMenuScene, updatePlayers} = menuScreen;
+const menuScreen = createMenuScreen({app, choices, profile, credits, escapeHTML, text, ui, root, coursePreview, time, onFrontDoor:refreshFrontDoor, nextUpFacts:nextUpOn?currentDoorFacts:null, onRaceSetup:()=>refreshRaceSetup()});
+const {updateMenuCar, updateMenuScene, updatePlayers, refreshNextUp} = menuScreen;
+let labWasOpen=false;
 const playerScreen = createPlayerScreen({app, profile, escapeHTML, credits, getPlayerMessage:()=>playerMessage, getBackupMessage:()=>backupMessage});
 const leaderboardScreen = createLeaderboardScreen({app, boardFilter, escapeHTML, credits, time});
 const garageScreen = createGarageScreen({app, profile, credits, escapeHTML, getGarageCar:()=>garageCar, getGarageMessage:()=>garageMessage, arrow, action:(label,verb,primary)=>screenAction(label,verb,primary,arrow), clamp});
@@ -441,6 +444,8 @@ function renderState(s) {
   if (teamRoom.isOpen && (app.player.id !== teamRoomPlayerId ||
       !['menu', 'stage_result', 'complete'].includes(s.status) || !app._switches().enabled('grand-prix'))) teamRoom.close();
   const yardActive=app.isYardHomeActive?.()===true;
+  // MENU-NEXT-UP: closing the Lab can change what is next, and it does not change the screen key below.
+  if(nextUpOn&&s.status==='menu'&&labWasOpen!==(app.labOpen===true)){labWasOpen=app.labOpen===true;refreshNextUp();}
   if(!yardActive)yardPanel='home';
   const discovery=app.getHiddenRoadDiscovery?.(),discoveryKey=hiddenRoadMapKey(discovery)+':'+(discovery?.pacificFinishes||0);
   if(s.status==='menu'&&discoveryKey!==menuDiscoveryKey){menuDiscoveryKey=discoveryKey;updateMenuScene();lastScreen=null;}
@@ -483,7 +488,7 @@ function renderState(s) {
       focused?.dataset?.weaponUpgrade?['weaponUpgrade',focused.dataset.weaponUpgrade]:
       focused?.dataset?.kitTier?['kitTier',focused.dataset.kitTier]:
       focused?.dataset?.crewSelect?['crewSelect',focused.dataset.crewSelect]:null;
-    lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
+    lastScreen=screen; const menu=s.status==='menu'; ui.stage.classList.toggle('in-menu',menu); ui.stage.classList.toggle('in-race',!menu);ui.stage.classList.toggle('yard-home-active',yardActive); ui['menu-screen'].hidden=!menu; if(menu&&nextUpOn)refreshNextUp(); ui['race-hud'].hidden=menu||yardActive; ui['menu-location'].hidden=!menu; root.querySelectorAll('.race-only').forEach(el=>{el.hidden=menu||yardActive;});
     ui['garage-open'].hidden = !menu;root.querySelector('#armory-open').hidden=!menu;
     cardArt?.dispose();cardArt=null;
     const modal=yardActive?yardHomeScreen({profile:profile(),playerName:app.player.name,escapeHTML,panel:yardPanel,featureFlags:app.duel.featureFlags,water:app.storyProps?.('water'),ember:app.storyProps?.('ember'),armoryMarkup:yardPanel==='armory'?armoryScreen.yardContent():'',message:garageMessage,warlordsAvailable:app.warlordsAvailable?.()===true,arenaMarkup:app.arenaAvailable?.()?arenaYardPanel({venueId:arenaVenue,mode:arenaMode,opponents:arenaOpponents,difficulty:app.cpuDifficulty,profile:profile(),featureFlags:app.duel.featureFlags}):''}):menu&&armoryOpen?armoryScreen():menu&&coursesOpen?courseScreen(profile(),choices.startStage,courseMessage):menu&&playersOpen?playerScreen():menu&&leaderboardOpen?leaderboardScreen():menu && garageOpen ? garageScreen() : menu||showImpact?'':modalScreen(s); ui['modal-layer'].innerHTML=modal; ui['modal-layer'].hidden=!modal; ui.stage.classList.toggle('has-modal',!!modal); ui['countdown'].hidden=s.status!=='countdown'||!!s.paused;

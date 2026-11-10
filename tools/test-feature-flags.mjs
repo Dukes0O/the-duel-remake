@@ -20,7 +20,7 @@ check(FEATURE_STATES['career-backup'] === 'dev' && !Object.hasOwn(FEATURE_STATES
   && FEATURE_STATES.arsenal === 'on' && FEATURE_STATES['salt-flats'] === 'on'
   && FEATURE_STATES['bounty-hunt'] === 'on' && FEATURE_STATES['crew-gear'] === 'on'
   && ['fight-voices', 'arsenal-wave3', 'convoy-raid', 'tollkeeper', 'cpu-crews', 'ambush-alley', 'gunn', 'blackiron',
-    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 52 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
+    'warlord-cards'].every(name => FEATURE_STATES[name] === 'on') && FEATURE_STATES['seeker-rockets'] === 'on' && Object.keys(FEATURE_STATES).length === 53 + new Set(CIRCUIT_MANIFESTS.map(manifest => manifest.flag)).size
     && FEATURE_STATES['gear-find'] === 'on'
     && ['titan-bowl', 'snow-world', 'rival-voices', 'engine-curve', 'tyre-slip', 'story-everburn', 'wasteland-town', 'deep-vasca'].every(name => FEATURE_STATES[name] === 'dev')
     && ['wildlife', 'heli-skins'].every(name => FEATURE_STATES[name] === 'on')
