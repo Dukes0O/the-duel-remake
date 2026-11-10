@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-10T14:52:48.559Z
+Observed at: 2026-11-10T15:13:42.427Z
 
-Observation commit: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
+Observation commit: 16f6801018699b7636386745f0180753dcfb8244
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
+Integration HEAD: 16f6801018699b7636386745f0180753dcfb8244
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -80,14 +80,14 @@ Targets are advisory. Change compares with the previous status observation when 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
 | Build `dist/` | 708,967,217 B | +0 B | 250,000,000 B |
-| Wasteland models | 426,995,538 B | +0 B | 60,000,000 B |
+| Wasteland models | 427,002,434 B | +6,896 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 497,720 B | +0 B | 500,000 B |
-| Review `looks/` | 72,638,439 B | +0 B | 20,000,000 B |
+| Review `looks/` | 72,818,438 B | +179,999 B | 20,000,000 B |
 | Added bytes in last merge | 139,240 B | +0 B | 5,000,000 B |
-| All `public/` | 700,978,943 B | +0 B | unavailable |
-| Git objects | 1,684,164,608 B | +416,768 B | unavailable |
+| All `public/` | 700,985,839 B | +6,896 B | unavailable |
+| Git objects | 1,684,614,144 B | +449,536 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e783dc7e10e1df07d951572a9599d7fff76cf190
 - Local main: missing
-- Local integration/wasteland: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
+- Local integration/wasteland: 16f6801018699b7636386745f0180753dcfb8244
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
