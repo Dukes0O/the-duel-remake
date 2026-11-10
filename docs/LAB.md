@@ -32,8 +32,8 @@ October. Sections 4 to 6 are for players and builders; 9 to 11 for builders.
 
 The Lab is a workshop in the hangar beside the home helipad at Tremblant
 Woods: benches, a fire pit, a pendulum frame, a test rig and a small wind
-tunnel. You reach it from a **Lab** tab in the garage and from the helipad
-(no new main-menu button). Each lesson has three parts. **The bench:** a
+tunnel. You reach it from the **LAB** button on the old main menu (LAB-OPEN-DOOR),
+from a **Lab** tab in the garage and from the helipad. Each lesson has three parts. **The bench:** a
 hands-on experiment, two or three controls and a Run button; Brian, in
 person (his clean voice, no radio), explains what you see in two or three
 lines. **The challenge:** one short task in the game that uses what the
@@ -47,16 +47,33 @@ sentence. Every explanation in section 4 is true as written.
 
 ## 3. Which lessons are open
 
-| Group | Lessons | Opens when |
+Every lesson is open from the start (LAB-OPEN-DOOR, Kyle, 9 November 2026): a new
+player can walk in and take any lesson, in any order. A lesson is shut only
+when its switch is off.
+
+| Group | Lessons | Open when |
 | --- | --- | --- |
-| Flying | Lift and weight, Projectile motion, Fire triangle, Pendulums, Air and altitude | The helicopter's first lessons are done |
-| Workshop | Strength against weight, Rust, G-force, Headings and maps | From the start (G-force after driving lesson 1) |
-| Wind tunnel | Grip, Downforce, Braking, Suspension, Fuel | Driving lesson 1 is passed |
+| Flying | Lift and weight, Projectile motion, Fire triangle, Pendulums, Air and altitude | The helicopter switch is on |
+| Workshop | Strength against weight, Rust, G-force, Headings and maps | Always |
+| Wind tunnel | Grip, Downforce, Braking, Suspension, Fuel | Always |
 | Snow (with H5) | Launch angles, Ski wax | Heli-skiing is on (`docs/HELI_SKIING.md`) |
 
 Without the helicopter switch, the Flying group shows "Opens with the
-helicopter". Each group lists its lessons in the order above; any open
-lesson can be taken in any order.
+helicopter". Each group lists its lessons in the order above.
+
+**The game challenges keep their conditions.** The lesson and its bench never
+read the player's other lessons, but the challenge step does, and says so in
+one plain sentence that also names where to go:
+
+| Challenge | Needs | The sentence |
+| --- | --- | --- |
+| Flying (the helicopter challenges) | The four helicopter lessons | "This challenge needs the four helicopter lessons, so finish them first, at the HELIPAD button on the main menu." |
+| Wind tunnel (Grip, Downforce, Braking, Suspension, Fuel) and the G-force lap | Driving lesson 1 | "This challenge needs driving lesson 1, so pass it first, at the INSTRUCTOR button on the main menu." |
+
+Passing a lesson (the Lab's pass call) asks the same condition, so a shut
+challenge cannot pass a lesson. What a passed lesson or challenge opens
+(tuning settings, upgrades) is unchanged. The rule is in `challengeOpenState`
+in `src/lab/lab-lessons.js`; `lessonOpenState` reads only the switches.
 
 ## 4. The lessons
 
@@ -364,8 +381,10 @@ Heli-skiing's two lessons (Launch angles, Ski wax) are built with H5's cards
 
 ## 11. Picked for Kyle (24 October 2026)
 
-- The Lab is a tab in the garage and a door at the helipad, not a main-menu
-  button, so the menu stays as it is.
+- The Lab is a tab in the garage and a door at the helipad. (Changed
+  9 November 2026, LAB-OPEN-DOOR: the old main menu also has a LAB button,
+  shown whenever the Lab is available, so a player need not own the helicopter
+  to find it. The rest of the menu is unchanged.)
 - Brian teaches in the Lab too, in person (no radio), so there is one
   teacher and no new voice to pay for.
 - Prices sit between 400 and 4,000 credits (one to four good wins), and the
@@ -402,9 +421,9 @@ the same change (replace means remove).
   tower, fire pit, pendulum frame, rotor stand), Workshop (bending rig, nail
   jars, turning arm, map table), Wind tunnel, Snow (launcher, snow trays).
 - **Visit a machine** by walking up to it. Its name lights on the floor in
-  front of it with "E: use the Lift bench". A machine whose lesson is not
-  open yet shows a small card: "Opens when you pass helicopter lesson 3."
-  A passed machine shows a green tick.
+  front of it with "E: use the Lift bench". A machine whose lesson is shut
+  (its switch is off) shows a small card with the reason, such as "Opens with
+  the helicopter". A passed machine shows a green tick.
 - **Brian is in the room**, standing by the machine you used last. Walk up
   and press E to ask him: "What should I try next?" or "Tell me about this
   machine."

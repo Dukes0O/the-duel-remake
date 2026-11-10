@@ -220,7 +220,10 @@ test('the board lists the four groups with the reason a shut lesson is shut', ()
   assert.equal(rows.length, 16);
   const html = boardMarkup({rows});
   for (const group of ['Flying', 'Workshop', 'Wind tunnel', 'Snow']) assert.ok(html.includes(`>${group}</li>`), group);
-  assert.ok(html.includes('Finish the helicopter lessons first') || html.includes('Opens with the helicopter'));
+  // LAB-OPEN-DOOR: with the helicopter on every Flying lesson is open; the Snow lessons wait for heli-skiing.
+  assert.ok(html.includes('Opens with heli-skiing'));
+  assert.ok(!html.includes('Finish the helicopter lessons first') && !html.includes('Opens after driving lesson 1'));
+  assert.ok(html.includes('data-lab-lesson="start:lift"') && html.includes('data-lab-lesson="start:grip"'), 'a new profile can start a Flying and a Wind tunnel lesson');
   assert.ok(html.includes('data-lab-lesson="start:strength"'));
   assert.deepEqual(boardRows(createProfile(), on([])), [], 'the board is empty while the Lab is off');
   assert.ok(boardMarkup({rows: []}).includes('not open yet'));

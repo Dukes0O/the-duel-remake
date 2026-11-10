@@ -40,7 +40,8 @@ export async function run(context) {
   await tap('KeyE');
   await context.waitFor(`!!document.querySelector('.lab-door-board')`, 'door board');
   const board = await context.evaluate(`({count: document.querySelectorAll('.lab-door-board li').length, text: document.querySelector('.lab-door-board').textContent})`);
-  if (board.count !== 16 || !board.text.includes('Opens:') || !board.text.includes('Opens after driving lesson 1')) throw Error('Door board is missing lessons, rewards or lock reasons.');
+  // LAB-OPEN-DOOR: no lesson waits on driving lesson 1 or the helicopter lessons any more, so the board lists no such lock.
+  if (board.count !== 16 || !board.text.includes('Opens:') || board.text.includes('Opens after driving lesson 1') || board.text.includes('Finish the helicopter lessons first')) throw Error('Door board is missing lessons or rewards, or still shows an old lock.');
   await context.screenshot('door');
   await context.evaluate(`document.querySelector('[data-lab="walk-back"]').click()`);
   // Stop before Brian's solid body, then take the clear aisle to the pad.

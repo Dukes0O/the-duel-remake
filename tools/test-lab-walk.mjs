@@ -104,8 +104,10 @@ test('lab-2 is on in production and QA without a preview opt-in', () => {
 test('the shared wind tunnel reports its lock reason, open choice or all-passed tick', () => {
   const ids = ['grip', 'downforce', 'braking', 'suspension', 'fuel'];
   const rows = lessonRows({}, {enabled: () => true});
-  const locked = stationPrompt(ids, rows);
-  assert.equal(locked.text, 'Opens after driving lesson 1');
+  assert.ok(rows.filter(r => ids.includes(r.id)).every(r => r.open), 'LAB-OPEN-DOOR: the wind tunnel lessons are open from the start');
+  // A shut lesson (a switch is off) still reports its reason at the machine.
+  const locked = stationPrompt(ids, rows.map(r => ({...r, open: false, note: 'The Lab is not available yet.'})));
+  assert.equal(locked.text, 'The Lab is not available yet.');
   assert.match(locked.floor, /Locked/); assert.equal(locked.done, false);
   const open = rows.map(r => ({...r, open: true}));
   assert.match(stationPrompt(ids, open).text, /E: choose/);

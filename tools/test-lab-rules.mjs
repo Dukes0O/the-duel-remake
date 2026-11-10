@@ -8,7 +8,7 @@ import {HELI_LESSONS} from '../src/heli/heli-save.js';
 import {KESTREL} from '../src/heli/heli-flight.js';
 import {BUCKET, DROP_AIM_RINGS} from '../src/heli/heli-bucket.js';
 import {CABLE} from '../src/heli/heli-cable.js';
-import {LAB_LESSONS, LAB_GROUPS, lessonRows} from '../src/lab/lab-lessons.js';
+import {LAB_LESSONS, LAB_GROUPS, lessonRows, lessonOpenState, challengeOpenState, CHALLENGE_NEEDS_HELI, CHALLENGE_NEEDS_DRIVING} from '../src/lab/lab-lessons.js';
 import {LAB_UPGRADES, buyUpgrade} from '../src/lab/lab-shop.js';
 import {createLab, normalizeLab, labOf, passLesson, setRing, setCable, setTune, recordStockLap, payTunedBonus,
   markSecret} from '../src/lab/lab-save.js';
@@ -53,32 +53,61 @@ test('there are sixteen lessons in four groups, in the design order', () => {
 
 const open = (profile, flags) => Object.fromEntries(lessonRows(profile, flags).map(row => [row.id, row.open]));
 
-test('opening order: groups open as section 3 says, and the board rows have the shared board shape', () => {
+test('opening order: every lesson is open from the start unless its switch is off, and the board rows have the shared board shape', () => {
   assert.deepEqual(lessonRows(rich(), OFF), [], 'with the switch off the board is empty');
-  const start = open(rich(), WITH_HELI);
-  for (const id of ['lift', 'projectile', 'fire', 'pendulum', 'altitude']) assert.equal(start[id], false, `${id} waits for the helicopter lessons`);
-  for (const id of ['strength', 'rust', 'headings']) assert.equal(start[id], true, `${id} is open from the start`);
-  for (const id of ['gforce', 'grip', 'downforce', 'braking', 'suspension', 'fuel', 'launch', 'wax']) assert.equal(start[id], false, `${id} is shut at the start`);
+  // LAB-OPEN-DOOR: a new player finds every lesson open; only a switch shuts one.
+  const start = open(rich(), WITH_SKIING);
+  assert.equal(Object.keys(start).length, 16);
+  assert.ok(Object.values(start).every(Boolean), 'a new profile sees all sixteen lessons open');
+  const heliOnly = open(rich(), WITH_HELI);
+  for (const id of ['lift', 'projectile', 'fire', 'pendulum', 'altitude', 'strength', 'rust', 'gforce', 'headings', 'grip', 'downforce', 'braking', 'suspension', 'fuel'])
+    assert.equal(heliOnly[id], true, `${id} is open from the start`);
   const noHeli = lessonRows(rich(), ON).find(row => row.id === 'lift');
   assert.equal(noHeli.open, false);
   assert.equal(noHeli.note, 'Opens with the helicopter');
-  // Driving lesson 1 opens G-force and the whole wind tunnel, and nothing else.
-  const taught = open(driven(), ON);
-  for (const id of ['gforce', 'grip', 'downforce', 'braking', 'suspension', 'fuel']) assert.equal(taught[id], true, `${id} opens with driving lesson 1`);
-  assert.equal(taught.lift, false);
-  assert.equal(taught.launch, false);
-  // The helicopter's lessons open Flying, but only while the helicopter is on.
-  assert.equal(open(flier(), WITH_HELI).lift, true);
+  // The player's helicopter lessons and driving lesson 1 change nothing about which lessons are open.
+  assert.deepEqual(open(driven(flier()), WITH_SKIING), start);
+  assert.deepEqual(open(rich({heli: {...HELI_DONE, lessons: {liftoff: true, hover: true, landing: true, carry: false}}}), WITH_SKIING), start);
+  assert.deepEqual(open(driven(), ON), open(rich(), ON));
   assert.equal(open(flier(), ON).lift, false, 'a finished helicopter course does nothing with the helicopter off');
-  assert.equal(open(rich({heli: {...HELI_DONE, lessons: {liftoff: true, hover: true, landing: true, carry: false}}}), WITH_HELI).lift, false);
   // Snow follows heli-skiing, which needs the helicopter.
   assert.equal(open(rich(), WITH_SKIING).launch, true);
   assert.equal(open(rich(), flagsOf('lab', 'heli-skiing')).launch, false);
   assert.equal(open(rich(), WITH_HELI).launch, false);
+  assert.equal(lessonOpenState(rich(), 'grip', ON).note, '');
+  assert.equal(lessonOpenState(rich(), 'nothing', ON).open, false);
   const rows = lessonRows(driven(withLessons(rich(), 'rust')), ON);
   assert.deepEqual(Object.keys(rows[0]).sort(), ['done', 'group', 'id', 'name', 'note', 'open']);
   assert.equal(rows.find(row => row.id === 'rust').done, true);
   assert.equal(rows.length, 16);
+});
+
+test('the challenges keep their conditions: Flying needs the four helicopter lessons, the wind tunnel and G-force need driving lesson 1', () => {
+  const flying = ['lift', 'projectile', 'fire', 'pendulum', 'altitude'], driving = ['gforce', 'grip', 'downforce', 'braking', 'suspension', 'fuel'];
+  for (const id of flying) {
+    assert.deepEqual(challengeOpenState(rich(), id, WITH_HELI), {open: false, note: CHALLENGE_NEEDS_HELI}, `${id} challenge waits for the helicopter lessons`);
+    assert.equal(challengeOpenState(flier(), id, WITH_HELI).open, true, `${id} challenge opens with the four helicopter lessons`);
+    assert.equal(challengeOpenState(rich({heli: {...HELI_DONE, lessons: {liftoff: true, hover: true, landing: true, carry: false}}}), id, WITH_HELI).open, false);
+    assert.equal(challengeOpenState(flier(), id, ON).note, 'Opens with the helicopter', 'the switch is said first');
+  }
+  for (const id of driving) {
+    assert.deepEqual(challengeOpenState(rich(), id, TUNING), {open: false, note: CHALLENGE_NEEDS_DRIVING}, `${id} challenge waits for driving lesson 1`);
+    assert.equal(challengeOpenState(driven(), id, TUNING).open, true, `${id} challenge opens after driving lesson 1`);
+  }
+  // Every other lesson's challenge needs no other lesson.
+  for (const id of ['strength', 'rust', 'headings']) assert.equal(challengeOpenState(rich(), id, ON).open, true);
+  assert.equal(challengeOpenState(rich(), 'launch', WITH_SKIING).open, true);
+  // The sentences are plain whole sentences, one each, and say where to go.
+  for (const text of [CHALLENGE_NEEDS_HELI, CHALLENGE_NEEDS_DRIVING]) {
+    assert.ok(/^This challenge needs /.test(text) && text.endsWith('.') && !/[—–]/.test(text) && text.split('. ').length === 1, text);
+  }
+  assert.ok(CHALLENGE_NEEDS_HELI.includes('HELIPAD') && CHALLENGE_NEEDS_DRIVING.includes('INSTRUCTOR'));
+  // Passing a lesson asks the same condition: a shut challenge cannot pass a lesson, and what a pass opens is unchanged.
+  assert.equal(passLesson(rich(), 'lift', {flags: WITH_HELI}).ok, false);
+  assert.equal(passLesson(rich(), 'lift', {flags: WITH_HELI}).reason, CHALLENGE_NEEDS_HELI);
+  assert.equal(passLesson(rich(), 'grip', {flags: ON}).reason, CHALLENGE_NEEDS_DRIVING);
+  assert.equal(passLesson(flier(), 'lift', {flags: WITH_HELI}).ok, true);
+  assert.equal(passLesson(driven(), 'grip', {flags: ON}).ok, true);
 });
 
 test('the shop sells the upgrades of section 4 at the designed prices', () => {
@@ -324,7 +353,8 @@ test('a newer game\'s save fields never make the Lab fail or get written over', 
   for (const drivingLessons of [{version: 2}, {version: 2, done: null}, {version: 1, done: null}, null, 'x', 7, []]) {
     const profile = {...rich(), drivingLessons};
     assert.doesNotThrow(() => lessonRows(profile, ON));
-    assert.equal(open(profile, ON).grip, false, 'a driving field this game cannot read does not open the tunnel');
+    assert.equal(challengeOpenState(profile, 'grip', ON).open, false, 'a driving field this game cannot read does not open the tunnel challenge');
+    assert.equal(open(profile, ON).grip, true, 'the lesson itself does not read it');
     assert.equal(passLesson(profile, 'rust', {flags: ON}).ok, true);
   }
   const later = {version: 2, shape: 'new', done: {lift: true}};
