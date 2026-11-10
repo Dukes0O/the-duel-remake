@@ -1,5 +1,6 @@
 # Wasteland run log
 
+10 November, LAB-OPEN-DOOR merged (Claude; built by a Sonnet helper): lane tier 65 of 65, build, 24 of 24 Lab and menu browser checks, 6 of 6 neighbouring ones; looked at as a new player.
 10 November, EVERBURN-FURNACE-LOOK round 1 merged, card open (Claude): the vehicles model carries its colours and stands upright; lane tier 49 of 49, build, model tests, browser check everburn-well pass; the everburn browser check still fails on its two known screen facts (QA-EVERBURN-SCREENS).
 10 November, EVERBURN-WELL-ART merged (Claude): the Scablands scene finds model parts under the loader's names, so the well and the furnace are drawn; lane tier 29 of 29, build, browser check everburn-well pass. Cockpit: 17 tasks added for 70 cards (Sonnet helper).
 10 November, WW-BOSS merged, switch off (Claude; built by a Sonnet helper): lane tier 61 of 61, build, boss test 295 checks, Easy driver 10 of 10; played by a scripted key driver on Easy and Medium. The furnace runs for the next ground after a hit. The furnace model and the well are not drawn in job 6: EVERBURN-WELL-ART.

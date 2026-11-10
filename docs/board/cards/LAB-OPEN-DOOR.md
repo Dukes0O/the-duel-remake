@@ -46,6 +46,15 @@ change the menu files.
 - Laptop only: Claude starts a new player in a visible browser, presses LAB and starts one
   Flying lesson and one Wind tunnel lesson.
 
+## Result (Claude, 10 November 2026)
+
+Built by a Sonnet helper, reviewed by Claude; see `docs/changes/LAB-OPEN-DOOR.md`. Claude read the code and the changed
+assertions (they are the ones reviewed above, and nothing else is loosened), then looked in the check runner's browser as a
+new player: the LAB button stands between INSTRUCTOR and HELIPAD with its NEW tag, it opens the Lab, and the Downforce
+lesson starts with no driving lesson passed. The way to a shut challenge is given in words (the HELIPAD and INSTRUCTOR
+buttons are named), not as a button. Seen and left: with INSTRUCTOR, LAB, HELIPAD and STORY all showing, STORY moves to a
+second line of the row.
+
 ## Removed
 
 The two lesson locks in `lessonOpenState` and their lines in `docs/LAB.md`.
