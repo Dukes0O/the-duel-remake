@@ -15,9 +15,13 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
   if(path===SCABLANDS_ASSETS.vehicles){
     for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace",'Thief buggy']){
       const part=new THREE.Group();part.name=name;root.add(part);
-      if(name==="Old Smoke's rolling furnace")for(let index=1;index<=3;index++){
+      if(name==="Old Smoke's rolling furnace")for(const plateName of ['Furnace side armor','Furnace side armor','Hanging torn furnace plate','Hanging torn furnace plate','Furnace torn corner plate','Furnace torn corner plate']){
+        const plate=new THREE.Group();plate.name=plateName;part.add(plate);
+      }
+      // The model's three rear vents are the rear door; three vents on each flank are the left and right doors.
+      if(name==="Old Smoke's rolling furnace")for(let index=1;index<=3;index++)for(const ventName of [`old-smoke-vent-${index}-glow`,`Flank vent 1 ${index} ember`,`Flank vent -1 ${index} ember`]){
         const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xff8020,emissive:0xff8020,emissiveIntensity:2}));
-        vent.name=`old-smoke-vent-${index}-glow`;part.add(vent);
+        vent.name=ventName;part.add(vent);
       }
     }
   }
@@ -65,7 +69,8 @@ assert.equal(furnace.scale.x,1.5,'Old Smoke is scaled up by half in the world');
 const stillPosition=new THREE.Vector3();furnace.getWorldPosition(stillPosition);
 assert.ok(Math.abs(stillPosition.x-(places.get('everburn').x+18))<.001,
   'outside the chase, the furnace remains in its authored Everburn place');
-const ventMaterials=[1,2,3].map(index=>scene.group.getObjectByName(`old-smoke-vent-${index}-glow`).material);
+const doorMaterials=door=>[1,2,3].map(index=>scene.group.getObjectByName(
+  door==='rear'?`old-smoke-vent-${index}-glow`:`Flank vent ${door==='left'?'':'-'}1 ${index} ember`).material.emissiveIntensity);
 const furnaceFire=scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke");
 const everburn=places.get('everburn'),doorWorld=new THREE.Vector3(),chimneyWorld=new THREE.Vector3();
 furnaceFire.children[0].getWorldPosition(doorWorld);furnaceFire.children[6].getWorldPosition(chimneyWorld);
@@ -74,22 +79,52 @@ assert.ok(Math.abs(doorWorld.x-(everburn.x+17.28))<.001,
 assert.ok(Math.abs(chimneyWorld.x-(everburn.x+19.77))<.001&&Math.abs(chimneyWorld.z-(everburn.z+.93))<.001,
   'smoke starts over the scaled furnace chimney');
 const chaseState={arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'chase'}]},
-  actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:places.get('everburn').x+100,y:0,z:places.get('everburn').z},heading:.5}]}}};
+  actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:places.get('everburn').x+100,y:0,z:places.get('everburn').z},heading:.5,
+    furnace:{phase:'glow',door:'left',hits:0,phaseSec:0}}]}}};
 assert.equal(EVERBURN_JOBS[5].steps[1].actor.renderCar,undefined,'Old Smoke does not spawn as an ordinary vehicle');
 syncScene(scene.group,chaseState);
 const actor=chaseState.arena.worldJob.actors[0],furnaceWorld=new THREE.Vector3(),litVentWorld=new THREE.Vector3();
-furnace.getWorldPosition(furnaceWorld);scene.group.getObjectByName('old-smoke-vent-1-glow').getWorldPosition(litVentWorld);
+furnace.getWorldPosition(furnaceWorld);scene.group.getObjectByName('Flank vent 1 1 ember').getWorldPosition(litVentWorld);
 assert.ok(furnaceWorld.distanceTo(new THREE.Vector3(actor.position.x,actor.position.y,actor.position.z))<8,
   'after the actor moves 100 m, the authored furnace follows within 8 m');
 assert.ok(Math.abs(furnace.parent.rotation.y-actor.heading)<.001,'the furnace follows the chase actor heading');
 assert.ok(litVentWorld.distanceTo(new THREE.Vector3(actor.position.x,actor.position.y,actor.position.z))<8,
   'the lit vent on the moving furnace is within 8 m of the hit target');
-assert.deepEqual(ventMaterials.map(material=>material.emissiveIntensity),[2.8,.15,.15],
-  'the visible first vent matches the live first chase vent');
-chaseState.arena.worldJob.clockSec=3;
+const lit=()=>[doorMaterials('left'),doorMaterials('right'),doorMaterials('rear')];
+const dark=[.15,.15,.15],glow=[2.8,2.8,2.8];
+const furnaceActor=chaseState.arena.worldJob.actors[0];
+assert.deepEqual(lit(),[glow,dark,dark],'only the open door glows: the left door lights its flank vents');
+furnaceActor.furnace={phase:'glow',door:'right',hits:1,phaseSec:0};
 syncScene(scene.group,chaseState);
-assert.deepEqual(ventMaterials.map(material=>material.emissiveIntensity),[.15,2.8,.15],
-  'the visible glow advances with the simulation clock');
+assert.deepEqual(lit(),[dark,glow,dark],'the visible glow follows the furnace\'s open door');
+furnaceActor.furnace={phase:'glow',door:'rear',hits:2,phaseSec:0};
+syncScene(scene.group,chaseState);
+assert.deepEqual(lit(),[dark,dark,glow],'the rear door lights the rear vents');
+furnaceActor.furnace={phase:'stoke',door:'rear',hits:2,phaseSec:4};
+syncScene(scene.group,chaseState);
+assert.deepEqual(lit(),[dark,dark,dark],'no door glows during the stoke');
+const plates=[];furnace.traverse(node=>{if(/armor$|plate$/.test(node.name))plates.push(node);});
+const visiblePlates=()=>plates.filter(plate=>plate.visible).length;
+assert.equal(plates.length,6,'the furnace model has six armour plates');
+furnaceActor.furnace={phase:'idle',door:null,hits:0,phaseSec:0};
+syncScene(scene.group,chaseState);
+assert.equal(visiblePlates(),6,'all plates are on before the first hit');
+furnaceActor.furnace={phase:'stagger',door:null,hits:1,phaseSec:0};
+syncScene(scene.group,chaseState);
+assert.equal(visiblePlates(),4,'a plate falls off the furnace with each hit');
+furnaceActor.furnace={phase:'rollin',door:null,hits:3,phaseSec:0};
+syncScene(scene.group,chaseState);
+assert.equal(visiblePlates(),0,'every plate has gone by the third hit');
+furnaceActor.furnace={phase:'stoke',door:'rear',hits:2,phaseSec:4};
+syncScene(scene.group,chaseState);
+const sootColour=scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke").children[6].material.color;
+assert.ok(sootColour.r>sootColour.b*1.8,'the smoke turns orange at the end of the stoke');
+furnaceActor.furnace={phase:'idle',door:null,hits:0,phaseSec:0};
+syncScene(scene.group,chaseState);
+const greySmoke=sootColour.r;
+furnaceActor.furnace={phase:'idle',door:null,hits:3,phaseSec:0};
+syncScene(scene.group,chaseState);
+assert.ok(sootColour.r<greySmoke,'the smoke is blacker after the hits');
 const soot=furnaceFire.children[6];
 const smokeY=soot.position.y;animateScene(scene.group,2);
 assert.notEqual(soot.position.y,smokeY,'chimney smoke moves as presentation');

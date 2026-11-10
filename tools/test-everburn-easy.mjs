@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {furnaceDoorSpot, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
 
 const DT = 1 / 120, MAX_SECONDS = 720;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
@@ -75,6 +76,32 @@ function moveTowardMarker(duel, target) {
     steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
 }
 
+// Old Smoke's furnace ends only on three door hits, so contact with it no longer finishes the
+// chase. The Easy driver waits behind and beside the furnace on the side of the next door (the
+// arrow), outside its cinders, and rams the door while it glows. It also fires the loaned weapon.
+function driveFurnace(duel, actor) {
+  const state = duel.state, f = actor.furnace, car = duel.course.groundAt(state.s, state.lateral);
+  const forward = {x: Math.sin(f.heading), z: Math.cos(f.heading)}, right = {x: -Math.cos(f.heading), z: Math.sin(f.heading)};
+  const door = f.door ?? actor.nextDoor ?? 'rear';
+  const out = door === 'left' ? {x: -right.x, z: -right.z} : door === 'right' ? right : {x: -forward.x, z: -forward.z};
+  const open = f.phase === 'glow' || f.phase === 'stoke' && f.phaseSec > 2.5;
+  let target;
+  if (open) {
+    const spot = furnaceDoorSpot(f, door);
+    target = {x: spot.x + out.x * 1.2, z: spot.z + out.z * 1.2};
+  } else {
+    const wait = door === 'rear' ? right : out;
+    target = {x: f.x - forward.x * 14 + wait.x * 6, z: f.z - forward.z * 14 + wait.z * 6};
+  }
+  const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
+  const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0)));
+  const furnaceMph = furnaceSpeed(f.difficulty, f.hits) * 2.236936;
+  const want = clamp(furnaceMph + gap * 1.5, 0, furnaceMph + 40), speed = state.speedMph || 0;
+  const limit = Math.abs(turn) > 1.2 ? Math.min(want, 25) : want;
+  duel.setInput({throttle: speed < limit ? 1 : 0, brake: speed > limit + 3 ? 1 : 0,
+    steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
+}
+
 function playerInput(duel) {
   const state = duel.state, worldJob = state.arena.worldJob;
   const step = worldJob.job.steps[worldJob.job.stepIndex];
@@ -118,7 +145,9 @@ function playerInput(duel) {
     }
     return;
   }
-  moveTowardMarker(duel, target);
+  const furnaceActor = step.kind === 'chase' ? worldJob.actors.find(actor => actor.furnace) : null;
+  if (furnaceActor && !state.onFoot) driveFurnace(duel, furnaceActor);
+  else moveTowardMarker(duel, target);
   if (!state.onFoot) {
     // Player weapon inputs use the ordinary weapon API. Shots resolve in Duel.step.
     if (step.kind === 'chase') {
