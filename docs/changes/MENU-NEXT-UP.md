@@ -33,14 +33,14 @@ The front door stays off (`menu-front-door` stays `dev`) and nothing on the old 
     leaving a race early is not a finish.
 - **The line and tags are redrawn** when the menu is drawn, when a screen closes, when the Story card changes and when the Lab
   closes, and only when their words changed, so a focused button keeps its focus.
-- **Switch.** `menu-next-up` in `src/feature-flags.js`, state `dev` until the Release Manager switches it on (rule 18, no Preview
+- **Switch.** `menu-next-up` in `src/feature-flags.js`, `on` since 10 November 2026 (rule 18, no Preview
   step). With the front door on, the front door's own line is used and this adds nothing.
 - **Sound.** No new game event, so no new cue. The line presses the same button as the one it points at, so the sound that
   button already makes is the only sound.
 
 ## Checks
 
-- New test `tools/test-menu-next-up.mjs`, 14 of 14. It covers: the switch is `dev`; with it off the markup is unchanged; with it on
+- New test `tools/test-menu-next-up.mjs`, 14 of 14. It covers: the switch is on in the game; with it off the markup is unchanged; with it on
   the markup minus the new line is byte for byte the old menu, and the list of `data-action` values is the same, in the same
   order, apart from the line; the line sits after the INSTRUCTOR and HELIPAD buttons; the line is hidden when Next up has nothing to
   say; each kind of Next up points at the existing button; the front door gets nothing added; each NEW tag appears for a profile that
@@ -52,25 +52,35 @@ The front door stays off (`menu-front-door` stays `dev`) and nothing on the old 
   switches); the new switch makes it 53. This is a re-recorded count, not a loosened check. The file is outside the card's list
   and was edited for this one number only. Its other checks passed unchanged ("129 state, QA, persistence and override checks
   passed"). `tools/test-course-kit.mjs` failed before this edit because it runs that same file on a copy; it passes after.
-- Preview launcher: `tools/test-preview-launcher.mjs` requires every development switch to be named in `start-preview.bat`, so `menu-next-up` was added to its flag list, the same way `menu-front-door` is listed. That file is outside the card's list and was edited for this one name only. The test passes unchanged (23 checks, 0 failures).
+- Preview launcher: `start-preview.bat` is unchanged in the end. The builder added the switch to its list while the switch was `dev`; Claude took it out again when the switch went on. `tools/test-preview-launcher.mjs` passes (23 checks, 0 failures).
 - Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`, from PowerShell): 62 passed, 0 failed, 0 not run (365 s), on the final code. The first run of the tier failed two suites (the switch count in the feature-flags test, and the Preview launcher test); both are fixed by the one-line edits listed above, outside the card's file list.
 - `npm run build`: passes.
 
-## Look at the menu (for Claude, laptop only)
+## Claude's review and look (10 November 2026)
 
-The card asks for a look in a visible browser at the laptop's size, and for a note on whether the big title lay over the player and
-circuit boxes in the audit's 1440 by 900 window. This has not been done by the builder (the lead runs the browser). Start the
-game with `?flags=menu-next-up` on a QA build to see the line. The line is placed at 76 px from the top (68 px below 740 px of
-height) and is one row high, so it sits between the masthead and the title; check that it does not touch the title at 1440 by
-900.
+A Sonnet helper built this from the card. Claude read the whole change and looked at the menu in a visible browser.
+
+- **Review:** no fault found. The tag's rule makes its button `position: relative`; the four tagged buttons were checked in the
+  browser and none is placed in a way that this would move.
+- **Seen at 1920 by 1000:** the line reads "NEXT UP  A Lab lesson is open: Lift and weight. Go and try it." between the masthead
+  and the small line above the title, and touches neither. The NEW tag sits on the corner of HELIPAD. Pressing the line opens
+  the Lab.
+- **Seen at 1440 by 900:** the line sits in the same place. The big title lies over the PLAYER and CIRCUIT boxes at this size,
+  and its lower edge reaches the PLAYER row at 1920 by 1000. The menu did this before this card, with or without the line; it
+  is not changed here.
+- **Switched on:** `menu-next-up` is `on` (card: on at release, no Preview step), so it left the Preview list in
+  `start-preview.bat`. The first check in `tools/test-menu-next-up.mjs` now expects `on` where the builder wrote `dev`: the
+  state changed on purpose and nothing is loosened (rule 18).
+- **Checks with the switch on:** lane tier 60 passed, 0 failed, 0 not run; `npm run build` passes; browser checks
+  drive-lessons-view-2, earned-cars, heli-first-flight, lessons-v2-view, menu-front-door, story-kogane, hidden-road and
+  lab-classroom-braking pass, 8 of 8.
 
 ## Not checked
 
-- No browser scenario and no picture of the line or the tags were made by the builder; the placement numbers above are from
-  the styles, not from a screenshot.
+- No browser scenario presses the line; Claude pressed it by hand once (the Lab answer).
 - The line sits at the end of the page's markup, so a keyboard player reaches it after the garage controls, not before.
 - The Helipad tag for the Lab only shows where the helicopter is available. A player without the helicopter sees the Lab only
-  through the Next up line.
+  through the Next up line, until LAB-OPEN-DOOR adds a LAB button.
 
 ## Removed
 

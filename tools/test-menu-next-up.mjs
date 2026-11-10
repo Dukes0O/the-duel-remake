@@ -18,9 +18,9 @@ const actionsOf = html => [...html.matchAll(/data-action="([^"]+)"/g)].map(match
 const SECTION = /<section id="menu-next-up"[\s\S]*?<\/section>/;
 const labFacts = () => frontDoorFacts({profile: createProfile(), flags: flagsOn(['lab']), labOn: true});
 
-test('the switch is declared and off, and the front door stays off', () => {
-  assert.equal(FEATURE_STATES['menu-next-up'], 'dev');
-  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-next-up'), false);
+test('the switch is on in the game, and the front door stays off', () => {
+  assert.equal(FEATURE_STATES['menu-next-up'], 'on');
+  assert.equal(createFeatureFlags({storage: null, qa: false}).enabled('menu-next-up'), true);
   assert.equal(FEATURE_STATES['menu-front-door'], 'dev');
 });
 
