@@ -22,11 +22,23 @@ change when plates fall after a hit. The chase tells the player to "hit a door w
   designs and a cheaper model builds); scores go in `docs/ART_LINE.md`.
 - Six art rounds at most (SPEC 0.11).
 
+## Round 1 (Claude, 10 November 2026)
+
+Sheet: `docs/board/looks/everburn-furnace/round-1.jpg`. Two causes found and fixed in `tools/blender/scablands-vehicles.py`
+(both now in `docs/ART_LINE.md`): the model carried no colours, and it was exported standing on its nose. The door lights
+are about twice as large. All three vehicles in the file (the furnace, Big Bess, the thief buggy) are rebuilt.
+
+- Reads now: which way it faces, the glowing door (three bright vents on that side only), plates gone after hits.
+- Still wrong: the body is close to black on its shaded side; the shape is boxes; the flame cones stand between the cab and
+  the boiler; the rear door's vents are small. Smoke turning orange was not judged (the camera was below it).
+- Next round: lighter soot and rust with a worn ochre boiler, fire inside the mouth and doors in place of the cones, and the
+  view from the chasing car at 30 m. Consider the photo and carve method of the art line for the body.
+
 ## Checks
 
 - Browser check `everburn-well` still passes.
 - Look (Claude): four sides at 13 m and one view from the chasing car at 30 m, for idle, stoke, glow, one hit and two hits;
-  one comparison sheet under `docs/board/looks/everburn/`.
+  one comparison sheet under `docs/board/looks/everburn-furnace/`.
 - No frame check (rule 9): the story is not switched on.
 
 ## Removed

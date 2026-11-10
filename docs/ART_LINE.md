@@ -194,6 +194,15 @@ stop adjusting and change the method.
   already put the building's front at the top of the frame. Check the roof
   courses and front edge against the source before copying another camera's
   roll; a needless 90-degree roll turns both. (TOWN-ART-PLANTS, 7 November.)
+- **A model that is black in the game** had its colour made by a noise texture. The exporter writes no colour for a
+  material whose colour comes from a texture node; the material arrives white, and any metal setting then draws black
+  where there is no sky to reflect. Set plain base colours and keep metal at .2 or less for Scablands art. (Old Smoke's
+  furnace, 10 November.)
+- **A vehicle standing on its nose in the game** was authored +Y up and then exported with the exporter's own Y-up turn.
+  A recipe authored +Y up exports with `export_yup=False`. (`scablands-vehicles.py`, 10 November.)
+- **Look at the piece in the game before accepting it.** Both faults above passed three rounds of Blender renders,
+  because the renders showed the noise colour and the review camera was turned to suit. A piece nobody has loaded in
+  the game is not checked: its scene test must use the names and the file the real loader gives.
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.

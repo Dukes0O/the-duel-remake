@@ -39,25 +39,21 @@ scene.render.film_transparent = False
 scene.world.color = (.035, .035, .032)
 
 def mat(name, color, metallic=.45, rough=.72, emission=0):
+    metallic = min(metallic, .18)
     m = bpy.data.materials.new(name); m.diffuse_color = (*color, 1); m.use_nodes = True
     bs = m.node_tree.nodes.get('Principled BSDF')
     bs.inputs['Base Color'].default_value = (*color, 1)
     bs.inputs['Metallic'].default_value = metallic; bs.inputs['Roughness'].default_value = rough
-    noise=m.node_tree.nodes.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value=5.5
-    noise.inputs['Detail'].default_value=3.0; noise.inputs['Roughness'].default_value=.78
-    ramp=m.node_tree.nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position=.24; ramp.color_ramp.elements[0].color=(*(c*.42 for c in color),1)
-    ramp.color_ramp.elements[1].position=.76; ramp.color_ramp.elements[1].color=(*(min(1,c*1.55+.025) for c in color),1)
-    m.node_tree.links.new(noise.outputs['Fac'],ramp.inputs['Fac'])
-    m.node_tree.links.new(ramp.outputs['Color'],bs.inputs['Base Color'])
+    # Plain colours only. A noise texture wired into the colour is not written to the game's model file: the
+    # exported material arrives white, and with a metal setting it draws black in the Scablands (no sky to reflect).
     if emission:
         bs.inputs['Emission Color'].default_value = (*color, 1); bs.inputs['Emission Strength'].default_value = emission
     return m
 
-steel = mat('Welded soot-dark steel', (.105,.112,.105), .68, .82)
-rust = mat('Layered iron oxide', (.31,.115,.048), .55, .92)
-paint = mat('Faded ochre enamel, chipped to rust', (.37,.28,.12), .45, .84)
-black = mat('Oiled iron and rubber', (.035,.039,.036), .26, .91)
+steel = mat('Welded soot-dark steel', (.225,.235,.228), .68, .82)
+rust = mat('Layered iron oxide', (.42,.17,.07), .55, .92)
+paint = mat('Faded ochre enamel, chipped to rust', (.56,.41,.17), .45, .84)
+black = mat('Oiled iron and rubber', (.075,.078,.074), .26, .91)
 glass = mat('Dusty cab glass', (.09,.14,.14), .35, .42)
 glow = mat('Vent glow look', (.95,.19,.025), .05, .44, 2.0)
 warm = mat('Firebox ember', (.72,.24,.025), .15, .65, .5)
@@ -151,8 +147,8 @@ def smoke(x):
     # Three individually addressable vents, with a dark mouth and separate glow insert.
     for i,xv in enumerate((-.82,0,.82),1):
         cube(f'old-smoke-vent-{i}',(xv,2.03,-2.72),(.48,.57,.13),steel,.045,r)
-        cube(f'old-smoke-vent-{i}-mouth',(xv,2.03,-2.635),(.31,.35,.035),black,.01,r)
-        cube(f'old-smoke-vent-{i}-glow',(xv,2.03,-2.61),(.22,.24,.025),glow,.01,r)
+        cube(f'old-smoke-vent-{i}-mouth',(xv,2.03,-2.635),(.40,.47,.035),black,.01,r)
+        cube(f'old-smoke-vent-{i}-glow',(xv,2.03,-2.61),(.33,.39,.025),glow,.01,r)
         for dx in (-.20,.20): cyl('Vent bolt',(xv+dx,2.03,-2.60),.035,.025,rust,rot=(math.pi/2,0,0),parent=r)
     # Tall crooked chimney and rain hood.
     cyl('Crooked furnace chimney',(.62,3.25,-1.18),.24,2.55,steel,rot=(math.pi/2,0,0),vertices=12,parent=r)
@@ -163,8 +159,8 @@ def smoke(x):
         # Three-part vent housings project from each flank; each keeps a separate glow look.
         for i,zv in enumerate((-1.88,-1.05,-.22),1):
             cube(f'Flank vent {side} {i} rim',(side*1.47,1.78,zv),(.12,.50,.46),rust,.035,r)
-            cube(f'Flank vent {side} {i} dark throat',(side*1.54,1.78,zv),(.035,.27,.25),black,.01,r)
-            cube(f'Flank vent {side} {i} ember',(side*1.565,1.78,zv),(.02,.13,.15),glow,.008,r)
+            cube(f'Flank vent {side} {i} dark throat',(side*1.54,1.78,zv),(.035,.42,.38),black,.01,r)
+            cube(f'Flank vent {side} {i} ember',(side*1.565,1.78,zv),(.02,.34,.30),glow,.008,r)
         cube('Furnace torn corner plate',(side*1.50,1.11,-2.12),(.09,.43,.55),steel,.02,r)
         for y in (1.12,1.52,1.92): cube('Armor weld bead',(side*1.45,y,-1.0),(.025,.035,2.05),steel,.006,r)
     wheelset(r,0,5.2,.70,3)
@@ -253,7 +249,8 @@ for obj in list(bpy.data.objects):
     parent=obj.parent
     while parent and parent not in roots: parent=parent.parent
     if obj in roots or parent in roots: obj.select_set(True)
-bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True,export_materials='EXPORT',export_extras=True,use_selection=True)
+bpy.ops.export_scene.gltf(filepath=str(glb),export_format='GLB',export_apply=True,export_materials='EXPORT',export_extras=True,use_selection=True,
+    export_yup=False)  # The parts are authored +Y up already; the exporter's own turn stood every vehicle on its nose.
 if glb.stat().st_size > 1_500_000: raise RuntimeError(f'GLB budget exceeded: {glb.stat().st_size}')
 # A separate comparison collage is assembled after Blender from the previous
 # round plus the nine individual evidence renders.
