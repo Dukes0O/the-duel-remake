@@ -2,15 +2,39 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {clearScablandsTownLayout} from '../../world/scablands-ground.js';
-import {oldSmokeVentTargets} from '../../world/jobs/old-smoke.js';
+import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
+import {oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
+  furnaceNextDoor} from '../../world/jobs/old-smoke.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
+import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
+import {applyArmorDamage} from '../../combat-armor.js';
+import {startKnock} from '../../vehicle-knock.js';
+import {DRIVE} from '../../config.js';
+import {worldPose} from '../arena-floor.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
   return {x: at.x, y: at.y, z: at.z};
 };
 const EMPTY_HIT_TARGETS = [];
+const FURNACE_ID = 'old-smoke-furnace';
+// Existing cues only (src/sound-bank.js), played through the arena tell event.
+const FURNACE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch',
+  doorSlam: 'vehicle.landing', hit: 'combat.hit-confirm', shoveWarning: 'arena.toll-gate',
+  fell: 'combat.explosion'});
+const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.ember.old-smoke.3',
+  3: 'story.ember.cinder.19'});
+const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
+  rear: 'REAR DOOR OPENING (BEHIND HIM)'});
+const FURNACE_LOG_LIMIT = 80;
+
+// A line's words: the job's own captions, then the Everburn story lines, else the id.
+function captionFor(worldJob, lineId) {
+  const own = worldJob.definition.captions?.[lineId];
+  if (own) return own;
+  const story = EMBER_CAPTIONS[lineId];
+  return story ? `${story.who}: ${story.text}` : lineId;
+}
 const WELL_WEAR_RANGE = 10;
 const WELL_WEAR_PER_SECOND = 1;
 
@@ -97,7 +121,7 @@ export function prepareWorldJobControls(duel) {
   return true;
 }
 
-function updateJobActors(worldJob, dt) {
+function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   const actorDef = step?.actor;
   if (!actorDef) return;
@@ -107,8 +131,16 @@ function updateJobActors(worldJob, dt) {
     if (!start) return;
     actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
       pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null,
-      ...(actorDef.id === 'old-smoke-furnace' ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
+      ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
+    if (actorDef.id === FURNACE_ID && actorDef.legs) {
+      actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
+      syncFurnaceActor(actor);
+    }
     worldJob.actors.push(actor);
+  }
+  if (actor.furnace) {
+    stepFurnaceActor(duel, worldJob, actor, actorDef, dt);
+    return;
   }
   const follow = worldJob.follow;
   if (!follow || follow.actorId && follow.actorId !== actor.id || !actorDef.path?.length) return;
@@ -126,6 +158,99 @@ function updateJobActors(worldJob, dt) {
     actor.position.z += dz / gap * travel;
   }
   if (actor.pathProgress >= 1 && actorDef.escort) actor.atDestination = true;
+}
+
+function syncFurnaceActor(actor) {
+  const furnace = actor.furnace;
+  actor.position.x = furnace.x;
+  actor.position.z = furnace.z;
+  actor.position.y = scablandsSurfaceHeightAt(furnace.x, furnace.z);
+  actor.heading = furnace.heading;
+  actor.pathIndex = furnace.pathIndex;
+  actor.pathProgress = furnace.path.total > 0 ? Math.min(1, furnace.metres / furnace.path.total) : 0;
+  actor.speed = furnace.phase === 'fallen' ? 0 : actor.speed;
+  actor.health = furnaceHealth(furnace);
+  actor.nextDoor = furnaceNextDoor(furnace);
+}
+
+function logFurnace(duel, worldJob, event) {
+  worldJob.furnaceLog ??= [];
+  worldJob.furnaceLog.push({tSec: duel.state.stageTimeSec, ...event});
+  if (worldJob.furnaceLog.length > FURNACE_LOG_LIMIT) worldJob.furnaceLog.shift();
+}
+
+function furnaceCue(duel, actor, cue, seconds = 0) {
+  duel.emit({arenaTell: {id: actor.id, targetId: 'player', seconds, cue,
+    position: {x: actor.position.x, y: actor.position.y, z: actor.position.z}}});
+}
+
+// Armour the furnace takes off the player. After the third hit the job is won:
+// the car may lose armour near the well but is never left with none.
+function furnaceHurts(duel, furnace, amount) {
+  if (!(amount > 0)) return 0;
+  const state = duel.state;
+  const allowed = furnace.won ? Math.min(amount, Math.max(0, (state.armor ?? 0) - 1)) : amount;
+  return allowed > 0 ? applyArmorDamage(duel, state, 'fixed', {owner: FURNACE_ID, amount: allowed}) : 0;
+}
+
+function shoveCar(duel, shove) {
+  const state = duel.state;
+  if (state.combatWrecking || state.knock) return;
+  const pose = worldPose(duel, state), carMps = (state.speedMph || 0) * DRIVE.mphToWorld;
+  startKnock(state, {vx: Math.sin(pose.heading) * carMps + shove.x * shove.metresPerSecond,
+    vz: Math.cos(pose.heading) * carMps + shove.z * shove.metresPerSecond,
+    spin: 0, severity: 'knocked', heading: pose.heading, player: true, arenaShove: true});
+}
+
+function handleFurnaceEvent(duel, worldJob, actor, event) {
+  const furnace = actor.furnace;
+  logFurnace(duel, worldJob, event);
+  const cue = FURNACE_CUES[event.type];
+  if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
+  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy')
+    duel._callout(FURNACE_ARROWS[event.door] ?? '', event.seconds);
+  else if (event.type === 'hit') duel._callout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6);
+  else if (event.type === 'shoveWarning') duel._callout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4);
+  else if (event.type === 'shove') {
+    duel._callout('SHOVED!', 1.2);
+    duel.emit({combatHit: true, strength: .4, enemy: true, victim: 'player',
+      hitPosition: {x: actor.position.x, y: actor.position.y, z: actor.position.z}});
+  }
+  else if (event.type === 'turnAround') duel._callout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
+  return furnace;
+}
+
+// The chase starts again from its own beginning (never the three waves).
+function restartFurnace(duel, worldJob, actor, actorDef, reason) {
+  actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
+  actor.startedAtSec = worldJob.clockSec ?? 0;
+  syncFurnaceActor(actor);
+  logFurnace(duel, worldJob, {type: 'restart', reason});
+  duel._callout(reason === 'escaped' ? 'HE GOT AWAY. HE IS BACK AT THE WELL.' :
+    'WRECKED. THE CHASE STARTS OVER.', 3);
+}
+
+function stepFurnaceActor(duel, worldJob, actor, actorDef, dt) {
+  const state = duel.state, wrecked = state.combatWrecking === true;
+  let furnace = actor.furnace;
+  if (!furnace.won && wrecked) { furnace.holding = true; return; }
+  if (furnace.holding) {
+    restartFurnace(duel, worldJob, actor, actorDef, 'wrecked');
+    return;
+  }
+  const carAt = position(duel, state);
+  const car = state.onFoot || wrecked ? null : {x: carAt.x, y: carAt.y, z: carAt.z};
+  const out = stepFurnace(furnace, dt, {car});
+  syncFurnaceActor(actor);
+  for (const event of out.events) handleFurnaceEvent(duel, worldJob, actor, event);
+  if (furnace.escaped) { restartFurnace(duel, worldJob, actor, actorDef, 'escaped'); return; }
+  if (out.armor > 0) furnaceHurts(duel, furnace, out.armor);
+  if (out.shove) {
+    furnaceHurts(duel, furnace, out.shove.armor);
+    shoveCar(duel, out.shove);
+  }
+  if (out.speedCapMph !== null && state.speedMph > out.speedCapMph)
+    state.speedMph = Math.max(out.speedCapMph, state.speedMph - 40 * dt);
 }
 
 function spawnWave(duel, worldJob, request, key) {
@@ -193,8 +318,7 @@ function applyRequests(duel, worldJob, requests) {
       spawnWave(duel, worldJob, request, key);
     }
     else if (request.type === 'say' && request.lineId) {
-      const caption = worldJob.definition.captions?.[request.lineId] ?? request.lineId;
-      duel._callout(caption, 2.2);
+      duel._callout(captionFor(worldJob, request.lineId), 2.2);
     }
     else if (request.type === 'lendWeapon' && typeof request.weapon === 'string') {
       duel.state.weaponLoadout = [...new Set([...(duel.state.weaponLoadout || []), request.weapon])];
@@ -275,6 +399,11 @@ export function stepWorldJob(duel, dt) {
   for (const hit of thingsHit) {
     const targetId = hit.actorId ?? hit.id;
     const actor = worldJob.actors.find(item => item.id === targetId);
+    // A door hit counts only on the glowing door; the furnace owns its health.
+    if (hit.kind === 'furnace-vent') {
+      if (actor?.furnace && furnaceHit(actor.furnace, hit.door, 'weapon')) syncFurnaceActor(actor);
+      continue;
+    }
     if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
   }
   const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);
@@ -302,7 +431,7 @@ export function stepWorldJob(duel, dt) {
   worldJob.job = next;
   state.worldJobThingsHit = [];
   moveJobRaiders(worldJob, dt);
-  updateJobActors(worldJob, dt);
+  updateJobActors(duel, worldJob, dt);
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
   if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
   for (const event of next.events) {
@@ -327,7 +456,7 @@ export function stepWorldJob(duel, dt) {
       worldJob.inventory = [...new Set([...(worldJob.inventory ?? []), event.id])];
     }
     if (event.type === 'say' && event.lineId) {
-      duel._callout(worldJob.definition.captions?.[event.lineId] ?? event.lineId, 2.2);
+      duel._callout(captionFor(worldJob, event.lineId), 2.2);
     }
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
@@ -395,9 +524,7 @@ export function worldJobHitTargets(duel) {
     if (actor.health > 0 && actor.position) {
       targets.push({id: actor.id, actorId: actor.id, kind: actor.id.includes('furnace') ? 'furnace' : 'vehicle',
         position: actor.position, radius: 3});
-      if (actor.id === 'old-smoke-furnace')
-        targets.push(...oldSmokeVentTargets(actor,
-          Math.max(0, (worldJob.clockSec ?? 0) - actor.startedAtSec)));
+      if (actor.id === FURNACE_ID) targets.push(...oldSmokeVentTargets(actor));
     }
   }
   for (const barrier of step?.barriers ?? []) {

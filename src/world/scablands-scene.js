@@ -6,7 +6,7 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
 import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
-import {oldSmokeGlowingVent} from './jobs/old-smoke.js';
+import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
@@ -101,6 +101,7 @@ function addMallRubble(group,place){
   group.add(rubble);
 }
 
+const SOOT_GREY=new THREE.Color(0x302c28),SOOT_BLACK=new THREE.Color(0x0c0b0a),SOOT_ORANGE=new THREE.Color(0xc8641c);
 function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
   const flame=new THREE.MeshStandardMaterial({color:0xff6a18,emissive:0xc33508,emissiveIntensity:1.4,roughness:.6});
@@ -152,7 +153,7 @@ export function createScablandsScene(course,options={}){
     group.add(root);townDraw=root;
   };
   void addTown();
-  const furnaceVents=[];
+  const furnaceVents=[],furnacePlates=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
   const roadMaterial=new THREE.MeshStandardMaterial({color:0x594b39,roughness:1});
@@ -201,10 +202,13 @@ export function createScablandsScene(course,options={}){
         const model=source.clone(true);tintArt(model,place.id);
         if(key==='vehicles'&&place.id==='everburn'){
           model.traverse(node=>{
-            const ventMatch=node.name.match(/old-smoke-vent-(\d+)-glow|Flank vent [+-]?1 (\d+) ember/i);
+            // Six armour plates; two fall off the furnace with each hit.
+            if(/^(Furnace side armor|Furnace torn corner plate|Hanging torn furnace plate)(\.\d+)?$/.test(node.name))furnacePlates.push(node);
+            // The three rear vents are the rear door; the flank vents on each side are the left and right doors.
+            const ventMatch=node.name.match(/old-smoke-vent-\d+-glow|Flank vent ([+-]?)1 \d+ ember/i);
             if(!node.isMesh||!ventMatch)return;
             node.material=Array.isArray(node.material)?node.material.map(material=>material.clone()):node.material.clone();
-            furnaceVents.push({index:Number(ventMatch[1]??ventMatch[2])-1,material:node.material});
+            furnaceVents.push({door:ventMatch[1]===undefined?'rear':ventMatch[1]==='-'?'right':'left',material:node.material});
           });
           furnacePlace=place;
           furnaceRig=new THREE.Group();furnaceRig.name="Old Smoke's moving furnace rig";
@@ -252,10 +256,18 @@ export function createScablandsScene(course,options={}){
           furnaceRig.rotation.y=(SCABLANDS_PLACES.indexOf(furnacePlace)%4)*Math.PI/2;furnaceModel.position.x=0;
         }
       }
+      const furnace=actor?.furnace;
+      furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
+      const sootMaterial=furnaceEffects?.smoke[0]?.material;
+      if(sootMaterial){
+        // The smoke is grey, turns orange through the 4-second stoke, and is blacker after each hit.
+        sootMaterial.color.copy(SOOT_GREY).lerp(SOOT_BLACK,(furnace?.hits??0)/OLD_SMOKE.hitsToWin);
+        if(furnace?.phase==='stoke')sootMaterial.color.lerp(SOOT_ORANGE,Math.min(1,furnace.phaseSec/OLD_SMOKE.stokeSec));
+      }
       if(!actor)return;
-      const glowing=oldSmokeGlowingVent(Math.max(0,worldJob.clockSec-actor.startedAtSec));
+      const glowingDoor=furnace?furnaceGlowingDoor(furnace):null;
       for(const vent of furnaceVents){
-        const active=vent.index===glowing;
+        const active=vent.door===glowingDoor;
         const materials=Array.isArray(vent.material)?vent.material:[vent.material];
         for(const material of materials){
           if(material.emissive)material.emissive.set(active?0xff7020:0x160904);

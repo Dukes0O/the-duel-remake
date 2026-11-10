@@ -13,6 +13,23 @@ const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];
 
+// Old Smoke's path: from the well across the open flats (leg 1, left door), into
+// the Boneyard past the planes (leg 2, right door) and back along the run to the
+// well, whose last 230 m are leg 3 (rear door). About 3,150 m, or 3 minutes 45
+// seconds at the furnace's base pace.
+const furnacePath = path(well,
+  place('furnace-flats-1', -450, 40), place('furnace-flats-2', -300, -230), place('furnace-flats-3', -60, -380),
+  place('furnace-flats-4', 170, -340), place('furnace-flats-5', 350, -200), place('furnace-flats-6', 350, 60),
+  place('furnace-boneyard-in', 335, 170), place('furnace-planes-1', 345, 246), place('furnace-planes-2', 440, 248),
+  place('furnace-planes-3', 545, 252), place('furnace-turn-1', 610, 335), place('furnace-turn-2', 520, 425),
+  place('furnace-run-1', 250, 415), place('furnace-run-2', 0, 370),
+  place('furnace-run-3', -200, 350), well);
+const furnaceLegs = Object.freeze([
+  Object.freeze({id:'open-flats', door:'left', fromWaypoint:0}),
+  Object.freeze({id:'boneyard', door:'right', fromWaypoint:7}),
+  Object.freeze({id:'run-back', door:'rear', fromWaypoint:15}),
+]);
+
 export const EVERBURN_JOBS = Object.freeze([
   Object.freeze({id:'everburn-hot-delivery', storyId:'everburn', number:1, name:'Hot Delivery', kind:'delivery',
     resultLineId:'story.ember.auntie-solder.2',
@@ -54,7 +71,7 @@ export const EVERBURN_JOBS = Object.freeze([
       startLineId:'everburn-job-5-start', takenLineId:'everburn-job-5-key-taken', wonLineId:'everburn-job-5-won'})]}),
   Object.freeze({id:'everburn-the-everburn', storyId:'everburn', number:6, name:'The Everburn', kind:'defence-then-finish',
     resultLineId:'story.ember.hollis.1',
-    easy:Object.freeze({placeHealth:120, waves:[1,2,2], furnaceHealth:3, ventRadius:10}), lineId:'everburn-job-6-start',
+    easy:Object.freeze({placeHealth:120, waves:[1,2,2], furnaceHealth:3, ventRadius:2}), lineId:'everburn-job-6-start',
     steps:[step('defend',{what:'Defend the Everburn well from the Ash Men.', place:well, placeId:'everburn-valve', health:120, waveCount:3,
       waves:[{count:2},{count:2},{count:3}], easyWaves:[{count:1},{count:2},{count:2}],
       raiderEntry:wellApproach, raiderHold:wellRaidersHold, approachSpeed:1.5,
@@ -63,9 +80,12 @@ export const EVERBURN_JOBS = Object.freeze([
       restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
       step('chase',{what:"Stop Old Smoke's furnace before it reaches Tin Town.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
-        path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250))}, path:path(well,place('furnace-run',-260,150),place('furnace-return',-350,250)),
-        targetSpeed:14, leashDistance:180, contactRadius:10, targetHealth:3, hitPart:'glowing-vent',
-        requiredHits:3, lentWeapon:'flamethrower', startLineId:'everburn-job-6-chase-start', wonLineId:'everburn-job-6-won'})],
+        path:furnacePath, legs:furnaceLegs}, path:furnacePath, legs:furnaceLegs,
+        // The chase ends on the third door hit, never on contact or distance
+        // (src/world/jobs/old-smoke.js owns the rules).
+        targetSpeed:14, leashDistance:Infinity, contactRadius:0, targetHealth:3, hitPart:'glowing-vent',
+        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:'story.ember.cinder.17',
+        wonLineId:'story.ember.cinder.20'})],
     rewards:['cinder-crew-member','cinders-hand-flamer','ember-paint','everburn-lit']}),
 ]);
 
