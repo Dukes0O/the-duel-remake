@@ -1,5 +1,6 @@
 # Wasteland run log
 
+10 November, released (Claude): menu Next up line, Brian in three sentences, round Lab speeds. Build 26.11.10 08:04 UTC, master e783dc7e; staged build checked on port 5188; the live server was not running.
 10 November, MENU-NEXT-UP merged and switched on (Claude; built by a Sonnet helper): lane tier 60 of 60, build, 8 of 8 menu browser checks, menu looked at and the line pressed.
 9 November night check on dd7e09c97 (a menu build ran beside it): full tier 639 of 639; combat balance pass; frames on Performance p95 18.2 ms, world build 316 ms, first-race load 5.4 s (a warning), High 34.3 ms, the known HDMI pattern, keeps its pass (Kyle, 30 Oct); browser 195 of 203, all 23 Lab checks pass. The eight: arena-shove, drive-lesson-run, everburn, ski-finish (passes alone) have QA cards; deep-frames, frame-pacing, arsenal-wave1-audio and p4-audio need the laptop alone.
 9 November, LAB-BRIAN-SHORT and LAB-ROUND-NUMBERS merged (Claude): lane tier 45 of 45, build, 23 of 23 Lab browser checks; Pendulums read by hand. Not released yet.
