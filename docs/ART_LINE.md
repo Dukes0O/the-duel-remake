@@ -203,6 +203,15 @@ stop adjusting and change the method.
 - **Look at the piece in the game before accepting it.** Both faults above passed three rounds of Blender renders,
   because the renders showed the noise colour and the review camera was turned to suit. A piece nobody has loaded in
   the game is not checked: its scene test must use the names and the file the real loader gives.
+- **Art near black in the game while its file has good colours** was darkened in the game's code once for every part
+  that shared a material: a rust used by forty parts ended at a thousandth of its colour, while a paint used by three
+  kept most of it. Code that tints loaded art copies each material and tints it once. If one colour of a model reads
+  and another is black, count the parts that share each material before touching the recipe. (`tintArt` in the
+  Scablands scene, 10 November; round 1 of the furnace lightened the recipe's colours for nothing.)
+- **Boxes and drums in flat colour look like a toy** (Kyle, 10 November, Old Smoke's furnace round 2). A recipe of
+  plain cubes and cylinders with one colour per part reads as a furnace at 30 m and still looks like a toy, however
+  the colours are chosen. A piece the player looks at for a whole chase is built from photos with the kits in "The
+  method" above. Do not spend a round restyling box art.
 - **Roof pieces float** when placed at the table's `height`, which includes the photo's roof kit. Read the carved body's own surface under each piece (the Vane escort's beacons, 7 November).
 - **A piece built from raw points stands on end** when glTF points (Y up) go straight into Blender mesh data (Z up). Convert each point (x, y, z) to (x, -z, y) (the crusher's belt).
 - **A trace takes in whatever lies in its box.** A leg box drawn where the photo has gravel made a false leg. Check each traced part against the photo before keeping it.

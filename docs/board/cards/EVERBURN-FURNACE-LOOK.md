@@ -34,6 +34,45 @@ are about twice as large. All three vehicles in the file (the furnace, Big Bess,
 - Next round: lighter soot and rust with a worn ochre boiler, fire inside the mouth and doors in place of the cones, and the
   view from the chasing car at 30 m. Consider the photo and carve method of the art line for the body.
 
+## Round 2 (Claude, 10 November 2026)
+
+Sheet: `docs/board/looks/everburn-furnace/round-2.jpg`, note `round-2-review.md`.
+
+- The near-black body had a third cause, in the game: `tintArt` darkened a shared material once for every part that
+  used it. Fixed, with a test; it also lightens the well's buildings, the Dead Mall and the Boneyard.
+- New shape (firebox, banded drum, barred fire doors on both flanks and the rear, steam dome, taller chimney, ram),
+  the first reviewed colours a little darker, fire over the glowing door in place of the cones, plates that fall by
+  side: left pair, right pair, rear corner shields.
+- At 30 m the facing, the doors, the stoke (orange smoke) and the glowing door all read.
+- **Kyle's verdict, 10 November: "this art looks toy like."** Not accepted as the look. The model stays in as the
+  working piece so the chase can be driven by hand.
+- **Round 3 changes the method** (two rounds of box art, and Kyle's rule is gritty, never toy-like): build the furnace
+  from photos with the art line's kits, with `rail-trains.py` (the steam engine) as the example. The part names the
+  game reads stay the same: the nine door lights, the six plates, the root's name.
+
+### Round 3 photo requests (Claude)
+
+Claude's session has no image tool; Codex's built-in one makes these, one call per view (ART_LINE, "Photos and
+masks"). Keep them in `public/assets/models/wasteland/scablands/textures/` as `old-smoke-side.jpg`, `-front.jpg`,
+`-rear.jpg`, `-top.jpg`, credited in that folder's `CREDITS.md`. Every request starts with the same description:
+
+> A photograph of one original post-apocalyptic vehicle: a heavy six-wheeled scrap truck, about 8 m long, 4 m wide
+> and 5 m tall without its chimney, carrying a riveted steam-boiler furnace behind a small armoured cab. A dark iron
+> firebox with one wide barred fire door in the middle of each flank and one across the rear; a horizontal banded
+> boiler drum on top; a steam dome; one tall crooked chimney behind the cab; a scrap ram across the front. Thick soot
+> above every door, heat-blued and rust-streaked plate, dented faded ochre armour skirts over the wheels, weld beads,
+> chains, patched plates. Fire doors shut and dark. Flat overcast light, plain pale grey studio background, even pale
+> floor, no people, no logos, no text. Dead-on orthographic view, no perspective, the whole vehicle in frame.
+
+Then one of: "Exact left side elevation, front of the vehicle at the left of the picture." "Exact front elevation."
+"Exact rear elevation." "Exact plan view from straight above, front of the vehicle at the top of the picture."
+Check each picture is one view of the same vehicle before carving; regenerate any that is not.
+
+**Changed assertion, reviewed by Claude (rule 18).** `tools/test-scablands-scene.mjs` no longer checks that fire stands
+at the furnace's front face, because the stand-in cones there are removed. It now checks more: two tongues of fire
+per door, placed over the left, right and rear doors, hidden outside the chase and during the stoke, and shown only
+over the door that glows. Nothing is loosened.
+
 ## Checks
 
 - Browser check `everburn-well` still passes.
@@ -43,4 +82,4 @@ are about twice as large. All three vehicles in the file (the furnace, Big Bess,
 
 ## Removed
 
-The stand-in flame cones in `addFurnaceFire`, when the new fire is in.
+The stand-in flame cones in `addFurnaceFire` (removed in round 2).

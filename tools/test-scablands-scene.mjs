@@ -18,6 +18,9 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
       if(name==="Old Smoke's rolling furnace")for(const plateName of ['Furnace side armor','Furnace side armor','Hanging torn furnace plate','Hanging torn furnace plate','Furnace torn corner plate','Furnace torn corner plate']){
         const plate=new THREE.Group();plate.name=plateName;part.add(plate);
       }
+      // Twelve parts share one material, as the real model's rust and steel parts do.
+      if(name==="Old Smoke's rolling furnace"){const shared=new THREE.MeshStandardMaterial({color:new THREE.Color(.5,.5,.5)});
+        for(let index=0;index<12;index++){const body=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),shared);body.name=`Shared body part ${index}`;part.add(body);}}
       // The model's three rear vents are the rear door; three vents on each flank are the left and right doors.
       if(name==="Old Smoke's rolling furnace")for(let index=1;index<=3;index++)for(const ventName of [`old-smoke-vent-${index}-glow`,`Flank vent 1 ${index} ember`,`Flank vent -1 ${index} ember`]){
         const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0xff8020,emissive:0xff8020,emissiveIntensity:2}));
@@ -28,6 +31,8 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
   return {scene:root};
 }});
 assert.equal(await scene.ready,true,'all placed art loads');
+assert.ok(Math.abs(scene.group.getObjectByName('Shared body part 11').material.color.r-.42)<.001,
+  'a material shared by many parts is tinted once, not once for every part');
 assert.equal(loaded.length,7,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
@@ -72,10 +77,14 @@ assert.ok(Math.abs(stillPosition.x-(places.get('everburn').x+18))<.001,
 const doorMaterials=door=>[1,2,3].map(index=>scene.group.getObjectByName(
   door==='rear'?`old-smoke-vent-${index}-glow`:`Flank vent ${door==='left'?'':'-'}1 ${index} ember`).material.emissiveIntensity);
 const furnaceFire=scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke");
-const everburn=places.get('everburn'),doorWorld=new THREE.Vector3(),chimneyWorld=new THREE.Vector3();
-furnaceFire.children[0].getWorldPosition(doorWorld);furnaceFire.children[6].getWorldPosition(chimneyWorld);
-assert.ok(Math.abs(doorWorld.x-(everburn.x+17.28))<.001,
-  'fire is placed at the furnace door on its forward face');
+const everburn=places.get('everburn'),chimneyWorld=new THREE.Vector3();
+furnaceFire.children[6].getWorldPosition(chimneyWorld);
+// EVERBURN-FURNACE-LOOK round 2: the stand-in cones at the front face are gone. Fire now stands over each of the
+// three doors and shows only while that door glows.
+const tongues=furnaceFire.children.slice(0,6),fireOver=()=>tongues.filter(tongue=>tongue.visible).map(tongue=>tongue.userData.door);
+assert.deepEqual(tongues.map(tongue=>tongue.userData.door),['left','left','right','right','rear','rear'],'each door has two tongues of fire');
+assert.ok(tongues[0].position.x>2&&tongues[2].position.x<-2&&tongues[4].position.z<-4,'the fire stands over the left, right and rear doors');
+assert.deepEqual(fireOver(),[],'no fire shows over a door outside the chase');
 assert.ok(Math.abs(chimneyWorld.x-(everburn.x+19.77))<.001&&Math.abs(chimneyWorld.z-(everburn.z+.93))<.001,
   'smoke starts over the scaled furnace chimney');
 const chaseState={arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'chase'}]},
@@ -94,15 +103,18 @@ const lit=()=>[doorMaterials('left'),doorMaterials('right'),doorMaterials('rear'
 const dark=[.15,.15,.15],glow=[2.8,2.8,2.8];
 const furnaceActor=chaseState.arena.worldJob.actors[0];
 assert.deepEqual(lit(),[glow,dark,dark],'only the open door glows: the left door lights its flank vents');
+assert.deepEqual(fireOver(),['left','left'],'fire shows over the glowing left door only');
 furnaceActor.furnace={phase:'glow',door:'right',hits:1,phaseSec:0};
 syncScene(scene.group,chaseState);
 assert.deepEqual(lit(),[dark,glow,dark],'the visible glow follows the furnace\'s open door');
 furnaceActor.furnace={phase:'glow',door:'rear',hits:2,phaseSec:0};
 syncScene(scene.group,chaseState);
 assert.deepEqual(lit(),[dark,dark,glow],'the rear door lights the rear vents');
+assert.deepEqual(fireOver(),['rear','rear'],'fire shows over the glowing rear door only');
 furnaceActor.furnace={phase:'stoke',door:'rear',hits:2,phaseSec:4};
 syncScene(scene.group,chaseState);
 assert.deepEqual(lit(),[dark,dark,dark],'no door glows during the stoke');
+assert.deepEqual(fireOver(),[],'no fire shows over a door during the stoke');
 const plates=[];furnace.traverse(node=>{if(/armor$|plate$/.test(node.name))plates.push(node);});
 const visiblePlates=()=>plates.filter(plate=>plate.visible).length;
 assert.equal(plates.length,6,'the furnace model has six armour plates');

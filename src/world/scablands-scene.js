@@ -83,15 +83,22 @@ function mastAndSmoke(group){
 }
 
 function tintArt(scene, placeId){
+  // Many parts share one material, and one model file serves more than one place. Each material is copied
+  // and tinted once for this place; tinting it again for every part that used it drew the art near black.
+  const tinted=new Map();
+  const tint=source=>{
+    if(tinted.has(source))return tinted.get(source);
+    const material=source.clone();tinted.set(source,material);
+    material.color?.multiplyScalar(placeId==='dead-mall'?.72:.84);
+    if(material.roughness!==undefined)material.roughness=Math.max(.78,material.roughness);
+    if(placeId==='dead-mall'&&/sign|letter|goods/i.test(material.name||''))
+      material.color?.set(/letter|goods/i.test(material.name)?0xf0d397:0x173e32);
+    return material;
+  };
   scene.traverse(node=>{
-    if(!node.isMesh)return;
+    if(!node.isMesh||!node.material)return;
     node.castShadow=true;node.receiveShadow=true;
-    for(const material of [].concat(node.material||[])){
-      material.color?.multiplyScalar(placeId==='dead-mall'?.72:.84);
-      if(material.roughness!==undefined)material.roughness=Math.max(.78,material.roughness);
-      if(placeId==='dead-mall'&&/sign|letter|goods/i.test(material.name||''))
-        material.color?.set(/letter|goods/i.test(material.name)?0xf0d397:0x173e32);
-    }
+    node.material=Array.isArray(node.material)?node.material.map(tint):tint(node.material);
   });
 }
 
@@ -109,25 +116,27 @@ function addMallRubble(group,place){
 }
 
 const SOOT_GREY=new THREE.Color(0x302c28),SOOT_BLACK=new THREE.Color(0x0c0b0a),SOOT_ORANGE=new THREE.Color(0xc8641c);
+// Where fire licks out above each door, in the furnace model's own metres (+X is the furnace's left).
+const DOOR_FLAMES=Object.freeze([['left',1.5,-1.4],['left',1.5,-.6],['right',-1.5,-1.4],['right',-1.5,-.6],['rear',-.4,-2.86],['rear',.4,-2.86]]);
 function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
-  const flame=new THREE.MeshStandardMaterial({color:0xff6a18,emissive:0xc33508,emissiveIntensity:1.4,roughness:.6});
-  const core=new THREE.MeshStandardMaterial({color:0xffd36b,emissive:0xf08014,emissiveIntensity:1.7,roughness:.5});
+  const flame=new THREE.MeshStandardMaterial({color:0xff7a1a,emissive:0xd9480a,emissiveIntensity:1.1,roughness:.7});
   const soot=new THREE.MeshStandardMaterial({color:0x302c28,transparent:true,opacity:.48,roughness:1,depthWrite:false});
-  for(let door=0;door<3;door++){
-    const x=(door-1)*.88*scale,z=.48*scale,y=2.3;
-    const outer=new THREE.Mesh(new THREE.ConeGeometry(.55,1.85,6),flame);outer.position.set(x,y,z);outer.rotation.x=Math.PI/2;
-    const inner=new THREE.Mesh(new THREE.ConeGeometry(.27,1.1,6),core);inner.position.set(x,y-.18,z+.035);inner.rotation.x=Math.PI/2;
-    effects.add(outer,inner);
+  // Two tongues of fire over each door. They show only while that door glows.
+  for(const [door,x,z] of DOOR_FLAMES){
+    const tongue=new THREE.Mesh(new THREE.ConeGeometry(.3,1.5,5),flame);tongue.name=`Fire over the ${door} door`;
+    tongue.position.set(x*scale,2.2*scale+.75,z*scale);tongue.userData.door=door;tongue.visible=false;
+    if(door==='rear')tongue.rotation.x=-.3;else tongue.rotation.z=door==='left'?-.3:.3;
+    effects.add(tongue);
   }
   const chimney={x:.62*scale,z:-1.18*scale};
   for(let puff=0;puff<5;puff++){
     const cloud=new THREE.Mesh(new THREE.SphereGeometry(1.15+puff*.35,7,5),soot);
-    cloud.position.set(chimney.x,6.7+puff*3.4,chimney.z);cloud.scale.y=1.5;effects.add(cloud);
+    cloud.position.set(chimney.x,8.6+puff*3.4,chimney.z);cloud.scale.y=1.5;effects.add(cloud);
   }
   parent.add(effects);
   return {effects, flames:[...effects.children.slice(0,6)], smoke:[...effects.children.slice(6)],
-    chimneyX:chimney.x, chimneyY:6.7, chimneyZ:chimney.z};
+    chimneyX:chimney.x, chimneyY:8.6, chimneyZ:chimney.z};
 }
 
 export function createScablandsScene(course,options={}){
@@ -224,6 +233,10 @@ export function createScablandsScene(course,options={}){
           furnaceRig.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
           model.position.x=0;model.rotation.y=0;model.scale.setScalar(1.5);
           furnaceModel=model;furnaceRig.add(model);group.add(furnaceRig);
+          // The left side's plates fall with the first hit (the left door), the right side's with the second,
+          // and the rear corner shields with the third.
+          const plateRank=plate=>/corner/.test(plate.name)?2:plate.position.x>0?0:1;
+          furnacePlates.sort((a,b)=>plateRank(a)-plateRank(b));
           furnaceEffects=addFurnaceFire(furnaceRig,place,1.5);
           return;
         }
@@ -245,7 +258,7 @@ export function createScablandsScene(course,options={}){
       furnaceEffects.smoke.forEach((puff,index)=>{puff.position.y=furnaceEffects.chimneyY+index*3.4+Math.sin(seconds*.42+index)*.7;
         puff.position.x=furnaceEffects.chimneyX+Math.sin(seconds*.19+index)*.9;
         puff.position.z=furnaceEffects.chimneyZ+Math.cos(seconds*.17+index)*.35;});
-      furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=.86+(.14*Math.sin(seconds*7+index));});
+      furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=.8+(.3*Math.abs(Math.sin(seconds*7+index*1.9)));});
     },
     sync(state){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
@@ -273,8 +286,9 @@ export function createScablandsScene(course,options={}){
         sootMaterial.color.copy(SOOT_GREY).lerp(SOOT_BLACK,(furnace?.hits??0)/OLD_SMOKE.hitsToWin);
         if(furnace?.phase==='stoke')sootMaterial.color.lerp(SOOT_ORANGE,Math.min(1,furnace.phaseSec/OLD_SMOKE.stokeSec));
       }
+      const glowingDoor=actor&&furnace?furnaceGlowingDoor(furnace):null;
+      for(const flame of furnaceEffects?.flames??[])flame.visible=flame.userData.door===glowingDoor;
       if(!actor)return;
-      const glowingDoor=furnace?furnaceGlowingDoor(furnace):null;
       for(const vent of furnaceVents){
         const active=vent.door===glowingDoor;
         const materials=Array.isArray(vent.material)?vent.material:[vent.material];
