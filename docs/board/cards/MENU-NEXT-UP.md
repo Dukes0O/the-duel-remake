@@ -38,6 +38,13 @@ says what to do next. The front door had one, and it went away with the front do
   audit's test window at 1440 by 900 the big title lay over the player and circuit boxes;
   look for that and say in the change note whether it happens on the laptop.
 
+## Result (Claude, 10 November 2026)
+
+Done and switched on; see `docs/changes/MENU-NEXT-UP.md`. A Sonnet helper built it; Claude reviewed the code, looked at the
+menu at 1920 by 1000 and at 1440 by 900, and pressed the line. The first check in the new test expects the switch `on` where
+the builder wrote `dev`; the state changed on purpose and nothing is loosened (rule 18). The big title lying over the PLAYER
+and CIRCUIT boxes is the menu as it was before this card and is left for a later card.
+
 ## Removed
 
 Nothing. The front door's own files stay until Kyle decides about the front door.
