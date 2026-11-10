@@ -6,6 +6,8 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab has its own button.** LAB stands on the menu beside INSTRUCTOR and HELIPAD. Every lesson is
+  open from the start; a challenge that flies or drives says which lessons it needs first.
 - **The menu says what to do next.** A "Next up" line under the top bar names one thing to try and
   takes you there, and a small NEW tag marks a button with something new behind it. Nothing else on
   the menu has moved.

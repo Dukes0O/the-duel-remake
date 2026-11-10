@@ -2029,3 +2029,11 @@ Combat balance: pass, same night check.
 Browser scenarios, same night check: 195 of 203, all 23 Lab checks among the passes. arena-shove, drive-lesson-run, everburn and ski-finish have QA cards (ski-finish passes alone); deep-frames, frame-pacing, arsenal-wave1-audio and p4-audio need the laptop alone. After the menu merge: drive-lessons-view-2, earned-cars, heli-first-flight, lessons-v2-view, menu-front-door, story-kogane, hidden-road and lab-classroom-braking pass, 8 of 8.
 Frames: no race scene changed (rule 9 for the lesson boards; the menu line is one row of text). The night check's own run had a menu build beside it and is not counted; it read Performance p95 18.2 ms.
 Seen by Claude: Pendulums read start to finish, one changed board in each of the four lessons, and the menu at 1920 by 1000 and 1440 by 900 with the line pressed.
+
+## Release, 10 November 2026 (second), the LAB button and open lessons (Claude, Release Manager)
+
+LAB-OPEN-DOOR. The range also holds WW-BOSS, EVERBURN-WELL-ART and EVERBURN-FURNACE-LOOK round 1, all behind `story-everburn`, which stays off with `titan-bowl`, `wasteland-town` and `deep-vasca`.
+Full tier in the night check on dd7e09c97: 639 passed, 0 failed, 0 not run. Since then each change ran its own lane tier (rule 19): MENU-NEXT-UP 60 of 60, WW-BOSS 61 of 61, EVERBURN-WELL-ART 29 of 29, EVERBURN-FURNACE-LOOK 49 of 49, LAB-OPEN-DOOR 65 of 65. The build passes on the merged result, with test-earned-cars-ui and test-medals.
+Browser scenarios: all 23 Lab checks and menu-front-door pass, with six neighbouring ones; everburn-well passes; everburn still fails on its two known screen facts (QA-EVERBURN-SCREENS, story off).
+Frames: no race scene a player can reach changed (rule 9).
+Seen by Claude: the menu as a new player with the LAB button and its NEW tag, the Lab opened from it, and Downforce started with no driving lesson passed.
