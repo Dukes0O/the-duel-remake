@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-10T09:33:28.227Z
+Observed at: 2026-11-10T14:52:48.559Z
 
-Observation commit: b9b8803e7d1605bd62379fd415b13fb00e8587b4
+Observation commit: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b9b8803e7d1605bd62379fd415b13fb00e8587b4
+Integration HEAD: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -40,7 +40,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/qa-arena-shove-baseline | 4 | unknown | true | false | unknown |
 | codex/qa-drive-lesson-run-board | 4 | unknown | true | false | unknown |
 | codex/qa-ski-finish-timeout | 4 | unknown | true | false | unknown |
-| codex/rail-lines | 3 | unknown | true | false | unknown |
+| codex/rail-lines | 4 | unknown | true | false | unknown |
 | codex/rail-region | 3 | unknown | true | false | unknown |
 | codex/rail-steps | 3 | unknown | true | false | unknown |
 | codex/skin-waste | 4 | unknown | true | false | unknown |
@@ -85,9 +85,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 497,720 B | +0 B | 500,000 B |
 | Review `looks/` | 72,638,439 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 139,240 B | -192,891 B | 5,000,000 B |
+| Added bytes in last merge | 139,240 B | +0 B | 5,000,000 B |
 | All `public/` | 700,978,943 B | +0 B | unavailable |
-| Git objects | 1,683,747,840 B | +779,264 B | unavailable |
+| Git objects | 1,684,164,608 B | +416,768 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: e783dc7e10e1df07d951572a9599d7fff76cf190
 - Local main: missing
-- Local integration/wasteland: b9b8803e7d1605bd62379fd415b13fb00e8587b4
+- Local integration/wasteland: 7e4245cb9216fa7f458c8bebe2b9f28bdc13ffc9
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
