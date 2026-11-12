@@ -88,6 +88,30 @@ before it reaches Tin Town. Hit a door while it glows."
 5. Laptop only (Claude): browser checks `everburn-well` and `everburn`; then Claude drives job 6 by hand on Easy and
    Medium and watches the three sightings.
 
+## Result (built by a Sonnet helper; reviewed by Claude, 11 November 2026)
+
+Merged into Claude's branch as 58e42dc5c. Claude read the rule changes (`old-smoke.js`, `steps/chase.js`,
+`everburn.js`) and reran the four named tests on the merged result: the furnace rules 480 checks, the scene, 40
+captions, and the child-pace Easy driver winning all nine jobs 10 times in 10.
+
+Four things differ from the design above, all accepted by Claude:
+
+1. The job 1 sighting line is `story.ember.cinder.24`, because `cinder.21` was already a job 6 line.
+2. `OLD_SMOKE.introSec` is 6.7 seconds (was 4.5), so that the three opening lines finish before the first stoke.
+   **Changed assertion, reviewed by Claude (rule 18):** the first-slam wait in `tools/test-old-smoke.mjs` is 16 s
+   with a limit of 24 s (was 14 and 20), which follows the longer opening and loosens nothing else.
+3. Job 3 ends on Cinder's sighting line as a closing line, held for about 2.2 seconds, in place of a won line that
+   had no caption behind it (the raw id on card QA-EVERBURN-SCREENS). A catch now stays a catch during that hold. The
+   player sees about the first 2 seconds of the furnace rolling away; a longer look needs a longer hold.
+4. The path's first and last pieces are let off the well's own box, since the furnace starts in the well and falls
+   into it. Every other piece clears every solid by at least 15.1 m, and no place was moved.
+
+The path is 3,250.6 m, 3 minutes 52 seconds at the base pace. Sound: `arena.toll-gate` when the furnace reaches the
+town, `weapon.flame.start` when the gate burns.
+
+Still to do before this card closes: the two browser checks on the merged result, Claude's look at the three
+sightings and the gate, a drive of job 6 on Easy and Medium, and the caption table in `docs/WASTELAND_WORLD.md`.
+
 ## Not in this card
 
 Ash Men riding beside the furnace, lasting damage to Tin Town, feuds and recurring runs: later steps of
