@@ -1,48 +1,42 @@
-# The current plan (9 November 2026)
+# The current plan (12 November 2026)
 
-This page replaces every earlier run plan. It follows the audit of 9 November
-(`docs/board/audit-2026-11-09.md`). The rules are in `AGENTS.md`.
+This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's direction of 11 November is in
+`docs/board/decisions.md`: draw in code before building model files, and a boss needs a reason.
 
-## Now: the audit's seven small cards
+## Who does what
 
-Kyle said yes to these on 9 November. They go before town and art cards.
+- **Claude:** design, drawing code, the first example of each new kind of thing, and every verdict, by looking at
+  pictures from the game and at scripted play.
+- **Sonnet helpers** (started by Claude, each in its own copy of the repository when it writes code): builds from a
+  settled card, carving from photos with the kits, redrawing to an accepted example, gathering pictures and play
+  facts, routine fixes.
+- **Codex:** photos and painted pictures with its image tool, long runs, the nightly full check, and its ready cards
+  on the board. No new Blender art card starts until Claude's list of code-drawn work is on the board.
 
-| Card | Owner | Notes |
+## Now, in this order
+
+| Work | Card | Where it stands |
 | --- | --- | --- |
-| RULES-REWRITE | Claude | Done with this page |
-| MENU-NEXT-UP | Codex | The old menu stays as Gratian asked; nothing moves |
-| EASY-NO-PENALTY | Codex | Touches credits: one independent review |
-| DIG-YARD-TOY | Codex, then Claude plays it | Released on its own switch |
-| LAB-OPEN-DOOR | Codex | After MENU-NEXT-UP (same menu files) |
-| LAB-BRIAN-SHORT | Claude | Done and merged on 9 November |
-| LAB-ROUND-NUMBERS | Claude | Done and merged on 9 November |
+| The Lab: a compelling place to learn | LAB-LOOK | All sixteen lesson boards and their answer cards are redrawn, Brian has painted portraits, the old lesson frame is gone. Next: the stage step (a larger board and larger cards), then the challenges in the 3D world, then the walking hangar |
+| The Scablands as a place | SCABLANDS-LAND | Models carry their colours, wear and ground are drawn in code, the road is flat, Tin Town has a gate and 45 shacks. Next: the other places looked at the same way (the well, the Dead Mall, the Boneyard), then a frame check |
+| When a boss comes out | `docs/FEUDS_AND_RUNS.md` | Step 1 (EVERBURN-RUN-AT-TOWN) and step 2 (RUN-GAS) are built with their switches off. Next: play both through by hand, then feuds for a second group, the field battle and the Scrapdome challenge |
+| Finish and release the Everburn | QA-EVERBURN-SCREENS, EVERBURN-FURNACE-LOOK | Raw line names still show at the start of jobs 1, 2, 5 and 6. The story needs one play from end to end and a frame check before its switch goes on |
 
-Each one goes live when it is green (rule 18). One release a day at most is enough.
+Nothing from 11 and 12 November is released. The Lab's new look is the nearest to a release: it needs the nightly
+full check green and a look at all sixteen lessons in a visible browser.
 
-## After these: Kyle decides
+## Rules of thumb learned on 11 and 12 November
 
-The audit suggests this order. None of it is decided yet, and direction is Kyle's.
-
-1. Claude plays all sixteen Lab lessons in a visible browser, as a child would (L1). Finish
-   and release the Everburn (W2). W1 (an Easy that a young driver wins 8 times in 10) is dropped:
-   Kyle said on 9 November that Gratian is now good, and better than Kyle at the Scrapdome.
-2. One Lab lesson, Pendulums, taught on the real machine in the hangar, for Kyle and Gratian to
-   try before any other lesson is rebuilt (L5). Brian brings a lesson back after a race (L7).
-   The Bowl's smallest Show Night (W4).
-3. Kyle's choice: one played slice of the town with the tunnel trial (W6), or more Lab.
-
-Kyle, 9 November: finish what has been started before opening new lines, and Claude chooses the
-order. Routine build work goes to a cheaper model (Sonnet 5.5 or Codex) with a written brief;
-Claude's own turns go to graphics, story and design. For art, try both routes on two or three
-comparable pieces and write the scores in `docs/ART_LINE.md`: Claude builds in one or two turns,
-against Claude designs, a cheaper model builds and Claude judges.
-
-Until then, Codex's other ready cards run as the board lists them.
+- Pictures from the game and a scripted Medium driver come before believing a design. Both of Claude's escort
+  designs passed their tests on Easy and could not be won on Medium until a helper played them.
+- A model nobody has loaded in the game is not checked. Four Scablands models drew white and one stood on end.
+- A helper that finds the card wrong stops and says so. That saved the gas run from being built on raids that did
+  not exist.
 
 ## Switched off, and staying off until its card says otherwise
 
-`story-everburn`, `titan-bowl`, `wasteland-town` and `menu-front-door`. The front door was
-pulled on 30 October at Gratian's request; do not switch it on unasked.
+`story-everburn`, `scablands-runs`, `titan-bowl`, `wasteland-town` and `menu-front-door`. The front door was pulled
+on 30 October at Gratian's request; do not switch it on unasked.
 
 ## Start prompt for Codex
 
