@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, readdirSync} from 'node:fs';
 import {createProfile, loadPlayers, normalizeProfile, savePlayers} from '../src/progression.js';
 import {getProfileWeapons} from '../src/weapon-upgrades.js';
-import {emberOf, markEmberRead, markEmberJob, markEmberEnd, emberFeud, emberRuns, emberFeudWord, applyArrivedRun} from '../src/story/ember-save.js';
+import {emberOf, markEmberRead, markEmberJob, markEmberEnd, emberFeud, emberRuns, emberFeudWord, applyArrivedRun, applyBattleEnding, emberFurnaceDead} from '../src/story/ember-save.js';
 import {normalizeWorld, rememberWorldFound, worldOf} from '../src/world/world-save.js';
 
 let checks = 0;
@@ -117,6 +117,45 @@ same(career, afterCinder, 'earning Cinder twice changes nothing');
   // A damaged feud is repaired by the next arrival, from Raiding.
   const repaired = applyArrivedRun({...allJobs, story: {...allJobs.story, ember: {...allJobs.story.ember, feud: 'x', runs: -3}}}, 'boneyard');
   same([repaired.feudBefore, repaired.feudAfter, repaired.runs], [2, 3, 1], 'a damaged save is repaired by the next arrival');
+}
+
+// FIELD-BATTLE-ASH: `furnaceDead`, and the two endings of the battle that write the save. Older saves read exactly as before.
+{
+  const warParty = (ember = {}) => ({...allJobs, story: {...allJobs.story, ember: {...allJobs.story.ember, feud: 4, runs: 6, ...ember}}});
+  const snapshot = JSON.stringify(allJobs);
+  ok(!emberFurnaceDead(fresh) && !emberFurnaceDead(allJobs), 'a career with no furnaceDead saved reads as false');
+  ok(!has(emberOf(allJobs), 'furnaceDead'), 'reading an older save does not add furnaceDead');
+  same(JSON.stringify(allJobs), snapshot, 'reading furnaceDead changes nothing');
+  ok(emberFurnaceDead(warParty({furnaceDead: true})), 'a saved furnaceDead of true is kept');
+  for (const damaged of [false, 1, 'true', null, [], {}, 0]) {
+    const profile = warParty({furnaceDead: damaged});
+    ok(!emberFurnaceDead(profile) && emberOf(profile).furnaceDead === false, `a damaged furnaceDead ${JSON.stringify(damaged)} reads as false and is repaired to false`);
+  }
+  same(emberFurnaceDead({...warParty({furnaceDead: true}), story: {version: 2, ember: {furnaceDead: true}}}), false, 'a newer story is not shown by this build');
+  const before = JSON.stringify(warParty());
+  // The battle won: the furnace is dead for good, the feud falls to Watching, one run is counted.
+  const won = applyBattleEnding(warParty(), 'won');
+  ok(won.ok && won.changed, 'a battle won is saved');
+  same([won.feudBefore, won.feudAfter, won.runs, won.furnaceDead, emberFeud(won.profile), emberRuns(won.profile), emberFurnaceDead(won.profile)],
+    [4, 1, 7, true, 1, 7, true], 'a battle won sets furnaceDead, the feud to Watching and adds one run');
+  same(won.profile.story.ember.jobs, allJobs.story.ember.jobs, 'a battle won leaves the six jobs as they were');
+  same(JSON.stringify(warParty()), before, 'applying a battle does not change the profile it was given');
+  // Arrived with the furnace still rolling: one run, the feud stays at War party, the furnace is alive.
+  const arrived = applyBattleEnding(warParty(), 'arrived');
+  ok(arrived.ok && arrived.changed, 'a battle that ends with the furnace still rolling is saved');
+  same([arrived.feudBefore, arrived.feudAfter, arrived.runs, arrived.furnaceDead, emberFeud(arrived.profile), emberFurnaceDead(arrived.profile)],
+    [4, 4, 7, false, 4, false], 'arriving with the furnace rolling adds one run, keeps War party and leaves the furnace alive');
+  ok(!has(emberOf(arrived.profile), 'furnaceDead'), 'and writes no furnaceDead');
+  // What it refuses.
+  ok(!applyBattleEnding(warParty(), 'sideways').ok, 'an unknown ending is refused');
+  ok(!applyBattleEnding(allJobs, 'won').ok && !applyBattleEnding(read.profile, 'won').ok, 'no battle without War party, and none before job 6 is won');
+  ok(!applyBattleEnding(warParty({feud: 3}), 'won').ok, 'no battle at Hunting');
+  ok(!applyBattleEnding(warParty({furnaceDead: true}), 'won').ok && !applyBattleEnding(warParty({furnaceDead: true}), 'arrived').ok, 'no battle once the furnace is dead');
+  const ahead = {...allJobs, story: {version: 2, ember: {feud: 4}}};
+  ok(!applyBattleEnding(ahead, 'won').ok && applyBattleEnding(ahead, 'won').profile === ahead, 'a save from a newer build is not written');
+  // An ordinary run after the win: the feud climbs again, the furnace stays dead.
+  const later = applyArrivedRun(won.profile, 'boneyard');
+  ok(later.ok && emberFurnaceDead(later.profile) && emberFeud(later.profile) === 2, 'a Boneyard run after the win raises the feud and the furnace stays dead');
 }
 
 // World discoveries are an additive union and keep unknown fields and names.

@@ -18,10 +18,14 @@ export const EMBER_FEUD_START = 2;
 export const EMBER_RUN_ROADS = Object.freeze(['long', 'boneyard']);
 const validFeud = value => Number.isSafeInteger(value) && value >= 1 && value <= EMBER_FEUD_WORDS.length;
 const validRuns = value => Number.isSafeInteger(value) && value >= 0;
+// FIELD-BATTLE-ASH: the war party's furnace is dead for good once the battle on the Boneyard road is won. Only a saved value is
+// checked (anything but true reads as false), so an older save is read exactly as before.
+export const EMBER_BATTLE_ENDINGS = Object.freeze(['won', 'arrived']);
 
 function normalizeEmber(ember) {
   if (Object.hasOwn(ember, 'feud') && !validFeud(ember.feud)) ember.feud = EMBER_FEUD_START;
   if (Object.hasOwn(ember, 'runs') && !validRuns(ember.runs)) ember.runs = 0;
+  if (Object.hasOwn(ember, 'furnaceDead')) ember.furnaceDead = ember.furnaceDead === true;
   if (Object.hasOwn(ember, 'read')) ember.read = ember.read === true;
   if (Object.hasOwn(ember, 'end')) ember.end = ember.end === true;
   if (Object.hasOwn(ember, 'jobs')) ember.jobs = Array.isArray(ember.jobs)
@@ -57,6 +61,17 @@ registerStory({
       const feud = emberFeudOf(ember), runs = emberRunsOf(ember);
       return {feud: Math.max(1, Math.min(EMBER_FEUD_WORDS.length, feud + (road === 'boneyard' ? 1 : -1))), runs: runs + 1};
     },
+    // The battle on the Boneyard road ended (FIELD-BATTLE-ASH). 'won': the furnace is dead for good, the feud falls to Watching and
+    // the run counts. 'arrived': Big Bess reached Tin Town with the furnace still rolling; the run counts and the feud stays at War
+    // party. The battle happens only at War party and only while the furnace is alive.
+    battle: (ember, ending) => {
+      if (!EMBER_BATTLE_ENDINGS.includes(ending)) return 'That is not an ending of the battle.';
+      if (!EMBER_JOBS.every(id => (ember.jobs ?? []).includes(id))) return 'Finish all six Everburn jobs first.';
+      if (emberFeudOf(ember) !== EMBER_FEUD_WORDS.length) return 'The Ash Men have not gathered a war party.';
+      if (ember.furnaceDead === true) return 'The furnace is already dead.';
+      const runs = emberRunsOf(ember) + 1;
+      return ending === 'won' ? {furnaceDead: true, feud: 1, runs} : {runs};
+    },
   },
 });
 
@@ -66,6 +81,8 @@ export const emberOf = profile => storyIsNewer(profile) ? {} : storyOf(profile)[
 function emberFeudOf(ember) { return validFeud(ember?.feud) ? ember.feud : EMBER_FEUD_START; }
 function emberRunsOf(ember) { return validRuns(ember?.runs) ? ember.runs : 0; }
 export const emberFeud = profile => emberFeudOf(emberOf(profile));
+// True once the battle on the Boneyard road has been won; missing or damaged reads as false.
+export const emberFurnaceDead = profile => emberOf(profile).furnaceDead === true;
 export const emberRuns = profile => emberRunsOf(emberOf(profile));
 export const emberFeudWord = feud => EMBER_FEUD_WORDS[(validFeud(feud) ? feud : EMBER_FEUD_START) - 1];
 
@@ -78,6 +95,16 @@ export function applyArrivedRun(profile, road) {
   const after = written.ok ? emberFeud(written.profile) : before;
   return {...written, feudBefore: before, feudAfter: after, runs: written.ok ? emberRuns(written.profile) : emberRuns(profile),
     reachedWarParty: written.ok && before < EMBER_FEUD_WORDS.length && after === EMBER_FEUD_WORDS.length};
+}
+
+// The battle on the Boneyard road ended by `ending` ('won' or 'arrived'). Pure, like applyArrivedRun: the profile it is given is
+// never changed. The result says the feud before and after. A battle that is left or not finished writes nothing.
+export function applyBattleEnding(profile, ending) {
+  const before = emberFeud(profile);
+  const written = writeStory(profile, EMBER_KEY, 'battle', ending);
+  const after = written.ok ? emberFeud(written.profile) : before;
+  return {...written, ending, feudBefore: before, feudAfter: after, runs: written.ok ? emberRuns(written.profile) : emberRuns(profile),
+    furnaceDead: written.ok ? emberFurnaceDead(written.profile) : emberFurnaceDead(profile)};
 }
 
 function grantJobReward(profile, jobId) {
