@@ -7,3 +7,12 @@ From the full check of 6 November 2026 (`docs/changes/FIX-EVERBURN-CARD.md`). `t
 Job 6's defend step shows its opening line as the raw id "everburn-job-6-start". WW-BOSS gave the chase step real words through
 `captionFor` in `src/arena/modes/world-job.js`; the other steps' line ids still have none.
 - Job 6 starts the car inside the well's derrick (Claude, 10 November, after EVERBURN-WELL-ART drew the well).
+
+## Settled for the build (Claude, 12 November 2026; built by Codex)
+
+- A step's opening line that has words in the story's line table shows its words. An id with no words anywhere shows
+  nothing, never the raw id, and the builder lists those ids for Claude, who writes story lines.
+- Job 6 starts the car on the approach road 30 m short of the well's derrick, facing it, clear of every solid, with a
+  check that the start is clear of every solid of the well.
+- Codex cannot run a browser under its protected mode: Claude runs `everburn`, `everburn-play` and `everburn-well`
+  on the branch.

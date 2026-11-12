@@ -215,6 +215,27 @@ Still weak, for the round that does Fuel, Wax, Launch and Projectile:
 - One-lane steps leave bare floor under the road, and past 80 m the road has no marks.
 - In the free test the close-up is the Falcone whichever car is chosen.
 
+## Round 11: the wide board on Fuel, Wax, Launch and Projectile (rules settled by Claude, 12 November 2026)
+
+Braking is the example (`src/lab/lessons/braking-board.js`): the board exports `size` (1320 by 680) and
+`strip(view)`, its readouts and tables are in the strip, and its scene is scaled so that the subject's whole travel
+fills the width with 40 pixels clear at each end. The rules of "The wide board's rules" above stand, with three
+added after round 10:
+
+- **No text on a wide board is smaller than 15 board units.** A laptop shows the board at about 0.8 of its drawn
+  size, so 15 is 12 pixels on screen. This replaces "labels keep their size" for the small labels (distance marks,
+  lane names, "brakes on"). Larger text stays as it is. Braking is brought to this rule in the Fuel and Wax job.
+- **The subject is the largest thing on the board** and stands in the middle third. No bare area larger than about
+  a quarter of the board.
+- **No word, number or step changes.** The builder proves it as round 10 did: every word the old board draws at
+  every step and setting is drawn by the new board or its strip.
+
+Two jobs, each a Sonnet helper in its own folder: Fuel and Wax (with Braking's labels); Launch and Projectile.
+Checks for each: the lessons' own tests with every moved point listed for Claude's review; every `lab-*` browser
+check; lane tier and build; one sheet (before and after of the step that shows the subject best, the free test, one
+with the physics panel open, at 1536 by 864, two pictures a row). A lesson whose picture is not better than before
+is not merged; the builder says so plainly.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
