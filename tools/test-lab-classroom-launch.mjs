@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, MARKS, MAX_MS, FLAG_M, distanceOf, secondsOf, pathOf, kmh, hits, benchAttempts, noAirDistance, FREE_TRIES} from '../src/lab/lessons/launch-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/launch-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, strip, size, LIP, DECK_Y, PX, WIN} from '../src/lab/lessons/launch-board.js';
 import {launchBench, rangeOf, TARGET} from '../src/lab/benches/launch.js';
 import {skiZone} from '../src/ski/runs/summit-zones.js';
 import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js';
@@ -237,7 +237,11 @@ test('mouse: the ramp and the dial turn, a click on the launcher launches, and h
   for (const action of ['speed:up', 'speed:down']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
   assert.equal(hitTest(v, ...targetPoint(v, 'angle:up')), null, 'the speed try’s ramp is set by Brian');
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'angle:up'), [300, 330], [80, 300], [400, 272], [500, 480]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
+  // The wide board: the launcher, the deck and the ramp panel keep their hover where they are drawn now. The tape's reading and the table are
+  // in the strip under the board, so their hover is the strip's hint.
+  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'angle:up'), [LIP.x - 60, DECK_Y + 40], [LIP.x + 250, DECK_Y + 12]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
+  assert.match(strip(v).hint, /The tape shows how far from the end of the ramp the last skier landed\./);
+  assert.match(strip(v).hint, /This table lists each launch with its angle, speed and distance\./);
   session.act(hitTest(v, ...targetPoint(v, 'speed:down')).action);
   assert.equal(session.view().dial.kmh, 68);
   const job = createClassroomSession(lesson);
@@ -245,7 +249,7 @@ test('mouse: the ramp and the dial turn, a click on the launcher launches, and h
   setTo(job, null, 22); fly(job);
   v = job.view();
   for (const action of ['angle:up', 'angle:down']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
-  assert.ok(hoverInfo(v, 118 + 27 * 9, 240), 'the flag is named');
+  assert.ok(hoverInfo(v, LIP.x + 27 * PX, DECK_Y - 40), 'the flag is named');
 });
 
 test('Show me on the free test reaches three different settings by itself', () => {
@@ -321,17 +325,87 @@ test('the board draws every step and card', () => {
   }
 });
 
-test('the flights stay on the board: the furthest and the highest the dials allow fit the scene', () => {
-  const PX = 9, LIP_X = 118, DECK_Y = 268;
-  for (const [angle, ms] of [[45, MAX_MS], [75, MAX_MS], [15, MAX_MS]]) {
-    const pts = pathOf(angle, ms);
-    assert.ok(LIP_X + Math.max(...pts.map(p => p[0])) * PX < 590, `${angle}/${ms}: lands inside the scene`);
-    assert.ok(DECK_Y - Math.max(...pts.map(p => p[1])) * PX > 30, `${angle}/${ms}: stays under the scene’s top`);
+test('the flights stay on the board: the furthest and the highest the dials allow fit the scene, and the furthest ends near the edge', () => {
+  let furthest = 0;
+  for (let angle = 15; angle <= 75; angle += 5) for (let ms = 13; ms <= MAX_MS; ms++) {
+    const pts = pathOf(angle, ms), land = LIP.x + Math.max(...pts.map(p => p[0])) * PX;
+    furthest = Math.max(furthest, land);
+    assert.ok(land < WIN.x + WIN.w - 8, `${angle}/${ms}: lands inside the scene`);
+    assert.ok(DECK_Y - Math.max(...pts.map(p => p[1])) * PX > WIN.y, `${angle}/${ms}: stays under the scene’s top`);
   }
+  assert.ok(size.width - furthest >= 36 && size.width - furthest <= 80, `the furthest landing leaves ${size.width - furthest} units to the board’s edge`);
   // Turning the dial and tilting the ramp counts as busy.
   const session = createClassroomSession(lesson);
   playThroughTo(session, 'try-speed');
   for (let i = 0; i < 14; i++) { session.act(i % 2 ? 'speed:down' : 'speed:up'); run(session, 2); }
   assert.equal(session.view().nudge, null, 'a player turning the dial is not stuck');
   assert.equal(session.view().help, 0);
+});
+
+// The wide board (docs/board/cards/LAB-LOOK.md, round 11): it names its size, the tape's reading and the table are in the strip under it,
+// and no text on it is smaller than 15 board units (a laptop shows the board at about 0.8, which is 12 pixels).
+const textSizes = (view, width = 1320, height = 680) => {
+  const sizes = [], store = {};
+  const ctx = new Proxy(store, {get: (target, name) => {
+    if (name in target) return target[name];
+    if (name === 'measureText') return value => ({width: String(value).length * 9});
+    if (['createLinearGradient', 'createRadialGradient'].includes(name)) return () => ({addColorStop() {}});
+    if (name === 'fillText') return value => { sizes.push([Number(/(\d+(?:\.\d+)?)px/.exec(store.font)?.[1]), String(value)]); };
+    return () => {};
+  }, set: (target, name, value) => { target[name] = value; return true; }});
+  drawBoard(ctx, view, width, height);
+  return sizes;
+};
+test('the wide board hands the tape and the table to the strip', () => {
+  assert.deepEqual({...size}, {width: 1320, height: 680});
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  assert.deepEqual(strip(session.view()).readouts, [{label: 'TAPE', value: '–', tone: 'faint'}]);
+  assert.deepEqual(strip(session.view()).tables[0].rows.map(r => [r.label, r.value]), [['Angle, speed', 'Distance'], ['There are no launches yet. Press Space to launch.', '']]);
+  fly(session);
+  let s = strip(session.view());
+  assert.equal(s.readouts[0].value, '35.6 m');
+  assert.equal(s.tables[0].title, 'THE LAUNCHES');
+  assert.deepEqual(s.tables[0].rows.map(r => [r.label, r.value]), [['Angle, speed', 'Distance'], ['45°, 72 km/h', '35.6 m']]);
+  session.act('angle:up'); fly(session); session.act('angle:up'); fly(session);
+  s = strip(session.view());
+  assert.equal(s.tables[0].rows.find(r => r.tone === 'accent').label, '45°, 72 km/h', 'the furthest launch is picked out once there are three');
+  // The flag steps say how far the tape is from the flag, in the table and beside the tape.
+  const flag = createClassroomSession(lesson);
+  playThroughTo(flag, 'try-flag'); flag.act('answer:2'); setTo(flag, 50); fly(flag);
+  s = strip(flag.view());
+  assert.deepEqual(s.readouts.map(r => [r.label, r.value]), [['TAPE', '34.9 m'], ['', '4.9 m beyond']]);
+  assert.deepEqual(s.tables[0].rows.slice(-1).map(r => [r.label, r.value]), [['50°, 72 km/h', '34.9 m, 4.9 m beyond']]);
+  assert.equal(s.tables[0].rows[0].value, 'Distance, against the flag');
+  // Brian's mark: the card is on the board, the launches are in the strip.
+  const job = createClassroomSession(lesson);
+  playThroughTo(job, 'alone'); fly(job);
+  s = strip(job.view());
+  assert.equal(s.tables[0].title, 'Your launches');
+  assert.deepEqual(s.tables[0].rows.map(r => [r.label, r.value]), [['45°, 72 km/h', '35.6 m']]);
+  assert.deepEqual(s.readouts.map(r => r.value), ['35.6 m', '6.4 m short']);
+  assert.match(hoverInfo(job.view(), 400, 100), /^This card shows the flag to reach and what Brian has fixed\.$/);
+  // The check scenes and the recap hand nothing to the strip.
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-pair');
+  assert.equal(strip(check.view()), null);
+});
+test('the wide board draws no text under 15 units, at any step', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'recap');
+  let drawn = 0;
+  for (let i = 0; i < STEPS.length; i++) {
+    session.act('back'); session.act(`go:${i}`);
+    if (STEPS[i].id === 'try-flag') { session.act('answer:2'); setTo(session, 60); session.act('go'); }
+    if (STEPS[i].id === 'alone') session.act('go');
+    for (const t of [0, 1, 3, 5]) {
+      run(session, t);
+      for (const [px, words] of textSizes(session.view())) { drawn++; assert.ok(px >= 15, `${STEPS[i].id}: “${words}” is drawn at ${px}`); }
+    }
+  }
+  for (const id of ['check-pair', 'check-lower', 'check-game']) {
+    session.act(`go:${STEPS.findIndex(s => s.id === id)}`); session.act('answer:0');
+    for (const [px, words] of textSizes(session.view())) { drawn++; assert.ok(px >= 15, `${id}: “${words}” is drawn at ${px}`); }
+  }
+  assert.ok(drawn > 500, 'the scan saw the text');
 });

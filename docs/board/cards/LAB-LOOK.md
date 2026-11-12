@@ -260,6 +260,32 @@ that no text is under 15 board units at any step.
 Still weak: Wax's three-strip step leaves the right third bare; Fuel's free test is one car on a long road; table
 rows wrap to two lines at a laptop's width.
 
+## Round 12, Launch and Projectile: merged (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Sheet and note: `docs/board/looks/lab-look/round-12.jpg` and `round-12-review.md`. Launch draws its flights at 21
+units to the metre where it drew 9; Projectile at 16 where it drew 12, as high as a 30 m drop on a board 680 tall
+allows. The helper compared 14,000 drawn moments with the old boards: no word or number is missing. One shared
+change: `outdoors` and `waterBody` in `board-art.js` take a width, 1000 by default.
+
+**Changed assertions, reviewed by Claude (rule 18).** `tools/test-lab-classroom-launch.mjs`: the hovers over the tape
+box and the table became checks of the strip's hint, because both moved to the strip; the launcher, deck and flag
+hovers moved with the scene and are now written from the scene's own lip, deck and scale; and "the flights stay on
+the board" checks every ramp at every dial reading against the scene's own edges where it checked three flights
+against fixed numbers, which is stronger. `tools/test-lab-classroom-projectile.mjs`: the buoy hover is taken from
+the board's own geometry, and "Show me lands on the board" allows the board's width, 1320, where it allowed 1000.
+The two scenarios fit a board 1320 wide, and their click and drag moved with the controls. Nothing is loosened.
+
+## Round 13 (not started; Claude): the physics panel must not shrink the picture
+
+With the physics panel open a wide board is fitted by width and is about a quarter smaller than the old board was,
+with text near 8 pixels. "That is accepted" in the wide board's rules above was wrong. The stage changes, not the
+boards: when the physics panel is open on a wide board it takes its room from Brian's column (Brian's page narrows
+or the physics shows as a tab of his column), so that the picture keeps its width. One change in
+`classroom-ui.js` and `classroom.css`, with a sheet of all five wide boards, panel open, before and after.
+
+Also for round 13: Projectile's short falls leave the right of the board to sky and ruler; Launch's job card hides a
+rising arc for ramps of 70 degrees or more; Wax's three-strip step leaves the right third bare.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

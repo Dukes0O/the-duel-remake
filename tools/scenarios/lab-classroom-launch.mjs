@@ -22,8 +22,8 @@ export async function run(c) {
   const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 20_000);
   const shot = name => c.screenshot(name);
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
-  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
-    return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
+  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
+    return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
 
   // The Lab map's click-to-go takes the player to the launcher, as a player's click does.
   const canvas = `document.querySelector('.lab-canvas')`;
@@ -39,7 +39,7 @@ export async function run(c) {
   await next('word-speed');
   // Launch angle: one click on the ramp panel's Flatter, then ↓ twice more.
   await at('word-angle'); await shot('word-angle');
-  const flatter = await toScreen(690, 160);
+  const flatter = await toScreen(1010, 156);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: flatter.x, y: flatter.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: flatter.x, y: flatter.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});

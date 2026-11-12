@@ -1,23 +1,36 @@
 // The Launch angles lesson's board (docs/board/cards/LAB-CLASSROOM-LAUNCH.md): Brian's launcher side on, its ramp
 // tilting about the lip, a skier flying its arc over a landing deck with a tape and a flag; the ramp panel and the
-// speed dial; and below, a close-up, the launches table or Brian's mark card. Draws and hit-tests only.
-import {BOARD, theme, background, cardScene, shadow, steel, bolt, bezel, lcd, brassDial, glassGlare, tarmac, roadPost, groundFlag, forceArrowTo, shade, grain, labelPlate, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+// speed dial; and, in the words, a close-up of the angle, the dial or the tape. Draws and hit-tests only.
+// The wide board (docs/board/cards/LAB-LOOK.md, round 11): the scene takes the whole board, scaled so that the furthest the
+// dials allow (45 degrees at 24 m/s, 48.6 m) lands near the right edge, and the deck runs on to its 50 m mark. The tape's reading and the table of
+// launches (or Brian's mark) are in the strip under the board; the board keeps only the labels that point at a part of the picture.
+import {BOARD, theme, background, cardScene, shadow, steel, bolt, bezel, lcd, brassDial, glassGlare, tarmac, roadPost, groundFlag, forceArrowTo, shade, grain, labelPlate, text, wrap, fitBoard} from '../classroom/board-art.js';
 import {pathOf, distanceOf, kmh, m1, deg, SHOW_MS, SLOW_MS} from './launch-classroom.js';
 export {BOARD};
+export const size = Object.freeze({width: 1320, height: 680});
 export const pressMovesDrag = false;
 
 const TRAIL = '#edc557', OLD = 'rgba(190,198,204,.45)', FLAG = '#ef7a59', GREEN = '#9ff0b4';
-// The scene: the launcher on the left, the landing deck level with its lip, metres to pixels the same both ways.
-const SCENE = Object.freeze({x: 30, y: 30, w: 560, h: 330});
-const DECK_Y = 268, LIP = Object.freeze({x: 118, y: DECK_Y}), PX = 9, ARM = 54;
-const RAMP = Object.freeze({x: 610, y: 40, w: 350, h: 150, down: [690, 160], up: [880, 160]});
-const DIAL = Object.freeze({x: 610, y: 206, w: 350, h: 130, down: [690, 304], up: [880, 304]});
-const TAPE_BOX = Object.freeze({x: 176, y: 304, w: 400, h: 50});
-const LOW = Object.freeze({x: 40, y: 376, w: 920, h: 284});
+// The scene: the whole board. The lip of the ramp, the deck level with it, metres to board units the same both ways.
+export const WIN = Object.freeze({x: 40, y: 26, w: 1240, h: 630});
+export const PX = 21;
+export const LIP = Object.freeze({x: 222, y: 548});
+export const DECK_Y = LIP.y;
+// The launcher is drawn in its own small units (a ramp of 4.4 m at 9 units a metre) and scaled up by K, so that it stands in the scene at the
+// scene's scale. OLD_LIP is where its lip is in those units.
+const K = PX / 9, OLD_LIP = Object.freeze({x: 118, y: 268}), ARM = 40, FLOOR_UNITS = 36;
+const W = (x, y) => [LIP.x + (x - OLD_LIP.x) * K, LIP.y + (y - OLD_LIP.y) * K];
+const RAMP = Object.freeze({x: 930, y: 36, w: 350, h: 150, down: [1010, 156], up: [1200, 156]});
+const DIAL = Object.freeze({x: 930, y: 196, w: 350, h: 130, down: [1010, 294], up: [1200, 294]});
+// The close-ups of the words sit in the sky between the launcher and the panels, over the middle of the board.
+const CLOSE = Object.freeze({x: 300, y: 40, w: 620, h: 350}), TAPE_CLOSE = Object.freeze({x: 300, y: 40, w: 620, h: 224});
 const scene = view => view.scene === 'launcher';
 const inBox = (x, y, [cx, cy], w, h) => Math.abs(x - cx) < w / 2 && Math.abs(y - cy) < h / 2;
 const inRect = (x, y, r) => x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
-const GO_AT = [LIP.x - 24, LIP.y - 34];
+const GO_AT = W(OLD_LIP.x - 24, OLD_LIP.y - 34);
+const flagX = metres => LIP.x + metres * PX;
+// The strip's hover: the tape's, and the table's or the job card's.
+const TAPE_HINT = 'The tape shows how far from the end of the ramp the last skier landed.', JOB_HINT = 'This card shows the flag to reach and what Brian has fixed.';
 
 // ---- hit testing and Brian's pointer, in board units ----
 export function hitTest(view, x, y) {
@@ -30,18 +43,17 @@ export function hitTest(view, x, y) {
     if (inBox(x, y, DIAL.up, 130, 40)) return {action: 'speed:up'};
     if (inBox(x, y, DIAL.down, 130, 40)) return {action: 'speed:down'};
   }
-  if (view.keys.Space === 'go' && x > SCENE.x && x < SCENE.x + SCENE.w && y > SCENE.y && y < DECK_Y + 20) return {action: 'go'};
+  if (view.keys.Space === 'go' && x > WIN.x && x < WIN.x + WIN.w && y > WIN.y && y < DECK_Y + 24 && !(view.ramp && inRect(x, y, RAMP)) && !(view.dial && inRect(x, y, DIAL))) return {action: 'go'};
   return null;
 }
 export function hoverInfo(view, x, y) {
   if (!scene(view)) return null;
   if (view.ramp && inRect(x, y, RAMP)) return view.ramp.locked ? 'Brian has set the angle of the ramp for this launch.' : 'Each press tilts the ramp 5 degrees steeper or flatter.';
   if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'Brian has set the speed dial for this launch.' : 'The speed dial sets how fast the skier leaves the ramp.';
-  if (inRect(x, y, TAPE_BOX)) return 'The tape shows how far from the end of the ramp the last skier landed.';
-  if (view.flag && Math.abs(x - (LIP.x + view.flag * PX)) < 16 && y > DECK_Y - 50 && y < DECK_Y + 4) return `The flag stands ${view.flag} m from the end of the ramp.`;
-  if (x > SCENE.x && x < LIP.x + 10 && y > DECK_Y - 60 && y < SCENE.y + SCENE.h) return `The ramp of the launcher is at ${deg(view.rig.angle)}, and its spring is set to ${view.rig.kmh} km/h.`;
-  if (x > LIP.x && x < SCENE.x + SCENE.w && y > DECK_Y - 8 && y < DECK_Y + 22) return 'The landing deck is level with the end of the ramp and carries a tape marked in metres.';
-  if (y > LOW.y && x < LOW.x + LOW.w) return view.job ? 'This card shows the flag to reach and what Brian has fixed.' : 'This table lists each launch with its angle, speed and distance.';
+  if (view.low === 'job' && view.job && inRect(x, y, JOB_CARD)) return JOB_HINT;
+  if (view.flag && Math.abs(x - flagX(view.flag)) < 22 && y > DECK_Y - 130 && y < DECK_Y + 6) return `The flag stands ${view.flag} m from the end of the ramp.`;
+  if (x > WIN.x && x < LIP.x + 25 && y > DECK_Y - 140 && y < WIN.y + WIN.h) return `The ramp of the launcher is at ${deg(view.rig.angle)}, and its spring is set to ${view.rig.kmh} km/h.`;
+  if (x > LIP.x && x < WIN.x + WIN.w && y > DECK_Y - 18 && y < DECK_Y + 50) return 'The landing deck is level with the end of the ramp and carries a tape marked in metres.';
   return null;
 }
 export function targetPoint(view, action) {
@@ -59,7 +71,7 @@ export function targetPoint(view, action) {
   // Sparks fly from what the step is about.
   if (view.focus === 'ramp') return [RAMP.x + RAMP.w / 2, RAMP.y + 60];
   if (view.focus === 'dial') return [DIAL.x + DIAL.w / 2, DIAL.y + 60];
-  return [TAPE_BOX.x + TAPE_BOX.w / 2, TAPE_BOX.y + 20];
+  return [flagX(18), DECK_Y + 24];
 }
 export function dragAngle() { return 0; }
 
@@ -73,12 +85,17 @@ function panel(ctx, x, y, w, h) {
   ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
   bezel(ctx, x, y, w, h, 8);
 }
+// A key cap: the letter is 16 units tall, so that it reads on the wide board.
+function cap(ctx, x, y, key) {
+  ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 13, y - 12, 26, 24, 4); ctx.fill();
+  ctx.fillStyle = '#1d2224'; ctx.font = '800 16px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(key, x, y + 1);
+}
 function button(ctx, [x, y], label, key, can) {
   ctx.globalAlpha = can ? 1 : .35;
   const g = ctx.createLinearGradient(0, y - 18, 0, y + 18); g.addColorStop(0, '#4b555b'); g.addColorStop(1, '#22282b');
   ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x - 60, y - 18, 120, 36, 6); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(x - 56, y - 17, 112, 1);
-  text(ctx, label, x + 10, y, {size: 15}); keyCap(ctx, x - 40, y, key);
+  text(ctx, label, x + 10, y, {size: 15}); cap(ctx, x - 40, y, key);
   ctx.globalAlpha = 1;
 }
 // A skier figure side on, flying along `dir` (radians, screen up is negative y): cream skis, boots, navy trousers, a blue jacket,
@@ -105,9 +122,10 @@ function skier(ctx, x, y, dir, scale = 1) {
   ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.ellipse(-.5, -24.5, 1.6, .8, -.5, 0, Math.PI * 2); ctx.fill();
   ctx.lineCap = 'butt'; ctx.lineJoin = 'miter'; ctx.restore();
 }
+const SKIER = 2.1;
 function flagPole(ctx, x, groundY, label) {
-  groundFlag(ctx, x, groundY, FLAG, 44);
-  if (label) text(ctx, label, x, groundY - 54, {size: 14, colour: FLAG, weight: 800});
+  groundFlag(ctx, x, groundY, FLAG, 80);
+  if (label) text(ctx, label, x, groundY - 98, {size: 18, colour: FLAG, weight: 800});
 }
 // A flight's path in board units, from an origin and a scale.
 const toBoard = (points, ox, oy, px) => points.map(([x, y, t]) => [ox + x * px, oy - y * px, t]);
@@ -116,12 +134,12 @@ function strokePath(ctx, pts, colour, width, dash = null) {
   ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.setLineDash(dash ?? []);
   ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]);
 }
-// The launcher: a steel frame with an engraved brass protractor behind its hinge, a steel ramp pivoting about its lip at the
-// deck's edge, and a strut with its spring that sets the angle.
+// The launcher, drawn in its own units (see K): a steel frame with an engraved brass protractor behind its hinge, a steel ramp
+// pivoting about its lip at the deck's edge, and a strut with its spring that sets the angle.
 function launcher(ctx, angle) {
-  const a = angle * Math.PI / 180, back = [LIP.x - ARM * Math.cos(a), LIP.y + ARM * Math.sin(a)], floorY = SCENE.y + SCENE.h - 6, R = 44;
+  const a = angle * Math.PI / 180, L = OLD_LIP, back = [L.x - ARM * Math.cos(a), L.y + ARM * Math.sin(a)], floorY = L.y + FLOOR_UNITS, R = 40;
   // The protractor: a quarter disc of brass under the hinge, engraved every 5 degrees from level to straight down.
-  ctx.save(); ctx.translate(LIP.x, LIP.y);
+  ctx.save(); ctx.translate(L.x, L.y);
   const brass = ctx.createRadialGradient(-12, 12, 4, 0, 0, R); brass.addColorStop(0, theme.brass[0]); brass.addColorStop(.6, theme.brass[1]); brass.addColorStop(1, theme.brass[2]);
   ctx.fillStyle = brass; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, Math.PI / 2, Math.PI); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(40,24,4,.7)'; ctx.lineWidth = 1; ctx.stroke();
@@ -131,13 +149,13 @@ function launcher(ctx, angle) {
   ctx.beginPath(); ctx.arc(0, 0, R - 14, Math.PI / 2, Math.PI); ctx.stroke();
   ctx.restore();
   // The frame: a steel post on a base plate with two bolted feet, and a hinge lug at the top.
-  shadow(ctx, LIP.x, floorY + 3, 52, .55);
-  steel(ctx, LIP.x - 34, floorY - 8, 66, 8, 2); bolt(ctx, LIP.x - 28, floorY - 4, 2); bolt(ctx, LIP.x + 26, floorY - 4, 2);
-  steel(ctx, LIP.x - 8, LIP.y + 4, 14, floorY - LIP.y - 12, 2);
-  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(LIP.x + 2, LIP.y + 6, 4, floorY - LIP.y - 14);
-  for (const by of [LIP.y + 14, LIP.y + 34, LIP.y + 54]) bolt(ctx, LIP.x - 1, by, 1.8);
+  shadow(ctx, L.x, floorY + 3, 52, .55);
+  steel(ctx, L.x - 34, floorY - 8, 66, 8, 2); bolt(ctx, L.x - 28, floorY - 4, 2); bolt(ctx, L.x + 26, floorY - 4, 2);
+  steel(ctx, L.x - 8, L.y + 4, 14, floorY - L.y - 12, 2);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(L.x + 2, L.y + 6, 4, floorY - L.y - 14);
+  for (const by of [L.y + 10, L.y + 20]) bolt(ctx, L.x - 1, by, 1.8);
   // The strut: a steel tube, a chrome rod and a brass spring, from the post to the middle of the ramp.
-  const sx = LIP.x - 3, sy = floorY - 30, ex = (LIP.x + back[0]) / 2, ey = (LIP.y + back[1]) / 2, span = Math.hypot(ex - sx, ey - sy);
+  const sx = L.x - 3, sy = floorY - 14, ex = (L.x + back[0]) / 2, ey = (L.y + back[1]) / 2, span = Math.hypot(ex - sx, ey - sy);
   ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.atan2(ey - sy, ex - sx));
   const rod = ctx.createLinearGradient(0, -2, 0, 2); rod.addColorStop(0, '#f1f5f7'); rod.addColorStop(1, '#6d777d');
   ctx.fillStyle = rod; ctx.fillRect(span * .3, -1.8, span * .7, 3.6);
@@ -146,49 +164,57 @@ function launcher(ctx, angle) {
   ctx.restore();
   bolt(ctx, ex, ey, 2.4);
   // The ramp: a steel plate with a lit top edge, grip ridges, a yellow and black lip and a hinge barrel at the pivot.
-  ctx.save(); ctx.translate(LIP.x, LIP.y); ctx.rotate(-a);
+  ctx.save(); ctx.translate(L.x, L.y); ctx.rotate(-a);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-ARM + 2, 1.5, ARM, 4);
   steel(ctx, -ARM, -3.5, ARM, 7, 2);
   ctx.fillStyle = 'rgba(0,0,0,.35)'; for (let rx = -ARM + 6; rx < -10; rx += 6) ctx.fillRect(rx, -3.2, 1.4, 2);
   ctx.save(); ctx.beginPath(); ctx.rect(-12, -3.5, 12, 7); ctx.clip(); ctx.fillStyle = '#e0b23c'; ctx.fillRect(-12, -3.5, 12, 7);
   ctx.fillStyle = '#1a1c1d'; for (let rx = -16; rx < 0; rx += 6) { ctx.beginPath(); ctx.moveTo(rx, 3.5); ctx.lineTo(rx + 3, 3.5); ctx.lineTo(rx + 7, -3.5); ctx.lineTo(rx + 4, -3.5); ctx.closePath(); ctx.fill(); } ctx.restore();
   ctx.restore();
-  const hinge = ctx.createRadialGradient(LIP.x - 1.5, LIP.y - 1.5, .5, LIP.x, LIP.y, 6.5); hinge.addColorStop(0, theme.brass[0]); hinge.addColorStop(.6, theme.brass[1]); hinge.addColorStop(1, theme.brass[2]);
-  ctx.fillStyle = hinge; ctx.beginPath(); ctx.arc(LIP.x, LIP.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.stroke(); bolt(ctx, LIP.x, LIP.y, 2);
+  const hinge = ctx.createRadialGradient(L.x - 1.5, L.y - 1.5, .5, L.x, L.y, 6.5); hinge.addColorStop(0, theme.brass[0]); hinge.addColorStop(.6, theme.brass[1]); hinge.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = hinge; ctx.beginPath(); ctx.arc(L.x, L.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.stroke(); bolt(ctx, L.x, L.y, 2);
+}
+// Draws what is in the launcher's own units (see K) at the lip of the board's scene.
+function inLauncherUnits(ctx, draw) {
+  ctx.save(); ctx.translate(LIP.x, LIP.y); ctx.scale(K, K); ctx.translate(-OLD_LIP.x, -OLD_LIP.y); draw(); ctx.restore();
 }
 // The ramp divides the speed: the forward arrow and the upward arrow at the end of the ramp, to one scale.
 function splitArrows(ctx, angle, ms) {
-  const a = angle * Math.PI / 180, forward = ms * Math.cos(a), upward = ms * Math.sin(a), scale = 6, x = LIP.x + 6, y = LIP.y - 8;
-  forceArrowTo(ctx, x, y, x + forward * scale, y, TRAIL, 6);
-  forceArrowTo(ctx, x, y, x, y - upward * scale, GREEN, 6);
-  text(ctx, `forward ${forward.toFixed(1)} m/s`, LIP.x + 14 + forward * scale, LIP.y - 8, {size: 15, align: 'left', colour: TRAIL, weight: 800});
-  text(ctx, `upward ${upward.toFixed(1)} m/s`, LIP.x + 14, LIP.y - 14 - upward * scale, {size: 15, align: 'left', colour: GREEN, weight: 800});
+  const a = angle * Math.PI / 180, forward = ms * Math.cos(a), upward = ms * Math.sin(a), scale = 13, x = LIP.x + 14, y = LIP.y - 20;
+  forceArrowTo(ctx, x, y, x + forward * scale, y, TRAIL, 12);
+  forceArrowTo(ctx, x, y, x, y - upward * scale, GREEN, 12);
+  text(ctx, `forward ${forward.toFixed(1)} m/s`, x + 12 + forward * scale, y, {size: 18, align: 'left', colour: TRAIL, weight: 800});
+  text(ctx, `upward ${upward.toFixed(1)} m/s`, x - 16, y - upward * scale + 4, {size: 18, align: 'right', colour: GREEN, weight: 800});
 }
-// The landing strip: tarmac with a painted yellow edge, white marks every 5 metres, a small post at every 10, and the metres.
+// The landing strip: tarmac with a painted yellow edge, white marks every 5 metres, a post at every 10, and the metres. The strip runs to
+// the board's edge, so that it ends under the furthest landing the dials allow.
 function deck(ctx, view) {
-  const right = SCENE.x + SCENE.w - 8;
-  tarmac(ctx, LIP.x + 6, DECK_Y + 2, right - LIP.x - 6, 18);
-  ctx.fillStyle = '#d9b24a'; ctx.fillRect(LIP.x + 6, DECK_Y - 2, right - LIP.x - 6, 4); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(LIP.x + 6, DECK_Y - 2, right - LIP.x - 6, 1);
-  ctx.strokeStyle = 'rgba(245,240,220,.8)'; ctx.lineWidth = 1.5;
+  const right = WIN.x + WIN.w - 8, x0 = LIP.x + 6, thick = 40;
+  tarmac(ctx, x0, DECK_Y + 4, right - x0, thick);
+  ctx.fillStyle = '#d9b24a'; ctx.fillRect(x0, DECK_Y - 4, right - x0, 8); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(x0, DECK_Y - 4, right - x0, 2);
+  ctx.strokeStyle = 'rgba(245,240,220,.8)'; ctx.lineWidth = 2.5;
   for (let d = 0; LIP.x + d * PX <= right; d += 5) {
     const x = LIP.x + d * PX;
-    ctx.beginPath(); ctx.moveTo(x, DECK_Y + 2); ctx.lineTo(x, DECK_Y + (d % 10 ? 5 : 8)); ctx.stroke();
-    if (d % 10 === 0 && d > 0) { roadPost(ctx, x, DECK_Y - 2, 9); text(ctx, `${d}`, x, DECK_Y + 13, {size: 11, colour: theme.text}); }
+    ctx.beginPath(); ctx.moveTo(x, DECK_Y + 4); ctx.lineTo(x, DECK_Y + (d % 10 ? 14 : 20)); ctx.stroke();
+    if (d % 10 === 0 && d > 0) { roadPost(ctx, x, DECK_Y - 4, 22); text(ctx, `${d}`, x, DECK_Y + 34, {size: 18, colour: theme.text}); }
   }
-  if (view.flag) flagPole(ctx, LIP.x + view.flag * PX, DECK_Y - 2, `${view.flag} m`);
+  if (view.flag) flagPole(ctx, flagX(view.flag), DECK_Y - 4, `${view.flag} m`);
 }
 // The scene's window: a cold dusk sky with hills and a line of firs behind the strip, over the dark of the launcher's pit.
 function sceneBack(ctx) {
-  const {x, y, w, h} = SCENE;
+  const {x, y, w, h} = WIN;
   ctx.fillStyle = 'rgba(10,14,16,.55)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 10); ctx.fill();
   ctx.save(); ctx.beginPath(); ctx.roundRect(x + 1, y + 1, w - 2, h - 2, 10); ctx.clip();
   const sky = ctx.createLinearGradient(0, y, 0, DECK_Y); sky.addColorStop(0, '#16222f'); sky.addColorStop(.6, '#2c3b50'); sky.addColorStop(.9, '#5a5062'); sky.addColorStop(1, '#8a6a6c');
   ctx.fillStyle = sky; ctx.fillRect(x, y, w, DECK_Y - y);
-  for (let k = 0; k < 18; k++) { ctx.fillStyle = `rgba(255,255,255,${(.15 + (k % 4) * .08).toFixed(2)})`; ctx.fillRect(x + 10 + grain(k + 800) * (w - 20), y + 6 + grain(k + 810) * 90, 1.3, 1.3); }
-  const range = (base, height, colour, seed) => { ctx.fillStyle = colour; ctx.beginPath(); ctx.moveTo(x, DECK_Y); for (let hx = x; hx <= x + w; hx += 8) ctx.lineTo(hx, base - height * (.5 + .5 * Math.sin(hx * .021 + seed) * Math.cos(hx * .008 + seed * 2))); ctx.lineTo(x + w, DECK_Y); ctx.closePath(); ctx.fill(); };
-  range(DECK_Y - 18, 56, '#4a4a66', 1.7); range(DECK_Y - 4, 34, '#262c3c', 4.3);
+  for (let k = 0; k < 44; k++) { ctx.fillStyle = `rgba(255,255,255,${(.15 + (k % 4) * .08).toFixed(2)})`; ctx.fillRect(x + 10 + grain(k + 800) * (w - 20), y + 8 + grain(k + 810) * 240, 2, 2); }
+  const range = (base, height, colour, seed) => { ctx.fillStyle = colour; ctx.beginPath(); ctx.moveTo(x, DECK_Y); for (let hx = x; hx <= x + w; hx += 12) ctx.lineTo(hx, base - height * (.5 + .5 * Math.sin(hx * .021 / K + seed) * Math.cos(hx * .008 / K + seed * 2))); ctx.lineTo(x + w, DECK_Y); ctx.closePath(); ctx.fill(); };
+  range(DECK_Y - 30 * K, 110 * K, '#4a4a66', 1.7); range(DECK_Y - 4 * K, 58 * K, '#262c3c', 4.3);
   ctx.fillStyle = '#0e1512';
-  for (let k = 0; k < 24; k++) { const fx = x + 10 + k * 23 + (k % 3) * 5, fh = 20 + (k * 37) % 18; for (let tier = 0; tier < 3; tier++) { const ty = DECK_Y - 2 - fh + tier * fh * .26, tw = fh * .13 * (.6 + tier * .35); ctx.beginPath(); ctx.moveTo(fx, ty); ctx.lineTo(fx - tw, ty + fh * .42); ctx.lineTo(fx + tw, ty + fh * .42); ctx.closePath(); ctx.fill(); } }
+  for (let k = 0; k < 25; k++) { const fx = x + 10 * K + k * 23 * K + (k % 3) * 5 * K, fh = (20 + (k * 37) % 18) * K; for (let tier = 0; tier < 3; tier++) { const ty = DECK_Y - 2 * K - fh + tier * fh * .26, tw = fh * .13 * (.6 + tier * .35); ctx.beginPath(); ctx.moveTo(fx, ty); ctx.lineTo(fx - tw, ty + fh * .42); ctx.lineTo(fx + tw, ty + fh * .42); ctx.closePath(); ctx.fill(); } }
+  // Below the deck, the pit the launcher stands in: dark concrete.
+  const pit = ctx.createLinearGradient(0, DECK_Y, 0, y + h); pit.addColorStop(0, '#23282a'); pit.addColorStop(1, '#0d1011');
+  ctx.fillStyle = pit; ctx.fillRect(x, DECK_Y, w, y + h - DECK_Y);
   ctx.restore();
   bezel(ctx, x, y, w, h, 10);
 }
@@ -196,48 +222,34 @@ function launchScene(ctx, view) {
   const r = view.rig;
   sceneBack(ctx);
   deck(ctx, view);
-  ctx.save(); ctx.beginPath(); ctx.rect(SCENE.x + 2, SCENE.y + 2, SCENE.w - 4, DECK_Y - SCENE.y); ctx.clip();
+  ctx.save(); ctx.beginPath(); ctx.rect(WIN.x + 2, WIN.y + 2, WIN.w - 4, DECK_Y - WIN.y + 4); ctx.clip();
   // This step's earlier launches, faded, each marked where it landed with a small flag in the ground.
   for (const t of r.trails) {
     const pts = toBoard(pathOf(t.angle, t.ms), LIP.x, LIP.y, PX), top = pts.reduce((a, b) => b[1] < a[1] ? b : a);
-    strokePath(ctx, pts, OLD, 2, [6, 6]);
-    groundFlag(ctx, pts.at(-1)[0], DECK_Y - 2, '#8b959b', 20);
-    text(ctx, deg(t.angle), top[0], top[1] - 10, {size: 13, colour: theme.ghost, weight: 800});
+    strokePath(ctx, pts, OLD, 3.5, [10, 9]);
+    groundFlag(ctx, pts.at(-1)[0], DECK_Y - 4, '#8b959b', 46);
+    text(ctx, deg(t.angle), top[0], top[1] - 18, {size: 18, colour: theme.ghost, weight: 800});
   }
   const f = r.flight;
   if (f) {
     const pts = toBoard(pathOf(f.angle, f.ms), LIP.x, LIP.y, PX).filter(p => p[2] <= f.t);
-    ctx.save(); ctx.shadowColor = TRAIL; ctx.shadowBlur = 8; strokePath(ctx, pts, TRAIL, 3); ctx.restore();
+    ctx.save(); ctx.shadowColor = TRAIL; ctx.shadowBlur = 10; strokePath(ctx, pts, TRAIL, 5); ctx.restore();
     const at = pts.at(-1) ?? [LIP.x, LIP.y], before = pts.at(-2) ?? [LIP.x - Math.cos(f.angle * Math.PI / 180), LIP.y + Math.sin(f.angle * Math.PI / 180)];
     const dir = f.landed ? 0 : Math.atan2(-(at[1] - before[1]), at[0] - before[0]);
-    if (f.landed) groundFlag(ctx, at[0], DECK_Y - 2, TRAIL, 24);
-    skier(ctx, at[0], at[1] - 4, dir, .9);
-    if (f.landed) text(ctx, m1(f.distance), at[0], at[1] - 40, {size: 16, colour: theme.accent, weight: 800});
-  } else skier(ctx, LIP.x - 4, LIP.y - 6, r.angle * Math.PI / 180, .9);
+    if (f.landed) groundFlag(ctx, at[0], DECK_Y - 4, TRAIL, 54);
+    skier(ctx, at[0], at[1] - 8, dir, SKIER);
+    if (f.landed) text(ctx, m1(f.distance), at[0], at[1] - 80, {size: 24, colour: theme.accent, weight: 800});
+  } else skier(ctx, LIP.x - 9, LIP.y - 14, r.angle * Math.PI / 180, SKIER);
   ctx.restore();
-  launcher(ctx, f ? f.angle : r.angle);
+  inLauncherUnits(ctx, () => launcher(ctx, f ? f.angle : r.angle));
   if (view.split && !f) splitArrows(ctx, r.angle, r.ms);
-  text(ctx, `${deg(f ? f.angle : r.angle)} · ${f ? kmh(f.ms) : r.kmh} km/h`, LIP.x - 40, SCENE.y + 22, {size: 14, colour: theme.faint, weight: 800});
+  text(ctx, `${deg(f ? f.angle : r.angle)} · ${f ? kmh(f.ms) : r.kmh} km/h`, WIN.x + 22, WIN.y + 34, {size: 20, align: 'left', colour: theme.faint, weight: 800});
   if (view.keys.Space === 'go') {
-    keyCap(ctx, SCENE.x + 30, SCENE.y + 48, 'Sp');
-    text(ctx, 'Press Space to launch', SCENE.x + 46, SCENE.y + 48, {size: 13, align: 'left'});
+    cap(ctx, WIN.x + 32, WIN.y + 74, 'Sp');
+    text(ctx, 'Press Space to launch', WIN.x + 52, WIN.y + 74, {size: 17, align: 'left'});
   }
-  // The tape's reading: the skier now landed, or the last one. The box is a tape measure's case with its steel tape along the top.
-  panel(ctx, TAPE_BOX.x, TAPE_BOX.y, TAPE_BOX.w, TAPE_BOX.h);
-  ctx.save(); ctx.beginPath(); ctx.roundRect(TAPE_BOX.x + 3, TAPE_BOX.y + 3, TAPE_BOX.w - 6, 5, 2); ctx.clip();
-  const band = ctx.createLinearGradient(0, TAPE_BOX.y + 3, 0, TAPE_BOX.y + 8); band.addColorStop(0, '#f3d374'); band.addColorStop(1, '#b48d28');
-  ctx.fillStyle = band; ctx.fillRect(TAPE_BOX.x + 3, TAPE_BOX.y + 3, TAPE_BOX.w - 6, 5);
-  ctx.fillStyle = '#1d2224'; for (let tx = TAPE_BOX.x + 8; tx < TAPE_BOX.x + TAPE_BOX.w - 4; tx += 6) ctx.fillRect(tx, TAPE_BOX.y + 3, 1, (tx - TAPE_BOX.x) % 30 < 6 ? 4 : 2);
-  ctx.restore();
-  steel(ctx, TAPE_BOX.x + 2, TAPE_BOX.y + 2, 4, 7, 1.5);
-  text(ctx, 'TAPE', TAPE_BOX.x + 12, TAPE_BOX.y + 14, {size: 11, align: 'left', colour: theme.faint, weight: 800});
-  const last = f?.landed ? f.distance : f ? null : r.trails.at(-1)?.distance ?? null;
-  text(ctx, last === null ? (f ? 'in the air' : '–') : m1(last), TAPE_BOX.x + 12, TAPE_BOX.y + 34, {size: 22, align: 'left', weight: 800, colour: last === null ? theme.faint : theme.text});
-  if (view.flag && last !== null) {
-    const diff = last - view.flag, on = Math.abs(diff) <= 2;
-    text(ctx, on ? 'on the flag' : `${m1(Math.abs(diff))} ${diff < 0 ? 'short' : 'beyond'}`, TAPE_BOX.x + TAPE_BOX.w - 12, TAPE_BOX.y + 34, {size: 16, align: 'right', colour: on ? GREEN : theme.bad, weight: 800});
-  } else if (view.flag) text(ctx, `flag at ${view.flag} m`, TAPE_BOX.x + TAPE_BOX.w - 12, TAPE_BOX.y + 34, {size: 15, align: 'right', colour: FLAG});
-  if (view.focus === 'tape') glowBox(ctx, view, TAPE_BOX.x - 4, TAPE_BOX.y - 4, TAPE_BOX.w + 8, TAPE_BOX.h + 8);
+  // The tape: along the deck, with the marks above. What it reads, and how far that is from the flag, is in the strip under the board.
+  if (view.focus === 'tape') glowBox(ctx, view, LIP.x + 2, DECK_Y - 12, WIN.x + WIN.w - LIP.x - 12, 62);
 }
 // An engraved brass arc round (ox, oy) from level to `to` radians, with a tick every 15 degrees; the small ramp's angle in the panel.
 function engravedArc(ctx, ox, oy, r, to) {
@@ -250,7 +262,7 @@ function engravedArc(ctx, ox, oy, r, to) {
 function rampPanel(ctx, view) {
   const p = view.ramp, can = view.keys['↑'] === 'angle:up', a = p.angle * Math.PI / 180;
   panel(ctx, RAMP.x, RAMP.y, RAMP.w, RAMP.h);
-  text(ctx, 'RAMP ANGLE', RAMP.x + 16, RAMP.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, 'RAMP ANGLE', RAMP.x + 16, RAMP.y + 20, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   // A small ramp over a level line, with its angle marked on an engraved brass arc.
   const ox = RAMP.x + 40, oy = RAMP.y + 96;
   ctx.strokeStyle = theme.faint; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + 76, oy); ctx.stroke();
@@ -262,68 +274,71 @@ function rampPanel(ctx, view) {
   text(ctx, deg(p.angle), RAMP.x + 240, RAMP.y + 76, {size: 40, weight: 800});
   button(ctx, RAMP.down, 'Flatter', '↓', can);
   button(ctx, RAMP.up, 'Steeper', '↑', can);
-  if (p.locked) text(ctx, 'set by Brian', RAMP.x + RAMP.w - 12, RAMP.y + 18, {size: 12, align: 'right', colour: theme.faint});
+  if (p.locked) text(ctx, 'set by Brian', RAMP.x + RAMP.w - 12, RAMP.y + 20, {size: 15, align: 'right', colour: theme.faint});
 }
 function dialPanel(ctx, view) {
   const d = view.dial, can = view.keys['→'] === 'speed:up';
   panel(ctx, DIAL.x, DIAL.y, DIAL.w, DIAL.h);
-  text(ctx, 'SPEED DIAL', DIAL.x + 16, DIAL.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, 'SPEED DIAL', DIAL.x + 16, DIAL.y + 20, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   lcd(ctx, DIAL.x + DIAL.w / 2 - 92, DIAL.y + 31, 184, 48, '#56d683');
   text(ctx, `${d.kmh} km/h`, DIAL.x + DIAL.w / 2, DIAL.y + 56, {size: 34, weight: 800});
   button(ctx, DIAL.down, 'Slower', '←', can);
   button(ctx, DIAL.up, 'Faster', '→', can);
-  if (d.locked) text(ctx, 'set by Brian', DIAL.x + DIAL.w - 12, DIAL.y + 18, {size: 12, align: 'right', colour: theme.faint});
+  if (d.locked) text(ctx, 'set by Brian', DIAL.x + DIAL.w - 12, DIAL.y + 20, {size: 15, align: 'right', colour: theme.faint});
 }
 
-// ---- the lower half: a close-up for the words, the launches table, or Brian's mark ----
+// ---- the close-ups of the words, in the sky over the middle of the board ----
 function closeAngle(ctx, view) {
-  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
-  text(ctx, 'THE LAUNCH ANGLE', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-  const cx = 330, cy = 630, rad = 210, a = view.ramp.angle * Math.PI / 180;
+  const C = CLOSE;
+  panel(ctx, C.x, C.y, C.w, C.h);
+  text(ctx, 'THE LAUNCH ANGLE', C.x + 16, C.y + 22, {size: 15, align: 'left', colour: theme.faint, weight: 800});
+  const cx = C.x + 62, cy = C.y + 318, rad = 200, a = view.ramp.angle * Math.PI / 180;
   tarmac(ctx, cx, cy, rad + 30, 12);
   const band = ctx.createLinearGradient(cx, cy - rad, cx + rad, cy); band.addColorStop(0, theme.brass[0]); band.addColorStop(.5, theme.brass[1]); band.addColorStop(1, theme.brass[2]);
   ctx.fillStyle = band; ctx.beginPath(); ctx.arc(cx, cy, rad, -Math.PI / 2, 0); ctx.arc(cx, cy, rad - 18, 0, -Math.PI / 2, true); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(30,18,4,.7)'; ctx.lineWidth = 1.2; ctx.stroke();
   ctx.strokeStyle = 'rgba(30,18,4,.85)'; ctx.lineWidth = 1;
   for (let d = 0; d <= 90; d += 5) { const t = d * Math.PI / 180, len = d % 15 === 0 ? 14 : 7; ctx.beginPath(); ctx.moveTo(cx + Math.cos(t) * rad, cy - Math.sin(t) * rad); ctx.lineTo(cx + Math.cos(t) * (rad - len), cy - Math.sin(t) * (rad - len)); ctx.stroke(); }
-  for (let d = 0; d <= 90; d += 15) { const t = d * Math.PI / 180; text(ctx, `${d}°`, cx + Math.cos(t) * (rad + 22), cy - Math.sin(t) * (rad + 18), {size: 13, colour: theme.faint}); }
+  for (let d = 0; d <= 90; d += 15) { const t = d * Math.PI / 180; text(ctx, `${d}°`, cx + Math.cos(t) * (rad + 24), cy - Math.sin(t) * (rad + 20), {size: 16, colour: theme.faint}); }
   ctx.strokeStyle = theme.faint; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + rad + 30, cy); ctx.stroke();
-  text(ctx, 'level ground', cx + rad - 40, cy - 12, {size: 14, colour: theme.faint});
+  text(ctx, 'level ground', cx + rad - 40, cy - 14, {size: 16, colour: theme.faint});
   ctx.save(); ctx.translate(cx, cy); ctx.rotate(-a); shadow(ctx, rad / 2, 12, rad * .5, .3); steel(ctx, 0, -6, rad, 12, 3);
   ctx.fillStyle = '#e0b23c'; ctx.fillRect(rad - 22, -6, 22, 12); ctx.fillStyle = '#1a1c1d'; for (let rx = rad - 26; rx < rad; rx += 8) { ctx.beginPath(); ctx.moveTo(rx, 6); ctx.lineTo(rx + 4, 6); ctx.lineTo(rx + 10, -6); ctx.lineTo(rx + 6, -6); ctx.closePath(); ctx.fill(); }
   for (let rx = 20; rx < rad - 30; rx += 10) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(rx, -5.5, 1.6, 3); }
   ctx.restore();
   bolt(ctx, cx, cy, 5);
   ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, 70, -a, 0); ctx.stroke();
-  text(ctx, `${view.ramp.angle} degrees`, 720, 500, {size: 34, colour: theme.accent, weight: 800});
-  text(ctx, 'how far the ramp points up', 720, 544, {size: 18});
-  text(ctx, '0 is level; 90 is straight up', 720, 576, {size: 16, colour: theme.faint});
+  text(ctx, `${view.ramp.angle} degrees`, 770, C.y + 190, {size: 34, colour: theme.accent, weight: 800});
+  text(ctx, 'how far the ramp points up', 770, C.y + 234, {size: 18});
+  text(ctx, '0 is level; 90 is straight up', 770, C.y + 266, {size: 16, colour: theme.faint});
 }
 function closeSpeed(ctx, view) {
-  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
-  text(ctx, 'THE SPEED DIAL', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-  const cx = 330, cy = 540, rad = 110, share = Math.min(1, view.dial.kmh / 90);
+  const C = CLOSE;
+  panel(ctx, C.x, C.y, C.w, C.h);
+  text(ctx, 'THE SPEED DIAL', C.x + 16, C.y + 22, {size: 15, align: 'left', colour: theme.faint, weight: 800});
+  const cx = C.x + 190, cy = C.y + 196, rad = 135, share = Math.min(1, view.dial.kmh / 90);
   brassDial(ctx, cx, cy, rad, 9);
   ctx.strokeStyle = '#2b3236'; ctx.lineWidth = 2;
   for (let k = 0; k <= 6; k++) {
     const t = Math.PI * (.75 + 1.5 * k / 6);
     ctx.beginPath(); ctx.moveTo(cx + Math.cos(t) * rad * .8, cy + Math.sin(t) * rad * .8); ctx.lineTo(cx + Math.cos(t) * rad * .95, cy + Math.sin(t) * rad * .95); ctx.stroke();
-    text(ctx, String(k * 15), cx + Math.cos(t) * rad * .64, cy + Math.sin(t) * rad * .64, {size: 13, colour: '#2b3236'});
+    text(ctx, String(k * 15), cx + Math.cos(t) * rad * .64, cy + Math.sin(t) * rad * .64, {size: 17, colour: '#2b3236'});
   }
   const t = Math.PI * (.75 + 1.5 * share);
-  ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx + 2, cy + 3); ctx.lineTo(cx + 2 + Math.cos(t) * rad * .85, cy + 3 + Math.sin(t) * rad * .85); ctx.stroke();
-  ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(t) * rad * .85, cy + Math.sin(t) * rad * .85); ctx.stroke();
-  const hub = ctx.createRadialGradient(cx - 2, cy - 2, 1, cx, cy, 8); hub.addColorStop(0, theme.brass[0]); hub.addColorStop(.6, theme.brass[1]); hub.addColorStop(1, theme.brass[2]); ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.fill(); bolt(ctx, cx, cy, 2);
+  ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(cx + 2, cy + 3); ctx.lineTo(cx + 2 + Math.cos(t) * rad * .85, cy + 3 + Math.sin(t) * rad * .85); ctx.stroke();
+  ctx.strokeStyle = theme.bad; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(t) * rad * .85, cy + Math.sin(t) * rad * .85); ctx.stroke();
+  const hub = ctx.createRadialGradient(cx - 2, cy - 2, 1, cx, cy, 10); hub.addColorStop(0, theme.brass[0]); hub.addColorStop(.6, theme.brass[1]); hub.addColorStop(1, theme.brass[2]); ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill(); bolt(ctx, cx, cy, 2.6);
   glassGlare(ctx, cx, cy, rad * .9);
-  text(ctx, 'km/h', cx, cy + 44, {size: 14, colour: '#2b3236'});
-  text(ctx, `${view.dial.kmh} km/h`, 680, 500, {size: 34, colour: theme.accent, weight: 800});
-  text(ctx, 'how fast the skier leaves the ramp', 680, 544, {size: 18});
+  text(ctx, 'km/h', cx, cy + 56, {size: 17, colour: '#2b3236'});
+  text(ctx, `${view.dial.kmh} km/h`, 760, C.y + 160, {size: 34, colour: theme.accent, weight: 800});
+  text(ctx, 'how fast the skier leaves the ramp', 760, C.y + 208, {size: 18});
 }
 function closeTape(ctx, view) {
-  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
-  text(ctx, 'THE TAPE CLOSE UP', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
+  const C = TAPE_CLOSE;
+  panel(ctx, C.x, C.y, C.w, C.h);
+  text(ctx, 'THE TAPE CLOSE UP', C.x + 16, C.y + 22, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   // 25 m to 45 m across the panel, a mark every metre.
-  const x0 = 130, x1 = 870, from = 25, to = 45, at = d => x0 + (d - from) / (to - from) * (x1 - x0), y = 520;
+  const x0 = 370, x1 = 850, from = 25, to = 45, at = d => x0 + (d - from) / (to - from) * (x1 - x0), y = C.y + 124;
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x0 - 46, y - 20, x1 - x0 + 100, 52);
   const tape = ctx.createLinearGradient(0, y - 26, 0, y + 26); tape.addColorStop(0, '#f6d978'); tape.addColorStop(.45, '#d9b24a'); tape.addColorStop(1, '#8f6d1c');
   ctx.fillStyle = tape; ctx.fillRect(x0 - 50, y - 26, x1 - x0 + 100, 52); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x0 - 50, y - 26, x1 - x0 + 100, 1.4); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x0 - 50, y + 24.6, x1 - x0 + 100, 1.4);
@@ -331,74 +346,78 @@ function closeTape(ctx, view) {
   ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 1.5;
   for (let d = from; d <= to; d++) {
     ctx.beginPath(); ctx.moveTo(at(d), y - 26); ctx.lineTo(at(d), y - 26 + (d % 5 ? 12 : 22)); ctx.stroke();
-    if (d % 5 === 0) { ctx.fillStyle = '#1d2224'; ctx.font = '800 15px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`${d} m`, at(d), y + 12); }
+    if (d % 5 === 0) { ctx.fillStyle = '#1d2224'; ctx.font = '800 16px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`${d} m`, at(d), y + 12); }
   }
   const f = view.rig.flight, landed = f?.landed ? f.distance : !f ? view.rig.trails.at(-1)?.distance : null;
   if (landed != null) {
     const x = at(Math.max(from, Math.min(to, landed)));
     ctx.fillStyle = theme.bad; ctx.beginPath(); ctx.moveTo(x, y - 30); ctx.lineTo(x - 10, y - 50); ctx.lineTo(x + 10, y - 50); ctx.closePath(); ctx.fill();
-    text(ctx, `landed ${m1(landed)}`, x, y - 66, {size: 22, colour: theme.accent, weight: 800});
-  } else text(ctx, 'from the end of the ramp, in metres', 500, y + 70, {size: 17, colour: theme.faint});
+    text(ctx, `landed ${m1(landed)}`, x, y - 68, {size: 22, colour: theme.accent, weight: 800});
+  } else text(ctx, 'from the end of the ramp, in metres', C.x + C.w / 2, y + 62, {size: 17, colour: theme.faint});
 }
-function table(ctx, view) {
-  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
-  const cols = [[110, 'Angle', 'left'], [300, 'Speed', 'left'], [560, 'Distance', 'right'], [880, view.flag ? 'Against the flag' : '', 'right']];
-  text(ctx, 'THE LAUNCHES', LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
-  for (const [x, label, align] of cols) text(ctx, label, x, LOW.y + 48, {size: 15, align, colour: theme.faint, weight: 800});
-  if (!view.rows.length) text(ctx, 'There are no launches yet. Press Space to launch.', 500, LOW.y + 130, {size: 18, colour: theme.faint});
-  const best = view.rows.length > 2 ? Math.max(...view.rows.map(r => r.distance)) : null;
-  view.rows.slice(-6).forEach((row, i) => {
-    const y = LOW.y + 86 + i * 34;
-    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(LOW.x + 10, y - 16, LOW.w - 20, 32);
-    text(ctx, deg(row.angle), 110, y, {size: 18, align: 'left'});
-    text(ctx, `${row.speed} km/h`, 300, y, {size: 18, align: 'left'});
-    text(ctx, m1(row.distance), 560, y, {size: 18, align: 'right', colour: row.distance === best ? theme.accent : theme.text, weight: row.distance === best ? 800 : 700});
-    if (view.flag) {
-      const diff = row.distance - view.flag, on = Math.abs(diff) <= 2;
-      text(ctx, on ? 'on the flag' : `${m1(Math.abs(diff))} ${diff < 0 ? 'short' : 'beyond'}`, 880, y, {size: 17, align: 'right', colour: on ? GREEN : theme.bad});
-    }
-  });
-}
-// Brian's mark: the card on the left, this job's last launches on the right.
+
+// Brian's mark: the card in the sky over the middle of the board; this job's last launches are in the strip under the board.
+const JOB_CARD = Object.freeze({x: 340, y: 40, w: 430, h: 158});
 function jobCard(ctx, view) {
-  const j = view.job;
-  panel(ctx, LOW.x, LOW.y, LOW.w, LOW.h);
-  text(ctx, `BRIAN’S JOB · MARK ${j.mark} OF ${j.of}${j.done ? ' · DONE' : ''}`, LOW.x + 16, LOW.y + 18, {size: 12, align: 'left', colour: theme.accent, weight: 800});
-  text(ctx, `A flag at ${j.flag} m`, LOW.x + 24, LOW.y + 62, {size: 28, align: 'left'});
+  const j = view.job, C = JOB_CARD;
+  panel(ctx, C.x, C.y, C.w, C.h);
+  text(ctx, `BRIAN’S JOB · MARK ${j.mark} OF ${j.of}${j.done ? ' · DONE' : ''}`, C.x + 16, C.y + 20, {size: 15, align: 'left', colour: theme.accent, weight: 800});
+  text(ctx, `A flag at ${j.flag} m`, C.x + 22, C.y + 54, {size: 28, align: 'left'});
   const fixed = j.fixed === 'angle' ? `The ramp is fixed at ${deg(view.ramp.angle)}.` : j.fixed === 'speed' ? `The speed is fixed at ${view.dial.kmh} km/h.` : 'Angle and speed are yours.';
-  text(ctx, fixed, LOW.x + 24, LOW.y + 100, {size: 18, align: 'left', colour: theme.accent});
-  text(ctx, j.fixed === 'angle' ? 'Set the speed.' : j.fixed === 'speed' ? 'Set the angle.' : 'Set both.', LOW.x + 24, LOW.y + 130, {size: 18, align: 'left'});
-  text(ctx, 'Within 2 m of the flag counts.', LOW.x + 24, LOW.y + 172, {size: 15, align: 'left', colour: theme.faint});
-  text(ctx, 'Your launches', 500, LOW.y + 48, {size: 15, align: 'left', colour: theme.faint, weight: 800});
-  const rows = view.rows.slice(-5);
-  if (!rows.length) text(ctx, 'There are no launches yet. Press Space to launch.', 500, LOW.y + 90, {size: 17, align: 'left', colour: theme.faint});
-  rows.forEach((row, i) => {
-    const y = LOW.y + 84 + i * 34;
-    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.06)'; ctx.fillRect(490, y - 16, 460, 32);
-    text(ctx, `${deg(row.angle)}, ${row.speed} km/h`, 500, y, {size: 17, align: 'left'});
-    text(ctx, m1(row.distance), 760, y, {size: 17, align: 'right'});
-  });
+  text(ctx, fixed, C.x + 22, C.y + 88, {size: 18, align: 'left', colour: theme.accent});
+  text(ctx, j.fixed === 'angle' ? 'Set the speed.' : j.fixed === 'speed' ? 'Set the angle.' : 'Set both.', C.x + 22, C.y + 114, {size: 18, align: 'left'});
+  text(ctx, 'Within 2 m of the flag counts.', C.x + 22, C.y + 140, {size: 15, align: 'left', colour: theme.faint});
 }
 
 function drawLauncher(ctx, view) {
-  background(ctx);
+  background(ctx, size.width);
   launchScene(ctx, view);
   if (view.ramp) rampPanel(ctx, view);
   if (view.dial) dialPanel(ctx, view);
-  if (view.low === 'job' && view.job) jobCard(ctx, view);
-  else if (view.low === 'angle' && view.ramp) closeAngle(ctx, view);
+  if (view.low === 'angle' && view.ramp) closeAngle(ctx, view);
   else if (view.low === 'speed' && view.dial) closeSpeed(ctx, view);
   else if (view.low === 'tape') closeTape(ctx, view);
-  else table(ctx, view);
+  else if (view.low === 'job' && view.job) jobCard(ctx, view);
   // The glow on what to use next.
-  const launcherBox = () => glowBox(ctx, view, SCENE.x + 8, DECK_Y - 90, LIP.x - SCENE.x + 20, SCENE.y + SCENE.h - DECK_Y + 84);
+  const launcherBox = () => glowBox(ctx, view, WIN.x + 8, DECK_Y - 130, LIP.x - WIN.x + 40, WIN.y + WIN.h - DECK_Y + 124);
   if (view.glow === 'launcher' || view.glow === 'set' && view.target === 'go') launcherBox();
   const rampNext = view.ramp && !view.ramp.locked && view.best && view.ramp.angle !== view.best.angle;
   if (view.glow === 'ramp' || view.glow === 'set' && view.target === 'set:best' && rampNext) glowBox(ctx, view, RAMP.x - 4, RAMP.y - 4, RAMP.w + 8, RAMP.h + 8);
   else if (view.glow === 'dial' || view.glow === 'set' && view.target === 'set:best' && view.dial && !view.dial.locked) glowBox(ctx, view, DIAL.x - 4, DIAL.y - 4, DIAL.w + 8, DIAL.h + 8);
 }
 
+// ---- the page under the board: the tape's reading, the table of launches or Brian's mark ----
+// The board draws none of these. The classroom page (classroom-ui.js) shows what strip() returns, in HTML.
+const against = (distance, flag) => { const diff = distance - flag, on = Math.abs(diff) <= 2; return {on, text: on ? 'on the flag' : `${m1(Math.abs(diff))} ${diff < 0 ? 'short' : 'beyond'}`}; };
+export function strip(view) {
+  if (!scene(view)) return null;
+  const out = {readouts: [], parts: [], tables: [], hint: null};
+  // The tape's reading: the skier now landed, or the last one; and how far that is from the flag.
+  const f = view.rig.flight, last = f?.landed ? f.distance : f ? null : view.rig.trails.at(-1)?.distance ?? null;
+  out.readouts.push({label: 'TAPE', value: last === null ? (f ? 'in the air' : '–') : m1(last), tone: last === null ? 'faint' : null});
+  if (view.flag && last !== null) { const g = against(last, view.flag); out.readouts.push({label: '', value: g.text, tone: g.on ? 'good' : 'bad'}); }
+  else if (view.flag) out.readouts.push({label: '', value: `flag at ${view.flag} m`, tone: 'accent'});
+  out.hint = TAPE_HINT;
+  if (view.low === 'job' && view.job) {
+    const rows = view.rows.slice(-5).map(row => ({label: `${deg(row.angle)}, ${row.speed} km/h`, value: m1(row.distance), tone: null}));
+    out.tables.push({title: 'Your launches', rows: rows.length ? rows : [{label: 'There are no launches yet. Press Space to launch.', value: '', tone: 'faint'}]});
+    out.hint = `${TAPE_HINT} ${JOB_HINT}`;
+  } else if (view.low === 'table') {
+    const best = view.rows.length > 2 ? Math.max(...view.rows.map(r => r.distance)) : null;
+    // The old table's column headings, as the first row; then one row for each launch.
+    const rows = view.rows.slice(-6).map(row => {
+      const g = view.flag ? against(row.distance, view.flag) : null;
+      return {label: `${deg(row.angle)}, ${row.speed} km/h`, value: g ? `${m1(row.distance)}, ${g.text}` : m1(row.distance), tone: g ? (g.on ? 'good' : 'bad') : row.distance === best ? 'accent' : null};
+    });
+    out.tables.push({title: 'THE LAUNCHES', rows: [{label: 'Angle, speed', value: view.flag ? 'Distance, against the flag' : 'Distance', tone: 'faint'}, ...(rows.length ? rows : [{label: 'There are no launches yet. Press Space to launch.', value: '', tone: 'faint'}])]});
+    out.hint = `${TAPE_HINT} This table lists each launch with its angle, speed and distance.`;
+  }
+  return out;
+}
+
 // ---- the questions: arcs from one launcher, a lower landing, and the Aerials kicker ----
+// These scenes are drawn as they always were, 1000 wide and centred on the wide board.
+const CHECK_SHIFT = (size.width - BOARD.width) / 2;
 const ARC_COLOURS = ['#edc557', '#70bfd2', '#b8a1e3', '#eb927e'];
 function arcsPicture(ctx, view, lower) {
   const ox = 170, oy = lower ? 300 : 460, px = 14, landY = oy + (lower ? 10 * px : 0);
@@ -412,7 +431,7 @@ function arcsPicture(ctx, view, lower) {
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ox + 30, oy + 4); ctx.lineTo(ox + 30, landY - 6); ctx.stroke();
     text(ctx, '10 m lower', ox + 40, (oy + landY) / 2, {size: 16, align: 'left', colour: theme.accent});
   }
-  for (let d = 10; d <= 50; d += 10) text(ctx, `${d} m`, ox + d * px, landY + 18, {size: 13, colour: theme.faint});
+  for (let d = 10; d <= 50; d += 10) text(ctx, `${d} m`, ox + d * px, landY + 18, {size: 15, colour: theme.faint});
   if (!view.arcs.length) text(ctx, '?', 560, oy - 120, {size: 60, colour: theme.faint});
   view.arcs.forEach((arc, i) => {
     const pts = toBoard(pathOf(arc.angle, arc.ms, arc.lower), ox, oy, px), end = pts.at(-1);
@@ -450,19 +469,23 @@ function kicker(ctx, x, y, s, {pose = 'stand', flight = false} = {}) {
   ctx.restore();
 }
 function drawCheck(ctx, view) {
-  background(ctx);
-  if (view.arcs) { arcsPicture(ctx, view, view.scene === 'check-lower'); return; }
-  panel(ctx, 60, 70, 880, 520);
-  text(ctx, 'THE AERIALS RUN', 80, 96, {size: 13, align: 'left', colour: theme.faint, weight: 800});
-  kicker(ctx, 420, 300, 1.2, {flight: true});
-  text(ctx, 'about 50°', 462, 305, {size: 18, colour: theme.accent, align: 'left'});
-  text(ctx, 'inrun', 260, 150, {size: 16, colour: theme.text});
-  text(ctx, 'landing hill', 660, 440, {size: 16, colour: theme.text});
-  view.kicker.arcs.forEach((arc, i) => text(ctx, `On the launcher at 50°, ${kmh(arc.ms)} km/h lands ${m1(arc.distance)}`, 920, 110 + i * 34, {size: 18, align: 'right', colour: i ? GREEN : theme.text}));
+  background(ctx, size.width);
+  ctx.save(); ctx.translate(CHECK_SHIFT, 0);
+  if (view.arcs) arcsPicture(ctx, view, view.scene === 'check-lower');
+  else {
+    panel(ctx, 60, 70, 880, 520);
+    text(ctx, 'THE AERIALS RUN', 80, 96, {size: 15, align: 'left', colour: theme.faint, weight: 800});
+    kicker(ctx, 420, 300, 1.2, {flight: true});
+    text(ctx, 'about 50°', 462, 305, {size: 18, colour: theme.accent, align: 'left'});
+    text(ctx, 'inrun', 260, 150, {size: 16, colour: theme.text});
+    text(ctx, 'landing hill', 660, 440, {size: 16, colour: theme.text});
+    view.kicker.arcs.forEach((arc, i) => text(ctx, `On the launcher at 50°, ${kmh(arc.ms)} km/h lands ${m1(arc.distance)}`, 920, 110 + i * 34, {size: 18, align: 'right', colour: i ? GREEN : theme.text}));
+  }
+  ctx.restore();
 }
 function drawRecap(ctx, view) {
-  background(ctx);
-  const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;
+  background(ctx, size.width);
+  const w = 300, gap = 25, x0 = (size.width - 3 * w - 2 * gap) / 2;
   view.ideas.forEach((idea, i) => {
     const x = x0 + i * (w + gap);
     panel(ctx, x, 40, w, 600);
@@ -486,7 +509,7 @@ export function drawBoard(ctx, view, width, height) {
     if (view.scene === 'recap') drawRecap(ctx, view);
     else if (view.scene === 'launcher') drawLauncher(ctx, view);
     else drawCheck(ctx, view);
-  });
+  }, size);
 }
 // The answer cards' pictures: a ramp at an angle (over a lower landing too), a way to tilt, a guess on the tape, the kicker.
 // A word on a small dark plate, so that it stays readable over the workshop wall.
