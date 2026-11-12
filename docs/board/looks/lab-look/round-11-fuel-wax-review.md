@@ -23,6 +23,8 @@ What changed:
 - **Braking** (`braking-board.js`): every text under 15 board units is now 15 (distance marks, "brakes on", the dial and lever
   headings, the close-up's labels, the energy step's labels, the questions' small labels); the key caps are drawn at 15. Nothing else
   moved.
+- One shared change: in `classroom.css` a strip table's row may wrap its value under its label, because Fuel's and Ski wax's rows
+  are longer than Braking's and were cut off with the physics panel open. Where a row fits it looks as before.
 - No text on any of the three boards is smaller than 15 board units. One test for each lesson plays every step, draws it as it opens
   and while it plays, and fails if any text is smaller.
 - No word changed. A scratch script played every step of each lesson at many settings and compared every word the old board and the
@@ -38,6 +40,7 @@ Builder's view of what is still weak:
   this and still fit the height, and a third of the width to the right stays bare.
 - The strip's table shows the last three tests, not the last six or eleven the old boards drew; its rows are the longest in the
   Lab (up to about 100 characters).
+- Ski wax's table rows are two lines each even with the physics panel closed at 1536 by 864, so its strip is four lines tall there; at 1920 by 1080 they fit on one.
 - Ski wax's close-up is still a thin band of drawn points; it is larger but not richer.
 
 Verdict (Claude): to be written.

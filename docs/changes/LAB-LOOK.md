@@ -90,6 +90,9 @@ Sheet and note: `docs/board/looks/lab-look/round-11-fuel-wax.jpg` and `round-11-
   close-up's "mass carries on", "tyres slow the car", "BRAKING", the balance sentence, the energy step's labels and block numbers, the
   questions' "back", "front", "toward the front", "THE TUNE PAGE"); `keyCap` is a local copy at 15. "tyres slow" and "the car" are
   re-spaced (7 and 25 units under the floor line).
+- `classroom.css` (shared, two lines): a strip table's row may wrap its value under its label (`flex-wrap`, the value pushed right
+  with `margin-left: auto`), because Fuel's and Ski wax's rows are longer than Braking's and were cut off at the end when the physics
+  panel is open. Where the row fits it looks as before, so Braking's table does not change.
 - Tests: one test in each of the three lessons' test files that plays every step, draws it as it opens and while it plays, and
   fails if any text is smaller than 15 board units (the surface counts every scale in force); Fuel's and Ski wax's also assert the
   1320 by 680 size. Scenarios: the click on the tap and the click on the medium tin are at the wide board's places and use the
@@ -107,10 +110,14 @@ Sheet and note: `docs/board/looks/lab-look/round-11-fuel-wax.jpg` and `round-11-
 
 - `test-lab-classroom-braking.mjs` 28 of 28, `-fuel.mjs` 24 of 24, `-wax.mjs` 24 of 24 (one test added to each). All 33
   `tools/test-lab*.mjs` pass.
-- <<LANE>>
-- <<BUILD>>
-- <<BROWSER>>
-- <<EVIDENCE>>
+- Lane tier (`run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, 41 files): 40 pass; `test-repo-hygiene` failed once because the new sheet's
+  name (`round-11-fuel-wax.jpg`) is not one of the allowed sheet names, so its pattern now allows words after the round number (`tools/test-repo-hygiene.mjs`,
+  one regular expression); it passes alone after that, with `test-review-evidence` (9 of 9) and `test-board` (629 checks).
+- `npm run build` passes.
+- All 24 `lab-*` browser scenarios passed (`run-browser-scenarios.mjs --jobs 3`) on the first commit of this round. After that only
+  the three boards' geometry, `classroom.css` and the wax free test's snow name changed, so the Fuel, Ski wax and Braking scenarios were run again on the
+  final code: 3 of 3 passed.
+- Sheet: `docs/board/looks/lab-look/round-11-fuel-wax.jpg` (1932 by 2332, 499 KB), eight pictures from the browser harness at 1536 by 864; note beside it.
 
 ### Round 11 changed assertions (old, new, reason)
 
@@ -127,6 +134,7 @@ Sheet and note: `docs/board/looks/lab-look/round-11-fuel-wax.jpg` and `round-11-
   The tabs and the tins moved to the right with the wider board.
 - `tools/scenarios/lab-classroom-fuel.mjs` and `-wax.mjs`: the fit is 1320 wide instead of 1000; the click on the tap `(300, 418)` becomes
   `(347, 446)` and the click on the medium tin `(500, 600)` becomes `(660, 596)`.
+- `tools/test-repo-hygiene.mjs`: the allowed sheet names `round-N.jpg` also allow words after the number (`round-11-fuel-wax.jpg`).
 - Nothing is loosened; each still checks the same thing in its new place.
 
 ### Round 11 removed
