@@ -79,14 +79,16 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
 {
   const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
   same(def.path.map(place => [place.position.x, place.position.z]), [[-424, 304], [-450, 40], [-300, -230], [-60, -380],
-    [170, -340], [350, -200], [350, 60], [335, 170], [345, 246], [440, 248], [545, 252], [610, 170], [575, 62],
+    [170, -340], [350, -200], [350, 60], [335, 170], [345, 246], [440, 248], [545, 252], [610, 170], [575, 82],
     [430, 70], [230, 150], [0, 230], [-200, 350], [-424, 304]], 'the path is the card\'s list of places');
   same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 16]],
     'the three legs begin at the well, at the Boneyard and at the place (-200, 350)');
-  check(def.path[def.gateWaypoint].id === 'tin-town-gate' && def.gateWaypoint === 12, 'the gate is the place named tin-town-gate, the 13th in the list');
-  same(placeAt(def.gateWaypoint), [575, 62], 'the gate stands at (575, 62)');
-  near(f.path.total, 3250.6, .1, 'the path is about 3,250 m');
-  near(f.path.total / OLD_SMOKE.baseSpeed, 232.2, .1, 'the path takes 3 minutes 52 seconds at the base pace');
+  check(def.path[def.gateWaypoint].id === 'tin-town-gate-front' && def.gateWaypoint === 12, 'the furnace stops at the place named tin-town-gate-front, the 13th in the list');
+  same(placeAt(def.gateWaypoint), [575, 82], 'the furnace stops in front of the gate, at (575, 82)');
+  // Re-recorded: the furnace stops 20 m in front of the gate, at (575, 82), and turns west from there, in place of running
+  // up to (575, 62) and back out: the two pieces round the gate are 18.5 m shorter (3,250.6 m and 232.2 s before).
+  near(f.path.total, 3232.1, .1, 'the path is about 3,232 m');
+  near(f.path.total / OLD_SMOKE.baseSpeed, 230.9, .1, 'the path takes 3 minutes 51 seconds at the base pace');
   near(f.path.total - f.legs[2].fromMetres, 228.7, .1, 'the rear door is fought on the last 229 m');
   check(f.legs[1].fromMetres < f.path.cumulative[def.gateWaypoint] && f.path.cumulative[def.gateWaypoint] < f.legs[2].fromMetres,
     'the gate lies on the Boneyard leg, before the run home');
@@ -112,14 +114,8 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
         const t = metres / length;
         closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, solid));
       }
-      // The path runs through Tin Town's gate, so the gate's two post boxes are the one place it may come nearer: it must
-      // keep 3.4 m from each (the gate's opening is 9 m, the boxes are the posts' own 2.1 m). Every other solid keeps 8 m.
-      // The one exception: the piece that leaves the gate turns west and starts inside the gate's line of posts. The furnace is
-      // an actor that turns round at the gate, so that piece (the 13th) is let touch the gate's posts and no other solid.
-      if (/^tin-town-gate-post-/.test(solid.id) && piece === def.gateWaypoint) continue;
       tightest = Math.min(tightest, closest);
-      const needed = /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
-      check(closest >= needed, `piece ${piece + 1} of the path clears ${solid.id} by ${needed} m (got ${closest.toFixed(1)})`);
+      check(closest >= 8, `piece ${piece + 1} of the path clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
     }
   }
   console.log(`Old Smoke: the path's tightest clearance from a solid is ${tightest.toFixed(1)} m`);

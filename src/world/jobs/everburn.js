@@ -18,10 +18,11 @@ const forge = place('cold-forge', 625, 14, 6), lamps = [
 // Old Smoke's path: from the well across the open flats (leg 1, left door), through
 // the Boneyard past the planes and up to Tin Town's gate (leg 2, right door), then
 // home along the road with the player behind it. The last 229 m, from the place at
-// (-200, 350), are leg 3 (rear door). About 3,250 m, or 3 minutes 52 seconds at the
+// (-200, 350), are leg 3 (rear door). About 3,232 m, or 3 minutes 51 seconds at the
 // furnace's base pace. The gate is where the furnace is running to: if its right
-// door is still unbroken when it passes the gate, the gate burns (old-smoke.js).
-const furnaceGate = place('tin-town-gate', 575, 62, 18);
+// door is still unbroken when it reaches the place in front of the gate, the gate burns (old-smoke.js). The furnace does
+// not drive through the gate: it stops 20 m in front of it, at (575, 82), and turns west along the outside of the fence.
+const furnaceGate = place('tin-town-gate-front', 575, 82, 18);
 const furnaceRunBack = place('furnace-run-3', -200, 350);
 const furnacePath = path(well,
   place('furnace-flats-1', -450, 40), place('furnace-flats-2', -300, -230), place('furnace-flats-3', -60, -380),

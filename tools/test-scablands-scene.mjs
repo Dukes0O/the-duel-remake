@@ -198,7 +198,7 @@ assert.ok(gateFire,'the scene carries a fire for Tin Town\'s gate');
 assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,9,'the gate has nine flames: two posts, three over the beam, four along the fences');
 assert.ok(gateFire.children.some(node=>node.name==='Gate smoke'),'the gate has a plume of smoke');
 const everburnJob=EVERBURN_JOBS[5],gateAt=everburnJob.steps[1].path[everburnJob.steps[1].actor.gateWaypoint].position;
-assert.deepEqual([gateAt.x,gateAt.z],[575,62],'the job names the gate at Tin Town');
+assert.deepEqual([gateAt.x,gateAt.z],[575,82],'the job stops the furnace at (575, 82): the furnace stops in front of the gate');
 const atGate=(furnace,extra={})=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number:6},clockSec:0,job:{stepIndex:1,steps:everburnJob.steps},
   actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:500,y:0,z:60},heading:1.5,furnace}],...extra}}});
 syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,gateBurnt:false}));
@@ -365,9 +365,9 @@ assert.ok(road,'the dirt road is drawn');
   // The way a truck drives through is north and south: the furnace's way in (from (610, 170)) and the gas run's Boneyard road
   // (from (447, 308)) both cross the opening within 30 degrees of straight, and the road goes on to the town's centre.
   const through=new THREE.Vector3(0,0,1).transformDirection(gate.matrixWorld),across=(from,to)=>Math.abs(through.dot(new THREE.Vector3(to.x-from.x,0,to.z-from.z).normalize()));
-  assert.ok(across({x:610,z:170},{x:575,z:62})>Math.cos(30*Math.PI/180),'the furnace comes through the opening of the gate, not into a post');
-  assert.ok(across({x:447,z:308},{x:575,z:62})>Math.cos(30*Math.PI/180),'the gas run Boneyard road comes through the opening of the gate, not into a post');
-  assert.deepEqual([TIN_TOWN_GATE.x,TIN_TOWN_GATE.z],[gateAt.x,gateAt.z],'the gate stands where the furnace\'s path names it');
+  // The furnace does not drive through the gate (it stops 20 m in front of it); the Boneyard road does, squarely, from (575, 112) to (575, 62).
+  assert.ok(across({x:575,z:112},{x:575,z:62})>.9999,'the gas run Boneyard road passes squarely through the opening of the gate');
+  assert.deepEqual([TIN_TOWN_GATE.x,TIN_TOWN_GATE.z+20],[gateAt.x,gateAt.z],'the furnace stops 20 m in front of the gate, south of it');
   assert.equal(gate.getObjectByName('Gate sign plate').userData.text,'TIN TOWN','the gate carries a tin sign reading TIN TOWN');
   const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
   const lampMeshes=gate.getObjectByName('Gate lamps').children.filter(mesh=>glowing(mesh.material));

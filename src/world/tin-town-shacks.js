@@ -16,9 +16,9 @@ export const TIN_TOWN_CENTRE=Object.freeze({x:600,z:0});
 export const TIN_TOWN_CLEAR_RADIUS=24,TIN_TOWN_CLEAR_ROAD=10;
 export const TIN_TOWN_ROADS=Object.freeze([
   [[0,0],[600,0]],[[575,62],[600,0]],
-  [[545,252],[610,170]],[[610,170],[575,62]],[[575,62],[430,70]],
+  [[545,252],[610,170]],[[610,170],[575,82]],[[575,82],[430,70]],
   [[350,-200],[480,-90]],[[480,-90],[600,0]],
-  [[250,415],[447,308]],[[447,308],[575,62]],
+  [[250,415],[447,308]],[[447,308],[575,112]],[[575,112],[575,62]],
   [[230,150],[600,0]],
 ].map(line=>Object.freeze(line.map(point=>Object.freeze(point)))));
 // The existing Tin Town model's footprint, its solid box (SCABLANDS_SOLIDS 'tin-town-shell') and the gate with its fence
