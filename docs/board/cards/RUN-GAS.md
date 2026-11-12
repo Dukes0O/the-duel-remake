@@ -172,6 +172,25 @@ New targets for the scripted drivers on Medium, each over 10 tries: a driver who
 down wins job 4 and a Boneyard run at Raiding at least 8 times in 10 and at War party at least 5 in 10; a driver who
 never fights still arrives on the long road at Watching and Raiding, and on any road needs at most 3 rests.
 
+### Result of the changes (a Sonnet helper; reviewed by Claude, 12 November 2026)
+
+Merged into Claude's branch as 0e314853c. All seven changes are built and every Medium target above is met and is
+now an assertion in the new `tools/test-run-gas-medium.mjs`.
+
+| Medium, wins out of 10 | Job 4 | Long road, Watching to War party | Boneyard road, Watching, Raiding, Hunting, War party |
+| --- | --- | --- | --- |
+| A driver who runs the raiders down | 10 | 10, 10, 10, 10 | 10, 10, 9, 7 |
+| A driver who never fights | 0 | 10, 10, 10, 10 | 10, 1, 0, 0 |
+
+Easy is unchanged: 10 of 10 everywhere with the child-pace driver, who does not fight.
+
+**One thing left, settled by Claude:** on Medium a player who never fights loops for ever on job 4 and on the Boneyard
+road from Raiding up (22 to 75 rests in the tests), which breaks this card's own rule that a run is never lost for
+good. Change: when Big Bess has rested twice on the same stretch, the raiders still standing at that stretch's ambush
+give up as she sets off the third time, and Moss says `story.ember.moss.10`: "They have had enough of waiting. Go,
+go, go." She arrives with what health she has, and the arrival line for a hurt truck plays. The feud and the pay are
+as for any arrival.
+
 ## Not in this card
 
 Other cargo and other roads, sending someone else, the boss coming out, the Scrapdome challenge, lasting damage.
