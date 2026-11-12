@@ -34,6 +34,19 @@ A player who reads the map sees a circle while driving a road from the Boneyard 
 2. The `run-gas` and `field-battle` browser checks, each with one picture of the map panel, for Claude's look.
 3. Lane tier and build.
 
+## Result (built by Codex; reviewed by Claude, 12 November 2026): merged
+
+Change note: `docs/changes/SCABLANDS-JOB-MAP.md`. The panel draws the road with its start and end named (EVERBURN,
+TIN TOWN), marks for the player, Big Bess, the furnace and riders, and a legend. The heading is the job's name and
+the road's name. PLACING and KEEP YOUR LINE are hidden in a world job.
+
+Claude's review asked for four fixes, all made: no writing to the page on every frame of an ordinary race, the
+road's points kept between frames, the player's mark following the player on foot, and larger marks and names.
+Claude ran the `field-battle` and `run-gas` browser checks, `test-review-evidence` and the build; Codex ran the map's
+test (20), the lane tier and the replay fingerprints (unchanged). No existing assertion changed.
+
+Still odd, left as it is: the old legend's small "YOU" shows under the new legend's "YOU".
+
 ## Removed
 
 The race headings and the oval in world jobs.
