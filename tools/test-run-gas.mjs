@@ -370,12 +370,14 @@ function runUntil(duel, condition, seconds = 90) {
   const at = places => places.map(item => [item.position.x, item.position.z]);
   same(at(GAS_RUN_PATHS.long), [[-424, 304], [-450, 40], [-300, -230], [-60, -380], [170, -340], [350, -200], [480, -90], [600, 0]],
     'the long road is the card\'s eight places, well to Tin Town');
-  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [447, 308], [575, 62], [600, 0]],
-    'the Boneyard road goes straight on from the Boneyard to Tin Town\'s gate and the town');
+  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [447, 308], [575, 112], [575, 62], [600, 0]],
+    'the Boneyard road goes from the Boneyard to a place 50 m south of Tin Town\'s gate, straight north through it, and on to the town');
   check(!at(GAS_RUN_PATHS.boneyard).some(([x, z]) => x === 230 && z === 150), 'and never doubles back to the safe road');
   same(GAS_RUN_ROADS, ['long', 'boneyard'], 'two roads');
   same([GAS_RUN_SHARES.long, GAS_RUN_SHARES.boneyard], [1, 2], 'the long road pays 1 share and the Boneyard road 2');
-  near(gasRunLength('boneyard'), 1252, 5, 'the Boneyard road is about 1.25 km (the road no longer doubles back)');
+  // Re-recorded: the road now comes up to a place at (575, 112) and goes straight north through the gate's opening, in place
+  // of running diagonally to the gate's middle: the last two pieces are 6.8 m longer (1,252 m before).
+  near(gasRunLength('boneyard'), 1259, 5, 'the Boneyard road is about 1.26 km (the road no longer doubles back)');
   check(gasRunLength('boneyard') < gasRunLength('long') - 300, 'and 300 m or more shorter than the long road: short and dangerous, or long and safe');
   near(gasRunLength('long'), 1640, 5, 'the long road, as the card\'s places lie, is 1.64 km (the card says about 1.9 km)');
   for (const road of GAS_RUN_ROADS) {
@@ -461,8 +463,9 @@ function runUntil(duel, condition, seconds = 90) {
         let closest = Infinity;
         for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, solid));
         tightest = Math.min(tightest, closest);
-        // The Boneyard road runs through Tin Town's gate: it keeps 3.4 m from each of the gate's two post boxes (the gate's
-        // opening is 9 m; the boxes are the posts' own 2.1 m) and 8 m from every other solid.
+        // An opening is meant to be driven through: a road that passes through Tin Town's gate keeps at least 3.4 m from each of
+        // the gate's two post boxes (the opening is 9 m, Big Bess is 2.8 m wide, the boxes are the posts' own 2.1 m). Every other
+        // solid keeps 8 m from every road.
         const needed = /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
         check(closest >= needed, `${road}: piece ${piece + 1} clears ${solid.id} by ${needed} m (got ${closest.toFixed(1)})`);
       }

@@ -159,3 +159,61 @@ one group named `Tin Town shacks`, added to the scene with one call).
 ## Removed
 
 Nothing replaced; the gate's first direction (towards (430, 70)) is replaced by north and south.
+
+# Follow-up 2 (12 November): the furnace stops in front of the gate, the road goes through it, Tin Town from far off
+
+Built by a Sonnet helper for Claude, to the card's section "Tin Town's shacks: built, merged and judged".
+
+## What changed
+
+- **The furnace stops in front of the gate** (`src/world/jobs/everburn.js`): the gate waypoint is now `tin-town-gate-front`
+  at (575, 82), 20 m south of the gate, and the next place stays (430, 70), so the furnace turns west along the outside of the
+  fence. `gateWaypoint` follows the new place (still the 13th). The rules in `old-smoke.js` did not change.
+- **The Boneyard road passes squarely through the gate** (`src/world/jobs/gas-run.js`): a new place `tin-town-gate-approach`
+  at (575, 112), so the truck drives north through the middle of the opening.
+- **Seen from far off** (`src/world/tin-town-shacks.js`): three shacks (the top of slot 2 in clusters 1, 3 and 5) have a
+  stovepipe and a plume of chimney smoke (`createTinTownChimneySmoke`: 8 puffs each from `createSmokeMaterial(0x6a655e)`,
+  rising 14 m, drifting towards +x and +z at 4.5 and 1.8 m over the climb, placed from the clock in the scene's `animate`; the
+  puffs fade to .55 at most). A 16 m watchtower of girders (braced every 3 m, plank platform and rail, a roof, a warm lamp under
+  it, a ladder) stands in slot 6 of cluster 6, the cluster nearest the gate. The sheet colours are the old model's rust and
+  orange (five of six), with one steel sheet in six, and one patch in four is grey-blue.
+- **Counts:** the shacks are still 4 draw calls; 24,084 triangles (22,996 before). The smoke is a separate group, 24 soft
+  cards in one material (the gate's own smoke is 12), so the scene adds 28 draws for Tin Town in all.
+
+## Re-recorded numbers
+
+| Where | Was | Now | Why |
+| --- | --- | --- | --- |
+| `tools/test-old-smoke.mjs`: the path's places | gate at (575, 62) | `tin-town-gate-front` at (575, 82) | the furnace stops in front of the gate |
+| Furnace path length | 3,250.6 m | 3,232.1 m | the two pieces round the gate are 18.5 m shorter |
+| Furnace path time at base pace (14 m/s) | 232.2 s (3 min 52 s) | 230.9 s (3 min 51 s) | the same |
+| `tools/test-run-gas.mjs`: the Boneyard road's places | ... (447, 308), (575, 62), (600, 0) | ... (447, 308), (575, 112), (575, 62), (600, 0) | the road passes squarely through the gate |
+| Boneyard road length | 1,252 m (+/- 5) | 1,259 m (+/- 5); exactly 1,258.8 | the last two pieces are 6.8 m longer |
+| `GAS_RUN_AMBUSH_METRES.boneyard` | 970, 1100 | 977, 1107 | the two marks after the Boneyard place keep their distance from Tin Town |
+| Tightest clearance of the Boneyard road from a solid | 3.5 m (a post) | 3.8 m (a post) | squarely through the opening |
+
+## Changed assertions
+
+- `tools/test-old-smoke.mjs`: both allowances for the furnace's path are REMOVED (the 3.4 m rule for the gate's posts and the
+  exemption for the piece leaving the gate). The furnace's path keeps 8 m from every solid, as before the gate's posts; the
+  well's own box stays exempt for the first and last pieces. Tightest clearance 15.1 m.
+- `tools/test-run-gas.mjs`: the allowance stays, in its own words: a road that passes through the gate keeps at least 3.4 m from
+  each post box and every other solid keeps 8 m ("an opening is meant to be driven through").
+- `tools/test-scablands-scene.mjs`: the one assertion that named the job's gate at [575, 62] now names the furnace's stopping
+  place [575, 82], "the furnace stops in front of the gate"; the gate's own place is checked separately as 20 m north of it. The
+  old check that the furnace crosses the gate's opening is replaced by one that the Boneyard road does, squarely
+  ((575, 112) to (575, 62)). New: the watchtower is 16 m tall and stands in the cluster nearest the gate; three chimneys in three
+  clusters, each plume eight puffs rising about 14 m and drifting the same way, light.
+
+## Checks
+
+- `test-scablands-scene`, `test-old-smoke` (616 checks), `test-run-gas` (1,088 checks), `test-run-gas-medium` (the card's
+  targets are met), `test-everburn-easy`, `test-ember-lines` (47 captions): pass.
+- The shack layout did not move (the cluster search reads the new furnace and road lines from the same list).
+
+## Look
+
+`.evidence/land-look/sheet-e.jpg` (the six viewpoints) and `sheet-f.jpg` (Tin Town from 200 m, from the gate, from 60 m up and
+the gate burning from 45 m, 20 m, the town side and 120 m down the furnace's approach).
+- Lane tier (`--changed --jobs 4 --keep-going`): 48 passed, 0 failed; replay fingerprints (297 checks) unchanged. `npm run build`:
+  pass. Browser checks `everburn-well` and `run-gas`: pass, 0 warnings, 0 errors. No world signature moved.
