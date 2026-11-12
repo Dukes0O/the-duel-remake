@@ -1,6 +1,6 @@
 # The Lab's look: round 11, the wide board on Fuel and Ski wax, and Braking's labels (12 November 2026)
 
-Sheet: `round-11-fuel-wax.jpg`, eight pictures from the game's browser harness (memory-only saves, a 1536 by 864 window), two to
+Sheet: `round-11.jpg`, eight pictures from the game's browser harness (memory-only saves, a 1536 by 864 window), two to
 a row, each captioned: 1 and 2, Fuel's "Force, mass and acceleration" step after and before; 3 and 4, Fuel's free test with the
 physics panel closed and open; 5 and 6, Ski wax's "Three snows, three waxes" step after and before; 7, Ski wax's free test with the
 panel closed; 8, Braking's close-up step with the larger labels. Built by a Sonnet helper; Claude judges.
@@ -43,4 +43,8 @@ Builder's view of what is still weak:
 - Ski wax's table rows are two lines each even with the physics panel closed at 1536 by 864, so its strip is four lines tall there; at 1920 by 1080 they fit on one.
 - Ski wax's close-up is still a thin band of drawn points; it is larger but not richer.
 
-Verdict (Claude): to be written.
+Verdict (Claude): both lessons are better than before, merged. Fuel gains most: the tank and the road fill the board and
+the stopwatches read in the strip. Ski wax gains on its single strip and its free test; on the three-strip step the right
+third of the board is still bare. The strip keeps the last three tests where the old boards kept eleven and six: accepted,
+because the lesson asks for three settings. The sheet was renamed to `round-11.jpg` and the hygiene test's rule for sheet
+names was put back as it was.

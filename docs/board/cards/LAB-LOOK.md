@@ -236,6 +236,30 @@ check; lane tier and build; one sheet (before and after of the step that shows t
 with the physics panel open, at 1536 by 864, two pictures a row). A lesson whose picture is not better than before
 is not merged; the builder says so plainly.
 
+## Round 11, Fuel and Ski wax: merged (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Sheet and note: `docs/board/looks/lab-look/round-11.jpg` and `round-11-review.md`. Both lessons are better than
+before. Braking's small labels are at 15. The helper compared every word of the three lessons with the old boards
+over 24,000 drawn moments: only table headings moved into the strip's rows.
+
+Accepted differences: the strip's table keeps the last three tests (the old boards kept eleven and six; the lesson
+asks for three). One shared change: a strip table's row may wrap its value under its label
+(`src/lab/classroom/classroom.css`), because Fuel's and Wax's rows are long.
+
+Put back by Claude at the merge: the helper had widened the hygiene test's rule for sheet names to fit the file name
+Claude's brief gave it. The rule stands; the sheet is `round-11.jpg`, and Launch and Projectile's will be
+`round-12.jpg`.
+
+**Changed assertions, reviewed by Claude (rule 18).** In `tools/test-lab-classroom-fuel.mjs` eight hover and click
+points moved with the tank, scale, can, car panel and jugs they point at, and the lane hover uses the board's own
+`lanePoint` because a fixed point missed the free test's single lane. In `tools/test-lab-classroom-wax.mjs` six
+points moved right with the tabs and tins. The two scenarios fit a board 1320 wide and click the tap and the medium
+tin where they now are. Each checks the same thing in its new place; nothing is loosened. Each lesson gained a test
+that no text is under 15 board units at any step.
+
+Still weak: Wax's three-strip step leaves the right third bare; Fuel's free test is one car on a long road; table
+rows wrap to two lines at a laptop's width.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
