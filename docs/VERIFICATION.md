@@ -2037,3 +2037,11 @@ Full tier in the night check on dd7e09c97: 639 passed, 0 failed, 0 not run. Sinc
 Browser scenarios: all 23 Lab checks and menu-front-door pass, with six neighbouring ones; everburn-well passes; everburn still fails on its two known screen facts (QA-EVERBURN-SCREENS, story off).
 Frames: no race scene a player can reach changed (rule 9).
 Seen by Claude: the menu as a new player with the LAB button and its NEW tag, the Lab opened from it, and Downforce started with no driving lesson passed.
+
+## Release, 12 November 2026, the Lab's new look (Claude, Release Manager)
+
+LAB-LOOK rounds 1 to 10 and LAB-UX-FIXES. The range also holds EVERBURN-FURNACE-LOOK rounds 2 and 3, SCABLANDS-LAND, EVERBURN-RUN-AT-TOWN, RUN-GAS, FIELD-BATTLE-ASH and SCABLANDS-JOB-MAP, all behind `story-everburn` and `scablands-runs`, which stay off with `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca`.
+Full tier, alone, on 7ddcc3791 (the last commit that changed code): 645 passed, 0 failed, 0 not run. The Everburn save gained `furnaceDead` since the night check's pass on 299f3dac3, which is why the whole tier ran again. Only notes changed after it (rule 19). The build passes on the merged result.
+Browser scenarios on 7ddcc3791: 39 of 39, all 24 Lab checks with grand-prix, scrapdome, arena-fuel-run, combat-hud, map-view, menu-front-door, weapon-bar, crash-counter, opponents, qualifying, the-dig, everburn-well, field-battle, run-gas and release-controls. The night check on 299f3dac3 ran all 206: 198 passed; the eight that failed are the known ones (arena-shove, drive-lesson-run, everburn and ski-finish have QA cards; deep-frames, frame-pacing, p4-audio and convoy-frames need the laptop alone). Combat balance passed in that check and no combat number has changed since.
+Frames: no race scene a player can reach changed (rule 9). The race screen gained one comparison a frame for the job map, which draws only in a world job.
+Seen by Claude: every board from the browser harness's pictures (sheets `docs/board/looks/lab-look/round-6.jpg`, `round-8.jpg` and `round-10.jpg`). Not seen in a visible browser window: the session had no window open, so the first look in a real window is the players'.

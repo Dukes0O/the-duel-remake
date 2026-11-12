@@ -1,17 +1,15 @@
 {
   "schema": 1,
-  "commit": "8aa0b62019b8bdc2401a7e29af993c48e8ff1802",
-  "time": "2026-11-05T13:24:31.222Z",
+  "commit": "7ddcc37914cc85abeb121f5a53e559d1c3fee21c",
+  "time": "2026-11-12T18:21:54.247Z",
   "tier": "full",
-  "passed": false,
+  "passed": true,
   "dirty": false,
   "startDirty": false,
   "endDirty": false,
-  "endCommit": "8aa0b62019b8bdc2401a7e29af993c48e8ff1802",
+  "endCommit": "7ddcc37914cc85abeb121f5a53e559d1c3fee21c",
   "complete": true,
-  "total": 585,
-  "completed": 585,
-  "failures": [
-    "tools/test-review-evidence.mjs"
-  ]
+  "total": 645,
+  "completed": 645,
+  "failures": []
 }

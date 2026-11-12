@@ -6,6 +6,11 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Lab has a new look.** Every lesson's board is redrawn as a lit workshop scene: a real floor and
+  wall, the car, the helicopter and the tools drawn as things, and arrows that glow. The pictures on
+  the answer cards are redrawn to match, and Brian has painted portraits with four moods. In Lift
+  and in Braking the numbers and tables sit in a strip under the board, so the picture is larger;
+  Braking's board is wider and its close-up car is bigger.
 - **The Lab has its own button.** LAB stands on the menu beside INSTRUCTOR and HELIPAD. Every lesson is
   open from the start; a challenge that flies or drives says which lessons it needs first.
 - **The menu says what to do next.** A "Next up" line under the top bar names one thing to try and
