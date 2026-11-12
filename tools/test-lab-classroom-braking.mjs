@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {DRIVE} from '../src/config.js';
-import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, TEST_CARS, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, SLOW, FAST, DECEL_SPEED, WATCH_SPEED, fastestFor, metresFrom, laneAt, stopOf, kmh, msOf, aOf, brakesOf, sumOf, benchAttempts} from '../src/lab/lessons/braking-classroom.js';
+import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, TEST_CARS, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, SLOW, FAST, DECEL_SPEED, WATCH_SPEED, fastestFor, metresFrom, laneAt, stopOf, kmh, msOf, aOf, brakesOf, sumOf, benchAttempts, m1} from '../src/lab/lessons/braking-classroom.js';
 import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, strip, size} from '../src/lab/lessons/braking-board.js';
 import {brakingBench, stopDistance, frontLoadShare} from '../src/lab/benches/tunnel.js';
 import {effectLine, TUNE_ROWS} from '../src/lab/tune-view.js';
@@ -444,7 +444,7 @@ test('mouse: the dial and the lever turn, a click on the strip brakes, and hover
   let v = session.view();
   for (const action of ['speed:up', 'speed:down', 'lever:front', 'lever:back']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'lever:front'), [430, 290], [430, 180], [500, 460]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
+  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'lever:front'), [655, 300], [655, 200], [500, 460]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
   session.act(hitTest(v, ...targetPoint(v, 'speed:up')).action);
   session.act(hitTest(v, ...targetPoint(v, 'lever:front')).action);
   v = session.view();
@@ -542,7 +542,7 @@ test('every speed in km/h that the lesson shows or lets the player set is a whol
     for (const row of v.table ?? []) assert.equal(row.kmh % 10, 0, where);
     for (const stop of v.stops ?? []) assert.equal(stop.kmh % 10, 0, where);
     if (v.dial) { read++; assert.equal(v.dial.kmh % 10, 0, where); assert.equal(v.dial.kmh, v.dial.speed, 'the dial reads its own setting'); }
-    for (const point of [[1100, 100], [430, 200], [500, 460]]) round(hoverInfo(v, ...point), where);
+    for (const point of [[1100, 100], [655, 200], [500, 460]]) round(hoverInfo(v, ...point), where);
   };
   const helped = session => { for (let k = 0; k < 3; k++) { session.act('help'); look(session); } };
   const session = createClassroomSession(lesson);
@@ -603,4 +603,24 @@ test('the wide board: Braking is 1320 wide, its readings and tests are in the st
   assert.ok(x <= size.width - 40 && dx <= size.width - 40, 'the controls sit inside the board');
   const drawn = drawBoard(new Proxy({}, {get: (target, name) => name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {}, set: () => true}), v, 1320, 680);
   assert.deepEqual(drawn, {scale: 1, left: 0, top: 0}, 'a 1320 by 680 panel holds the wide board exactly');
+});
+
+// LAB-LOOK round 10: the wide board keeps the old board's words (the strip is "80 m long", a long stop is "past the end"), and the
+// close-up car stands in the free test where the table used to be.
+test('the wide board keeps the old words, and the free test has the close-up car', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  setTo(session, 240);
+  brake(session);
+  const v = session.view();
+  assert.ok(v.close && !v.close.plain, 'the free test shows the close-up car on its pads');
+  assert.match(hoverInfo(v, 655, 200), /Falcone F42 close up/, 'the close-up is named after the car chosen');
+  assert.match(hoverInfo(v, 655, 300), /weighing pads/);
+  assert.match(hoverInfo(v, 500, 460), /test strip is 80 m long and drawn to scale/);
+  const said = [];
+  const ctx = new Proxy({}, {get: (target, name) => name === 'fillText' ? value => said.push(String(value)) : name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {}, set: () => true});
+  drawBoard(ctx, v, 1320, 680);
+  assert.ok(v.lanes[0].stopMetres > 80);
+  assert.ok(said.some(w => w.includes(`${m1(v.lanes[0].stopMetres)}, past the end ▶`)), `past the end is said, in ${said.length} words`);
+  assert.ok(said.includes('80 m') && !said.includes('90 m'), 'the strip is marked to 80 m');
 });

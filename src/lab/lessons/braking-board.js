@@ -12,19 +12,23 @@ export const size = Object.freeze({width: 1320, height: 680});
 export const pressMovesDrag = false;
 
 const CAR = '#c8402f', GOLD = '#edc557', GREEN = '#9ff0b4';
-// The close-up car (nose to the right) and its pads; the dial and the lever (or the car chooser) at the right edge.
-const CLOSE = Object.freeze({nose: 600, ground: 250, scale: 3.2});
+// The close-up car (nose to the right) and its pads, 1.3 times the size of the usual board's and centred over the road; the dial
+// and the lever (or the car chooser) at the right edge. The pads sit flush with the floor, which starts at `floor`; the car's
+// tyres rest on them, and its roof is where the weight arrows end.
+const CLOSE = Object.freeze({nose: 850, floor: 312, scale: 4.16});
+const PAD_Y = CLOSE.floor - 50, CAR_Y = PAD_Y + 53 - 16 * CLOSE.scale, ROOF_Y = CAR_Y - 20.4 * CLOSE.scale;
 const DIAL = Object.freeze({x: 920, y: 52, w: 360, h: 120, down: [1000, 140], up: [1200, 140]});
 const LEVER = Object.freeze({x: 920, y: 186, w: 360, h: 140, back: [970, 300], front: [1230, 300], track: [980, 1220], trackY: 262});
 const LEFT = Object.freeze({x: 40, y: 40, w: 840, h: 310});
-// The road is tarmac from 40 to 1280 across the wide board. The brakes go on at 0 m (130 px in, where a car arrives), a mark every 10 m,
-// and the scale is the largest at which the longest stop the lesson allows (the Falcone from 240 km/h, 104.9 m) still ends 40 px
-// short of the board's edge.
+// The road is tarmac from 40 to 1280 across the wide board. The test strip is still 80 m long, marked every 10 m from the brakes
+// going on at 0 m (130 px in, where a car arrives); the road carries on past its end, at the largest scale at which the longest
+// stop the lesson allows (the Falcone from 240 km/h, 104.9 m) still ends 40 px short of the board's edge.
 const ROAD_LEFT = 40, ROAD_WIDTH = 1240;
-const STRIP = Object.freeze({x0: 130, perM: 10.9, metres: 105, top: 400, bottom: 650});
+const STRIP = Object.freeze({x0: 130, perM: 10.9, metres: 80, top: 400, bottom: 650});
 const CAR_SCALE = .48 * STRIP.perM / 10;
 const stripX = metres => STRIP.x0 + metres * STRIP.perM;
-const laneY = (i, n) => n >= 3 ? 440 + i * 80 : 450 + i * 110;
+// One or two cars sit lower on the floor than on the usual board, so that the road is not left with an empty floor beneath it.
+const laneY = (i, n) => n >= 3 ? 440 + i * 80 : n === 2 ? 470 + i * 110 : 490;
 // The energy step's road: the same road, so that the longest stop the dial can give still fits.
 const ROAD = Object.freeze({x0: STRIP.x0, perM: STRIP.perM, y: [460, 570]});
 // The questions' scenes are drawn as they always were, 1000 wide and centred on the wide board.
@@ -60,11 +64,11 @@ export function hoverInfo(view, x, y) {
   if (view.dial && inRect(x, y, DIAL)) return view.dial.locked ? 'This is the speed dial, and Brian has set it for this test.' : `This is the speed dial. Each press makes the speed ${SPEED_STEP} km/h faster or slower.`;
   if (view.car && inRect(x, y, LEVER)) return 'These buttons choose the car. Each car has its own brake strength, which changes its deceleration.';
   if (view.lever && inRect(x, y, LEVER)) return view.lever.locked ? 'This is the brake lever, and Brian has set it for this test.' : 'This is the brake lever. It divides the braking between the front and back brakes, and each press moves it 10%.';
-  if (view.close && !view.close.plain && y > CLOSE.ground - 8 && y < CLOSE.ground + 92 && x > CLOSE.nose - 370 && x < CLOSE.nose + 50) return 'These weighing pads show the share of the car’s weight on each pair of tyres.';
-  if (view.close && x > CLOSE.nose - 320 && x < CLOSE.nose + 30 && y > 110 && y < CLOSE.ground) return 'This is the Falcone F42 close up.';
+  if (view.close && !view.close.plain && y > PAD_Y - 8 && y < PAD_Y + 92 && x > CLOSE.nose - 420 && x < CLOSE.nose + 50) return 'These weighing pads show the share of the car’s weight on each pair of tyres.';
+  if (view.close && x > CLOSE.nose - 420 && x < CLOSE.nose + 30 && y > 90 && y < PAD_Y - 8) return `This is the ${view.car?.name ?? 'Falcone F42'} close up.`;
   if (view.energy && inRect(x, y, LEFT)) return `Each gold block is the energy of motion of this car at ${kmh(SLOW)} km/h.`;
   if (view.energy && x > 90 && x < 1230 && y > STRIP.top && y < STRIP.bottom) return 'Each numbered stretch of road is the length that the brakes need to remove one block of energy.';
-  if (x > 90 && x < 1230 && y > STRIP.top && y < STRIP.bottom) return 'This test strip is drawn to scale. The brakes go on at the yellow line, and there is a mark every 10 m.';
+  if (x > 90 && x < 1230 && y > STRIP.top && y < STRIP.bottom) return 'This test strip is 80 m long and drawn to scale. The brakes go on at the yellow line, and there is a mark every 10 m.';
   return null;
 }
 export function targetPoint(view, action) {
@@ -82,7 +86,7 @@ export function targetPoint(view, action) {
   const l = view.lanes[0];
   if (l && !view.energy) return [stripX(Math.max(0, l.metres)), laneY(0, view.lanes.length)];
   if (view.energy) return [LEFT.x + LEFT.w / 2, LEFT.y + LEFT.h / 2];
-  return [CLOSE.nose - 140, CLOSE.ground - 60];
+  return [CLOSE.nose - 195, ROOF_Y + 40];
 }
 export function dragAngle() { return 0; }
 
@@ -108,37 +112,39 @@ function pad(ctx, x, ground) {
   steel(ctx, x - 62, ground + 48, 124, 7, 2);
   for (const bx of [x - 55, x + 55]) bolt(ctx, bx, ground + 51.5, 1.7);
 }
-// The car close up on its two pads, each with the share of the weight it carries and an arrow sized to it.
+// The car close up on its two pads, each with the share of the weight it carries and an arrow sized to it. The arrows end at the
+// roof and their labels stay at the usual text size; the scene is what grew.
 function closeUp(ctx, view) {
-  const c = view.close, {nose, ground, scale} = CLOSE, front = c.front, back = 1 - front;
+  const c = view.close, {nose, scale} = CLOSE, front = c.front, back = 1 - front, tip = ROOF_Y - 5;
   const wheel = wx => nose + wx * scale;
   const braking = Boolean(c.braking), frontShare = view.lever ? view.lever.front / 100 : .65;
   const heat = braking ? .3 + .7 * frontShare : 0, rearHeat = braking ? (c.locked ? 1 : .3 + .7 * (1 - frontShare)) : 0;
-  car(ctx, nose, ground + 2, scale, {braking, locked: c.locked, heat, rearHeat});
+  car(ctx, nose, CAR_Y, scale, {braking, locked: c.locked, heat, rearHeat});
   // Before weight shift has been explained, the car stands alone, with no pads or shares.
   if (!c.plain) for (const [wx, share, name] of [[-20, front, 'Front'], [-74, back, 'Back']]) {
     const x = wheel(wx);
-    pad(ctx, x, ground);
-    text(ctx, `${name} ${pct(share)}`, x, ground + 68, {size: 20, colour: name === 'Back' && c.locked ? theme.bad : GREEN, weight: 800});
+    pad(ctx, x, PAD_Y);
+    text(ctx, `${name} ${pct(share)}`, x, PAD_Y + 68, {size: 20, colour: name === 'Back' && c.locked ? theme.bad : GREEN, weight: 800});
     // The weight on this end pressing down.
     const len = 30 + 120 * share;
-    forceArrow(ctx, x, ground - 64 - (len + 6), len + 6, false, theme.bad, 8);
+    forceArrow(ctx, x, tip - (len + 6), len + 6, false, theme.bad, 10);
   }
-  // Why the weight moves: the mass carries on forward above the road while the tyres slow the car at the road.
+  // Why the weight moves: the mass carries on forward above the car while the tyres slow the car at the road. The mass arrow sits
+  // between the two weight arrows and the tyres' arrow between the two wheels, so that nothing crosses.
   if (view.forces && c.braking) {
-    const dx = nose - 470;
-    forceArrowTo(ctx, 270 + dx, 160, 370 + dx, 160, '#f5f0dc', 6);
-    text(ctx, 'mass carries on', 320 + dx, 138, {size: 14, colour: '#f5f0dc'});
-    forceArrowTo(ctx, 350 + dx, ground + 34, 290 + dx, ground + 34, theme.bad, 5);
-    text(ctx, 'tyres slow', 320 + dx, ground + 56, {size: 13, colour: theme.bad});
-    text(ctx, 'the car', 320 + dx, ground + 72, {size: 13, colour: theme.bad});
+    const mid = nose + (-20 - 74) / 2 * scale;
+    forceArrowTo(ctx, mid - 60, ROOF_Y - 32, mid + 60, ROOF_Y - 32, '#f5f0dc', 7);
+    text(ctx, 'mass carries on', mid, ROOF_Y - 56, {size: 14, colour: '#f5f0dc'});
+    forceArrowTo(ctx, mid + 35, CLOSE.floor - 16, mid - 35, CLOSE.floor - 16, theme.bad, 6);
+    text(ctx, 'tyres slow', mid, CLOSE.floor + 8, {size: 13, colour: theme.bad});
+    text(ctx, 'the car', mid, CLOSE.floor + 24, {size: 13, colour: theme.bad});
   }
-  if (c.locked) text(ctx, 'back tyre locked', wheel(-74), ground - 76 - 30 - 120 * back - 16, {size: 16, colour: theme.bad});
-  text(ctx, c.braking ? 'BRAKING' : 'STANDING', 120, 70, {size: 14, align: 'left', colour: c.braking ? theme.accent : theme.faint, weight: 800});
+  if (c.locked) text(ctx, 'back tyre locked', wheel(-74), tip - (30 + 120 * back + 6) - 16, {size: 16, colour: theme.bad});
+  text(ctx, c.braking ? 'BRAKING' : 'STANDING', nose - 520, 56, {size: 14, align: 'left', colour: c.braking ? theme.accent : theme.faint, weight: 800});
   // The lever's share against the weight on the back tyres, in the same words as the sum.
   if (view.balance && view.lever) {
     const backBrakes = 100 - view.lever.front, steady = view.lever.front >= STEADY_FRONT;
-    text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, nose - 160, 30, {size: 14, colour: steady ? GREEN : theme.bad});
+    text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, nose - 195, 26, {size: 14, colour: steady ? GREEN : theme.bad});
   }
 }
 function dial(ctx, view) {
@@ -264,15 +270,17 @@ function roadStrip(ctx, view) {
       text(ctx, `${k.t.toFixed(1)} s`, x, y0 + 74, {size: 14, colour: GOLD, weight: 800});
       text(ctx, `${k.ms.toFixed(1)} m/s`, x, y0 + 94 + (k.t * 2 % 2) * 20, {size: 14, colour: theme.text});
     });
-    if (view.timeMarks.length) text(ctx, 'The marks show the car at each half second.', size.width / 2, 610, {size: 20, colour: GOLD});
+    if (view.timeMarks.length) text(ctx, 'The marks show the car at each half second.', size.width / 2, 645, {size: 20, colour: GOLD});
   }
   lanes.forEach((l, i) => {
     const y = laneY(i, n);
     laneName(ctx, l.label, y);
-    // The tape's length, beside the car where it stopped. The speed now and the stop are read in the strip under the board.
+    // The tape's length, beside the car where it stopped; a stop beyond the 80 m strip says so, above the tape so that the tape does not
+    // run through the words. The speed now and the stop are read in the strip under the board.
     if (l.done) {
-      const x = stripX(l.metres), late = x > 1150;
-      text(ctx, m1(l.stopMetres), late ? x - 12 : x + 12, y - 22, {size: 15, align: late ? 'right' : 'left', colour: theme.accent});
+      const x = stripX(l.metres), past = l.stopMetres > STRIP.metres;
+      if (past) text(ctx, `${m1(l.stopMetres)}, past the end ▶`, x - 12, y - 40, {size: 15, align: 'right', colour: theme.accent});
+      else text(ctx, m1(l.stopMetres), x + 12, y - 22, {size: 15, align: 'left', colour: theme.accent});
     }
   });
   if (view.keys.Space === 'go' && !view.lanes.length && !view.perSecond) text(ctx, 'Press Space to brake', stripX(20), laneY(0, 1) + 4, {size: 15, align: 'left', colour: theme.faint});
@@ -346,7 +354,7 @@ function energyScene(ctx, view) {
   });
 }
 function drawRig(ctx, view) {
-  background(ctx, size.width); floor(ctx, CLOSE.ground + 50, size.width);
+  background(ctx, size.width); floor(ctx, CLOSE.floor, size.width);
   if (view.close) closeUp(ctx, view);
   if (view.dial) dial(ctx, view);
   if (view.lever) lever(ctx, view);
