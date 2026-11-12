@@ -217,3 +217,93 @@ Built by a Sonnet helper for Claude, to the card's section "Tin Town's shacks: b
 the gate burning from 45 m, 20 m, the town side and 120 m down the furnace's approach).
 - Lane tier (`--changed --jobs 4 --keep-going`): 48 passed, 0 failed; replay fingerprints (297 checks) unchanged. `npm run build`:
   pass. Browser checks `everburn-well` and `run-gas`: pass, 0 warnings, 0 errors. No world signature moved.
+
+# Round 3 fixes (12 November): the well, the Dead Mall and the Boneyard
+
+Built by a Sonnet helper for Claude, from the card's section "Round 3" and the round 3 sheet. One commit for each fix. No switch:
+the Scablands is drawn this way whenever it is drawn.
+
+## What changed
+
+1. **The Everburn's fire and smoke are drawn in code** (`src/world/everburn-fire.js`, new). Three flame tongues 5 to 7 m tall on the
+   derrick's top (8.25 m up), firelight on the sand round its foot, 26 sparks, and a column of 16 smoke puffs that rises 85 m and leans
+   22 m east and 9 m south with one fixed wind. It burns all the time, as the model's own flame did. The seven grey spheres
+   (`mastAndSmoke`, now `radioMast`) and the model's flame solids (`everburn-flame-core`, `-outer` and the merged
+   `everburn-burning-flame-*` meshes, taken out of the loaded copy) are gone. Past 280 m the well's stand-in is a 8.25 m dark mast, not a
+   32 by 12 by 24 m box (the other places keep the box). Cost: 21 draw calls.
+2. **The mall's sign lettering sits on its boards.** Cause: `scablands-mall.py` put each word's left edge at the sign's middle minus
+   2.8 m, and the half turn that faces the three words on the entrance side toward the entrance sent the text the other way. Words
+   are now centred on their signs (`align_x='CENTER'`), and `mall.glb` is rebuilt (1,049,760 to 1,050,856 bytes). Checked in the file:
+   every word's box lies inside its board's box. The kind of fault is in `docs/ART_LINE.md`.
+3. **The mall's nine flat rocks go** (`addMallRubble`), and so do the four sand drifts: a first try that laid them low and wide on the
+   ground's own material still read as cushions and barrels in the 25 m and close pictures, so, as the card says, they go too.
+4. **The Boneyard's dirt slab is not drawn** (`Boneyard_ground_*` removed from the loaded copy). The model file keeps it.
+5. **The three wrecks differ** (`src/world/boneyard-wrecks.js`, new). At load each wreck is lifted out of the model and set down
+   again: the north wreck at (418, 272) turned 8 degrees; the east wreck at (466, 338) turned -30 degrees, beyond the Boneyard road;
+   the south wreck at (372, 296) turned 62 degrees and rolled 40 degrees onto a wing. Gaps are uneven (see the test). Each rests on the
+   ground (lowest part within 0.12 m); the engine pods of the two level wrecks are sunk no deeper than 0.15 m (the buried landing gear
+   is not counted, it is broken on purpose). The one box `boneyard-planes` (it covered only part of one wreck) is replaced by three,
+   `boneyard-wreck-north`, `-east` and `-south`, each covering all of its wreck. Both gas-run roads, the furnace's path and every other
+   path the tests read stay 8 m or more clear. Big Bess's resting place is now (464, 262), turned 2.2 rad, 5 m or more from every
+   wreck (it was inside the north wreck).
+6. **The mall is drawn in one piece for each surface** (`mergeBySurface`, using `mergeGeometries`, the helper the game's other scenes
+   use): 254 meshes become 7. Each part's place is baked in; a surface with one part keeps its name and glow. The model file is
+   unchanged.
+7. **The well is not alone on its disc** (`src/world/everburn-props.js`, new). Eleven props cut from the Ridge's kit model (already
+   loaded, so no new file): three fire pots, two tyre-and-slat barricades, a signpost, a radio mast and four basalt rocks, in one
+   cluster 20 to 30 m north-east of the well (about (-414, 282)). It stays 14 m or more from the raiders' way in (-448, 288) and hold
+   (-426, 303), 12 m or more from the furnace's parking place (-406, 304) and the car's start at the well. Drawing only; no solid.
+
+## Differs from the card
+
+- Fix 5: the card says "both roads stay 6 m clear". The existing checks ask 8 m of every solid and are not loosened, so the
+  wrecks keep 8 m. The east wreck left the original row because the furnace's path (345, 246) to (545, 252) runs 15 m north of the
+  old row and the Boneyard road ran through the south wreck.
+- Fix 5: a solid is an axis-aligned box in every test and in the game, so each wreck's box is the box round the turned wreck (38 by 23,
+  33 by 30 and 20 by 38 m), larger than the wreck itself.
+- Fix 3 went further than the card's first step (see above).
+
+## Re-recorded assertions
+
+`tools/test-scablands-scene.mjs` only (`test-run-gas`, `test-old-smoke` and `test-field-battle` are untouched):
+
+- The smoke pillar check now looks for `Everburn fire and smoke` (the spheres are replaced by it).
+- The solid count is 18, not 16 (`boneyard-planes` became three wreck boxes).
+- "Outside a job, Big Bess stands at her Boneyard place (the place's own spot plus 18 m)" and "she keeps her Boneyard turn" now name her
+  new resting place and its turn (`BESS_REST`): the old spot was inside the north wreck.
+- The check that the mall has rubble now checks that it has none.
+- New: the fire (three tongues of 5 to 7 m, firelight, 14 to 18 puffs, the column to about 90 m, one lean, the mast stand-in), the
+  model's flame solids and the dirt slab are not drawn, the mall's sand drifts are not drawn, the mall's merge (parts, place, glow),
+  the wrecks (own solid, inside it, on the ground, pods, three headings, one roll, uneven gaps, 8 m from both roads and the furnace's
+  path, Big Bess 5 m clear) and the props (8 to 12, small, on the ground, clear of four named places, five kinds).
+
+## Checks
+
+- `test-scablands-scene` (every new check above; no count printed), `test-scablands-ground` (5), `test-scablands-job-map` (20 checks),
+  `test-run-gas` (1,116 checks, untouched: both roads keep 8 m from every solid, the three wreck boxes included), `test-old-smoke`
+  (650 checks, untouched; the card's 616 grew with the two extra solids it measures every path piece against), `test-field-battle`
+  (792 checks, untouched; the card's 750 grew the same way), `test-everburn-easy` (pass, the Easy driver brought Big Bess home 10 of 10
+  on every road and the battle), `test-review-evidence` (9), `test-board` (629 checks), `test-repo-hygiene`: pass.
+- Lane tier from PowerShell (`--changed --jobs 4 --keep-going`): 71 passed, 0 failed, 0 not run (896 s). `npm run build`: pass.
+  Browser scenarios `everburn-well`, `run-gas` and `field-battle` (`--jobs 2`): 3 of 3 passed, 0 warnings, 0 errors (2, 4 and 7 screenshots).
+- Not run: `test-blender-output` (it rebuilds every recipe in the repository); the mall recipe was run by hand, writing only the
+  model, and the rebuilt file was read back (each word's box inside its board's box).
+- Frame check: not run (rule 9); owed before the Scablands is opened beyond the story's switch. Render numbers before and after are in
+  `round-4-review.md`: the mall falls from 635 to 769 draw calls to 143 to 291, the well rises by 14 to 30.
+
+## Look
+
+`docs/board/looks/scablands-land/round-4.jpg` and `round-4-review.md` (the same twelve views, with the render numbers before and
+after).
+
+## Removed
+
+- The seven grey smoke spheres (`Everburn smoke pillar visible across the Scablands`) and the `mastAndSmoke` function's smoke half.
+- The model's flame solids in `everburn.glb` (removed from the loaded copy; the file keeps them, a rebuild without them is a later
+  clean-up).
+- The nine flat rocks (`addMallRubble`, group `Dead Mall sand drifts and rubble`) and the four sand drifts (removed from the
+  loaded copy of `mall.glb`).
+- The Boneyard's dirt slab (`Boneyard_ground_*`; removed from the loaded copy of `boneyard.glb`).
+- The solid `boneyard-planes`, and Big Bess's resting place at the Boneyard's own spot plus 18 m.
+- The 32 by 12 by 24 m far stand-in of the well.
+- The mall's 254 separate meshes (now merged at load).
