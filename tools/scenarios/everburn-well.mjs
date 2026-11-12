@@ -50,6 +50,7 @@ export async function run(c) {
   await c.waitFor('document.querySelector("[data-ember-step=\\"the-everburn\\"]")','job 6 on the wall');
   await click(c,'[data-ember-step="the-everburn"]');
   await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"&&window.__qaApp.duel.state.status==="racing"','job 6 racing',90000);
+  await c.screenshot('everburn-well-map');
   const out={};
   out.defend=await c.evaluate(probe);
   check(out.defend,'defend');

@@ -64,10 +64,4 @@ export function emberResultLine(result) {
   return `Everburn: job ${index + 1}, ${EMBER_JOB_NAMES[index]}, complete.`;
 }
 
-export function scablandsGateMarkup({available = false} = {}) {
-  if (!available) return '';
-  return '<nav class="scablands-gate" aria-label="Scablands"><button type="button" class="secondary-button" data-scablands-enter><span>BACK GATE</span></button>'
-    + '<button type="button" class="secondary-button" data-scablands-drive><span>DRIVE THE SCABLANDS</span></button></nav>';
-}
-
 export {emberStoryProps};

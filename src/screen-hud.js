@@ -132,7 +132,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       lastWorldJob=worldJob;
     }
     if(worldJob || lastJobHeading!=='CIRCUIT / LIVE') {
-      const heading=jobRoad ? (s.arena.worldJob.definition.name ?? 'WORLD JOB').toUpperCase() : 'CIRCUIT / LIVE';
+      const heading=worldJob ? (s.arena.worldJob.definition?.name ?? 'WORLD JOB').toUpperCase() : 'CIRCUIT / LIVE';
       if(heading!==lastJobHeading) { if(mapHeading) mapHeading.textContent=heading; lastJobHeading=heading; }
     }
     // Controls are shown only on request (the H key), never by themselves.
@@ -321,8 +321,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
       text('route-remaining',arena.scoreText);
-      text('route-lap',jobRoad ? '' : 'ARENA');
-      text('route-section',jobRoad ? (s.arena.worldJob.definition.road ? `${s.arena.worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS') : arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
+      text('route-lap',worldJob ? '' : 'ARENA');
+      text('route-section',worldJob ? (s.arena.worldJob.definition?.road ? `${s.arena.worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS') : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);

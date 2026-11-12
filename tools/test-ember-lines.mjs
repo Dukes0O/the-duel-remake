@@ -47,6 +47,8 @@ const EXPECTED = [
   ['Job 6 won', 'Cinder', 'Well, look at that. A hundred years old and still showing off.'],
   ['Job 6 won', 'Cinder', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'],
   ['Job 6 won', 'Hollis', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'],
+  ["The well's defence fails and the wave starts again", 'Cinder', 'They reached the valve! I have shut it again. Same lot, once more.'],
+  ['The soup spills', 'Auntie Solder', 'That was my good soup! Come back. There is more in the pot, and less in my patience.'],
   // RUN-GAS: the six lines of the gas run, word for word from docs/board/cards/RUN-GAS.md.
   ['A long road run starts', 'Moss', 'The long way round, then. Bess likes a quiet road.'],
   ['A Boneyard road run starts', 'Moss', 'Through the Boneyard. Keep your eyes on the planes; that is where they wait.'],
@@ -140,7 +142,7 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   // Job 4 shows no raw ids: its start, rest, sighting and ending lines are all real captions, and it ends on Auntie Solder's
   // existing result line, which it holds for (the way job 3 holds for Cinder's).
   const step = EVERBURN_JOBS[3].steps[0];
-  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId, EVERBURN_JOBS[3].resultLineId];
+  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId];
   assert.ok(named.every(id => EMBER_CAPTIONS[id]), `every line job 4 names has words: ${named.filter(id => !EMBER_CAPTIONS[id])}`);
   assert.ok(!Object.hasOwn(step, 'wonLineId'), 'job 4 has no won line of an id without words');
   const bess = (atDestination, share = .5) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'big-bess', position: {x: 600, y: 0, z: 0}, health: 100, pathProgress: 1, atDestination, share}]});

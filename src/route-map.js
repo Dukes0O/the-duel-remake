@@ -83,44 +83,60 @@ export function routeActorPose(course,geometry,actor,out={}){
 function makePath(points){const path=new Path2D();for(let i=0;i<points.length;i+=2)i?path.lineTo(points[i],points[i+1]):path.moveTo(points[i],points[i+1]);return path;}
 function stroke(ctx,path,color,width,dash=[]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke(path);ctx.setLineDash([]);}
 
-// Cache the immutable road view outside the simulation; a replaced path is checked again.
+// Cache the current step's map data without changing simulation state.
 const jobRoadCache = new WeakMap();
-const placeName = place => (place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
+const placeName = place => String(place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
+const pointOf = place => place?.position ?? place;
+const validPlace = place => Number.isFinite(pointOf(place)?.x) && Number.isFinite(pointOf(place)?.z);
+const namedPlace = (place, fallback) => ({position: pointOf(place), name: placeName(place) || fallback});
 export function worldJobMapRoad(state) {
   const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
-  const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-  if (!Array.isArray(step?.path) || step.path.length < 2) return null;
-  let road = jobRoadCache.get(step);
-  if (!road || road.source !== step.path) {
-    const path = step.path.map(place => place.position ?? place);
-    if (!path.every(point => Number.isFinite(point.x) && Number.isFinite(point.z))) return null;
-    const destination = step.destination ?? step.path.at(-1);
-    road = {source: step.path, path, start: {position: path[0], name: placeName(step.path[0])},
-      destination: {position: destination.position ?? destination, name: placeName(destination)}};
-    jobRoadCache.set(step, road);
-  }
+  if (!worldJob) return null;
+  const step = worldJob.job?.steps?.[worldJob.job.stepIndex];
+  if (!step) return {path: [], places: [], margin: 120};
+  const sources = [step.path, step.origin, step.safePoints, step.destination, step.returnPath,
+    step.place, step.places, step.zone, step.carPlace, step.escapePlace];
+  const cached = jobRoadCache.get(step);
+  if (cached && sources.every((source, index) => source === cached.sources[index])) return cached;
+  const path = Array.isArray(step.path) && step.path.length >= 2 && step.path.every(validPlace) ? step.path :
+    validPlace(step.origin) && validPlace(step.destination) && (step.safePoints ?? []).every(validPlace) ?
+      [step.origin, ...(step.safePoints ?? []), step.destination] :
+    Array.isArray(step.returnPath) && step.returnPath.length >= 2 && step.returnPath.every(validPlace) ? step.returnPath : null;
+  const places = path ? [] : [step.place, ...(step.places ?? []), step.zone, step.carPlace, step.escapePlace]
+    .filter(validPlace).map((place, index) => namedPlace(place, `PLACE ${index + 1}`));
+  const namedPath = path?.map((place, index) => namedPlace(place, index === 0 ? 'START' : 'DESTINATION')) ?? places;
+  const mainPlace = step.place ?? step.zone ?? step.places?.[0] ?? step.carPlace ?? step.escapePlace;
+  const last = path?.at(-1), target = pointOf(step.destination), end = pointOf(last);
+  const destination = path && validPlace(step.destination) && target.x === end.x && target.z === end.z ?
+    namedPlace(step.destination, 'DESTINATION') : !path && validPlace(mainPlace) ?
+      namedPlace(mainPlace, 'PLACE') : namedPath.at(-1);
+  const road = {sources, path: namedPath.map(place => place.position), places,
+    start: namedPath[0] ?? null, destination: destination ?? null, margin: path ? 0 : 120};
+  jobRoadCache.set(step, road);
   return road;
 }
 
-// A read-only view of the current job. A missing road leaves the circuit map untouched.
+// A read-only view of the current job, including a local view for a step without a road.
 export function worldJobMapData(course, state) {
   const road = worldJobMapRoad(state);
   if (!road) return null;
-  const worldJob = state.arena.worldJob, step = worldJob.job.steps[worldJob.job.stepIndex];
+  const worldJob = state.arena.worldJob, step = worldJob.job?.steps?.[worldJob.job.stepIndex];
   const actors = worldJob.actors ?? [];
   const player = state.onFoot && state.fighter ? state.fighter : course.worldAt(state.s, state.lateral || 0);
+  const fallback = {position: player, name: 'CURRENT POSITION'};
   const marks = [{kind: 'player', position: player}];
+  const defenders = new Set(Object.values(worldJob.waveZones ?? {}).flatMap(zone => zone.raiders ?? []));
   for (const actor of actors) {
-    if (actor.id === step.actorId && step.actor?.escort && actor.position)
-      marks.push({kind: 'escort', position: actor.position});
-    else if (actor.furnace && actor.position)
-      marks.push({kind: 'hunter', position: actor.position});
-    else if (actor.ambushKey && Number.isFinite(actor.x) && Number.isFinite(actor.z))
-      marks.push({kind: 'rider', position: {x: actor.x, z: actor.z}});
+    const position = actor.position ?? (Number.isFinite(actor.x) && Number.isFinite(actor.z) ? {x: actor.x, z: actor.z} : null);
+    if (!Number.isFinite(position?.x) || !Number.isFinite(position?.z)) continue;
+    if (actor.id === step?.actorId && step?.actor?.escort) marks.push({kind: 'escort', position});
+    else if (actor.furnace) marks.push({kind: 'hunter', position});
+    else if (actor.ambushKey || step?.kind === 'defend' && defenders.has(actor)) marks.push({kind: 'rider', position});
   }
-  return {path: road.path, start: road.start, destination: road.destination, marks,
-    jobName: (worldJob.definition.name ?? 'WORLD JOB').toUpperCase(),
-    roadName: worldJob.definition.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
+  return {path: road.path.length ? road.path : [player], start: road.start ?? fallback,
+    destination: road.destination ?? fallback, places: road.places, margin: road.margin, marks,
+    jobName: (worldJob.definition?.name ?? 'WORLD JOB').toUpperCase(),
+    roadName: worldJob.definition?.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
 }
 
 // Pick a label position with room for the road, end mark and panel edges.
@@ -153,7 +169,9 @@ function drawPlaceName(ctx, point, label, points, width, height, end) {
 function drawWorldJobMap(ctx, canvas, data) {
   const width = canvas.width, height = canvas.height, padding = 30;
   const xs = data.path.map(p => p.x), zs = data.path.map(p => p.z);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
+  const margin = data.margin ?? 0;
+  const minX = Math.min(...xs) - margin, maxX = Math.max(...xs) + margin;
+  const minZ = Math.min(...zs) - margin, maxZ = Math.max(...zs) + margin;
   const scale = Math.min((width - 2 * padding) / Math.max(1, maxX - minX), (height - 2 * padding) / Math.max(1, maxZ - minZ));
   // North is positive z in the Scablands; x grows to the right.
   const project = p => ({x: (width - (maxX - minX) * scale) / 2 + (p.x - minX) * scale,
@@ -161,11 +179,20 @@ function drawWorldJobMap(ctx, canvas, data) {
   ctx.clearRect(0, 0, width, height); ctx.lineCap = ctx.lineJoin = 'round';
   const points = data.path.map(project), path = new Path2D();
   points.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y));
-  stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
+  if (!data.places?.length && points.length > 1) {
+    stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
+  }
   const end = project(data.destination.position), start = project(data.start.position);
+  for (const place of data.places ?? []) {
+    const p = project(place.position);
+    ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    drawPlaceName(ctx, p, place.name, points, width, height, false);
+  }
   ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
-  drawPlaceName(ctx, end, data.destination.name, points, width, height, true);
-  drawPlaceName(ctx, start, data.start.name, points, width, height, false);
+  if (!data.places?.length) {
+    drawPlaceName(ctx, end, data.destination.name, points, width, height, true);
+    drawPlaceName(ctx, start, data.start.name, points, width, height, false);
+  }
   const colors = {player: '#fff1d0', escort: '#62dabc', hunter: '#ff683a', rider: '#ef9f75'};
   ctx.font = '12px Segoe UI, sans-serif'; ctx.textAlign = 'left';
   const legend = [['player', 'YOU'], ['escort', 'BIG BESS'], ['hunter', 'FURNACE'], ['rider', 'RIDERS']];

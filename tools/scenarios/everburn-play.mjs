@@ -25,6 +25,7 @@ export async function run(c) {
   await click(c,'[data-ember-step="hot-delivery"]');
   await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"','first Everburn job',60000);
   await c.waitFor('document.querySelector(".world-hud-line")?.textContent.includes("Cinder\'s ember pot")','hand-written Everburn instruction');
+  await c.screenshot('everburn-play-map');
   const firstJob=await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,j=s.arena.worldJob;
     const text=document.body.innerText;
     if(s.arena.venueId!=='scablands'||a.duel.course.def.id!=='scablands')throw Error('Everburn started outside the Scablands');
@@ -56,10 +57,13 @@ export async function run(c) {
   await c.evaluate(`(()=>{const a=window.__qaApp,j=a.duel.state.arena.worldJob.job;j.stepIndex=j.steps.length;j.done=true;a.advance(0.1)})()`);
   await c.waitFor('window.__qaApp.duel.state.status==="arena_result"','Hot Delivery result');
   await c.evaluate(`(()=>{const text=document.body.innerText;if(/LAST CAR ROLLING|REMATCH/i.test(text))throw Error('Arena results leaked into a world job');if(!text.includes('HOT DELIVERY')||!text.includes('NEXT JOB: GET OUT AND WALK'))throw Error('World job result or next job is missing');if(/PLACE|WRECKS|WRECKED|HOLD/i.test(text))throw Error('Arena metrics leaked into world job results')})()`);
+  await c.evaluate(`(()=>{const tick=document.querySelector('.result-panel .water-road-tick');
+    if(!tick?.textContent.includes('Everburn: job 1, Hot Delivery, complete.'))throw Error('Everburn job 1 result tick is missing');
+    if(!document.querySelector('.result-panel')?.textContent.includes("A live ember. I haven't seen one in a year. Bring it in."))throw Error('Auntie Solder result line is missing');})()`);
   await c.screenshot('everburn-hot-delivery-result');
   await click(c,'[data-action="ember-next-job"]');
   await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"&&window.__qaApp.duel.state.arena.worldJob.definition.number===2','Get Out and Walk starts',60000);
   await c.waitFor('document.querySelector(".world-hud-line")?.textContent.includes("three lamps")','job 2 first step');
   await c.screenshot('everburn-job-two');
-  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:9,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
+  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:10,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
 }
