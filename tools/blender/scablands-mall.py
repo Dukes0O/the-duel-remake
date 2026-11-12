@@ -133,8 +133,10 @@ if not a.no_build:
                 bpy.context.object.data.materials.append(glass)
         box(f'shop-sign-{title.lower().replace(" ", "-")}', (x, 5.45, z + front * .3), (6.2, 1.45, .24), signmat, .06)
         # Raised, original sign lettering, baked as simple legible mesh glyphs.
-        bpy.ops.object.text_add(location=(x-2.8, 5.11, z + front * .44)); t=bpy.context.object; t.name=f'invented-sign-lettering-{i}'
-        t.data.body=title; t.data.size=.9; t.data.extrude=.018; t.data.materials.append(tilemat)
+        # Centred on the sign: a text object grows from its origin to the right, and the half turn below sends it the other
+        # way, so a left-aligned origin put three of the five words 6 m off their boards (SCABLANDS-LAND round 3).
+        bpy.ops.object.text_add(location=(x, 5.11, z + front * .44)); t=bpy.context.object; t.name=f'invented-sign-lettering-{i}'
+        t.data.body=title; t.data.size=.9; t.data.extrude=.018; t.data.align_x='CENTER'; t.data.materials.append(tilemat)
         # Text lies in the X/Y plane (Y is up); face each sign toward the entrance.
         t.rotation_euler[1] = math.pi if front < 0 else 0
         for k in range(5):
