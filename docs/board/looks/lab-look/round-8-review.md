@@ -17,4 +17,5 @@ card aimed at, because the board is limited by its height and the strip takes so
 stand unused at each side of the board. The builder's finding is the important one: a board that is wider than
 1000 by 680, so that it fills its panel, is where the large gain is.
 
-Verdict (Claude): keep Lift as it is. Before any other lesson gets the stage step, decide the wider board.
+Verdict (Claude): keep Lift as it is. Lift's own size is set by how high the helicopter must climb inside the board;
+a wider board pays in the lessons whose scenes are long and low, and those come next.

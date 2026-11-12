@@ -122,11 +122,13 @@ Built and merged (`docs/board/looks/lab-look/round-8.jpg`). A board may now expo
 readouts and tables under the board, and a board without it looks exactly as before. Lift's scene is 1.55 times its
 own size. The helicopter is about a quarter larger on screen.
 
-**The finding that changes the next step:** every board is 1000 by 680, and on a laptop the board's panel is much
-wider than that, so about 150 pixels stand empty at each side while the strip takes height the picture needs. The
-large gain is a wider board (about 1300 by 680) whose scene uses the whole panel. That is a change to each lesson's
-layout, so it is decided before a second lesson gets the stage step: Claude draws Lift on a wide board first, and
-the other lessons follow that example by helper.
+**What limits the picture:** every board is 1000 by 680, and on a laptop the board's panel is wider than that, so
+about 150 pixels stand empty at each side while the strip takes height. A wider board (about 1300 by 680) would use
+that width. For Lift it would gain little, because Lift's scene is tall: the helicopter has to climb 10 m inside the
+board, and that height, not the width, sets its size. A wide board pays where the scene is long and low: Braking's
+and Fuel's strips, Wax's lanes, Launch's flight, Projectile's water. So the next stage-step lessons are those five,
+on a wide board, with the readout strip moved beside the board where the panel has room. Claude settles the wide
+board's rules on one of them (Braking) before the rest follow by helper.
 
 Also seen: under 1500 pixels of window width, the free-test step's seven buttons wrap onto extra lines and squeeze
 the board to almost nothing. That was there before this card and needs its own fix (fewer, shorter buttons on that
