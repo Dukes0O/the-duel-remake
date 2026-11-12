@@ -629,6 +629,9 @@ const wellScene=createScablandsScene(course,{loadAsset:async path=>{
       const part=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x886644}));part.name=name;root.add(part);
     }
   }
+  if(path===SCABLANDS_ASSETS.boneyard)for(const name of ['Boneyard_ground_—_Dry_Scablands_dirt','Boneyard_field_scrap_—_Pitted_grey_aircraft_aluminium']){
+    const part=new THREE.Mesh(new THREE.BoxGeometry(10,.3,10),new THREE.MeshStandardMaterial({color:0x7e6a50}));part.name=name;root.add(part);
+  }
   if(path===SCABLANDS_ASSETS.mall){
     const drift=new THREE.Mesh(new THREE.BoxGeometry(7,1.1,3.6),new THREE.MeshStandardMaterial({color:0x7d5c33}));drift.name='sand-drift-1';drift.position.set(-11,.8,-8);root.add(drift);
   }
@@ -657,6 +660,9 @@ const wellFar=wellLod.levels[1].object;
 assert.ok(wellFar.geometry.type==='CylinderGeometry'&&wellFar.geometry.parameters.height>7&&wellFar.geometry.parameters.height<10&&wellFar.geometry.parameters.radiusBottom<1,
   'past 280 m the well is a thin mast the height of its derrick, not a box');
 assert.ok(wellScene.group.getObjectByName('The Dead Mall detail LOD').levels[1].object.geometry.type==='BoxGeometry','the other places keep their plain far shape');
+// Fix 4: the Boneyard's flat dirt slab is not drawn; its scrap plates are.
+const boneyardLod=wellScene.group.getObjectByName('The Boneyard detail LOD');
+assert.ok(!boneyardLod.getObjectByName('Boneyard_ground_—_Dry_Scablands_dirt')&&boneyardLod.getObjectByName('Boneyard_field_scrap_—_Pitted_grey_aircraft_aluminium'),'the dirt slab is not drawn and the scrap plates are');
 // Fix 3: the mall's drifts take the ground's own surface, lie low and wide, and keep their base where it was.
 wellScene.group.updateMatrixWorld(true);
 const mallDrift=wellScene.group.getObjectByName('sand-drift-1'),driftBox=new THREE.Box3().setFromObject(mallDrift);

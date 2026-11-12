@@ -537,6 +537,12 @@ export function createScablandsScene(course,options={}){
           const solids=[];model.traverse(node=>{if(/flame/i.test(node.name))solids.push(node);});
           for(const node of solids)node.removeFromParent();
         }
+        // The Boneyard's flat dirt slab is not drawn: laid flat over rising and falling ground it showed as hard-edged brown pieces
+        // (SCABLANDS-LAND round 3), and the ground is drawn in code already.
+        if(key==='boneyard'){
+          const slabs=[];model.traverse(node=>{if(/^Boneyard ground/.test(plainName(node.name)))slabs.push(node);});
+          for(const node of slabs)node.removeFromParent();
+        }
         tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
         if(key==='mall')settleSandDrifts(model,groundMaterial);
         if(key==='furnace'){
