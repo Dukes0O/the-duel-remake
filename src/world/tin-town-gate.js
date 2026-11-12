@@ -8,12 +8,19 @@ import {createScrapWear} from './scrap-look.js';
 
 export const TIN_TOWN_GATE=Object.freeze({
   x:575,z:62,opening:9,postHeight:7,fenceLength:14,
-  // The way trucks drive through: the line from the furnace's approach (610, 170) to the road home (430, 70), which
-  // the furnace's own path bends round at the gate (src/world/jobs/everburn.js).
-  through:Object.freeze({x:-180,z:-100}),
+  // The way trucks drive through: north and south. The furnace comes in from the south-south-east, the gas run's Boneyard
+  // road from the south-south-west and goes on to the town's centre to the north, so those cross the opening within 30
+  // degrees of straight. (The first round turned the gate towards (430, 70), which put the Boneyard road into a post.)
+  through:Object.freeze({x:0,z:-1}),
 });
 const POST_WIDTH=2.1,POST_CENTRE=TIN_TOWN_GATE.opening/2+POST_WIDTH/2;
 const BEAM_TOP=7.64;
+// The gate's two posts as boxes for the solids list: each is the smallest upright box round the post (2.1 m square,
+// turned to the gate's direction).
+export const TIN_TOWN_GATE_POSTS=Object.freeze([-1,1].map(side=>{
+  const yaw=Math.atan2(TIN_TOWN_GATE.through.x,TIN_TOWN_GATE.through.z);
+  return Object.freeze({side:side<0?'left':'right',x:TIN_TOWN_GATE.x+side*POST_CENTRE*Math.cos(yaw),z:TIN_TOWN_GATE.z-side*POST_CENTRE*Math.sin(yaw),size:+(POST_WIDTH*(Math.abs(Math.cos(yaw))+Math.abs(Math.sin(yaw)))).toFixed(3)});
+}));
 
 const corrugated=(width,height)=>{
   // A zig-zag strip with a rib every 0.22 m, standing 4 cm out and in.

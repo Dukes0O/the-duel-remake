@@ -10,7 +10,8 @@ import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
-import {createTinTownGate,TIN_TOWN_GATE} from './tin-town-gate.js';
+import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
+import {createTinTownShacks,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -34,6 +35,10 @@ export const SCABLANDS_SOLIDS = Object.freeze([
   ['dry-dam-gate','dry-dam',0,0,34,13,10],
   ['ships-hulk-field','ships-in-sand',0,0,60,14,27],
   ['ridge-rocks','ridge',-16,18,80,24,20],
+  // Tin Town's six clusters of stacked shacks, one box each (src/world/tin-town-shacks.js), and the gate's two posts.
+  ...tinTownLayout().clusters.map(cluster=>[`tin-town-cluster-${cluster.index+1}`,'tin-town',cluster.centre.x-TIN_TOWN_CENTRE.x,cluster.centre.z-TIN_TOWN_CENTRE.z,
+    cluster.rect.x1-cluster.rect.x0,12,cluster.rect.z1-cluster.rect.z0]),
+  ...TIN_TOWN_GATE_POSTS.map(post=>[`tin-town-gate-post-${post.side}`,'tin-town',post.x-TIN_TOWN_CENTRE.x,post.z-TIN_TOWN_CENTRE.z,post.size,7,post.size]),
 ].map(([id,placeId,dx,dz,width,height,depth])=>{
   const place=SCABLANDS_PLACES.find(row=>row.id===placeId);
   const center=Object.freeze([place.x+dx,place.height+height/2,place.z+dz]);
@@ -449,6 +454,8 @@ export function createScablandsScene(course,options={}){
   road.name='Scablands dirt road';road.receiveShadow=true;ground.add(road);
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
+  // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
+  group.add(createTinTownShacks());
   // The fire stands on the gate's beam, with its three tongues along the beam.
   gateFire.effects.rotation.y=tinTownGate.userData.yaw;
   mastAndSmoke(group);
