@@ -528,6 +528,17 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
 
+  - id: FIELD-BATTLE-ASH
+    title: "The Ash Men's war party: the patched furnace hunts Big Bess on the Boneyard road"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [RUN-GAS]
+    locks: []
+    flag: "scablands-runs"
+    details: "docs/board/cards/FIELD-BATTLE-ASH.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"
