@@ -57,6 +57,7 @@ export async function run(c) {
       bess:{x:Math.round(bess.position.x),z:Math.round(bess.position.z),health:Math.round(bess.health)},gap:Math.round(gap),caption,
       lines:(a.duel.state.callout||'')};})()`);
   await c.screenshot('field-battle-furnace-out');
+  await c.screenshot('field-battle-map');
 
   // The cinders land on Big Bess once the furnace has closed to 25 m.
   let burning=false;

@@ -1,3 +1,4 @@
+import {worldJobMapRoad} from './route-map.js';
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
@@ -120,7 +121,20 @@ export function presentJumpHeight(readout, s, app, ui, text) {
   text('jump-distance',`DISTANCE ${(jumpHeight.distanceMeters||0).toFixed(1)} m · ${(jumpHeight.durationSeconds||0).toFixed(1)} s`);
 }
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
+  const positionPanel=ui['race-position'].closest?.('.race-position');
+  const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
+  let lastWorldJob=false, lastJobHeading='CIRCUIT / LIVE';
   function updateHud(s) {
+    const worldJob=s.arena?.mode==='world-job';
+    const jobRoad=worldJob ? worldJobMapRoad(s) : null;
+    if(worldJob!==lastWorldJob) {
+      if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
+      lastWorldJob=worldJob;
+    }
+    if(worldJob || lastJobHeading!=='CIRCUIT / LIVE') {
+      const heading=jobRoad ? (s.arena.worldJob.definition.name ?? 'WORLD JOB').toUpperCase() : 'CIRCUIT / LIVE';
+      if(heading!==lastJobHeading) { if(mapHeading) mapHeading.textContent=heading; lastJobHeading=heading; }
+    }
     // Controls are shown only on request (the H key), never by themselves.
     const helpShown = app.helpVisible === true && !s.paused &&
       ['racing', 'countdown', 'exploring'].includes(s.status);
@@ -214,7 +228,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     if(opponents.length<=1&&ui['rival-legend'].lastChild)ui['rival-legend'].lastChild.textContent=' RIVAL';
     if(opponents.length)text('position-total',`/${String(opponents.length+1).padStart(2,'0')}`);
     ui['position-total'].hidden=!s.rival;
-    ui['rival-legend'].hidden=!s.rival;
+    const hideRival=!s.rival || !!jobRoad;
+    if(ui['rival-legend'].hidden!==hideRival) ui['rival-legend'].hidden=hideRival;
     presentField(ui,text,s);
     const hits=s.combat?s.majorCrashes||0:Math.max(0,LIVES.start-s.lives),limit=s.combat?DRIVE.majorCrashLimit:LIVES.start,persistent=!!app.duel.stageDef.persistentVehicle;
     const armored=s.mode==='wasteland'&&!!s.combat&&wastelandRulesActive(s)&&Number.isFinite(s.armor)&&Number.isFinite(s.maxArmor);
@@ -306,8 +321,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
       text('route-remaining',arena.scoreText);
-      text('route-lap','ARENA');
-      text('route-section',arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
+      text('route-lap',jobRoad ? '' : 'ARENA');
+      text('route-section',jobRoad ? (s.arena.worldJob.definition.road ? `${s.arena.worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS') : arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);
@@ -327,6 +342,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       }
       if(s.status==='countdown')text('countdown-word',arena.worldJob ? 'THE SCABLANDS' : s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
+    if(worldJob && ui['callout-kicker'].textContent==='KEEP YOUR LINE') text('callout-kicker','');
   }
   return updateHud;
 }

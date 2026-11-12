@@ -58,6 +58,7 @@ export async function run(c) {
     for(const [name,r] of Object.entries(others))if(r&&over(bar,r))throw Error('The Big Bess health bar covers the '+name);
     return {bar,others};})()`);
   await c.screenshot('run-gas-raid');
+  await c.screenshot('run-gas-map');
 
   // A long road run: back to the yard (nothing arrived, so nothing is saved), then start it and look at its beginning.
   const before=await c.evaluate('JSON.stringify(window.__qaApp.profile.story.ember)');
