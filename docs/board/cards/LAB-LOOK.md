@@ -1,0 +1,85 @@
+# LAB-LOOK
+
+Kyle, 11 November 2026: "I'd start with the lab lessons. we want that environment to be really compelling to learn
+from. Both in lesson UX and in UI." This follows his direction of the same day to draw in code before building model
+files (`docs/board/decisions.md`).
+
+Owner: Claude (design, the first example of each new thing, every verdict). Sonnet helpers repeat an established
+example on further lessons and do the routine fixes. Codex's image tool makes painted pictures.
+
+## What the survey found (a Sonnet helper, 11 November)
+
+- Sixteen lessons, all on the classroom pattern, 236 steps, with sixteen challenges. The structure, the words and
+  the numbers are sound and stay as they are.
+- Every lesson picture is already drawn in code: one 1000 x 680 board per lesson (`src/lab/lessons/<id>-board.js`)
+  through one small shared file, `src/lab/classroom/board-art.js`. No lesson picture is a photo or a model.
+- What makes the Lab feel flat is the drawing, not the method: a small diagram in a dark void, thin lines, no light,
+  no place; Brian as a rough 3D render 72 pixels wide; three columns of small text.
+- The six flying challenges, the lap and the ski run happen in the game's 3D world, where fire and smoke are plain
+  squares (`src/heli/heli-scene.js` 120 to 141).
+
+## The look (Claude)
+
+Brian's workshop under one hanging lamp, and the pad outside at dusk. Every board is a place with light in it.
+
+- **The wall:** corrugated steel with rust, a warm pool of lamp light and a dark edge. **The floor:** worn concrete
+  with slab joints. Things stand on the floor and cast soft shadows.
+- **The subject is drawn as a thing, not an outline:** shaded metal, glass with a reflection, a rotor that blurs,
+  lights that blink. It fills as much of the board as the lesson's controls allow.
+- **Forces are lit arrows,** one colour each through the whole Lab as LAB.md 12.3 says: lift green, weight red, drag
+  orange, grip blue. Air and water are streaks whose length shows speed; dust and spray show where they land.
+- **Where a board does not fill its panel,** the wall carries on behind it and the board hangs in a brass frame.
+- **Brian is a painted portrait** with four moods the classroom already has (talk, cheer, hint, explain), large
+  enough to read his face.
+- Nothing about a lesson's steps, words, numbers, controls or hit areas changes in this card.
+
+## Round 1 (Claude, 11 November 2026): the shared art and the Lift lesson
+
+- `src/lab/classroom/board-art.js`: new `background` (the wall), `outdoors` (the pad at dusk), `helicopter` and `car`
+  with the same anchor points and sizes as before, and new `floor`, `shadow` and `forceArrow`. The wall and the dusk
+  scene are painted once and copied each frame, which costs less than the old background did. All sixteen boards use
+  `background`, so all sixteen change with this file.
+- `src/lab/lessons/lift-board.js`: the example. Planked crates, a weighing pad on load cells with a hazard edge, a
+  brass dial, air that streaks down faster and thicker with lift, dust blown along the pad, lit force arrows, the
+  helicopter's shadow shrinking as it climbs, the workshop floor.
+- Checks: the lesson tests pass unchanged (no assertion touched). Claude looked at Lift's screens.
+
+## Order of work
+
+1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
+   contrast, a picture that now sits on nothing).
+2. **Brian's portraits** (Codex's image tool, then a Sonnet helper wires them in): four moods, shown about 150 pixels
+   tall in Brian's panel. The 3D render and `brian-portrait.js` are removed in the same change.
+3. **The other fifteen boards** (Sonnet helpers, three lessons a job, Lift as the example): each board gets the
+   floor, shadows, lit arrows and its own subject drawn as a thing. Claude judges each lesson from a sheet before it
+   merges. A lesson that falls short comes back to Claude, not round a loop.
+4. **The stage:** the board fills its panel on a wide window, the physics panel keeps its show and hide, text sizes
+   go up one step. One change in `classroom.css` and `fitBoard`, by Claude.
+5. **The challenges in the 3D world:** fire, smoke and water drops drawn by `src/world/scrap-look.js` in place of the
+   squares (a Sonnet helper, the furnace as the example).
+6. **The walking hangar** last, and only if the lessons are done: photo surfaces and lamp light.
+
+## Routine fixes the survey turned up (card LAB-UX-FIXES, a Sonnet helper)
+
+- A lesson's taught words are turned into boxed buttons inside lesson titles on the door board and in the shop
+  ("Lift and weight" breaks into pieces). Titles are never broken up.
+- G-force's last button reads "Finish the lesson" and then closes the Lab and starts a lap. The button says what it
+  does.
+- `docs/LAB.md` says the Projectile challenge counts a hit within 5 m and the Fire challenge lasts 3 minutes; the
+  game uses 10 m and 420 seconds. It also names `tools/blender/lab.py`, which does not exist. The page is corrected
+  to the game.
+- Two narrow-window style rules remain (`lab-ui.css` 70, `lab-walk.css` 44). The game is for a laptop; remove them.
+- Two near-identical golds and two near-identical off-whites are in use. One of each.
+- The older five-step lesson frame (`lesson-frame.js`, `lesson-pictures.js`, the `.lab-teaching` styles) still ships
+  with no lesson in it. Remove it if `node tools/repo-audit.mjs` agrees.
+
+## Checks
+
+- Each change: the tests of the lessons whose boards it touches, and their `lab-classroom-<id>` browser scenarios.
+- When a batch merges: every `lab-*` browser scenario (rule in Claude's notes for Lab merges).
+- Look (Claude): one contact sheet per batch under `docs/board/looks/lab-look/`, with its review note.
+- No frame check: the boards are flat pictures and are cheaper to draw than before.
+
+## Removed
+
+Round 1: the brushed-steel background and the outline helicopter and car in `board-art.js`.

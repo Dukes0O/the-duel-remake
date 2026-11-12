@@ -26,6 +26,17 @@ grinding away on assets that are insufficient."
 - Claude lists where code-drawn work would lift the rest of the game most, and new Blender art cards wait for that
   list. To reverse: Kyle says so; the art line's older kits are unchanged.
 
+## Kyle, 11 November 2026: a boss needs a reason
+
+"Each of these bosses just runs around in a circle... We should have something lead up to a boss fight that is
+compelling, not just new bosses." "Escorting cargo could be a kind of recurring mission in the scablands that results
+in skirmishes and battles." "I just don't want all this effort being put into a graphic if we're not going to bring
+it out for good reason." On Claude's design page: "I won't have time to read it - do your best then build from it."
+
+- The design is `docs/FEUDS_AND_RUNS.md`: feuds between communities, recurring escort runs, field battles and
+  Scrapdome challenges, and three rules every boss must pass. Claude builds from it.
+- A machine gets photo-quality art only when that page gives it minutes on screen. To reverse: Kyle says so.
+
 ## Kyle's decisions on how we work (moved here from AGENTS.md, 9 November 2026)
 
 `AGENTS.md` now states today's rules only. These are the decisions behind them, oldest first.

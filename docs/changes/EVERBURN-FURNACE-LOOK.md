@@ -92,3 +92,34 @@ No new game event.
 
 The box furnace: `smoke()` in `scablands-vehicles.py`, its parts in `vehicles.glb`, and the round 2 sphere smoke and
 cone flames in the scene.
+
+# Big Bess from photos, and the Lab's look round 1
+
+Claude, 11 November 2026, with Sonnet helpers and Codex's image tool.
+
+## What changed
+
+- `tools/blender/big-bess-photo.py`, `public/assets/models/wasteland/scablands/big-bess.glb` and four photos in the
+  Scablands `textures` folder (credited): Big Bess carved from photos by a Sonnet helper.
+- `src/world/scablands-scene.js`: Big Bess has her own file and her own rig, which follows the escort in Everburn
+  job 4; wheels turn, exhaust and road dust are drawn. `src/world/scrap-look.js`: `createDustTrail`.
+- `src/world/jobs/everburn.js`: the big-bess actor has `renderCar:false`; no rule, speed, health or path changed.
+- Removed: `tools/blender/scablands-vehicles.py` and `vehicles.glb` (the unused thief buggy with them).
+- `src/lab/classroom/board-art.js` and `src/lab/lessons/lift-board.js`: the Lab's look, round 1 (card LAB-LOOK).
+- `docs/board/cards/LAB-LOOK.md`, two board entries, `docs/ART_LINE.md` (four carving faults and the route test's
+  result), `docs/WASTELAND_WORLD.md`, two look sheets with notes.
+
+## Checks
+
+- Scene test, model tests (397 checks), the Lab lesson tests: pass. Lane tier and build: see the run log.
+- Browser: `everburn-well` passes; all 16 `lab-classroom` scenarios pass with the new art.
+- Look (Claude): Big Bess and the furnace moving, in the game; every lesson's board on one sheet.
+
+## Sound
+
+No new game event. Big Bess has no engine sound of her own in job 4; that was true of the stand-in car's place too.
+
+## Removed
+
+The stand-in sports car for Big Bess; the box-art vehicles recipe and model; the Lab's brushed-steel board
+background and outline helicopter and car.

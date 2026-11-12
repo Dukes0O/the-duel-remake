@@ -56,7 +56,8 @@ export const EVERBURN_JOBS = Object.freeze([
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
     resultLineId:'story.ember.auntie-solder.6',
     easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'everburn-job-4-start',
-    steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:'falcone_heritage', escort:true, health:100, speed:9,
+    // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
+    steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
       speed:9, health:100, restLineId:'everburn-job-4-rest', restartFrom:'last-marker',
       raiders:path(place('ash-men-raid-1',360,270),place('ash-men-raid-2',500,90)),

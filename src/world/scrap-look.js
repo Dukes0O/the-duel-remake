@@ -208,3 +208,33 @@ export function createGroundShade(){
     transparent:true,depthWrite:false,
   });
 }
+
+// Dust kicked up behind a moving machine: soft puffs born at the ground just behind the rear axle, one side or the
+// other, that grow from 1 m to 5 m across, thin out and drift back and up over about 1.5 seconds. `anchors` are the
+// birth points in the machine's own metres ({x, z}, one per side) and `speed` is its speed in metres a second: none
+// shows standing still, all of it at 10 m/s. The puffs are placed from the clock, so nothing is stored between frames.
+// Add the returned group to the machine's root, and call `group.userData.place(seconds, speed, anchors)` each frame.
+const DUST_SECONDS=1.5;
+export function createDustTrail({count=18,colour=0x8a7458}={}){
+  const group=new THREE.Group();group.name='Road dust behind the wheels';
+  const material=createSmokeMaterial(colour),card=new THREE.PlaneGeometry(1,1);
+  const puffs=[];
+  for(let index=0;index<count;index++){
+    const puff=new THREE.Mesh(card,material);puff.name='Road dust';puff.userData.fade=0;puff.renderOrder=2;puff.visible=false;
+    puff.onBeforeRender=()=>{material.uniforms.uFade.value=puff.userData.fade;material.uniforms.uSeed.value=index*.37;material.uniformsNeedUpdate=true;};
+    group.add(puff);puffs.push(puff);
+  }
+  group.userData.place=(seconds,speed,anchors)=>{
+    const strength=Math.min(1,Math.max(0,speed/10));
+    puffs.forEach((puff,index)=>{
+      const age=(seconds/DUST_SECONDS+index/count)%1,anchor=anchors[index%anchors.length];
+      // The dust stays where it was thrown while the machine drives on, so it falls behind at most of the machine's speed.
+      // A low wake, wider than it is tall, so that it reads as dust along the ground and not as separate balls.
+      puff.position.set(anchor.x+Math.sin(index*2.3)*age*.9,.3+age*.9,anchor.z-age*(DUST_SECONDS*speed*.7+1.2));
+      puff.scale.set(1+4*age,.55*(1+4*age),1);
+      puff.userData.fade=strength*Math.min(1,age/.1)*Math.pow(1-age,1.3)*.34;
+      puff.visible=puff.userData.fade>.004;
+    });
+  };
+  return group;
+}

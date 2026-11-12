@@ -315,7 +315,7 @@ Nothing times frames on art (rule 9).
 | The Everburn: well head, cap, valve, flame stack | `scablands-everburn.py` | `.../scablands/everburn.glb` | 20,000, 1 MB |
 | Rocks, cliffs, road signs, mast, barricades, ember pot, lamps | `scablands-kit.py` | `.../scablands/kit.glb` | 30,000, 1.5 MB |
 | People and Ash Men, re-dressed from crew and art-library donors | `scablands-folk.py` | `.../scablands/folk.glb` | 8,000 each, 2 MB |
-| Big Bess gas truck, thief buggy | `scablands-vehicles.py` | `.../scablands/vehicles.glb` | 12,000 each, 1.5 MB |
+| Big Bess's gas truck, carved from four photos; her exhaust smoke, shade and road dust are drawn by the game | `big-bess-photo.py` | `.../scablands/big-bess.glb` | 12,000, 1.5 MB |
 | Old Smoke's furnace, carved from four photos; its fire, smoke and sparks are drawn by the game | `old-smoke-photo.py` | `.../scablands/old-smoke.glb` | 12,000, 1.5 MB |
 | Iron Mule train and wagons, rails, station | `scablands-mule.py` | `.../scablands/mule.glb` | 40,000, 2 MB |
 | Bowl stadium shell, ramps, flame jets, floodlights | `bowl-stadium.py` | `public/assets/models/wasteland/bowl/stadium.glb` | 80,000, 3 MB |

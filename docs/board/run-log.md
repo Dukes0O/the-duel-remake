@@ -1,5 +1,6 @@
 # Wasteland run log
 
+11 November, Big Bess from photos and LAB-LOOK round 1 merged, cards open (Claude; carve and game work by Sonnet helpers, photos by Codex): the escort in job 4 is the real truck with turning wheels and dust; the Lab's shared board art and the Lift board are redrawn; lane tier 88 of 88, build, model tests 397, everburn-well and 16 of 16 lab-classroom browser checks pass.
 11 November, EVERBURN-FURNACE-LOOK round 3 merged, card open (Claude; photos by Codex): the furnace is carved from four photos and its fire, smoke, sparks and firelight are drawn in code; lane tier 53 of 53, build, model tests 397, browser check everburn-well pass. Kyle's direction: draw in code before building model files.
 10 November, EVERBURN-FURNACE-LOOK round 2 merged, card open (Claude): Scablands art was darkened once for every part sharing a material, now once; new furnace shape and fire over the glowing door; lane tier 53 of 53, build, browser check everburn-well pass. Kyle: toy-like, so round 3 builds from photos.
 10 November, released again (Claude): the LAB button and open lessons. Build 26.11.10 15:18 UTC, master 54456f5f; staged build checked on port 5188.

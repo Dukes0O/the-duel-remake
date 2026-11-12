@@ -1,6 +1,6 @@
 // The Lift lesson's board (docs/board/cards/LAB-CLASSROOM-LIFT.md): the collective lever with its
 // kilogram scale, the weighing pad, Kestrel One and its load. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, floor, shadow, forceArrow, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {BAND_M, CAR_KG, CRATE_KG, HOLD_S, MAX_CRATES, MOST_KG, OWN_KG, kg, leverPct, weightOf} from './lift-classroom.js';
 export {BOARD};
 // Pressing on the lever moves it there at once.
@@ -92,56 +92,84 @@ export function targetPoint(view, action) {
 export function dragAngle(view, id, x, y) { return (G0 - y) / PER_KG; }
 
 // ---- drawing ----
+// A planked wooden crate with steel corners and its weight stencilled on the side.
 function crate(ctx, x, y, {ghost = false} = {}) {
   ctx.save(); if (ghost) ctx.globalAlpha = .45;
-  const g = ctx.createLinearGradient(x - CRATE.w / 2, y - CRATE.h / 2, x + CRATE.w / 2, y + CRATE.h / 2);
-  g.addColorStop(0, '#b98a4e'); g.addColorStop(1, '#6e4b24');
-  ctx.fillStyle = g; ctx.fillRect(x - CRATE.w / 2, y - CRATE.h / 2, CRATE.w, CRATE.h);
-  ctx.strokeStyle = 'rgba(30,18,6,.7)'; ctx.lineWidth = 1.5; ctx.strokeRect(x - CRATE.w / 2, y - CRATE.h / 2, CRATE.w, CRATE.h);
-  ctx.beginPath(); ctx.moveTo(x - CRATE.w / 2, y - CRATE.h / 2); ctx.lineTo(x + CRATE.w / 2, y + CRATE.h / 2); ctx.moveTo(x + CRATE.w / 2, y - CRATE.h / 2); ctx.lineTo(x - CRATE.w / 2, y + CRATE.h / 2); ctx.stroke();
-  ctx.font = '800 10px "Segoe UI", sans-serif'; ctx.fillStyle = '#f5e7c8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('500', x, y + 1);
+  const l = x - CRATE.w / 2, t = y - CRATE.h / 2;
+  const g = ctx.createLinearGradient(l, t, l, t + CRATE.h);
+  g.addColorStop(0, '#c99a5c'); g.addColorStop(.5, '#a37640'); g.addColorStop(1, '#5e3f1d');
+  ctx.fillStyle = g; ctx.fillRect(l, t, CRATE.w, CRATE.h);
+  // Planks, each a little lighter or darker than its neighbour, and the frame nailed over them.
+  for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,240,210,.07)'; ctx.fillRect(l + i * CRATE.w / 5, t, CRATE.w / 5, CRATE.h); ctx.fillStyle = 'rgba(30,18,6,.45)'; ctx.fillRect(l + i * CRATE.w / 5, t, .8, CRATE.h); }
+  ctx.fillStyle = '#7d5529'; ctx.fillRect(l, t, CRATE.w, 5); ctx.fillRect(l, t + CRATE.h - 5, CRATE.w, 5); ctx.fillRect(l, t, 4, CRATE.h); ctx.fillRect(l + CRATE.w - 4, t, 4, CRATE.h);
+  ctx.fillStyle = 'rgba(255,236,200,.28)'; ctx.fillRect(l, t, CRATE.w, 1);
+  ctx.fillStyle = '#5c646a'; for (const [cx, cy] of [[l, t], [l + CRATE.w - 5, t], [l, t + CRATE.h - 5], [l + CRATE.w - 5, t + CRATE.h - 5]]) ctx.fillRect(cx, cy, 5, 5);
+  ctx.strokeStyle = 'rgba(20,12,4,.8)'; ctx.lineWidth = 1.2; ctx.strokeRect(l, t, CRATE.w, CRATE.h);
+  ctx.font = '800 10px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(20,12,4,.7)'; ctx.fillText('500', x + .8, y + 1.8); ctx.fillStyle = '#f7ead0'; ctx.fillText('500', x, y + 1);
   ctx.restore();
 }
+// The weighing pad: a steel platform on four load cells, with a yellow and black edge.
 function pad(ctx) {
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-PAD_HALF + 5, -4, 2 * PAD_HALF, 12);
-  const g = ctx.createLinearGradient(0, -10, 0, 0); g.addColorStop(0, theme.beamLight); g.addColorStop(1, theme.beamDark);
-  ctx.fillStyle = g; ctx.fillRect(-PAD_HALF, -10, 2 * PAD_HALF, 10);
-  ctx.fillStyle = '#d6a43a'; for (let x = -PAD_HALF + 5; x < PAD_HALF - 5; x += 40) ctx.fillRect(x, -10, 20, 3);
+  shadow(ctx, 0, 6, PAD_HALF + 30, .55);
+  ctx.fillStyle = '#15181a'; for (const x of [-PAD_HALF + 14, -70, 70, PAD_HALF - 26]) ctx.fillRect(x, -2, 12, 9);
+  const g = ctx.createLinearGradient(0, -11, 0, 0); g.addColorStop(0, '#a9b2b7'); g.addColorStop(.3, '#6c757b'); g.addColorStop(1, '#2c3236');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-PAD_HALF, -11, 2 * PAD_HALF, 11, 2); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.rect(-PAD_HALF, -11, 2 * PAD_HALF, 4); ctx.clip();
+  ctx.fillStyle = '#e0b23c'; ctx.fillRect(-PAD_HALF, -11, 2 * PAD_HALF, 4);
+  ctx.fillStyle = '#1a1c1d'; for (let x = -PAD_HALF - 8; x < PAD_HALF; x += 16) { ctx.beginPath(); ctx.moveTo(x, -7); ctx.lineTo(x + 6, -11); ctx.lineTo(x + 12, -11); ctx.lineTo(x + 6, -7); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-PAD_HALF, -11, 2 * PAD_HALF, .9);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; for (let x = -PAD_HALF + 10; x < PAD_HALF; x += 30) { ctx.beginPath(); ctx.arc(x, -3, 1.1, 0, Math.PI * 2); ctx.fill(); }
 }
+// The pad's dial: a brass-rimmed gauge whose needle shows the weight still resting on the pad.
 function dial(ctx, reads, x, y) {
-  ctx.fillStyle = theme.dial; ctx.strokeStyle = theme.beamDark; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = '#3a3a34'; ctx.lineWidth = 1.2;
-  for (let i = 0; i <= 10; i++) { const a = Math.PI * .75 + i * Math.PI * .15; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 21, y + Math.sin(a) * 21); ctx.lineTo(x + Math.cos(a) * 25, y + Math.sin(a) * 25); ctx.stroke(); }
+  const rim = ctx.createLinearGradient(x - 30, y - 30, x + 30, y + 30); rim.addColorStop(0, theme.brass[0]); rim.addColorStop(.5, theme.brass[1]); rim.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(x + 2, y + 3, 31, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = rim; ctx.beginPath(); ctx.arc(x, y, 31, 0, Math.PI * 2); ctx.fill();
+  const face = ctx.createRadialGradient(x - 8, y - 10, 2, x, y, 27); face.addColorStop(0, '#fffaf0'); face.addColorStop(1, '#d9cfb6');
+  ctx.fillStyle = face; ctx.beginPath(); ctx.arc(x, y, 26.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#3a3a34';
+  for (let i = 0; i <= 10; i++) { const a = Math.PI * .75 + i * Math.PI * .15; ctx.lineWidth = i % 5 === 0 ? 2 : 1.1; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (i % 5 === 0 ? 18 : 20.5), y + Math.sin(a) * (i % 5 === 0 ? 18 : 20.5)); ctx.lineTo(x + Math.cos(a) * 24, y + Math.sin(a) * 24); ctx.stroke(); }
   const a = Math.PI * .75 + Math.min(1, reads / 5000) * Math.PI * 1.5;
-  ctx.strokeStyle = theme.bad; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 22, y + Math.sin(a) * 22); ctx.stroke();
-  text(ctx, `the pad reads ${kg(reads)}`, x + 40, y, {size: 17, align: 'left'});
+  ctx.strokeStyle = '#c8402e'; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 5, y - Math.sin(a) * 5); ctx.lineTo(x + Math.cos(a) * 21, y + Math.sin(a) * 21); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.fillStyle = '#2a2a26'; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(x - 8, y - 12, 12, 5, -.6, 0, Math.PI * 2); ctx.fill();
+  text(ctx, `the pad reads ${kg(reads)}`, x + 44, y, {size: 17, align: 'left'});
 }
-// The air the rotor throws down: more arrows, and faster, as the lift grows.
+// The air the rotor throws down: soft streaks that are longer, faster and more numerous as the lift grows, and
+// dust blown outward along the pad once the rotor is working hard.
 function air(ctx, hx, hy, liftKg, time) {
-  const share = Math.min(1, liftKg / MOST_KG), n = Math.max(2, Math.round(share * 7));
-  ctx.strokeStyle = 'rgba(170,220,245,.75)'; ctx.lineWidth = 2.4;
+  const share = Math.min(1, liftKg / MOST_KG), n = Math.max(3, Math.round(share * 12)), fall = -12 - (hy - 28);
+  if (fall < 30) return;
+  ctx.lineCap = 'round';
   for (let i = 0; i < n; i++) {
-    const x = hx - 110 + i * (220 / (n - 1)), y = hy - 28 + ((time * (70 + share * 110) + i * 37) % 76);
-    if (y + 18 > -12) continue; // The air stops at the pad.
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 18); ctx.lineTo(x - 4, y + 12); ctx.moveTo(x, y + 18); ctx.lineTo(x + 4, y + 12); ctx.stroke();
+    const x = hx - 116 + (i + .5) * (232 / n) + Math.sin(i * 12.9) * 6, travel = (time * (80 + share * 150) + i * 53) % fall;
+    const y = hy - 28 + travel, len = Math.min(14 + share * 30, fall - travel);
+    if (len < 4) continue;
+    const g = ctx.createLinearGradient(0, y, 0, y + len); g.addColorStop(0, 'rgba(170,220,245,0)'); g.addColorStop(1, `rgba(170,220,245,${.35 + share * .5})`);
+    ctx.strokeStyle = g; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + len); ctx.stroke();
+    ctx.fillStyle = `rgba(190,230,250,${.5 + share * .4})`; ctx.beginPath(); ctx.moveTo(x - 3.6, y + len - 5); ctx.lineTo(x + 3.6, y + len - 5); ctx.lineTo(x, y + len + 2); ctx.closePath(); ctx.fill();
+  }
+  ctx.lineCap = 'butt';
+  if (share > .3) for (let i = 0; i < 10; i++) {
+    const side = i % 2 ? 1 : -1, age = (time * (.5 + share * .6) + i * .137) % 1, reach = 30 + age * (90 + share * 110);
+    const px = hx + side * reach, py = -15 - age * 16, r = 9 + age * 24, puff = ctx.createRadialGradient(px, py, 1, px, py, r);
+    puff.addColorStop(0, `rgba(222,208,178,${(1 - age) * (share - .3) * .55})`); puff.addColorStop(1, 'rgba(222,208,178,0)');
+    ctx.fillStyle = puff; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
   }
 }
-function arrow(ctx, x, y, length, up, colour, width = 10) {
-  if (length < 2) return;
-  const dir = up ? -1 : 1, head = Math.min(16, length * .6);
-  ctx.fillStyle = colour;
-  ctx.fillRect(x - width / 2, up ? y - length + head : y, width, length - head);
-  ctx.beginPath(); ctx.moveTo(x - width * 1.2, y + dir * (length - head)); ctx.lineTo(x + width * 1.2, y + dir * (length - head)); ctx.lineTo(x, y + dir * length); ctx.closePath(); ctx.fill();
-}
+const arrow = forceArrow;
 // One helicopter and its load, in the pad's own units.
 function drawSet(ctx, f, time, {rest = true, strain = false} = {}) {
   const g = setGeometry(f, {rest});
   pad(ctx);
+  // The helicopter's shadow on the pad: smaller and fainter as it climbs.
+  shadow(ctx, g.hx - 20, -12, 120 - Math.min(60, f.h * 12), Math.max(.12, .5 - f.h * .08));
   for (let i = 0; i < (f.dropped ?? 0); i++) crate(ctx, LOAD_X + 100 + i * (CRATE.w + 2), -8 - CRATE.h / 2);
   if (g.loadedSet) {
     // Slings from the ring to the load, and the cable from the helicopter's hook, slack until the helicopter rises.
-    ctx.strokeStyle = theme.line; ctx.lineWidth = 1.4;
+    ctx.strokeStyle = '#d8d0bc'; ctx.lineWidth = 1.4;
     for (const c of g.crates) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(c.x, c.y - CRATE.h / 2); ctx.stroke(); }
     if (g.carAt) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x - 26, g.carAt.y - 4); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x + 26, g.carAt.y - 4); ctx.stroke(); }
     const hookX = g.hx, hookY = g.hy + HOOK, sag = (1 - (g.k ?? 1)) * 60;
@@ -265,7 +293,7 @@ function table(ctx, rows, {x = 230, y = 20, w = 330, title = null} = {}) {
   });
 }
 function drawPad(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx, GROUND_Y + 8);
   const f = view.flight;
   if (view.band) band(ctx);
   ctx.save(); ctx.translate(PAD_X, GROUND_Y); ctx.scale(SCENE, SCENE);
@@ -290,7 +318,7 @@ function drawPad(ctx, view) {
   if (view.keys.Space === 'rotor') keyCap(ctx, ...toBoard(g.hx, g.hy - 70), 'Space');
 }
 function drawThree(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx, GROUND_Y - 36);
   const columns = [180, 500, 820];
   view.sets.forEach((f, i) => {
     ctx.save(); ctx.translate(columns[i] + 22, GROUND_Y - 40); ctx.scale(.62, .62);

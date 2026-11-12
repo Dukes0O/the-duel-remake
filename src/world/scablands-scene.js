@@ -8,7 +8,7 @@ import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
-import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade} from './scrap-look.js';
+import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -17,7 +17,7 @@ export const SCABLANDS_ASSETS = Object.freeze({
   everburn: '/assets/models/wasteland/scablands/everburn.glb',
   kit: '/assets/models/wasteland/scablands/kit.glb',
   folk: '/assets/models/wasteland/scablands/folk.glb',
-  vehicles: '/assets/models/wasteland/scablands/vehicles.glb',
+  bess: '/assets/models/wasteland/scablands/big-bess.glb',
   furnace: '/assets/models/wasteland/scablands/old-smoke.glb',
 });
 
@@ -41,10 +41,10 @@ export const SCABLANDS_SOLIDS = Object.freeze([
 }));
 
 const placeAssets={
-  'tin-town':['tintown','folk'],'boneyard':['boneyard','vehicles'],'dead-mall':['mall'],'everburn':['everburn','furnace'],
+  'tin-town':['tintown','folk'],'boneyard':['boneyard','bess'],'dead-mall':['mall'],'everburn':['everburn','furnace'],
   'iron-line':[],'dry-dam':[],'ships-in-sand':[],'ridge':['kit'],
 };
-const vehiclePart={vehicles:'Big Bess gas truck',furnace:"Old Smoke's rolling furnace"};
+const vehiclePart={bess:'Big Bess gas truck',furnace:"Old Smoke's rolling furnace"};
 const detailCounts=Object.freeze({near:30,far:10});
 // The model loader renames every part: a space becomes an underscore and a full stop is dropped
 // ("Furnace side armor.001" arrives as "Furnace_side_armor001"). Part names are compared in this plain form.
@@ -117,6 +117,43 @@ function addMallRubble(group,place){
   group.add(rubble);
 }
 
+// Where each truck's wheels turn about their axle (the model's X axis) and how wide they are, in the rig's own metres.
+// Old Smoke's model is stored at 1/1.5 and drawn at 1.5, so its wheels read 0.449 m stored and 0.673 m drawn.
+const BESS_WHEEL=Object.freeze({name:/^Big Bess wheel \d (left|right)$/,radius:.555});
+const FURNACE_WHEEL=Object.freeze({name:/^Furnace wheel \d (left|right)$/,radius:85*3.2/404});
+const wheelsOf=(model,kind)=>{const found=[];model.traverse(node=>{if(kind.name.test(plainName(node.name)))found.push(node);});return found;};
+const spinWheels=(wheels,turn)=>{for(const wheel of wheels)wheel.rotation.x=(wheel.rotation.x+turn)%(Math.PI*2);};
+
+// How a rig moved since the last frame, read from where it stood at the last frame. `speed` is its smoothed speed in
+// metres a second; `update` returns the distance gone along its heading (backwards is negative). Only drawing uses it.
+function createTravelMeter(){
+  const last=new THREE.Vector3();let lastSeconds=null,speed=0;
+  return {
+    get speed(){return speed;},
+    update(rig,seconds){
+      const step=lastSeconds===null?0:seconds-lastSeconds;let along=0;
+      if(step>0&&step<.5){
+        const moved=rig.position.distanceTo(last);
+        speed+=(Math.min(40,moved/step)-speed)*Math.min(1,step*2);
+        // A jump of more than 60 m a second is the rig being put somewhere, not driven there: its wheels do not spin for it.
+        if(moved<step*60)along=(rig.position.x-last.x)*Math.sin(rig.rotation.y)+(rig.position.z-last.z)*Math.cos(rig.rotation.y);
+      }
+      last.copy(rig.position);lastSeconds=seconds;return along;
+    },
+  };
+}
+
+// The way an actor with no heading of its own faces: toward the path point `aim` places past the one it is walking
+// to, skipping any point it is already standing on.
+function headingToward(actor,path,aim,fallback){
+  const from=actor.position;if(!from||!path.length)return fallback;
+  for(let index=Math.min((actor.pathIndex??0)+aim,path.length-1);index<path.length;index++){
+    const target=path[index]?.position??path[index],dx=target.x-from.x,dz=target.z-from.z;
+    if(Math.hypot(dx,dz)>.5)return Math.atan2(dx,dz);
+  }
+  return fallback;
+}
+
 const SOOT_GREY=new THREE.Color(0x302c28),SOOT_BLACK=new THREE.Color(0x0c0b0a),SOOT_ORANGE=new THREE.Color(0xc8641c);
 // The furnace's three fire doors in the rig's own metres (+X is the furnace's left): the middle of each door and
 // the way it faces. Two tongues of fire stand in each door.
@@ -164,6 +201,40 @@ function addFurnaceFire(parent,place,scale=1.5){
   return fire;
 }
 
+// Big Bess's exhaust stack: the mouth stands behind the cab on the truck's left, read from tools/blender/big-bess-photo.py.
+const BESS_STACK=Object.freeze({x:.98,y:3.26,z:1.4});
+const BESS_PUFFS=6;
+// Road dust is born behind the rear axle of each truck, one place a side, in the rig's own metres.
+const BESS_DUST=Object.freeze([{x:1.2,z:-3.7},{x:-1.2,z:-3.7}]);
+const FURNACE_DUST=Object.freeze([{x:1.7,z:-3.8},{x:-1.7,z:-3.8}]);
+function addBessEffects(parent){
+  const effects=new THREE.Group();effects.name='Big Bess exhaust, shade and road dust';
+  const grey=createSmokeMaterial(0x4a4640),card=new THREE.PlaneGeometry(1,1);
+  const smoke=[];
+  for(let puff=0;puff<BESS_PUFFS;puff++){
+    const cloud=new THREE.Mesh(card,grey);cloud.name='Exhaust smoke';cloud.userData.fade=0;cloud.renderOrder=2;
+    cloud.onBeforeRender=()=>{grey.uniforms.uFade.value=cloud.userData.fade;grey.uniforms.uSeed.value=puff*.29;grey.uniformsNeedUpdate=true;};
+    effects.add(cloud);smoke.push(cloud);
+  }
+  const shade=new THREE.Mesh(card,createGroundShade());shade.name='Shade under Big Bess';
+  shade.rotation.x=-Math.PI/2;shade.position.set(0,.1,0);shade.scale.set(4.4,10.5,1);effects.add(shade);
+  const dust=createDustTrail();effects.add(dust);
+  parent.add(effects);
+  const fx={effects,smoke,dust,
+    // Thin grey smoke rising about 5 m, leaning back as she gathers speed (`drift`, metres a second).
+    placeSmoke(seconds,drift=0){
+      smoke.forEach((puff,index)=>{
+        const age=(seconds*.35+index/BESS_PUFFS)%1,lean=Math.min(drift,30);
+        puff.position.set(BESS_STACK.x+Math.sin(seconds*.9+index*2.4)*.45*age,BESS_STACK.y+age*(5-lean*.04),
+          BESS_STACK.z+Math.cos(seconds*.8+index*1.7)*.35*age-lean*age*.28);
+        puff.scale.setScalar(.6+age*2.75);
+        puff.userData.fade=Math.min(1,age/.08)*Math.pow(1-age,1.2)*.6;
+      });
+    }};
+  fx.placeSmoke(0);
+  return fx;
+}
+
 export function createScablandsScene(course,options={}){
   const loadAsset=options.loadAsset??(path=>new GLTFLoader().loadAsync(path));
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
@@ -198,7 +269,19 @@ export function createScablandsScene(course,options={}){
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
   // The furnace's surfaces are photos, which carry their own rust and soot; the code adds only the road dust.
   const furnaceWear=createScrapWear({paint:0});
-  const furnaceLast=new THREE.Vector3();let furnaceLastSeconds=null,furnaceDrift=0;
+  const furnaceTravel=createTravelMeter(),furnaceWheels=[];
+  // Big Bess has her own rig, like the furnace's: the Everburn escort moves it, and it stands at her Boneyard place otherwise.
+  let bessRig=null,bessPlace=null,bessEffects=null;
+  const bessWheels=[],bessTravel=createTravelMeter(),bessWear=createScrapWear({paint:0});
+  const placeRig=(rig,actor,path,aim,onGround,rest)=>{
+    if(!actor){
+      rig.position.set(rest.x+18,scablandsSurfaceHeightAt(rest.x,rest.z),rest.z);
+      rig.rotation.y=(SCABLANDS_PLACES.indexOf(rest)%4)*Math.PI/2;return;
+    }
+    const at=actor.position,x=at?.x??rest.x,z=at?.z??rest.z;
+    rig.position.set(x,(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
+    rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
+  };
   const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
   const roadMaterial=new THREE.MeshStandardMaterial({color:0x594b39,roughness:1});
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
@@ -269,6 +352,19 @@ export function createScablandsScene(course,options={}){
           const plateRank=plate=>/corner/.test(plate.name)?2:plate.position.x>0?0:1;
           furnacePlates.sort((a,b)=>plateRank(a)-plateRank(b));
           furnaceEffects=addFurnaceFire(furnaceRig,place,1.5);
+          furnaceWheels.push(...wheelsOf(model,FURNACE_WHEEL));
+          furnaceEffects.effects.add(furnaceEffects.dust=createDustTrail());
+          return;
+        }
+        if(key==='bess'){
+          // Her surfaces are photos; the code adds only the road dust.
+          model.traverse(node=>{if(node.isMesh)for(const material of [].concat(node.material))bessWear.apply(material);});
+          bessPlace=place;
+          bessRig=new THREE.Group();bessRig.name='Big Bess moving rig';
+          placeRig(bessRig,null,[],0,true,place);
+          bessRig.add(model);group.add(bessRig);
+          bessEffects=addBessEffects(bessRig);
+          bessWheels.push(...wheelsOf(model,BESS_WHEEL));
           return;
         }
         model.position.x=index?18:0;model.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
@@ -285,12 +381,19 @@ export function createScablandsScene(course,options={}){
     console.error('Scablands art did not load:',String(error?.message||error));}return false;});
   registerSceneSystem(group,{
     animate(seconds){
+      if(bessRig&&bessEffects){
+        bessWear.follow(bessRig);
+        // Her wheels turn by the distance she has gone, and the dust behind them thickens with her speed.
+        spinWheels(bessWheels,bessTravel.update(bessRig,seconds)/BESS_WHEEL.radius);
+        bessEffects.placeSmoke(seconds,bessTravel.speed);
+        bessEffects.dust.userData.place(seconds,bessTravel.speed,BESS_DUST);
+      }
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
-      // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke.
-      const step=furnaceLastSeconds===null?0:seconds-furnaceLastSeconds;
-      if(step>0&&step<.5)furnaceDrift+=(Math.min(40,furnaceRig.position.distanceTo(furnaceLast)/step)-furnaceDrift)*Math.min(1,step*2);
-      furnaceLast.copy(furnaceRig.position);furnaceLastSeconds=seconds;
+      // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.
+      spinWheels(furnaceWheels,furnaceTravel.update(furnaceRig,seconds)/FURNACE_WHEEL.radius);
+      const furnaceDrift=furnaceTravel.speed;
+      furnaceEffects.dust.userData.place(seconds,furnaceDrift,FURNACE_DUST);
       furnaceEffects.placeSmoke(seconds,furnaceDrift);
       furnaceEffects.flame.uniforms.uTime.value=seconds;furnaceEffects.glowMaterial.uniforms.uTime.value=seconds;
       furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=3.8*(.85+.25*Math.abs(Math.sin(seconds*5.3+index*1.9)));});
@@ -306,18 +409,14 @@ export function createScablandsScene(course,options={}){
       const chasing=worldJob?.definition?.storyId==='everburn'&&worldJob.job?.steps?.[worldJob.job.stepIndex]?.kind==='chase';
       const actor=chasing?worldJob.actors?.find(item=>item.id==='old-smoke-furnace'):null;
       if(furnaceRig&&furnaceModel&&furnacePlace){
-        if(actor){
-          furnaceRig.position.set(actor.position?.x??furnacePlace.x,actor.position?.y??0,actor.position?.z??furnacePlace.z);
-          const path=worldJob.job.steps[worldJob.job.stepIndex]?.path||[];
-          const next=path[Math.min((actor.pathIndex??0)+1,path.length-1)];
-          const target=next?.position??next;
-          const heading=Number.isFinite(actor.heading)?actor.heading:target&&actor.position
-            ?Math.atan2(target.x-actor.position.x,target.z-actor.position.z):furnaceRig.rotation.y;
-          furnaceRig.rotation.y=heading;furnaceModel.position.x=0;
-        }else{
-          furnaceRig.position.set(furnacePlace.x+18,scablandsSurfaceHeightAt(furnacePlace.x,furnacePlace.z),furnacePlace.z);
-          furnaceRig.rotation.y=(SCABLANDS_PLACES.indexOf(furnacePlace)%4)*Math.PI/2;furnaceModel.position.x=0;
-        }
+        placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
+        furnaceModel.position.x=0;
+      }
+      // Big Bess follows her escort actor in the Everburn story and stands in the Boneyard otherwise.
+      if(bessRig&&bessPlace){
+        const escort=worldJob?.definition?.storyId==='everburn'?worldJob.actors?.find(item=>item.id==='big-bess'):null;
+        placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace);
+        bessWear.follow(bessRig);
       }
       const furnace=actor?.furnace;
       furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});

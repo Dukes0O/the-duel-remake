@@ -162,7 +162,7 @@ const generators = [
     ...['rook', 'nell', 'jax', 'odessa', 'cinder', 'dune', 'wren', 'tusk'].map(name => `public/assets/models/wasteland/first-person/hands/${name}.glb`),
   ] },
   { script: 'tools/blender/rustwall.py', args: ['--round', '1'], glb: ['wall', 'wash'].map(name => `public/assets/models/wasteland/rustwall/${name}.glb`) },
-  { script: 'tools/blender/scablands-vehicles.py', args: [], glb: ['public/assets/models/wasteland/scablands/vehicles.glb'] },
+  { script: 'tools/blender/big-bess-photo.py', args: [], glb: ['public/assets/models/wasteland/scablands/big-bess.glb'] },
   { script: 'tools/blender/old-smoke-photo.py', args: [], glb: ['public/assets/models/wasteland/scablands/old-smoke.glb'] },
   { script: 'tools/blender/rattler-photo.py', args: [], glb: ['public/assets/models/wasteland/cars/rattler.glb'], budget: 25000, maxBytes: 8000000 },
   { id: 'longhaul', script: 'tools/blender/longhaul.py', args: [], glb: ['public/assets/models/wasteland/cars/longhaul.glb'], budget: 25000, maxBytes: 8000000 },

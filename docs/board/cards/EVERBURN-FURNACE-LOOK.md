@@ -81,6 +81,19 @@ Sheet: `docs/board/looks/everburn-furnace/round-3.jpg`, note `round-3-review.md`
 - Left for a later round if Kyle wants it: shields with real shape, a true overhead photo, damage that shows from
   behind. Before the story goes live: the frame check, because the drawn effects cost graphics time.
 
+## Big Bess, the second machine made the same way (11 November 2026)
+
+Sheet: `docs/board/looks/big-bess/round-1.jpg`, note `round-1-review.md` beside it.
+
+- Codex's image tool made four photos; a Sonnet helper carved the truck (`tools/blender/big-bess-photo.py`,
+  `big-bess.glb`); a second helper drew her in the game. Claude judged each step and tuned the dust.
+- Job 4's escort is drawn as the real truck (`renderCar:false` on the big-bess actor; the Scablands scene draws
+  her). Both trucks' wheels turn with distance, both throw road dust, and Bess has exhaust from her stack.
+- `scablands-vehicles.py` and `vehicles.glb` are removed. The thief buggy that was in that file was never drawn by
+  the game; job 3's thief is still drawn as a stand-in rally car, which is the next piece for this method.
+- No existing test assertion changed. New checks: her rig's place in and out of a job, her heading, no stand-in car,
+  wheels turning by distance, dust only while moving.
+
 **Changed assertions in round 3, reviewed by Claude (rule 18).** `tools/test-scablands-scene.mjs`: eight art files
 load instead of seven (the furnace has its own file); the smoke starts over the new chimney (16 m and 1.1 m from the
 well's centre in place of 19.77 and 0.93). Both follow the new model; nothing is loosened.

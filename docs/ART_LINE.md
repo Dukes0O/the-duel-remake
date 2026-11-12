@@ -64,8 +64,9 @@ damage, a gritty furnace on wheels), each out of 5.
 
 What the test showed: the photo job for Codex was small (four pictures, about six minutes), the carve took Claude
 one turn with the table kit, and the drawn effects took one turn and serve every later machine. The slow part of
-the old way was restyling shapes by hand. A cheaper model was not tried as the builder; with the table kit and this
-recipe as the example, that is the next thing to try.
+the old way was restyling shapes by hand. A Sonnet helper then carved Big Bess from four photos in one job with
+this recipe as its example (four build rounds, scores 4, 3.5, 4, 4), so carving goes to helpers and Claude judges in
+the game.
 
 ## What to watch for
 
@@ -137,6 +138,18 @@ recipe as the example, that is the next thing to try.
 - **A shield made from a crop of the photo wears a tyre** if the crop reaches into a wheel arch. Read the crop's box
   on the grid like any other measurement.
 - **Lights that sit on a photographed door** hide the door when they are dark. Hide them until they glow.
+- **A one-sided part lands on the wrong flank.** For a vehicle (`forward: 1`) `carve_object` reads the overhead photo
+  mirrored left to right, so a part that is on one side only (Big Bess's ladder) lands on the other flank. Turn the
+  overhead photo left to right in a working copy at build time and check a one-sided part. (`big-bess-photo.py`,
+  11 November.)
+- **A part built after the carve is painted over.** The carve's bleed paints over everything outside the mask,
+  including cut rectangles, in its own copy of the photo. A part built after the carve must read a fresh copy of the
+  photo. (`big-bess-photo.py`, 11 November.)
+- **A tube that wears the photo's outline shows the photo's pale edge** along its sides. Sample inside the outline,
+  at half the tube's radius. (Big Bess's exhaust stack, 11 November.)
+- **An end photo that shows the tank behind the cab makes the cab as wide as the tank.** Use `ends_split` with a
+  cab-only `keep` test, so the cab keeps the front photo and the tank keeps the rear one. (`big-bess-photo.py`,
+  11 November.)
 
 - **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
   arch's wall wears a ghost of the photo's tyre, the tread shows the background,

@@ -372,3 +372,14 @@ the requests on card EVERBURN-FURNACE-LOOK. Resized to 1400 x 700, 820 x 749 and
 `tools/photo_grid.py`. No outside source art, logos or makers' names. The originals stay under
 `C:\Users\kyleb\.codex\generated_images\01a1cdb8-63e9-73c0-b3c6-f9a8cc3b8781\`. The chimney stands on a
 different side in each view; `tools/blender/old-smoke-photo.py` cuts it from every mask and builds it on its own.
+
+## Big Bess's gas tanker photo set
+
+`big-bess-side.jpg`, `big-bess-front.jpg`, `big-bess-rear.jpg`, `big-bess-top.jpg`: four original views of one
+invented gas tanker truck, made on 11 November 2026 with Codex's built-in image tool, one call per view, from
+Claude's request. Resized to 1400 x 700, 820 x 749 and 443 x 886 and measured with `tools/photo_grid.py`. No outside
+source art, logos or makers' names. The views disagree in places (the rear view shows twin rear tyres, the side view
+single ones; the exhaust stack and the rear draw pipe stand on a different side in different views; the overhead view
+is a little shorter in the cab than the side view). The side view controls length, height, wheels and the stack's and
+pipe's look, the front and rear views control width, and `tools/blender/big-bess-photo.py` builds the stack and pipe on
+their own and turns the overhead photo round in its own working copy.

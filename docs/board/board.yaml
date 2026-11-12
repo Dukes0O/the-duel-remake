@@ -463,6 +463,26 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-WATER-ROAD-AUTOPILOT.md"
 
+  - id: LAB-LOOK
+    title: "The Lab's lessons: a compelling place to learn (look and lesson UX)"
+    owner: "claude"
+    lane: "UI"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/LAB-LOOK.md"
+
+  - id: LAB-UX-FIXES
+    title: "Lab: routine fixes from the 11 November survey"
+    owner: "claude"
+    lane: "UI"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/LAB-LOOK.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"
