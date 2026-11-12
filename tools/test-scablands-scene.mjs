@@ -72,7 +72,7 @@ assert.ok(Math.abs(far.geometry.attributes.position.getY(1)-untouchedY)>0.1,'far
 assert.equal(far.geometry.attributes.position.getY(0),untouchedY,'far ground keeps undug terrain exactly unchanged');
 resetScablandsGroundEdit();
 assert.ok(scene.group.getObjectByName('Radio mast visible across the Scablands'),'mast is placed in the world');
-assert.ok(scene.group.getObjectByName('Everburn smoke pillar visible across the Scablands'),'smoke pillar is placed in the world');
+assert.ok(scene.group.getObjectByName('Everburn fire and smoke'),'the Everburn fire and smoke are placed in the world');
 assert.ok(scene.group.getObjectByName("Old Smoke's furnace fire and chimney smoke"),'furnace art gets its smoke and fire treatment');
 const furnace=scene.group.getObjectByName("Old Smoke's rolling furnace");
 assert.ok(furnace,'Everburn places the furnace model');
@@ -619,4 +619,40 @@ for(const place of SCABLANDS_PLACES){
 }
 assert.equal(wearMatrices.size,5,'each of the five places that carry art (Tin Town, the Boneyard, the Dead Mall, the Everburn and the Ridge) has its own wear');
 worn.dispose();
+// SCABLANDS-LAND round 3, fix 1: the Everburn's fire and smoke are drawn in code. The model's own flame solids are not
+// drawn, three wellTongues of fire 5 to 7 m tall stand on the derrick, a column of 14 to 18 wellPuffs climbs to about 90 m and
+// leans one way, and past 280 m the well's stand-in is a thin mast the height of the derrick.
+const wellScene=createScablandsScene(course,{loadAsset:async path=>{
+  const root=new THREE.Group();
+  if(path===SCABLANDS_ASSETS.everburn){
+    for(const name of ['everburn-flare-stack','everburn-flame-core','everburn-flame-outer','everburn-merged-everburn-burning-everburn-flame-orange','everburn-merged-everburn-burning-everburn-embers']){
+      const part=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x886644}));part.name=name;root.add(part);
+    }
+  }
+  if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
+  return {scene:root};
+}});
+assert.equal(await wellScene.ready,true,'the well scene loads');
+const wellLod=wellScene.group.getObjectByName('The Everburn detail LOD');
+assert.ok(wellLod.getObjectByName('everburn-flare-stack')&&wellLod.getObjectByName('everburn-merged-everburn-burning-everburn-embers'),'the derrick and the embers are still drawn');
+assert.ok(!wellLod.getObjectByName('everburn-flame-core')&&!wellLod.getObjectByName('everburn-flame-outer')&&!wellLod.getObjectByName('everburn-merged-everburn-burning-everburn-flame-orange'),
+  'the model own flame solids are not drawn');
+assert.ok(!wellScene.group.getObjectByName('Everburn smoke pillar visible across the Scablands'),'the seven grey spheres are gone');
+const wellFire=wellScene.group.getObjectByName('Everburn fire and smoke'),everburnPlaceRow=places.get('everburn');
+assert.ok(wellFire&&Math.abs(wellFire.position.x-everburnPlaceRow.x)<.001&&Math.abs(wellFire.position.z-everburnPlaceRow.z)<.001,'the fire stands on the well');
+animateScene(wellScene.group,3.7);
+const wellTongues=wellFire.children.filter(node=>node.name==='Fire on the Everburn derrick'),wellPuffs=wellFire.children.filter(node=>node.name==='Everburn smoke');
+assert.equal(wellTongues.length,3,'three wellTongues of fire');
+for(const tongue of wellTongues)assert.ok(tongue.scale.y>=4.2&&tongue.scale.y<=8.5&&tongue.position.y>7&&tongue.position.y<9,'a tongue is 5 to 7 m tall (flickering) and stands on the derrick top');
+assert.ok(wellFire.children.some(node=>node.name==='Firelight on the ground at the Everburn'),'firelight on the ground under the derrick');
+assert.ok(wellPuffs.length>=14&&wellPuffs.length<=18,'a column of 14 to 18 smoke wellPuffs');
+const columnTop=Math.max(...wellPuffs.filter(puff=>puff.userData.fade>.05).map(puff=>puff.position.y));
+assert.ok(columnTop>70&&columnTop<100,`the column reaches about 90 m (reaches ${columnTop.toFixed(0)} m)`);
+const lean=[];for(const seconds of [0,1.3,6,11.9]){animateScene(wellScene.group,seconds);for(const puff of wellPuffs)if(puff.position.y>60)lean.push(puff.position.x);}
+assert.ok(lean.every(x=>x>5),'the column leans one way with a fixed wind (downwind of the derrick at every moment)');
+const wellFar=wellLod.levels[1].object;
+assert.ok(wellFar.geometry.type==='CylinderGeometry'&&wellFar.geometry.parameters.height>7&&wellFar.geometry.parameters.height<10&&wellFar.geometry.parameters.radiusBottom<1,
+  'past 280 m the well is a thin mast the height of its derrick, not a box');
+assert.ok(wellScene.group.getObjectByName('The Dead Mall detail LOD').levels[1].object.geometry.type==='BoxGeometry','the other places keep their plain far shape');
+wellScene.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');

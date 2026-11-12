@@ -12,6 +12,7 @@ import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
+import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -170,20 +171,13 @@ function roadRibbon(){
   return geometry;
 }
 
-function mastAndSmoke(group){
+function radioMast(group){
   const mast=new THREE.Group();mast.name='Radio mast visible across the Scablands';
   const dark=new THREE.MeshStandardMaterial({color:0x302b25,metalness:.52,roughness:.78});
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.65,.95,76,8),dark);
   pole.position.set(-601,38,0);mast.add(pole);
   for(let y=9;y<70;y+=10){const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.max(.8,(76-y)*.025),.12,4,8),dark);ring.position.set(-601,y,0);ring.rotation.x=Math.PI/2;mast.add(ring);}
   group.add(mast);
-  const smoke=new THREE.Group();smoke.name='Everburn smoke pillar visible across the Scablands';
-  const soot=new THREE.MeshStandardMaterial({color:0x433a32,transparent:true,opacity:.36,roughness:1,depthWrite:false});
-  for(let i=0;i<7;i++){
-    const radius=4.8+i*1.25,particle=new THREE.Mesh(new THREE.SphereGeometry(radius,8,6),soot);
-    particle.position.set(-424+(i%2)*3,18+i*12,304);particle.scale.set(1,.72,1);smoke.add(particle);
-  }
-  group.add(smoke);
 }
 
 // Parts that give off light keep the light: lamps, embers and flames are not worn.
@@ -507,7 +501,11 @@ export function createScablandsScene(course,options={}){
   const chimneySmoke=createTinTownChimneySmoke(tinTownShacks.userData.chimneys);group.add(chimneySmoke.group);chimneySmoke.animate(0);
   // The fire stands on the gate's beam, with its three tongues along the beam.
   gateFire.effects.rotation.y=tinTownGate.userData.yaw;
-  mastAndSmoke(group);
+  radioMast(group);
+  // The Everburn's fire and its column of smoke, drawn in code and always burning (src/world/everburn-fire.js).
+  const everburnPlace=SCABLANDS_PLACES.find(place=>place.id==='everburn');
+  const everburnFire=createEverburnFire();
+  everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
   const ready=(async()=>{
     const cache=new Map();
@@ -529,7 +527,13 @@ export function createScablandsScene(course,options={}){
         const source=vehiclePart[key]?findPart(asset.scene,vehiclePart[key]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         // The people carry their own look, and the two trucks their own wear.
-        const model=source.clone(true);tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
+        const model=source.clone(true);
+        // The well's flame is drawn in code (src/world/everburn-fire.js); the model's own flame solids are not drawn.
+        if(key==='everburn'){
+          const solids=[];model.traverse(node=>{if(/flame/i.test(node.name))solids.push(node);});
+          for(const node of solids)node.removeFromParent();
+        }
+        tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
         if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.
@@ -573,8 +577,11 @@ export function createScablandsScene(course,options={}){
         model.position.x=index?18:0;model.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
         full.add(model);
       });
-      const distant=new THREE.Mesh(new THREE.BoxGeometry(32,12,24),new THREE.MeshStandardMaterial({color:0x4c4236,roughness:1}));
-      distant.name=`${place.name} far silhouette`;distant.position.y=6;distant.castShadow=true;
+      // Past 280 m a place is a plain dark shape. The well's is a thin mast the height of its derrick; the fire and smoke stay drawn.
+      const wellMast=place.id==='everburn';
+      const distant=new THREE.Mesh(wellMast?new THREE.CylinderGeometry(.35,.6,EVERBURN_DERRICK_TOP,6):new THREE.BoxGeometry(32,12,24),
+        new THREE.MeshStandardMaterial({color:wellMast?0x2b2622:0x4c4236,roughness:1}));
+      distant.name=`${place.name} far silhouette`;distant.position.y=wellMast?EVERBURN_DERRICK_TOP/2:6;distant.castShadow=true;
       lod.addLevel(full,0);lod.addLevel(distant,280);
       lod.position.set(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z);group.add(lod);
       if(place.id==='dead-mall')addMallRubble(group,place);
@@ -600,7 +607,7 @@ export function createScablandsScene(course,options={}){
         group.worldToLocal(bessRig.localToWorld(arcTo.set(BESS_TANK_TOP.x,BESS_TANK_TOP.y,BESS_TANK_TOP.z)));
         cinderArc.userData.place(seconds,arcFrom,arcTo);
       }
-      gateFire.animate(seconds);chimneySmoke.animate(seconds);
+      gateFire.animate(seconds);chimneySmoke.animate(seconds);everburnFire.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.
