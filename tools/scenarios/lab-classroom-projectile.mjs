@@ -20,8 +20,8 @@ async function play(c) {
   const at = (step, extra = 'true') => c.waitFor(`${state}?.step === '${step}' && (s => ${extra})(${state})`, `${step} ${extra}`, 30_000);
   const next = async (step, extra = 's.ready') => { await at(step, extra); await press('Enter'); };
   // Board units to screen pixels, as the board is fitted into its canvas.
-  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
-    return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
+  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
+    return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
 
   // Walk up to the drop tower and press E, as a player does.
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
@@ -81,7 +81,7 @@ async function play(c) {
   // The flag: a held arrow moves it a metre a press, then one mouse drag puts it on 13 m.
   await at('try-flag'); await shot('try-flag');
   await key('ArrowRight', 'keyDown'); for (let i = 0; i < 4; i++) { await wait(40); await key('ArrowRight', 'keyDown', {autoRepeat: true}); } await key('ArrowRight', 'keyUp'); await wait(250);
-  const from = await toScreen(200 + 5 * 12, 590), to = await toScreen(200 + 13 * 12, 590);
+  const from = await toScreen(300 + 5 * 16, 590), to = await toScreen(300 + 13 * 16, 590);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: from.x, y: from.y, button: 'left', buttons: 1, clickCount: 1});
   for (let k = 1; k <= 5; k++) { await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: from.x + (to.x - from.x) * k / 5, y: from.y, button: 'left', buttons: 1}); await wait(40); }
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: to.x, y: to.y, button: 'left', buttons: 0, clickCount: 1});

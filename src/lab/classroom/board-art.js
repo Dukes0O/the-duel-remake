@@ -202,44 +202,51 @@ export function car(ctx, x, y, angle) {
 }
 // The pad outside the hangar at dusk: sky, the hills behind Tremblant Woods, a line of firs and the apron.
 let dusk = null;
-function paintDusk(ctx) {
+// A board wider than the usual 1000 asks for the dusk at its own width (the wide board); the sun keeps its place in proportion.
+function paintDusk(ctx, width = BOARD.width) {
   const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
   sky.addColorStop(0, '#16222f'); sky.addColorStop(.5, '#3a4860'); sky.addColorStop(.82, '#a8736a'); sky.addColorStop(1, '#f0a85e');
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, BOARD.width, GROUND_Y);
-  const sun = ctx.createRadialGradient(760, GROUND_Y - 30, 4, 760, GROUND_Y - 30, 380);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, width, GROUND_Y);
+  const sunX = 760 * width / BOARD.width, sun = ctx.createRadialGradient(sunX, GROUND_Y - 30, 4, sunX, GROUND_Y - 30, 380);
   sun.addColorStop(0, 'rgba(255,226,170,.75)'); sun.addColorStop(.25, 'rgba(255,170,100,.30)'); sun.addColorStop(1, 'rgba(255,150,90,0)');
-  ctx.fillStyle = sun; ctx.fillRect(0, 0, BOARD.width, GROUND_Y);
-  for (let i = 0; i < 40; i++) { ctx.fillStyle = `rgba(255,255,255,${.15 + (i % 5) * .08})`; ctx.fillRect((i * 613) % BOARD.width, (i * 197) % 240, 1.4, 1.4); }
+  ctx.fillStyle = sun; ctx.fillRect(0, 0, width, GROUND_Y);
+  for (let i = 0, n = Math.round(40 * width / BOARD.width); i < n; i++) { ctx.fillStyle = `rgba(255,255,255,${.15 + (i % 5) * .08})`; ctx.fillRect((i * 613) % width, (i * 197) % 240, 1.4, 1.4); }
   // Long thin clouds catching the last light.
-  for (let i = 0; i < 6; i++) {
-    const cx = (i * 331 + 120) % BOARD.width, cy = 150 + (i * 53) % 230, c = ctx.createLinearGradient(cx - 150, 0, cx + 150, 0);
+  for (let i = 0, n = Math.round(6 * width / BOARD.width); i < n; i++) {
+    const cx = (i * 331 + 120) % width, cy = 150 + (i * 53) % 230, c = ctx.createLinearGradient(cx - 150, 0, cx + 150, 0);
     c.addColorStop(0, 'rgba(255,190,140,0)'); c.addColorStop(.5, 'rgba(255,190,140,.22)'); c.addColorStop(1, 'rgba(255,190,140,0)');
     ctx.fillStyle = c; ctx.fillRect(cx - 150, cy, 300, 5 + (i % 3) * 3);
   }
   // Two ranges of hills, the far one paler.
   const range = (base, height, step, colour, seed) => {
     ctx.fillStyle = colour; ctx.beginPath(); ctx.moveTo(0, GROUND_Y);
-    for (let x = 0; x <= BOARD.width; x += step) ctx.lineTo(x, base - height * (.5 + .5 * Math.sin(x * .011 + seed) * Math.cos(x * .0043 + seed * 2)) - 14 * Math.sin(x * .05 + seed));
-    ctx.lineTo(BOARD.width, GROUND_Y); ctx.closePath(); ctx.fill();
+    for (let x = 0; x <= width; x += step) ctx.lineTo(x, base - height * (.5 + .5 * Math.sin(x * .011 + seed) * Math.cos(x * .0043 + seed * 2)) - 14 * Math.sin(x * .05 + seed));
+    ctx.lineTo(width, GROUND_Y); ctx.closePath(); ctx.fill();
   };
   range(GROUND_Y - 70, 150, 10, '#4f4c66', 1.3); range(GROUND_Y - 30, 100, 8, '#2b3040', 4.1);
   // Firs, darker and taller toward the viewer.
-  for (let row = 0; row < 2; row++) for (let i = 0; i < 44; i++) {
+  for (let row = 0; row < 2; row++) for (let i = 0, n = Math.ceil(44 * width / BOARD.width); i < n; i++) {
     const x = i * 24 + (i % 3) * 7 + row * 11, h = (row ? 58 : 38) + (i * 37) % (row ? 44 : 26), w = h * .23;
     ctx.fillStyle = row ? '#0e1512' : '#1a2420';
     for (let tier = 0; tier < 3; tier++) { const ty = GROUND_Y - h + tier * h * .26, tw = w * (.55 + tier * .3); ctx.beginPath(); ctx.moveTo(x, ty); ctx.lineTo(x - tw, ty + h * .42); ctx.lineTo(x + tw, ty + h * .42); ctx.closePath(); ctx.fill(); }
   }
   // The apron: tarmac with the low sun raking across it.
   const apron = ctx.createLinearGradient(0, GROUND_Y, 0, BOARD.height); apron.addColorStop(0, '#3a3836'); apron.addColorStop(1, '#141414');
-  ctx.fillStyle = apron; ctx.fillRect(0, GROUND_Y, BOARD.width, BOARD.height - GROUND_Y);
-  const rake = ctx.createLinearGradient(400, 0, 1000, 0); rake.addColorStop(0, 'rgba(255,170,100,0)'); rake.addColorStop(1, 'rgba(255,170,100,.16)');
-  ctx.fillStyle = rake; ctx.fillRect(0, GROUND_Y, BOARD.width, 14);
-  ctx.fillStyle = 'rgba(255,236,200,.22)'; ctx.fillRect(0, GROUND_Y, BOARD.width, 1.5);
-  const v = ctx.createRadialGradient(500, 320, 300, 500, 340, 720); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
-  ctx.fillStyle = v; ctx.fillRect(0, 0, BOARD.width, BOARD.height);
+  ctx.fillStyle = apron; ctx.fillRect(0, GROUND_Y, width, BOARD.height - GROUND_Y);
+  const rake = ctx.createLinearGradient(400 * width / BOARD.width, 0, width, 0); rake.addColorStop(0, 'rgba(255,170,100,0)'); rake.addColorStop(1, 'rgba(255,170,100,.16)');
+  ctx.fillStyle = rake; ctx.fillRect(0, GROUND_Y, width, 14);
+  ctx.fillStyle = 'rgba(255,236,200,.22)'; ctx.fillRect(0, GROUND_Y, width, 1.5);
+  const v = ctx.createRadialGradient(width / 2, 320, 300, width / 2, 340, 720); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, width, BOARD.height);
 }
-export function outdoors(ctx) {
-  if (typeof document === 'undefined') { paintDusk(ctx); return; }
+const wideDusks = new Map();
+export function outdoors(ctx, width = BOARD.width) {
+  if (typeof document === 'undefined') { paintDusk(ctx, width); return; }
+  if (width !== BOARD.width) {
+    if (!wideDusks.has(width)) { const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = BOARD.height; paintDusk(canvas.getContext('2d'), width); wideDusks.set(width, canvas); }
+    ctx.drawImage(wideDusks.get(width), 0, 0);
+    return;
+  }
   if (!dusk) { dusk = document.createElement('canvas'); dusk.width = BOARD.width; dusk.height = BOARD.height; paintDusk(dusk.getContext('2d')); }
   ctx.drawImage(dusk, 0, 0);
 }
@@ -559,22 +566,24 @@ export function bezel(ctx, x, y, w, h, r = 8) {
   for (const [bx, by] of [[x + 6, y + 6], [x + w - 6, y + 6], [x + 6, y + h - 6], [x + w - 6, y + h - 6]]) bolt(ctx, bx, by, 1.9);
 }
 // Water from y down: a dark body that catches the dusk, a lit surface line, ripples that drift, and the sun's glitter.
-export function waterBody(ctx, y, time = 0) {
+// A wide board gives its width, and the sun's glitter keeps its place in proportion.
+export function waterBody(ctx, y, time = 0, width = BOARD.width) {
+  const sunX = 760 * width / BOARD.width;
   const g = ctx.createLinearGradient(0, y, 0, BOARD.height);
   g.addColorStop(0, '#6d6a6c'); g.addColorStop(.04, '#37606f'); g.addColorStop(.3, '#1e3c49'); g.addColorStop(1, '#0b171c');
-  ctx.fillStyle = g; ctx.fillRect(0, y, BOARD.width, BOARD.height - y);
-  const glitter = ctx.createRadialGradient(760, y, 4, 760, y, 260); glitter.addColorStop(0, 'rgba(255,190,120,.2)'); glitter.addColorStop(1, 'rgba(255,170,100,0)');
-  ctx.save(); ctx.beginPath(); ctx.rect(0, y, BOARD.width, BOARD.height - y); ctx.clip(); ctx.translate(760, y); ctx.scale(1, .32); ctx.translate(-760, -y);
-  ctx.fillStyle = glitter; ctx.fillRect(500, y - 10, 520, 400); ctx.restore();
+  ctx.fillStyle = g; ctx.fillRect(0, y, width, BOARD.height - y);
+  const glitter = ctx.createRadialGradient(sunX, y, 4, sunX, y, 260); glitter.addColorStop(0, 'rgba(255,190,120,.2)'); glitter.addColorStop(1, 'rgba(255,170,100,0)');
+  ctx.save(); ctx.beginPath(); ctx.rect(0, y, width, BOARD.height - y); ctx.clip(); ctx.translate(sunX, y); ctx.scale(1, .32); ctx.translate(-sunX, -y);
+  ctx.fillStyle = glitter; ctx.fillRect(sunX - 260, y - 10, 520, 400); ctx.restore();
   for (let i = 0; i < 26; i++) {
-    const depth = noise(i + 800), ry = y + 8 + depth * 62, rx = (noise(i + 810) * (BOARD.width + 80) + time * (3 + depth * 5)) % (BOARD.width + 80) - 40, half = 10 + depth * 26;
+    const depth = noise(i + 800), ry = y + 8 + depth * 62, rx = (noise(i + 810) * (width + 80) + time * (3 + depth * 5)) % (width + 80) - 40, half = 10 + depth * 26;
     ctx.strokeStyle = `rgba(200,228,238,${(.08 + depth * .12).toFixed(2)})`; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.ellipse(rx, ry, half, 1.6 + depth * 2, 0, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
-    const warm = Math.abs(rx - 760) < 190;
+    const warm = Math.abs(rx - sunX) < 190;
     ctx.fillStyle = warm ? 'rgba(255,208,150,.35)' : 'rgba(225,242,248,.16)'; ctx.fillRect(rx - half * .4, ry - 2.2, half * .8, 1.2);
   }
-  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, y + 1.5, BOARD.width, 2);
-  ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(0, y - .5, BOARD.width, 1.6);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, y + 1.5, width, 2);
+  ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(0, y - .5, width, 1.6);
 }
 // A planked crate, centred on (x, y), with steel corners and its weight stencilled on the front.
 export function plankCrate(ctx, x, y, w, h, label) {
