@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
-import {createScrapWear} from './scrap-look.js';
+import {createScrapWear,createSmokeMaterial} from './scrap-look.js';
 
 export const TIN_TOWN_CENTRE=Object.freeze({x:600,z:0});
 // The places where jobs arrive and the roads they use keep clear of everything drawn here: a circle of 24 m round the
@@ -32,14 +32,14 @@ const SIZES=Object.freeze({S:[3,3,2.6],M:[4,3,2.6],L:[5,4,3]});
 const CELL=Object.freeze({x:7.5,z:6.5});     // five by four metre bays with alleys 2.5 m wide between them
 const LEVEL=3.3,DECK_LIFT=.3,MARGIN=1.2;
 // Six clusters. Each has six slots (three along, two across): the number of shacks stacked in each (0 is open ground,
-// T the water tower, P the radio pole) and their sizes. 45 shacks in all.
+// T the water tower, P the radio pole, W the watchtower) and their sizes. 45 shacks in all.
 const CLUSTERS=Object.freeze([
   {angle:-108,stack:[3,2,1,1,'T',1],size:'LMSMSL'},
   {angle:-72,stack:[2,1,2,1,1,0],size:'MSLSML'},
   {angle:-36,stack:[3,1,1,2,1,'P'],size:'SLMLSM'},
   {angle:-2,stack:[2,2,1,1,1,0],size:'LSMMLS'},
   {angle:34,stack:[3,1,2,1,1,0],size:'MLSLMS'},
-  {angle:68,stack:[2,1,1,2,1,0],size:'SMLMLS'},
+  {angle:68,stack:[2,1,1,2,1,'W'],size:'SMLMLS'},
 ]);
 const FENCE_RADIUS=88,FENCE_FROM=114,FENCE_TO=-110;
 
@@ -99,7 +99,7 @@ export function tinTownLayout(){
       const kind=typeof stack==='string'?stack:stack>0?'shack':'open',size=SIZES[spec.size[slot]];
       const cell=cluster.turned?{w:size[1],d:size[0]}:{w:size[0],d:size[1]};
       const footprint={x0:x-cell.w/2-.4,x1:x+cell.w/2+.4,z0:z-cell.d/2-.4,z1:z+cell.d/2+.4};
-      const flat=kind==='open'||kind==='T'||kind==='P'||groundSpread(footprint)<=1.5;
+      const flat=kind==='open'||kind==='T'||kind==='P'||kind==='W'||groundSpread(footprint)<=1.5;
       return {slot,x,z,kind,levels:flat&&kind==='shack'?stack:0,sizeName:spec.size[slot],size,cell,flat,facing:row===0?1:-1};
     });
     cluster.shacks=cluster.slots.reduce((sum,slot)=>sum+slot.levels,0);
@@ -112,8 +112,10 @@ export function tinTownLayout(){
 // Colours from tintown.glb's own materials (linear values, as the file stores them), so that the new shacks match the old.
 const color=(r,g,b,k=.84)=>new THREE.Color().setRGB(r*k,g*k,b*k);
 const PALETTE={
-  sheet:[color(.24,.22,.18),color(.31,.105,.045),color(.2,.085,.04),color(.3,.28,.22),color(.17,.15,.12),color(.28,.17,.08)],
-  patch:[color(.24,.19,.13),color(.36,.31,.22),color(.46,.36,.22),color(.15,.19,.21),color(.31,.105,.045),color(.4,.34,.2)],
+  // Rust and orange sheet, like the old Tin Town model's oxide scale, with one steel sheet in six.
+  sheet:[color(.31,.105,.045),color(.44,.17,.055),color(.36,.13,.05),color(.3,.18,.08),color(.24,.22,.18),color(.4,.15,.05)],
+  // Patches: one in four is grey-blue sheet.
+  patch:[color(.15,.19,.21),color(.24,.19,.13),color(.36,.31,.22),color(.14,.18,.2),color(.31,.105,.045),color(.46,.36,.22),color(.44,.17,.055),color(.3,.18,.08)],
   iron:color(.075,.078,.07,1),girder:color(.17,.15,.13),plank:color(.24,.19,.13),dark:color(.018,.016,.014,1),
   tank:color(.26,.1,.05),cloth:[color(.46,.36,.22),color(.5,.14,.07),color(.16,.2,.22),color(.36,.31,.22),color(.34,.4,.28)],
 };
@@ -155,7 +157,7 @@ export function createTinTownShacks(){
   const plan=tinTownLayout(),group=new THREE.Group();group.name='Tin Town shacks';
   const out=assembly(),{put,box,strut}=out,random=mulberry(0x7157a9);
   const pick=list=>list[Math.floor(random()*list.length)];
-  const shacks=[],feet=[],specials={};
+  const shacks=[],feet=[],specials={},chimneys=[];
   const landAt=(x,z)=>height(x,z);
   const foot=(x,z)=>{const y=landAt(x,z)-.05;feet.push({x,y,z});return y;};
 
@@ -224,6 +226,12 @@ export function createTinTownShacks(){
       const variant=cluster.index*7+slot.slot*3+level*5,sizeX=cluster.turned?size[1]:size[0],sizeZ=cluster.turned?size[0]:size[1];
       const sx=x+(random()-.5)*(cell.w-sizeX)*.5,sz=z+(random()-.5)*(cell.d-sizeZ)*.5;
       shack(sx,y,sz,sizeX,sizeZ,h,n,variant);
+      // Three shacks in different clusters (the top of slot 1 in clusters 1, 3 and 5) have a stovepipe, and smoke.
+      if(slot.slot===1&&level===levels-1&&cluster.index%2===0){
+        const px=sx+sizeX*.25,pz=sz-n.z*sizeZ*.25-n.x*0,top=y+h+1.9;
+        box('frame',.26,1.7,.26,PALETTE.iron,px,y+h+1.05,pz);box('frame',.4,.1,.4,PALETTE.iron,px,top+.02,pz);
+        chimneys.push({x:px,y:top,z:pz,cluster:cluster.index});
+      }
       shacks.push({cluster:cluster.index,slot:slot.slot,level,size:slot.sizeName,x:sx,z:sz,y});
     }
   };
@@ -248,6 +256,27 @@ export function createTinTownShacks(){
   };
 
   // The radio pole: a thin mast with cross bars, four guy wires and a glowing lamp on top.
+  // The watchtower: 16 m of girders, braced every 3 m, with a plank platform and rail, a roof and a warm lamp under it.
+  const watchtower=slot=>{
+    const {x,z}=slot,half=1.5,legsAt=[[-half,-half],[half,-half],[-half,half],[half,half]],heights=legsAt.map(([lx,lz])=>landAt(x+lx,z+lz)),base=Math.max(...heights),deck=base+12;
+    legsAt.forEach(([lx,lz])=>{const low=foot(x+lx,z+lz);box('frame',.3,deck+2.4-low,.3,PALETTE.girder,x+lx,(low+deck+2.4)/2,z+lz);});
+    for(const [from,to] of [[.3,3.2],[3.2,6.1],[6.1,9],[9,12]]){
+      for(const [ax,az,bx,bz] of [[-half,-half,half,-half],[half,-half,half,half],[half,half,-half,half],[-half,half,-half,-half]]){
+        strut('frame',[x+ax,base+from,z+az],[x+bx,base+to,z+bz],.12,PALETTE.iron);
+        strut('frame',[x+ax,base+to,z+az],[x+bx,base+from,z+bz],.12,PALETTE.iron);
+      }
+    }
+    box('frame',4.0,.22,4.0,PALETTE.plank,x,deck-.11,z);
+    for(const [rx,rz,w,d] of [[0,-1.95,4.0,.07],[0,1.95,4.0,.07],[-1.95,0,.07,4.0],[1.95,0,.07,4.0]])box('frame',w,.07,d,PALETTE.iron,x+rx,deck+.95,z+rz);
+    for(const [px,pz] of [[-1.95,-1.95],[1.95,-1.95],[-1.95,1.95],[1.95,1.95],[0,-1.95],[0,1.95],[-1.95,0],[1.95,0]])box('frame',.07,.95,.07,PALETTE.iron,x+px,deck+.48,z+pz);
+    put('sheet',new THREE.ConeGeometry(3.3,1.6,4),PALETTE.sheet[0],x,deck+2.4+.8,z,[0,Math.PI/4,0]);
+    box('frame',.12,.1,.12,PALETTE.iron,x,deck+2.4,z);
+    box('frame',.3,.34,.3,PALETTE.iron,x,deck+1.95,z);box('lamp',.24,.3,.24,PALETTE.iron,x,deck+1.65,z);
+    for(let rung=0;rung<22;rung++)box('frame',.5,.05,.06,PALETTE.iron,x,base+.6+rung*.55,z+half+.2);
+    for(const side of [-.25,.25])box('frame',.06,deck-base+.2,.06,PALETTE.iron,x+side,base+(deck-base+.2)/2,z+half+.2);
+    specials.watchtower={x,z,height:deck+4-base,base};
+  };
+
   const pole=slot=>{
     const {x,z}=slot,low=foot(x,z),tallest=13,base=low+.05;
     put('frame',new THREE.CylinderGeometry(.12,.2,tallest,8),PALETTE.girder,x,low+tallest/2,z);
@@ -281,6 +310,7 @@ export function createTinTownShacks(){
       if(slot.kind==='shack'&&slot.levels>0)buildSlot(cluster,slot);
       else if(slot.kind==='T')tower(slot);
       else if(slot.kind==='P')pole(slot);
+      else if(slot.kind==='W')watchtower(slot);
     }
     washing(cluster);
   }
@@ -319,6 +349,30 @@ export function createTinTownShacks(){
     if(kind==='lamp')merged.deleteAttribute('color');
     const mesh=new THREE.Mesh(merged,materials[kind]);mesh.name=`Tin Town shacks, ${materials[kind].name}`;mesh.castShadow=kind!=='cloth';mesh.receiveShadow=true;group.add(mesh);
   }
-  group.userData={shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,triangles:out.triangles};
+  group.userData={shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,watchtower:specials.watchtower,chimneys,triangles:out.triangles};
   return group;
+}
+
+// Chimney smoke for the shacks that have a stovepipe: a small plume each, eight soft puffs rising about 14 m and all
+// drifting the same way (towards +x and +z, a light wind). The puffs are placed from the clock by `animate(seconds)`, the way
+// the gate's smoke is; nothing is stored between frames.
+const PLUME_PUFFS=8,PLUME_METRES=14,WIND=Object.freeze({x:4.5,z:1.8});
+export function createTinTownChimneySmoke(chimneys){
+  const group=new THREE.Group();group.name='Tin Town chimney smoke';
+  const smoke=createSmokeMaterial(0x6a655e),card=new THREE.PlaneGeometry(1,1),puffs=[];
+  chimneys.forEach((chimney,plume)=>{
+    for(let index=0;index<PLUME_PUFFS;index++){
+      const puff=new THREE.Mesh(card,smoke);puff.name='Chimney smoke of a shack';puff.userData={fade:0,plume,index};puff.renderOrder=2;puff.frustumCulled=false;
+      puff.onBeforeRender=()=>{smoke.uniforms.uFade.value=puff.userData.fade;smoke.uniforms.uSeed.value=plume*.57+index*.23;smoke.uniformsNeedUpdate=true;};
+      group.add(puff);puffs.push(puff);
+    }
+  });
+  return {group,puffs,animate(seconds){
+    for(const puff of puffs){
+      const {plume,index}=puff.userData,at=chimneys[plume],age=(seconds*.1+index/PLUME_PUFFS+plume*.37)%1;
+      puff.position.set(at.x+WIND.x*age+Math.sin(seconds*.4+index*2.1+plume)*.35*age,at.y+age*PLUME_METRES,at.z+WIND.z*age);
+      puff.scale.setScalar(.8+age*3.4);
+      puff.userData.fade=Math.min(1,age/.08)*Math.pow(1-age,1.4)*.55;
+    }
+  }};
 }

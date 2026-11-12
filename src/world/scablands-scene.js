@@ -11,7 +11,7 @@ import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
-import {createTinTownShacks,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
+import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -461,7 +461,9 @@ export function createScablandsScene(course,options={}){
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
-  group.add(createTinTownShacks());
+  const tinTownShacks=createTinTownShacks();group.add(tinTownShacks);
+  // Smoke from three of the shacks' stovepipes, placed from the clock in animate.
+  const chimneySmoke=createTinTownChimneySmoke(tinTownShacks.userData.chimneys);group.add(chimneySmoke.group);chimneySmoke.animate(0);
   // The fire stands on the gate's beam, with its three tongues along the beam.
   gateFire.effects.rotation.y=tinTownGate.userData.yaw;
   mastAndSmoke(group);
@@ -548,7 +550,7 @@ export function createScablandsScene(course,options={}){
         bessEffects.placeSmoke(seconds,bessTravel.speed);
         bessEffects.dust.userData.place(seconds,bessTravel.speed,BESS_DUST);
       }
-      gateFire.animate(seconds);
+      gateFire.animate(seconds);chimneySmoke.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.

@@ -394,6 +394,22 @@ assert.ok(road,'the dirt road is drawn');
   assert.ok(data.shacks.some(shack=>shack.level===2)&&data.shacks.every(shack=>shack.level<=2),'they are stacked one, two or three high');
   assert.ok(data.tower&&data.tower.height>=10.5&&data.tower.height<=12.5,`the water tower is about 11 m tall (${data.tower?.height.toFixed(1)})`);
   assert.ok(data.pole&&data.pole.height>=12,'the radio pole stands in a cluster');
+  // Seen from far off: a 16 m watchtower with a lamp in the cluster nearest the gate, and chimney smoke from three shacks in different clusters.
+  const nearestToGate=data.clusters.map(cluster=>({index:cluster.index,distance:Math.hypot((cluster.rect.x0+cluster.rect.x1)/2-575,(cluster.rect.z0+cluster.rect.z1)/2-62)})).sort((a,b)=>a.distance-b.distance)[0].index;
+  assert.ok(data.watchtower&&Math.abs(data.watchtower.height-16)<.6,`the watchtower is 16 m tall (${data.watchtower?.height.toFixed(1)})`);
+  const towerCluster=data.clusters.find(cluster=>data.watchtower.x>=cluster.rect.x0&&data.watchtower.x<=cluster.rect.x1&&data.watchtower.z>=cluster.rect.z0&&data.watchtower.z<=cluster.rect.z1);
+  assert.equal(towerCluster?.index,nearestToGate,'the watchtower stands in the cluster nearest the gate');
+  assert.equal(data.chimneys.length,3,'three shacks have a chimney');assert.equal(new Set(data.chimneys.map(chimney=>chimney.cluster)).size,3,'in three different clusters');
+  const smoke=scene.group.getObjectByName('Tin Town chimney smoke');
+  assert.ok(smoke&&smoke.children.length===24&&smoke.children.every(puff=>puff.name==='Chimney smoke of a shack'),'each chimney has a plume of eight puffs');
+  animateScene(scene.group,30);
+  const plumeOf=plume=>smoke.children.filter(puff=>puff.userData.plume===plume);
+  for(let plume=0;plume<3;plume++){
+    const chimney=data.chimneys[plume],puffs=plumeOf(plume).sort((a,b)=>a.position.y-b.position.y);
+    assert.ok(puffs.length===8&&puffs[0].position.y>=chimney.y&&puffs[7].position.y-chimney.y>10&&puffs[7].position.y-chimney.y<=14.01,`plume ${plume+1} rises about 14 m`);
+    assert.ok(puffs.every(puff=>puff.position.x>=chimney.x-.5&&puff.position.z>=chimney.z-.01),`plume ${plume+1} drifts the same way as the others (towards +x and +z)`);
+  }
+  assert.ok(smoke.children.every(puff=>puff.userData.fade<=.56),'the plumes are light');
   assert.ok(data.fence.length>20,`the fence runs round the outside of the ring (${data.fence.length} sheets)`);
   const meshes=[];town.traverse(node=>{if(node.isMesh)meshes.push(node);});
   assert.ok(meshes.length>=1&&meshes.length<=12,`the whole town is at most 12 draw calls (${meshes.length})`);
