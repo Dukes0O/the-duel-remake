@@ -107,7 +107,9 @@ and Cinder's lines.
 - `node tools/test-run-gas.mjs` 1,088; `test-old-smoke` 616 (untouched); `test-ember-screens` 23; `test-scablands-scene`; `test-world-job-mode`; `test-arena-settlement` 10;
   `test-story-registry` 78.
 - Scripted drivers, 10 tries each, the run count the try's number (tables below).
-- Lane tier, `npm run build` and the browser scenarios `field-battle` (new), `run-gas` and `everburn-well`: see the end of this note.
+- Lane tier (`--changed --jobs 4 --keep-going`): 105 passed, 0 failed (this includes `test-everburn-easy`, `test-run-gas-medium` and `test-old-smoke`). `npm run build`: pass.
+- Browser scenarios `field-battle` (new: the wall before the battle, the battle starting, the furnace coming out, cinders on Big Bess, a door glowing and breaking, the dead
+  furnace; 6 pictures), `run-gas` and `everburn-well`: pass, 0 warnings, 0 errors.
 
 ### The drivers
 
