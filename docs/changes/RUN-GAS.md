@@ -114,13 +114,28 @@ escort" and "Pay"). This note lists what was built, the numbers, the checks and 
 - Also run and passing: `test-ember-screens` (23), `test-world-job-mode`, `test-feature-flags` (129; the count of switches
   is now 54), `test-world-jobs`, `test-world-hud`, `test-old-smoke` (480), `test-scablands-scene`, `test-ships-lines` (90),
   `test-town-links` (16), `test-town-world`, `test-blender-output` (397), `test-preview-launcher` (23).
-- Lane tier (`--changed --jobs 4 --keep-going`): 130 passed, 1 failed. The one failure is `tools/test-story-registry.mjs`
-  ("and the only lines": it finds the Everburn and Ships lines registered as well as Kogane's). It fails the same way on
-  the commit before this card (`7d7135521`, checked from a copy of that commit's `src`): `flamethrower.js` imports
-  `world-job.js`, which imports `ember-lines.js`, so the lines register whenever `progression.js` is loaded. Not caused by this
-  work and not fixed here (a card for Claude). `start-preview.bat` needed the new switch for `test-preview-launcher` and has it.
+- Lane tier (`--changed --jobs 4 --keep-going`): 139 passed, 0 failed. `tools/test-story-registry.mjs` (78 checks, unchanged)
+  passes again, see "Follow-ups after review". `start-preview.bat` needed the new switch for `test-preview-launcher` and has it.
 - `npm run build`: pass.
 - Browser scenarios `run-gas` (new) and `everburn-well`: pass (3 and 2 screenshots, 0 warnings, 0 errors).
+
+## Follow-ups after review (Claude, 11 November)
+
+- **The Boneyard road no longer doubles back.** See "Differs from the card". Test and numbers re-recorded: length 1,252 m
+  (was 1,594 m), clearance 17.1 m, marks 260, 400, 540, 690, 830, 970, 1,100 m; the Easy table is still 10 of 10 everywhere.
+- **Job 4 shows real words.** `lineId` and `startLineId` are `story.ember.moss.1`; the job ends on `story.ember.auntie-solder.6`
+  through the closing-line path (`closing`), held as job 3 holds for Cinder's. The won line `everburn-job-4-won` and the start id
+  `everburn-job-4-start` are gone. Nothing pinned the raw ids: `test-ember-screens` and the `everburn` scenario did not name them.
+  `tools/test-ember-lines.mjs` gained a check that every line job 4 names has words, that it starts on Moss's line and holds for
+  Auntie Solder's. Jobs 1, 2, 3, 5 and 6 still show raw ids for their start and some other lines (QA-EVERBURN-SCREENS).
+- **Layering.** `src/arena/modes/world-job.js` imported `EMBER_CAPTIONS` from `src/story/ember-lines.js`, so loading the core
+  registered the Everburn's and the Ships' lines and `tools/test-story-registry.mjs` failed since WW-BOSS (10 November). It now
+  reads captions through a new `captionRecord(id)` in `src/story/story-lines.js`, beside `captionText`. The Everburn's lines still
+  register wherever the story runs: `main.js` imports `screen-router.js`, which imports `screen-menu.js` (imports
+  `story/ember-ui.js`) and `screen-arena.js` (imports `ember-lines.js` itself). `tools/test-old-smoke.mjs`, the one test that
+  read captions through the job code, now imports `ember-lines.js` (not a changed assertion). No other static import path pulls a
+  story's lines into the core: a walk of the imports from `progression.js` and the story modules finds none.
+
 
 ### The Easy driver: gas runs brought home out of 10
 
@@ -144,4 +159,4 @@ Big Bess's lowest health on arrival over the ten tries: long 100, 100, 90, 80; B
 ## Removed
 
 The unread `raiders:` list on job 4 (now `ambushes`), the old escort test of "arrived when she sets out for the last place",
-and job 4's raw rest line id `everburn-job-4-rest`.
+job 4's raw rest, start and won line ids (`everburn-job-4-rest`, `everburn-job-4-start`, `everburn-job-4-won`), the Boneyard road's detour to the safe road, and its imports of the Everburn's lines in `world-job.js`.
