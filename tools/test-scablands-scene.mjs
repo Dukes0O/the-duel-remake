@@ -6,6 +6,7 @@ import {SCABLANDS_VENUE,SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
 import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {animateScene,syncScene} from '../src/scene-systems.js';
@@ -42,7 +43,7 @@ assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
-assert.equal(SCABLANDS_SOLIDS.length,8,'each named place has its solid');
+assert.equal(SCABLANDS_SOLIDS.length,16,'the eight named places, six Tin Town clusters and two gate posts each have a solid');
 for(const solid of SCABLANDS_SOLIDS){
   const place=places.get(solid.placeId);
   assert.ok(place,`${solid.id} names a place table entry`);
@@ -357,9 +358,11 @@ assert.ok(road,'the dirt road is drawn');
   const leftBox=boxIn(left),rightBox=boxIn(right);
   assert.ok(Math.abs((rightBox.min.x-leftBox.max.x)-9)<.05,`the gate's opening is 9 m (${(rightBox.min.x-leftBox.max.x).toFixed(2)})`);
   assert.ok(Math.abs(leftBox.max.y-7)<.05&&Math.abs(rightBox.max.y-7)<.05,'the posts are 7 m tall');
-  // The way a truck drives through is the line from (610, 170) to (430, 70), and the furnace's path crosses the gate.
-  const through=new THREE.Vector3(0,0,1).transformDirection(gate.matrixWorld),line=new THREE.Vector3(-180,0,-100).normalize();
-  assert.ok(Math.abs(through.dot(line))>.9999,'the gate stands across the line from (610, 170) to (430, 70)');
+  // The way a truck drives through is north and south: the furnace's way in (from (610, 170)) and the gas run's Boneyard road
+  // (from (447, 308)) both cross the opening within 30 degrees of straight, and the road goes on to the town's centre.
+  const through=new THREE.Vector3(0,0,1).transformDirection(gate.matrixWorld),across=(from,to)=>Math.abs(through.dot(new THREE.Vector3(to.x-from.x,0,to.z-from.z).normalize()));
+  assert.ok(across({x:610,z:170},{x:575,z:62})>Math.cos(30*Math.PI/180),'the furnace comes through the opening of the gate, not into a post');
+  assert.ok(across({x:447,z:308},{x:575,z:62})>Math.cos(30*Math.PI/180),'the gas run Boneyard road comes through the opening of the gate, not into a post');
   assert.deepEqual([TIN_TOWN_GATE.x,TIN_TOWN_GATE.z],[gateAt.x,gateAt.z],'the gate stands where the furnace\'s path names it');
   assert.equal(gate.getObjectByName('Gate sign plate').userData.text,'TIN TOWN','the gate carries a tin sign reading TIN TOWN');
   const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
@@ -376,6 +379,61 @@ assert.ok(road,'the dirt road is drawn');
   assert.ok(Math.hypot(gateFire.position.x-575,gateFire.position.z-62)<.001,'the fire stands at the gate');
   assert.ok(Math.abs(gateFire.position.y-land-beam.max.y)<.05,`the fire stands on the gate's beam (${(gateFire.position.y-land).toFixed(2)} m up, beam top ${beam.max.y.toFixed(2)})`);
   assert.ok(Math.abs(gateFire.rotation.y-gate.rotation.y)<1e-9,'the three tongues of fire stand along the beam');
+}
+// SCABLANDS-LAND follow-up: Tin Town's shacks, drawn in code round the town's own model.
+{
+  const town=scene.group.getObjectByName('Tin Town shacks'),data=town?.userData;
+  assert.ok(town&&town.parent===scene.group,'the scene carries the Tin Town shacks');
+  assert.ok(data.shacks.length>=40&&data.shacks.length<=50,`there are 40 to 50 shacks (${data.shacks.length})`);
+  assert.equal(data.clusters.length,6,'the shacks stand in six clusters');
+  assert.deepEqual([...new Set(data.shacks.map(shack=>shack.size))].sort(),['L','M','S'],'the shacks come in three sizes');
+  assert.ok(data.shacks.some(shack=>shack.level===2)&&data.shacks.every(shack=>shack.level<=2),'they are stacked one, two or three high');
+  assert.ok(data.tower&&data.tower.height>=10.5&&data.tower.height<=12.5,`the water tower is about 11 m tall (${data.tower?.height.toFixed(1)})`);
+  assert.ok(data.pole&&data.pole.height>=12,'the radio pole stands in a cluster');
+  assert.ok(data.fence.length>20,`the fence runs round the outside of the ring (${data.fence.length} sheets)`);
+  const meshes=[];town.traverse(node=>{if(node.isMesh)meshes.push(node);});
+  assert.ok(meshes.length>=1&&meshes.length<=12,`the whole town is at most 12 draw calls (${meshes.length})`);
+  assert.ok(data.triangles<60000,`the town is under 60,000 triangles (${Math.round(data.triangles)})`);
+  const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
+  assert.ok(meshes.every(mesh=>Boolean(mesh.material.userData.scrapWear)===!glowing(mesh.material))&&meshes.some(mesh=>glowing(mesh.material)),'the wear is drawn over everything that does not glow, and some lamps glow');
+  // Clear ground: nothing is drawn within 24 m of the town's centre or 10 m either side of the roads jobs use, read from the real job paths.
+  const flat=list=>list.map(item=>item.position??item);
+  const furnaceSteps=EVERBURN_JOBS[5].steps[1].path,planes=furnaceSteps.findIndex(item=>item.id==='furnace-planes-3'),roadHome=furnaceSteps.findIndex(item=>item.id==='furnace-road-1');
+  const lines=[];
+  const addLine=(points)=>{for(let index=1;index<points.length;index++)lines.push([points[index-1],points[index]]);};
+  addLine(flat(furnaceSteps.slice(planes,roadHome+1)));
+  addLine(flat(GAS_RUN_PATHS.long));addLine(flat(GAS_RUN_PATHS.boneyard));
+  addLine(flat(EVERBURN_JOBS[3].steps[0].path).slice(1));
+  addLine([{x:0,z:0},{x:600,z:0}]);addLine([{x:575,z:62},{x:600,z:0}]);
+  assert.ok(lines.length>=12,'the roads and lines are read from the real job paths');
+  const distanceToLine=(x,z,[a,b])=>{const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);};
+  let nearestCentre=1e9,nearestRoad=1e9,vertices=0;
+  for(const mesh of meshes){
+    const at=mesh.geometry.attributes.position;
+    for(let index=0;index<at.count;index++){
+      const x=at.getX(index),z=at.getZ(index);vertices++;
+      nearestCentre=Math.min(nearestCentre,Math.hypot(x-600,z));
+      for(const line of lines)nearestRoad=Math.min(nearestRoad,distanceToLine(x,z,line));
+    }
+  }
+  assert.ok(vertices>10000,'the shacks are drawn');
+  assert.ok(nearestCentre>=24,`nothing is drawn within 24 m of the town's centre (nearest ${nearestCentre.toFixed(1)} m)`);
+  assert.ok(nearestRoad>=10,`nothing is drawn within 10 m of a road or path (nearest ${nearestRoad.toFixed(1)} m)`);
+  // Every foot stands on the ground at its own point.
+  assert.ok(data.feet.length>150,'every leg, post and sheet has a foot');
+  const worst=Math.max(...data.feet.map(foot=>Math.abs(foot.y-scablandsSurfaceHeightAt(foot.x,foot.z))));
+  assert.ok(worst<=.15,`every leg's foot is within 0.15 m of the ground (worst ${worst.toFixed(3)} m)`);
+  // The solids: one box a cluster, two for the gate's posts, and every shack stands inside its cluster's box.
+  const clusterSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-cluster-\d$/.test(solid.id)),postSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-gate-post-/.test(solid.id));
+  assert.equal(clusterSolids.length,6,'one solid for each cluster');assert.equal(postSolids.length,2,'two solids for the gate\'s posts');
+  for(const shack of data.shacks){
+    const solid=clusterSolids[shack.cluster];
+    assert.ok(Math.abs(shack.x-solid.center[0])<=solid.size[0]/2&&Math.abs(shack.z-solid.center[2])<=solid.size[2]/2,`a shack of cluster ${shack.cluster+1} stands inside its solid`);
+  }
+  for(const solid of clusterSolids)for(const line of lines)for(let metres=0;metres<=Math.hypot(line[1].x-line[0].x,line[1].z-line[0].z);metres+=1){
+    const length=Math.hypot(line[1].x-line[0].x,line[1].z-line[0].z),x=line[0].x+(line[1].x-line[0].x)*metres/length,z=line[0].z+(line[1].z-line[0].z)*metres/length;
+    if(Math.hypot(Math.max(Math.abs(x-solid.center[0])-solid.size[0]/2,0),Math.max(Math.abs(z-solid.center[2])-solid.size[2]/2,0))<10)assert.fail(`${solid.id} is within 10 m of a road`);
+  }
 }
 // The ground look is drawn over the near ground, the far ground, the road and any edited chunk.
 assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.userData.groundLook,'the near and far ground carry the ground look');

@@ -395,7 +395,10 @@ function runUntil(duel, condition, seconds = 90) {
         let closest = Infinity;
         for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, solid));
         tightest = Math.min(tightest, closest);
-        check(closest >= 8, `${road}: piece ${piece + 1} clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
+        // The Boneyard road runs through Tin Town's gate: it keeps 3.4 m from each of the gate's two post boxes (the gate's
+        // opening is 9 m; the boxes are the posts' own 2.1 m) and 8 m from every other solid.
+        const needed = /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
+        check(closest >= needed, `${road}: piece ${piece + 1} clears ${solid.id} by ${needed} m (got ${closest.toFixed(1)})`);
       }
     }
     console.log(`Gas run, ${road} road: tightest clearance from a solid is ${tightest.toFixed(1)} m, length ${gasRunLength(road).toFixed(0)} m`);
