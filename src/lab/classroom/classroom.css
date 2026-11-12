@@ -122,8 +122,8 @@
 .lc-table h4 { flex: none; margin: 0; font-size: 18px; color: #edc557; }
 .lc-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 24px; }
 .lc-table.wide .lc-rows { grid-auto-flow: column; grid-template-rows: repeat(3, auto); grid-template-columns: none; grid-auto-columns: minmax(0, 1fr); }
-.lc-rows p { display: flex; justify-content: space-between; gap: 14px; margin: 0; font-size: 18px; line-height: 22px; font-weight: 600; white-space: nowrap; }
-.lc-rows b { font-size: 18px; }
+.lc-rows p { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 14px; margin: 0; font-size: 18px; line-height: 22px; font-weight: 600; white-space: nowrap; }
+.lc-rows b { margin-left: auto; font-size: 18px; }
 .lc-strip .tone-good { color: #56d683; }
 .lc-strip .tone-bad { color: #f07a5a; }
 .lc-strip .tone-accent { color: #edc557; }

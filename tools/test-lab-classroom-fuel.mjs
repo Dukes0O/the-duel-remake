@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/classroom-frame.js';
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {STEPS, DAYS, HALF, WEIGH_LITRES, WEIGH_KG, HALF_TANK_LINE, FREE_CARS, FREE_TRIES, TARGET_KMH, TARGET_MS, toTarget, leastLitres, secondsTo100, secondsOf, sumsOf, gapAtWin, benchAttempts, KEY_IDEAS, CHALLENGE_CARD, WORDS, PASS_SAY} from '../src/lab/lessons/fuel-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, STRIP} from '../src/lab/lessons/fuel-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, lanePoint, STRIP, size} from '../src/lab/lessons/fuel-board.js';
 import {fuelBench, zeroToSixty, FUEL_RIG, PETROL_KG_PER_LITRE} from '../src/lab/benches/tunnel.js';
 import {dragAt, lastsShare, SIXTY_MS, TANK_LITRES} from '../src/lab/benches/fuel.js';
 import {LAB_TUNE} from '../src/lab/lab-tune.js';
@@ -469,7 +469,7 @@ test('mouse: the nozzle pours in, the tap pours out, the strip races, the jugs w
   assert.equal(hitTest(v, ...targetPoint(v, 'pour:in'))?.action, 'pour:in');
   assert.equal(hitTest(v, ...targetPoint(v, 'pour:out'))?.action, 'pour:out');
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  for (const point of [targetPoint(v, 'pour:in'), targetPoint(v, 'pour:out'), [180, 300], [180, 500], [358, 520]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
+  for (const point of [targetPoint(v, 'pour:in'), targetPoint(v, 'pour:out'), [208, 311], [208, 541], [413, 564]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
   const words = createClassroomSession(lesson);
   playThroughTo(words, 'word-kilogram');
   v = words.view();
@@ -480,10 +480,10 @@ test('mouse: the nozzle pours in, the tap pours out, the strip races, the jugs w
   const free = createClassroomSession(lesson);
   playThroughTo(free, 'try-free');
   v = free.view();
-  assert.equal(hitTest(v, 344, 640)?.action, 'car:next');
-  assert.equal(hitTest(v, 116, 640)?.action, 'car:prev');
+  assert.equal(hitTest(v, 370, 647)?.action, 'car:next');
+  assert.equal(hitTest(v, 130, 647)?.action, 'car:prev');
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  assert.ok(hoverInfo(v, 230, 600), 'the car panel is named');
+  assert.ok(hoverInfo(v, 250, 605), 'the car panel is named');
   free.act('go');
   assert.deepEqual(Object.keys(free.view().keys), [], 'nothing changes while the car is racing');
   const speed = createClassroomSession(lesson);
@@ -558,8 +558,8 @@ test('review fixes: the can holds only what went out of the tap; clicks land whe
   const words = createClassroomSession(lesson);
   playThroughTo(words, 'word-kilogram');
   let v = words.view();
-  assert.equal(hitTest(v, 300, 460)?.action, 'weigh:water');
-  assert.equal(hitTest(v, 300, 260), null);
+  assert.equal(hitTest(v, 375, 379)?.action, 'weigh:water');
+  assert.equal(hitTest(v, 375, 79), null);
   // Brian's job: a click on the race card's bar does not race; a click on the track does.
   const job = createClassroomSession(lesson);
   playThroughTo(job, 'alone');
@@ -640,7 +640,7 @@ test('LAB-ROUND-NUMBERS: every speed in km/h that the lesson shows is a multiple
   const words = v => [v.say, v.prompt, v.brian?.text, ...v.hints, ...v.formulas.flatMap(f => [f.title, f.formula, f.worked, f.note]), ...v.cards.map(c => c.label), ...(v.ideas ?? []).map(i => i.text)];
   // The board is read only while no car is moving, because a moving car's speed reading is a result.
   const still = v => v.lanes.every(l => l.seconds == null || l.done);
-  const hovers = v => v.lanes.map((_, i) => hoverInfo(v, 700, 160 + i * 100));
+  const hovers = v => v.lanes.map((_, i) => hoverInfo(v, ...lanePoint(v, i)));
   const collect = (v, where) => {
     for (const l of v.lanes) if (l.done) assert.ok(Math.abs(l.kmh - TARGET_KMH) < 1e-9, `${where}: a finished car reads ${TARGET_KMH} km/h`);
     for (const text of [...words(v), ...(still(v) ? [...drawn(v), ...hovers(v)] : [])].filter(Boolean))
@@ -676,4 +676,30 @@ test('LAB-ROUND-NUMBERS: every speed in km/h that the lesson shows is a multiple
   for (const where of ['wonder opening', 'word-speed opening', 'watch playing', 'try-half 50', 'check-race 2']) assert.ok(found.some(f => f.where === where), `${where} shows a speed`);
   for (const f of found) assert.ok(Number.isInteger(f.n) && f.n % 10 === 0, `${f.where}: ${f.n} km/h in “${f.text}”`);
   assert.deepEqual([...new Set(found.map(f => f.n))], [TARGET_KMH], 'the lesson has one speed, 100 km/h');
+});
+
+// LAB-LOOK round 11: no text on the wide board is smaller than 15 board units. The surface notes every text with its size in board
+// units (the font size times every scale in force when it is drawn).
+function smallestText(view) {
+  const stack = [], state = {scale: 1};
+  const target = {font: '10px x', found: [], save() { stack.push(state.scale); }, restore() { state.scale = stack.pop() ?? 1; }, scale(a) { state.scale *= a; }, setTransform(a) { state.scale = a; },
+    measureText: value => ({width: String(value).length * 9}), createLinearGradient: () => ({addColorStop() {}}), createRadialGradient: () => ({addColorStop() {}}),
+    fillText(value) { this.found.push([String(value), Number(/(\d+(?:\.\d+)?)px/.exec(this.font)[1]) * state.scale]); }};
+  const ctx = new Proxy(target, {get: (t, name) => name in t ? t[name] : () => {}, set: (t, name, value) => { t[name] = value; return true; }});
+  drawBoard(ctx, view, size.width, size.height);
+  return target.found.reduce((least, found) => found[1] < least[1] ? found : least, ['', Infinity]);
+}
+test('LAB-LOOK round 11: the wide board names its size and draws no text smaller than 15 board units, on any step', () => {
+  assert.deepEqual({...size}, {width: 1320, height: 680});
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    // The step as it opens, and while it plays (a race shows the readings, the sums and the photo finish).
+    if (session.view().keys.Space === 'go') session.act('go');
+    for (let t = 0; t < 10; t += .5) {
+      const [word, least] = smallestText(session.view());
+      assert.ok(least >= 14.99, `${step.id}: “${word}” is ${least.toFixed(1)} units`);
+      run(session, .5);
+    }
+  }
 });

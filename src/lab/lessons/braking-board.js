@@ -3,7 +3,7 @@
 // test strip where cars to scale arrive, brake at the line at real speed and stop, with a tape giving the metres.
 // The word steps add a mark for each second, a mark for each half second of braking, and gold blocks of energy that
 // disappear along the road. Draws and hit-tests only.
-import {BOARD, theme, background, floor, cardScene, shadow, forceArrow, forceArrowTo, roadCar, tarmac, paintStripe, roadPost, steel, bolt, lcd, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, cardScene, shadow, forceArrow, forceArrowTo, roadCar, tarmac, paintStripe, roadPost, steel, bolt, lcd, text, wrap, fitBoard} from '../classroom/board-art.js';
 import {m1, pct, kmh, msOf, metresFrom, S_SLOW, SLOW, FAST, SPEED_STEP, FRONT_LOAD, REAR_LOAD, STEADY_FRONT, MIN_FRONT, MAX_FRONT} from './braking-classroom.js';
 export {BOARD};
 // The wide board (docs/board/cards/LAB-LOOK.md, "The wide board's rules"): the road is long and low, so the board takes the width
@@ -12,6 +12,12 @@ export const size = Object.freeze({width: 1320, height: 680});
 export const pressMovesDrag = false;
 
 const CAR = '#c8402f', GOLD = '#edc557', GREEN = '#9ff0b4';
+// No text on the wide board is smaller than 15 board units (docs/board/cards/LAB-LOOK.md, round 11). The shared key cap writes its key at
+// 13, so the wide board draws its own, a little larger.
+function keyCap(ctx, x, y, key) {
+  ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 12, y - 12, 24, 24, 3); ctx.fill();
+  ctx.fillStyle = '#1d2224'; ctx.font = '800 15px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(key, x, y + 1);
+}
 // The close-up car (nose to the right) and its pads, 1.3 times the size of the usual board's and centred over the road; the dial
 // and the lever (or the car chooser) at the right edge. The pads sit flush with the floor, which starts at `floor`; the car's
 // tyres rest on them, and its roof is where the weight arrows end.
@@ -134,23 +140,23 @@ function closeUp(ctx, view) {
   if (view.forces && c.braking) {
     const mid = nose + (-20 - 74) / 2 * scale;
     forceArrowTo(ctx, mid - 60, ROOF_Y - 32, mid + 60, ROOF_Y - 32, '#f5f0dc', 7);
-    text(ctx, 'mass carries on', mid, ROOF_Y - 56, {size: 14, colour: '#f5f0dc'});
+    text(ctx, 'mass carries on', mid, ROOF_Y - 56, {size: 15, colour: '#f5f0dc'});
     forceArrowTo(ctx, mid + 35, CLOSE.floor - 16, mid - 35, CLOSE.floor - 16, theme.bad, 6);
-    text(ctx, 'tyres slow', mid, CLOSE.floor + 8, {size: 13, colour: theme.bad});
-    text(ctx, 'the car', mid, CLOSE.floor + 24, {size: 13, colour: theme.bad});
+    text(ctx, 'tyres slow', mid, CLOSE.floor + 7, {size: 15, colour: theme.bad});
+    text(ctx, 'the car', mid, CLOSE.floor + 25, {size: 15, colour: theme.bad});
   }
   if (c.locked) text(ctx, 'back tyre locked', wheel(-74), tip - (30 + 120 * back + 6) - 16, {size: 16, colour: theme.bad});
-  text(ctx, c.braking ? 'BRAKING' : 'STANDING', nose - 520, 56, {size: 14, align: 'left', colour: c.braking ? theme.accent : theme.faint, weight: 800});
+  text(ctx, c.braking ? 'BRAKING' : 'STANDING', nose - 520, 56, {size: 15, align: 'left', colour: c.braking ? theme.accent : theme.faint, weight: 800});
   // The lever's share against the weight on the back tyres, in the same words as the sum.
   if (view.balance && view.lever) {
     const backBrakes = 100 - view.lever.front, steady = view.lever.front >= STEADY_FRONT;
-    text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, nose - 195, 26, {size: 14, colour: steady ? GREEN : theme.bad});
+    text(ctx, `The back brakes do ${backBrakes}% of the braking, and the back tyres carry ${pct(REAR_LOAD)} of the weight.`, nose - 195, 26, {size: 15, colour: steady ? GREEN : theme.bad});
   }
 }
 function dial(ctx, view) {
   const d = view.dial, can = view.keys['↑'] === 'speed:up';
   panel(ctx, DIAL.x, DIAL.y, DIAL.w, DIAL.h);
-  text(ctx, 'SPEED DIAL', DIAL.x + DIAL.w / 2, DIAL.y + 18, {size: 12, colour: theme.faint, weight: 800});
+  text(ctx, 'SPEED DIAL', DIAL.x + DIAL.w / 2, DIAL.y + 18, {size: 15, colour: theme.faint, weight: 800});
   text(ctx, `${d.kmh} km/h`, DIAL.x + DIAL.w / 2, DIAL.y + 50, {size: 30, weight: 800});
   text(ctx, `${d.ms.toFixed(2)} m/s`, DIAL.x + DIAL.w / 2, DIAL.y + 88, {size: 15, colour: theme.accent});
   for (const [way, label, key] of [['down', 'Slower', '↓'], ['up', 'Faster', '↑']]) {
@@ -160,12 +166,12 @@ function dial(ctx, view) {
     text(ctx, label, x + 10, y, {size: 15}); keyCap(ctx, x - 36, y, key);
     ctx.globalAlpha = 1;
   }
-  if (d.locked) text(ctx, 'set by Brian', DIAL.x + DIAL.w - 12, DIAL.y + 18, {size: 12, align: 'right', colour: theme.faint});
+  if (d.locked) text(ctx, 'set by Brian', DIAL.x + DIAL.w - 12, DIAL.y + 18, {size: 15, align: 'right', colour: theme.faint});
 }
 function lever(ctx, view) {
   const l = view.lever, can = view.keys['→'] === 'lever:front', [x0, x1] = LEVER.track, y = LEVER.trackY;
   panel(ctx, LEVER.x, LEVER.y, LEVER.w, LEVER.h);
-  text(ctx, 'BRAKE LEVER', LEVER.x + LEVER.w / 2, LEVER.y + 18, {size: 12, colour: theme.faint, weight: 800});
+  text(ctx, 'BRAKE LEVER', LEVER.x + LEVER.w / 2, LEVER.y + 18, {size: 15, colour: theme.faint, weight: 800});
   text(ctx, `Back ${100 - l.front}%`, LEVER.x + 14, LEVER.y + 44, {size: 17, align: 'left', weight: 800});
   text(ctx, `Front ${l.front}%`, LEVER.x + LEVER.w - 14, LEVER.y + 44, {size: 17, align: 'right', weight: 800});
   // The track, a mark at every step, and the steady side (70% front and more) in green.
@@ -188,7 +194,7 @@ function lever(ctx, view) {
 function carPanel(ctx, view) {
   const c = view.car, can = view.keys['→'] === 'car:next';
   panel(ctx, LEVER.x, LEVER.y, LEVER.w, LEVER.h);
-  text(ctx, 'CAR', LEVER.x + LEVER.w / 2, LEVER.y + 18, {size: 12, colour: theme.faint, weight: 800});
+  text(ctx, 'CAR', LEVER.x + LEVER.w / 2, LEVER.y + 18, {size: 15, colour: theme.faint, weight: 800});
   text(ctx, c.name, LEVER.x + LEVER.w / 2, LEVER.y + 48, {size: 22, weight: 800});
   text(ctx, `deceleration ${c.a.toFixed(2)} m/s²`, LEVER.x + LEVER.w / 2, LEVER.y + 78, {size: 15, colour: theme.accent});
   for (const [way, label, key] of [['back', 'Car', '←'], ['front', 'Car', '→']]) {
@@ -220,15 +226,15 @@ function roadStrip(ctx, view) {
   for (let mm = 10; mm <= STRIP.metres; mm += 10) {
     ctx.strokeStyle = 'rgba(245,240,220,.18)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(stripX(mm), top + 12); ctx.lineTo(stripX(mm), bottom - 12); ctx.stroke();
     roadPost(ctx, stripX(mm), bottom - 5, 15);
-    text(ctx, `${mm} m`, stripX(mm), bottom + 14, {size: 12, colour: theme.faint});
+    text(ctx, `${mm} m`, stripX(mm), bottom + 15, {size: 15, colour: theme.faint});
   }
   paintStripe(ctx, stripX(0), top, bottom, 6, theme.accent);
-  text(ctx, 'brakes on', stripX(0), bottom + 14, {size: 12, colour: theme.accent});
+  text(ctx, 'brakes on', stripX(0), bottom + 15, {size: 15, colour: theme.accent});
   if (view.line != null) {
     const x = stripX(view.line);
     for (let k = 0; k * 10 < bottom - top; k++) { ctx.fillStyle = k % 2 ? '#eee' : theme.bad; ctx.fillRect(x - 4, top + k * 10, 8, 10); }
     ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x - 4, top, 1.2, bottom - top); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x + 2.8, top, 1.2, bottom - top);
-    text(ctx, view.job ? `corner, ${view.line} m` : 'the line', x, top - 12, {size: 14, colour: theme.bad});
+    text(ctx, view.job ? `corner, ${view.line} m` : 'the line', x, top - 12, {size: 15, colour: theme.bad});
   }
   ctx.save(); ctx.beginPath(); ctx.rect(ROAD_LEFT, top, ROAD_WIDTH, bottom - top); ctx.clip();
   lanes.forEach((l, i) => {
@@ -267,8 +273,8 @@ function roadStrip(ctx, view) {
     view.timeMarks.forEach(k => {
       const x = stripX(k.metres);
       ctx.strokeStyle = GOLD; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x, y0 - 40); ctx.lineTo(x, y0 + 60); ctx.stroke();
-      text(ctx, `${k.t.toFixed(1)} s`, x, y0 + 74, {size: 14, colour: GOLD, weight: 800});
-      text(ctx, `${k.ms.toFixed(1)} m/s`, x, y0 + 94 + (k.t * 2 % 2) * 20, {size: 14, colour: theme.text});
+      text(ctx, `${k.t.toFixed(1)} s`, x, y0 + 74, {size: 15, colour: GOLD, weight: 800});
+      text(ctx, `${k.ms.toFixed(1)} m/s`, x, y0 + 94 + (k.t * 2 % 2) * 20, {size: 15, colour: theme.text});
     });
     if (view.timeMarks.length) text(ctx, 'The marks show the car at each half second.', size.width / 2, 645, {size: 20, colour: GOLD});
   }
@@ -327,12 +333,12 @@ function energyRows(view) {
 function energyScene(ctx, view) {
   const {x, y, w, h} = LEFT, slowKmh = kmh(SLOW), slowMs = msOf(SLOW), rows = energyRows(view);
   panel(ctx, x, y, w, h);
-  text(ctx, 'ENERGY OF MOTION', x + 14, y + 18, {size: 12, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, 'ENERGY OF MOTION', x + 14, y + 18, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   rows.forEach((row, i) => {
     const ry = y + 44 + i * 128, count = (row.ms / slowMs) ** 2, l = row.lane;
     const share = l && !l.waiting ? (l.ms / l.startMs) ** 2 : 1;
     text(ctx, row.label, x + 14, ry + 8, {size: 18, align: 'left'});
-    text(ctx, `${count.toFixed(2)} times the energy of the car at ${slowKmh} km/h`, x + 110, ry + 8, {size: 14, align: 'left', colour: 'rgba(245,240,220,.75)'});
+    text(ctx, `${count.toFixed(2)} times the energy of the car at ${slowKmh} km/h`, x + 110, ry + 8, {size: 15, align: 'left', colour: 'rgba(245,240,220,.75)'});
     blocks(ctx, x + 14, ry + 28, count, count * share);
   });
   wrap(ctx, together(`Each block needs the same ${m1(S_SLOW)} of road.`), LEVER.x + LEVER.w / 2, 230, LEVER.w - 30, {size: 22});
@@ -343,7 +349,7 @@ function energyScene(ctx, view) {
     for (let k = 0; k < Math.ceil(count - 1e-3); k++) {
       const sx = ROAD.x0 + k * stretch, sw = Math.min(stretch, ROAD.x0 + row.stop * ROAD.perM - sx);
       ctx.fillStyle = k % 2 ? 'rgba(237,197,87,.16)' : 'rgba(237,197,87,.32)'; ctx.fillRect(sx, ry - 16, sw, 30);
-      if (sw > 24) text(ctx, String(k + 1), sx + sw / 2, ry + 26, {size: 13, colour: GOLD});
+      if (sw > 24) text(ctx, String(k + 1), sx + sw / 2, ry + 26, {size: 15, colour: GOLD});
     }
     paintStripe(ctx, ROAD.x0, ry - 40, ry + 34, 6, theme.accent);
     const metres = l && !l.waiting ? l.metres : -6;
@@ -400,14 +406,14 @@ function checkScene(ctx, view) {
       ctx.fillStyle = '#2b3236'; ctx.fillRect(x - 110, y - 5, 220, 10);
       const kx = x - 110 + (b.front - MIN_FRONT) / (MAX_FRONT - MIN_FRONT) * 220;
       ctx.fillStyle = theme.brass[1]; ctx.beginPath(); ctx.arc(kx, y - 20, 11, 0, Math.PI * 2); ctx.fill();
-      text(ctx, 'back', x - 110, y + 26, {size: 13, colour: theme.faint}); text(ctx, 'front', x + 110, y + 26, {size: 13, colour: theme.faint});
+      text(ctx, 'back', x - 110, y + 26, {size: 15, colour: theme.faint}); text(ctx, 'front', x + 110, y + 26, {size: 15, colour: theme.faint});
       if (view.answered) text(ctx, b.slides ? 'the back slides' : 'the back stays in line', x, y + 72, {size: 19, colour: b.slides ? theme.bad : GREEN});
     });
     return;
   }
   const x = 170, y = 150, w = 660;
   panel(ctx, x, y, w, 260);
-  text(ctx, 'THE TUNE PAGE · IN THE GARAGE', x + 20, y + 24, {size: 13, align: 'left', colour: theme.faint, weight: 800});
+  text(ctx, 'THE TUNE PAGE · IN THE GARAGE', x + 20, y + 24, {size: 15, align: 'left', colour: theme.faint, weight: 800});
   text(ctx, 'Brake balance', x + 20, y + 62, {size: 26, align: 'left'});
   [-2, -1, 0, 1, 2].forEach((stepNo, i) => {
     const bx = x + 20 + i * 126, on = stepNo === 2;
@@ -415,7 +421,7 @@ function checkScene(ctx, view) {
     if (on) { ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.stroke(); }
     text(ctx, stepNo === 0 ? '0' : stepNo > 0 ? `+${stepNo}` : String(stepNo), bx + 57, y + 112, {size: 18});
   });
-  text(ctx, 'toward the front', x + 20, y + 150, {size: 13, align: 'left', colour: theme.faint}); text(ctx, 'toward the rear', x + w - 20, y + 150, {size: 13, align: 'right', colour: theme.faint});
+  text(ctx, 'toward the front', x + 20, y + 150, {size: 15, align: 'left', colour: theme.faint}); text(ctx, 'toward the rear', x + w - 20, y + 150, {size: 15, align: 'right', colour: theme.faint});
   if (view.tune.effect) wrap(ctx, view.tune.effect, x + w / 2, y + 200, w - 40);
   else text(ctx, 'Two steps toward the rear', x + w / 2, y + 205, {size: 20, colour: theme.faint});
 }
