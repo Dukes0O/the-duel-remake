@@ -152,7 +152,8 @@ side. A wide board takes that width for the picture.
   to the longest stop the lesson allows. Text sizes stay as they are; they are already sized for reading.
 - **Numbers leave the board** as round 8 settled: readouts and the table of results go to the strip, and only labels
   that point at a part of the picture stay.
-- **Answer cards on a wide board** are three to a row, each about 380 by 190 in the board's own measure.
+- **Answer cards are not the board's.** (Corrected after the first build: the cards a player picks are HTML buttons
+  in Brian's panel, and round 7 already redrew their pictures. The wide board does not change them.)
 - **With the physics panel open** the board's panel is narrower than the wide board's shape, so the board is fitted
   by width and the wall shows above and below it. That is accepted; nothing is rearranged.
 - **Order:** Braking first, judged by Claude from a sheet at 1536 by 864 and at 1920 by 1080, with the physics panel
@@ -165,6 +166,32 @@ Checks for Braking's build, named before code:
 3. One new check that a board with no `size` is fitted exactly as before, and every other `lab-*` browser check
    passes untouched (memory: when the classroom changes, run them all).
 4. The sheet, before and after, at the four views above.
+
+## Round 9: the wide board on Braking (a Sonnet helper; judged by Claude, 12 November 2026): built, not merged
+
+Branch `lab-look/braking-wide` (two commits on top of 131947147; its sheet is
+`docs/board/looks/lab-look/round-9.jpg` on that branch). The plumbing is right and can be kept: `fitBoard` takes a
+size, the wall and floor take a width, the classroom reads a board's `size`, a board without one is fitted exactly as
+before (new check), Braking's readouts and table are in the strip. Braking's own test, the classroom tests, three
+browser checks and the build pass on the branch.
+
+Claude's verdict from the sheet: **not yet better than before, so it is not merged.**
+
+- The road is about a third longer on screen and fills the panel's width. That part works.
+- The car in the close-up is no larger than before, and it now stands in the left third with empty board beside it.
+  The close-up is the thing being taught (weight moving onto the front tyres), so it must grow: about 1.3 times, with
+  its two arrows and labels, centred over the road.
+- In the free test the table left for the strip and nothing took its place: the top left of the board is empty.
+  Bring the close-up car into that space at the larger size.
+- Two wordings changed (the strip's hover no longer says "80 m long"; "past the end" is gone). No word may change:
+  put both back.
+- Only three of the Lab's browser checks were run. All `lab-*` checks are owed before a merge.
+
+Changed assertions on the branch, to be reviewed when it is merged, not before: four hover points and one lever
+click moved with what they point at; one hover check became a check of the strip's hint and table title.
+
+Next: the same helper pattern, one more round on that branch with the four fixes above, then all `lab-*` browser
+checks, then Claude's verdict from a sheet whose pictures are large enough to read (two views a row, not four).
 
 ## Order of work
 
