@@ -141,6 +141,27 @@ solid), `test-everburn-easy`, `test-old-smoke` untouched, lane tier, build, the 
 `field-battle` browser checks, and a sheet `round-4.jpg` with the same twelve views. No frame check (rule 9); the
 render numbers of each place are recorded before and after.
 
+## Round 3 result (a Sonnet helper; judged by Claude from `round-4.jpg`, 12 November 2026): merged
+
+All seven fixes are built, one commit each. Where the build differs from the list above, accepted by Claude:
+
+- The mall's four drifts still read as cushions after reshaping, so they are gone with the rocks.
+- The lettering's cause was text aligned left and then turned half round, which threw each word 6 m off its board:
+  fixed in the mall's recipe, the model rebuilt, and the fault added to `docs/ART_LINE.md`.
+- The east wreck lies beyond the Boneyard road at (466, 338), because the furnace's path and the road left no room
+  in the old row. Each wreck is solid as the box round it (the game's solids are boxes that do not turn), so the
+  boxes are larger than the wrecks. Roads stay 8 m clear of every solid, as the existing checks ask.
+- Big Bess rests at (464, 262). The well's eleven props are cut from the Ridge's kit and have no collision.
+- The mall is drawn in 7 pieces where it was 254: its views fell from about 740 draw calls to about 250.
+
+**Changed assertions, reviewed by Claude (rule 18),** all in `tools/test-scablands-scene.mjs`: the smoke check looks
+for the drawn fire and smoke, since the spheres are gone; the count of solids is 18 where it was 16, since one box
+became three; Big Bess's resting place is the new one; and the check that the mall has rubble became a check that it
+has none. Each follows a thing this round removed or moved by design; nothing is loosened.
+
+Next round (not started): a redder flame core seen close, a boarded front and a sign on the mall's road side, larger
+things beside the well, stand-ins beyond 280 m that look like the place, and the three items left out above.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read

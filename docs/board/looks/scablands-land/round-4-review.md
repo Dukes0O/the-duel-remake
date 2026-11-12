@@ -83,4 +83,8 @@ the views were re-aimed at the moved wrecks and Big Bess stands in a new place.
 What the numbers say: the mall's draw calls fall to about a third (254 meshes became 7) and the well's rise by 14 to 30 (the fire and smoke are 21 draw calls, the merged props a handful). The Boneyard moves
 with how many wrecks the camera sees. No frame check was run (rule 9).
 
-Verdict (Claude): to be written.
+Verdict (Claude): a clear step, accepted and merged. The well now has a real flame, firelight on the ground and a
+smoke plume that marks it from the mall and the Boneyard. The mall stands clean with its words on its boards. The
+wrecks lie as wrecks, and Big Bess rests in the open. Still short of the furnace's standard, for the next round: from
+12 m the flame is a white streak against the clouds and needs a darker, redder core; the mall shows the road a blank
+wall; the props beside the well are too small for a 78 m disc; past 280 m the mall and the Boneyard are still boxes.
