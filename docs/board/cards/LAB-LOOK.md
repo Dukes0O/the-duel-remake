@@ -90,7 +90,8 @@ removal; the challenges in the 3D world; and the walking hangar.
 - Checks on the builder's run: every `tools/test-lab-*.mjs`, all sixteen classroom browser scenarios, `lab-view`,
   `lab-navigation`, `lab-brian-faces`, and `lab-walk` on its one rerun alone (it timed out once while other jobs were
   running, rule 7); lane tier 45 of 45; build.
-- Still to do: `docs/lab-lesson-authoring.md` and some old change notes still describe the removed frame. The answer
+- `docs/lab-lesson-authoring.md` described the removed frame and is deleted; its one live part, the three-sentence
+  wording rule for classroom lessons, is now `docs/LAB.md` section 13.1. Some old change notes still describe the frame. The answer
   cards show at 120 by 60 pixels, so their small text is near 6 pixels; the stage step enlarges them.
 
 ## Order of work
