@@ -26,9 +26,11 @@ player uses it decides how hard they fight.
 
 | Road | Places (x, z) | Length | Pay | Feud |
 | --- | --- | --- | --- | --- |
-| **Long road** | well (-424, 304); (-450, 40); (-300, -230); (-60, -380); (170, -340); (350, -200); (480, -90); Tin Town (600, 0) | about 1.9 km | 1 share | One step down, never below Watching |
-| **Boneyard road** | well (-424, 304); (-200, 350); (0, 370); (250, 415); Boneyard (424, 304); the safe road (230, 150); Tin Town (600, 0) | about 1.6 km | 2 shares | One step up, never above War party |
+| **Long road** | well (-424, 304); (-450, 40); (-300, -230); (-60, -380); (170, -340); (350, -200); (480, -90); Tin Town (600, 0) | about 1.64 km | 1 share | One step down, never below Watching |
+| **Boneyard road** | well (-424, 304); (-200, 350); (0, 370); (250, 415); Boneyard (424, 304); Tin Town's gate (575, 62); Tin Town (600, 0) | about 1.25 km | 2 shares | One step up, never above War party |
 
+- Corrected by Claude on 11 November after the first build: the Boneyard road first went back west to the safe road
+  before turning for Tin Town, which made it as long as the long road. It now goes straight on from the Boneyard.
 - A share is the scrap that Everburn job 4 pays today. The builder reads that amount from the game and uses it.
 - Big Bess keeps job 4's manners: 9 metres a second, health 100, a rest when she is hurt and then that stretch again.
   A run is never lost for good.
