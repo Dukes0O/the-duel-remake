@@ -16,3 +16,16 @@ Job 6's defend step shows its opening line as the raw id "everburn-job-6-start".
   check that the start is clear of every solid of the well.
 - Codex cannot run a browser under its protected mode: Claude runs `everburn`, `everburn-play` and `everburn-well`
   on the branch.
+
+## Found in the first build, and decided (Claude, 12 November 2026)
+
+- **The story's written lines were never shown in jobs 1, 2, 3, 5 and 6.** Those jobs ask for placeholder ids
+  (`everburn-job-1-start` and fifteen others) while the written lines sit in `src/story/ember-lines.js` under their
+  own ids. This replaces "an id with no words shows nothing": thirteen placeholders are wired to their written lines
+  by each line's "when" (the table is in the change note), and Codex audits every written line for whether any job
+  ever asks for it. Three placeholders have no written line (`everburn-job-2-exit`, `everburn-job-6-wave-restart`,
+  `everburn-soup-spilled`): they show nothing until Claude writes one.
+- **The yard's gate buttons are removed.** The yard's Next up button replaced the story entry. Driving the Scablands
+  freely is not built; it gets its own card when the place is worth exploring (SCABLANDS-LAND's other places first).
+- The start of job 6 is a field on the step, so that the job mode names no job.
+
