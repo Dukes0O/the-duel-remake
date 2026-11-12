@@ -163,6 +163,37 @@ Still to do before this card closes:
    furnace tougher and its cinders gentler, so that winning is less certain and Big Bess is less close to resting.
 2. One play by hand, to see the cinders and the last fire while driving.
 
+### Tuning: what the battle should feel like (Claude, 12 November 2026, before the numbers move)
+
+The battle should be a race against the road: the player has until Tin Town's gate to break three doors, and the
+riders ahead cost time. Losing that race is the kind ending (the gas is home, the furnace comes back). Big Bess
+should be hurt, never one cinder from resting when the player has fought well.
+
+Targets for scripted drivers, 10 tries each, same seeds as the table above:
+
+| Driver | Big Bess home | Battle won | Her lowest health in a won battle |
+| --- | --- | --- | --- |
+| Easy, child-pace | 10 | 8 or more | 50 or more |
+| Medium, clears riders and breaks doors | 10 | 6 to 8 | 25 or more in at least 7 of the won battles |
+| Medium, never fights | 10 | 0 | (not won) |
+| Hard, clears riders and breaks doors | 8 or more | 2 to 5 | no target |
+
+First the builder finds out and writes down why the fighting driver's Big Bess falls to 1 while the driver who never
+fights keeps 22. If that is a fault in a rule or in the scripted driver, it is fixed before any number moves.
+
+Numbers that may move, in this order, and only for a furnace whose definition says `battle`:
+
+1. Cinders on Big Bess: Medium from 6 health a second down to no less than 3; Hard from 9 down to no less than 6.
+   Easy stays at 2.
+2. The time between one door's glow and the next (the stoke), so that three doors take most of the road: up to twice
+   today's.
+3. How long a broken door stops the furnace: from 8 seconds down to no less than 5.
+4. How long a door glows on Medium and Hard: down to no less than 4 seconds.
+
+Not to move: Big Bess's pace and health, the furnace's pace, one hit breaking a glowing door, Easy's one door, pay,
+the save, the lines, and anything in the story's own fight (job 6). If the targets cannot be met inside these
+limits, the builder stops and reports the nearest result.
+
 ## Not in this card
 
 A second group's feud, the Scrapdome challenge, lasting damage to Tin Town, sending someone else on a run.
