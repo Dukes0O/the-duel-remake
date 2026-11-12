@@ -64,7 +64,7 @@ export const EVERBURN_JOBS = Object.freeze([
       closing:['story.ember.cinder.22']})]}),
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
     resultLineId:'story.ember.auntie-solder.6',
-    easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'everburn-job-4-start',
+    easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
@@ -75,7 +75,8 @@ export const EVERBURN_JOBS = Object.freeze([
         Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2',500,41), count:2})]),
       // The furnace paces her on the high ground while she is between 30% and 70% of her road.
       sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
-      reward:'scrap', startLineId:'everburn-job-4-start', wonLineId:'everburn-job-4-won'})]}),
+      // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
+      reward:'scrap', startLineId:'story.ember.moss.1', closing:['story.ember.auntie-solder.6']})]}),
   Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
     resultLine:'You carried Old Smoke’s key back to the Everburn.',
     easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'everburn-job-5-start',
