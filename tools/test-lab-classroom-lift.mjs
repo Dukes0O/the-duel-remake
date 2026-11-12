@@ -5,7 +5,7 @@ import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/cla
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {readFileSync} from 'node:fs';
 import {STEPS, OWN_KG, MOST_KG, CAR_KG, CRATE_KG, BEST_CRATES, BAND_M, HOLD_S, FREE_TRIES, kg, weightOf, leverShare} from '../src/lab/lessons/lift-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle} from '../src/lab/lessons/lift-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, dragAngle, strip} from '../src/lab/lessons/lift-board.js';
 import {padForces, KESTREL, GRAVITY} from '../src/lab/benches/lift-pad.js';
 import {heliMass, availableThrust, createHeliState} from '../src/heli/heli-flight.js';
 import {CHALLENGE_RULES} from '../src/lab/lab-challenges.js';
@@ -409,4 +409,47 @@ test('review: metres are defined before “1 m” is used, and the rotor’s lim
     assert.doesNotMatch(words, /has a most\b|a most push of/, step.id);
   });
   for (const idea of lesson.keyIdeas) assert.doesNotMatch(idea.text, /has a most\b/);
+});
+
+test('the stage step: the numbers and tables are in the strip under the board, with the words and values the board used to draw', () => {
+  const session = createClassroomSession(lesson);
+  assert.equal(strip(session.view()), null, 'the wonder has no strip');
+  playThroughTo(session, 'word-weight');
+  let s = strip(session.view());
+  assert.deepEqual(s.readouts.map(r => `${r.label} ${r.value}`), ['Weight 1,630 kg']);
+  assert.deepEqual(s.parts, ['Kestrel One 1,630 kg']);
+  playThroughTo(session, 'word-hover');
+  session.act('lever:up');
+  s = strip(session.view());
+  assert.deepEqual(s.readouts.map(r => [r.label, r.value, r.tone]), [['Lift', '1,630 kg', 'good'], ['Weight', '1,630 kg', 'bad'], ['Lever', '42%', 'accent'], [null, 'Lifting', 'accent']]);
+  const watch = createClassroomSession(lesson);
+  playThroughTo(watch, 'watch-lever');
+  assert.deepEqual(strip(watch.view()).tables[0].rows.map(r => [r.label, r.value]), [['Less lift than weight', '…'], ['Lift equal to weight', '…'], ['More lift than weight', '…']]);
+  const free = createClassroomSession(lesson);
+  playThroughTo(free, 'try-free');
+  free.act('go');
+  const table = strip(free.view()).tables.find(t => t.title === 'Your results');
+  assert.deepEqual(table.rows, [{label: 'No load at 0%', value: 'stays down', tone: 'good'}]);
+  const check = createClassroomSession(lesson);
+  playThroughTo(check, 'check-more');
+  assert.equal(strip(check.view()), null, 'no numbers while the question is open');
+  check.act('answer:0');
+  assert.ok(strip(check.view()).readouts.some(r => r.label === 'Lift'), 'the numbers come with the answer');
+});
+
+test('the stage step: every control sits where it is drawn, and the stock and the Dusthawk are at the scene’s scale', () => {
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  const v = session.view();
+  for (const action of ['crate:add', 'car']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action);
+  session.act('crate:add'); session.act('crate:add');
+  const loaded = session.view();
+  assert.equal(hitTest(loaded, ...targetPoint(loaded, 'crate:remove'))?.action, 'crate:remove');
+  assert.equal(hitTest(loaded, ...targetPoint(loaded, 'crate:add'))?.action, 'crate:add', 'the stock still has two crates');
+  for (let i = 0; i < 2; i++) session.act('crate:add');
+  const empty = session.view();
+  assert.equal(hitTest(empty, ...targetPoint(empty, 'crate:add')), null, 'with no spare crates there is nothing to press');
+  const [lx, ly] = targetPoint(v, 'lever:top');
+  assert.equal(hitTest(v, lx, ly)?.drag, 'lever');
+  assert.ok(Math.abs(dragAngle(v, 'lever', lx, ly) - MOST_KG) < 1);
 });

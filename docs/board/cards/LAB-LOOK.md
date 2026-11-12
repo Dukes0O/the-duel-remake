@@ -116,6 +116,22 @@ panel gains nothing. The cure is a rule about what belongs on the board.
 - This step changes where things are on screen, so each lesson's test and scenario assertions about positions are
   reviewed by Claude as they change (rule 18). No step, word or number changes.
 
+## Round 8: the stage step on Lift (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Built and merged (`docs/board/looks/lab-look/round-8.jpg`). A board may now export `strip(view)`; the page shows its
+readouts and tables under the board, and a board without it looks exactly as before. Lift's scene is 1.55 times its
+own size. The helicopter is about a quarter larger on screen.
+
+**The finding that changes the next step:** every board is 1000 by 680, and on a laptop the board's panel is much
+wider than that, so about 150 pixels stand empty at each side while the strip takes height the picture needs. The
+large gain is a wider board (about 1300 by 680) whose scene uses the whole panel. That is a change to each lesson's
+layout, so it is decided before a second lesson gets the stage step: Claude draws Lift on a wide board first, and
+the other lessons follow that example by helper.
+
+Also seen: under 1500 pixels of window width, the free-test step's seven buttons wrap onto extra lines and squeeze
+the board to almost nothing. That was there before this card and needs its own fix (fewer, shorter buttons on that
+step).
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

@@ -21,13 +21,15 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
-    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
+    <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><div class="lc-strip" hidden></div><p class="lc-hover" hidden></p></div>
     <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
     <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk" role="img" aria-label="Brian"><span>B</span></div><b class="lc-name">Brian</b></div>
       <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('T')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
+  // A lesson that hands its numbers to the page (the stage step) gets a tighter frame, so that the board keeps its height.
+  if (board.strip) root.classList.add('lc-staged');
   stage.append(root);
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
@@ -149,6 +151,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const brian = note ? {text: note, mood: 'explain'} : passed && v.last ? {text: passed, mood: 'cheer'} : v.brian;
     paintPage(v, brian);
     paintPhysics(v);
+    paintStrip(v);
     // Brian's offer of help sits under his words, so a slow reader never loses them.
     const nudgeText = !note && !(passed && v.last) && v.nudge ? v.nudge.text : '';
     setHtml($('.lc-nudge'), 'nudge', escape(nudgeText));
@@ -224,6 +227,22 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     setHtml($('.lc-formulas'), 'formulas', formulas.map(f => `<section><h4>${escape(f.title)}</h4>` +
       (f.formula ? `<p class="lc-formula">${math(f.formula)}</p>` : '') + (f.worked ? `<p class="lc-worked">${math(f.worked)}</p>` : '') +
       (f.note ? `<p class="lc-formula-note">${math(f.note)}</p>` : '') + '</section>').join(''));
+  }
+
+  // The strip under the board (the stage step, docs/board/cards/LAB-LOOK.md): the readouts, tables and small pictures with
+  // numbers that a lesson's board hands to the page, in HTML so that they are sharp and large. A board with no strip() shows none.
+  function paintStrip(v) {
+    const strip = $('.lc-strip'), data = board.strip?.(v) ?? null;
+    if (!data) { if (!strip.hidden) strip.hidden = true; setHtml(strip, 'strip', ''); return; }
+    const tone = value => value ? ` tone-${escape(value)}` : '';
+    const readouts = data.readouts.map(r => `<p class="lc-readout${tone(r.tone)}">${r.label ? `<span>${escape(r.label)}</span>` : ''}<b>${escape(r.value)}</b></p>`).join('') +
+      (data.parts?.length ? `<ul class="lc-parts">${data.parts.map(part => `<li>${escape(part)}</li>`).join('')}</ul>` : '');
+    const tables = (data.tables ?? []).map(table => `<div class="lc-table${table.rows.length > 3 ? ' wide' : ''}">${table.title ? `<h4>${escape(table.title)}</h4>` : ''}<div class="lc-rows">` +
+      table.rows.map(row => `<p><span>${escape(row.label)}</span><b class="${tone(row.tone).trim()}">${escape(row.value)}</b></p>`).join('') + '</div></div>').join('');
+    setHtml(strip, 'strip', `${readouts ? `<div class="lc-readouts">${readouts}</div>` : ''}${tables}`);
+    strip.classList.toggle('has-table', tables !== '');
+    if (data.hint) strip.title = data.hint; else strip.removeAttribute('title');
+    if (strip.hidden) strip.hidden = false;
   }
 
   function paintBoard(v, dt) {

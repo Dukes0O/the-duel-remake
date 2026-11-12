@@ -7,12 +7,16 @@ export {BOARD};
 export const pressMovesDrag = true;
 
 // The lever: a kilogram scale from 0 at the bottom to 4,000 kg at the top.
-const GX = 100, G0 = 575, G1 = 150, SCALE_KG = 4000, PER_KG = (G0 - G1) / SCALE_KG;
+const GX = 80, G0 = 575, G1 = 150, SCALE_KG = 4000, PER_KG = (G0 - G1) / SCALE_KG;
 const leverY = kgValue => G0 - Math.max(0, Math.min(SCALE_KG, kgValue)) * PER_KG;
-// The pad scene is drawn 1.2 times its own units, so Kestrel One reads at a glance.
-const PAD_X = 505, SCENE = 1.2, PAD_HALF = 225, METRE = 24, CRATE = Object.freeze({w: 38, h: 32}), LOAD_X = 60, CABLE_PX = 90, HOOK = 22;
-const BOX = Object.freeze({x: 770, y: 14, w: 216, h: 272});
-const STOCK_X = 805, PARKED_CAR_X = 935, DIAL_X = PAD_X - 140, DIAL_Y = GROUND_Y + 42;
+// The stage step (docs/board/cards/LAB-LOOK.md): the board holds the picture only, so the pad scene is drawn 1.55 times
+// its own units, which is as large as Kestrel One, its load, the lever and the stock of crates and the Dusthawk fit across
+// the board together. The numbers and tables are on the page under the board (strip, below). The spare crates and the parked
+// Dusthawk are drawn at the same scale, so a crate is the same size in the stock and on the hook.
+const PAD_X = 517, SCENE = 1.55, PAD_HALF = 172, WONDER_PAD_HALF = 225, METRE = 20, CRATE = Object.freeze({w: 38, h: 32}), LOAD_X = 45, PARK_X = -125, CABLE_PX = 90, HOOK = 22;
+// Lift and weight arrows are on one scale, in the pad's own units per kilogram.
+const ARROW = .022;
+const STOCK_X = 796, STOCK_W = CRATE.w * SCENE, PARKED_CAR_X = 925, DIAL_X = PAD_X - 140, DIAL_Y = GROUND_Y + 42;
 
 // ---- where everything is, in the pad's own units (ground at 0, pad centre at x 0) ----
 function crateSpots(f) {
@@ -29,11 +33,16 @@ function setGeometry(f, {rest = true} = {}) {
   const ring = {x: ringX, y: top - 24};
   const tautX = ring.x, tautY = ring.y - CABLE_PX - HOOK;
   const k = rest ? f.taut * f.taut * (3 - 2 * f.taut) : 1;
-  return {hx: -150 + (tautX + 150) * k, hy: -40 + (tautY + 40) * k, loadedSet, crates, carAt, ring, k};
+  return {hx: PARK_X + (tautX - PARK_X) * k, hy: -40 + (tautY + 40) * k, loadedSet, crates, carAt, ring, k};
 }
 const local = (view, x, y) => [(x - PAD_X) / SCENE, (y - GROUND_Y) / SCENE];
 const toBoard = (lx, ly) => [PAD_X + lx * SCENE, GROUND_Y + ly * SCENE];
 const bandY = metres => GROUND_Y - (8 + metres * METRE) * SCENE;
+// The stock of spare crates stands in one column at the right, the parked Dusthawk beyond it, both on the floor line.
+const spareCrates = f => MAX_CRATES - f.crates;
+const stockTop = f => GROUND_Y - spareCrates(f) * (CRATE.h + 2) * SCENE;
+const inStock = (f, x, y, margin = 0) => spareCrates(f) > 0 && x > STOCK_X - margin && x < STOCK_X + STOCK_W + margin && y > stockTop(f) - margin && y < GROUND_Y + 4;
+const onParkedCar = (x, y) => Math.abs(x - PARKED_CAR_X) < 42 * SCENE && y > GROUND_Y - 46 * SCENE && y < GROUND_Y + 4;
 
 // ---- hit testing and Brian's pointer, in board units ----
 export function hitTest(view, x, y) {
@@ -42,10 +51,10 @@ export function hitTest(view, x, y) {
   if (!f || view.scene !== 'pad') return null;
   const [lx, ly] = local(view, x, y), g = setGeometry(f);
   if (view.keys.Space === 'rotor' && Math.abs(lx - g.hx) < 130 && ly > g.hy - 60 && ly < g.hy + 34) return {action: 'rotor'};
-  if (view.keys[1] === 'crate:add' && x > STOCK_X - 8 && x < STOCK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 10 && y < GROUND_Y + 4) return {action: 'crate:add'};
+  if (view.keys[1] === 'crate:add' && inStock(f, x, y, 8)) return {action: 'crate:add'};
   if (view.keys[2] === 'crate:remove' && g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 + 4 && Math.abs(ly - c.y) < CRATE.h / 2 + 4)) return {action: 'crate:remove'};
   if (view.keys[3] === 'car') {
-    if (!f.car && Math.abs(x - PARKED_CAR_X) < 44 && y > GROUND_Y - 50 && y < GROUND_Y + 4) return {action: 'car'};
+    if (!f.car && onParkedCar(x, y)) return {action: 'car'};
     if (g.carAt && Math.abs(lx - g.carAt.x) < 42 && Math.abs(ly - g.carAt.y) < 26) return {action: 'car'};
   }
   return null;
@@ -58,7 +67,6 @@ export function hoverInfo(view, x, y) {
     if (view.gauge === 'weight' && Math.abs(y - redLineY(f)) < 8 && x > GX - 30 && x < GX + 150) return `The red line marks the total weight, ${kg(f.weight)}. With the lever here, lift equals weight.`;
     if (x > GX - 50 && x < GX + 80 && y > G1 - 24 && y < G0 + 30) return `This is the collective lever, now giving ${kg(f.lift)} of lift. Raising it tilts the blades more steeply, which gives more lift. Drag it, or use W and S.`;
   }
-  if (view.readouts && x > BOX.x && y > BOX.y && x < BOX.x + BOX.w && y < BOX.y + BOX.h) return 'Green shows lift, the rotor’s push upward. Red shows weight, the Earth’s pull downward.';
   if (view.band && y < bandY(BAND_M[0]) && y > bandY(BAND_M[1])) return `In the challenge you hold the Dusthawk inside this strip, ${BAND_M[0]} to ${BAND_M[1]} m above the ground, for ${HOLD_S} seconds.`;
   if (!f || view.scene !== 'pad') return null;
   const [lx, ly] = local(view, x, y), g = setGeometry(f);
@@ -66,8 +74,8 @@ export function hoverInfo(view, x, y) {
   if (Math.abs(lx - g.hx) < 60 && ly > g.hy - 28 && ly < g.hy + 34) return `Kestrel One, with its pilot and a full tank of fuel, weighs ${kg(OWN_KG)}.`;
   if (g.carAt && Math.abs(lx - g.carAt.x) < 42 && Math.abs(ly - g.carAt.y) < 26) return `The Dusthawk rally car weighs ${kg(CAR_KG)}.`;
   if (g.crates.some(c => Math.abs(lx - c.x) < CRATE.w / 2 && Math.abs(ly - c.y) < CRATE.h / 2)) return `This crate weighs ${kg(CRATE_KG)}.`;
-  if (view.stock && x > STOCK_X - 8 && x < STOCK_X + 2 * CRATE.w + 12 && y > GROUND_Y - 3 * CRATE.h - 10 && y < GROUND_Y) return `These are spare crates, ${kg(CRATE_KG)} each.` + (view.keys[1] ? ' Click them to load one.' : '');
-  if (view.stock === 'all' && !f.car && Math.abs(x - PARKED_CAR_X) < 44 && y > GROUND_Y - 50 && y < GROUND_Y) return `The Dusthawk weighs ${kg(CAR_KG)}.` + (view.keys[3] ? ' Click it to hang it from the cable.' : '');
+  if (view.stock && inStock(f, x, y, 8) && y < GROUND_Y) return `These are spare crates, ${kg(CRATE_KG)} each.` + (view.keys[1] ? ' Click them to load one.' : '');
+  if (view.stock === 'all' && !f.car && onParkedCar(x, y) && y < GROUND_Y) return `The Dusthawk weighs ${kg(CAR_KG)}.` + (view.keys[3] ? ' Click it to hang it from the cable.' : '');
   if (Math.hypot(x - DIAL_X, y - DIAL_Y) < 32) return 'This dial shows the weight still resting on the pad, which is the total weight less the rotor’s lift.';
   if (y > GROUND_Y - 10 && y < GROUND_Y + 20 && Math.abs(x - PAD_X) < PAD_HALF * SCENE) return 'The weighing pad weighs whatever rests on it.';
   return null;
@@ -81,9 +89,9 @@ export function targetPoint(view, action) {
   if (action === 'lever:weight') return [GX, leverY(Math.min(f.weight, f.most))];
   if (action === 'lever:mark') return [GX, leverY(view.mark)];
   if (action === 'lever:top') return [GX, leverY(f.most)];
-  if (action === 'crate:add') return [STOCK_X + CRATE.w, GROUND_Y - CRATE.h];
+  if (action === 'crate:add') return [STOCK_X + STOCK_W / 2, GROUND_Y - CRATE.h * SCENE / 2];
   if (action === 'crate:remove') { const c = g.crates.at(-1); return c ? toBoard(c.x, c.y) : null; }
-  if (action === 'car') return f.car ? toBoard(g.carAt.x, g.carAt.y) : [PARKED_CAR_X, GROUND_Y - 22];
+  if (action === 'car') return f.car ? toBoard(g.carAt.x, g.carAt.y) : [PARKED_CAR_X, GROUND_Y - 22 * SCENE];
   if (action === 'rotor') return toBoard(g.hx, g.hy - 35);
   if (action === 'release') return toBoard(g.hx, g.hy);
   return null;
@@ -94,7 +102,7 @@ export function dragAngle(view, id, x, y) { return (G0 - y) / PER_KG; }
 // ---- drawing ----
 // The crate and the weighing pad are drawn once, in board-art.js. Each crate shows its weight, 500 kg, on the side.
 function crate(ctx, x, y) { plankCrate(ctx, x, y, CRATE.w, CRATE.h, '500'); }
-function pad(ctx) { weighingPad(ctx, PAD_HALF, 70); }
+function pad(ctx, half = PAD_HALF) { weighingPad(ctx, half, 70); }
 // The pad's dial: a brass-rimmed gauge whose needle shows the weight still resting on the pad.
 function dial(ctx, reads, x, y) {
   const rim = ctx.createLinearGradient(x - 30, y - 30, x + 30, y + 30); rim.addColorStop(0, theme.brass[0]); rim.addColorStop(.5, theme.brass[1]); rim.addColorStop(1, theme.brass[2]);
@@ -134,9 +142,9 @@ function air(ctx, hx, hy, liftKg, time) {
 }
 const arrow = forceArrow;
 // One helicopter and its load, in the pad's own units.
-function drawSet(ctx, f, time, {rest = true, strain = false} = {}) {
+function drawSet(ctx, f, time, {rest = true, strain = false, padHalf = PAD_HALF} = {}) {
   const g = setGeometry(f, {rest});
-  pad(ctx);
+  pad(ctx, padHalf);
   // The helicopter's shadow on the pad: smaller and fainter as it climbs.
   shadow(ctx, g.hx - 20, -12, 120 - Math.min(60, f.h * 12), Math.max(.12, .5 - f.h * .08));
   for (let i = 0; i < (f.dropped ?? 0); i++) crate(ctx, LOAD_X + 100 + i * (CRATE.w + 2), -8 - CRATE.h / 2);
@@ -192,32 +200,46 @@ function gauge(ctx, view) {
   if (interactive) { keyCap(ctx, GX - 22, G0 + 34, 'W'); text(ctx, 'up', GX - 8, G0 + 34, {size: 14, align: 'left'}); keyCap(ctx, GX + 26, G0 + 34, 'S'); text(ctx, 'down', GX + 40, G0 + 34, {size: 14, align: 'left'}); }
 }
 const STATUS = {pad: 'On the pad', taut: 'Load still on the pad', rising: 'Lifting', hovering: 'Hovering', climbing: 'Climbing', high: 'Still climbing', sinking: 'Sinking'};
-function readouts(ctx, view) {
-  const f = view.flight, kind = view.readouts;
-  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(BOX.x, BOX.y, BOX.w, BOX.h, 8); ctx.fill(); ctx.stroke();
-  let y = BOX.y + 24;
-  const row = (label, value, colour) => { text(ctx, label, BOX.x + 14, y, {size: 17, align: 'left', weight: 600}); text(ctx, value, BOX.x + BOX.w - 14, y, {size: 21, align: 'right', colour}); y += 30; };
-  if (kind === 'lift' || kind === 'both') row('Lift', kg(f.lift), theme.good);
-  if (kind === 'weight' || kind === 'both') row('Weight', kg(f.weight), theme.bad);
-  if ((kind === 'lift' || kind === 'both') && view.leverRow) row('Lever', `${f.lever}%`, theme.accent);
-  if (kind === 'weight') for (const part of f.parts) { text(ctx, part, BOX.x + 14, y, {size: 14, align: 'left', weight: 600, colour: theme.faint}); y += 22; }
-  if (view.blade) blade(ctx, f, view.time);
-  if (kind === 'both') {
-    // The two arrows side by side, on one scale: when they are the same length, the helicopter hovers.
-    const mid = BOX.y + 172, per = 62 / SCALE_KG;
-    ctx.strokeStyle = theme.faint; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(BOX.x + 40, mid); ctx.lineTo(BOX.x + BOX.w - 40, mid); ctx.stroke();
-    arrow(ctx, BOX.x + 80, mid, f.lift * per, true, theme.good);
-    arrow(ctx, BOX.x + 136, mid, f.weight * per, false, theme.bad);
-    text(ctx, 'lift', BOX.x + 56, mid - 12, {size: 13, colour: theme.good, align: 'right'});
-    text(ctx, 'weight', BOX.x + 156, mid + 12, {size: 13, colour: theme.bad, align: 'left'});
-    text(ctx, STATUS[f.status], BOX.x + BOX.w / 2, BOX.y + BOX.h - 14, {size: 15, colour: f.status === 'hovering' ? theme.good : theme.accent});
+// ---- the page under the board: the readouts and the tables ----
+// The board draws none of these. The classroom page (classroom-ui.js) shows what strip() returns, in HTML.
+const TONES = {lift: 'good', weight: 'bad', lever: 'accent'};
+export function strip(view) {
+  const f = view.flight, kind = view.scene === 'pad' ? view.readouts : false;
+  const readouts = [], out = {readouts, parts: [], tables: [], hint: null};
+  if (kind) {
+    if (kind === 'lift' || kind === 'both') readouts.push({label: 'Lift', value: kg(f.lift), tone: TONES.lift});
+    if (kind === 'weight' || kind === 'both') readouts.push({label: 'Weight', value: kg(f.weight), tone: TONES.weight});
+    if ((kind === 'lift' || kind === 'both') && view.leverRow) readouts.push({label: 'Lever', value: `${f.lever}%`, tone: TONES.lever});
+    if (kind === 'both') readouts.push({label: null, value: STATUS[f.status], tone: f.status === 'hovering' ? 'good' : 'accent'});
+    if (kind === 'weight') out.parts = f.parts;
+    out.hint = 'Green shows lift, the rotor’s push upward. Red shows weight, the Earth’s pull downward.';
   }
+  const rows = list => list.map(row => ({label: row.label, value: row.value ?? '…', tone: row.value ? 'good' : 'faint'}));
+  if (view.scene === 'pad' && view.table) out.tables.push({title: null, rows: rows(view.table)});
+  if (view.scene === 'pad' && view.freeTable?.length) out.tables.push({title: 'Your results', rows: rows(view.freeTable)});
+  return readouts.length || out.parts.length || out.tables.length ? out : null;
 }
-// One blade seen end on, drawn large: a higher lever tilts the blade more steeply, and more air goes down.
-function blade(ctx, f, time) {
-  const x = BOX.x + BOX.w / 2, y = BOX.y + 134, share = Math.min(1, f.lift / f.most), tilt = (3 + share * 22) * Math.PI / 180;
-  text(ctx, 'One blade, seen end on', x, BOX.y + 92, {size: 14, colour: theme.accent});
+// The two small pictures that stay on the board, in its empty top right corner, with no numbers: lift and weight as arrows side
+// by side on one scale (when they are the same length, the helicopter hovers), and one blade seen end on, drawn large (a higher
+// lever tilts the blade more steeply, and more air goes down).
+const CORNER = Object.freeze({x: 800, y: 14, w: 186, h: 112});
+function cornerPanel(ctx, w = CORNER.w) {
+  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(CORNER.x, CORNER.y, w, CORNER.h, 8); ctx.fill(); ctx.stroke();
+}
+function arrowsPicture(ctx, f) {
+  const x = CORNER.x, mid = CORNER.y + 56, per = 40 / SCALE_KG;
+  cornerPanel(ctx, 150);
+  ctx.strokeStyle = theme.faint; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 14, mid); ctx.lineTo(x + 136, mid); ctx.stroke();
+  arrow(ctx, x + 52, mid, f.lift * per, true, theme.good, 8);
+  arrow(ctx, x + 98, mid, f.weight * per, false, theme.bad, 8);
+  text(ctx, 'lift', x + 38, mid - 18, {size: 15, colour: theme.good, align: 'right'});
+  text(ctx, 'weight', x + 112, mid + 18, {size: 15, colour: theme.bad, align: 'left'});
+}
+function bladePicture(ctx, f, time) {
+  const x = CORNER.x + CORNER.w / 2, y = CORNER.y + 42, share = Math.min(1, f.lift / f.most), tilt = (3 + share * 22) * Math.PI / 180;
+  cornerPanel(ctx);
+  text(ctx, 'One blade, seen end on', x, CORNER.y + 18, {size: 14, colour: theme.accent});
   ctx.save(); ctx.translate(x, y); ctx.rotate(-tilt);
   ctx.fillStyle = theme.iron[0]; ctx.strokeStyle = theme.iron[2]; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.ellipse(0, 0, 44, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -225,20 +247,22 @@ function blade(ctx, f, time) {
   const n = f.lift > 0 ? Math.max(1, Math.round(share * 5)) : 0;
   ctx.strokeStyle = 'rgba(170,220,245,.85)'; ctx.lineWidth = 2.2;
   for (let i = 0; i < n; i++) {
-    const ax = x - 40 + (n === 1 ? 40 : i * (80 / (n - 1))), ay = y + 14 + (time * (30 + share * 50) + i * 13) % 22;
-    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 24); ctx.lineTo(ax - 4, ay + 18); ctx.moveTo(ax, ay + 24); ctx.lineTo(ax + 4, ay + 18); ctx.stroke();
+    const ax = x - 40 + (n === 1 ? 40 : i * (80 / (n - 1))), ay = y + 10 + (time * (30 + share * 50) + i * 13) % 16;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay + 22); ctx.lineTo(ax - 4, ay + 16); ctx.moveTo(ax, ay + 22); ctx.lineTo(ax + 4, ay + 16); ctx.stroke();
   }
-  text(ctx, f.lift > 0 ? 'air thrown down' : 'rotor stopped', x, BOX.y + BOX.h - 16, {size: 14, colour: f.lift > 0 ? 'rgba(170,220,245,.95)' : theme.faint});
+  text(ctx, f.lift > 0 ? 'air thrown down' : 'rotor stopped', x, CORNER.y + CORNER.h - 14, {size: 14, colour: f.lift > 0 ? 'rgba(170,220,245,.95)' : theme.faint});
 }
 function stock(ctx, view) {
-  const f = view.flight, spare = MAX_CRATES - f.crates;
-  for (let i = 0; i < spare; i++) crate(ctx, STOCK_X + CRATE.w / 2 + (i % 2) * (CRATE.w + 2), GROUND_Y - CRATE.h / 2 - Math.floor(i / 2) * (CRATE.h + 2));
-  if (view.glow === 'crate:add' && spare) halo(ctx, STOCK_X + CRATE.w, GROUND_Y - CRATE.h, 50, view.time);
-  if (view.keys[1]) keyCap(ctx, STOCK_X + CRATE.w, GROUND_Y + 26, '1');
-  if (view.keys[2] && f.crates) { keyCap(ctx, STOCK_X + CRATE.w + 26, GROUND_Y + 26, '2'); }
+  const f = view.flight, spare = spareCrates(f);
+  ctx.save(); ctx.translate(STOCK_X, GROUND_Y); ctx.scale(SCENE, SCENE);
+  for (let i = 0; i < spare; i++) crate(ctx, CRATE.w / 2, -CRATE.h / 2 - i * (CRATE.h + 2));
+  ctx.restore();
+  if (view.glow === 'crate:add' && spare) halo(ctx, STOCK_X + STOCK_W / 2, (GROUND_Y + stockTop(f)) / 2, 64, view.time);
+  if (view.keys[1]) keyCap(ctx, STOCK_X + STOCK_W / 2 - 14, GROUND_Y + 26, '1');
+  if (view.keys[2] && f.crates) { keyCap(ctx, STOCK_X + STOCK_W / 2 + 14, GROUND_Y + 26, '2'); }
   if (view.stock === 'all') {
-    if (!f.car) car(ctx, PARKED_CAR_X, GROUND_Y - 23, 0);
-    if (view.glow === 'car') halo(ctx, ...(f.car ? toBoard(LOAD_X, -33) : [PARKED_CAR_X, GROUND_Y - 22]), 50, view.time);
+    if (!f.car) { ctx.save(); ctx.translate(PARKED_CAR_X, GROUND_Y); ctx.scale(SCENE, SCENE); car(ctx, 0, -23, 0); ctx.restore(); }
+    if (view.glow === 'car') halo(ctx, ...(f.car ? toBoard(LOAD_X, -33) : [PARKED_CAR_X, GROUND_Y - 22 * SCENE]), 64, view.time);
     if (view.keys[3]) keyCap(ctx, PARKED_CAR_X, GROUND_Y + 26, '3');
   }
 }
@@ -252,18 +276,8 @@ function band(ctx) {
   ctx.strokeStyle = 'rgba(86,214,131,.6)'; ctx.setLineDash([8, 6]); ctx.lineWidth = 2;
   for (const y of [y0, y1]) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); }
   ctx.setLineDash([]);
-  text(ctx, `${BAND_M[0]} to ${BAND_M[1]} m above the ground`, x1 - 5, y0 - 12, {size: 14, align: 'right', colour: theme.good});
-}
-function table(ctx, rows, {x = 230, y = 20, w = 330, title = null} = {}) {
-  const h = 30 + rows.length * 30 + (title ? 26 : 0);
-  ctx.fillStyle = 'rgba(10,14,15,.65)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
-  if (title) text(ctx, title, x + 14, y + 20, {size: 15, align: 'left', colour: theme.accent});
-  const top = y + 26 + (title ? 26 : 0);
-  rows.forEach((row, i) => {
-    text(ctx, row.label, x + 14, top + i * 30, {size: 16, align: 'left', weight: 600});
-    text(ctx, row.value ?? '…', x + w - 14, top + i * 30, {size: 18, align: 'right', colour: row.value ? theme.good : theme.faint});
-  });
+  // The label sits just under the strip's lower edge, clear of the load that hangs inside it.
+  text(ctx, `${BAND_M[0]} to ${BAND_M[1]} m above the ground`, x1 - 5, y1 + 14, {size: 14, align: 'right', colour: theme.good});
 }
 function drawPad(ctx, view) {
   background(ctx); floor(ctx, GROUND_Y + 8);
@@ -274,20 +288,19 @@ function drawPad(ctx, view) {
   if (view.air) air(ctx, g.hx, g.hy, f.lift, view.time);
   if (view.glow === 'rotor') halo(ctx, g.hx, g.hy - 35, 70, view.time);
   // Lift on the rotor and weight on the helicopter, as arrows on one scale, so that equal arrows mean a hover.
-  if (view.readouts === 'lift' || view.readouts === 'both') arrow(ctx, g.hx, g.hy - 44, f.lift * .035, true, theme.good, 8);
-  // The label sits on the side of the arrow away from the readouts.
-  if (view.forces && f.lift > 0) text(ctx, 'air pushes the rotor up', g.hx + (g.hx > 20 ? -14 : 14), g.hy - 44 - Math.max(16, f.lift * .03), {size: 13, align: g.hx > 20 ? 'right' : 'left', colour: theme.good});
+  if (view.readouts === 'lift' || view.readouts === 'both') arrow(ctx, g.hx, g.hy - 44, f.lift * ARROW, true, theme.good, 8);
+  // The label sits on the side of the arrow that has more room: toward the middle of the board.
+  if (view.forces && f.lift > 0) text(ctx, 'air pushes the rotor up', g.hx + (g.hx > 20 ? -14 : 14), g.hy - 44 - Math.max(16, f.lift * ARROW * .85), {size: 12, align: g.hx > 20 ? 'right' : 'left', colour: theme.good});
   if (view.forces && view.readouts === 'both') {
-    arrow(ctx, g.hx + 74, g.hy - 12, f.weight * .035, false, theme.bad, 8);
-    text(ctx, 'weight', g.hx + 86, g.hy + 4, {size: 13, align: 'left', colour: theme.bad});
+    arrow(ctx, g.hx + 74, g.hy - 12, f.weight * ARROW, false, theme.bad, 8);
+    text(ctx, 'weight', g.hx + 86, g.hy + 4, {size: 12, align: 'left', colour: theme.bad});
   }
   ctx.restore();
   dial(ctx, f.pad, DIAL_X, DIAL_Y);
   if (view.stock) stock(ctx, view);
   if (view.gauge) gauge(ctx, view);
-  if (view.readouts) readouts(ctx, view);
-  if (view.table) table(ctx, view.table);
-  if (view.freeTable?.length) table(ctx, view.freeTable, {x: 285, y: 14, w: 345, title: 'Your results'});
+  if (view.blade) bladePicture(ctx, f, view.time);
+  if (view.readouts === 'both') arrowsPicture(ctx, f);
   if (view.keys.Space === 'rotor') keyCap(ctx, ...toBoard(g.hx, g.hy - 70), 'Space');
 }
 function drawThree(ctx, view) {
@@ -310,7 +323,7 @@ function drawWonder(ctx, view) {
   outdoors(ctx);
   const f = view.flight;
   ctx.save(); ctx.translate(PAD_X, GROUND_Y); ctx.scale(SCENE, SCENE);
-  const g = drawSet(ctx, f, view.time, {strain: f.status === 'taut'});
+  const g = drawSet(ctx, f, view.time, {strain: f.status === 'taut', padHalf: WONDER_PAD_HALF});
   air(ctx, g.hx, g.hy, f.lift, view.time);
   ctx.restore();
   if (f.status === 'taut') text(ctx, 'engine at full power', ...toBoard(g.hx, g.hy - 62), {size: 18, colour: theme.accent});
@@ -324,7 +337,7 @@ function drawRecap(ctx, view) {
     ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 300); ctx.clip();
-    ctx.translate(x + w / 2 - 20, 372); ctx.scale(.55, .55);
+    ctx.translate(x + w / 2 - 20, 372); ctx.scale(.72, .72);
     const t = view.time;
     if (idea.id === 'match') { const f = mini({}, OWN_KG, 1.5 + Math.sin(t * 1.4) * .06); drawSet(ctx, f, t); arrow(ctx, 0, -40 - f.h * METRE - 44, OWN_KG * .04, true, theme.good, 10); arrow(ctx, 0, -40 - f.h * METRE + 40, OWN_KG * .04, false, theme.bad, 10); }
     if (idea.id === 'most') drawSet(ctx, mini({car: 1, crates: 2}, MOST_KG, 0, 1), t, {strain: true});

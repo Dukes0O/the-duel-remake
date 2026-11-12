@@ -1,5 +1,6 @@
 # Wasteland run log
 
+12 November, LAB-LOOK round 8 merged, card open (Claude; built by a Sonnet helper): the stage step on Lift (numbers and tables in a strip under the board, the scene 1.55 times its size, every control clicked where it is drawn); 14 classroom test files, three browser checks, lane tier 39 of 39, build.
 12 November, LAB-LOOK round 7 merged, card open (Claude; built by a Sonnet helper): answer-card pictures redrawn in all sixteen lessons, one copy of the crate and pad, the old five-step lesson frame removed with its test; every Lab test file, 19 of 20 Lab browser checks first time and lab-walk on its rerun alone, lane tier 45 of 45, build.
 12 November, SCABLANDS-LAND round 2 merged, card open (Claude; built by a Sonnet helper): the furnace stops in front of Tin Town's gate, the Boneyard road passes through it, the town has a watchtower, chimney smoke and its rust colours, the gate's fire takes the whole gate; furnace rules 616, run-gas 1,088, lane tier 48 of 48 on the builder's branch, build.
 12 November, LAB-LOOK round 6 merged, card open (Claude; built by a Sonnet helper): G-force, Grip, Headings and Suspension boards redrawn, so all sixteen lesson boards are done; lesson tests unchanged, four browser checks, lane tier 35 of 35, build.
