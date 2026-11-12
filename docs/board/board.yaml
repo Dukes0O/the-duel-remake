@@ -483,6 +483,17 @@ tasks:
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
 
+  - id: EVERBURN-RUN-AT-TOWN
+    title: "Old Smoke is seen before he is fought, and his last fight is a run at Tin Town"
+    owner: "claude"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/EVERBURN-RUN-AT-TOWN.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"
