@@ -1,7 +1,7 @@
 // A rolling-road demonstration of the game's tyre grip curve.
 import {gripBench, slipAtAngle, bestSlideDegrees} from '../benches/tunnel.js';
 import {tyreSlipGrip} from '../../config.js';
-import {BOARD, theme, background, text, keyCap, fitBoard, wrap, steelPanel, lcd, forceArrowTo, tarmac, bolt, labelPlate} from '../classroom/board-art.js';
+import {BOARD, theme, cardScene, background, text, keyCap, fitBoard, wrap, steelPanel, lcd, forceArrowTo, tarmac, bolt, labelPlate} from '../classroom/board-art.js';
 
 export {BOARD};
 export const pressMovesDrag = false;
@@ -283,20 +283,17 @@ export function drawBoard(ctx, view, width = BOARD.width, height = BOARD.height)
 
 export function drawPicture(ctx, picture, width, height) {
   ctx.save();
-  const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#343c3f'); gradient.addColorStop(1, '#1b2224');
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+  cardScene(ctx, width, height, {floorAt: height});
   const percent = picture.percent == null || !Number.isFinite(Number(picture.percent)) ? null : Number(picture.percent);
-  const x = width * .45, y = height * .52, radius = Math.min(width, height) * .25;
-  ctx.strokeStyle = '#d4bc73'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#202526'; ctx.beginPath(); ctx.roundRect(x - radius * .42, y - radius * .82, radius * .84, radius * 1.64, 7); ctx.fill();
-  for (let i = -1; i <= 1; i++) {
-    ctx.strokeStyle = '#9ba4a3';
-    ctx.beginPath();
-    ctx.moveTo(x - radius * .3, y + i * 9);
-    ctx.lineTo(x + radius * .3, y + i * 9);
-    ctx.stroke();
-  }
-  text(ctx, percent == null ? 'Grip?' : `${percent}%`, width * .78, height * .5, {size: 16, weight: 900});
-  text(ctx, 'tyre on road', width * .78, height * .72, {size: 10, colour: '#d2cbbd'});
+  // The tyre from above on the rolling road, with the blue travel arrow, as on the board.
+  const x = width * .26, y = height * .5;
+  tarmac(ctx, 6, y - 28, width * .56, 56);
+  ctx.strokeStyle = 'rgba(213,182,95,.75)'; ctx.lineWidth = 1.4; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(width * .56 + 2, y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.save(); ctx.translate(x, y); ctx.scale(1.1, 1.1); tyreFromAbove(ctx); ctx.restore();
+  forceArrowTo(ctx, x + 44, y - 3, x + 72, y - 3, '#69c5eb', 6);
+  lcd(ctx, width * .62, height * .2, width * .35, height * .38, '#e3c56f');
+  text(ctx, percent == null ? 'Grip?' : `${percent}%`, width * .795, height * .39, {size: 16, weight: 900, colour: '#e3c56f'});
+  labelPlate(ctx, width * .795, height * .74, width * .36, 22, .6);
+  text(ctx, 'tyre on road', width * .795, height * .74, {size: 12, colour: '#d2cbbd'});
   ctx.restore();
 }

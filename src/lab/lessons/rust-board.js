@@ -1,7 +1,7 @@
 // The Rust lesson's board (docs/board/cards/LAB-CLASSROOM-RUST.md): Brian's shelf of glass jars, a steel nail in each,
 // a wall calendar counting the days; the day dial, the protection switch, the jar buttons and a graph of the rust day by day;
 // and below, a close-up of why the rust forms, the results table or Brian's job card. Draws and hit-tests only.
-import {BOARD, theme, background, shadow, steel, bolt, bezel, shade, blend, grain, timber, labelPlate, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, cardScene, background, shadow, steel, bolt, bezel, shade, blend, grain, timber, labelPlate, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {FREE_JARS, MAX_DAYS, PROTECTION_NAME, pct, jarOf, shareOf, coatOf, rustAfter} from './rust-classroom.js';
 import {RUST as RUST_RULE} from '../benches/rust.js';
 import {RUST_OK, RUST_WEEK} from '../lab-workshop.js';
@@ -587,16 +587,25 @@ export function drawBoard(ctx, view, width, height) {
 // The answer cards' pictures: a nail with its rust and coat, or the Sirena's soak.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
+  cardScene(ctx, w, h, {floorAt: h});
   if (picture.kind === 'nail') {
-    ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(-Math.PI / 2);
+    // The nail lies along Brian's shelf plank, lit from the lamp.
+    const plank = Math.round(h * .7);
+    timber(ctx, 0, plank, w, h - plank);
+    shadow(ctx, w / 2, plank + 1, w * .42, .55);
+    ctx.save(); ctx.translate(w / 2 + 8, h * .62); ctx.rotate(-Math.PI / 2);
     nail(ctx, 0, -h * .9, h * 1.8 > w * .8 ? w * .8 : h * 1.8, {rust: picture.rust, coat: picture.coat ?? null, width: Math.max(8, h * .14)});
     ctx.restore();
   }
   if (picture.kind === 'soak') {
-    ctx.fillStyle = WATER; ctx.fillRect(10, h * .35, w - 20, h * .6);
-    sirena(ctx, w / 2, h * .8, Math.min(.35, w / 700));
+    // The Sirena standing in the salt water over the sand, as in the board's sea panel.
+    waterFill(ctx, 0, h * .36, w, h * .64);
+    const sand = ctx.createLinearGradient(0, h - 22, 0, h); sand.addColorStop(0, '#9c8860'); sand.addColorStop(1, '#5a4c32');
+    ctx.fillStyle = sand; ctx.fillRect(0, h - 22, w, 22);
+    for (let k = 0; k < 24; k++) { ctx.fillStyle = k % 2 ? 'rgba(255,240,200,.14)' : 'rgba(0,0,0,.2)'; ctx.fillRect(grain(k + 700) * w, h - 20 + grain(k + 710) * 18, 2, 2); }
+    sirena(ctx, w / 2, h - 36, Math.min(.36, w / 620));
     const say = {salt: 'salt out', wash: 'rust off', stop: 'no more rust'}[picture.what];
+    labelPlate(ctx, w / 2, h * .17, 150, 30, .55);
     text(ctx, say, w / 2, h * .17, {size: 22, colour: theme.accent, weight: 800});
   }
 }

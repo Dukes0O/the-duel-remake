@@ -2,7 +2,7 @@
 // with a litres gauge, the pump nozzle that pours in and the tap that pours out into a jerry can, a drag strip of cars
 // timed to the lesson's speed with a photo finish, force and speed arrows and each car's sum, a graph of the speed, the
 // litre jug and its box, the free test's car and table, and the job card for Brian's job. Draws and hit-tests only.
-import {BOARD, theme, background, floor, shadow, forceArrowTo, roadCar, tarmac, paintStripe, steel, bolt, lcd, shade, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, cardScene, shadow, forceArrowTo, roadCar, tarmac, paintStripe, steel, bolt, lcd, shade, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {HALF, WEIGH_KG, TARGET_TEXT, TARGET_KMH, TARGET_MS, kg1, kg2, s2, pct, pctAbout, gapWords} from './fuel-classroom.js';
 import {TANK_LITRES, POUR_LITRES, PETROL_KG_PER_LITRE, WATER_KG_PER_LITRE, GRAND_PRIX} from '../benches/fuel.js';
 export {BOARD};
@@ -531,16 +531,43 @@ export function drawBoard(ctx, view, width, height) {
   });
 }
 // The answer cards' pictures: a jug, two jugs, a car with its tank, two cars, and the game's three outcomes.
+// A word on a small dark plate, so that it stays readable over the workshop wall.
+function tag(ctx, value, x, y, colour, size = 16, align = 'center') {
+  ctx.font = `800 ${size}px "Segoe UI", sans-serif`;
+  const width = (ctx.measureText?.(value)?.width ?? value.length * size * .6) + 12, left = align === 'left' ? x - 6 : x - width / 2;
+  ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.beginPath(); ctx.roundRect(left, y - size * .75, width, size * 1.5, 5); ctx.fill();
+  text(ctx, value, align === 'left' ? x : x, y, {size, colour, align});
+}
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
-  if (picture.kind === 'jug') jug(ctx, w / 2, h - 18, 1, picture.what === 'water' ? WATER : PETROL, {w: 60, h: 80, mark: false});
-  if (picture.kind === 'jugs') { jug(ctx, w / 2 - 50, h - 18, 1, WATER, {w: 50, h: 70, mark: false}); text(ctx, '=', w / 2 + 6, h / 2 + 8, {size: 26}); jug(ctx, w / 2 + 66, h - 18, 1, PETROL, {w: 50, h: 70, mark: false}); }
-  if (picture.kind === 'car') { car(ctx, w - 30, h / 2 + 10, 1.3); miniTank(ctx, 20, h / 2 + 2, picture.litres); text(ctx, `${picture.litres} L`, 40, h / 2 + 2, {size: 15, align: 'left'}); }
-  if (picture.kind === 'cars') { car(ctx, w - 20, h / 2 - 12, .9); car(ctx, w - 20, h / 2 + 30, .9); ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(w - 20, 10); ctx.lineTo(w - 20, h - 8); ctx.stroke(); }
+  const ground = cardScene(ctx, w, h, {floorAt: h - 22});
+  if (picture.kind === 'jug') jug(ctx, w / 2, ground + 3, 1, picture.what === 'water' ? WATER : PETROL, {w: 60, h: 80, mark: false});
+  if (picture.kind === 'jugs') { jug(ctx, w / 2 - 50, ground + 3, 1, WATER, {w: 50, h: 70, mark: false}); text(ctx, '=', w / 2 + 6, h / 2 + 8, {size: 26}); jug(ctx, w / 2 + 66, ground + 3, 1, PETROL, {w: 50, h: 70, mark: false}); }
+  if (picture.kind === 'car') {
+    car(ctx, w - 30, ground - 16 * 1.3, 1.3);
+    steel(ctx, 16, h / 2 - 20, 20, 36, 3); miniTank(ctx, 20, h / 2 - 2, picture.litres);
+    tag(ctx, `${picture.litres} L`, 44, h / 2 - 2, theme.text, 15, 'left');
+  }
+  if (picture.kind === 'cars') {
+    // Two cars side by side on two lanes, both at the chequered line.
+    cardScene(ctx, w, h, {floorAt: h});
+    for (const y of [30, 76]) { tarmac(ctx, 6, y - 20, w - 12, 40); car(ctx, w - 30, y + 3, .8); }
+    finishLine(ctx, w - 22, 10, h - 10);
+  }
   if (picture.kind === 'game') {
-    if (picture.what === 'pit') { car(ctx, w / 2 + 10, h / 2 + 18, 1); ctx.fillStyle = '#2f6b45'; ctx.fillRect(w - 50, 26, 30, 56); ctx.fillStyle = theme.text; ctx.fillRect(w - 44, 34, 18, 12); text(ctx, 'PIT', 40, 30, {size: 18, colour: theme.accent}); }
-    if (picture.what === 'flag') for (let k = 0; k < 6; k++) for (let r = 0; r < 4; r++) { ctx.fillStyle = (k + r) % 2 ? '#111' : '#eee'; ctx.fillRect(w / 2 - 36 + k * 12, 24 + r * 12, 12, 12); }
-    if (picture.what === 'slow') { car(ctx, w / 2 + 70, h / 2 + 10, 1); text(ctx, 'slow', w / 2 - 66, h / 2 + 10, {size: 18, colour: theme.bad}); }
+    if (picture.what === 'pit') {
+      car(ctx, w / 2 + 10, ground - 16, 1);
+      // The pump in the pit lane: a green housing with a lit readout.
+      ctx.fillStyle = '#2f6b45'; ctx.beginPath(); ctx.roundRect(w - 50, ground - 58, 30, 58, 3); ctx.fill();
+      steel(ctx, w - 53, ground - 62, 36, 6, 2); lcd(ctx, w - 45, ground - 50, 20, 14);
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(w - 50, ground - 8, 30, 8);
+      tag(ctx, 'PIT', 40, 28, theme.accent, 18);
+    }
+    if (picture.what === 'flag') {
+      steel(ctx, w / 2 - 44, ground - 76, 4, 78, 1);
+      for (let k = 0; k < 6; k++) for (let r = 0; r < 4; r++) { ctx.fillStyle = (k + r) % 2 ? '#111' : '#eee'; ctx.fillRect(w / 2 - 36 + k * 12, 24 + r * 12, 12, 12); }
+      ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.2; ctx.strokeRect(w / 2 - 36, 24, 72, 48);
+    }
+    if (picture.what === 'slow') { car(ctx, w / 2 + 70, ground - 16, 1); tag(ctx, 'slow', w / 2 - 56, h / 2 + 4, theme.bad, 18); }
   }
 }

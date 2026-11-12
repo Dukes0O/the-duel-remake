@@ -585,9 +585,10 @@ export function plankCrate(ctx, x, y, w, h, label) {
   }
 }
 // A steel weighing pad, `half` wide each side of its centre, standing on the ground line at y = 0 of the current drawing.
-export function weighingPad(ctx, half) {
+// Its four load cells sit at both ends and at `inner` either side of the centre.
+export function weighingPad(ctx, half, inner = half / 3) {
   shadow(ctx, 0, 6, half + 30, .55);
-  ctx.fillStyle = '#15181a'; for (const x of [-half + 14, -half / 3, half / 3, half - 26]) ctx.fillRect(x, -2, 12, 9);
+  ctx.fillStyle = '#15181a'; for (const x of [-half + 14, -inner, inner, half - 26]) ctx.fillRect(x, -2, 12, 9);
   const g = ctx.createLinearGradient(0, -11, 0, 0); g.addColorStop(0, '#a9b2b7'); g.addColorStop(.3, '#6c757b'); g.addColorStop(1, '#2c3236');
   ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-half, -11, 2 * half, 11, 2); ctx.fill();
   ctx.save(); ctx.beginPath(); ctx.rect(-half, -11, 2 * half, 4); ctx.clip();
@@ -849,6 +850,34 @@ export function helicopterTop(ctx, x, y, heading, time, scale = 1, {shadow: drop
   const hub = ctx.createRadialGradient(-1, -1, .5, 0, 0, 5); hub.addColorStop(0, '#dde3e6'); hub.addColorStop(1, '#3a4247');
   ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, 4.6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = .8; ctx.stroke();
   ctx.restore();
+}
+
+// ---- LAB-FINISH: the small answer-card pictures ----
+// The backdrop of an answer-card picture (the cards are 220 x 110): a crop of the same workshop wall that the boards
+// hang on, or, with `outdoors`, of the dusk at the horizon, so that a card reads as a small view of its board. With
+// `floorAt` the concrete floor starts that far down the card. It answers the y of the floor (or of the horizon).
+export function cardScene(ctx, w, h, {outdoors: dusky = false, floorAt = h - 20} = {}) {
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+  const sx = (BOARD.width - w) / 2, sy = dusky ? GROUND_Y - floorAt : 6;
+  if (typeof document === 'undefined') { ctx.translate(-sx, -sy); if (dusky) paintDusk(ctx); else paintWall(ctx); }
+  else {
+    if (dusky) { if (!dusk) { dusk = document.createElement('canvas'); dusk.width = BOARD.width; dusk.height = BOARD.height; paintDusk(dusk.getContext('2d')); } }
+    else if (!wall) { wall = document.createElement('canvas'); wall.width = BOARD.width; wall.height = BOARD.height; paintWall(wall.getContext('2d')); }
+    ctx.drawImage(dusky ? dusk : wall, sx, sy, w, h, 0, 0, w, h);
+  }
+  ctx.restore();
+  if (!dusky) {
+    const g = ctx.createLinearGradient(0, floorAt, 0, h);
+    g.addColorStop(0, '#4a4d49'); g.addColorStop(.25, '#35383a'); g.addColorStop(1, '#17191b');
+    ctx.fillStyle = g; ctx.fillRect(0, floorAt, w, h - floorAt);
+    ctx.fillStyle = 'rgba(255,236,200,.12)'; ctx.fillRect(0, floorAt, w, 1);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, floorAt - 2, w, 2);
+  }
+  // A dark edge round the card, as the board has, so that the picture sits in the lamp's light.
+  const v = ctx.createRadialGradient(w / 2, h * .45, h * .35, w / 2, h * .5, w * .62);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+  return floorAt;
 }
 
 export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {

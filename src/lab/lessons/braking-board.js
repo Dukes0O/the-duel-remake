@@ -3,7 +3,7 @@
 // test strip where cars to scale arrive, brake at the line at real speed and stop, with a tape giving the metres.
 // The word steps add a mark for each second, a mark for each half second of braking, and gold blocks of energy that
 // disappear along the road. Draws and hit-tests only.
-import {BOARD, theme, background, floor, shadow, forceArrow, forceArrowTo, roadCar, tarmac, paintStripe, roadPost, steel, bolt, lcd, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, cardScene, shadow, forceArrow, forceArrowTo, roadCar, tarmac, paintStripe, roadPost, steel, bolt, lcd, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {m1, pct, kmh, msOf, metresFrom, S_SLOW, SLOW, FAST, SPEED_STEP, FRONT_LOAD, REAR_LOAD, STEADY_FRONT, MIN_FRONT, MAX_FRONT} from './braking-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -429,30 +429,46 @@ export function drawBoard(ctx, view, width, height) {
   });
 }
 // The answer cards' pictures: two stops on a little strip, a lever, and the race trade.
+// A word on a small dark plate, so that it stays readable over the workshop wall.
+function tag(ctx, value, x, y, colour, size = 16) {
+  ctx.font = `800 ${size}px "Segoe UI", sans-serif`;
+  const width = (ctx.measureText?.(value)?.width ?? value.length * size * .6) + 12;
+  ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.beginPath(); ctx.roundRect(x - width / 2, y - size * .75, width, size * 1.5, 5); ctx.fill();
+  text(ctx, value, x, y, {size, colour});
+}
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
   if (picture.kind === 'stops') {
-    // 160 m across the card, the brake line on the left.
+    // 160 m across the card, the brake line on the left, a road for each car with its tape beneath it.
+    cardScene(ctx, w, h, {floorAt: h});
     const x0 = 22, per = (w - 40) / 160;
-    ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, 14); ctx.lineTo(x0, h - 10); ctx.stroke();
     picture.metres.forEach((metres, i) => {
       const y = 36 + i * 44;
-      tarmac(ctx, x0, y - 16, w - 30, 32);
-      car(ctx, x0 + metres * per, y + 4, .3);
-      ctx.fillStyle = theme.accent; ctx.fillRect(x0, y + 12, metres * per, 3);
+      tarmac(ctx, x0, y - 18, w - 30, 36);
+      car(ctx, x0 + metres * per, y + 3, .34);
+      ctx.fillStyle = GOLD; ctx.fillRect(x0, y + 11, metres * per, 4); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(x0, y + 11, metres * per, 1); ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x0, y + 14, metres * per, 1);
     });
+    paintStripe(ctx, x0, 8, h - 8, 3, GOLD);
   }
   if (picture.kind === 'lever') {
-    ctx.fillStyle = '#2b3236'; ctx.fillRect(30, h / 2, w - 60, 8);
+    // The brake lever's track and its brass knob, from 40% front (back) to 90% front (front).
+    cardScene(ctx, w, h, {floorAt: h});
+    steel(ctx, 30, h / 2, w - 60, 10, 4);
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1;
+    for (let f = MIN_FRONT; f <= MAX_FRONT; f += 10) { const x = 30 + (f - MIN_FRONT) / (MAX_FRONT - MIN_FRONT) * (w - 60); ctx.beginPath(); ctx.moveTo(x, h / 2 + 12); ctx.lineTo(x, h / 2 + 18); ctx.stroke(); }
     const kx = 30 + (picture.front - MIN_FRONT) / (MAX_FRONT - MIN_FRONT) * (w - 60);
-    ctx.fillStyle = theme.brass[1]; ctx.beginPath(); ctx.arc(kx, h / 2 - 10, 10, 0, Math.PI * 2); ctx.fill();
-    text(ctx, 'back', 30, h / 2 + 26, {size: 13, colour: theme.faint}); text(ctx, 'front', w - 30, h / 2 + 26, {size: 13, colour: theme.faint});
+    shadow(ctx, kx, h / 2 + 22, 16, .5);
+    ctx.fillStyle = '#20262a'; ctx.fillRect(kx - 3, h / 2 - 8, 6, 12);
+    const knob = ctx.createRadialGradient(kx - 3, h / 2 - 16, 1, kx, h / 2 - 12, 13); knob.addColorStop(0, theme.brass[0]); knob.addColorStop(.6, theme.brass[1]); knob.addColorStop(1, theme.brass[2]);
+    ctx.fillStyle = knob; ctx.beginPath(); ctx.arc(kx, h / 2 - 12, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.2; ctx.stroke();
+    tag(ctx, 'back', 40, h / 2 + 38, theme.text, 13); tag(ctx, 'front', w - 40, h / 2 + 38, theme.text, 13);
   }
   if (picture.kind === 'game') {
-    car(ctx, w / 2 + 50, h / 2 + 8, 1.1);
-    if (picture.what === 'trade') { text(ctx, 'stops +', 40, 30, {size: 16, colour: GREEN}); text(ctx, 'turns −', w - 40, 30, {size: 16, colour: theme.bad}); }
-    if (picture.what === 'both') { text(ctx, 'stops +', 40, 30, {size: 16, colour: GREEN}); text(ctx, 'turns +', w - 40, 30, {size: 16, colour: GREEN}); }
-    if (picture.what === 'same') text(ctx, 'no change', w / 2, 30, {size: 16, colour: theme.faint});
+    const ground = cardScene(ctx, w, h, {floorAt: h / 2 + 25});
+    car(ctx, w / 2 + 50, ground - 9, 1.1);
+    if (picture.what === 'trade') { tag(ctx, 'stops +', 44, 28, GREEN); tag(ctx, 'turns −', w - 44, 28, theme.bad); }
+    if (picture.what === 'both') { tag(ctx, 'stops +', 44, 28, GREEN); tag(ctx, 'turns +', w - 44, 28, GREEN); }
+    if (picture.what === 'same') tag(ctx, 'no change', w / 2, 28, theme.text);
   }
 }

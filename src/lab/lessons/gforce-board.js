@@ -1,6 +1,6 @@
 // The G-force classroom board: a large overhead turn and controls in the
 // workshop style used by the other classroom lessons.
-import {BOARD, theme, background, text, keyCap, fitBoard, wrap, steelPanel, steel, bolt, lcd, forceArrowTo, roadCarTop, labelPlate, grain} from '../classroom/board-art.js';
+import {BOARD, theme, cardScene, background, text, keyCap, fitBoard, wrap, steelPanel, steel, bolt, lcd, forceArrowTo, roadCarTop, labelPlate, grain} from '../classroom/board-art.js';
 
 export {BOARD};
 export const pressMovesDrag = false;
@@ -287,17 +287,22 @@ export function drawBoard(ctx, view, width = BOARD.width, height = BOARD.height)
 
 export function drawPicture(ctx, picture, width, height) {
   ctx.save();
-  const gradient = ctx.createLinearGradient(0, 0, 0, height); gradient.addColorStop(0, '#343c3f'); gradient.addColorStop(1, '#1b2224');
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
-  const cx = width * .34, cy = height * .53, r = Math.min(width, height) * .30;
-  ctx.strokeStyle = '#c6a75e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = '#d7ab4f'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+  cardScene(ctx, width, height, {floorAt: height});
+  // The turn from above, as on the board: the yard, the arm on its post and the car, its speed arrow (blue) along the
+  // way it goes and its sideways push arrow (orange) toward the post.
+  const r = 120, a = -Math.PI / 2, x = CIRCLE.x + Math.cos(a) * r, y = CIRCLE.y + Math.sin(a) * r;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, width * .54, height); ctx.clip();
+  ctx.translate(width * .26, height * .93); ctx.scale(.5, .5); ctx.translate(-CIRCLE.x, -CIRCLE.y);
+  paintYard(ctx, CIRCLE.x, CIRCLE.y, r);
+  arm(ctx, a, r); post(ctx);
+  roadCarTop(ctx, x, y, {scale: .95, angle: a + Math.PI / 2, steer: .3});
+  arrow(ctx, x + 50, y, x + 120, y, '#79bce2', 6);
+  arrow(ctx, x, y + 19, x, y + 90, '#ef7654', 6);
+  ctx.restore();
   const g = picture.g == null || !Number.isFinite(Number(picture.g)) ? null : Number(picture.g);
-  const lean = g == null ? 5 : 5 + Math.min(22, g * 8);
-  ctx.strokeStyle = '#e2bd68'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + r, cy); ctx.lineTo(cx + r + lean, cy + 29); ctx.stroke();
-  ctx.fillStyle = '#e2bd68'; ctx.beginPath(); ctx.arc(cx + r + lean, cy + 29, 4, 0, Math.PI * 2); ctx.fill();
-  arrow(ctx, cx + r + 4, cy - 8, cx + r + 30, cy - 8, '#79bce2', 2);
-  text(ctx, g == null ? 'Reading?' : `${g.toFixed(2)} g`, width * .72, height * .52, {size: 16, weight: 900});
-  text(ctx, 'sideways push', width * .72, height * .74, {size: 10, colour: '#ff9b7e'});
+  lcd(ctx, width * .56, height * .2, width * .41, height * .38, '#72c888');
+  text(ctx, g == null ? 'Reading?' : `${g.toFixed(2)} g`, width * .765, height * .39, {size: 16, weight: 900, colour: '#a8dba6'});
+  labelPlate(ctx, width * .765, height * .74, width * .42, 22, .6);
+  text(ctx, 'sideways push', width * .765, height * .74, {size: 12, colour: '#ff9b7e'});
   ctx.restore();
 }

@@ -2,7 +2,7 @@
 // boxes of 100 m; Kestrel One on the pad with a compass ring round it and the angle shaded from north; the HEADING
 // gauge beside the map; the ruler, the smoke, the flight tracks, and the right-angled triangle that the sums use.
 // Draws and hit-tests only.
-import {BOARD, theme, background, text, keyCap, wrap, fitBoard, steelPanel, lcd, bezel, bolt, timber, labelPlate, groundFlag, helicopterTop, grain} from '../classroom/board-art.js';
+import {BOARD, theme, background, cardScene, text, keyCap, wrap, fitBoard, steelPanel, lcd, bezel, bolt, timber, labelPlate, groundFlag, helicopterTop, grain} from '../classroom/board-art.js';
 import {MAP, RING_M, BOX_M, three, wrap as round} from './headings-classroom.js';
 export {BOARD};
 // Pressing on the compass ring turns the helicopter to that heading at once; pressing on the ruler moves its end there.
@@ -476,15 +476,21 @@ export function drawBoard(ctx, view, width, height) {
 // The answer cards' pictures: a compass with one heading, a turn the short or long way, a distance in boxes.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = '#2f3a2c'; ctx.fillRect(0, 0, w, h);
+  // A scrap of the chart pinned on the workshop wall, as in the recap.
+  cardScene(ctx, w, h, {floorAt: h});
+  const scrap = ctx.createLinearGradient(0, 0, w, h); scrap.addColorStop(0, '#cbbe92'); scrap.addColorStop(1, '#a89b6f');
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.roundRect(8, 9, w - 12, h - 12, 3); ctx.fill();
+  ctx.fillStyle = scrap; ctx.beginPath(); ctx.roundRect(5, 5, w - 10, h - 10, 3); ctx.fill();
+  ctx.strokeStyle = `${INK}.55)`; ctx.lineWidth = 1; ctx.stroke();
+  for (const [bx, by] of [[11, 11], [w - 11, 11], [11, h - 11], [w - 11, h - 11]]) bolt(ctx, bx, by, 2);
   const cx = w / 2, cy = h / 2;
   if (picture.kind === 'heading') {
-    miniCompass(ctx, cx, cy, 40, picture.deg, false);
-    text(ctx, 'N', cx, cy - 47, {size: 14, colour: theme.text});
+    miniCompass(ctx, cx, cy + 6, 37, picture.deg, false);
+    tag(ctx, 'N', cx, 11, theme.text);
   }
   if (picture.kind === 'wrap') {
     const r = 40, at = d => [cx + Math.sin(d * Math.PI / 180) * r, cy - Math.cos(d * Math.PI / 180) * r];
-    ctx.strokeStyle = 'rgba(245,240,220,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    compassFace(ctx, cx, cy, r);
     // Only the way the turn sets off from 350, the same length each way, so the picture does not settle which turn is smaller.
     const setOff = dir => {
       const from = (350 - 90) * Math.PI / 180, to = (350 + dir * 14 - 90) * Math.PI / 180, ex = cx + Math.cos(to) * r, ey = cy + Math.sin(to) * r, tx = -Math.sin(to) * dir, ty = Math.cos(to) * dir, ox = Math.cos(to), oy = Math.sin(to);
@@ -493,14 +499,15 @@ export function drawPicture(ctx, picture, w, h) {
     };
     if (picture.way === 'right' || picture.way === 'same') setOff(1);
     if (picture.way === 'left' || picture.way === 'same') setOff(-1);
-    for (const [d, l] of [[350, '350'], [10, '010']]) { const [x, y] = at(d); ctx.fillStyle = theme.text; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill(); text(ctx, l, x + (d === 350 ? -26 : 26), y + 2, {size: 15}); }
+    for (const [d, l] of [[350, '350'], [10, '010']]) { const [x, y] = at(d); ctx.fillStyle = theme.text; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill(); tag(ctx, l, x + (d === 350 ? -28 : 28), y + 2, theme.text, 15); }
   }
   if (picture.kind === 'boxes') {
     const sq = 26, n = picture.m / BOX_M, x0 = 14, y0 = cy;
-    ctx.strokeStyle = 'rgba(237,197,87,.45)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = `${INK}.5)`; ctx.lineWidth = 1;
     for (let i = 0; i * sq <= w - 28; i++) ctx.strokeRect(x0 + i * sq, y0 - sq / 2, sq, sq);
     const long = Math.min(n * sq, w - 28);
-    ctx.strokeStyle = theme.accent; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + long, y0); ctx.stroke();
+    ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(14,12,6,.75)'; ctx.lineWidth = 7.4; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + long, y0); ctx.stroke();
+    ctx.strokeStyle = theme.accent; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + long, y0); ctx.stroke(); ctx.lineCap = 'butt';
     if (n * sq > w - 28) { ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.moveTo(w - 6, y0); ctx.lineTo(w - 16, y0 - 7); ctx.lineTo(w - 16, y0 + 7); ctx.fill(); }
   }
 }

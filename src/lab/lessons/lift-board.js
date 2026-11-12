@@ -1,6 +1,6 @@
 // The Lift lesson's board (docs/board/cards/LAB-CLASSROOM-LIFT.md): the collective lever with its
 // kilogram scale, the weighing pad, Kestrel One and its load. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, floor, shadow, forceArrow, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, floor, cardScene, shadow, forceArrow, plankCrate, weighingPad, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {BAND_M, CAR_KG, CRATE_KG, HOLD_S, MAX_CRATES, MOST_KG, OWN_KG, kg, leverPct, weightOf} from './lift-classroom.js';
 export {BOARD};
 // Pressing on the lever moves it there at once.
@@ -92,36 +92,9 @@ export function targetPoint(view, action) {
 export function dragAngle(view, id, x, y) { return (G0 - y) / PER_KG; }
 
 // ---- drawing ----
-// A planked wooden crate with steel corners and its weight stencilled on the side.
-function crate(ctx, x, y, {ghost = false} = {}) {
-  ctx.save(); if (ghost) ctx.globalAlpha = .45;
-  const l = x - CRATE.w / 2, t = y - CRATE.h / 2;
-  const g = ctx.createLinearGradient(l, t, l, t + CRATE.h);
-  g.addColorStop(0, '#c99a5c'); g.addColorStop(.5, '#a37640'); g.addColorStop(1, '#5e3f1d');
-  ctx.fillStyle = g; ctx.fillRect(l, t, CRATE.w, CRATE.h);
-  // Planks, each a little lighter or darker than its neighbour, and the frame nailed over them.
-  for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,240,210,.07)'; ctx.fillRect(l + i * CRATE.w / 5, t, CRATE.w / 5, CRATE.h); ctx.fillStyle = 'rgba(30,18,6,.45)'; ctx.fillRect(l + i * CRATE.w / 5, t, .8, CRATE.h); }
-  ctx.fillStyle = '#7d5529'; ctx.fillRect(l, t, CRATE.w, 5); ctx.fillRect(l, t + CRATE.h - 5, CRATE.w, 5); ctx.fillRect(l, t, 4, CRATE.h); ctx.fillRect(l + CRATE.w - 4, t, 4, CRATE.h);
-  ctx.fillStyle = 'rgba(255,236,200,.28)'; ctx.fillRect(l, t, CRATE.w, 1);
-  ctx.fillStyle = '#5c646a'; for (const [cx, cy] of [[l, t], [l + CRATE.w - 5, t], [l, t + CRATE.h - 5], [l + CRATE.w - 5, t + CRATE.h - 5]]) ctx.fillRect(cx, cy, 5, 5);
-  ctx.strokeStyle = 'rgba(20,12,4,.8)'; ctx.lineWidth = 1.2; ctx.strokeRect(l, t, CRATE.w, CRATE.h);
-  ctx.font = '800 10px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(20,12,4,.7)'; ctx.fillText('500', x + .8, y + 1.8); ctx.fillStyle = '#f7ead0'; ctx.fillText('500', x, y + 1);
-  ctx.restore();
-}
-// The weighing pad: a steel platform on four load cells, with a yellow and black edge.
-function pad(ctx) {
-  shadow(ctx, 0, 6, PAD_HALF + 30, .55);
-  ctx.fillStyle = '#15181a'; for (const x of [-PAD_HALF + 14, -70, 70, PAD_HALF - 26]) ctx.fillRect(x, -2, 12, 9);
-  const g = ctx.createLinearGradient(0, -11, 0, 0); g.addColorStop(0, '#a9b2b7'); g.addColorStop(.3, '#6c757b'); g.addColorStop(1, '#2c3236');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-PAD_HALF, -11, 2 * PAD_HALF, 11, 2); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.rect(-PAD_HALF, -11, 2 * PAD_HALF, 4); ctx.clip();
-  ctx.fillStyle = '#e0b23c'; ctx.fillRect(-PAD_HALF, -11, 2 * PAD_HALF, 4);
-  ctx.fillStyle = '#1a1c1d'; for (let x = -PAD_HALF - 8; x < PAD_HALF; x += 16) { ctx.beginPath(); ctx.moveTo(x, -7); ctx.lineTo(x + 6, -11); ctx.lineTo(x + 12, -11); ctx.lineTo(x + 6, -7); ctx.closePath(); ctx.fill(); }
-  ctx.restore();
-  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-PAD_HALF, -11, 2 * PAD_HALF, .9);
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; for (let x = -PAD_HALF + 10; x < PAD_HALF; x += 30) { ctx.beginPath(); ctx.arc(x, -3, 1.1, 0, Math.PI * 2); ctx.fill(); }
-}
+// The crate and the weighing pad are drawn once, in board-art.js. Each crate shows its weight, 500 kg, on the side.
+function crate(ctx, x, y) { plankCrate(ctx, x, y, CRATE.w, CRATE.h, '500'); }
+function pad(ctx) { weighingPad(ctx, PAD_HALF, 70); }
 // The pad's dial: a brass-rimmed gauge whose needle shows the weight still resting on the pad.
 function dial(ctx, reads, x, y) {
   const rim = ctx.createLinearGradient(x - 30, y - 30, x + 30, y + 30); rim.addColorStop(0, theme.brass[0]); rim.addColorStop(.5, theme.brass[1]); rim.addColorStop(1, theme.brass[2]);
@@ -375,21 +348,25 @@ export function drawBoard(ctx, view, width, height) {
 }
 
 // ---- the card pictures ----
+// Each picture is a small view of the pad: the same wall and floor, pad, car, crates, helicopter, lever and lit arrows.
+const cross = (ctx, x, y, r) => {
+  ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = theme.bad; ctx.shadowBlur = 10; ctx.strokeStyle = theme.bad; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); ctx.restore();
+};
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const back = ctx.createLinearGradient(0, 0, 0, h);
-  back.addColorStop(0, theme.back[0]); back.addColorStop(1, theme.back[1]);
-  ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
+  const floorAt = picture.kind === 'lever' ? h : h - 18;
+  cardScene(ctx, w, h, {floorAt});
   ctx.save();
   if (picture.kind === 'verdict') {
-    ctx.translate(w * .45, h - 6); ctx.scale(.42, .42);
+    ctx.translate(w * .42, floorAt + 8); ctx.scale(.37, .37);
     drawSet(ctx, mini({car: 1}, MOST_KG, picture.up ? 1.4 : 0, 1), .3);
     ctx.restore(); ctx.save();
-    if (picture.up) arrow(ctx, w - 26, h * .7, h * .5, true, theme.good, 8);
-    else { ctx.strokeStyle = theme.bad; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(w - 40, 22); ctx.lineTo(w - 14, 48); ctx.moveTo(w - 14, 22); ctx.lineTo(w - 40, 48); ctx.stroke(); }
+    if (picture.up) arrow(ctx, w - 28, h * .78, h * .56, true, theme.good, 10);
+    else cross(ctx, w - 28, h * .42, 15);
   }
   if (picture.kind === 'load') {
-    ctx.translate(w * .42, h - 14); ctx.scale(.62, .62);
+    ctx.translate(w * .42, floorAt + 4); ctx.scale(.62, .62);
     const f = {crates: picture.crates ?? 0, car: picture.car ?? 0, h: 0, taut: 0, lift: 0};
     pad(ctx);
     const g = setGeometry(f);
@@ -397,20 +374,25 @@ export function drawPicture(ctx, picture, w, h) {
     for (const c of g.crates) crate(ctx, c.x, c.y);
   }
   if (picture.kind === 'motion') {
-    ctx.translate(w * .42, h + 4); ctx.scale(.42, .42);
+    ctx.translate(w * .42, floorAt + 8); ctx.scale(.37, .37);
     drawSet(ctx, mini({car: 1}, weightOf({car: 1}), 1.5, 1), .3);
     ctx.restore(); ctx.save();
-    if (picture.move === 'climb') arrow(ctx, w - 30, h * .78, h * .56, true, theme.good, 9);
-    if (picture.move === 'sink') arrow(ctx, w - 30, h * .22, h * .56, false, theme.bad, 9);
-    if (picture.move === 'hover') { ctx.fillStyle = theme.accent; ctx.fillRect(w - 44, h * .44, 28, 5); ctx.fillRect(w - 44, h * .56, 28, 5); }
+    if (picture.move === 'climb') arrow(ctx, w - 28, h * .8, h * .56, true, theme.good, 10);
+    if (picture.move === 'sink') arrow(ctx, w - 28, h * .2, h * .56, false, theme.bad, 10);
+    if (picture.move === 'hover') for (const y of [h * .4, h * .56]) { ctx.shadowColor = theme.accent; ctx.shadowBlur = 8; ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.roundRect(w - 46, y, 34, 7, 3); ctx.fill(); }
   }
   if (picture.kind === 'lever') {
-    const x = w / 2, y0 = h - 14, y1 = 16, at = {top: y1, match: (y0 + y1) / 2 + 6, bottom: y0}[picture.at];
-    ctx.fillStyle = 'rgba(10,14,15,.6)'; ctx.fillRect(x - 8, y1 - 4, 16, y0 - y1 + 8);
-    ctx.strokeStyle = theme.bad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 30, (y0 + y1) / 2 + 6); ctx.lineTo(x + 30, (y0 + y1) / 2 + 6); ctx.stroke();
-    const grip = ctx.createLinearGradient(0, at - 8, 0, at + 6); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(1, theme.brass[2]);
-    ctx.fillStyle = grip; ctx.beginPath(); ctx.roundRect(x - 26, at - 7, 52, 13, 6); ctx.fill();
-    text(ctx, 'weight', x + 36, (y0 + y1) / 2 + 6, {size: 13, colour: theme.bad, align: 'left'});
+    // The collective lever's slot with its handle at the top, level with the red weight line, or at the bottom.
+    const x = w / 2 - 16, y0 = h - 16, y1 = 18, mid = (y0 + y1) / 2 + 6, at = {top: y1, match: mid, bottom: y0}[picture.at];
+    ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.beginPath(); ctx.roundRect(x - 10, y1 - 10, 20, y0 - y1 + 20, 9); ctx.fill();
+    ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = theme.good; ctx.globalAlpha = .55; ctx.fillRect(x - 5, at, 10, y0 - at); ctx.globalAlpha = 1;
+    ctx.strokeStyle = theme.bad; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(x - 26, mid); ctx.lineTo(x + 40, mid); ctx.stroke();
+    text(ctx, 'weight', x + 46, mid, {size: 13, colour: theme.bad, align: 'left'});
+    ctx.fillStyle = '#20262a'; ctx.fillRect(x - 3, at, 6, 12);
+    const grip = ctx.createLinearGradient(0, at - 10, 0, at + 6); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(1, theme.brass[2]);
+    ctx.fillStyle = grip; ctx.beginPath(); ctx.roundRect(x - 28, at - 9, 56, 15, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
   }
   ctx.restore();
 }

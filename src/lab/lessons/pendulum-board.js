@@ -2,7 +2,7 @@
 // teaching drawing at true scale and real speed. Draws and hit-tests only; it never changes the lesson.
 import {stringPeriod} from '../benches/pendulum.js';
 import {GUESS_CAPTIONS, HOOK_X, LENGTHS, REFERENCE_X, SWING_RAD, WEIGHTS, tripMetres} from './pendulum-classroom.js';
-import {BOARD, theme, background, floor, shadow, forceArrow, cable, swivelHook, brassDial, glassGlare, steelBeam, steel, bolt, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, cardScene, shadow, forceArrow, cable, swivelHook, brassDial, glassGlare, steelBeam, steel, bolt, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 export {BOARD};
 
 const BEAM_Y = 150, METRE = 18, WATCH_Y = 50, WATCH_R = 28, DIAL_S = 12, PLATE_Y = BEAM_Y - 30, FLOOR_Y = 622;
@@ -402,35 +402,44 @@ export function drawBoard(ctx, view, width, height) {
 }
 
 // ---- the card pictures ----
+// Each picture is a small view of the board: the workshop wall and floor (the dusk for the helicopter), the brass stopwatches,
+// the beam and hook, the cast weights, and Kestrel One with the car on its cable.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const back = ctx.createLinearGradient(0, 0, 0, h);
-  back.addColorStop(0, picture.kind === 'heli' ? theme.sky[0] : theme.back[0]); back.addColorStop(1, picture.kind === 'heli' ? theme.sky[1] : theme.back[1]);
-  ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
+  const floorAt = picture.kind === 'compare' ? h - 20 : picture.kind === 'heli' ? h - 14 : h;
+  cardScene(ctx, w, h, {floorAt, outdoors: picture.kind === 'heli'});
   if (picture.kind === 'compare') {
     const mine = {quicker: stringPeriod(5), slower: stringPeriod(25), same: stringPeriod(15)}[picture.mine];
-    stopwatch(ctx, w * .28, h * .48, {elapsed: stringPeriod(15), done: false}, 0, {ghost: true, r: 30, digits: false});
-    stopwatch(ctx, w * .72, h * .48, {elapsed: mine, done: false}, 0, {r: 30, digits: false});
-    text(ctx, 'grey', w * .28, h - 14, {size: 14, colour: theme.ghost});
-    text(ctx, 'yours', w * .72, h - 14, {size: 14, colour: theme.accent});
-    text(ctx, picture.mine === 'quicker' ? '>' : picture.mine === 'slower' ? '<' : '=', w / 2, h * .48, {size: 30, colour: theme.text});
+    stopwatch(ctx, w * .28, h * .46, {elapsed: stringPeriod(15), done: false}, 0, {ghost: true, r: 28, digits: false});
+    stopwatch(ctx, w * .72, h * .46, {elapsed: mine, done: false}, 0, {r: 28, digits: false});
+    text(ctx, 'grey', w * .28, h - 9, {size: 14, colour: theme.ghost});
+    text(ctx, 'yours', w * .72, h - 9, {size: 14, colour: theme.accent});
+    text(ctx, picture.mine === 'quicker' ? '>' : picture.mine === 'slower' ? '<' : '=', w / 2, h * .46, {size: 32, colour: theme.text});
   }
   if (picture.kind === 'watch') {
-    stopwatch(ctx, w * .5, h * .5, {elapsed: picture.seconds, done: false}, 0, {r: 38, digits: false});
+    stopwatch(ctx, w * .5, h * .56, {elapsed: picture.seconds, done: false}, 0, {r: 36, digits: false});
   }
   if (picture.kind === 'setup') {
-    const top = 16, length = picture.lengthM * 3.8, x = w / 2;
-    ctx.fillStyle = theme.beam; ctx.fillRect(x - 50, top - 6, 100, 8);
-    ctx.strokeStyle = theme.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + length * .2, top + length); ctx.stroke();
-    ball(ctx, x + length * .2, top + length, picture.weightKg, {label: false});
+    // The hook under the beam, the cable pulled a little to one side, and the weight (bronze 20 kg, iron 200 kg) at its end.
+    const x = w / 2 - 14, len = 2 * picture.lengthM, ringY = 30, side = len * .22, lean = Math.atan2(side, len), r = radius(picture.weightKg) * .62;
+    steelBeam(ctx, x - 62, x + 62, 0, 12);
+    swivelHook(ctx, x, 8);
+    const bx = x + side, by = ringY + len + r + 4;
+    cable(ctx, x, ringY, bx - Math.sin(lean) * (r + 2), by - Math.cos(lean) * (r + 2), {width: 2.2});
+    ctx.save(); ctx.translate(bx, by); ctx.scale(.62, .62); ball(ctx, 0, 0, picture.weightKg, {label: false, angle: lean}); ctx.restore();
   }
   if (picture.kind === 'heli') {
-    ctx.save(); ctx.translate(w / 2, 0); ctx.scale(.45, .45); ctx.translate(-500, -60);
+    ctx.save(); ctx.translate(w / 2 + 6, 0); ctx.scale(.3, .3); ctx.translate(-500, -100);
     const hx = picture.move === 'forward' ? 560 : 500, tilt = picture.move === 'forward' ? .25 : 0;
-    if (picture.move === 'drop') { car(ctx, 500, 470, .5); ctx.strokeStyle = theme.bad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(470, 380); ctx.lineTo(470, 430); ctx.moveTo(530, 380); ctx.lineTo(530, 430); ctx.stroke(); }
-    else carOnCable(ctx, hx, picture.move === 'forward' ? -.55 : .05, 0, false);
+    if (picture.move === 'drop') {
+      car(ctx, 500, 400, .5);
+      ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = theme.bad; ctx.shadowBlur = 8; ctx.strokeStyle = theme.bad; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(470, 300); ctx.lineTo(470, 350); ctx.moveTo(530, 300); ctx.lineTo(530, 350); ctx.stroke(); ctx.restore();
+    } else carOnCable(ctx, hx, picture.move === 'forward' ? -.55 : .05, 0, false);
     helicopter(ctx, hx, HELI_Y, tilt, .3);
-    if (picture.move === 'forward') { ctx.strokeStyle = theme.text; ctx.lineWidth = 4; for (const y of [120, 150, 180]) { ctx.beginPath(); ctx.moveTo(360, y); ctx.lineTo(420, y); ctx.stroke(); } }
+    if (picture.move === 'forward') {
+      ctx.lineCap = 'round';
+      for (const y of [120, 150, 180]) { const streak = ctx.createLinearGradient(340, 0, 430, 0); streak.addColorStop(0, 'rgba(235,240,245,0)'); streak.addColorStop(1, 'rgba(235,240,245,.9)'); ctx.strokeStyle = streak; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(340, y); ctx.lineTo(430, y); ctx.stroke(); }
+    }
     ctx.restore();
   }
 }

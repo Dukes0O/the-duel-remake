@@ -2,7 +2,7 @@
 // three places, the collective lever as a share, the weighing pad with Kestrel One and its load, the air jar, the column of
 // air that shows why the air thins, and the bars that compare the push with the weight.
 // Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, floor, shade, shadow, rope, forceArrow, steel, bolt, bezel, plankCrate, weighingPad, grain, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, floor, cardScene, shade, shadow, rope, forceArrow, steel, bolt, bezel, plankCrate, weighingPad, grain, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {AIR, CAR_KG, CRATE_KG, HEIGHT, MOST, NAME, OWN_KG, RACK, airAt, bestCrates, dots, fuelPerMinute, hoverShare, kg, metres, pct} from './altitude-classroom.js';
 export {BOARD};
 // Pressing on the lever moves it there at once.
@@ -516,57 +516,85 @@ export function drawBoard(ctx, view, width, height) {
 
 // ---- the card pictures ----
 const mini = (place, load, lever, h) => ({place, crates: load.crates ?? 0, car: load.car ?? 0, lever, h, status: 'pad'});
+// Each picture is a small view of the board: the same wall and floor (or the dusk), jars, pad, helicopter, lever and lit arrows.
+const cross = (ctx, x, y, r) => {
+  ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = theme.bad; ctx.shadowBlur = 10; ctx.strokeStyle = theme.bad; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); ctx.restore();
+};
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const back = ctx.createLinearGradient(0, 0, 0, h);
-  back.addColorStop(0, theme.back[0]); back.addColorStop(1, theme.back[1]);
-  ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
+  const floorAt = picture.kind === 'lever' ? h : picture.kind === 'route' ? h - 14 : h - 18;
+  cardScene(ctx, w, h, {floorAt, outdoors: picture.kind === 'route'});
   ctx.save();
   if (picture.kind === 'verdict') {
-    ctx.translate(w * .48, h - 6); ctx.scale(.42, .42);
+    ctx.translate(w * .42, floorAt + 8); ctx.scale(.37, .37);
     drawSet(ctx, mini(2, {car: 1}, 1, picture.up ? 1.4 : 0), .3);
     ctx.restore(); ctx.save();
-    if (picture.up) arrow(ctx, w - 26, h * .7, h * .5, true, theme.good, 8);
-    else { ctx.strokeStyle = theme.bad; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(w - 40, 22); ctx.lineTo(w - 14, 48); ctx.moveTo(w - 14, 22); ctx.lineTo(w - 40, 48); ctx.stroke(); }
+    if (picture.up) arrow(ctx, w - 28, h * .78, h * .56, true, theme.good, 10);
+    else cross(ctx, w - 28, h * .42, 14);
   }
   if (picture.kind === 'lever') {
-    const x = w / 2 - 20, y0 = h - 12, y1 = 14, at = s => y0 - s * (y0 - y1);
-    ctx.fillStyle = 'rgba(10,14,15,.6)'; ctx.fillRect(x - 8, y1 - 4, 16, y0 - y1 + 8);
-    ctx.strokeStyle = theme.ghost; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - 24, at(picture.ghost)); ctx.lineTo(x + 24, at(picture.ghost)); ctx.stroke(); ctx.setLineDash([]);
-    ctx.strokeStyle = theme.bad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 26, at(picture.at)); ctx.lineTo(x + 26, at(picture.at)); ctx.stroke();
-    text(ctx, pct(picture.ghost), x + 30, at(picture.ghost), {size: 12, align: 'left', colour: theme.ghost});
-    if (Math.abs(picture.at - picture.ghost) > .01) text(ctx, picture.at > picture.ghost ? 'higher' : 'lower', x + 30, at(picture.at), {size: 13, align: 'left', colour: theme.bad});
+    // The slot of the collective lever, the dashed mark where it hovered at sea level, and the red line and handle where this answer puts it.
+    const x = w / 2 - 20, y0 = h - 16, y1 = 18, at = s => y0 - s * (y0 - y1);
+    ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.beginPath(); ctx.roundRect(x - 10, y1 - 10, 20, y0 - y1 + 20, 9); ctx.fill();
+    ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.strokeStyle = theme.ghost; ctx.lineWidth = 2.5; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - 30, at(picture.ghost)); ctx.lineTo(x + 30, at(picture.ghost)); ctx.stroke(); ctx.setLineDash([]);
+    text(ctx, pct(picture.ghost), x + 36, at(picture.ghost), {size: 12, align: 'left', colour: theme.ghost});
+    ctx.strokeStyle = theme.bad; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(x - 36, at(picture.at)); ctx.lineTo(x + 36, at(picture.at)); ctx.stroke();
+    ctx.fillStyle = '#20262a'; ctx.fillRect(x - 3, at(picture.at), 6, 12);
+    const grip = ctx.createLinearGradient(0, at(picture.at) - 10, 0, at(picture.at) + 6); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(1, theme.brass[2]);
+    ctx.fillStyle = grip; ctx.beginPath(); ctx.roundRect(x - 26, at(picture.at) - 8, 52, 14, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+    if (Math.abs(picture.at - picture.ghost) > .01) text(ctx, picture.at > picture.ghost ? 'higher' : 'lower', x + 42, at(picture.at), {size: 13, align: 'left', colour: theme.bad});
   }
   if (picture.kind === 'jars') {
-    jar(ctx, {x: w * .18, y: 14, w: w * .26, h: h - 30}, 1, {});
-    jar(ctx, {x: w * .56, y: 14, w: w * .26, h: h - 30}, AIR[2], {});
+    jar(ctx, {x: w * .16, y: 22, w: w * .28, h: floorAt + 2 - 22}, 1, {});
+    jar(ctx, {x: w * .56, y: 22, w: w * .28, h: floorAt + 2 - 22}, AIR[2], {});
   }
   if (picture.kind === 'heavier') {
-    helicopter(ctx, w * .45, h * .55, 0, 0, .5);
+    ctx.translate(w * .4, floorAt + 4); ctx.scale(.5, .5);
+    pad(ctx); helicopter(ctx, 0, -43, 0, 0);
+    ctx.restore(); ctx.save();
     text(ctx, '+ kg ?', w * .8, h * .3, {size: 18, colour: theme.bad});
   }
   if (picture.kind === 'slower') {
-    helicopter(ctx, w * .45, h * .6, 0, 0, .5);
-    ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(w * .45, h * .32, 22, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    shadow(ctx, w * .4, floorAt + 2, 44, .4);
+    helicopter(ctx, w * .45, h * .6, 0, .3, .5);
+    ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = theme.accent; ctx.shadowBlur = 8; ctx.strokeStyle = theme.accent; ctx.fillStyle = theme.accent; ctx.lineWidth = 3.5;
+    const ax = w * .45, ay = h * .34; ctx.beginPath(); ctx.arc(ax, ay, 22, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax + 22 * Math.cos(Math.PI * 1.9) + 6, ay + 22 * Math.sin(Math.PI * 1.9) + 1); ctx.lineTo(ax + 22 * Math.cos(Math.PI * 1.9) - 5, ay + 22 * Math.sin(Math.PI * 1.9) - 5); ctx.lineTo(ax + 22 * Math.cos(Math.PI * 1.9) - 4, ay + 22 * Math.sin(Math.PI * 1.9) + 7); ctx.closePath(); ctx.fill();
+    ctx.restore();
     text(ctx, 'slow?', w * .8, h * .3, {size: 18, colour: theme.accent});
   }
   if (picture.kind === 'places') {
     picture.lifts.forEach((up, i) => {
-      const cx = w * (.2 + i * .3), cy = h * .55;
-      text(ctx, NAME[i].split(' ')[0], cx, h - 12, {size: 13, weight: 600});
-      if (up) arrow(ctx, cx, cy + 18, 36, true, theme.good, 7);
-      else { ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx - 12, cy - 12); ctx.lineTo(cx + 12, cy + 12); ctx.moveTo(cx + 12, cy - 12); ctx.lineTo(cx - 12, cy + 12); ctx.stroke(); }
+      const cx = w * (.2 + i * .3), cy = h * .5;
+      helicopter(ctx, cx + 6, cy - 22, 0, .3, .2);
+      if (up) arrow(ctx, cx, cy + 22, 34, true, theme.good, 8); else cross(ctx, cx, cy + 6, 11);
+      text(ctx, NAME[i].split(' ')[0], cx, h - 8, {size: 13, weight: 600});
     });
   }
   if (picture.kind === 'route') {
-    const y = h * .55;
-    ctx.fillStyle = '#7d8478'; ctx.beginPath(); ctx.moveTo(w * .55, h - 6); ctx.lineTo(w * .82, 16); ctx.lineTo(w - 6, h - 6); ctx.fill();
-    ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.setLineDash(picture.what === 'straight' ? [] : [6, 4]);
-    ctx.beginPath(); ctx.moveTo(18, h - 16);
-    if (picture.what === 'pump') { ctx.lineTo(w * .32, y); ctx.lineTo(w * .82, 20); } else ctx.lineTo(w * .82, 20);
-    ctx.stroke(); ctx.setLineDash([]);
-    if (picture.what === 'pump') { ctx.fillStyle = theme.bad; ctx.fillRect(w * .32 - 8, y - 6, 16, 22); }
-    if (picture.what === 'lever') { ctx.fillStyle = theme.brass[1]; ctx.fillRect(18, 14, 14, h - 30); ctx.fillStyle = theme.bad; ctx.fillRect(14, 12, 22, 8); }
+    // The mountain at dusk, the route to the summit, and what the answer does on the way: nothing, a lever held up or a pump.
+    const y = h * .55, peakX = w * .82;
+    const rock = ctx.createLinearGradient(0, 14, 0, h - 14); rock.addColorStop(0, '#9aa09a'); rock.addColorStop(.25, '#6c7068'); rock.addColorStop(1, '#2c2f2c');
+    ctx.fillStyle = rock; ctx.beginPath(); ctx.moveTo(w * .5, h - 14); ctx.lineTo(peakX, 16); ctx.lineTo(w - 4, h - 14); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.moveTo(peakX, 16); ctx.lineTo(peakX - 11, 38); ctx.lineTo(peakX + 11, 38); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.shadowColor = theme.accent; ctx.shadowBlur = 6; ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.setLineDash(picture.what === 'straight' ? [] : [6, 4]);
+    ctx.beginPath(); ctx.moveTo(18, h - 20);
+    if (picture.what === 'pump') { ctx.lineTo(w * .32, y); ctx.lineTo(peakX, 20); } else ctx.lineTo(peakX, 20);
+    ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+    if (picture.what === 'pump') {
+      const px = w * .32, body = ctx.createLinearGradient(px - 9, 0, px + 9, 0); body.addColorStop(0, '#e0593f'); body.addColorStop(1, '#8c2a1c');
+      ctx.fillStyle = body; ctx.beginPath(); ctx.roundRect(px - 9, y - 8, 18, 26, 3); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#1b2a2f'; ctx.fillRect(px - 6, y - 4, 12, 8); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(px - 5, y - 3, 10, 1.5);
+    }
+    if (picture.what === 'lever') {
+      ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.beginPath(); ctx.roundRect(16, 14, 14, h - 40, 6); ctx.fill(); ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.2; ctx.stroke();
+      const grip = ctx.createLinearGradient(0, 10, 0, 24); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(1, theme.brass[2]);
+      ctx.fillStyle = grip; ctx.beginPath(); ctx.roundRect(8, 12, 30, 12, 5); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.stroke();
+    }
+    helicopter(ctx, 30, h - 28, .1, .3, .16);
   }
   ctx.restore();
 }

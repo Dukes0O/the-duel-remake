@@ -1,7 +1,7 @@
 // The Downforce lesson's board (docs/board/cards/LAB-CLASSROOM-DOWNFORCE.md): the wind tunnel, with the fan blowing
 // smoke past the Falcone F42 on its scale, a wing over its back and a rope at its nose with a drag gauge; the fan dial
 // and the wing panel; and below, a close-up, the runs table or Brian's course. Draws and hit-tests only.
-import {BOARD, theme, background, forceArrow, forceArrowTo, roadCar, ROAD_CAR_TOP, tarmac, steel, bolt, lcd, shade, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, cardScene, roadCarTop, forceArrow, forceArrowTo, roadCar, ROAD_CAR_TOP, tarmac, steel, bolt, lcd, shade, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {WINGS, WING_NAME, CAR_KG, kg, kmh, pushKg, topOf} from './downforce-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -561,30 +561,47 @@ export function drawBoard(ctx, view, width, height) {
   });
 }
 // The answer cards' pictures: two pushes as bars, a wing, a bend, and the race trade.
+// A word on a small dark plate, so that it stays readable over the workshop wall.
+function tag(ctx, value, x, y, colour, size = 16) {
+  ctx.font = `800 ${size}px "Segoe UI", sans-serif`;
+  const width = (ctx.measureText?.(value)?.width ?? value.length * size * .6) + 12;
+  ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.beginPath(); ctx.roundRect(x - width / 2, y - size * .75, width, size * 1.5, 5); ctx.fill();
+  text(ctx, value, x, y, {size, colour});
+}
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
   if (picture.kind === 'push') {
-    // Up to PUSH_TOP kg across the card.
+    // Up to PUSH_TOP kg across the card: two lit bars in steel troughs, to the same scale.
+    cardScene(ctx, w, h, {floorAt: h});
     const per = (w - 40) / PUSH_TOP;
     picture.kg.forEach((value, i) => {
-      const y = 34 + i * 42;
-      ctx.fillStyle = '#23272a'; ctx.fillRect(20, y - 13, w - 40, 26);
-      ctx.fillStyle = i ? theme.accent : theme.good; ctx.fillRect(20, y - 13, Math.min(w - 40, value * per), 26);
+      const y = 34 + i * 42, colour = i ? theme.accent : theme.good, fill = Math.min(w - 40, value * per);
+      steel(ctx, 17, y - 16, w - 34, 32, 4);
+      ctx.fillStyle = '#0b1114'; ctx.beginPath(); ctx.roundRect(20, y - 13, w - 40, 26, 2); ctx.fill();
+      const lit = ctx.createLinearGradient(0, y - 13, 0, y + 13); lit.addColorStop(0, shade(colour, .35)); lit.addColorStop(.5, colour); lit.addColorStop(1, shade(colour, -.4));
+      ctx.fillStyle = lit; ctx.fillRect(20, y - 13, fill, 26);
+      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(20, y - 12, fill, 1.5);
     });
   }
   if (picture.kind === 'wing') {
-    for (const y0 of [h * .3, h * .5, h * .7]) { ctx.strokeStyle = 'rgba(225,232,236,.35)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(10, y0); ctx.lineTo(w - 10, y0); ctx.stroke(); }
+    // The wing on its steel post in the tunnel's air, tilted as the choice says.
+    const ground = cardScene(ctx, w, h, {floorAt: h - 14});
+    for (const y0 of [h * .3, h * .5, h * .7]) { ctx.strokeStyle = 'rgba(170,220,245,.4)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(10, y0); ctx.lineTo(w - 10, y0); ctx.stroke(); }
+    steel(ctx, w / 2 - 4, h / 2, 8, ground - h / 2, 1);
+    steel(ctx, w / 2 - 22, ground - 4, 44, 6, 2);
     wingShape(ctx, w / 2, h / 2, Math.min(120, w * .55), TILT[picture.wing]);
   }
   if (picture.kind === 'bend') {
+    cardScene(ctx, w, h, {floorAt: h});
     bendPicture(ctx, w / 2, h * .62, Math.min(60, h * .55));
-    text(ctx, `${picture.kmh} km/h`, w / 2, h * .62, {size: 15, colour: theme.accent});
+    roadCarTop(ctx, w / 2, h * .62 + Math.min(60, h * .55) * (.3 - .8), {scale: .3});
+    tag(ctx, `${picture.kmh} km/h`, w / 2, h * .66, theme.accent, 15);
   }
   if (picture.kind === 'game') {
-    car(ctx, w / 2 + 50, h / 2 + 8, 1.1);
-    if (picture.what === 'trade') { text(ctx, 'grip +', 40, 30, {size: 16, colour: GREEN}); text(ctx, 'speed −', w - 44, 30, {size: 16, colour: theme.bad}); }
-    if (picture.what === 'both') { text(ctx, 'grip +', 40, 30, {size: 16, colour: GREEN}); text(ctx, 'speed +', w - 44, 30, {size: 16, colour: GREEN}); }
-    if (picture.what === 'same') text(ctx, 'no change', w / 2, 30, {size: 16, colour: theme.faint});
+    const ground = cardScene(ctx, w, h, {floorAt: h / 2 + 25});
+    car(ctx, w / 2 + 50, ground - 9, 1.1);
+    if (picture.what === 'trade') { tag(ctx, 'grip +', 44, 28, GREEN); tag(ctx, 'speed −', w - 44, 28, theme.bad); }
+    if (picture.what === 'both') { tag(ctx, 'grip +', 44, 28, GREEN); tag(ctx, 'speed +', w - 44, 28, GREEN); }
+    if (picture.what === 'same') tag(ctx, 'no change', w / 2, 28, theme.text);
   }
 }

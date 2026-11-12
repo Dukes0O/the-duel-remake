@@ -2,7 +2,7 @@
 // degrees with a stopwatch on each ski, three labelled wax tins on the workbench, the thermometer and magnifier, the
 // arrows and bars of the friction sum, a close-up of the base on the snow, the results table of the free test, and the
 // ski menu's line for Brian's job. Draws and hit-tests only.
-import {BOARD, theme, background, shadow, steel, bezel, shade, grain, timber, glassTube, glassGlare, forceArrowTo, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, cardScene, labelPlate, background, shadow, steel, bezel, shade, grain, timber, glassTube, glassGlare, forceArrowTo, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {STRIP_M, WAX_NAMES, SNOW_ORDER, s1, metresAt, runSeconds} from './wax-classroom.js';
 import {SNOWS, WAXES} from '../benches/wax.js';
 export {BOARD};
@@ -483,18 +483,32 @@ export function drawBoard(ctx, view, width, height) {
 // The answer cards' pictures: a tin, the cold-to-warm rule, and where the game says the snow.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
-  if (picture.kind === 'tin') tin(ctx, w / 2, h / 2 + 4, picture.wax, false, null, false, 0);
+  cardScene(ctx, w, h, {floorAt: h});
+  // The workbench the tins stand on, as on the board.
+  const bench = () => { const top = h - 20; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, top - 2, w, 3); timber(ctx, 0, top, w, 20); };
+  if (picture.kind === 'tin') { bench(); tin(ctx, w / 2, h - 55, picture.wax, false, null, false, 0); }
   if (picture.kind === 'rule') {
-    thermometer(ctx, 40, 14, 66, -15, false);
-    text(ctx, '→', 82, 52, {size: 26});
+    bench();
+    thermometer(ctx, 40, 10, 62, -15, false);
+    text(ctx, '→', 82, 48, {size: 30});
     const wax = {harder: 'hard', softer: 'soft', same: null}[picture.way];
-    if (wax) tin(ctx, 150, 56, wax, false, null, false, 0);
-    else text(ctx, 'any wax', 150, 56, {size: 18});
+    if (wax) tin(ctx, 150, h - 55, wax, false, null, false, 0);
+    else { labelPlate(ctx, 150, 52, 92, 34, .6); text(ctx, 'any wax', 150, 52, {size: 18}); }
   }
   if (picture.kind === 'game') {
-    if (picture.what === 'menu') { ctx.fillStyle = 'rgba(14,20,24,.95)'; ctx.fillRect(14, 22, w - 28, 66); text(ctx, 'Today’s snow:', 24, 40, {size: 14, align: 'left', colour: theme.faint}); text(ctx, 'Cool snow, -5 °C', 24, 66, {size: 17, align: 'left'}); }
-    if (picture.what === 'skis') [0, 1].forEach(k => { ctx.fillStyle = k ? WAX_COLOURS.soft : WAX_COLOURS.hard; ctx.beginPath(); ctx.roundRect(30, 38 + k * 26, w - 60, 10, 4); ctx.fill(); });
-    if (picture.what === 'shop') { ctx.fillStyle = '#5a4430'; ctx.fillRect(60, 40, w - 120, 50); ctx.fillStyle = theme.accent; ctx.fillRect(50, 26, w - 100, 18); text(ctx, 'SHOP', w / 2, 66, {size: 18}); }
+    if (picture.what === 'menu') {
+      // The ski menu's line in its steel-framed panel.
+      const g = ctx.createLinearGradient(0, 20, 0, 90); g.addColorStop(0, 'rgba(26,33,37,.95)'); g.addColorStop(1, 'rgba(11,15,17,.95)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(14, 20, w - 28, 70, 6); ctx.fill(); bezel(ctx, 14, 20, w - 28, 70, 6);
+      text(ctx, 'Today’s snow:', 28, 42, {size: 14, align: 'left', colour: LABEL}); text(ctx, 'Cool snow, -5 °C', 28, 68, {size: 17, align: 'left'});
+    }
+    if (picture.what === 'skis') [0, 1].forEach(k => { ctx.save(); ctx.translate(w / 2, 40 + k * 34); ctx.scale(1.7, 1.7); const paint = k ? WAX_COLOURS.soft : WAX_COLOURS.hard; skiShape(ctx, 90, paint); ctx.fillStyle = paint; ctx.beginPath(); ctx.roundRect(-46, 3.6, 92, 3.4, 1.5); ctx.fill(); ctx.restore(); });
+    if (picture.what === 'shop') {
+      // A shop counter with its striped awning and sign.
+      bench();
+      timber(ctx, 40, 52, w - 80, 36);
+      for (let k = 0; k < 8; k++) { ctx.fillStyle = k % 2 ? '#d9c9a0' : theme.accent; ctx.beginPath(); ctx.moveTo(34 + k * (w - 68) / 8, 24); ctx.lineTo(34 + (k + 1) * (w - 68) / 8, 24); ctx.lineTo(40 + (k + 1) * (w - 80) / 8, 50); ctx.lineTo(40 + k * (w - 80) / 8, 50); ctx.closePath(); ctx.fill(); }
+      steel(ctx, w / 2 - 36, 56, 72, 26, 4); text(ctx, 'SHOP', w / 2, 70, {size: 18, colour: '#1d2224'});
+    }
   }
 }

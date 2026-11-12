@@ -1,7 +1,7 @@
 // The Fire triangle lesson's board (docs/board/cards/LAB-CLASSROOM-FIRE.md): Brian's fire pit with one switch plate
 // per side of the triangle, the triangle itself, the water and sand buckets, and the practice fire's forest seen from
 // above. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, floor, shadow, steel, bolt, bezel, shade, blend, grain, tarmac, flameTongue, glassTube, text, keyCap, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, cardScene, background, floor, shadow, steel, bolt, bezel, shade, blend, grain, tarmac, flameTongue, glassTube, text, keyCap, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {COLS, ROWS, STRIP, ROAD, CELL_M, SIDES, SIDE_NAME, SWITCH_NAME, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, WOOD_BURNS_C, WATER_BOILS_C, GROW, SPREAD_FROM, litres, litresFor, strengthOf} from './fire-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -787,9 +787,14 @@ export function drawBoard(ctx, view, width, height) {
 // ---- the card pictures ----
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const back = ctx.createLinearGradient(0, 0, 0, h);
-  back.addColorStop(0, theme.back[0]); back.addColorStop(1, theme.back[1]);
-  ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
-  if (picture.kind === 'side') triangle(ctx, {x: w / 2, top: 14, base: h - 30, half: Math.min(w * .3, (h - 44) * .62)}, [picture.side], {size: 14, width: 7, labels: true});
-  if (picture.kind === 'spot') { const size = Math.min((w - 40) / COLS, (h - 16) / ROWS); miniForest(ctx, (w - COLS * size) / 2, (h - ROWS * size) / 2, size, picture.what, picture.where, .4); }
+  cardScene(ctx, w, h, {floorAt: h});
+  if (picture.kind === 'side') triangle(ctx, {x: w / 2, top: 12, base: h - 36, half: Math.min(w * .3, (h - 48) * .62)}, [picture.side], {size: 14, width: 7, labels: true});
+  if (picture.kind === 'spot') {
+    // The forest map hung on the wall in a steel frame, as the board's forest is seen from above.
+    const size = Math.min((w - 40) / (COLS + .8), (h - 26) / ROWS), x0 = (w - (COLS + .8) * size) / 2 + size * .35, y0 = (h - ROWS * size) / 2;
+    const fx = x0 - size * .35 - 3, fy = y0 - 3, fw = COLS * size + size * .8 + 10, fh = ROWS * size + 6;
+    ctx.fillStyle = '#0d1316'; ctx.fillRect(fx, fy, fw, fh);
+    miniForest(ctx, x0, y0, size, picture.what, picture.where, .4);
+    bezel(ctx, fx - 1, fy - 1, fw + 2, fh + 2, 3);
+  }
 }

@@ -257,7 +257,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     }
   }
   // New lessons enter the same existing challenge path only after their checks.
-  const teaching = createLessonUi({section, stage, host, app, room: () => keeper.scene,
+  const teaching = createLessonUi({section, stage, host, app,
     onBack: () => backToBoard({keepMessage: true}), onPause: render, onCue: bing, sayVoice: id => { if (id) voice.say(id); },
     onChallenge: (id, lesson) => {
       let bench = openBench(id);
@@ -477,7 +477,7 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
 
   // ---- the room ----
   const keeper = createSceneKeeper({stage, loadManifest, sceneFactory,
-    sceneOptions: () => walking() ? {walking: true, onUse: useWalk, onLessonControl: (id, value) => teaching.control(id, value)} : {},
+    sceneOptions: () => walking() ? {walking: true, onUse: useWalk} : {},
     onRoom: room => { room.show(ui.bench ? ui.bench.lessonId : null, ui.bench?.result ?? null); room.restore(ui.restore ? restoreView() : null);
       room.walk?.({rows: walkRows(), paused: walkPaused(), last: ui.lastMachine});
       if (walking()) room.canvas.focus({preventScroll: true});

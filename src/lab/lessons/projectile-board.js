@@ -1,7 +1,7 @@
 // The Projectile lesson's board (docs/board/cards/LAB-CLASSROOM-PROJECTILE.md): Kestrel One side on over
 // the lake, the bucket or a stone on its hook, the falls with their paths and speed arrows, the marks for each
 // second, the flag, the buoy and a ruler on the water. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, outdoors, waterBody, shadow, cable, steel, bolt, forceArrowTo, grain, text, keyCap, helicopter, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, cardScene, outdoors, waterBody, shadow, cable, steel, bolt, forceArrowTo, grain, text, keyCap, helicopter, wrap, fitBoard} from '../classroom/board-art.js';
 import {BEST_LET_GO_M, HIGH_M, JOB, RING_M, dropPoint, dropSpeed, landing, metres} from './projectile-classroom.js';
 import {GRAVITY, stoneFallAfter} from '../benches/projectile.js';
 export {BOARD};
@@ -397,40 +397,50 @@ export function drawBoard(ctx, view, width, height) {
 }
 
 // ---- the card pictures ----
+// Each picture is a small view of the lake board: the dusk sky and the lake, Kestrel One with its bucket on the cable, the
+// buoy, and the path of the fall in dots.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  const back = ctx.createLinearGradient(0, 0, 0, h);
-  back.addColorStop(0, theme.sky[0]); back.addColorStop(1, theme.sky[1]);
-  ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
-  const water = h - 14;
-  const sea = ctx.createLinearGradient(0, water, 0, h); sea.addColorStop(0, '#4a7381'); sea.addColorStop(1, '#16282f');
-  ctx.fillStyle = sea; ctx.fillRect(0, water, w, 14); ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(0, water - .5, w, 1.2);
+  const water = h - 22;
+  cardScene(ctx, w, h, {outdoors: true, floorAt: water});
+  ctx.save(); ctx.beginPath(); ctx.rect(0, water, w, h - water); ctx.clip(); waterBody(ctx, water, .5); ctx.restore();
   const arc = (fromX, fromY, toX, colour = WATER_BLUE) => {
     ctx.fillStyle = colour;
-    for (let i = 0; i <= 14; i++) { const f = i / 14; ctx.beginPath(); ctx.arc(fromX + (toX - fromX) * (1 - (1 - f) ** 2), fromY + (water - fromY) * f * f, 1.8, 0, Math.PI * 2); ctx.fill(); }
-    ctx.beginPath(); ctx.ellipse(toX, water + 1, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i <= 14; i++) { const f = i / 14; ctx.beginPath(); ctx.arc(fromX + (toX - fromX) * (1 - (1 - f) ** 2), fromY + (water - fromY) * f * f, 2.4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.strokeStyle = colour; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(toX, water + 2, 9, 3, 0, 0, Math.PI * 2); ctx.stroke();
   };
-  const mini = (x, y) => helicopter(ctx, x, y, .08, .3, .2);
-  const buoyAt = x => { ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(x, water, 7, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#fffaf0'; ctx.fillRect(x - 6.5, water - 3.5, 13, 2); };
+  // Kestrel One with the pail hanging from its hook.
+  const mini = (x, y, pail = true) => {
+    if (pail) { cable(ctx, x, y + 4, x, y + 10, {width: 1.4}); ctx.save(); ctx.translate(x, y + 24); ctx.scale(.7, .7); bucket(ctx, 0, 0, true); ctx.restore(); }
+    helicopter(ctx, x, y, .08, .3, .26);
+  };
+  // A small buoy: a red dome with a white band, a mast and a lit lamp, on the water line.
+  const buoyAt = x => {
+    const dome = ctx.createLinearGradient(x - 8, 0, x + 8, 0); dome.addColorStop(0, '#ffa27c'); dome.addColorStop(.4, '#e8613f'); dome.addColorStop(1, '#7d2614');
+    ctx.strokeStyle = '#2c353a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, water - 8); ctx.lineTo(x, water - 18); ctx.stroke();
+    ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.arc(x, water - 19, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = dome; ctx.beginPath(); ctx.arc(x, water, 8, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#fffaf0'; ctx.fillRect(x - 7.5, water - 4, 15, 2.4);
+    ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, water, 8, Math.PI, 0); ctx.stroke();
+  };
   if (picture.kind === 'landing') {
-    const b = w * .45; buoyAt(b); mini(b, 26);
-    arc(b, 36, b + {short: -40, on: 0, past: 62}[picture.where]);
+    const b = w * .45; buoyAt(b); mini(b, 24);
+    arc(b, 52, b + {short: -40, on: 0, past: 62}[picture.where]);
   }
   if (picture.kind === 'release') {
     const b = w * .82, from = {further: w * .18, same: w * .42, closer: w * .62}[picture.where];
-    buoyAt(b); mini(from, 26); arc(from, 36, from + (b - from) * (picture.where === 'further' ? 1 : .8 + (picture.where === 'closer' ? .5 : 0)));
+    buoyAt(b); mini(from, 30); arc(from, 56, from + (b - from) * (picture.where === 'further' ? 1 : .8 + (picture.where === 'closer' ? .5 : 0)));
     text(ctx, '20 m/s', from, 8, {size: 12, colour: theme.accent});
   }
   if (picture.kind === 'height') {
-    mini(w * .14, 18); mini(w * .14, 62);
+    mini(w * .16, 20, false); mini(w * .16, 54, false);
     const low = w * .52, high = {further: w * .9, same: w * .58, shorter: w * .36}[picture.move];
-    arc(w * .14, 70, low, theme.accent); arc(w * .14, 28, high, theme.good);
+    arc(w * .16, 66, low, theme.accent); arc(w * .16, 32, high, theme.good);
   }
   if (picture.kind === 'game') {
     const b = w * .62;
     buoyAt(b);
-    if (picture.what === 'over') { mini(b, 26); arc(b, 36, b + 60); }
-    if (picture.what === 'before') { mini(w * .28, 26); arc(w * .28, 36, b); }
-    if (picture.what === 'after') { mini(b + 34, 26); arc(b + 34, 36, b + 80); }
+    if (picture.what === 'over') { mini(b, 24); arc(b, 52, b + 60); }
+    if (picture.what === 'before') { mini(w * .28, 24); arc(w * .28, 52, b); }
+    if (picture.what === 'after') { mini(b + 34, 24); arc(b + 34, 52, b + 80); }
   }
 }

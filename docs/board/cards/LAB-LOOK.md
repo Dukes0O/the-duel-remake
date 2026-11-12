@@ -78,6 +78,21 @@ Wax, Launch, Grip, Suspension and the distance strips can grow); the small answe
 flat; one copy of the crate and weighing pad that Lift and `board-art.js` both hold; the old five-step lesson frame's
 removal; the challenges in the 3D world; and the walking hangar.
 
+## Round 7 (a Sonnet helper; judged by Claude, 12 November 2026)
+
+- The small pictures on the answer cards of all sixteen lessons are drawn with the boards' own parts on the workshop
+  wall and floor (`cardScene` in `board-art.js`). Every card says what it said before, and no choice is drawn with
+  more care than another. No test assertion changed.
+- Lift draws its crate and weighing pad through the shared drawing; one copy remains.
+- The old five-step lesson frame is removed: `lesson-frame.js`, `lesson-pictures.js`, three modules nothing imported,
+  the example hook in `tools/menu-check.js`, its fixture and `tools/test-lab-lesson-frame.mjs`, which tested only the
+  removed frame. `lesson-ui.js` keeps what the classrooms, the notebook and the word meanings use.
+- Checks on the builder's run: every `tools/test-lab-*.mjs`, all sixteen classroom browser scenarios, `lab-view`,
+  `lab-navigation`, `lab-brian-faces`, and `lab-walk` on its one rerun alone (it timed out once while other jobs were
+  running, rule 7); lane tier 45 of 45; build.
+- Still to do: `docs/lab-lesson-authoring.md` and some old change notes still describe the removed frame. The answer
+  cards show at 120 by 60 pixels, so their small text is near 6 pixels; the stage step enlarges them.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

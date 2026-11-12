@@ -1,7 +1,7 @@
 // The Launch angles lesson's board (docs/board/cards/LAB-CLASSROOM-LAUNCH.md): Brian's launcher side on, its ramp
 // tilting about the lip, a skier flying its arc over a landing deck with a tape and a flag; the ramp panel and the
 // speed dial; and below, a close-up, the launches table or Brian's mark card. Draws and hit-tests only.
-import {BOARD, theme, background, shadow, steel, bolt, bezel, lcd, brassDial, glassGlare, tarmac, roadPost, groundFlag, forceArrowTo, shade, grain, labelPlate, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, cardScene, shadow, steel, bolt, bezel, lcd, brassDial, glassGlare, tarmac, roadPost, groundFlag, forceArrowTo, shade, grain, labelPlate, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {pathOf, distanceOf, kmh, m1, deg, SHOW_MS, SLOW_MS} from './launch-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -489,39 +489,58 @@ export function drawBoard(ctx, view, width, height) {
   });
 }
 // The answer cards' pictures: a ramp at an angle (over a lower landing too), a way to tilt, a guess on the tape, the kicker.
+// A word on a small dark plate, so that it stays readable over the workshop wall.
+function tag(ctx, value, x, y, colour, size = 16, weight = 800) {
+  ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
+  const width = (ctx.measureText?.(value)?.width ?? value.length * size * .6) + 12;
+  ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.beginPath(); ctx.roundRect(x - width / 2, y - size * .75, width, size * 1.5, 5); ctx.fill();
+  text(ctx, value, x, y, {size, colour, weight});
+}
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
   if (picture.kind === 'ramp' || picture.kind === 'tilt') {
-    const ox = w * .32, oy = h * (picture.lower ? .5 : .78), a = (picture.angle ?? 45) * Math.PI / 180, len = Math.min(70, h * .55);
-    ctx.fillStyle = '#d9b24a'; ctx.fillRect(ox, (picture.lower ? h * .86 : oy) - 1, w - ox - 10, 3);
+    cardScene(ctx, w, h, {floorAt: h});
+    const ox = w * .32, oy = h * (picture.lower ? .5 : .78), a = (picture.angle ?? 45) * Math.PI / 180, len = Math.min(70, h * .55), landY = picture.lower ? h * .86 : oy;
+    // The landing deck: tarmac with a gold edge, and the steel stand that holds the ramp's lip.
+    steel(ctx, ox - 12, oy + 3, 16, h - oy, 3);
+    tarmac(ctx, ox, landY - 1, w - ox - 6, 12);
+    ctx.fillStyle = '#d9b24a'; ctx.fillRect(ox, landY - 2, w - ox - 6, 3);
     if (picture.lower) { ctx.strokeStyle = theme.faint; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(w - 10, oy); ctx.stroke(); ctx.setLineDash([]); }
-    // The ramp drawn rising to its lip at (ox, oy), pointing up at its angle.
-    const draw = (t, colour) => { ctx.strokeStyle = colour; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ox - len * Math.cos(t), oy + len * Math.sin(t)); ctx.lineTo(ox, oy); ctx.stroke(); ctx.lineCap = 'butt'; };
+    // The ramp drawn rising to its lip at (ox, oy), pointing up at its angle: a steel plank with a brass hinge at the lip.
+    const draw = (t, alpha) => {
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(ox, oy); ctx.rotate(-t);
+      steel(ctx, -len, -5, len, 10, 2); ctx.fillStyle = theme.brass[1]; ctx.fillRect(-len, -5, len, 2);
+      ctx.restore();
+    };
+    const hinge = () => { ctx.fillStyle = theme.brass[1]; ctx.beginPath(); ctx.arc(ox, oy, 4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1; ctx.stroke(); };
     if (picture.kind === 'ramp') {
-      draw(a, theme.brass[1]);
+      draw(a, 1); hinge();
       ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + 30 * Math.cos(a), oy - 30 * Math.sin(a)); ctx.stroke();
-      text(ctx, `${picture.angle}°`, ox + 60, oy - 30, {size: 18, colour: theme.accent, weight: 800});
+      tag(ctx, `${picture.angle}°`, ox + 60, oy - 30, theme.accent, 18);
     } else {
       const ways = picture.way === 'either' ? [60, 30] : [picture.way === 'steeper' ? 60 : 30];
-      draw(Math.PI / 4, OLD);
-      for (const angle of ways) draw(angle * Math.PI / 180, theme.brass[1]);
-      text(ctx, picture.way === 'either' ? '↑ or ↓' : picture.way === 'steeper' ? '↑' : '↓', ox + 70, oy - 40, {size: 22, colour: theme.accent, weight: 800});
+      draw(Math.PI / 4, .4);
+      for (const angle of ways) draw(angle * Math.PI / 180, 1);
+      hinge();
+      tag(ctx, picture.way === 'either' ? '↑ or ↓' : picture.way === 'steeper' ? '↑' : '↓', ox + 70, oy - 40, theme.accent, 22);
     }
   }
   if (picture.kind === 'tape') {
+    // A measuring tape lying along the foot of the wall, with a marker above for the first jump and one below for the guess.
     const x0 = 14, x1 = w - 14, at = d => x0 + d / 40 * (x1 - x0), y = h * .55;
-    ctx.fillStyle = '#d9b24a'; ctx.fillRect(x0, y - 8, x1 - x0, 16);
+    cardScene(ctx, w, h, {floorAt: y - 8});
+    const tape = ctx.createLinearGradient(0, y - 8, 0, y + 8); tape.addColorStop(0, '#f2cf6a'); tape.addColorStop(.5, '#d9b24a'); tape.addColorStop(1, '#8d6f22');
+    ctx.fillStyle = tape; ctx.fillRect(x0, y - 8, x1 - x0, 16);
     ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 1;
     for (let d = 0; d <= 40; d += 5) { ctx.beginPath(); ctx.moveTo(at(d), y - 8); ctx.lineTo(at(d), y + (d % 10 ? 0 : 6)); ctx.stroke(); }
     const [before, guess] = picture.at;
     ctx.fillStyle = OLD; ctx.beginPath(); ctx.moveTo(at(before), y - 10); ctx.lineTo(at(before) - 7, y - 24); ctx.lineTo(at(before) + 7, y - 24); ctx.closePath(); ctx.fill();
-    text(ctx, '72 km/h', at(before), y - 34, {size: 12, colour: theme.ghost});
+    tag(ctx, '72 km/h', at(before), y - 34, theme.text, 12, 700);
     ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.moveTo(at(guess), y + 10); ctx.lineTo(at(guess) - 8, y + 26); ctx.lineTo(at(guess) + 8, y + 26); ctx.closePath(); ctx.fill();
-    text(ctx, `${guess} m?`, at(guess), y + 38, {size: 13, colour: theme.accent, weight: 800});
+    tag(ctx, `${guess} m?`, at(guess), y + 38, theme.accent, 13);
   }
   if (picture.kind === 'kicker') {
+    cardScene(ctx, w, h, {floorAt: h});
     kicker(ctx, w * .5, h * .42, Math.min(.32, h / 330), {pose: {tuck: 'tuck', lean: 'lean', slow: 'stand'}[picture.what]});
   }
 }
-

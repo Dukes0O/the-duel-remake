@@ -1,6 +1,6 @@
 // A rear view of the suspension rig, with the car body leaning by its measured
 // body-roll angle. The fixed key stays in the corner while the rig moves.
-import {BOARD, theme, background, text, keyCap, fitBoard, wrap, steelPanel, steel, bolt, lcd, coilSpring, damper, forceArrowTo, tarmac, shadow} from '../classroom/board-art.js';
+import {BOARD, theme, cardScene, labelPlate, background, text, keyCap, fitBoard, wrap, steelPanel, steel, bolt, lcd, coilSpring, damper, forceArrowTo, tarmac, shadow} from '../classroom/board-art.js';
 
 export {BOARD};
 export const pressMovesDrag = false;
@@ -288,16 +288,28 @@ export function drawBoard(ctx, view, width = BOARD.width, height = BOARD.height)
 
 export function drawPicture(ctx, picture, width, height) {
   ctx.save();
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, '#343c3f'); gradient.addColorStop(1, '#1b2224');
-  ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
-  const cx = width * .5, cy = height * .48;
+  cardScene(ctx, width, height, {floorAt: height});
   const unknown = picture.shake == null || picture.roll == null;
-  const tilt = unknown ? .12 : Math.min(.2, Number(picture.roll) * Math.PI / 180);
-  ctx.save(); ctx.translate(cx, cy); ctx.rotate(tilt);
-  ctx.fillStyle = '#b6b1a5'; ctx.strokeStyle = '#202729'; ctx.lineWidth = 2; ctx.fillRect(-60, -20, 120, 40); ctx.strokeRect(-60, -20, 120, 40);
+  const roll = unknown ? .12 : Math.min(.2, Number(picture.roll) * Math.PI / 180);
+  // The Dusthawk from behind on its springs, as on the board: the body leans so that its left side drops, the left
+  // spring (yellow) compresses and the right spring (blue) extends.
+  const cx = width * .27, roadY = height * .9, s = .36;
+  tarmac(ctx, 4, roadY, width * .5, 12);
+  ctx.save(); ctx.translate(cx, roadY - 87 * s + 2); ctx.scale(s, s);
+  for (const side of [-1, 1]) tyreEndOn(ctx, side * 90, 52);
+  for (const side of [-1, 1]) {
+    const hubX = side * 68;
+    suspensionArm(ctx, side * 20, 54, hubX, 66);
+    damper(ctx, side * 46, 34, 62, {tube: 5.2, rod: 2.4});
+    coilSpring(ctx, side * 46, 34, 62, {radius: 12, coils: 5, wire: 3.4, colour: side < 0 ? '#edc557' : '#79bce2'});
+  }
+  ctx.translate(0, -40); ctx.rotate(-roll); ctx.translate(0, 40);
+  steel(ctx, -74, 38, 148, 18, 3);
+  ctx.save(); ctx.translate(0, 10); bodyFromBehind(ctx); ctx.restore();
   ctx.restore();
-  text(ctx, unknown ? 'Reading?' : `${picture.shake.toFixed(2)} m/s²`, width * .5, height * .8, {size: 13, weight: 900});
-  text(ctx, unknown ? 'Predict' : `${picture.roll.toFixed(1)}° roll`, width * .5, height * .18, {size: 12, weight: 900, colour: '#d9a640'});
+  lcd(ctx, width * .58, height * .32, width * .4, height * .36, '#a9d9aa');
+  text(ctx, unknown ? 'Reading?' : `${picture.shake.toFixed(2)} m/s²`, width * .78, height * .5, {size: 14, weight: 900, colour: '#a9d9aa'});
+  labelPlate(ctx, width * .78, height * .16, width * .4, 20, .6);
+  text(ctx, unknown ? 'Predict' : `${picture.roll.toFixed(1)}° roll`, width * .78, height * .16, {size: 12, weight: 900, colour: '#d9a640'});
   ctx.restore();
 }

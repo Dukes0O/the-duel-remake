@@ -3,7 +3,7 @@
 // Strength used and Dips gauges; arrows that show the top of the part stretched and the bottom squeezed; the end of the
 // part drawn to scale; the rack of three materials and the thickness handle; the free test's table and Brian's job card.
 // Draws and hit-tests only.
-import {BOARD, theme, background, floor, shadow, rope, cable, steel, bolt, bezel, lcd, shade, grain, text, keyCap, wrap, fitBoard, helicopter, car as slungCar} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, cardScene, shadow, rope, cable, steel, bolt, bezel, lcd, shade, grain, text, keyCap, wrap, fitBoard, helicopter, car as slungCar} from '../classroom/board-art.js';
 import {NAMES, LIGHTEST, CAR_KG, DIP_MM, WEIGHT_KG, pct, mm1, kg1, failKg, barMm} from './strength-classroom.js';
 import {GRAVITY, MATERIALS} from '../benches/strength.js';
 export {BOARD};
@@ -574,36 +574,51 @@ export function drawBoard(ctx, view, width, height) {
   });
 }
 // The answer cards' pictures: an arm that holds, bends or snaps; a plain bar; an arm with the car.
+// Each picture is a small view of the board: the workshop wall and floor, the steel vice, a bar or arm of its real material,
+// the weight, and the Dusthawk on its sling.
 export function drawPicture(ctx, picture, w, h) {
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = theme.plate; ctx.fillRect(0, 0, w, h);
-  const wall = () => { ctx.fillStyle = theme.beamDark; ctx.fillRect(10, 14, 22, h - 28); };
-  const carAt = (x, y, s = .9) => { ctx.save(); ctx.translate(x, y); ctx.scale(s, s); slungCar(ctx, 0, 0, 0); ctx.restore(); };
+  const floorAt = cardScene(ctx, w, h, {floorAt: h - 18});
+  // The vice that clamps the root of the part at height y, a part t thick.
+  const miniVice = (y, t) => {
+    steel(ctx, 6, y - 22, 24, 44, 3); ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(10, y - 18, 16, 36);
+    bolt(ctx, 18, y - 14, 2.8); bolt(ctx, 18, y + 14, 2.8);
+    steel(ctx, 26, y - t / 2 - 9, 14, 9, 2); steel(ctx, 26, y + t / 2, 14, 9, 2); bolt(ctx, 33, y - t / 2 - 4.5, 2); bolt(ctx, 33, y + t / 2 + 4.5, 2);
+  };
+  // The car on its sling, hanging from (x, top) or standing with its tyres on the floor.
+  const carAt = (x, cy, s = .85) => { ctx.save(); ctx.translate(x, cy); ctx.scale(s, s); slungCar(ctx, 0, 0, 0); ctx.restore(); };
+  const rest = (x, s = .85) => { shadow(ctx, x, floorAt + 3, 34, .5); carAt(x, floorAt + 2 - 24 * s, s); };
   if (picture.kind === 'outcome') {
-    wall(); ctx.fillStyle = theme.ground; ctx.fillRect(10, h - 10, w - 20, 4);
-    const y = 30, x0 = 32, len = 150, t = 12;
-    if (picture.state === 'holds') { fillMaterial(ctx, 'carbon fibre', x0, y - t / 2, len, t); ctx.strokeStyle = theme.line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0 + len - 4, y + t / 2); ctx.lineTo(x0 + len - 4, y + 34); ctx.stroke(); carAt(x0 + len - 4, y + 56, 1.15); }
+    const y = 22, x0 = 38, len = 126, t = 10;
+    miniVice(y, t);
+    if (picture.state === 'holds') {
+      fillMaterial(ctx, 'carbon fibre', x0, y - t / 2, len, t);
+      cable(ctx, x0 + len - 4, y + t / 2, x0 + len - 4, y + 36, {width: 1.8}); carAt(x0 + len - 4, y + 54);
+    }
     if (picture.state === 'bends') {
-      ctx.save(); ctx.translate(x0, y); ctx.rotate(.42); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, len - 30, t); ctx.restore();
-      carAt(x0 + (len - 30) * .91 + 2, h - 26, 1.15);
+      ctx.save(); ctx.translate(x0, y); ctx.rotate(.3); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, 108, t); ctx.restore();
+      const tx = x0 + 108 * Math.cos(.3), ty = y + 108 * Math.sin(.3);
+      cable(ctx, tx, ty, tx, ty + 10, {width: 1.8}); rest(tx + 2);
     }
     if (picture.state === 'snaps') {
       fillMaterial(ctx, 'carbon fibre', x0, y - t / 2, 12, t);
       ctx.strokeStyle = '#f2f0e6'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0 + 12, y - t / 2); ctx.lineTo(x0 + 16, y - 1); ctx.lineTo(x0 + 11, y + t / 2); ctx.stroke();
-      ctx.save(); ctx.translate(x0 + 18, h - 18); ctx.rotate(.05); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, len - 40, t); ctx.restore();
-      carAt(x0 + len + 10, h - 26, 1.15);
+      ctx.save(); ctx.translate(x0 + 18, floorAt - 8); ctx.rotate(.05); fillMaterial(ctx, 'carbon fibre', 0, -t / 2, 86, t); ctx.restore();
+      rest(x0 + len + 18);
     }
   }
   if (picture.kind === 'bar') {
-    const t = Math.max(3, barMm(picture.material) * 1.6);
-    wall(); fillMaterial(ctx, picture.material, 32, h / 2 - t / 2, w - 60, t);
-    text(ctx, '1 kg', w - 40, h / 2 - t / 2 - 14, {size: 14, colour: theme.text});
+    const t = Math.max(3, barMm(picture.material) * 1.6), y = h * .4, tip = w - 34;
+    miniVice(y, t); fillMaterial(ctx, picture.material, 38, y - t / 2, tip - 38, t);
+    // A 1 kg weight hangs from the tip.
+    cable(ctx, tip, y + t / 2, tip, y + t / 2 + 14, {width: 1.8});
+    steel(ctx, tip - 9, y + t / 2 + 14, 18, 16, 3);
+    text(ctx, '1 kg', tip - 36, y + t / 2 + 22, {size: 14, colour: theme.text});
   }
   if (picture.kind === 'arm') {
-    const t = Math.max(3, picture.mm * .5);
-    wall(); fillMaterial(ctx, picture.material, 32, 30 - t / 2, 140, t);
-    ctx.strokeStyle = theme.line; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(168, 30 + t / 2); ctx.lineTo(168, 62); ctx.stroke();
-    carAt(168, 80, .8);
-    text(ctx, `${picture.mm} mm`, 80, 30 + t / 2 + 16, {size: 14, colour: theme.accent});
+    const t = Math.max(3, picture.mm * .5), y = 20;
+    miniVice(y, t); fillMaterial(ctx, picture.material, 38, y - t / 2, 130, t);
+    cable(ctx, 164, y + t / 2, 164, y + 34, {width: 1.8}); carAt(164, y + 52, .8);
+    text(ctx, `${picture.mm} mm`, 84, y + t / 2 + 18, {size: 14, colour: theme.accent});
   }
 }
