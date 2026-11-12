@@ -192,7 +192,7 @@ assert.ok(Math.abs(furnaceTurned)<.001||Math.abs(Math.abs(furnaceTurned)-Math.PI
 // EVERBURN-RUN-AT-TOWN: Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
 const gateFire=scene.group.getObjectByName('Tin Town gate fire and smoke');
 assert.ok(gateFire,'the scene carries a fire for Tin Town\'s gate');
-assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,3,'the gate has three tongues of fire');
+assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,5,'the gate has five tongues of fire');
 assert.ok(gateFire.children.some(node=>node.name==='Gate smoke'),'the gate has a plume of smoke');
 const everburnJob=EVERBURN_JOBS[5],gateAt=everburnJob.steps[1].path[everburnJob.steps[1].actor.gateWaypoint].position;
 assert.deepEqual([gateAt.x,gateAt.z],[575,62],'the job names the gate at Tin Town');
@@ -206,9 +206,22 @@ syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReach
 assert.equal(gateFire.visible,true,'the gate burns after gateBurnt');
 assert.ok(Math.hypot(gateFire.position.x-gateAt.x,gateFire.position.z-gateAt.z)<.001,'the fire stands on the gate');
 const tongueHeights=gateFire.children.filter(node=>node.name==='Fire on the gate').map(node=>node.scale.y);
-assert.ok(tongueHeights.every(height=>height>2.5&&height<3.8),'the tongues of fire are about 3 m tall');
+assert.ok(tongueHeights.every(height=>height>=6&&height<=8),'the tongues of fire are 6 to 8 m tall');
+const gateTongues=gateFire.children.filter(node=>node.name==='Fire on the gate'),tongueXs=gateTongues.map(node=>node.position.x).sort((a,b)=>a-b);
+const reach=Math.max(...gateTongues.map(node=>node.position.x+node.scale.x/2))-Math.min(...gateTongues.map(node=>node.position.x-node.scale.x/2));
+assert.ok(tongueXs.length===5&&Math.abs(reach-18)<.001&&Math.abs(tongueXs[0]+tongueXs[4])<.001,'the tongues are spread along 18 m, centred on the gate place');
+assert.equal(gateFire.children.filter(node=>node.name==='Gate smoke').length,12,'the plume is twelve puffs');
+assert.equal(gateFire.children.filter(node=>node.name==='Sparks from the gate fire').length,5,'sparks are thrown off the fire');
+const gateGlow=gateFire.children.find(node=>node.name==='Firelight on the ground at the gate');
+assert.ok(gateGlow&&gateGlow.material.uniforms.uTime&&gateGlow.position.y<.5,'firelight lies on the ground at the gate');
 const gateSmokeY=gateFire.children.find(node=>node.name==='Gate smoke').position.y;animateScene(scene.group,150);
 assert.notEqual(gateFire.children.find(node=>node.name==='Gate smoke').position.y,gateSmokeY,'the gate smoke moves as presentation');
+{
+  let highest=0;
+  for(let seconds=0;seconds<40;seconds+=.5){animateScene(scene.group,seconds);for(const puff of gateFire.children.filter(node=>node.name==='Gate smoke'))highest=Math.max(highest,puff.position.y);}
+  assert.ok(highest>28&&highest<=33,`the plume rises about 30 m (highest ${highest.toFixed(1)} m)`);
+  animateScene(scene.group,150);
+}
 syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,gateBurnt:false},{gateBurnt:true}));
 assert.equal(gateFire.visible,true,'the job remembers the fire when a wreck starts the chase again');
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number:5},clockSec:0,job:{stepIndex:0,steps:[{kind:'heist'}]},actors:[]}}});
@@ -217,11 +230,11 @@ assert.equal(gateFire.visible,false,'another job starts with the gate whole');
 const sightingState=(number,job,worldJob={})=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number},clockSec:0,job,actors:[],...worldJob}}});
 const rigAt=()=>{const point=new THREE.Vector3();furnace.parent.updateWorldMatrix(true,false);furnace.parent.getWorldPosition(point);return point;};
 const rig=furnace.parent,restAt=new THREE.Vector3(places.get('everburn').x+18,scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z),places.get('everburn').z);
-// Job 1: standing on the skyline at (300, -120), smoke and no door fire, until the pot is delivered.
+// Job 1: standing on the skyline at (300, -60), smoke and no door fire, until the pot is delivered.
 const hot={stepIndex:0,steps:EVERBURN_JOBS[0].steps,done:false};
 syncScene(scene.group,sightingState(1,hot));
-assert.ok(Math.hypot(rigAt().x-300,rigAt().z+120)<.001&&rig.visible,'job 1: the furnace stands at (300, -120)');
-assert.ok(Math.abs(rigAt().y-scablandsSurfaceHeightAt(300,-120))<.001,'job 1: it stands on the ground');
+assert.ok(Math.hypot(rigAt().x-300,rigAt().z+60)<.001&&rig.visible,'job 1: the furnace stands at (300, -60)');
+assert.ok(Math.abs(rigAt().y-scablandsSurfaceHeightAt(300,-60))<.001,'job 1: it stands on the ground');
 assert.deepEqual(fireOver(),[],'job 1: no door fire shows on the standing furnace');
 assert.ok(furnaceFire.children.slice(6,20).every(puff=>puff.name==='Chimney smoke'),'job 1: its chimney smoke is drawn');
 animateScene(scene.group,200);
@@ -241,26 +254,27 @@ assert.ok(rolling(19.9).x<-59&&rig.visible,'job 3: it is still rolling just befo
 rolling(20);
 assert.equal(rig.visible,false,'job 3: after 20 seconds it is gone');
 assert.deepEqual([rolling(5).x,rolling(5).z],[rolling(5).x,rolling(5).z],'job 3: the same clock gives the same place');
-// Job 4: 150 m north of Big Bess while she is between 30% and 70% of her road, at her speed, then turning away north.
+// Job 4: 90 m to the north of Big Bess and 40 m ahead of her while she is between 30% and 70% of her road, at her speed, then turning away north.
 const slow=EVERBURN_JOBS[3].steps[0],points=slow.path.map(item=>item.position);
 const legs=points.slice(1).map((point,index)=>Math.hypot(point.x-points[index].x,point.z-points[index].z)),total=legs[0]+legs[1];
 const escortAtShare=share=>{const metres=share*total,second=metres>legs[0],from=points[second?1:0],to=points[second?2:1],t=(metres-(second?legs[0]:0))/legs[second?1:0];
-  return {id:'big-bess',position:{x:from.x+(to.x-from.x)*t,y:0,z:from.z+(to.z-from.z)*t},pathIndex:second?2:1};};
+  return {id:'big-bess',position:{x:from.x+(to.x-from.x)*t,y:0,z:from.z+(to.z-from.z)*t},pathIndex:second?2:1,roadHeading:Math.atan2(to.x-from.x,to.z-from.z)};};
 const escorting=(share,job={stepIndex:0,steps:EVERBURN_JOBS[3].steps,done:false})=>sightingState(4,job,{actors:[escortAtShare(share)]});
 const wrapAngle=angle=>Math.atan2(Math.sin(angle),Math.cos(angle));
 syncScene(scene.group,escorting(.2));
 assert.ok(rigAt().distanceTo(restAt)<.001,'job 4: before 30% of her road the furnace stays where it was');
 for(const share of [.31,.5,.69]){
-  const bess=escortAtShare(share).position;
+  const {position:bess,roadHeading}=escortAtShare(share);
   syncScene(scene.group,escorting(share));
-  assert.ok(Math.hypot(rigAt().x-bess.x,rigAt().z-(bess.z-150))<.001&&rig.visible,`job 4: at ${share*100}% the furnace is 150 m north of Big Bess`);
+  assert.ok(Math.hypot(rigAt().x-(bess.x+Math.sin(roadHeading)*40),rigAt().z-(bess.z+Math.cos(roadHeading)*40-90))<.001&&rig.visible,`job 4: at ${share*100}% the furnace is 90 m north of Big Bess and 40 m ahead of her`);
   assert.ok(Math.abs(wrapAngle(rig.rotation.y-bessRig.rotation.y))<.001,'job 4: it faces the way she faces');
 }
 assert.deepEqual(fireOver(),[],'job 4: no door fire shows on the pacing furnace');
-const before=escortAtShare(.69).position;
+syncScene(scene.group,escorting(.69));
+const beforeTurn=rigAt().clone();
 syncScene(scene.group,escorting(.76));
 assert.ok(Math.abs(wrapAngle(rig.rotation.y-Math.PI))<.001,'job 4: past 70% it has turned to face north');
-assert.ok(rigAt().z<before.z-150&&rig.visible,'job 4: and it is further north than before');
+assert.ok(rigAt().z<beforeTurn.z&&rig.visible,'job 4: and it is further north than before');
 syncScene(scene.group,escorting(.99));
 assert.equal(rig.visible,false,'job 4: it turns away north and is gone');
 assert.equal(escorting(.5).arena.worldJob.actors.every(item=>item.id!=='old-smoke-furnace'),true,'job 4: no furnace actor stands behind the sighting');

@@ -49,7 +49,14 @@ export async function run(c) {
     const raiders=j.actors.filter(x=>x.ambushKey),bess=j.actors.find(x=>x.id==='big-bess');
     if(!raiders.length)throw Error('The raiders are gone');
     return {raiders:raiders.map(r=>({id:r.id,x:Math.round(r.x),z:Math.round(r.z),health:r.health})),bess:{x:Math.round(bess.position.x),z:Math.round(bess.position.z),health:Math.round(bess.health)},
-      hud:document.querySelector('.world-hud-progress')?.innerText||'',caption:document.body.innerText.includes('Here they come')};})()`);
+      hud:document.querySelector('.world-hud-truck')?.innerText||'',caption:document.body.innerText.includes('Here they come')};})()`);
+  // Big Bess's health bar is shown and stands clear of the rear-view mirror, the caption line and the armour bar.
+  out.bar=await c.evaluate(`(()=>{const rect=sel=>{const n=document.querySelector(sel);if(!n)return null;const r=n.getBoundingClientRect();return r.width&&r.height?{x:r.left,y:r.top,w:r.width,h:r.height}:null;};
+    const bar=rect('.world-hud-truck:not([hidden])'),others={mirror:rect('.rear-view-frame'),line:rect('.world-hud-line'),armour:rect('.combat-player-armor'),route:rect('#route-map')};
+    if(!bar)throw Error('The Big Bess health bar is not shown');
+    const over=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+    for(const [name,r] of Object.entries(others))if(r&&over(bar,r))throw Error('The Big Bess health bar covers the '+name);
+    return {bar,others};})()`);
   await c.screenshot('run-gas-raid');
 
   // A long road run: back to the yard (nothing arrived, so nothing is saved), then start it and look at its beginning.

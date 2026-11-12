@@ -1,12 +1,12 @@
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
-import {createRaidZones} from '../../raiders.js';
+import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor} from '../../world/jobs/old-smoke.js';
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
-import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND} from '../../world/jobs/steps/escort.js';
+import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
@@ -353,6 +353,18 @@ function wearEscort(worldJob, step, difficulty, dt) {
   if (standing) truck.health = Math.max(0, truck.health - standing * rate * dt);
 }
 
+// RUN-GAS: the player's car knocks down an ambush raider it touches (its centre within 2.2 m) while it moves at 4 m/s or more.
+// A raider knocked down in an ambush, by the car or by any weapon, stays down for the rest of that ambush (src/raiders.js).
+function runDownRaiders(duel, worldJob, car) {
+  const state = duel.state;
+  if (state.onFoot || state.combatWrecking || Math.abs(state.speedMph || 0) * DRIVE.mphToWorld < AMBUSH_RUN_DOWN_MPS) return;
+  for (const raider of worldJob.actors) {
+    if (!raider.ambushKey || raider.knockedDown || !(raider.health > 0) || !Number.isFinite(raider.x) || !Number.isFinite(raider.z)) continue;
+    if (Math.hypot(raider.x - car.x, raider.z - car.z) <= AMBUSH_RUN_DOWN_METRES)
+      damageRaider(duel, raider, raider.health, {source: 'car', owner: 'player'});
+  }
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
     if (request.type === 'marker') {
@@ -462,7 +474,10 @@ export function stepWorldJob(duel, dt) {
     placeState.health = Math.max(0, placeState.health - nearbyRaiders *
       WELL_WEAR_PER_SECOND * difficultyScale * dt);
   }
-  if (currentStep?.kind === 'escort' && currentStep.ambushes?.length) wearEscort(worldJob, currentStep, state.cpuDifficulty, dt);
+  if (currentStep?.kind === 'escort' && currentStep.ambushes?.length) {
+    runDownRaiders(duel, worldJob, point);
+    wearEscort(worldJob, currentStep, state.cpuDifficulty, dt);
+  }
   const thingsHit = [...(state.worldJobThingsHit || []),
     ...(state.onFoot && state.input?.interact &&
       worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
@@ -532,7 +547,9 @@ export function stepWorldJob(duel, dt) {
       const start = path?.[Math.max(0, (truck?.pathIndex ?? 1) - 1)];
       if (truck && start) {
         truck.position = {...(start.position ?? start)};
-        truck.health = truck.stretchHealth ?? truck.health;
+        // After a rest she has at least REST_HEALTH_MINIMUM, and more if she had more when the stretch began.
+        truck.health = Math.max(truck.stretchHealth ?? 0, REST_HEALTH_MINIMUM);
+        truck.stretchHealth = truck.health;
         truck.reachedEnd = false; truck.atDestination = false;
       }
     }

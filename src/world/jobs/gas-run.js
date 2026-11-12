@@ -117,7 +117,7 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium'} = {}
     actorId: 'big-bess',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot, as in job 4.
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route}),
-    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3,
+    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower',
     ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: START_LINE[road],
     arrival: Object.freeze({wholeLineId: GAS_RUN_LINES.whole, hurtLineId: GAS_RUN_LINES.hurt, hurtBelow: GAS_RUN_LINES.hurtBelow,
       thenLineIds: reachesWarParty ? Object.freeze([GAS_RUN_LINES.warParty]) : Object.freeze([])})});

@@ -93,15 +93,15 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   return {heard, job};
 }
 {
-  // Job 1: Cinder speaks once, when the player first comes within 260 m of the furnace at (300, -120).
+  // Job 1: Cinder speaks once, when the player first comes within 260 m of the furnace at (300, -60).
   const at = (x, z) => ({player: {position: {x, y: 0, z}}, actors: []});
   const far = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(0, 0), 12);
   assert.ok(!far.heard.includes('story.ember.cinder.24'), 'job 1: nothing is said while the furnace is out of sight');
-  const near = lineIdsHeard(far.job, () => at(100, 0), 12);
+  const near = lineIdsHeard(far.job, () => at(67, -60), 12);
   assert.equal(near.heard.filter(id => id === 'story.ember.cinder.24').length, 1, 'job 1: Cinder points out the furnace once, 233 m away');
-  const again = lineIdsHeard(near.job, () => at(300, -100), 12);
+  const again = lineIdsHeard(near.job, () => at(300, -10), 12);
   assert.ok(!again.heard.includes('story.ember.cinder.24'), 'job 1: she does not say it twice');
-  const edge = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(60, 0), 12);
+  const edge = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(30, -60), 12);
   assert.ok(!edge.heard.includes('story.ember.cinder.24'), 'job 1: 270 m away is still too far');
 }
 {

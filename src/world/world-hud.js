@@ -151,7 +151,7 @@ export function createWorldHud({host}) {
   }
   const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
   root.setAttribute('aria-label', 'Scablands job guidance');
-  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>SCABLANDS</b><button type="button" data-world-map-close>CLOSE</button></header>
       <canvas width="${MAP_WIDTH}" height="${MAP_HEIGHT}" aria-label="Map with your position and job marker"></canvas>
@@ -159,6 +159,7 @@ export function createWorldHud({host}) {
   host.append(root);
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
+  const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
   const findList = root.querySelector('.world-hud-finds');
@@ -189,9 +190,11 @@ export function createWorldHud({host}) {
       prompt.textContent = model.prompt;
       const bars=model.wave?[{label:`WAVE ${Math.min(model.wave.value+1,model.wave.max)} / ${model.wave.max}`,value:Math.min(model.wave.value+1,model.wave.max),max:model.wave.max}]:[];
       if(model.well)bars.push({label:`WELL ${Math.ceil(model.well.value)} / ${model.well.max}`,value:model.well.value,max:model.well.max});
-      if(model.truck)bars.push({label:`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`,value:model.truck.value,max:model.truck.max});
       progress.hidden=!bars.length;
       progress.replaceChildren(...bars.flatMap(bar=>{const label=doc.createElement('span'),meter=doc.createElement('progress');label.textContent=bar.label;meter.max=bar.max;meter.value=bar.value;meter.setAttribute('aria-label',bar.label);return[label,meter];}));
+      // RUN-GAS: Big Bess's health sits at the lower left above the armour bar, clear of the rear-view mirror and the caption line.
+      truckBar.hidden=!model.truck;
+      if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
       const mapKey = JSON.stringify([model.places, model.finds, model.target, model.player]);
       if (mapKey !== lastMap) {

@@ -2,10 +2,11 @@
 // Memory only: no save is read or written.
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
+import {damageRaider} from '../src/raiders.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
-import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES,
+import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES, AMBUSH_MIN_FROM_START_METRES,
   AMBUSH_WEAR_PER_SECOND} from '../src/world/jobs/steps/escort.js';
-import {GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
+import {GAS_RUN_AMBUSH_METRES, GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {App} from '../src/app.js';
@@ -109,6 +110,20 @@ function run(duel, seconds) {
 const worldOf = duel => duel.state.arena.worldJob;
 const bessOf = duel => worldOf(duel).actors.find(actor => actor.id === 'big-bess');
 const raidersOf = duel => worldOf(duel).actors.filter(actor => actor.ambushKey);
+// Stand an escorted truck `metres` along her road, heading for the place after that point.
+function placeOnPath(truck, path, metres) {
+  const points = path.map(item => item.position ?? item);
+  let left = metres;
+  for (let i = 1; i < points.length; i++) {
+    const length = Math.hypot(points[i].x - points[i - 1].x, points[i].z - points[i - 1].z);
+    if (left <= length || i === points.length - 1) {
+      Object.assign(truck.position, {x: points[i - 1].x + (points[i].x - points[i - 1].x) * left / length, z: points[i - 1].z + (points[i].z - points[i - 1].z) * left / length});
+      truck.pathIndex = i;
+      return;
+    }
+    left -= length;
+  }
+}
 function runUntil(duel, condition, seconds = 90) {
   for (let tick = 0; tick < Math.round(seconds / DT) && !condition(); tick++) {
     duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
@@ -176,14 +191,111 @@ function runUntil(duel, condition, seconds = 90) {
     runUntil(duel, () => raidersOf(duel).length > 0);
     check(duel.state.raids.zones.length === 1, 'the camp is in the raider list');
     const bess = bessOf(duel), place = ambushes[0].place.position, path = job4.steps[0].path;
-    const farther = alongPath(path, place).metres + 70, safe = path[1].position;
-    check(farther < metresAtPlace(path, 1), 'the test place is on her first stretch');
-    const a = path[0].position, b = path[1].position, length = Math.hypot(b.x - a.x, b.z - a.z);
-    Object.assign(bess.position, {x: a.x + (b.x - a.x) * farther / length, z: a.z + (b.z - a.z) * farther / length});
+    const farther = alongPath(path, place).metres + 70;
+    placeOnPath(bess, path, farther);
     run(duel, .1);
     same(raidersOf(duel).length, 0, 'raiders still standing give up when she is 60 m past');
     same(duel.state.raids.zones.length, 0, 'and leave the raider list');
-    void safe;
+  }
+}
+
+// ---- 2b. What play showed (RUN-GAS follow-ups): running raiders down, staying down, health after a rest, where ambushes stand ---
+{
+  const job4 = EVERBURN_JOBS[3], step4 = job4.steps[0], coast = {throttle: 0, brake: 0, steer: 0, boost: false, interact: false};
+  // The car on a raider, at a speed, for one tick.
+  const touch = (duel, raider, {mph, away = 0}) => {
+    const at = duel.course.nearest(raider.x + away, raider.z);
+    duel.state.s = at.s; duel.state.lateral = at.lateral; duel.state.speedMph = mph;
+    duel.setInput(coast); duel.step(DT);
+  };
+  const apart = (duel, raider) => { const car = duel.course.worldAt(duel.state.s, duel.state.lateral); return Math.hypot(car.x - raider.x, car.z - raider.z); };
+  {
+    const duel = startJob(job4, 'medium'), knocks = [];
+    duel.onChange((_state, event) => { if (event.raiderKnockdown) knocks.push(event.raider); });
+    check(runUntil(duel, () => raidersOf(duel).length === 2 && duel.state.status === 'racing'), 'medium: two raiders appear');
+    const [first, second] = raidersOf(duel);
+    touch(duel, first, {mph: 12});
+    check(apart(duel, first) <= 2.2, 'the test car is within 2.2 m of the raider');
+    check(first.knockedDown === true && first.health === 0, 'a car at 5.4 m/s touching a raider knocks him down');
+    same(knocks, [first.id], 'and the game counts the knock-down once');
+    touch(duel, second, {mph: 6});
+    check(second.knockedDown === false, 'a car at 2.7 m/s does not');
+    touch(duel, second, {mph: 12, away: 3});
+    check(apart(duel, second) > 2.2 && second.knockedDown === false, 'a fast car 3 m away does not');
+    touch(duel, second, {mph: 8});
+    check(second.knockedDown === false, 'a car at 3.6 m/s, just under 4 m/s, does not');
+    touch(duel, second, {mph: 9.2});
+    check(second.knockedDown === true, 'a car at 4.1 m/s does');
+    // A raider knocked down stays down for the rest of that ambush.
+    run(duel, 6);
+    check(first.knockedDown === true && second.knockedDown === true, 'both stay down well past the 3 seconds a raider takes to get up elsewhere');
+    check(raidersOf(duel).every(raider => raider.knockedDown), 'and they are still the ambush raiders');
+  }
+  {
+    const duel = startJob(job4, 'medium');
+    runUntil(duel, () => raidersOf(duel).length === 2);
+    const [first, second] = raidersOf(duel);
+    check(damageRaider(duel, first, 999, {source: 'crossbow', owner: 'player'}) === true && first.knockedDown, 'a weapon knocks a raider down');
+    check(damageRaider(duel, second, 999, {source: 'flamethrower', owner: 'player'}) === true && second.knockedDown, 'so does the flamethrower');
+    run(duel, 6);
+    check(first.knockedDown && second.knockedDown, 'and he stays down for the rest of the ambush');
+    // The next ambush's raiders are standing: only the knocked-down ones of an ambush stay down.
+    const place2 = step4.ambushes[1].place.position, path = step4.path;
+    placeOnPath(bessOf(duel), path, alongPath(path, place2).metres - 100);
+    check(runUntil(duel, () => raidersOf(duel).some(raider => raider.id.startsWith('ambush:ash-men-raid-2')), 5), 'the second ambush appears');
+    check(raidersOf(duel).filter(raider => raider.id.startsWith('ambush:ash-men-raid-2')).every(raider => !raider.knockedDown), 'with its raiders standing');
+  }
+  {
+    // Outside escort ambushes nothing about raiders changes: job 6's well raiders still get up after their 3 seconds.
+    const duel = startJob(EVERBURN_JOBS[5], 'medium');
+    check(runUntil(duel, () => worldOf(duel).waveZones?.['0:0']?.raiders.length > 0 && duel.state.status === 'racing', 30), 'job 6: the first wave appears');
+    const raider = worldOf(duel).waveZones['0:0'].raiders[0];
+    check(!raider.ambushKey, 'a well raider is not an ambush raider');
+    check(damageRaider(duel, raider, 999, {source: 'crossbow', owner: 'player'}) === true && raider.knockedDown, 'job 6: a raider is knocked down');
+    run(duel, 4);
+    check(raider.knockedDown === false && raider.health > 0, 'job 6: and gets up again after 3 seconds, as before');
+    // A car does not knock a well raider down.
+    const standing = worldOf(duel).waveZones['0:0'].raiders.find(item => !item.knockedDown);
+    touch(duel, standing, {mph: 20});
+    check(standing.knockedDown === false, 'job 6: a car touching a well raider does nothing');
+  }
+
+  // After a rest Big Bess has at least 60 health, and more if she had more when the stretch began.
+  for (const [began, expected] of [[100, 100], [90, 90], [60, 60], [59, 60], [20, 60], [1, 60]]) {
+    const duel = startJob(job4, 'medium');
+    runUntil(duel, () => raidersOf(duel).length > 0);
+    const bess = bessOf(duel);
+    bess.stretchHealth = began; bess.health = 0;
+    check(runUntil(duel, () => worldOf(duel).job.stepState.rested === false && bessOf(duel).health > 0, 12), `rest ${began}: she restarts`);
+    near(bessOf(duel).health, expected, 1, `a stretch begun with ${began} health restarts with ${expected}`);
+  }
+
+  // Where ambushes stand: none within 180 m of the start along the road, on job 4 and on every road, feud and run sampled.
+  {
+    const firstAmbush = step4.ambushes[0];
+    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [278, 188], 'job 4\'s first ambush stands at (278, 188)');
+    near(alongPath(step4.path, firstAmbush.place).gap, 0, .5, 'on her road');
+    check(step4.ambushes.every(item => alongPath(step4.path, item.place).metres >= AMBUSH_MIN_FROM_START_METRES), 'no ambush of job 4 within 180 m of its start');
+    near(alongPath(step4.path, firstAmbush.place).metres, 186, 1, 'the first is 186 m along her road');
+    let sampled = 0;
+    for (const road of GAS_RUN_ROADS) for (let feud = 1; feud <= 4; feud++) for (let runs = 0; runs < 200; runs++) {
+      const job = gasRunJob({road, feud, runs});
+      for (const ambush of job.steps[0].ambushes) {
+        sampled++;
+        if (alongPath(job.steps[0].path, ambush.place).metres < AMBUSH_MIN_FROM_START_METRES) check(false, `${road} feud ${feud} run ${runs}: an ambush within 180 m of the start`);
+      }
+    }
+    check(sampled > 1000, `no ambush within 180 m of the start on ${sampled} sampled ambushes (every road, feud and 200 run counts)`);
+    check([...GAS_RUN_AMBUSH_METRES.boneyard, ...GAS_RUN_AMBUSH_METRES.long].every(metres => metres >= AMBUSH_MIN_FROM_START_METRES), 'and every place in the fixed lists is at least 180 m along');
+  }
+
+  // The flamethrower is lent for job 4 and for every run, as job 1 lends it.
+  {
+    check(EVERBURN_JOBS[0].steps[0].lentWeapon === 'flamethrower' && step4.lentWeapon === 'flamethrower', 'job 1 and job 4 lend the flamethrower');
+    for (const road of GAS_RUN_ROADS) check(gasRunJob({road, feud: 2}).steps[0].lentWeapon === 'flamethrower', `the ${road} road lends the flamethrower`);
+    const duel = startJob(gasRunJob({road: 'boneyard', feud: 2, runs: 0, difficulty: 'medium'}), 'medium');
+    same(worldOf(duel).activeLoan, 'flamethrower', 'a run in a real Duel has the flamethrower on loan');
+    check(duel.state.weaponLoadout.includes('flamethrower'), 'and in the car\'s slots');
   }
 }
 

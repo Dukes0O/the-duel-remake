@@ -5,13 +5,14 @@
 // changes a race; the scene reads `furnaceSighting` and the job engine reads `pathShare`.
 import {OLD_SMOKE} from './old-smoke.js';
 
-// Job 1: standing on the skyline north of the road (smaller z is north in the Scablands), until the pot is delivered.
-export const FURNACE_SKYLINE = Object.freeze({x: 300, z: -120});
+// Job 1: standing on the skyline north of the road (at (300, -60), nearer the player's road than it first stood; RUN-GAS) (smaller z is north in the Scablands), until the pot is delivered.
+export const FURNACE_SKYLINE = Object.freeze({x: 300, z: -60});
 // Job 3: rolling away west from the Boneyard's far end for 20 seconds from the moment the thief is caught, then gone.
 export const FURNACE_LEAVING = Object.freeze({from: Object.freeze({x: 140, z: 470}), to: Object.freeze({x: -60, z: 440}), seconds: 20});
-// Job 4: 150 m north of Big Bess while she is between 30% and 70% of her road, at her speed. Past 70% it turns away
-// north, at its own base pace, and is gone once it has gone 220 m.
-export const FURNACE_PACING = Object.freeze({fromShare: .3, toShare: .7, northMetres: 150, turnMetres: 30, goneMetres: 220});
+// Job 4: 90 m to the north of Big Bess and 40 m ahead of her along her direction of travel, while she is between 30% and 70% of
+// her road, at her speed (RUN-GAS: it was 150 m abeam, out of the player's view). Past 70% it turns away north, at its own base
+// pace, and is gone once it has gone 220 m.
+export const FURNACE_PACING = Object.freeze({fromShare: .3, toShare: .7, northMetres: 90, aheadMetres: 40, turnMetres: 30, goneMetres: 220});
 
 const NORTH = Math.PI;
 const at = place => place?.position ?? place;
@@ -79,14 +80,15 @@ export function furnaceSighting(worldJob) {
     const {share, total} = pathShare(bess.position, bess.pathIndex, path), pacing = FURNACE_PACING;
     if (over || share < pacing.fromShare) return over ? {hidden: true} : null;
     const pose = bessPose(bess, path, bess.pathIndex);
-    if (share <= pacing.toShare) return {x: pose.x, z: pose.z - pacing.northMetres, heading: pose.heading};
+    if (share <= pacing.toShare) return {x: pose.x + Math.sin(pose.heading) * pacing.aheadMetres,
+      z: pose.z + Math.cos(pose.heading) * pacing.aheadMetres - pacing.northMetres, heading: pose.heading};
     // Past 70% the furnace turns away: it keeps its place from the 70% mark, turns to the north over `turnMetres`, and
     // goes on north at its own pace (the share of her road she has gone since, scaled by how much faster it is).
     const mark = pointAlong(path, pacing.toShare * total), travelled = (share - pacing.toShare) * total *
       OLD_SMOKE.baseSpeed / Math.max(1, step.speed ?? 9);
     if (travelled >= pacing.goneMetres) return {hidden: true};
     const turn = wrap(NORTH - mark.heading), first = Math.min(travelled, pacing.turnMetres);
-    let x = mark.x, z = mark.z - pacing.northMetres;
+    let x = mark.x + Math.sin(mark.heading) * pacing.aheadMetres, z = mark.z + Math.cos(mark.heading) * pacing.aheadMetres - pacing.northMetres;
     if (Math.abs(turn) > 1e-6) {
       const rate = turn / pacing.turnMetres;
       x += (-Math.cos(mark.heading + rate * first) + Math.cos(mark.heading)) / rate;
