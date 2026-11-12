@@ -191,6 +191,22 @@ give up as she sets off the third time, and Moss says `story.ember.moss.10`: "Th
 go, go." She arrives with what health she has, and the arrival line for a hurt truck plays. The feud and the pay are
 as for any arrival.
 
+### No endless loop: built and merged (12 November 2026)
+
+When Big Bess has rested twice on a stretch, the raiders still standing there give up and Moss says line
+`story.ember.moss.10` once. On Medium the driver who never fights now arrives 10 times in 10 on job 4 and on both
+roads at every feud word, with at most 4 rests in a run.
+
+**Changed assertions, reviewed by Claude (rule 18),** all in `tools/test-run-gas-medium.mjs`, which is one day old:
+the driver who never fights must now arrive everywhere 10 times in 10 (it was the long road at two feud words, 8 in
+10); and the limit on rests is now 2 for each stretch for both drivers (it was 3 in a whole run). The first is
+stronger. The second follows the new rule, under which a run that used to loop for ever now ends; it loosens
+nothing a player could feel, and the fighting driver's three targets on this card pass at 10 in 10.
+
+What Claude notes for a later tuning pass: on the Boneyard road at Hunting and War party a player who never fights
+gets home by waiting through four rests. That is safe, and it is dull; the cure is to make running raiders down
+obvious and satisfying (a line from Moss the first time, a sound, raiders that scatter), not to punish the waiting.
+
 ## Not in this card
 
 Other cargo and other roads, sending someone else, the boss coming out, the Scrapdome challenge, lasting damage.
