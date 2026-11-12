@@ -115,7 +115,7 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium'} = {}
   const route = GAS_RUN_PATHS[road], ambushes = Object.freeze(gasRunAmbushes(road, feud, runs));
   // Auntie Solder says her line once: when this arrival is the one that takes the feud to War party.
   const reachesWarParty = road === 'boneyard' && clampFeud(feud) === 3;
-  const step = Object.freeze({kind: 'escort', what: `Keep Big Bess safe on the ${GAS_RUN_NAMES[road].toLowerCase()} to Tin Town.`,
+  const step = Object.freeze({kind: 'escort', what: `Keep Big Bess safe on the ${road === 'long' ? 'long road' : 'Boneyard road'} to Tin Town.`,
     actorId: 'big-bess',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot, as in job 4.
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route}),

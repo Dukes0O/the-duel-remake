@@ -252,6 +252,7 @@ function runUntil(duel, condition, seconds = 90) {
   same([['long', 3], ['long', 4], ['boneyard', 1], ['boneyard', 2], ['boneyard', 4]].map(([road, feud]) => gasRunJob({road, feud}).steps[0].arrival.thenLineIds.length),
     [0, 0, 0, 0, 0], 'and no other run does');
   same(gasRunJob({road: 'long'}).steps[0].startLineId, 'story.ember.moss.5', 'the long road starts with Moss\'s long road line');
+  same([gasRunJob({road: 'long'}).steps[0].what, step.what], ['Keep Big Bess safe on the long road to Tin Town.', 'Keep Big Bess safe on the Boneyard road to Tin Town.'], 'each run\'s line on screen is a whole sentence naming its road');
 
   // Pay: a share is what job 4 pays today (80 times the difficulty factor).
   for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]]) {
