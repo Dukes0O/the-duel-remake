@@ -176,7 +176,7 @@ breaking a door, Easy's one door, pay, the save, the lines, job 6.
 
 **The furnace burns its coal (a fourth rule, added after Claude accepted the three).** A Hard driver who never fights could never get Big Bess home (0 of
 10, 32 rests), and a battle is never a game over. `FIELD_BATTLE.furnace.spentAfterRests` is 3. The job mode counts every `rest` event of a battle
-(`worldJob.battleRests`, so rests before the furnace comes out count too) and calls `furnaceRested` in `old-smoke.js`, which counts them on the furnace
+(only once the furnace is out; Claude removed the count of earlier rests in review) and calls `furnaceRested` in `old-smoke.js`, which counts them on the furnace
 (`rests`) and sets `spent` at the third. A spent furnace has `burning` false and adds no `escortBurn`, and `canStoke` (in range and not spent) gates the
 start of every stoke and every shut door's next stoke. A door already glowing keeps its time and can be broken; a stoke already begun runs on to its glow.
 It still follows her and turns away at the gate, so the battle ends as "arrived" unless the last door was glowing and is broken. `furnaceRested` does nothing

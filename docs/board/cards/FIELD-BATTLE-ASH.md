@@ -285,7 +285,7 @@ wrong" below), and a battle is never a game over, so: after Big Bess's third res
 (`burning` false, nothing drawn) and no door begins to stoke again; a door that already glows keeps its time and can still be broken; it follows her
 as before and turns away at the gate, so the battle ends as "arrived" unless its last door was already glowing and is broken. It mirrors the rule that
 an ambush gives up after two rests. No new line, no new sound. The furnace's state carries `spent` (true or false) for the scene and the map to read
-later; nothing new is drawn. `FIELD_BATTLE.furnace.spentAfterRests` is 3. Rests she has before the furnace comes out count. Three rests were enough: the
+later; nothing new is drawn. `FIELD_BATTLE.furnace.spentAfterRests` is 3. Only rests after the furnace is out count (changed by Claude in review: rests before it comes out are the riders' doing). Three rests were enough: the
 Medium driver who fights wins 9 of 10 (23 of 30), well over the 6 of 10 and 18 of 30 at which four would have been used, and never rests three times
 (at most 2), so for him nothing changed. Nothing else moved.
 

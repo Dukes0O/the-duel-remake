@@ -193,6 +193,28 @@ click moved with what they point at; one hover check became a check of the strip
 Next: the same helper pattern, one more round on that branch with the four fixes above, then all `lab-*` browser
 checks, then Claude's verdict from a sheet whose pictures are large enough to read (two views a row, not four).
 
+## Round 10: the wide board on Braking, finished and merged (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Sheet and note: `docs/board/looks/lab-look/round-10.jpg` and `round-10-review.md`. Verdict: **better than the board
+before, merged.** The board fills the panel, the close-up car is 1.3 times larger and centred over the road, the
+free test has the close-up car where its table was, and "80 m long" and "past the end" are back. The helper played
+every step at every speed on all five cars and compared every word with the old board: only the table's column
+words differ, because round 8 moved the table to the strip.
+
+**Changed assertions, reviewed by Claude (rule 18).** In `tools/test-lab-classroom-braking.mjs` three hover points
+moved with what they point at (the close-up car and its pads from x 300 to x 655, the speed dial from x 780 to
+x 1100), and the check that hovering names the table became a check of the strip's hint and the table's title,
+because the table is in the strip. In `tools/scenarios/lab-classroom-braking.mjs` the lever is clicked at
+(1230, 285) on a board 1320 wide. Each still checks the same thing in its new place; nothing is loosened. Two tests
+were added.
+
+Still weak, for the round that does Fuel, Wax, Launch and Projectile:
+
+- The road's own labels (10 m marks, "brakes on", the lane names) are about 10 pixels tall on a laptop. The rule
+  that labels keep their size is wrong for these: on a wide board the road's labels go up one step.
+- One-lane steps leave bare floor under the road, and past 80 m the road has no marks.
+- In the free test the close-up is the Falcone whichever car is chosen.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

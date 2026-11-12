@@ -15,4 +15,6 @@ step at 1920 by 1080. Built by a Sonnet helper; Claude judges.
 Builder's view of what is still weak: the road beyond 80 m has no marks; with the physics panel open the board is fitted by
 width and the wall shows above and below it (accepted by the card's rules); text labels on the board are small because they keep their old size.
 
-Verdict (Claude): to be written.
+Verdict (Claude): better than the board before, merged. The close-up reads as the subject of the step and the board
+fills its panel. Still weak, and carried to the next round on the card: the road's own labels are about 10 pixels tall on
+a laptop, one-lane steps leave bare floor under the road, and the free test's close-up is the Falcone for every car.

@@ -211,7 +211,7 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
     furnaceRested(f);
     same(f.rests, 4, `${difficulty}: later rests are still counted`);
     const g = fresh(difficulty); furnaceRested(g, 3);
-    same(g.spent, true, `${difficulty}: and three rests counted at once (rests she had before it came out) spend it`);
+    same(g.spent, true, `${difficulty}: and three rests counted at once spend it`);
     // It still follows her (at the catching-up pace beyond 40 m) and never comes nearer than 12 m.
     const h = fresh(difficulty); furnaceRested(h, 3); const m0 = h.metres; run(h, 5, aheadOf(500));
     check(h.metres > m0 + 40, `${difficulty}: a spent furnace still follows her`);
