@@ -40,53 +40,20 @@ blend.parent.mkdir(parents=True, exist_ok=True)
 evidence.mkdir(parents=True, exist_ok=True)
 
 def mat(name, color, metal=0.0, rough=.86, rust=False):
+    # One plain base colour and little metal: the exporter writes no colour for a texture node, and the game draws the
+    # rust, runs and grain in code (SCABLANDS-LAND; docs/ART_LINE.md, "A model that is black in the game").
     m = bpy.data.materials.new(name)
     m.diffuse_color = (*color, 1)
     m.use_nodes = True
-    nodes, links = m.node_tree.nodes, m.node_tree.links
-    shader = nodes.get('Principled BSDF')
-    shader.inputs['Metallic'].default_value = metal
+    shader = m.node_tree.nodes.get('Principled BSDF')
+    shader.inputs['Metallic'].default_value = min(metal, .2)
     shader.inputs['Roughness'].default_value = rough
-    if rust:
-        noise = nodes.new('ShaderNodeTexNoise')
-        noise.inputs['Scale'].default_value = 5.4
-        noise.inputs['Detail'].default_value = 3
-        noise.inputs['Roughness'].default_value = .78
-        ramp = nodes.new('ShaderNodeValToRGB')
-        ramp.color_ramp.elements[0].position = .28
-        ramp.color_ramp.elements[0].color = (.075,.085,.082,1)
-        ramp.color_ramp.elements[1].position = .72
-        ramp.color_ramp.elements[1].color = (.37,.135,.047,1)
-        mid = ramp.color_ramp.elements.new(.51)
-        mid.color = (.19,.13,.09,1)
-        links.new(noise.outputs['Fac'], ramp.inputs['Fac'])
-        links.new(ramp.outputs['Color'], shader.inputs['Base Color'])
-        bump = nodes.new('ShaderNodeBump')
-        bump.inputs['Strength'].default_value = .24
-        bump.inputs['Distance'].default_value = .035
-        links.new(noise.outputs['Fac'], bump.inputs['Height'])
-        links.new(bump.outputs['Normal'], shader.inputs['Normal'])
-    else:
-        shader.inputs['Base Color'].default_value = (*color, 1)
+    shader.inputs['Base Color'].default_value = (*color, 1)
     return m
 
-steel = mat('Pitted grey aircraft aluminium', (.30,.32,.31), .56, .88)
-paint = mat('Faded ivory aircraft enamel', (.55,.51,.43), .24, .86)
-for material, low, high in ((steel,(.20,.23,.23,1),(.39,.42,.40,1)),
-                           (paint,(.32,.32,.29,1),(.62,.59,.51,1))):
-    nodes, links = material.node_tree.nodes, material.node_tree.links
-    shader = nodes.get('Principled BSDF')
-    noise = nodes.new('ShaderNodeTexNoise'); noise.inputs['Scale'].default_value=3.8
-    noise.inputs['Detail'].default_value=3.0; noise.inputs['Roughness'].default_value=.82
-    ramp = nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position=.28; ramp.color_ramp.elements[0].color=low
-    ramp.color_ramp.elements[1].position=.74; ramp.color_ramp.elements[1].color=high
-    links.new(noise.outputs['Fac'],ramp.inputs['Fac'])
-    links.new(ramp.outputs['Color'],shader.inputs['Base Color'])
-    bump = nodes.new('ShaderNodeBump'); bump.inputs['Strength'].default_value=.16
-    bump.inputs['Distance'].default_value=.018
-    links.new(noise.outputs['Fac'],bump.inputs['Height'])
-    links.new(bump.outputs['Normal'],shader.inputs['Normal'])
+# The aluminium and the enamel were two-colour noise: each takes the middle of its two colours.
+steel = mat('Pitted grey aircraft aluminium', (.295,.325,.315), .56, .88)
+paint = mat('Faded ivory aircraft enamel', (.47,.455,.40), .24, .86)
 dark = mat('Soot-dark interior steel', (.045,.052,.05), .32, .94)
 glass = mat('Clouded cockpit glass', (.075,.105,.105), .48, .42)
 rubber = mat('Engine pod burnt rubber', (.035,.038,.036), .04, .98)
