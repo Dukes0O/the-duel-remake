@@ -11,6 +11,7 @@ import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} f
 import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {BONEYARD_WRECKS,BESS_REST} from '../src/world/boneyard-wrecks.js';
+import {createEverburnProps} from '../src/world/everburn-props.js';
 import {animateScene,syncScene} from '../src/scene-systems.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
@@ -743,7 +744,11 @@ const propScene=createScablandsScene(course,{loadAsset:async path=>{
 }});
 assert.equal(await propScene.ready,true,'the scene with the real kit loads');
 propScene.group.updateMatrixWorld(true);
-const propCluster=propScene.group.getObjectByName('The Everburn detail LOD').getObjectByName('Everburn well props');
+const sceneProps=propScene.group.getObjectByName('The Everburn detail LOD').getObjectByName('Everburn well props'),sceneMeshes=[];
+sceneProps.traverse(node=>{if(node.isMesh)sceneMeshes.push(node);});
+assert.ok(sceneMeshes.length>=2&&sceneMeshes.length<=12,`the props are drawn in one mesh for each surface (${sceneMeshes.length} meshes)`);
+const propKit=await realParse(SCABLANDS_ASSETS.kit),propCluster=createEverburnProps(propKit.scene,{groundAt:(east,south)=>scablandsSurfaceHeightAt(places.get('everburn').x+east,places.get('everburn').z+south)-scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z)});
+const propRoot=new THREE.Group();propRoot.position.set(places.get('everburn').x,scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z),places.get('everburn').z);propRoot.add(propCluster);propRoot.updateMatrixWorld(true);
 assert.ok(propCluster&&propCluster.children.length>=8&&propCluster.children.length<=12,`eight to twelve props stand by the well (${propCluster?.children.length})`);
 const wellAt=places.get('everburn'),avoid=[['the raiders way in',-448,288,14],['the raiders hold',-426,303,14],['the furnace parking place',wellAt.x+18,wellAt.z,12],['the car start at the well',wellAt.x,wellAt.z,12]];
 const propGround=scablandsSurfaceHeightAt(wellAt.x,wellAt.z);

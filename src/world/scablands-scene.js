@@ -658,7 +658,7 @@ export function createScablandsScene(course,options={}){
         if(retired)return;
         if(kit?.scene){
           const props=createEverburnProps(kit.scene,{groundAt:(east,south)=>scablandsSurfaceHeightAt(place.x+east,place.z+south)-placeGround});
-          tintArt(props,place.id,placeWear);full.add(props);
+          tintArt(props,place.id,placeWear);mergeBySurface(props,'Everburn well props');full.add(props);
         }
       }
       // Past 280 m a place is a plain dark shape. The well's is a thin mast the height of its derrick; the fire and smoke stay drawn.
