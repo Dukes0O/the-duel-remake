@@ -53,6 +53,7 @@ const EXPECTED = [
   ['The first raid of a run appears', 'Moss', 'Here they come. Keep them off the tank.'],
   ['A run arrives with Bess at 70 health or more', 'Moss', 'Every drop delivered. Bess thanks you, in her way.'],
   ['A run arrives with Bess under 70 health', 'Moss', 'We are here, and most of the gas is too. That will do.'],
+  ['An ambush gives up', 'Moss', 'They have had enough of waiting. Go, go, go.'],
   ['The feud reaches War party', 'Auntie Solder', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'],
 ];
 
@@ -177,6 +178,11 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   assert.ok(!second.heard.includes('story.ember.moss.7'), 'and does not say it again');
   const quiet = gasRunJob({road: 'long', feud: 2});
   assert.ok(!lineIdsHeard(createJob(quiet, 1), () => road('x'), 3).heard.includes('story.ember.moss.7'), 'a quiet road has no raid and no raid line');
+
+  // An ambush gives up after two rests on the same stretch: Moss says so once for that stretch (the escort's own state decides).
+  assert.equal(raided.steps[0].giveUpLineId, 'story.ember.moss.10', 'a run names the give-up line');
+  assert.equal(EVERBURN_JOBS[3].steps[0].giveUpLineId, 'story.ember.moss.10', 'and so does job 4');
+  assert.equal(EMBER_CAPTIONS['story.ember.moss.10'].text, 'They have had enough of waiting. Go, go, go.', 'with the card words');
 
   // Arrival: Moss's line for how Bess comes in, then Auntie Solder's only when this arrival takes the feud to War party.
   const arrival = (job, health) => {

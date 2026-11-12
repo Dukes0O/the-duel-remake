@@ -218,3 +218,40 @@ and is worn down again, 22 to 75 rests (the fighting driver, 29 at Hunting and 5
 weapon); `test-everburn-easy` (job 4 and the eight runs, table above); `test-run-gas-medium` (table above; takes about eight minutes);
 `test-ember-lines`, `test-old-smoke`, `test-scablands-scene`, `test-world-hud`, `test-world-job-mode`, `test-story-registry`,
 `test-ember-screens`: pass. Browser scenarios `run-gas` (with the new bar check) and `everburn-well`: pass.
+
+## An ambush gives up after two rests (Claude, 12 November)
+
+On Medium a player who never fights looped for ever on job 4 and on the Boneyard road from Raiding up (22 to 75 rests), against the
+card's rule that a run is never lost for good.
+
+- **The rule** (`src/world/jobs/steps/escort.js`, from the step's own state, no randomness): rests are counted for the stretch she is
+  on (`stretchRests`, keyed by the place she is heading for). When she has rested twice on a stretch, the raiders still standing at
+  that stretch's ambush (and at any ambush behind it that is still standing) are removed as she sets off for the third time, and the
+  ambush does not come back (it goes into the step's `spawned` and `gone` lists). The step says `ambushGaveUp` in an event. Job 4 and
+  every run name the line in `giveUpLineId`. She carries on with the health she has (60 or more, as before); arrival, pay and the feud
+  are as for any arrival, and Moss's hurt-truck arrival line plays if she is under 70.
+- **The line** `story.ember.moss.10` (Moss, "An ambush gives up"): "They have had enough of waiting. Go, go, go." The id was free. It is
+  said once for the stretch.
+- **Tests.** `tools/test-run-gas.mjs` 968 checks (28 new): the step as numbers (first rest puts the ambush back with no line, second rest
+  gives up with the line once, no third set-off, the next stretch's ambush untouched, rests counted per stretch); and a real Duel with job
+  4's first ambush made lethal (four raiders) and never cleared: on Medium and Hard it arrives after exactly two rests, the give-up
+  happens once, Moss's line is heard once and no raider is left; on Easy it arrives in no more than two rests. `tools/test-ember-lines.mjs`
+  has 47 captions and checks job 4 and a run name the line.
+- **Assertions changed in `tools/test-run-gas-medium.mjs`** (the behaviour changed by design; nothing was loosened):
+  1. Old: the driver who never fights arrives on the long road at Watching and Raiding, 8 of 10. New: it arrives on every road at every
+     feud word and on job 4, 10 of 10 (stronger: it used to be 0 of 10 on job 4 and 0 to 1 of 10 on the Boneyard road from Raiding).
+  2. Old: a try that arrives needs at most 3 rests (for both drivers). New, for the driver who never fights: at most 2 rests for each ambush
+     on its road in every try (the old limit could only be met by the tries that arrived, and the looping tries had 22 to 75).
+  3. Old: the 3-rest limit for the fighting driver's arrived tries. New, for both drivers: no try has more than 2 rests for each stretch of its
+     road (the mechanism's own guarantee). The fighting driver's tries that used to loop now arrive, and the worst one rests 9 times on a
+     road of six stretches, which the 3-rest limit could not allow. The fighting driver's targets (8 of 10, 8 of 10, 5 of 10) are untouched
+     and now 10 of 10 everywhere.
+
+| Medium, never fights, out of 10 (most rests in any try; lowest Big Bess health on arrival) | Job 4 | Long: Watching | Raiding | Hunting | War party | Boneyard: Watching | Raiding | Hunting | War party |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Brought home | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+| Most rests | 2 | 0 | 0 | 0 | 0 | 0 | 2 | 4 | 4 |
+| Lowest health on arrival | 60 | 100 | 100 | 35 | 3 | 33 | 20 | 60 | 60 |
+
+The fighting driver on Medium is now 10 of 10 everywhere too (lowest health on arrival: job 4 89; long 100, 100, 35, 3; Boneyard 35, 35, 27, 2;
+most rests in any try 0, except 2 at Boneyard Hunting and 9 at Boneyard War party). Easy is unchanged: 10 of 10 in all eight run cases and job 4.

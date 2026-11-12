@@ -68,7 +68,7 @@ export const EVERBURN_JOBS = Object.freeze([
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
-      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower',
+      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
       // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The first stands on her road at
       // (278, 188), 186 m from the start (it was (360, 270), 72 m from it). The second was (500, 90), 48 m from her road,
       // out of reach of the 30 m that wears her health; it now stands on the road at (500, 41). The flamethrower is lent, as in job 1.

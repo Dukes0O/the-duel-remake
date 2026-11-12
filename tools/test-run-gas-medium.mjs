@@ -70,7 +70,7 @@ function play(definition, seed, driver) {
     if (duel.state.arena.worldJob.job.events.some(event => event.type === 'rest')) rests++;
   }
   const worldJob = duel.state.arena.worldJob;
-  return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete', rests, seconds: duel.state.stageTimeSec,
+  return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete', rests, ambushes: definition.steps[0].ambushes.length, stretches: definition.steps[0].path.length - 1, seconds: duel.state.stageTimeSec,
     health: worldJob.actors.find(actor => actor.id === 'big-bess')?.health ?? NaN, wrecked: duel.state.combatWrecking === true};
 }
 
@@ -84,7 +84,8 @@ for (const [label, driver] of [['fighting driver', fighter], ['driver who never 
   for (const entry of cases) {
     const tries = Array.from({length: TRIES}, (_, index) => play(entry.job(index + 1), index + 1, driver));
     const wins = tries.filter(item => item.won).length, wonTries = tries.filter(item => item.won);
-    const row = {wins, maxRests: Math.max(0, ...wonTries.map(item => item.rests)), mostRests: Math.max(...tries.map(item => item.rests)), lowest: wonTries.length ? Math.min(...wonTries.map(item => item.health)) : NaN};
+    // Rests beyond two for each ambush on the road (an ambush gives up after two rests on its stretch); 0 or less means within the rule.
+    const row = {wins, overTwoPerAmbush: Math.max(...tries.map(item => item.rests - 2 * item.ambushes)), overTwoPerStretch: Math.max(...tries.map(item => item.rests - 2 * item.stretches)), maxRests: Math.max(0, ...wonTries.map(item => item.rests)), mostRests: Math.max(...tries.map(item => item.rests)), lowest: wonTries.length ? Math.min(...wonTries.map(item => item.health)) : NaN};
     results[`${label} / ${entry.name}`] = row;
     console.log(`${label}, ${entry.name}: ${wins}/10 brought home, most rests in a try that arrived ${row.maxRests} (in any try ${row.mostRests}), Big Bess's lowest health on arrival ${Number.isFinite(row.lowest) ? row.lowest.toFixed(0) : 'none'}`);
   }
@@ -95,8 +96,15 @@ const FIGHT = 'fighting driver', COWARD = 'driver who never fights';
 assert(get(FIGHT, 'Job 4 (Slow Ride)').wins >= 8, `the fighting driver wins job 4: ${get(FIGHT, 'Job 4 (Slow Ride)').wins}/10, expected at least 8`);
 assert(get(FIGHT, 'boneyard road, Raiding').wins >= 8, `the fighting driver wins a Boneyard run at Raiding: ${get(FIGHT, 'boneyard road, Raiding').wins}/10, expected at least 8`);
 assert(get(FIGHT, 'boneyard road, War party').wins >= 5, `the fighting driver wins a Boneyard run at War party: ${get(FIGHT, 'boneyard road, War party').wins}/10, expected at least 5`);
-for (const name of ['long road, Watching', 'long road, Raiding'])
-  assert(get(COWARD, name).wins >= 8, `a driver who never fights still arrives on the ${name}: ${get(COWARD, name).wins}/10, expected at least 8`);
-for (const [key, row] of Object.entries(results)) if (row.wins > 0)
-  assert(row.maxRests <= 3, `${key}: at most 3 rests in a run that arrives (most seen ${row.maxRests})`);
+// The driver who never fights arrives everywhere: an ambush that is never cleared gives up after two rests on its stretch, so a run
+// can never loop for ever (RUN-GAS). It needs at most two rests for each ambush on its road.
+for (const entry of cases) {
+  const row = get(COWARD, entry.name);
+  assert.equal(row.wins, 10, `a driver who never fights arrives on ${entry.name}: ${row.wins}/10, expected 10`);
+  assert(row.overTwoPerAmbush <= 0, `a driver who never fights needs at most 2 rests for each ambush on ${entry.name} (${row.overTwoPerAmbush} over in the worst try)`);
+}
+// Whatever the driver does, a run cannot loop for ever: a stretch is rested on at most twice, so a try never has more than two rests for
+// each stretch of its road (the fighting driver's old limit of three rests in a try that arrived is gone; see docs/changes/RUN-GAS.md).
+for (const [key, row] of Object.entries(results))
+  assert(row.overTwoPerStretch <= 0, `${key}: at most 2 rests on each stretch of the road (${row.overTwoPerStretch} over in the worst try)`);
 console.log('Medium drivers: the card\'s targets are met');
