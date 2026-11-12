@@ -1,3 +1,4 @@
+import {worldJobMapData} from './route-map.js';
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
 import {arenaHud, arenaBoardMarkup} from './screen-arena.js';
@@ -288,6 +289,14 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       if(crash)text('callout-kicker','RECOVER AND TRY AGAIN · NO RACE PENALTY');
       if(s.status==='countdown')text('countdown-word','EXPLORE THE PLAYGROUND');
     }
+    const jobMap=worldJobMapData(app.duel.course,s);
+    const worldJob=s.arena?.mode==='world-job';
+    const positionPanel=ui['race-position'].closest?.('.race-position');
+    if(positionPanel) positionPanel.hidden=worldJob;
+    const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
+    if(mapHeading) mapHeading.textContent=jobMap ? jobMap.jobName : 'CIRCUIT / LIVE';
+    const rivalLegend=ui['rival-legend'];
+    if(jobMap && rivalLegend) rivalLegend.hidden=true;
     const arena=arenaHud(s);
     ui['arena-board'].hidden=!arena||!!arena.worldJob;
     ui.stage.classList.toggle('is-scrapdome',!!arena&&!arena.worldJob);
@@ -306,8 +315,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
       text('route-remaining',arena.scoreText);
-      text('route-lap','ARENA');
-      text('route-section',arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
+      text('route-lap',jobMap ? '' : 'ARENA');
+      text('route-section',jobMap ? jobMap.roadName : arena.worldJob ? 'THE SCABLANDS' : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
       text('race-position',String(arena.place).padStart(2,'0'));
       text('position-total',`/${String(arena.field).padStart(2,'0')}`);
@@ -327,6 +336,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       }
       if(s.status==='countdown')text('countdown-word',arena.worldJob ? 'THE SCABLANDS' : s.countdown>1?'SCRAPDOME':arena.bounty?'HUNT THE BEACON':arena.fuel?'BRING IT HOME':'WRECK THEM');
     }
+    if(worldJob && ui['callout-kicker'].textContent==='KEEP YOUR LINE') text('callout-kicker','');
   }
   return updateHud;
 }

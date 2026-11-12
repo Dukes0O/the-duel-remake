@@ -83,6 +83,61 @@ export function routeActorPose(course,geometry,actor,out={}){
 function makePath(points){const path=new Path2D();for(let i=0;i<points.length;i+=2)i?path.lineTo(points[i],points[i+1]):path.moveTo(points[i],points[i+1]);return path;}
 function stroke(ctx,path,color,width,dash=[]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke(path);ctx.setLineDash([]);}
 
+// A read-only view of the current job. A missing road leaves the circuit map untouched.
+export function worldJobMapData(course, state) {
+  const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+  const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+  if (!Array.isArray(step?.path) || step.path.length < 2) return null;
+  const path = step.path.map(place => place.position ?? place);
+  if (!path.every(point => Number.isFinite(point.x) && Number.isFinite(point.z))) return null;
+  const name = place => (place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
+  const destination = step.destination ?? step.path.at(-1);
+  const actors = worldJob.actors ?? [];
+  const marks = [{kind: 'player', position: course.worldAt(state.s, state.lateral || 0)}];
+  for (const actor of actors) {
+    if (actor.id === step.actorId && step.actor?.escort && actor.position)
+      marks.push({kind: 'escort', position: actor.position});
+    else if (actor.furnace && actor.position)
+      marks.push({kind: 'hunter', position: actor.position});
+    else if (actor.ambushKey && Number.isFinite(actor.x) && Number.isFinite(actor.z))
+      marks.push({kind: 'rider', position: {x: actor.x, z: actor.z}});
+  }
+  return {path, marks, destination: {position: destination.position ?? destination, name: name(destination)},
+    jobName: (worldJob.definition.name ?? 'WORLD JOB').toUpperCase(),
+    roadName: worldJob.definition.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
+}
+
+function drawWorldJobMap(ctx, canvas, data) {
+  const width = canvas.width, height = canvas.height, padding = 42;
+  const xs = data.path.map(p => p.x), zs = data.path.map(p => p.z);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
+  const scale = Math.min((width - 2 * padding) / Math.max(1, maxX - minX), (height - 2 * padding) / Math.max(1, maxZ - minZ));
+  // North is positive z in the Scablands; x grows to the right.
+  const project = p => ({x: (width - (maxX - minX) * scale) / 2 + (p.x - minX) * scale,
+    y: (height - (maxZ - minZ) * scale) / 2 + (maxZ - p.z) * scale});
+  ctx.clearRect(0, 0, width, height); ctx.lineCap = ctx.lineJoin = 'round';
+  const points = data.path.map(project), path = new Path2D();
+  points.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y));
+  stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
+  const end = project(data.destination.position);
+  ctx.font = 'bold 12px Segoe UI, sans-serif'; ctx.textAlign = end.x > width / 2 ? 'right' : 'left';
+  ctx.fillStyle = '#ffce75'; ctx.fillText(data.destination.name, end.x, Math.max(14, end.y - 11));
+  ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
+  const colors = {player: '#fff1d0', escort: '#62dabc', hunter: '#ff683a', rider: '#ef9f75'};
+  ctx.font = '10px Segoe UI, sans-serif'; ctx.textAlign = 'left';
+  const legend = [['escort', 'BIG BESS'], ['hunter', 'FURNACE'], ['rider', 'RIDERS']];
+  let legendX = 10;
+  for (const [kind, label] of legend) {
+    if (!data.marks.some(mark => mark.kind === kind)) continue;
+    ctx.fillStyle = colors[kind]; ctx.fillText(label, legendX, height - 7);
+    legendX += ctx.measureText(label).width + 16;
+  }
+  for (const mark of data.marks) {
+    const p = project(mark.position); ctx.beginPath(); ctx.arc(clamp(p.x, 7, width - 7), clamp(p.y, 7, height - 7), mark.kind === 'player' ? 6 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = colors[mark.kind]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#102026'; ctx.stroke();
+  }
+}
+
 export class RouteMap {
   constructor(canvas,{getDiscovery=()=>null}={}){this.getDiscovery=getDiscovery;this.discoveryKey=null;this.canvas=canvas;this.context=canvas.getContext('2d');this.cache=new WeakMap();this.course=null;this.current=null;this.lastDraw=-Infinity;this.pose={};this.lastLabel='';}
   _prepare(course,discovery){
@@ -103,6 +158,16 @@ export class RouteMap {
   }
   update(course,state,now=performance.now()){
     if(!this.context||!course?.samples?.length)return;
+    const jobMap = worldJobMapData(course, state);
+    if (jobMap) {
+      if (now - this.lastDraw < 60 && this.showingJob) return;
+      this.lastDraw = now; this.showingJob = true;
+      drawWorldJobMap(this.context, this.canvas, jobMap);
+      const label = `${jobMap.jobName}. ${jobMap.roadName}. Road to ${jobMap.destination.name}. Marks: ${jobMap.marks.map(mark => mark.kind).join(', ')}.`;
+      if (label !== this.lastLabel) { this.canvas.setAttribute('aria-label', label); this.lastLabel = label; }
+      return;
+    }
+    if (this.showingJob) { this.showingJob = false; this.course = null; }
     const discovery=this.getDiscovery(),discoveryKey=hiddenRoadMapKey(discovery);
     const changed=discoveryKey!==this.discoveryKey||course!==this.course||this.current?.width!==this.canvas.width||this.current?.height!==this.canvas.height;
     if(!changed&&now-this.lastDraw<60)return;
