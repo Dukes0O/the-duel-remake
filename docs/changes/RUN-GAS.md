@@ -97,7 +97,39 @@ escort" and "Pay"). This note lists what was built, the numbers, the checks and 
 
 ## Checks
 
-LANE_TIER_RESULT
+- `node tools/test-run-gas.mjs`: 902 checks (new). Raids as pure numbers (distances, Easy's one fewer, the rest and restart, the
+  raid line once); raids in a real Duel on job 4 at Easy, Medium and Hard (where they stand, both sides, wear per second,
+  knocked-down and far raiders do not wear her, rest, restart with her stretch health, the ambush back, raiders leave 60 m
+  past, the existing raider warning once); the two roads and their places; the feud table with Easy's fewer; the same save
+  gives the same places and two Boneyard runs in a row never match (300 pairs at each word); every ambush lies on its road;
+  pay; both roads clear every solid by 8 m; the wall with each switch off, before job 6 and with it won; starting, arriving,
+  leaving and failing in a real App; a damaged save.
+- `node tools/test-ember-save.mjs`: 92 checks (53 before); `feud` and `runs` kept, repaired, older saves read as before.
+- `node tools/test-everburn-easy.mjs`: all nine jobs 10 of 10 as before (job 4 with its raids included), and the new gas run
+  cases below.
+- `node tools/test-ember-lines.mjs`: 46 captions (40 before) and the six lines each at the moment the card gives.
+- `node tools/test-arena-settlement.mjs`: 10 tests (9 before); shares.
+- Also run and passing: `test-ember-screens` (23), `test-world-job-mode`, `test-feature-flags` (129; the count of switches
+  is now 54), `test-world-jobs`, `test-world-hud`, `test-old-smoke` (480), `test-scablands-scene`, `test-ships-lines` (90),
+  `test-town-links` (16), `test-town-world`, `test-blender-output` (397), `test-preview-launcher` (23).
+- Lane tier (`--changed --jobs 4 --keep-going`): 130 passed, 1 failed. The one failure is `tools/test-story-registry.mjs`
+  ("and the only lines": it finds the Everburn and Ships lines registered as well as Kogane's). It fails the same way on
+  the commit before this card (`7d7135521`, checked from a copy of that commit's `src`): `flamethrower.js` imports
+  `world-job.js`, which imports `ember-lines.js`, so the lines register whenever `progression.js` is loaded. Not caused by this
+  work and not fixed here (a card for Claude). `start-preview.bat` needed the new switch for `test-preview-launcher` and has it.
+- `npm run build`: pass.
+- Browser scenarios `run-gas` (new) and `everburn-well`: pass (3 and 2 screenshots, 0 warnings, 0 errors).
+
+### The Easy driver: gas runs brought home out of 10
+
+The child-pace driver was not taught anything; it drives to Tin Town and does not fight. The run count is the try's number.
+
+| Road | Watching | Raiding | Hunting | War party |
+| --- | --- | --- | --- | --- |
+| Long | 10 | 10 | 10 | 10 |
+| Boneyard | 10 | 10 | 10 | 10 |
+
+Big Bess's lowest health on arrival over the ten tries: long 100, 100, 90, 80; Boneyard 88, 79, 58, 28. Job 4 still 10 of 10.
 
 ## Sound
 
