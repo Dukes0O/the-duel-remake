@@ -118,6 +118,35 @@ No new sound. A run's start, raids, hits on Bess, her rest and her arrival use t
 5. Laptop only (Claude): one browser scenario that wins job 6 by setting the save, opens the wall, starts a run on
    each road and photographs the wall, a raid and the arrival; then Claude drives both roads.
 
+## Result (built by a Sonnet helper; reviewed by Claude, 11 November 2026)
+
+Merged into Claude's branch as 945dbf2e3, switch `scablands-runs` off. Change note: `docs/changes/RUN-GAS.md`.
+
+- **Pay, read line by line by Claude (rule 17):** `arenaReward` multiplies the one world-job amount by a job's
+  `shares`, a whole number of 1 or more, 1 when absent. Six lines, one new test. One share is 80 times the difficulty
+  factor: 80 on Easy, 96 on Medium, 112 on Hard.
+- **Save, read line by line by Claude (rule 17):** `feud` and `runs` are checked only when a save already holds them;
+  an older save reads exactly as before and loading adds neither. `applyArrivedRun` refuses an unknown road and a save
+  without all six jobs. 92 checks.
+- **Raids:** as settled above. Job 4 has them too. Its second ambush stands at (500, 41), on her road; the declared
+  place (500, 90) was 48 m off it. A rest lasts 3 seconds. The HUD shows Big Bess's health.
+- **Found and fixed on the way:** job 4 used to count as won when Big Bess set out for her last place, at the safe
+  road, 400 m short of Tin Town. She now has to arrive. Job 4 shows Moss's and Auntie Solder's real lines in place of
+  two raw line names.
+- **Roads:** the Boneyard road is 1,252 m and the long road 1,639 m. The Boneyard road's own place by the planes is
+  (447, 308), 23 m from the Boneyard's place, to clear the planes' box.
+- **Child-pace Easy driver:** 10 of 10 on both roads at all four feud words and on job 4, without fighting. Big
+  Bess's lowest health on arrival was 31, on the Boneyard road at War party.
+- **A failing test from 10 November, fixed here:** `tools/test-story-registry.mjs` had failed since WW-BOSS, because
+  the job code imported the Everburn's lines and so registered them in the game's core. The job code now looks a line
+  up in the shared registry. The test passes unchanged. The lane tier's "changed files" rule had not picked it up.
+- Checks on the builder's branch: lane tier 139 of 139, the build, `run-gas` and `everburn-well` browser checks.
+  Rerun by Claude on the merged result: `test-run-gas` 888, `test-ember-save` 92, `test-story-registry` 78,
+  settlement 10, furnace rules 480.
+
+Still to do before this card closes: Claude drives both roads on Medium, where the raids matter (left alone, the
+first Boneyard ambush costs Big Bess about 58 health), and looks at a raid in the game.
+
 ## Not in this card
 
 Other cargo and other roads, sending someone else, the boss coming out, the Scrapdome challenge, lasting damage.
