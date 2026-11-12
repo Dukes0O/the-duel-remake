@@ -131,9 +131,37 @@ Checks on the builder's branch: `test-field-battle` 643, lane tier 105 of 105, b
 `run-gas` and `everburn-well` browser checks. Rerun by Claude on the merged result: field battle 643, furnace rules
 616, save 117, run-gas 1,088, build.
 
-Still to do before this card closes: pictures of the battle from the game for Claude's verdict (the builder's
-scenario takes six), and a look at whether winning 10 times in 10 on Medium is too easy while Big Bess arrives
-with 1 health: the fight may want the furnace tougher and its cinders gentler.
+### Pictures of the battle, and what they changed (Claude, 12 November 2026)
+
+The `field-battle` browser check passes on the merged result, but its six pictures show the player's car parked, so
+a helper took pictures with a camera placed beside the two machines while the battle ran. They showed two gaps, both
+now drawn by Claude in `src/world/scablands-scene.js` and `src/world/scrap-look.js`:
+
+1. **Nothing was drawn when the furnace threw cinders on Big Bess.** Her health fell under a caption and a sound.
+   Now, for as long as the furnace's own state says it is throwing (`burning`), glowing lumps fly a low arc from its
+   chimney to her tank (`createCinderArc`), three fires stand on the tank and firelight lies on the road under her.
+2. **The furnace's death could not be seen.** It now dies with a last fire in its chimney for 5 seconds and heavy
+   smoke for 12, and after that only thin smoke rises (fuller than before, so that the wreck can be seen from the
+   road). Its door fire stays out, as Cinder's line says. The wreck of later runs has thin smoke only.
+
+Both are drawing only: no rule, pay or save reads them.
+
+**Changed assertion, reviewed by Claude (rule 18).** `tools/test-scablands-scene.mjs` checked "only thin smoke rises"
+at the moment the furnace died. The furnace now dies under heavy smoke by design, so that check is made 18 seconds
+later, at the same age of the same puff of smoke, with its limits unchanged; new checks cover the heavy smoke at the
+moment of death, the last fire standing, sinking and going out, the cinders, the fires on the tank, and that none of
+them shows beside the wreck or while the furnace only follows. Nothing is loosened.
+
+Sheet and verdict: `docs/board/looks/field-battle/round-1.jpg` and its review note.
+
+Also seen in the pictures, and not this card's: in every Scablands job the map panel shows the venue's oval, and the
+screen still says PLACING 01 and KEEP YOUR LINE as in a race. New card SCABLANDS-JOB-MAP.
+
+Still to do before this card closes:
+
+1. Tuning. A Medium driver who fights wins 10 times in 10, yet Big Bess arrives with 1 health. The fight may want the
+   furnace tougher and its cinders gentler, so that winning is less certain and Big Bess is less close to resting.
+2. One play by hand, to see the cinders and the last fire while driving.
 
 ## Not in this card
 

@@ -519,6 +519,15 @@ tasks:
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
 
+  - id: SCABLANDS-JOB-MAP
+    title: "A Scablands job shows its own road on the map, not the venue's oval"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/SCABLANDS-JOB-MAP.md"
+
   - id: QA-EVIDENCE-MIDNIGHT
     title: "The evidence-folder test fails for a while after midnight"
     owner: "codex"

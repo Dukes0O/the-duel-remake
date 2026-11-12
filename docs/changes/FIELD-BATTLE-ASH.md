@@ -126,6 +126,16 @@ The card's targets are 8 of 10 on Easy, 6 of 10 on Medium for the fighting drive
 every time, so the battle is not hard for a player who goes for the doors; Hard (scratch run, not asserted): 10 of 10 home and 10 of 10 won for the fighter, 10 of 10 home and none won
 for the driver who never fights, with up to 6 rests. The existing Medium and Easy tables for job 4 and the runs are as the RUN-GAS note records them.
 
+## Drawn after the pictures (Claude, 12 November 2026)
+
+Pictures taken beside the two machines showed nothing drawn when cinders landed on Big Bess, and nothing to mark the
+furnace's death. Added, drawing only: `createCinderArc` in `src/world/scrap-look.js` (glowing lumps on a low arc from
+the chimney to the tank), three fires on her tank and firelight under her while the furnace's state says `burning`,
+and the furnace's last fire (two tongues in the chimney for 5 seconds, heavy smoke for 12, then thin smoke at 0.45 of
+full in place of 0.3). `tools/test-scablands-scene.mjs` checks each, and its thin-smoke check moved 18 seconds after
+the death (reviewed on the card). No rule, pay, save, replay fingerprint or world signature is touched. Sound: none
+new; cinders landing already play the fire cue.
+
 ## Removed
 
 Nothing is deleted. At War party with a live furnace the wall's War party sentence and the Boneyard road's plain button are replaced by the battle's; they stay for a War party with

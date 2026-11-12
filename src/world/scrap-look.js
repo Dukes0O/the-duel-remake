@@ -201,6 +201,47 @@ export function createSparks(count=44){
 }
 
 // A soft dark patch on the ground under a machine, so that it sits on the sand where the sun's shadow does not reach.
+// Burning lumps thrown through the air from one place to another (FIELD-BATTLE-ASH: the furnace throwing cinders on
+// Big Bess). Each lump flies a low arc and drags two fainter lumps behind it as a tail. Call
+// `points.userData.place(seconds, from, to)` each frame with both ends in the metres of the lumps' own parent.
+export function createCinderArc(count=18){
+  const TAIL=3,total=count*TAIL;
+  const positions=new Float32Array(total*3),heat=new Float32Array(total),geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  geometry.setAttribute('aHeat',new THREE.BufferAttribute(heat,1));
+  const material=new THREE.ShaderMaterial({
+    vertexShader:`attribute float aHeat;varying float vHeat;
+      void main(){vHeat=aHeat;vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize=min(72.0,(700.0+900.0*aHeat)/max(1.0,-mv.z));gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`varying float vHeat;
+      void main(){float d=length(gl_PointCoord-.5)*2.0;float a=(1.0-smoothstep(.15,1.0,d))*vHeat;
+        vec3 colour=mix(vec3(1.0,.36,.07),vec3(1.0,.9,.55),smoothstep(.55,.0,d)*vHeat);
+        gl_FragColor=vec4(colour*a*2.2,a);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+  const points=new THREE.Points(geometry,material);points.name='Cinders thrown through the air';points.frustumCulled=false;
+  const unit=(index,k)=>{const v=Math.sin(index*127.1+k*311.7)*43758.5453;return v-Math.floor(v);};
+  points.userData.place=(seconds,from,to)=>{
+    const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,reach=Math.hypot(dx,dz)||1;
+    // Across the throw, level with the ground.
+    const sideX=-dz/reach,sideZ=dx/reach,rise=Math.min(6,1.5+reach*.1);
+    for(let index=0;index<count;index++){
+      const pace=.42+.2*unit(index,1),spread=(unit(index,3)-.5)*2.6,lift=rise*(.75+.5*unit(index,4));
+      for(let tail=0;tail<TAIL;tail++){
+        const life=(((seconds*pace+unit(index,2)-tail*.035)%1)+1)%1,at=(index*TAIL+tail)*3;
+        // A lump leaves the chimney together with the others and lands scattered along the tank.
+        positions[at]=from.x+dx*life+sideX*spread*life;
+        positions[at+1]=from.y+dy*life+lift*4*life*(1-life);
+        positions[at+2]=from.z+dz*life+sideZ*spread*life;
+        heat[index*TAIL+tail]=Math.min(1,life/.06)*(1-.35*life)*(1-tail*.32);
+      }
+    }
+    geometry.attributes.position.needsUpdate=true;geometry.attributes.aHeat.needsUpdate=true;
+  };
+  return points;
+}
 export function createGroundShade(){
   return new THREE.ShaderMaterial({
     vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,

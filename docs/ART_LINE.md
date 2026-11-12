@@ -292,6 +292,9 @@ the game.
 - **Triangles run away in traces and rings.** A traced seat at a fine tolerance cost 4,880 triangles and a ring of 128 by 12 steps 6,144 (the big wheel). Count each piece's triangles before submitting, and coarsen what the mayor's camera cannot see.
 - **Check open drift meshes before UV export.** In Blender 4.5.13, the joined two-sided ship sand bank had loops pointing beyond its vertex list. `mesh.validate()` repaired the mesh before export; use a coarser source grid for this broad surface and validate meshes before assigning UVs.
 
+- **A rule that hurts and draws nothing.** The furnace's cinders took Big Bess's health under a caption and a sound, with nothing in the air and nothing on her, and the machine's death drew nothing either (the field battle, 12 November). Every event that costs health, and every death, needs something drawn. Find these by taking pictures from a camera placed beside the machines while the fight runs; the game's own camera sits on the player's car, and a parked car's pictures prove nothing.
+- **Points drawn too small to see.** A point's size is given in pixels of the drawn picture, not in metres: lumps sized at 23 pixels at 30 m showed as dots in the game's pictures. Size a drawn point for the far end of the distance it will be seen from, and look at it in a picture from there.
+
 - Cameras aimed at each piece's own bounds. A blank frame means the camera is wrong.
 - A camera can point at its target and still roll a reverse three-quarter view. Set the camera's screen-up vector from a world-up direction, then check both sides in the sheet. (Town Fun coaster, 8 November.)
 - The whole subject in every frame, on plain mid-grey ground, in one even light,

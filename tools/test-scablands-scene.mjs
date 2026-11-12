@@ -188,12 +188,52 @@ assert.notEqual(soot.position.y,smokeY,'chimney smoke moves as presentation');
   assert.equal(visiblePlates(),2,'the first broken door takes its two shields, the left ones, with it');
   animateScene(scene.group,7);
   const fullFade=furnaceFire.children[6].userData.fade;
-  hunter.furnace={phase:'dead',door:null,hits:3,dead:true,phaseSec:0,battle:{hurtAtStart:['rear']}};
+  // Cinders thrown on Big Bess are drawn: lumps in the air from the chimney to her tank, fire on the tank and firelight
+  // under her, for as long as the furnace's own state says it is throwing them, and never otherwise.
+  const cinderArc=scene.group.getObjectByName('Cinders thrown through the air');
+  const bessFires=[],lastFires=[];
+  scene.group.traverse(node=>{if(node.name==='Fire on Big Bess')bessFires.push(node);if(node.name==="The furnace's last fire")lastFires.push(node);});
+  const bessGlow=scene.group.getObjectByName('Firelight under Big Bess');
+  assert.ok(cinderArc&&bessFires.length===3&&bessGlow&&lastFires.length===2,'the cinders, three fires on the tank, the firelight and the last fire exist');
+  const cindersShown=()=>[cinderArc.visible,bessFires.every(fire=>fire.visible),bessGlow.visible];
+  assert.deepEqual(cindersShown(),[false,false,false],'no cinders fly and Big Bess does not burn while the furnace is only following her');
+  hunter.furnace={...hunter.furnace,phase:'follow',burning:true};
+  syncScene(scene.group,battleState([bessActor,hunter]));
+  animateScene(scene.group,7.5);
+  assert.deepEqual(cindersShown(),[true,true,true],'while the furnace throws cinders they fly, the tank burns and the road is lit');
+  {
+    const lumps=cinderArc.geometry.attributes.position,low=Math.min(-100,bessActor.position.x)-4,high=Math.max(-100,bessActor.position.x)+4;
+    let highest=-Infinity,inside=true;
+    for(let index=0;index<lumps.count;index++){
+      const x=lumps.getX(index),y=lumps.getY(index),z=lumps.getZ(index);
+      inside=inside&&Number.isFinite(x+y+z)&&x>=low&&x<=high;highest=Math.max(highest,y);
+    }
+    const tankTop=bessRig.position.y+3;
+    assert.ok(lumps.count>=30&&inside,'every lump is in the air between the furnace and Big Bess');
+    assert.ok(highest>tankTop+1.5&&highest<Math.max(tankTop,furnace.parent.position.y+5.15)+8,'and the throw arcs over her tank, not into the sky');
+  }
+  assert.ok(lastFires.every(fire=>!fire.visible),'the last fire is hidden while the furnace lives');
+  hunter.furnace={...hunter.furnace,burning:false};
+  syncScene(scene.group,battleState([bessActor,hunter]));
+  assert.deepEqual(cindersShown(),[false,false,false],'the cinders and her fire stop when the furnace stops throwing');
+  animateScene(scene.group,7);
+  hunter.furnace={phase:'dead',door:null,hits:3,dead:true,phaseSec:0,burning:true,battle:{hurtAtStart:['rear']}};
   hunter.position={x:-40,y:0,z:330};
   syncScene(scene.group,battleState([bessActor,hunter]));
   animateScene(scene.group,7);
   assert.ok(Math.abs(furnace.parent.position.x+40)<.001,'a dead furnace stays where it stopped');
   assert.deepEqual(fireOver(),[],'a dead furnace has no fire over its doors');
+  assert.deepEqual(cindersShown(),[false,false,false],'a dead furnace throws nothing');
+  // It dies with a last fire from its chimney and heavy smoke; twelve seconds later the fire is out and the smoke is thin.
+  assert.ok(lastFires.every(fire=>fire.visible&&fire.scale.y>2),'as it dies, the last fire stands in its chimney');
+  assert.ok(furnaceFire.children[6].userData.fade>fullFade,'under heavy smoke');
+  animateScene(scene.group,9.5);syncScene(scene.group,battleState([bessActor,hunter]));animateScene(scene.group,9.5);
+  assert.ok(lastFires.every(fire=>fire.visible&&fire.scale.y<fire.userData.tall*.6),'the last fire sinks as it burns out');
+  // Two full turns of the plume later (the plume turns once in 100/11 seconds), so the same puff is at the same age.
+  const later=7+200/11;
+  animateScene(scene.group,later);syncScene(scene.group,battleState([bessActor,hunter]));animateScene(scene.group,later);
+  assert.ok(lastFires.every(fire=>!fire.visible),'eighteen seconds on, the last fire is out');
+  assert.deepEqual(fireOver(),[],'and there is still no fire over its doors');
   assert.ok(furnaceFire.children[6].userData.fade<fullFade*.5&&furnaceFire.children[6].userData.fade>0,'and only thin smoke rises from it');
   assert.equal(visiblePlates(),0,'with its three doors broken every shield is gone');
   // The job is over (the step index is past the last step): the furnace is still drawn where it stopped.
@@ -208,6 +248,10 @@ assert.notEqual(soot.position.y,smokeY,'chimney smoke moves as presentation');
   assert.ok(Math.abs(furnace.parent.rotation.y-1.3)<.001&&furnace.parent.visible,'lying along the road, and shown');
   assert.equal(visiblePlates(),0,'its shields are gone');
   assert.deepEqual(fireOver(),[],'with no fire');
+  {
+    const shown=[];scene.group.traverse(node=>{if(node.name==="The furnace's last fire"||node.name==='Fire on Big Bess'||node.name==='Cinders thrown through the air')shown.push(node.visible);});
+    assert.ok(shown.length===6&&shown.every(visible=>!visible),'no last fire, no cinders and no fire on Big Bess beside the wreck');
+  }
   animateScene(scene.group,7);
   assert.ok(furnaceFire.children[6].userData.fade<fullFade*.5,'and thin smoke');
   syncScene(scene.group,wreckState({storyId:'everburn',run:true,road:'boneyard'}));

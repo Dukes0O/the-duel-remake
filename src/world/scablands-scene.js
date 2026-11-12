@@ -9,7 +9,7 @@ import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
-import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
+import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 
@@ -271,7 +271,11 @@ const SMOKE_PUFFS=14;
 // (FIELD-BATTLE-ASH): all three doors broken, no fire, and a thin plume.
 const FURNACE_DOOR_ORDER=Object.freeze(['left','right','rear']);
 const WRECKED_FURNACE=Object.freeze({dead:true,phase:'dead',hits:3});
-const THIN_SMOKE=.3;
+const THIN_SMOKE=.45;
+// The furnace's last fire: where each tongue stands from the chimney's mouth (x, z), its width and its height in metres;
+// how long the fire lasts, and how long the heavy smoke takes to thin afterwards.
+const LAST_FIRE=Object.freeze([[0,0,3.4,7.5],[-.5,-.4,2.6,5.2]]);
+const LAST_FIRE_SEC=5,LAST_SMOKE_SEC=12,LAST_SMOKE=1.7;
 function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
   const flame=createFlameMaterial(),soot=createSmokeMaterial(0x302c28),card=new THREE.PlaneGeometry(1,1);
@@ -291,13 +295,22 @@ function addFurnaceFire(parent,place,scale=1.5){
     effects.add(cloud);
   }
   const flames=effects.children.slice(0,6),smoke=effects.children.slice(6);
+  // The furnace's last fire (FIELD-BATTLE-ASH): when it dies on the road its chimney throws up fire for a few seconds,
+  // and then only thin smoke rises. Two tongues stand in the chimney's mouth, hidden until then.
+  const lastFire=LAST_FIRE.map(([x,z,wide,tall],index)=>{
+    const tongue=new THREE.Mesh(standing,flame);tongue.name="The furnace's last fire";
+    tongue.position.set(chimney.x+x,chimney.y-.4,chimney.z+z);tongue.scale.set(wide,tall,1);tongue.userData.tall=tall;
+    tongue.visible=false;tongue.renderOrder=3;
+    tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=2.1+index*.53;flame.uniformsNeedUpdate=true;};
+    effects.add(tongue);return tongue;
+  });
   const sparks=createSparks();sparks.visible=false;effects.add(sparks);
   const glowMaterial=createGroundGlowMaterial(),glow=new THREE.Mesh(card,glowMaterial);
   glow.name='Firelight on the ground';glow.rotation.x=-Math.PI/2;glow.scale.setScalar(11);glow.visible=false;glow.renderOrder=1;effects.add(glow);
   const shade=new THREE.Mesh(card,createGroundShade());shade.name='Shade under the furnace';
   shade.rotation.x=-Math.PI/2;shade.position.set(0,.1,1);shade.scale.set(7.6,14,1);effects.add(shade);
   parent.add(effects);
-  const fire={effects,flames,smoke,sparks,glow,flame,glowMaterial,chimneyX:chimney.x,chimneyY:chimney.y,chimneyZ:chimney.z,glowingDoor:null,
+  const fire={effects,flames,lastFire,smoke,sparks,glow,flame,glowMaterial,chimneyX:chimney.x,chimneyY:chimney.y,chimneyZ:chimney.z,glowingDoor:null,
     // How full the plume is: 1, or thin once the furnace is dead (FIELD-BATTLE-ASH).
     density:1,
     // The plume rises and spreads, and leans back as the furnace gathers speed (`drift`, metres a second).
@@ -317,6 +330,10 @@ function addFurnaceFire(parent,place,scale=1.5){
 // Big Bess's exhaust stack: the mouth stands behind the cab on the truck's left, read from tools/blender/big-bess-photo.py.
 const BESS_STACK=Object.freeze({x:.98,y:3.26,z:1.4});
 const BESS_PUFFS=6;
+// Where cinders land and burn on Big Bess (FIELD-BATTLE-ASH), in the rig's own metres: the middle of her tank's top, and
+// the three fires that stand on it (x, z, width, height).
+const BESS_TANK_TOP=Object.freeze({x:0,y:3.0,z:-1.7});
+const BESS_TANK_FIRES=Object.freeze([[.45,-.3,1.7,2.6],[-.35,-1.9,2.1,3.3],[.3,-3.4,1.6,2.4]]);
 // Road dust is born behind the rear axle of each truck, one place a side, in the rig's own metres.
 const BESS_DUST=Object.freeze([{x:1.2,z:-3.7},{x:-1.2,z:-3.7}]);
 const FURNACE_DUST=Object.freeze([{x:1.7,z:-3.8},{x:-1.7,z:-3.8}]);
@@ -332,8 +349,20 @@ function addBessEffects(parent){
   const shade=new THREE.Mesh(card,createGroundShade());shade.name='Shade under Big Bess';
   shade.rotation.x=-Math.PI/2;shade.position.set(0,.1,0);shade.scale.set(4.4,10.5,1);effects.add(shade);
   const dust=createDustTrail();effects.add(dust);
+  // Fire on her tank and firelight on the road, drawn only while cinders are landing on her.
+  const flame=createFlameMaterial(),standing=new THREE.PlaneGeometry(1,1);standing.translate(0,.5,0);
+  const fires=BESS_TANK_FIRES.map(([x,z,wide,tall],index)=>{
+    const tongue=new THREE.Mesh(standing,flame);tongue.name='Fire on Big Bess';
+    tongue.position.set(x,BESS_TANK_TOP.y-.35,z);tongue.scale.set(wide,tall,1);tongue.userData.tall=tall;
+    tongue.visible=false;tongue.renderOrder=3;
+    tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=.7+index*.41;flame.uniformsNeedUpdate=true;};
+    effects.add(tongue);return tongue;
+  });
+  const glowMaterial=createGroundGlowMaterial(),glow=new THREE.Mesh(card,glowMaterial);
+  glow.name='Firelight under Big Bess';glow.rotation.x=-Math.PI/2;glow.position.set(0,.14,-1.7);glow.scale.setScalar(12);
+  glow.visible=false;glow.renderOrder=1;effects.add(glow);
   parent.add(effects);
-  const fx={effects,smoke,dust,
+  const fx={effects,smoke,dust,fires,flame,glow,glowMaterial,
     // Thin grey smoke rising about 5 m, leaning back as she gathers speed (`drift`, metres a second).
     placeSmoke(seconds,drift=0){
       smoke.forEach((puff,index)=>{
@@ -433,6 +462,11 @@ export function createScablandsScene(course,options={}){
   const gateFire=addGateFire();group.add(gateFire.effects);gateFire.animate(0);
   // Big Bess has her own rig, like the furnace's: the Everburn escort moves it, and it stands at her Boneyard place otherwise.
   let bessRig=null,bessPlace=null,bessEffects=null;
+  // Cinders in the air between the furnace's chimney and Big Bess's tank (FIELD-BATTLE-ASH), drawn only while the
+  // battle's furnace is throwing them. `clock` is the last drawn second, so that the furnace's last fire can be timed.
+  const cinderArc=createCinderArc();cinderArc.visible=false;group.add(cinderArc);
+  const arcFrom=new THREE.Vector3(),arcTo=new THREE.Vector3();
+  let clock=0,diedAt=null,lastFire=0,lastSmoke=0;
   const bessWheels=[],bessTravel=createTravelMeter(),bessWear=createScrapWear({paint:0});
   const placeRig=(rig,actor,path,aim,onGround,rest)=>{
     if(!actor){
@@ -556,6 +590,15 @@ export function createScablandsScene(course,options={}){
         spinWheels(bessWheels,bessTravel.update(bessRig,seconds)/BESS_WHEEL.radius);
         bessEffects.placeSmoke(seconds,bessTravel.speed);
         bessEffects.dust.userData.place(seconds,bessTravel.speed,BESS_DUST);
+        bessEffects.flame.uniforms.uTime.value=seconds;bessEffects.glowMaterial.uniforms.uTime.value=seconds;
+        bessEffects.fires.forEach((fire,index)=>{fire.scale.y=fire.userData.tall*(.8+.3*Math.abs(Math.sin(seconds*4.7+index*2.3)));});
+      }
+      clock=seconds;
+      if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
+        furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
+        group.worldToLocal(furnaceRig.localToWorld(arcFrom.set(furnaceEffects.chimneyX,furnaceEffects.chimneyY,furnaceEffects.chimneyZ)));
+        group.worldToLocal(bessRig.localToWorld(arcTo.set(BESS_TANK_TOP.x,BESS_TANK_TOP.y,BESS_TANK_TOP.z)));
+        cinderArc.userData.place(seconds,arcFrom,arcTo);
       }
       gateFire.animate(seconds);chimneySmoke.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
@@ -567,6 +610,8 @@ export function createScablandsScene(course,options={}){
       furnaceEffects.placeSmoke(seconds,furnaceDrift);
       furnaceEffects.flame.uniforms.uTime.value=seconds;furnaceEffects.glowMaterial.uniforms.uTime.value=seconds;
       furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=3.8*(.85+.25*Math.abs(Math.sin(seconds*5.3+index*1.9)));});
+      // The last fire sinks as it burns out.
+      furnaceEffects.lastFire.forEach((flame,index)=>{flame.scale.y=Math.max(.01,flame.userData.tall*lastFire*(.8+.3*Math.abs(Math.sin(seconds*5.9+index*2.7))));});
       const door=FURNACE_DOORS[furnaceEffects.glowingDoor];
       furnaceEffects.sparks.visible=furnaceEffects.glow.visible=Boolean(door);
       if(door){
@@ -620,8 +665,20 @@ export function createScablandsScene(course,options={}){
       // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.
       FURNACE_DOOR_ORDER.forEach((door,index)=>{const spot=FURNACE_DOORS[door],broken=doorGone(index);
         furnaceWear.uniforms.uScrapSoot.value[index].set(spot.x,broken?spot.y+.3:-99,spot.z,broken?2.7:.01);});
-      // A dead furnace burns no more: its door fire is out and only thin smoke rises.
-      if(furnaceEffects)furnaceEffects.density=furnace?.dead===true||furnace?.phase==='dead'?THIN_SMOKE:1;
+      // A dead furnace's door fire is out. The battle's furnace dies with a last fire from its chimney and heavy smoke
+      // for a few seconds; after that, and on the wreck of later runs, only thin smoke rises.
+      const furnaceDeadNow=furnace?.dead===true||furnace?.phase==='dead';
+      if(furnaceDeadNow&&actor){if(diedAt===null)diedAt=clock;}else diedAt=null;
+      const sinceDeath=diedAt===null?Infinity:Math.max(0,clock-diedAt);
+      lastFire=Math.max(0,1-sinceDeath/LAST_FIRE_SEC);lastSmoke=Math.max(0,1-sinceDeath/LAST_SMOKE_SEC);
+      if(furnaceEffects){
+        furnaceEffects.density=furnaceDeadNow?THIN_SMOKE+(LAST_SMOKE-THIN_SMOKE)*lastSmoke:1;
+        for(const flame of furnaceEffects.lastFire)flame.visible=lastFire>0;
+      }
+      // Cinders fly and Big Bess burns for as long as the battle's furnace is throwing them on her.
+      const cindersOn=Boolean(actor&&furnace?.burning===true&&!furnaceDeadNow&&bessRig&&furnaceRig?.visible);
+      cinderArc.visible=cindersOn;
+      if(bessEffects){for(const fire of bessEffects.fires)fire.visible=cindersOn;bessEffects.glow.visible=cindersOn;}
       const sootMaterial=furnaceEffects?.smoke[0]?.material;
       if(sootMaterial){
         // The smoke is grey, turns orange through the 4-second stoke, and is blacker after each hit.
