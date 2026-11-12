@@ -154,4 +154,9 @@ walk (the scene holds 2,948 meshes).
 Parts of the place models in the scene (no frame check was run): the well 17 meshes (13,044 triangles, plus the furnace's
 41 meshes beside it), the mall 254 meshes (18,620), the Boneyard 54 meshes (30,349, plus Big Bess's 46).
 
-Verdict (Claude): to be written.
+Verdict (Claude): not good enough to switch the story on. Nothing is broken in the way round 1 found (no white
+models, nothing on end), but each place still reads as toys on a table: the well's smoke is seven balls and its flame
+a hard orange cone on an empty disc; the mall has nine flat-coloured rocks, a word hanging in the air back to front
+and a blank wall to the road; the Boneyard is one aircraft three times in a row on rust-brown rectangles, with Big
+Bess parked inside a wreck. The mall's inside and the furnace are the standard to reach. The fixes and their order
+are on card SCABLANDS-LAND, "Round 3".

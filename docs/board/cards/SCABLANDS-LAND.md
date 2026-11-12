@@ -106,6 +106,41 @@ of 48, build, two browser checks; no replay fingerprint or world signature moved
 Open on this card: the town seen from beyond 120 m; a gate that chars as it burns; the frame check before the
 Scablands opens beyond the story's switch (the shacks, wear and ground are all drawn every frame).
 
+## Round 3: the well, the Dead Mall and the Boneyard (settled by Claude from the sheet, 12 November 2026)
+
+Sheet and faults with names and positions: `docs/board/looks/scablands-land/round-3.jpg` and its review note. Verdict:
+each place reads as toys on a table. The fixes, in this order, one commit each; the builder stops an item after thirty
+minutes and says so.
+
+1. **The Everburn's fire and smoke are drawn in code.** The seven spheres and the faceted flame solids go. In their
+   place, with `src/world/scrap-look.js` and the furnace's fire as the example: flame tongues 5 to 7 m tall on the
+   derrick's top, firelight on the ground under it, and a column of smoke puffs that rises to about 90 m and leans
+   with one fixed wind, so that the well is still the landmark seen from the mall and the Boneyard. Whatever decides
+   today when the flame shows keeps deciding it. Beyond 280 m the fire and smoke are still drawn and the well's
+   stand-in is a thin dark mast the height of the derrick, not a 32 m box.
+2. **The mall's sign lettering sits on its boards** and reads the right way round from outside. Fix the cause, not
+   the three positions, and add the kind of fault to `docs/ART_LINE.md` if it is a new one.
+3. **The mall's nine flat rocks go.** The four drifts at the entrance take the ground's own surface and a low, wide
+   shape; if they still read as cushions they go too.
+4. **The Boneyard's dirt slab is not drawn.** The ground is drawn in code already.
+5. **The three wrecks differ** by where and how they lie: three different headings, one rolled onto a wing, uneven
+   gaps, no engine pod sunk more than a hand's depth. All three are solid where they are drawn, and both roads stay
+   6 m clear of every solid. Big Bess's resting place moves 5 m clear of every wreck.
+6. **The mall is drawn in fewer pieces.** Its 254 meshes are merged by surface at load if the scene already has a
+   way to do that; the draw calls before and after are recorded.
+7. **The well is not alone on its disc.** Eight to twelve props from models the Scablands already loads (drums,
+   pipes, a shack, a tank) stand in one cluster beside the apron, away from the raiders' way in, the furnace's
+   parking place and the car's start in job 6.
+
+Not in this round: the road ribbon lying under the drawn ground near each place, the cliffs' saw-teeth, the hard
+edge between road and sand, and the collision boxes larger than the well and the mall. Each changes ground or job
+rules and gets its own look.
+
+Checks: `test-scablands-scene`, `test-scablands-land` if it exists, `test-run-gas` (both roads clear of every
+solid), `test-everburn-easy`, `test-old-smoke` untouched, lane tier, build, the `everburn-well`, `run-gas` and
+`field-battle` browser checks, and a sheet `round-4.jpg` with the same twelve views. No frame check (rule 9); the
+render numbers of each place are recorded before and after.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read
