@@ -1,6 +1,6 @@
 // The Everburn's screen state (docs/WASTELAND_WORLD.md section 5). Reads the
 // save and returns plain display props; the app owns navigation and saving.
-import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, emberFeudWord, emberRuns} from './ember-save.js';
+import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, emberFeudWord, emberRuns, emberBattleOpen, emberFurnaceDead} from './ember-save.js';
 
 export const EMBER_JOB_NAMES = Object.freeze([
   'Hot Delivery', 'Get Out and Walk', 'Run Him Down', 'Slow Ride',
@@ -28,7 +28,17 @@ export const EMBER_FEUD_SENTENCES = Object.freeze([
 export const emberFeudSentence = feud => EMBER_FEUD_SENTENCES[emberFeudWordIndex(feud)];
 const emberFeudWordIndex = feud => EMBER_FEUD_WORDS.indexOf(emberFeudWord(feud));
 
-// `runs`: the gas run is wanted (the scablands-runs switch is on). `runPay`: what each road pays now, {long, boneyard}.
+// FIELD-BATTLE-ASH (docs/board/cards/FIELD-BATTLE-ASH.md): at War party, while the furnace is alive, the wall says this in place of
+// the War party sentence, the Boneyard road's button reads BONEYARD ROAD: THE BATTLE and carries the battle's pay.
+export const EMBER_BATTLE_SENTENCE = 'The Ash Men have dragged the furnace out of the well. They are waiting on the Boneyard road.';
+export const EMBER_BATTLE_BUTTON = 'BONEYARD ROAD: THE BATTLE';
+// The one sentence the result screen says for each ending of the battle.
+export const EMBER_BATTLE_RESULTS = Object.freeze({
+  won: 'The furnace has stopped for good on the Boneyard road, and Big Bess is in Tin Town.',
+  arrived: 'Big Bess is in Tin Town, but the furnace is still rolling and will be back on the next Boneyard run.',
+});
+
+// `runs`: the gas run is wanted (the scablands-runs switch is on). `runPay`: what each road pays now, {long, boneyard, battle}.
 export function emberStoryProps(profile, {available = false, runs = false, runPay = {}} = {}) {
   if (!available) return {available: false, step: null, read: false, steps: [], sideJobs: []};
   const ember = emberOf(profile), jobs = ember.jobs ?? [];
@@ -45,9 +55,12 @@ export function emberStoryProps(profile, {available = false, runs = false, runPa
     ended: step === 'done' && ember.end === true};
   // The gas run: shown only with its switch on and the sixth job won. It never finishes, so it never carries a tick.
   if (runs === true && EMBER_JOBS.every(id => jobs.includes(id))) {
-    const feud = emberFeud(profile);
-    props.run = {feud, word: emberFeudWord(feud), sentence: emberFeudSentence(feud), runs: emberRuns(profile),
-      roads: EMBER_RUN_ROADS.map(id => ({id, name: id === 'long' ? 'LONG ROAD' : 'BONEYARD ROAD', pay: runPay[id] ?? null}))};
+    const feud = emberFeud(profile), battle = emberBattleOpen(profile);
+    props.run = {feud, word: emberFeudWord(feud), sentence: battle ? EMBER_BATTLE_SENTENCE : emberFeudSentence(feud), runs: emberRuns(profile),
+      battle, furnaceDead: emberFurnaceDead(profile),
+      roads: EMBER_RUN_ROADS.map(id => id === 'boneyard' && battle ?
+        {id, name: EMBER_BATTLE_BUTTON, pay: runPay.battle ?? null} :
+        {id, name: id === 'long' ? 'LONG ROAD' : 'BONEYARD ROAD', pay: runPay[id] ?? null})};
   }
   return props;
 }

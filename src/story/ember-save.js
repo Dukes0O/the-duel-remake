@@ -83,6 +83,8 @@ function emberRunsOf(ember) { return validRuns(ember?.runs) ? ember.runs : 0; }
 export const emberFeud = profile => emberFeudOf(emberOf(profile));
 // True once the battle on the Boneyard road has been won; missing or damaged reads as false.
 export const emberFurnaceDead = profile => emberOf(profile).furnaceDead === true;
+// The next Boneyard run is the battle: the feud is at War party and the furnace is not dead. (The six jobs are the run's own rule.)
+export const emberBattleOpen = profile => emberFeud(profile) === EMBER_FEUD_WORDS.length && !emberFurnaceDead(profile);
 export const emberRuns = profile => emberRunsOf(emberOf(profile));
 export const emberFeudWord = feud => EMBER_FEUD_WORDS[(validFeud(feud) ? feud : EMBER_FEUD_START) - 1];
 
