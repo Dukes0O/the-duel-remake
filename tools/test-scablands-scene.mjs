@@ -1,7 +1,9 @@
 ﻿import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {Course} from '../src/course.js';
-import {SCABLANDS_VENUE} from '../src/world/scablands.js';
+import {SCABLANDS_VENUE,SCABLANDS_LAYOUT} from '../src/world/scablands.js';
+import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
@@ -282,6 +284,112 @@ syncScene(scene.group,sightingState(5,{stepIndex:0,steps:[{kind:'heist'}],done:f
 assert.ok(rigAt().distanceTo(restAt)<.001&&rig.visible,'another job leaves the furnace where it stands');
 assert.ok(scene.group.getObjectByName('Dead Mall sand drifts and rubble'),'mall art gets rubble dressing');
 assert.equal(scene.group.userData.solids,SCABLANDS_SOLIDS,'scene exposes the tested static collision set');
+// SCABLANDS-LAND, check 1a: every material of every placed model file arrives with a colour that is not white (or with
+// a picture), read from the real files. Four recipes once drew colour through a noise node, which the exporter does not
+// write, and 10 of 10, 12 of 12, 4 of 9 and 3 of 7 materials arrived white. Metal is .2 or less on those four.
+const readMaterials=url=>{
+  const buffer=readFileSync(new URL('../public'+url,import.meta.url)),json=JSON.parse(buffer.subarray(20,20+buffer.readUInt32LE(12)).toString('utf8'));
+  return json.materials??[];
+};
+for(const [key,url] of Object.entries(SCABLANDS_ASSETS)){
+  const materials=readMaterials(url);
+  assert.ok(materials.length>0,`${key}: the model has materials`);
+  for(const material of materials){
+    const pbr=material.pbrMetallicRoughness??{},factor=pbr.baseColorFactor;
+    assert.ok(pbr.baseColorTexture||(factor&&factor.slice(0,3).some(value=>value<.98)),`${key}: "${material.name}" has a colour that is not white`);
+    if(['tintown','kit','everburn','boneyard'].includes(key))assert.ok((pbr.metallicFactor??1)<=.2+1e-6,`${key}: "${material.name}" has metal at .2 or less`);
+  }
+}
+// Checks 1b to 1d work on the ground as it is drawn.
+scene.group.updateMatrixWorld(true);
+const raycaster=new THREE.Raycaster(),straightDown=new THREE.Vector3(0,-1,0);
+const heightOn=(meshes,x,z)=>{raycaster.set(new THREE.Vector3(x,5000,z),straightDown);const hit=raycaster.intersectObjects(meshes,false)[0];return hit?hit.point.y:null;};
+const road=ground.children.find(mesh=>mesh.name==='Scablands dirt road');
+assert.ok(road,'the dirt road is drawn');
+{
+  const roadAt=road.geometry.attributes.position,across=20,sections=roadAt.count/across;
+  assert.ok(across>=3&&Number.isInteger(sections),'the road is cut across at three or more points');
+  // The first cross-section lies across the oval at its east end: 1.2 times the road's half width each side.
+  const reach=SCABLANDS_LAYOUT.roadHalfWidth*1.2;
+  assert.ok(Math.abs(roadAt.getX(0)-(SCABLANDS_LAYOUT.frameRadiusX-reach))<.01&&Math.abs(roadAt.getX(across-1)-(SCABLANDS_LAYOUT.frameRadiusX+reach))<.01,'the road is 1.2 times the road half width to each side');
+  assert.ok(road.material.vertexColors&&road.material.userData.groundLook,'the road has its ruts and the ground look');
+  // It lies on the ground as drawn: never more than 0.3 m above it, and sunk into it more than 0.5 m only at the steepest edges.
+  let sampled=0,sunk=0,highest=-1e9;
+  for(let section=0;section<sections;section+=3)for(let point=0;point<across-1;point++)for(const part of [0,.5]){
+    const i=section*across+point,j=i+1,x=roadAt.getX(i)+(roadAt.getX(j)-roadAt.getX(i))*part,z=roadAt.getZ(i)+(roadAt.getZ(j)-roadAt.getZ(i))*part;
+    const onRoad=heightOn([road],x,z),onGround=heightOn(near,x,z);
+    if(onRoad===null||onGround===null)continue;
+    sampled++;highest=Math.max(highest,onRoad-onGround);if(onRoad-onGround<-.5)sunk++;
+  }
+  assert.ok(sampled>3000,'the road is sampled along its whole length');
+  assert.ok(highest<=.3,`the road is no taller than 0.3 m above the ground anywhere (highest ${highest.toFixed(2)} m)`);
+  assert.ok(sunk/sampled<.05,`the road is sunk more than 0.5 m only at the steepest edges (${sunk} of ${sampled})`);
+  const index=road.geometry.index.array,a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let faceDown=0;
+  for(let k=0;k<index.length;k+=3){a.fromBufferAttribute(roadAt,index[k]);b.fromBufferAttribute(roadAt,index[k+1]);c.fromBufferAttribute(roadAt,index[k+2]);
+    if(b.sub(a).cross(c.sub(a)).y<=0)faceDown++;}
+  assert.equal(faceDown,0,'every face of the road looks up');
+  const middle=Math.floor(sections/2)*across+across/2;
+  assert.ok(Math.abs(roadAt.getY(middle)-scablandsSurfaceHeightAt(roadAt.getX(middle),roadAt.getZ(middle)))<.5,'the middle of the road lies on the land');
+}
+// Check 1c: the far ground lies below the near ground wherever both exist.
+{
+  let samples=0,smallest=1e9;
+  for(let x=-695;x<=695;x+=17)for(let z=-495;z<=495;z+=13){
+    const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);
+    assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);
+    samples++;smallest=Math.min(smallest,nearHeight-farHeight);
+  }
+  assert.ok(samples>5000&&smallest>0,`the far ground lies below the near ground everywhere it was sampled (closest ${smallest.toFixed(2)} m, ${samples} places)`);
+  const farAt=far.geometry.attributes.position;
+  assert.ok(Math.abs(farAt.getY(0)+far.position.y-(scablandsSurfaceHeightAt(-1400,-1000)+.025-.12))<.001,'the far ground is unchanged outside the near ground');
+}
+// Check 1d: Tin Town's gate stands at its place, across the line the trucks drive, with a 9 m opening.
+{
+  const gate=scene.group.getObjectByName('Tin Town gate'),land=scablandsSurfaceHeightAt(575,62);
+  assert.ok(gate&&gate.parent===scene.group,'the scene carries Tin Town\'s gate');
+  assert.ok(Math.hypot(gate.position.x-575,gate.position.z-62)<.001&&Math.abs(gate.position.y-land)<.001,'the gate stands at (575, 62), on the ground');
+  gate.updateMatrixWorld(true);
+  const left=gate.getObjectByName('Gate post left'),right=gate.getObjectByName('Gate post right');
+  assert.ok(left&&right,'the gate has two posts');
+  // In the gate's own frame (X along the beam, Z the way a truck drives) the posts stand 9 m apart and 7 m tall.
+  const own=new THREE.Matrix4().copy(gate.matrixWorld).invert(),boxIn=object=>{const box=new THREE.Box3();
+    object.traverse(node=>{if(node.isMesh){node.geometry.computeBoundingBox();box.union(node.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(own,node.matrixWorld)));}});return box;};
+  const leftBox=boxIn(left),rightBox=boxIn(right);
+  assert.ok(Math.abs((rightBox.min.x-leftBox.max.x)-9)<.05,`the gate's opening is 9 m (${(rightBox.min.x-leftBox.max.x).toFixed(2)})`);
+  assert.ok(Math.abs(leftBox.max.y-7)<.05&&Math.abs(rightBox.max.y-7)<.05,'the posts are 7 m tall');
+  // The way a truck drives through is the line from (610, 170) to (430, 70), and the furnace's path crosses the gate.
+  const through=new THREE.Vector3(0,0,1).transformDirection(gate.matrixWorld),line=new THREE.Vector3(-180,0,-100).normalize();
+  assert.ok(Math.abs(through.dot(line))>.9999,'the gate stands across the line from (610, 170) to (430, 70)');
+  assert.deepEqual([TIN_TOWN_GATE.x,TIN_TOWN_GATE.z],[gateAt.x,gateAt.z],'the gate stands where the furnace\'s path names it');
+  assert.equal(gate.getObjectByName('Gate sign plate').userData.text,'TIN TOWN','the gate carries a tin sign reading TIN TOWN');
+  const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
+  const lampMeshes=gate.getObjectByName('Gate lamps').children.filter(mesh=>glowing(mesh.material));
+  assert.ok(lampMeshes.length>0&&lampMeshes.every(mesh=>mesh.material.emissiveIntensity>.3&&mesh.material.emissiveIntensity<1.5),'the gate\'s lamps glow a little');
+  const fence=['left','right'].map(side=>boxIn(gate.getObjectByName(`Gate fence ${side}`)));
+  assert.ok(fence.every(box=>box.max.x-box.min.x>=13.9&&box.max.x-box.min.x<=15.2),'each side of the gate has about 14 m of fence');
+  const beam=boxIn(gate.getObjectByName('Gate beam'));
+  // The wear is drawn over every material that does not glow.
+  const materials=[];gate.traverse(node=>{if(node.isMesh)materials.push(node.material);});
+  assert.ok(materials.length>5&&materials.every(material=>Boolean(material.userData.scrapWear)===!glowing(material)),'the wear is drawn over every material of the gate except its lamp glass');
+  // When it burns, the fire stands on the beam.
+  syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReached:true,gateBurnt:true}));
+  assert.ok(Math.hypot(gateFire.position.x-575,gateFire.position.z-62)<.001,'the fire stands at the gate');
+  assert.ok(Math.abs(gateFire.position.y-land-beam.max.y)<.05,`the fire stands on the gate's beam (${(gateFire.position.y-land).toFixed(2)} m up, beam top ${beam.max.y.toFixed(2)})`);
+  assert.ok(Math.abs(gateFire.rotation.y-gate.rotation.y)<1e-9,'the three tongues of fire stand along the beam');
+}
+// The ground look is drawn over the near ground, the far ground, the road and any edited chunk.
+assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.userData.groundLook,'the near and far ground carry the ground look');
+{
+  scablandsGroundEdit.cut({x:100,z:100,radius:4},scablandsGroundEdit.heightAt(100,100)-2);
+  assert.ok(scene.group.userData.updateGroundView()>0,'a cut refreshes the ground');
+  const chunk=ground.children.find(mesh=>/^Scablands edited ground/.test(mesh.name));
+  assert.ok(chunk&&chunk.material.userData.groundLook,'an edited chunk carries the ground look');
+  assert.ok(ground.children.includes(road)&&road.name==='Scablands dirt road','the road is rebuilt after an edit and keeps its name');
+  // The far ground stays dropped under the near ground after a rebuild: the vertex at (0, 0) is the 179th.
+  const lowered=far.geometry.attributes.position.getY(8*21+10)+far.position.y;
+  assert.ok(lowered<scablandsSurfaceHeightAt(0,0)-39,'the far ground stays dropped under the near ground after an edit');
+  resetScablandsGroundEdit();scene.group.userData.updateGroundView();
+}
 scene.dispose();
 assert.equal(scene.group.children.length,0,'disposing the scene releases its presentation graph');
 // EVERBURN-WELL-ART: the game's model loader renames parts (a space becomes an underscore, a full stop is dropped).
@@ -309,4 +417,38 @@ const renamedParts=[];renamedRig.traverse(node=>renamedParts.push(node));
 assert.equal(renamedParts.filter(node=>/plate|armor/.test(node.name)&&!node.visible).length,2,'two of the six renamed plates fall with the first hit');
 assert.equal(renamedParts.filter(node=>node.isMesh&&node.material.emissiveIntensity===2.8).length,3,'the three renamed vents of the glowing door light up');
 renamed.dispose();
+// SCABLANDS-LAND: wear is drawn over every place's materials, one wear for each place, with the place's own ground point
+// as its origin; lamps and flames and the people are left clean.
+const worn=createScablandsScene(course,{loadAsset:async path=>{
+  const root=new THREE.Group();
+  if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace){
+    for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
+    return {scene:root};
+  }
+  const steel=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'plain steel',color:0x808080}));steel.name='steel';
+  const lamp=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'forge lamp glass lit',color:0xffaa44,emissive:0xff8820,emissiveIntensity:2}));lamp.name='lamp';
+  const person=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'person cloth',color:0x806040}));person.name='person';
+  root.add(path===SCABLANDS_ASSETS.folk?person:steel,...(path===SCABLANDS_ASSETS.folk?[]:[lamp]));
+  return {scene:root};
+}});
+assert.equal(await worn.ready,true,'the worn scene loads');
+const inverseOf=material=>{const shader={uniforms:{},vertexShader:'#include <common>\n#include <project_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>'};
+  material.onBeforeCompile(shader);return shader.uniforms.uScrapInverse.value;};
+const wearMatrices=new Set();
+for(const place of SCABLANDS_PLACES){
+  const lod=worn.group.getObjectByName(`${place.name} detail LOD`),full=lod.levels[0].object,parts=[];
+  full.traverse(node=>{if(node.isMesh)parts.push(node);});
+  for(const mesh of parts){
+    const wearing=mesh.material.userData.scrapWear===true;
+    if(mesh.name==='steel'){
+      assert.ok(wearing,`${place.name}: plain steel is worn`);
+      const ground=new THREE.Vector3(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z).applyMatrix4(inverseOf(mesh.material));
+      assert.ok(ground.length()<1e-6,`${place.name}: the wear's origin is the place's own ground point`);
+      wearMatrices.add(inverseOf(mesh.material));
+    }
+    else assert.ok(!wearing,`${place.name}: ${mesh.name} is not worn (lamps, flames and people stay as they are)`);
+  }
+}
+assert.equal(wearMatrices.size,5,'each of the five places that carry art (Tin Town, the Boneyard, the Dead Mall, the Everburn and the Ridge) has its own wear');
+worn.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
