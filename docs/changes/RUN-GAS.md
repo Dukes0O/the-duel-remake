@@ -160,3 +160,61 @@ Big Bess's lowest health on arrival over the ten tries: long 100, 100, 90, 80; B
 
 The unread `raiders:` list on job 4 (now `ambushes`), the old escort test of "arrived when she sets out for the last place",
 job 4's raw rest, start and won line ids (`everburn-job-4-rest`, `everburn-job-4-start`, `everburn-job-4-won`), the Boneyard road's detour to the safe road, and its imports of the Everburn's lines in `world-job.js`.
+
+## Changes from play on Medium (Claude, 12 November)
+
+The card's section "What play showed, and the changes it needs": on Medium nothing could be won. Seven changes, then drivers on Medium.
+
+- **1. Cars run raiders down.** `src/arena/modes/world-job.js` (`runDownRaiders`): in an escort's ambush a raider whose position is
+  within 2.2 m of the player's car centre while the car moves at 4 m/s or more (`state.speedMph` times `DRIVE.mphToWorld`) is
+  knocked down through the existing `damageRaider` (so the game counts it and shows RAIDER DOWN). `src/raiders.js`: a raider with
+  an `ambushKey`, once knocked down (by the car, the crossbow, a bomb or the flamethrower), stays down for the rest of that ambush;
+  every other raider, job 6's well raiders included, still gets up after 3 seconds and a car does nothing to them (checked).
+- **2. Health after a rest.** After a rest Big Bess has `max(health at the start of the stretch, 60)` (`REST_HEALTH_MINIMUM` in
+  `escort.js`); the new value is also her stretch-start health.
+- **3. Job 4's first ambush** is at (278, 188) on her road, 186 m from the start (was (360, 270), 72 m). No ambush may stand within
+  180 m of the start along the road (`AMBUSH_MIN_FROM_START_METRES`): checked for job 4, every fixed place, and every road, feud
+  word and run count 0 to 199 (more than 1,000 ambushes). The Boneyard road's nearest mark is 260 m, the long road's one place is
+  1,529 m along.
+- **4. Big Bess's health bar** (`world-hud.js`, `world-hud.css`) is its own element at the lower left (left 35 px, bottom 78 px, 188 px
+  wide), above the armour bar and below the route map, the same column the game's other bars use. It no longer sits in the middle of
+  the top under the rear-view mirror. The `run-gas` scenario measures it and fails if it covers the mirror, the caption line, the
+  armour bar or the route map (picture: lower left, `BIG BESS 100 / 100` above `PLAYER ARMOR`).
+- **5. The flamethrower** is lent for job 4 and for every run (`lentWeapon: 'flamethrower'` on the escort step), as job 1 lends it. A
+  run's car has it in slot 4 (checked in a real Duel and in the picture).
+- **6. Sightings** (`furnace-sightings.js`): job 1's furnace stands at (300, -60), the caption distance stays 260 m (the lines test's
+  distances moved with the furnace: 233 m is now (67, -60) and 270 m is (30, -60)). Job 4's furnace paces Big Bess 90 m to her north and
+  40 m ahead of her along her direction of travel, with the same 30% to 70% rule and the same turn away north (the scene test follows).
+- **7. The gate fire** (`scablands-scene.js`, only the gate-fire code): five tongues 6 to 8 m tall at x = -7, -3.5, 0, 3.5, 7 m (each 4 m
+  wide, 18 m in all) centred on the gate place (575, 62); five groups of `createSparks`; 12 smoke puffs rising 30 m; the firelight pool
+  from `createGroundGlowMaterial` (34 by 24 m). Shown only once the gate has burnt. No gate is built.
+
+### Medium drivers (`tools/test-run-gas-medium.mjs`, new, beside the Easy test; 10 tries each, the run count is the try's number)
+
+The fighting driver goes to the next ambush it has not seen yet and waits 45 m short of it on the side Big Bess comes from; when raiders
+appear it drives at the nearest standing one (34 mph, 22 mph inside 12 m) and runs him down; with no raiders left it goes back to her.
+The driver who never fights drives to Tin Town at 52 mph, as the Easy driver does. Targets, asserted: the fighting driver wins job 4
+and a Boneyard run at Raiding 8 in 10 or better and at War party 5 in 10 or better; the driver who never fights still arrives on the long
+road at Watching and Raiding; a try that arrives needs at most 3 rests. Easy's targets (8 of 10 everywhere) are unchanged.
+
+| Medium, brought home out of 10 (lowest Big Bess health on arrival) | Job 4 | Long: Watching | Raiding | Hunting | War party | Boneyard: Watching | Raiding | Hunting | War party |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Fighting driver | 10 (89) | 10 (100) | 10 (100) | 10 (35) | 10 (3) | 10 (35) | 10 (35) | 9 (27) | 7 (2) |
+| Never fights | 0 | 10 (100) | 10 (100) | 10 (35) | 10 (3) | 10 (33) | 1 (20) | 0 | 0 |
+
+Rests in a try that arrived: 0 everywhere except one for the fighting driver at the Boneyard road's Hunting and War party and one for
+the driver who never fights at its Raiding. The tries that did not arrive were loops: Big Bess is worn to nothing, rests, restarts at 60
+and is worn down again, 22 to 75 rests (the fighting driver, 29 at Hunting and 56 at War party; the one who never fights, 22 on job 4,
+63 at Raiding, 74 at Hunting, 75 at War party). The 60 health floor does not get a player who leaves the raiders alone past two
+2-raider ambushes on Medium.
+
+| Easy (unchanged driver), out of 10 | Long: Watching | Raiding | Hunting | War party | Boneyard: Watching | Raiding | Hunting | War party | Job 4 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Brought home (lowest health) | 10 (100) | 10 (100) | 10 (90) | 10 (80) | 10 (89) | 10 (80) | 10 (60) | 10 (31) | 10 |
+
+### Checks for these changes
+
+`test-run-gas` 940 checks (53 new: running raiders down, staying down, job 6 unchanged, health after a rest, 180 m from the start, the lent
+weapon); `test-everburn-easy` (job 4 and the eight runs, table above); `test-run-gas-medium` (table above; takes about eight minutes);
+`test-ember-lines`, `test-old-smoke`, `test-scablands-scene`, `test-world-hud`, `test-world-job-mode`, `test-story-registry`,
+`test-ember-screens`: pass. Browser scenarios `run-gas` (with the new bar check) and `everburn-well`: pass.
