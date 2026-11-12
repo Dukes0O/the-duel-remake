@@ -54,6 +54,34 @@ One number in the player's Everburn story save, with four words. It starts at **
 - On Easy every raid has one raider fewer, never fewer than one.
 - At War party nothing more happens in this card. The boss coming out is step 4 of the design.
 
+### Raids on an escort (settled by Claude on 11 November, after the builder found there were none)
+
+The builder found that job 4's `raiders:` list is declared and never read: no raider appears on an escort and
+nothing but the player's own weapons can hurt Big Bess. Job 4 today is a drive beside a truck. This card therefore
+adds raids to the escort step itself, and job 4 gets them too, at its two declared places with 2 raiders each.
+
+- **An ambush** is a place on the road with a number of raiders. When Big Bess comes within **160 m** of it, the
+  raiders appear at the roadside within 12 m of the place, on both sides, the way the well's attackers appear in
+  job 6 (`spawnWave`). The player has about 16 seconds to drive ahead and deal with them.
+- **Raiders are the Ash Men on foot that job 6 already has.** They are knocked down by a car or a weapon exactly as
+  there, and they shoot at the player exactly as there.
+- **What hurts Big Bess:** each raider still standing within **30 m** of her wears her health down every second, by
+  **5** on Medium, **7** on Hard and **1.5** on Easy. Left alone, two raiders cost her about 70 on Medium as she
+  passes; on Easy about 10.
+- **When her health reaches 0** the escort's existing rest runs and that stretch starts again, with its ambush
+  back in place. Health lost on a stretch she finished stays lost for the run.
+- **After she has passed** an ambush by 60 m, any raider left standing gives up and is removed.
+- Easy has one raider fewer in every ambush, never fewer than one.
+- The child-pace Easy driver in the test must still win job 4 and every run 8 times in 10. The driver may be taught
+  to drive ahead of Bess to the ambush and knock the raiders down; that is a change to the test driver's play, not to
+  an assertion.
+
+### Pay
+
+Every world job is paid one amount today (80 times the difficulty factor, in `src/arena/arena-settlement.js`). A
+job definition may now carry `shares` (a whole number, 1 when absent), and the amount is multiplied by it. The long
+road is 1 share and the Boneyard road 2. This is a change to pay, so Claude reviews it line by line before it merges.
+
 ### What the save holds
 
 Inside the Everburn story's own save object, beside `read`, `end` and `jobs`: `feud` (1 to 4) and `runs` (a count).
@@ -94,4 +122,4 @@ Other cargo and other roads, sending someone else, the boss coming out, the Scra
 
 ## Removed
 
-Nothing. The run uses job 4's engine and does not replace job 4.
+The unread `raiders:` list on job 4 becomes real ambushes. Nothing else is replaced.
