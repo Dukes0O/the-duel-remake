@@ -47,6 +47,10 @@ The fight goes somewhere: Big Bess to Tin Town's gate, with the gas the town liv
   - Big Bess reaches Tin Town's gate with the furnace still rolling: the furnace turns away at the gate. The gas is
     home, but the battle is not won: the feud stays at War party and the furnace will be back on the next Boneyard run.
   - Big Bess rests as usual when her health reaches 0; a battle is never a game over.
+  - The furnace runs out of coal: after Big Bess's third rest in one battle it throws no more cinders and no door begins to
+    glow again. A door that already glows keeps its time and can still be broken. The furnace goes on following her and turns
+    away at the gate, so a battle in which she rested three times usually ends as "arrived": the gas is home, the feud stays
+    at War party and the furnace is back on the next Boneyard run.
 - **Winning** pays 4 shares, sets the feud to Watching, and leaves the dead furnace on the Boneyard road for good as
   a wreck the player drives past on every later run (drawn only, with a thin smoke). The battle does not come again
   until the feud climbs back to War party, and then the riders come without a furnace (a War party run as today).
@@ -125,8 +129,9 @@ with it alive that button is the battle. Every assertion is as it was.
 | --- | --- | --- | --- | --- |
 | Easy, child-pace driver | 10 | 10 | 52 | 142 s |
 | Medium, a driver who clears riders and breaks doors | 10 | 9 | 26 | 194 s |
-| Medium, a driver who never fights | 10 | 0 | 60 | 230 s |
-| Hard, a driver who clears riders and breaks doors | 10 | 7 | 28 | 203 s |
+| Medium, a driver who never fights | 10 | 0 | 1 | 225 s |
+| Hard, a driver who clears riders and breaks doors | 10 | 4 | 28 | 203 s |
+| Hard, a driver who never fights | 10 | 0 | 60 | 249 s |
 
 Checks on the builder's branch: `test-field-battle` 643, lane tier 105 of 105, build, and the `field-battle`,
 `run-gas` and `everburn-well` browser checks. Rerun by Claude on the merged result: field battle 643, furnace rules
@@ -275,25 +280,37 @@ At 430 m Hard is never beaten and at 620 to 700 m Medium is beaten about as ofte
 and Hard (5.3 of 10) both land in their targets, with the fire landing in 30 of 30 Medium battles (stoke 6) and her health at the gate 25 or
 more in every won one. Stoke 8 s at 560 m costs Medium too many wins (13 of 30).
 
-**The four drivers, built numbers, 10 tries each on the same seeds** (cinders: seconds of fire landing on Big Bess in a try):
+**The furnace burns its coal (added after the first redesign build).** The Hard driver who never fights could not get Big Bess home (see "Found
+wrong" below), and a battle is never a game over, so: after Big Bess's third rest in one battle the furnace is spent. It throws no more cinders
+(`burning` false, nothing drawn) and no door begins to stoke again; a door that already glows keeps its time and can still be broken; it follows her
+as before and turns away at the gate, so the battle ends as "arrived" unless its last door was already glowing and is broken. It mirrors the rule that
+an ambush gives up after two rests. No new line, no new sound. The furnace's state carries `spent` (true or false) for the scene and the map to read
+later; nothing new is drawn. `FIELD_BATTLE.furnace.spentAfterRests` is 3. Rests she has before the furnace comes out count. Three rests were enough: the
+Medium driver who fights wins 9 of 10 (23 of 30), well over the 6 of 10 and 18 of 30 at which four would have been used, and never rests three times
+(at most 2), so for him nothing changed. Nothing else moved.
+
+**The five drivers, built numbers, 10 tries each on the same seeds** (cinders: seconds of fire landing on Big Bess in a try):
 
 | Driver | Big Bess home | Battle won | Her health at the gate in won battles | Cinders on her | Longest |
 | --- | --- | --- | --- | --- | --- |
 | Easy, child-pace | 10 | 10 | lowest 52 | 4.3 to 4.4 s | 142 s |
 | Medium, clears riders and breaks doors | 10 | 9 | lowest 26; 25 or more in 9 of 9 | 11 to 21 s (10 of 10 tries in 10 to 30 s) | 194 s |
-| Medium, never fights | 10 | 0 | (not won; on arrival 60) | 42 to 82 s | 230 s |
-| Hard, clears riders and breaks doors | 10 | 7 | lowest 28; 25 or more in 7 of 7 | 13 to 24 s | 203 s |
-| Hard, never fights (for information) | 0 | 0 | (never arrives) | 372 to 402 s | 897 s (stopped) |
+| Medium, never fights | 10 | 0 | (not won; lowest on arrival 1) | 21 to 51 s | 225 s |
+| Hard, clears riders and breaks doors | 10 | 4 | lowest 28; 25 or more in 4 of 4 | 13 to 22 s | 203 s |
+| Hard, never fights | 10 | 0 | (not won; lowest on arrival 60) | 1 to 39 s | 249 s |
 
-Against the targets: 1 (cinders 10 to 30 s in at least 8 of 10) met, 10 of 10. 2 (home 10 of 10 for Easy and Medium drivers, the one who
-never fights wins none) met. 3 (25 or more in at least 7 of the won) met, 9 of 9. 4 (Medium 6 to 9, Easy 8 or more, Hard 3 to 7) met: 9, 10
-and 7. On 30 tries the same numbers give Medium 23 won (7.7 of 10), Hard 16 (5.3 of 10).
+The furnace was spent in all 10 tries of both drivers who never fight (up to 4 and 5 rests) and in 4 tries of the Hard fighter; never for the Medium
+fighter. On 30 tries: Medium fights 30 home, 23 won (7.7 of 10), cinders 10 to 30 s in 30 of 30, health 25 or more in 23 of 23; Hard fights 30 home,
+11 won (3.7 of 10), 8 of those 11 at 25 or more; Easy 30 of 30 won, lowest 52; Medium never fights 30 home (first redesign build, unchanged: 0 won).
 
-**Found wrong on the card: a Hard driver who never fights cannot get Big Bess home.** With cinders at 6 a second on Hard (the lowest the card
-allows) and a furnace that catches up and sits 12 m behind her throwing fire, she rests every 17 s or so and each rest puts her back at the
-last place she reached, so in 10 of 10 tries she was still resting when the 15 minutes ran out (32 rests). Before the redesign this driver got
-home 10 of 10. The card asks for home 10 of 10 only for the Easy and Medium drivers, so this is outside the targets, but a Hard player who
-only drives has no way to finish; the road back (fight, or lower the Hard cinders under 6) is for Claude to decide.
+Against the targets: 1 (cinders 10 to 30 s in at least 8 of 10 for Medium, fights) met, 10 of 10. 2 (home 10 of 10 for every Easy and Medium driver, the
+one who never fights wins none) met; and the Hard driver who never fights is now home 10 of 10 with none won. 3 (25 or more in at least 7 of the won) met,
+9 of 9. 4 (Medium 6 to 9, Easy 8 or more, Hard 3 to 7) met: 9, 10 and 4.
+
+**Found wrong on the card (now answered by the coal rule): a Hard driver who never fights could not get Big Bess home.** With cinders at 6 a second on
+Hard (the lowest the card allows) and a furnace that catches up and sits 12 m behind her throwing fire, she rested every 17 s or so and each rest put
+her back at the last place she reached: 0 of 10 home, 32 rests, still resting when the 15 minutes ran out. With the coal rule she is home 10 of 10
+(up to 5 rests). Before the redesign this driver got home 10 of 10.
 
 ## Not in this card
 

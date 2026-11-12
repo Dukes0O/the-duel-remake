@@ -174,14 +174,26 @@ breaking a door, Easy's one door, pay, the save, the lines, job 6.
 `escortBurn`; the new check in `tools/test-field-battle.mjs` runs 60 s of steps in and out of range and with doors broken and asserts that
 `escortBurn > 0` exactly when `burning` is true, on every step.
 
-**Drivers** (scratch copies of the drivers in `tools/test-everburn-easy.mjs` and `tools/test-run-gas-medium.mjs`, a Hard driver added; 10 tries each, same
-seeds; the tests themselves still pass): Easy 10 home, 10 won, lowest 52, cinders 4.3 s; Medium fights 10 home, 9 won, 9 of 9 at 25 or more, cinders 11
-to 21 s; Medium never fights 10 home, 0 won; Hard fights 10 home, 7 won; Hard never fights 0 home (32 rests, stopped at 15 minutes), reported on the card.
+**The furnace burns its coal (a fourth rule, added after Claude accepted the three).** A Hard driver who never fights could never get Big Bess home (0 of
+10, 32 rests), and a battle is never a game over. `FIELD_BATTLE.furnace.spentAfterRests` is 3. The job mode counts every `rest` event of a battle
+(`worldJob.battleRests`, so rests before the furnace comes out count too) and calls `furnaceRested` in `old-smoke.js`, which counts them on the furnace
+(`rests`) and sets `spent` at the third. A spent furnace has `burning` false and adds no `escortBurn`, and `canStoke` (in range and not spent) gates the
+start of every stoke and every shut door's next stoke. A door already glowing keeps its time and can be broken; a stoke already begun runs on to its glow.
+It still follows her and turns away at the gate, so the battle ends as "arrived" unless the last door was glowing and is broken. `furnaceRested` does nothing
+for the story's furnace. `spent` is on the furnace state for the scene and the map to read later; nothing new is drawn, no new line or sound. Three rests,
+not four: the Medium fighter wins 9 of 10 (23 of 30) and never rests three times, so nothing changed for him.
 
-**Checks.** `node tools/test-field-battle.mjs` 684 (was 643, 41 more net: the two new rules, the burning flag and the ranges, see below), `test-old-smoke` 616
+**Drivers** (scratch copies of the drivers in `tools/test-everburn-easy.mjs` and `tools/test-run-gas-medium.mjs`, a Hard driver added; 10 tries each, same seeds;
+the tests themselves still pass): Easy 10 home, 10 won, lowest 52, cinders 4.3 s; Medium fights 10 home, 9 won, 9 of 9 at 25 or more, cinders 11 to 21 s;
+Medium never fights 10 home, 0 won (spent in 10 of 10); Hard fights 10 home, 4 won (11 of 30); Hard never fights 10 home, 0 won (spent in 10 of 10, 1 to 39 s of
+cinders; was 0 home before the coal rule). Table with every column on the card.
+
+**Checks.** `node tools/test-field-battle.mjs` 750 (was 643 in the first build, 684 after the three rules; 66 more for the coal rule, see below), `test-old-smoke` 616
 (untouched), `test-run-gas` 1,088, `test-ember-save` 117, `test-ember-lines` 54 captions, `test-scablands-scene` pass. Lane tier
-(`--changed --jobs 4 --keep-going`, from PowerShell): 34 of 34 passed, 0 failed (it includes `test-everburn-easy`, `test-run-gas-medium`, `test-old-smoke`,
-`test-field-battle`, `test-replays` and `test-world-composition`). `npm run build`: pass. Browser scenarios `field-battle` (7 pictures), `run-gas`
+(`--changed --jobs 4 --keep-going`, from PowerShell, run again for the coal rule): 51 tests, 50 passed and 1 failed: `test-town-core` (a timing
+check, "slowest tick", while the laptop was busy with the lane's own jobs); rerun alone on the same commit it passes (641 checks), which rule 3 treats as
+not a failure. The 50 include `test-everburn-easy`, `test-run-gas-medium` (battle: fighter 9 of 10 won, never-fights 10 home and 0 won), `test-old-smoke`,
+`test-field-battle`, `test-replays` and `test-world-composition`. `npm run build`: pass. Browser scenarios `field-battle` (7 pictures), `run-gas`
 and `everburn-well`: 3 of 3 passed, 0 warnings, 0 errors. The field-battle scenario needed no change: it waits for the furnace to come out and for its
 cinders in loops long enough for the new timings, and it hits each door the moment it glows.
 
@@ -200,6 +212,12 @@ cinders in loops long enough for the new timings, and it hits each door the mome
   place, 540 m, may stand just before the new comes-out place.
 - After the third door "Big Bess drives on to Tin Town" (no result 20 s later) becomes: no result at the moment of death (the card's claim), and 20 s later
   no result or the battle won (she may now arrive inside those 20 s, because the furnace dies later on the road).
+- Coal rule, all new (no existing assertion changed for it): not spent before the third rest and spent at it, on each difficulty; a spent furnace in range throws
+  no cinders; one spent before any door has begun throws nothing and begins no stoke in 30 s; later rests still count and three counted at once spend it; it still
+  follows her and holds 12 m behind her; a glowing door keeps its glow time and can be broken (Medium and Hard); no other door begins after its stop; a glowing door
+  not broken shuts at its own time and no stoke follows; the last glowing door can still be broken and the furnace dies; the story's furnace ignores rests; in a real
+  App, three forced rests spend the furnace, no cinders land and no door begins after it, and the battle ends as arrived with 192 scrap, feud at War party, one run
+  counted, no `furnaceDead` and Auntie Solder's line.
 - New: a door waits to stoke while she is out of range, at the start, after it has shut and after a broken door's stop; a stoke begun and a glow keep going out
   of range, the glow for its own time; stoke begins at once when she is back; `burning` equals cinders landing (60 s).
 

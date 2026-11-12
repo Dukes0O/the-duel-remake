@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import '../src/story/ember-lines.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
-import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceHealth, furnaceDoorSpot, furnaceFallBack, furnacePace} from '../src/world/jobs/old-smoke.js';
+import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceHealth, furnaceDoorSpot, furnaceFallBack, furnacePace, furnaceRested} from '../src/world/jobs/old-smoke.js';
 import {GAS_RUN_PATHS, GAS_RUN_ROADS, FIELD_BATTLE, fieldBattleAmbushes, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isFieldBattle, isGasRun} from '../src/world/jobs/gas-run.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
 import {pathShare} from '../src/world/jobs/furnace-sightings.js';
@@ -189,6 +189,65 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
     same(mismatches, 0, 'burning is true on exactly the steps where cinders land on Big Bess (60 s, in and out of range, with doors broken)');
     check(burningSteps > 0 && heldInRange > 0, 'and that run had steps with cinders landing, and steps held by a broken door within range, where nothing lands');
     check(f.dead === false && f.burning !== undefined, 'a living furnace has the flag');
+  }
+
+  // The furnace burns its coal: after Big Bess's third rest in one battle it is spent. It throws no more cinders, no door begins to stoke,
+  // a door that already glows keeps its time and can still be broken, and it follows her as before.
+  same(FIELD_BATTLE.furnace.spentAfterRests, 3, 'the furnace is spent after three rests');
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const f = fresh(difficulty);
+    same([f.rests, f.spent], [0, false], `${difficulty}: a new furnace has had no rests and is not spent`);
+    furnaceRested(f); furnaceRested(f);
+    same([f.rests, f.spent], [2, false], `${difficulty}: it is not spent before the third rest`);
+    check(run(f, 20, within()).escortBurn > 0, `${difficulty}: and still throws cinders after two`);
+    furnaceRested(f);
+    same([f.rests, f.spent], [3, true], `${difficulty}: it is spent at the third`);
+    const mid = run(f, 30, within());   // a stoke or glow that had already begun may finish; the cinders stop at once
+    same([mid.escortBurn, f.burning], [0, false], `${difficulty}: a spent furnace within range of her throws no cinders`);
+    const fresh3 = fresh(difficulty); furnaceRested(fresh3, 3);
+    const after = run(fresh3, 30, within());
+    same([after.escortBurn, fresh3.burning, fresh3.phase, typesOf(after.events).filter(type => ['stoke', 'doorOpen', 'cindersLand'].includes(type))], [0, false, 'idle', []],
+      `${difficulty}: a furnace spent before any door has begun, within range of her for 30 s, throws nothing and begins no stoke`);
+    furnaceRested(f);
+    same(f.rests, 4, `${difficulty}: later rests are still counted`);
+    const g = fresh(difficulty); furnaceRested(g, 3);
+    same(g.spent, true, `${difficulty}: and three rests counted at once (rests she had before it came out) spend it`);
+    // It still follows her (at the catching-up pace beyond 40 m) and never comes nearer than 12 m.
+    const h = fresh(difficulty); furnaceRested(h, 3); const m0 = h.metres; run(h, 5, aheadOf(500));
+    check(h.metres > m0 + 40, `${difficulty}: a spent furnace still follows her`);
+    const k = fresh(difficulty); furnaceRested(k, 3); run(k, 60, () => bessAt(FIELD_BATTLE.comesOutAtMetres + 40));
+    near(FIELD_BATTLE.comesOutAtMetres + 40 - k.metres, 12, .01, `${difficulty}: and stops 12 m behind her`);
+  }
+  for (const difficulty of ['medium', 'hard']) {
+    // A door that already glows keeps its time and can still be broken after the furnace is spent.
+    const f = fresh(difficulty), glow = difficulty === 'medium' ? 4.5 : 3.5;
+    check(until(f, g => g.phase === 'glow', 60, within()), `${difficulty}: the left door glows`);
+    furnaceRested(f, 3);
+    run(f, glow / 2, within());
+    same([f.phase, f.door, f.spent], ['glow', 'left', true], `${difficulty}: spent, its glowing door is still glowing half-way through its time`);
+    check(furnaceHit(f, 'left') === true && f.hits === 1, `${difficulty}: and can still be broken`);
+    run(f, 8.5, within());
+    same([f.phase, f.door], ['idle', null], `${difficulty}: but no other door begins to stoke after its stop`);
+    // A door left to glow shuts at its own time and the next stoke never begins.
+    const g = fresh(difficulty);
+    check(until(g, h => h.phase === 'glow', 60, within()), `${difficulty}: a door glows`);
+    furnaceRested(g, 3);
+    const opened = g.timeSec, seen = run(g, glow + 20, within()), slam = seen.events.find(event => event.type === 'doorSlam');
+    check(slam && slam.reason === 'missed', `${difficulty}: a glowing door that is not broken shuts`);
+    near(slam.atSec - opened, glow, DT * 2, `${difficulty}: after its own ${glow} seconds`);
+    check(g.phase === 'shut' && !seen.events.some(event => event.type === 'stoke'), `${difficulty}: and no stoke follows`);
+    // The last door, glowing when it is spent, still ends the furnace when it is broken.
+    const h = fresh(difficulty);
+    for (const door of ['left', 'right']) { until(h, k => k.phase === 'glow', 60, within()); furnaceHit(h, door); run(h, 8.5, within()); }
+    check(until(h, k => k.phase === 'glow', 60, within()) && h.door === 'rear', `${difficulty}: the rear door glows`);
+    furnaceRested(h, 3);
+    check(furnaceHit(h, 'rear') === true && h.dead && h.won, `${difficulty}: spent, its last glowing door can still be broken, and it dies`);
+  }
+  {
+    // The story's furnace has no coal rule.
+    const old = createFurnace(EVERBURN_JOBS[5].steps[1].actor, 'medium');
+    furnaceRested(old, 5);
+    same([old.rests, old.spent], [0, false], 'the story furnace of job 6 ignores rests: never spent');
   }
 
   // They burn Big Bess and not the player, and nothing shoves the player.
@@ -616,6 +675,42 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
     check(app.gasRun('boneyard'));
     const {result} = playBattle(app, 2);
     same([worldOf(app.duel).battleEnding, result.scrapEarned, emberFeud(app.profile), emberFurnaceDead(app.profile)], ['arrived', 192, 4, false], 'two doors broken is not the battle won');
+    app.dispose?.();
+  }
+
+  {
+    // The furnace burns its coal: Big Bess rests three times (the test takes her health to 0 each time), the furnace is spent, throws no more cinders
+    // and begins no more doors, and she arrives with it still rolling: ending two, with its save and its pay.
+    const app = yard({extra: {feud: 4, runs: 5}}), scrap = app.profile.wasteland.scrap, duel = app.duel;
+    check(app.gasRun('boneyard') && worldOf(duel).definition.battle === true, 'the battle starts');
+    let forced = 0, nextKill = 0, spentAt = null, burningAfter = 0, stokeAfter = 0, restsSeen = 0, spentEarly = 0;
+    const lines = [], callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
+    for (let tick = 0; tick < 900 * 120 && duel.state.status !== 'arena_result'; tick++) {
+      duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
+      const hunter = worldOf(duel).actors.find(actor => actor.furnace), bess = bessOf(duel);
+      if (hunter && forced < 3 && bess && bess.health > 0 && worldOf(duel).job.stepState.rested !== true && duel.state.stageTimeSec >= nextKill) { bess.health = 0; forced++; nextKill = duel.state.stageTimeSec + 12; }
+      duel.step(1 / 120);
+      if (worldOf(duel).job.events.some(event => event.type === 'rest')) restsSeen++;
+      const f = furnaceOf(duel)?.furnace;
+      if (f) {
+        if (f.spent && f.rests < 3) spentEarly++;
+        if (f.spent && spentAt === null) spentAt = duel.state.stageTimeSec;
+        if (spentAt !== null && f.burning) burningAfter++;
+        if (spentAt !== null && f.phase === 'stoke' && f.phaseSec < .1 && f.hits === 0) stokeAfter++;
+      }
+    }
+    const result = duel.state.arena.result, f = furnaceOf(duel).furnace;
+    check(restsSeen >= 3 && forced === 3, 'Big Bess rested three times');
+    same([spentEarly, f.spent, f.rests >= 3], [0, true, true], 'the furnace was not spent before the third rest and is spent after it');
+    same([burningAfter, stokeAfter], [0, 0], 'no cinders land and no door begins to stoke once it is spent');
+    check(f.hits === 0 && !f.dead, 'with no door broken it is still rolling');
+    check(worldOf(duel).battleEnding === 'arrived' && result.winnerId === 'player' && result.won === true, 'the battle ends as arrived: the gas is home');
+    same(result.scrapEarned, 192, 'with the arrived pay, the Boneyard road own two shares (192 on Medium)');
+    same(app.profile.wasteland.scrap - scrap, 192, 'and the scrap is in the save');
+    same([emberFeud(app.profile), emberRuns(app.profile), emberFurnaceDead(app.profile)], [4, 6, false], 'the feud stays at War party, one run is counted and the furnace lives');
+    check(!Object.hasOwn(emberOf(app.profile), 'furnaceDead'), 'no furnaceDead is written');
+    same(result.gasRun, {road: 'boneyard', feud: 4, word: 'War party', runs: 6, reachedWarParty: false, battle: 'arrived'}, 'the result says it is still War party');
+    check(lines.includes('Auntie Solder: The gas is in and the gate is shut. That thing will be back. Next time, finish it.'), 'Auntie Solder says it will be back');
     app.dispose?.();
   }
 

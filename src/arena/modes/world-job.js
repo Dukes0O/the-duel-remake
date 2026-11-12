@@ -4,7 +4,7 @@ import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
-  furnaceNextDoor, furnaceFallBack} from '../../world/jobs/old-smoke.js';
+  furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
@@ -311,6 +311,8 @@ function updateBattleFurnace(duel, worldJob, step, dt) {
     if (metres < def.battle.comesOutAtMetres - .5) return;
     actor = {id: def.id, position: {x: 0, y: 0, z: 0}, health: def.health ?? 3, pathProgress: 0, speed: 0, renderCar: null,
       startedAtSec: worldJob.clockSec ?? 0, furnace: createFurnace(def, duel.state.cpuDifficulty)};
+    // Rests she had before it came out count towards its coal.
+    if (worldJob.battleRests) furnaceRested(actor.furnace, worldJob.battleRests);
     syncFurnaceActor(actor);
     worldJob.actors.push(actor);
   }
@@ -584,6 +586,12 @@ export function stepWorldJob(duel, dt) {
   if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
   if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
   for (const event of next.events) {
+    // The battle's furnace counts each of Big Bess's rests; after the third it is spent (old-smoke.js).
+    if (event.type === 'rest' && worldJob.definition.battle === true) {
+      worldJob.battleRests = (worldJob.battleRests ?? 0) + 1;
+      const hunter = worldJob.actors.find(actor => actor.furnace?.battle);
+      if (hunter) furnaceRested(hunter.furnace);
+    }
     if (event.type === 'waveRestarted') {
       const step = next.steps[next.stepIndex];
       if (step?.kind === 'defend' && step.placeId) {

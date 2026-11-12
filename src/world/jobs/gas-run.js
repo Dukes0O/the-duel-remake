@@ -165,6 +165,8 @@ export const FIELD_BATTLE = Object.freeze({
     burnRangeMetres: 25,
     // Never nearer than this to Big Bess, so it never rams her.
     holdBehindMetres: 12,
+    // After this many of Big Bess's rests in one battle the furnace has burnt its coal (`spent`): no more cinders, no door begins to stoke.
+    spentAfterRests: 3,
     stopSec: Object.freeze({easy: 8, medium: 8, hard: 8}),
     // A door begins to stoke only while the furnace is within burnRangeMetres of Big Bess. The glow is the story's own; the stoke is 6 s on
     // Medium and Hard (the story's is 4 s), so that the fire is seen landing before each door.

@@ -115,7 +115,7 @@ export function createFurnace(def, difficulty = 'medium') {
     fromMetres: path.cumulative[leg.fromWaypoint]}));
   const battle = def.battle ? resolveBattle(def.battle, level) : null;
   const start = pointAt(path, battle?.startMetres ?? 0);
-  return {difficulty: level, path, legs, timeSec: 0, battle, dead: false, turnedAway: false, burning: false, catchingUp: false, inCinderRange: false,
+  return {difficulty: level, path, legs, timeSec: 0, battle, dead: false, turnedAway: false, burning: false, catchingUp: false, inCinderRange: false, rests: 0, spent: false,
     metres: battle?.startMetres ?? 0, run: null, x: start.x, z: start.z, heading: start.heading, pathIndex: battle ? start.index : 0,
     legIndex: 0, hits: 0, broken: [false, false, false],
     gateMetres, townReached: false, gateBurnt: false,
@@ -285,6 +285,8 @@ function legAt(f, metres) {
 
 // Stoke, glow, slam, and the 3 seconds shut before the next stoke. The rhythm
 // runs only for the leg the furnace is on while that leg's door is the next one.
+// The battle's door begins to stoke only while its cinders can land (in range) and the furnace has coal left (not spent).
+const canStoke = f => f.inCinderRange && !f.spent;
 const stokeSec0 = f => f.battle?.stokeSec ?? OLD_SMOKE.stokeSec;
 function rhythm(f, dt, out) {
   if (f.staggerLeft > 0) {
@@ -301,7 +303,7 @@ function rhythm(f, dt, out) {
     return;
   }
   if (f.phase === 'idle') {
-    if (f.battle && !f.inCinderRange) return;
+    if (f.battle && !canStoke(f)) return;
     f.phase = 'stoke'; f.door = wanted; f.phaseSec = 0;
     out.events.push({type: 'stoke', door: wanted, seconds: stokeSec0(f)});
   }
@@ -317,7 +319,7 @@ function rhythm(f, dt, out) {
       out.events.push({type: 'doorSlam', door: f.door, reason: 'missed'});
     } else if (f.phase === 'shut' && f.phaseSec >= OLD_SMOKE.shutSec) {
       // The battle's next door begins to stoke only while its cinders can land on the escort; out of range the stoke waits.
-      if (f.battle && !f.inCinderRange) { f.phaseSec = OLD_SMOKE.shutSec; break; }
+      if (f.battle && !canStoke(f)) { f.phaseSec = OLD_SMOKE.shutSec; break; }
       f.phaseSec -= OLD_SMOKE.shutSec; f.phase = 'stoke';
       out.events.push({type: 'stoke', door: f.door, seconds: stokeSec});
     } else break;
@@ -428,6 +430,15 @@ function placeBattle(f) {
   f.legIndex = legAt(f, f.metres);
 }
 
+// Big Bess has rested (her health reached 0): the battle's furnace counts it, and after spentAfterRests rests in one battle it has burnt its
+// coal: `spent`. A spent furnace throws no more cinders and no door begins to stoke again; a door that already glows keeps its time and
+// can still be broken, and it follows her as before and turns away at the gate. Nothing else changes; the story's furnace has no `battle`.
+export function furnaceRested(f, times = 1) {
+  if (!f.battle || f.dead) return;
+  f.rests += times;
+  if (f.rests >= f.battle.spentAfterRests && !f.spent) { f.spent = true; f.burning = false; }
+}
+
 // The escort rested and started her stretch again, further back along her road: the furnace falls back to where it came out
 // from behind her and keeps its broken doors. Does nothing for a furnace that is not the battle's, or is dead.
 export function furnaceFallBack(f, escortMetres) {
@@ -441,7 +452,7 @@ export function furnaceFallBack(f, escortMetres) {
 // event each time they start to land.
 function burnEscort(f, dt, ctx, out) {
   const rule = f.battle, escort = ctx.escort ?? null;
-  const near = f.inCinderRange && f.staggerLeft <= 0;
+  const near = f.inCinderRange && !f.spent && f.staggerLeft <= 0;
   if (near && !f.burning) out.events.push({type: 'cindersLand'});
   f.burning = near;
   if (near) out.escortBurn += rule.burnPerSecond * dt;
