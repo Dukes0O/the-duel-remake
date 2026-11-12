@@ -134,6 +134,38 @@ Also seen: under 1500 pixels of window width, the free-test step's seven buttons
 the board to almost nothing. That was there before this card and needs its own fix (fewer, shorter buttons on that
 step).
 
+## The wide board's rules (settled by Claude, 12 November 2026; Braking is the first build, by a helper)
+
+Every board is 1000 by 680, and the classroom fits that shape into the board's panel (`fitBoard` in
+`src/lab/classroom/board-art.js`). On a laptop the panel is about 1,300 wide, so 150 pixels of wall stand at each
+side. A wide board takes that width for the picture.
+
+- **A board may name its own size.** A lesson's board exports `size` (`{width, height}`); a board that exports none
+  is 1000 by 680 and is drawn exactly as today. The wide board is **1320 by 680**. `fitBoard` fits the size it is
+  given, and the classroom's pointer code already converts through what `fitBoard` answers, so hit tests follow.
+- **Shared art takes a width.** The wall, the dusk, the floor and anything else in `board-art.js` that assumes 1000
+  takes the board's width, with 1000 as its default, so that no other lesson's picture moves by a pixel.
+- **The strip stays under the board.** The wide board uses the panel's whole width, so there is no room beside it.
+  (This replaces round 8's thought of moving the strip to the side.)
+- **The scene grows with the board, not the labels.** On a wide board the scene's scale rises until the subject's
+  whole travel fills the width with 40 pixels clear at each end. For Braking that is the road from the braking line
+  to the longest stop the lesson allows. Text sizes stay as they are; they are already sized for reading.
+- **Numbers leave the board** as round 8 settled: readouts and the table of results go to the strip, and only labels
+  that point at a part of the picture stay.
+- **Answer cards on a wide board** are three to a row, each about 380 by 190 in the board's own measure.
+- **With the physics panel open** the board's panel is narrower than the wide board's shape, so the board is fitted
+  by width and the wall shows above and below it. That is accepted; nothing is rearranged.
+- **Order:** Braking first, judged by Claude from a sheet at 1536 by 864 and at 1920 by 1080, with the physics panel
+  closed and open. Then Fuel, Wax, Launch and Projectile, by helper, each with its own browser check.
+
+Checks for Braking's build, named before code:
+
+1. Braking's own test, with every changed position reviewed by Claude (rule 18); no step, word or number changes.
+2. Braking's browser check proves every control still answers where it is drawn.
+3. One new check that a board with no `size` is fitted exactly as before, and every other `lab-*` browser check
+   passes untouched (memory: when the classroom changes, run them all).
+4. The sheet, before and after, at the four views above.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
