@@ -68,7 +68,7 @@ export const EVERBURN_JOBS = Object.freeze([
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
-      speed:9, health:100, restLineId:'everburn-job-4-rest', restartFrom:'last-marker', restSeconds:3,
+      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3,
       // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The second place was (500, 90),
       // 48 m from her road, out of reach of the 30 m that wears her health; it now stands on the road at (500, 41).
       ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1',360,270), count:2}),

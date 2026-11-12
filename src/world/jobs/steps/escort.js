@@ -90,5 +90,9 @@ export function stepEscort(step, state, view, dt = 0) {
   const requests = [{ type: 'follow', path: step.path, speed: step.speed }, { type: 'marker', place: step.destination }];
   if (!truck) return {state, complete: false, requests};
   const ambushState = stepAmbushes(step, state, view, truck, requests);
-  return { state: {...state, ...ambushState}, complete: truck.atDestination === true || (truck.atDestination === undefined && truck.pathProgress >= 1), requests };
+  const complete = truck.atDestination === true || (truck.atDestination === undefined && truck.pathProgress >= 1);
+  // A step with `arrival` closes with Moss's line for how Big Bess comes in (whole or hurt), then any extra lines it names.
+  const arrival = complete ? step.arrival : null;
+  const closingLines = arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
+  return { state: {...state, ...ambushState}, complete, requests, ...(closingLines ? {closingLines} : {}) };
 }

@@ -5,6 +5,9 @@ import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES,
   AMBUSH_WEAR_PER_SECOND} from '../src/world/jobs/steps/escort.js';
+import {GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
+import {arenaReward} from '../src/arena/arena-settlement.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -172,6 +175,106 @@ function runUntil(duel, condition, seconds = 90) {
     same(raidersOf(duel).length, 0, 'raiders still standing give up when she is 60 m past');
     same(duel.state.raids.zones.length, 0, 'and leave the raider list');
     void safe;
+  }
+}
+
+// ---- 3. The gas run's two roads, feud table, pay and clearance ------------------------------------------------------
+{
+  const at = places => places.map(item => [item.position.x, item.position.z]);
+  same(at(GAS_RUN_PATHS.long), [[-424, 304], [-450, 40], [-300, -230], [-60, -380], [170, -340], [350, -200], [480, -90], [600, 0]],
+    'the long road is the card\'s eight places, well to Tin Town');
+  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [424, 304], [375, 325], [230, 150], [575, 62], [600, 0]],
+    'the Boneyard road is the card\'s places with a bend after the Boneyard and Tin Town\'s gate before the town');
+  same(GAS_RUN_ROADS, ['long', 'boneyard'], 'two roads');
+  same([GAS_RUN_SHARES.long, GAS_RUN_SHARES.boneyard], [1, 2], 'the long road pays 1 share and the Boneyard road 2');
+  near(gasRunLength('boneyard'), 1600, 60, 'the Boneyard road is about 1.6 km');
+  near(gasRunLength('long'), 1640, 5, 'the long road, as the card\'s places lie, is 1.64 km (the card says about 1.9 km)');
+  for (const road of GAS_RUN_ROADS) {
+    const route = GAS_RUN_PATHS[road];
+    check(route[0].id === 'everburn' && route.at(-1).id === 'tin-town', `${road}: from the well to Tin Town`);
+  }
+
+  // The card's feud table: raiders in each raid, per word and road. Easy has one fewer, never fewer than one.
+  const counts = (road, feud, difficulty) => gasRunJob({road, feud, runs: 0, difficulty}).raids.map(item => item.count);
+  same([1, 2, 3, 4].map(feud => counts('boneyard', feud, 'medium')), [[2], [2, 2], [2, 3, 2], [3, 3, 4]], 'Boneyard road raids: 2 / 2,2 / 2,3,2 / 3,3,4');
+  same([1, 2, 3, 4].map(feud => counts('long', feud, 'medium')), [[], [], [2], [3]], 'long road raids: none / none / one of 2 / one of 3');
+  same([1, 2, 3, 4].map(feud => counts('boneyard', feud, 'easy')), [[1], [1, 1], [1, 2, 1], [2, 2, 3]], 'Easy: one raider fewer in every raid, never fewer than one');
+  same([1, 2, 3, 4].map(feud => counts('long', feud, 'easy')), [[], [], [1], [2]], 'and on the long road');
+  same([1, 2, 3, 4].map(feud => counts('boneyard', feud, 'hard')), [[2], [2, 2], [2, 3, 2], [3, 3, 4]], 'Hard keeps the card\'s numbers');
+  same(gasRunJob({road: 'long', feud: 1}).steps[0].ambushes.length + gasRunJob({road: 'long', feud: 2}).steps[0].ambushes.length, 0, 'the long road is quiet at Watching and Raiding');
+  same(gasRunJob({road: 'boneyard', feud: 99}).feud, 4, 'a feud out of range is held to War party');
+  same(gasRunJob({road: 'boneyard', feud: undefined}).feud, 2, 'a missing feud reads as Raiding');
+  assert.throws(() => gasRunJob({road: 'sideways'}), RangeError); checks++;
+
+  // The same save always gets the same run; two runs in a row are not alike; every place lies on its road.
+  const places = job => job.steps[0].ambushes.map(item => [item.place.position.x, item.place.position.z]);
+  for (const road of GAS_RUN_ROADS) for (const feud of [1, 2, 3, 4]) {
+    for (const runs of [0, 1, 7, 40]) same(places(gasRunJob({road, feud, runs})), places(gasRunJob({road, feud, runs})), `${road} feud ${feud} run ${runs}: the same save gets the same run`);
+    // The long road's one raid has one place by the card, so only the Boneyard road can vary.
+    let alike = 0;
+    for (let runs = 0; runs < (road === 'boneyard' ? 300 : 0); runs++) {
+      const first = gasRunJob({road, feud, runs}), second = gasRunJob({road, feud, runs: runs + 1});
+      if (first.steps[0].ambushes.length && JSON.stringify(places(first)) === JSON.stringify(places(second))) alike++;
+    }
+    same(alike, 0, `${road} feud ${feud}: no two runs in a row have the same raids`);
+  }
+  {
+    const seen = new Set();
+    for (let runs = 0; runs < 60; runs++) seen.add(JSON.stringify(places(gasRunJob({road: 'boneyard', feud: 2, runs}))));
+    check(seen.size >= 10, `the Boneyard road's places vary from run to run (${seen.size} different pairs in 60 runs)`);
+  }
+  for (const road of GAS_RUN_ROADS) for (let runs = 0; runs < 40; runs++) for (const feud of [3, 4]) {
+    const job = gasRunJob({road, feud, runs}), route = GAS_RUN_PATHS[road], step = job.steps[0];
+    for (const ambush of step.ambushes) {
+      const found = alongPath(route, ambush.place);
+      if (found.gap > .2) { check(false, `${road}: ${ambush.id} lies ${found.gap.toFixed(1)} m off its road`); }
+      check(found.metres > 150 && found.metres < gasRunLength(road) - 100, `${road}: ${ambush.id} is well inside the road`);
+    }
+    check(step.ambushes.every((item, index) => index === 0 || item.metres > step.ambushes[index - 1].metres + 100), `${road}: raids come in order along the road, 100 m or more apart`);
+  }
+  const longRaid = gasRunJob({road: 'long', feud: 3}).steps[0].ambushes[0];
+  near(gasRunLength('long') - longRaid.metres, 110, 1, 'the long road\'s raid stands 110 m before Tin Town, where it comes nearest the Boneyard');
+
+  // Big Bess keeps job 4's manners and her own actor id, drawn by the Scablands scene as before.
+  const job = gasRunJob({road: 'boneyard', feud: 3, runs: 2, difficulty: 'medium'}), step = job.steps[0];
+  same([step.actorId, step.actor.id, step.actor.renderCar, step.actor.escort, step.speed, step.health, step.actor.health, step.actor.speed],
+    ['big-bess', 'big-bess', false, true, 9, 100, 100, 9], 'Big Bess: 9 m a second, 100 health, her own actor id and no stand-in car');
+  same([job.storyId, job.kind, job.run, job.road, job.shares, step.kind, step.destination.id], ['everburn', 'escort', true, 'boneyard', 2, 'escort', 'tin-town'], 'the run is job 4\'s escort step');
+  same([step.startLineId, step.raidLineId, step.restLineId], ['story.ember.moss.6', 'story.ember.moss.7', 'story.ember.moss.3'], 'start, raid and rest lines');
+  same(step.arrival.thenLineIds, ['story.ember.auntie-solder.9'], 'a Boneyard run from Hunting ends with Auntie Solder\'s war party line');
+  same([['long', 3], ['long', 4], ['boneyard', 1], ['boneyard', 2], ['boneyard', 4]].map(([road, feud]) => gasRunJob({road, feud}).steps[0].arrival.thenLineIds.length),
+    [0, 0, 0, 0, 0], 'and no other run does');
+  same(gasRunJob({road: 'long'}).steps[0].startLineId, 'story.ember.moss.5', 'the long road starts with Moss\'s long road line');
+
+  // Pay: a share is what job 4 pays today (80 times the difficulty factor).
+  for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]]) {
+    const share = Math.round(80 * factor);
+    same([gasRunPay('long', difficulty), gasRunPay('boneyard', difficulty)], [share, Math.round(160 * factor)], `${difficulty}: 1 share on the long road, 2 on the Boneyard road`);
+    same(gasRunPay('long', difficulty), arenaReward({version: 1, venueId: 'scablands', mode: 'world-job', phase: 'over', participants: [{id: 'player'}],
+      result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'}, worldJob: {definition: EVERBURN_JOBS[3], job: {stepIndex: 1, steps: [{}]}}}, difficulty).total,
+    `${difficulty}: one share is what job 4 pays`);
+  }
+
+  // Both roads clear every box in SCABLANDS_SOLIDS by 8 m. The road begins at the well, so its first piece is let touch the
+  // well's own box and no other.
+  const distanceToBox = (x, z, solid) => {
+    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
+    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+  };
+  for (const road of GAS_RUN_ROADS) {
+    const points = GAS_RUN_PATHS[road].map(item => item.position);
+    let tightest = Infinity;
+    for (let piece = 0; piece < points.length - 1; piece++) {
+      const a = points[piece], b = points[piece + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+      for (const solid of SCABLANDS_SOLIDS) {
+        if (solid.id === 'everburn-well' && piece === 0) continue;
+        let closest = Infinity;
+        for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, solid));
+        tightest = Math.min(tightest, closest);
+        check(closest >= 8, `${road}: piece ${piece + 1} clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
+      }
+    }
+    console.log(`Gas run, ${road} road: tightest clearance from a solid is ${tightest.toFixed(1)} m, length ${gasRunLength(road).toFixed(0)} m`);
   }
 }
 
