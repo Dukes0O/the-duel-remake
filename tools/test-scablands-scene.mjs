@@ -168,6 +168,52 @@ assert.ok(sootColour.r<greySmoke,'the smoke is blacker after the hits');
 const soot=furnaceFire.children[6];
 const smokeY=soot.position.y;animateScene(scene.group,2);
 assert.notEqual(soot.position.y,smokeY,'chimney smoke moves as presentation');
+// FIELD-BATTLE-ASH: the battle's furnace follows its actor like the chase's, comes out with two of its six shields gone and the
+// rear door scorched (drawing only), stays where it stopped with its door fire out and thin smoke when it is dead, and later runs
+// show it as a wreck where the run's definition says.
+{
+  const battleStep={kind:'escort',path:[],furnaceActor:{battle:{hurtAtStart:['rear']}}};
+  const battleState=(actors,definition={storyId:'everburn',run:true,battle:true})=>({arena:{mode:'world-job',worldJob:{definition,clockSec:0,job:{stepIndex:0,steps:[battleStep]},actors}}});
+  const everburnAt=places.get('everburn');
+  syncScene(scene.group,battleState([bessActor]));
+  assert.equal(visiblePlates(),4,'before it comes out, the battle\'s furnace stands by the well with two of its six shields already gone');
+  assert.equal(furnace.parent.position.x,everburnAt.x+18,'and stands in its place by the well until it comes out');
+  const hunter={id:'old-smoke-furnace',position:{x:-100,y:0,z:300},heading:1.1,furnace:{phase:'stoke',door:'left',hits:0,phaseSec:1,dead:false,battle:{hurtAtStart:['rear']}}};
+  syncScene(scene.group,battleState([bessActor,hunter]));
+  assert.ok(Math.abs(furnace.parent.position.x+100)<.001&&Math.abs(furnace.parent.position.z-300)<.001,'once out, the furnace follows its actor');
+  assert.ok(Math.abs(furnace.parent.rotation.y-1.1)<.001,'and its heading');
+  assert.equal(visiblePlates(),4,'it comes out with two of its six shields gone');
+  hunter.furnace={...hunter.furnace,phase:'stagger',hits:1};
+  syncScene(scene.group,battleState([bessActor,hunter]));
+  assert.equal(visiblePlates(),2,'the first broken door takes its two shields, the left ones, with it');
+  animateScene(scene.group,7);
+  const fullFade=furnaceFire.children[6].userData.fade;
+  hunter.furnace={phase:'dead',door:null,hits:3,dead:true,phaseSec:0,battle:{hurtAtStart:['rear']}};
+  hunter.position={x:-40,y:0,z:330};
+  syncScene(scene.group,battleState([bessActor,hunter]));
+  animateScene(scene.group,7);
+  assert.ok(Math.abs(furnace.parent.position.x+40)<.001,'a dead furnace stays where it stopped');
+  assert.deepEqual(fireOver(),[],'a dead furnace has no fire over its doors');
+  assert.ok(furnaceFire.children[6].userData.fade<fullFade*.5&&furnaceFire.children[6].userData.fade>0,'and only thin smoke rises from it');
+  assert.equal(visiblePlates(),0,'with its three doors broken every shield is gone');
+  // The job is over (the step index is past the last step): the furnace is still drawn where it stopped.
+  const over=battleState([bessActor,hunter]);over.arena.worldJob.job.stepIndex=1;
+  syncScene(scene.group,over);
+  assert.ok(Math.abs(furnace.parent.position.x+40)<.001,'when the battle is over the furnace stays where it stopped');
+  // A later Boneyard run: the wreck, at the place the run names, with thin smoke and no fire; no wreck on a run that names none.
+  const wreck={x:250,z:407,heading:1.3};
+  const wreckState=definition=>({arena:{mode:'world-job',worldJob:{definition,clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
+  syncScene(scene.group,wreckState({storyId:'everburn',run:true,road:'boneyard',wreck}));
+  assert.ok(Math.abs(furnace.parent.position.x-250)<.001&&Math.abs(furnace.parent.position.z-407)<.001,'a Boneyard run after the win draws the dead furnace at the wreck place');
+  assert.ok(Math.abs(furnace.parent.rotation.y-1.3)<.001&&furnace.parent.visible,'lying along the road, and shown');
+  assert.equal(visiblePlates(),0,'its shields are gone');
+  assert.deepEqual(fireOver(),[],'with no fire');
+  animateScene(scene.group,7);
+  assert.ok(furnaceFire.children[6].userData.fade<fullFade*.5,'and thin smoke');
+  syncScene(scene.group,wreckState({storyId:'everburn',run:true,road:'boneyard'}));
+  assert.ok(Math.abs(furnace.parent.position.x-(everburnAt.x+18))<.001,'a run with no wreck leaves the furnace in its place by the well');
+  assert.equal(visiblePlates(),6,'with all its shields on');
+}
 // Wheels turn by the distance driven divided by the wheel radius, and the road dust shows only while she moves.
 const bessWheel=scene.group.getObjectByName('Big Bess wheel 3 right'),dustPuffs=()=>bessRig.getObjectByName('Road dust behind the wheels').children;
 bessActor.heading=0;bessActor.position={x:0,y:0,z:0};
