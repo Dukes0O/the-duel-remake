@@ -14,6 +14,7 @@ import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-ga
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -222,6 +223,36 @@ function settleSandDrifts(model,groundMaterial){
     drift.material=groundMaterial;drift.castShadow=false;drift.receiveShadow=true;
   }
   return drifts;
+}
+
+// The mall's 254 parts are drawn as one piece for each surface (SCABLANDS-LAND round 3): the model's meshes that share a
+// material are merged into one mesh at load, with each part's place in the model baked in. Only position, normal and uv are
+// kept. A surface with a single part keeps that part's name. The loaded model's own geometry is shared with the cache and
+// is not changed or disposed.
+function mergeBySurface(model,label){
+  model.updateMatrixWorld(true);
+  const inverse=new THREE.Matrix4().copy(model.matrixWorld).invert(),batches=new Map();
+  model.traverse(node=>{
+    if(!node.isMesh||Array.isArray(node.material))return;
+    if(!batches.has(node.material))batches.set(node.material,[]);
+    batches.get(node.material).push(node);
+  });
+  for(const [material,nodes] of batches){
+    const pieces=nodes.map(node=>{
+      const geometry=node.geometry.index?node.geometry.toNonIndexed():node.geometry.clone();
+      for(const name of Object.keys(geometry.attributes))if(!['position','normal','uv'].includes(name))geometry.deleteAttribute(name);
+      if(!geometry.attributes.normal)geometry.computeVertexNormals();
+      if(!geometry.attributes.uv)geometry.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(geometry.attributes.position.count*2),2));
+      geometry.morphAttributes={};geometry.clearGroups();
+      return geometry.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse,node.matrixWorld));
+    });
+    const merged=new THREE.Mesh(mergeGeometries(pieces,false),material);
+    merged.name=nodes.length===1?nodes[0].name:`${label} surface: ${material.name||'unnamed'}`;
+    merged.castShadow=true;merged.receiveShadow=true;
+    for(const piece of pieces)piece.dispose();
+    for(const node of nodes)node.removeFromParent();
+    model.add(merged);
+  }
 }
 
 // The Boneyard's three aircraft are lifted out of the model and set down again as BONEYARD_WRECKS says: each with its own
@@ -584,7 +615,7 @@ export function createScablandsScene(course,options={}){
           for(const node of slabs)node.removeFromParent();
         }
         tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
-        if(key==='mall')settleSandDrifts(model,groundMaterial);
+        if(key==='mall'){settleSandDrifts(model,groundMaterial);mergeBySurface(model,'Dead Mall');}
         if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.

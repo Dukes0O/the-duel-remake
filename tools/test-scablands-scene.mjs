@@ -638,6 +638,10 @@ const wellScene=createScablandsScene(course,{loadAsset:async path=>{
   }
   if(path===SCABLANDS_ASSETS.mall){
     const drift=new THREE.Mesh(new THREE.BoxGeometry(7,1.1,3.6),new THREE.MeshStandardMaterial({color:0x7d5c33}));drift.name='sand-drift-1';drift.position.set(-11,.8,-8);root.add(drift);
+    // Fix 6: forty plain parts of two surfaces, one lamp part with its own glow, and a part with a single surface.
+    const wallSurface=new THREE.MeshStandardMaterial({name:'mall wall',color:0x908b80}),railSurface=new THREE.MeshStandardMaterial({name:'mall rail',color:0x6a4e38});
+    for(let index=0;index<40;index++){const part=new THREE.Mesh(new THREE.BoxGeometry(1,2,.5),index%4?wallSurface:railSurface);part.name=`mall-part-${index}`;part.position.set(index-20,1,index%3);part.rotation.y=index*.1;root.add(part);}
+    const lamp=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),new THREE.MeshStandardMaterial({name:'lamp amber',color:0xd87624,emissive:0xd87624,emissiveIntensity:1.5}));lamp.name='ash-men-lamp-1-amber-lens';lamp.position.set(3,4,0);root.add(lamp);
   }
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
   return {scene:root};
@@ -667,6 +671,15 @@ assert.ok(wellScene.group.getObjectByName('The Dead Mall detail LOD').levels[1].
 // Fix 4: the Boneyard's flat dirt slab is not drawn; its scrap plates are.
 const boneyardLod=wellScene.group.getObjectByName('The Boneyard detail LOD');
 assert.ok(!boneyardLod.getObjectByName('Boneyard_ground_—_Dry_Scablands_dirt')&&boneyardLod.getObjectByName('Boneyard_field_scrap_—_Pitted_grey_aircraft_aluminium'),'the dirt slab is not drawn and the scrap plates are');
+// Fix 6: the mall is drawn in one piece for each surface, with every part where it was and the lamp's glow kept.
+const mallLod=wellScene.group.getObjectByName('The Dead Mall detail LOD'),mallMeshes=[];
+mallLod.levels[0].object.traverse(node=>{if(node.isMesh)mallMeshes.push(node);});
+assert.equal(mallMeshes.length,4,'43 parts of four surfaces (wall, rail, lamp, the ground-surfaced drift) are drawn as four meshes');
+const mergedWall=mallMeshes.find(mesh=>mesh.material.name==='mall wall');
+assert.ok(mergedWall&&mergedWall.geometry.attributes.position.count===30*36,'the thirty wall parts are in one mesh with all their vertices');
+mergedWall.geometry.computeBoundingBox();
+assert.ok(mergedWall.geometry.boundingBox.min.x<-18.5&&mergedWall.geometry.boundingBox.max.x>18,'each merged part stays where it was in the model');
+assert.ok(mallMeshes.some(mesh=>mesh.name==='ash-men-lamp-1-amber-lens'&&mesh.material.emissiveIntensity===1.5),'a surface with one part keeps its name and its glow');
 // Fix 3: the mall's drifts take the ground's own surface, lie low and wide, and keep their base where it was.
 wellScene.group.updateMatrixWorld(true);
 const mallDrift=wellScene.group.getObjectByName('sand-drift-1'),driftBox=new THREE.Box3().setFromObject(mallDrift);
