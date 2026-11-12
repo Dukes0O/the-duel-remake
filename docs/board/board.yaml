@@ -494,6 +494,17 @@ tasks:
     flag: "story-everburn"
     details: "docs/board/cards/EVERBURN-RUN-AT-TOWN.md"
 
+  - id: RUN-GAS
+    title: "The gas run: Big Bess to Tin Town again and again, and the Ash Men's feud"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: [EVERBURN-RUN-AT-TOWN]
+    locks: []
+    flag: "scablands-runs"
+    details: "docs/board/cards/RUN-GAS.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"
