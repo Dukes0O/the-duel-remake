@@ -301,6 +301,8 @@ export function stepRaiders(duel, dt = 0) {
     }
     for (const raider of zone.raiders) {
       if (!raider.knockedDown || !(dt > 0)) continue;
+      // RUN-GAS: a raider of an ambush on an escort's road, once knocked down, stays down for the rest of that ambush.
+      if (raider.ambushKey) continue;
       raider.knockdownRemaining = Math.max(0,
         raider.knockdownRemaining - dt);
       if (raider.knockdownRemaining <= 1e-8) {

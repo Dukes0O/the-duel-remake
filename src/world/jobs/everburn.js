@@ -68,10 +68,11 @@ export const EVERBURN_JOBS = Object.freeze([
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
-      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3,
-      // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The second place was (500, 90),
-      // 48 m from her road, out of reach of the 30 m that wears her health; it now stands on the road at (500, 41).
-      ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1',360,270), count:2}),
+      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower',
+      // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The first stands on her road at
+      // (278, 188), 186 m from the start (it was (360, 270), 72 m from it). The second was (500, 90), 48 m from her road,
+      // out of reach of the 30 m that wears her health; it now stands on the road at (500, 41). The flamethrower is lent, as in job 1.
+      ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1',278,188), count:2}),
         Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2',500,41), count:2})]),
       // The furnace paces her on the high ground while she is between 30% and 70% of her road.
       sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],

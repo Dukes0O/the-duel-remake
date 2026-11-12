@@ -9,6 +9,13 @@ import {pathShare} from '../furnace-sightings.js';
 export const AMBUSH_ALERT_METRES = 160;
 export const AMBUSH_GONE_METRES = 60;
 export const AMBUSH_WEAR_METRES = 30;
+// The player's car knocks an ambush raider down when it moves at this speed (m/s) or more and its centre is this close (m).
+export const AMBUSH_RUN_DOWN_MPS = 4;
+export const AMBUSH_RUN_DOWN_METRES = 2.2;
+// After a rest Big Bess has at least this much health (she keeps more if she had more when the stretch began).
+export const REST_HEALTH_MINIMUM = 60;
+// No ambush stands closer than this to the start of the road, measured along it.
+export const AMBUSH_MIN_FROM_START_METRES = 180;
 // Health a raider still standing within AMBUSH_WEAR_METRES takes off the truck every second.
 export const AMBUSH_WEAR_PER_SECOND = Object.freeze({easy: 1.5, medium: 5, hard: 7});
 
