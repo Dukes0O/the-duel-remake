@@ -192,7 +192,7 @@ assert.ok(Math.abs(furnaceTurned)<.001||Math.abs(Math.abs(furnaceTurned)-Math.PI
 // EVERBURN-RUN-AT-TOWN: Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
 const gateFire=scene.group.getObjectByName('Tin Town gate fire and smoke');
 assert.ok(gateFire,'the scene carries a fire for Tin Town\'s gate');
-assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,3,'the gate has three tongues of fire');
+assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,5,'the gate has five tongues of fire');
 assert.ok(gateFire.children.some(node=>node.name==='Gate smoke'),'the gate has a plume of smoke');
 const everburnJob=EVERBURN_JOBS[5],gateAt=everburnJob.steps[1].path[everburnJob.steps[1].actor.gateWaypoint].position;
 assert.deepEqual([gateAt.x,gateAt.z],[575,62],'the job names the gate at Tin Town');
@@ -206,9 +206,22 @@ syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReach
 assert.equal(gateFire.visible,true,'the gate burns after gateBurnt');
 assert.ok(Math.hypot(gateFire.position.x-gateAt.x,gateFire.position.z-gateAt.z)<.001,'the fire stands on the gate');
 const tongueHeights=gateFire.children.filter(node=>node.name==='Fire on the gate').map(node=>node.scale.y);
-assert.ok(tongueHeights.every(height=>height>2.5&&height<3.8),'the tongues of fire are about 3 m tall');
+assert.ok(tongueHeights.every(height=>height>=6&&height<=8),'the tongues of fire are 6 to 8 m tall');
+const gateTongues=gateFire.children.filter(node=>node.name==='Fire on the gate'),tongueXs=gateTongues.map(node=>node.position.x).sort((a,b)=>a-b);
+const reach=Math.max(...gateTongues.map(node=>node.position.x+node.scale.x/2))-Math.min(...gateTongues.map(node=>node.position.x-node.scale.x/2));
+assert.ok(tongueXs.length===5&&Math.abs(reach-18)<.001&&Math.abs(tongueXs[0]+tongueXs[4])<.001,'the tongues are spread along 18 m, centred on the gate place');
+assert.equal(gateFire.children.filter(node=>node.name==='Gate smoke').length,12,'the plume is twelve puffs');
+assert.equal(gateFire.children.filter(node=>node.name==='Sparks from the gate fire').length,5,'sparks are thrown off the fire');
+const gateGlow=gateFire.children.find(node=>node.name==='Firelight on the ground at the gate');
+assert.ok(gateGlow&&gateGlow.material.uniforms.uTime&&gateGlow.position.y<.5,'firelight lies on the ground at the gate');
 const gateSmokeY=gateFire.children.find(node=>node.name==='Gate smoke').position.y;animateScene(scene.group,150);
 assert.notEqual(gateFire.children.find(node=>node.name==='Gate smoke').position.y,gateSmokeY,'the gate smoke moves as presentation');
+{
+  let highest=0;
+  for(let seconds=0;seconds<40;seconds+=.5){animateScene(scene.group,seconds);for(const puff of gateFire.children.filter(node=>node.name==='Gate smoke'))highest=Math.max(highest,puff.position.y);}
+  assert.ok(highest>28&&highest<=33,`the plume rises about 30 m (highest ${highest.toFixed(1)} m)`);
+  animateScene(scene.group,150);
+}
 syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,gateBurnt:false},{gateBurnt:true}));
 assert.equal(gateFire.visible,true,'the job remembers the fire when a wreck starts the chase again');
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number:5},clockSec:0,job:{stepIndex:0,steps:[{kind:'heist'}]},actors:[]}}});

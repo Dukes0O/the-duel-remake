@@ -236,35 +236,42 @@ function addBessEffects(parent){
   return fx;
 }
 
-// Tin Town's gate afire (EVERBURN-RUN-AT-TOWN): three tongues of fire about 3 m tall and a small plume of smoke,
-// built the way the furnace's door fire is. It is drawn only, and stays hidden until the furnace has burnt the gate.
-const GATE_TONGUES=Object.freeze([-2.6,0,2.6]);
-const GATE_PUFFS=8;
+// Tin Town's gate afire (EVERBURN-RUN-AT-TOWN, grown by RUN-GAS): five tongues of fire 6 to 8 m tall spread along 18 m (the outer ones are 14 m apart and 4 m wide) centred
+// on the gate's place, sparks thrown off them, a plume of twelve smoke puffs that rises 30 m and firelight on the ground.
+// Built the way the furnace's door fire is. It is drawn only, and stays hidden until the furnace has burnt the gate.
+const GATE_TONGUES=Object.freeze([-7,-3.5,0,3.5,7]);
+const GATE_PUFFS=12;
+const GATE_PLUME_METRES=30;
 function addGateFire(){
   const effects=new THREE.Group();effects.name='Tin Town gate fire and smoke';effects.visible=false;
   const flame=createFlameMaterial(),soot=createSmokeMaterial(0x302c28),card=new THREE.PlaneGeometry(1,1);
   const standing=new THREE.PlaneGeometry(1,1);standing.translate(0,.5,0);
+  // The firelight pool on the ground, under everything else that is drawn here.
+  const glowMaterial=createGroundGlowMaterial(),glow=new THREE.Mesh(card,glowMaterial);
+  glow.name='Firelight on the ground at the gate';glow.rotation.x=-Math.PI/2;glow.position.set(0,.14,0);glow.scale.set(34,24,1);glow.renderOrder=1;effects.add(glow);
   const tongues=GATE_TONGUES.map((x,index)=>{
     const tongue=new THREE.Mesh(standing,flame);tongue.name='Fire on the gate';
-    tongue.position.set(x,0,0);tongue.scale.set(2,3,1);tongue.renderOrder=3;
+    tongue.position.set(x,0,0);tongue.scale.set(4,7,1);tongue.renderOrder=3;
     tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=index*.41;flame.uniformsNeedUpdate=true;};
     effects.add(tongue);return tongue;
   });
+  const sparks=GATE_TONGUES.map(()=>{const points=createSparks(30);points.name='Sparks from the gate fire';effects.add(points);return points;});
   const smoke=[];
   for(let puff=0;puff<GATE_PUFFS;puff++){
     const cloud=new THREE.Mesh(card,soot);cloud.name='Gate smoke';cloud.userData.fade=0;cloud.renderOrder=2;
     cloud.onBeforeRender=()=>{soot.uniforms.uFade.value=cloud.userData.fade;soot.uniforms.uSeed.value=puff*.31;soot.uniformsNeedUpdate=true;};
     effects.add(cloud);smoke.push(cloud);
   }
-  return {effects,tongues,smoke,flame,
-    // The plume rises about 18 m and spreads; the flames flicker. Only the clock moves them.
+  return {effects,tongues,smoke,sparks,glow,flame,glowMaterial,
+    // The plume rises about 30 m and spreads; the flames flicker between 6 and 8 m; the sparks and the firelight follow the clock.
     animate(seconds){
-      this.flame.uniforms.uTime.value=seconds;
-      tongues.forEach((tongue,index)=>{tongue.scale.y=3*(.85+.25*Math.abs(Math.sin(seconds*4.7+index*2.1)));});
+      this.flame.uniforms.uTime.value=seconds;this.glowMaterial.uniforms.uTime.value=seconds;
+      tongues.forEach((tongue,index)=>{tongue.scale.y=6+2*Math.abs(Math.sin(seconds*4.7+index*2.1));});
+      sparks.forEach((points,index)=>points.userData.place(seconds+index*.37,{x:GATE_TONGUES[index],y:1.5,z:0},{x:0,z:1}));
       smoke.forEach((puff,index)=>{
-        const age=(seconds*.13+index/GATE_PUFFS)%1;
-        puff.position.set(Math.sin(seconds*.3+index*2.2)*1.6*age,1.8+age*18,Math.cos(seconds*.25+index*1.9)*1.2*age);
-        puff.scale.setScalar(1.8+age*7);
+        const age=(seconds*.1+index/GATE_PUFFS)%1;
+        puff.position.set(Math.sin(seconds*.3+index*2.2)*4*age,2.5+age*GATE_PLUME_METRES,Math.cos(seconds*.25+index*1.9)*2.4*age);
+        puff.scale.setScalar(3.5+age*12);
         puff.userData.fade=Math.min(1,age/.06)*Math.pow(1-age,1.3)*.8;
       });
     }};
