@@ -1,5 +1,6 @@
 # Wasteland run log
 
+12 November, LAB-LOOK round 6 merged, card open (Claude; built by a Sonnet helper): G-force, Grip, Headings and Suspension boards redrawn, so all sixteen lesson boards are done; lesson tests unchanged, four browser checks, lane tier 35 of 35, build.
 12 November, SCABLANDS-LAND Tin Town merged, card open (Claude; built by a Sonnet helper, the gate's fire by Claude): 45 shacks in six clusters, the gate turned north and south, solids for clusters and posts; furnace rules 614 checks, run-gas 1,044, Easy driver wins everything, lane tier 27 of 27 on the builder's branch, build; no replay fingerprint or world signature moved.
 12 November, LAB-LOOK round 5 merged, card open (Claude; built by a Sonnet helper): Fire, Rust, Wax and Launch boards redrawn; four lesson tests and browser checks unchanged, lane tier 35 of 35, build.
 12 November, SCABLANDS-LAND merged, card open (Claude; built by a Sonnet helper): four place models carry their colours, wear and ground drawn in code, the road is a flat ribbon, the far ground lies below the near ground, Tin Town has a gate; the Boneyard no longer stands on end; lane tier 57 of 57 on the builder's branch, build, model tests 397, everburn-well; no replay fingerprint or world signature moved.

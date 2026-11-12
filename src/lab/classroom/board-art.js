@@ -676,6 +676,181 @@ export function timber(ctx, x, y, w, h) {
   if (h > 8) for (const nx of [x + 8, x + w - 8]) bolt(ctx, nx, y + h / 2, 1.5);
 }
 
+// ---- LAB-BOARDS-4: shared pieces for the G-force, Grip, Headings and Suspension boards ----
+// A readout panel: a steel frame round dark glass, a faint sheen and four corner bolts. The glass fills (x, y, w, h)
+// exactly, so the lessons' own panel sizes and tests keep working; the frame is 3 wide outside it.
+export function steelPanel(ctx, x, y, w, h, r = 8) {
+  ctx.fillStyle = 'rgba(0,0,0,.34)'; ctx.beginPath(); ctx.roundRect(x - 2, y + 2, w + 6, h + 6, r + 3); ctx.fill();
+  const frame = ctx.createLinearGradient(0, y - 3, 0, y + h + 3);
+  frame.addColorStop(0, '#b4bec4'); frame.addColorStop(.3, '#737d83'); frame.addColorStop(1, '#2b3235');
+  ctx.fillStyle = frame; ctx.beginPath(); ctx.roundRect(x - 3, y - 3, w + 6, h + 6, r + 3); ctx.fill();
+  const glass = ctx.createLinearGradient(0, y, 0, y + h); glass.addColorStop(0, '#111a1e'); glass.addColorStop(1, '#0a1013');
+  ctx.fillStyle = glass; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.beginPath(); ctx.moveTo(x + w * .08, y); ctx.lineTo(x + w * .08 + 70, y); ctx.lineTo(x + 40 - 30, y + h); ctx.lineTo(x - 30, y + h); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x + r, y + .6, w - 2 * r, 1);
+  ctx.restore();
+  for (const [bx, by] of [[x + 6, y + 6], [x + w - 6, y + 6], [x + 6, y + h - 6], [x + w - 6, y + h - 6]]) bolt(ctx, bx, by, 1.8);
+}
+// A coil spring from `top` to `bottom` at x: `coils` turns of lit wire, the far side of each turn darker, and a steel seat
+// at each end. Squeezing it (a shorter span) bunches the turns, stretching it opens them.
+export function coilSpring(ctx, x, top, bottom, {radius = 15, coils = 7, wire = 3.6, colour = '#edc557'} = {}) {
+  const length = bottom - top;
+  if (length < 6) return;
+  const steps = coils * 16, point = i => { const t = i / steps, a = t * coils * Math.PI * 2 + .5; return [x + Math.sin(a) * radius, top + 3 + (length - 6) * t, Math.cos(a), Math.sin(a)]; };
+  ctx.save(); ctx.lineCap = 'round';
+  for (const front of [false, true]) {
+    if (front) { ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = wire + 1.8; ctx.beginPath(); for (let i = 0; i < steps; i++) { const a = point(i), b = point(i + 1); if (a[2] + b[2] > 0) { ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); } } ctx.stroke(); }
+    for (let i = 0; i < steps; i++) {
+      const a = point(i), b = point(i + 1), facing = (a[2] + b[2]) / 2;
+      if ((facing > 0) !== front) continue;
+      ctx.strokeStyle = front ? shade(colour, .32 - (a[3] + 1) * .38) : shade(colour, -.62); ctx.lineWidth = front ? wire : wire * .75;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  steel(ctx, x - radius - 3, top - 3, radius * 2 + 6, 5, 1.5); steel(ctx, x - radius - 3, bottom - 2, radius * 2 + 6, 5, 1.5);
+}
+// A damper: a lit steel tube standing on its lower mount and a chrome rod coming out of its top, with eyelets at both ends.
+export function damper(ctx, x, top, bottom, {tube = 7, rod = 3.2} = {}) {
+  const length = bottom - top, tubeTop = bottom - Math.max(14, length * .58);
+  const lit = (half, a, b, c) => { const g = ctx.createLinearGradient(x - half, 0, x + half, 0); g.addColorStop(0, a); g.addColorStop(.35, b); g.addColorStop(1, c); return g; };
+  ctx.fillStyle = lit(rod, '#e6ecef', '#9aa4aa', '#4a5257'); ctx.fillRect(x - rod, top + 2, rod * 2, Math.max(0, tubeTop - top));
+  ctx.fillStyle = lit(tube, '#6f7a80', '#39434a', '#101417'); ctx.beginPath(); ctx.roundRect(x - tube, tubeTop, tube * 2, Math.max(6, bottom - tubeTop - 2), 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x - tube + 1.5, tubeTop + 2, 1.2, Math.max(2, bottom - tubeTop - 7));
+  ctx.fillStyle = '#1a1f22'; ctx.fillRect(x - tube - 1, tubeTop - 1, tube * 2 + 2, 3);
+  for (const ey of [top, bottom]) { ctx.strokeStyle = '#c3cbd0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, ey, 3.4, 0, Math.PI * 2); ctx.stroke(); }
+}
+// The red road car seen from straight above, nose to the right: a bonnet, glass, a lit roof, mirrors, and four wheels
+// showing at the arches. It is 92 long and 38 wide at scale 1, centred on (x, y). Options: scale; colour; angle (turns
+// the whole car, in radians); steer (turns the front wheels); shadow (a soft shadow thrown down and to the right, the
+// same whichever way the car points); braking (the tail lamps are bright).
+export function roadCarTop(ctx, x, y, {scale = 1, colour = '#c8402f', angle = 0, steer = 0, shadow: dropShadow = true, braking = false} = {}) {
+  const outline = () => {
+    ctx.beginPath(); ctx.moveTo(46, 0);
+    ctx.bezierCurveTo(46, -7, 43, -13, 35, -16.5); ctx.bezierCurveTo(26, -18.6, 14, -18.6, 0, -18.8);
+    ctx.bezierCurveTo(-20, -18.8, -34, -18.2, -41, -16); ctx.bezierCurveTo(-45, -13, -46.5, -7, -46.5, 0);
+    ctx.bezierCurveTo(-46.5, 7, -45, 13, -41, 16); ctx.bezierCurveTo(-34, 18.2, -20, 18.8, 0, 18.8);
+    ctx.bezierCurveTo(14, 18.6, 26, 18.6, 35, 16.5); ctx.bezierCurveTo(43, 13, 46, 7, 46, 0); ctx.closePath();
+  };
+  if (dropShadow) {
+    for (const [grow, alpha] of [[7, .10], [3.5, .16], [0, .30]]) {
+      ctx.save(); ctx.translate(x + 5 * scale, y + 7 * scale); ctx.rotate(angle); ctx.scale(scale, scale);
+      outline(); ctx.fillStyle = `rgba(0,0,0,${alpha})`; ctx.fill(); if (grow) { ctx.strokeStyle = `rgba(0,0,0,${alpha})`; ctx.lineWidth = grow; ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(scale, scale);
+  // The wheels, tucked under the body at the arches so that only their outer edge shows.
+  const wheel = (cx, cy, turn) => {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(turn);
+    const tyre = ctx.createLinearGradient(0, -3.8, 0, 3.8); tyre.addColorStop(0, '#2b3134'); tyre.addColorStop(.5, '#111517'); tyre.addColorStop(1, '#050607');
+    ctx.fillStyle = tyre; ctx.beginPath(); ctx.roundRect(-8.4, -3.8, 16.8, 7.6, 2.6); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = .6; ctx.beginPath(); for (let k = -6; k <= 6; k += 3) { ctx.moveTo(k, -3.4); ctx.lineTo(k + 1.2, 3.4); } ctx.stroke();
+    ctx.restore();
+  };
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    for (const wx of [29, -29]) { ctx.beginPath(); ctx.ellipse(wx, side * 16.2, 10.4, 3.4, 0, 0, Math.PI * 2); ctx.fill(); }
+    wheel(29, side * 19.4, steer); wheel(-29, side * 19.4, 0);
+  }
+  // Paint: lit on the side the workshop lamp is, darker down the other.
+  const paint = ctx.createLinearGradient(0, -19, 0, 19);
+  paint.addColorStop(0, shade(colour, .42)); paint.addColorStop(.3, shade(colour, .08)); paint.addColorStop(.62, shade(colour, -.2)); paint.addColorStop(1, shade(colour, -.52));
+  outline(); ctx.fillStyle = paint; ctx.fill();
+  ctx.save(); outline(); ctx.clip();
+  // The bonnet: a centre crease, two vents and a lit shoulder; the boot lip at the tail.
+  ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(44, 0); ctx.lineTo(16, 0); ctx.moveTo(15.5, -14.5); ctx.lineTo(15.5, 14.5); ctx.moveTo(-31.5, -13.2); ctx.lineTo(-31.5, 13.2); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(33, s * 4.2); ctx.lineTo(25, s * 4.6); ctx.lineTo(25, s * 6.6); ctx.lineTo(33, s * 6.2); ctx.closePath(); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(255,240,220,.5)'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(40, -13.4); ctx.bezierCurveTo(30, -16.2, 14, -16.4, 0, -16.4); ctx.bezierCurveTo(-20, -16.4, -32, -15.6, -39, -13.6); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(-40, -12); ctx.lineTo(-40, 12); ctx.stroke();
+  // The glass of the cabin, with the sky in it.
+  const glass = ctx.createLinearGradient(0, -14.5, 0, 14.5); glass.addColorStop(0, '#a9c6d1'); glass.addColorStop(.4, '#4f7080'); glass.addColorStop(1, '#101c23');
+  ctx.fillStyle = glass; ctx.beginPath(); ctx.moveTo(15.5, -14.5); ctx.lineTo(-30, -13.4); ctx.quadraticCurveTo(-33.5, 0, -30, 13.4); ctx.lineTo(15.5, 14.5); ctx.quadraticCurveTo(12.5, 0, 15.5, -14.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.moveTo(14, -13); ctx.lineTo(9, -13); ctx.lineTo(7.5, 1); ctx.lineTo(12.5, 1); ctx.closePath(); ctx.fill();
+  // The roof, lit along its top edge.
+  const roof = ctx.createLinearGradient(0, -11.6, 0, 11.6); roof.addColorStop(0, shade(colour, .5)); roof.addColorStop(.3, shade(colour, .15)); roof.addColorStop(1, shade(colour, -.35));
+  ctx.fillStyle = roof; ctx.beginPath(); ctx.roundRect(-21, -11.6, 26, 23.2, 4.5); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .8; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-18, -10.2, 20, .9);
+  // The seats' headrests, dark behind the glass.
+  ctx.fillStyle = 'rgba(8,12,14,.55)'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.roundRect(-27.6, s * 6.4 - 2.6, 3.4, 5.2, 1.4); ctx.fill(); }
+  // Lamps: the head lamps, the grille slot, and the tail lamps (bright when the brakes are on).
+  ctx.fillStyle = '#10141a'; ctx.beginPath(); ctx.roundRect(44.6, -4.6, 1.8, 9.2, .8); ctx.fill();
+  for (const s of [-1, 1]) {
+    const lamp = ctx.createLinearGradient(36, 0, 44, 0); lamp.addColorStop(0, '#fffbe6'); lamp.addColorStop(1, '#c4ad66');
+    ctx.fillStyle = lamp; ctx.beginPath(); ctx.moveTo(43.4, s * 7.2); ctx.lineTo(37, s * 13.2); ctx.lineTo(34.8, s * 11.6); ctx.lineTo(41.6, s * 6.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = braking ? '#ff4d38' : '#a32a1c'; ctx.beginPath(); ctx.roundRect(-46.4, s * 11.4 - 3.4, 3, 6.8, 1); ctx.fill();
+    if (braking) { const glow = ctx.createRadialGradient(-46, s * 11.4, 1, -46, s * 11.4, 11); glow.addColorStop(0, 'rgba(255,70,50,.5)'); glow.addColorStop(1, 'rgba(255,70,50,0)'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(-46, s * 11.4, 11, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1.1; outline(); ctx.stroke();
+  // The mirrors, standing out from the front doors.
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = shade(colour, s < 0 ? .12 : -.35); ctx.beginPath(); ctx.ellipse(10.5, s * 20.4, 3.6, 2.2, s * .35, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = .7; ctx.stroke();
+  }
+  ctx.restore();
+}
+// Kestrel One from straight above, its nose along `heading` (in radians, 0 is up the board): skids, the tail boom with
+// its fin and stabiliser, the cabin glass, and the rotor as a blurred disc with its two blades turning with `time`. The
+// rotor disc is 76 across and the tail reaches 62 behind the centre at scale 1; the shadow falls down and to the right.
+export function helicopterTop(ctx, x, y, heading, time, scale = 1, {shadow: dropShadow = true} = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+  const fuselage = () => { ctx.beginPath(); ctx.ellipse(0, -1, 13.5, 24, 0, 0, Math.PI * 2); };
+  if (dropShadow) {
+    ctx.save(); ctx.translate(12, 17); ctx.rotate(heading);
+    ctx.fillStyle = 'rgba(0,0,0,.30)'; fuselage(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-4.5, 16); ctx.lineTo(-2, 62); ctx.lineTo(2, 62); ctx.lineTo(4.5, 16); ctx.closePath(); ctx.fill(); ctx.fillRect(-12, 56, 24, 5);
+    ctx.fillStyle = 'rgba(0,0,0,.07)'; ctx.beginPath(); ctx.arc(0, -1, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.rotate(heading);
+  // Skids with their cross tubes, lit along the outer edge.
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#161a1c'; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(-15, -21); ctx.lineTo(-15, 17); ctx.moveTo(15, -21); ctx.lineTo(15, 17); ctx.moveTo(-15, -9); ctx.lineTo(15, -9); ctx.moveTo(-15, 8); ctx.lineTo(15, 8); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,208,212,.5)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(-15.9, -20); ctx.lineTo(-15.9, 16); ctx.moveTo(14.1, -20); ctx.lineTo(14.1, 16); ctx.stroke();
+  ctx.lineCap = 'butt';
+  // The tail boom, with the stabiliser and the fin along its end.
+  const boom = ctx.createLinearGradient(-4.5, 0, 4.5, 0); boom.addColorStop(0, '#a3ae9a'); boom.addColorStop(.5, '#66725f'); boom.addColorStop(1, '#2c332b');
+  ctx.fillStyle = boom; ctx.beginPath(); ctx.moveTo(-5, 14); ctx.lineTo(-2.2, 62); ctx.lineTo(2.2, 62); ctx.lineTo(5, 14); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#d6a43a'; ctx.fillRect(-3.8, 34, 7.6, 5);
+  const stab = ctx.createLinearGradient(-12, 0, 12, 0); stab.addColorStop(0, '#9aa592'); stab.addColorStop(1, '#4a5446');
+  ctx.fillStyle = stab; ctx.beginPath(); ctx.moveTo(-13, 57); ctx.lineTo(13, 57); ctx.lineTo(11, 62.5); ctx.lineTo(-11, 62.5); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.stroke();
+  ctx.fillStyle = '#2e362d'; ctx.fillRect(-1.2, 50, 2.4, 17);
+  // The tail rotor: a small blurred disc with one blade turning.
+  const tail = ctx.createRadialGradient(4.6, 63, 1, 4.6, 63, 10); tail.addColorStop(0, 'rgba(225,230,225,.34)'); tail.addColorStop(1, 'rgba(225,230,225,0)');
+  ctx.fillStyle = tail; ctx.beginPath(); ctx.arc(4.6, 63, 10, 0, Math.PI * 2); ctx.fill();
+  const tb = time * 40; ctx.strokeStyle = 'rgba(20,24,26,.6)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(4.6, 63 + Math.sin(tb) * 9); ctx.lineTo(4.6, 63 - Math.sin(tb) * 9); ctx.stroke();
+  // The cabin, lit from the left, with the glass at the nose and the gold band behind it.
+  const body = ctx.createLinearGradient(-14, 0, 14, 0); body.addColorStop(0, '#7f8a7b'); body.addColorStop(.3, '#e9eee4'); body.addColorStop(.65, '#b2bcae'); body.addColorStop(1, '#505a4d');
+  ctx.fillStyle = body; fuselage(); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.3; ctx.stroke();
+  ctx.save(); fuselage(); ctx.clip();
+  const glass = ctx.createLinearGradient(-10, -22, 10, -2); glass.addColorStop(0, '#d8e8ee'); glass.addColorStop(.5, '#6f93a2'); glass.addColorStop(1, '#22343d');
+  ctx.fillStyle = glass; ctx.beginPath(); ctx.moveTo(-11, -9); ctx.quadraticCurveTo(0, -30, 11, -9); ctx.quadraticCurveTo(0, -12, -11, -9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.moveTo(-8, -15); ctx.lineTo(-4, -17.6); ctx.lineTo(-5, -11); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#d6a43a'; ctx.fillRect(-14, 5, 28, 3.4); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(-14, 8.4, 28, 1);
+  const cowl = ctx.createLinearGradient(-7, 0, 7, 0); cowl.addColorStop(0, '#9aa590'); cowl.addColorStop(1, '#4a5446');
+  ctx.fillStyle = cowl; ctx.beginPath(); ctx.roundRect(-7.5, 9.5, 15, 13, 4); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; for (let i = 0; i < 3; i++) ctx.fillRect(-5, 12 + i * 3.4, 10, 1.1);
+  ctx.restore();
+  // The rotor: a soft disc with a bright rim, two ghost blades and the sharper pair on top, and the hub.
+  const disc = ctx.createRadialGradient(0, 0, 4, 0, 0, 38); disc.addColorStop(0, 'rgba(226,230,222,.05)'); disc.addColorStop(.8, 'rgba(226,230,222,.14)'); disc.addColorStop(1, 'rgba(226,230,222,.26)');
+  ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(0, 0, 38, 0, Math.PI * 2); ctx.fill();
+  const b = time * 24; ctx.lineCap = 'round';
+  for (const [lag, alpha] of [[.5, .10], [.25, .2], [0, .55]]) {
+    ctx.strokeStyle = `rgba(18,22,24,${alpha})`; ctx.lineWidth = lag ? 4 : 3.2; ctx.beginPath();
+    ctx.moveTo(Math.cos(b - lag) * 38, Math.sin(b - lag) * 38); ctx.lineTo(-Math.cos(b - lag) * 38, -Math.sin(b - lag) * 38); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(238,200,90,.8)'; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(Math.cos(b) * 38, Math.sin(b) * 38); ctx.lineTo(Math.cos(b) * 32, Math.sin(b) * 32); ctx.moveTo(-Math.cos(b) * 38, -Math.sin(b) * 38); ctx.lineTo(-Math.cos(b) * 32, -Math.sin(b) * 32); ctx.stroke();
+  ctx.lineCap = 'butt';
+  const hub = ctx.createRadialGradient(-1, -1, .5, 0, 0, 5); hub.addColorStop(0, '#dde3e6'); hub.addColorStop(1, '#3a4247');
+  ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, 4.6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = .8; ctx.stroke();
+  ctx.restore();
+}
+
 export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {
   ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
   const words = value.split(' '), lines = [];

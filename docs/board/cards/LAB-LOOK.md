@@ -67,6 +67,17 @@ Fire, Rust, Wax and Launch are redrawn (`docs/board/looks/lab-look/round-5.jpg`)
 Headings, Suspension. After those, the lessons whose subjects are small in their boards (Pendulums, Wax, Launch,
 the distance strips) want the stage step: a larger board.
 
+## Round 6 (a Sonnet helper; judged by Claude, 12 November 2026)
+
+G-force, Grip, Headings and Suspension are redrawn (`docs/board/looks/lab-look/round-6.jpg`). **All sixteen lesson
+boards are now redrawn.** Two old pictures that contradicted their own labels were put right on the way (the
+Suspension body's lean and the Grip tyre's direction; see the round's review note).
+
+What is left on this card, in order: the stage step (a larger board, so that the subjects that are small in Pendulums,
+Wax, Launch, Grip, Suspension and the distance strips can grow); the small answer-card pictures, which are still
+flat; one copy of the crate and weighing pad that Lift and `board-art.js` both hold; the old five-step lesson frame's
+removal; the challenges in the 3D world; and the walking hangar.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
