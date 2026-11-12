@@ -204,17 +204,21 @@ function tintArt(scene, placeId, wear=null){
   });
 }
 
-function addMallRubble(group,place){
-  const rubble=new THREE.Group();rubble.name='Dead Mall sand drifts and rubble';
-  const stone=new THREE.MeshStandardMaterial({color:0x55483a,roughness:1});
-  const sand=new THREE.MeshStandardMaterial({color:0x8a6e4e,roughness:1});
-  for(let i=0;i<9;i++){
-    const mesh=new THREE.Mesh(new THREE.DodecahedronGeometry(1,0),i%2?sand:stone);
-    const a=i/9*Math.PI*2,r=30+(i%3)*4,x=place.x+Math.cos(a)*r,z=place.z+Math.sin(a)*r;
-    mesh.position.set(x,scablandsSurfaceHeightAt(x,z)+1,z);
-    mesh.scale.set(4+(i%3),1.4+(i%2),3+(i%4));mesh.rotation.y=a;mesh.castShadow=true;mesh.receiveShadow=true;rubble.add(mesh);
+// The mall's four sand drifts at the entrance take the ground's own surface and a low, wide shape (SCABLANDS-LAND round 3):
+// as modelled they were beige pillows of their own flat colour. Each is flattened onto its base and spread wider.
+const DRIFT_FLATTEN=.4,DRIFT_SPREAD=1.3;
+function settleSandDrifts(model,groundMaterial){
+  const drifts=[];model.traverse(node=>{if(node.isMesh&&/^sand[- ]drift/.test(plainName(node.name)))drifts.push(node);});
+  model.updateMatrixWorld(true);
+  for(const drift of drifts){
+    const base=new THREE.Box3().setFromObject(drift).min.y;
+    drift.scale.set(drift.scale.x*DRIFT_SPREAD,drift.scale.y*DRIFT_FLATTEN,drift.scale.z*DRIFT_SPREAD);
+    drift.updateMatrixWorld(true);
+    // Flattening about the part's own origin moves its base: put the base back where it was.
+    drift.position.y+=base-new THREE.Box3().setFromObject(drift).min.y;
+    drift.material=groundMaterial;drift.castShadow=false;drift.receiveShadow=true;
   }
-  group.add(rubble);
+  return drifts;
 }
 
 // Where each truck's wheels turn about their axle (the model's X axis) and how wide they are, in the rig's own metres.
@@ -534,6 +538,7 @@ export function createScablandsScene(course,options={}){
           for(const node of solids)node.removeFromParent();
         }
         tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
+        if(key==='mall')settleSandDrifts(model,groundMaterial);
         if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.
@@ -584,7 +589,6 @@ export function createScablandsScene(course,options={}){
       distant.name=`${place.name} far silhouette`;distant.position.y=wellMast?EVERBURN_DERRICK_TOP/2:6;distant.castShadow=true;
       lod.addLevel(full,0);lod.addLevel(distant,280);
       lod.position.set(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z);group.add(lod);
-      if(place.id==='dead-mall')addMallRubble(group,place);
     }));
     group.userData.assetStatus='ready';return true;
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));

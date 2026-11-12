@@ -377,7 +377,7 @@ assert.equal(rig.visible,false,'job 4: it turns away north and is gone');
 assert.equal(escorting(.5).arena.worldJob.actors.every(item=>item.id!=='old-smoke-furnace'),true,'job 4: no furnace actor stands behind the sighting');
 syncScene(scene.group,sightingState(5,{stepIndex:0,steps:[{kind:'heist'}],done:false}));
 assert.ok(rigAt().distanceTo(restAt)<.001&&rig.visible,'another job leaves the furnace where it stands');
-assert.ok(scene.group.getObjectByName('Dead Mall sand drifts and rubble'),'mall art gets rubble dressing');
+assert.ok(!scene.group.getObjectByName('Dead Mall sand drifts and rubble'),'the nine flat rocks round the mall are gone');
 assert.equal(scene.group.userData.solids,SCABLANDS_SOLIDS,'scene exposes the tested static collision set');
 // SCABLANDS-LAND, check 1a: every material of every placed model file arrives with a colour that is not white (or with
 // a picture), read from the real files. Four recipes once drew colour through a noise node, which the exporter does not
@@ -629,6 +629,9 @@ const wellScene=createScablandsScene(course,{loadAsset:async path=>{
       const part=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x886644}));part.name=name;root.add(part);
     }
   }
+  if(path===SCABLANDS_ASSETS.mall){
+    const drift=new THREE.Mesh(new THREE.BoxGeometry(7,1.1,3.6),new THREE.MeshStandardMaterial({color:0x7d5c33}));drift.name='sand-drift-1';drift.position.set(-11,.8,-8);root.add(drift);
+  }
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
   return {scene:root};
 }});
@@ -654,5 +657,12 @@ const wellFar=wellLod.levels[1].object;
 assert.ok(wellFar.geometry.type==='CylinderGeometry'&&wellFar.geometry.parameters.height>7&&wellFar.geometry.parameters.height<10&&wellFar.geometry.parameters.radiusBottom<1,
   'past 280 m the well is a thin mast the height of its derrick, not a box');
 assert.ok(wellScene.group.getObjectByName('The Dead Mall detail LOD').levels[1].object.geometry.type==='BoxGeometry','the other places keep their plain far shape');
+// Fix 3: the mall's drifts take the ground's own surface, lie low and wide, and keep their base where it was.
+wellScene.group.updateMatrixWorld(true);
+const mallDrift=wellScene.group.getObjectByName('sand-drift-1'),driftBox=new THREE.Box3().setFromObject(mallDrift);
+assert.equal(mallDrift.material,wellScene.group.getObjectByName('Scablands ground chunks').children[0].material,'a sand drift takes the ground own material');
+assert.ok(Math.abs(driftBox.max.y-driftBox.min.y-1.1*.4)<.01&&driftBox.max.x-driftBox.min.x>7.5,'a drift is low (0.4 of its old height) and wide');
+const driftLod=wellScene.group.getObjectByName('The Dead Mall detail LOD');
+assert.ok(Math.abs(driftBox.min.y-(driftLod.position.y+.8-.55))<.01,'a drift keeps its base where it was');
 wellScene.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
