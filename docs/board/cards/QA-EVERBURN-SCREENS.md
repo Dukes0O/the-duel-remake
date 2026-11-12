@@ -29,3 +29,18 @@ Job 6's defend step shows its opening line as the raw id "everburn-job-6-start".
   freely is not built; it gets its own card when the place is worth exploring (SCABLANDS-LAND's other places first).
 - The start of job 6 is a field on the step, so that the job mode names no job.
 
+## Third round (Claude, 12 November 2026, after running the browser checks on the second build)
+
+- `everburn-play` and `everburn-well` pass; `everburn` timed out on a forced end of job 3. The result fact moves to
+  `everburn-play`, which reaches Hot Delivery's real results screen.
+- Four written lines with no trigger are said when the player comes near a place (the first barricade, Tin Town in
+  sight, the planes in the Boneyard, inside the mall). "Raiders" (job 2) and "Bess hit" (job 4) are wired only if
+  their steps raise an event.
+- Two new lines, written by Claude: `story.ember.cinder.26`, Cinder when the well's defence fails and the wave
+  starts again: "They reached the valve! I have shut it again. Same lot, once more."; and
+  `story.ember.auntie-solder.12`, Auntie Solder when the soup spills: "That was my good soup! Come back. There is
+  more in the pot, and less in my patience."
+- **The map panel still showed the oval in job 1** (seen in `everburn-play`'s first picture): this morning's job
+  map draws only a step with a path. Every world job in the Scablands now draws its own ground: the path, else
+  origin to destination through its safe points, else the return path, else the step's named places.
+
