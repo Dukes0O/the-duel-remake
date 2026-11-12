@@ -1,5 +1,7 @@
 // The Everburn story and Tin Town notice-board jobs. These definitions contain
 // only world-job data; the shared job engine owns all simulation rules.
+import {FURNACE_SKYLINE} from './furnace-sightings.js';
+
 const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.freeze({x, y:0, z}), radius});
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -13,21 +15,24 @@ const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];
 
-// Old Smoke's path: from the well across the open flats (leg 1, left door), into
-// the Boneyard past the planes (leg 2, right door) and back along the run to the
-// well, whose last 230 m are leg 3 (rear door). About 3,150 m, or 3 minutes 45
-// seconds at the furnace's base pace.
+// Old Smoke's path: from the well across the open flats (leg 1, left door), through
+// the Boneyard past the planes and up to Tin Town's gate (leg 2, right door), then
+// home along the road with the player behind it. The last 229 m, from the place at
+// (-200, 350), are leg 3 (rear door). About 3,250 m, or 3 minutes 52 seconds at the
+// furnace's base pace. The gate is where the furnace is running to: if its right
+// door is still unbroken when it passes the gate, the gate burns (old-smoke.js).
+const furnaceGate = place('tin-town-gate', 575, 62, 18);
+const furnaceRunBack = place('furnace-run-3', -200, 350);
 const furnacePath = path(well,
   place('furnace-flats-1', -450, 40), place('furnace-flats-2', -300, -230), place('furnace-flats-3', -60, -380),
   place('furnace-flats-4', 170, -340), place('furnace-flats-5', 350, -200), place('furnace-flats-6', 350, 60),
   place('furnace-boneyard-in', 335, 170), place('furnace-planes-1', 345, 246), place('furnace-planes-2', 440, 248),
-  place('furnace-planes-3', 545, 252), place('furnace-turn-1', 610, 335), place('furnace-turn-2', 520, 425),
-  place('furnace-run-1', 250, 415), place('furnace-run-2', 0, 370),
-  place('furnace-run-3', -200, 350), well);
+  place('furnace-planes-3', 545, 252), place('furnace-approach', 610, 170), furnaceGate,
+  place('furnace-road-1', 430, 70), safeRoad, place('furnace-road-2', 0, 230), furnaceRunBack, well);
 const furnaceLegs = Object.freeze([
   Object.freeze({id:'open-flats', door:'left', fromWaypoint:0}),
   Object.freeze({id:'boneyard', door:'right', fromWaypoint:7}),
-  Object.freeze({id:'run-back', door:'rear', fromWaypoint:15}),
+  Object.freeze({id:'run-back', door:'rear', fromWaypoint:furnacePath.indexOf(furnaceRunBack)}),
 ]);
 
 export const EVERBURN_JOBS = Object.freeze([
@@ -37,6 +42,8 @@ export const EVERBURN_JOBS = Object.freeze([
     steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
       safePoints:path(safeRoad), crashLimit:8, burnable:true, spillLineId:'everburn-job-1-spill',
       barriers:path(place('ash-men-barricade-1', 180, 100), place('ash-men-barricade-2', 410, 210)),
+      // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
+      sayNear:[{place:place('furnace-skyline', FURNACE_SKYLINE.x, FURNACE_SKYLINE.z), radius:260, lineId:'story.ember.cinder.24'}],
       unlock:'tin-town', lentWeapon:'flamethrower', startLineId:'everburn-job-1-start',
       arrivalLineId:'everburn-job-1-won'})]}),
   Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Get Out and Walk', kind:'on-foot',
@@ -52,7 +59,9 @@ export const EVERBURN_JOBS = Object.freeze([
     steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
       path:path(boneyard, place('plane-row',280,380), place('wing-gap',140,470))}, path:path(boneyard, place('plane-row',280,380), place('wing-gap',140,470)),
       targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'everburn-job-3-falling-behind',
-      targetHealth:20, reward:'flamethrower', startLineId:'everburn-job-3-start', wonLineId:'everburn-job-3-won'})]}),
+      targetHealth:20, reward:'flamethrower', startLineId:'everburn-job-3-start',
+      // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
+      closing:['story.ember.cinder.22']})]}),
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
     resultLineId:'story.ember.auntie-solder.6',
     easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'everburn-job-4-start',
@@ -61,6 +70,8 @@ export const EVERBURN_JOBS = Object.freeze([
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
       speed:9, health:100, restLineId:'everburn-job-4-rest', restartFrom:'last-marker',
       raiders:path(place('ash-men-raid-1',360,270),place('ash-men-raid-2',500,90)),
+      // The furnace paces her on the high ground while she is between 30% and 70% of her road.
+      sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
       reward:'scrap', startLineId:'everburn-job-4-start', wonLineId:'everburn-job-4-won'})]}),
   Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
     resultLine:'You carried Old Smoke’s key back to the Everburn.',
@@ -80,12 +91,12 @@ export const EVERBURN_JOBS = Object.freeze([
       lentWeapon:'flamethrower',
       restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
-      step('chase',{what:"Break the furnace's three doors. Hit a door while it glows.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
-        path:furnacePath, legs:furnaceLegs}, path:furnacePath, legs:furnaceLegs,
+      step('chase',{what:'Stop the furnace before it reaches Tin Town. Hit a door while it glows.', targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
+        path:furnacePath, legs:furnaceLegs, gateWaypoint:furnacePath.indexOf(furnaceGate)}, path:furnacePath, legs:furnaceLegs,
         // The chase ends on the third door hit, never on contact or distance
         // (src/world/jobs/old-smoke.js owns the rules).
         targetSpeed:14, leashDistance:Infinity, contactRadius:0, targetHealth:3, hitPart:'glowing-vent',
-        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:'story.ember.cinder.17',
+        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:['story.ember.old-smoke.4', 'story.ember.cinder.23'],
         wonLineId:'story.ember.cinder.20'})],
     rewards:['cinder-crew-member','cinders-hand-flamer','ember-paint','everburn-lit']}),
 ]);

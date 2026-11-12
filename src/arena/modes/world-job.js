@@ -5,6 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor} from '../../world/jobs/old-smoke.js';
+import {pathShare} from '../../world/jobs/furnace-sightings.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
@@ -19,9 +20,10 @@ const position = (duel, actor) => {
 const EMPTY_HIT_TARGETS = [];
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.
+// townReached is the horn (the one that warns of the shove) and gateBurnt is the flamethrower's flame catching.
 const FURNACE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch',
   doorSlam: 'vehicle.landing', hit: 'combat.hit-confirm', shoveWarning: 'arena.toll-gate',
-  fell: 'combat.explosion'});
+  fell: 'combat.explosion', townReached: 'arena.toll-gate', gateBurnt: 'weapon.flame.start'});
 const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.ember.old-smoke.3',
   3: 'story.ember.cinder.19'});
 const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
@@ -218,6 +220,12 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
   }
   else if (event.type === 'bolt') duel._callout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
   else if (event.type === 'turnAround') duel._callout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
+  else if (event.type === 'gateBurnt') {
+    // The scene keeps the fire on the gate until the job ends, even if a wreck starts the chase again.
+    worldJob.gateBurnt = true;
+    duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.7'), 3);
+  }
+  else if (event.type === 'townReached' && !event.burnt) duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.8'), 3);
   return furnace;
 }
 
@@ -413,7 +421,10 @@ export function stepWorldJob(duel, dt) {
     ? targetActor.id : null;
   const actors = [...worldJob.actors.map((actor, index) => ({id: actor.id ?? `raider-${index}`,
     position: actor.position ?? {x: actor.x, y: actor.y, z: actor.z}, health: actor.knockedDown ? 0 : actor.health,
-    pathProgress: actor.pathProgress, atDestination: actor.atDestination})),
+    pathProgress: actor.pathProgress, atDestination: actor.atDestination,
+    // How far an escorted truck has gone along its road, for the step's sayAtShare lines (0 to 1).
+    ...(currentStep?.sayAtShare && actor.id === currentStep.actorId && actor.position ?
+      {share: pathShare(actor.position, actor.pathIndex, currentStep.path).share} : {})})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
   const view = {player: playerView, onFoot: !!state.onFoot,
@@ -430,6 +441,8 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  // The moment a step began its closing lines: the scene times the furnace's sighting after Job 3's catch from it.
+  if (next.stepState.linesClosing && !Number.isFinite(worldJob.wonAtSec)) worldJob.wonAtSec = worldJob.clockSec;
   state.worldJobThingsHit = [];
   moveJobRaiders(worldJob, dt);
   updateJobActors(duel, worldJob, dt);

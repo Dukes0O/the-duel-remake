@@ -1,7 +1,9 @@
 // Old Smoke's furnace chase (docs/board/cards/WW-BOSS.md, "Settled design").
 // The furnace drives one fixed path with three legs, and each leg has one door:
 // left on the open flats, right in the Boneyard, rear on the run back to the
-// well. A door runs one rhythm, stoke then glow then slam, and a hit while the
+// well. The path runs through Tin Town's gate on the way home (EVERBURN-RUN-AT-TOWN):
+// the furnace records once that it reached the gate, and that the gate burnt if its right
+// door was still unbroken. A door runs one rhythm, stoke then glow then slam, and a hit while the
 // door glows ends the leg. Everything here is plain numbers read from the job
 // clock's steps, so the same inputs always give the same chase. There is no
 // randomness, no drawing and no audio in this file; the world-job mode asks it
@@ -18,8 +20,8 @@ export const OLD_SMOKE = Object.freeze({
   // (seen in Claude's play of 10 November: 113 s and 85 s of plain following). Still slower
   // than the Titan Monster's 52 m/s.
   boltSpeed: Object.freeze({easy: 36, medium: 45, hard: 45}),
-  // The two opening lines (2.2 seconds each) play before the first stoke begins.
-  introSec: 4.5,
+  // The three opening lines (2.2 seconds each) play before the first stoke begins.
+  introSec: 6.7,
   stokeSec: 4,
   glowSec: Object.freeze({easy: 6, medium: 4.5, hard: 3.5}),
   shutSec: 3,
@@ -84,16 +86,19 @@ function pointAt(path, metres) {
 }
 
 // def is the chase actor from src/world/jobs/everburn.js: its path and its legs
-// (door and the waypoint where the leg's ground begins).
+// (door and the waypoint where the leg's ground begins) and, optionally, gateWaypoint,
+// the place on the path that is Tin Town's gate. Without it there are no gate facts.
 export function createFurnace(def, difficulty = 'medium') {
   const level = DIFFICULTIES.includes(difficulty) ? difficulty : 'medium';
   const path = buildPath(def.path);
+  const gateMetres = Number.isInteger(def.gateWaypoint) ? path.cumulative[def.gateWaypoint] ?? null : null;
   const legs = def.legs.map(leg => ({id: leg.id, door: leg.door,
     fromMetres: path.cumulative[leg.fromWaypoint]}));
   const start = pointAt(path, 0);
   return {difficulty: level, path, legs, timeSec: 0,
     metres: 0, run: null, x: start.x, z: start.z, heading: start.heading, pathIndex: 0,
     legIndex: 0, hits: 0, broken: [false, false, false],
+    gateMetres, townReached: false, gateBurnt: false,
     phase: 'idle', phaseSec: 0, door: null, staggerLeft: 0,
     cinders: [], dropMetres: 0, burnDebt: 0,
     shoulder: {sitSec: 0, warnSec: 0, side: 0, cooldownSec: 0},
@@ -202,6 +207,7 @@ function move(f, dt, out) {
     return;
   }
   f.metres += advance;
+  passTheGate(f, out);
   if (f.metres >= f.path.total) {
     const unbroken = f.hits < OLD_SMOKE.hitsToWin;
     if (unbroken && f.difficulty === 'hard') {
@@ -230,6 +236,16 @@ function move(f, dt, out) {
   f.x = point.x; f.z = point.z; f.heading = point.heading; f.pathIndex = point.index;
   f.legIndex = legAt(f, f.metres);
   dropCinders(f, advance);
+}
+
+// The first time the furnace's run along the path reaches the gate, at any pace, it has reached Tin Town. The gate
+// burns only when the right door (the second leg's) is still whole at that moment. Two plain facts, set once.
+function passTheGate(f, out) {
+  if (f.gateMetres === null || f.townReached || f.metres < f.gateMetres) return;
+  f.townReached = true;
+  f.gateBurnt = !f.broken[1];
+  out.events.push({type: 'townReached', burnt: f.gateBurnt});
+  if (f.gateBurnt) out.events.push({type: 'gateBurnt'});
 }
 
 function legAt(f, metres) {

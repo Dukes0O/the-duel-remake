@@ -7,7 +7,9 @@ export function stepLines(step,state,view,dt,outcome) {
   const lineHistory=new Set(state.lineHistory??[]);
   const nonCaption=(outcome?.requests??[]).filter(request=>request.type!=='say');
   const newlyRequested=(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId);
-  const once=new Set([step.startLineId,step.afterStartLineId,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
+  // afterStartLineId is one line id or a list of them, played in order after startLineId.
+  const afterStart=[].concat(step.afterStartLineId??[]);
+  const once=new Set([step.startLineId,...afterStart,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
   for(const lineId of newlyRequested) {
     if(once.has(lineId)&&lineHistory.has(lineId))continue;
     queue.push(lineId);if(once.has(lineId))lineHistory.add(lineId);
@@ -31,7 +33,7 @@ export function stepLines(step,state,view,dt,outcome) {
     // Order: what the step before left waiting, the opening that holds the step, then the start lines.
     const opening=[...(state.carriedLines??[]),...(step.opening??[])];
     for(const lineId of opening) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
-    for(const lineId of [step.startLineId,step.afterStartLineId])
+    for(const lineId of [step.startLineId,...afterStart])
       if(lineId&&!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
     if(queue.length) {const lineId=nextCaption(queue);const result=emit(lineId,queue,opening.includes(lineId));
       result.state.linesStarted=true;return result;}
@@ -53,6 +55,9 @@ export function stepLineTriggers(step,state,view,outcome) {
   const player=view.fighter?.position??view.player?.position;
   for(const cue of step.sayNear??[]) if(distance(player,cue.place?.position??cue.place)<=(cue.radius??8))fire(cue.lineId,`near:${cue.lineId}`);
   for(const cue of step.sayOnce??[]) if(typeof cue==='string')fire(cue); else if(cue?.lineId&&distance(player,cue.place?.position??cue.place)<=(cue.radius??8))fire(cue.lineId,`once:${cue.lineId}`);
+  // sayAtShare: [{share, lineId}] plays a line once, when the step's actor has gone that share (0 to 1) of its road.
+  const sharer=step.sayAtShare?(view.actors??[]).find(item=>item.id===step.actorId):null;
+  for(const cue of step.sayAtShare??[]) if((sharer?.share??0)>=cue.share)fire(cue.lineId,`share:${cue.lineId}`);
   if(step.nearLineId&&step.actorId) {
     const actor=(view.actors??[]).find(item=>item.id===step.actorId);
     if(actor&&distance(player,actor.position)<=(step.nearRadius??8))fire(step.nearLineId,`near:${step.nearLineId}`);

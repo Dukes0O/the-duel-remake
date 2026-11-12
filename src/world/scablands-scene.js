@@ -7,6 +7,7 @@ import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
+import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
 
@@ -235,6 +236,40 @@ function addBessEffects(parent){
   return fx;
 }
 
+// Tin Town's gate afire (EVERBURN-RUN-AT-TOWN): three tongues of fire about 3 m tall and a small plume of smoke,
+// built the way the furnace's door fire is. It is drawn only, and stays hidden until the furnace has burnt the gate.
+const GATE_TONGUES=Object.freeze([-2.6,0,2.6]);
+const GATE_PUFFS=8;
+function addGateFire(){
+  const effects=new THREE.Group();effects.name='Tin Town gate fire and smoke';effects.visible=false;
+  const flame=createFlameMaterial(),soot=createSmokeMaterial(0x302c28),card=new THREE.PlaneGeometry(1,1);
+  const standing=new THREE.PlaneGeometry(1,1);standing.translate(0,.5,0);
+  const tongues=GATE_TONGUES.map((x,index)=>{
+    const tongue=new THREE.Mesh(standing,flame);tongue.name='Fire on the gate';
+    tongue.position.set(x,0,0);tongue.scale.set(2,3,1);tongue.renderOrder=3;
+    tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=index*.41;flame.uniformsNeedUpdate=true;};
+    effects.add(tongue);return tongue;
+  });
+  const smoke=[];
+  for(let puff=0;puff<GATE_PUFFS;puff++){
+    const cloud=new THREE.Mesh(card,soot);cloud.name='Gate smoke';cloud.userData.fade=0;cloud.renderOrder=2;
+    cloud.onBeforeRender=()=>{soot.uniforms.uFade.value=cloud.userData.fade;soot.uniforms.uSeed.value=puff*.31;soot.uniformsNeedUpdate=true;};
+    effects.add(cloud);smoke.push(cloud);
+  }
+  return {effects,tongues,smoke,flame,
+    // The plume rises about 18 m and spreads; the flames flicker. Only the clock moves them.
+    animate(seconds){
+      this.flame.uniforms.uTime.value=seconds;
+      tongues.forEach((tongue,index)=>{tongue.scale.y=3*(.85+.25*Math.abs(Math.sin(seconds*4.7+index*2.1)));});
+      smoke.forEach((puff,index)=>{
+        const age=(seconds*.13+index/GATE_PUFFS)%1;
+        puff.position.set(Math.sin(seconds*.3+index*2.2)*1.6*age,1.8+age*18,Math.cos(seconds*.25+index*1.9)*1.2*age);
+        puff.scale.setScalar(1.8+age*7);
+        puff.userData.fade=Math.min(1,age/.06)*Math.pow(1-age,1.3)*.8;
+      });
+    }};
+}
+
 export function createScablandsScene(course,options={}){
   const loadAsset=options.loadAsset??(path=>new GLTFLoader().loadAsync(path));
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
@@ -270,6 +305,7 @@ export function createScablandsScene(course,options={}){
   // The furnace's surfaces are photos, which carry their own rust and soot; the code adds only the road dust.
   const furnaceWear=createScrapWear({paint:0});
   const furnaceTravel=createTravelMeter(),furnaceWheels=[];
+  const gateFire=addGateFire();group.add(gateFire.effects);gateFire.animate(0);
   // Big Bess has her own rig, like the furnace's: the Everburn escort moves it, and it stands at her Boneyard place otherwise.
   let bessRig=null,bessPlace=null,bessEffects=null;
   const bessWheels=[],bessTravel=createTravelMeter(),bessWear=createScrapWear({paint:0});
@@ -388,6 +424,7 @@ export function createScablandsScene(course,options={}){
         bessEffects.placeSmoke(seconds,bessTravel.speed);
         bessEffects.dust.userData.place(seconds,bessTravel.speed,BESS_DUST);
       }
+      gateFire.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.
@@ -409,7 +446,14 @@ export function createScablandsScene(course,options={}){
       const chasing=worldJob?.definition?.storyId==='everburn'&&worldJob.job?.steps?.[worldJob.job.stepIndex]?.kind==='chase';
       const actor=chasing?worldJob.actors?.find(item=>item.id==='old-smoke-furnace'):null;
       if(furnaceRig&&furnaceModel&&furnacePlace){
-        placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
+        // In jobs 1, 3 and 4 the furnace is seen before it is fought: drawn where the job's own state and clock put it
+        // (src/world/jobs/furnace-sightings.js), with no actor behind it. Otherwise it stands in the Everburn or follows the chase.
+        const sighting=actor?null:furnaceSighting(worldJob);
+        if(sighting&&!sighting.hidden){
+          furnaceRig.position.set(sighting.x,scablandsSurfaceHeightAt(sighting.x,sighting.z),sighting.z);
+          furnaceRig.rotation.y=sighting.heading;
+        }else placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
+        furnaceRig.visible=!sighting?.hidden;
         furnaceModel.position.x=0;
       }
       // Big Bess follows her escort actor in the Everburn story and stands in the Boneyard otherwise.
@@ -418,6 +462,12 @@ export function createScablandsScene(course,options={}){
         placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace);
         bessWear.follow(bessRig);
       }
+      // Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
+      const gateStep=worldJob?.definition?.storyId==='everburn'?worldJob.job?.steps?.find(step=>Number.isInteger(step.actor?.gateWaypoint)):null;
+      const gateAt=gateStep?.path?.[gateStep.actor.gateWaypoint],gateSpot=gateAt?.position??gateAt;
+      const burning=Boolean(gateSpot)&&(worldJob?.gateBurnt===true||actor?.furnace?.gateBurnt===true);
+      gateFire.effects.visible=burning;
+      if(burning)gateFire.effects.position.set(gateSpot.x,scablandsSurfaceHeightAt(gateSpot.x,gateSpot.z),gateSpot.z);
       const furnace=actor?.furnace;
       furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
       // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.

@@ -7,6 +7,7 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceSpeed, furnaceHealth,
   furnaceDoorSpot, furnaceGlowingDoor, oldSmokeVentTargets} from '../src/world/jobs/old-smoke.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 
 // WW-BOSS: Old Smoke's furnace chase. The rules live in src/world/jobs/old-smoke.js
 // and run without graphics, so this test drives them directly and then through a
@@ -69,6 +70,51 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   const boneyardLeg = f.path.points.slice(7, 11);
   check(boneyardLeg.every(point => Math.abs(point.z - planes.z) > 20 || Math.abs(point.x - planes.x) > 40),
     'the Boneyard leg passes beside the planes, not through them');
+}
+
+// EVERBURN-RUN-AT-TOWN: the run goes to Tin Town's gate and home along the road. The path, the three legs
+// and the gate's place in the list are exactly the card's table.
+{
+  const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
+  same(def.path.map(place => [place.position.x, place.position.z]), [[-424, 304], [-450, 40], [-300, -230], [-60, -380],
+    [170, -340], [350, -200], [350, 60], [335, 170], [345, 246], [440, 248], [545, 252], [610, 170], [575, 62],
+    [430, 70], [230, 150], [0, 230], [-200, 350], [-424, 304]], 'the path is the card\'s list of places');
+  same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 16]],
+    'the three legs begin at the well, at the Boneyard and at the place (-200, 350)');
+  check(def.path[def.gateWaypoint].id === 'tin-town-gate' && def.gateWaypoint === 12, 'the gate is the place named tin-town-gate, the 13th in the list');
+  same(placeAt(def.gateWaypoint), [575, 62], 'the gate stands at (575, 62)');
+  near(f.path.total, 3250.6, .1, 'the path is about 3,250 m');
+  near(f.path.total / OLD_SMOKE.baseSpeed, 232.2, .1, 'the path takes 3 minutes 52 seconds at the base pace');
+  near(f.path.total - f.legs[2].fromMetres, 228.7, .1, 'the rear door is fought on the last 229 m');
+  check(f.legs[1].fromMetres < f.path.cumulative[def.gateWaypoint] && f.path.cumulative[def.gateWaypoint] < f.legs[2].fromMetres,
+    'the gate lies on the Boneyard leg, before the run home');
+  // The old loop is gone: no place of the path comes from the old turning points.
+  check(!def.path.some(place => /^furnace-(turn|run)-[12]$/.test(place.id)), 'the loop back to the well is gone');
+}
+
+// Every straight piece of the path clears every solid in the Scablands by 8 m. The furnace begins at the well and
+// rolls into it, so the first and last pieces are allowed to touch the Everburn well's own box and no other.
+{
+  const distanceToBox = (x, z, solid) => {
+    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
+    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+  };
+  const points = def.path.map(place => place.position);
+  let tightest = Infinity;
+  for (let piece = 0; piece < points.length - 1; piece++) {
+    const a = points[piece], b = points[piece + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    for (const solid of SCABLANDS_SOLIDS) {
+      if (solid.id === 'everburn-well' && (piece === 0 || piece === points.length - 2)) continue;
+      let closest = Infinity;
+      for (let metres = 0; metres <= length; metres += .1) {
+        const t = metres / length;
+        closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, solid));
+      }
+      tightest = Math.min(tightest, closest);
+      check(closest >= 8, `piece ${piece + 1} of the path clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
+    }
+  }
+  console.log(`Old Smoke: the path's tightest clearance from a solid is ${tightest.toFixed(1)} m`);
 }
 check(chaseStep.contactRadius === 0 && chaseStep.leashDistance === Infinity,
   'touching the furnace or falling behind never ends the chase');
@@ -133,6 +179,53 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   }
   same(doors, ['left', 'right', 'rear'], `${difficulty}: left, right, then rear`);
   check(f.won, `${difficulty}: three hits end it`);
+}
+
+// ---- 4b. The gate: reaching Tin Town, and the gate burning ------------------------
+{
+  const count = (events, type) => events.filter(event => event.type === type).length;
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    // No hits at all: the furnace runs up to the gate with its right door whole, and the gate burns, once.
+    const f = fresh(difficulty);
+    check(!f.townReached && !f.gateBurnt && f.gateMetres === f.path.cumulative[def.gateWaypoint], `${difficulty}: the gate facts start out false`);
+    const first = run(f, f.gateMetres / OLD_SMOKE.baseSpeed - 1);
+    check(count(first.events, 'townReached') === 0 && !f.townReached, `${difficulty}: nothing is recorded before the gate`);
+    const second = run(f, 4);
+    check(f.townReached && f.gateBurnt && count(second.events, 'townReached') === 1 && count(second.events, 'gateBurnt') === 1,
+      `${difficulty}: at the gate with the right door whole, the gate burns`);
+    check(second.events.find(event => event.type === 'townReached').burnt === true, `${difficulty}: the town event says the gate burnt`);
+
+    // The first two doors broken in time: the furnace runs through the gate at its bolt pace and the gate does not burn.
+    const g = fresh(difficulty), events = [];
+    for (let leg = 0; leg < 2; leg++) { until(g, 'glow'); furnaceHit(g, g.door); }
+    events.push(...run(g, 120).events);
+    check(g.metres > g.gateMetres, `${difficulty}: the furnace passed the gate while running at its bolt pace`);
+    check(g.townReached && !g.gateBurnt && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 0,
+      `${difficulty}: with the right door broken it reaches the gate and the gate stays whole`);
+    check(events.find(event => event.type === 'townReached').burnt === false, `${difficulty}: the town event says the gate did not burn`);
+    // Only the right door counts: with just the left door broken the gate still burns.
+    const h = fresh(difficulty);
+    until(h, 'glow'); furnaceHit(h, h.door);
+    const leftOnly = run(h, 200).events;
+    check(h.gateBurnt && count(leftOnly, 'gateBurnt') === 1, `${difficulty}: with only the left door broken the gate burns`);
+  }
+  // Once only: three more laps past the gate set nothing again, and breaking the right door later does not mend the gate.
+  const f = fresh('easy');
+  const {events} = run(f, 1200);
+  check(f.laps >= 3 && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 1, 'the gate facts are set once, however many laps it runs');
+  const late = fresh('easy');
+  run(late, late.gateMetres / OLD_SMOKE.baseSpeed + 2);
+  const burntBefore = late.gateBurnt;
+  while (late.hits < 3) { until(late, 'glow'); furnaceHit(late, late.door); }
+  check(burntBefore && late.broken[1] && late.gateBurnt, 'the gate burnt, and breaking the doors afterwards does not mend it');
+  // A furnace made without a gate place has no gate facts.
+  const bare = createFurnace({path: def.path, legs: def.legs}, 'medium');
+  const bareRun = run(bare, 200);
+  check(bare.gateMetres === null && !bare.townReached && !bare.gateBurnt && !bareRun.events.some(event => /^(townReached|gateBurnt)$/.test(event.type)),
+    'without gateWaypoint the furnace records no gate facts');
+  // The same inputs give the same facts.
+  const facts = () => { const x = fresh('medium'); const out = run(x, 170); return JSON.stringify([x.townReached, x.gateBurnt, out.events.filter(e => /^(townReached|gateBurnt)$/.test(e.type))]); };
+  check(facts() === facts(), 'the gate facts are the same every time');
 }
 
 // ---- 5. After a hit: stagger, a plate, a speed-up; always slower than any car ----
@@ -489,6 +582,7 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     first ??= result;
   }
   check(wins >= 8, `a young driver on Easy wins at least 8 chases in 10 (won ${wins})`);
+  console.log(`Old Smoke: the young driver on Easy won ${wins} of 10 chases`);
   const log = first.log;
   same(log.filter(event => event.type === 'hit').map(event => event.door), ['left', 'right', 'rear'], 'the Easy chase breaks the left, right then rear doors');
   check(log.filter(event => event.type === 'hit').every(event => event.source === 'ram'), 'every hit was a ram: no weapon was fired');
@@ -516,7 +610,8 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   const duel = startDuel(13, 'medium', {carAt: {x: 0, z: -200}});
   const cues = new Set();
   duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
-  waitUntil(duel, () => duel.state.stageTimeSec > 14, 20);
+  // The first stoke begins after the three opening lines (6.7 s), so the first slam comes at about 15.2 s on Medium.
+  waitUntil(duel, () => duel.state.stageTimeSec > 16, 24);
   check(cues.has('vehicle.landing') && cues.has('arena.tell') && cues.has('gate.latch'), 'a missed door plays stoke, door open and slam');
   const shoulder = startDuel(14, 'medium', {carAt: {x: well.x + 8, z: well.z + 10}});
   const horn = new Set();
@@ -539,6 +634,68 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   check(shoulder.state.armor <= armorBefore - 15, 'the shove costs armour on Medium');
   check(shoulder.state.knock || shoulder.state.arena.worldJob.furnaceLog.some(event => event.type === 'shove'),
     'the furnace swerves into the car and shoves it');
+}
+
+{
+  // EVERBURN-RUN-AT-TOWN: reaching the gate plays a cue and a line in a real Duel, and a burnt gate is remembered for the job.
+  for (const rightDoorBroken of [false, true]) {
+    const duel = startDuel(21, 'medium', {carAt: {x: 0, z: -200}});
+    const cues = new Set(), seen = [];
+    duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
+    waitUntil(duel, () => !!furnaceOf(duel), 5);
+    const furnace = furnaceOf(duel).furnace, worldJob = duel.state.arena.worldJob;
+    furnace.metres = furnace.gateMetres - .5;
+    if (rightDoorBroken) { furnace.hits = 2; furnace.broken[0] = true; furnace.broken[1] = true; }
+    for (let n = 0; n < 2 / DT; n++) { tick(duel); if (duel.state.callout) seen.push(duel.state.callout); }
+    const log = worldJob.furnaceLog.filter(event => event.type === 'townReached' || event.type === 'gateBurnt');
+    check(cues.has('arena.toll-gate'), `${rightDoorBroken ? 'broken' : 'whole'} right door: reaching the gate sounds the horn`);
+    if (rightDoorBroken) {
+      check(!cues.has('weapon.flame.start') && !worldJob.gateBurnt && log.length === 1, 'the gate stays whole: no flame cue and no memory of a fire');
+      check(seen.includes('Auntie Solder: That is close enough, Smoke. Look at the state of you. Go home.'), 'Auntie Solder tells Old Smoke to go home');
+    } else {
+      check(cues.has('weapon.flame.start') && worldJob.gateBurnt && log.length === 2, 'the gate burns: the flame cue plays and the job remembers the fire');
+      check(seen.includes('Auntie Solder: He has set the gate alight! We will mend it. You stop that furnace.'), 'Auntie Solder says the gate is alight');
+      worldJob.furnaceLog.length = 0;
+    }
+  }
+  check(SOUND_BANK['arena.toll-gate'] && SOUND_BANK['weapon.flame.start'], 'both gate cues already exist in the sound bank');
+  // The chase opens with Old Smoke's two lines and Cinder's, one after another, and the old line is not played.
+  const duel = startDuel(22, 'medium', {fullJob: true, carAt: {x: 0, z: -200}});
+  const worldJob = duel.state.arena.worldJob, heard = [];
+  worldJob.job = {...worldJob.job, stepIndex: 1, stepState: {}};
+  for (let n = 0; n < 16 / DT; n++) { tick(duel); if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); }
+  same(heard.filter(text => text !== 'GO. MAKE IT COUNT.').slice(0, 3), ['Old Smoke: Fire is mine. Everything goes grey in the end.',
+    'Old Smoke: If I cannot have the fire, nobody has it. I am going to put out your forge.',
+    'Cinder: He is heading for Tin Town! When a door glows, hit it!'], 'the chase opens with three lines in the card\'s order');
+  check(!heard.some(text => text.includes('He\'s running!')), 'the old chase line is never played');
+  check(worldJob.furnaceLog.find(event => event.type === 'stoke').tSec > 6.6, 'the first door stokes only after the third line has played');
+}
+
+{
+  // Job 3 in a real Duel: the catch is noted for the scene, Cinder's line shows, and the job ends after it.
+  const seed = 31, duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed, cpuDifficulty: 'medium', opponents: [],
+    weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job: {...EVERBURN_JOBS[2], seed}}), true, 'job 3 starts in a real headless Duel');
+  const worldJob = duel.state.arena.worldJob, heard = [];
+  // The car waits 30 m from the thief's start: inside the leash, out of reach.
+  const start = duel.course.nearest(394, 304);
+  Object.assign(duel.state, {s: start.s, lateral: start.lateral, speedMph: 0, headingError: 0, yawVelocity: 0});
+  const watch = () => { if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); };
+  for (let n = 0; n < 8 / DT && !worldJob.actors.length; n++) { tick(duel); watch(); }
+  // Let the opening line finish first: a catch while a line is still showing ends the job without the closing line.
+  for (let n = 0; n < 4 / DT; n++) { tick(duel); watch(); }
+  check(worldJob.actors.length === 1 && worldJob.wonAtSec === undefined, 'the thief is on the road and nothing is caught yet');
+  worldJob.actors[0].health = 0;
+  let caughtAt = null;
+  for (let n = 0; n < 1 / DT; n++) { tick(duel); watch(); if (caughtAt === null && worldJob.wonAtSec !== undefined) caughtAt = duel.state.stageTimeSec; }
+  check(caughtAt !== null && Math.abs(worldJob.wonAtSec - caughtAt) < .1, 'the job notes when the catch happened, for the furnace sighting');
+  check(!duel.state.arena.result && heard.includes('Cinder: He was taking the bellows to the furnace. There it goes, out the far end.'),
+    'Cinder\'s line shows and the job waits for it');
+  worldJob.actors[0].health = 20;
+  waitUntil(duel, () => !!duel.state.arena.result, 5);
+  check(duel.state.arena.result?.reason === 'job-complete' && duel.state.arena.result.winnerId === 'player',
+    'the job is won after the line, even if the thief has rolled on');
 }
 
 console.log(`Old Smoke: furnace chase rules passed (${checks} checks)`);
