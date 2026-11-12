@@ -83,17 +83,33 @@ export function routeActorPose(course,geometry,actor,out={}){
 function makePath(points){const path=new Path2D();for(let i=0;i<points.length;i+=2)i?path.lineTo(points[i],points[i+1]):path.moveTo(points[i],points[i+1]);return path;}
 function stroke(ctx,path,color,width,dash=[]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.stroke(path);ctx.setLineDash([]);}
 
-// A read-only view of the current job. A missing road leaves the circuit map untouched.
-export function worldJobMapData(course, state) {
+// Cache the immutable road view outside the simulation; a replaced path is checked again.
+const jobRoadCache = new WeakMap();
+const placeName = place => (place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
+export function worldJobMapRoad(state) {
   const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
   const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
   if (!Array.isArray(step?.path) || step.path.length < 2) return null;
-  const path = step.path.map(place => place.position ?? place);
-  if (!path.every(point => Number.isFinite(point.x) && Number.isFinite(point.z))) return null;
-  const name = place => (place?.name ?? place?.id ?? '').replace(/-/g, ' ').toUpperCase();
-  const destination = step.destination ?? step.path.at(-1);
+  let road = jobRoadCache.get(step);
+  if (!road || road.source !== step.path) {
+    const path = step.path.map(place => place.position ?? place);
+    if (!path.every(point => Number.isFinite(point.x) && Number.isFinite(point.z))) return null;
+    const destination = step.destination ?? step.path.at(-1);
+    road = {source: step.path, path, start: {position: path[0], name: placeName(step.path[0])},
+      destination: {position: destination.position ?? destination, name: placeName(destination)}};
+    jobRoadCache.set(step, road);
+  }
+  return road;
+}
+
+// A read-only view of the current job. A missing road leaves the circuit map untouched.
+export function worldJobMapData(course, state) {
+  const road = worldJobMapRoad(state);
+  if (!road) return null;
+  const worldJob = state.arena.worldJob, step = worldJob.job.steps[worldJob.job.stepIndex];
   const actors = worldJob.actors ?? [];
-  const marks = [{kind: 'player', position: course.worldAt(state.s, state.lateral || 0)}];
+  const player = state.onFoot && state.fighter ? state.fighter : course.worldAt(state.s, state.lateral || 0);
+  const marks = [{kind: 'player', position: player}];
   for (const actor of actors) {
     if (actor.id === step.actorId && step.actor?.escort && actor.position)
       marks.push({kind: 'escort', position: actor.position});
@@ -102,13 +118,40 @@ export function worldJobMapData(course, state) {
     else if (actor.ambushKey && Number.isFinite(actor.x) && Number.isFinite(actor.z))
       marks.push({kind: 'rider', position: {x: actor.x, z: actor.z}});
   }
-  return {path, marks, destination: {position: destination.position ?? destination, name: name(destination)},
+  return {path: road.path, start: road.start, destination: road.destination, marks,
     jobName: (worldJob.definition.name ?? 'WORLD JOB').toUpperCase(),
     roadName: worldJob.definition.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
 }
 
+// Pick a label position with room for the road, end mark and panel edges.
+function drawPlaceName(ctx, point, label, points, width, height, end) {
+  if (!label) return;
+  ctx.font = end ? 'bold 12px Segoe UI, sans-serif' : '10px Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  const w = ctx.measureText(label).width, h = end ? 12 : 10;
+  const candidates = [[12,-12],[-w-12,-12],[12,h+12],[-w-12,h+12],[12,-h-20],[-w-12,-h-20]];
+  const distance = (p, a, b) => {
+    const dx=b.x-a.x, dy=b.y-a.y, length=dx*dx+dy*dy;
+    const t=length ? clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/length,0,1) : 0;
+    return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+  };
+  let best=null;
+  for (const [dx,dy] of candidates) {
+    const x=clamp(point.x+dx,4,Math.max(4,width-w-4)), y=clamp(point.y+dy,h+4,height-22);
+    // Sample the label rectangle densely enough to protect the road's thick stroke.
+    let clearance=Infinity;
+    for(let px=x;px<=x+w+4;px+=4) for(let py=y-h;py<=y+3;py+=4)
+      for(let i=1;i<points.length;i++) clearance=Math.min(clearance,distance({x:px,z:0,y:py},points[i-1],points[i]));
+    const markerGap=Math.hypot(Math.max(x-point.x,0,point.x-(x+w)),Math.max(y-h-point.y,0,point.y-y));
+    const score=Math.min(clearance-7,markerGap-8);
+    if(!best || score>best.score) best={x,y,score};
+    if(score>=2) break;
+  }
+  ctx.fillStyle=end?'#ffce75':'#b4b9a6'; ctx.fillText(label,best.x,best.y);
+}
+
 function drawWorldJobMap(ctx, canvas, data) {
-  const width = canvas.width, height = canvas.height, padding = 42;
+  const width = canvas.width, height = canvas.height, padding = 30;
   const xs = data.path.map(p => p.x), zs = data.path.map(p => p.z);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
   const scale = Math.min((width - 2 * padding) / Math.max(1, maxX - minX), (height - 2 * padding) / Math.max(1, maxZ - minZ));
@@ -119,23 +162,26 @@ function drawWorldJobMap(ctx, canvas, data) {
   const points = data.path.map(project), path = new Path2D();
   points.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y));
   stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
-  const end = project(data.destination.position);
-  ctx.font = 'bold 12px Segoe UI, sans-serif'; ctx.textAlign = end.x > width / 2 ? 'right' : 'left';
-  ctx.fillStyle = '#ffce75'; ctx.fillText(data.destination.name, end.x, Math.max(14, end.y - 11));
-  ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
+  const end = project(data.destination.position), start = project(data.start.position);
+  ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
+  drawPlaceName(ctx, end, data.destination.name, points, width, height, true);
+  drawPlaceName(ctx, start, data.start.name, points, width, height, false);
   const colors = {player: '#fff1d0', escort: '#62dabc', hunter: '#ff683a', rider: '#ef9f75'};
-  ctx.font = '10px Segoe UI, sans-serif'; ctx.textAlign = 'left';
-  const legend = [['escort', 'BIG BESS'], ['hunter', 'FURNACE'], ['rider', 'RIDERS']];
+  ctx.font = '12px Segoe UI, sans-serif'; ctx.textAlign = 'left';
+  const legend = [['player', 'YOU'], ['escort', 'BIG BESS'], ['hunter', 'FURNACE'], ['rider', 'RIDERS']];
   let legendX = 10;
   for (const [kind, label] of legend) {
     if (!data.marks.some(mark => mark.kind === kind)) continue;
     ctx.fillStyle = colors[kind]; ctx.fillText(label, legendX, height - 7);
     legendX += ctx.measureText(label).width + 16;
   }
-  for (const mark of data.marks) {
-    const p = project(mark.position); ctx.beginPath(); ctx.arc(clamp(p.x, 7, width - 7), clamp(p.y, 7, height - 7), mark.kind === 'player' ? 6 : 5, 0, Math.PI * 2);
+  const drawMark = mark => {
+    const radius = mark.kind === 'player' ? 8 : 7, p = project(mark.position);
+    ctx.beginPath(); ctx.arc(clamp(p.x, radius + 2, width - radius - 2), clamp(p.y, radius + 2, height - radius - 2), radius, 0, Math.PI * 2);
     ctx.fillStyle = colors[mark.kind]; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#102026'; ctx.stroke();
-  }
+  };
+  for (const mark of data.marks) if (mark.kind !== 'player') drawMark(mark);
+  for (const mark of data.marks) if (mark.kind === 'player') drawMark(mark);
 }
 
 export class RouteMap {

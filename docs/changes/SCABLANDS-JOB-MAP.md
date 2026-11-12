@@ -15,3 +15,18 @@ The map reads the current world-job step's road, fits it north up and marks the 
 ## Removed
 
 The oval and race map headings are replaced by the active road and job headings when a world-job step has a path. Placing and KEEP YOUR LINE no longer appear in world jobs. The original map remains for jobs without a path and for other modes.
+
+## Claude review follow-up
+
+HUD elements are found once, and the new heading and visibility values change only when needed. A weak map caches each step's road points outside job state. On foot, the player mark follows the fighter. The road has a 30-pixel margin; marks are radius 8 for the player and 7 for others, with the player drawn last. A 12-pixel legend includes YOU, the named start is smaller and dimmer, and the end label is placed clear of the road and its marker.
+
+Claude reported that `field-battle` and `run-gas` passed in the browser on the first commit, and that the road, Big Bess and furnace appeared. This follow-up has not been run in Chrome; Claude will rerun both scenarios and the audio-evidence suite.
+
+Follow-up checks:
+- `node tools/test-scablands-job-map.mjs`: 20 checks passed, including fighter position and path reuse.
+- Lane tier (`--changed --jobs 4 --keep-going`): 44 of 45 suites passed. `test-review-evidence.mjs` again could not launch `ffmpeg` in the sandbox (`EPERM`); Claude will rerun it. Race fingerprints: 297 checks passed unchanged; combat replay fingerprints: 12 passed.
+- `npm.cmd run build`: passed, 751 modules.
+- `tools/test-board.mjs`: 632 checks passed; `tools/test-repo-hygiene.mjs`: passed, both in the lane tier.
+- Browser scenarios: not run for this follow-up; Claude will rerun `field-battle` and `run-gas` and review the map.
+
+No existing assertions changed; no sound event added.

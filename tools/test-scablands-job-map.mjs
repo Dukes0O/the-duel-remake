@@ -18,6 +18,12 @@ check(JSON.stringify(data().path) === JSON.stringify(worldJob.job.steps[0].path.
 check(data().destination.name === 'TIN TOWN', 'destination named');
 check(data().jobName === 'GAS RUN' && data().roadName === 'BONEYARD ROAD', 'headings');
 check(marks('player').length === 1, 'player present');
+const cachedPath = data().path;
+check(data().path === cachedPath, 'step path is reused');
+check(data().start.name === 'EVERBURN', 'start place is named');
+state.onFoot = true; state.fighter = {x: 77, z: 88};
+check(marks('player')[0].position === state.fighter, 'on-foot player uses fighter position');
+state.onFoot = false;
 for (const kind of ['escort', 'hunter', 'rider']) check(marks(kind).length === 0, `${kind} absent`);
 worldJob.actors.push({id: 'big-bess', position: {x: 2, z: 3}}, {id: 'old-smoke-furnace', furnace: {}, position: {x: 4, z: 5}},
   {id: 'ambush:1:0', ambushKey: 'ambush:1', x: 6, z: 7}, {id: 'ambush:1:1', ambushKey: 'ambush:1', x: 8, z: 9});
