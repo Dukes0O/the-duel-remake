@@ -67,6 +67,34 @@ three sizes, stacked one to three high on girder scaffolds with walkways and lad
 doors, and a fence joining the clusters to the gate. Every job's road stays clear by 10 m and the arrival place by
 24 m. One solid box for each cluster and two for the gate's posts; at most 12 draw calls and 60,000 triangles.
 
+### Tin Town's shacks: built, merged and judged (12 November 2026)
+
+45 shacks in six clusters, a water tower, a radio pole, washing lines, lamps and a fence, in 4 draw calls and 23,000
+triangles. The alleys and the view from the gate read as a settlement. From 200 m the town is still a thin strip under
+the cliff.
+
+Settled by Claude after the pictures:
+
+- **The gate faces north and south** (the builder's finding: no other turn clears every road). **The furnace does not
+  drive through it.** Its path stops in front of the gate at (575, 82), burns it from there, and turns west along the
+  outside of the fence to (430, 70). So the furnace's path keeps 8 m from the gate's posts like every other solid.
+- **The Boneyard road passes squarely through the gate:** a new place at (575, 112) before it. A road through the
+  gate must keep 3.4 m from each post (the opening is 9 m and Big Bess is 2.8 m wide); every other solid still needs
+  8 m.
+- **The fire takes the whole gate** (Claude's drawing): a flame up each post from the ground, three over the beam,
+  four along the fences, in place of five thin flames on the beam that read as candles.
+- **Seen from far off:** chimney smoke from three shacks, a 16 m watchtower with a lamp, and the shacks' sheet
+  colours brought toward the old model's rust and orange.
+
+**Changed assertions, reviewed by Claude (rule 18).** In `tools/test-scablands-scene.mjs`, the gate fire's checks of
+12 November (five flames, 6 to 8 m tall, spread along 18 m, standing on the beam, five sets of sparks) are replaced by
+checks of the new fire: nine flames, one at least 9 m tall up each post from the ground, three over the beam, a reach
+of 34 m or more centred on the gate, nine sets of sparks, and the fire standing at the gate's own place from the
+ground up. The old checks were one day old and described a fire that the pictures showed to be wrong. In
+`tools/test-old-smoke.mjs` and `tools/test-run-gas.mjs` the builder let a path come within 3.4 m of the gate's two
+posts and let the furnace's piece leaving the gate touch them; the second allowance is being removed with the
+furnace's new path, and the first stays for roads that pass through the gate.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read

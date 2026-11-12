@@ -341,10 +341,16 @@ function addBessEffects(parent){
   return fx;
 }
 
-// Tin Town's gate afire (EVERBURN-RUN-AT-TOWN, grown by RUN-GAS): five tongues of fire 6 to 8 m tall spread along 18 m (the outer ones are 14 m apart and 4 m wide) centred
-// on the gate's place, sparks thrown off them, a plume of twelve smoke puffs that rises 30 m and firelight on the ground.
-// Built the way the furnace's door fire is. It is drawn only, and stays hidden until the furnace has burnt the gate.
-const GATE_TONGUES=Object.freeze([-7,-3.5,0,3.5,7]);
+// Tin Town's gate afire (EVERBURN-RUN-AT-TOWN; redrawn by Claude on 12 November after five thin flames on the beam
+// read as candles). The fire takes the whole gate: one great flame up each post from the ground, three over the beam,
+// and four along the fences, with sparks, a plume of twelve smoke puffs that rises 30 m and firelight on the ground.
+// Each entry is where a flame stands across the gate (x), the height its foot is at (y), its width and its height.
+// It is drawn only, and stays hidden until the furnace has burnt the gate.
+const GATE_TONGUES=Object.freeze([
+  {x:-5.1,y:0,w:5.2,h:10.5},{x:5.1,y:0,w:5.2,h:11},
+  {x:-2.6,y:6.4,w:4.2,h:5.2},{x:0,y:6.8,w:3.8,h:4.4},{x:2.6,y:6.4,w:4.2,h:5.6},
+  {x:-10.5,y:0,w:5.4,h:5.4},{x:10.5,y:0,w:5.4,h:5},{x:-15.5,y:0,w:4.6,h:3.8},{x:15.5,y:0,w:4.6,h:4.1},
+]);
 const GATE_PUFFS=12;
 const GATE_PLUME_METRES=30;
 function addGateFire(){
@@ -353,10 +359,10 @@ function addGateFire(){
   const standing=new THREE.PlaneGeometry(1,1);standing.translate(0,.5,0);
   // The firelight pool on the ground, under everything else that is drawn here.
   const glowMaterial=createGroundGlowMaterial(),glow=new THREE.Mesh(card,glowMaterial);
-  glow.name='Firelight on the ground at the gate';glow.rotation.x=-Math.PI/2;glow.position.set(0,.14,0);glow.scale.set(34,24,1);glow.renderOrder=1;effects.add(glow);
-  const tongues=GATE_TONGUES.map((x,index)=>{
+  glow.name='Firelight on the ground at the gate';glow.rotation.x=-Math.PI/2;glow.position.set(0,.14,0);glow.scale.set(48,30,1);glow.renderOrder=1;effects.add(glow);
+  const tongues=GATE_TONGUES.map((spot,index)=>{
     const tongue=new THREE.Mesh(standing,flame);tongue.name='Fire on the gate';
-    tongue.position.set(x,0,0);tongue.scale.set(4,7,1);tongue.renderOrder=3;
+    tongue.position.set(spot.x,spot.y,0);tongue.scale.set(spot.w,spot.h,1);tongue.renderOrder=3;
     tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=index*.41;flame.uniformsNeedUpdate=true;};
     effects.add(tongue);return tongue;
   });
@@ -371,8 +377,8 @@ function addGateFire(){
     // The plume rises about 30 m and spreads; the flames flicker between 6 and 8 m; the sparks and the firelight follow the clock.
     animate(seconds){
       this.flame.uniforms.uTime.value=seconds;this.glowMaterial.uniforms.uTime.value=seconds;
-      tongues.forEach((tongue,index)=>{tongue.scale.y=6+2*Math.abs(Math.sin(seconds*4.7+index*2.1));});
-      sparks.forEach((points,index)=>points.userData.place(seconds+index*.37,{x:GATE_TONGUES[index],y:1.5,z:0},{x:0,z:1}));
+      tongues.forEach((tongue,index)=>{tongue.scale.y=GATE_TONGUES[index].h*(.86+.2*Math.abs(Math.sin(seconds*4.7+index*2.1)));});
+      sparks.forEach((points,index)=>points.userData.place(seconds+index*.37,{x:GATE_TONGUES[index].x,y:GATE_TONGUES[index].y+2,z:0},{x:0,z:index%2?1:-1}));
       smoke.forEach((puff,index)=>{
         const age=(seconds*.1+index/GATE_PUFFS)%1;
         puff.position.set(Math.sin(seconds*.3+index*2.2)*4*age,2.5+age*GATE_PLUME_METRES,Math.cos(seconds*.25+index*1.9)*2.4*age);
@@ -585,7 +591,8 @@ export function createScablandsScene(course,options={}){
       const gateAt=gateStep?.path?.[gateStep.actor.gateWaypoint],gateSpot=gateAt?.position??gateAt;
       const burning=Boolean(gateSpot)&&(worldJob?.gateBurnt===true||actor?.furnace?.gateBurnt===true);
       gateFire.effects.visible=burning;
-      if(burning)gateFire.effects.position.set(gateSpot.x,scablandsSurfaceHeightAt(gateSpot.x,gateSpot.z)+tinTownGate.userData.fireHeight,gateSpot.z);
+      // The fire stands on the gate itself, from the ground up, wherever the job's path stops in front of it.
+      if(burning)gateFire.effects.position.set(tinTownGate.position.x,scablandsSurfaceHeightAt(tinTownGate.position.x,tinTownGate.position.z),tinTownGate.position.z);
       const furnace=actor?.furnace;
       furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
       // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.

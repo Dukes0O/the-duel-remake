@@ -195,7 +195,7 @@ assert.ok(Math.abs(furnaceTurned)<.001||Math.abs(Math.abs(furnaceTurned)-Math.PI
 // EVERBURN-RUN-AT-TOWN: Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
 const gateFire=scene.group.getObjectByName('Tin Town gate fire and smoke');
 assert.ok(gateFire,'the scene carries a fire for Tin Town\'s gate');
-assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,5,'the gate has five tongues of fire');
+assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,9,'the gate has nine flames: two posts, three over the beam, four along the fences');
 assert.ok(gateFire.children.some(node=>node.name==='Gate smoke'),'the gate has a plume of smoke');
 const everburnJob=EVERBURN_JOBS[5],gateAt=everburnJob.steps[1].path[everburnJob.steps[1].actor.gateWaypoint].position;
 assert.deepEqual([gateAt.x,gateAt.z],[575,62],'the job names the gate at Tin Town');
@@ -207,14 +207,18 @@ syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReach
 assert.equal(gateFire.visible,false,'a furnace that reached the gate without burning it leaves it whole');
 syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReached:true,gateBurnt:true}));
 assert.equal(gateFire.visible,true,'the gate burns after gateBurnt');
-assert.ok(Math.hypot(gateFire.position.x-gateAt.x,gateFire.position.z-gateAt.z)<.001,'the fire stands on the gate');
-const tongueHeights=gateFire.children.filter(node=>node.name==='Fire on the gate').map(node=>node.scale.y);
-assert.ok(tongueHeights.every(height=>height>=6&&height<=8),'the tongues of fire are 6 to 8 m tall');
-const gateTongues=gateFire.children.filter(node=>node.name==='Fire on the gate'),tongueXs=gateTongues.map(node=>node.position.x).sort((a,b)=>a-b);
+const gateModel=scene.group.getObjectByName('Tin Town gate');
+assert.ok(Math.hypot(gateFire.position.x-gateModel.position.x,gateFire.position.z-gateModel.position.z)<.001,'the fire stands on the gate itself');
+// LAND round 2 (Claude): the fire takes the whole gate. A flame at least 9 m tall stands from the ground up each post,
+// three stand over the beam, and the fire reaches along both fences.
+const gateTongues=gateFire.children.filter(node=>node.name==='Fire on the gate');
+const postFlames=gateTongues.filter(node=>node.position.y===0&&Math.abs(Math.abs(node.position.x)-5.1)<.6);
+assert.ok(postFlames.length===2&&postFlames.every(node=>node.scale.y>=9),'a flame at least 9 m tall climbs each post from the ground');
+assert.equal(gateTongues.filter(node=>node.position.y>6).length,3,'three flames stand over the beam');
 const reach=Math.max(...gateTongues.map(node=>node.position.x+node.scale.x/2))-Math.min(...gateTongues.map(node=>node.position.x-node.scale.x/2));
-assert.ok(tongueXs.length===5&&Math.abs(reach-18)<.001&&Math.abs(tongueXs[0]+tongueXs[4])<.001,'the tongues are spread along 18 m, centred on the gate place');
+assert.ok(reach>=34&&Math.abs(gateTongues.reduce((sum,node)=>sum+node.position.x,0))<.001,'the fire reaches along both fences, 34 m or more, centred on the gate');
 assert.equal(gateFire.children.filter(node=>node.name==='Gate smoke').length,12,'the plume is twelve puffs');
-assert.equal(gateFire.children.filter(node=>node.name==='Sparks from the gate fire').length,5,'sparks are thrown off the fire');
+assert.equal(gateFire.children.filter(node=>node.name==='Sparks from the gate fire').length,9,'sparks are thrown off every flame');
 const gateGlow=gateFire.children.find(node=>node.name==='Firelight on the ground at the gate');
 assert.ok(gateGlow&&gateGlow.material.uniforms.uTime&&gateGlow.position.y<.5,'firelight lies on the ground at the gate');
 const gateSmokeY=gateFire.children.find(node=>node.name==='Gate smoke').position.y;animateScene(scene.group,150);
@@ -374,11 +378,11 @@ assert.ok(road,'the dirt road is drawn');
   // The wear is drawn over every material that does not glow.
   const materials=[];gate.traverse(node=>{if(node.isMesh)materials.push(node.material);});
   assert.ok(materials.length>5&&materials.every(material=>Boolean(material.userData.scrapWear)===!glowing(material)),'the wear is drawn over every material of the gate except its lamp glass');
-  // When it burns, the fire stands on the beam.
+  // When it burns, the fire takes the whole gate, from the ground up (redrawn by Claude, 12 November).
   syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReached:true,gateBurnt:true}));
   assert.ok(Math.hypot(gateFire.position.x-575,gateFire.position.z-62)<.001,'the fire stands at the gate');
-  assert.ok(Math.abs(gateFire.position.y-land-beam.max.y)<.05,`the fire stands on the gate's beam (${(gateFire.position.y-land).toFixed(2)} m up, beam top ${beam.max.y.toFixed(2)})`);
-  assert.ok(Math.abs(gateFire.rotation.y-gate.rotation.y)<1e-9,'the three tongues of fire stand along the beam');
+  assert.ok(Math.abs(gateFire.position.y-land)<.05&&Math.abs(Math.max(...gateFire.children.filter(node=>node.name==='Fire on the gate'&&node.position.y>6).map(node=>node.position.y))-beam.max.y)<1.2,`the fire stands from the ground up, with three flames over the beam (beam top ${beam.max.y.toFixed(2)})`);
+  assert.ok(Math.abs(gateFire.rotation.y-gate.rotation.y)<1e-9,'the flames stand along the gate');
 }
 // SCABLANDS-LAND follow-up: Tin Town's shacks, drawn in code round the town's own model.
 {

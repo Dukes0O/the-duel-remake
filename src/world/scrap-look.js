@@ -282,7 +282,7 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
           // Strata: soft layers of uneven thickness, bent by the noise at three sizes so that no two run alike.
           float gLayer=vGroundPos.y*.21+gBig.b*2.6+gMid.r*1.9+gFine.g*.7;
-          gRock*=.88+.17*smoothstep(.3,.7,abs(fract(gLayer)-.5)*2.0)*(.5+gFine.r);
+          gRock*=.95+.07*smoothstep(.3,.7,abs(fract(gLayer)-.5)*2.0)*(.5+gFine.r)*smoothstep(.35,.6,gBig.g);
           gc=mix(gc,gRock,smoothstep(.16,.42,gSlope));
           // Gravel and stones, thicker near rock.
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
@@ -290,7 +290,7 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
           gc*=.88+.24*gGrit.b;
           diffuseColor.rgb=gc;`);
     };
-    material.customProgramCacheKey=()=>'ground-look-2';
+    material.customProgramCacheKey=()=>'ground-look-3';
     material.needsUpdate=true;
     return material;
   }
