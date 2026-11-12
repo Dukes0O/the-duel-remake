@@ -22,10 +22,11 @@ for (const solid of SCABLANDS_SOLIDS.filter(s => s.placeId === 'everburn')) {
   const [x,,z]=solid.center, [hx,,hz]=solid.collision.halfExtents;
   assert.ok(Math.abs(at.x-x)>hx+3 || Math.abs(at.z-z)>hz+3, `car clears ${solid.id}`);
 }
-state.countdown=0; duel.step(1/60); duel.step(1/60);
-assert.equal(state.callout, '', 'unknown opening id is not shown');
+const unknown = start({...EVERBURN_JOBS[5], steps:[{...EVERBURN_JOBS[5].steps[0], startLineId:'missing-opening'}]});
+unknown.state.countdown=0; unknown.step(1/60); unknown.step(1/60);
+assert.equal(unknown.state.callout, '', 'unknown opening id is not shown');
 const named = {...EVERBURN_JOBS[5], steps:[{...EVERBURN_JOBS[5].steps[0], startLineId:'story.ember.moss.1'}]};
 const other = start(named); other.state.countdown=0; other.step(1/60); other.step(1/60);
 assert.match(other.state.callout, /^Big Bess.s driver, Moss: /, 'registered opening shows its words');
-console.log('test-everburn-screens-start: 8 checks passed');
+console.log('test-everburn-screens-start: 9 checks passed');
 

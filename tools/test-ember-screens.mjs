@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createProfile} from '../src/progression.js';
 import {markEmberJob, markEmberRead, markEmberEnd, EMBER_JOBS} from '../src/story/ember-save.js';
 import {emberStoryProps} from '../src/story/ember-road.js';
-import {emberNextUp, emberResultLine, emberWallMarkup, scablandsGateMarkup} from '../src/story/ember-ui.js';
+import {emberNextUp, emberResultLine, emberWallMarkup} from '../src/story/ember-ui.js';
 import {storyCardKeys, storyView, storyCardMarkup} from '../src/story/story-ui.js';
 
 let checks = 0;
@@ -18,7 +18,6 @@ import '../src/story/ember-ui.js';
 same(storyCardKeys().includes('ember'), true, 'the Everburn registers a Story choice');
 same(emberStoryProps(profile).available, false, 'off by default');
 same(emberWallMarkup(emberStoryProps(profile)), '', 'the Story Wall stays empty while unavailable');
-same(scablandsGateMarkup().length, 0, 'the Scablands gate stays hidden while unavailable');
 
 // A new story shows Hollis’s note and only its first job button.
 profile = markEmberRead(profile).profile;
@@ -45,10 +44,7 @@ const unsafe = emberStoryProps(profile, {available: true});
 unsafe.steps[2].note = '<img src=x onerror=alert(1)>';
 ok(!emberWallMarkup(unsafe).includes('<img'), 'story text is escaped');
 
-// Back gate and free driving are separate choices; only a won story job gets a result tick.
-const gate = scablandsGateMarkup({available: true});
-same(count(gate, /<button/g), 2, 'the Scablands offers entry and free driving');
-ok(gate.includes('BACK GATE') && gate.includes('DRIVE THE SCABLANDS'), 'the two routes are named plainly');
+// Only a won story job gets a result tick.
 same(emberResultLine({emberJob: EMBER_JOBS[0], won: true}), 'Everburn: job 1, Hot Delivery, complete.', 'a won job gets a result tick');
 same(emberResultLine({emberJob: EMBER_JOBS[0], won: false}), '', 'a lost job gets no result tick');
 for (const id of EMBER_JOBS.slice(2)) profile = markEmberJob(profile, id).profile;

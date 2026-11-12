@@ -62,7 +62,7 @@ export function initializeWorldJob(duel, definition) {
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   state.worldJobThingsHit = [];
-  if (definition.id === 'everburn-the-everburn' && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
+  if (definition.steps[0]?.faceOriginToPlace && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
     const target = definition.steps[0].place.position;
     const at = duel.course.worldAt(state.s, state.lateral);
     state.headingError = Math.atan2(target.x - at.x, target.z - at.z) - duel.course.at(state.s).heading;

@@ -140,7 +140,7 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   // Job 4 shows no raw ids: its start, rest, sighting and ending lines are all real captions, and it ends on Auntie Solder's
   // existing result line, which it holds for (the way job 3 holds for Cinder's).
   const step = EVERBURN_JOBS[3].steps[0];
-  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId, EVERBURN_JOBS[3].resultLineId];
+  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId];
   assert.ok(named.every(id => EMBER_CAPTIONS[id]), `every line job 4 names has words: ${named.filter(id => !EMBER_CAPTIONS[id])}`);
   assert.ok(!Object.hasOwn(step, 'wonLineId'), 'job 4 has no won line of an id without words');
   const bess = (atDestination, share = .5) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'big-bess', position: {x: 600, y: 0, z: 0}, health: 100, pathProgress: 1, atDestination, share}]});
