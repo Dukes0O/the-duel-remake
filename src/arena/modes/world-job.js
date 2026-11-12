@@ -31,12 +31,12 @@ const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGH
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
 
-// A line's words: the job's own captions, then any registered story's captions, else the id.
+// A line's words: the job's own captions, then any registered story's captions.
 function captionFor(worldJob, lineId) {
   const own = worldJob.definition.captions?.[lineId];
   if (own) return own;
   const story = captionRecord(lineId);
-  return story ? `${story.who}: ${story.text}` : lineId;
+  return story ? `${story.who}: ${story.text}` : '';
 }
 const WELL_WEAR_RANGE = 10;
 const WELL_WEAR_PER_SECOND = 1;
@@ -62,6 +62,11 @@ export function initializeWorldJob(duel, definition) {
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   state.worldJobThingsHit = [];
+  if (definition.id === 'everburn-the-everburn' && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
+    const target = definition.steps[0].place.position;
+    const at = duel.course.worldAt(state.s, state.lateral);
+    state.headingError = Math.atan2(target.x - at.x, target.z - at.z) - duel.course.at(state.s).heading;
+  }
   if(definition.kind==='town-drive'&&definition.layout?.start){
     const start=definition.layout.start,pose=duel.course.nearest(start.x,start.z);
     state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;

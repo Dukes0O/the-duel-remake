@@ -90,7 +90,7 @@ export const EVERBURN_JOBS = Object.freeze([
   Object.freeze({id:'everburn-the-everburn', storyId:'everburn', number:6, name:'The Everburn', kind:'defence-then-finish',
     resultLineId:'story.ember.hollis.1',
     easy:Object.freeze({placeHealth:120, waves:[1,2,2], furnaceHealth:3, ventRadius:2}), lineId:'everburn-job-6-start',
-    steps:[step('defend',{what:'Defend the Everburn well from the Ash Men.', place:well, placeId:'everburn-valve', health:120, waveCount:3,
+    steps:[step('defend',{what:'Defend the Everburn well from the Ash Men.', origin:place('well-start', -445.2132034356, 282.7867965644), place:well, placeId:'everburn-valve', health:120, waveCount:3,
       waves:[{count:2},{count:2},{count:3}], easyWaves:[{count:1},{count:2},{count:2}],
       raiderEntry:wellApproach, raiderHold:wellRaidersHold, approachSpeed:1.5,
       refill:{place:well,crateId:'hollis-well-supply',carWeapon:'flamethrower',footAmmo:'rpg'},
