@@ -536,7 +536,8 @@ export function createModel() {
       repeat: setNow ? [...(canDial() ? ['↑', '↓'] : []), ...(canLever() ? ['←', '→'] : [])] : [], target: !setNow ? null : atGoal ? 'go' : 'set:best', glow: setNow ? 'set' : null,
       waiting: setNow || m.phase === 'guess', best: g};
     if (free) {
-      const fv = {...v, close: null, car: {id: set.car, name: carName(set.car), a: aOf(set.car)}, table: m.rows};
+      // The close-up car and its pads stand where the table of tests used to be; the table is in the strip under the board.
+      const fv = {...v, car: {id: set.car, name: carName(set.car), a: aOf(set.car)}, table: m.rows};
       if (m.phase === 'running') return {...fv, say: m.say, prompt: 'Watch the tape.', hints: ['Watch where the car stops.', 'Compare the tape with the sum beside the picture.', 'Wait a moment.']};
       return {...fv, waiting: !seen.has(id),
         say: m.auto ? autoSay() : m.say || `Now you can experiment. Press ↑ and ↓ to change the speed, and ← and → to choose a different car. The sums beside the picture change as you do, so you can predict the stopping distance before you press Space.${MORE}Test at least ${FREE_TRIES} different settings. The table keeps your results so that you can compare them.`,
