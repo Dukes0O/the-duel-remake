@@ -2,7 +2,7 @@
 // with a litres gauge, the pump nozzle that pours in and the tap that pours out into a jerry can, a drag strip of cars
 // timed to the lesson's speed with a photo finish, force and speed arrows and each car's sum, a graph of the speed, the
 // litre jug and its box, the free test's car and table, and the job card for Brian's job. Draws and hit-tests only.
-import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, shadow, forceArrowTo, roadCar, tarmac, paintStripe, steel, bolt, lcd, shade, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {HALF, WEIGH_KG, TARGET_TEXT, TARGET_KMH, TARGET_MS, kg1, kg2, s2, pct, pctAbout, gapWords} from './fuel-classroom.js';
 import {TANK_LITRES, POUR_LITRES, PETROL_KG_PER_LITRE, WATER_KG_PER_LITRE, GRAND_PRIX} from '../benches/fuel.js';
 export {BOARD};
@@ -93,12 +93,18 @@ function glowBox(ctx, view, x, y, w, h) {
   ctx.strokeStyle = theme.accent; ctx.globalAlpha = .45 + .35 * Math.sin(view.time * 6); ctx.lineWidth = 3;
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 10); ctx.stroke(); ctx.globalAlpha = 1;
 }
+// A platform scale: a steel platform on a housing with four feet, and a lit window for the reading.
 function scaleBody(ctx, cx, top, w, reading, on = true) {
-  ctx.fillStyle = theme.iron[1]; ctx.fillRect(cx - w / 2, top, w, 16);
-  ctx.fillStyle = theme.iron[0]; ctx.fillRect(cx - w / 2, top, w, 4);
-  ctx.fillStyle = theme.beamDark; ctx.beginPath(); ctx.roundRect(cx - w / 2 + 12, top + 16, w - 24, 84, 6); ctx.fill();
+  shadow(ctx, cx, top + 104, w * .56, .6);
+  const house = ctx.createLinearGradient(0, top + 16, 0, top + 100); house.addColorStop(0, '#3d474e'); house.addColorStop(1, '#14181a');
+  ctx.fillStyle = house; ctx.beginPath(); ctx.roundRect(cx - w / 2 + 12, top + 16, w - 24, 84, 6); ctx.fill();
+  ctx.fillStyle = '#0b0d0e'; for (const fx of [cx - w / 2 + 18, cx + w / 2 - 36]) ctx.fillRect(fx, top + 99, 18, 5);
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(cx - w / 2 + 14, top + 18, w - 28, 1.5);
+  steel(ctx, cx - w / 2, top, w, 16, 3);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; for (let tx = cx - w / 2 + 14; tx < cx + w / 2 - 10; tx += 12) { ctx.beginPath(); ctx.moveTo(tx, top + 11); ctx.lineTo(tx + 5, top + 4); ctx.lineTo(tx + 7, top + 4); ctx.lineTo(tx + 2, top + 11); ctx.closePath(); ctx.fill(); }
+  for (const bx of [cx - w / 2 + 6, cx + w / 2 - 6]) bolt(ctx, bx, top + 8, 2);
   if (!on) return;
-  ctx.fillStyle = '#0d1a12'; ctx.beginPath(); ctx.roundRect(cx - 74, top + 32, 148, 50, 5); ctx.fill();
+  lcd(ctx, cx - 74, top + 32, 148, 50);
   text(ctx, reading, cx, top + 58, {size: 30, colour: '#9ff0b4', weight: 800});
 }
 function tank(ctx, view) {
@@ -106,13 +112,22 @@ function tank(ctx, view) {
   // The stand or the scale under it.
   scaleBody(ctx, x + w / 2, y + h + 10, 230, kg1(view.kg), view.scale);
   if (view.scale) text(ctx, 'SCALE', x + w / 2, y + h + 118, {size: 13, colour: DIM, weight: 800});
-  // Glass, petrol and the steel frame.
-  ctx.fillStyle = 'rgba(200,220,230,.08)'; ctx.fillRect(x, y, w, h);
-  const g = ctx.createLinearGradient(0, y + h * (1 - k), 0, y + h); g.addColorStop(0, '#f2c25a'); g.addColorStop(1, '#a8701e');
-  ctx.fillStyle = g; ctx.globalAlpha = .88; ctx.fillRect(x + 3, y + h * (1 - k), w - 6, h * k); ctx.globalAlpha = 1;
-  if (k > 0) { ctx.fillStyle = 'rgba(255,240,190,.55)'; ctx.fillRect(x + 3, y + h * (1 - k), w - 6, 3); }
-  ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 5; ctx.strokeRect(x, y, w, h);
-  ctx.fillStyle = theme.beam; ctx.fillRect(x + w / 2 - 22, y - 12, 44, 14);
+  // Glass, petrol (with its surface and the meniscus where it climbs the glass) and the steel frame.
+  const pane = ctx.createLinearGradient(x, 0, x + w, 0); pane.addColorStop(0, 'rgba(200,222,232,.16)'); pane.addColorStop(.5, 'rgba(200,222,232,.05)'); pane.addColorStop(1, 'rgba(200,222,232,.13)');
+  ctx.fillStyle = pane; ctx.fillRect(x, y, w, h);
+  const sy = y + h * (1 - k);
+  if (k > 0) {
+    const g = ctx.createLinearGradient(0, sy, 0, y + h); g.addColorStop(0, '#f6c85e'); g.addColorStop(.35, '#d99a2a'); g.addColorStop(1, '#8a5712');
+    ctx.fillStyle = g; ctx.globalAlpha = .9; ctx.fillRect(x + 3, sy, w - 6, h * k); ctx.globalAlpha = 1;
+    const tint = ctx.createLinearGradient(0, sy, 0, sy + 22); tint.addColorStop(0, 'rgba(255,240,180,.35)'); tint.addColorStop(1, 'rgba(255,240,180,0)');
+    ctx.fillStyle = tint; ctx.fillRect(x + 3, sy, w - 6, Math.min(22, h * k));
+    ctx.strokeStyle = 'rgba(255,246,210,.95)'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(x + 3, sy - 4); ctx.quadraticCurveTo(x + 9, sy + 1, x + 17, sy + 1); ctx.lineTo(x + w - 17, sy + 1); ctx.quadraticCurveTo(x + w - 9, sy + 1, x + w - 3, sy - 4); ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.10)'; ctx.fillRect(x + 12, y + 8, 7, h - 16); ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(x + w - 22, y + 8, 4, h - 16);
+  steel(ctx, x - 3, y - 3, w + 6, 6, 2); steel(ctx, x - 3, y + h - 3, w + 6, 6, 2); steel(ctx, x - 3, y, 6, h, 2); steel(ctx, x + w - 3, y, 6, h, 2);
+  for (const [bx, by] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) bolt(ctx, bx, by, 2.4);
+  steel(ctx, x + w / 2 - 22, y - 12, 44, 14, 3); bolt(ctx, x + w / 2 - 14, y - 5, 1.6); bolt(ctx, x + w / 2 + 14, y - 5, 1.6);
   // The gauge: a mark every 10 litres, the half line when the step asks for it.
   for (let l = 0; l <= TANK_LITRES; l += 10) {
     const ty = y + h * (1 - l / TANK_LITRES);
@@ -136,77 +151,123 @@ function tank(ctx, view) {
 }
 // A pump nozzle side on: the hose, a green grip with its lever, and the spout pointing down; (tx, ty) is the spout's tip.
 function pumpNozzle(ctx, tx, ty) {
-  ctx.strokeStyle = '#1f2427'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(tx - 150, ty - 120); ctx.bezierCurveTo(tx - 110, ty - 140, tx - 80, ty - 60, tx - 52, ty - 46); ctx.stroke(); ctx.lineCap = 'butt';
+  // The hose, ribbed and lit along its top, then the green rubber grip with its trigger, then the steel spout.
+  const hose = () => { ctx.beginPath(); ctx.moveTo(tx - 150, ty - 120); ctx.bezierCurveTo(tx - 110, ty - 140, tx - 80, ty - 60, tx - 52, ty - 46); ctx.stroke(); };
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#14181a'; ctx.lineWidth = 11; hose();
+  ctx.strokeStyle = '#2b3236'; ctx.lineWidth = 8; hose();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 2; ctx.save(); ctx.translate(-2, -2); hose(); ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 8; ctx.setLineDash([2, 6]); hose(); ctx.setLineDash([]); ctx.lineCap = 'butt';
   ctx.save(); ctx.translate(tx, ty);
-  ctx.fillStyle = '#2f6b45'; ctx.beginPath(); ctx.moveTo(-56, -52); ctx.lineTo(-12, -44); ctx.lineTo(-8, -26); ctx.lineTo(-50, -32); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#1f2427'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-46, -28); ctx.quadraticCurveTo(-34, -12, -16, -22); ctx.stroke();
-  ctx.fillStyle = theme.iron[0]; ctx.beginPath(); ctx.moveTo(-12, -42); ctx.lineTo(4, -38); ctx.lineTo(4, 0); ctx.lineTo(-3, 0); ctx.lineTo(-3, -30); ctx.lineTo(-10, -30); ctx.closePath(); ctx.fill();
+  const grip = ctx.createLinearGradient(0, -52, 0, -26); grip.addColorStop(0, '#4c9a69'); grip.addColorStop(.5, '#2f6b45'); grip.addColorStop(1, '#15301f');
+  ctx.fillStyle = grip; ctx.beginPath(); ctx.moveTo(-56, -52); ctx.lineTo(-12, -44); ctx.lineTo(-8, -26); ctx.lineTo(-50, -32); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-54, -50); ctx.lineTo(-13, -42.5); ctx.stroke();
+  ctx.strokeStyle = '#aab3b8'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(-46, -28); ctx.quadraticCurveTo(-34, -12, -16, -22); ctx.stroke();
+  const spout = ctx.createLinearGradient(-12, 0, 4, 0); spout.addColorStop(0, '#e1e7ea'); spout.addColorStop(.5, '#9aa4a9'); spout.addColorStop(1, '#4a5257');
+  ctx.fillStyle = spout; ctx.beginPath(); ctx.moveTo(-12, -42); ctx.lineTo(4, -38); ctx.lineTo(4, 0); ctx.lineTo(-3, 0); ctx.lineTo(-3, -30); ctx.lineTo(-10, -30); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = .8; ctx.stroke();
   ctx.restore();
+}
+// A falling stream of petrol, lit down one side, that splashes where it lands.
+function stream(ctx, x, top, length) {
+  if (length < 1) return;
+  const g = ctx.createLinearGradient(x, 0, x + 5, 0); g.addColorStop(0, '#f8d37a'); g.addColorStop(.5, '#d99a2a'); g.addColorStop(1, '#8a5712');
+  ctx.fillStyle = g; ctx.fillRect(x, top, 5, length);
+  ctx.fillStyle = 'rgba(255,248,214,.7)'; ctx.fillRect(x + .8, top, 1.2, length);
+  const splash = ctx.createRadialGradient(x + 2.5, top + length, 1, x + 2.5, top + length, 11); splash.addColorStop(0, 'rgba(255,230,150,.6)'); splash.addColorStop(1, 'rgba(255,230,150,0)');
+  ctx.fillStyle = splash; ctx.beginPath(); ctx.ellipse(x + 2.5, top + length, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
 }
 function nozzle(ctx, view) {
   const [nx, ny] = NOZZLE;
   pumpNozzle(ctx, nx, ny + 26);
   if (view.keys['↑']) keyCap(ctx, nx - 66, ny - 30, '↑');
   // Petrol running while the level rises.
-  if (view.level < view.litres - .2) { ctx.fillStyle = PETROL; ctx.fillRect(nx - 2, ny + 26, 5, TANK.y + TANK.h * (1 - view.level / TANK_LITRES) - ny - 26); }
+  if (view.level < view.litres - .2) stream(ctx, nx - 2, ny + 26, TANK.y + TANK.h * (1 - view.level / TANK_LITRES) - ny - 26);
   if (view.glow === 'nozzle' || view.glow === 'pour' && view.keys['↑']) glowBox(ctx, view, nx - 76, ny - 42, 96, 76);
 }
 function tap(ctx, view) {
   const [tx, ty] = TAP;
-  ctx.fillStyle = theme.iron[1]; ctx.fillRect(TANK.x + TANK.w, ty - 6, tx - TANK.x - TANK.w + 14, 12);
-  ctx.fillStyle = '#b8402f'; ctx.beginPath(); ctx.arc(tx - 6, ty - 10, 9, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = theme.iron[1]; ctx.fillRect(tx + 6, ty - 6, 8, 26);
+  steel(ctx, TANK.x + TANK.w, ty - 6, tx - TANK.x - TANK.w + 14, 12, 3);
+  // The tap's red hand wheel, with its spokes, and the spout under the pipe.
+  const wheel = ctx.createRadialGradient(tx - 8, ty - 13, 1, tx - 6, ty - 10, 10); wheel.addColorStop(0, '#e8705a'); wheel.addColorStop(1, '#7d261b');
+  ctx.fillStyle = wheel; ctx.beginPath(); ctx.arc(tx - 6, ty - 10, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1.6; ctx.beginPath(); for (let a = 0; a < 3; a++) { ctx.moveTo(tx - 6 + Math.cos(a * 1.047) * 8, ty - 10 + Math.sin(a * 1.047) * 8); ctx.lineTo(tx - 6 - Math.cos(a * 1.047) * 8, ty - 10 - Math.sin(a * 1.047) * 8); } ctx.stroke();
+  steel(ctx, tx + 6, ty - 6, 8, 26, 2);
   if (view.keys['↓']) keyCap(ctx, tx + 34, ty - 18, '↓');
-  if (view.level > view.litres + .2) { ctx.fillStyle = PETROL; ctx.fillRect(tx + 8, ty + 20, 5, CAN.y - ty - 8); }
+  if (view.level > view.litres + .2) stream(ctx, tx + 8, ty + 20, CAN.y - ty - 8);
   if (view.glow === 'pour' && view.keys['↓']) glowBox(ctx, view, tx - 22, ty - 26, 64, 56);
 }
 function jerryCan(ctx, view) {
   const {x, y, w, h} = CAN, k = Math.max(0, Math.min(1, view.can / TANK_LITRES));
-  ctx.fillStyle = '#7b2a22'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill();
-  ctx.fillStyle = 'rgba(224,166,58,.35)'; ctx.fillRect(x + 6, y + h - 6 - (h - 14) * k, w - 12, (h - 14) * k);
-  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 8, y + 10); ctx.lineTo(x + w - 8, y + h - 10); ctx.moveTo(x + w - 8, y + 10); ctx.lineTo(x + 8, y + h - 10); ctx.stroke();
-  ctx.fillStyle = '#7b2a22'; ctx.fillRect(x + 12, y - 12, 26, 12); ctx.fillRect(x + w - 26, y - 8, 14, 8);
+  shadow(ctx, x + w / 2, y + h + 2, 56, .6);
+  // A red steel jerry can: a chamfered top, a handle slot, a spout with its cap, the pressed cross and a sight window.
+  const body = ctx.createLinearGradient(x, 0, x + w, 0); body.addColorStop(0, '#c4463a'); body.addColorStop(.35, '#9c2f25'); body.addColorStop(1, '#4c1511');
+  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(x + 6, y); ctx.lineTo(x + w - 6, y); ctx.quadraticCurveTo(x + w, y, x + w, y + 6); ctx.lineTo(x + w, y + h - 6); ctx.quadraticCurveTo(x + w, y + h, x + w - 6, y + h); ctx.lineTo(x + 6, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - 6); ctx.lineTo(x, y + 14); ctx.lineTo(x + 14, y); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(x + 16, y + 1, w - 26, 1.5);
+  ctx.fillStyle = '#2a0d0b'; ctx.beginPath(); ctx.roundRect(x + 24, y + 7, 34, 9, 4); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 10, y + 24); ctx.lineTo(x + w - 20, y + h - 10); ctx.moveTo(x + w - 20, y + 24); ctx.lineTo(x + 10, y + h - 10); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,200,190,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 11, y + 22.5); ctx.lineTo(x + w - 19, y + h - 11.5); ctx.moveTo(x + w - 19, y + 22.5); ctx.lineTo(x + 11, y + h - 11.5); ctx.stroke();
+  steel(ctx, x + w - 26, y - 8, 14, 8, 2); steel(ctx, x + w - 30, y - 12, 22, 5, 2);
+  // The sight window down the right side shows how much petrol is in the can.
+  ctx.fillStyle = 'rgba(10,6,4,.7)'; ctx.beginPath(); ctx.roundRect(x + w - 14, y + 20, 9, h - 34, 3); ctx.fill();
+  if (k > 0) { const lit = Math.max(1.5, (h - 38) * k); ctx.fillStyle = '#e8b04a'; ctx.fillRect(x + w - 13, y + h - 17 - lit, 7, lit); ctx.fillStyle = 'rgba(255,246,210,.8)'; ctx.fillRect(x + w - 13, y + h - 17 - lit, 7, 1.2); }
+  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x + w - 14, y + 20, 9, h - 34, 3); ctx.stroke();
 }
 // A Falcone F42 side on, nose to the right; x is the nose.
-function car(ctx, nose, y, scale = 1, colour = CAR) {
-  ctx.save(); ctx.translate(nose, y); ctx.scale(scale, scale);
-  ctx.fillStyle = colour; ctx.beginPath(); ctx.moveTo(0, 6); ctx.lineTo(-4, -4); ctx.lineTo(-30, -9); ctx.lineTo(-44, -20); ctx.lineTo(-66, -20); ctx.lineTo(-80, -9); ctx.lineTo(-92, -7); ctx.lineTo(-92, 6); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#2c3a42'; ctx.beginPath(); ctx.moveTo(-34, -10); ctx.lineTo(-46, -18); ctx.lineTo(-64, -18); ctx.lineTo(-74, -10); ctx.closePath(); ctx.fill();
-  for (const wx of [-20, -74]) { ctx.fillStyle = '#121516'; ctx.beginPath(); ctx.arc(wx, 7, 9, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8d949a'; ctx.beginPath(); ctx.arc(wx, 7, 3.5, 0, Math.PI * 2); ctx.fill(); }
-  ctx.restore();
+function car(ctx, nose, y, scale = 1, colour = CAR, extra = {}) {
+  roadCar(ctx, nose, y, {scale, colour, ...extra});
 }
 // A little tank gauge by a lane's name: how full that car is.
 function miniTank(ctx, x, y, litres) {
+  ctx.fillStyle = 'rgba(200,222,232,.14)'; ctx.fillRect(x, y - 14, 12, 26);
+  const k = litres / TANK_LITRES;
+  if (k > 0) { const g = ctx.createLinearGradient(0, y + 10 - 22 * k, 0, y + 10); g.addColorStop(0, '#f6c85e'); g.addColorStop(1, '#a8701e'); ctx.fillStyle = g; ctx.fillRect(x + 2, y + 10 - 22 * k, 8, 22 * k); ctx.fillStyle = 'rgba(255,246,210,.9)'; ctx.fillRect(x + 2, y + 10 - 22 * k, 8, 1); }
+  ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.fillRect(x + 1.5, y - 12, 2, 22);
   ctx.strokeStyle = theme.text; ctx.lineWidth = 1.5; ctx.strokeRect(x, y - 14, 12, 26);
-  const k = litres / TANK_LITRES; ctx.fillStyle = PETROL; ctx.fillRect(x + 2, y + 10 - 22 * k, 8, 22 * k);
 }
 // An arrow along the road from x to x + length, pointing forward.
-function roadArrow(ctx, x, y, length, colour) {
-  ctx.fillStyle = colour; ctx.strokeStyle = colour; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + length - 8, y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + length, y); ctx.lineTo(x + length - 10, y - 6); ctx.lineTo(x + length - 10, y + 6); ctx.closePath(); ctx.fill();
+function roadArrow(ctx, x, y, length, colour) { forceArrowTo(ctx, x, y, x + length, y, colour, 5); }
+// A chequered finish line across the road from top to bottom, and the board that stands over it.
+function finishLine(ctx, x, top, bottom) {
+  for (let r = 0, py = top; py < bottom; r++, py += 8) for (let c = 0; c < 2; c++) { ctx.fillStyle = (r + c) % 2 ? '#141516' : '#ecebe4'; ctx.fillRect(x - 8 + c * 8, py, 8, Math.min(8, bottom - py)); }
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 7, top, 1, bottom - top);
+}
+function finishBoard(ctx, x, base) {
+  shadow(ctx, x, base + 1, 14, .5);
+  steel(ctx, x - 2, base - 40, 4, 40, 1);
+  ctx.fillStyle = '#101213'; ctx.beginPath(); ctx.roundRect(x - 20, base - 62, 40, 26, 3); ctx.fill();
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) { ctx.fillStyle = (r + c) % 2 ? '#141516' : '#ecebe4'; ctx.fillRect(x - 17 + c * 7, base - 59 + r * 7, 7, 7); }
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.roundRect(x - 20, base - 62, 40, 26, 3); ctx.stroke();
+}
+// The drag strip's road: tarmac, a dashed line between lanes, a painted start line in each lane, and the chequered finish
+// line with its board standing over the road's far end.
+function roadBlock(ctx, g, n, height = (n - 1) * STRIP.gap + 96) {
+  tarmac(ctx, g.x, laneY(0) - 50, g.w, height);
+  for (let i = 1; i < n; i++) { ctx.strokeStyle = 'rgba(245,240,220,.5)'; ctx.setLineDash([22, 14]); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(g.x, laneY(i) - 50); ctx.lineTo(g.x + g.w, laneY(i) - 50); ctx.stroke(); ctx.setLineDash([]); }
+  for (let i = 0; i < n; i++) { paintStripe(ctx, stripX(g, 0), laneY(i) - 14, laneY(i) + 36, 5, theme.text); finishLine(ctx, stripX(g, STRIP.metres), laneY(i) - 40, laneY(i) + 36); }
+  finishBoard(ctx, stripX(g, STRIP.metres) + 4, laneY(0) - 50);
 }
 function strip(ctx, view) {
   const n = view.lanes.length, g = stripOf(view);
-  ctx.fillStyle = '#23272a'; ctx.fillRect(g.x, laneY(0) - 50, g.w, (n - 1) * STRIP.gap + 96);
-  for (let i = 1; i < n; i++) { ctx.strokeStyle = 'rgba(245,240,220,.35)'; ctx.setLineDash([16, 12]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x, laneY(i) - 50); ctx.lineTo(g.x + g.w, laneY(i) - 50); ctx.stroke(); ctx.setLineDash([]); }
-  ctx.strokeStyle = theme.text; ctx.lineWidth = 3; ctx.beginPath();
-  for (let i = 0; i < n; i++) { ctx.moveTo(stripX(g, 0), laneY(i) - 14); ctx.lineTo(stripX(g, 0), laneY(i) + 28); }
-  ctx.stroke();
+  roadBlock(ctx, g, n);
   text(ctx, 'start', stripX(g, 0), laneY(n - 1) + 60, {size: 13, colour: DIM});
   for (const m of [10, 20, 30, 40]) text(ctx, `${m} m`, stripX(g, m), laneY(n - 1) + 60, {size: 12, colour: DIM});
   text(ctx, `From a standstill to ${TARGET_TEXT}, timed at real speed`, g.x + g.w / 2, laneY(0) - 72, {size: 16, colour: DIM});
   view.lanes.forEach((l, i) => {
     const y = laneY(i), nose = stripX(g, l.metres);
     // The car's nose is where it has got to; the stopwatch and the speed ride above the lane, clear of the car.
-    car(ctx, nose, y + 6);
+    car(ctx, nose, y + 6, 1, CAR, {spin: l.metres * (g.w - 170) / STRIP.metres / 8.5, blur: Math.min(1, (l.kmh ?? 0) / 70)});
     miniTank(ctx, g.x + 12, y - 28, l.litres);
     text(ctx, view.plain ? l.label : `${l.label} · ${l.litres} L · ${kg1(l.kg)}`, g.x + 32, y - 28, {size: 15, align: 'left', colour: theme.text});
     // The force is the same push on the car from start to finish; the speed arrow grows as the car accelerates.
     if (view.laneSums) {
       roadArrow(ctx, nose - 92 - 48, y + 2, 46, theme.accent);
       text(ctx, 'force', nose - 92 - 24, y + 16, {size: 12, colour: theme.accent, weight: 800});
-      text(ctx, `${n0(l.sums.force)} N ÷ ${n1(l.sums.total)} kg = ${l.sums.accel.toFixed(3)} m/s²`, g.x + 12, y + 37, {size: 13, align: 'left', colour: theme.accent});
+      const sum = `${n0(l.sums.force)} N ÷ ${n1(l.sums.total)} kg = ${l.sums.accel.toFixed(3)} m/s²`;
+      ctx.font = '700 13px "Segoe UI", sans-serif'; ctx.fillStyle = 'rgba(14,18,20,.85)'; ctx.fillRect(g.x + 7, y + 28, ctx.measureText(sum).width + 10, 18);
+      text(ctx, sum, g.x + 12, y + 37, {size: 13, align: 'left', colour: theme.accent});
     }
     if (l.seconds != null && l.kmh > 3) roadArrow(ctx, nose + 4, y + 2, Math.max(12, 44 * l.kmh / TARGET_KMH), GREEN);
     const sx = g.x + g.w - 8;
@@ -303,8 +364,20 @@ function photo(ctx, view, g) {
 }
 function jug(ctx, cx, bottom, fill, liquid, {label = null, key = null, w = 110, h = 150, mark = true} = {}) {
   const x = cx - w / 2, y = bottom - h;
-  ctx.fillStyle = liquid; ctx.globalAlpha = .85; ctx.fillRect(x + 4, bottom - 4 - (h * .8 - 4) * fill, w - 8, (h * .8 - 4) * fill); ctx.globalAlpha = 1;
+  shadow(ctx, cx, bottom + 1, w * .8, .55);
+  // Glass, the liquid in it with a surface and a meniscus, and the glass's highlights.
+  ctx.fillStyle = 'rgba(200,225,235,.10)'; ctx.fillRect(x, y, w, h);
+  const level = bottom - 4 - (h * .8 - 4) * fill;
+  if (fill > 0) {
+    const g = ctx.createLinearGradient(0, level, 0, bottom); g.addColorStop(0, shade(liquid, .3)); g.addColorStop(.4, liquid); g.addColorStop(1, shade(liquid, -.45));
+    ctx.fillStyle = g; ctx.globalAlpha = .88; ctx.fillRect(x + 4, level, w - 8, bottom - 4 - level); ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.8; ctx.beginPath();
+    ctx.moveTo(x + 4, level - 3); ctx.quadraticCurveTo(x + 9, level + 1, x + 15, level + 1); ctx.lineTo(x + w - 15, level + 1); ctx.quadraticCurveTo(x + w - 9, level + 1, x + w - 4, level - 3); ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x + 8, y + 6, 6, h - 14);
   ctx.strokeStyle = '#d7e3e8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, bottom); ctx.lineTo(x + w, bottom); ctx.lineTo(x + w, y); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 2, y); ctx.lineTo(x + 2, bottom - 2); ctx.lineTo(x + w - 2, bottom - 2); ctx.lineTo(x + w - 2, y); ctx.stroke();
+  ctx.strokeStyle = '#d7e3e8'; ctx.lineWidth = 4;
   ctx.beginPath(); ctx.moveTo(x + w, y + 20); ctx.quadraticCurveTo(x + w + 34, y + 30, x + w, y + 70); ctx.stroke();
   const line = bottom - h * .8;
   ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 8, line); ctx.lineTo(x + w * .45, line); ctx.stroke();
@@ -366,9 +439,10 @@ function jobCard(ctx, view) {
   text(ctx, 'a whole Grand Prix', at(1), by + 62, {size: 12, colour: DIM});
   // The race: start to flag, the car stopping where the petrol runs out.
   const ty = 330, tx0 = x + 40, tx1 = x + w - 30;
-  ctx.fillStyle = '#23272a'; ctx.fillRect(x, ty - 36, w, 64);
-  ctx.strokeStyle = theme.text; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(tx0, ty - 30); ctx.lineTo(tx0, ty + 22); ctx.stroke();
+  tarmac(ctx, x, ty - 36, w, 64);
+  paintStripe(ctx, tx0, ty - 30, ty + 22, 5, theme.text);
   for (let k = 0; k < 6; k++) for (let r = 0; r < 2; r++) { ctx.fillStyle = (k + r) % 2 ? '#111' : '#eee'; ctx.fillRect(tx1 + r * 8, ty - 30 + k * 8, 8, 8); }
+  finishBoard(ctx, tx1 + 8, ty - 36);
   const race = j.race, carX = tx0 + 92 + (tx1 - tx0 - 92) * (race ? race.at : 0);
   car(ctx, carX, ty, 1);
   if (race?.dry) { text(ctx, 'out of petrol', carX - 46, ty - 34, {size: 15, colour: theme.bad}); for (let i = 0; i < 3; i++) { ctx.fillStyle = `rgba(120,120,120,${.5 - i * .14})`; ctx.beginPath(); ctx.arc(carX - 100 - i * 14, ty - 4 - i * 6, 7 + i * 3, 0, Math.PI * 2); ctx.fill(); } }
@@ -390,6 +464,8 @@ function weighCard(ctx, view) {
 }
 function drawShop(ctx, view) {
   background(ctx);
+  // The workshop floor: the tank's scale and the jerry can stand on it; the jugs stand on it too.
+  if (view.tank) floor(ctx, 522); else if (view.jug) floor(ctx, 480); else if (view.jugs) floor(ctx, 462);
   if (view.tank) tank(ctx, view);
   if (view.jug) litreStep(ctx, view);
   if (view.jugs) kilogramStep(ctx, view);
@@ -401,7 +477,7 @@ function drawShop(ctx, view) {
   else if (view.tank && view.keys.Space === 'go' && !view.covered) {
     // Before the first race: the strip waits with its start line.
     const g = RIGHT;
-    ctx.fillStyle = '#23272a'; ctx.fillRect(g.x, laneY(0) - 50, g.w, STRIP.gap + 82);
+    roadBlock(ctx, g, 2, STRIP.gap + 82);
     car(ctx, stripX(g, 0), laneY(0) + 6); car(ctx, stripX(g, 0), laneY(1) + 6);
     text(ctx, `Your tank · ${view.litres} L`, g.x + 14, laneY(0) - 28, {size: 15, align: 'left'}); text(ctx, `Full tank · ${TANK_LITRES} L`, g.x + 14, laneY(1) - 28, {size: 15, align: 'left'});
     text(ctx, 'Press Space to race', stripX(g, 0) + 40, laneY(0) + 6, {size: 15, align: 'left', colour: DIM});
@@ -412,6 +488,7 @@ function drawShop(ctx, view) {
 function drawCheck(ctx, view) {
   background(ctx);
   if (view.scene === 'check-water') {
+    floor(ctx, 462);
     for (const [what, liquid, cx] of [['water', WATER, 330], ['petrol', PETROL, 670]]) {
       if (view.answered) scaleBody(ctx, cx, 470, 230, kg2(what === 'water' ? WATER_KG_PER_LITRE : PETROL_KG_PER_LITRE));
       jug(ctx, cx, 470, 1, liquid, {label: `One litre of ${what}`});

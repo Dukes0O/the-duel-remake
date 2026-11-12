@@ -3,7 +3,7 @@
 // test strip where cars to scale arrive, brake at the line at real speed and stop, with a tape giving the metres.
 // The word steps add a mark for each second, a mark for each half second of braking, and gold blocks of energy that
 // disappear along the road. Draws and hit-tests only.
-import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, shadow, forceArrow, forceArrowTo, roadCar, tarmac, paintStripe, roadPost, steel, bolt, lcd, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {m1, pct, kmh, msOf, metresFrom, S_SLOW, SLOW, FAST, SPEED_STEP, FRONT_LOAD, REAR_LOAD, STEADY_FRONT, MIN_FRONT, MAX_FRONT} from './braking-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -85,46 +85,41 @@ function glowBox(ctx, view, x, y, w, h) {
 function panel(ctx, x, y, w, h) {
   ctx.fillStyle = 'rgba(14,20,24,.9)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
 }
-function arrow(ctx, x0, y0, x1, y1, colour, width = 5) {
-  const length = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / length, uy = (y1 - y0) / length;
-  ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = width;
-  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * 10, y1 - uy * 10); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - ux * 13 - uy * 8, y1 - uy * 13 + ux * 8); ctx.lineTo(x1 - ux * 13 + uy * 8, y1 - uy * 13 - ux * 8); ctx.closePath(); ctx.fill();
+// The Falcone F42 side on, nose to the right; x is the nose. locked: the back tyre red and smoking. braking: the nose dips,
+// the brake lamps and the discs glow (heat at the front, rearHeat at the back).
+function car(ctx, nose, y, scale = 1, {angle = 0, locked = false, braking = false, heat = 0, rearHeat = heat, spin = 0} = {}) {
+  roadCar(ctx, nose, y, {scale, colour: CAR, angle, locked, braking, heat, rearHeat, spin, pitch: braking ? .045 : 0, blur: 0});
 }
-// A car side on, nose to the right; x is the nose. locked: the back tyre red.
-function car(ctx, nose, y, scale = 1, {angle = 0, locked = false} = {}) {
-  ctx.save(); ctx.translate(nose, y); ctx.rotate(-angle); ctx.scale(scale, scale);
-  ctx.fillStyle = CAR; ctx.beginPath(); ctx.moveTo(0, 6); ctx.lineTo(-4, -4); ctx.lineTo(-30, -9); ctx.lineTo(-44, -20); ctx.lineTo(-66, -20); ctx.lineTo(-80, -9); ctx.lineTo(-92, -7); ctx.lineTo(-92, 6); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#2c3a42'; ctx.beginPath(); ctx.moveTo(-34, -10); ctx.lineTo(-46, -18); ctx.lineTo(-64, -18); ctx.lineTo(-74, -10); ctx.closePath(); ctx.fill();
-  for (const wx of [-20, -74]) {
-    ctx.fillStyle = '#121516'; ctx.beginPath(); ctx.arc(wx, 7, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#8d949a'; ctx.beginPath(); ctx.arc(wx, 7, 3.5, 0, Math.PI * 2); ctx.fill();
-  }
-  if (locked) { ctx.strokeStyle = theme.bad; ctx.lineWidth = 2.5 / scale + .8; ctx.beginPath(); ctx.arc(-74, 7, 10.5, 0, Math.PI * 2); ctx.stroke(); }
-  ctx.restore();
+// A weighing pad under one pair of tyres: a steel platform, its housing and the lit readout, standing on the floor.
+function pad(ctx, x, ground) {
+  shadow(ctx, x, ground + 98, 84, .6);
+  const house = ctx.createLinearGradient(0, ground + 50, 0, ground + 94); house.addColorStop(0, '#39424a'); house.addColorStop(1, '#161a1d');
+  ctx.fillStyle = house; ctx.beginPath(); ctx.roundRect(x - 58, ground + 50, 116, 44, 4); ctx.fill();
+  lcd(ctx, x - 52, ground + 55, 104, 35);
+  steel(ctx, x - 62, ground + 48, 124, 7, 2);
+  for (const bx of [x - 55, x + 55]) bolt(ctx, bx, ground + 51.5, 1.7);
 }
 // The car close up on its two pads, each with the share of the weight it carries and an arrow sized to it.
 function closeUp(ctx, view) {
   const c = view.close, {nose, ground, scale} = CLOSE, front = c.front, back = 1 - front;
   const wheel = wx => nose + wx * scale;
+  const braking = Boolean(c.braking), frontShare = view.lever ? view.lever.front / 100 : .65;
+  const heat = braking ? .3 + .7 * frontShare : 0, rearHeat = braking ? (c.locked ? 1 : .3 + .7 * (1 - frontShare)) : 0;
+  car(ctx, nose, ground + 2, scale, {braking, locked: c.locked, heat, rearHeat});
   // Before weight shift has been explained, the car stands alone, with no pads or shares.
   if (!c.plain) for (const [wx, share, name] of [[-20, front, 'Front'], [-74, back, 'Back']]) {
     const x = wheel(wx);
-    ctx.fillStyle = theme.iron[1]; ctx.fillRect(x - 46, ground + 30, 92, 12);
-    ctx.fillStyle = '#0d1a12'; ctx.beginPath(); ctx.roundRect(x - 52, ground + 48, 104, 40, 5); ctx.fill();
+    pad(ctx, x, ground);
     text(ctx, `${name} ${pct(share)}`, x, ground + 68, {size: 20, colour: name === 'Back' && c.locked ? theme.bad : GREEN, weight: 800});
     // The weight on this end pressing down.
     const len = 30 + 120 * share;
-    ctx.strokeStyle = theme.accent; ctx.fillStyle = theme.accent; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(x, ground - 70 - len); ctx.lineTo(x, ground - 76); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - 11, ground - 80); ctx.lineTo(x + 11, ground - 80); ctx.lineTo(x, ground - 64); ctx.closePath(); ctx.fill();
+    forceArrow(ctx, x, ground - 64 - (len + 6), len + 6, false, theme.bad, 8);
   }
-  car(ctx, nose, ground + 2, scale, {angle: c.braking ? .03 : 0, locked: c.locked});
   // Why the weight moves: the mass carries on forward above the road while the tyres slow the car at the road.
   if (view.forces && c.braking) {
-    arrow(ctx, 270, 160, 370, 160, '#f5f0dc');
+    forceArrowTo(ctx, 270, 160, 370, 160, '#f5f0dc', 6);
     text(ctx, 'mass carries on', 320, 138, {size: 14, colour: '#f5f0dc'});
-    arrow(ctx, 350, ground + 34, 290, ground + 34, theme.bad, 4);
+    forceArrowTo(ctx, 350, ground + 34, 290, ground + 34, theme.bad, 5);
     text(ctx, 'tyres slow', 320, ground + 56, {size: 13, colour: theme.bad});
     text(ctx, 'the car', 320, ground + 72, {size: 13, colour: theme.bad});
   }
@@ -206,6 +201,11 @@ function resultsTable(ctx, view) {
     text(ctx, m1(row.strip), cols[4][0], ry, {size: 15, align: 'right', colour: GREEN});
   });
 }
+// A small dark plate behind a right-aligned reading, so that the road's edge line does not run through the words.
+function plate(ctx, value, x, y, size) {
+  ctx.font = `700 ${size}px "Segoe UI", sans-serif`;
+  ctx.fillStyle = 'rgba(14,18,20,.82)'; ctx.fillRect(x - ctx.measureText(value).width - 5, y - size * .7, ctx.measureText(value).width + 10, size * 1.4);
+}
 function laneName(ctx, label, y) {
   ctx.font = '700 15px "Segoe UI", sans-serif';
   ctx.fillStyle = '#23272a'; ctx.fillRect(44, y - 38, ctx.measureText(label).width + 10, 20);
@@ -217,25 +217,37 @@ function strip(ctx, view) {
     // A car waiting to start sits just before the brake line, where it can be seen.
     .map(l => l.waiting ? {...l, metres: -6} : l);
   const n = Math.max(1, lanes.length), top = laneY(0, n) - 40, bottom = laneY(n - 1, n) + 34;
-  ctx.fillStyle = '#23272a'; ctx.fillRect(40, top, 920, bottom - top);
-  for (let i = 1; i < n; i++) { ctx.strokeStyle = 'rgba(245,240,220,.35)'; ctx.setLineDash([16, 12]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(40, laneY(i, n) - 40); ctx.lineTo(960, laneY(i, n) - 40); ctx.stroke(); ctx.setLineDash([]); }
+  tarmac(ctx, 40, top, 920, bottom - top);
+  for (let i = 1; i < n; i++) { ctx.strokeStyle = 'rgba(245,240,220,.5)'; ctx.setLineDash([22, 14]); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(40, laneY(i, n) - 40); ctx.lineTo(960, laneY(i, n) - 40); ctx.stroke(); ctx.setLineDash([]); }
+  // Every 10 m: a faint painted tick across the road and a post at the verge.
   for (let mm = 10; mm <= STRIP.metres; mm += 10) {
-    ctx.strokeStyle = 'rgba(245,240,220,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(stripX(mm), top); ctx.lineTo(stripX(mm), bottom); ctx.stroke();
+    ctx.strokeStyle = 'rgba(245,240,220,.18)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(stripX(mm), top + 12); ctx.lineTo(stripX(mm), bottom - 12); ctx.stroke();
+    roadPost(ctx, stripX(mm), bottom - 5, 15);
     text(ctx, `${mm} m`, stripX(mm), bottom + 14, {size: 12, colour: theme.faint});
   }
-  ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(stripX(0), top); ctx.lineTo(stripX(0), bottom); ctx.stroke();
+  paintStripe(ctx, stripX(0), top, bottom, 6, theme.accent);
   text(ctx, 'brakes on', stripX(0), bottom + 14, {size: 12, colour: theme.accent});
   if (view.line != null) {
     const x = stripX(view.line);
     for (let k = 0; k * 10 < bottom - top; k++) { ctx.fillStyle = k % 2 ? '#eee' : theme.bad; ctx.fillRect(x - 4, top + k * 10, 8, 10); }
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x - 4, top, 1.2, bottom - top); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x + 2.8, top, 1.2, bottom - top);
     text(ctx, view.job ? `corner, ${view.line} m` : 'the line', x, top - 12, {size: 14, colour: theme.bad});
   }
   ctx.save(); ctx.beginPath(); ctx.rect(40, top, 920, bottom - top); ctx.clip();
   lanes.forEach((l, i) => {
     const y = laneY(i, n), x = stripX(l.metres);
     // Skid marks behind a sliding back, from the brake line to where the back is now.
-    if (l.slide > 0) { ctx.strokeStyle = 'rgba(10,10,10,.75)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(stripX(0) - 40, y + 10); ctx.quadraticCurveTo(x - 40, y + 10, x - 44, y + 10 - 26 * l.slide); ctx.stroke(); }
-    car(ctx, x, y + 4, .48, {angle: .35 * l.slide, locked: l.slide > 0});
+    if (l.slide > 0) {
+      const skid = () => { ctx.beginPath(); ctx.moveTo(stripX(0) - 40, y + 10); ctx.quadraticCurveTo(x - 40, y + 10, x - 44, y + 10 - 26 * l.slide); ctx.stroke(); };
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(170,170,160,.14)'; ctx.lineWidth = 9; skid();
+      ctx.strokeStyle = 'rgba(6,6,6,.82)'; ctx.lineWidth = 4.5; skid();
+      ctx.strokeStyle = 'rgba(120,120,112,.4)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); skid(); ctx.setLineDash([]);
+      ctx.lineCap = 'butt';
+    }
+    // The discs glow while the brakes are on, most at the end that does most of the braking, and cool a little once stopped.
+    const front = l.front / 100, working = l.braking && !l.done;
+    car(ctx, x, y + 4, .48, {angle: .35 * l.slide, locked: l.slide > 0, braking: working, heat: working ? .35 + .65 * front : l.done ? .2 : 0, rearHeat: working ? .35 + .65 * (1 - front) : l.done ? .2 : 0, spin: l.metres * STRIP.perM / (9 * .48)});
     if (l.done) {
       ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(stripX(0), y - 22); ctx.lineTo(x, y - 22); ctx.stroke();
       for (const tx of [stripX(0), x]) { ctx.beginPath(); ctx.moveTo(tx, y - 28); ctx.lineTo(tx, y - 16); ctx.stroke(); }
@@ -267,6 +279,7 @@ function strip(ctx, view) {
     const y = laneY(i, n);
     laneName(ctx, l.label, y);
     const reading = l.waiting ? 'ready' : l.done ? `stopped in ${m1(l.stopMetres)}${l.slides ? ', and the back slid' : ''}` : `${Math.round(l.ms * 3.6)} km/h`;
+    plate(ctx, reading, 952, y - 28, 15);
     text(ctx, reading, 952, y - 28, {size: 15, align: 'right', colour: l.done ? (l.slides ? theme.bad : GREEN) : theme.text});
     // A stop far along the strip sits under the reading on the right, which already gives the distance.
     if (l.done && (l.stopMetres > STRIP.metres || stripX(l.metres) < 700)) text(ctx, l.stopMetres > STRIP.metres ? `${m1(l.stopMetres)}, past the end ▶` : m1(l.stopMetres), Math.min(stripX(l.metres), 900) + 12, y - 22, {size: 15, align: l.stopMetres > STRIP.metres ? 'right' : 'left', colour: theme.accent});
@@ -300,23 +313,24 @@ function energyScene(ctx, view) {
   // The road: one numbered stretch for each block.
   rows.forEach((row, i) => {
     const ry = ROAD.y[i], l = row.lane, stretch = S_SLOW * ROAD.perM, count = row.stop / S_SLOW;
-    ctx.fillStyle = '#23272a'; ctx.fillRect(40, ry - 40, 920, 74);
+    tarmac(ctx, 40, ry - 40, 920, 74);
     for (let k = 0; k < Math.ceil(count - 1e-3); k++) {
       const sx = ROAD.x0 + k * stretch, sw = Math.min(stretch, ROAD.x0 + row.stop * ROAD.perM - sx);
       ctx.fillStyle = k % 2 ? 'rgba(237,197,87,.16)' : 'rgba(237,197,87,.32)'; ctx.fillRect(sx, ry - 16, sw, 30);
       if (sw > 24) text(ctx, String(k + 1), sx + sw / 2, ry + 26, {size: 13, colour: GOLD});
     }
-    ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ROAD.x0, ry - 40); ctx.lineTo(ROAD.x0, ry + 34); ctx.stroke();
+    paintStripe(ctx, ROAD.x0, ry - 40, ry + 34, 6, theme.accent);
     const metres = l && !l.waiting ? l.metres : -6;
     ctx.save(); ctx.beginPath(); ctx.rect(40, ry - 40, 920, 74); ctx.clip();
-    car(ctx, ROAD.x0 + metres * ROAD.perM, ry + 4, .48);
+    car(ctx, ROAD.x0 + metres * ROAD.perM, ry + 4, .48, {braking: Boolean(l?.braking && !l.done), heat: l?.braking && !l.done ? .8 : 0, spin: metres * ROAD.perM / (9 * .48)});
     ctx.restore();
     laneName(ctx, `From ${row.label}`, ry);
+    plate(ctx, l?.done ? `stopped in ${m1(row.stop)}` : `needs ${m1(row.stop)}`, 952, ry - 28, 15);
     text(ctx, l?.done ? `stopped in ${m1(row.stop)}` : `needs ${m1(row.stop)}`, 952, ry - 28, {size: 15, align: 'right', colour: l?.done ? GREEN : theme.text});
   });
 }
 function drawRig(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx, CLOSE.ground + 50);
   if (view.close) closeUp(ctx, view);
   if (view.table) resultsTable(ctx, view);
   if (view.dial) dial(ctx, view);
@@ -338,10 +352,11 @@ function drawRig(ctx, view) {
 function drawCheck(ctx, view) {
   background(ctx);
   if (view.stops) {
+    floor(ctx, 160);
     view.stops.forEach((s, i) => {
       const y = 250 + i * 150;
-      ctx.fillStyle = '#23272a'; ctx.fillRect(40, y - 44, 920, 80);
-      ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(stripX(0), y - 44); ctx.lineTo(stripX(0), y + 36); ctx.stroke();
+      tarmac(ctx, 40, y - 44, 920, 80);
+      paintStripe(ctx, stripX(0), y - 44, y + 36, 6, theme.accent);
       text(ctx, `From ${s.kmh} km/h`, 48, y - 56, {size: 17, align: 'left'});
       const at = view.answered ? s.metres : 0;
       car(ctx, stripX(at), y + 4, .48);
@@ -392,6 +407,7 @@ function drawRecap(ctx, view) {
       }
     }
     if (idea.id === 'weight') {
+      tarmac(ctx, x + 14, 284, 272, 14);
       car(ctx, x + 250, 250, 2.2);
       text(ctx, `front ${pct(FRONT_LOAD)}`, x + 206, 300, {size: 16, colour: GREEN}); text(ctx, `back ${pct(REAR_LOAD)}`, x + 87, 300, {size: 16, colour: GREEN});
     }
@@ -422,7 +438,7 @@ export function drawPicture(ctx, picture, w, h) {
     ctx.strokeStyle = theme.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, 14); ctx.lineTo(x0, h - 10); ctx.stroke();
     picture.metres.forEach((metres, i) => {
       const y = 36 + i * 44;
-      ctx.fillStyle = '#23272a'; ctx.fillRect(x0, y - 16, w - 30, 32);
+      tarmac(ctx, x0, y - 16, w - 30, 32);
       car(ctx, x0 + metres * per, y + 4, .3);
       ctx.fillStyle = theme.accent; ctx.fillRect(x0, y + 12, metres * per, 3);
     });

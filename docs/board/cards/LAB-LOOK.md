@@ -50,6 +50,12 @@ Brian's four painted portraits are wired in, and five of the six routine fixes a
 (`docs/board/looks/lab-look/round-2.jpg`, `docs/changes/LAB-LOOK.md`). The sixth, removing the old five-step lesson
 frame, needs edits in the walking room and the lesson opener and waits for its own small job.
 
+## Round 3 (a Sonnet helper; judged by Claude, 11 November 2026)
+
+Braking, Downforce and Fuel are redrawn to the Lift lesson's standard (`docs/board/looks/lab-look/round-3.jpg`), with
+a shared road car, tarmac, posts, steel and lit readouts added to `board-art.js` for later boards to use. Twelve
+boards remain: Pendulums, Projectile, Altitude, Strength; Fire, Rust, Wax, Launch; G-force, Grip, Headings, Suspension.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

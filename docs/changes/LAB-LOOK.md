@@ -16,6 +16,10 @@ Claude, 11 November 2026, with Sonnet helpers and Codex's image tool. Both cards
   minutes and names the recipes that build the Lab's models; two narrow-window style rules are removed; one gold and
   one off-white replace two near-identical pairs.
 
+- Round 3 (a Sonnet helper): `braking-board.js`, `downforce-board.js` and `fuel-board.js` redrawn; `board-art.js`
+  gains `roadCar`, `tarmac`, `paintStripe`, `roadPost`, `forceArrowTo`, `steel`, `bolt` and `lcd`. Their three lesson
+  tests and browser checks pass unchanged; lane tier 35 of 35.
+
 ## Checks
 
 - All 32 `tools/test-lab-*.mjs` files pass, with two new ones (`test-lab-brian-faces`, `test-lab-title-words`) and one

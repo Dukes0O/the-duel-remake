@@ -236,6 +236,242 @@ export function outdoors(ctx) {
   if (!dusk) { dusk = document.createElement('canvas'); dusk.width = BOARD.width; dusk.height = BOARD.height; paintDusk(dusk.getContext('2d')); }
   ctx.drawImage(dusk, 0, 0);
 }
+// ---- LAB-BOARDS-1: shared pieces for the car lessons (Braking, Downforce, Fuel) ----
+// A hex colour (#rrggbb) lightened toward white (t > 0) or darkened toward black (t < 0).
+export function shade(colour, t) {
+  const n = parseInt(colour.slice(1), 16), target = t > 0 ? 255 : 0, k = Math.abs(t);
+  const mixed = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (target - v) * k));
+  return `rgb(${mixed[0]},${mixed[1]},${mixed[2]})`;
+}
+// A colour a fraction t of the way from hex colour a to hex colour b.
+export function blend(a, b, t) {
+  const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16), pick = (n, s) => n >> s & 255;
+  const at = s => Math.round(pick(x, s) + (pick(y, s) - pick(x, s)) * t);
+  return `rgb(${at(16)},${at(8)},${at(0)})`;
+}
+// The same number every time for the same i, so that wear and grain never flicker.
+const noise = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+// A force arrow along any direction, from (x0, y0) to (x1, y1).
+export function forceArrowTo(ctx, x0, y0, x1, y1, colour, width = 10) {
+  const dx = x1 - x0, dy = y1 - y0, length = Math.hypot(dx, dy);
+  if (length < 2) return;
+  ctx.save(); ctx.translate(x0, y0); ctx.rotate(Math.atan2(-dx, dy));
+  forceArrow(ctx, 0, 0, length, false, colour, width);
+  ctx.restore();
+}
+// A steel bar lit from above: a bright top edge, a darker body and a dark underside.
+export function steel(ctx, x, y, w, h, r = 2) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, '#c9d1d6'); g.addColorStop(.2, '#8d979d'); g.addColorStop(.65, '#586166'); g.addColorStop(1, '#2a3135');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill();
+  if (w > 4 && h > 3) { ctx.fillStyle = 'rgba(255,255,255,.38)'; ctx.fillRect(x + r, y + .6, w - 2 * r, 1); ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x + r, y + h - 1.3, w - 2 * r, 1.3); }
+}
+export function bolt(ctx, x, y, r = 2.2) {
+  const g = ctx.createRadialGradient(x - r * .3, y - r * .3, .3, x, y, r);
+  g.addColorStop(0, '#dde3e6'); g.addColorStop(1, '#4a5257');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(x - r * .6, y + r * .2); ctx.lineTo(x + r * .6, y - r * .2); ctx.stroke();
+}
+// A dark glass readout window with a glow inside it, for the weighing scales' numbers.
+export function lcd(ctx, x, y, w, h, colour = '#56d683') {
+  ctx.fillStyle = '#05100a'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.fill();
+  const g = ctx.createRadialGradient(x + w / 2, y + h / 2, 2, x + w / 2, y + h / 2, w * .6);
+  g.addColorStop(0, colour); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save(); ctx.globalAlpha = .16; ctx.fillStyle = g; ctx.fillRect(x, y, w, h); ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x, y, w, h, 4); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x + 3, y + 2, w - 6, 1.4);
+}
+
+// Tarmac for a road drawn into the rectangle (x, y, w, h): grain, patches and cracks, a gravel verge and a worn white
+// edge line along the top and the bottom. Painted once per size and copied (the tests, with no page, paint it directly).
+const roads = new Map();
+function paintTarmac(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#2d2f32'); g.addColorStop(.5, '#2a2c2f'); g.addColorStop(1, '#202224');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  for (let i = 0, n = Math.min(2400, w * h / 70); i < n; i++) {
+    ctx.fillStyle = noise(i * 3 + 2) > .5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.17)';
+    ctx.fillRect(noise(i * 3) * w, noise(i * 3 + 1) * h, 1.5, 1.2);
+  }
+  // Patched repairs, a shade lighter or darker than the road round them, and a few hairline cracks.
+  for (let i = 0; i < Math.ceil(w / 140); i++) {
+    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.028)' : 'rgba(0,0,0,.10)';
+    ctx.fillRect(noise(i * 5 + 90) * w, 8 + noise(i * 5 + 91) * h * .5, 40 + noise(i * 5 + 92) * 90, 6 + noise(i * 5 + 93) * h * .3);
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i < Math.ceil(w / 220); i++) {
+    let cx = noise(i * 7 + 400) * w, cy = 8 + noise(i * 7 + 401) * (h - 16);
+    ctx.moveTo(cx, cy);
+    for (let k = 0; k < 5; k++) { cx += 6 + noise(i * 11 + k) * 10; cy += (noise(i * 13 + k + 3) - .5) * 9; ctx.lineTo(cx, cy); }
+  }
+  ctx.stroke();
+  if (h < 46) return;
+  // The gravel verge, its shadow, and the white edge line with worn gaps.
+  ctx.fillStyle = '#4d4a43'; ctx.fillRect(0, 0, w, 3); ctx.fillRect(0, h - 3, w, 3);
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 3, w, 2); ctx.fillRect(0, h - 5, w, 2);
+  ctx.fillStyle = 'rgba(235,230,214,.55)';
+  for (let x = 0, i = 0; x < w; i++) {
+    const len = 30 + noise(i + 600) * 70; ctx.fillRect(x, 8, len, 2.2); ctx.fillRect(x + 11, h - 10, len, 2.2); x += len + noise(i + 700) * 14;
+  }
+}
+export function tarmac(ctx, x, y, w, h) {
+  if (typeof document === 'undefined') { ctx.save(); ctx.translate(x, y); paintTarmac(ctx, w, h); ctx.restore(); return; }
+  const key = `${Math.round(w)}x${Math.round(h)}`;
+  let road = roads.get(key);
+  if (!road) {
+    road = document.createElement('canvas'); road.width = Math.round(w); road.height = Math.round(h);
+    paintTarmac(road.getContext('2d'), road.width, road.height);
+    roads.set(key, road);
+  }
+  ctx.drawImage(road, x, y);
+}
+// A stripe painted across the road at x, from top to bottom, with chips worn out of it and a lit edge.
+export function paintStripe(ctx, x, top, bottom, width, colour) {
+  ctx.fillStyle = colour; ctx.fillRect(x - width / 2, top, width, bottom - top);
+  for (let y = top, i = 0; y < bottom; y += 5, i++) if (noise(i * 7 + x) > .62) {
+    ctx.fillStyle = 'rgba(30,32,34,.55)'; ctx.fillRect(x - width / 2 + noise(i + x) * width * .5, y, width * (.2 + noise(i * 3 + x) * .4), 2 + noise(i * 5 + x) * 3);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x - width / 2, top, 1, bottom - top);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + width / 2 - 1, top, 1, bottom - top);
+}
+// A white roadside post with a dark band and a red reflector, standing with its foot at (x, y).
+export function roadPost(ctx, x, y, height = 16) {
+  shadow(ctx, x + 2, y + 1, 7, .5);
+  const g = ctx.createLinearGradient(x - 2.5, 0, x + 2.5, 0); g.addColorStop(0, '#f2eee0'); g.addColorStop(.6, '#cfcabb'); g.addColorStop(1, '#7d7a70');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x - 2.5, y - height, 5, height, 1.5); ctx.fill();
+  ctx.fillStyle = '#1b1d1e'; ctx.fillRect(x - 2.5, y - height + 3, 5, 3);
+  ctx.fillStyle = '#d4402c'; ctx.fillRect(x - 1.4, y - height + 8, 2.8, 2.6);
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x - 2, y - height + 1, 1, height - 2);
+}
+
+// The red road car (a Falcone F42) side on, nose to the right, drawn at the size and anchor the lessons' flat car had:
+// the nose is at (x, y), the car is 92 long, the wheel centres are 20 and 74 behind the nose, 7 below y, 9 in radius, and
+// the road is 16 below y. Options: scale; colour; angle (turns the whole car about its nose, tail down); facing (-1
+// points it left); pitch (the body dips its nose, in radians, the wheels stay on the road); spin (how far the wheels
+// have turned, in radians); blur (0 to 1, spokes smear when the wheels turn fast); locked (the back wheel has stopped
+// turning: red, smoking); heat and rearHeat (0 to 1, how brightly the front and the back brake discs glow);
+// braking (the tail lamps are bright); lights (the headlamp throws a beam); shadow (the floor shadow); detail
+// (spokes, discs, door and handle, off by default for small cars).
+export const ROAD_CAR = Object.freeze({length: 92, wheels: [-20, -74], wheelY: 7, wheelR: 9});
+// The car's top edge, nose to tail, for air that has to pass over it.
+export const ROAD_CAR_TOP = Object.freeze([[1.5, -1.5], [-3, -4.4], [-14, -6.3], [-26, -7.7], [-36, -8.6], [-44, -12.6], [-52, -18.6], [-60, -20.4], [-68, -19.6], [-74, -17.2], [-82, -13.6], [-91, -8.8], [-93.2, -6]]);
+function topEdge(ctx) {
+  ctx.quadraticCurveTo(2, -3.4, -3, -4.4);
+  ctx.bezierCurveTo(-14, -6, -26, -7.6, -36, -8.6);
+  ctx.bezierCurveTo(-41, -10, -47, -16.5, -52, -18.6);
+  ctx.bezierCurveTo(-58, -20.8, -68, -20.2, -74, -17.2);
+  ctx.bezierCurveTo(-82, -13.6, -87, -10.2, -91, -8.8);
+}
+function bodyPath(ctx) {
+  ctx.beginPath(); ctx.moveTo(1, 7); ctx.lineTo(2, .5);
+  topEdge(ctx);
+  ctx.quadraticCurveTo(-93.2, -8.2, -93.2, -4); ctx.lineTo(-93, 5.5); ctx.quadraticCurveTo(-92.6, 8, -90, 8); ctx.lineTo(-85, 8);
+  ctx.arc(-74, 7, 11, Math.PI - .09, Math.PI * 2 + .09); ctx.lineTo(-31, 8);
+  ctx.arc(-20, 7, 11, Math.PI - .09, Math.PI * 2 + .09); ctx.lineTo(-4, 8.5); ctx.closePath();
+}
+function glassPath(ctx) {
+  ctx.beginPath(); ctx.moveTo(-38, -8.7);
+  ctx.bezierCurveTo(-42.5, -10.2, -47.5, -15.6, -52, -17.4);
+  ctx.bezierCurveTo(-58, -19.4, -67.5, -18.8, -73, -16.1);
+  ctx.bezierCurveTo(-80, -13, -84, -11.4, -87, -10.3);
+  ctx.lineTo(-84, -8.9); ctx.closePath();
+}
+function carWheel(ctx, cx, cy, scale, {spin, blur, locked, heat, detail}) {
+  ctx.fillStyle = '#0b0d0e'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill();
+  const wall = ctx.createRadialGradient(cx, cy, 5.2, cx, cy, 9);
+  wall.addColorStop(0, '#30373b'); wall.addColorStop(.5, '#191d1f'); wall.addColorStop(1, '#0a0b0c');
+  ctx.fillStyle = wall; ctx.beginPath(); ctx.arc(cx, cy, 8.7, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.arc(cx, cy, 8, Math.PI * 1.05, Math.PI * 1.65); ctx.stroke();
+  if (locked) {
+    ctx.fillStyle = 'rgba(240,122,90,.26)'; ctx.beginPath(); ctx.arc(cx, cy, 8.7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = theme.bad; ctx.lineWidth = Math.min(3, 2.5 / scale + .8); ctx.beginPath(); ctx.arc(cx, cy, 10.4, 0, Math.PI * 2); ctx.stroke();
+  }
+  const rim = ctx.createRadialGradient(cx - 1.4, cy - 1.8, .5, cx, cy, 6.2);
+  rim.addColorStop(0, '#f6f8f8'); rim.addColorStop(.55, '#9ba4aa'); rim.addColorStop(1, '#3f464b');
+  ctx.fillStyle = rim; ctx.beginPath(); ctx.arc(cx, cy, 6.1, 0, Math.PI * 2); ctx.fill();
+  if (!detail) { ctx.fillStyle = '#2a2e31'; ctx.beginPath(); ctx.arc(cx, cy, 1.9, 0, Math.PI * 2); ctx.fill(); return; }
+  // The brake disc shows between the spokes, and glows orange as the brakes work.
+  if (heat > .02) {
+    const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, 9); glow.addColorStop(0, `rgba(255,150,60,${(.7 * heat).toFixed(2)})`); glow.addColorStop(1, 'rgba(255,120,40,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = blend('#444c52', '#ff8a3a', Math.min(1, heat)); ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(cx, cy, 2.4, 0, Math.PI * 2); ctx.fill();
+  ctx.lineCap = 'round';
+  if (blur < .5) {
+    ctx.strokeStyle = '#d3dadd'; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let k = 0; k < 5; k++) { const a = spin + k * Math.PI * .4; ctx.moveTo(cx + Math.cos(a) * 1.4, cy + Math.sin(a) * 1.4); ctx.lineTo(cx + Math.cos(a) * 5.6, cy + Math.sin(a) * 5.6); }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = .5; ctx.beginPath();
+    for (let k = 0; k < 5; k++) { const a = spin + k * Math.PI * .4 + .07; ctx.moveTo(cx + Math.cos(a) * 1.4, cy + Math.sin(a) * 1.4); ctx.lineTo(cx + Math.cos(a) * 5.6, cy + Math.sin(a) * 5.6); }
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = 'rgba(214,220,224,.26)'; ctx.beginPath(); ctx.arc(cx, cy, 5.8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(230,234,236,.3)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(spin) * 5, cy + Math.sin(spin) * 5); ctx.lineTo(cx - Math.cos(spin) * 5, cy - Math.sin(spin) * 5); ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = '#d8a32a'; ctx.lineWidth = 2.1; ctx.beginPath(); ctx.arc(cx, cy, 4, -1.25, -.3); ctx.stroke();
+  ctx.fillStyle = '#23272a'; ctx.beginPath(); ctx.arc(cx, cy, 1.4, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = .6; ctx.beginPath(); ctx.arc(cx, cy, 6.1, 0, Math.PI * 2); ctx.stroke();
+}
+export function roadCar(ctx, x, y, {scale = 1, colour = '#c8402f', angle = 0, facing = 1, pitch = 0, spin = 0, blur = 0, locked = false, heat = 0, rearHeat = heat, braking = false, lights = false, shadow: dropShadow = true, detail = scale >= .7} = {}) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(facing, 1); ctx.rotate(-angle); ctx.scale(scale, scale);
+  if (dropShadow) { shadow(ctx, -46.5, 16.6, 62, .6); shadow(ctx, -20, 16.4, 13, .75); shadow(ctx, -74, 16.4, 13, .75); }
+  const tilt = () => { ctx.translate(-47, 16); ctx.rotate(pitch); ctx.translate(47, -16); };
+  // The wheel wells, then the wheels (which stay on the road), then the body over them.
+  ctx.save(); tilt();
+  ctx.fillStyle = '#06080a'; for (const wx of ROAD_CAR.wheels) { ctx.beginPath(); ctx.arc(wx, 7, 11, Math.PI, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  ROAD_CAR.wheels.forEach((wx, i) => carWheel(ctx, wx, 7, scale, {spin, blur, locked: locked && i === 1, heat: i ? rearHeat : heat, detail}));
+  if (locked) for (const [dx, r, a] of [[-12, 8, .30], [-26, 11, .20], [-42, 13, .12]]) {
+    const smoke = ctx.createRadialGradient(-74 + dx, 12, 1, -74 + dx, 12, r); smoke.addColorStop(0, `rgba(215,215,215,${a})`); smoke.addColorStop(1, 'rgba(215,215,215,0)');
+    ctx.fillStyle = smoke; ctx.beginPath(); ctx.arc(-74 + dx, 12, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.save(); tilt();
+  // Paint: lit on top, dark under the sills.
+  const paint = ctx.createLinearGradient(0, -21, 0, 9);
+  paint.addColorStop(0, shade(colour, .5)); paint.addColorStop(.2, shade(colour, .22)); paint.addColorStop(.48, colour); paint.addColorStop(.78, shade(colour, -.38)); paint.addColorStop(1, shade(colour, -.62));
+  bodyPath(ctx); ctx.fillStyle = paint; ctx.fill();
+  ctx.save(); bodyPath(ctx); ctx.clip();
+  // The shoulder catching the lamp, the long dark sill, the lamp's reflection across the doors.
+  ctx.strokeStyle = 'rgba(255,236,214,.34)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-3, -3.4); ctx.bezierCurveTo(-30, -6.4, -60, -6.6, -91, -7.4); ctx.stroke();
+  const flank = ctx.createLinearGradient(0, -8, 0, 8); flank.addColorStop(0, 'rgba(255,255,255,.14)'); flank.addColorStop(.35, 'rgba(255,255,255,0)'); flank.addColorStop(1, 'rgba(0,0,0,.34)');
+  ctx.fillStyle = flank; ctx.fillRect(-94, -9, 97, 18);
+  ctx.fillStyle = 'rgba(0,0,0,.42)'; ctx.fillRect(-62, 5, 30, 3.5);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.1; bodyPath(ctx); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,244,214,.6)'; ctx.lineWidth = 1.2; ctx.save(); ctx.translate(0, 1.1); ctx.beginPath(); ctx.moveTo(-3, -4.4); ctx.bezierCurveTo(-14, -6, -26, -7.6, -36, -8.6); ctx.bezierCurveTo(-41, -10, -47, -16.5, -52, -18.6); ctx.bezierCurveTo(-58, -20.8, -68, -20.2, -74, -17.2); ctx.stroke(); ctx.restore();
+  // Glass with the sky in it, and the driver's head behind it.
+  const glass = ctx.createLinearGradient(-60, -20, -50, -8); glass.addColorStop(0, '#bcd5df'); glass.addColorStop(.45, '#5f8291'); glass.addColorStop(1, '#16252d');
+  glassPath(ctx); ctx.fillStyle = glass; ctx.fill();
+  ctx.save(); glassPath(ctx); ctx.clip();
+  if (detail) { ctx.fillStyle = 'rgba(12,16,18,.62)'; ctx.beginPath(); ctx.ellipse(-48.5, -12.6, 3, 3.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(-52, -10, 8, 3); }
+  ctx.fillStyle = 'rgba(255,255,255,.36)'; ctx.beginPath(); ctx.moveTo(-44, -20); ctx.lineTo(-37, -20); ctx.lineTo(-49, -8); ctx.lineTo(-56, -8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.beginPath(); ctx.moveTo(-60, -20); ctx.lineTo(-57, -20); ctx.lineTo(-67, -8); ctx.lineTo(-70, -8); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = .9; glassPath(ctx); ctx.stroke();
+  ctx.strokeStyle = shade(colour, -.55); ctx.lineWidth = 1.7; ctx.beginPath(); ctx.moveTo(-59, -19); ctx.lineTo(-59, -8.7); ctx.stroke();
+  if (detail) {
+    // The door, its handle and the mirror.
+    ctx.strokeStyle = 'rgba(0,0,0,.42)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(-36, -8.4); ctx.lineTo(-35.2, 7.4); ctx.moveTo(-64.5, -8.6); ctx.lineTo(-64.5, 6); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.roundRect(-61, -5.6, 5.5, 1.5, .7); ctx.fill();
+    ctx.fillStyle = shade(colour, -.45); ctx.beginPath(); ctx.moveTo(-38, -9.3); ctx.lineTo(-41.8, -9.7); ctx.lineTo(-41.2, -7.6); ctx.lineTo(-38, -8.2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = shade(colour, -.5); ctx.fillRect(-92.6, -9.5, 7, 1.2);
+    ctx.fillStyle = '#101314'; ctx.beginPath(); ctx.roundRect(-4.5, 2.6, 5.5, 3.6, 1); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = .5; ctx.beginPath(); ctx.moveTo(-3.6, 3.9); ctx.lineTo(.4, 3.9); ctx.moveTo(-3.6, 5.1); ctx.lineTo(.4, 5.1); ctx.stroke();
+    ctx.fillStyle = '#25292c'; ctx.beginPath(); ctx.ellipse(-92.2, 5.8, 1.3, 1.9, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#14181a'; ctx.beginPath(); ctx.moveTo(1, 7); ctx.lineTo(-9, 8.6); ctx.lineTo(-9, 7.2); ctx.lineTo(.6, 5.6); ctx.closePath(); ctx.fill();
+  // Lamps: the head lamp, and the tail lamp, which glows while the brakes are on.
+  const head = ctx.createLinearGradient(2, -3, -8, -1); head.addColorStop(0, '#fffbe6'); head.addColorStop(1, '#bda760');
+  ctx.fillStyle = head; ctx.beginPath(); ctx.moveTo(1.9, -.2); ctx.lineTo(-2.4, -3.3); ctx.lineTo(-9, -3.7); ctx.lineTo(-6.4, -.8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = braking ? '#ff4d38' : '#972317'; ctx.beginPath(); ctx.moveTo(-93.2, -6.9); ctx.lineTo(-89, -7.5); ctx.lineTo(-89.4, -3.6); ctx.lineTo(-93.1, -3.3); ctx.closePath(); ctx.fill();
+  if (braking) { const glow = ctx.createRadialGradient(-93, -5, 1, -93, -5, 11); glow.addColorStop(0, 'rgba(255,70,50,.55)'); glow.addColorStop(1, 'rgba(255,70,50,0)'); ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(-93, -5, 11, 0, Math.PI * 2); ctx.fill(); }
+  if (lights) { const beam = ctx.createLinearGradient(2, 0, 40, 0); beam.addColorStop(0, 'rgba(255,244,200,.35)'); beam.addColorStop(1, 'rgba(255,244,200,0)'); ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(2, -2); ctx.lineTo(40, -9); ctx.lineTo(40, 8); ctx.lineTo(2, 1); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  ctx.restore();
+}
+
 export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {
   ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
   const words = value.split(' '), lines = [];
