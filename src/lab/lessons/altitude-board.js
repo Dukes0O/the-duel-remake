@@ -2,7 +2,7 @@
 // three places, the collective lever as a share, the weighing pad with Kestrel One and its load, the air jar, the column of
 // air that shows why the air thins, and the bars that compare the push with the weight.
 // Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, floor, shade, shadow, rope, forceArrow, steel, bolt, bezel, plankCrate, weighingPad, grain, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {AIR, CAR_KG, CRATE_KG, HEIGHT, MOST, NAME, OWN_KG, RACK, airAt, bestCrates, dots, fuelPerMinute, hoverShare, kg, metres, pct} from './altitude-classroom.js';
 export {BOARD};
 // Pressing on the lever moves it there at once.
@@ -107,35 +107,21 @@ export function targetPoint(view, action) {
 export function dragAngle(view, id, x, y) { return (G0 - y) / (G0 - G1); }
 
 // ---- drawing ----
-function crate(ctx, x, y) {
-  const g = ctx.createLinearGradient(x - CRATE.w / 2, y - CRATE.h / 2, x + CRATE.w / 2, y + CRATE.h / 2);
-  g.addColorStop(0, '#b98a4e'); g.addColorStop(1, '#6e4b24');
-  ctx.fillStyle = g; ctx.fillRect(x - CRATE.w / 2, y - CRATE.h / 2, CRATE.w, CRATE.h);
-  ctx.strokeStyle = 'rgba(30,18,6,.7)'; ctx.lineWidth = 1.5; ctx.strokeRect(x - CRATE.w / 2, y - CRATE.h / 2, CRATE.w, CRATE.h);
-  ctx.beginPath(); ctx.moveTo(x - CRATE.w / 2, y - CRATE.h / 2); ctx.lineTo(x + CRATE.w / 2, y + CRATE.h / 2); ctx.moveTo(x + CRATE.w / 2, y - CRATE.h / 2); ctx.lineTo(x - CRATE.w / 2, y + CRATE.h / 2); ctx.stroke();
-  ctx.font = '800 10px "Segoe UI", sans-serif'; ctx.fillStyle = '#f5e7c8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('500', x, y + 1);
-}
-function pad(ctx) {
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-PAD_HALF + 5, -4, 2 * PAD_HALF, 12);
-  const g = ctx.createLinearGradient(0, -10, 0, 0); g.addColorStop(0, theme.beamLight); g.addColorStop(1, theme.beamDark);
-  ctx.fillStyle = g; ctx.fillRect(-PAD_HALF, -10, 2 * PAD_HALF, 10);
-  ctx.fillStyle = '#d6a43a'; for (let x = -PAD_HALF + 5; x < PAD_HALF - 5; x += 40) ctx.fillRect(x, -10, 20, 3);
-}
-function arrow(ctx, x, y, length, up, colour, width = 10) {
-  if (length < 2) return;
-  const dir = up ? -1 : 1, head = Math.min(16, length * .6);
-  ctx.fillStyle = colour;
-  ctx.fillRect(x - width / 2, up ? y - length + head : y, width, length - head);
-  ctx.beginPath(); ctx.moveTo(x - width * 1.2, y + dir * (length - head)); ctx.lineTo(x + width * 1.2, y + dir * (length - head)); ctx.lineTo(x, y + dir * length); ctx.closePath(); ctx.fill();
-}
-// Air thrown down by the rotor: one falling dot for each bit of air, so fewer dots where the air is thin.
+function crate(ctx, x, y) { plankCrate(ctx, x, y, CRATE.w, CRATE.h, '500'); }
+function pad(ctx) { weighingPad(ctx, PAD_HALF); }
+const arrow = forceArrow;
+// Air thrown down by the rotor: a streak for each stream of air, so that there are fewer where the air is thin.
 function air(ctx, hx, hy, share, time) {
-  const n = Math.round(44 * share);
-  ctx.fillStyle = 'rgba(196,237,223,.75)';
+  const n = Math.round(22 * share), fall = 76;
+  ctx.lineCap = 'round';
   for (let i = 0; i < n; i++) {
-    const x = hx - 104 + ((i * 37) % 44) * (208 / 43), y = hy - 24 + ((time * 110 + i * 29) % 76);
-    ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
+    const x = hx - 104 + ((i * 37) % 44) * (208 / 43), travel = (time * 110 + i * 29) % fall, y = hy - 24 + travel, len = Math.min(16, fall - travel);
+    if (len < 4) continue;
+    const g = ctx.createLinearGradient(0, y, 0, y + len); g.addColorStop(0, 'rgba(170,236,215,0)'); g.addColorStop(1, 'rgba(196,237,223,.8)');
+    ctx.strokeStyle = g; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + len); ctx.stroke();
+    ctx.fillStyle = 'rgba(205,244,230,.85)'; ctx.beginPath(); ctx.moveTo(x - 3.2, y + len - 4.5); ctx.lineTo(x + 3.2, y + len - 4.5); ctx.lineTo(x, y + len + 2); ctx.closePath(); ctx.fill();
   }
+  ctx.lineCap = 'butt';
 }
 function spaceKey(ctx, x, y) {
   ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 26, y - 10, 52, 20, 3); ctx.fill();
@@ -149,13 +135,15 @@ function halo(ctx, x, y, r, time) {
 function drawSet(ctx, f, time, {strain = false} = {}) {
   const g = geometry(f);
   pad(ctx);
+  // The helicopter's shadow on the pad: smaller and fainter as it climbs.
+  shadow(ctx, g.hx - 20, -12, 110 - Math.min(55, f.h * 12), Math.max(.12, .45 - f.h * .08));
   if (g.loadedSet) {
-    ctx.strokeStyle = theme.line; ctx.lineWidth = 1.4;
+    ctx.strokeStyle = '#d8d0bc'; ctx.lineWidth = 1.4;
     for (const c of g.crates) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(c.x, c.y - CRATE.h / 2); ctx.stroke(); }
     if (g.carAt) { ctx.beginPath(); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x - 26, g.carAt.y - 4); ctx.moveTo(g.ring.x, g.ring.y); ctx.lineTo(g.carAt.x + 26, g.carAt.y - 4); ctx.stroke(); }
     const hookX = g.hx, hookY = g.hy + HOOK, sag = (1 - g.k) * 14;
-    ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(hookX, hookY);
-    ctx.quadraticCurveTo((hookX + g.ring.x) / 2, Math.max(hookY, g.ring.y) + sag, g.ring.x, g.ring.y); ctx.stroke();
+    rope(ctx, hookX, hookY, (hookX + g.ring.x) / 2, Math.max(hookY, g.ring.y) + sag, g.ring.x, g.ring.y, 2.2);
+    ctx.strokeStyle = '#cfd6da'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(g.ring.x, g.ring.y, 3.2, 0, Math.PI * 2); ctx.stroke();
     if (g.carAt) car(ctx, g.carAt.x, g.carAt.y, 0);
     for (const c of g.crates) crate(ctx, c.x, c.y);
   }
@@ -165,23 +153,71 @@ function drawSet(ctx, f, time, {strain = false} = {}) {
 }
 
 // A rock mountain with a snow cap: its peak at height py, seven tenths of the way from left to right; feet on the ground line gy.
+// The left faces catch the lamp, the right faces are in shade, and the far ridges fade into haze.
+const PEAK_LEFT = [[0, 1], [.1, .9], [.18, .78], [.24, .76], [.3, .7], [.36, .58], [.42, .46], [.47, .44], [.52, .38], [.57, .3], [.62, .2], [.66, .1], [.7, 0]];
+const PEAK_RIGHT = [[.7, 0], [.75, .1], [.8, .16], [.83, .24], [.86, .3], [.9, .42], [.93, .5], [.97, .56], [1, .62], [1, 1]];
+const PEAK_RIDGE = [[.7, 0], [.69, .15], [.73, .3], [.68, .45], [.72, .6], [.67, .78], [.7, 1]];
+const SNOW_EDGE = [[.505, .4], [.545, .34], [.57, .42], [.61, .33], [.64, .4], [.68, .3], [.71, .38], [.75, .28], [.79, .36], [.83, .27], [.86, .3]];
 function peak(ctx, py, left, right, gy) {
-  const w = right - left, h = gy - py, at = (fx, fy) => [left + fx * w, py + fy * h], top = .7;
-  const rock = ctx.createLinearGradient(0, py, 0, gy);
-  rock.addColorStop(0, '#6f766c'); rock.addColorStop(1, '#30362f');
-  const outline = [[0, 1], [.18, .78], [.3, .7], [.42, .46], [.52, .38], [.62, .2], [top, 0], [.8, .16], [.86, .3], [.93, .5], [1, .62], [1, 1]];
-  ctx.fillStyle = rock; ctx.beginPath(); outline.forEach(([fx, fy], i) => ctx[i ? 'lineTo' : 'moveTo'](...at(fx, fy))); ctx.closePath(); ctx.fill();
-  // A darker shoulder on the shaded side, then the snow cap with a ragged edge.
-  ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.moveTo(...at(top, 0)); ctx.lineTo(...at(.8, .16)); ctx.lineTo(...at(.86, .3)); ctx.lineTo(...at(.93, .5)); ctx.lineTo(...at(1, .62)); ctx.lineTo(...at(1, 1)); ctx.lineTo(...at(.74, 1)); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#e4e8e6'; ctx.beginPath();
-  [[.58, .26], [.62, .2], [top, 0], [.8, .16], [.84, .25], [.78, .22], [.74, .29], [.69, .21], [.64, .3]].forEach(([fx, fy], i) => ctx[i ? 'lineTo' : 'moveTo'](...at(fx, fy)));
-  ctx.closePath(); ctx.fill();
+  const w = right - left, h = gy - py, at = ([fx, fy]) => [left + fx * w, py + fy * h];
+  const trace = (points, first = 'moveTo') => points.forEach((point, i) => ctx[i ? 'lineTo' : first](...at(point)));
+  // Two far ridges behind, each paler than the one before it.
+  for (const [colour, pts] of [['rgba(150,166,182,.22)', [[-.06, 1], [.04, .72], [.14, .6], [.26, .68], [.4, .5], [.52, .64], [.6, 1]]], ['rgba(110,126,140,.32)', [[.3, 1], [.42, .78], [.5, .66], [.58, .74], [.66, .5], [.78, .6], [.9, .48], [1.04, .7], [1.04, 1]]]]) {
+    ctx.fillStyle = colour; ctx.beginPath(); trace(pts); ctx.closePath(); ctx.fill();
+  }
+  ctx.save();
+  ctx.beginPath(); trace(PEAK_LEFT); trace(PEAK_RIGHT.slice(1), 'lineTo'); ctx.closePath(); ctx.clip();
+  const lit = ctx.createLinearGradient(0, py, 0, gy); lit.addColorStop(0, '#b8bdb0'); lit.addColorStop(.5, '#757c70'); lit.addColorStop(1, '#3f463e');
+  ctx.fillStyle = lit; ctx.fillRect(left - 2, py - 2, w + 4, h + 4);
+  // The shaded faces: right of the ridge that runs down from the summit.
+  const dark = ctx.createLinearGradient(0, py, 0, gy); dark.addColorStop(0, '#7e877e'); dark.addColorStop(.5, '#4a524a'); dark.addColorStop(1, '#262d27');
+  ctx.fillStyle = dark; ctx.beginPath(); trace(PEAK_RIGHT); trace([...PEAK_RIDGE].reverse().slice(0, -1), 'lineTo'); ctx.closePath(); ctx.fill();
+  // Gullies and cracks in the rock, the same every time.
+  for (let i = 0; i < 18; i++) {
+    const fx = .28 + .66 * grain(i + 300), fy = .1 + .62 * grain(i + 320), shaded = fx > .7 - .02 * fy;
+    ctx.strokeStyle = shaded ? 'rgba(0,0,0,.28)' : 'rgba(20,26,20,.24)'; ctx.lineWidth = 1.2; ctx.beginPath();
+    let cx = fx, cy = fy; ctx.moveTo(...at([cx, cy]));
+    for (let k = 0; k < 4; k++) { cx += (grain(i * 7 + k + 340) - .5) * .06; cy += .035 + grain(i * 5 + k + 360) * .05; ctx.lineTo(...at([cx, cy])); }
+    ctx.stroke();
+    ctx.strokeStyle = shaded ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.14)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(...at([fx + .012, fy])); ctx.lineTo(...at([fx + .012 + (grain(i + 380) - .5) * .05, fy + .12])); ctx.stroke();
+  }
+  // The snow cap: bright on the lit side, blue-grey in shade, with a ragged lower edge and wind-scoured streaks.
+  const snow = ctx.createLinearGradient(0, py, 0, py + h * .4); snow.addColorStop(0, '#ffffff'); snow.addColorStop(1, '#d3dde2');
+  ctx.fillStyle = snow; ctx.beginPath(); trace([[.505, .4], ...PEAK_LEFT.slice(-5, -1), [.7, 0], ...PEAK_RIGHT.slice(1, 5)]); trace([...SNOW_EDGE].reverse(), 'lineTo'); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(95,120,160,.42)'; ctx.beginPath(); trace([[.7, 0], ...PEAK_RIGHT.slice(1, 5), [.83, .27], [.79, .36], [.75, .28], [.71, .38], [.68, .3], [.69, .15]]); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 1.4; ctx.beginPath(); trace(SNOW_EDGE); ctx.stroke();
+  ctx.strokeStyle = 'rgba(130,150,185,.45)'; ctx.lineWidth = 1;
+  for (let i = 0; i < 9; i++) { const fx = .56 + .28 * grain(i + 400), fy = .05 + .22 * grain(i + 420); ctx.beginPath(); ctx.moveTo(...at([fx, fy])); ctx.lineTo(...at([fx + .05 + grain(i + 440) * .03, fy + .018])); ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 6; i++) ctx.fillRect(...at([.58 + .1 * grain(i + 460), .04 + .22 * grain(i + 480)]), 1.6, 1.6);
+  // The tree line: firs thinning out as the mountain climbs.
+  const scale = Math.max(1, h / 400);
+  for (let row = 0; row < 4; row++) for (let x = left + w * (.07 + row * .03) + (row % 2) * 3.5, i = 0; x < right - 3; x += 7, i++) {
+    if (grain(i + row * 50 + 500) > .86 - row * .22) continue;
+    const size = (9 + 9 * grain(i + row * 40 + 600)) * scale, base = gy - 1 - row * (h * .03 + 3);
+    ctx.fillStyle = row ? '#202c24' : '#141d17';
+    ctx.beginPath(); ctx.moveTo(x, base - size); ctx.lineTo(x - size * .32, base - size * .45); ctx.lineTo(x - size * .18, base - size * .45); ctx.lineTo(x - size * .4, base); ctx.lineTo(x + size * .4, base); ctx.lineTo(x + size * .18, base - size * .45); ctx.lineTo(x + size * .32, base - size * .45); ctx.closePath(); ctx.fill();
+  }
+  // Haze gathers at the foot of the mountain.
+  const haze = ctx.createLinearGradient(0, gy - h * .4, 0, gy); haze.addColorStop(0, 'rgba(170,190,205,0)'); haze.addColorStop(1, 'rgba(170,190,205,.32)');
+  ctx.fillStyle = haze; ctx.fillRect(left - 2, gy - h * .4, w + 4, h * .4 + 2);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,244,214,.45)'; ctx.lineWidth = 1.3; ctx.beginPath(); trace(PEAK_LEFT.slice(4)); ctx.stroke();
+}
+// A small flag on a pole, standing on the line that marks a place.
+function marker(ctx, x, y, here) {
+  ctx.strokeStyle = '#d8dee1'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 24); ctx.stroke();
+  ctx.fillStyle = here ? theme.accent : '#c9c2b0'; ctx.beginPath(); ctx.moveTo(x, y - 24); ctx.lineTo(x + 13, y - 20); ctx.lineTo(x, y - 15); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.moveTo(x, y - 19.5); ctx.lineTo(x + 13, y - 20); ctx.lineTo(x, y - 15); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#4c565d'; ctx.beginPath(); ctx.ellipse(x, y, 3.5, 1.4, 0, 0, Math.PI * 2); ctx.fill();
 }
 function mountain(ctx, view, place) {
   ctx.fillStyle = 'rgba(10,14,15,.45)'; ctx.beginPath(); ctx.roundRect(MX0 - 6, 40, MX1 - MX0 + 12, FOOT_Y - 10, 8); ctx.fill();
   // The mountain, then the sea at its foot.
   peak(ctx, PEAK_Y - 8, MX0 + 20, MX1 + 4, FOOT_Y);
-  ctx.fillStyle = '#2f5a6e'; ctx.fillRect(MX0, FOOT_Y, MX1 - MX0, 14);
+  const sea = ctx.createLinearGradient(0, FOOT_Y, 0, FOOT_Y + 14); sea.addColorStop(0, '#3f7488'); sea.addColorStop(1, '#14303c');
+  ctx.fillStyle = sea; ctx.fillRect(MX0, FOOT_Y, MX1 - MX0, 14);
+  ctx.fillStyle = 'rgba(235,246,250,.55)'; ctx.fillRect(MX0, FOOT_Y - .5, MX1 - MX0, 1.4);
+  ctx.strokeStyle = 'rgba(210,235,245,.25)'; ctx.lineWidth = 1; for (let i = 0; i < 6; i++) { const x = MX0 + 8 + i * 36; ctx.beginPath(); ctx.moveTo(x, FOOT_Y + 5 + (i % 2) * 4); ctx.lineTo(x + 14, FOOT_Y + 5 + (i % 2) * 4); ctx.stroke(); }
   text(ctx, 'Altitude', (MX0 + MX1) / 2, 58, {size: 17, colour: theme.accent});
   for (let i = 0; i < 3; i++) {
     const y = placeY(i), here = i === place;
@@ -190,6 +226,7 @@ function mountain(ctx, view, place) {
     ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.beginPath(); ctx.roundRect(MX0 + 2, y - 38, 138, 36, 5); ctx.fill();
     text(ctx, NAME[i], MX0 + 8, y - 26, {size: 16, align: 'left', colour: here ? theme.accent : theme.text});
     text(ctx, metres(HEIGHT[i]), MX0 + 8, y - 9, {size: 14, align: 'left', weight: 600, colour: here ? theme.text : theme.faint});
+    marker(ctx, MX0 + 148, y, here);
   }
   if (place != null) {
     const [x, y] = markerPoint(place);
@@ -199,18 +236,36 @@ function mountain(ctx, view, place) {
   if (view.keys['↑'] === 'place:up') { keyCap(ctx, MX0 + 40, FOOT_Y + 36, '↑'); text(ctx, 'up', MX0 + 56, FOOT_Y + 36, {size: 14, align: 'left'}); keyCap(ctx, MX0 + 120, FOOT_Y + 36, '↓'); text(ctx, 'down', MX0 + 136, FOOT_Y + 36, {size: 14, align: 'left'}); }
 }
 
-// A jar of air: 100 places for a bit of air, filled evenly so thin air shows its gaps.
+// A jar of air: 100 places for a bit of air, filled evenly so thin air shows its gaps. It is glass with a brass lid.
 const SLOTS = Array.from({length: 100}, (_, i) => (i * 37) % 100);
 function jar(ctx, box, share, {label, glow = false, time = 0, unknown = false} = {}) {
-  ctx.fillStyle = 'rgba(160,200,215,.10)'; ctx.strokeStyle = glow ? theme.accent : 'rgba(200,225,235,.7)'; ctx.lineWidth = glow ? 3 + Math.sin(time * 6) * 1.5 : 2;
-  ctx.beginPath(); ctx.roundRect(box.x, box.y, box.w, box.h, 10); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = theme.beamLight; ctx.fillRect(box.x + 6, box.y - 8, box.w - 12, 8);
-  const n = Math.round(share * 100), dx = (box.w - 14) / 10, dy = (box.h - 14) / 10, r = Math.min(dx, dy) * .28;
+  const {x, y, w, h} = box;
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x + w / 2 + 4, y + h + 3, w / 2 + 4, 4, 0, 0, Math.PI * 2); ctx.fill();
+  const glass = ctx.createLinearGradient(x, 0, x + w, 0);
+  glass.addColorStop(0, 'rgba(190,226,240,.30)'); glass.addColorStop(.14, 'rgba(160,200,215,.12)'); glass.addColorStop(.6, 'rgba(160,200,215,.07)'); glass.addColorStop(.9, 'rgba(160,200,215,.14)'); glass.addColorStop(1, 'rgba(190,226,240,.30)');
+  ctx.fillStyle = glass; ctx.beginPath(); ctx.roundRect(x, y, w, h, 10); ctx.fill();
+  const base = ctx.createLinearGradient(0, y + h - 10, 0, y + h); base.addColorStop(0, 'rgba(120,170,190,0)'); base.addColorStop(1, 'rgba(120,170,190,.35)');
+  ctx.fillStyle = base; ctx.beginPath(); ctx.roundRect(x + 2, y + h - 10, w - 4, 9, 6); ctx.fill();
+  const n = Math.round(share * 100), dx = (w - 14) / 10, dy = (h - 14) / 10, r = Math.min(dx, dy) * .28;
   const shown = new Set(SLOTS.slice(0, n));
-  ctx.fillStyle = '#c4eddf';
-  for (let i = 0; i < 100; i++) if (shown.has(i)) { ctx.beginPath(); ctx.arc(box.x + 7 + dx * (i % 10 + .5), box.y + 7 + dy * (Math.floor(i / 10) + .5), r, 0, Math.PI * 2); ctx.fill(); }
-  if (unknown) text(ctx, '?', box.x + box.w / 2, box.y + box.h / 2, {size: 40, colour: theme.accent});
-  if (label) text(ctx, label, box.x + box.w / 2, box.y + box.h + 18, {size: 15, weight: 600});
+  for (let i = 0; i < 100; i++) if (shown.has(i)) {
+    const cx = x + 7 + dx * (i % 10 + .5), cy = y + 7 + dy * (Math.floor(i / 10) + .5);
+    ctx.fillStyle = '#c4eddf'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillRect(cx - r * .55, cy - r * .55, r * .5, r * .5);
+  }
+  ctx.strokeStyle = glow ? theme.accent : 'rgba(200,225,235,.7)'; ctx.lineWidth = glow ? 3 + Math.sin(time * 6) * 1.5 : 2;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, 10); ctx.stroke();
+  // The lamp's reflection down the glass.
+  ctx.fillStyle = 'rgba(255,255,255,.26)'; ctx.beginPath(); ctx.roundRect(x + 6, y + 10, 4, h * .55, 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.roundRect(x + w - 10, y + 14, 2.4, h * .3, 1.2); ctx.fill();
+  // The lid: a brass cap with a knurled edge on a steel ring.
+  steel(ctx, x + 4, y - 3, w - 8, 4, 1.5);
+  const lid = ctx.createLinearGradient(0, y - 12, 0, y - 2); lid.addColorStop(0, theme.brass[0]); lid.addColorStop(.45, theme.brass[1]); lid.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = lid; ctx.beginPath(); ctx.roundRect(x + 2, y - 12, w - 4, 10, 3); ctx.fill();
+  ctx.strokeStyle = 'rgba(40,24,4,.45)'; ctx.lineWidth = 1; ctx.beginPath(); for (let k = x + 6; k < x + w - 4; k += 5) { ctx.moveTo(k, y - 11); ctx.lineTo(k, y - 3); } ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(x + 5, y - 11.5, w - 10, 1);
+  if (unknown) text(ctx, '?', x + w / 2, y + h / 2, {size: 40, colour: theme.accent});
+  if (label) text(ctx, label, x + w / 2, y + h + 18, {size: 15, weight: 600});
 }
 function jars(ctx, view, place) {
   const j = view.jar;
@@ -228,8 +283,7 @@ function readouts(ctx, view) {
   if (r.hover) rows.push(['Lever to hover', f.hover <= 1 ? pct(f.hover) : 'over 100%', f.hover <= 1 ? theme.accent : theme.bad]);
   if (r.fuel) rows.push(['Fuel a minute', `${fuelPerMinute(Math.min(1, f.hover)).toFixed(1)} kg`, theme.accent]);
   const h = 18 + rows.length * 34;
-  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(BOX.x, BOX.y, BOX.w, h, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.beginPath(); ctx.roundRect(BOX.x, BOX.y, BOX.w, h, 8); ctx.fill(); bezel(ctx, BOX.x, BOX.y, BOX.w, h);
   rows.forEach(([label, value, colour], i) => {
     const y = BOX.y + 26 + i * 34;
     text(ctx, label, BOX.x + 12, y, {size: 15, align: 'left', weight: 600});
@@ -241,8 +295,12 @@ function readouts(ctx, view) {
 function balance(ctx, f, showMost, top) {
   const left = BOX.x + 56, full = BOX.w - 60, per = full / 4300, row = (y, label, colour, value) => {
     text(ctx, label, BOX.x + 2, y + 9, {size: 13, align: 'left', weight: 700, colour});
-    ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.fillRect(left, y, full, 18);
-    ctx.fillStyle = colour; ctx.fillRect(left, y, Math.min(full, value * per), 18);
+    // A lit bar in a steel trough, like the lever's.
+    ctx.fillStyle = '#060a0b'; ctx.fillRect(left, y, full, 18);
+    const fill = ctx.createLinearGradient(0, y, 0, y + 18); fill.addColorStop(0, shade(colour, .35)); fill.addColorStop(.5, colour); fill.addColorStop(1, shade(colour, -.35));
+    const len = Math.min(full, value * per); ctx.fillStyle = fill; ctx.fillRect(left, y, len, 18);
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(left, y + 1, len, 1.4);
+    ctx.strokeStyle = '#7f8a90'; ctx.lineWidth = 1.6; ctx.strokeRect(left - .8, y - .8, full + 1.6, 19.6);
   };
   row(top, 'Push', theme.good, f.lift);
   row(top + 24, 'Weight', theme.bad, f.weight);
@@ -254,8 +312,7 @@ function balance(ctx, f, showMost, top) {
 const COLUMN = Object.freeze({x: 262, y: 40, w: 490, h: 424, left: 284, right: 450, ground: 426, top: 96, topM: 11_000});
 function airColumn(ctx, place) {
   const c = COLUMN, yAt = m => c.ground - m / c.topM * (c.ground - c.top), gap = 7;
-  ctx.fillStyle = 'rgba(10,14,15,.72)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.beginPath(); ctx.roundRect(c.x, c.y, c.w, c.h, 8); ctx.fill(); bezel(ctx, c.x, c.y, c.w, c.h);
   text(ctx, 'Why the air thins with height', c.x + c.w / 2, c.y + 20, {size: 18, colour: theme.accent});
   ctx.fillStyle = 'rgba(160,200,215,.10)'; ctx.fillRect(c.left, c.top, c.right - c.left, c.ground - c.top);
   ctx.fillStyle = '#c4eddf';
@@ -282,15 +339,19 @@ function airColumn(ctx, place) {
 function lever(ctx, view) {
   const f = view.flight, l = view.lever, interactive = Boolean(view.keys.W);
   text(ctx, 'Collective lever', GX + 10, G1 - 40, {size: 17, colour: theme.accent});
-  ctx.fillStyle = 'rgba(10,14,15,.6)'; ctx.beginPath(); ctx.roundRect(GX - 12, G1 - 14, 24, G0 - G1 + 28, 10); ctx.fill();
-  ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.stroke();
+  // The lever's rail: a dark slot in a steel frame.
+  ctx.fillStyle = 'rgba(6,9,10,.82)'; ctx.beginPath(); ctx.roundRect(GX - 12, G1 - 14, 24, G0 - G1 + 28, 10); ctx.fill();
+  ctx.strokeStyle = '#7f8a90'; ctx.lineWidth = 2.6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(GX - 10.6, G1 - 12.6, 21.2, G0 - G1 + 25.2, 8.6); ctx.stroke();
   for (let n = 0; n <= 10; n++) {
     const y = leverY(n / 10), big = n % 5 === 0;
     ctx.strokeStyle = theme.faint; ctx.lineWidth = big ? 2 : 1; ctx.beginPath(); ctx.moveTo(GX - 20, y); ctx.lineTo(GX - (big ? 30 : 25), y); ctx.stroke();
     if (big) text(ctx, `${n * 10}%`, GX - 38, y, {size: 13, align: 'right', weight: 600, colour: theme.faint});
   }
-  ctx.fillStyle = theme.good; ctx.globalAlpha = .55; ctx.fillRect(GX - 6, leverY(f.lever), 12, G0 - leverY(f.lever)); ctx.globalAlpha = 1;
-  ctx.fillStyle = theme.beamLight; ctx.fillRect(GX - 18, leverY(1) - 4, 36, 5);
+  const lit = ctx.createLinearGradient(GX - 6, 0, GX + 6, 0); lit.addColorStop(0, '#9af5ba'); lit.addColorStop(.5, '#3fbd70'); lit.addColorStop(1, '#217a46');
+  ctx.fillStyle = lit; ctx.globalAlpha = .7; ctx.fillRect(GX - 6, leverY(f.lever), 12, G0 - leverY(f.lever)); ctx.globalAlpha = 1;
+  const stop = leverY(1);
+  steel(ctx, GX - 18, stop - 4, 36, 5, 1.5); bolt(ctx, GX - 13, stop - 1.5, 1.2); bolt(ctx, GX + 13, stop - 1.5, 1.2);
   if (!(l.red && f.hover > 1)) text(ctx, 'all the way up', GX + 22, leverY(1) - 16, {size: 12, align: 'left', colour: theme.faint, weight: 600});
   if (l.ghost != null) {
     const y = leverY(l.ghost);
@@ -304,11 +365,15 @@ function lever(ctx, view) {
     ctx.beginPath(); ctx.moveTo(GX - 20, y); ctx.lineTo(GX + 64, y); ctx.stroke();
     text(ctx, f.hover <= 1 ? `hover ${pct(f.hover)}` : 'hover: above the top!', GX + 68, y, {size: 13, align: 'left', colour: theme.bad});
   }
+  // The handle: a steel shaft and a ridged brass grip.
   const y = leverY(f.lever), glow = view.glow === 'lever:top' || view.glow === 'lever:weight';
-  ctx.fillStyle = '#20262a'; ctx.fillRect(GX - 3, y, 6, 14);
-  const grip = ctx.createLinearGradient(0, y - 12, 0, y + 6); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.roundRect(GX - 31, y - 6, 64, 16, 7); ctx.fill();
+  steel(ctx, GX - 3, y, 6, 14, 1);
+  const grip = ctx.createLinearGradient(0, y - 12, 0, y + 6); grip.addColorStop(0, theme.brass[0]); grip.addColorStop(.45, theme.brass[1]); grip.addColorStop(1, theme.brass[2]);
   ctx.fillStyle = grip; ctx.beginPath(); ctx.roundRect(GX - 32, y - 10, 64, 16, 7); ctx.fill();
-  ctx.strokeStyle = glow ? theme.accent : 'rgba(0,0,0,.5)'; ctx.lineWidth = glow ? 3 + Math.sin(view.time * 6) * 1.5 : 1.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(60,36,6,.4)'; ctx.lineWidth = 1; ctx.beginPath(); for (let k = GX - 24; k <= GX + 24; k += 6) { ctx.moveTo(k, y - 8); ctx.lineTo(k, y + 4); } ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(GX - 26, y - 9, 52, 1.2);
+  ctx.strokeStyle = glow ? theme.accent : 'rgba(0,0,0,.5)'; ctx.lineWidth = glow ? 3 + Math.sin(view.time * 6) * 1.5 : 1.5; ctx.beginPath(); ctx.roundRect(GX - 32, y - 10, 64, 16, 7); ctx.stroke();
   if (glow && view.glow === 'lever:top') halo(ctx, GX, leverY(1), 34, view.time);
   if (interactive) { keyCap(ctx, GX - 22, G0 + 36, 'W'); text(ctx, 'up', GX - 8, G0 + 36, {size: 14, align: 'left'}); keyCap(ctx, GX + 26, G0 + 36, 'S'); text(ctx, 'down', GX + 40, G0 + 36, {size: 14, align: 'left'}); }
 }
@@ -321,8 +386,7 @@ function rack(ctx, view) {
 }
 function resultsTable(ctx, rows) {
   const x = 352, y = 8, w = 404, cols = [x + 10, x + 136, x + 232, x + 316, x + w - 10];
-  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(x, y, w, 132, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.beginPath(); ctx.roundRect(x, y, w, 132, 6); ctx.fill(); bezel(ctx, x, y, w, 132, 6);
   [['Place', 'left'], ['Crates', 'left'], ['Weight', 'right'], ['Most push', 'right'], ['Lever', 'right']].forEach(([h, align], i) => text(ctx, h, cols[i], y + 18, {size: 13, align, colour: theme.faint}));
   if (!rows.length) text(ctx, 'Your results will appear here.', x + w / 2, y + 74, {size: 15, colour: theme.faint});
   rows.slice(-4).forEach((row, i) => {
@@ -336,8 +400,7 @@ function resultsTable(ctx, rows) {
 }
 function table(ctx, rows, {hideAir = false, hideMost = false} = {}) {
   const x = 352, y = 8, w = 404, cols = [x + 12, x + 150, x + 226, x + w - 12];
-  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(x, y, w, 132, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.beginPath(); ctx.roundRect(x, y, w, 132, 6); ctx.fill(); bezel(ctx, x, y, w, 132, 6);
   [['Place', 'left'], ['Height', 'left'], ['Air in a jar', 'left'], ['Most push', 'right']].forEach(([h, align], i) => text(ctx, h, cols[i], y + 20, {size: 14, align, colour: theme.faint}));
   rows.forEach((row, i) => {
     const ry = y + 50 + i * 28;
@@ -350,7 +413,7 @@ function table(ctx, rows, {hideAir = false, hideMost = false} = {}) {
 }
 const STATUS = {pad: 'On the pad', stays: 'The load stays down', rising: 'Lifting', hovering: 'Hovering', climbing: 'Climbing', sinking: 'Sinking'};
 function drawStand(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx, GROUND_Y + 8);
   const f = view.flight;
   mountain(ctx, view, f?.place);
   if (!f) return;
@@ -401,17 +464,19 @@ function drawWonder(ctx, view) {
   });
 }
 function drawCheck(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx, GROUND_Y + 8);
   mountain(ctx, {...view, keys: {}}, null);
   // Every place's air and push, for the questions to use. While a question is open, the board keeps back what would settle it.
   const open = !view.answered, hideAir = open && view.check === 'check-why', hideMost = open && view.check === 'check-car';
   table(ctx, [0, 1, 2].map(i => ({name: NAME[i], height: HEIGHT[i], air: AIR[i], most: MOST[i]})), {hideAir, hideMost});
-  if (hideAir) text(ctx, 'The answer will appear here once you have picked a card.', 600, 310, {size: 17, colour: theme.faint});
+  const plate = (x, y, w) => { ctx.fillStyle = 'rgba(10,14,15,.6)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - 15, w, 30, 6); ctx.fill(); };
+  if (hideAir) { plate(600, 310, 470); text(ctx, 'The answer will appear here once you have picked a card.', 600, 310, {size: 17, colour: 'rgba(227,220,203,.6)'}); }
   else {
     jar(ctx, {x: 380, y: 230, w: 130, h: 170}, 1, {label: 'Sea level: 100 dots'});
     jar(ctx, {x: 560, y: 230, w: 130, h: 170}, AIR[2], {label: `${NAME[2]}: ${dots(AIR[2])} dots`});
   }
-  text(ctx, `Kestrel One ${kg(OWN_KG)} · Dusthawk ${kg(CAR_KG)} · a crate ${kg(CRATE_KG)}`, 600, 470, {size: 17, colour: theme.faint});
+  plate(600, 470, 500);
+  text(ctx, `Kestrel One ${kg(OWN_KG)} · Dusthawk ${kg(CAR_KG)} · a crate ${kg(CRATE_KG)}`, 600, 470, {size: 17, colour: 'rgba(227,220,203,.6)'});
 }
 function drawRecap(ctx, view) {
   const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;

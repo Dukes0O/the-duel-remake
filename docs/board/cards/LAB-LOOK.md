@@ -56,6 +56,11 @@ Braking, Downforce and Fuel are redrawn to the Lift lesson's standard (`docs/boa
 a shared road car, tarmac, posts, steel and lit readouts added to `board-art.js` for later boards to use. Twelve
 boards remain: Pendulums, Projectile, Altitude, Strength; Fire, Rust, Wax, Launch; G-force, Grip, Headings, Suspension.
 
+## Round 4 (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Pendulums, Projectile motion, Altitude and Strength are redrawn (`docs/board/looks/lab-look/round-4.jpg`). Eight
+boards remain: Fire, Rust, Wax, Launch; G-force, Grip, Headings, Suspension.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

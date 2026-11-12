@@ -1,7 +1,7 @@
 // The Projectile lesson's board (docs/board/cards/LAB-CLASSROOM-PROJECTILE.md): Kestrel One side on over
 // the lake, the bucket or a stone on its hook, the falls with their paths and speed arrows, the marks for each
 // second, the flag, the buoy and a ruler on the water. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, text, keyCap, helicopter, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, outdoors, waterBody, shadow, cable, steel, bolt, forceArrowTo, grain, text, keyCap, helicopter, wrap, fitBoard} from '../classroom/board-art.js';
 import {BEST_LET_GO_M, HIGH_M, JOB, RING_M, dropPoint, dropSpeed, landing, metres} from './projectile-classroom.js';
 import {GRAVITY, stoneFallAfter} from '../benches/projectile.js';
 export {BOARD};
@@ -55,73 +55,127 @@ export function dragAngle(view, id, x) { return (x - POST_X) / METRE; }
 
 // ---- drawing ----
 function lake(ctx, time) {
-  const g = ctx.createLinearGradient(0, 0, 0, WATER_Y);
-  g.addColorStop(0, theme.sky[0]); g.addColorStop(1, theme.sky[1]);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, BOARD.width, WATER_Y);
-  // The far shore: a fir line, the same every frame.
-  ctx.fillStyle = 'rgba(0,0,0,.32)';
-  for (let i = 0; i < 30; i++) { const x = i * 35 + (i % 3) * 8, h = 26 + (i * 37) % 34; ctx.beginPath(); ctx.moveTo(x - 14, WATER_Y); ctx.lineTo(x, WATER_Y - h); ctx.lineTo(x + 14, WATER_Y); ctx.fill(); }
-  const w = ctx.createLinearGradient(0, WATER_Y, 0, BOARD.height);
-  w.addColorStop(0, '#3d5f6b'); w.addColorStop(1, '#16272d');
-  ctx.fillStyle = w; ctx.fillRect(0, WATER_Y, BOARD.width, BOARD.height - WATER_Y);
-  ctx.strokeStyle = 'rgba(220,240,245,.12)'; ctx.lineWidth = 1.5;
-  for (let i = 0; i < 14; i++) { const x = (i * 83 + time * 9) % (BOARD.width + 60) - 30, y = WATER_Y + 10 + (i * 29) % 60; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 26, y); ctx.stroke(); }
-  ctx.strokeStyle = 'rgba(230,245,250,.35)'; ctx.beginPath(); ctx.moveTo(0, WATER_Y); ctx.lineTo(BOARD.width, WATER_Y); ctx.stroke();
+  // The dusk sky and the firs along the far shore, then the lake in front of them.
+  outdoors(ctx);
+  waterBody(ctx, WATER_Y, time);
+}
+// A short white stake standing out of the water, with a dark band and a lit side.
+function stake(ctx, x, h, w = 3.4) {
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x + 1, WATER_Y + 2, w + 2.5, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, '#f6f2e4'); g.addColorStop(.6, '#cfcabb'); g.addColorStop(1, '#7a776c');
+  ctx.fillStyle = g; ctx.fillRect(x - w / 2, WATER_Y - h, w, h + 1);
+  ctx.fillStyle = '#1b1d1e'; ctx.fillRect(x - w / 2, WATER_Y - h + 2, w, 2);
+  ctx.strokeStyle = 'rgba(235,246,250,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, WATER_Y + 1, w + 1.5, 1.4, 0, 0, Math.PI * 2); ctx.stroke();
 }
 function ruler(ctx, view) {
   const toBuoy = view.ruler === 'buoy';
   for (let m = 0; m <= 65; m += 5) {
     const x = bx(m), before = view.buoy - m;
     if (toBuoy && before < 0) break;
+    stake(ctx, x, m % 10 === 0 ? 15 : 8, m % 10 === 0 ? 4 : 3);
     ctx.strokeStyle = 'rgba(245,240,220,.6)'; ctx.lineWidth = m % 10 === 0 ? 2 : 1;
     ctx.beginPath(); ctx.moveTo(x, WATER_Y + 2); ctx.lineTo(x, WATER_Y + (m % 10 === 0 ? 12 : 8)); ctx.stroke();
     const label = toBuoy ? before : m;
-    if (label % 10 === 0 || toBuoy) text(ctx, String(label), x, WATER_Y + 24, {size: 14, weight: 600, colour: toBuoy && label === Math.round(JOB.buoyM - BEST_LET_GO_M) ? theme.accent : theme.faint});
+    if (label % 10 === 0 || toBuoy) text(ctx, String(label), x, WATER_Y + 24, {size: 14, weight: 600, colour: toBuoy && label === Math.round(JOB.buoyM - BEST_LET_GO_M) ? theme.accent : 'rgba(227,220,203,.6)'});
   }
-  text(ctx, toBuoy ? 'metres before the buoy' : 'metres from the post', toBuoy ? bx(view.buoy) + 70 : BOARD.width - 16, WATER_Y + 50, {size: 14, weight: 600, colour: theme.faint, align: toBuoy ? 'left' : 'right'});
+  text(ctx, toBuoy ? 'metres before the buoy' : 'metres from the post', toBuoy ? bx(view.buoy) + 70 : BOARD.width - 16, WATER_Y + 50, {size: 14, weight: 600, colour: 'rgba(227,220,203,.6)', align: toBuoy ? 'left' : 'right'});
 }
+// A small dark plate behind a label, so that it stays readable against the sky and the trees.
+function plate(ctx, x, y, w, h = 18) { ctx.fillStyle = 'rgba(10,14,15,.6)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 5); ctx.fill(); }
 function post(ctx) {
-  ctx.fillStyle = theme.beamDark; ctx.fillRect(POST_X - 3, WATER_Y - 46, 6, 50);
-  ctx.fillStyle = theme.brass[1]; ctx.fillRect(POST_X - 6, WATER_Y - 50, 12, 6);
-  text(ctx, 'release post', POST_X, WATER_Y - 62, {size: 13, weight: 600, colour: theme.faint});
+  // A piling driven into the lake bed: weathered timber, iron bands, a brass cap and its reflection.
+  const rl = ctx.createLinearGradient(0, WATER_Y + 3, 0, WATER_Y + 32); rl.addColorStop(0, 'rgba(90,70,50,.55)'); rl.addColorStop(1, 'rgba(90,70,50,0)');
+  ctx.fillStyle = rl; ctx.fillRect(POST_X - 2.5, WATER_Y + 3, 5, 29);
+  const wood = ctx.createLinearGradient(POST_X - 3, 0, POST_X + 3, 0); wood.addColorStop(0, '#8a775c'); wood.addColorStop(.45, '#5a4a37'); wood.addColorStop(1, '#241c14');
+  ctx.fillStyle = wood; ctx.fillRect(POST_X - 3, WATER_Y - 46, 6, 50);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(POST_X - 3, WATER_Y - 9, 6, 11);
+  for (const dy of [-38, -24, -12]) {
+    ctx.fillStyle = '#4c565d'; ctx.fillRect(POST_X - 3.6, WATER_Y + dy, 7.2, 2.6);
+    ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(POST_X - 3.6, WATER_Y + dy, 7.2, .8);
+  }
+  steel(ctx, POST_X - 6.5, WATER_Y - 51, 13, 6, 2);
+  const cap = ctx.createLinearGradient(0, WATER_Y - 51, 0, WATER_Y - 45); cap.addColorStop(0, theme.brass[0]); cap.addColorStop(.5, theme.brass[1]); cap.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = cap; ctx.beginPath(); ctx.roundRect(POST_X - 6, WATER_Y - 50, 12, 6, 2); ctx.fill();
+  bolt(ctx, POST_X, WATER_Y - 47, 1.3);
+  ctx.strokeStyle = 'rgba(235,246,250,.45)'; ctx.lineWidth = 1.2;
+  for (const [rx, ry] of [[8, 2.4], [14, 3.8]]) { ctx.beginPath(); ctx.ellipse(POST_X, WATER_Y + 1.5, rx, ry, 0, 0, Math.PI * 2); ctx.stroke(); }
+  plate(ctx, POST_X, WATER_Y - 62, 86);
+  text(ctx, 'release post', POST_X, WATER_Y - 62, {size: 13, weight: 600, colour: 'rgba(227,220,203,.7)'});
 }
 function buoy(ctx, x, time) {
-  const cx = bx(x), r = RING_M * METRE;
+  const cx = bx(x), r = RING_M * METRE, bob = Math.sin(time * 2) * 1.5;
   ctx.strokeStyle = 'rgba(237,197,87,.7)'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
   ctx.beginPath(); ctx.ellipse(cx, WATER_Y + 2, r, 7, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-  const bob = Math.sin(time * 2) * 1.5;
-  ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(cx, WATER_Y + bob, 11, Math.PI, 0); ctx.fill();
-  ctx.fillStyle = '#f5f0dc'; ctx.fillRect(cx - 11, WATER_Y - 5 + bob, 22, 3);
-  ctx.strokeStyle = theme.beamDark; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, WATER_Y - 11 + bob); ctx.lineTo(cx, WATER_Y - 24 + bob); ctx.stroke();
+  // The buoy's reflection, then its body: a red dome with a white band, a mast and a lamp.
+  const refl = ctx.createLinearGradient(0, WATER_Y + 3, 0, WATER_Y + 30); refl.addColorStop(0, 'rgba(232,97,63,.4)'); refl.addColorStop(1, 'rgba(232,97,63,0)');
+  ctx.fillStyle = refl; ctx.fillRect(cx - 9, WATER_Y + 3, 18, 27);
+  const dome = ctx.createLinearGradient(cx - 11, 0, cx + 11, 0); dome.addColorStop(0, '#ffa27c'); dome.addColorStop(.4, '#e8613f'); dome.addColorStop(1, '#7d2614');
+  ctx.fillStyle = dome; ctx.beginPath(); ctx.arc(cx, WATER_Y + bob, 11, Math.PI, 0); ctx.fill();
+  const band = ctx.createLinearGradient(cx - 11, 0, cx + 11, 0); band.addColorStop(0, '#fffaf0'); band.addColorStop(1, '#9d9a8c');
+  ctx.fillStyle = band; ctx.fillRect(cx - 10.4, WATER_Y - 5 + bob, 20.8, 3);
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, WATER_Y + bob, 11, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.ellipse(cx - 4, WATER_Y - 7 + bob, 3, 1.6, -.6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#2c353a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, WATER_Y - 11 + bob); ctx.lineTo(cx, WATER_Y - 24 + bob); ctx.stroke();
+  const lamp = ctx.createRadialGradient(cx, WATER_Y - 25 + bob, 1, cx, WATER_Y - 25 + bob, 10); lamp.addColorStop(0, 'rgba(255,214,120,.8)'); lamp.addColorStop(1, 'rgba(255,214,120,0)');
+  ctx.fillStyle = lamp; ctx.beginPath(); ctx.arc(cx, WATER_Y - 25 + bob, 10, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.arc(cx, WATER_Y - 25 + bob, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(240,248,250,.55)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, WATER_Y + 1.5, 14, 2.8, 0, 0, Math.PI * 2); ctx.stroke();
 }
 function flag(ctx, x, glow, time) {
   const cx = bx(x);
-  ctx.fillStyle = '#5d666c'; ctx.beginPath(); ctx.ellipse(cx, WATER_Y + 1, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#f5f0dc'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, WATER_Y); ctx.lineTo(cx, WATER_Y - 46); ctx.stroke();
-  ctx.fillStyle = theme.accent; ctx.beginPath(); ctx.moveTo(cx, WATER_Y - 46); ctx.lineTo(cx + 20, WATER_Y - 40); ctx.lineTo(cx, WATER_Y - 33); ctx.closePath(); ctx.fill();
+  // A pole planted in the lake bed: a lit steel pole with a cloth flag, and ripples where it meets the water.
+  ctx.strokeStyle = 'rgba(235,246,250,.45)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, WATER_Y + 1.5, 10, 2.6, 0, 0, Math.PI * 2); ctx.stroke();
+  const rf = ctx.createLinearGradient(0, WATER_Y + 3, 0, WATER_Y + 26); rf.addColorStop(0, 'rgba(237,197,87,.35)'); rf.addColorStop(1, 'rgba(237,197,87,0)');
+  ctx.fillStyle = rf; ctx.fillRect(cx - 1.5, WATER_Y + 3, 3, 23);
+  ctx.strokeStyle = '#d8dee1'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(cx, WATER_Y); ctx.lineTo(cx, WATER_Y - 46); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx + 1.4, WATER_Y); ctx.lineTo(cx + 1.4, WATER_Y - 46); ctx.stroke();
+  const cloth = ctx.createLinearGradient(cx, WATER_Y - 46, cx + 20, WATER_Y - 33); cloth.addColorStop(0, '#fff0b8'); cloth.addColorStop(.5, theme.accent); cloth.addColorStop(1, '#a8801c');
+  ctx.fillStyle = cloth; ctx.beginPath(); ctx.moveTo(cx, WATER_Y - 46); ctx.quadraticCurveTo(cx + 12, WATER_Y - 47, cx + 20, WATER_Y - 40); ctx.quadraticCurveTo(cx + 10, WATER_Y - 37, cx, WATER_Y - 33); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, WATER_Y - 40); ctx.quadraticCurveTo(cx + 10, WATER_Y - 41, cx + 18, WATER_Y - 40); ctx.stroke();
+  ctx.fillStyle = '#eef2f3'; ctx.beginPath(); ctx.arc(cx, WATER_Y - 47, 1.8, 0, Math.PI * 2); ctx.fill();
   text(ctx, `flag ${metres(x)}`, cx, WATER_Y - 58, {size: 15, colour: theme.accent});
   if (glow) halo(ctx, cx, WATER_Y - 24, 30, time);
 }
 function bucket(ctx, x, y, full) {
-  ctx.fillStyle = '#c9662f'; ctx.beginPath(); ctx.moveTo(x - 8, y - 15); ctx.lineTo(x + 8, y - 15); ctx.lineTo(x + 6, y); ctx.lineTo(x - 6, y); ctx.closePath(); ctx.fill();
+  // A steel pail: a tapering body lit from the left, a rolled band, a dark mouth with the water in it, and a bail.
+  ctx.strokeStyle = '#aeb7bc'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 8, y - 15); ctx.quadraticCurveTo(x, y - 24, x + 8, y - 15); ctx.stroke();
+  const body = ctx.createLinearGradient(x - 8, 0, x + 8, 0); body.addColorStop(0, '#f0a06a'); body.addColorStop(.35, '#c9662f'); body.addColorStop(1, '#5b2610');
+  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(x - 8, y - 15); ctx.lineTo(x + 8, y - 15); ctx.lineTo(x + 6, y); ctx.lineTo(x - 6, y); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
-  if (full) { ctx.fillStyle = WATER_BLUE; ctx.fillRect(x - 7, y - 15, 14, 3); }
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x - 7.3, y - 8, 14.6, 1.4); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x - 7.3, y - 9, 14.6, .8);
+  ctx.fillStyle = '#1b1210'; ctx.beginPath(); ctx.ellipse(x, y - 15, 8, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+  if (full) { ctx.fillStyle = WATER_BLUE; ctx.beginPath(); ctx.ellipse(x, y - 14.6, 6.8, 1.7, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.ellipse(x, y - 15, 8, 2.4, 0, Math.PI * 1.05, Math.PI * 1.6); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x - 6, y - 14, 1.3, 12);
 }
+// A stone: a lumpy rock with a lit face and a dark side, the same shape every time.
 function stone(ctx, x, y, r = 6) {
-  const g = ctx.createRadialGradient(x - 2, y - 2, 1, x, y, r);
-  g.addColorStop(0, '#e4e0d6'); g.addColorStop(1, '#6f6a60');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  const lumps = Array.from({length: 9}, (_, i) => r * (.82 + .3 * grain(i * 5 + Math.round(r * 3))));
+  const path = () => { ctx.beginPath(); lumps.forEach((rr, i) => { const a = i / 9 * Math.PI * 2; ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr * .92); }); ctx.closePath(); };
+  const g = ctx.createRadialGradient(x - r * .4, y - r * .45, r * .1, x, y, r * 1.2); g.addColorStop(0, '#f1ede2'); g.addColorStop(.5, '#a39e92'); g.addColorStop(1, '#3f3b34');
+  path(); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.moveTo(x - r * .75, y - r * .1); ctx.lineTo(x - r * .2, y - r * .8); ctx.lineTo(x + r * .3, y - r * .5); ctx.lineTo(x - r * .3, y - r * .1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.moveTo(x + r * .1, y + r * .1); ctx.lineTo(x + r * .8, y - r * .1); ctx.lineTo(x + r * .5, y + r * .7); ctx.lineTo(x - r * .1, y + r * .6); ctx.closePath(); ctx.fill();
 }
-function spray(ctx, x, y, r = 1) {
-  ctx.fillStyle = WATER_BLUE;
-  for (const [dx, dy, s] of [[0, 0, 5], [-5, -3, 3], [4, -4, 3], [-2, 5, 2.5], [5, 3, 2.5]]) { ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, s, 0, Math.PI * 2); ctx.fill(); }
+// The water a bucket lets go: a sheet that stretches and thins, then breaks up into droplets as the seconds pass.
+function waterFall(ctx, x, y, t) {
+  const spread = Math.min(1, t / 1.1), sheet = 1 - spread;
+  if (sheet > .04) {
+    const g = ctx.createLinearGradient(x - 8, 0, x + 8, 0); g.addColorStop(0, `rgba(190,232,255,${(.85 * sheet).toFixed(2)})`); g.addColorStop(1, `rgba(60,150,215,${(.7 * sheet).toFixed(2)})`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 4 + 6 * sheet, 5 + 9 * sheet, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  for (let i = 0; i < 11; i++) {
+    const a = i * 2.4 + 1, reach = spread * (3 + 10 * grain(i + 30)), dx = Math.cos(a) * reach, dy = Math.sin(a) * reach * 1.25, r = 1.3 + grain(i + 60) * 2.2;
+    ctx.fillStyle = WATER_BLUE; ctx.beginPath(); ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(x + dx - r * .3, y + dy - r * .35, r * .35, 0, Math.PI * 2); ctx.fill();
+  }
 }
 // One helicopter with its bucket or stone on the cable, and its speed above it.
 function kestrel(ctx, c, view, label = true) {
   ctx.save(); if (c.dim) ctx.globalAlpha = .45;
   const [hx, hy] = bodyAt(c), [kx, ky] = bucketAt(c), stoneOn = c.loads.includes('stone'), waterOn = c.loads.includes('water');
-  ctx.strokeStyle = theme.line; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(hx, hy + 12); ctx.lineTo(kx, ky - (stoneOn && !waterOn ? 6 : 15)); ctx.stroke();
+  shadow(ctx, hx - 10, WATER_Y + 12, 52, Math.max(.12, .34 - c.h * .01));
+  cable(ctx, hx, hy + 12, kx, ky - (stoneOn && !waterOn ? 6 : 22), {width: 1.6});
   if (stoneOn && !waterOn) stone(ctx, kx, ky);
   else if (waterOn || c.carries === 'water') bucket(ctx, kx, ky, waterOn);
   if (stoneOn && waterOn) stone(ctx, kx + 13, ky - 4, 5);
@@ -145,20 +199,13 @@ function drops(ctx, view) {
     path(ctx, d.kind, d.h, d.v, d.x0, d.t, colour);
     if (d.landed) continue;
     const p = dropPoint(d.kind, d.h, d.v, d.t), x = bx(d.x0 + p.x), y = by(p.y);
-    if (d.kind === 'stone') stone(ctx, x, y); else spray(ctx, x, y);
+    if (d.kind === 'stone') stone(ctx, x, y); else waterFall(ctx, x, y, d.t);
     if (view.arrows) speedArrows(ctx, d, x, y, view.drops.length > 1);
   }
 }
 // The two speeds of a falling thing: the forward arrow and the downward arrow, drawn to the same scale.
 const ARROW_SCALE = 4;
-function arrow(ctx, x, y, dx, dy, colour) {
-  const length = Math.hypot(dx, dy);
-  if (length < 3) return;
-  const ux = dx / length, uy = dy / length, head = Math.min(9, length * .6);
-  ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = 3.5;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * head, y + dy - uy * head); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + dx, y + dy); ctx.lineTo(x + dx - ux * head - uy * head * .6, y + dy - uy * head + ux * head * .6); ctx.lineTo(x + dx - ux * head + uy * head * .6, y + dy - uy * head - ux * head * .6); ctx.closePath(); ctx.fill();
-}
+const arrow = (ctx, x, y, dx, dy, colour) => forceArrowTo(ctx, x, y, x + dx, y + dy, colour, 4);
 function speedArrows(ctx, d, x, y, two) {
   const {forward, down} = dropSpeed(d.kind, d.h, d.v, d.t), name = d.kind === 'stone' ? '' : 'water ', low = two && d.kind === 'water';
   arrow(ctx, x, y, forward * ARROW_SCALE, 0, FORWARD_COLOUR);
@@ -198,14 +245,25 @@ function secondDot(ctx, x, h, k) {
   const fell = stoneFallAfter(k), y = by(h - fell);
   ctx.strokeStyle = 'rgba(237,197,87,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(x, SCALE_Y + 10); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = theme.text; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x - 1.5, y - 1.5, 1.5, 0, Math.PI * 2); ctx.fill();
   text(ctx, `${fell.toFixed(1)} m fallen`, x - 10, y + 4, {size: 15, align: 'right', colour: DOWN_COLOUR});
 }
 function marks(ctx, view) {
   view.marks.forEach((k, i) => {
-    const x = bx(k.x);
-    if (k.age < .8) { ctx.strokeStyle = k.kind === 'stone' ? STONE : WATER_BLUE; ctx.lineWidth = 2.5; ctx.globalAlpha = 1 - k.age / .8;
-      ctx.beginPath(); ctx.ellipse(x, WATER_Y, 6 + k.age * 40, 3 + k.age * 8, 0, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
-    ctx.fillStyle = k.kind === 'stone' ? STONE : WATER_BLUE; ctx.beginPath(); ctx.ellipse(x, WATER_Y + 1, 7, 3, 0, 0, Math.PI * 2); ctx.fill();
+    const x = bx(k.x), tone = k.kind === 'stone' ? STONE : WATER_BLUE;
+    if (k.age < .8) {
+      ctx.strokeStyle = tone; ctx.lineWidth = 2.5; ctx.globalAlpha = 1 - k.age / .8;
+      ctx.beginPath(); ctx.ellipse(x, WATER_Y, 6 + k.age * 40, 3 + k.age * 8, 0, 0, Math.PI * 2); ctx.stroke();
+      // The splash: a crown of droplets thrown up and falling back.
+      ctx.fillStyle = 'rgba(225,244,252,.9)';
+      for (let n = 0; n < 12; n++) {
+        const a = Math.PI * (.12 + .76 * n / 11), speed = 38 + 34 * grain(n + 90), px = x + Math.cos(a) * speed * k.age, py = WATER_Y - Math.sin(a) * speed * 1.5 * k.age + 150 * k.age * k.age;
+        ctx.beginPath(); ctx.arc(px, py, 1.4 + 1.4 * grain(n + 120), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = tone; ctx.globalAlpha = .55; ctx.beginPath(); ctx.ellipse(x, WATER_Y + 1, 7, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(235,246,250,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, WATER_Y + 1, 10, 4, 0, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = 'rgba(245,240,220,.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, WATER_Y - 4); ctx.lineTo(x, WATER_Y - 22 - (i % 2) * 22); ctx.stroke();
     const colour = view.helis.length > 1 && view.drops.length > 1 ? COLOURS[k.colour] : k.kind === 'stone' ? STONE : WATER_BLUE;
     text(ctx, k.label, x, WATER_Y - 30 - (i % 2) * 22, {size: 16, colour});
@@ -220,7 +278,8 @@ function letGoMark(ctx, x, label, colour = theme.accent, dy = 52) {
 function height(ctx, h, x) {
   ctx.strokeStyle = theme.faint; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(x, WATER_Y); ctx.lineTo(x, by(h)); ctx.moveTo(x - 5, by(h)); ctx.lineTo(x + 5, by(h)); ctx.stroke();
-  text(ctx, `${h} m up`, x + 8, (WATER_Y + by(h)) / 2, {size: 14, weight: 600, colour: theme.faint, align: 'left'});
+  plate(ctx, x + 8 + 25, (WATER_Y + by(h)) / 2, 62, 20);
+  text(ctx, `${h} m up`, x + 8, (WATER_Y + by(h)) / 2, {size: 14, weight: 600, colour: 'rgba(227,220,203,.7)', align: 'left'});
 }
 // The gravity marks: how far the stone has fallen, and how fast it is falling, after each second.
 function fallMarks(ctx, view) {
@@ -301,13 +360,14 @@ function drawRecap(ctx, view) {
 // A small side view for the recap and the cards: a helicopter, falls drawn as dotted arcs, a buoy.
 function miniScene(ctx, kind, x, y, w, h, time) {
   const water = y + h - 20, s = Math.min(w / 260, h / 200);
-  ctx.fillStyle = 'rgba(61,95,107,.8)'; ctx.fillRect(x, water, w, 20);
+  const sea = ctx.createLinearGradient(0, water, 0, water + 20); sea.addColorStop(0, '#4a7381'); sea.addColorStop(1, '#16282f');
+  ctx.fillStyle = sea; ctx.fillRect(x, water, w, 20); ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(x, water - .5, w, 1.4);
   const arc = (fromX, fromY, toX, colour) => {
     ctx.fillStyle = colour;
     for (let i = 0; i <= 16; i++) { const f = i / 16; ctx.beginPath(); ctx.arc(fromX + (toX - fromX) * (1 - (1 - f) ** 2), fromY + (water - fromY) * f * f, 2.2, 0, Math.PI * 2); ctx.fill(); }
   };
   const mini = (hx, hy) => helicopter(ctx, hx, hy, .08, time, .3 * s);
-  const buoyAt = bxp => { ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(bxp, water, 8 * s, Math.PI, 0); ctx.fill(); };
+  const buoyAt = bxp => { ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(bxp, water, 8 * s, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#fffaf0'; ctx.fillRect(bxp - 7.5 * s, water - 4 * s, 15 * s, 2.2 * s); };
   if (kind === 'keep') {
     const hx = x + w * .62, hy = y + h * .25;
     mini(hx, hy);
@@ -343,14 +403,15 @@ export function drawPicture(ctx, picture, w, h) {
   back.addColorStop(0, theme.sky[0]); back.addColorStop(1, theme.sky[1]);
   ctx.fillStyle = back; ctx.fillRect(0, 0, w, h);
   const water = h - 14;
-  ctx.fillStyle = '#3d5f6b'; ctx.fillRect(0, water, w, 14);
+  const sea = ctx.createLinearGradient(0, water, 0, h); sea.addColorStop(0, '#4a7381'); sea.addColorStop(1, '#16282f');
+  ctx.fillStyle = sea; ctx.fillRect(0, water, w, 14); ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(0, water - .5, w, 1.2);
   const arc = (fromX, fromY, toX, colour = WATER_BLUE) => {
     ctx.fillStyle = colour;
     for (let i = 0; i <= 14; i++) { const f = i / 14; ctx.beginPath(); ctx.arc(fromX + (toX - fromX) * (1 - (1 - f) ** 2), fromY + (water - fromY) * f * f, 1.8, 0, Math.PI * 2); ctx.fill(); }
     ctx.beginPath(); ctx.ellipse(toX, water + 1, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
   };
   const mini = (x, y) => helicopter(ctx, x, y, .08, .3, .2);
-  const buoyAt = x => { ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(x, water, 7, Math.PI, 0); ctx.fill(); };
+  const buoyAt = x => { ctx.fillStyle = '#e8613f'; ctx.beginPath(); ctx.arc(x, water, 7, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#fffaf0'; ctx.fillRect(x - 6.5, water - 3.5, 13, 2); };
   if (picture.kind === 'landing') {
     const b = w * .45; buoyAt(b); mini(b, 26);
     arc(b, 36, b + {short: -40, on: 0, past: 62}[picture.where]);

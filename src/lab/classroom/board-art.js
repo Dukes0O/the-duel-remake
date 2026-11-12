@@ -472,6 +472,132 @@ export function roadCar(ctx, x, y, {scale = 1, colour = '#c8402f', angle = 0, fa
   ctx.restore();
 }
 
+// ---- LAB-BOARDS-2: shared pieces for the Pendulums, Projectile, Altitude and Strength boards ----
+// The same number every time for the same i (the boards use it for rock, ripples and wear).
+export const grain = noise;
+// A cable under load from (x0, y0) to (x1, y1): a dark shadow, a steel body twisted from fine strands, and a lit edge.
+export function cable(ctx, x0, y0, x1, y1, {width = 2.4, alpha = 1} = {}) {
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1, side = dy - dx > 0 ? 1 : -1, nx = -dy / len * side, ny = dx / len * side;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = width + 1; ctx.beginPath(); ctx.moveTo(x0 + 2, y0 + 2); ctx.lineTo(x1 + 2, y1 + 2); ctx.stroke();
+  ctx.strokeStyle = '#737c82'; ctx.lineWidth = width; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  ctx.lineCap = 'butt'; ctx.setLineDash([1.3, 2.7]); ctx.strokeStyle = 'rgba(12,16,18,.5)'; ctx.lineWidth = width * .75;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(236,243,245,.85)'; ctx.lineWidth = Math.max(.8, width * .34);
+  ctx.beginPath(); ctx.moveTo(x0 + nx * width * .26, y0 + ny * width * .26); ctx.lineTo(x1 + nx * width * .26, y1 + ny * width * .26); ctx.stroke();
+  ctx.restore();
+}
+// A cable with some slack in it: a dark shadow, a steel body and a lit edge along a curve.
+export function rope(ctx, ax, ay, qx, qy, bx, by, width) {
+  const trace = (dx, dy) => { ctx.beginPath(); ctx.moveTo(ax + dx, ay + dy); ctx.quadraticCurveTo(qx + dx, qy + dy, bx + dx, by + dy); ctx.stroke(); };
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = width + 1; trace(2, 2);
+  ctx.strokeStyle = '#737c82'; ctx.lineWidth = width; trace(0, 0);
+  ctx.strokeStyle = 'rgba(236,243,245,.8)'; ctx.lineWidth = Math.max(.8, width * .34); trace(-.6, -.6);
+  ctx.lineCap = 'butt';
+}
+// A hanging bracket bolted under a beam, then a swivel and a ring to hook a cable on: the bracket's top is at (x, y)
+// and the ring's centre is 24 below it.
+export function swivelHook(ctx, x, y, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  steel(ctx, x - 9, y, 18, 6, 1.5); bolt(ctx, x - 5.5, y + 3, 1.3); bolt(ctx, x + 5.5, y + 3, 1.3);
+  ctx.strokeStyle = '#aeb7bc'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y + 10, 3.4, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(x, y + 10, 3.4, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+  steel(ctx, x - 2.8, y + 13, 5.6, 8, 1.2);
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x - 2.8, y + 16.6, 5.6, .8);
+  ctx.strokeStyle = '#cfd6da'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(x, y + 24, 3, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+// The glass over a dial: a soft reflection of the lamp.
+export function glassGlare(ctx, x, y, r) {
+  ctx.fillStyle = 'rgba(255,255,255,.30)'; ctx.beginPath(); ctx.ellipse(x - r * .3, y - r * .42, r * .46, r * .17, -.6, 0, Math.PI * 2); ctx.fill();
+}
+// A brass-rimmed dial with a cream face (no ticks or needle): the rim is `rim` wide outside radius r.
+export function brassDial(ctx, x, y, r, rim = 4) {
+  const o = r + rim, g = ctx.createLinearGradient(x - o, y - o, x + o, y + o);
+  g.addColorStop(0, theme.brass[0]); g.addColorStop(.5, theme.brass[1]); g.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(x + 2, y + 3, o, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, o, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.arc(x, y, o - .5, 0, Math.PI * 2); ctx.stroke();
+  const face = ctx.createRadialGradient(x - r * .3, y - r * .38, 2, x, y, r * 1.02); face.addColorStop(0, '#fffaf0'); face.addColorStop(1, '#d9cfb6');
+  ctx.fillStyle = face; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(60,40,10,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+}
+// A rolled steel I-beam from x0 to x1 whose top edge is at `top`: lit top flange, recessed web, bolted flanges, end caps.
+export function steelBeam(ctx, x0, x1, top, height = 26) {
+  const w = x1 - x0, fl = Math.round(height * .27), web = height - 2 * fl;
+  ctx.fillStyle = 'rgba(0,0,0,.38)'; ctx.fillRect(x0 + 8, top + 7, w, height);
+  const upper = ctx.createLinearGradient(0, top, 0, top + fl); upper.addColorStop(0, '#dce3e7'); upper.addColorStop(.4, '#9aa4aa'); upper.addColorStop(1, '#5d676d');
+  ctx.fillStyle = upper; ctx.fillRect(x0, top, w, fl);
+  const lower = ctx.createLinearGradient(0, top + height - fl, 0, top + height); lower.addColorStop(0, '#838d93'); lower.addColorStop(.5, '#4f585e'); lower.addColorStop(1, '#22282c');
+  ctx.fillStyle = lower; ctx.fillRect(x0, top + height - fl, w, fl);
+  const middle = ctx.createLinearGradient(0, top + fl, 0, top + fl + web); middle.addColorStop(0, '#2b3237'); middle.addColorStop(.5, '#444d53'); middle.addColorStop(1, '#2d353a');
+  ctx.fillStyle = middle; ctx.fillRect(x0, top + fl, w, web);
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x0, top, w, 1);
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x0, top + fl, w, 1.6); ctx.fillRect(x0, top + height - 1.2, w, 1.2);
+  ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(x0, top + height - fl, w, .9);
+  // Rolling marks along the steel and a few patches of rust.
+  for (let i = 0; i < 5; i++) { ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(x0 + noise(i * 3 + 700) * w * .7, top + 1.5 + noise(i + 710) * (fl - 3), 40 + noise(i + 720) * 120, 1); }
+  for (let i = 0; i < Math.ceil(w / 90); i++) { ctx.fillStyle = 'rgba(140,80,40,.22)'; ctx.beginPath(); ctx.ellipse(x0 + 10 + noise(i + 740) * (w - 20), top + height - fl / 2, 4 + noise(i + 750) * 6, 1.6, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let x = x0 + 14; x < x1; x += 36) { bolt(ctx, x, top + fl / 2, 2.2); bolt(ctx, x, top + height - fl / 2, 2.2); }
+  ctx.fillStyle = '#3a4248'; ctx.fillRect(x0 - 3, top - 1, 4, height + 2); ctx.fillRect(x1 - 1, top - 1, 4, height + 2);
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x0 - 3, top - 1, 4, 1); ctx.fillRect(x1 - 1, top - 1, 4, 1);
+}
+// A dark glass plate with a steel frame and four corner bolts, for the boards' readout panels.
+export function bezel(ctx, x, y, w, h, r = 8) {
+  ctx.save(); ctx.strokeStyle = '#8b959b'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x + 1.6, y + 1.6, w - 3.2, h - 3.2, Math.max(0, r - 1.6)); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x - 1.5, y - 1.5, w + 3, h + 3, r + 1.5); ctx.stroke();
+  ctx.restore();
+  for (const [bx, by] of [[x + 6, y + 6], [x + w - 6, y + 6], [x + 6, y + h - 6], [x + w - 6, y + h - 6]]) bolt(ctx, bx, by, 1.9);
+}
+// Water from y down: a dark body that catches the dusk, a lit surface line, ripples that drift, and the sun's glitter.
+export function waterBody(ctx, y, time = 0) {
+  const g = ctx.createLinearGradient(0, y, 0, BOARD.height);
+  g.addColorStop(0, '#6d6a6c'); g.addColorStop(.04, '#37606f'); g.addColorStop(.3, '#1e3c49'); g.addColorStop(1, '#0b171c');
+  ctx.fillStyle = g; ctx.fillRect(0, y, BOARD.width, BOARD.height - y);
+  const glitter = ctx.createRadialGradient(760, y, 4, 760, y, 260); glitter.addColorStop(0, 'rgba(255,190,120,.2)'); glitter.addColorStop(1, 'rgba(255,170,100,0)');
+  ctx.save(); ctx.beginPath(); ctx.rect(0, y, BOARD.width, BOARD.height - y); ctx.clip(); ctx.translate(760, y); ctx.scale(1, .32); ctx.translate(-760, -y);
+  ctx.fillStyle = glitter; ctx.fillRect(500, y - 10, 520, 400); ctx.restore();
+  for (let i = 0; i < 26; i++) {
+    const depth = noise(i + 800), ry = y + 8 + depth * 62, rx = (noise(i + 810) * (BOARD.width + 80) + time * (3 + depth * 5)) % (BOARD.width + 80) - 40, half = 10 + depth * 26;
+    ctx.strokeStyle = `rgba(200,228,238,${(.08 + depth * .12).toFixed(2)})`; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(rx, ry, half, 1.6 + depth * 2, 0, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    const warm = Math.abs(rx - 760) < 190;
+    ctx.fillStyle = warm ? 'rgba(255,208,150,.35)' : 'rgba(225,242,248,.16)'; ctx.fillRect(rx - half * .4, ry - 2.2, half * .8, 1.2);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, y + 1.5, BOARD.width, 2);
+  ctx.fillStyle = 'rgba(236,246,250,.5)'; ctx.fillRect(0, y - .5, BOARD.width, 1.6);
+}
+// A planked crate, centred on (x, y), with steel corners and its weight stencilled on the front.
+export function plankCrate(ctx, x, y, w, h, label) {
+  const l = x - w / 2, t = y - h / 2, g = ctx.createLinearGradient(l, t, l, t + h);
+  g.addColorStop(0, '#c99a5c'); g.addColorStop(.5, '#a37640'); g.addColorStop(1, '#5e3f1d');
+  ctx.fillStyle = g; ctx.fillRect(l, t, w, h);
+  for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,240,210,.07)'; ctx.fillRect(l + i * w / 5, t, w / 5, h); ctx.fillStyle = 'rgba(30,18,6,.45)'; ctx.fillRect(l + i * w / 5, t, .8, h); }
+  ctx.fillStyle = '#7d5529'; ctx.fillRect(l, t, w, 5); ctx.fillRect(l, t + h - 5, w, 5); ctx.fillRect(l, t, 4, h); ctx.fillRect(l + w - 4, t, 4, h);
+  ctx.fillStyle = 'rgba(255,236,200,.28)'; ctx.fillRect(l, t, w, 1);
+  ctx.fillStyle = '#5c646a'; for (const [cx, cy] of [[l, t], [l + w - 5, t], [l, t + h - 5], [l + w - 5, t + h - 5]]) ctx.fillRect(cx, cy, 5, 5);
+  ctx.strokeStyle = 'rgba(20,12,4,.8)'; ctx.lineWidth = 1.2; ctx.strokeRect(l, t, w, h);
+  if (label) {
+    ctx.font = '800 10px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(20,12,4,.7)'; ctx.fillText(label, x + .8, y + 1.8); ctx.fillStyle = '#f7ead0'; ctx.fillText(label, x, y + 1);
+  }
+}
+// A steel weighing pad, `half` wide each side of its centre, standing on the ground line at y = 0 of the current drawing.
+export function weighingPad(ctx, half) {
+  shadow(ctx, 0, 6, half + 30, .55);
+  ctx.fillStyle = '#15181a'; for (const x of [-half + 14, -half / 3, half / 3, half - 26]) ctx.fillRect(x, -2, 12, 9);
+  const g = ctx.createLinearGradient(0, -11, 0, 0); g.addColorStop(0, '#a9b2b7'); g.addColorStop(.3, '#6c757b'); g.addColorStop(1, '#2c3236');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-half, -11, 2 * half, 11, 2); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.rect(-half, -11, 2 * half, 4); ctx.clip();
+  ctx.fillStyle = '#e0b23c'; ctx.fillRect(-half, -11, 2 * half, 4);
+  ctx.fillStyle = '#1a1c1d'; for (let x = -half - 8; x < half; x += 16) { ctx.beginPath(); ctx.moveTo(x, -7); ctx.lineTo(x + 6, -11); ctx.lineTo(x + 12, -11); ctx.lineTo(x + 6, -7); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-half, -11, 2 * half, .9);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; for (let x = -half + 10; x < half; x += 30) { ctx.beginPath(); ctx.arc(x, -3, 1.1, 0, Math.PI * 2); ctx.fill(); }
+}
+
 export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {
   ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
   const words = value.split(' '), lines = [];

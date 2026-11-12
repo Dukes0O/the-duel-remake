@@ -515,6 +515,15 @@ tasks:
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
 
+  - id: QA-EVIDENCE-MIDNIGHT
+    title: "The evidence-folder test fails for a while after midnight"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"

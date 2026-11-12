@@ -2,10 +2,10 @@
 // teaching drawing at true scale and real speed. Draws and hit-tests only; it never changes the lesson.
 import {stringPeriod} from '../benches/pendulum.js';
 import {GUESS_CAPTIONS, HOOK_X, LENGTHS, REFERENCE_X, SWING_RAD, WEIGHTS, tripMetres} from './pendulum-classroom.js';
-import {BOARD, theme, background, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, floor, shadow, forceArrow, cable, swivelHook, brassDial, glassGlare, steelBeam, steel, bolt, text, keyCap, helicopter, car, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 export {BOARD};
 
-const BEAM_Y = 150, METRE = 18, WATCH_Y = 50, WATCH_R = 28, DIAL_S = 12, PLATE_Y = BEAM_Y - 30;
+const BEAM_Y = 150, METRE = 18, WATCH_Y = 50, WATCH_R = 28, DIAL_S = 12, PLATE_Y = BEAM_Y - 30, FLOOR_Y = 622;
 const SHELF = Object.freeze({light: [78, 618], heavy: [140, 608]});
 const radius = kg => kg > 100 ? 26 : 18;
 const CABLE_PERIOD = stringPeriod(15);
@@ -74,30 +74,40 @@ export function dragAngle(view, id, x, y) {
 
 // ---- drawing ----
 function beam(ctx, from = 60, to = 940) {
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(from + 6, BEAM_Y - 10, to - from, 22);
-  const g = ctx.createLinearGradient(0, BEAM_Y - 16, 0, BEAM_Y + 8);
-  g.addColorStop(0, theme.beamLight); g.addColorStop(.35, theme.beam); g.addColorStop(1, theme.beamDark);
-  ctx.fillStyle = g; ctx.fillRect(from, BEAM_Y - 16, to - from, 8); ctx.fillRect(from, BEAM_Y + 2, to - from, 8);
-  ctx.fillStyle = theme.beamDark; ctx.fillRect(from, BEAM_Y - 8, to - from, 10);
-  ctx.fillStyle = theme.rivet;
-  for (let x = from + 14; x < to; x += 36) { ctx.beginPath(); ctx.arc(x, BEAM_Y - 12, 2.2, 0, Math.PI * 2); ctx.arc(x, BEAM_Y + 6, 2.2, 0, Math.PI * 2); ctx.fill(); }
+  // Two plates bolted to the wall hold the beam up.
+  for (const bx of [from + 12, to - 12]) { steel(ctx, bx - 8, BEAM_Y - 27, 16, 62, 2); bolt(ctx, bx, BEAM_Y - 21, 2.2); bolt(ctx, bx, BEAM_Y + 27, 2.2); }
+  steelBeam(ctx, from, to, BEAM_Y - 16, 26);
 }
-function hook(ctx, x, colour = theme.beamLight) {
-  ctx.strokeStyle = colour; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x, BEAM_Y + 10); ctx.lineTo(x, BEAM_Y + 18); ctx.stroke();
-  ctx.beginPath(); ctx.arc(x, BEAM_Y + 22, 4, Math.PI * 1.5, Math.PI * 3.2); ctx.stroke();
-}
-function ball(ctx, x, y, kg, {ghost = false, label = true} = {}) {
-  const r = radius(kg), colours = kg > 100 ? theme.iron : theme.brass;
+// The hanging bracket and swivel that a string hooks on; a dim one is a hook the weight is not on.
+function hook(ctx, x, dim = false) { swivelHook(ctx, x, BEAM_Y + 10, dim ? .5 : 1); }
+// A weight: a cast ball with a lifting eye, a lit side, a seam and its mass stencilled on. The light 20 kg weight is bronze
+// and the heavy 200 kg weight is cast iron. `angle` is how far the string leans, so that the eye sits where the string joins.
+function ball(ctx, x, y, kg, {ghost = false, label = true, angle = 0} = {}) {
+  const r = radius(kg), heavy = kg > 100;
   ctx.save();
   if (ghost) ctx.globalAlpha = .42;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x + 4, y + 5, r, r * .92, 0, 0, Math.PI * 2); ctx.fill();
-  const g = ctx.createRadialGradient(x - r * .4, y - r * .45, r * .1, x, y, r * 1.05);
-  g.addColorStop(0, ghost ? '#d9dee2' : colours[0]); g.addColorStop(.45, ghost ? '#9aa2a8' : colours[1]); g.addColorStop(1, ghost ? '#4a5257' : colours[2]);
+  const ex = x - Math.sin(angle) * (r + 2.5), ey = y - Math.cos(angle) * (r + 2.5);
+  ctx.strokeStyle = ghost ? '#8c949a' : '#252b2f'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(ex, ey, 3, Math.PI * 1.05, Math.PI * 1.5); ctx.stroke();
+  const g = ctx.createRadialGradient(x - r * .4, y - r * .44, r * .05, x + r * .12, y + r * .12, r * 1.12);
+  g.addColorStop(0, ghost ? '#d9dee2' : heavy ? '#929da3' : '#ffeeb0'); g.addColorStop(.38, ghost ? '#9aa2a8' : heavy ? '#444d52' : '#cf9a38'); g.addColorStop(1, ghost ? '#4a5257' : heavy ? '#0d1012' : '#4f3409');
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1.2; ctx.stroke();
-  if (label) { ctx.font = `800 ${kg > 100 ? 13 : 12}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(30,20,5,.75)'; ctx.fillText(kg > 100 ? '200' : '20', x, y + 1); }
+  // Warm light thrown back from the floor along the lower edge, and the seam where the two halves of the mould met.
+  ctx.strokeStyle = 'rgba(255,196,130,.28)'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(x, y, r - 1.4, Math.PI * .12, Math.PI * .55); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y, r, r * .24, -angle, .1, Math.PI - .1); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(x - r * .42, y - r * .46, r * .24, r * .14, -.75, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(x - r * .46, y - r * .5, r * .07, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  if (label) {
+    ctx.font = `800 ${heavy ? 13 : 12}px "Segoe UI", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = heavy ? 'rgba(235,228,205,.88)' : 'rgba(40,24,4,.8)'; ctx.fillText(heavy ? '200' : '20', x, y + 2);
+  }
   ctx.restore();
+}
+// The soft shadow a weight throws on the floor: wider and fainter the higher the weight hangs.
+function weightShadow(ctx, p) {
+  const [bx, by] = bobPoint(p), up = Math.max(0, FLOOR_Y - by);
+  shadow(ctx, bx, FLOOR_Y + 22, radius(p.weightKg) * (2.2 + up / 200), Math.max(.22, (p.ghost ? .4 : .75) - up / 800));
 }
 function swingPath(ctx, p, highlight = false, pivotY = BEAM_Y) {
   const r = p.lengthM * METRE, a = Math.abs(p.amplitude ?? SWING_RAD);
@@ -105,16 +115,13 @@ function swingPath(ctx, p, highlight = false, pivotY = BEAM_Y) {
   ctx.beginPath(); ctx.arc(p.x, pivotY, r, Math.PI / 2 - a, Math.PI / 2 + a); ctx.stroke(); ctx.restore();
 }
 function pendulum(ctx, p, {path = p.swinging, glow = false, time = 0} = {}) {
-  const [bx, by] = bobPoint(p);
+  const [bx, by] = bobPoint(p), r = radius(p.weightKg), lean = Math.atan2(bx - p.x, by - BEAM_Y);
   if (path) swingPath(ctx, p);
-  ctx.save();
-  if (p.ghost) { ctx.setLineDash([6, 5]); ctx.globalAlpha = .55; }
-  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x + 2, BEAM_Y + 24); ctx.lineTo(bx + 2, by + 2); ctx.stroke();
-  ctx.strokeStyle = p.ghost ? theme.ghost : theme.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, BEAM_Y + 24); ctx.lineTo(bx, by); ctx.stroke();
-  ctx.restore();
+  // The cable runs from the ring on the hook to the lifting eye on the weight.
+  cable(ctx, p.x, BEAM_Y + 34, bx - Math.sin(lean) * (r + 5.5), by - Math.cos(lean) * (r + 5.5), {width: 2.2, alpha: p.ghost ? .5 : 1});
   hook(ctx, p.x);
-  if (glow) halo(ctx, bx, by, radius(p.weightKg) + 10, time);
-  ball(ctx, bx, by, p.weightKg, {ghost: p.ghost});
+  if (glow) halo(ctx, bx, by, r + 10, time);
+  ball(ctx, bx, by, p.weightKg, {ghost: p.ghost, angle: lean});
 }
 function halo(ctx, x, y, r, time) {
   const pulse = .5 + .5 * Math.sin(time * 5);
@@ -124,12 +131,10 @@ function halo(ctx, x, y, r, time) {
 function stopwatch(ctx, x, y, watch, periodS, {ghost = false, r = WATCH_R, digits = true} = {}) {
   ctx.save();
   if (ghost) ctx.globalAlpha = .55;
-  ctx.fillStyle = theme.beamDark; ctx.fillRect(x - 5, y - r - 9, 10, 8);
-  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(x + 3, y + 3, r + 4, 0, Math.PI * 2); ctx.fill();
-  const bezel = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
-  bezel.addColorStop(0, theme.beamLight); bezel.addColorStop(1, theme.beamDark);
-  ctx.fillStyle = bezel; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = theme.dial; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  // The crown, then the brass case, the face, the ticks, the swept part, the hand and the glass.
+  steel(ctx, x - 4, y - r - 12, 8, 8, 1.5);
+  ctx.strokeStyle = '#b7bfc3'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y - r - 14, 3.4, Math.PI * .1, Math.PI * .9, true); ctx.stroke();
+  brassDial(ctx, x, y, r);
   ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = 1.2;
   for (let s = 0; s < DIAL_S * 2; s++) {
     const a = s / (DIAL_S * 2) * Math.PI * 2 - Math.PI / 2, inner = s % 2 ? r - 4 : r - 8;
@@ -142,8 +147,9 @@ function stopwatch(ctx, x, y, watch, periodS, {ghost = false, r = WATCH_R, digit
     ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r - 9, -Math.PI / 2, -Math.PI / 2 + elapsed / DIAL_S * Math.PI * 2); ctx.closePath(); ctx.fill();
   }
   const a = elapsed / DIAL_S * Math.PI * 2 - Math.PI / 2;
-  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * (r - 5), y + Math.sin(a) * (r - 5)); ctx.stroke();
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#c8402e'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * 5, y - Math.sin(a) * 5); ctx.lineTo(x + Math.cos(a) * (r - 5), y + Math.sin(a) * (r - 5)); ctx.stroke(); ctx.lineCap = 'butt';
   ctx.fillStyle = '#2b2b2b'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+  glassGlare(ctx, x, y, r);
   ctx.restore();
   if (digits) {
     const label = watch ? `${elapsed.toFixed(1)} s` : '0.0 s';
@@ -155,8 +161,11 @@ function plate(ctx, x, y, label, {key = null, chosen = false, glow = false, time
   ctx.font = '800 16px "Segoe UI", sans-serif';
   const w = ctx.measureText(label).width + (key ? 40 : 18), h = 26;
   if (glow) halo(ctx, x, y, w / 2 + 4, time);
-  ctx.fillStyle = chosen ? theme.accent : theme.plate; ctx.strokeStyle = chosen ? theme.accent : theme.beamLight; ctx.lineWidth = 2;
+  const face = ctx.createLinearGradient(0, y - h / 2, 0, y + h / 2);
+  if (chosen) { face.addColorStop(0, '#ffe08a'); face.addColorStop(1, '#d9a640'); } else { face.addColorStop(0, '#39424a'); face.addColorStop(1, '#1d2326'); }
+  ctx.fillStyle = face; ctx.strokeStyle = chosen ? theme.accent : theme.beamLight; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(x - w / 2 + 4, y - h / 2 + 2, w - 8, 1);
   ctx.fillStyle = chosen ? '#1d2224' : theme.text; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, x - (key ? 11 : 0), y + 1);
   if (key) keyCap(ctx, x + w / 2 - 15, y, key, chosen);
@@ -168,12 +177,16 @@ function arrowDown(ctx, x, y, time) {
 }
 function tape(ctx, p) {
   const x = p.x + 30, end = BEAM_Y + p.lengthM * METRE;
-  ctx.fillStyle = '#e8c547'; ctx.fillRect(x - 7, BEAM_Y + 10, 14, end - BEAM_Y - 10);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 4, BEAM_Y + 13, 14, end - BEAM_Y - 10);
+  const g = ctx.createLinearGradient(x - 7, 0, x + 7, 0); g.addColorStop(0, '#f6de80'); g.addColorStop(.45, '#e8c547'); g.addColorStop(1, '#a98a1e');
+  ctx.fillStyle = g; ctx.fillRect(x - 7, BEAM_Y + 10, 14, end - BEAM_Y - 10);
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x - 6.5, BEAM_Y + 10, 1.2, end - BEAM_Y - 10);
   ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 1;
   for (let m = 0; m <= p.lengthM; m++) {
     const y = BEAM_Y + m * METRE; if (y < BEAM_Y + 10) continue;
     ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x - 7 + (m % 5 ? 5 : 10), y); ctx.stroke();
   }
+  steel(ctx, x - 8, end - 1, 16, 4, 1);
   ctx.strokeStyle = theme.accent; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(x - 7, end); ctx.lineTo(p.x, end); ctx.stroke(); ctx.setLineDash([]);
   text(ctx, `${p.lengthM} m`, x + 14, (BEAM_Y + end) / 2, {size: 22, align: 'left', colour: theme.accent});
 }
@@ -184,9 +197,12 @@ function partLabel(ctx, label, x, y, tx, ty) {
 }
 function startMark(ctx, p, flash, time) {
   const [x, y] = bobPoint(p, Math.abs(p.amplitude ?? SWING_RAD));
-  ctx.fillStyle = theme.good; ctx.strokeStyle = theme.good; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 26, y + 30); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 46, y - 22); ctx.lineTo(x + 26, y - 14); ctx.fill();
+  ctx.strokeStyle = '#c9d1d6'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 26, y + 30); ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 27.6, y - 30); ctx.lineTo(x + 27.6, y + 30); ctx.stroke();
+  const cloth = ctx.createLinearGradient(x + 26, y - 30, x + 46, y - 14); cloth.addColorStop(0, '#9ff5bf'); cloth.addColorStop(.5, theme.good); cloth.addColorStop(1, '#2c9a59');
+  ctx.fillStyle = cloth; ctx.beginPath(); ctx.moveTo(x + 26, y - 30); ctx.lineTo(x + 46, y - 22); ctx.lineTo(x + 26, y - 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 26, y - 22); ctx.lineTo(x + 46, y - 22); ctx.stroke();
+  ctx.fillStyle = theme.good;
   text(ctx, 'start', x + 52, y - 22, {size: 15, colour: theme.good, align: 'left'});
   if (flash) { ctx.save(); ctx.strokeStyle = theme.good; ctx.lineWidth = 4; ctx.globalAlpha = .9; ctx.beginPath(); ctx.arc(x, y, 30 + 6 * Math.sin(time * 12), 0, Math.PI * 2); ctx.stroke(); ctx.restore(); text(ctx, 'TAP', x, y - 46, {size: 22, colour: theme.good}); }
 }
@@ -220,9 +236,7 @@ function tripLabel(ctx, p, y) {
 // The pull of gravity on a weight: a longer arrow for the heavier weight, and the sum under it.
 function pullArrow(ctx, p) {
   const [bx, by] = bobPoint(p), from = by + radius(p.weightKg) + 2, to = from + (p.weightKg > 100 ? 110 : 22);
-  ctx.strokeStyle = theme.bad; ctx.fillStyle = theme.bad; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(bx, from); ctx.lineTo(bx, to - 8); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(bx - 8, to - 10); ctx.lineTo(bx + 8, to - 10); ctx.lineTo(bx, to + 3); ctx.closePath(); ctx.fill();
+  forceArrow(ctx, bx, from, to + 3 - from, false, theme.bad, 6);
   const pull = (p.weightKg * 9.81).toFixed(1);
   text(ctx, `pull of gravity: ${pull} newtons`, p.x, 578, {size: 16, colour: theme.bad});
   text(ctx, `${pull} ÷ ${p.weightKg} kg = 9.81 m/s²`, p.x, 602, {size: 16, colour: theme.good});
@@ -244,16 +258,22 @@ function pullPanel(ctx, view, time) {
 // A sense of size for a metre: a grown-up beside a 1 m bar, at the same scale as the strings.
 function metreScale(ctx) {
   const x = 870, foot = 620, head = foot - 1.8 * METRE;
-  ctx.strokeStyle = theme.text; ctx.fillStyle = theme.text; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, head + 4, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(x, head + 8); ctx.lineTo(x, foot - 13); ctx.moveTo(x, foot - 13); ctx.lineTo(x - 5, foot); ctx.moveTo(x, foot - 13); ctx.lineTo(x + 5, foot); ctx.moveTo(x - 6, head + 14); ctx.lineTo(x + 6, head + 14); ctx.stroke();
-  ctx.fillStyle = theme.accent; ctx.fillRect(x + 22, foot - METRE, 6, METRE);
+  shadow(ctx, x, foot + 6, 20, .5);
+  // The grown-up is a lit silhouette: head, shoulders and body, two legs.
+  const body = ctx.createLinearGradient(x - 7, 0, x + 7, 0); body.addColorStop(0, '#e9e3cf'); body.addColorStop(1, '#8e8a7b');
+  ctx.fillStyle = body; ctx.beginPath(); ctx.arc(x, head + 4, 4.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(x - 7, head + 9, 14, 13, 4); ctx.fill();
+  ctx.fillRect(x - 5.5, head + 20, 4.6, foot - head - 20); ctx.fillRect(x + .9, head + 20, 4.6, foot - head - 20);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x + .2, head + 22, .8, foot - head - 22);
+  const tape = ctx.createLinearGradient(x + 22, 0, x + 28, 0); tape.addColorStop(0, '#f6de80'); tape.addColorStop(1, '#a98a1e');
+  ctx.fillStyle = tape; ctx.fillRect(x + 22, foot - METRE, 6, METRE);
+  ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 22, foot - METRE); ctx.lineTo(x + 28, foot - METRE); ctx.moveTo(x + 22, foot - METRE / 2); ctx.lineTo(x + 25, foot - METRE / 2); ctx.stroke();
   text(ctx, '1 m', x + 36, foot - METRE / 2, {size: 16, align: 'left', colour: theme.accent});
   text(ctx, 'a grown-up, to scale', x + 8, foot + 20, {size: 15, colour: theme.text, weight: 600});
 }
 function shelf(ctx, chosen, view) {
-  ctx.fillStyle = theme.beamDark; ctx.fillRect(40, 636, 140, 10);
-  ctx.fillStyle = theme.beam; ctx.fillRect(40, 632, 140, 5);
+  steel(ctx, 40, 632, 140, 10, 2);
+  for (const bx of [58, 162]) { steel(ctx, bx - 4, 642, 8, 14, 1); bolt(ctx, bx, 636.5, 1.6); }
   for (const [name, [x, y]] of Object.entries(SHELF)) {
     const kg = WEIGHTS[name], here = chosen.weightKg !== kg;
     if (here) ball(ctx, x, y, kg);
@@ -266,6 +286,8 @@ function shelf(ctx, chosen, view) {
 }
 
 function drawPendulumBoard(ctx, view) {
+  floor(ctx, FLOOR_Y);
+  for (const p of view.pendulums) weightShadow(ctx, p);
   beam(ctx);
   const you = pendulumById(view, 'you');
   if (view.hooks) {
@@ -316,9 +338,11 @@ function drawPendulumBoard(ctx, view) {
 
 // ---- the helicopter scenes ----
 const CABLE_PX = 15 * METRE * .8, HELI_Y = 150, SETTLE_RATE = Math.log(3) / 16;
-function carOnCable(ctx, hx, angle, time) {
+function carOnCable(ctx, hx, angle, time, ground = true) {
   const cx = hx + Math.sin(angle) * CABLE_PX, cy = HELI_Y + 34 + Math.cos(angle) * CABLE_PX;
-  ctx.strokeStyle = theme.line; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, HELI_Y + 34); ctx.lineTo(cx, cy - 18); ctx.stroke();
+  if (ground) { shadow(ctx, cx, 646, 54, .32); shadow(ctx, hx, 660, 110, .26); }
+  cable(ctx, hx, HELI_Y + 34, cx, cy - 18, {width: 2.4});
+  ctx.strokeStyle = '#cfd6da'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(hx, HELI_Y + 36, 2.6, 0, Math.PI * 2); ctx.stroke();
   car(ctx, cx, cy, angle * .6);
   return [cx, cy];
 }
@@ -362,7 +386,7 @@ function drawRecap(ctx, view) {
     if (idea.id === 'weights') { beamShort(ctx); for (const p of [mini('a', -60, 15, 20), mini('b', 55, 15, 200)]) pendulum(ctx, p); }
     if (idea.id === 'settle') {
       const k = (t % 10) / 10, amplitude = .3 * Math.exp(-k * 4.5);
-      ctx.translate(-500, 0); carOnCable(ctx, 500, amplitude * Math.sin(2 * Math.PI * t / CABLE_PERIOD), t); helicopter(ctx, 500, HELI_Y, 0, t, .8);
+      ctx.translate(-500, 0); carOnCable(ctx, 500, amplitude * Math.sin(2 * Math.PI * t / CABLE_PERIOD), t, false); helicopter(ctx, 500, HELI_Y, 0, t, .8);
     }
     ctx.restore();
     wrap(ctx, idea.text, x + w / 2, 505, w - 30, {size: 19, weight: 600});
@@ -404,7 +428,7 @@ export function drawPicture(ctx, picture, w, h) {
     ctx.save(); ctx.translate(w / 2, 0); ctx.scale(.45, .45); ctx.translate(-500, -60);
     const hx = picture.move === 'forward' ? 560 : 500, tilt = picture.move === 'forward' ? .25 : 0;
     if (picture.move === 'drop') { car(ctx, 500, 470, .5); ctx.strokeStyle = theme.bad; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(470, 380); ctx.lineTo(470, 430); ctx.moveTo(530, 380); ctx.lineTo(530, 430); ctx.stroke(); }
-    else carOnCable(ctx, hx, picture.move === 'forward' ? -.55 : .05, 0);
+    else carOnCable(ctx, hx, picture.move === 'forward' ? -.55 : .05, 0, false);
     helicopter(ctx, hx, HELI_Y, tilt, .3);
     if (picture.move === 'forward') { ctx.strokeStyle = theme.text; ctx.lineWidth = 4; for (const y of [120, 150, 180]) { ctx.beginPath(); ctx.moveTo(360, y); ctx.lineTo(420, y); ctx.stroke(); } }
     ctx.restore();
