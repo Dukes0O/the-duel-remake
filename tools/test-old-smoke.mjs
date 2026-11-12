@@ -609,7 +609,8 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   const duel = startDuel(13, 'medium', {carAt: {x: 0, z: -200}});
   const cues = new Set();
   duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
-  waitUntil(duel, () => duel.state.stageTimeSec > 14, 20);
+  // The first stoke begins after the three opening lines (6.7 s), so the first slam comes at about 15.2 s on Medium.
+  waitUntil(duel, () => duel.state.stageTimeSec > 16, 24);
   check(cues.has('vehicle.landing') && cues.has('arena.tell') && cues.has('gate.latch'), 'a missed door plays stoke, door open and slam');
   const shoulder = startDuel(14, 'medium', {carAt: {x: well.x + 8, z: well.z + 10}});
   const horn = new Set();
@@ -632,6 +633,41 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   check(shoulder.state.armor <= armorBefore - 15, 'the shove costs armour on Medium');
   check(shoulder.state.knock || shoulder.state.arena.worldJob.furnaceLog.some(event => event.type === 'shove'),
     'the furnace swerves into the car and shoves it');
+}
+
+{
+  // EVERBURN-RUN-AT-TOWN: reaching the gate plays a cue and a line in a real Duel, and a burnt gate is remembered for the job.
+  for (const rightDoorBroken of [false, true]) {
+    const duel = startDuel(21, 'medium', {carAt: {x: 0, z: -200}});
+    const cues = new Set(), seen = [];
+    duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
+    waitUntil(duel, () => !!furnaceOf(duel), 5);
+    const furnace = furnaceOf(duel).furnace, worldJob = duel.state.arena.worldJob;
+    furnace.metres = furnace.gateMetres - .5;
+    if (rightDoorBroken) { furnace.hits = 2; furnace.broken[0] = true; furnace.broken[1] = true; }
+    for (let n = 0; n < 2 / DT; n++) { tick(duel); if (duel.state.callout) seen.push(duel.state.callout); }
+    const log = worldJob.furnaceLog.filter(event => event.type === 'townReached' || event.type === 'gateBurnt');
+    check(cues.has('arena.toll-gate'), `${rightDoorBroken ? 'broken' : 'whole'} right door: reaching the gate sounds the horn`);
+    if (rightDoorBroken) {
+      check(!cues.has('weapon.flame.start') && !worldJob.gateBurnt && log.length === 1, 'the gate stays whole: no flame cue and no memory of a fire');
+      check(seen.includes('Auntie Solder: That is close enough, Smoke. Look at the state of you. Go home.'), 'Auntie Solder tells Old Smoke to go home');
+    } else {
+      check(cues.has('weapon.flame.start') && worldJob.gateBurnt && log.length === 2, 'the gate burns: the flame cue plays and the job remembers the fire');
+      check(seen.includes('Auntie Solder: He has set the gate alight! We will mend it. You stop that furnace.'), 'Auntie Solder says the gate is alight');
+      worldJob.furnaceLog.length = 0;
+    }
+  }
+  check(SOUND_BANK['arena.toll-gate'] && SOUND_BANK['weapon.flame.start'], 'both gate cues already exist in the sound bank');
+  // The chase opens with Old Smoke's two lines and Cinder's, one after another, and the old line is not played.
+  const duel = startDuel(22, 'medium', {fullJob: true, carAt: {x: 0, z: -200}});
+  const worldJob = duel.state.arena.worldJob, heard = [];
+  worldJob.job = {...worldJob.job, stepIndex: 1, stepState: {}};
+  for (let n = 0; n < 16 / DT; n++) { tick(duel); if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); }
+  same(heard.filter(text => text !== 'GO. MAKE IT COUNT.').slice(0, 3), ['Old Smoke: Fire is mine. Everything goes grey in the end.',
+    'Old Smoke: If I cannot have the fire, nobody has it. I am going to put out your forge.',
+    'Cinder: He is heading for Tin Town! When a door glows, hit it!'], 'the chase opens with three lines in the card\'s order');
+  check(!heard.some(text => text.includes('He\'s running!')), 'the old chase line is never played');
+  check(worldJob.furnaceLog.find(event => event.type === 'stoke').tSec > 6.6, 'the first door stokes only after the third line has played');
 }
 
 console.log(`Old Smoke: furnace chase rules passed (${checks} checks)`);

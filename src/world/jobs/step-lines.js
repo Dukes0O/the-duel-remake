@@ -7,7 +7,9 @@ export function stepLines(step,state,view,dt,outcome) {
   const lineHistory=new Set(state.lineHistory??[]);
   const nonCaption=(outcome?.requests??[]).filter(request=>request.type!=='say');
   const newlyRequested=(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId);
-  const once=new Set([step.startLineId,step.afterStartLineId,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
+  // afterStartLineId is one line id or a list of them, played in order after startLineId.
+  const afterStart=[].concat(step.afterStartLineId??[]);
+  const once=new Set([step.startLineId,...afterStart,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
   for(const lineId of newlyRequested) {
     if(once.has(lineId)&&lineHistory.has(lineId))continue;
     queue.push(lineId);if(once.has(lineId))lineHistory.add(lineId);
@@ -31,7 +33,7 @@ export function stepLines(step,state,view,dt,outcome) {
     // Order: what the step before left waiting, the opening that holds the step, then the start lines.
     const opening=[...(state.carriedLines??[]),...(step.opening??[])];
     for(const lineId of opening) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
-    for(const lineId of [step.startLineId,step.afterStartLineId])
+    for(const lineId of [step.startLineId,...afterStart])
       if(lineId&&!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
     if(queue.length) {const lineId=nextCaption(queue);const result=emit(lineId,queue,opening.includes(lineId));
       result.state.linesStarted=true;return result;}

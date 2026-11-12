@@ -20,8 +20,8 @@ export const OLD_SMOKE = Object.freeze({
   // (seen in Claude's play of 10 November: 113 s and 85 s of plain following). Still slower
   // than the Titan Monster's 52 m/s.
   boltSpeed: Object.freeze({easy: 36, medium: 45, hard: 45}),
-  // The two opening lines (2.2 seconds each) play before the first stoke begins.
-  introSec: 4.5,
+  // The three opening lines (2.2 seconds each) play before the first stoke begins.
+  introSec: 6.7,
   stokeSec: 4,
   glowSec: Object.freeze({easy: 6, medium: 4.5, hard: 3.5}),
   shutSec: 3,

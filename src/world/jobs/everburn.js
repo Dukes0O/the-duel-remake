@@ -83,12 +83,12 @@ export const EVERBURN_JOBS = Object.freeze([
       lentWeapon:'flamethrower',
       restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
-      step('chase',{what:"Break the furnace's three doors. Hit a door while it glows.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
+      step('chase',{what:'Stop the furnace before it reaches Tin Town. Hit a door while it glows.', targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
         path:furnacePath, legs:furnaceLegs, gateWaypoint:furnacePath.indexOf(furnaceGate)}, path:furnacePath, legs:furnaceLegs,
         // The chase ends on the third door hit, never on contact or distance
         // (src/world/jobs/old-smoke.js owns the rules).
         targetSpeed:14, leashDistance:Infinity, contactRadius:0, targetHealth:3, hitPart:'glowing-vent',
-        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:'story.ember.cinder.17',
+        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:['story.ember.old-smoke.4', 'story.ember.cinder.23'],
         wonLineId:'story.ember.cinder.20'})],
     rewards:['cinder-crew-member','cinders-hand-flamer','ember-paint','everburn-lit']}),
 ]);

@@ -19,9 +19,10 @@ const position = (duel, actor) => {
 const EMPTY_HIT_TARGETS = [];
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.
+// townReached is the horn (the one that warns of the shove) and gateBurnt is the flamethrower's flame catching.
 const FURNACE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch',
   doorSlam: 'vehicle.landing', hit: 'combat.hit-confirm', shoveWarning: 'arena.toll-gate',
-  fell: 'combat.explosion'});
+  fell: 'combat.explosion', townReached: 'arena.toll-gate', gateBurnt: 'weapon.flame.start'});
 const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.ember.old-smoke.3',
   3: 'story.ember.cinder.19'});
 const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
@@ -218,6 +219,12 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
   }
   else if (event.type === 'bolt') duel._callout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
   else if (event.type === 'turnAround') duel._callout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
+  else if (event.type === 'gateBurnt') {
+    // The scene keeps the fire on the gate until the job ends, even if a wreck starts the chase again.
+    worldJob.gateBurnt = true;
+    duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.7'), 3);
+  }
+  else if (event.type === 'townReached' && !event.burnt) duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.8'), 3);
   return furnace;
 }
 
