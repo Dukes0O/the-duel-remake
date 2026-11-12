@@ -136,6 +136,24 @@ full in place of 0.3). `tools/test-scablands-scene.mjs` checks each, and its thi
 the death (reviewed on the card). No rule, pay, save, replay fingerprint or world signature is touched. Sound: none
 new; cinders landing already play the fire cue.
 
+## Tuning (builder, 12 November 2026): stopped, no number moved
+
+The card's tuning section asked for the fighting drivers to win less often (Medium 6 to 8 of 10, Hard 2 to 5 of 10) by moving the
+cinders, the stoke, the stop after a broken door and the glow time inside the card's limits. They cannot: the furnace has about 44 s
+of slack even with the stoke and stop at their limits, because the third door breaks at 94 to 98 s and Big Bess arrives at 142 s. The
+answer to the card's first question (the 1 health is the riders' doing, not the cinders'; no fault in a rule or the driver), the
+table at today's numbers with the Hard rows, and the way the numbers behaved are written in the card's "Tuning result".
+
+- **What moved:** nothing in the game. To measure, the stoke time, stop time and glow time were made battle rules for a while in
+  `old-smoke.js` and `gas-run.js`; they were taken out again, since no value of them meets the targets. `git diff` of `src/` is empty.
+- **Tests:** none run, none needed (a notes-only change). `tools/test-board.mjs` and `tools/test-repo-hygiene.mjs` were run on the
+  commit. The scripted drivers were rerun through a scratch copy of the drivers in `tools/test-everburn-easy.mjs` and
+  `tools/test-run-gas-medium.mjs` (a Hard driver added): Easy 10 home, 10 won, lowest 60, longest 142 s; Medium fighting 10, 10,
+  lowest 1, 188 s; Medium never fights 10, 0, lowest 22, 272 s; Hard fighting 10, 10, lowest 10, 167 s; Hard never fights 10, 0, lowest 60,
+  240 s. These are the existing table's numbers, reproduced.
+- **Re-recorded assertions:** none. **Replay fingerprints:** unchanged, since no file under `src/` or `tools/` changed.
+- **Removed:** nothing. The scratch harness was deleted.
+
 ## Removed
 
 Nothing is deleted. At War party with a live furnace the wall's War party sentence and the Boneyard road's plain button are replaced by the battle's; they stay for a War party with
