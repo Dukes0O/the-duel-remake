@@ -89,3 +89,73 @@ the right.
 
 The round tube road (`TubeGeometry`, its point list and `roadGeometry`). The noise-texture colours and bump nodes in the
 four recipes. `detailCounts.far = 10` (now a 20 by 16 grid).
+
+# Follow-up (12 November): Tin Town's shacks
+
+Built by a Sonnet helper for Claude. Tin Town grows, drawn in code the way the gate is (`src/world/tin-town-shacks.js`,
+one group named `Tin Town shacks`, added to the scene with one call).
+
+## What changed
+
+- **45 shacks** of three sizes (3 x 3 x 2.6, 4 x 3 x 2.6 and 5 x 4 x 3 m): four walls of corrugated sheet, a sloping tin roof
+  that overhangs, a dark doorway with a frame, one or two shuttered window holes, one or two patches of other sheet and
+  sometimes a warm lamp by the door. Colours are tintown.glb's own (steel, rust, wood, cloth, paper); each shack differs by a
+  fixed seeded sequence.
+- **Stacked one, two or three high on scaffold legs** (four girders to the ground, each standing on the ground at its own
+  point and 5 cm in, braced between levels) with plank decks, a walkway and rail on the front of each upper level and a ladder
+  to the next.
+- **Six clusters** of six slots each (three along, two across, alleys 2.5 m wide), found by a fixed search near these angles
+  round (600, 0): the first spot that keeps every rule below. A cluster stands 35 to 80 m from the centre. East and west
+  clusters are turned so that their long side runs round the ring. The water tower (tank on four girder legs, 11.7 m) is in
+  cluster 1 and the radio pole (13 m, a glowing lamp on top, four guys) in cluster 3.
+- **Washing lines** (a thin line with small coloured cloths) between some stacks, and **warm lamps** (small glowing boxes,
+  the only part not worn) by some doors.
+- **A tin fence** of 2 m sheets on posts along the outside of the ring (88 m from the centre), beginning where the gate's own
+  fence ends and running round to the north, with a gap wherever a road comes in or the ground is not flat.
+- **Four meshes** in all (sheet, scaffold and planks, washing, lamps), one per material with each piece's colour in its
+  vertices: 4 draw calls. 22,996 triangles. Built in about 50 ms.
+- **Collision:** one solid for each cluster (`tin-town-cluster-1` to `-6`, 12 m tall) and two for the gate's posts
+  (`tin-town-gate-post-left` and `-right`) in `SCABLANDS_SOLIDS`, 16 in all.
+
+## Differs from the brief
+
+- **The gate now faces north and south.** With the gate turned along the line from (610, 170) to (430, 70), the gas run's
+  Boneyard road (from (447, 308) to the gate) ran along the gate's beam into a post (0.0 m clearance). The gate's driving
+  direction is now straight north and south: the furnace comes in 18 degrees and the Boneyard road 27 degrees from straight, and
+  the road goes on to the town's centre 22 degrees off. The gate's two posts then clear the Boneyard road by 3.5 m. A gate
+  cannot face the furnace's way in, the Boneyard road and the furnace's way out west all at once: the furnace's last piece
+  (from the gate to (430, 70)) starts inside the west post. It is an actor that turns round there, and the gate's west fence
+  also lies across that piece (nothing collides with the fence). Claude to decide whether to move a path.
+- **Two tests changed, for the gate's posts only** (`tools/test-old-smoke.mjs`, `tools/test-run-gas.mjs`): a path must keep
+  3.4 m from the gate's post boxes instead of 8 m, and the furnace's piece that leaves the gate may touch them. Every other
+  solid still needs 8 m and no other assertion moved. Needs Claude's written review (rule 18).
+- **The shack layout avoids the gate's fence too** (a box 553 to 597 by 58 to 66), besides the roads, the 24 m circle, the
+  existing model and its solid box.
+- **Cluster places are the first that keep the rules.** With the roads and the ridge at the east edge (the ground climbs from
+  x = 660), the free ring is the north and east; the six clusters stand at (585, -48), (620, -46), (647, -18), (648, 15),
+  (626, 43) and (614, 67). Every cluster's ground varies by 1.5 m or less (the ground at Tin Town is flat), so no shack was
+  skipped.
+
+## Checks
+
+- `node tools/test-scablands-scene.mjs`: new checks: 40 to 50 shacks (45), six clusters, three sizes, stacks, the tower and
+  the pole, at most 12 draw calls (4) and under 60,000 triangles, wear on everything that does not glow, nothing drawn within
+  24 m of (600, 0) or within 10 m of the roads (read from the real job paths: the furnace's path pieces, both gas-run roads,
+  job 4's road, the yard line and the gate line), every foot within 0.15 m of the ground, one solid for each cluster and
+  two for the gate's posts, every shack inside its cluster's solid, and both ways in cross the gate's opening.
+- `node tools/test-old-smoke.mjs` (614 checks), `node tools/test-run-gas.mjs` (1,044 checks), `node tools/test-everburn-easy.mjs`:
+  pass; every path still clears every cluster by more than 8 m and the Easy driver won every road.
+- Lane tier (`--changed --jobs 4 --keep-going`): 27 passed, 0 failed (the replay fingerprints, 297 checks, and the world
+  composition checks are unchanged). `npm run build`: pass. Browser checks `everburn-well` (2 screenshots) and `run-gas`
+  (3 screenshots): pass, 0 warnings, 0 errors.
+- No replay fingerprint or world signature moved. Frame check: not run (rule 9); the town adds 4 draw calls and about 23,000
+  triangles.
+
+## Look
+
+`.evidence/land-look/sheet-c.jpg` (the six viewpoints, before above after) and `sheet-d.jpg` (the town from the gate, from
+200 m, an alley, the town from 60 m up, the washing lines and the gate burning from three places).
+
+## Removed
+
+Nothing replaced; the gate's first direction (towards (430, 70)) is replaced by north and south.

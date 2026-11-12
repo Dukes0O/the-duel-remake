@@ -21,9 +21,10 @@ export const TIN_TOWN_ROADS=Object.freeze([
   [[250,415],[447,308]],[[447,308],[575,62]],
   [[230,150],[600,0]],
 ].map(line=>Object.freeze(line.map(point=>Object.freeze(point)))));
-// The existing Tin Town model's footprint and its solid box (SCABLANDS_SOLIDS 'tin-town-shell'): kept off, with a margin.
+// The existing Tin Town model's footprint, its solid box (SCABLANDS_SOLIDS 'tin-town-shell') and the gate with its fence
+// (src/world/tin-town-gate.js: 6.6 to 20.6 m each side of (575, 62) along x): kept off, with a margin.
 const OFF_LIMITS=Object.freeze([
-  {x0:570,x1:634,z0:-30,z1:30},{x0:538.5,x1:569.5,z0:-11.5,z1:11.5},
+  {x0:570,x1:634,z0:-30,z1:30},{x0:538.5,x1:569.5,z0:-11.5,z1:11.5},{x0:553,x1:597,z0:58,z1:66},
 ]);
 
 // Shack sizes, in metres: width, depth, wall height.
@@ -72,7 +73,7 @@ export function tinTownLayout(){
   for(const [index,spec] of CLUSTERS.entries()){
     let placed=null;
     search:for(const radius of [50,56,44,62,40,68,36]){
-      for(const turnAngle of [0,5,-5,10,-10,15,-15,20,-20]){
+      for(const turnAngle of [0,5,-5,10,-10,15,-15,20,-20,25,-25,30,-30,35,-35,40,-40]){
         const angle=(spec.angle+turnAngle)*Math.PI/180,cx=Math.round(TIN_TOWN_CENTRE.x+Math.cos(angle)*radius),cz=Math.round(TIN_TOWN_CENTRE.z+Math.sin(angle)*radius);
         // Clusters that stand east or west of the town are turned, so that their long side runs round the ring.
         const turned=Math.abs(Math.cos(angle))>.72,long=CELL.x+2.5+MARGIN,short=CELL.z/2+2+MARGIN,halfX=turned?short:long,halfZ=turned?long:short;
