@@ -68,6 +68,23 @@ Then one of: "Exact left side elevation, front of the vehicle at the left of the
 "Exact rear elevation." "Exact plan view from straight above, front of the vehicle at the top of the picture."
 Check each picture is one view of the same vehicle before carving; regenerate any that is not.
 
+## Round 3 (Claude, 11 November 2026)
+
+Sheet: `docs/board/looks/everburn-furnace/round-3.jpg`, note `round-3-review.md`.
+
+- Kyle, 11 November: put effort into what code can draw, not into model files that fall short.
+- The fire, smoke, sparks, firelight, ground shade and scorch marks are now drawn by the game
+  (`src/world/scrap-look.js`). The same file draws rust, runs and grain over plain-coloured parts.
+- The furnace's body is carved from Codex's four photos (`tools/blender/old-smoke-photo.py`, model
+  `old-smoke.glb`). The box furnace is removed from `scablands-vehicles.py` and from `vehicles.glb`.
+- Claude's pick is the photo body with the code-drawn fire. Kyle has the sheet.
+- Left for a later round if Kyle wants it: shields with real shape, a true overhead photo, damage that shows from
+  behind. Before the story goes live: the frame check, because the drawn effects cost graphics time.
+
+**Changed assertions in round 3, reviewed by Claude (rule 18).** `tools/test-scablands-scene.mjs`: eight art files
+load instead of seven (the furnace has its own file); the smoke starts over the new chimney (16 m and 1.1 m from the
+well's centre in place of 19.77 and 0.93). Both follow the new model; nothing is loosened.
+
 **Changed assertion, reviewed by Claude (rule 18).** `tools/test-scablands-scene.mjs` no longer checks that fire stands
 at the furnace's front face, because the stand-in cones there are removed. It now checks more: two tongues of fire
 per door, placed over the left, right and rear doors, hidden outside the chase and during the stoke, and shown only

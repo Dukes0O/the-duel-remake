@@ -1,4 +1,6 @@
-"""Build the Everburn story vehicles and render private round-review views.
+"""Build Big Bess and the thief buggy and render private round-review views.
+
+Old Smoke's furnace is carved from photos by old-smoke-photo.py.
 
 blender -b --python-exit-code 1 --python tools/blender/scablands-vehicles.py -- --root .
 Metric units, +Y up, +Z forward. The GLB has one named empty root per vehicle.
@@ -56,10 +58,7 @@ steel = mat('Welded soot-dark steel', (.105,.112,.105), .68, .82)
 rust = mat('Layered iron oxide', (.20,.082,.040), .55, .92)
 paint = mat('Faded ochre enamel, chipped to rust', (.30,.225,.10), .45, .84)
 black = mat('Oiled iron and rubber', (.035,.039,.036), .26, .91)
-scorch = mat('Scorched firebox plate', (.115,.058,.034), .3, .95)
 glass = mat('Dusty cab glass', (.09,.14,.14), .35, .42)
-glow = mat('Vent glow look', (.95,.19,.025), .05, .44, 2.0)
-warm = mat('Firebox ember', (.72,.24,.025), .15, .65, .5)
 
 def cube(name, loc, scale, material, bevel=.025, parent=None):
     bpy.ops.mesh.primitive_cube_add(size=1, location=loc); o=bpy.context.object; o.name=name
@@ -135,62 +134,6 @@ def bess(x):
     cube('Bumper',(0,.70,3.05),(2.5,.32,.25),steel,.04,r)
     return r
 
-def smoke(x):
-    """A scrap boiler on a six-wheel truck: a firebox with a barred fire door on each flank and at the rear, a
-    banded drum on top, a steam dome and a tall crooked chimney. Model +X is the furnace's left."""
-    r=root_empty("Old Smoke's rolling furnace",x)
-    cube('Furnace armored chassis',(0,.88,0),(2.2,.42,5.6),black,.05,r)
-    cab(r,0,1.42,1.9,1.2)
-    cube('Scrap ram beam',(0,.78,2.86),(2.6,.46,.22),steel,.04,r)
-    for xv in (-1.0,-.34,.34,1.0): cube('Ram tooth',(xv,.62,3.02),(.20,.62,.16),rust,.03,r)
-    cube('Firebox riveted box',(0,1.60,-1.15),(2.5,1.25,3.0),scorch,.06,r)
-    cube('Firebox soot-stained top deck',(0,2.25,-1.15),(2.56,.10,3.06),black,.02,r)
-    cyl('Boiler drum',(0,2.38,-1.15),.92,3.02,steel,rot=(0,0,0),vertices=20,parent=r)
-    for z in (-2.42,-1.58,-.72,.14):
-        cyl('Drum band',(0,2.38,z),.955,.10,rust,rot=(0,0,0),vertices=20,parent=r)
-    cyl('Drum rear cap',(0,2.38,-2.69),.74,.08,black,rot=(0,0,0),vertices=16,parent=r)
-    for k in range(8):
-        a=k*math.pi/4
-        cyl('Drum cap bolt',(math.cos(a)*.60,2.38+math.sin(a)*.60,-2.74),.055,.05,rust,rot=(0,0,0),vertices=6,parent=r)
-    cyl('Steam dome',(-.18,3.42,-1.95),.33,.46,paint,rot=(math.pi/2,0,0),vertices=14,parent=r)
-    cyl('Steam dome cap',(-.18,3.70,-1.95),.20,.14,rust,rot=(math.pi/2,0,0),vertices=10,parent=r)
-    for side in (-1,1):
-        cyl('Drum steam pipe',(side*.72,3.06,-1.15),.065,2.7,rust,rot=(0,0,0),vertices=8,parent=r)
-    # Tall crooked chimney with a flared crown, off-centre on the drum.
-    cyl('Crooked furnace chimney',(.62,3.95,-1.18),.25,2.15,steel,rot=(math.pi/2,0,0),vertices=12,parent=r)
-    cyl('Chimney rust collar',(.62,3.05,-1.18),.33,.22,rust,rot=(math.pi/2,0,0),vertices=12,parent=r)
-    cyl('Chimney flared crown',(.62,5.02,-1.18),.36,.24,rust,rot=(math.pi/2,0,0),vertices=12,parent=r)
-    cube('Chimney cap',(.62,5.22,-1.18),(.66,.08,.62),black,.02,r)
-    # The rear fire door: three barred openings, each with a dark mouth and its own fire.
-    cube('Rear door iron frame',(0,1.55,-2.66),(2.34,.98,.06),black,.02,r)
-    cube('Rear door soot hood',(0,2.10,-2.80),(2.44,.09,.34),black,.02,r)
-    cube('Rear soot stain',(0,2.36,-2.675),(1.5,.44,.03),black,.01,r)
-    for i,xv in enumerate((-.74,0,.74),1):
-        cube(f'old-smoke-vent-{i}',(xv,1.55,-2.695),(.64,.80,.02),steel,.008,r)
-        cube(f'old-smoke-vent-{i}-mouth',(xv,1.55,-2.71),(.56,.72,.02),black,.004,r)
-        cube(f'old-smoke-vent-{i}-glow',(xv,1.55,-2.73),(.50,.66,.02),glow,.004,r)
-    for y in (1.36,1.74): cube('Rear door grate bar',(0,y,-2.76),(2.24,.05,.03),black,.006,r)
-    for xv in (-1.11,-.37,.37,1.11): cube('Rear door post',(xv,1.55,-2.75),(.07,.92,.05),black,.008,r)
-    for side in (-1,1):
-        # A flank fire door, built the same way as the rear one.
-        cube('Flank door iron frame',(side*1.29,1.55,-1.0),(.10,.98,2.34),black,.02,r)
-        cube('Flank door soot hood',(side*1.43,2.10,-1.0),(.34,.09,2.44),black,.02,r)
-        for i,zv in enumerate((-1.74,-1.0,-.26),1):
-            cube(f'Flank vent {side} {i} rim',(side*1.345,1.55,zv),(.02,.80,.64),steel,.008,r)
-            cube(f'Flank vent {side} {i} dark throat',(side*1.36,1.55,zv),(.02,.72,.56),black,.004,r)
-            cube(f'Flank vent {side} {i} ember',(side*1.38,1.55,zv),(.02,.66,.50),glow,.004,r)
-        for y in (1.36,1.74): cube('Flank door grate bar',(side*1.41,y,-1.0),(.03,.05,2.24),black,.006,r)
-        for zv in (-2.11,-1.37,-.63,.11): cube('Flank door post',(side*1.40,1.55,zv),(.05,.92,.07),black,.008,r)
-        # Six armour plates, two lost with each hit: a skirt over the wheels, a shoulder plate leaning on the
-        # drum, and a shield on the rear corner.
-        cube('Furnace side armor',(side*1.36,.80,-.95),(.08,.60,3.3),paint,.025,r)
-        shoulder=cube('Hanging torn furnace plate',(side*.98,2.74,-1.15),(.07,.78,2.5),paint,.02,r)
-        shoulder.rotation_euler.z=side*math.radians(38)
-        cube('Furnace torn corner plate',(side*1.28,1.62,-2.84),(.34,1.20,.09),steel,.02,r)
-        for z in (-2.3,-1.5,-.7,.1,.6): cyl('Skirt rivet',(side*1.41,.98,z),.04,.03,black,rot=(0,math.pi/2,0),vertices=6,parent=r)
-    wheelset(r,0,5.2,.70,3)
-    return r
-
 def buggy(x):
     r=root_empty('Thief buggy',x)
     cube('Buggy ladder rails',(0,.73,0),(1.32,.22,3.8),rust,.025,r)
@@ -216,11 +159,11 @@ def buggy(x):
     cyl('Engine drive pulley',(.28,1.10,-.92),.21,.09,rust,rot=(math.pi/2,0,0),vertices=12,parent=r)
     return r
 
-roots=[bess(-4.3),smoke(0),buggy(4.3)]
+roots=[bess(-4.3),buggy(4.3)]
 # A plain, human-shaped scale figure stands beside each subject in the review
 # views. It is authored directly in Z-up and is never selected for export.
 scale_figures=[]
-for vehicle_x in (-4.3,0,4.3):
+for vehicle_x in (-4.3,4.3):
     px,py=vehicle_x+3.0,1.2; group=[]
     def human_box(name,location,size,material):
         bpy.ops.mesh.primitive_cube_add(size=1,location=location); o=bpy.context.object; o.name=name; o.dimensions=size
@@ -242,7 +185,7 @@ blend.parent.mkdir(parents=True,exist_ok=True); glb.parent.mkdir(parents=True,ex
 evidence.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 # Render in Blender Z-up while leaving exported roots in the game's Y-up frame.
-labels=('BIG BESS','OLD SMOKE','THIEF BUGGY')
+labels=('BIG BESS','THIEF BUGGY')
 view_files=[]
 for root_obj in roots: root_obj.rotation_euler.x=math.pi/2
 floor.rotation_euler.x=math.pi/2

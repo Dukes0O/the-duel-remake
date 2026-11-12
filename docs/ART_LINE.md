@@ -22,7 +22,12 @@ stop adjusting and change the method.
    for each photo and read off the ground, the ends, the centre line, each wheel's
    centre and radius, and each lamp. Do not read numbers by eye. All of an
    object's photos should share one scale.
-4. **Choose the kit by the shape:**
+4. **Split the piece between photos and drawing code** (Kyle, 11 November 2026). Photos give a body its surface;
+   the game's own drawing code gives it everything that moves or glows. Fire, smoke, sparks, firelight, dust and
+   scorch marks are never modelled: they are drawn by `src/world/scrap-look.js`, which also draws rust, runs and
+   grain over plain-coloured parts that have no photo. Flat pictures (story cards, portraits, maps) are drawn as
+   HTML pictures, not rendered from models. A piece that is only boxes and flat colours is not submitted.
+5. **Choose the kit by the shape:**
 
    | Subject | Kit | Worked example |
    | --- | --- | --- |
@@ -32,19 +37,35 @@ stop adjusting and change the method.
    | Plate-work, planks, drums, a steam engine | `photo_model.py` flat parts and lathes | `rail-trains.py` |
    | Wheels, lamps, reels, cannon | `tyre`, `headlamp` and `lathe` | `town-trucks-1.py` |
 
-5. **One piece first, then the family.** A job with a long list adjusts old
+6. **One piece first, then the family.** A job with a long list adjusts old
    recipes and fails. A job with few pieces and an example passes. Jobs asked to
    copy carving code kept going back to shapes made by eye, so the code is one
    call now: if you find yourself writing boxes, stop and fill in the table.
-6. **Moving parts are their own pieces,** with their origin on their true pivot.
-7. **Render from the exported model,** imported into an empty scene, beside the
+7. **Moving parts are their own pieces,** with their origin on their true pivot.
+8. **Render from the exported model,** imported into an empty scene, beside the
    photo at the same camera, in flat light with the Standard view transform.
    In Blender, give cameras a valid local up axis. For a camera tracking local
    `-Z`, use local `Y` as up; using `Z` for both track and up creates an arbitrary
    roll and can make a correct Y-up model look tipped.
-8. **Look at it yourself before you submit.** Then commit, including a poor
+9. **Look at it yourself before you submit.** Then commit, including a poor
    result with honest scores. Never delete work because it falls short: Claude
    judges. Commit after every piece.
+
+## Route test: who builds, and how (Old Smoke's furnace, 10 and 11 November 2026)
+
+One piece taken three ways, all judged in the game on the card's four points (facing and doors, stoke and glow,
+damage, a gritty furnace on wheels), each out of 5.
+
+| Route | Turns | Facing | Glow | Damage | Gritty | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| Boxes and drums in flat colours, Claude in Blender (round 2) | 2 | 4 | 4 | 3 | 1 | Kyle: toy-like |
+| The same boxes with wear, fire, smoke and sparks drawn in code (round 3, A) | 1 | 4 | 5 | 3 | 3 | better, still a simple shape |
+| Body carved from four photos, plus the code-drawn fire and smoke (round 3, B) | 1 | 5 | 5 | 4 | 5 | Claude's pick |
+
+What the test showed: the photo job for Codex was small (four pictures, about six minutes), the carve took Claude
+one turn with the table kit, and the drawn effects took one turn and serve every later machine. The slow part of
+the old way was restyling shapes by hand. A cheaper model was not tried as the builder; with the table kit and this
+recipe as the example, that is the next thing to try.
 
 ## What to watch for
 
@@ -109,6 +130,13 @@ stop adjusting and change the method.
   TOWN-ART-PLANTS, 7 November).
 
 ### Vehicles
+
+- **A part that stands on a different side in each photo** (Old Smoke's chimney: left in the rear view, right in the
+  overhead view, centred in the front view) is carved away to nothing. Cut it from every mask and build it as its
+  own piece wearing the side photo (`old-smoke-photo.py`).
+- **A shield made from a crop of the photo wears a tyre** if the crop reaches into a wheel arch. Read the crop's box
+  on the grid like any other measurement.
+- **Lights that sit on a photographed door** hide the door when they are dark. Hide them until they glow.
 
 - **Tyres** (Kyle, 6 November). Use `tyre` and `wheel_well`. Without them, the
   arch's wall wears a ghost of the photo's tyre, the tread shows the background,

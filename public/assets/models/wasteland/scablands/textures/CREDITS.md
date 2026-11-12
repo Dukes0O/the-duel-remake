@@ -363,3 +363,12 @@ the upperworks reference, created by the Blender recipe for round 8.
 ## Good Hope upperworks bow (WW-ART-SHIPS round 13, 2026-11-07)
 
 `good-hope-upperworks-bow-round13.png` is one original Codex ImageGen studio reference photograph of a closed, faded-black freighter wheelhouse end with a short mast. `photo_grid.py` measurements for `carve_object` are centre x=700, deck y=1050 and cabin roof y=232 in the 1448 x 1086 image. It replaces no existing source photograph; the side, stern and plan views are unchanged.
+
+## Old Smoke's furnace photo set
+
+`old-smoke-side.jpg`, `old-smoke-front.jpg`, `old-smoke-rear.jpg`, `old-smoke-top.jpg`: four original views of one
+invented scrap furnace truck, made on 11 November 2026 with Codex's built-in image tool, one call per view, from
+the requests on card EVERBURN-FURNACE-LOOK. Resized to 1400 x 700, 820 x 749 and 443 x 886 and measured with
+`tools/photo_grid.py`. No outside source art, logos or makers' names. The originals stay under
+`C:\Users\kyleb\.codex\generated_images\01a1cdb8-63e9-73c0-b3c6-f9a8cc3b8781\`. The chimney stands on a
+different side in each view; `tools/blender/old-smoke-photo.py` cuts it from every mask and builds it on its own.

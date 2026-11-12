@@ -1,5 +1,6 @@
 # Wasteland run log
 
+11 November, EVERBURN-FURNACE-LOOK round 3 merged, card open (Claude; photos by Codex): the furnace is carved from four photos and its fire, smoke, sparks and firelight are drawn in code; lane tier 53 of 53, build, model tests 397, browser check everburn-well pass. Kyle's direction: draw in code before building model files.
 10 November, EVERBURN-FURNACE-LOOK round 2 merged, card open (Claude): Scablands art was darkened once for every part sharing a material, now once; new furnace shape and fire over the glowing door; lane tier 53 of 53, build, browser check everburn-well pass. Kyle: toy-like, so round 3 builds from photos.
 10 November, released again (Claude): the LAB button and open lessons. Build 26.11.10 15:18 UTC, master 54456f5f; staged build checked on port 5188.
 10 November, LAB-OPEN-DOOR merged (Claude; built by a Sonnet helper): lane tier 65 of 65, build, 24 of 24 Lab and menu browser checks, 6 of 6 neighbouring ones; looked at as a new player.

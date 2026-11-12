@@ -8,6 +8,7 @@ import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
+import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade} from './scrap-look.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -17,6 +18,7 @@ export const SCABLANDS_ASSETS = Object.freeze({
   kit: '/assets/models/wasteland/scablands/kit.glb',
   folk: '/assets/models/wasteland/scablands/folk.glb',
   vehicles: '/assets/models/wasteland/scablands/vehicles.glb',
+  furnace: '/assets/models/wasteland/scablands/old-smoke.glb',
 });
 
 // Every placed solid names its anchor in the shared place table. The small
@@ -39,10 +41,10 @@ export const SCABLANDS_SOLIDS = Object.freeze([
 }));
 
 const placeAssets={
-  'tin-town':['tintown','folk'],'boneyard':['boneyard','vehicles'],'dead-mall':['mall'],'everburn':['everburn','vehicles'],
+  'tin-town':['tintown','folk'],'boneyard':['boneyard','vehicles'],'dead-mall':['mall'],'everburn':['everburn','furnace'],
   'iron-line':[],'dry-dam':[],'ships-in-sand':[],'ridge':['kit'],
 };
-const vehiclePart={'boneyard':'Big Bess gas truck','everburn':"Old Smoke's rolling furnace"};
+const vehiclePart={vehicles:'Big Bess gas truck',furnace:"Old Smoke's rolling furnace"};
 const detailCounts=Object.freeze({near:30,far:10});
 // The model loader renames every part: a space becomes an underscore and a full stop is dropped
 // ("Furnace side armor.001" arrives as "Furnace_side_armor001"). Part names are compared in this plain form.
@@ -116,27 +118,50 @@ function addMallRubble(group,place){
 }
 
 const SOOT_GREY=new THREE.Color(0x302c28),SOOT_BLACK=new THREE.Color(0x0c0b0a),SOOT_ORANGE=new THREE.Color(0xc8641c);
-// Where fire licks out above each door, in the furnace model's own metres (+X is the furnace's left).
-const DOOR_FLAMES=Object.freeze([['left',1.5,-1.4],['left',1.5,-.6],['right',-1.5,-1.4],['right',-1.5,-.6],['rear',-.4,-2.86],['rear',.4,-2.86]]);
+// The furnace's three fire doors in the rig's own metres (+X is the furnace's left): the middle of each door and
+// the way it faces. Two tongues of fire stand in each door.
+const FURNACE_DOORS=Object.freeze({left:{x:2.0,y:2.26,z:-1,out:{x:1,z:0}},right:{x:-2.0,y:2.26,z:-1,out:{x:-1,z:0}},
+  rear:{x:0,y:2.22,z:-4.1,out:{x:0,z:-1}}});
+const DOOR_FLAMES=Object.freeze([['left',2.15,-1.45],['left',2.15,-.55],['right',-2.15,-1.45],['right',-2.15,-.55],['rear',-.45,-4.3],['rear',.45,-4.3]]);
+const SMOKE_PUFFS=14;
 function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
-  const flame=new THREE.MeshStandardMaterial({color:0xff7a1a,emissive:0xd9480a,emissiveIntensity:1.1,roughness:.7});
-  const soot=new THREE.MeshStandardMaterial({color:0x302c28,transparent:true,opacity:.48,roughness:1,depthWrite:false});
-  // Two tongues of fire over each door. They show only while that door glows.
-  for(const [door,x,z] of DOOR_FLAMES){
-    const tongue=new THREE.Mesh(new THREE.ConeGeometry(.3,1.5,5),flame);tongue.name=`Fire over the ${door} door`;
-    tongue.position.set(x*scale,2.2*scale+.75,z*scale);tongue.userData.door=door;tongue.visible=false;
-    if(door==='rear')tongue.rotation.x=-.3;else tongue.rotation.z=door==='left'?-.3:.3;
+  const flame=createFlameMaterial(),soot=createSmokeMaterial(0x302c28),card=new THREE.PlaneGeometry(1,1);
+  const standing=new THREE.PlaneGeometry(1,1);standing.translate(0,.5,0);
+  // Fire drawn in code: it faces the viewer, flickers, and shows only while its door glows.
+  DOOR_FLAMES.forEach(([door,x,z],index)=>{
+    const tongue=new THREE.Mesh(standing,flame);tongue.name=`Fire over the ${door} door`;
+    tongue.position.set(x,1.75,z);tongue.scale.set(2.3,3.8,1);tongue.userData.door=door;tongue.visible=false;tongue.renderOrder=3;
+    tongue.onBeforeRender=()=>{flame.uniforms.uSeed.value=index*.37;flame.uniformsNeedUpdate=true;};
     effects.add(tongue);
+  });
+  // The chimney's mouth, read from the side photo.
+  const chimney={x:1.1,y:5.15,z:2.0};
+  for(let puff=0;puff<SMOKE_PUFFS;puff++){
+    const cloud=new THREE.Mesh(card,soot);cloud.name='Chimney smoke';cloud.userData.fade=0;cloud.renderOrder=2;
+    cloud.onBeforeRender=()=>{soot.uniforms.uFade.value=cloud.userData.fade;soot.uniforms.uSeed.value=puff*.213;soot.uniformsNeedUpdate=true;};
+    effects.add(cloud);
   }
-  const chimney={x:.62*scale,z:-1.18*scale};
-  for(let puff=0;puff<5;puff++){
-    const cloud=new THREE.Mesh(new THREE.SphereGeometry(1.15+puff*.35,7,5),soot);
-    cloud.position.set(chimney.x,8.6+puff*3.4,chimney.z);cloud.scale.y=1.5;effects.add(cloud);
-  }
+  const flames=effects.children.slice(0,6),smoke=effects.children.slice(6);
+  const sparks=createSparks();sparks.visible=false;effects.add(sparks);
+  const glowMaterial=createGroundGlowMaterial(),glow=new THREE.Mesh(card,glowMaterial);
+  glow.name='Firelight on the ground';glow.rotation.x=-Math.PI/2;glow.scale.setScalar(11);glow.visible=false;glow.renderOrder=1;effects.add(glow);
+  const shade=new THREE.Mesh(card,createGroundShade());shade.name='Shade under the furnace';
+  shade.rotation.x=-Math.PI/2;shade.position.set(0,.1,1);shade.scale.set(7.6,14,1);effects.add(shade);
   parent.add(effects);
-  return {effects, flames:[...effects.children.slice(0,6)], smoke:[...effects.children.slice(6)],
-    chimneyX:chimney.x, chimneyY:8.6, chimneyZ:chimney.z};
+  const fire={effects,flames,smoke,sparks,glow,flame,glowMaterial,chimneyX:chimney.x,chimneyY:chimney.y,chimneyZ:chimney.z,glowingDoor:null,
+    // The plume rises and spreads, and leans back as the furnace gathers speed (`drift`, metres a second).
+    placeSmoke(seconds,drift=0){
+      smoke.forEach((puff,index)=>{
+        const age=(seconds*.11+index/SMOKE_PUFFS)%1;
+        puff.position.set(chimney.x+Math.sin(seconds*.31+index*2.4)*2.4*age,chimney.y+age*(24-Math.min(drift,30)*.45),
+          chimney.z+Math.cos(seconds*.27+index*1.7)*1.6*age-Math.min(drift,30)*age*1.1);
+        puff.scale.setScalar(2.4+age*11);
+        puff.userData.fade=Math.min(1,age/.05)*Math.pow(1-age,1.3)*.85;
+      });
+    }};
+  fire.placeSmoke(0);
+  return fire;
 }
 
 export function createScablandsScene(course,options={}){
@@ -171,6 +196,9 @@ export function createScablandsScene(course,options={}){
   void addTown();
   const furnaceVents=[],furnacePlates=[];
   let furnaceEffects=null, furnaceRig=null, furnaceModel=null, furnacePlace=null;
+  // The furnace's surfaces are photos, which carry their own rust and soot; the code adds only the road dust.
+  const furnaceWear=createScrapWear({paint:0});
+  const furnaceLast=new THREE.Vector3();let furnaceLastSeconds=null,furnaceDrift=0;
   const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
   const roadMaterial=new THREE.MeshStandardMaterial({color:0x594b39,roughness:1});
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
@@ -213,19 +241,22 @@ export function createScablandsScene(course,options={}){
       assets.forEach((asset,index)=>{
         const key=placeAssets[place.id][index];
         if(!asset?.scene)throw Error(`Scablands ${key} art has no scene.`);
-        const source=key==='vehicles'?findPart(asset.scene,vehiclePart[place.id]):asset.scene;
+        const source=vehiclePart[key]?findPart(asset.scene,vehiclePart[key]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         const model=source.clone(true);tintArt(model,place.id);
-        if(key==='vehicles'&&place.id==='everburn'){
+        if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.
             const name=plainName(node.name);
+            if(node.isMesh)for(const material of [].concat(node.material))if(!/glow|ember/i.test(material.name||''))furnaceWear.apply(material);
             if(/^(Furnace side armor|Furnace torn corner plate|Hanging torn furnace plate)[ .\d]*$/.test(name))furnacePlates.push(node);
             // The three rear vents are the rear door; the flank vents on each side are the left and right doors.
             const ventMatch=name.match(/old-smoke-vent-\d+-glow|Flank vent ([+-]?)1 \d+ ember/i);
             if(!node.isMesh||!ventMatch)return;
             node.material=Array.isArray(node.material)?node.material.map(material=>material.clone()):node.material.clone();
-            furnaceVents.push({door:ventMatch[1]===undefined?'rear':ventMatch[1]==='-'?'right':'left',material:node.material});
+            // A door's lights are hidden until it glows, so the photo's own shut door shows.
+            node.visible=false;
+            furnaceVents.push({door:ventMatch[1]===undefined?'rear':ventMatch[1]==='-'?'right':'left',material:node.material,mesh:node});
           });
           furnacePlace=place;
           furnaceRig=new THREE.Group();furnaceRig.name="Old Smoke's moving furnace rig";
@@ -254,11 +285,21 @@ export function createScablandsScene(course,options={}){
     console.error('Scablands art did not load:',String(error?.message||error));}return false;});
   registerSceneSystem(group,{
     animate(seconds){
-      if(!furnaceEffects)return;
-      furnaceEffects.smoke.forEach((puff,index)=>{puff.position.y=furnaceEffects.chimneyY+index*3.4+Math.sin(seconds*.42+index)*.7;
-        puff.position.x=furnaceEffects.chimneyX+Math.sin(seconds*.19+index)*.9;
-        puff.position.z=furnaceEffects.chimneyZ+Math.cos(seconds*.17+index)*.35;});
-      furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=.8+(.3*Math.abs(Math.sin(seconds*7+index*1.9)));});
+      if(!furnaceEffects||!furnaceRig)return;
+      furnaceWear.follow(furnaceRig);
+      // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke.
+      const step=furnaceLastSeconds===null?0:seconds-furnaceLastSeconds;
+      if(step>0&&step<.5)furnaceDrift+=(Math.min(40,furnaceRig.position.distanceTo(furnaceLast)/step)-furnaceDrift)*Math.min(1,step*2);
+      furnaceLast.copy(furnaceRig.position);furnaceLastSeconds=seconds;
+      furnaceEffects.placeSmoke(seconds,furnaceDrift);
+      furnaceEffects.flame.uniforms.uTime.value=seconds;furnaceEffects.glowMaterial.uniforms.uTime.value=seconds;
+      furnaceEffects.flames.forEach((flame,index)=>{flame.scale.y=3.8*(.85+.25*Math.abs(Math.sin(seconds*5.3+index*1.9)));});
+      const door=FURNACE_DOORS[furnaceEffects.glowingDoor];
+      furnaceEffects.sparks.visible=furnaceEffects.glow.visible=Boolean(door);
+      if(door){
+        furnaceEffects.sparks.userData.place(seconds,door,door.out,door.out.z?0:furnaceDrift*.25);
+        furnaceEffects.glow.position.set(door.x+door.out.x*3.2,.14,door.z+door.out.z*3.2);
+      }
     },
     sync(state){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
@@ -280,6 +321,9 @@ export function createScablandsScene(course,options={}){
       }
       const furnace=actor?.furnace;
       furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
+      // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.
+      ['left','right','rear'].forEach((door,index)=>{const spot=FURNACE_DOORS[door],broken=(furnace?.hits??0)>index;
+        furnaceWear.uniforms.uScrapSoot.value[index].set(spot.x,broken?spot.y+.3:-99,spot.z,broken?2.7:.01);});
       const sootMaterial=furnaceEffects?.smoke[0]?.material;
       if(sootMaterial){
         // The smoke is grey, turns orange through the 4-second stoke, and is blacker after each hit.
@@ -288,6 +332,9 @@ export function createScablandsScene(course,options={}){
       }
       const glowingDoor=actor&&furnace?furnaceGlowingDoor(furnace):null;
       for(const flame of furnaceEffects?.flames??[])flame.visible=flame.userData.door===glowingDoor;
+      if(furnaceEffects)furnaceEffects.glowingDoor=glowingDoor;
+      for(const vent of furnaceVents)vent.mesh.visible=vent.door===glowingDoor;
+      if(furnaceRig)furnaceWear.follow(furnaceRig);
       if(!actor)return;
       for(const vent of furnaceVents){
         const active=vent.door===glowingDoor;

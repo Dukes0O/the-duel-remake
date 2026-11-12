@@ -12,7 +12,7 @@ const course=new Course(SCABLANDS_VENUE,1989);
 const loaded=[];
 const scene=createScablandsScene(course,{loadAsset:async path=>{
   loaded.push(path);const root=new THREE.Group();root.name=path;
-  if(path===SCABLANDS_ASSETS.vehicles){
+  if(path===SCABLANDS_ASSETS.vehicles||path===SCABLANDS_ASSETS.furnace){
     for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace",'Thief buggy']){
       const part=new THREE.Group();part.name=name;root.add(part);
       if(name==="Old Smoke's rolling furnace")for(const plateName of ['Furnace side armor','Furnace side armor','Hanging torn furnace plate','Hanging torn furnace plate','Furnace torn corner plate','Furnace torn corner plate']){
@@ -33,7 +33,7 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
 assert.equal(await scene.ready,true,'all placed art loads');
 assert.ok(Math.abs(scene.group.getObjectByName('Shared body part 11').material.color.r-.42)<.001,
   'a material shared by many parts is tinted once, not once for every part');
-assert.equal(loaded.length,7,'each required art family loads once');
+assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
@@ -85,7 +85,8 @@ const tongues=furnaceFire.children.slice(0,6),fireOver=()=>tongues.filter(tongue
 assert.deepEqual(tongues.map(tongue=>tongue.userData.door),['left','left','right','right','rear','rear'],'each door has two tongues of fire');
 assert.ok(tongues[0].position.x>2&&tongues[2].position.x<-2&&tongues[4].position.z<-4,'the fire stands over the left, right and rear doors');
 assert.deepEqual(fireOver(),[],'no fire shows over a door outside the chase');
-assert.ok(Math.abs(chimneyWorld.x-(everburn.x+19.77))<.001&&Math.abs(chimneyWorld.z-(everburn.z+.93))<.001,
+// EVERBURN-FURNACE-LOOK round 3: the photo model's chimney stands behind the cab on the furnace's left.
+assert.ok(Math.abs(chimneyWorld.x-(everburn.x+16))<.001&&Math.abs(chimneyWorld.z-(everburn.z+1.1))<.001,
   'smoke starts over the scaled furnace chimney');
 const chaseState={arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'chase'}]},
   actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:places.get('everburn').x+100,y:0,z:places.get('everburn').z},heading:.5,
@@ -149,7 +150,7 @@ assert.equal(scene.group.children.length,0,'disposing the scene releases its pre
 const loaderName=name=>THREE.PropertyBinding.sanitizeNodeName(name);
 const renamed=createScablandsScene(course,{loadAsset:async path=>{
   const root=new THREE.Group();
-  if(path===SCABLANDS_ASSETS.vehicles)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){
+  if(path===SCABLANDS_ASSETS.vehicles||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){
     const part=new THREE.Group();part.name=loaderName(name);root.add(part);
     if(name!=="Old Smoke's rolling furnace")continue;
     for(const plateName of ['Furnace side armor','Furnace side armor.001','Hanging torn furnace plate','Hanging torn furnace plate.001','Furnace torn corner plate','Furnace torn corner plate.001']){

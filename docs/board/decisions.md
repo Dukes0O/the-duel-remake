@@ -14,6 +14,18 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle, 11 November 2026: draw in code before building model files
+
+On Old Smoke's furnace, round 2: "this art looks toy like." Then: "are we putting effort into creating 3d assets
+where we could instead just be using impressive HTML?" and "elsewhere in the game I see the potential ... we're
+grinding away on assets that are insufficient."
+
+- Fire, smoke, sparks, light, dust, water, weather and surface wear are drawn by the game's own code.
+- Flat pictures (story cards, portraits, maps, menus, Lab pictures) are drawn as HTML pictures.
+- Model files are for shapes a player drives around; their surfaces come from photos (`docs/ART_LINE.md`).
+- Claude lists where code-drawn work would lift the rest of the game most, and new Blender art cards wait for that
+  list. To reverse: Kyle says so; the art line's older kits are unchanged.
+
 ## Kyle's decisions on how we work (moved here from AGENTS.md, 9 November 2026)
 
 `AGENTS.md` now states today's rules only. These are the decisions behind them, oldest first.
