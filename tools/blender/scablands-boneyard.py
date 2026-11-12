@@ -324,7 +324,7 @@ bpy.ops.object.select_all(action='DESELECT'); root_obj.select_set(True)
 for obj in objects: obj.select_set(True)
 bpy.context.view_layer.objects.active=root_obj
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=True,
-                           export_yup=True,export_apply=False,export_cameras=False,export_lights=False,
+                           export_yup=False,export_apply=False,export_cameras=False,export_lights=False,
                            export_materials='EXPORT',export_image_format='AUTO')
 print('boneyard GLB bytes:',out.stat().st_size)
 assert out.stat().st_size <= 2_000_000, 'GLB exceeds the 2 MB card budget'
