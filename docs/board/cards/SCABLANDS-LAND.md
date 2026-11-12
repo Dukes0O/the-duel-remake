@@ -95,6 +95,17 @@ ground up. The old checks were one day old and described a fire that the picture
 posts and let the furnace's piece leaving the gate touch them; the second allowance is being removed with the
 furnace's new path, and the first stays for roads that pass through the gate.
 
+### Round 2 merged (12 November 2026)
+
+The furnace stops in front of the gate at (575, 82) and keeps 8 m from every solid, posts included (path 3,232 m,
+3 minutes 51 seconds at the base pace). The Boneyard road passes squarely through the gate by way of (575, 112) and is
+1,259 m. Tin Town has its watchtower, chimney smoke and rust colours. Sheet: `docs/board/looks/scablands-land/round-2.jpg`.
+Checks on the builder's branch: furnace rules 616, run-gas 1,088, the Medium and Easy drivers' targets, lane tier 48
+of 48, build, two browser checks; no replay fingerprint or world signature moved.
+
+Open on this card: the town seen from beyond 120 m; a gate that chars as it burns; the frame check before the
+Scablands opens beyond the story's switch (the shacks, wear and ground are all drawn every frame).
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read
