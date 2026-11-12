@@ -261,6 +261,7 @@ root.addEventListener('click',e => {
     if(out?.setup==='race'){refreshRaceSetup();return;}
     lastScreen=null;renderState(app.duel.state);return;
   }
+  if(button.dataset.emberRun){const ok=app.gasRun?.(button.dataset.emberRun);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.emberStep){const ok=app.everburnStep?.(button.dataset.emberStep);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.action==='ember-next-job'){
     const job=app.duel.state.arena?.worldJob?.definition,index=job?.number;
@@ -351,7 +352,11 @@ root.addEventListener('click',e => {
       return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
-    case 'world-job-retry': {const number=app.duel.state.arena?.worldJob?.definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
+    case 'world-job-retry': {
+      const definition=app.duel.state.arena?.worldJob?.definition;
+      // A gas run starts again on the same road; the six jobs start again by their number.
+      if(definition?.run===true){if(app.gasRun?.(definition.road)){lastScreen=null;renderState(app.duel.state);}return;}
+      const number=definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
       finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;

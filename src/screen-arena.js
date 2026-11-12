@@ -5,6 +5,7 @@ import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {EMBER_CAPTIONS} from './story/ember-lines.js';
 import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {emberFeudSentence} from './story/ember-road.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
 
@@ -217,16 +218,18 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
     const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
-    const next = won ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const next = won && job?.run !== true ? EVERBURN_JOBS[jobIndex + 1] : null;
+    // RUN-GAS: a gas run says where the Ash Men stand now, and how many runs have arrived.
+    const run = job?.run === true && won ? result.gasRun : null;
     const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
     const storyLine = lineId ? EMBER_CAPTIONS[lineId]?.text : null;
-    const description = won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
+    const description = run ? `Big Bess is in Tin Town. ${emberFeudSentence(run.feud)}` : won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
       (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.');
     const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
     return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description,
-      metrics: rewards + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
-      extra: '', actions: won ? (next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : action('BACK TO THE YARD', 'arena-yard', true)) +
+      metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
+      extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : action('BACK TO THE YARD', 'arena-yard', true)) +
         action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu') :
         action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
   }

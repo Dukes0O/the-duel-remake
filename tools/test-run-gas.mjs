@@ -8,6 +8,13 @@ import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES
 import {GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+import {App} from '../src/app.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {finishArenaEvent} from '../src/arena/arena-event.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
+import {EMBER_JOBS, markEmberJob, markEmberRead, emberFeud, emberRuns} from '../src/story/ember-save.js';
+import {emberStoryProps} from '../src/story/ember-road.js';
+import {emberWallMarkup} from '../src/story/ember-ui.js';
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks++; };
@@ -275,6 +282,135 @@ function runUntil(duel, condition, seconds = 90) {
       }
     }
     console.log(`Gas run, ${road} road: tightest clearance from a solid is ${tightest.toFixed(1)} m, length ${gasRunLength(road).toFixed(0)} m`);
+  }
+}
+
+// ---- 4. The wall, starting a run, and finishing one, in a real App ---------------------------------------------------
+{
+  const values = new Map();
+  globalThis.localStorage = {getItem: key => values.get(String(key)) ?? null, setItem: (key, value) => values.set(String(key), String(value)),
+    removeItem: key => values.delete(String(key))};
+  globalThis.cancelAnimationFrame ??= () => {};
+  const metric = (label, value) => `<m>${label}:${value}</m>`, action = (label, verb, primary = false) => `<button data-action="${verb}"${primary ? ' data-primary="true"' : ''}>${label}</button>`;
+  // An App in the yard with the Everburn story at `jobs` jobs won and the given switches.
+  function yard({jobs = 6, on = ['story-everburn', 'scablands-runs'], extra = {}} = {}) {
+    values.clear();
+    const app = new App(); app.audio.unlock = () => {};
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))});
+    let profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
+    profile = markEmberRead(profile).profile;
+    for (const id of EMBER_JOBS.slice(0, jobs)) profile = markEmberJob(profile, id).profile;
+    if (Object.keys(extra).length) profile = {...profile, story: {...profile.story, ember: {...profile.story.ember, ...extra}}};
+    app.profile = profile;
+    assert.equal(app._saveProfile(), true); checks++;
+    const state = app.duel.state; state.status = 'exploring'; state.playerId = app.player.id;
+    state.hiddenRoadJourney = {id: 'test-yard', phase: 'arrived', departed: true}; state.wastelandGateDiscovered = true;
+    assert.equal(app.isYardHomeActive(), true); checks++;
+    return app;
+  }
+  const wallOf = app => emberWallMarkup(app.storyProps('ember'));
+  const finish = (app, reason = 'job-complete', winner = 'player') => {
+    const worldJob = app.duel.state.arena.worldJob;
+    if (winner === 'player') { worldJob.job.stepIndex = worldJob.job.steps.length; worldJob.job.done = true; }
+    finishArenaEvent(app.duel, reason, winner);
+    return app.duel.state.arena.result;
+  };
+
+  // The wall: nothing without both switches and the sixth job.
+  for (const [label, options] of [['with its switch off', {on: ['story-everburn']}], ['without the Everburn switch', {on: ['scablands-runs']}],
+    ['before job 6 is won', {jobs: 5}], ['with no job won', {jobs: 0}]]) {
+    const app = yard(options), before = JSON.stringify(app.profile);
+    check(!/GAS RUN|data-ember-run|ember-run-buttons/.test(wallOf(app)), `the wall has no gas run ${label}`);
+    check(app.gasRunAvailable() === false && app.gasRun('boneyard') === false && app.gasRun('long') === false, `a run cannot start ${label}`);
+    check(app.duel.state.arena == null, `no job was started ${label}`);
+    same(JSON.stringify(app.profile), before, `the save is untouched ${label}`);
+    app.dispose?.();
+  }
+  {
+    // With the run's switch off the wall is exactly what it was before this card: the same markup as an old wall.
+    const app = yard({on: ['story-everburn']});
+    same(wallOf(app), emberWallMarkup(emberStoryProps(app.profile, {available: true})), 'the wall with the switch off is the old wall');
+    app.dispose?.();
+  }
+  // The wall with the run on: the entry, the feud's sentence and two buttons with their pay.
+  const sentences = ['The Ash Men are watching the Boneyard road.', 'The Ash Men are raiding the Boneyard road.', 'The Ash Men are hunting Big Bess.', 'The Ash Men have gathered a war party.'];
+  for (const [feud, sentence] of sentences.map((text, index) => [index + 1, text])) {
+    const app = yard({extra: {feud, runs: 3}}); app.cpuDifficulty = 'easy';
+    const wall = wallOf(app);
+    check(wall.includes('GAS RUN') && wall.includes(sentence), `feud ${feud}: the wall says "${sentence}"`);
+    same((wall.match(/data-ember-run="/g) || []).length, 2, `feud ${feud}: two road buttons`);
+    check(wall.includes('data-ember-run="long"><span>LONG ROAD</span><small>80 scrap</small>') &&
+      wall.includes('data-ember-run="boneyard"><span>BONEYARD ROAD</span><small>160 scrap</small>'), `feud ${feud}: each button shows its pay (80 and 160 on Easy)`);
+    check(/class="story-step is-open is-run" data-ember-job="gas-run"/.test(wall) && !/is-done[^>]*data-ember-job="gas-run"/.test(wall), `feud ${feud}: the entry is open and never done, so it shows no tick`);
+    check(!(wall.match(/data-ember-step="/g) || []).length, `feud ${feud}: the six jobs have no button once all are won`);
+    app.dispose?.();
+  }
+  {
+    const app = yard({extra: {feud: 2}}); app.cpuDifficulty = 'medium';
+    check(wallOf(app).includes('<small>96 scrap</small>') && wallOf(app).includes('<small>192 scrap</small>'), 'pay on the buttons follows the difficulty (96 and 192 on Medium)');
+    same(app.storyProps('ember').run.runs, 0, 'a save with no runs reads 0');
+    app.dispose?.();
+  }
+
+  // Starting a run enters the Scablands the way a story job does.
+  for (const road of GAS_RUN_ROADS) {
+    const app = yard({extra: {feud: 3, runs: 2}});
+    check(app.gasRun('sideways') === false, 'an unknown road does not start');
+    check(app.gasRun(road) === true, `${road}: the run starts`);
+    const arena = app.duel.state.arena, definition = arena.worldJob.definition;
+    same([arena.mode, arena.venueId, definition.id, definition.road, definition.run, definition.feud, definition.runs],
+      ['world-job', 'scablands', `gas-run-${road}`, road, true, 3, 2], `${road}: a Scablands world job built from the save's feud and run count`);
+    same(definition.steps[0].ambushes.map(item => item.place.position), gasRunJob({road, feud: 3, runs: 2}).steps[0].ambushes.map(item => item.place.position), `${road}: the same save gets the same ambush places`);
+    check(arena.worldJob.job.steps[0].kind === 'escort' && arena.worldJob.job.steps[0].actorId === 'big-bess', `${road}: it is the escort of Big Bess`);
+    app.dispose?.();
+  }
+
+  // Arriving pays the shares, moves the feud, counts the run; leaving or failing changes nothing.
+  for (const [road, feud, runs, after, share] of [['boneyard', 2, 0, 3, 2], ['long', 3, 4, 2, 1], ['boneyard', 4, 1, 4, 2], ['long', 1, 0, 1, 1]]) {
+    const app = yard({extra: {feud, runs}}), scrap = app.profile.wasteland.scrap, factor = {easy: 1, medium: 1.2, hard: 1.4}[app.cpuDifficulty];
+    check(app.gasRun(road), `${road} from feud ${feud}: starts`);
+    const result = finish(app);
+    same(result.settlementSaved, true, `${road} from feud ${feud}: the arrival settles`);
+    same(result.scrapEarned, Math.round(80 * share * factor), `${road} from feud ${feud}: pays ${share} share${share === 1 ? '' : 's'}`);
+    same(app.profile.wasteland.scrap - scrap, Math.round(80 * share * factor), `${road} from feud ${feud}: and the scrap is in the save`);
+    same([emberFeud(app.profile), emberRuns(app.profile)], [after, runs + 1], `${road} from feud ${feud}: the feud is ${after} and the run count rises by one`);
+    same(result.gasRun, {road, feud: after, word: ['Watching', 'Raiding', 'Hunting', 'War party'][after - 1], runs: runs + 1, reachedWarParty: feud < 4 && after === 4}, `${road} from feud ${feud}: the result says where it stands`);
+    same(app.profile.story.ember.jobs, EMBER_JOBS.slice(), `${road}: the six jobs are as they were`);
+    check(!Object.hasOwn(result, 'emberJob'), `${road}: a run is not one of the six jobs`);
+    const screen = arenaResultsScreen(app.duel.state, {metric, action, escapeHTML: String});
+    check(screen.title === 'GAS RUN' && screen.description.startsWith('Big Bess is in Tin Town. The Ash Men'), `${road}: the result screen names the run`);
+    check(screen.metrics.includes('SCRAP EARNED') && screen.metrics.includes('THE ASH MEN') && screen.metrics.includes(`GAS RUNS:${runs + 1}`), `${road}: with the scrap, the Ash Men and the runs`);
+    check(screen.actions.includes('DRIVE ANOTHER RUN') && !/NEXT JOB/.test(screen.actions), `${road}: and no next job`);
+    const paid = app.profile.wasteland.scrap;
+    check(app._settleArenaResult({result}, app.duel.state) === false && app.profile.wasteland.scrap === paid && emberRuns(app.profile) === runs + 1, `${road}: a second settle changes nothing`);
+    app.dispose?.();
+  }
+  for (const [label, reason, winner] of [['failing', 'job-failed', 'raiders'], ['leaving', 'job-quit', 'raiders']]) {
+    const app = yard({extra: {feud: 2, runs: 5}}), before = JSON.stringify(app.profile.story);
+    check(app.gasRun('boneyard'), `${label}: starts`);
+    const result = finish(app, reason, winner);
+    check(!result.gasRun, `${label}: no run arrived`);
+    same(JSON.stringify(app.profile.story), before, `${label}: the whole story save is untouched`);
+    same([emberFeud(app.profile), emberRuns(app.profile)], [2, 5], `${label}: still Raiding and 5 runs`);
+    const screen = arenaResultsScreen(app.duel.state, {metric, action, escapeHTML: String});
+    check(/world-job-retry/.test(screen.actions), `${label}: offers the run again`);
+    app.dispose?.();
+  }
+  {
+    // With the run's switch switched off during a run, an arrival writes nothing (nothing changes when the switch is off).
+    const app = yard({extra: {feud: 2, runs: 1}});
+    check(app.gasRun('long'));
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'hidden-road': true, 'story-everburn': true, arsenal: true, 'arsenal-wave3': true}});
+    finish(app);
+    same([emberFeud(app.profile), emberRuns(app.profile)], [2, 1], 'an arrival with the switch off moves nothing');
+    app.dispose?.();
+  }
+  {
+    // A save with a damaged feud and runs reads as Raiding and 0 on the wall and in a run.
+    const app = yard({extra: {feud: 'x', runs: -4}});
+    check(wallOf(app).includes('The Ash Men are raiding the Boneyard road.'), 'a damaged feud reads as Raiding on the wall');
+    check(app.gasRun('boneyard') && app.duel.state.arena.worldJob.definition.feud === 2 && app.duel.state.arena.worldJob.definition.runs === 0, 'and starts a run at Raiding, run 0');
+    app.dispose?.();
   }
 }
 

@@ -1,6 +1,6 @@
 // The Everburn's screen state (docs/WASTELAND_WORLD.md section 5). Reads the
 // save and returns plain display props; the app owns navigation and saving.
-import {EMBER_JOBS, emberOf} from './ember-save.js';
+import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, emberFeudWord, emberRuns} from './ember-save.js';
 
 export const EMBER_JOB_NAMES = Object.freeze([
   'Hot Delivery', 'Get Out and Walk', 'Run Him Down', 'Slow Ride',
@@ -20,7 +20,16 @@ const SIDE_JOBS = Object.freeze([
   {id: 'hot-soup', name: 'Hot Soup', kind: 'Delivery', note: 'Carry Auntie Solder’s soup across town without spilling it.'},
 ]);
 
-export function emberStoryProps(profile, {available = false} = {}) {
+// RUN-GAS: how things stand with the Ash Men, one sentence for each word of the feud (docs/board/cards/RUN-GAS.md).
+export const EMBER_FEUD_SENTENCES = Object.freeze([
+  'The Ash Men are watching the Boneyard road.', 'The Ash Men are raiding the Boneyard road.',
+  'The Ash Men are hunting Big Bess.', 'The Ash Men have gathered a war party.',
+]);
+export const emberFeudSentence = feud => EMBER_FEUD_SENTENCES[emberFeudWordIndex(feud)];
+const emberFeudWordIndex = feud => EMBER_FEUD_WORDS.indexOf(emberFeudWord(feud));
+
+// `runs`: the gas run is wanted (the scablands-runs switch is on). `runPay`: what each road pays now, {long, boneyard}.
+export function emberStoryProps(profile, {available = false, runs = false, runPay = {}} = {}) {
   if (!available) return {available: false, step: null, read: false, steps: [], sideJobs: []};
   const ember = emberOf(profile), jobs = ember.jobs ?? [];
   const step = ember.read !== true ? 'read' : EMBER_JOBS.find(id => !jobs.includes(id)) ?? 'done';
@@ -31,7 +40,14 @@ export function emberStoryProps(profile, {available = false} = {}) {
     button: index === next ? (index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`) : '',
   }));
   if (step === 'read') steps[0] = {...steps[0], state: 'open', button: 'Read Hollis’s note'};
-  return {available: true, step, read: ember.read === true, steps,
+  const props = {available: true, step, read: ember.read === true, steps,
     notes: [], sideJobs: jobs.includes(EMBER_JOBS[1]) ? SIDE_JOBS : [],
     ended: step === 'done' && ember.end === true};
+  // The gas run: shown only with its switch on and the sixth job won. It never finishes, so it never carries a tick.
+  if (runs === true && EMBER_JOBS.every(id => jobs.includes(id))) {
+    const feud = emberFeud(profile);
+    props.run = {feud, word: emberFeudWord(feud), sentence: emberFeudSentence(feud), runs: emberRuns(profile),
+      roads: EMBER_RUN_ROADS.map(id => ({id, name: id === 'long' ? 'LONG ROAD' : 'BONEYARD ROAD', pay: runPay[id] ?? null}))};
+  }
+  return props;
 }
