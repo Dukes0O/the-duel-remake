@@ -1,7 +1,7 @@
 // The Fire triangle lesson's board (docs/board/cards/LAB-CLASSROOM-FIRE.md): Brian's fire pit with one switch plate
 // per side of the triangle, the triangle itself, the water and sand buckets, and the practice fire's forest seen from
 // above. Draws and hit-tests only.
-import {BOARD, GROUND_Y, theme, background, text, keyCap, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, GROUND_Y, theme, background, floor, shadow, steel, bolt, bezel, shade, blend, grain, tarmac, flameTongue, glassTube, text, keyCap, outdoors, wrap, fitBoard} from '../classroom/board-art.js';
 import {COLS, ROWS, STRIP, ROAD, CELL_M, SIDES, SIDE_NAME, SWITCH_NAME, BUCKET_L, FLAT_OUT_L, COAT_L, TANK_L, WOOD_BURNS_C, WATER_BOILS_C, GROW, SPREAD_FROM, litres, litresFor, strengthOf} from './fire-classroom.js';
 export {BOARD};
 export const pressMovesDrag = false;
@@ -97,6 +97,14 @@ export function targetPoint(view, action) {
 export function dragAngle() { return 0; }
 
 // ---- drawing: shared pieces ----
+// A colour as rgba(), for lit edges and glows in a lesson's own colours.
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+// A steel-framed readout plate: a dark glass face under a bezel.
+function panel(ctx, x, y, w, h, alpha = .78) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, `rgba(26,32,35,${alpha})`); g.addColorStop(1, `rgba(10,14,15,${alpha})`);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
+  bezel(ctx, x, y, w, h, 8);
+}
 function halo(ctx, x, y, r, time) {
   ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.globalAlpha = .55 + .35 * Math.sin(time * 6);
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
@@ -105,37 +113,56 @@ function spaceKey(ctx, x, y) {
   ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 26, y - 10, 52, 20, 3); ctx.fill();
   text(ctx, 'Space', x, y + 1, {size: 12, colour: '#1d2224', weight: 800});
 }
-// One flame: a teardrop that flickers, its foot at (x, y).
-function flame(ctx, x, y, w, h, time, seed) {
-  const flick = 1 + .12 * Math.sin(time * 9 + seed * 3.1) + .06 * Math.sin(time * 17 + seed);
-  const top = y - h * flick, lean = Math.sin(time * 3 + seed) * w * .15;
-  const g = ctx.createLinearGradient(0, y, 0, top);
-  g.addColorStop(0, '#f2551f'); g.addColorStop(.55, '#f59a2a'); g.addColorStop(1, 'rgba(255,226,120,.85)');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2, y);
-  ctx.bezierCurveTo(x - w / 2, y - h * .45, x + lean - w * .2, top + h * .25, x + lean, top);
-  ctx.bezierCurveTo(x + lean + w * .2, top + h * .25, x + w / 2, y - h * .45, x + w / 2, y); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = 'rgba(255,240,170,.75)'; ctx.beginPath(); ctx.ellipse(x + lean * .4, y - h * .22, w * .16, h * .2, 0, 0, Math.PI * 2); ctx.fill();
-}
-function puffs(ctx, x, y, age, colour, n = 6, spread = 80) {
+// One flame: the shared layered tongue, its foot at (x, y).
+function flame(ctx, x, y, w, h, time, seed) { flameTongue(ctx, x, y, w, h, time, seed); }
+function puffs(ctx, x, y, age, colour, n = 6, spread = 80, strength = 1) {
   for (let k = 0; k < n; k++) {
-    const t = (age * .7 + k / n) % 1, px = x + Math.sin(k * 2.7) * spread * .5 * (1 + t), py = y - t * 170, r = 14 + t * 30;
-    ctx.fillStyle = colour.replace('A', String(Math.max(0, .5 * (1 - t)))); ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+    const t = (age * .7 + k / n) % 1, px = x + Math.sin(k * 2.7) * spread * .5 * (1 + t), py = y - t * 170, r = 14 + t * 30, a = Math.max(0, .5 * (1 - t)) * strength;
+    const g = ctx.createRadialGradient(px - r * .2, py - r * .2, 1, px, py, r);
+    g.addColorStop(0, colour.replace('A', a.toFixed(3))); g.addColorStop(1, colour.replace('A', '0'));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
   }
 }
-// The fire triangle: each side in its colour while the fire has it, dark with a cross once it is gone.
+// One side of the triangle as a lit steel bar in its own colour. Once the fire has lost that side, the bar is dull,
+// broken in the middle and cracked.
+function triBar(ctx, a, b, colour, width, off) {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]), w = width, gap = w * .9;
+  ctx.save(); ctx.translate(a[0], a[1]); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0]));
+  const pieces = off ? [[0, len * .5 - gap], [len * .5 + gap, len]] : [[0, len]];
+  if (!off) { ctx.lineCap = 'round'; ctx.strokeStyle = rgba(colour, .22); ctx.lineWidth = w * 2.4; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(len, 0); ctx.stroke(); ctx.lineCap = 'butt'; }
+  for (const [s0, s1] of pieces) {
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.roundRect(s0 + 1.5, -w / 2 + 3, s1 - s0, w, w * .3); ctx.fill();
+    ctx.fillStyle = '#1d2326'; ctx.beginPath(); ctx.roundRect(s0 - 1.5, -w / 2 - 1.5, s1 - s0 + 3, w + 3, w * .35); ctx.fill();
+    const g = ctx.createLinearGradient(0, -w / 2, 0, w / 2);
+    if (off) { g.addColorStop(0, '#59636a'); g.addColorStop(.5, '#3a4247'); g.addColorStop(1, '#22282b'); }
+    else { g.addColorStop(0, shade(colour, .55)); g.addColorStop(.35, colour); g.addColorStop(1, shade(colour, -.5)); }
+    ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(s0, -w / 2, s1 - s0, w, w * .3); ctx.fill();
+    ctx.fillStyle = off ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.55)'; ctx.fillRect(s0 + w * .3, -w / 2 + 1, Math.max(0, s1 - s0 - w * .6), 1.4);
+  }
+  if (off) {
+    // Jagged ends where the bar snapped, and hairline cracks running back along each piece.
+    ctx.strokeStyle = 'rgba(6,8,9,.95)'; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (const [x, dir] of [[len * .5 - gap, 1], [len * .5 + gap, -1]]) { ctx.moveTo(x, -w / 2); ctx.lineTo(x + dir * w * .3, -w * .15); ctx.lineTo(x - dir * w * .1, w * .12); ctx.lineTo(x + dir * w * .25, w / 2); }
+    ctx.moveTo(len * .5 - gap, -w * .1); ctx.lineTo(len * .36, w * .2); ctx.lineTo(len * .3, -w * .12); ctx.moveTo(len * .5 + gap, w * .12); ctx.lineTo(len * .66, -w * .22); ctx.lineTo(len * .74, w * .1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// The fire triangle: each side a lit bar in its colour while the fire has it, dull and broken with a cross once it is gone.
 function triangle(ctx, {x, top, base, half}, gone, {burning = false, labels = true, size = 18, width = 9, time = 0} = {}) {
   const pts = {top: [x, top], left: [x - half, base], right: [x + half, base]};
   const sides = {fuel: [pts.top, pts.left], heat: [pts.left, pts.right], air: [pts.right, pts.top]};
   for (const side of SIDES) {
     const [a, b] = sides[side], off = gone.includes(side);
-    ctx.strokeStyle = off ? 'rgba(120,128,132,.5)' : SIDE_COLOUR[side]; ctx.lineWidth = width; ctx.lineCap = 'round';
-    ctx.setLineDash(off ? [width, width * 1.2] : []); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); ctx.setLineDash([]);
+    triBar(ctx, a, b, SIDE_COLOUR[side], width, off);
     if (off) {
       const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, r = width * 1.4;
-      ctx.strokeStyle = '#f5f0dc'; ctx.lineWidth = width * .45; ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke();
+      ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = width * .45 + 2.5; ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke();
+      ctx.strokeStyle = '#f5f0dc'; ctx.lineWidth = width * .45; ctx.beginPath(); ctx.moveTo(mx - r, my - r); ctx.lineTo(mx + r, my + r); ctx.moveTo(mx + r, my - r); ctx.lineTo(mx - r, my + r); ctx.stroke(); ctx.lineCap = 'butt';
     }
   }
-  ctx.lineCap = 'butt';
+  // Steel gusset plates at the three corners.
+  for (const [px, py] of Object.values(pts)) { const plate = ctx.createRadialGradient(px - width * .25, py - width * .25, 1, px, py, width * .95); plate.addColorStop(0, '#d5dce0'); plate.addColorStop(1, '#4a5257'); ctx.fillStyle = plate; ctx.beginPath(); ctx.arc(px, py, width * .8, 0, Math.PI * 2); ctx.fill(); bolt(ctx, px, py, Math.max(1.4, width * .22)); }
   if (labels) {
     const h = base - top;
     text(ctx, SIDE_NAME.fuel, x - half * .5 - width * 3.6, top + h * .5, {size, align: 'right', colour: gone.includes('fuel') ? theme.faint : SIDE_COLOUR.fuel});
@@ -149,81 +176,206 @@ function triangle(ctx, {x, top, base, half}, gone, {burning = false, labels = tr
 
 // ---- the fire pit, drawn round the middle of its rim ----
 function bucket(ctx, x, y, tool, {glow = false, time = 0, tilt = 0, empty = false} = {}) {
+  if (!tilt) shadow(ctx, x, y + 3, BUCKET_W * .75, .55);
   ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
-  const g = ctx.createLinearGradient(-BUCKET_W / 2, 0, BUCKET_W / 2, 0);
-  g.addColorStop(0, theme.iron[1]); g.addColorStop(.5, theme.iron[0]); g.addColorStop(1, theme.iron[2]);
-  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-BUCKET_W / 2, -BUCKET_H); ctx.lineTo(BUCKET_W / 2, -BUCKET_H); ctx.lineTo(BUCKET_W / 2 - 7, 0); ctx.lineTo(-BUCKET_W / 2 + 7, 0); ctx.closePath(); ctx.fill();
+  const top = -BUCKET_H, hw = BUCKET_W / 2;
+  // The bail behind the rim, then the galvanised body lit from the left, with its rolled rings and a painted band.
+  ctx.strokeStyle = '#2b3236'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, top, hw + 1, Math.PI, 0); ctx.stroke();
+  const g = ctx.createLinearGradient(-hw, 0, hw, 0);
+  g.addColorStop(0, '#454f55'); g.addColorStop(.3, '#cdd5d9'); g.addColorStop(.55, '#8a949a'); g.addColorStop(1, '#262d31');
+  const outline = () => { ctx.beginPath(); ctx.moveTo(-hw, top); ctx.lineTo(hw, top); ctx.lineTo(hw - 7, 0); ctx.quadraticCurveTo(0, 7, -hw + 7, 0); ctx.closePath(); };
+  ctx.fillStyle = g; outline(); ctx.fill();
   ctx.strokeStyle = glow ? theme.accent : 'rgba(0,0,0,.5)'; ctx.lineWidth = glow ? 3 + Math.sin(time * 6) * 1.5 : 1.5; ctx.stroke();
-  if (!empty) { ctx.fillStyle = tool === 'water' ? '#4f9fd1' : '#d4b57c'; ctx.beginPath(); ctx.ellipse(0, -BUCKET_H + 2, BUCKET_W / 2 - 3, 6, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.strokeStyle = theme.iron[1]; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, -BUCKET_H, BUCKET_W / 2, Math.PI, 0); ctx.stroke();
+  ctx.save(); outline(); ctx.clip();
+  ctx.fillStyle = tool === 'water' ? 'rgba(61,134,184,.75)' : 'rgba(176,138,58,.75)'; ctx.fillRect(-hw, top + 24, BUCKET_W, 14);
+  ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(-hw, top + 24, BUCKET_W, 1);
+  ctx.restore();
+  for (const ry of [top + 16, top + 44]) { ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-hw + 3, ry); ctx.quadraticCurveTo(0, ry + 4, hw - 3, ry); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-hw + 3, ry + 2); ctx.quadraticCurveTo(0, ry + 6, hw - 3, ry + 2); ctx.stroke(); }
+  // The mouth, and what is in it: water with a lit surface, or a heap of dry sand.
+  ctx.fillStyle = '#15191b'; ctx.beginPath(); ctx.ellipse(0, top, hw, 6, 0, 0, Math.PI * 2); ctx.fill();
+  if (!empty) {
+    if (tool === 'water') { ctx.fillStyle = '#4f9fd1'; ctx.beginPath(); ctx.ellipse(0, top + 1.5, hw - 3, 4, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.ellipse(-6, top + .5, 9, 1.5, 0, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.fillStyle = '#d4b57c'; ctx.beginPath(); ctx.ellipse(0, top - 1, hw - 3, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(120,90,40,.5)'; for (let k = 0; k < 7; k++) ctx.fillRect(-hw + 8 + grain(k + 900) * (BUCKET_W - 16), top - 3 + grain(k + 910) * 5, 1.6, 1.4); }
+  }
+  ctx.strokeStyle = '#dfe5e8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, top, hw, 6, 0, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke();
+  bolt(ctx, -hw + 1, top + 4, 1.8); bolt(ctx, hw - 1, top + 4, 1.8);
   ctx.restore();
 }
+// The log positions in the pit: two lying at an angle and one across the top.
+const LOGS = Object.freeze([[-38, -2, .25], [34, -2, -.25], [0, -10, 0]]);
 function drawPit(ctx, p, time, {scale = 1} = {}) {
   ctx.save(); ctx.translate(PIT_X, RIM_Y); ctx.scale(scale, scale);
-  // Legs, the bowl and the gas pipe with its valve.
-  ctx.strokeStyle = theme.iron[2]; ctx.lineWidth = 7;
-  for (const lx of [-96, 96]) { ctx.beginPath(); ctx.moveTo(lx, 60); ctx.lineTo(lx * 1.12, GROUND_Y - RIM_Y); ctx.stroke(); }
-  ctx.strokeStyle = p.heat ? '#c94c3c' : theme.iron[1]; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(-250, 70); ctx.lineTo(-112, 70); ctx.stroke();
-  ctx.fillStyle = p.heat ? '#c94c3c' : theme.iron[1]; ctx.beginPath(); ctx.arc(-200, 70, 13, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-210, p.heat ? 70 : 60); ctx.lineTo(-190, p.heat ? 70 : 80); ctx.stroke();
-  const body = ctx.createLinearGradient(-RIM_RX, 0, RIM_RX, 0);
-  body.addColorStop(0, '#3a4146'); body.addColorStop(.45, '#7d868c'); body.addColorStop(1, '#262c30');
-  ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(-RIM_RX, 0); ctx.lineTo(-RIM_RX + 22, 92); ctx.lineTo(RIM_RX - 22, 92); ctx.lineTo(RIM_RX, 0); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
-  // Inside the rim: the burner, the logs, and what was tipped on them.
-  ctx.fillStyle = '#121618'; ctx.beginPath(); ctx.ellipse(0, 0, RIM_RX - 6, RIM_RY - 4, 0, 0, Math.PI * 2); ctx.fill();
-  if (p.heat && p.putOut !== 'sand') for (let k = -4; k <= 4; k++) {
-    ctx.fillStyle = 'rgba(90,150,255,.85)'; ctx.beginPath(); ctx.ellipse(k * 22, 4, 5, 9 + 3 * Math.sin(time * 14 + k), 0, 0, Math.PI * 2); ctx.fill();
+  const ground = GROUND_Y - RIM_Y, burning = p.flame > .05, hot = p.flame > .2 || p.smoke != null;
+  // How brightly the wood glows: full while it burns, then fading with the smoke after the fire is put out.
+  const glowK = burning ? Math.min(1, p.flame) : p.smoke != null ? Math.max(0, 1 - p.smoke / 2.6) * .55 : 0;
+  shadow(ctx, 0, ground + 4, 190, .6);
+  // Legs: angle iron on steel pads.
+  for (const lx of [-96, 96]) {
+    ctx.lineCap = 'butt'; ctx.strokeStyle = '#13171a'; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(lx, 60); ctx.lineTo(lx * 1.12, ground - 3); ctx.stroke();
+    ctx.strokeStyle = '#59636a'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(lx - 1.5, 60); ctx.lineTo(lx * 1.12 - 1.5, ground - 3); ctx.stroke();
+    steel(ctx, lx * 1.12 - 12, ground - 4, 24, 6, 2);
+  }
+  // The gas pipe, painted red while the gas is on, with its collars and a brass valve on a lever.
+  const paint = p.heat ? '#c94c3c' : '#7d868c', pipe = ctx.createLinearGradient(0, 66, 0, 74);
+  pipe.addColorStop(0, shade(paint, .5)); pipe.addColorStop(.4, paint); pipe.addColorStop(1, shade(paint, -.55));
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-250, 75, 134, 2.5);
+  ctx.fillStyle = pipe; ctx.fillRect(-250, 66, 134, 8);
+  for (const cx of [-247, -150, -130]) steel(ctx, cx - 3, 63, 6, 14, 1.5);
+  const brass = ctx.createRadialGradient(-203, 66, 1, -200, 70, 14); brass.addColorStop(0, theme.brass[0]); brass.addColorStop(.55, theme.brass[1]); brass.addColorStop(1, theme.brass[2]);
+  ctx.fillStyle = brass; ctx.beginPath(); ctx.arc(-200, 70, 13, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.save(); ctx.translate(-200, 70); ctx.rotate(p.heat ? 0 : -Math.PI / 2);
+  ctx.fillStyle = '#1d2224'; ctx.beginPath(); ctx.roundRect(-17, -3, 34, 6, 3); ctx.fill();
+  ctx.fillStyle = p.heat ? '#e0604c' : '#aab4ba'; ctx.beginPath(); ctx.roundRect(-16, -2.2, 32, 3.2, 1.6); ctx.fill();
+  ctx.fillStyle = '#d8dee1'; ctx.beginPath(); ctx.arc(16, 0, 3.4, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  bolt(ctx, -200, 70, 2.6);
+  // The drum: rolled steel lit from the lamp, with two rolling rings, soot down from the rim and rust at the foot.
+  const bodyPath = () => { ctx.beginPath(); ctx.moveTo(-RIM_RX, 0); ctx.lineTo(-RIM_RX + 22, 92); ctx.ellipse(0, 92, RIM_RX - 22, 14, 0, Math.PI, 0, true); ctx.lineTo(RIM_RX, 0); ctx.closePath(); };
+  const drum = ctx.createLinearGradient(-RIM_RX, 0, RIM_RX, 0);
+  [[0, '#1f2528'], [.1, '#4a545a'], [.3, '#9aa5ab'], [.45, '#8a959b'], [.7, '#4d575d'], [1, '#171b1d']].forEach(([at, c]) => drum.addColorStop(at, c));
+  bodyPath(); ctx.fillStyle = drum; ctx.fill();
+  ctx.save(); bodyPath(); ctx.clip();
+  const soot = ctx.createLinearGradient(0, 0, 0, 62); soot.addColorStop(0, 'rgba(10,8,6,.62)'); soot.addColorStop(1, 'rgba(10,8,6,0)');
+  ctx.fillStyle = soot; ctx.fillRect(-RIM_RX, 0, 2 * RIM_RX, 62);
+  for (let i = 0; i < 14; i++) {
+    const sx = -RIM_RX + 14 + grain(i + 5000) * (2 * RIM_RX - 28), sh = 16 + grain(i + 5100) * 38, sg = ctx.createLinearGradient(0, 0, 0, sh);
+    sg.addColorStop(0, 'rgba(8,6,4,.5)'); sg.addColorStop(1, 'rgba(8,6,4,0)'); ctx.fillStyle = sg; ctx.fillRect(sx, 0, 2 + grain(i + 5200) * 5, sh);
+  }
+  if (glowK > 0) { const heat = ctx.createLinearGradient(0, 0, 0, 34); heat.addColorStop(0, rgba('#ff7828', .3 * glowK)); heat.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = heat; ctx.fillRect(-RIM_RX, 0, 2 * RIM_RX, 34); }
+  const rust = ctx.createLinearGradient(0, 58, 0, 108); rust.addColorStop(0, 'rgba(140,76,36,0)'); rust.addColorStop(1, 'rgba(140,76,36,.45)'); ctx.fillStyle = rust; ctx.fillRect(-RIM_RX, 58, 2 * RIM_RX, 52);
+  for (let i = 0; i < 5; i++) { ctx.fillStyle = 'rgba(150,80,36,.3)'; ctx.beginPath(); ctx.ellipse(-100 + grain(i + 5300) * 200, 70 + grain(i + 5310) * 24, 5 + grain(i + 5320) * 9, 2, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (const ry of [30, 62]) {
+    const half = RIM_RX - 22 * ry / 92, deep = 26 - 12 * ry / 92;
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0, ry, half, deep, 0, .08, Math.PI - .08); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(0, ry + 2.5, half, deep, 0, .08, Math.PI - .08); ctx.stroke();
+  }
+  ctx.restore();
+  bodyPath(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+  steel(ctx, -RIM_RX + 14, 64, 8, 12, 2);
+  // Inside the rim: the dark of the drum, the glow of the wood, the burner ring and the grate.
+  const inner = () => { ctx.beginPath(); ctx.ellipse(0, 0, RIM_RX - 6, RIM_RY - 4, 0, 0, Math.PI * 2); };
+  inner(); ctx.fillStyle = '#0e1113'; ctx.fill();
+  ctx.save(); inner(); ctx.clip();
+  const wall = ctx.createLinearGradient(0, -RIM_RY, 0, RIM_RY); wall.addColorStop(0, 'rgba(120,112,100,.5)'); wall.addColorStop(.45, 'rgba(60,54,48,.25)'); wall.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = wall; ctx.fillRect(-RIM_RX, -RIM_RY, 2 * RIM_RX, RIM_RY * 2);
+  if (p.fuel && glowK > 0) { const bed = ctx.createRadialGradient(0, 4, 4, 0, 4, 125); bed.addColorStop(0, rgba('#ff9632', .75 * glowK)); bed.addColorStop(1, 'rgba(255,80,20,0)'); ctx.fillStyle = bed; ctx.fillRect(-RIM_RX, -RIM_RY, 2 * RIM_RX, RIM_RY * 2); }
+  ctx.strokeStyle = '#2f363a'; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(0, 8, 74, 12, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = '#7b868c'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(0, 6.5, 74, 12, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+  ctx.fillStyle = '#0a0c0d'; for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2; ctx.beginPath(); ctx.arc(Math.cos(a) * 74, 8 + Math.sin(a) * 12, 1.1, 0, Math.PI * 2); ctx.fill(); }
+  for (let k = -5; k <= 5; k++) { ctx.fillStyle = '#1a1e20'; ctx.fillRect(k * 22 - 1.5, -RIM_RY, 3, RIM_RY * 2); ctx.fillStyle = 'rgba(120,135,145,.55)'; ctx.fillRect(k * 22 - 1.5, -RIM_RY, 1, RIM_RY * 2); }
+  for (const ry of [-8, 12]) { ctx.fillStyle = '#23292c'; ctx.fillRect(-RIM_RX, ry, 2 * RIM_RX, 3.2); ctx.fillStyle = 'rgba(140,155,165,.5)'; ctx.fillRect(-RIM_RX, ry, 2 * RIM_RX, .9); }
+  ctx.restore();
+  // The back half of the rim goes behind the wood and the flames, the front half in front of them.
+  const rimGrad = ctx.createLinearGradient(-RIM_RX, 0, RIM_RX, 0); [[0, '#6b757b'], [.3, '#e4eaed'], [.55, '#9aa5ab'], [1, '#454e54']].forEach(([at, c]) => rimGrad.addColorStop(at, c));
+  const rim = (from, to) => {
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 9; ctx.beginPath(); ctx.ellipse(0, 1.5, RIM_RX, RIM_RY, 0, from, to); ctx.stroke();
+    ctx.strokeStyle = rimGrad; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(0, 0, RIM_RX, RIM_RY, 0, from, to); ctx.stroke();
+    ctx.strokeStyle = 'rgba(20,14,8,.45)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, 0, RIM_RX - 3, RIM_RY - 3, 0, from, to); ctx.stroke();
+  };
+  rim(Math.PI, Math.PI * 2);
+  // The burner: a ring of small blue flames with a pale core.
+  if (p.heat && p.putOut !== 'sand') for (let k = 0; k < 12; k++) {
+    const a = k / 12 * Math.PI * 2, fx = Math.cos(a) * 74, fy = 8 + Math.sin(a) * 12, fh = 9 + 3 * Math.sin(time * 14 + k);
+    const blue = ctx.createRadialGradient(fx, fy - fh * .5, 1, fx, fy - fh * .5, 12); blue.addColorStop(0, 'rgba(110,170,255,.35)'); blue.addColorStop(1, 'rgba(90,150,255,0)');
+    ctx.fillStyle = blue; ctx.beginPath(); ctx.arc(fx, fy - fh * .5, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(90,150,255,.9)'; ctx.beginPath(); ctx.ellipse(fx, fy - fh * .4, 3.4, fh * .62, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d8ecff'; ctx.beginPath(); ctx.ellipse(fx, fy - fh * .25, 1.5, fh * .32, 0, 0, Math.PI * 2); ctx.fill();
   }
   if (p.fuel) {
-    const wet = p.putOut === 'water';
-    for (const [lx, ly, a] of [[-38, -2, .25], [34, -2, -.25], [0, -10, 0]]) {
+    const wet = p.putOut === 'water', colours = wet ? ['#4a3a2c', '#2c2119', '#14100c'] : hot ? ['#6a4a2e', '#3a2616', '#140c06'] : ['#c79a64', '#8a5a32', '#4a2c15'];
+    for (const [lx, ly, a] of LOGS) {
       ctx.save(); ctx.translate(lx, ly); ctx.rotate(a);
-      ctx.fillStyle = wet ? '#2a211a' : p.flame > .2 || p.smoke != null ? '#3b2716' : '#8a5a32'; ctx.beginPath(); ctx.roundRect(-58, -9, 116, 18, 9); ctx.fill();
-      ctx.fillStyle = wet ? '#3a3029' : '#c79a64'; ctx.beginPath(); ctx.ellipse(58, 0, 5, 9, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.roundRect(-58, 3, 116, 14, 7); ctx.fill();
+      const lg = ctx.createLinearGradient(0, -9, 0, 9); lg.addColorStop(0, colours[0]); lg.addColorStop(.5, colours[1]); lg.addColorStop(1, colours[2]);
+      ctx.fillStyle = lg; ctx.beginPath(); ctx.roundRect(-58, -9, 116, 18, 9); ctx.fill();
+      ctx.strokeStyle = hot || wet ? 'rgba(0,0,0,.5)' : 'rgba(30,16,6,.45)'; ctx.lineWidth = 1; ctx.beginPath();
+      for (let i = 0; i < 12; i++) { const bx = -50 + grain(i + lx * 3 + 300) * 100, by = -6 + grain(i + lx * 3 + 330) * 12; ctx.moveTo(bx, by); ctx.lineTo(bx + 6 + grain(i + 360) * 8, by + (grain(i + 390) - .5) * 2); }
+      ctx.stroke();
+      if (hot && !wet) for (let i = 0; i < 6; i++) { const cx = -44 + i * 18 + grain(i + lx) * 6; ctx.strokeStyle = rgba('#ff7828', .12 + .6 * glowK * (.8 + .2 * Math.sin(time * 5 + i + lx))); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(cx, -6); ctx.lineTo(cx + 3, 0); ctx.lineTo(cx - 1, 6); ctx.stroke(); }
+      if (wet) { ctx.fillStyle = 'rgba(180,215,235,.25)'; ctx.fillRect(-50, -8, 100, 1.6); }
+      ctx.fillStyle = 'rgba(255,236,200,.22)'; ctx.fillRect(-46, -8, 92, 1.2);
+      ctx.fillStyle = wet ? '#3a3029' : hot ? blend('#3a2616', '#ff9a3a', glowK * .85) : '#d7ae78'; ctx.beginPath(); ctx.ellipse(58, 0, 5, 9, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(60,30,10,.5)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.ellipse(58, 0, 2.4, 4.8, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
-    if (wet) { ctx.fillStyle = 'rgba(120,180,220,.35)'; ctx.beginPath(); ctx.ellipse(0, 6, RIM_RX - 20, 10, 0, 0, Math.PI * 2); ctx.fill(); }
+    if (wet) { const pool = ctx.createLinearGradient(0, -4, 0, 16); pool.addColorStop(0, 'rgba(150,200,230,.45)'); pool.addColorStop(1, 'rgba(60,110,150,.3)'); ctx.fillStyle = pool; ctx.beginPath(); ctx.ellipse(0, 6, RIM_RX - 20, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(235,246,250,.45)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, 5, RIM_RX - 24, 8, 0, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
   }
-  if (p.putOut === 'sand') { ctx.fillStyle = '#c9ab72'; ctx.beginPath(); ctx.ellipse(0, -6, RIM_RX - 14, 22, 0, Math.PI, 0); ctx.ellipse(0, 0, RIM_RX - 10, RIM_RY - 6, 0, 0, Math.PI); ctx.fill(); }
-  // The flames, as tall as the fire is strong.
+  if (p.putOut === 'sand') {
+    const heap = ctx.createLinearGradient(0, -28, 0, 6); heap.addColorStop(0, '#e6cd96'); heap.addColorStop(1, '#a98a52');
+    ctx.fillStyle = heap; ctx.beginPath(); ctx.ellipse(0, -6, RIM_RX - 14, 22, 0, Math.PI, 0); ctx.ellipse(0, 0, RIM_RX - 10, RIM_RY - 6, 0, 0, Math.PI); ctx.fill();
+    for (let k = 0; k < 40; k++) { ctx.fillStyle = k % 2 ? 'rgba(110,80,36,.45)' : 'rgba(255,240,200,.35)'; ctx.fillRect(-110 + grain(k + 950) * 220, -22 + grain(k + 990) * 26, 1.6, 1.4); }
+  }
+  // The flames, as tall as the fire is strong, with embers lifting off them.
   if (p.flame > 0) for (let k = 0; k < 7; k++) {
     const fx = (k - 3) * 30, h = (90 + 90 * Math.sin(k * 1.7) ** 2) * p.flame, w = 46 * Math.max(.35, p.flame);
     flame(ctx, fx, 4, w, h, time, k);
   }
-  ctx.strokeStyle = theme.iron[0]; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(0, 0, RIM_RX, RIM_RY, 0, 0, Math.PI * 2); ctx.stroke();
-  // The lid: standing open on its hinge at the back right, or shut over the rim.
-  const lid = ctx.createLinearGradient(0, -RIM_RY, 0, RIM_RY); lid.addColorStop(0, '#9aa3a8'); lid.addColorStop(1, '#3e464b');
-  ctx.fillStyle = lid; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 2;
-  if (p.air) {
-    ctx.beginPath(); ctx.ellipse(RIM_RX + 18, -RIM_RX + 6, 20, RIM_RX, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = theme.iron[2]; ctx.fillRect(RIM_RX + 30, -RIM_RX, 12, 30);
-  } else {
-    ctx.beginPath(); ctx.ellipse(0, -4, RIM_RX + 6, RIM_RY + 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = theme.iron[2]; ctx.beginPath(); ctx.roundRect(-26, -30, 52, 14, 6); ctx.fill();
+  if (p.flame > .15 && p.fuel && p.air) for (let i = 0; i < 14; i++) {
+    const t = (time * .35 + i * .137) % 1, ex = Math.sin(i * 12.9) * 100 + Math.sin(time * 2 + i) * 8, ey = -t * (120 + 120 * p.flame);
+    ctx.fillStyle = rgba('#ffaa46', (1 - t) * Math.min(1, p.flame)); ctx.beginPath(); ctx.arc(ex, ey, 1.5 - t * .5, 0, Math.PI * 2); ctx.fill();
   }
-  if (p.smoke != null) puffs(ctx, 0, -20, p.smoke, 'rgba(150,150,150,A)', 7, 90);
+  rim(0, Math.PI);
+  // The lid: a heavy domed lid with a thick lip, rivets and a bar handle, shut over the rim, or standing open on its hinge at the back right.
+  if (p.air) {
+    const ox = RIM_RX + 18, oy = -RIM_RX + 6;
+    steel(ctx, RIM_RX - 4, -7, 16, 11, 2); bolt(ctx, RIM_RX + 4, -1.5, 1.8);
+    ctx.fillStyle = '#242b2f'; ctx.beginPath(); ctx.ellipse(ox + 5, oy, 20, RIM_RX, 0, 0, Math.PI * 2); ctx.fill();
+    const face = ctx.createLinearGradient(ox - 20, 0, ox + 20, 0); face.addColorStop(0, '#c7d0d5'); face.addColorStop(.5, '#8a959b'); face.addColorStop(1, '#3d464b');
+    ctx.fillStyle = face; ctx.beginPath(); ctx.ellipse(ox, oy, 20, RIM_RX, 0, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(ox, oy, 14, RIM_RX - 14, 0, 0, Math.PI * 2); ctx.stroke();
+    for (let k = -3; k <= 3; k++) bolt(ctx, ox - 8, oy + k * 34, 1.8);
+    steel(ctx, ox + 12, -RIM_RX, 14, 30, 3);
+  } else {
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(0, 3, RIM_RX + 8, RIM_RY + 8, 0, 0, Math.PI * 2); ctx.fill();
+    const lip = ctx.createLinearGradient(-RIM_RX, 0, RIM_RX, 0); lip.addColorStop(0, '#454e54'); lip.addColorStop(.35, '#8a959b'); lip.addColorStop(1, '#2a3136');
+    ctx.fillStyle = lip; ctx.beginPath(); ctx.ellipse(0, -1, RIM_RX + 6, RIM_RY + 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 2; ctx.stroke();
+    const dome = ctx.createRadialGradient(-50, -22, 6, -10, -6, RIM_RX + 10); dome.addColorStop(0, '#e1e8ec'); dome.addColorStop(.5, '#9aa5ab'); dome.addColorStop(1, '#46505a');
+    ctx.fillStyle = dome; ctx.beginPath(); ctx.ellipse(0, -6, RIM_RX + 3, RIM_RY + 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.3)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, -6, RIM_RX - 18, RIM_RY - 6, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, -7.2, RIM_RX - 18, RIM_RY - 6, 0, Math.PI * 1.1, Math.PI * 1.7); ctx.stroke();
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; bolt(ctx, Math.cos(a) * (RIM_RX - 8), -6 + Math.sin(a) * (RIM_RY - 3), 2); }
+    ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.beginPath(); ctx.ellipse(-62, -20, 34, 5, -.28, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, -10, 34, 6, 0, 0, Math.PI * 2); ctx.fill();
+    steel(ctx, -25, -25, 8, 11, 1.5); steel(ctx, 17, -25, 8, 11, 1.5); steel(ctx, -30, -32, 60, 9, 4);
+  }
+  if (p.smoke != null) puffs(ctx, 0, -20, p.smoke, 'rgba(150,150,150,A)', 7, 90, Math.max(.15, 1 - p.smoke / 3.5));
+  else if (burning && p.air) puffs(ctx, 0, -40, time * .5, 'rgba(70,70,70,A)', 4, 70, .3 * p.flame);
   if (p.putOut === 'water' && p.pour) puffs(ctx, 0, -10, p.pour.age, 'rgba(235,240,245,A)', 8, 120);
   ctx.restore();
 }
 // An arrow from (x0, y0) to (x1, y1), with a dot running along it so the picture shows which way things move.
-function flowArrow(ctx, x0, y0, x1, y1, colour, time, {width = 4, dot = true} = {}) {
-  const a = Math.atan2(y1 - y0, x1 - x0), head = width * 3;
-  ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = width; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - Math.cos(a) * head * .7, y1 - Math.sin(a) * head * .7); ctx.stroke(); ctx.lineCap = 'butt';
+// Air is drawn as three pale streaks, and the others as one glowing line.
+function flowArrow(ctx, x0, y0, x1, y1, colour, time, {width = 4, dot = true, streaks = false} = {}) {
+  const a = Math.atan2(y1 - y0, x1 - x0), head = width * 3, length = Math.hypot(x1 - x0, y1 - y0), tx = x1 - Math.cos(a) * head * .7, ty = y1 - Math.sin(a) * head * .7;
+  ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = colour; ctx.fillStyle = colour;
+  if (streaks) {
+    for (const off of [-6, 0, 6]) {
+      const nx = -Math.sin(a) * off, ny = Math.cos(a) * off;
+      ctx.globalAlpha = off ? .4 : .75; ctx.lineWidth = off ? 1.6 : 2.6; ctx.setLineDash([length * .24, length * .1]); ctx.lineDashOffset = dot ? -time * length * .35 - off * 3 : 0;
+      ctx.beginPath(); ctx.moveTo(x0 + nx, y0 + ny); ctx.lineTo(tx + nx, ty + ny); ctx.stroke();
+    }
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  } else {
+    ctx.shadowColor = colour; ctx.shadowBlur = 8; ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(tx, ty); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = Math.max(1, width * .3); ctx.beginPath(); ctx.moveTo(x0 + Math.sin(a) * width * .2, y0 - Math.cos(a) * width * .2); ctx.lineTo(tx + Math.sin(a) * width * .2, ty - Math.cos(a) * width * .2); ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - Math.cos(a - .5) * head, y1 - Math.sin(a - .5) * head); ctx.lineTo(x1 - Math.cos(a + .5) * head, y1 - Math.sin(a + .5) * head); ctx.closePath(); ctx.fill();
   if (dot) { const t = (time * .8) % 1; ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.arc(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width * .7, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
 }
 function blockedMark(ctx, x, y, size = 9) {
-  ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size); ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size); ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size); ctx.stroke();
+  ctx.strokeStyle = theme.bad; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size); ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size); ctx.stroke(); ctx.lineCap = 'butt';
 }
 // The pit's three sides as things the player can see: fresh air moving in or stopped, heat rising from the burner, steam carrying heat away.
 function mechanism(ctx, p, time) {
   const blocked = !p.air || p.putOut === 'sand', air = SIDE_COLOUR.air;
   [[300, 300], [340, 262]].forEach(([x, y], k) => {
     const endX = PIT_X - 110 + k * 50, endY = blocked ? RIM_Y - 74 : RIM_Y - 22;
-    flowArrow(ctx, x, y, endX, endY, blocked ? 'rgba(113,201,255,.45)' : air, time + k * .4, {dot: !blocked});
+    flowArrow(ctx, x, y, endX, endY, blocked ? 'rgba(113,201,255,.55)' : air, time + k * .4, {dot: !blocked, streaks: true});
     if (blocked) blockedMark(ctx, endX + 8, endY + 16);
   });
   text(ctx, blocked ? 'Fresh air is stopped' : 'Fresh air', 270, 236, {size: 15, colour: blocked ? theme.faint : air});
@@ -247,10 +399,9 @@ function pitWords(ctx, p, known) {
 function thermometer(ctx, p) {
   const {x, base, perC, top} = THERMO, wet = p.putOut === 'water';
   const degrees = wet ? WATER_BOILS_C + (450 - WATER_BOILS_C) * p.flame : 20 + 430 * p.flame, level = base - degrees * perC;
-  ctx.fillStyle = 'rgba(10,14,15,.8)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(x - 11, top, 22, base - top + 14, 10); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = degrees >= WOOD_BURNS_C ? '#f2551f' : '#d9a640'; ctx.fillRect(x - 6, level, 12, base - level + 6);
-  ctx.beginPath(); ctx.arc(x, base + 14, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(10,14,15,.8)'; ctx.beginPath(); ctx.roundRect(x - 17, top - 8, 34, base - top + 44, 15); ctx.fill();
+  steel(ctx, x - 15, top - 4, 30, 6, 2);
+  glassTube(ctx, x, top, base + 14, {width: 22, bulbR: 16, bulbY: base + 14, levelY: level, spirit: degrees >= WOOD_BURNS_C ? '#f2551f' : '#d9a640'});
   for (const [c, label, colour] of [[WOOD_BURNS_C, `Wood burns above ${WOOD_BURNS_C} °C`, '#f2a15a'], [WATER_BOILS_C, `Water boils at ${WATER_BOILS_C} °C`, '#8cc8f0']]) {
     const y = base - c * perC;
     ctx.strokeStyle = colour; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 14, y); ctx.lineTo(x + 20, y); ctx.stroke();
@@ -258,16 +409,24 @@ function thermometer(ctx, p) {
   }
   text(ctx, 'Wood', x, top - 16, {size: 15});
 }
+// One panel switch for each side of the triangle: a steel bezel round a dark face that lights in the side's colour while the fire has it.
 function plates(ctx, view) {
   const p = view.pit, actions = Object.values(view.keys);
   for (const side of SIDES) {
-    const [x, y, w, h] = plateBox(side), on = p[side], action = PLATE_ACTION[side].find(a => actions.includes(a));
-    ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.strokeStyle = on ? SIDE_COLOUR[side] : 'rgba(120,128,132,.6)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+    const [x, y, w, h] = plateBox(side), on = p[side], action = PLATE_ACTION[side].find(a => actions.includes(a)), colour = SIDE_COLOUR[side];
+    const face = ctx.createLinearGradient(0, y, 0, y + h); face.addColorStop(0, '#2c3438'); face.addColorStop(1, '#13181a');
+    ctx.fillStyle = face; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
+    if (on) { const lit = ctx.createLinearGradient(0, y + h, 0, y); lit.addColorStop(0, rgba(colour, .34)); lit.addColorStop(1, rgba(colour, 0)); ctx.fillStyle = lit; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); }
+    bezel(ctx, x, y, w, h, 8);
+    ctx.save(); ctx.strokeStyle = on ? colour : 'rgba(120,128,132,.6)'; ctx.lineWidth = on ? 2.5 : 1.5;
+    if (on) { ctx.shadowColor = colour; ctx.shadowBlur = 10; }
+    ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5); ctx.stroke(); ctx.restore();
+    const lamp = ctx.createRadialGradient(x + w - 22, y + 9, .5, x + w - 22, y + 9, 7); lamp.addColorStop(0, on ? '#ffffff' : '#555e63'); lamp.addColorStop(.35, on ? colour : '#2c3438'); lamp.addColorStop(1, on ? rgba(colour, 0) : 'rgba(0,0,0,0)');
+    ctx.fillStyle = lamp; ctx.beginPath(); ctx.arc(x + w - 22, y + 9, 7, 0, Math.PI * 2); ctx.fill();
     const left = action ? x + 44 : x + 14;
     if (action) keyCap(ctx, x + 22, y + h / 2, PLATE_KEY[side]);
     text(ctx, SWITCH_NAME[side], left, y + 18, {size: 17, align: 'left'});
-    if (view.known.includes(side)) text(ctx, SIDE_LOWER[side], left, y + 40, {size: 14, align: 'left', weight: 600, colour: on ? SIDE_COLOUR[side] : theme.faint});
+    if (view.known.includes(side)) text(ctx, SIDE_LOWER[side], left, y + 40, {size: 14, align: 'left', weight: 600, colour: on ? colour : theme.faint});
     const state = side === 'fuel' ? (on ? 'IN' : 'OUT') : side === 'heat' ? (on ? 'ON' : 'OFF') : (on ? 'OPEN' : 'SHUT');
     text(ctx, state, x + w - 14, y + h / 2, {size: 20, align: 'right', colour: on ? theme.good : theme.bad});
     if (view.glow === action) halo(ctx, x + w / 2, y + h / 2, w / 2 + 6, view.time);
@@ -298,8 +457,7 @@ function pouring(ctx, pour) {
 }
 function watchTable(ctx, rows, time) {
   const {x, y, w} = TABLE, h = 40 + 3 * 46;
-  ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+  panel(ctx, x, y, w, h, .82);
   text(ctx, 'Remove one side…', x + 12, y + 20, {size: 14, align: 'left', colour: theme.faint});
   text(ctx, 'and the fire', x + w - 12, y + 20, {size: 14, align: 'right', colour: theme.faint});
   const said = {heat: 'Gas off', fuel: 'Wood out', air: 'Lid shut'};
@@ -314,8 +472,7 @@ function watchTable(ctx, rows, time) {
 // The free test's results: one row for each setting tried, with what the flame did and why.
 function freeTable(ctx, rows) {
   const {x, y, w} = TABLE, h = 34 + Math.max(1, rows.length) * 28;
-  ctx.fillStyle = 'rgba(10,14,15,.78)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+  panel(ctx, x, y, w, h, .85);
   const at = [x + 10, x + 52, x + 88], result = x + w - 10;
   ['Wood', 'Gas', 'Lid'].forEach((label, k) => text(ctx, label, at[k], y + 17, {size: 13, align: 'left', colour: theme.accent}));
   text(ctx, 'Result', result, y + 17, {size: 13, align: 'right', colour: theme.accent});
@@ -329,7 +486,7 @@ function freeTable(ctx, rows) {
   });
 }
 function drawPitScene(ctx, view) {
-  background(ctx);
+  background(ctx); floor(ctx);
   const p = view.pit;
   if (view.tools) tools(ctx, view);
   drawPit(ctx, p, view.time);
@@ -349,26 +506,40 @@ function drawPitScene(ctx, view) {
 
 // ---- the forest, from above ----
 const TREE_SPOTS = [[-24, -20], [22, -12], [-6, 22]];
+// A tree seen from above: a soft shadow, a crown lit from the top left, and leaf clumps round its edge.
+function crown(ctx, cx, cy, r, colour) {
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(cx + 4, cy + 6, r, r * .85, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(cx - r * .35, cy - r * .4, 1, cx, cy, r * 1.05); g.addColorStop(0, shade(colour, .35)); g.addColorStop(.55, colour); g.addColorStop(1, shade(colour, -.5));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  for (let k = 0; k < 6; k++) { const a = k * 1.05 + cx * .1; ctx.fillStyle = k % 2 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.14)'; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r * .55, cy + Math.sin(a) * r * .55, r * .3, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(cx - r * .3, cy - r * .35, r * .3, 0, Math.PI * 2); ctx.fill();
+}
 function forestCell(ctx, cell, time) {
-  const x = FX + cell.i * CELL, y = FY + cell.j * CELL, cx = x + CELL / 2, cy = y + CELL / 2;
+  const x = FX + cell.i * CELL, y = FY + cell.j * CELL, cx = x + CELL / 2, cy = y + CELL / 2, seed = cell.i * 50 + cell.j * 7;
   const ground = {raked: '#6b5236', burnt: '#1d1b19', coated: '#4a3438'}[cell.state] ?? '#2d3a26';
-  ctx.fillStyle = ground; ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+  const base = ctx.createLinearGradient(x, y, x + CELL, y + CELL); base.addColorStop(0, shade(ground, .08)); base.addColorStop(1, shade(ground, -.18));
+  ctx.fillStyle = base; ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+  for (let k = 0; k < 22; k++) { ctx.fillStyle = k % 2 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.18)'; ctx.fillRect(x + 4 + grain(seed + k) * (CELL - 8), y + 4 + grain(seed + k + 99) * (CELL - 8), 2, 2); }
   if (cell.state === 'raked') {
-    ctx.strokeStyle = 'rgba(40,28,16,.7)'; ctx.lineWidth = 2;
-    for (let k = 12; k < CELL; k += 14) { ctx.beginPath(); ctx.moveTo(x + 8, y + k); ctx.lineTo(x + CELL - 8, y + k); ctx.stroke(); }
+    for (let k = 12; k < CELL; k += 14) { ctx.strokeStyle = 'rgba(40,28,16,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 8, y + k); ctx.lineTo(x + CELL - 8, y + k); ctx.stroke(); ctx.strokeStyle = 'rgba(255,226,180,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 8, y + k + 2); ctx.lineTo(x + CELL - 8, y + k + 2); ctx.stroke(); }
     return;
   }
   if (cell.state === 'burnt') {
-    ctx.fillStyle = 'rgba(120,120,115,.35)'; for (const [dx, dy] of TREE_SPOTS) { ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 14, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = '#0d0c0b'; for (const [dx, dy] of TREE_SPOTS) { ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 5, 0, Math.PI * 2); ctx.fill(); }
+    TREE_SPOTS.forEach(([dx, dy], k) => {
+      const ash = ctx.createRadialGradient(cx + dx, cy + dy, 1, cx + dx, cy + dy, 17); ash.addColorStop(0, 'rgba(130,130,124,.5)'); ash.addColorStop(1, 'rgba(120,120,115,0)');
+      ctx.fillStyle = ash; ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 17, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0d0c0b'; ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = rgba('#ff6e28', .2 + .15 * Math.sin(time * 2 + k * 2 + seed)); ctx.beginPath(); ctx.arc(cx + dx + 1, cy + dy - 1, 1.8, 0, Math.PI * 2); ctx.fill();
+    });
     return;
   }
-  const crown = {coated: '#d8768a', damp: '#3f7d78', burning: '#3c3320'}[cell.state] ?? '#3f7a45';
-  for (const [dx, dy] of TREE_SPOTS) {
-    ctx.fillStyle = crown; ctx.beginPath(); ctx.arc(cx + dx, cy + dy, 19, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(cx + dx - 5, cy + dy - 6, 8, 0, Math.PI * 2); ctx.fill();
+  const crownColour = {coated: '#d8768a', damp: '#3f7d78', burning: '#3c3320'}[cell.state] ?? '#3f7a45';
+  if (cell.state === 'burning') {
+    const s = cell.percent / 100, scorch = ctx.createRadialGradient(cx, cy, 4, cx, cy, CELL * .62); scorch.addColorStop(0, rgba('#ff6e1e', .25 + .3 * s)); scorch.addColorStop(1, 'rgba(255,110,30,0)');
+    ctx.fillStyle = scorch; ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
   }
-  if (cell.state === 'damp') { ctx.fillStyle = 'rgba(140,200,240,.8)'; for (let k = 0; k < 6; k++) { ctx.beginPath(); ctx.arc(x + 14 + (k * 29) % 76, y + 14 + (k * 41) % 72, 3, 0, Math.PI * 2); ctx.fill(); } }
+  for (const [dx, dy] of TREE_SPOTS) crown(ctx, cx + dx, cy + dy, 19, crownColour);
+  if (cell.state === 'damp') { for (let k = 0; k < 6; k++) { const dx = x + 14 + (k * 29) % 76, dy = y + 14 + (k * 41) % 72; ctx.fillStyle = 'rgba(140,200,240,.8)'; ctx.beginPath(); ctx.arc(dx, dy, 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(dx - 1, dy - 1, 1, 0, Math.PI * 2); ctx.fill(); } }
   if (cell.state === 'burning') {
     const s = cell.percent / 100;
     TREE_SPOTS.forEach(([dx, dy], k) => flame(ctx, cx + dx, cy + dy + 14, 22 + 14 * s, 20 + 46 * s, time, cell.i * 3 + cell.j + k));
@@ -405,11 +576,13 @@ function spreadArrows(ctx, cells, time) {
 }
 function forest(ctx, view) {
   const f = view.forest;
-  // The lake on the left and the road on the right.
-  ctx.fillStyle = '#2f5a6e'; ctx.fillRect(0, FY - 10, FX - 6, ROWS * CELL + 20);
+  // The lake on the left, with its shore and ripples, and the road on the right, a strip of tarmac turned to run down the board.
+  const lake = ctx.createLinearGradient(0, 0, FX - 6, 0); lake.addColorStop(0, '#1c3f50'); lake.addColorStop(1, '#3b7088');
+  ctx.fillStyle = lake; ctx.fillRect(0, FY - 10, FX - 6, ROWS * CELL + 20);
+  ctx.fillStyle = '#5b5a40'; ctx.fillRect(FX - 12, FY - 10, 6, ROWS * CELL + 20);
   ctx.strokeStyle = 'rgba(200,230,240,.3)'; ctx.lineWidth = 2;
   for (let k = 0; k < 6; k++) { const wy = FY + 20 + k * 48; ctx.beginPath(); ctx.moveTo(8, wy); ctx.quadraticCurveTo(26, wy - 6, 44, wy); ctx.stroke(); }
-  ctx.fillStyle = '#3c3f40'; ctx.fillRect(ROAD_X, FY - 10, ROAD_W, ROWS * CELL + 20);
+  ctx.save(); ctx.translate(ROAD_X + ROAD_W, FY - 10); ctx.rotate(Math.PI / 2); tarmac(ctx, 0, 0, ROWS * CELL + 20, ROAD_W); ctx.restore();
   ctx.strokeStyle = '#d9c46a'; ctx.lineWidth = 3; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(ROAD_X + ROAD_W / 2, FY - 6); ctx.lineTo(ROAD_X + ROAD_W / 2, FY + ROWS * CELL + 8); ctx.stroke(); ctx.setLineDash([]);
   text(ctx, 'Lake', (FX - 6) / 2, FY - 26, {size: 15, colour: theme.faint});
   text(ctx, 'Road', ROAD_X + ROAD_W / 2, FY - 26, {size: 15, colour: theme.bad});
@@ -425,7 +598,7 @@ function forest(ctx, view) {
   text(ctx, 'by the road', FX + (ROAD + .5) * CELL, FY + ROWS * CELL + 18, {size: 13, colour: theme.bad, weight: 600});
   if (f.splash && f.splash.age < 1.2) {
     const [x, y] = cellCentre(f.splash.i, f.splash.j), a = f.splash.age;
-    ctx.strokeStyle = `rgba(140,200,245,${1 - a / 1.2})`; ctx.lineWidth = 5;
+    ctx.strokeStyle = rgba('#8cc8f5', 1 - a / 1.2); ctx.lineWidth = 5;
     for (const r of [a * 60, a * 40]) { ctx.beginPath(); ctx.arc(x, y, 10 + r, 0, Math.PI * 2); ctx.stroke(); }
   }
 }
@@ -435,12 +608,20 @@ function tool(ctx, view) {
   if (set) { ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.strokeRect(FX + STRIP * CELL + 3, FY + 3, CELL - 6, ROWS * CELL - 6); ctx.setLineDash([]); }
   ctx.save(); ctx.translate(x, y);
   if (kind === 'rake') {
+    // A timber handle and a steel head with its tines.
+    ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(-33, -22); ctx.lineTo(17, 16); ctx.stroke();
     ctx.strokeStyle = '#a0784a'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(-34, -24); ctx.lineTo(16, 14); ctx.stroke();
-    ctx.strokeStyle = theme.iron[0]; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(4, 24); ctx.lineTo(32, -2); ctx.stroke();
-    for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(6 + k * 6, 22 - k * 6); ctx.lineTo(12 + k * 6, 28 - k * 6); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(255,230,190,.4)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-35, -26); ctx.lineTo(14, 12); ctx.stroke();
+    ctx.strokeStyle = '#1d2224'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(4, 24); ctx.lineTo(32, -2); ctx.stroke();
+    ctx.strokeStyle = theme.iron[0]; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(4, 24); ctx.lineTo(32, -2); ctx.stroke();
+    ctx.lineWidth = 2.4; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(6 + k * 6, 22 - k * 6); ctx.lineTo(12 + k * 6, 29 - k * 6); ctx.stroke(); }
+    ctx.lineCap = 'butt';
   } else {
-    ctx.fillStyle = '#c95b6f'; ctx.beginPath(); ctx.roundRect(-14, -26, 28, 40, 6); ctx.fill();
-    ctx.fillStyle = theme.iron[1]; ctx.fillRect(-4, 14, 8, 14);
+    // A pink retardant tank with a banded body and a steel nozzle.
+    const tank = ctx.createLinearGradient(-14, 0, 14, 0); tank.addColorStop(0, '#e9a3b2'); tank.addColorStop(.4, '#c95b6f'); tank.addColorStop(1, '#6e2a38');
+    ctx.fillStyle = tank; ctx.beginPath(); ctx.roundRect(-14, -26, 28, 40, 6); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-14, -10, 28, 3); ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-14, -11, 28, 1);
+    steel(ctx, -4, 14, 8, 14, 2); steel(ctx, -9, -30, 18, 6, 2);
     if (!set && view.forest.coated) { ctx.fillStyle = 'rgba(216,118,138,.45)'; ctx.beginPath(); ctx.moveTo(-6, 28); ctx.lineTo(-40, 64); ctx.lineTo(40, 64); ctx.lineTo(6, 28); ctx.fill(); }
   }
   ctx.restore();
@@ -470,8 +651,7 @@ function drawForestScene(ctx, view) {
   }
   let y = view.triangle ? 300 : 60;
   if (view.spread) {
-    ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(px, 40, 212, 116, 8); ctx.fill(); ctx.stroke();
+    panel(ctx, px, 40, 212, 116, .82);
     text(ctx, 'Spreads', px + 12, 66, {size: 15, align: 'left', weight: 600}); text(ctx, String(view.spread.steps), px + 200, 66, {size: 18, align: 'right', colour: theme.accent});
     text(ctx, 'Time', px + 12, 98, {size: 15, align: 'left', weight: 600}); text(ctx, `${view.spread.seconds} s`, px + 200, 98, {size: 18, align: 'right', colour: theme.accent});
     text(ctx, 'Burning cells', px + 12, 130, {size: 15, align: 'left', weight: 600}); text(ctx, String(f.burning), px + 200, 130, {size: 18, align: 'right', colour: theme.bad});
@@ -484,8 +664,7 @@ function drawForestScene(ctx, view) {
   }
   if (view.job) {
     const j = view.job;
-    ctx.fillStyle = 'rgba(10,14,15,.7)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(px, 40, 212, 150, 8); ctx.fill(); ctx.stroke();
+    panel(ctx, px, 40, 212, 150, .82);
     text(ctx, 'Bucket', px + 12, 66, {size: 15, align: 'left', weight: 600}); text(ctx, litres(j.bucket), px + 200, 66, {size: 16, align: 'right', colour: '#8cc8f0'});
     text(ctx, 'A cell at 100%', px + 12, 100, {size: 15, align: 'left', weight: 600}); text(ctx, litres(j.flatOut), px + 200, 100, {size: 16, align: 'right', colour: theme.bad});
     text(ctx, 'Trips', px + 12, 134, {size: 15, align: 'left', weight: 600}); text(ctx, String(j.trips), px + 200, 134, {size: 18, align: 'right', colour: theme.accent});
@@ -535,26 +714,40 @@ function drawCheck(ctx, view) {
 }
 // Question 1's kitchen: oil burning in a pan on a stove, with the lid above it, then over it once the question is answered.
 function panOnStove(ctx, x, y, shut, time) {
-  ctx.fillStyle = theme.iron[1]; ctx.fillRect(x - 170, y + 44, 340, 22); ctx.fillStyle = theme.iron[2]; ctx.fillRect(x - 150, y + 66, 300, 96);
-  for (const dx of [-60, -20, 20, 60]) { ctx.fillStyle = 'rgba(90,150,255,.85)'; ctx.beginPath(); ctx.ellipse(x + dx, y + 38, 6, 8, 0, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = '#3a4146'; ctx.fillRect(x - 96, y - 6, 192, 36); ctx.fillStyle = '#1d2224'; ctx.fillRect(x + 96, y + 2, 76, 10);
-  ctx.fillStyle = '#c9a23a'; ctx.fillRect(x - 90, y - 6, 180, 8);
+  shadow(ctx, x, y + 166, 200, .55);
+  steel(ctx, x - 170, y + 44, 340, 22, 4);
+  const front = ctx.createLinearGradient(0, y + 66, 0, y + 162); front.addColorStop(0, '#3a4348'); front.addColorStop(1, '#14191b');
+  ctx.fillStyle = front; ctx.fillRect(x - 150, y + 66, 300, 96); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x - 150, y + 66, 300, 1.2);
+  for (const dx of [-105, -35, 35, 105]) { const knob = ctx.createRadialGradient(x + dx - 3, y + 100, 1, x + dx, y + 104, 12); knob.addColorStop(0, '#e6ecef'); knob.addColorStop(1, '#3d464b'); ctx.fillStyle = knob; ctx.beginPath(); ctx.arc(x + dx, y + 104, 11, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + dx, y + 104); ctx.lineTo(x + dx, y + 95); ctx.stroke(); }
+  for (const dx of [-60, -20, 20, 60]) { ctx.fillStyle = 'rgba(90,150,255,.9)'; ctx.beginPath(); ctx.ellipse(x + dx, y + 38, 6, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#d8ecff'; ctx.beginPath(); ctx.ellipse(x + dx, y + 41, 2.4, 4, 0, 0, Math.PI * 2); ctx.fill(); }
+  const pan = ctx.createLinearGradient(0, y - 6, 0, y + 30); pan.addColorStop(0, '#59636a'); pan.addColorStop(.5, '#2f373b'); pan.addColorStop(1, '#14181a');
+  ctx.fillStyle = pan; ctx.beginPath(); ctx.roundRect(x - 96, y - 6, 192, 36, 4); ctx.fill();
+  steel(ctx, x + 96, y + 2, 76, 10, 4); bolt(ctx, x + 104, y + 7, 2);
+  const oil = ctx.createLinearGradient(0, y - 6, 0, y + 2); oil.addColorStop(0, '#e0b54a'); oil.addColorStop(1, '#9a7222'); ctx.fillStyle = oil; ctx.fillRect(x - 90, y - 6, 180, 8);
+  ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(x - 86, y - 5, 60, 1.4);
   if (!shut) for (let k = 0; k < 5; k++) flame(ctx, x - 72 + k * 36, y - 4, 38, 90 + 30 * Math.sin(k * 1.7) ** 2, time, k);
   const lidY = shut ? y - 16 : y - 170;
-  ctx.fillStyle = theme.iron[0]; ctx.beginPath(); ctx.roundRect(x - 102, lidY, 204, 12, 5); ctx.fill(); ctx.fillStyle = theme.iron[2]; ctx.fillRect(x - 18, lidY - 12, 36, 12);
+  shadow(ctx, x, lidY + 22, 100, shut ? .5 : .25);
+  const lid = ctx.createLinearGradient(0, lidY, 0, lidY + 12); lid.addColorStop(0, '#e1e8ec'); lid.addColorStop(.45, '#9aa5ab'); lid.addColorStop(1, '#46505a');
+  ctx.fillStyle = lid; ctx.beginPath(); ctx.roundRect(x - 102, lidY, 204, 12, 5); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+  steel(ctx, x - 22, lidY - 12, 44, 9, 4); steel(ctx, x - 18, lidY - 5, 6, 6, 1); steel(ctx, x + 12, lidY - 5, 6, 6, 1);
   text(ctx, shut ? 'The lid keeps fresh air out.' : 'A lid', x, shut ? y - 60 : lidY - 30, {size: 17});
 }
 // A small forest for the questions: burning at the lake end, the road at the far end, and a mark where something goes.
 function miniForest(ctx, x0, y0, size, what, where, time) {
   const states = what === 'coat' ? ['burnt', 'burning', 'burning', 'trees', 'trees', 'trees'] : ['burning', 'burning', 'burning', 'trees', 'trees', 'trees'];
   for (let i = 0; i < COLS; i++) for (let j = 0; j < ROWS; j++) {
-    const s = states[i], x = x0 + i * size, y = y0 + j * size;
-    ctx.fillStyle = s === 'burnt' ? '#1d1b19' : s === 'burning' ? '#3c3320' : '#2d3a26'; ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
-    if (s === 'trees' || s === 'burning') { ctx.fillStyle = s === 'trees' ? '#3f7a45' : '#3c3320'; ctx.beginPath(); ctx.arc(x + size / 2, y + size / 2, size * .3, 0, Math.PI * 2); ctx.fill(); }
+    const s = states[i], x = x0 + i * size, y = y0 + j * size, ground = s === 'burnt' ? '#1d1b19' : s === 'burning' ? '#3c3320' : '#2d3a26';
+    const base = ctx.createLinearGradient(x, y, x + size, y + size); base.addColorStop(0, shade(ground, .08)); base.addColorStop(1, shade(ground, -.18));
+    ctx.fillStyle = base; ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    if (s === 'burning') { const scorch = ctx.createRadialGradient(x + size / 2, y + size / 2, 2, x + size / 2, y + size / 2, size * .6); scorch.addColorStop(0, 'rgba(255,110,30,.45)'); scorch.addColorStop(1, 'rgba(255,110,30,0)'); ctx.fillStyle = scorch; ctx.fillRect(x + 1, y + 1, size - 2, size - 2); }
+    if (s === 'trees' || s === 'burning') crown(ctx, x + size / 2, y + size / 2, size * .3, s === 'trees' ? '#3f7a45' : '#3c3320');
     if (s === 'burning') flame(ctx, x + size / 2, y + size * .78, size * .4, size * .6, time, i + j);
   }
-  ctx.fillStyle = '#2f5a6e'; ctx.fillRect(x0 - size * .35, y0, size * .3, ROWS * size);
-  ctx.fillStyle = '#3c3f40'; ctx.fillRect(x0 + COLS * size + 4, y0, size * .45, ROWS * size);
+  const lake = ctx.createLinearGradient(x0 - size * .35, 0, x0 - size * .05, 0); lake.addColorStop(0, '#1c3f50'); lake.addColorStop(1, '#3b7088');
+  ctx.fillStyle = lake; ctx.fillRect(x0 - size * .35, y0, size * .3, ROWS * size);
+  ctx.fillStyle = '#2f3234'; ctx.fillRect(x0 + COLS * size + 4, y0, size * .45, ROWS * size);
+  ctx.fillStyle = 'rgba(235,230,214,.5)'; for (let j = 0; j < ROWS * 2; j++) ctx.fillRect(x0 + COLS * size + 4 + size * .22 - 1, y0 + j * size * .5 + 3, 2, size * .28);
   if (where) {
     const col = {front: 3, flames: 2, behind: 0, back: 0}[where], colour = what === 'coat' ? 'rgba(216,118,138,.75)' : 'rgba(110,180,235,.75)';
     ctx.fillStyle = colour; ctx.fillRect(x0 + col * size + 3, y0 + 3, size - 6, ROWS * size - 6);
@@ -565,8 +758,7 @@ function drawRecap(ctx, view) {
   const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;
   view.ideas.forEach((idea, i) => {
     const x = x0 + i * (w + gap);
-    ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
+    panel(ctx, x, 40, w, 600, .6);
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     ctx.save(); ctx.beginPath(); ctx.rect(x + 2, 90, w - 4, 340); ctx.clip();
     if (idea.id === 'triangle') triangle(ctx, {x: x + w / 2, top: 130, base: 350, half: 84}, [], {burning: true, size: 18, time: view.time});

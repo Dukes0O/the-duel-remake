@@ -2,7 +2,7 @@
 // degrees with a stopwatch on each ski, three labelled wax tins on the workbench, the thermometer and magnifier, the
 // arrows and bars of the friction sum, a close-up of the base on the snow, the results table of the free test, and the
 // ski menu's line for Brian's job. Draws and hit-tests only.
-import {BOARD, theme, background, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
+import {BOARD, theme, background, shadow, steel, bezel, shade, grain, timber, glassTube, glassGlare, forceArrowTo, text, keyCap, wrap, fitBoard} from '../classroom/board-art.js';
 import {STRIP_M, WAX_NAMES, SNOW_ORDER, s1, metresAt, runSeconds} from './wax-classroom.js';
 import {SNOWS, WAXES} from '../benches/wax.js';
 export {BOARD};
@@ -67,30 +67,90 @@ export function dragAngle() { return 0; }
 
 // ---- drawing ----
 function panel(ctx, x, y, w, h) {
-  ctx.fillStyle = 'rgba(14,20,24,.9)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(26,33,37,.92)'); g.addColorStop(1, 'rgba(11,15,17,.92)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill();
+  bezel(ctx, x, y, w, h, 8);
 }
-// An arrow from (x0, y0) to (x1, y1).
-function arrow(ctx, x0, y0, x1, y1, colour, width = 5) {
-  const length = Math.hypot(x1 - x0, y1 - y0) || 1, ux = (x1 - x0) / length, uy = (y1 - y0) / length, head = Math.min(14, length * .6);
-  ctx.strokeStyle = colour; ctx.fillStyle = colour; ctx.lineWidth = width;
-  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * head * .8, y1 - uy * head * .8); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - ux * head - uy * head * .55, y1 - uy * head + ux * head * .55); ctx.lineTo(x1 - ux * head + uy * head * .55, y1 - uy * head - ux * head * .55); ctx.closePath(); ctx.fill();
+// A lit arrow from (x0, y0) to (x1, y1).
+function arrow(ctx, x0, y0, x1, y1, colour, width = 5) { forceArrowTo(ctx, x0, y0, x1, y1, colour, width * 1.4); }
+// A band of snow along the slope, in the slope's own frame: its top edge at y 0, `thick` deep and `L` long. Powder is soft and
+// bumpy with glints in it, cool snow is smooth with a firm sheen, and wet snow is grey-blue and glossy with meltwater lying on it.
+function snowBand(ctx, kind, L, thick) {
+  const g = ctx.createLinearGradient(0, -3, 0, thick);
+  if (kind === 'wet') { g.addColorStop(0, '#d6e3e7'); g.addColorStop(.35, '#b4c8d0'); g.addColorStop(1, '#7f98a4'); }
+  else if (kind === 'cold') { g.addColorStop(0, '#f0f6f8'); g.addColorStop(.4, '#d5e3ea'); g.addColorStop(1, '#9db4c2'); }
+  else { g.addColorStop(0, '#ffffff'); g.addColorStop(.4, '#eaf4f9'); g.addColorStop(1, '#bcd2de'); }
+  const bump = kind === 'wet' ? 1.2 : kind === 'cold' ? .8 : 2.6;
+  const path = () => { ctx.beginPath(); ctx.moveTo(0, thick); for (let x = 0; x <= L; x += 6) ctx.lineTo(x, -2 - bump * (.5 + .5 * Math.sin(x * .09 + grain(Math.floor(x / 6) + 20) * 6))); ctx.lineTo(L, thick); ctx.closePath(); };
+  ctx.fillStyle = g; path(); ctx.fill();
+  ctx.save(); path(); ctx.clip();
+  if (kind === 'powder') for (let k = 0, n = Math.ceil(L / 8); k < n; k++) {
+    const gx = grain(k + 30) * L, gy = -1 + grain(k + 40) * (thick - 3);
+    ctx.fillStyle = 'rgba(150,185,205,.3)'; ctx.fillRect(gx, gy + 1.5, 4 + grain(k + 45) * 5, 1.4);
+    if (k % 2) { ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(gx - 2, gy); ctx.lineTo(gx + 2, gy); ctx.moveTo(gx, gy - 2); ctx.lineTo(gx, gy + 2); ctx.stroke(); }
+  }
+  if (kind === 'cold') {
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillRect(0, -1.6, L, 1.3);
+    ctx.strokeStyle = 'rgba(110,145,165,.35)'; ctx.lineWidth = .8; ctx.beginPath();
+    for (let k = 0, n = Math.ceil(L / 70); k < n; k++) { const cx = grain(k + 50) * L; ctx.moveTo(cx, 1); ctx.lineTo(cx + 8, 4); ctx.lineTo(cx + 5, thick - 1); }
+    ctx.stroke();
+  }
+  if (kind === 'wet') {
+    for (let k = 0, n = Math.ceil(L / 46); k < n; k++) {
+      const px = 14 + grain(k + 60) * (L - 28), pw = 8 + grain(k + 70) * 12;
+      ctx.fillStyle = 'rgba(96,160,190,.75)'; ctx.beginPath(); ctx.ellipse(px, 1.2, pw, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillRect(px - pw * .5, .2, pw * .7, .9);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(0, -1.8, L, 1);
+  }
+  ctx.fillStyle = 'rgba(30,50,65,.35)'; ctx.fillRect(0, thick - 2, L, 2);
+  ctx.restore();
+}
+// A ski side on, nose to the right and centred on the origin, `len` long: a cream top sheet with a dark stripe, a steel edge, a
+// base in the wax's colour, a tip that curves up and a small upturn at the tail.
+function skiShape(ctx, len, baseColour) {
+  const h = len / 2, shape = () => {
+    ctx.beginPath(); ctx.moveTo(-h + 1, 3); ctx.lineTo(h - 12, 3); ctx.quadraticCurveTo(h + 6, 3, h + 14, -9);
+    ctx.quadraticCurveTo(h + 4, -5, h - 14, -4.5); ctx.lineTo(-h + 4, -4.5); ctx.quadraticCurveTo(-h - 3, -4.5, -h - 3, -1.5); ctx.closePath();
+  };
+  const top = ctx.createLinearGradient(0, -4.5, 0, 3); top.addColorStop(0, '#fbf6e6'); top.addColorStop(.6, '#d4ccb6'); top.addColorStop(1, '#8d8777');
+  ctx.fillStyle = top; shape(); ctx.fill();
+  ctx.save(); shape(); ctx.clip();
+  ctx.fillStyle = 'rgba(30,36,40,.75)'; ctx.fillRect(-h + 8, -3, len - 30, 1.3);
+  ctx.fillStyle = baseColour; ctx.fillRect(-h - 4, 1.2, len + 8, 3);
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-h - 4, 1.2, len + 8, .7);
+  ctx.fillStyle = '#b5bfc5'; ctx.fillRect(-h - 4, .3, len + 8, .9);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = .9; shape(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = .9; ctx.beginPath(); ctx.moveTo(-h + 3, -4.2); ctx.lineTo(h - 14, -4.2); ctx.quadraticCurveTo(h + 2, -4.6, h + 11, -8); ctx.stroke();
+}
+// The ski's binding: a dark plate with a toe piece and a heel piece.
+function binding(ctx, scale = 1) {
+  ctx.save(); ctx.scale(scale, scale); ctx.translate(0, 4);
+  ctx.fillStyle = '#1d2427'; ctx.beginPath(); ctx.roundRect(-9, -11, 18, 4, 1.5); ctx.fill();
+  ctx.fillStyle = '#2b3236'; ctx.beginPath(); ctx.roundRect(-9, -16, 6, 6, 1.5); ctx.fill(); ctx.beginPath(); ctx.roundRect(3, -14, 6, 4, 1.5); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(-8, -16, 4, .9); ctx.fillRect(4, -14, 4, .9);
+  ctx.restore();
 }
 function strip(ctx, view, i) {
   const s = view.strips[i], g = stripGeometry(view, i), n = Math.max(1, s.lanes.length);
-  // The tray: wood under a snow surface, one lane a ski.
+  // The tray: timber under a snow surface, one lane a ski.
   for (let j = 0; j < n; j++) {
-    const [x0, y0] = surface(g, j, 0), [x1, y1] = surface(g, j, g.w);
-    ctx.fillStyle = '#5a4430'; ctx.beginPath(); ctx.moveTo(x0, y0 + 4); ctx.lineTo(x1, y1 + 4); ctx.lineTo(x1, y1 + 20 * g.scale); ctx.lineTo(x0, y0 + 20 * g.scale); ctx.closePath(); ctx.fill();
-    const snow = s.snow === 'wet' ? '#cfdde0' : s.snow === 'cold' ? '#e6eef1' : '#f6fbfd';
-    ctx.fillStyle = snow; ctx.beginPath(); ctx.moveTo(x0, y0 - 2); ctx.lineTo(x1, y1 - 2); ctx.lineTo(x1, y1 + 6); ctx.lineTo(x0, y0 + 6); ctx.closePath(); ctx.fill();
-    if (s.snow === 'wet') { ctx.fillStyle = 'rgba(80,140,170,.45)'; for (let k = 0; k < 14; k++) { const [px, py] = surface(g, j, 30 + k * g.w / 15); ctx.beginPath(); ctx.ellipse(px, py + 1, 6, 2, SLOPE, 0, Math.PI * 2); ctx.fill(); } }
+    const [x0, y0] = surface(g, j, 0), [x1, y1] = surface(g, j, g.w), length = Math.hypot(x1 - x0, y1 - y0);
+    ctx.save(); ctx.translate(x0, y0); ctx.rotate(Math.atan(SLOPE));
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(0, 20 * g.scale, length, 4);
+    timber(ctx, 0, 4, length, 16 * g.scale);
+    snowBand(ctx, s.snow, length, 12);
+    ctx.restore();
   }
-  // Start and finish lines, and the metres.
+  // Start and finish lines, with a small flag on a pole at the top of each, and the metres.
   for (const [m, label] of [[0, 'start'], [STRIP_M, `${STRIP_M} m`]]) {
-    const [x, y] = surface(g, 0, 30 * g.scale + along(g, m));
+    const [x, y] = surface(g, 0, 30 * g.scale + along(g, m)), top = y - 42 * g.scale;
     ctx.strokeStyle = m ? theme.accent : 'rgba(245,240,220,.6)'; ctx.lineWidth = 2; ctx.setLineDash(m ? [] : [5, 4]);
-    ctx.beginPath(); ctx.moveTo(x, y - 42 * g.scale); ctx.lineTo(x, y + (n - 1) * g.lane + 22); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, y + (n - 1) * g.lane + 22); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#d8dee1'; ctx.fillRect(x - 1, top - 2, 2, 14 * g.scale + 4);
+    if (m) { for (let c = 0; c < 6; c++) { ctx.fillStyle = ((c % 3) + (c > 2 ? 1 : 0)) % 2 ? '#15191b' : '#f5f0dc'; ctx.fillRect(x + 1 + (c % 3) * 5 * g.scale, top + (c > 2 ? 5 : 0) * g.scale, 5 * g.scale, 5 * g.scale); } }
+    else { ctx.fillStyle = '#56d683'; ctx.beginPath(); ctx.moveTo(x + 1, top); ctx.lineTo(x + 16 * g.scale, top + 5 * g.scale); ctx.lineTo(x + 1, top + 10 * g.scale); ctx.closePath(); ctx.fill(); }
     text(ctx, label, x, m ? y - 52 * g.scale : y + (n - 1) * g.lane + 34, {size: 13 * g.scale + 2, colour: m ? theme.accent : LABEL});
   }
   // The snow: its name and temperature, with a small thermometer.
@@ -100,6 +160,8 @@ function strip(ctx, view, i) {
   if (view.glide) secondMarks(ctx, view, g);
   for (const [j, l] of s.lanes.entries()) ski(ctx, view, i, j, l, g);
 }
+
+
 // Where the ski was at the end of each second: the marks grow further apart because the ski moves faster.
 function secondMarks(ctx, view, g) {
   for (const {second, metres} of view.glide.marks) {
@@ -119,12 +181,17 @@ function speedBox(ctx, view) {
   text(ctx, 'The yellow marks show where the ski was at the end of each second.', 130, 582, {size: 15, align: 'left', colour: theme.text});
 }
 function ski(ctx, view, i, j, l, g) {
-  const [x, y] = skiAt(view, i, j), len = 78 * g.scale, a = Math.atan(SLOPE);
+  const [x, y] = skiAt(view, i, j), len = 78 * g.scale, a = Math.atan(SLOPE), snow = view.strips[i].snow;
   ctx.save(); ctx.translate(x, y - 4); ctx.rotate(a);
-  ctx.fillStyle = l.wax ? WAX_COLOURS[l.wax] : PLAIN; ctx.beginPath(); ctx.roundRect(-len / 2, -2, len, 5, 2); ctx.fill();
-  ctx.fillStyle = '#e8e2d0'; ctx.beginPath(); ctx.roundRect(-len / 2, -9, len, 7, 3); ctx.fill();
-  ctx.strokeStyle = '#e8e2d0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(len / 2 - 2, -5); ctx.quadraticCurveTo(len / 2 + 10, -6, len / 2 + 12, -16); ctx.stroke();
-  ctx.fillStyle = '#2b3236'; ctx.fillRect(-8, -16, 16, 7);
+  // While the ski runs, loose snow (or spray, on wet snow) is thrown up behind it.
+  if (l.setAt != null && !l.done) for (let k = 0; k < 8; k++) {
+    const t = (view.time * 2.2 + k / 8) % 1, px = -len / 2 - 4 - t * 34 * g.scale, py = 3 - t * (6 + 8 * grain(k + 5)) - grain(k + 9) * 3, r = (snow === 'wet' ? 1.6 : 2.6 + grain(k + 13) * 2.4) * g.scale * (1 + t * .6);
+    ctx.fillStyle = snow === 'wet' ? `rgba(150,200,225,${(.7 * (1 - t)).toFixed(2)})` : `rgba(255,255,255,${(.75 * (1 - t)).toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+  }
+  shadow(ctx, 0, 7, len * .55, .4);
+  skiShape(ctx, len, l.wax ? WAX_COLOURS[l.wax] : PLAIN);
+  binding(ctx, g.scale);
   ctx.restore();
   // A finished ski's name moves clear of the finish line: beyond its stopwatch where the lanes are close together, otherwise before the line.
   const named = !l.done ? {x, y: y - 26 * g.scale, align: 'center'} : g.scale < 1 ? {x: surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale)[0] + 108, y: surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale)[1] - 11, align: 'left'} : {x: x - 12, y: y - 26 * g.scale, align: 'right'};
@@ -143,23 +210,25 @@ function ski(ctx, view, i, j, l, g) {
   if (l.seconds != null) {
     const [fx, fy] = surface(g, j, 30 * g.scale + along(g, STRIP_M) + 60 * g.scale);
     ctx.fillStyle = 'rgba(10,14,15,.8)'; ctx.beginPath(); ctx.roundRect(fx - 4, fy - 24, (l.winner ? 118 : 82) * g.scale + 10, 26, 5); ctx.fill();
+    ctx.strokeStyle = '#8b959b'; ctx.lineWidth = 1.2; ctx.stroke();
     text(ctx, `${s1(l.seconds)}${l.winner ? '  first' : ''}`, fx + 2, fy - 11, {size: 17 * g.scale + 2, align: 'left', colour: !l.done ? theme.text : l.winner ? '#9ff0b4' : l.behindM != null ? theme.bad : '#9ff0b4'});
   }
 }
 function thermometer(ctx, x, y, h, celsius, big) {
   const k = Math.max(0, Math.min(1, (celsius + 15) / 15)), w = big ? 22 : 9;
-  ctx.fillStyle = '#e9e4d6'; ctx.beginPath(); ctx.roundRect(x - w / 2, y, w, h, w / 2); ctx.fill();
-  // One colour at every temperature, because the tins' colours here would answer an open pick.
-  ctx.fillStyle = THERMOMETER_FILL;
-  ctx.beginPath(); ctx.roundRect(x - w / 2 + 2, y + 2 + (h - 4) * (1 - k), w - 4, (h - 4) * k + 1, w / 2 - 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x, y + h + w * .4, w * .8, 0, Math.PI * 2); ctx.fill();
+  // Glass round a column of one colour at every temperature, because a colour that changed would answer an open pick.
+  const level = y + 2 + (h - 4) * (1 - k), bulbY = y + h + w * .4;
+  glassTube(ctx, x, y, y + h, {width: w, bulbR: w * .8, bulbY, levelY: bulbY, spirit: THERMOMETER_FILL});
+  ctx.fillStyle = THERMOMETER_FILL; ctx.beginPath(); ctx.roundRect(x - w * .2, level, w * .4, bulbY - level, w * .2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(x - w * .12, level, Math.max(.8, w * .08), bulbY - level);
   if (big) for (const c of [0, -5, -10, -15]) { const ty = y + 2 + (h - 4) * (1 - (c + 15) / 15); ctx.strokeStyle = theme.text; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + w / 2, ty); ctx.lineTo(x + w / 2 + 10, ty); ctx.stroke(); text(ctx, `${c} °C`, x + w / 2 + 16, ty, {size: 15, align: 'left'}); }
 }
 // Snow crystals: sharp six-armed stars when cold, rounding into wet grains near 0 °C.
 function crystals(ctx, cx, cy, r, celsius, time) {
   const warm = Math.max(0, Math.min(1, (celsius + 15) / 15));
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = warm > .9 ? '#c9dbe2' : '#e8f1f5'; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+  const lens = ctx.createRadialGradient(cx - r * .25, cy - r * .3, r * .1, cx, cy, r); lens.addColorStop(0, warm > .9 ? '#d6e5ea' : '#f4fafc'); lens.addColorStop(1, warm > .9 ? '#a9c2cd' : '#c3d8e2');
+  ctx.fillStyle = lens; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
   for (let i = 0; i < 9; i++) {
     const x = cx + ((i * 97) % 220) - 110 + Math.sin(i * 1.7) * 12, y = cy + ((i * 61) % 200) - 100, size = 26 + (i % 3) * 6;
     ctx.save(); ctx.translate(x, y); ctx.rotate(i * .5 + time * .05);
@@ -176,32 +245,46 @@ function crystals(ctx, cx, cy, r, celsius, time) {
     if (warm > .7) { ctx.fillStyle = 'rgba(70,130,170,.55)'; ctx.beginPath(); ctx.arc(size * .4, size * .3, 4 + warm * 4, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();
   }
+  const edge = ctx.createRadialGradient(cx, cy, r * .62, cx, cy, r); edge.addColorStop(0, 'rgba(20,40,55,0)'); edge.addColorStop(1, 'rgba(20,40,55,.4)');
+  ctx.fillStyle = edge; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
   ctx.restore();
-  ctx.strokeStyle = theme.brass[1]; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = theme.brass[2]; ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(cx + r * .72, cy + r * .72); ctx.lineTo(cx + r * 1.05, cy + r * 1.05); ctx.stroke();
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#2a1c0e'; ctx.lineWidth = 19; ctx.beginPath(); ctx.moveTo(cx + r * .72, cy + r * .72); ctx.lineTo(cx + r * 1.12, cy + r * 1.12); ctx.stroke();
+  ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = 15; ctx.beginPath(); ctx.moveTo(cx + r * .72, cy + r * .72); ctx.lineTo(cx + r * 1.12, cy + r * 1.12); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,230,190,.3)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx + r * .72 - 4, cy + r * .72 - 3); ctx.lineTo(cx + r * 1.12 - 4, cy + r * 1.12 - 3); ctx.stroke(); ctx.lineCap = 'butt';
+  const rim = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r); rim.addColorStop(0, theme.brass[0]); rim.addColorStop(.5, theme.brass[1]); rim.addColorStop(1, theme.brass[2]);
+  ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = rim; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,244,210,.55)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, r - 3.5, 0, Math.PI * 2); ctx.stroke();
+  glassGlare(ctx, cx, cy, r * .9);
   text(ctx, warm > .9 ? 'Rounded and wet' : warm < .2 ? 'Sharp and hard' : 'Softening', cx, cy - r - 22, {size: 18, colour: theme.text});
 }
 function tin(ctx, x, y, wax, picked, keyName, glow, time) {
-  const w = 104, h = 70, lift = picked ? 10 : 0;
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y + h / 2 + 6, w / 2, 8, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = WAX_COLOURS[wax]; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2 - lift, w, h, 8); ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x - w / 2 + 6, y - h / 2 - lift + 4, w - 12, 10);
-  ctx.fillStyle = '#f5f0dc'; ctx.beginPath(); ctx.roundRect(x - 40, y - 12 - lift, 80, 26, 4); ctx.fill();
+  const w = 104, h = 70, lift = picked ? 10 : 0, colour = WAX_COLOURS[wax], top = y - h / 2 - lift;
+  shadow(ctx, x, y + h / 2 + 6, w * .62, .6);
+  // A tin of wax: a body in the wax's colour lit from the left, steel rims, and a paper label.
+  const body = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); body.addColorStop(0, shade(colour, -.4)); body.addColorStop(.2, shade(colour, .35)); body.addColorStop(.5, colour); body.addColorStop(1, shade(colour, -.55));
+  ctx.fillStyle = body; ctx.beginPath(); ctx.roundRect(x - w / 2, top, w, h, 8); ctx.fill();
+  steel(ctx, x - w / 2 - 2, top, w + 4, 9, 3); steel(ctx, x - w / 2 - 2, top + h - 9, w + 4, 9, 3);
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(x - w / 2 + 10, top + 14, 3, h - 28);
+  const paper = ctx.createLinearGradient(0, y - 12 - lift, 0, y + 14 - lift); paper.addColorStop(0, '#fbf6e6'); paper.addColorStop(1, '#ddd5bc');
+  ctx.fillStyle = paper; ctx.beginPath(); ctx.roundRect(x - 40, y - 12 - lift, 80, 26, 4); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = '#1d2224'; ctx.font = '800 16px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(WAX_NAMES[wax].toUpperCase(), x, y + 1 - lift);
   if (keyName) keyCap(ctx, x - w / 2 + 2, y - h / 2 - lift - 2, keyName);
   if (picked) { ctx.strokeStyle = theme.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x - w / 2 - 6, y - h / 2 - lift - 6, w + 12, h + 12, 10); ctx.stroke(); }
   if (glow && !picked) { ctx.strokeStyle = theme.accent; ctx.globalAlpha = .35 + .3 * Math.sin(time * 6); ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x - w / 2 - 4, y - h / 2 - 4, w + 8, h + 8, 9); ctx.stroke(); ctx.globalAlpha = 1; }
 }
 function bench(ctx, view) {
-  ctx.fillStyle = theme.plate; ctx.fillRect(170, 640, 680, 16);
-  ctx.fillStyle = theme.beamDark; ctx.fillRect(170, 652, 680, 6);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(176, 658, 668, 6);
+  timber(ctx, 170, 640, 680, 18);
   for (const t of TINS) tin(ctx, t.x, t.y, t.wax, view.pick === t.wax, view.keys['1'] ? String(1 + WAXES.indexOf(t.wax)) : null, view.glow === 'tins', view.time);
 }
+
+
+
 // The ski menu's line, as the game shows it, on a card.
 function menu(ctx, m) {
   const x = 560, y = 30, w = 420, h = m.example ? 70 : 96;
-  ctx.fillStyle = 'rgba(14,20,24,.92)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+  panel(ctx, x, y, w, h);
   text(ctx, m.example ? 'THE SKI MENU' : `THE SKI MENU · DAY ${m.day} OF ${m.of}${m.done ? ' · DONE' : ''}`, x + 18, y + 20, {size: 13, align: 'left', colour: LABEL, weight: 800});
   text(ctx, m.line, x + 18, y + 50, {size: 21, align: 'left', colour: theme.text});
   if (!m.example) text(ctx, 'Hard wax · Medium wax · Soft wax', x + 18, y + 78, {size: 14, align: 'left', colour: LABEL});
@@ -222,14 +305,13 @@ function forces(ctx, view) {
   const f = view.forces, x0 = 90, y0 = 112, length = 660, ux = Math.cos(Math.atan(SLOPE)), uy = Math.sin(Math.atan(SLOPE));
   const what = f.wax ? `${WAX_NAMES[f.wax]} wax` : 'No wax';
   text(ctx, `${what} on ${SNOWS[f.snow].name.toLowerCase()}, friction number ${f.friction}`, 60, 46, {size: 24, align: 'left', colour: theme.accent, weight: 800});
-  ctx.fillStyle = '#5a4430'; ctx.beginPath(); ctx.moveTo(x0, y0 + 6); ctx.lineTo(x0 + length, y0 + length * SLOPE + 6); ctx.lineTo(x0 + length, y0 + length * SLOPE + 32); ctx.lineTo(x0, y0 + 32); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#f6fbfd'; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + length, y0 + length * SLOPE); ctx.lineTo(x0 + length, y0 + length * SLOPE + 8); ctx.lineTo(x0, y0 + 8); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.translate(x0, y0); ctx.rotate(Math.atan(SLOPE));
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(0, 32, length / ux, 4); timber(ctx, 0, 6, length / ux, 26); snowBand(ctx, f.snow, length / ux, 12);
+  ctx.restore();
   // The ski in the middle of the slope.
   const sx = x0 + 280, sy = y0 + 280 * SLOPE;
   ctx.save(); ctx.translate(sx, sy - 4); ctx.rotate(Math.atan(SLOPE));
-  ctx.fillStyle = f.wax ? WAX_COLOURS[f.wax] : PLAIN; ctx.beginPath(); ctx.roundRect(-70, -2, 140, 6, 2); ctx.fill();
-  ctx.fillStyle = '#e8e2d0'; ctx.beginPath(); ctx.roundRect(-70, -11, 140, 9, 3); ctx.fill();
-  ctx.fillStyle = '#2b3236'; ctx.fillRect(-12, -20, 24, 9);
+  shadow(ctx, 0, 7, 76, .4); skiShape(ctx, 140, f.wax ? WAX_COLOURS[f.wax] : PLAIN); binding(ctx, 1.6);
   ctx.restore();
   // Gravity's pull down the slope, friction's slowing up the slope, to one scale.
   const ay = sy - 36, pull = f.pull * ARROW_SCALE, slow = f.slowing * ARROW_SCALE;
@@ -268,9 +350,11 @@ function closeUp(ctx, view) {
   text(ctx, small ? 'CLOSE-UP' : 'A CLOSE-UP OF THE BASE ON THE SNOW', x + 16, y + 18, {size: 13, align: 'left', colour: LABEL, weight: 800});
   const areaTop = y + 34, areaH = h * (small ? .62 : .74) - 34, skiH = areaH * .2, waxH = areaH * .16, under = areaTop + skiH + waxH, ground = areaTop + areaH;
   ctx.save(); ctx.beginPath(); ctx.rect(x + 2, areaTop, w - 4, areaH); ctx.clip();
-  ctx.fillStyle = '#33434d'; ctx.fillRect(x, areaTop, w, areaH);
+  const back = ctx.createLinearGradient(0, areaTop, 0, areaTop + areaH); back.addColorStop(0, '#2c3b45'); back.addColorStop(1, '#3d5160');
+  ctx.fillStyle = back; ctx.fillRect(x, areaTop, w, areaH);
   // The snow under the ski, sliding backwards past the base because the ski moves forward.
-  ctx.fillStyle = snow === 'wet' ? '#b9ced5' : snow === 'cold' ? '#d6e3e8' : '#e8f1f5'; ctx.fillRect(x, under + areaH * .17, w, ground - under);
+  const bed = ctx.createLinearGradient(0, under + areaH * .17, 0, ground); const bedTop = snow === 'wet' ? '#b9ced5' : snow === 'cold' ? '#d6e3e8' : '#e8f1f5'; bed.addColorStop(0, bedTop); bed.addColorStop(1, shade(bedTop, -.28));
+  ctx.fillStyle = bed; ctx.fillRect(x, under + areaH * .17, w, ground - under);
   const spacing = small ? 46 : 74, tall = areaH * .24, press = PRESS[snow][wax] * waxH * .85, sharp = SHARP[snow], shift = (view.time * 28) % spacing;
   for (let px = x - shift; px < x + w + spacing; px += spacing) {
     const half = spacing * .36, tip = under - press, foot = under + tall;
@@ -292,12 +376,14 @@ function closeUp(ctx, view) {
     }
   }
   // The wax over the points that press into it, and the ski over the wax.
-  ctx.fillStyle = WAX_COLOURS[wax]; ctx.fillRect(x, under - waxH, w, waxH);
+  const layer = ctx.createLinearGradient(0, under - waxH, 0, under); layer.addColorStop(0, shade(WAX_COLOURS[wax], .3)); layer.addColorStop(.4, WAX_COLOURS[wax]); layer.addColorStop(1, shade(WAX_COLOURS[wax], -.35));
+  ctx.fillStyle = layer; ctx.fillRect(x, under - waxH, w, waxH); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x, under - 1.5, w, 1.2);
   if (press > 0) {
     ctx.fillStyle = '#f7fbfd'; ctx.strokeStyle = '#6d9bb3'; ctx.lineWidth = 2;
     for (let px = x - shift; px < x + w + spacing; px += spacing) { const half = spacing * .36 * press / (tall + press) * (sharp === 1 ? 1 : .8); ctx.beginPath(); ctx.moveTo(px, under - press); ctx.lineTo(px + half, under); ctx.lineTo(px - half, under); ctx.closePath(); ctx.fill(); ctx.stroke(); }
   }
-  ctx.fillStyle = '#e8e2d0'; ctx.fillRect(x, areaTop, w, skiH);
+  const body = ctx.createLinearGradient(0, areaTop, 0, areaTop + skiH); body.addColorStop(0, '#fbf6e6'); body.addColorStop(1, '#cfc7b0');
+  ctx.fillStyle = body; ctx.fillRect(x, areaTop, w, skiH); ctx.fillStyle = '#9aa5ab'; ctx.fillRect(x, areaTop + skiH - 2, w, 2);
   ctx.restore();
   const labelSize = small ? 13 : 17;
   text(ctx, 'ski', x + 16, areaTop + skiH / 2, {size: labelSize, align: 'left', colour: '#1d2224', weight: 800});
@@ -317,8 +403,9 @@ function closeUp(ctx, view) {
 function snowTabs(ctx, view) {
   for (const t of TABS) {
     const on = view.snowTabs.current === t.snow;
-    ctx.fillStyle = on ? theme.accent : 'rgba(14,20,24,.9)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(t.x, t.y, t.w, t.h, 6); ctx.fill(); ctx.stroke();
+    const face = ctx.createLinearGradient(0, t.y, 0, t.y + t.h); face.addColorStop(0, on ? '#ffe08a' : '#3a444a'); face.addColorStop(1, on ? '#c9a03c' : '#161c1f');
+    ctx.fillStyle = face; ctx.beginPath(); ctx.roundRect(t.x, t.y, t.w, t.h, 6); ctx.fill();
+    ctx.strokeStyle = on ? '#fff2c2' : '#8b959b'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(t.x + 5, t.y + 1.5, t.w - 10, 1);
     text(ctx, SNOWS[t.snow].name, t.x + t.w / 2, t.y + t.h / 2, {size: 15, colour: on ? '#1d2224' : theme.text, weight: 800});
   }
 }
@@ -363,8 +450,7 @@ function drawRecap(ctx, view) {
   const w = 300, gap = 25, x0 = (BOARD.width - 3 * w - 2 * gap) / 2;
   view.ideas.forEach((idea, i) => {
     const x = x0 + i * (w + gap);
-    ctx.fillStyle = 'rgba(10,14,15,.55)'; ctx.strokeStyle = theme.beamLight; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(x, 40, w, 600, 8); ctx.fill(); ctx.stroke();
+    panel(ctx, x, 40, w, 600);
     text(ctx, String(i + 1), x + 26, 70, {size: 26, colour: theme.accent});
     if (idea.id === 'rule') ['hard', 'medium', 'soft'].forEach((wax, k) => { thermometer(ctx, x + 50 + k * 90, 120, 150, [-15, -5, 0][k], false); ctx.save(); ctx.translate(x + 60 + k * 90, 360); ctx.scale(.78, .78); tin(ctx, 0, 0, wax, false, null, false, 0); ctx.restore(); });
     if (idea.id === 'glide') {

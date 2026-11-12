@@ -61,6 +61,12 @@ boards remain: Pendulums, Projectile, Altitude, Strength; Fire, Rust, Wax, Launc
 Pendulums, Projectile motion, Altitude and Strength are redrawn (`docs/board/looks/lab-look/round-4.jpg`). Eight
 boards remain: Fire, Rust, Wax, Launch; G-force, Grip, Headings, Suspension.
 
+## Round 5 (a Sonnet helper; judged by Claude, 12 November 2026)
+
+Fire, Rust, Wax and Launch are redrawn (`docs/board/looks/lab-look/round-5.jpg`). Four boards remain: G-force, Grip,
+Headings, Suspension. After those, the lessons whose subjects are small in their boards (Pendulums, Wax, Launch,
+the distance strips) want the stage step: a larger board.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

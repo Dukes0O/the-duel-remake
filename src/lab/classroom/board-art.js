@@ -598,6 +598,84 @@ export function weighingPad(ctx, half) {
   ctx.fillStyle = 'rgba(0,0,0,.35)'; for (let x = -half + 10; x < half; x += 30) { ctx.beginPath(); ctx.arc(x, -3, 1.1, 0, Math.PI * 2); ctx.fill(); }
 }
 
+// ---- LAB-BOARDS-3: shared pieces for the Fire, Rust, Wax and Launch boards ----
+// One flame with its foot at (x, y): an outer body that is orange low down and red at the tip, a brighter middle, a pale
+// core and two small side licks, all flickering with `time`; the glow behind it lights what stands near.
+export function flameTongue(ctx, x, y, w, h, time, seed) {
+  const flick = 1 + .12 * Math.sin(time * 9 + seed * 3.1) + .06 * Math.sin(time * 17 + seed), height = h * flick, lean = Math.sin(time * 3 + seed) * w * .15;
+  const gy = y - height * .38, gr = Math.max(8, height * .75);
+  ctx.save();
+  const glow = ctx.createRadialGradient(x, gy, 1, x, gy, gr); glow.addColorStop(0, 'rgba(255,160,60,.34)'); glow.addColorStop(1, 'rgba(255,110,30,0)');
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, gy, gr, 0, Math.PI * 2); ctx.fill();
+  const tongue = (cx, fw, fh, bend, stops) => {
+    const top = y - fh, g = ctx.createLinearGradient(0, y, 0, top);
+    stops.forEach(([at, colour]) => g.addColorStop(at, colour));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx - fw / 2, y);
+    ctx.bezierCurveTo(cx - fw / 2, y - fh * .45, cx + bend - fw * .2, top + fh * .25, cx + bend, top);
+    ctx.bezierCurveTo(cx + bend + fw * .2, top + fh * .25, cx + fw / 2, y - fh * .45, cx + fw / 2, y); ctx.closePath(); ctx.fill();
+  };
+  const red = [[0, '#f7a62c'], [.45, '#ee5a1c'], [1, 'rgba(190,34,22,.85)']];
+  for (const side of [-1, 1]) tongue(x + side * w * .36, w * .42, height * (.5 + .08 * Math.sin(time * 11 + seed * 5 + side)), lean * .6 + side * w * .05, red);
+  tongue(x, w, height, lean, red);
+  tongue(x + lean * .12, w * .68, height * .72, lean * .8, [[0, '#ffd24a'], [.6, '#ffa028'], [1, 'rgba(255,150,40,.7)']]);
+  tongue(x + lean * .2, w * .32, height * .45, lean * .5, [[0, '#fffbe0'], [1, 'rgba(255,236,150,.5)']]);
+  ctx.restore();
+}
+// A glass thermometer: a tube from `top` to `bottom` with its bulb centred at `bulbY` (the bottom, unless it says
+// otherwise), and red spirit from `levelY` down to the bulb.
+export function glassTube(ctx, x, top, bottom, {width = 10, bulbR = width * .8, bulbY = bottom, levelY = bottom, spirit = '#d8402c'} = {}) {
+  const w = width;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.roundRect(x - w / 2 + 2, top + 2, w, bottom - top, w / 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 2, bulbY + 2, bulbR, 0, Math.PI * 2); ctx.fill();
+  const glass = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); glass.addColorStop(0, 'rgba(240,248,250,.5)'); glass.addColorStop(.35, 'rgba(210,226,232,.22)'); glass.addColorStop(1, 'rgba(120,140,150,.45)');
+  ctx.fillStyle = glass; ctx.beginPath(); ctx.roundRect(x - w / 2, top, w, bottom - top, w / 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x, bulbY, bulbR, 0, Math.PI * 2); ctx.fill();
+  const red = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); red.addColorStop(0, shade(spirit, .35)); red.addColorStop(.5, spirit); red.addColorStop(1, shade(spirit, -.45));
+  ctx.fillStyle = red; ctx.beginPath(); ctx.arc(x, bulbY, bulbR - 1.6, 0, Math.PI * 2); ctx.fill();
+  if (levelY < bulbY) ctx.fillRect(x - w * .2, levelY, w * .4, bulbY - levelY);
+  ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x - w / 2, top, w, bottom - top, w / 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, bulbY, bulbR, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - w * .3, top + w * .6); ctx.lineTo(x - w * .3, bottom - w * .3); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(x - bulbR * .35, bulbY - bulbR * .35, bulbR * .22, bulbR * .13, -.7, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+// A flag planted in the ground with its foot at (x, y): a lit pole on a small footing and a cloth with a fold in it.
+export function groundFlag(ctx, x, y, colour = '#ef7a59', height = 34) {
+  shadow(ctx, x + 3, y + 1, 9, .5);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y, 4.5, 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  const pole = ctx.createLinearGradient(x - 1.4, 0, x + 1.4, 0); pole.addColorStop(0, '#eef2f3'); pole.addColorStop(1, '#6d777d');
+  ctx.fillStyle = pole; ctx.fillRect(x - 1.3, y - height, 2.6, height);
+  const cloth = ctx.createLinearGradient(x, y - height, x + 20, y - height * .6); cloth.addColorStop(0, shade(colour, .35)); cloth.addColorStop(.5, colour); cloth.addColorStop(1, shade(colour, -.4));
+  ctx.fillStyle = cloth; ctx.beginPath(); ctx.moveTo(x + 1.3, y - height); ctx.quadraticCurveTo(x + 12, y - height - 2, x + 21, y - height * .82); ctx.quadraticCurveTo(x + 11, y - height * .76, x + 1.3, y - height * .6); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(x + 1.3, y - height * .8); ctx.quadraticCurveTo(x + 11, y - height * .84, x + 18, y - height * .82); ctx.stroke();
+  ctx.fillStyle = '#eef2f3'; ctx.beginPath(); ctx.arc(x, y - height - 1, 1.8, 0, Math.PI * 2); ctx.fill();
+}
+// A small dark plate behind a label, centred on (x, y), so that the words stay readable over a busy picture.
+export function labelPlate(ctx, x, y, w, h = 20, alpha = .6) {
+  ctx.fillStyle = `rgba(10,14,15,${alpha})`; ctx.beginPath(); ctx.roundRect(x - w / 2, y - h / 2, w, h, 5); ctx.fill();
+}
+// A worn timber board with its top-left at (x, y): a lit top edge, a darker underside, grain, a few knots and nail heads.
+export function timber(ctx, x, y, w, h) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, '#a07a4c'); g.addColorStop(.25, '#80603a'); g.addColorStop(.8, '#5a4128'); g.addColorStop(1, '#2f2113');
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  for (let i = 0, n = Math.ceil(w / 9); i < n; i++) {
+    ctx.fillStyle = noise(i * 3 + x) > .5 ? 'rgba(20,10,2,.22)' : 'rgba(255,230,190,.07)';
+    ctx.fillRect(x + noise(i * 3 + x + 1) * w, y + 2 + noise(i * 3 + x + 2) * (h - 4), 14 + noise(i + x + 9) * 60, 1);
+  }
+  for (let i = 0, n = Math.ceil(w / 160); i < n; i++) {
+    const kx = x + 30 + noise(i * 7 + x + 40) * (w - 60), ky = y + 3 + noise(i * 7 + x + 41) * (h - 6);
+    ctx.fillStyle = 'rgba(30,16,6,.5)'; ctx.beginPath(); ctx.ellipse(kx, ky, 4.5, Math.min(2.6, h / 4), 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(30,16,6,.3)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.ellipse(kx, ky, 8, Math.min(4, h / 3), 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,236,200,.35)'; ctx.fillRect(x, y, w, 1.2);
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x, y + h - 1.5, w, 1.5);
+  if (h > 8) for (const nx of [x + 8, x + w - 8]) bolt(ctx, nx, y + h / 2, 1.5);
+}
+
 export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, weight = 700} = {}) {
   ctx.font = `${weight} ${size}px "Segoe UI", sans-serif`;
   const words = value.split(' '), lines = [];
