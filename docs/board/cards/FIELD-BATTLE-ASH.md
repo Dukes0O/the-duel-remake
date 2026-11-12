@@ -249,6 +249,37 @@ first draft used, with the same 80 m gap) and stoke 8 s, stop 8 s, glow 4 s on M
 not repeated); coming out at 600 m or 800 m it won 10 of 10, so the count is noisy from one run to the next and wants a proper sweep
 before a number is chosen.
 
+### The hunt, redesigned after the builder's finding (Claude, 12 November 2026)
+
+The builder was right to stop, and its finding is worse than a missed win count: against a driver who fights, the
+furnace never comes within range, so the fire drawn last night is never seen in a well-fought battle. Each broken
+door stops the furnace for 8 seconds, Big Bess gains 72 m, and at 2 m/s the furnace needs 36 seconds to close that
+again, by which time the next door has glowed and been broken. The furnace is a target that trails behind, not a
+hunter. Three rule changes, all only for a furnace whose definition says `battle`:
+
+1. **It catches up.** More than 40 m behind Big Bess the furnace drives at a catching-up pace (15 m/s on Medium and
+   Hard, 12 on Easy). Within 40 m it drives today's pace. It still never comes nearer than 12 m.
+2. **The fire and the door are one act.** A door begins to stoke only while the furnace is within its cinder range
+   of Big Bess. Out of range the stoke waits. A door that already glows keeps its time. So before every door the
+   player sees fire land on the tank, and the way to stop the fire is to break the door.
+3. **Cinders are gentler,** because they now land in every battle: Medium 4 health a second, Hard 6, Easy 2.
+
+Targets, 10 tries each on the same seeds, in this order of importance:
+
+1. Medium, fights: cinders land on Big Bess for 10 to 30 seconds in all, in at least 8 tries of 10.
+2. Big Bess home 10 times in 10 for every Easy and Medium driver, and the driver who never fights wins none.
+3. Medium, fights: her lowest health in a won battle is 25 or more in at least 7 of the won battles.
+4. Medium, fights: 6 to 9 battles won. Easy child-pace: 8 or more won. Hard, fights: 3 to 7 won.
+
+Numbers the builder may move to meet them, each only for the battle: the catching-up pace (13 to 16 m/s), the stoke
+(4 to 8 seconds), the stop after a broken door (5 to 8 seconds), the glow on Medium and Hard (4 seconds or more),
+cinders (Medium 3 to 6, Hard 6 to 9), and where the furnace comes out (430 to 700 m into the road; decide that one
+from 30 tries, not 10). If targets 1 to 3 are met and target 4 is not, the builder builds the nearest result and
+says so; it stops only if 1, 2 or 3 cannot be met.
+
+Not to move: riders and their damage, Big Bess's pace and health, one hit breaking a glowing door, Easy's one door,
+pay, the save, the lines, and job 6 of the story (`tools/test-old-smoke.mjs` passes untouched).
+
 ## Not in this card
 
 A second group's feud, the Scrapdome challenge, lasting damage to Tin Town, sending someone else on a run.
