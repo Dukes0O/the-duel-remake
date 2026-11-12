@@ -326,6 +326,8 @@ function spawnAmbush(duel, worldJob, request) {
   worldJob.waveZones ??= {};
   worldJob.waveZones[key] = zone;
   worldJob.spawnedWaveKeys.push(key);
+  // The roadside camps' own warning (the existing cue), once for each ambush that appears.
+  duel.emit({raiderWarning: true, zone: key});
 }
 
 // The raiders of an ambush give up (the escort has passed) or are put back in place (the stretch starts again).

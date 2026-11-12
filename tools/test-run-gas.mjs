@@ -124,8 +124,10 @@ function runUntil(duel, condition, seconds = 90) {
   same([job4.steps[0].speed, job4.steps[0].health, job4.steps[0].actor.health], [9, 100, 100], 'job 4 keeps Big Bess at 9 m a second and 100 health');
 
   for (const [difficulty, rate, count] of [['easy', 1.5, 1], ['medium', 5, 2], ['hard', 7, 2]]) {
-    const duel = startJob(job4, difficulty);
+    const duel = startJob(job4, difficulty), warnings = [];
+    duel.onChange((_state, event) => { if (event.raiderWarning) warnings.push(event.zone); });
     check(runUntil(duel, () => raidersOf(duel).length > 0 && duel.state.status === 'racing'), `${difficulty}: the first raid appears`);
+    same(warnings, ['ambush:ash-men-raid-1'], `${difficulty}: with the existing raider warning, once`);
     const raiders = raidersOf(duel), place = ambushes[0].place.position;
     same(raiders.length, count, `${difficulty}: ${count} raider${count === 1 ? '' : 's'} appear`);
     check(raiders.every(raider => Math.hypot(raider.x - place.x, raider.z - place.z) <= 12), `${difficulty}: they stand within 12 m of the place`);
