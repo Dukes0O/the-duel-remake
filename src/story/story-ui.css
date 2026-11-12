@@ -24,6 +24,9 @@
 /* The duel's button uses the menu's big orange start button, which fills the width; here it is a button beside the words. */
 .story-step .story-step-button.start-button{width:auto;margin:0;padding:13px 20px;flex:0 0 auto;min-width:160px}
 .story-step-button[disabled]{opacity:.5;cursor:not-allowed}
+/* RUN-GAS: the gas run's two road buttons, one above the other, each with its pay under its name. */
+.ember-run-buttons{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.ember-run-buttons .story-step-button small{display:block;margin-top:2px;font-size:11px;letter-spacing:.8px;opacity:.85}
 .story-lead,.deep-log-lead{margin:12px 0 0;font-size:12px;letter-spacing:.6px;line-height:1.5;color:#8f9a92}
 .story-prize{margin:14px 0 0;font-size:12.5px;letter-spacing:.5px;line-height:1.5;color:#e4bd82}
 .story-garage p{font-size:12.5px;line-height:1.6;color:#c9d2c8}

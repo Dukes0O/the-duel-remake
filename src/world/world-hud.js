@@ -100,6 +100,8 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     prompt: townGatePrompt || (step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
+    // RUN-GAS: the escorted truck's health, while a step has raids on her road.
+    truck: step?.kind==='escort'&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -187,6 +189,7 @@ export function createWorldHud({host}) {
       prompt.textContent = model.prompt;
       const bars=model.wave?[{label:`WAVE ${Math.min(model.wave.value+1,model.wave.max)} / ${model.wave.max}`,value:Math.min(model.wave.value+1,model.wave.max),max:model.wave.max}]:[];
       if(model.well)bars.push({label:`WELL ${Math.ceil(model.well.value)} / ${model.well.max}`,value:model.well.value,max:model.well.max});
+      if(model.truck)bars.push({label:`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`,value:model.truck.value,max:model.truck.max});
       progress.hidden=!bars.length;
       progress.replaceChildren(...bars.flatMap(bar=>{const label=doc.createElement('span'),meter=doc.createElement('progress');label.textContent=bar.label;meter.max=bar.max;meter.value=bar.value;meter.setAttribute('aria-label',bar.label);return[label,meter];}));
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;

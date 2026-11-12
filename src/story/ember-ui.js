@@ -28,11 +28,20 @@ function row(step, index) {
     + `<div class="story-step-words"><b>${index + 1} · ${escape(EMBER_JOB_NAMES[index])}</b><small class="story-state">${state}</small><p>${escape(step.note)}</p></div>${button}</li>`;
 }
 
+// RUN-GAS: the gas run's entry under the six jobs. Drawn like them, but open for good: it never shows a tick.
+function gasRunRow(run) {
+  const buttons = run.roads.map(road => `<button type="button" class="start-button story-step-button" data-ember-run="${escape(road.id)}"><span>${escape(road.name)}</span>`
+    + (Number.isFinite(road.pay) ? `<small>${escape(road.pay)} scrap</small>` : '') + '</button>').join('');
+  return `<li class="story-step is-open is-run" data-ember-job="gas-run"><i class="story-tick" aria-hidden="true"></i>`
+    + `<div class="story-step-words"><b>GAS RUN</b><small class="story-state">OPEN</small><p data-ember-feud="${escape(run.word)}">${escape(run.sentence)}</p></div>`
+    + `<div class="ember-run-buttons">${buttons}</div></li>`;
+}
+
 export function emberWallMarkup(props) {
   if (!props?.available) return '';
   return `<section class="ember-wall" aria-label="The Everburn"><h3>THE EVERBURN</h3>`
     + `<article class="story-letter" aria-label="A note from Hollis"><span class="story-seal" aria-hidden="true"></span><p>${escape(EMBER_NOTE.text)}</p></article>`
-    + `<ol class="story-steps" aria-label="The jobs">${props.steps.map((step,index)=>row({...step,action:props.step==='read'&&index===0?'read':step.id},index)).join('')}</ol>`
+    + `<ol class="story-steps" aria-label="The jobs">${props.steps.map((step,index)=>row({...step,action:props.step==='read'&&index===0?'read':step.id},index)).join('')}${props.run ? gasRunRow(props.run) : ''}</ol>`
     + (props.sideJobs.length ? `<section class="ember-notice-board" aria-label="Tin Town notice board"><h4>TIN TOWN NOTICE BOARD</h4><ul>${props.sideJobs.map(job =>
       `<li><b>${escape(job.name)}</b> · ${escape(job.kind)}<p>${escape(job.note)}</p><button type="button" class="secondary-button" data-ember-side-job="${escape(job.id)}"><span>Take job</span></button></li>`).join('')}</ul></section>` : '')
     + '</section>';

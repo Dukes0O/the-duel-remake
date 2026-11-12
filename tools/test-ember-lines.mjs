@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {EMBER_CAPTIONS, EMBER_LINE_IDS, EMBER_NOTE, EMBER_NOTE_ID} from '../src/story/ember-lines.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {GAS_RUN_PATHS, gasRunJob} from '../src/world/jobs/gas-run.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
 
@@ -46,6 +47,13 @@ const EXPECTED = [
   ['Job 6 won', 'Cinder', 'Well, look at that. A hundred years old and still showing off.'],
   ['Job 6 won', 'Cinder', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'],
   ['Job 6 won', 'Hollis', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'],
+  // RUN-GAS: the six lines of the gas run, word for word from docs/board/cards/RUN-GAS.md.
+  ['A long road run starts', 'Moss', 'The long way round, then. Bess likes a quiet road.'],
+  ['A Boneyard road run starts', 'Moss', 'Through the Boneyard. Keep your eyes on the planes; that is where they wait.'],
+  ['The first raid of a run appears', 'Moss', 'Here they come. Keep them off the tank.'],
+  ['A run arrives with Bess at 70 health or more', 'Moss', 'Every drop delivered. Bess thanks you, in her way.'],
+  ['A run arrives with Bess under 70 health', 'Moss', 'We are here, and most of the gas is too. That will do.'],
+  ['The feud reaches War party', 'Auntie Solder', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'],
 ];
 
 assert.equal(Object.keys(EMBER_CAPTIONS).length, EXPECTED.length, 'every table caption is included');
@@ -117,6 +125,76 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   assert.equal(there.heard.filter(id => id === 'story.ember.moss.4').length, 1, 'job 4: Moss says it at 31%');
   const later = lineIdsHeard(there.job, () => bess(.6), 12);
   assert.ok(!later.heard.includes('story.ember.moss.4'), 'job 4: and does not say it twice');
+}
+
+{
+  // Job 4 shows no raw ids: its start, rest, sighting and ending lines are all real captions, and it ends on Auntie Solder's
+  // existing result line, which it holds for (the way job 3 holds for Cinder's).
+  const step = EVERBURN_JOBS[3].steps[0];
+  const named = [step.startLineId, step.restLineId, ...step.sayAtShare.map(item => item.lineId), ...step.closing, EVERBURN_JOBS[3].lineId, EVERBURN_JOBS[3].resultLineId];
+  assert.ok(named.every(id => EMBER_CAPTIONS[id]), `every line job 4 names has words: ${named.filter(id => !EMBER_CAPTIONS[id])}`);
+  assert.ok(!Object.hasOwn(step, 'wonLineId'), 'job 4 has no won line of an id without words');
+  const bess = (atDestination, share = .5) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'big-bess', position: {x: 600, y: 0, z: 0}, health: 100, pathProgress: 1, atDestination, share}]});
+  const began = lineIdsHeard(createJob(EVERBURN_JOBS[3], 1), () => bess(false, .1), 3);
+  assert.equal(began.heard[0], 'story.ember.moss.1', 'job 4 starts with Moss\'s own line');
+  const midway = lineIdsHeard(began.job, () => bess(false, .5), 3);
+  assert.ok(midway.heard.includes('story.ember.moss.4'), 'job 4 passes its furnace sighting on the way');
+  const arriving = lineIdsHeard(midway.job, () => bess(true, 1), .5);
+  assert.deepEqual(arriving.heard.filter(id => id === 'story.ember.auntie-solder.6'), ['story.ember.auntie-solder.6'], 'on arrival Auntie Solder\'s result line is said');
+  assert.equal(arriving.job.done, false, 'and the job holds while it shows');
+  const ended = lineIdsHeard(arriving.job, () => bess(true), 4);
+  assert.equal(ended.job.done, true, 'then the job ends');
+  assert.ok(!ended.heard.includes('story.ember.auntie-solder.6'), 'the line is said once');
+}
+{
+  // RUN-GAS: the six lines of the gas run, each at the moment the card gives.
+  const road = (id, extra = {}) => ({player: {position: {x: 0, y: 0, z: 0}}, difficulty: 'medium',
+    actors: [{id: 'big-bess', position: {x: -424, y: 0, z: 304}, health: 100, pathIndex: 1, pathProgress: .1, atDestination: false, ...extra}]});
+  const startOf = job => lineIdsHeard(createJob(job, 1), () => road('x'), 1).heard;
+  assert.deepEqual(startOf(gasRunJob({road: 'long'})), ['story.ember.moss.5'], 'a long road run starts with Moss\'s long road line');
+  assert.deepEqual(startOf(gasRunJob({road: 'boneyard'})), ['story.ember.moss.6'], 'a Boneyard road run starts with Moss\'s Boneyard line');
+  assert.ok(EMBER_CAPTIONS[startOf(gasRunJob({road: 'long'}))[0]].text.startsWith('The long way round'), 'and the id has the card\'s words');
+
+  // The first raid of a run: said once, when the first ambush appears; never again, not even after a rest and restart.
+  const raided = gasRunJob({road: 'boneyard', feud: 2, runs: 0});
+  // Big Bess standing on her road `metres` from the well, with the index of the place she is heading for.
+  const onRoad = metres => {
+    const places = GAS_RUN_PATHS.boneyard.map(item => item.position);
+    let left = metres;
+    for (let i = 1; i < places.length; i++) {
+      const length = Math.hypot(places[i].x - places[i - 1].x, places[i].z - places[i - 1].z);
+      if (left <= length) return {position: {x: places[i - 1].x + (places[i].x - places[i - 1].x) * left / length, y: 0, z: places[i - 1].z + (places[i].z - places[i - 1].z) * left / length}, pathIndex: i};
+      left -= length;
+    }
+    throw new Error('off the road');
+  };
+  const raidAt = raided.steps[0].ambushes[0].metres;
+  const started = lineIdsHeard(createJob(raided, 1), () => road('x'), 3);
+  assert.ok(!started.heard.includes('story.ember.moss.7'), 'no raid line while the first ambush is far away');
+  const first = lineIdsHeard(started.job, () => road('x', onRoad(raidAt - 100)), 1);
+  assert.equal(first.heard.filter(id => id === 'story.ember.moss.7').length, 1, 'the first raid says "Here they come"');
+  const second = lineIdsHeard(first.job, () => road('x', onRoad(raidAt + 5)), 3);
+  assert.ok(!second.heard.includes('story.ember.moss.7'), 'and does not say it again');
+  const quiet = gasRunJob({road: 'long', feud: 2});
+  assert.ok(!lineIdsHeard(createJob(quiet, 1), () => road('x'), 3).heard.includes('story.ember.moss.7'), 'a quiet road has no raid and no raid line');
+
+  // Arrival: Moss's line for how Bess comes in, then Auntie Solder's only when this arrival takes the feud to War party.
+  const arrival = (job, health) => {
+    let state = lineIdsHeard(createJob(job, 1), () => road('x'), 3).job;
+    const out = lineIdsHeard(state, () => road('x', {health, atDestination: true, pathProgress: 1, pathIndex: 7}), 12);
+    return {heard: out.heard.filter(id => /^story\.ember\.(moss\.[89]|auntie-solder\.9)$/.test(id)), done: out.job.done};
+  };
+  for (const [health, id] of [[100, 'story.ember.moss.8'], [70, 'story.ember.moss.8'], [69.9, 'story.ember.moss.9'], [1, 'story.ember.moss.9']]) {
+    const out = arrival(gasRunJob({road: 'long', feud: 2}), health);
+    assert.deepEqual(out.heard, [id], `a long road run arriving with Bess at ${health} health says ${id}`);
+    assert.equal(out.done, true, 'and the run finishes after the line');
+  }
+  assert.deepEqual(arrival(gasRunJob({road: 'boneyard', feud: 3}), 100).heard, ['story.ember.moss.8', 'story.ember.auntie-solder.9'],
+    'a Boneyard run that moves the feud from Hunting to War party also says Auntie Solder\'s line, once');
+  assert.deepEqual(arrival(gasRunJob({road: 'boneyard', feud: 3}), 50).heard, ['story.ember.moss.9', 'story.ember.auntie-solder.9'], 'with Moss\'s hurt line when Bess is hurt');
+  for (const [name, job] of [['Raiding', gasRunJob({road: 'boneyard', feud: 2})], ['War party already', gasRunJob({road: 'boneyard', feud: 4})],
+    ['Hunting by the long road', gasRunJob({road: 'long', feud: 3})], ['Watching', gasRunJob({road: 'boneyard', feud: 1})]])
+    assert.ok(!arrival(job, 100).heard.includes('story.ember.auntie-solder.9'), `Auntie Solder says nothing on arrival from ${name}`);
 }
 
 console.log(`test-ember-lines: ${EXPECTED.length} captions and note passed`);

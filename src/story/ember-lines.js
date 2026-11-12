@@ -51,6 +51,13 @@ export const EMBER_CAPTIONS = Object.freeze({
   'story.ember.cinder.20': line('Cinder', 'Job 6 won', 'Well, look at that. A hundred years old and still showing off.'),
   'story.ember.cinder.21': line('Cinder', 'Job 6 won', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'),
   'story.ember.hollis.1': line('Hollis', 'Job 6 won', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'),
+  // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run, once the six jobs are won.
+  'story.ember.moss.5': line('Moss', 'A long road run starts', 'The long way round, then. Bess likes a quiet road.'),
+  'story.ember.moss.6': line('Moss', 'A Boneyard road run starts', 'Through the Boneyard. Keep your eyes on the planes; that is where they wait.'),
+  'story.ember.moss.7': line('Moss', 'The first raid of a run appears', 'Here they come. Keep them off the tank.'),
+  'story.ember.moss.8': line('Moss', 'A run arrives with Bess at 70 health or more', 'Every drop delivered. Bess thanks you, in her way.'),
+  'story.ember.moss.9': line('Moss', 'A run arrives with Bess under 70 health', 'We are here, and most of the gas is too. That will do.'),
+  'story.ember.auntie-solder.9': line('Auntie Solder', 'The feud reaches War party', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'),
 });
 
 export const EMBER_LINE_IDS = Object.freeze([...Object.keys(EMBER_CAPTIONS), EMBER_NOTE_ID]);

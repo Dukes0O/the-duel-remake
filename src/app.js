@@ -74,8 +74,9 @@ import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUn
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
-import {EMBER_JOBS, markEmberJob, markEmberRead} from './story/ember-save.js';
+import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {GAS_RUN_ROADS, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -669,7 +670,12 @@ export class App {
   // The plain object the Story card and the other screens draw from (docs/story/kogane-invitation.md 12.1).
   storyProps(key='kogane'){
     if(key==='water')return this._waterRoad().props(this.isYardHomeActive()?'yard':'menu');
-    if(key==='ember')return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()});
+    if(key==='ember'){
+      // RUN-GAS: the gas run's entry needs its own switch as well as the Everburn's, and the sixth job won.
+      const runs=this._switches().enabled('scablands-runs')===true;
+      return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked(),runs,
+        runPay:runs?Object.fromEntries(GAS_RUN_ROADS.map(road=>[road,gasRunPay(road,this.cpuDifficulty)])):{}});
+    }
     const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
     if(!this._storyAvailable())return none;
     const profile=this.profile,step=koganeStep(profile),k=storyOf(profile).kogane,won=typeof k.duel==='string';
@@ -789,6 +795,17 @@ export class App {
     const index=EMBER_JOBS.indexOf(id),open=props.steps.find(step=>step.id===id);
     if(index<0||open?.state!=='open'||props.read!==true)return false;
     return this.startArenaEvent({venueId:'scablands',mode:'world-job',job:EVERBURN_JOBS[index]});
+  }
+  // RUN-GAS: the gas run needs both switches (the run's own and the Everburn's) and the sixth Everburn job won.
+  gasRunAvailable(){
+    return this._switches().enabled('scablands-runs')===true&&this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked()&&
+      EMBER_JOBS.every(id=>(emberOf(this.profile).jobs??[]).includes(id));
+  }
+  // A road button on the Story Wall's gas run: Big Bess drives from the well to Tin Town by that road ('long' or 'boneyard').
+  gasRun(road){
+    if(!this.gasRunAvailable()||!GAS_RUN_ROADS.includes(road))return false;
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',
+      job:gasRunJob({road,feud:emberFeud(this.profile),runs:emberRuns(this.profile),difficulty:this.cpuDifficulty})});
   }
   // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
@@ -1455,7 +1472,14 @@ export class App {
     const water=this._water?.settle(settled.profile,{runId:this.runId,won:result.winnerId==='player'}); // WATER-HOOKS
     let awardedProfile=water?.profile??settled.profile;
     if(water)result.waterJob=water.mark;
-    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
+    const runDefinition=state.arena.mode==='world-job'?state.arena.worldJob?.definition:null;
+    if(state.arena.mode==='world-job'&&result.winnerId==='player'&&isGasRun(runDefinition)){
+      // RUN-GAS: an arrived run moves the feud one step and counts one run. A run that is left or not finished writes nothing.
+      const arrived=this.gasRunAvailable()?applyArrivedRun(awardedProfile,runDefinition.road):null;
+      if(arrived?.ok){awardedProfile=arrived.profile;result.won=true;
+        result.gasRun={road:runDefinition.road,feud:arrived.feudAfter,word:emberFeudWord(arrived.feudAfter),runs:arrived.runs,reachedWarParty:arrived.reachedWarParty};}
+    }
+    else if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
       const id=EMBER_JOBS[state.arena.worldJob.definition.number-1],marked=markEmberJob(awardedProfile,id);
       if(marked.ok){awardedProfile=marked.profile;result.emberJob=id;result.won=true;}
     }
@@ -1841,7 +1865,9 @@ export class App {
   }
   startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3, job = null} = {}) {
     if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid', 'ambush-alley', 'world-job'].includes(mode)) return false;
-    if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||!EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open'))return false;
+    // A gas run is the one job here that is not one of the six: it is allowed only when gasRunAvailable() says so.
+    if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||(isGasRun(job)?!this.gasRunAvailable():
+      !EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open')))return false;
     return this._startArenaFight({venueId, mode, opponents, job});
   }
   async startTownDrive(town) {

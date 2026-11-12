@@ -67,6 +67,8 @@ export const FEATURE_STATES = Object.freeze({
   'wasteland-town': 'dev',
   // Everburn story screens and Scablands jobs, still in development.
   'story-everburn': 'dev',
+  // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn.
+  'scablands-runs': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.

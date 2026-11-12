@@ -64,15 +64,19 @@ export const EVERBURN_JOBS = Object.freeze([
       closing:['story.ember.cinder.22']})]}),
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
     resultLineId:'story.ember.auntie-solder.6',
-    easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'everburn-job-4-start',
+    easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
-      speed:9, health:100, restLineId:'everburn-job-4-rest', restartFrom:'last-marker',
-      raiders:path(place('ash-men-raid-1',360,270),place('ash-men-raid-2',500,90)),
+      speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3,
+      // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The second place was (500, 90),
+      // 48 m from her road, out of reach of the 30 m that wears her health; it now stands on the road at (500, 41).
+      ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1',360,270), count:2}),
+        Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2',500,41), count:2})]),
       // The furnace paces her on the high ground while she is between 30% and 70% of her road.
       sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
-      reward:'scrap', startLineId:'everburn-job-4-start', wonLineId:'everburn-job-4-won'})]}),
+      // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
+      reward:'scrap', startLineId:'story.ember.moss.1', closing:['story.ember.auntie-solder.6']})]}),
   Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
     resultLine:'You carried Old Smoke’s key back to the Everburn.',
     easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'everburn-job-5-start',

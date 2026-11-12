@@ -6,8 +6,9 @@ import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/sc
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor} from '../../world/jobs/old-smoke.js';
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
+import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
-import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
+import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
@@ -30,11 +31,11 @@ const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGH
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
 
-// A line's words: the job's own captions, then the Everburn story lines, else the id.
+// A line's words: the job's own captions, then any registered story's captions, else the id.
 function captionFor(worldJob, lineId) {
   const own = worldJob.definition.captions?.[lineId];
   if (own) return own;
-  const story = EMBER_CAPTIONS[lineId];
+  const story = captionRecord(lineId);
   return story ? `${story.who}: ${story.text}` : lineId;
 }
 const WELL_WEAR_RANGE = 10;
@@ -132,7 +133,7 @@ function updateJobActors(duel, worldJob, dt) {
     const start = actorDef.path?.[0]?.position ?? actorDef.path?.[0];
     if (!start) return;
     actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
-      pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null,
+      pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null, stretchHealth: actorDef.health ?? 100,
       ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
     if (actorDef.id === FURNACE_ID && actorDef.legs) {
       actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
@@ -155,11 +156,16 @@ function updateJobActors(duel, worldJob, dt) {
     actor.position = {...target};
     actor.pathIndex = Math.min(index + 1, path.length - 1);
     actor.pathProgress = path.length <= 1 ? 1 : actor.pathIndex / (path.length - 1);
+    // Health at the start of this stretch: what a rest and restart of the stretch gives back (RUN-GAS).
+    actor.stretchHealth = actor.health;
+    if (index >= path.length - 1) actor.reachedEnd = true;
   } else {
     actor.position.x += dx / gap * travel;
     actor.position.z += dz / gap * travel;
   }
-  if (actor.pathProgress >= 1 && actorDef.escort) actor.atDestination = true;
+  // An escorted truck has arrived when she has reached the last place of her road, not when she sets out for it
+  // (RUN-GAS: her pathProgress already reads 1 while she is on her way to the last place).
+  if (actorDef.escort) actor.atDestination = actor.reachedEnd === true || path.length <= 1;
 }
 
 function syncFurnaceActor(actor) {
@@ -294,6 +300,59 @@ function spawnWave(duel, worldJob, request, key) {
   worldJob.spawnedWaveKeys.push(key);
 }
 
+// An ambush on an escort's road (src/world/jobs/steps/escort.js): the same foot raiders as the well's attackers, standing
+// at the roadside on both sides of the place, within 12 m of it, and facing it. They are knocked down, recover and shoot
+// exactly like the others; the camp's own place is the zone's, so they shoot at a car passing near them.
+function spawnAmbush(duel, worldJob, request) {
+  const key = request.key;
+  if (!key || worldJob.spawnedWaveKeys.includes(key)) return;
+  const zone = createRaidZones(duel.course, worldJob.raidSeed + worldJob.spawnedWaves++)[0];
+  const place = request.at?.position ?? request.at, way = request.direction ?? {x: 0, z: 1};
+  const sideX = way.z, sideZ = -way.x, count = Math.max(1, Math.floor(request.n) || 1);
+  while (zone.raiders.length < count) zone.raiders.push({...zone.raiders.at(-1)});
+  zone.raiders = zone.raiders.slice(0, count);
+  zone.raiders.forEach((raider, index) => {
+    const side = index % 2 === 0 ? 1 : -1, across = side * (6 + 2.5 * Math.floor(index / 2)), along = (index - (count - 1) / 2) * 2;
+    const x = place.x + sideX * across + way.x * along, z = place.z + sideZ * across + way.z * along;
+    const ground = duel.course.nearest(x, z, zone.s);
+    Object.assign(raider, {id: `${key}:${index}`, s: ground.s, lateral: ground.lateral, x, y: ground.y, z, groundY: ground.y,
+      yaw: Math.atan2(place.x - x, place.z - z), knockedDown: false, knockdownRemaining: 0, ambushKey: key});
+  });
+  zone.s = duel.course.nearest(place.x, place.z, zone.s).s;
+  zone.id = key; zone.warnedLap = duel.state.currentLap; zone.nextShotAt = duel.state.stageTimeSec + 1.5;
+  duel.state.raids ??= {zones: [], shots: 0};
+  duel.state.raids.zones.push(zone);
+  worldJob.actors.push(...zone.raiders);
+  worldJob.waveZones ??= {};
+  worldJob.waveZones[key] = zone;
+  worldJob.spawnedWaveKeys.push(key);
+  // The roadside camps' own warning (the existing cue), once for each ambush that appears.
+  duel.emit({raiderWarning: true, zone: key});
+}
+
+// The raiders of an ambush give up (the escort has passed) or are put back in place (the stretch starts again).
+function clearAmbush(duel, worldJob, key) {
+  const zone = worldJob.waveZones?.[key];
+  if (!zone) return;
+  duel.state.raids.zones = duel.state.raids.zones.filter(candidate => candidate !== zone);
+  worldJob.actors = worldJob.actors.filter(actor => !zone.raiders.includes(actor));
+  delete worldJob.waveZones[key];
+  worldJob.spawnedWaveKeys = worldJob.spawnedWaveKeys.filter(existing => existing !== key);
+}
+
+// RUN-GAS: every raider of an ambush still standing within 30 m of the escorted truck wears her health down each second.
+function wearEscort(worldJob, step, difficulty, dt) {
+  const truck = worldJob.actors.find(actor => actor.id === step.actorId);
+  if (!truck?.position || !(truck.health > 0)) return;
+  const rate = AMBUSH_WEAR_PER_SECOND[difficulty] ?? AMBUSH_WEAR_PER_SECOND.medium;
+  let standing = 0;
+  for (const raider of worldJob.actors) {
+    if (!raider.ambushKey || raider.knockedDown || !Number.isFinite(raider.x) || !Number.isFinite(raider.z)) continue;
+    if (Math.hypot(raider.x - truck.position.x, raider.z - truck.position.z) <= AMBUSH_WEAR_METRES) standing++;
+  }
+  if (standing) truck.health = Math.max(0, truck.health - standing * rate * dt);
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
     if (request.type === 'marker') {
@@ -322,6 +381,8 @@ function applyRequests(duel, worldJob, requests) {
       actor.coupling={x:cab.x-Math.sin(cab.heading??0)*4,y:cab.y+1,z:cab.z-Math.cos(cab.heading??0)*4};
       actor.trainLength=request.pathLength??0;
     }
+    else if (request.type === 'spawnWave' && request.ambush) spawnAmbush(duel, worldJob, request);
+    else if (request.type === 'clearWave') clearAmbush(duel, worldJob, request.key);
     else if (request.type === 'spawnWave') {
       const key = `${worldJob.job.stepIndex}:${worldJob.job.stepState.wave ?? 0}`;
       spawnWave(duel, worldJob, request, key);
@@ -401,6 +462,7 @@ export function stepWorldJob(duel, dt) {
     placeState.health = Math.max(0, placeState.health - nearbyRaiders *
       WELL_WEAR_PER_SECOND * difficultyScale * dt);
   }
+  if (currentStep?.kind === 'escort' && currentStep.ambushes?.length) wearEscort(worldJob, currentStep, state.cpuDifficulty, dt);
   const thingsHit = [...(state.worldJobThingsHit || []),
     ...(state.onFoot && state.input?.interact &&
       worldJob.job.steps[worldJob.job.stepIndex]?.kind === 'heist'
@@ -421,7 +483,7 @@ export function stepWorldJob(duel, dt) {
     ? targetActor.id : null;
   const actors = [...worldJob.actors.map((actor, index) => ({id: actor.id ?? `raider-${index}`,
     position: actor.position ?? {x: actor.x, y: actor.y, z: actor.z}, health: actor.knockedDown ? 0 : actor.health,
-    pathProgress: actor.pathProgress, atDestination: actor.atDestination,
+    pathProgress: actor.pathProgress, atDestination: actor.atDestination, pathIndex: actor.pathIndex,
     // How far an escorted truck has gone along its road, for the step's sayAtShare lines (0 to 1).
     ...(currentStep?.sayAtShare && actor.id === currentStep.actorId && actor.position ?
       {share: pathShare(actor.position, actor.pathIndex, currentStep.path).share} : {})})),
@@ -463,6 +525,16 @@ export function stepWorldJob(duel, dt) {
         delete worldJob.waveZones[key];
       }
       worldJob.spawnedWaveKeys = worldJob.spawnedWaveKeys.filter(existing => existing !== key);
+    }
+    if (event.type === 'restarted') {
+      // The escorted truck starts the stretch again: back at the last place she reached, with the health she left it with.
+      const truck = worldJob.actors.find(actor => actor.id === event.actorId), path = next.steps[next.stepIndex]?.path;
+      const start = path?.[Math.max(0, (truck?.pathIndex ?? 1) - 1)];
+      if (truck && start) {
+        truck.position = {...(start.position ?? start)};
+        truck.health = truck.stretchHealth ?? truck.health;
+        truck.reachedEnd = false; truck.atDestination = false;
+      }
     }
     if (event.type === 'waveCleared') worldJob.clearedWaves.push(event.wave);
     if (event.type === 'taken') {

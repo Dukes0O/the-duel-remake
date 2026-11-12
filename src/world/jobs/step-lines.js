@@ -9,7 +9,10 @@ export function stepLines(step,state,view,dt,outcome) {
   const newlyRequested=(outcome?.requests??[]).filter(request=>request.type==='say'&&request.lineId).map(request=>request.lineId);
   // afterStartLineId is one line id or a list of them, played in order after startLineId.
   const afterStart=[].concat(step.afterStartLineId??[]);
-  const once=new Set([step.startLineId,...afterStart,...(step.opening??[]),...(step.closing??[])].filter(Boolean));
+  // A step may close with lines of its own choosing (the outcome's closingLines: RUN-GAS picks Moss's arrival line by Bess's
+  // health), else with its fixed closing list. The ones chosen are kept in the state so they hold the job the same way.
+  const closingList=[...(outcome?.closingLines??step.closing??[]),...(state.closingLines??[])];
+  const once=new Set([step.startLineId,...afterStart,...(step.opening??[]),...closingList].filter(Boolean));
   for(const lineId of newlyRequested) {
     if(once.has(lineId)&&lineHistory.has(lineId))continue;
     queue.push(lineId);if(once.has(lineId))lineHistory.add(lineId);
@@ -25,7 +28,7 @@ export function stepLines(step,state,view,dt,outcome) {
   }
   if(queue.length) {
     const lineId=nextCaption(queue), blocking=state.lineBlocking===true&&remaining>0||
-      [...(state.carriedLines??[]),...(step.opening??[]),...(step.closing??[])].includes(lineId);
+      [...(state.carriedLines??[]),...(step.opening??[]),...closingList].includes(lineId);
     return emit(lineId,queue,blocking);
   }
   if(!started) {
@@ -38,10 +41,12 @@ export function stepLines(step,state,view,dt,outcome) {
     if(queue.length) {const lineId=nextCaption(queue);const result=emit(lineId,queue,opening.includes(lineId));
       result.state.linesStarted=true;return result;}
   }
-  if(outcome?.complete&&!closing&&(step.closing?.length??0)>0) {
+  const closingNow=outcome?.closingLines??step.closing??[];
+  if(outcome?.complete&&!closing&&closingNow.length>0) {
     closing=true;
-    for(const lineId of step.closing) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
+    for(const lineId of closingNow) if(!lineHistory.has(lineId)) {queue.push(lineId);lineHistory.add(lineId);}
     const lineId=nextCaption(queue),result=emit(lineId,queue,true);result.state.linesStarted=started;result.state.linesClosing=true;
+    if(outcome?.closingLines)result.state.closingLines=[...outcome.closingLines];
     return result;
   }
   return {...outcome,state:{...base,lineQueue:[],lineRemaining:0,lineBlocking:false,

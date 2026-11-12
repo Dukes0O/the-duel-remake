@@ -10,7 +10,18 @@ export const EMBER_JOBS = Object.freeze([
 ]);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
+// RUN-GAS: the Ash Men's feud with the player's town, 1 to 4, and how many gas runs have arrived. A save that has neither
+// reads as Raiding and 0; a damaged value is repaired to the same. Only a saved value is checked, so an older save is read
+// exactly as before and loading never adds either name.
+export const EMBER_FEUD_WORDS = Object.freeze(['Watching', 'Raiding', 'Hunting', 'War party']);
+export const EMBER_FEUD_START = 2;
+export const EMBER_RUN_ROADS = Object.freeze(['long', 'boneyard']);
+const validFeud = value => Number.isSafeInteger(value) && value >= 1 && value <= EMBER_FEUD_WORDS.length;
+const validRuns = value => Number.isSafeInteger(value) && value >= 0;
+
 function normalizeEmber(ember) {
+  if (Object.hasOwn(ember, 'feud') && !validFeud(ember.feud)) ember.feud = EMBER_FEUD_START;
+  if (Object.hasOwn(ember, 'runs') && !validRuns(ember.runs)) ember.runs = 0;
   if (Object.hasOwn(ember, 'read')) ember.read = ember.read === true;
   if (Object.hasOwn(ember, 'end')) ember.end = ember.end === true;
   if (Object.hasOwn(ember, 'jobs')) ember.jobs = Array.isArray(ember.jobs)
@@ -38,10 +49,36 @@ registerStory({
     end: ember => ember.read !== true ? 'Read Hollis\'s note first.'
       : !EMBER_JOBS.every(id => (ember.jobs ?? []).includes(id))
         ? 'Finish all six Everburn jobs first.' : ember.end === true ? null : {end: true},
+    // A gas run arrived by this road: the feud moves one step (up for the Boneyard road, down for the long road, within
+    // Watching and War party) and the count of runs rises by one.
+    run: (ember, road) => {
+      if (!EMBER_RUN_ROADS.includes(road)) return 'That road is not on the map.';
+      if (!EMBER_JOBS.every(id => (ember.jobs ?? []).includes(id))) return 'Finish all six Everburn jobs first.';
+      const feud = emberFeudOf(ember), runs = emberRunsOf(ember);
+      return {feud: Math.max(1, Math.min(EMBER_FEUD_WORDS.length, feud + (road === 'boneyard' ? 1 : -1))), runs: runs + 1};
+    },
   },
 });
 
 export const emberOf = profile => storyIsNewer(profile) ? {} : storyOf(profile)[EMBER_KEY] ?? {};
+
+// The feud (1 to 4) and the runs arrived (0 or more) in an Everburn entry; missing or damaged values read as Raiding and 0.
+function emberFeudOf(ember) { return validFeud(ember?.feud) ? ember.feud : EMBER_FEUD_START; }
+function emberRunsOf(ember) { return validRuns(ember?.runs) ? ember.runs : 0; }
+export const emberFeud = profile => emberFeudOf(emberOf(profile));
+export const emberRuns = profile => emberRunsOf(emberOf(profile));
+export const emberFeudWord = feud => EMBER_FEUD_WORDS[(validFeud(feud) ? feud : EMBER_FEUD_START) - 1];
+
+// A run arrived by `road` ('long' or 'boneyard'). Pure: the profile it is given is never changed. The result says the feud
+// before and after, so the screens can tell when it has just reached War party. A run that does not arrive writes nothing,
+// so nothing calls this for one.
+export function applyArrivedRun(profile, road) {
+  const before = emberFeud(profile);
+  const written = writeStory(profile, EMBER_KEY, 'run', road);
+  const after = written.ok ? emberFeud(written.profile) : before;
+  return {...written, feudBefore: before, feudAfter: after, runs: written.ok ? emberRuns(written.profile) : emberRuns(profile),
+    reachedWarParty: written.ok && before < EMBER_FEUD_WORDS.length && after === EMBER_FEUD_WORDS.length};
+}
 
 function grantJobReward(profile, jobId) {
   // A save from a newer Wasteland build belongs to that build. Never edit or
