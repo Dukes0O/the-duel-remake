@@ -14,6 +14,7 @@ import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-ga
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
+import {createEverburnProps} from './everburn-props.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
@@ -660,6 +661,15 @@ export function createScablandsScene(course,options={}){
         full.add(model);
         if(key==='boneyard')arrangeWrecks(full,model,place,scablandsSurfaceHeightAt(place.x,place.z));
       });
+      // The well is not alone on its disc: fire pots, barricades, a signpost, rocks and a mast cut from the kit the Ridge loads.
+      if(place.id==='everburn'){
+        const kit=await load('kit'),placeGround=scablandsSurfaceHeightAt(place.x,place.z);
+        if(retired)return;
+        if(kit?.scene){
+          const props=createEverburnProps(kit.scene,{groundAt:(east,south)=>scablandsSurfaceHeightAt(place.x+east,place.z+south)-placeGround});
+          tintArt(props,place.id,placeWear);full.add(props);
+        }
+      }
       // Past 280 m a place is a plain dark shape. The well's is a thin mast the height of its derrick; the fire and smoke stay drawn.
       const wellMast=place.id==='everburn';
       const distant=new THREE.Mesh(wellMast?new THREE.CylinderGeometry(.35,.6,EVERBURN_DERRICK_TOP,6):new THREE.BoxGeometry(32,12,24),

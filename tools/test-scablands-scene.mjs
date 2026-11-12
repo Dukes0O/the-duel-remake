@@ -738,4 +738,29 @@ for(const wreck of BONEYARD_WRECKS){
   assert.ok(Math.hypot(Math.max(bessBox.min.x-BESS_REST.x,BESS_REST.x-bessBox.max.x,0),Math.max(bessBox.min.z-BESS_REST.z,BESS_REST.z-bessBox.max.z,0))>=5,`Big Bess's resting place is 5 m clear of the ${wreck.part}`);
 }
 wreckScene.dispose();
+// Fix 7: the well is not alone on its disc. Eight to twelve props cut from the real kit model stand in one cluster, clear of
+// the raiders' way in, their hold, the furnace's parking place and the car's start at the well, each on the ground.
+const propScene=createScablandsScene(course,{loadAsset:async path=>{
+  if(path===SCABLANDS_ASSETS.kit)return realParse(path);
+  const root=new THREE.Group();
+  if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
+  return {scene:root};
+}});
+assert.equal(await propScene.ready,true,'the scene with the real kit loads');
+propScene.group.updateMatrixWorld(true);
+const propCluster=propScene.group.getObjectByName('The Everburn detail LOD').getObjectByName('Everburn well props');
+assert.ok(propCluster&&propCluster.children.length>=8&&propCluster.children.length<=12,`eight to twelve props stand by the well (${propCluster?.children.length})`);
+const wellAt=places.get('everburn'),avoid=[['the raiders way in',-448,288,14],['the raiders hold',-426,303,14],['the furnace parking place',wellAt.x+18,wellAt.z,12],['the car start at the well',wellAt.x,wellAt.z,12]];
+const propGround=scablandsSurfaceHeightAt(wellAt.x,wellAt.z);
+for(const prop of propCluster.children){
+  const bounds=new THREE.Box3().setFromObject(prop),size=bounds.getSize(new THREE.Vector3());
+  assert.ok(size.y>.3&&size.y<8&&size.x<8&&size.z<8,`${prop.name} is a small prop (${size.x.toFixed(1)} by ${size.y.toFixed(1)} by ${size.z.toFixed(1)} m)`);
+  assert.ok(Math.abs(bounds.min.y-scablandsSurfaceHeightAt((bounds.min.x+bounds.max.x)/2,(bounds.min.z+bounds.max.z)/2))<.1,`${prop.name} stands on the ground`);
+  for(const [what,x,z,metres] of avoid){
+    const away=Math.hypot(Math.max(bounds.min.x-x,x-bounds.max.x,0),Math.max(bounds.min.z-z,z-bounds.max.z,0));
+    assert.ok(away>=metres,`${prop.name} stands ${metres} m or more from ${what} (${away.toFixed(1)} m)`);
+  }
+}
+assert.ok(new Set(propCluster.children.map(prop=>prop.name)).size>=5,'the props are of at least five kinds');
+propScene.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
