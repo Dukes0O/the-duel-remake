@@ -13,6 +13,7 @@ import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial
 import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
+import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -27,9 +28,11 @@ export const SCABLANDS_ASSETS = Object.freeze({
 
 // Every placed solid names its anchor in the shared place table. The small
 // local offsets keep roads and the eight named destinations clear.
+const BONEYARD_PLACE=SCABLANDS_PLACES.find(row=>row.id==='boneyard');
 export const SCABLANDS_SOLIDS = Object.freeze([
   ['tin-town-shell','tin-town',-46,0,31,15,23],
-  ['boneyard-planes','boneyard',-12,-26,47,11,30],
+  // The Boneyard's three wrecks, one box each, where each is drawn (src/world/boneyard-wrecks.js).
+  ...BONEYARD_WRECKS.map(wreck=>[`boneyard-wreck-${wreck.id}`,'boneyard',wreck.x-BONEYARD_PLACE.x,wreck.z-BONEYARD_PLACE.z,...wreck.size]),
   ['dead-mall-shell','dead-mall',0,0,38,13,35],
   ['everburn-well','everburn',0,0,18,9,18],
   ['iron-line-station','iron-line',12,0,28,8,20],
@@ -219,6 +222,41 @@ function settleSandDrifts(model,groundMaterial){
     drift.material=groundMaterial;drift.castShadow=false;drift.receiveShadow=true;
   }
   return drifts;
+}
+
+// The Boneyard's three aircraft are lifted out of the model and set down again as BONEYARD_WRECKS says: each with its own
+// heading, at its own place, one rolled onto a wing. `full` holds the model at the place's own origin. Every part of a wreck
+// carries its name ("North Wreck ..."); the broken landing gear is buried on purpose and does not count when a wreck is
+// set on the ground. Nothing here is read by a rule: the solids come from the same table.
+function arrangeWrecks(full,model,place,placeGround){
+  full.updateMatrixWorld(true);
+  const corner=new THREE.Vector3();
+  const extent=(nodes,test=()=>true)=>{
+    const box=new THREE.Box3();
+    for(const node of nodes){
+      if(!test(node))continue;
+      const positions=node.geometry.attributes.position;
+      for(let index=0;index<positions.count;index++)box.expandByPoint(corner.fromBufferAttribute(positions,index).applyMatrix4(node.matrixWorld));
+    }
+    return box;
+  };
+  const notGear=node=>!/landing gear/.test(plainName(node.name));
+  const arranged=[];
+  for(const wreck of BONEYARD_WRECKS){
+    const nodes=[];model.traverse(node=>{if(node.isMesh&&plainName(node.name).startsWith(wreck.part))nodes.push(node);});
+    if(!nodes.length)continue;
+    const box=extent(nodes,notGear),pivot=new THREE.Group();pivot.name=`${wreck.part} on the ground`;
+    pivot.position.set((box.min.x+box.max.x)/2,0,(box.min.z+box.max.z)/2);
+    full.add(pivot);pivot.updateMatrixWorld(true);
+    for(const node of nodes)pivot.attach(node);
+    pivot.rotation.order='YXZ';pivot.rotation.set(THREE.MathUtils.degToRad(wreck.roll),-THREE.MathUtils.degToRad(wreck.heading),0);
+    pivot.position.set(wreck.x-place.x,0,wreck.z-place.z);pivot.updateMatrixWorld(true);
+    // Rest the lowest of the wreck on the ground there, plus a finger's depth.
+    const ground=scablandsSurfaceHeightAt(wreck.x,wreck.z)-placeGround;
+    pivot.position.y=ground-extent(nodes,notGear).min.y-.05;pivot.updateMatrixWorld(true);
+    arranged.push(pivot);
+  }
+  return arranged;
 }
 
 // Where each truck's wheels turn about their axle (the model's X axis) and how wide they are, in the rig's own metres.
@@ -466,8 +504,10 @@ export function createScablandsScene(course,options={}){
   const arcFrom=new THREE.Vector3(),arcTo=new THREE.Vector3();
   let clock=0,diedAt=null,lastFire=0,lastSmoke=0;
   const bessWheels=[],bessTravel=createTravelMeter(),bessWear=createScrapWear({paint:0});
-  const placeRig=(rig,actor,path,aim,onGround,rest)=>{
+  // `restAt` ({x, z, heading}) is where a rig stands with no actor, when it is not at its place's own +18 m spot.
+  const placeRig=(rig,actor,path,aim,onGround,rest,restAt=null)=>{
     if(!actor){
+      if(restAt){rig.position.set(restAt.x,scablandsSurfaceHeightAt(restAt.x,restAt.z),restAt.z);rig.rotation.y=restAt.heading;return;}
       rig.position.set(rest.x+18,scablandsSurfaceHeightAt(rest.x,rest.z),rest.z);
       rig.rotation.y=(SCABLANDS_PLACES.indexOf(rest)%4)*Math.PI/2;return;
     }
@@ -579,7 +619,7 @@ export function createScablandsScene(course,options={}){
           model.traverse(node=>{if(node.isMesh)for(const material of [].concat(node.material))bessWear.apply(material);});
           bessPlace=place;
           bessRig=new THREE.Group();bessRig.name='Big Bess moving rig';
-          placeRig(bessRig,null,[],0,true,place);
+          placeRig(bessRig,null,[],0,true,place,BESS_REST);
           bessRig.add(model);group.add(bessRig);
           bessEffects=addBessEffects(bessRig);
           bessWheels.push(...wheelsOf(model,BESS_WHEEL));
@@ -587,6 +627,7 @@ export function createScablandsScene(course,options={}){
         }
         model.position.x=index?18:0;model.rotation.y=(SCABLANDS_PLACES.indexOf(place)%4)*Math.PI/2;
         full.add(model);
+        if(key==='boneyard')arrangeWrecks(full,model,place,scablandsSurfaceHeightAt(place.x,place.z));
       });
       // Past 280 m a place is a plain dark shape. The well's is a thin mast the height of its derrick; the fire and smoke stay drawn.
       const wellMast=place.id==='everburn';
@@ -662,7 +703,7 @@ export function createScablandsScene(course,options={}){
       // Big Bess follows her escort actor in the Everburn story and stands in the Boneyard otherwise.
       if(bessRig&&bessPlace){
         const escort=worldJob?.definition?.storyId==='everburn'?worldJob.actors?.find(item=>item.id==='big-bess'):null;
-        placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace);
+        placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace,BESS_REST);
         bessWear.follow(bessRig);
       }
       // Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.

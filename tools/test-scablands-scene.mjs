@@ -9,6 +9,8 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
 import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {BONEYARD_WRECKS,BESS_REST} from '../src/world/boneyard-wrecks.js';
 import {animateScene,syncScene} from '../src/scene-systems.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
@@ -43,7 +45,7 @@ assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
-assert.equal(SCABLANDS_SOLIDS.length,16,'the eight named places, six Tin Town clusters and two gate posts each have a solid');
+assert.equal(SCABLANDS_SOLIDS.length,18,'the seven named places other than the Boneyard, its three wrecks, six Tin Town clusters and two gate posts each have a solid');
 for(const solid of SCABLANDS_SOLIDS){
   const place=places.get(solid.placeId);
   assert.ok(place,`${solid.id} names a place table entry`);
@@ -87,9 +89,11 @@ assert.ok(bessRig&&bessRig.parent===scene.group,'Big Bess has her own moving rig
 assert.ok(bessRig.getObjectByName('Big Bess gas truck'),'the rig carries the Big Bess model');
 assert.ok(bessRig.getObjectByName('Big Bess exhaust, shade and road dust'),'Big Bess gets her exhaust, shade and road dust');
 const bessAt=()=>new THREE.Vector3().copy(bessRig.position);
-assert.ok(bessAt().distanceTo(new THREE.Vector3(boneyard.x+18,scablandsSurfaceHeightAt(boneyard.x,boneyard.z),boneyard.z))<.001,
-  'outside a job, Big Bess stands at her Boneyard place');
-assert.ok(Math.abs(bessRig.rotation.y-(SCABLANDS_PLACES.indexOf(boneyard)%4)*Math.PI/2)<.001,'outside a job, she keeps her Boneyard turn');
+// SCABLANDS-LAND round 3, fix 5 (re-recorded): her resting place moved from the Boneyard's own spot plus 18 m, which lay inside the north
+// wreck, to BESS_REST, 5 m or more clear of every wreck.
+assert.ok(bessAt().distanceTo(new THREE.Vector3(BESS_REST.x,scablandsSurfaceHeightAt(BESS_REST.x,BESS_REST.z),BESS_REST.z))<.001,
+  'outside a job, Big Bess stands at her resting place in the Boneyard');
+assert.ok(Math.abs(bessRig.rotation.y-BESS_REST.heading)<.001,'outside a job, she keeps the turn of her resting place');
 assert.ok(!EVERBURN_JOBS[3].steps[0].actor.renderCar,'job 4 spawns no stand-in car for Big Bess: the Scablands scene draws her truck');
 const bessActor={id:'big-bess',position:{x:boneyard.x+100,y:0,z:boneyard.z},heading:1.2};
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
@@ -671,4 +675,54 @@ assert.ok(Math.abs(driftBox.max.y-driftBox.min.y-1.1*.4)<.01&&driftBox.max.x-dri
 const driftLod=wellScene.group.getObjectByName('The Dead Mall detail LOD');
 assert.ok(Math.abs(driftBox.min.y-(driftLod.position.y+.8-.55))<.01,'a drift keeps its base where it was');
 wellScene.dispose();
+// Fix 5: the three wrecks of the real Boneyard model lie as the table says: three different headings, one rolled onto a wing,
+// uneven gaps, nothing but the buried landing gear sunk, each solid where it is drawn, both roads and the furnace's path
+// 8 m clear of every solid, and Big Bess's resting place 5 m clear of every wreck.
+const realParse=path=>{const bytes=readFileSync(new URL('../public'+path,import.meta.url));
+  return new Promise((resolve,reject)=>new GLTFLoader().parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'',resolve,reject));};
+const wreckScene=createScablandsScene(course,{loadAsset:async path=>{
+  if(path===SCABLANDS_ASSETS.boneyard)return realParse(path);
+  const root=new THREE.Group();
+  if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
+  return {scene:root};
+}});
+assert.equal(await wreckScene.ready,true,'the Boneyard scene with its real model loads');
+wreckScene.group.updateMatrixWorld(true);
+const wreckLod=wreckScene.group.getObjectByName('The Boneyard detail LOD'),corner=new THREE.Vector3(),footprints=new Map();
+for(const wreck of BONEYARD_WRECKS){
+  const pivot=wreckLod.getObjectByName(`${wreck.part} on the ground`);
+  assert.ok(pivot,`${wreck.part} is lifted out of the model and set down again`);
+  const all=new THREE.Box3(),notGear=new THREE.Box3(),pods=new THREE.Box3();
+  pivot.traverse(mesh=>{if(!mesh.isMesh)return;
+    const gear=/landing gear/.test(mesh.name.replace(/_/g,' ')),engine=/engines/.test(mesh.name);
+    const positions=mesh.geometry.attributes.position;
+    for(let index=0;index<positions.count;index++){corner.fromBufferAttribute(positions,index).applyMatrix4(mesh.matrixWorld);all.expandByPoint(corner);if(!gear)notGear.expandByPoint(corner);if(engine)pods.expandByPoint(corner);}});
+  footprints.set(wreck.id,all);
+  const solid=SCABLANDS_SOLIDS.find(row=>row.id===`boneyard-wreck-${wreck.id}`),ground=scablandsSurfaceHeightAt(wreck.x,wreck.z);
+  assert.ok(solid,`${wreck.part} has its own solid`);
+  assert.ok(all.min.x>=solid.center[0]-solid.size[0]/2&&all.max.x<=solid.center[0]+solid.size[0]/2&&all.min.z>=solid.center[2]-solid.size[2]/2&&all.max.z<=solid.center[2]+solid.size[2]/2,
+    `${wreck.part} lies inside its solid (x ${all.min.x.toFixed(1)} to ${all.max.x.toFixed(1)}, z ${all.min.z.toFixed(1)} to ${all.max.z.toFixed(1)})`);
+  assert.ok(Math.abs(notGear.min.y-ground)<.12,`${wreck.part} rests on the ground (lowest part ${(notGear.min.y-ground).toFixed(2)} m from it)`);
+  if(!Number.isFinite(pods.min.y))continue;
+  if(wreck.roll===0)assert.ok(pods.min.y>=ground-.15,`${wreck.part}'s engine pods are sunk no deeper than a hand (${(ground-pods.min.y).toFixed(2)} m)`);
+}
+assert.equal(new Set(BONEYARD_WRECKS.map(wreck=>wreck.heading)).size,3,'the three wrecks lie on three different headings');
+assert.equal(BONEYARD_WRECKS.filter(wreck=>wreck.roll!==0).length,1,'one wreck is rolled onto a wing');
+const gaps=[['north','east'],['north','south'],['east','south']].map(([a,b])=>{
+  const boxA=footprints.get(a),boxB=footprints.get(b);
+  return Math.hypot(Math.max(boxA.min.x-boxB.max.x,boxB.min.x-boxA.max.x,0),Math.max(boxA.min.z-boxB.max.z,boxB.min.z-boxA.max.z,0));});
+assert.ok(Math.max(...gaps)-Math.min(...gaps)>10&&Math.min(...gaps)>=3,`the gaps between wrecks are uneven (${gaps.map(gap=>gap.toFixed(0)).join(', ')} m) and no two touch`);
+const boxDistance=(x,z,solid)=>Math.hypot(Math.max(Math.abs(x-solid.center[0])-solid.size[0]/2,0),Math.max(Math.abs(z-solid.center[2])-solid.size[2]/2,0));
+const lineDistance=(line,solid)=>{let closest=Infinity;for(let index=0;index<line.length-1;index++){
+  const [ax,az]=line[index],[bx,bz]=line[index+1],length=Math.hypot(bx-ax,bz-az);
+  for(let metres=0;metres<=length;metres+=.5)closest=Math.min(closest,boxDistance(ax+(bx-ax)*metres/length,az+(bz-az)*metres/length,solid));}return closest;};
+const roads={boneyardRoad:GAS_RUN_PATHS.boneyard.map(place=>[place.position.x,place.position.z]),longRoad:GAS_RUN_PATHS.long.map(place=>[place.position.x,place.position.z]),
+  furnacePath:EVERBURN_JOBS[5].steps[1].path.map(place=>[(place.position??place).x,(place.position??place).z])};
+for(const wreck of BONEYARD_WRECKS){
+  const solid=SCABLANDS_SOLIDS.find(row=>row.id===`boneyard-wreck-${wreck.id}`);
+  for(const [name,line] of Object.entries(roads))assert.ok(lineDistance(line,solid)>=8,`${wreck.part} keeps 8 m from the ${name} (${lineDistance(line,solid).toFixed(1)} m)`);
+  const bessBox=footprints.get(wreck.id);
+  assert.ok(Math.hypot(Math.max(bessBox.min.x-BESS_REST.x,BESS_REST.x-bessBox.max.x,0),Math.max(bessBox.min.z-BESS_REST.z,BESS_REST.z-bessBox.max.z,0))>=5,`Big Bess's resting place is 5 m clear of the ${wreck.part}`);
+}
+wreckScene.dispose();
 console.log('Scablands scene: place art, coarse horizon, shared ground, landmark visibility and all solid collision boxes pass.');
