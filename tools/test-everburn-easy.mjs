@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
+import {GAS_RUN_ROADS, gasRunJob} from '../src/world/jobs/gas-run.js';
 
 const DT = 1 / 120, MAX_SECONDS = 720;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
@@ -235,3 +236,21 @@ for (const entry of results) if (entry.result) console.log(`Sample ${entry.defin
 for (const entry of results) if ('finishes' in entry)
   assert(entry.finishes >= 8, `${entry.definition.name}: ${entry.finishes}/10 finished; expected at least 8/10`);
 console.log('Everburn Easy driver: all nine jobs finished through real Duel inputs');
+
+// RUN-GAS: the same child-pace driver brings a gas run home on each road at each word of the feud, 8 times in 10 at least.
+// The run count is the try's number, so each try has its own ambush places.
+const FEUD_WORDS = ['Watching', 'Raiding', 'Hunting', 'War party'];
+const runWins = {};
+for (const road of GAS_RUN_ROADS) for (const feud of [1, 2, 3, 4]) {
+  let wins = 0, lowest = Infinity;
+  for (let seed = 1; seed <= 10; seed++) {
+    const result = play(gasRunJob({road, feud, runs: seed - 1, difficulty: 'easy'}), seed);
+    if (result.won) wins++;
+    if (result.won) assert.equal(result.duel.state.arena.worldJob.settled, true);
+    lowest = Math.min(lowest, result.duel.state.arena.worldJob.actors.find(actor => actor.id === 'big-bess')?.health ?? Infinity);
+  }
+  runWins[`${road} / ${FEUD_WORDS[feud - 1]}`] = wins;
+  console.log(`Gas run, ${road} road, ${FEUD_WORDS[feud - 1]}: ${wins}/10 brought home (Big Bess's lowest health on arrival ${lowest.toFixed(0)})`);
+}
+for (const [name, wins] of Object.entries(runWins)) assert(wins >= 8, `Gas run ${name}: ${wins}/10 brought home; expected at least 8/10`);
+console.log('Everburn Easy driver: both gas roads at all four feud words brought home through real Duel inputs');
