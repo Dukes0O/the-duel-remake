@@ -267,6 +267,11 @@ const FURNACE_DOORS=Object.freeze({left:{x:2.0,y:2.26,z:-1,out:{x:1,z:0}},right:
   rear:{x:0,y:2.22,z:-4.1,out:{x:0,z:-1}}});
 const DOOR_FLAMES=Object.freeze([['left',2.15,-1.45],['left',2.15,-.55],['right',-2.15,-1.45],['right',-2.15,-.55],['rear',-.45,-4.3],['rear',.45,-4.3]]);
 const SMOKE_PUFFS=14;
+// The doors in the order they break, and the furnace as the dead wreck a Boneyard run shows once the battle is won
+// (FIELD-BATTLE-ASH): all three doors broken, no fire, and a thin plume.
+const FURNACE_DOOR_ORDER=Object.freeze(['left','right','rear']);
+const WRECKED_FURNACE=Object.freeze({dead:true,phase:'dead',hits:3});
+const THIN_SMOKE=.3;
 function addFurnaceFire(parent,place,scale=1.5){
   const effects=new THREE.Group();effects.name="Old Smoke's furnace fire and chimney smoke";
   const flame=createFlameMaterial(),soot=createSmokeMaterial(0x302c28),card=new THREE.PlaneGeometry(1,1);
@@ -293,6 +298,8 @@ function addFurnaceFire(parent,place,scale=1.5){
   shade.rotation.x=-Math.PI/2;shade.position.set(0,.1,1);shade.scale.set(7.6,14,1);effects.add(shade);
   parent.add(effects);
   const fire={effects,flames,smoke,sparks,glow,flame,glowMaterial,chimneyX:chimney.x,chimneyY:chimney.y,chimneyZ:chimney.z,glowingDoor:null,
+    // How full the plume is: 1, or thin once the furnace is dead (FIELD-BATTLE-ASH).
+    density:1,
     // The plume rises and spreads, and leans back as the furnace gathers speed (`drift`, metres a second).
     placeSmoke(seconds,drift=0){
       smoke.forEach((puff,index)=>{
@@ -300,7 +307,7 @@ function addFurnaceFire(parent,place,scale=1.5){
         puff.position.set(chimney.x+Math.sin(seconds*.31+index*2.4)*2.4*age,chimney.y+age*(24-Math.min(drift,30)*.45),
           chimney.z+Math.cos(seconds*.27+index*1.7)*1.6*age-Math.min(drift,30)*age*1.1);
         puff.scale.setScalar(2.4+age*11);
-        puff.userData.fade=Math.min(1,age/.05)*Math.pow(1-age,1.3)*.85;
+        puff.userData.fade=Math.min(1,age/.05)*Math.pow(1-age,1.3)*.85*fire.density;
       });
     }};
   fire.placeSmoke(0);
@@ -569,8 +576,13 @@ export function createScablandsScene(course,options={}){
     },
     sync(state){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
-      const chasing=worldJob?.definition?.storyId==='everburn'&&worldJob.job?.steps?.[worldJob.job.stepIndex]?.kind==='chase';
+      const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
+      // The furnace follows its actor in Old Smoke's chase and in the battle on the Boneyard road (FIELD-BATTLE-ASH), where it stays
+      // where it stopped or turned away when the job is over.
+      const chasing=worldJob?.definition?.storyId==='everburn'&&(stepNow?.kind==='chase'||worldJob.definition.battle===true);
       const actor=chasing?worldJob.actors?.find(item=>item.id==='old-smoke-furnace'):null;
+      // After the battle is won, a Boneyard run shows the dead furnace as a wreck at the place the run's definition names.
+      const wreck=!actor&&worldJob?.definition?.run===true?worldJob.definition.wreck??null:null;
       if(furnaceRig&&furnaceModel&&furnacePlace){
         // In jobs 1, 3 and 4 the furnace is seen before it is fought: drawn where the job's own state and clock put it
         // (src/world/jobs/furnace-sightings.js), with no actor behind it. Otherwise it stands in the Everburn or follows the chase.
@@ -578,6 +590,9 @@ export function createScablandsScene(course,options={}){
         if(sighting&&!sighting.hidden){
           furnaceRig.position.set(sighting.x,scablandsSurfaceHeightAt(sighting.x,sighting.z),sighting.z);
           furnaceRig.rotation.y=sighting.heading;
+        }else if(wreck){
+          furnaceRig.position.set(wreck.x,scablandsSurfaceHeightAt(wreck.x,wreck.z),wreck.z);
+          furnaceRig.rotation.y=wreck.heading;
         }else placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
         furnaceRig.visible=!sighting?.hidden;
         furnaceModel.position.x=0;
@@ -595,15 +610,22 @@ export function createScablandsScene(course,options={}){
       gateFire.effects.visible=burning;
       // The fire stands on the gate itself, from the ground up, wherever the job's path stops in front of it.
       if(burning)gateFire.effects.position.set(tinTownGate.position.x,scablandsSurfaceHeightAt(tinTownGate.position.x,tinTownGate.position.z),tinTownGate.position.z);
-      const furnace=actor?.furnace;
-      furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
+      const furnace=actor?.furnace??(wreck?WRECKED_FURNACE:null);
+      // A door is gone (its two shields off, its door scorched) once it has been broken. The battle's furnace comes out already
+      // hurt: its definition names the doors drawn that way from the start (drawing only; the rules do not read it), also while it
+      // still stands by the well waiting to come out.
+      const hurtDoors=furnace?.battle?.hurtAtStart??stepNow?.furnaceActor?.battle?.hurtAtStart??[];
+      const doorGone=index=>index<(furnace?.hits??0)||hurtDoors.includes(FURNACE_DOOR_ORDER[index]);
+      furnacePlates.forEach((plate,index)=>{plate.visible=index>>1>2||!doorGone(index>>1);});
       // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.
-      ['left','right','rear'].forEach((door,index)=>{const spot=FURNACE_DOORS[door],broken=(furnace?.hits??0)>index;
+      FURNACE_DOOR_ORDER.forEach((door,index)=>{const spot=FURNACE_DOORS[door],broken=doorGone(index);
         furnaceWear.uniforms.uScrapSoot.value[index].set(spot.x,broken?spot.y+.3:-99,spot.z,broken?2.7:.01);});
+      // A dead furnace burns no more: its door fire is out and only thin smoke rises.
+      if(furnaceEffects)furnaceEffects.density=furnace?.dead===true||furnace?.phase==='dead'?THIN_SMOKE:1;
       const sootMaterial=furnaceEffects?.smoke[0]?.material;
       if(sootMaterial){
         // The smoke is grey, turns orange through the 4-second stoke, and is blacker after each hit.
-        sootMaterial.color.copy(SOOT_GREY).lerp(SOOT_BLACK,(furnace?.hits??0)/OLD_SMOKE.hitsToWin);
+        sootMaterial.color.copy(SOOT_GREY).lerp(SOOT_BLACK,FURNACE_DOOR_ORDER.filter((_,index)=>doorGone(index)).length/OLD_SMOKE.hitsToWin);
         if(furnace?.phase==='stoke')sootMaterial.color.lerp(SOOT_ORANGE,Math.min(1,furnace.phaseSec/OLD_SMOKE.stokeSec));
       }
       const glowingDoor=actor&&furnace?furnaceGlowingDoor(furnace):null;

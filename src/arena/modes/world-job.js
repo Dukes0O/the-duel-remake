@@ -4,7 +4,7 @@ import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
-  furnaceNextDoor} from '../../world/jobs/old-smoke.js';
+  furnaceNextDoor, furnaceFallBack} from '../../world/jobs/old-smoke.js';
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
@@ -126,7 +126,12 @@ export function prepareWorldJobControls(duel) {
 
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
-  const actorDef = step?.actor;
+  updateJobActor(duel, worldJob, step?.actor, dt);
+  // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
+  if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
+}
+
+function updateJobActor(duel, worldJob, actorDef, dt) {
   if (!actorDef) return;
   let actor = worldJob.actors.find(item => item.id === actorDef.id);
   if (!actor) {
@@ -210,8 +215,29 @@ function shoveCar(duel, shove) {
     spin: 0, severity: 'knocked', heading: pose.heading, player: true, arenaShove: true});
 }
 
+// FIELD-BATTLE-ASH: what the battle's furnace says and sounds. Existing cues only: the story's stoke, door and hit cues, and the
+// fire cue (the one the gate's flame uses) when cinders land on Big Bess. The riders' warning is the ambush's own (spawnAmbush).
+const BATTLE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch', doorSlam: 'vehicle.landing', hit: 'combat.hit-confirm',
+  cindersLand: 'weapon.flame.start'});
+const BATTLE_LINES = Object.freeze({comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2', cinders: 'story.ember.moss.12',
+  dead: 'story.ember.cinder.25'});
+
+function handleBattleEvent(duel, worldJob, actor, event) {
+  const furnace = actor.furnace;
+  logFurnace(duel, worldJob, event);
+  const cue = BATTLE_CUES[event.type];
+  if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
+  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._callout(FURNACE_ARROWS[event.door] ?? '', event.seconds);
+  else if (event.type === 'comesOut') duel._callout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
+  // A door that is not the last: Clinker. The last door ends the furnace, and the line for that is the one for its death.
+  else if (event.type === 'hit' && event.hit < furnace.battle.doorsToStop) duel._callout(captionFor(worldJob, BATTLE_LINES.door), 2.6);
+  else if (event.type === 'dead') { worldJob.furnaceDied = true; duel._callout(captionFor(worldJob, BATTLE_LINES.dead), 3); }
+  else if (event.type === 'cindersLand' && !worldJob.cindersSaid) { worldJob.cindersSaid = true; duel._callout(captionFor(worldJob, BATTLE_LINES.cinders), 2.6); }
+}
+
 function handleFurnaceEvent(duel, worldJob, actor, event) {
   const furnace = actor.furnace;
+  if (furnace.battle) { handleBattleEvent(duel, worldJob, actor, event); return furnace; }
   logFurnace(duel, worldJob, event);
   const cue = FURNACE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
@@ -245,18 +271,24 @@ function restartFurnace(duel, worldJob, actor, actorDef, reason) {
     'WRECKED. THE CHASE STARTS OVER.', 3);
 }
 
-function stepFurnaceActor(duel, worldJob, actor, actorDef, dt) {
+// `escort` is given only for the battle's furnace: {metres, x, z, arrived, actor}, where the escorted truck is on her road.
+function stepFurnaceActor(duel, worldJob, actor, actorDef, dt, escort = null) {
   const state = duel.state, wrecked = state.combatWrecking === true;
   let furnace = actor.furnace;
-  if (!furnace.won && wrecked) { furnace.holding = true; return; }
-  if (furnace.holding) {
-    restartFurnace(duel, worldJob, actor, actorDef, 'wrecked');
-    return;
+  // Old Smoke's chase starts over when the player is wrecked; the battle's furnace goes on without the player.
+  if (!furnace.battle) {
+    if (!furnace.won && wrecked) { furnace.holding = true; return; }
+    if (furnace.holding) {
+      restartFurnace(duel, worldJob, actor, actorDef, 'wrecked');
+      return;
+    }
   }
   const carAt = position(duel, state);
   const car = state.onFoot || wrecked ? null : {x: carAt.x, y: carAt.y, z: carAt.z};
-  const out = stepFurnace(furnace, dt, {car});
+  const out = stepFurnace(furnace, dt, {car, escort});
   syncFurnaceActor(actor);
+  // Cinders on the escorted truck (the battle's furnace only): health off Big Bess, never below nothing.
+  if (out.escortBurn > 0 && escort?.actor?.health > 0) escort.actor.health = Math.max(0, escort.actor.health - out.escortBurn);
   for (const event of out.events) handleFurnaceEvent(duel, worldJob, actor, event);
   if (furnace.escaped) { restartFurnace(duel, worldJob, actor, actorDef, 'escaped'); return; }
   if (out.armor > 0) furnaceHurts(duel, furnace, out.armor);
@@ -266,6 +298,23 @@ function stepFurnaceActor(duel, worldJob, actor, actorDef, dt) {
   }
   if (out.speedCapMph !== null && state.speedMph > out.speedCapMph)
     state.speedMph = Math.max(out.speedCapMph, state.speedMph - OLD_SMOKE.cinder.easySlowMphPerSec * dt);
+}
+
+// FIELD-BATTLE-ASH: the patched furnace comes out behind the escorted truck when she passes the place its definition names,
+// and from then on follows the rules of old-smoke.js as the battle's furnace (`battle` on its definition).
+function updateBattleFurnace(duel, worldJob, step, dt) {
+  const def = step.furnaceActor, bess = worldJob.actors.find(item => item.id === step.actorId);
+  if (!def || !bess?.position) return;
+  const metres = pathShare(bess.position, bess.pathIndex, step.path).metres;
+  let actor = worldJob.actors.find(item => item.id === def.id);
+  if (!actor) {
+    if (metres < def.battle.comesOutAtMetres - .5) return;
+    actor = {id: def.id, position: {x: 0, y: 0, z: 0}, health: def.health ?? 3, pathProgress: 0, speed: 0, renderCar: null,
+      startedAtSec: worldJob.clockSec ?? 0, furnace: createFurnace(def, duel.state.cpuDifficulty)};
+    syncFurnaceActor(actor);
+    worldJob.actors.push(actor);
+  }
+  stepFurnaceActor(duel, worldJob, actor, def, dt, {metres, x: bess.position.x, z: bess.position.z, arrived: bess.atDestination === true, actor: bess});
 }
 
 function spawnWave(duel, worldJob, request, key) {
@@ -363,6 +412,13 @@ function runDownRaiders(duel, worldJob, car) {
     if (Math.hypot(raider.x - car.x, raider.z - car.z) <= AMBUSH_RUN_DOWN_METRES)
       damageRaider(duel, raider, raider.health, {source: 'car', owner: 'player'});
   }
+}
+
+// FIELD-BATTLE-ASH: the battle is over. It pays its four shares only when it was won; Big Bess arriving with the furnace still
+// rolling pays the shares the definition names for that (the Boneyard road's own). The settlement reads `shares` from the definition.
+function settleBattle(worldJob) {
+  worldJob.battleEnding ??= worldJob.actors.some(actor => actor.furnace?.dead === true) ? 'won' : 'arrived';
+  if (worldJob.battleEnding !== 'won') worldJob.definition = {...worldJob.definition, shares: worldJob.definition.arrivedShares};
 }
 
 function applyRequests(duel, worldJob, requests) {
@@ -520,6 +576,8 @@ export function stepWorldJob(duel, dt) {
   worldJob.job = next;
   // The moment a step began its closing lines: the scene times the furnace's sighting after Job 3's catch from it.
   if (next.stepState.linesClosing && !Number.isFinite(worldJob.wonAtSec)) worldJob.wonAtSec = worldJob.clockSec;
+  // FIELD-BATTLE-ASH: how the battle ended, fixed by the escort step the moment Big Bess arrived ('won' or 'arrived').
+  if (next.stepState.ending) worldJob.battleEnding = next.stepState.ending;
   state.worldJobThingsHit = [];
   moveJobRaiders(worldJob, dt);
   updateJobActors(duel, worldJob, dt);
@@ -551,6 +609,9 @@ export function stepWorldJob(duel, dt) {
         truck.health = Math.max(truck.stretchHealth ?? 0, REST_HEALTH_MINIMUM);
         truck.stretchHealth = truck.health;
         truck.reachedEnd = false; truck.atDestination = false;
+        // The battle's furnace falls back to where it came out, behind her, and keeps its broken doors.
+        const hunter = worldJob.actors.find(actor => actor.furnace?.battle);
+        if (hunter) furnaceFallBack(hunter.furnace, pathShare(truck.position, truck.pathIndex, path).metres);
       }
     }
     if (event.type === 'waveCleared') worldJob.clearedWaves.push(event.wave);
@@ -567,6 +628,7 @@ export function stepWorldJob(duel, dt) {
     }
     if (event.type === 'done') {
       worldJob.settled = true;
+      if (worldJob.definition.battle === true) settleBattle(worldJob);
       state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
       if (worldJob.originalCrewId) state.crewId = worldJob.originalCrewId;
       if (worldJob.originalFootWeaponSelected && state.footWeapons)

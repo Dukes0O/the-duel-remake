@@ -524,7 +524,9 @@ function runUntil(duel, condition, seconds = 90) {
   // The wall with the run on: the entry, the feud's sentence and two buttons with their pay.
   const sentences = ['The Ash Men are watching the Boneyard road.', 'The Ash Men are raiding the Boneyard road.', 'The Ash Men are hunting Big Bess.', 'The Ash Men have gathered a war party.'];
   for (const [feud, sentence] of sentences.map((text, index) => [index + 1, text])) {
-    const app = yard({extra: {feud, runs: 3}}); app.cpuDifficulty = 'easy';
+    // FIELD-BATTLE-ASH: at War party with the furnace alive the wall and the Boneyard button are the battle's (tools/test-field-battle.mjs).
+    // This loop is the ordinary run's wall, so at War party it is the one with the furnace already dead; every assertion is as it was.
+    const app = yard({extra: {feud, runs: 3, ...(feud === 4 ? {furnaceDead: true} : {})}}); app.cpuDifficulty = 'easy';
     const wall = wallOf(app);
     check(wall.includes('GAS RUN') && wall.includes(sentence), `feud ${feud}: the wall says "${sentence}"`);
     same((wall.match(/data-ember-run="/g) || []).length, 2, `feud ${feud}: two road buttons`);
@@ -556,7 +558,8 @@ function runUntil(duel, condition, seconds = 90) {
 
   // Arriving pays the shares, moves the feud, counts the run; leaving or failing changes nothing.
   for (const [road, feud, runs, after, share] of [['boneyard', 2, 0, 3, 2], ['long', 3, 4, 2, 1], ['boneyard', 4, 1, 4, 2], ['long', 1, 0, 1, 1]]) {
-    const app = yard({extra: {feud, runs}}), scrap = app.profile.wasteland.scrap, factor = {easy: 1, medium: 1.2, hard: 1.4}[app.cpuDifficulty];
+    // FIELD-BATTLE-ASH: a Boneyard run from War party is the battle while the furnace lives; this is the ordinary run, so the furnace is dead.
+    const app = yard({extra: {feud, runs, ...(feud === 4 ? {furnaceDead: true} : {})}}), scrap = app.profile.wasteland.scrap, factor = {easy: 1, medium: 1.2, hard: 1.4}[app.cpuDifficulty];
     check(app.gasRun(road), `${road} from feud ${feud}: starts`);
     const result = finish(app);
     same(result.settlementSaved, true, `${road} from feud ${feud}: the arrival settles`);

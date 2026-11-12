@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
-import {furnaceDoorSpot, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
-import {GAS_RUN_ROADS, gasRunJob} from '../src/world/jobs/gas-run.js';
+import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
+import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
 
 const DT = 1 / 120, MAX_SECONDS = 720;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
@@ -96,7 +96,7 @@ function driveFurnace(duel, actor) {
   }
   const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
   const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0)));
-  const furnaceMph = furnaceSpeed(f.difficulty, f.hits) * 2.236936;
+  const furnaceMph = (f.battle ? furnacePace(f) : furnaceSpeed(f.difficulty, f.hits)) * 2.236936;
   const want = clamp(furnaceMph + gap * 1.5, 0, furnaceMph + 40), speed = state.speedMph || 0;
   const limit = Math.abs(turn) > 1.2 ? Math.min(want, 25) : want;
   duel.setInput({throttle: speed < limit ? 1 : 0, brake: speed > limit + 3 ? 1 : 0,
@@ -146,12 +146,21 @@ function playerInput(duel) {
     }
     return;
   }
-  const furnaceActor = step.kind === 'chase' ? worldJob.actors.find(actor => actor.furnace) : null;
+  // FIELD-BATTLE-ASH: in the battle on the Boneyard road the driver also goes for the furnace that hunts Big Bess, the way it does in
+  // job 6, until the furnace is dead; before it comes out the driver stays with Big Bess, and once she has arrived it drives to Tin Town.
+  const hunter = step.furnaceActor ? worldJob.actors.find(actor => actor.furnace && !actor.furnace.dead) : null;
+  const furnaceActor = step.kind === 'chase' ? worldJob.actors.find(actor => actor.furnace) : hunter;
+  const bess = step.furnaceActor ? worldJob.actors.find(actor => actor.id === step.actorId) : null;
   if (furnaceActor && !state.onFoot) driveFurnace(duel, furnaceActor);
+  else if (step.furnaceActor && bess && !state.onFoot && !bess.atDestination && !worldJob.actors.some(actor => actor.furnace)) {
+    const car = duel.course.groundAt(state.s, state.lateral), gap = Math.hypot(bess.position.x - car.x, bess.position.z - car.z);
+    if (gap < 25) duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false, interact: false});
+    else moveTowardMarker(duel, bess.position);
+  }
   else moveTowardMarker(duel, target);
   if (!state.onFoot) {
     // Player weapon inputs use the ordinary weapon API. Shots resolve in Duel.step.
-    if (step.kind === 'chase') {
+    if (step.kind === 'chase' || hunter) {
       const weapon = worldJob.activeLoan || state.weaponLoadout?.[0];
       if (weapon) duel.fireWeapon(weapon);
     }
@@ -254,3 +263,21 @@ for (const road of GAS_RUN_ROADS) for (const feud of [1, 2, 3, 4]) {
 }
 for (const [name, wins] of Object.entries(runWins)) assert(wins >= 8, `Gas run ${name}: ${wins}/10 brought home; expected at least 8/10`);
 console.log('Everburn Easy driver: both gas roads at all four feud words brought home through real Duel inputs');
+
+// FIELD-BATTLE-ASH: the same child-pace driver in the battle on the Boneyard road, taught (as in job 6) to ram the furnace's glowing
+// door: Big Bess gets home 10 times in 10 and the battle is won 8 times in 10 at least. The run count is the try's number.
+{
+  let home = 0, won = 0, lowest = Infinity, doors = 0, longest = 0;
+  for (let seed = 1; seed <= 10; seed++) {
+    const result = play(fieldBattleJob({runs: seed - 1, difficulty: 'easy'}), seed), worldJob = result.duel.state.arena.worldJob;
+    if (result.won) home++;
+    if (worldJob.battleEnding === 'won') won++;
+    lowest = Math.min(lowest, worldJob.actors.find(actor => actor.id === 'big-bess')?.health ?? Infinity);
+    doors += worldJob.actors.find(actor => actor.furnace)?.furnace.hits ?? 0;
+    longest = Math.max(longest, result.seconds);
+  }
+  console.log(`Battle on the Boneyard road, Easy: Big Bess home ${home}/10, battle won ${won}/10 (doors broken ${doors} in all, Big Bess's lowest health ${lowest.toFixed(0)}, longest ${longest.toFixed(0)} s)`);
+  assert.equal(home, 10, `Battle, Easy: Big Bess home ${home}/10; expected 10`);
+  assert(won >= 8, `Battle, Easy: the battle won ${won}/10; expected at least 8/10`);
+  console.log('Everburn Easy driver: the battle on the Boneyard road, Big Bess home every time and the furnace stopped through real Duel inputs');
+}

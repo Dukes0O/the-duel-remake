@@ -59,6 +59,15 @@ export const EMBER_CAPTIONS = Object.freeze({
   'story.ember.moss.9': line('Moss', 'A run arrives with Bess under 70 health', 'We are here, and most of the gas is too. That will do.'),
   'story.ember.moss.10': line('Moss', 'An ambush gives up', 'They have had enough of waiting. Go, go, go.'),
   'story.ember.auntie-solder.9': line('Auntie Solder', 'The feud reaches War party', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'),
+  // FIELD-BATTLE-ASH (docs/board/cards/FIELD-BATTLE-ASH.md): the battle on the Boneyard road at War party. Clinker is Old Smoke's
+  // stoker, who drives the patched furnace.
+  'story.ember.moss.11': line('Moss', 'The battle starts', 'That is his furnace on the road behind us. Somebody pulled it out of the well.'),
+  'story.ember.clinker.1': line('Clinker', 'The furnace comes out', 'You put him in the well. I am putting you in the ground.'),
+  'story.ember.clinker.2': line('Clinker', 'A door breaks', 'That door was the last thing he made. You will pay for that door.'),
+  'story.ember.moss.12': line('Moss', 'Cinders land on Big Bess', 'It is throwing fire on the tank! Get it off us!'),
+  'story.ember.cinder.25': line('Cinder', 'The furnace dies', 'That is the last of his fire, and it went out on a road. Bring the gas home.'),
+  'story.ember.auntie-solder.10': line('Auntie Solder', 'Big Bess arrives with the furnace still rolling', 'The gas is in and the gate is shut. That thing will be back. Next time, finish it.'),
+  'story.ember.auntie-solder.11': line('Auntie Solder', 'The battle is won', 'No more toll on the Boneyard road. Tin Town owes you a supper.'),
 });
 
 export const EMBER_LINE_IDS = Object.freeze([...Object.keys(EMBER_CAPTIONS), EMBER_NOTE_ID]);

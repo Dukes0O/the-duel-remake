@@ -74,9 +74,9 @@ import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUn
 import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
-import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
+import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
 import {EVERBURN_JOBS} from './world/jobs/everburn.js';
-import {GAS_RUN_ROADS, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
+import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
 import {settleWarlordResult} from './arena/warlord-settlement.js';
@@ -674,7 +674,7 @@ export class App {
       // RUN-GAS: the gas run's entry needs its own switch as well as the Everburn's, and the sixth job won.
       const runs=this._switches().enabled('scablands-runs')===true;
       return emberStoryProps(this.profile,{available:this._switches().enabled('story-everburn')===true&&this.wastelandUnlocked(),runs,
-        runPay:runs?Object.fromEntries(GAS_RUN_ROADS.map(road=>[road,gasRunPay(road,this.cpuDifficulty)])):{}});
+        runPay:runs?{...Object.fromEntries(GAS_RUN_ROADS.map(road=>[road,gasRunPay(road,this.cpuDifficulty)])),battle:fieldBattlePay(this.cpuDifficulty)}:{}});
     }
     const none={available:false,step:null,read:false,steps:[],fireClosed:null,skylineOwned:false,lead:''};
     if(!this._storyAvailable())return none;
@@ -804,8 +804,12 @@ export class App {
   // A road button on the Story Wall's gas run: Big Bess drives from the well to Tin Town by that road ('long' or 'boneyard').
   gasRun(road){
     if(!this.gasRunAvailable()||!GAS_RUN_ROADS.includes(road))return false;
-    return this.startArenaEvent({venueId:'scablands',mode:'world-job',
-      job:gasRunJob({road,feud:emberFeud(this.profile),runs:emberRuns(this.profile),difficulty:this.cpuDifficulty})});
+    // FIELD-BATTLE-ASH: at War party, while the furnace is alive, the Boneyard road is the battle (four shares), not an ordinary run.
+    // Once the furnace is dead a Boneyard run is the ordinary run again, with the wreck on the road.
+    const runs=emberRuns(this.profile),difficulty=this.cpuDifficulty;
+    const job=road==='boneyard'&&emberBattleOpen(this.profile)?fieldBattleJob({runs,difficulty}):
+      gasRunJob({road,feud:emberFeud(this.profile),runs,difficulty,furnaceDead:emberFurnaceDead(this.profile)});
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',job});
   }
   // Another mode or venue picked in the yard's Scrapdome panel cancels a story game.
   waterArenaChoice(choice){this._water?.arenaChoice(choice);}
@@ -1475,9 +1479,13 @@ export class App {
     const runDefinition=state.arena.mode==='world-job'?state.arena.worldJob?.definition:null;
     if(state.arena.mode==='world-job'&&result.winnerId==='player'&&isGasRun(runDefinition)){
       // RUN-GAS: an arrived run moves the feud one step and counts one run. A run that is left or not finished writes nothing.
-      const arrived=this.gasRunAvailable()?applyArrivedRun(awardedProfile,runDefinition.road):null;
+      // FIELD-BATTLE-ASH: the battle on the Boneyard road writes by how it ended: 'won' (the furnace is dead) or 'arrived' (Big
+      // Bess is home with the furnace still rolling).
+      const battle=runDefinition.battle===true,ending=state.arena.worldJob?.battleEnding;
+      const arrived=this.gasRunAvailable()?(battle?applyBattleEnding(awardedProfile,ending):applyArrivedRun(awardedProfile,runDefinition.road)):null;
       if(arrived?.ok){awardedProfile=arrived.profile;result.won=true;
-        result.gasRun={road:runDefinition.road,feud:arrived.feudAfter,word:emberFeudWord(arrived.feudAfter),runs:arrived.runs,reachedWarParty:arrived.reachedWarParty};}
+        result.gasRun={road:runDefinition.road,feud:arrived.feudAfter,word:emberFeudWord(arrived.feudAfter),runs:arrived.runs,reachedWarParty:arrived.reachedWarParty===true,
+          ...(battle?{battle:ending}:{})};}
     }
     else if(state.arena.mode==='world-job'&&result.winnerId==='player'&&state.arena.worldJob?.definition?.storyId==='everburn'){
       const id=EMBER_JOBS[state.arena.worldJob.definition.number-1],marked=markEmberJob(awardedProfile,id);

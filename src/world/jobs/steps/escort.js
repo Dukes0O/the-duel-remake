@@ -94,7 +94,9 @@ export function stepEscort(step, state, view, dt = 0) {
     let gaveUpNow = false;
     for (const ambush of step.ambushes ?? []) {
       const where = alongPath(step.path, ambush.place).metres, wasSpawned = (state.spawned ?? []).includes(ambush.id), wasGone = (state.gone ?? []).includes(ambush.id);
-      if (giveUp && where <= to + 1e-6 && !wasGone) {
+      // In the battle (a step with a furnace) the furnace can finish her after she has passed an ambush, so an ambush on this
+      // stretch that she had already passed gives up too; without that she would meet it again on every restart for ever.
+      if (giveUp && where <= to + 1e-6 && (!wasGone || step.furnaceActor && where >= from - 1e-6)) {
         if (wasSpawned) requests.push({type: 'clearWave', key: `ambush:${ambush.id}`});
         spawned.push(ambush.id); gone.push(ambush.id); gaveUpNow = true;
       } else if (where < from - 1e-6 && wasSpawned) { spawned.push(ambush.id); if (wasGone) gone.push(ambush.id); }
@@ -111,6 +113,15 @@ export function stepEscort(step, state, view, dt = 0) {
   const complete = truck.atDestination === true || (truck.atDestination === undefined && truck.pathProgress >= 1);
   // A step with `arrival` closes with Moss's line for how Big Bess comes in (whole or hurt), then any extra lines it names.
   const arrival = complete ? step.arrival : null;
-  const closingLines = arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
-  return { state: {...state, ...ambushState}, complete, requests, ...(closingLines ? {closingLines} : {}) };
+  // FIELD-BATTLE-ASH: the battle closes on Auntie Solder's line for how it ended, as the step saw it the moment Big Bess arrived:
+  // the furnace dead ('won') or still rolling ('arrived'). The ending is kept in the step's state so that a door broken while the
+  // line plays cannot change it.
+  let ending = state.ending ?? null;
+  if (arrival?.battle) {
+    const furnace = actors.find(actor => actor.id === arrival.battle.furnaceId);
+    ending ??= furnace && (furnace.health ?? 1) <= 0 ? 'won' : 'arrived';
+  }
+  const closingLines = arrival?.battle ? [...(ending === 'won' ? arrival.battle.wonLineIds : arrival.battle.arrivedLineIds)] :
+    arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
+  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, ...(closingLines ? {closingLines} : {}) };
 }

@@ -5,7 +5,7 @@ import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {EMBER_CAPTIONS} from './story/ember-lines.js';
 import {EVERBURN_JOBS} from './world/jobs/everburn.js';
-import {emberFeudSentence} from './story/ember-road.js';
+import {EMBER_BATTLE_RESULTS, emberFeudSentence} from './story/ember-road.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
 
@@ -223,7 +223,8 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const run = job?.run === true && won ? result.gasRun : null;
     const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
     const storyLine = lineId ? EMBER_CAPTIONS[lineId]?.text : null;
-    const description = run ? `Big Bess is in Tin Town. ${emberFeudSentence(run.feud)}` : won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
+    // FIELD-BATTLE-ASH: the battle's result says in one sentence which ending it was.
+    const description = run ? (run.battle ? EMBER_BATTLE_RESULTS[run.battle] : `Big Bess is in Tin Town. ${emberFeudSentence(run.feud)}`) : won ? (storyLine || job?.resultLine || `${job?.name ?? 'The job'} is done. You made it back to the yard.`) :
       (String(result.reason).includes('quit') ? 'You left the job unfinished.' : 'The job is unfinished. Nothing was lost.');
     const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
