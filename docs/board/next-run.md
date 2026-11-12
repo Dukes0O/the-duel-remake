@@ -13,6 +13,21 @@ This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's 
 - **Codex:** photos and painted pictures with its image tool, long runs, the nightly full check, and its ready cards
   on the board. No new Blender art card starts until Claude's list of code-drawn work is on the board.
 
+## Where the afternoon run stopped (12 November, 14:50, paused for quota until after 16:40)
+
+- **On integration:** Codex's Everburn work (QA-EVERBURN-SCREENS: the story's written lines are shown, every
+  Scablands job draws its own ground on the map, job 6 starts outside the derrick). Checked and built.
+- **On branch `c/game-audit-experience-2d694d` only, not on integration:** the wide board on Fuel, Wax, Launch and
+  Projectile (LAB-LOOK rounds 11 and 12, judged and accepted) and SCABLANDS-LAND round 3 (seven fixes to the well,
+  the Dead Mall and the Boneyard, judged and accepted). Lane tier 71 of 72 (the one is the town timing test, which
+  passes alone), build, and 28 of 29 browser checks on the combined branch.
+- **What holds the branch back:** the `everburn` browser check throws an error on it every time (card
+  SCABLANDS-LAND, "Open fault"). First job on resuming: find the cause, fix it in the game, rerun `everburn` three
+  times and the 24 Lab checks once (Launch and Projectile merged after the combined run), then fast-forward
+  integration.
+- **Then:** play the Everburn end to end by script on Medium with pictures; LAB-LOOK round 13 (the physics panel);
+  SCABLANDS-LAND's next round.
+
 ## Now, in this order
 
 | Work | Card | Where it stands |

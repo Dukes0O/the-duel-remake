@@ -162,6 +162,16 @@ has none. Each follows a thing this round removed or moved by design; nothing is
 Next round (not started): a redder flame core seen close, a boarded front and a sign on the mall's road side, larger
 things beside the well, stand-ins beyond 280 m that look like the place, and the three items left out above.
 
+## Open fault, found when the round 3 fixes met Codex's Everburn work (12 November 2026, paused at 14:50)
+
+On branch `c/game-audit-experience-2d694d` the `everburn` browser check fails every time, alone, with "Cannot read
+properties of undefined (reading 'isReady')" inside three's `compileAsync` poll. It passes on integration at
+62065711b, which has Codex's work without the round 3 fixes. The check starts job 1 and leaves for the Story Wall at
+once. Claude's guess, not confirmed: something is released, or never compiled, while the warm-up's poll is still
+running (`src/render-warmup.js`), and the well's new shader materials make the warm-up long enough to show it. A
+helper was looking for the cause and was stopped for the pause before it reported. **Until this is fixed in the
+game, the branch does not go to integration.** The fix must not be to make the check wait.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read
