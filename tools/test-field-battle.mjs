@@ -263,7 +263,7 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same([job.arrivedShares, fieldBattlePay('medium', job.arrivedShares)], [2, gasRunPay('boneyard', 'medium')], 'Big Bess arriving with the furnace still rolling pays the Boneyard road\'s own two shares');
   same(step.startLineId, 'story.ember.moss.11', 'it starts on Moss\'s line about the furnace');
   same(step.arrival.battle.wonLineIds.concat(step.arrival.battle.arrivedLineIds), ['story.ember.auntie-solder.11', 'story.ember.auntie-solder.10'], 'and ends on Auntie Solder\'s line for how it ended');
-  check(step.what.endsWith('.') && !step.what.includes('—'), 'its line on screen is a whole sentence');
+  check(step.what.endsWith('.') && !step.what.includes(String.fromCharCode(0x2014)), 'its line on screen is a whole sentence');
   same(step.furnaceActor.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'the furnace\'s doors come left, right, rear');
   same(Object.keys(FIELD_BATTLE.lines).length, 7, 'seven lines');
   check(Object.values(FIELD_BATTLE.lines).every(id => EMBER_CAPTIONS[id]), 'each has words');
