@@ -47,7 +47,9 @@ const placeAssets={
   'iron-line':[],'dry-dam':[],'ships-in-sand':[],'ridge':['kit'],
 };
 const vehiclePart={bess:'Big Bess gas truck',furnace:"Old Smoke's rolling furnace"};
-const detailCounts=Object.freeze({near:30,far:10});
+// The far ground's cells are 140 by 125 m, so that the edge of the near tiles (x = 700, z = 500) falls on a line between
+// cells and no far cell lies half under the near ground.
+const detailCounts=Object.freeze({near:30,far:Object.freeze({x:20,z:16})});
 // The model loader renames every part: a space becomes an underscore and a full stop is dropped
 // ("Furnace side armor.001" arrives as "Furnace_side_armor001"). Part names are compared in this plain form.
 const plainName=name=>String(name??'').replace(/_/g,' ');
@@ -57,15 +59,52 @@ function findPart(root,name){
 }
 
 // The far ground is a coarse copy of the same land. Where the four near tiles cover it (SCABLANDS_LAYOUT.halfWidth by
-// halfDepth) its corners drop by this much, so that it never shows through the near ground; elsewhere it is unchanged.
-const FAR_GROUND_DROP=40;
+// halfDepth) its corners drop by FAR_GROUND_DROP, and further wherever its straight slopes would still show through the
+// near ground as drawn (at the foot of the ridges the land climbs faster than a far cell can follow); elsewhere it is
+// unchanged. The far mesh itself stands .12 m below its own heights.
+const FAR_GROUND_DROP=40,FAR_GROUND_LOWER=.12,FAR_GROUND_CLEARANCE=.3;
+function lowerFarUnderNear(heights,cellsX,cellsZ,width,depth,underNear){
+  const across=cellsX+1,stepsX=6,stepsZ=15,cells=[];
+  // Where the near ground bends is along its own grid lines (23.3 m by 16.7 m), which a far cell (140 m by 125 m) holds
+  // 6 and 7.5 of, so the samples are taken at those lines: the far ground can only come through at a place where
+  // the near ground bends. The near heights are worked out once; the passes below only reread the far corners.
+  for(let iz=0;iz<cellsZ;iz++)for(let ix=0;ix<cellsX;ix++){
+    const a=iz*across+ix,b=a+1,c=a+across,d=c+1;
+    if(!(underNear[a]&&underNear[b]&&underNear[c]&&underNear[d]))continue;
+    const samples=[];
+    for(let sz=0;sz<=stepsZ;sz++)for(let sx=0;sx<=stepsX;sx++){
+      const u=sx/stepsX,v=sz/stepsZ;
+      samples.push([u,v,nearGroundHeightAt(-width/2+width*(ix+u)/cellsX,-depth/2+depth*(iz+v)/cellsZ)-FAR_GROUND_CLEARANCE+FAR_GROUND_LOWER]);
+    }
+    cells.push({a,b,c,d,samples});
+  }
+  for(let pass=0;pass<20;pass++){
+    let lowered=false;
+    for(const {a,b,c,d,samples} of cells){
+      let worst=0;
+      for(const [u,v,limit] of samples){
+        // The cell's two triangles meet along the line from its (1, 0) corner to its (0, 1) corner.
+        const far=u+v<=1?heights[a]+(heights[b]-heights[a])*u+(heights[c]-heights[a])*v:heights[d]+(heights[c]-heights[d])*(1-u)+(heights[b]-heights[d])*(1-v);
+        worst=Math.max(worst,far-limit);
+      }
+      if(worst>0){for(const corner of [a,b,c,d])heights[corner]-=worst+.05;lowered=true;}
+    }
+    if(!lowered)break;
+  }
+}
 function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
   const positions=[],uv=[],indices=[];
-  for(let iz=0;iz<=segments;iz++)for(let ix=0;ix<=segments;ix++){
-    const x=-width/2+width*ix/segments,z=-depth/2+depth*iz/segments;
-    const underNear=!detail&&Math.abs(x+offsetX)<=SCABLANDS_LAYOUT.halfWidth&&Math.abs(z+offsetZ)<=SCABLANDS_LAYOUT.halfDepth;
-    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025-(underNear?FAR_GROUND_DROP:0),z);uv.push(ix/segments*12,iz/segments*12);
-    if(ix<segments&&iz<segments){const a=iz*(segments+1)+ix,b=a+1,c=a+segments+1,d=c+1;indices.push(a,c,b,b,c,d);}
+  const cellsX=segments.x??segments,cellsZ=segments.z??segments,heights=[],underNear=[];
+  for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
+    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ;
+    const covered=!detail&&Math.abs(x+offsetX)<=SCABLANDS_LAYOUT.halfWidth&&Math.abs(z+offsetZ)<=SCABLANDS_LAYOUT.halfDepth;
+    heights.push(scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025-(covered?FAR_GROUND_DROP:0));underNear.push(covered);
+  }
+  if(!detail)lowerFarUnderNear(heights,cellsX,cellsZ,width,depth,underNear);
+  for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
+    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ;
+    positions.push(x,heights[iz*(cellsX+1)+ix],z);uv.push(ix/cellsX*12,iz/cellsZ*12);
+    if(ix<cellsX&&iz<cellsZ){const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
@@ -89,12 +128,20 @@ function nearGroundHeightAt(x,z){
   const d=corner(1,1);return d+(corner(0,1)-d)*(1-u)+(corner(1,0)-d)*(1-v);
 }
 
+// Where the ground drops away steeply the ribbon takes the lowest drawn ground within 1.5 m of a point, so that its edge
+// is tucked into the slope there and never stands out from it.
+function roadHeightAt(x,z){
+  let low=nearGroundHeightAt(x,z);
+  for(const [dx,dz] of [[1.5,0],[-1.5,0],[0,1.5],[0,-1.5]])low=Math.min(low,nearGroundHeightAt(x+dx,z+dz));
+  return low-.025+ROAD_LIFT;
+}
+
 // The dirt road: a ribbon laid flat along the oval the drivers follow, 1.2 times the road's half width to each side,
-// built from cross-sections of twelve points that each lie 6 cm above the ground at their own place. Two ruts run
+// built from cross-sections of twenty points that each lie 6 cm above the ground at their own place. Two ruts run
 // along it as slightly darker strips (vertex colour), and the ground look is drawn over the whole.
 const ROAD_SECTIONS=384,ROAD_LIFT=.06,ROAD_REACH=1.2;
-const ROAD_ACROSS=Object.freeze([-1,-.62,-.40,-.33,-.26,-.10,.10,.26,.33,.40,.62,1]);
-const ROAD_RUT=Object.freeze([1,1,1,.68,1,1,1,1,.68,1,1,1]);
+const ROAD_ACROSS=Object.freeze([-1,-.94,-.88,-.76,-.64,-.50,-.40,-.33,-.26,-.10,.10,.26,.33,.40,.50,.64,.76,.88,.94,1]);
+const ROAD_RUT=Object.freeze([1,1,1,1,1,1,1,.68,1,1,1,1,.68,1,1,1,1,1,1,1]);
 function roadRibbon(){
   const {frameRadiusX:rx,frameRadiusZ:rz,roadHalfWidth}=SCABLANDS_LAYOUT,reach=roadHalfWidth*ROAD_REACH,across=ROAD_ACROSS.length;
   const positions=[],colours=[],indices=[];
@@ -104,7 +151,7 @@ function roadRibbon(){
     const nx=Math.cos(angle)*rz,nz=Math.sin(angle)*rx,length=Math.hypot(nx,nz);
     for(let point=0;point<across;point++){
       const x=cx+nx/length*ROAD_ACROSS[point]*reach,z=cz+nz/length*ROAD_ACROSS[point]*reach;
-      positions.push(x,nearGroundHeightAt(x,z)-.025+ROAD_LIFT,z);colours.push(ROAD_RUT[point],ROAD_RUT[point],ROAD_RUT[point]);
+      positions.push(x,roadHeightAt(x,z),z);colours.push(ROAD_RUT[point],ROAD_RUT[point],ROAD_RUT[point]);
     }
     const next=(section+1)%ROAD_SECTIONS;
     for(let point=0;point<across-1;point++){
@@ -384,7 +431,7 @@ export function createScablandsScene(course,options={}){
     const tile=makeGround(700,500,detailCounts.near,groundMaterial,true,x*700+350,z*500+250);
     tile.position.set(x*700+350,0,z*500+250);ground.add(tile);nearTiles.push(tile);
   }
-  const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
+  const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-FAR_GROUND_LOWER;ground.add(far);
   let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
@@ -579,7 +626,7 @@ export function createScablandsScene(course,options={}){
     for(const tile of [...nearTiles,far]){
       const offsetX=tile.position.x,offsetZ=tile.position.z;
       const geometry=tile===far?makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry:
-        makeGround(700,500,detailCounts.near,groundMaterial,true,offsetX-350,offsetZ-250,scablandsGroundEdit).geometry;
+        makeGround(700,500,detailCounts.near,groundMaterial,true,offsetX,offsetZ,scablandsGroundEdit).geometry;
       const previous=tile.geometry;tile.geometry=geometry;previous.dispose();
     }
     editedGround.dispose();

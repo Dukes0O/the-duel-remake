@@ -106,8 +106,6 @@ export function createTinTownGate({ground=0}={}){
       const length=Math.hypot(span/cells,.62);
       put(materials.iron,box(length,.09,.09),-span/2+span*(cell+.5)/cells,7.15,0,[0,0,(cell%2?1:-1)*Math.atan2(.62,span/cells)]);
     }
-    // Two struts carry the sign above the beam.
-    for(const sx of [-3,3])put(materials.iron,box(.14,1.0,.14),sx,BEAM_TOP+.5,0);
     finish();gate.add(group);
   }
 
@@ -115,6 +113,8 @@ export function createTinTownGate({ground=0}={}){
   {
     const {group,put,finish}=assembly('Gate sign');
     put(materials.iron,box(7.4,.12,.2),0,BEAM_TOP+.95,0);
+    // Two struts carry the sign above the beam.
+    for(const sx of [-3,3])put(materials.iron,box(.14,1.0,.14),sx,BEAM_TOP+.5,0);
     finish();
     const plate=new THREE.Group();plate.name='Gate sign plate';plate.userData.text='TIN TOWN';
     const front=new THREE.Mesh(new THREE.PlaneGeometry(7,1.5),materials.sign),back=front.clone();
