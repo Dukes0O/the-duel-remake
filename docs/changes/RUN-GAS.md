@@ -62,7 +62,7 @@ escort" and "Pay"). This note lists what was built, the numbers, the checks and 
 
 | What | Value |
 | --- | --- |
-| Roads | long road 8 places, 1,639 m; Boneyard road 9 places, 1,594 m |
+| Roads | long road 8 places, 1,639 m; Boneyard road 7 places, 1,252 m (the road no longer doubles back) |
 | Pay | long road 1 share, Boneyard road 2; a share is 80 times the difficulty factor (Easy 80, Medium 96, Hard 112) |
 | Raids, Boneyard road, Watching / Raiding / Hunting / War party | 2 / 2,2 / 2,3,2 / 3,3,4 raiders |
 | Raids, long road | none / none / one of 2 / one of 3 |
@@ -70,18 +70,20 @@ escort" and "Pay"). This note lists what was built, the numbers, the checks and 
 | Appear / wear / give up | 160 m / 30 m / 60 m past |
 | Wear per raider per second | Easy 1.5, Medium 5, Hard 7 |
 | Rest | 3 s (job 4 and runs) |
-| Ambush places | Boneyard road: 7 fixed marks (260, 480, 690, 895, 1,060, 1,260, 1,430 m from the well), the raids' count drawn from them; long road: the one place 110 m before Tin Town |
-| Tightest clearance from a solid | long road 9.1 m, Boneyard road 11.0 m |
+| Ambush places | Boneyard road: 7 fixed marks (260, 400, 540, 690, 830, 970, 1,100 m from the well), the raids' count drawn from them; long road: the one place 110 m before Tin Town |
+| Tightest clearance from a solid | long road 9.1 m, Boneyard road 17.1 m |
 
 ## Differs from the card
 
-- **The Boneyard road has two bends the card's table does not have.** No move of a place by up to 25 m clears the planes' box
-  (the piece from the Boneyard to the safe road crosses it; the best move found reached 2.8 m of the 8 m), and the piece from
-  the safe road to Tin Town brushes the town's box at its corner (0.8 m). So the road has a bend after the Boneyard,
-  `boneyard-road-bend` (375, 325), and goes through Tin Town's gate (575, 62) before the town (600, 0). Length 1.59 km, as
-  the card says (about 1.6 km). No other place was moved.
-- **The long road is 1.64 km, not about 1.9 km**, with the card's places as written. Kept as written. It is 45 m longer than the
-  Boneyard road, not the 300 m the card's lengths suggest.
+- **The Boneyard road no longer doubles back (Claude's correction of the card, after review).** The card's table took Big Bess
+  from the Boneyard west to the safe road and east again. The road now goes straight on: well, (-200, 350), (0, 370),
+  (250, 415), the Boneyard, Tin Town's gate (575, 62), Tin Town. The safe road (230, 150) is not on it. Two changes keep it
+  8 m from every solid: the Boneyard's place is moved 23 m east and south, from (424, 304) to (447, 308), because the planes' box
+  lies just north-west of it; and Tin Town's gate brings the road in from the south of the town's box. No bend is added. Length
+  1,252 m (was 1,594 m with the doubling back, and the card's table brought about 1.6 km), reason "the road no longer doubles back";
+  tightest clearance 17.1 m. The ambush marks were redrawn on the new road.
+- **The long road is 1.64 km, not about 1.9 km**, with the card's places as written. Kept as written. The Boneyard road is now
+  about 390 m shorter than it: short and dangerous, or long and safe.
 - **Job 4 ended at the safe road, not at Tin Town.** The escort counted as arrived when Big Bess *set out* for the last place of
   her road (`pathProgress` is the index of the place she is heading for). Job 4 therefore ended 417 m short of Tin Town. Now she
   has arrived when she has reached the last place (`reachedEnd`, `atDestination`), so job 4 is about 72 s long (was about 36 s).
@@ -129,7 +131,7 @@ The child-pace driver was not taught anything; it drives to Tin Town and does no
 | Long | 10 | 10 | 10 | 10 |
 | Boneyard | 10 | 10 | 10 | 10 |
 
-Big Bess's lowest health on arrival over the ten tries: long 100, 100, 90, 80; Boneyard 88, 79, 58, 28. Job 4 still 10 of 10.
+Big Bess's lowest health on arrival over the ten tries: long 100, 100, 90, 80; Boneyard 89, 80, 60, 31. Job 4 still 10 of 10.
 
 ## Sound
 

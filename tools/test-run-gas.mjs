@@ -192,11 +192,13 @@ function runUntil(duel, condition, seconds = 90) {
   const at = places => places.map(item => [item.position.x, item.position.z]);
   same(at(GAS_RUN_PATHS.long), [[-424, 304], [-450, 40], [-300, -230], [-60, -380], [170, -340], [350, -200], [480, -90], [600, 0]],
     'the long road is the card\'s eight places, well to Tin Town');
-  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [424, 304], [375, 325], [230, 150], [575, 62], [600, 0]],
-    'the Boneyard road is the card\'s places with a bend after the Boneyard and Tin Town\'s gate before the town');
+  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [447, 308], [575, 62], [600, 0]],
+    'the Boneyard road goes straight on from the Boneyard to Tin Town\'s gate and the town');
+  check(!at(GAS_RUN_PATHS.boneyard).some(([x, z]) => x === 230 && z === 150), 'and never doubles back to the safe road');
   same(GAS_RUN_ROADS, ['long', 'boneyard'], 'two roads');
   same([GAS_RUN_SHARES.long, GAS_RUN_SHARES.boneyard], [1, 2], 'the long road pays 1 share and the Boneyard road 2');
-  near(gasRunLength('boneyard'), 1600, 60, 'the Boneyard road is about 1.6 km');
+  near(gasRunLength('boneyard'), 1252, 5, 'the Boneyard road is about 1.25 km (the road no longer doubles back)');
+  check(gasRunLength('boneyard') < gasRunLength('long') - 300, 'and 300 m or more shorter than the long road: short and dangerous, or long and safe');
   near(gasRunLength('long'), 1640, 5, 'the long road, as the card\'s places lie, is 1.64 km (the card says about 1.9 km)');
   for (const road of GAS_RUN_ROADS) {
     const route = GAS_RUN_PATHS[road];

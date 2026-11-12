@@ -9,18 +9,16 @@ const place = (id, x, z, radius = 12) => Object.freeze({id, position: Object.fre
 const path = (...places) => Object.freeze(places);
 
 const well = place('everburn', -424, 304, 18), tinTown = place('tin-town', 600, 0, 18);
-const boneyard = place('boneyard', 424, 304, 18), safeRoad = place('safe-road', 230, 150, 16);
 
-// The two roads. The long road is the card's table as it stands. The Boneyard road is the card's table with two bends added,
-// because no move of a place by up to 25 m can make the card's straight pieces clear every solid by 8 m: one after the
-// Boneyard, at (375, 325), takes the road round the south side of the planes' box (the piece from the Boneyard to the safe
-// road crosses it); the other at Tin Town's gate, (575, 62), brings it in from the south of the town (the piece from the
-// safe road to Tin Town brushes the town's box at its corner, 0.8 m).
+// The two roads. The long road is the card's table as it stands. The Boneyard road goes straight on from the Boneyard to
+// Tin Town's gate and the town; it no longer doubles back to the safe road. The planes' box lies just north-west of the
+// Boneyard's place (424, 304), so that place is moved 23 m east and south, to (447, 308), the one move that keeps the road
+// 8 m from every solid; Tin Town's gate, (575, 62), brings the road in from the south of the town's box.
 export const GAS_RUN_PATHS = Object.freeze({
   long: path(well, place('long-road-1', -450, 40), place('long-road-2', -300, -230), place('long-road-3', -60, -380),
     place('long-road-4', 170, -340), place('long-road-5', 350, -200), place('long-road-6', 480, -90), tinTown),
   boneyard: path(well, place('boneyard-road-1', -200, 350), place('boneyard-road-2', 0, 370), place('boneyard-road-3', 250, 415),
-    boneyard, place('boneyard-road-bend', 375, 325), safeRoad, place('tin-town-gate', 575, 62), tinTown),
+    place('boneyard-road-4', 447, 308), place('tin-town-gate', 575, 62), tinTown),
 });
 export const GAS_RUN_ROADS = Object.freeze(Object.keys(GAS_RUN_PATHS));
 // One share, two on the Boneyard road. A share is the one amount every world job pays (src/arena/arena-settlement.js).
@@ -55,7 +53,7 @@ export function pointAlongRoad(road, metres) {
 // Where the Ash Men may wait: a fixed list of places along each road, by metres from the well. The raid on the long road is
 // the one place where that road comes nearest the Boneyard (110 m before Tin Town; the road's far end is its nearest approach).
 export const GAS_RUN_AMBUSH_METRES = Object.freeze({
-  boneyard: Object.freeze([260, 480, 690, 895, 1060, 1260, 1430]),
+  boneyard: Object.freeze([260, 400, 540, 690, 830, 970, 1100]),
   long: Object.freeze([Math.round(gasRunLength('long') - 110)]),
 });
 
