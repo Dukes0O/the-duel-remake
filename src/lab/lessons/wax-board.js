@@ -161,12 +161,14 @@ function drawStrip(ctx, view, i) {
     ctx.fillStyle = '#d8dee1'; ctx.fillRect(x - 1, top - 2, 2, 14 * g.scale + 4);
     if (m) { for (let c = 0; c < 6; c++) { ctx.fillStyle = ((c % 3) + (c > 2 ? 1 : 0)) % 2 ? '#15191b' : '#f5f0dc'; ctx.fillRect(x + 1 + (c % 3) * 5 * g.scale, top + (c > 2 ? 5 : 0) * g.scale, 5 * g.scale, 5 * g.scale); } }
     else { ctx.fillStyle = '#56d683'; ctx.beginPath(); ctx.moveTo(x + 1, top); ctx.lineTo(x + 16 * g.scale, top + 5 * g.scale); ctx.lineTo(x + 1, top + 10 * g.scale); ctx.closePath(); ctx.fill(); }
-    text(ctx, label, x, !m && view.strips.length > 1 ? y + (n - 1) * g.lane + 34 : y - 52 * g.scale, {size: 13 * g.scale + 2, colour: m ? theme.accent : LABEL});
+    text(ctx, label, x, y - 52 * g.scale, {size: 13 * g.scale + 2, colour: m ? theme.accent : LABEL});
   }
   // The snow: its name and temperature, with a small thermometer.
   const [lx, ly] = surface(g, 0, 0);
   thermometer(ctx, lx - 30, ly - 50 * g.scale, 70 * g.scale, s.celsius, false);
-  text(ctx, `${s.name}, ${s.celsius} °C`, lx - 10, ly - (view.strips.length > 1 ? 62 : 80) * g.scale, {size: 18 * g.scale + 2, align: 'left', colour: theme.text});
+  // Three strips are close together, so each name sits over its own strip, right of the start flag, where the strip above has dropped away.
+  const stacked = view.strips.length > 1;
+  text(ctx, `${s.name}, ${s.celsius} °C`, stacked ? lx + 62 : lx - 10, ly - (stacked ? 26 : 80) * g.scale, {size: 18 * g.scale + 2, align: 'left', colour: theme.text});
   if (view.glide) secondMarks(ctx, view, g);
   for (const [j, l] of s.lanes.entries()) ski(ctx, view, i, j, l, g);
 }
