@@ -181,6 +181,53 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   check(f.won, `${difficulty}: three hits end it`);
 }
 
+// ---- 4b. The gate: reaching Tin Town, and the gate burning ------------------------
+{
+  const count = (events, type) => events.filter(event => event.type === type).length;
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    // No hits at all: the furnace runs up to the gate with its right door whole, and the gate burns, once.
+    const f = fresh(difficulty);
+    check(!f.townReached && !f.gateBurnt && f.gateMetres === f.path.cumulative[def.gateWaypoint], `${difficulty}: the gate facts start out false`);
+    const first = run(f, f.gateMetres / OLD_SMOKE.baseSpeed - 1);
+    check(count(first.events, 'townReached') === 0 && !f.townReached, `${difficulty}: nothing is recorded before the gate`);
+    const second = run(f, 4);
+    check(f.townReached && f.gateBurnt && count(second.events, 'townReached') === 1 && count(second.events, 'gateBurnt') === 1,
+      `${difficulty}: at the gate with the right door whole, the gate burns`);
+    check(second.events.find(event => event.type === 'townReached').burnt === true, `${difficulty}: the town event says the gate burnt`);
+
+    // The first two doors broken in time: the furnace runs through the gate at its bolt pace and the gate does not burn.
+    const g = fresh(difficulty), events = [];
+    for (let leg = 0; leg < 2; leg++) { until(g, 'glow'); furnaceHit(g, g.door); }
+    events.push(...run(g, 120).events);
+    check(g.metres > g.gateMetres, `${difficulty}: the furnace passed the gate while running at its bolt pace`);
+    check(g.townReached && !g.gateBurnt && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 0,
+      `${difficulty}: with the right door broken it reaches the gate and the gate stays whole`);
+    check(events.find(event => event.type === 'townReached').burnt === false, `${difficulty}: the town event says the gate did not burn`);
+    // Only the right door counts: with just the left door broken the gate still burns.
+    const h = fresh(difficulty);
+    until(h, 'glow'); furnaceHit(h, h.door);
+    const leftOnly = run(h, 200).events;
+    check(h.gateBurnt && count(leftOnly, 'gateBurnt') === 1, `${difficulty}: with only the left door broken the gate burns`);
+  }
+  // Once only: three more laps past the gate set nothing again, and breaking the right door later does not mend the gate.
+  const f = fresh('easy');
+  const {events} = run(f, 1200);
+  check(f.laps >= 3 && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 1, 'the gate facts are set once, however many laps it runs');
+  const late = fresh('easy');
+  run(late, late.gateMetres / OLD_SMOKE.baseSpeed + 2);
+  const burntBefore = late.gateBurnt;
+  while (late.hits < 3) { until(late, 'glow'); furnaceHit(late, late.door); }
+  check(burntBefore && late.broken[1] && late.gateBurnt, 'the gate burnt, and breaking the doors afterwards does not mend it');
+  // A furnace made without a gate place has no gate facts.
+  const bare = createFurnace({path: def.path, legs: def.legs}, 'medium');
+  const bareRun = run(bare, 200);
+  check(bare.gateMetres === null && !bare.townReached && !bare.gateBurnt && !bareRun.events.some(event => /^(townReached|gateBurnt)$/.test(event.type)),
+    'without gateWaypoint the furnace records no gate facts');
+  // The same inputs give the same facts.
+  const facts = () => { const x = fresh('medium'); const out = run(x, 170); return JSON.stringify([x.townReached, x.gateBurnt, out.events.filter(e => /^(townReached|gateBurnt)$/.test(e.type))]); };
+  check(facts() === facts(), 'the gate facts are the same every time');
+}
+
 // ---- 5. After a hit: stagger, a plate, a speed-up; always slower than any car ----
 {
   const slowestMps = Math.min(...Object.values(CARS).map(car => car.topSpeed)) * .44704;
