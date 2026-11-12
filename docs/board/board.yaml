@@ -533,7 +533,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 12 November 2026"
     needs: [RUN-GAS]
     locks: []
     flag: "scablands-runs"

@@ -93,6 +93,48 @@ false. A save change, so it gets its own review.
 5. Pictures from the game (a helper) and Claude's verdict: the furnace coming out behind Big Bess, cinders landing on
    her, a door breaking, the dead furnace on the road, and the wall before and after.
 
+## Result (built by a Sonnet helper; reviewed by Claude, 12 November 2026)
+
+Merged into Claude's branch as 693564cfe, switch `scablands-runs` off. Change note: `docs/changes/FIELD-BATTLE-ASH.md`.
+
+- **Save, read line by line by Claude (rule 17):** `furnaceDead` is checked only when a save already holds it; an
+  older save reads as before. The battle's ending is written only at War party with the furnace alive, and only as
+  'won' (furnace dead, feud to Watching, one run) or 'arrived' (one run). 117 checks.
+- **Pay, read line by line by Claude (rule 17):** settlement code is untouched. A won battle pays the job's 4 shares;
+  arriving with the furnace still rolling pays the Boneyard road's own 2, which the card had left unsaid.
+- **The furnace's rules:** seven small branches in `old-smoke.js`, each taken only when a furnace's definition says
+  `battle`. `tools/test-old-smoke.mjs` passes untouched at 616 checks, so job 6 is as it was.
+
+Where the build differs from the design above, all accepted by Claude:
+
+1. **The card was wrong about where the furnace starts.** (250, 415) is 254 m ahead of Big Bess at the moment the
+   card brings the furnace out, so it could not come up behind her. It now drives her own road and comes out 80 m
+   behind her as she passes (0, 370). On Medium it is throwing cinders on her 27 seconds later.
+2. The furnace never comes nearer than 12 m to her, and after she rests it falls back to 80 m with its broken doors
+   still broken.
+3. In the battle an ambush she has already passed also gives up after two rests, so that nobody loops for ever.
+4. Only Auntie Solder's line closes each ending. Clinker speaks at every broken door but the last, which is
+   Cinder's; on Easy one door ends it, so Clinker's door line is not heard there.
+5. The wreck stands at (250, 407), 8 m off the road.
+
+**Changed test input, reviewed by Claude (rule 18):** two places in `tools/test-run-gas.mjs` that looked at the
+ordinary War party wall and a Boneyard arrival from War party now start from a save whose furnace is dead, because
+with it alive that button is the battle. Every assertion is as it was.
+
+| 10 tries each | Big Bess home | Battle won | Her lowest health | Longest battle |
+| --- | --- | --- | --- | --- |
+| Easy, child-pace driver | 10 | 10 | 60 | 142 s |
+| Medium, a driver who clears riders and breaks doors | 10 | 10 | 1 | 188 s |
+| Medium, a driver who never fights | 10 | 0 | 22 | 272 s |
+
+Checks on the builder's branch: `test-field-battle` 643, lane tier 105 of 105, build, and the `field-battle`,
+`run-gas` and `everburn-well` browser checks. Rerun by Claude on the merged result: field battle 643, furnace rules
+616, save 117, run-gas 1,088, build.
+
+Still to do before this card closes: pictures of the battle from the game for Claude's verdict (the builder's
+scenario takes six), and a look at whether winning 10 times in 10 on Medium is too easy while Big Bess arrives
+with 1 health: the fight may want the furnace tougher and its cinders gentler.
+
 ## Not in this card
 
 A second group's feud, the Scrapdome challenge, lasting damage to Tin Town, sending someone else on a run.
