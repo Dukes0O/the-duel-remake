@@ -94,6 +94,28 @@ removal; the challenges in the 3D world; and the walking hangar.
   wording rule for classroom lessons, is now `docs/LAB.md` section 13.1. Some old change notes still describe the frame. The answer
   cards show at 120 by 60 pixels, so their small text is near 6 pixels; the stage step enlarges them.
 
+## The stage step, settled (Claude, 12 November 2026)
+
+Sixteen redrawn boards showed the same limit again and again: the subject is small, because each 1000 by 680 board
+also holds its tables, readouts, dials and key hints. The board's height is what the screen limits, so hiding a side
+panel gains nothing. The cure is a rule about what belongs on the board.
+
+- **The board is for the picture.** The thing being taught, the forces on it, the place it stands in, and the few
+  labels that point at parts of it.
+- **Numbers and tables leave the board** for a strip of the page under it (HTML, in `classroom-ui.js`): the readouts
+  ("Lift 3,887 kg"), the table of the player's results, and the dials' numbers. They keep their words and their live
+  values, and the "physics" panel beside the board keeps its formulas. Text in the page is sharper and larger than
+  text drawn on a board, and a child can point at it.
+- **Controls the player drags stay on the board,** on the thing itself (the lever, the crate, the wing).
+- **With the tables gone, the scene grows:** each board's scene scale rises until its subject fills about two thirds
+  of the board's width. Hit areas scale with it, in the same change, with the board's hit tests updated and the
+  browser scenario proving every control still works.
+- **Answer cards grow** from 120 by 60 to 200 by 100 pixels on screen, two to a row.
+- Lift is Claude's first example. The others follow by helper, three lessons a job, each judged from a sheet and
+  each proved by its own browser scenario. A lesson whose board has no table on it (Headings) only gets larger cards.
+- This step changes where things are on screen, so each lesson's test and scenario assertions about positions are
+  reviewed by Claude as they change (rule 18). No step, word or number changes.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost
