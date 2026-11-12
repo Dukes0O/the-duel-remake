@@ -37,6 +37,27 @@ The Scablands is an empty tan bowl, and three of its faults are plain mistakes, 
   corrugated fence each side, standing across the road with a 9 m opening. When the story burns it, the fire stands on
   the gate itself (card RUN-GAS's follow-up makes the fire larger).
 
+## Result (built by a Sonnet helper; reviewed by Claude, 12 November 2026)
+
+Merged into Claude's branch. Sheet: `docs/board/looks/scablands-land/round-1.jpg`. Change note:
+`docs/changes/SCABLANDS-LAND.md`.
+
+- Colours: every material in the four models now arrives with its colour (Tin Town 10 of 10, kit 12 of 12, Everburn
+  9 of 9, Boneyard 7 of 7). Wear is drawn over every place; the ground look is on all the ground.
+- **Found on the way and fixed:** the Boneyard's model was exported turned a quarter turn, so every plane stood on
+  end against a standing slab of dirt (the fault ART_LINE calls "a vehicle standing on its nose"). The near ground was
+  redrawn 350 m and 250 m out of place whenever the open marks changed.
+- The road follows the ground as it is drawn, because the drawn ground is up to 8 m off the land's own height at the
+  foot of the ridges. Nothing a car drives on changed; no replay fingerprint or world signature moved.
+- The far ground uses a finer grid whose lines fall on the near ground's edge, and lies below the near ground at
+  every sampled place.
+- The gate stands at (575, 62) across the furnace's path, with no collision.
+- Claude then softened the cliff strata and the sand ripples in `createGroundLook`, which the pictures showed as
+  stripes and a pale band.
+
+Open on this card: a second sheet after Claude's two changes; Tin Town's size; collision for the gate's posts; the
+frame check before the Scablands opens beyond the story's switch.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read

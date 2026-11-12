@@ -272,13 +272,17 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
           gc=mix(gc,gc*vec3(1.16,.97,.78),smoothstep(.42,.72,gMid.g)*.55);
           // Wind ripples across the pale sand.
           float gRipple=sin((vGroundPos.x*.93+vGroundPos.z*.37)*2.6+gMid.b*11.0)*.5+.5;
-          gc*=1.0-.13*gRipple*smoothstep(.5,.78,gBig.r)*gFlat;
+          // The ripples fade out where they would be finer than the screen can draw, so they never band at a distance.
+          float gRippleFine=fwidth((vGroundPos.x*.93+vGroundPos.z*.37)*2.6);
+          gc*=1.0-.08*gRipple*smoothstep(.5,.78,gBig.r)*gFlat*(1.0-smoothstep(.5,1.4,gRippleFine));
           // Cracked earth where the dust is dark and flat: thin dark lines along the ridges of the fine noise.
           float gCrack=smoothstep(.030,.0,abs(gFine.b-.5))+.6*smoothstep(.022,.0,abs(gFine.r-.47));
           gc*=1.0-.5*min(gCrack,1.0)*gFlat*smoothstep(.55,.32,gBig.r);
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
-          gRock*=1.0-.28*step(.55,fract(vGroundPos.y*.42+gMid.r*2.3));
+          // Strata: soft layers of uneven thickness, bent by the noise at three sizes so that no two run alike.
+          float gLayer=vGroundPos.y*.21+gBig.b*2.6+gMid.r*1.9+gFine.g*.7;
+          gRock*=.88+.17*smoothstep(.3,.7,abs(fract(gLayer)-.5)*2.0)*(.5+gFine.r);
           gc=mix(gc,gRock,smoothstep(.16,.42,gSlope));
           // Gravel and stones, thicker near rock.
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
@@ -286,7 +290,7 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
           gc*=.88+.24*gGrit.b;
           diffuseColor.rgb=gc;`);
     };
-    material.customProgramCacheKey=()=>'ground-look-1';
+    material.customProgramCacheKey=()=>'ground-look-2';
     material.needsUpdate=true;
     return material;
   }
