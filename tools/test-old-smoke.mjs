@@ -8,6 +8,8 @@ import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceSpeed, furnace
   furnaceDoorSpot, furnaceGlowingDoor, oldSmokeVentTargets} from '../src/world/jobs/old-smoke.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+// The Everburn's lines register when the story's own modules load (the game's screens do it); this test reads them through the job code.
+import '../src/story/ember-lines.js';
 
 // WW-BOSS: Old Smoke's furnace chase. The rules live in src/world/jobs/old-smoke.js
 // and run without graphics, so this test drives them directly and then through a

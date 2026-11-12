@@ -8,7 +8,7 @@ import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, 
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
-import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
+import {captionRecord} from '../../story/story-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
@@ -31,11 +31,11 @@ const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGH
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
 
-// A line's words: the job's own captions, then the Everburn story lines, else the id.
+// A line's words: the job's own captions, then any registered story's captions, else the id.
 function captionFor(worldJob, lineId) {
   const own = worldJob.definition.captions?.[lineId];
   if (own) return own;
-  const story = EMBER_CAPTIONS[lineId];
+  const story = captionRecord(lineId);
   return story ? `${story.who}: ${story.text}` : lineId;
 }
 const WELL_WEAR_RANGE = 10;
