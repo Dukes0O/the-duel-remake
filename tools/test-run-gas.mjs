@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {Duel} from '../src/game.js';
 import {damageRaider} from '../src/raiders.js';
+import '../src/story/ember-lines.js'; // the Everburn's words, for the callouts read through the job code
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES, AMBUSH_MIN_FROM_START_METRES,
   AMBUSH_WEAR_PER_SECOND} from '../src/world/jobs/steps/escort.js';
@@ -296,6 +297,71 @@ function runUntil(duel, condition, seconds = 90) {
     const duel = startJob(gasRunJob({road: 'boneyard', feud: 2, runs: 0, difficulty: 'medium'}), 'medium');
     same(worldOf(duel).activeLoan, 'flamethrower', 'a run in a real Duel has the flamethrower on loan');
     check(duel.state.weaponLoadout.includes('flamethrower'), 'and in the car\'s slots');
+  }
+}
+
+// ---- 2c. An ambush that is never cleared gives up after two rests on its stretch (a run never loops for ever) ------------------
+{
+  // As pure numbers: two rests on the same stretch, the raiders give up as she sets off the third time and do not come back.
+  const path = [pos(0, 0), pos(0, 300), pos(300, 300)];
+  const step = {kind: 'escort', actorId: 'bess', path, speed: 9, destination: pos(300, 300), restLineId: 'rest', restSeconds: 0, giveUpLineId: 'give-up',
+    ambushes: [{id: 'a', place: pos(12, 200), count: 3}, {id: 'b', place: pos(200, 312), count: 1}]};
+  const tick = (state, actor, dt = 1 / 60) => { const out = stepEscort(step, state, {actors: [actor], difficulty: 'medium'}, dt); return {...out, state: {...state, ...out.state}}; };
+  const truck = (x, z, pathIndex, health = 100) => ({id: 'bess', position: pos(x, z), health, pathIndex, pathProgress: .5});
+  let out = tick({}, truck(0, 100, 1));
+  check(out.requests.some(item => item.type === 'spawnWave' && item.key === 'ambush:a'), 'the ambush appears');
+  const said = () => out.requests.filter(item => item.type === 'say' && item.lineId === 'give-up').length;
+  // First rest on stretch 1: the ambush is put back, no line.
+  out = tick(out.state, truck(0, 190, 1, 0)); out = tick(out.state, truck(0, 190, 1, 0));
+  check(out.restart === true && said() === 0 && !out.state.gone.includes('a'), 'after the first rest the ambush is put back, with no line');
+  same(out.requests.filter(item => item.type === 'clearWave').map(item => item.key), ['ambush:a'], 'its raiders are taken away to appear again');
+  out = tick(out.state, truck(0, 100, 1));
+  check(out.requests.some(item => item.type === 'spawnWave' && item.key === 'ambush:a'), 'and it comes back at 160 m');
+  // Second rest on the same stretch: the ambush gives up, once, and is never put back.
+  out = tick(out.state, truck(0, 190, 1, 0)); out = tick(out.state, truck(0, 190, 1, 0));
+  check(out.restart === true && said() === 1, 'after the second rest Moss says the ambush has given up');
+  check(out.state.gone.includes('a') && out.state.spawned.includes('a'), 'it is gone for good');
+  same(out.requests.filter(item => item.type === 'clearWave').map(item => item.key), ['ambush:a'], 'its raiders still standing are removed as she sets off');
+  same(out.events.filter(item => item.type === 'ambushGaveUp').length, 1, 'and the step says so in an event');
+  out = tick(out.state, truck(0, 100, 1));
+  check(!out.requests.some(item => item.type === 'spawnWave' && item.key === 'ambush:a'), 'she sets off the third time and the ambush does not come back');
+  // The ambush on the later stretch is not touched.
+  out = tick(out.state, truck(150, 300, 2));
+  check(out.requests.some(item => item.type === 'spawnWave' && item.key === 'ambush:b'), 'the ambush on the next stretch still appears');
+  // The line is said once for the stretch even if she were to rest there again.
+  out = tick(out.state, truck(0, 190, 1, 0)); out = tick(out.state, truck(0, 190, 1, 0));
+  check(said() === 0, 'the line is not said again for the same stretch');
+  // Rests on different stretches are counted apart.
+  const two = {spawned: ['a', 'b'], gone: ['a'], stretchRests: {1: 1}};
+  let other = tick(two, truck(150, 300, 2, 0)); other = tick(other.state, truck(150, 300, 2, 0));
+  check(!other.state.gone.includes('b') && other.state.stretchRests[2] === 1, 'a first rest on another stretch does not make its ambush give up');
+}
+{
+  // In a real Duel: job 4's first ambush with four raiders, never cleared (the player does not fight), on Medium. She rests at it twice,
+  // the raiders give up, Moss says so once, and she arrives.
+  const job4 = EVERBURN_JOBS[3], step4 = job4.steps[0];
+  const lethal = {...job4, steps: [{...step4, ambushes: [{id: 'only', place: step4.ambushes[0].place, count: 4}]}]};
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const duel = startJob(lethal, difficulty), lines = [];
+    const callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
+    let rests = 0, gaveUp = 0;
+    for (let tick = 0; tick < Math.round(900 / DT) && duel.state.status !== 'arena_result'; tick++) {
+      duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
+      duel.step(DT);
+      const events = worldOf(duel).job.events;
+      if (events.some(event => event.type === 'rest')) rests++;
+      if (events.some(event => event.type === 'ambushGaveUp')) gaveUp++;
+    }
+    const arrived = worldOf(duel).job.done && duel.state.arena.result?.reason === 'job-complete';
+    check(arrived, `${difficulty}: a run whose ambush is never cleared still arrives`);
+    if (difficulty === 'easy') check(rests <= 2, 'easy: it needs no more than two rests');
+    else same([rests, gaveUp], [2, 1], `${difficulty}: after exactly two rests at that ambush it gives up`);
+    if (difficulty !== 'easy') {
+      same(lines.filter(text => text === 'Moss: They have had enough of waiting. Go, go, go.').length, 1, `${difficulty}: and Moss says so once`);
+      check(raidersOf(duel).length === 0, `${difficulty}: no raider is left standing at the end`);
+    }
+    const bess = bessOf(duel);
+    check(bess.health >= 0 && bess.atDestination === true, `${difficulty}: she is at Tin Town with the health she has (${Math.round(bess.health)})`);
   }
 }
 

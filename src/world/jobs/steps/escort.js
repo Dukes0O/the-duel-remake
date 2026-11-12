@@ -78,19 +78,30 @@ export function stepEscort(step, state, view, dt = 0) {
   const actors = view.actors ?? [];
   const truck = actors.find(actor => actor.id === step.actorId);
   if (truck && (truck.health ?? 1) <= 0) {
-    if (!state.rested) return { state: { rested: true, restLeft: step.restSeconds ?? 0 }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };
+    // Rests are counted for the stretch she is on (the place she is heading for), so a run can never loop for ever (RUN-GAS).
+    const stretch = String(truck.pathIndex ?? 1);
+    if (!state.rested) return { state: { rested: true, restLeft: step.restSeconds ?? 0, stretchRests: {...(state.stretchRests ?? {}), [stretch]: (state.stretchRests?.[stretch] ?? 0) + 1} }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };
     const restLeft = state.restLeft ?? 0;
     if (restLeft > 0) return { state: { restLeft: Math.max(0, restLeft - dt) }, complete: false, events: [], requests: [{ type: 'follow', path: step.path, speed: 0 }] };
     // The stretch starts again from the last place she reached; its ambush, and every ambush ahead of it, is back in place.
     const requests = [{ type: 'follow', path: step.path, speed: step.speed }, { type: 'marker', place: step.path?.[0] }];
     const from = metresAtPlace(step.path, Math.max(0, (truck.pathIndex ?? 1) - 1));
-    const spawned = [], gone = [];
+    const spawned = [], gone = [], gaveUp = [...(state.gaveUp ?? [])];
+    // Rested twice on this stretch: the raiders at this stretch's ambush (and any still standing behind it) give up as she sets off
+    // for the third time, and do not come back.
+    const to = metresAtPlace(step.path, Math.min(truck.pathIndex ?? 1, (step.path?.length ?? 1) - 1));
+    const giveUp = (state.stretchRests?.[stretch] ?? 0) >= 2;
+    let gaveUpNow = false;
     for (const ambush of step.ambushes ?? []) {
-      const where = alongPath(step.path, ambush.place).metres;
-      if (where < from - 1e-6 && (state.spawned ?? []).includes(ambush.id)) { spawned.push(ambush.id); if ((state.gone ?? []).includes(ambush.id)) gone.push(ambush.id); }
-      else if ((state.spawned ?? []).includes(ambush.id)) requests.push({type: 'clearWave', key: `ambush:${ambush.id}`});
+      const where = alongPath(step.path, ambush.place).metres, wasSpawned = (state.spawned ?? []).includes(ambush.id), wasGone = (state.gone ?? []).includes(ambush.id);
+      if (giveUp && where <= to + 1e-6 && !wasGone) {
+        if (wasSpawned) requests.push({type: 'clearWave', key: `ambush:${ambush.id}`});
+        spawned.push(ambush.id); gone.push(ambush.id); gaveUpNow = true;
+      } else if (where < from - 1e-6 && wasSpawned) { spawned.push(ambush.id); if (wasGone) gone.push(ambush.id); }
+      else if (wasSpawned) requests.push({type: 'clearWave', key: `ambush:${ambush.id}`});
     }
-    return { state: { rested: false, restLeft: 0, spawned, gone }, restart: true, events: [{ type: 'restarted', actorId: step.actorId }], requests };
+    if (gaveUpNow && step.giveUpLineId && !gaveUp.includes(stretch)) { gaveUp.push(stretch); requests.push({type: 'say', lineId: step.giveUpLineId}); }
+    return { state: { rested: false, restLeft: 0, spawned, gone, gaveUp }, restart: true, events: [{ type: 'restarted', actorId: step.actorId }, ...(gaveUpNow ? [{type: 'ambushGaveUp', actorId: step.actorId}] : [])], requests };
   }
   // A missing truck is still being spawned. Never let an absent objective
   // count as a successful escort.

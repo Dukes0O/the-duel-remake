@@ -105,7 +105,7 @@ export function gasRunPay(road, difficulty) {
 
 const START_LINE = Object.freeze({long: 'story.ember.moss.5', boneyard: 'story.ember.moss.6'});
 export const GAS_RUN_LINES = Object.freeze({start: START_LINE, raid: 'story.ember.moss.7', whole: 'story.ember.moss.8',
-  hurt: 'story.ember.moss.9', warParty: 'story.ember.auntie-solder.9', hurtBelow: 70});
+  hurt: 'story.ember.moss.9', giveUp: 'story.ember.moss.10', warParty: 'story.ember.auntie-solder.9', hurtBelow: 70});
 
 // The job definition of one run, from the road, the feud (1 to 4), the number of runs already arrived and the difficulty.
 export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium'} = {}) {
@@ -117,7 +117,7 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium'} = {}
     actorId: 'big-bess',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot, as in job 4.
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route}),
-    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower',
+    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp,
     ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: START_LINE[road],
     arrival: Object.freeze({wholeLineId: GAS_RUN_LINES.whole, hurtLineId: GAS_RUN_LINES.hurt, hurtBelow: GAS_RUN_LINES.hurtBelow,
       thenLineIds: reachesWarParty ? Object.freeze([GAS_RUN_LINES.warParty]) : Object.freeze([])})});

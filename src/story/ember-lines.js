@@ -57,6 +57,7 @@ export const EMBER_CAPTIONS = Object.freeze({
   'story.ember.moss.7': line('Moss', 'The first raid of a run appears', 'Here they come. Keep them off the tank.'),
   'story.ember.moss.8': line('Moss', 'A run arrives with Bess at 70 health or more', 'Every drop delivered. Bess thanks you, in her way.'),
   'story.ember.moss.9': line('Moss', 'A run arrives with Bess under 70 health', 'We are here, and most of the gas is too. That will do.'),
+  'story.ember.moss.10': line('Moss', 'An ambush gives up', 'They have had enough of waiting. Go, go, go.'),
   'story.ember.auntie-solder.9': line('Auntie Solder', 'The feud reaches War party', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'),
 });
 
