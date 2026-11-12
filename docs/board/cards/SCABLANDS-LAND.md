@@ -58,6 +58,15 @@ Merged into Claude's branch. Sheet: `docs/board/looks/scablands-land/round-1.jpg
 Open on this card: a second sheet after Claude's two changes; Tin Town's size; collision for the gate's posts; the
 frame check before the Scablands opens beyond the story's switch.
 
+## Tin Town grows (settled by Claude, 12 November 2026; with the builder now)
+
+The design page calls Tin Town "tin shacks stacked on scaffolds around a cold forge", and the pictures show a few
+small blocks. A second piece, drawn in code the way the gate is (`src/world/tin-town-shacks.js`): about 45 shacks of
+three sizes, stacked one to three high on girder scaffolds with walkways and ladders, in six clusters on a ring 35 to
+80 m from the town's centre, with alleys too narrow for a car, a water tower, a radio pole, washing lines, lamps by
+doors, and a fence joining the clusters to the gate. Every job's road stays clear by 10 m and the arrival place by
+24 m. One solid box for each cluster and two for the gate's posts; at most 12 draw calls and 60,000 triangles.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read
