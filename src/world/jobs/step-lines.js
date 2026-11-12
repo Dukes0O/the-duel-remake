@@ -55,6 +55,9 @@ export function stepLineTriggers(step,state,view,outcome) {
   const player=view.fighter?.position??view.player?.position;
   for(const cue of step.sayNear??[]) if(distance(player,cue.place?.position??cue.place)<=(cue.radius??8))fire(cue.lineId,`near:${cue.lineId}`);
   for(const cue of step.sayOnce??[]) if(typeof cue==='string')fire(cue); else if(cue?.lineId&&distance(player,cue.place?.position??cue.place)<=(cue.radius??8))fire(cue.lineId,`once:${cue.lineId}`);
+  // sayAtShare: [{share, lineId}] plays a line once, when the step's actor has gone that share (0 to 1) of its road.
+  const sharer=step.sayAtShare?(view.actors??[]).find(item=>item.id===step.actorId):null;
+  for(const cue of step.sayAtShare??[]) if((sharer?.share??0)>=cue.share)fire(cue.lineId,`share:${cue.lineId}`);
   if(step.nearLineId&&step.actorId) {
     const actor=(view.actors??[]).find(item=>item.id===step.actorId);
     if(actor&&distance(player,actor.position)<=(step.nearRadius??8))fire(step.nearLineId,`near:${step.nearLineId}`);

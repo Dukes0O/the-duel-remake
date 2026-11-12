@@ -582,6 +582,7 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     first ??= result;
   }
   check(wins >= 8, `a young driver on Easy wins at least 8 chases in 10 (won ${wins})`);
+  console.log(`Old Smoke: the young driver on Easy won ${wins} of 10 chases`);
   const log = first.log;
   same(log.filter(event => event.type === 'hit').map(event => event.door), ['left', 'right', 'rear'], 'the Easy chase breaks the left, right then rear doors');
   check(log.filter(event => event.type === 'hit').every(event => event.source === 'ram'), 'every hit was a ram: no weapon was fired');
@@ -668,6 +669,33 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     'Cinder: He is heading for Tin Town! When a door glows, hit it!'], 'the chase opens with three lines in the card\'s order');
   check(!heard.some(text => text.includes('He\'s running!')), 'the old chase line is never played');
   check(worldJob.furnaceLog.find(event => event.type === 'stoke').tSec > 6.6, 'the first door stokes only after the third line has played');
+}
+
+{
+  // Job 3 in a real Duel: the catch is noted for the scene, Cinder's line shows, and the job ends after it.
+  const seed = 31, duel = new Duel({seed, featureFlags: flags});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed, cpuDifficulty: 'medium', opponents: [],
+    weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job: {...EVERBURN_JOBS[2], seed}}), true, 'job 3 starts in a real headless Duel');
+  const worldJob = duel.state.arena.worldJob, heard = [];
+  // The car waits 30 m from the thief's start: inside the leash, out of reach.
+  const start = duel.course.nearest(394, 304);
+  Object.assign(duel.state, {s: start.s, lateral: start.lateral, speedMph: 0, headingError: 0, yawVelocity: 0});
+  const watch = () => { if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); };
+  for (let n = 0; n < 8 / DT && !worldJob.actors.length; n++) { tick(duel); watch(); }
+  // Let the opening line finish first: a catch while a line is still showing ends the job without the closing line.
+  for (let n = 0; n < 4 / DT; n++) { tick(duel); watch(); }
+  check(worldJob.actors.length === 1 && worldJob.wonAtSec === undefined, 'the thief is on the road and nothing is caught yet');
+  worldJob.actors[0].health = 0;
+  let caughtAt = null;
+  for (let n = 0; n < 1 / DT; n++) { tick(duel); watch(); if (caughtAt === null && worldJob.wonAtSec !== undefined) caughtAt = duel.state.stageTimeSec; }
+  check(caughtAt !== null && Math.abs(worldJob.wonAtSec - caughtAt) < .1, 'the job notes when the catch happened, for the furnace sighting');
+  check(!duel.state.arena.result && heard.includes('Cinder: He was taking the bellows to the furnace. There it goes, out the far end.'),
+    'Cinder\'s line shows and the job waits for it');
+  worldJob.actors[0].health = 20;
+  waitUntil(duel, () => !!duel.state.arena.result, 5);
+  check(duel.state.arena.result?.reason === 'job-complete' && duel.state.arena.result.winnerId === 'player',
+    'the job is won after the line, even if the thief has rolled on');
 }
 
 console.log(`Old Smoke: furnace chase rules passed (${checks} checks)`);

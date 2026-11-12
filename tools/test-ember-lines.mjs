@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {EMBER_CAPTIONS, EMBER_LINE_IDS, EMBER_NOTE, EMBER_NOTE_ID} from '../src/story/ember-lines.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
 
 const EXPECTED = [
@@ -74,4 +75,48 @@ assert.deepEqual(storyLineKeys().includes('ember'), true, 'the Everburn register
 assert.equal(storyLetter('ember'), EMBER_NOTE, 'the note is available as the story letter');
 for (const [id, caption] of Object.entries(EMBER_CAPTIONS)) assert.equal(captionText(id), caption.text, `${id} is registered`);
 assert.equal(captionText(EMBER_NOTE_ID), null, 'the note is not a caption');
+// The three sightings: each line plays once, through the job's own line player, at the moment the card gives.
+function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
+  const heard = [];
+  for (let t = 0; t < seconds; t += dt) {
+    job = stepJob(job, viewAt(t), dt);
+    for (const request of job.requests) if (request.type === 'say' && request.lineId) heard.push(request.lineId);
+  }
+  return {heard, job};
+}
+{
+  // Job 1: Cinder speaks once, when the player first comes within 260 m of the furnace at (300, -120).
+  const at = (x, z) => ({player: {position: {x, y: 0, z}}, actors: []});
+  const far = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(0, 0), 12);
+  assert.ok(!far.heard.includes('story.ember.cinder.24'), 'job 1: nothing is said while the furnace is out of sight');
+  const near = lineIdsHeard(far.job, () => at(100, 0), 12);
+  assert.equal(near.heard.filter(id => id === 'story.ember.cinder.24').length, 1, 'job 1: Cinder points out the furnace once, 233 m away');
+  const again = lineIdsHeard(near.job, () => at(300, -100), 12);
+  assert.ok(!again.heard.includes('story.ember.cinder.24'), 'job 1: she does not say it twice');
+  const edge = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(60, 0), 12);
+  assert.ok(!edge.heard.includes('story.ember.cinder.24'), 'job 1: 270 m away is still too far');
+}
+{
+  // Job 3: the catch plays Cinder's line and the job waits for it; the thief rolling on does not undo the catch.
+  const thief = (health, gap) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'ash-man-bellows-thief', position: {x: gap, y: 0, z: 0}, health}]});
+  const start = lineIdsHeard(createJob(EVERBURN_JOBS[2], 1), () => thief(20, 20), 10);
+  assert.ok(!start.heard.includes('story.ember.cinder.22') && !start.job.done, 'job 3: the line is not said before the catch');
+  const caught = lineIdsHeard(start.job, t => thief(t < 0.2 ? 0 : 20, t < 0.2 ? 5 : 90), 1);
+  assert.equal(caught.heard.filter(id => id === 'story.ember.cinder.22').length, 1, 'job 3: Cinder says it at the catch');
+  assert.equal(caught.job.done, false, 'job 3: the job waits while the line shows');
+  const after = lineIdsHeard(caught.job, () => thief(20, 90), 4);
+  assert.equal(after.job.done, true, 'job 3: it ends once the line is done, though the thief has rolled out of reach');
+  assert.ok(!after.heard.includes('story.ember.cinder.22'), 'job 3: the line is said once');
+}
+{
+  // Job 4: Moss speaks once, when Big Bess has gone 30% of her road.
+  const bess = share => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'big-bess', position: {x: 400, y: 0, z: 300}, health: 100, pathProgress: .5, share}]});
+  const early = lineIdsHeard(createJob(EVERBURN_JOBS[3], 1), () => bess(.29), 12);
+  assert.ok(!early.heard.includes('story.ember.moss.4'), 'job 4: nothing at 29% of the road');
+  const there = lineIdsHeard(early.job, () => bess(.31), 12);
+  assert.equal(there.heard.filter(id => id === 'story.ember.moss.4').length, 1, 'job 4: Moss says it at 31%');
+  const later = lineIdsHeard(there.job, () => bess(.6), 12);
+  assert.ok(!later.heard.includes('story.ember.moss.4'), 'job 4: and does not say it twice');
+}
+
 console.log(`test-ember-lines: ${EXPECTED.length} captions and note passed`);

@@ -5,6 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor} from '../../world/jobs/old-smoke.js';
+import {pathShare} from '../../world/jobs/furnace-sightings.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {EMBER_CAPTIONS} from '../../story/ember-lines.js';
 import {applyArmorDamage} from '../../combat-armor.js';
@@ -420,7 +421,10 @@ export function stepWorldJob(duel, dt) {
     ? targetActor.id : null;
   const actors = [...worldJob.actors.map((actor, index) => ({id: actor.id ?? `raider-${index}`,
     position: actor.position ?? {x: actor.x, y: actor.y, z: actor.z}, health: actor.knockedDown ? 0 : actor.health,
-    pathProgress: actor.pathProgress, atDestination: actor.atDestination})),
+    pathProgress: actor.pathProgress, atDestination: actor.atDestination,
+    // How far an escorted truck has gone along its road, for the step's sayAtShare lines (0 to 1).
+    ...(currentStep?.sayAtShare && actor.id === currentStep.actorId && actor.position ?
+      {share: pathShare(actor.position, actor.pathIndex, currentStep.path).share} : {})})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
   const view = {player: playerView, onFoot: !!state.onFoot,
@@ -437,6 +441,8 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  // The moment a step began its closing lines: the scene times the furnace's sighting after Job 3's catch from it.
+  if (next.stepState.linesClosing && !Number.isFinite(worldJob.wonAtSec)) worldJob.wonAtSec = worldJob.clockSec;
   state.worldJobThingsHit = [];
   moveJobRaiders(worldJob, dt);
   updateJobActors(duel, worldJob, dt);

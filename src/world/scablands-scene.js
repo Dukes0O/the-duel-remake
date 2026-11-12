@@ -7,6 +7,7 @@ import {createGroundView} from './ground-view.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
+import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
 
@@ -445,7 +446,14 @@ export function createScablandsScene(course,options={}){
       const chasing=worldJob?.definition?.storyId==='everburn'&&worldJob.job?.steps?.[worldJob.job.stepIndex]?.kind==='chase';
       const actor=chasing?worldJob.actors?.find(item=>item.id==='old-smoke-furnace'):null;
       if(furnaceRig&&furnaceModel&&furnacePlace){
-        placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
+        // In jobs 1, 3 and 4 the furnace is seen before it is fought: drawn where the job's own state and clock put it
+        // (src/world/jobs/furnace-sightings.js), with no actor behind it. Otherwise it stands in the Everburn or follows the chase.
+        const sighting=actor?null:furnaceSighting(worldJob);
+        if(sighting&&!sighting.hidden){
+          furnaceRig.position.set(sighting.x,scablandsSurfaceHeightAt(sighting.x,sighting.z),sighting.z);
+          furnaceRig.rotation.y=sighting.heading;
+        }else placeRig(furnaceRig,actor,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],1,false,furnacePlace);
+        furnaceRig.visible=!sighting?.hidden;
         furnaceModel.position.x=0;
       }
       // Big Bess follows her escort actor in the Everburn story and stands in the Boneyard otherwise.

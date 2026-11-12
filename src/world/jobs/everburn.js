@@ -1,5 +1,7 @@
 // The Everburn story and Tin Town notice-board jobs. These definitions contain
 // only world-job data; the shared job engine owns all simulation rules.
+import {FURNACE_SKYLINE} from './furnace-sightings.js';
+
 const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.freeze({x, y:0, z}), radius});
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -40,6 +42,8 @@ export const EVERBURN_JOBS = Object.freeze([
     steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
       safePoints:path(safeRoad), crashLimit:8, burnable:true, spillLineId:'everburn-job-1-spill',
       barriers:path(place('ash-men-barricade-1', 180, 100), place('ash-men-barricade-2', 410, 210)),
+      // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
+      sayNear:[{place:place('furnace-skyline', FURNACE_SKYLINE.x, FURNACE_SKYLINE.z), radius:260, lineId:'story.ember.cinder.24'}],
       unlock:'tin-town', lentWeapon:'flamethrower', startLineId:'everburn-job-1-start',
       arrivalLineId:'everburn-job-1-won'})]}),
   Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Get Out and Walk', kind:'on-foot',
@@ -55,7 +59,9 @@ export const EVERBURN_JOBS = Object.freeze([
     steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
       path:path(boneyard, place('plane-row',280,380), place('wing-gap',140,470))}, path:path(boneyard, place('plane-row',280,380), place('wing-gap',140,470)),
       targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'everburn-job-3-falling-behind',
-      targetHealth:20, reward:'flamethrower', startLineId:'everburn-job-3-start', wonLineId:'everburn-job-3-won'})]}),
+      targetHealth:20, reward:'flamethrower', startLineId:'everburn-job-3-start',
+      // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
+      closing:['story.ember.cinder.22']})]}),
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
     resultLineId:'story.ember.auntie-solder.6',
     easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'everburn-job-4-start',
@@ -64,6 +70,8 @@ export const EVERBURN_JOBS = Object.freeze([
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
       speed:9, health:100, restLineId:'everburn-job-4-rest', restartFrom:'last-marker',
       raiders:path(place('ash-men-raid-1',360,270),place('ash-men-raid-2',500,90)),
+      // The furnace paces her on the high ground while she is between 30% and 70% of her road.
+      sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
       reward:'scrap', startLineId:'everburn-job-4-start', wonLineId:'everburn-job-4-won'})]}),
   Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
     resultLine:'You carried Old Smoke’s key back to the Everburn.',
