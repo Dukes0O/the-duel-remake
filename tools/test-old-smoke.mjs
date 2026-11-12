@@ -7,6 +7,7 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceSpeed, furnaceHealth,
   furnaceDoorSpot, furnaceGlowingDoor, oldSmokeVentTargets} from '../src/world/jobs/old-smoke.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 
 // WW-BOSS: Old Smoke's furnace chase. The rules live in src/world/jobs/old-smoke.js
 // and run without graphics, so this test drives them directly and then through a
@@ -69,6 +70,51 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   const boneyardLeg = f.path.points.slice(7, 11);
   check(boneyardLeg.every(point => Math.abs(point.z - planes.z) > 20 || Math.abs(point.x - planes.x) > 40),
     'the Boneyard leg passes beside the planes, not through them');
+}
+
+// EVERBURN-RUN-AT-TOWN: the run goes to Tin Town's gate and home along the road. The path, the three legs
+// and the gate's place in the list are exactly the card's table.
+{
+  const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
+  same(def.path.map(place => [place.position.x, place.position.z]), [[-424, 304], [-450, 40], [-300, -230], [-60, -380],
+    [170, -340], [350, -200], [350, 60], [335, 170], [345, 246], [440, 248], [545, 252], [610, 170], [575, 62],
+    [430, 70], [230, 150], [0, 230], [-200, 350], [-424, 304]], 'the path is the card\'s list of places');
+  same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 16]],
+    'the three legs begin at the well, at the Boneyard and at the place (-200, 350)');
+  check(def.path[def.gateWaypoint].id === 'tin-town-gate' && def.gateWaypoint === 12, 'the gate is the place named tin-town-gate, the 13th in the list');
+  same(placeAt(def.gateWaypoint), [575, 62], 'the gate stands at (575, 62)');
+  near(f.path.total, 3250.6, .1, 'the path is about 3,250 m');
+  near(f.path.total / OLD_SMOKE.baseSpeed, 232.2, .1, 'the path takes 3 minutes 52 seconds at the base pace');
+  near(f.path.total - f.legs[2].fromMetres, 228.7, .1, 'the rear door is fought on the last 229 m');
+  check(f.legs[1].fromMetres < f.path.cumulative[def.gateWaypoint] && f.path.cumulative[def.gateWaypoint] < f.legs[2].fromMetres,
+    'the gate lies on the Boneyard leg, before the run home');
+  // The old loop is gone: no place of the path comes from the old turning points.
+  check(!def.path.some(place => /^furnace-(turn|run)-[12]$/.test(place.id)), 'the loop back to the well is gone');
+}
+
+// Every straight piece of the path clears every solid in the Scablands by 8 m. The furnace begins at the well and
+// rolls into it, so the first and last pieces are allowed to touch the Everburn well's own box and no other.
+{
+  const distanceToBox = (x, z, solid) => {
+    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
+    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+  };
+  const points = def.path.map(place => place.position);
+  let tightest = Infinity;
+  for (let piece = 0; piece < points.length - 1; piece++) {
+    const a = points[piece], b = points[piece + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    for (const solid of SCABLANDS_SOLIDS) {
+      if (solid.id === 'everburn-well' && (piece === 0 || piece === points.length - 2)) continue;
+      let closest = Infinity;
+      for (let metres = 0; metres <= length; metres += .1) {
+        const t = metres / length;
+        closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, solid));
+      }
+      tightest = Math.min(tightest, closest);
+      check(closest >= 8, `piece ${piece + 1} of the path clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
+    }
+  }
+  console.log(`Old Smoke: the path's tightest clearance from a solid is ${tightest.toFixed(1)} m`);
 }
 check(chaseStep.contactRadius === 0 && chaseStep.leashDistance === Infinity,
   'touching the furnace or falling behind never ends the chase');

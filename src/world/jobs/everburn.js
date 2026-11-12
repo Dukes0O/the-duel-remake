@@ -13,21 +13,24 @@ const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];
 
-// Old Smoke's path: from the well across the open flats (leg 1, left door), into
-// the Boneyard past the planes (leg 2, right door) and back along the run to the
-// well, whose last 230 m are leg 3 (rear door). About 3,150 m, or 3 minutes 45
-// seconds at the furnace's base pace.
+// Old Smoke's path: from the well across the open flats (leg 1, left door), through
+// the Boneyard past the planes and up to Tin Town's gate (leg 2, right door), then
+// home along the road with the player behind it. The last 229 m, from the place at
+// (-200, 350), are leg 3 (rear door). About 3,250 m, or 3 minutes 52 seconds at the
+// furnace's base pace. The gate is where the furnace is running to: if its right
+// door is still unbroken when it passes the gate, the gate burns (old-smoke.js).
+const furnaceGate = place('tin-town-gate', 575, 62, 18);
+const furnaceRunBack = place('furnace-run-3', -200, 350);
 const furnacePath = path(well,
   place('furnace-flats-1', -450, 40), place('furnace-flats-2', -300, -230), place('furnace-flats-3', -60, -380),
   place('furnace-flats-4', 170, -340), place('furnace-flats-5', 350, -200), place('furnace-flats-6', 350, 60),
   place('furnace-boneyard-in', 335, 170), place('furnace-planes-1', 345, 246), place('furnace-planes-2', 440, 248),
-  place('furnace-planes-3', 545, 252), place('furnace-turn-1', 610, 335), place('furnace-turn-2', 520, 425),
-  place('furnace-run-1', 250, 415), place('furnace-run-2', 0, 370),
-  place('furnace-run-3', -200, 350), well);
+  place('furnace-planes-3', 545, 252), place('furnace-approach', 610, 170), furnaceGate,
+  place('furnace-road-1', 430, 70), safeRoad, place('furnace-road-2', 0, 230), furnaceRunBack, well);
 const furnaceLegs = Object.freeze([
   Object.freeze({id:'open-flats', door:'left', fromWaypoint:0}),
   Object.freeze({id:'boneyard', door:'right', fromWaypoint:7}),
-  Object.freeze({id:'run-back', door:'rear', fromWaypoint:15}),
+  Object.freeze({id:'run-back', door:'rear', fromWaypoint:furnacePath.indexOf(furnaceRunBack)}),
 ]);
 
 export const EVERBURN_JOBS = Object.freeze([
@@ -81,7 +84,7 @@ export const EVERBURN_JOBS = Object.freeze([
       restartLineId:'everburn-job-6-wave-restart',
       startLineId:'everburn-job-6-start', wavesOverLineId:'everburn-job-6-waves-over'}),
       step('chase',{what:"Break the furnace's three doors. Hit a door while it glows.", targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
-        path:furnacePath, legs:furnaceLegs}, path:furnacePath, legs:furnaceLegs,
+        path:furnacePath, legs:furnaceLegs, gateWaypoint:furnacePath.indexOf(furnaceGate)}, path:furnacePath, legs:furnaceLegs,
         // The chase ends on the third door hit, never on contact or distance
         // (src/world/jobs/old-smoke.js owns the rules).
         targetSpeed:14, leashDistance:Infinity, contactRadius:0, targetHealth:3, hitPart:'glowing-vent',
