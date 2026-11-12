@@ -209,21 +209,12 @@ function tintArt(scene, placeId, wear=null){
   });
 }
 
-// The mall's four sand drifts at the entrance take the ground's own surface and a low, wide shape (SCABLANDS-LAND round 3):
-// as modelled they were beige pillows of their own flat colour. Each is flattened onto its base and spread wider.
-const DRIFT_FLATTEN=.4,DRIFT_SPREAD=1.3;
-function settleSandDrifts(model,groundMaterial){
+// The mall's four sand drifts at the entrance are not drawn (SCABLANDS-LAND round 3, fix 3): as modelled they were beige pillows of
+// their own flat colour, and flattened onto the ground's own material they still read as cushions and barrels.
+function removeSandDrifts(model){
   const drifts=[];model.traverse(node=>{if(node.isMesh&&/^sand[- ]drift/.test(plainName(node.name)))drifts.push(node);});
-  model.updateMatrixWorld(true);
-  for(const drift of drifts){
-    const base=new THREE.Box3().setFromObject(drift).min.y;
-    drift.scale.set(drift.scale.x*DRIFT_SPREAD,drift.scale.y*DRIFT_FLATTEN,drift.scale.z*DRIFT_SPREAD);
-    drift.updateMatrixWorld(true);
-    // Flattening about the part's own origin moves its base: put the base back where it was.
-    drift.position.y+=base-new THREE.Box3().setFromObject(drift).min.y;
-    drift.material=groundMaterial;drift.castShadow=false;drift.receiveShadow=true;
-  }
-  return drifts;
+  for(const node of drifts)node.removeFromParent();
+  return drifts.length;
 }
 
 // The mall's 254 parts are drawn as one piece for each surface (SCABLANDS-LAND round 3): the model's meshes that share a
@@ -616,7 +607,7 @@ export function createScablandsScene(course,options={}){
           for(const node of slabs)node.removeFromParent();
         }
         tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
-        if(key==='mall'){settleSandDrifts(model,groundMaterial);mergeBySurface(model,'Dead Mall');}
+        if(key==='mall'){removeSandDrifts(model);mergeBySurface(model,'Dead Mall');}
         if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.

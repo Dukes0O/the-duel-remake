@@ -674,19 +674,14 @@ assert.ok(!boneyardLod.getObjectByName('Boneyard_ground_—_Dry_Scablands_dirt')
 // Fix 6: the mall is drawn in one piece for each surface, with every part where it was and the lamp's glow kept.
 const mallLod=wellScene.group.getObjectByName('The Dead Mall detail LOD'),mallMeshes=[];
 mallLod.levels[0].object.traverse(node=>{if(node.isMesh)mallMeshes.push(node);});
-assert.equal(mallMeshes.length,4,'43 parts of four surfaces (wall, rail, lamp, the ground-surfaced drift) are drawn as four meshes');
+assert.equal(mallMeshes.length,3,'42 parts of three surfaces (wall, rail, lamp) are drawn as three meshes');
 const mergedWall=mallMeshes.find(mesh=>mesh.material.name==='mall wall');
 assert.ok(mergedWall&&mergedWall.geometry.attributes.position.count===30*36,'the thirty wall parts are in one mesh with all their vertices');
 mergedWall.geometry.computeBoundingBox();
 assert.ok(mergedWall.geometry.boundingBox.min.x<-18.5&&mergedWall.geometry.boundingBox.max.x>18,'each merged part stays where it was in the model');
 assert.ok(mallMeshes.some(mesh=>mesh.name==='ash-men-lamp-1-amber-lens'&&mesh.material.emissiveIntensity===1.5),'a surface with one part keeps its name and its glow');
-// Fix 3: the mall's drifts take the ground's own surface, lie low and wide, and keep their base where it was.
-wellScene.group.updateMatrixWorld(true);
-const mallDrift=wellScene.group.getObjectByName('sand-drift-1'),driftBox=new THREE.Box3().setFromObject(mallDrift);
-assert.equal(mallDrift.material,wellScene.group.getObjectByName('Scablands ground chunks').children[0].material,'a sand drift takes the ground own material');
-assert.ok(Math.abs(driftBox.max.y-driftBox.min.y-1.1*.4)<.01&&driftBox.max.x-driftBox.min.x>7.5,'a drift is low (0.4 of its old height) and wide');
-const driftLod=wellScene.group.getObjectByName('The Dead Mall detail LOD');
-assert.ok(Math.abs(driftBox.min.y-(driftLod.position.y+.8-.55))<.01,'a drift keeps its base where it was');
+// Fix 3: the mall's four sand drifts at the entrance are not drawn.
+assert.ok(!wellScene.group.getObjectByName('sand-drift-1'),'the mall sand drifts are not drawn');
 wellScene.dispose();
 // Fix 5: the three wrecks of the real Boneyard model lie as the table says: three different headings, one rolled onto a wing,
 // uneven gaps, nothing but the buried landing gear sunk, each solid where it is drawn, both roads and the furnace's path
