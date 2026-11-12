@@ -3,7 +3,7 @@
 // World-job data only: the job engine and the job mode own every rule (raids: src/world/jobs/steps/escort.js).
 import {makeRng} from '../../rng.js';
 import {arenaReward} from '../../arena/arena-settlement.js';
-import {ambushRaiders, metresAtPlace} from './steps/escort.js';
+import {ambushRaiders} from './steps/escort.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position: Object.freeze({x, y: 0, z}), radius});
 const path = (...places) => Object.freeze(places);
@@ -136,12 +136,14 @@ export const isGasRun = job => job?.run === true && job?.storyId === 'everburn' 
 
 // ---- The battle on the Boneyard road (docs/board/cards/FIELD-BATTLE-ASH.md) ----------------------------------------------------
 // At War party, while the furnace is alive, the next Boneyard run is not a run but a battle: Big Bess drives the same road with two
-// ambushes of 3 (2 on Easy) ahead of her, and the Ash Men's patched furnace comes out behind her as she passes (0, 370) and hunts her.
+// ambushes of 3 (2 on Easy) ahead of her, and the Ash Men's patched furnace comes out behind her 560 m along the road (past (0, 370)) and hunts her.
 // The furnace is Old Smoke's, with the same doors and the same rules (src/world/jobs/old-smoke.js), switched for the battle by the
 // `battle` rules on its definition. World-job data only: the job mode owns every rule (src/arena/modes/world-job.js).
 const FURNACE_ID = 'old-smoke-furnace';
-const COMES_OUT_PLACE = 2;
-const comesOutAtMetres = metresAtPlace(GAS_RUN_PATHS.boneyard, COMES_OUT_PLACE);
+// How far into the road Big Bess is when the furnace comes out: 130 m past (0, 370), which is 430 m in. It was 430 in the first build; with
+// 430 the three doors were broken long before the gate and the furnace never caught up. At 560 there is about 700 m of road, 78 s, left for
+// three doors (chosen from 30 tries of each driver, docs/board/cards/FIELD-BATTLE-ASH.md "Tuning result").
+const comesOutAtMetres = 560;
 // Where it comes out, this far behind Big Bess on her road. The card puts its start at (250, 415) and has it drive "her road
 // behind her", but (250, 415) is 254 m ahead of (0, 370): the furnace comes out on the road behind her instead.
 export const FIELD_BATTLE_GAP_METRES = 80;
@@ -152,15 +154,22 @@ export const FIELD_BATTLE = Object.freeze({
   ambushCounts: Object.freeze([3, 3]),
   // Fixed places along the road, ahead of (0, 370), where the two ambushes may stand; the seeded generator draws two.
   ambushMetres: Object.freeze([540, 690, 830, 977, 1107]),
-  comesOutAt: GAS_RUN_PATHS.boneyard[COMES_OUT_PLACE],
+  comesOutAt: Object.freeze(pointAlongRoad('boneyard', comesOutAtMetres)),
   comesOutAtMetres,
   furnace: Object.freeze({
     speed: Object.freeze({easy: 10, medium: 11, hard: 11}),
-    burnPerSecond: Object.freeze({easy: 2, medium: 6, hard: 9}),
+    // More than catchUpBeyondMetres behind her along the road the furnace drives at this pace; within it, at `speed`.
+    catchUpSpeed: Object.freeze({easy: 12, medium: 15, hard: 15}),
+    catchUpBeyondMetres: 40,
+    burnPerSecond: Object.freeze({easy: 2, medium: 4, hard: 6}),
     burnRangeMetres: 25,
     // Never nearer than this to Big Bess, so it never rams her.
     holdBehindMetres: 12,
-    stopSec: 8,
+    stopSec: Object.freeze({easy: 8, medium: 8, hard: 8}),
+    // A door begins to stoke only while the furnace is within burnRangeMetres of Big Bess. The glow is the story's own; the stoke is 6 s on
+    // Medium and Hard (the story's is 4 s), so that the fire is seen landing before each door.
+    stokeSec: Object.freeze({easy: 4, medium: 6, hard: 6}),
+    glowSec: Object.freeze({easy: 6, medium: 4.5, hard: 3.5}),
     doorsToStop: Object.freeze({easy: 1, medium: 3, hard: 3}),
     comesOutAtMetres,
     startMetres: comesOutAtMetres - FIELD_BATTLE_GAP_METRES,

@@ -123,10 +123,10 @@ with it alive that button is the battle. Every assertion is as it was.
 
 | 10 tries each | Big Bess home | Battle won | Her lowest health | Longest battle |
 | --- | --- | --- | --- | --- |
-| Easy, child-pace driver | 10 | 10 | 60 | 142 s |
-| Medium, a driver who clears riders and breaks doors | 10 | 10 | 1 | 188 s |
-| Medium, a driver who never fights | 10 | 0 | 22 | 272 s |
-| Hard, a driver who clears riders and breaks doors | 10 | 10 | 10 | 167 s |
+| Easy, child-pace driver | 10 | 10 | 52 | 142 s |
+| Medium, a driver who clears riders and breaks doors | 10 | 9 | 26 | 194 s |
+| Medium, a driver who never fights | 10 | 0 | 60 | 230 s |
+| Hard, a driver who clears riders and breaks doors | 10 | 7 | 28 | 203 s |
 
 Checks on the builder's branch: `test-field-battle` 643, lane tier 105 of 105, build, and the `field-battle`,
 `run-gas` and `everburn-well` browser checks. Rerun by Claude on the merged result: field battle 643, furnace rules
@@ -195,60 +195,6 @@ Not to move: Big Bess's pace and health, the furnace's pace, one hit breaking a 
 the save, the lines, and anything in the story's own fight (job 6). If the targets cannot be met inside these
 limits, the builder stops and reports the nearest result.
 
-### Tuning result (builder, 12 November 2026): stopped, no number moved
-
-**Why the fighting driver's Big Bess ends at 1 health while the driver who never fights keeps 22.** It is not a fault in a rule or
-in the driver, and the two figures do not measure the same thing.
-- In all ten tries of the fighting driver the furnace never threw one cinder on Big Bess (0 seconds in range, 0 health lost to
-  cinders). It comes out at 48 s with Big Bess 80 m ahead, its first door glows 11 s later and each broken door stops it for 8 s,
-  so the third door breaks at about 88 s with the furnace still some 120 m behind her, far outside the 25 m range. What the
-  fighting driver's Big Bess loses, she loses to the riders: with the driver behind her at the furnace's doors, three riders at
-  5 health a second each take her from 100 to 0 in about 8 s (try 3 of the trace: 100, 83, 53, 23, 0 between 72 and 80 s, no cinders,
-  three riders standing). The 1 is where that left her at the gate.
-- The 22 of the driver who never fights is the lowest health on arrival after 3 to 5 rests, with the furnace alive and in range for
-  25 to 60 s (150 to 360 health of cinders in a try). Each rest puts her back to 60 or more, so where she stands at the gate depends on
-  when her last rest fell. She is in far worse trouble than the fighter's 1.
-- So the driver is doing what its priorities say: go to a door that is opening, clear riders otherwise. The pull between the riders
-  ahead and the doors behind is the design, and it is the riders, not the cinders, that bring Big Bess near resting. Lowering
-  the cinders cannot change it, because a driver who fights is never in them.
-
-**Today's numbers** (nothing moved), same seeds, 10 tries each:
-
-| Driver | Big Bess home | Battle won | Her health at the gate in won battles | Longest |
-| --- | --- | --- | --- | --- |
-| Easy, child-pace | 10 | 10 | lowest 60 | 142 s |
-| Medium, clears riders and breaks doors | 10 | 10 | lowest 1; 25 or more in 7 of 10 | 188 s |
-| Medium, never fights | 10 | 0 | (not won; lowest on arrival 22) | 272 s |
-| Hard, clears riders and breaks doors | 10 | 10 | lowest 10; 25 or more in 7 of 10 | 167 s |
-| Hard, never fights (for information) | 10 | 0 | (not won; lowest on arrival 60) | 240 s |
-
-Against the targets: Easy meets all three. Medium, never fights, meets both. Medium, fights: home 10 and 25 or more in 7 of the won
-battles are met, but the win count is 10 and the target is 6 to 8. Hard, fights: home 10 is met, but the win count is 10 and the
-target is 2 to 5.
-
-**What the four numbers can do, and why the targets cannot be met inside their limits.** The win count is decided by one thing:
-whether the third door is broken before Big Bess arrives. With no rest, she arrives at 142 s; the third door breaks at 88 s on
-today's numbers. Every number the card lets move was tried on the fighting drivers, alone and together (stoke 4, 6, 8 s; stop 8, 6, 5 s;
-Medium glow 4.5 and 4 s; 17 combinations of those three, 10 tries each, and then the most the limits allow once more with cinders
-at their floor, 3 on Medium and 6 on Hard):
-- Medium fighter: 10 of 10 won in every one. At the most the limits allow (stoke 8 s, stop 8 s, glow 4 s) the third door breaks at
-  94 to 98 s, which is still about 44 s before Big Bess arrives, and no cinder has landed. Health at the gate in won battles was 25 or
-  more in 5 to 8 of 10 (7 on today's numbers, 5 at the most the stoke and stop allow).
-- Hard fighter (stoke 8, stop 8, cinders 6): 10 of 10 won, 7 of 10 at 25 or more.
-- Cinders alone change nothing for a fighter (he is never in range). On the driver who never fights, cinders at 3 (Medium) and 6 (Hard)
-  with stoke 8 and stop 8 still bring Big Bess home 10 of 10 and win none, lowest on arrival 24 and 22.
-- A shorter stop (down to 5 s) lets the furnace close faster but also brings the next door sooner, so it never lost the fighter the race.
-
-The nearest result is therefore today's numbers: all targets but the two win counts are met, and nothing in the four numbers gets
-those two counts down, because the furnace has about 44 s of slack even at the limits. The fault, if it is one, is in what the card
-fixed: the furnace comes out 430 m into a road of 1,259 m, so there are 92 s of road left to break three doors that need about 50 s.
-
-**For Claude to decide (not built, not in the card's list of numbers that may move).** The number that sets the race is how much
-road is left when the furnace comes out. In a scratch run with the furnace coming out at 684 m (the (250, 415) point that the card's
-first draft used, with the same 80 m gap) and stoke 8 s, stop 8 s, glow 4 s on Medium, the fighting driver won 8 of 10 (one run of ten,
-not repeated); coming out at 600 m or 800 m it won 10 of 10, so the count is noisy from one run to the next and wants a proper sweep
-before a number is chosen.
-
 ### The hunt, redesigned after the builder's finding (Claude, 12 November 2026)
 
 The builder was right to stop, and its finding is worse than a missed win count: against a driver who fights, the
@@ -279,6 +225,75 @@ says so; it stops only if 1, 2 or 3 cannot be met.
 
 Not to move: riders and their damage, Big Bess's pace and health, one hit breaking a glowing door, Easy's one door,
 pay, the save, the lines, and job 6 of the story (`tools/test-old-smoke.mjs` passes untouched).
+
+### Tuning result (builder, 12 November 2026, after the redesign)
+
+**Question 1: why the fighting driver's Big Bess ended at 1 health while the driver who never fights kept 22 (first build).** It was not a fault in a rule or
+in the driver, and the two figures do not measure the same thing.
+- In all ten tries of the fighting driver the furnace never threw one cinder on Big Bess (0 seconds in range, 0 health lost to
+  cinders). It comes out at 48 s with Big Bess 80 m ahead, its first door glows 11 s later and each broken door stops it for 8 s,
+  so the third door breaks at about 88 s with the furnace still some 120 m behind her, far outside the 25 m range. What the
+  fighting driver's Big Bess loses, she loses to the riders: with the driver behind her at the furnace's doors, three riders at
+  5 health a second each take her from 100 to 0 in about 8 s (try 3 of the trace: 100, 83, 53, 23, 0 between 72 and 80 s, no cinders,
+  three riders standing). The 1 is where that left her at the gate.
+- The 22 of the driver who never fights is the lowest health on arrival after 3 to 5 rests, with the furnace alive and in range for
+  25 to 60 s (150 to 360 health of cinders in a try). Each rest puts her back to 60 or more, so where she stands at the gate depends on
+  when her last rest fell. She is in far worse trouble than the fighter's 1.
+- So the driver is doing what its priorities say: go to a door that is opening, clear riders otherwise. The pull between the riders
+  ahead and the doors behind is the design, and it is the riders, not the cinders, that bring Big Bess near resting. Lowering
+  the cinders cannot change it, because a driver who fights is never in them.
+
+**First build, before the redesign** (10 tries each, same seeds): Easy 10 home, 10 won; Medium fights 10 home, 10 won, cinders on her for
+0 s; Medium never fights 10 home, 0 won; Hard fights 10 home, 10 won, cinders 0 s. No stoke, stop, glow or cinder setting inside the
+first limits changed the win count (the third door broke some 44 s before she arrived), so the builder stopped and the hunt was redesigned.
+
+**The redesigned hunt, built.** The three rule changes are in (catching-up pace beyond 40 m; a door begins to stoke only while the furnace
+is within cinder range; gentler cinders). Numbers, each only for the battle:
+
+| Number | Card's start | Built | Range | Why |
+| --- | --- | --- | --- | --- |
+| Catching-up pace, Medium and Hard (Easy) | 15 (12) | 15 (12) | 13 to 16 | Not needed to move |
+| Beyond how many metres behind her it catches up | 40 | 40 | fixed by the card | |
+| Cinders, Medium (Hard, Easy) | 4 (6, 2) | 4 (6, 2) | Medium 3 to 6, Hard 6 to 9 | Not needed to move |
+| Stoke, Medium and Hard (Easy) | 4 (4) | 6 (4) | 4 to 8 | Gives the cinders more seconds on her and keeps her health up at the gate |
+| Stop after a broken door | 8 | 8 | 5 to 8 | Not needed to move |
+| Glow, Medium (Hard, Easy) | 4.5 (3.5, 6) | 4.5 (3.5, 6) | 4 or more | Not needed to move |
+| Where the furnace comes out, metres into the road | 430 | 560 | 430 to 700 | Decided from 30 tries; see below |
+
+**Where it comes out, from 30 tries of each fighting driver** (stoke 4 / 6 / 8 s; won out of 30; Medium cinders in range of 10 to 30 s in
+how many of 30; Medium health 25 or more in how many of the won):
+
+| Comes out at | Medium fights (stoke 4) | Medium (stoke 6) | Hard fights (stoke 4) | Hard (stoke 6) |
+| --- | --- | --- | --- | --- |
+| 430 m | 26 won, cinders 29, health 19 of 26 | 25, 27, 19 of 25 | 30 won | 30 won |
+| 560 m | 25 won, cinders 29, health 23 of 25 | 23, 30, 23 of 23 | 17 won | 16 won |
+| 620 m | 15 won, 30, 15 of 15 | | 27 won | |
+| 660 m | 16 won, 20, 15 of 16 | | 17 won | |
+| 700 m | 10 won, 20, 10 of 10 | 8, 30, 8 of 8 | 8 won | 9 won |
+
+At 430 m Hard is never beaten and at 620 to 700 m Medium is beaten about as often as it wins; 560 m is the one place where Medium (7.7 of 10)
+and Hard (5.3 of 10) both land in their targets, with the fire landing in 30 of 30 Medium battles (stoke 6) and her health at the gate 25 or
+more in every won one. Stoke 8 s at 560 m costs Medium too many wins (13 of 30).
+
+**The four drivers, built numbers, 10 tries each on the same seeds** (cinders: seconds of fire landing on Big Bess in a try):
+
+| Driver | Big Bess home | Battle won | Her health at the gate in won battles | Cinders on her | Longest |
+| --- | --- | --- | --- | --- | --- |
+| Easy, child-pace | 10 | 10 | lowest 52 | 4.3 to 4.4 s | 142 s |
+| Medium, clears riders and breaks doors | 10 | 9 | lowest 26; 25 or more in 9 of 9 | 11 to 21 s (10 of 10 tries in 10 to 30 s) | 194 s |
+| Medium, never fights | 10 | 0 | (not won; on arrival 60) | 42 to 82 s | 230 s |
+| Hard, clears riders and breaks doors | 10 | 7 | lowest 28; 25 or more in 7 of 7 | 13 to 24 s | 203 s |
+| Hard, never fights (for information) | 0 | 0 | (never arrives) | 372 to 402 s | 897 s (stopped) |
+
+Against the targets: 1 (cinders 10 to 30 s in at least 8 of 10) met, 10 of 10. 2 (home 10 of 10 for Easy and Medium drivers, the one who
+never fights wins none) met. 3 (25 or more in at least 7 of the won) met, 9 of 9. 4 (Medium 6 to 9, Easy 8 or more, Hard 3 to 7) met: 9, 10
+and 7. On 30 tries the same numbers give Medium 23 won (7.7 of 10), Hard 16 (5.3 of 10).
+
+**Found wrong on the card: a Hard driver who never fights cannot get Big Bess home.** With cinders at 6 a second on Hard (the lowest the card
+allows) and a furnace that catches up and sits 12 m behind her throwing fire, she rests every 17 s or so and each rest puts her back at the
+last place she reached, so in 10 of 10 tries she was still resting when the 15 minutes ran out (32 rests). Before the redesign this driver got
+home 10 of 10. The card asks for home 10 of 10 only for the Easy and Medium drivers, so this is outside the targets, but a Hard player who
+only drives has no way to finish; the road back (fight, or lower the Hard cinders under 6) is for Claude to decide.
 
 ## Not in this card
 

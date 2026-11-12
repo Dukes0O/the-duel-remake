@@ -61,6 +61,10 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   };
   // Big Bess `ahead` metres in front of the furnace along the road (so the furnace is not held back by her).
   const aheadOf = ahead => f => bessAt(f.metres + ahead);
+  // Big Bess 20 m in front of the furnace: inside its cinder range (25 m) and inside the 40 m where it drives at its own pace.
+  const within = () => aheadOf(20);
+  // Big Bess far from the furnace and from the road (out of its cinder range however far it drives).
+  const outOfRange = f => ({metres: f.metres + 500, x: 9999, z: 9999, arrived: false});
   const typesOf = events => events.map(event => event.type);
 
   // Where it starts, and that its path is the Boneyard road itself.
@@ -68,31 +72,42 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same(def.path.map(item => item.position), ROAD.map(item => item.position), 'the furnace\'s path is the Boneyard road itself');
   same(step.path.map(item => item.position), ROAD.map(item => item.position), 'and so is Big Bess\'s');
   same(def.id, 'old-smoke-furnace', 'the battle\'s furnace is the furnace actor the scene already draws');
-  near(FIELD_BATTLE.comesOutAtMetres, metresAtPlace(ROAD, 2), 1e-9, 'it comes out as Big Bess passes (0, 370)');
+  // Re-recorded for the redesigned hunt: it comes out at 560 m (130 m past (0, 370)), not as she passes (0, 370) at 430 m, so that three
+  // doors take most of the road that is left (chosen from 30 tries of each scripted driver).
+  near(FIELD_BATTLE.comesOutAtMetres, metresAtPlace(ROAD, 2) + 130, .5, 'it comes out as Big Bess is 130 m past (0, 370)');
   same([ROAD[2].position.x, ROAD[2].position.z], [0, 370], 'which is the road\'s third place');
-  near(FIELD_BATTLE.comesOutAtMetres, 430, 1, 'about 430 m into the road');
+  near(FIELD_BATTLE.comesOutAtMetres, 560, 1e-9, '560 m into the road');
+  near(FIELD_BATTLE.furnace.startMetres, 480, 1e-9, 'and it starts 480 m in');
   near(FIELD_BATTLE.furnace.comesOutAtMetres - FIELD_BATTLE.furnace.startMetres, 80, 1e-9, 'it comes out 80 m behind her');
   {
     const f = fresh('medium'), start = alongAt(f.metres);
     near(Math.hypot(f.x - start.x, f.z - start.z), 0, 1e-6, 'it starts on the road at its start metre');
-    near(Math.hypot(f.x - 0, f.z - 370), 80, .5, 'and that is 80 m behind (0, 370)');
+    near(Math.hypot(f.x - 0, f.z - 370), 50, .5, 'which is 50 m past (0, 370), 80 m behind where she is as it comes out (it was 80 m from (0, 370) when it came out at 430 m)');
     near(f.metres, FIELD_BATTLE.furnace.startMetres, 1e-9, 'its metres are measured along Big Bess\'s own road');
     const out = run(f, .5, aheadOf(500));
     same(typesOf(out.events).filter(type => type === 'comesOut').length, 1, 'it says it has come out, once');
     check(!out.events.some(event => ['bolt', 'turnAround', 'rollIn', 'fell', 'townReached', 'gateBurnt', 'shoveWarning', 'shove'].includes(event.type)), 'and none of the story\'s other events');
   }
 
-  // Its pace, and how it closes on Big Bess, on each difficulty.
-  for (const [difficulty, pace, closing] of [['easy', 10, 1], ['medium', 11, 2], ['hard', 11, 2]]) {
+  // Its pace, and how it closes on Big Bess, on each difficulty. More than 40 m behind her it catches up at the catching-up pace;
+  // within 40 m it drives at its own. Re-recorded for the redesigned hunt: before, one pace of 10 or 11 m/s at any distance.
+  for (const [difficulty, pace, catchUp] of [['easy', 10, 12], ['medium', 11, 15], ['hard', 11, 15]]) {
     const f = fresh(difficulty);
-    same(furnacePace(f), pace, `${difficulty}: ${pace} m/s`);
+    same(furnacePace(f), pace, `${difficulty}: ${pace} m/s before it has seen where she is`);
     const before = f.metres; run(f, 10, aheadOf(500));
-    near(f.metres - before, pace * 10, .01, `${difficulty}: it covers ${pace * 10} m in 10 s`);
-    // Big Bess drives away at 9 m/s from 80 m ahead.
-    // Big Bess drives away at 9 m/s from where the furnace came out, 80 m ahead of it.
+    near(f.metres - before, catchUp * 10, .01, `${difficulty}: far behind her it covers ${catchUp * 10} m in 10 s (the catching-up pace, ${catchUp} m/s)`);
+    same(furnacePace(f), catchUp, `${difficulty}: and furnacePace says so`);
+    const near39 = fresh(difficulty); const m0 = near39.metres; run(near39, 10, f2 => bessAt(f2.metres + 39));
+    near(near39.metres - m0, pace * 10, .01, `${difficulty}: 39 m behind her it drives at its own pace, ${pace} m/s (today's, not the catching-up one)`);
+    same(furnacePace(near39), pace, `${difficulty}: and furnacePace says so`);
+    const over41 = fresh(difficulty); const m1 = over41.metres; run(over41, 1, () => bessAt(over41.metres + 41));
+    near(over41.metres - m1, catchUp, .2, `${difficulty}: 41 m behind her it is catching up`);
+    // Big Bess drives away at 9 m/s from where the furnace came out, 80 m ahead of it: it closes by (catching-up pace - 9) m/s down to
+    // 40 m, then by (pace - 9) m/s.
     const g = fresh(difficulty); let bess = FIELD_BATTLE.comesOutAtMetres;
     run(g, 20, () => { bess += 9 * DT; return bessAt(bess); });
-    near(bess - g.metres, 80 - closing * 20, .5, `${difficulty}: it closes on her by ${closing} m/s (80 m of gap becomes ${80 - closing * 20} m after 20 s)`);
+    const fastSec = 40 / (catchUp - 9), gapAfter = 40 - (pace - 9) * (20 - fastSec);
+    near(bess - g.metres, gapAfter, .5, `${difficulty}: it closes by ${catchUp - 9} m/s while 40 m or more behind and by ${pace - 9} m/s inside that (80 m of gap becomes ${gapAfter.toFixed(1)} m after 20 s)`);
   }
 
   // It never gets nearer than 12 m, so it never rams her.
@@ -103,8 +118,9 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
     check(Math.hypot(f.x - bessAt(stand).x, f.z - bessAt(stand).z) >= 11.9, `${difficulty}: and never touches her`);
   }
 
-  // Cinders on Big Bess: 2, 6 and 9 a second within 25 m, nothing beyond it, and a line of events the first time.
-  for (const [difficulty, rate] of [['easy', 2], ['medium', 6], ['hard', 9]]) {
+  // Cinders on Big Bess: 2, 4 and 6 a second within 25 m (gentler than the 6 and 9 of the first build, because they now land in
+  // every battle), nothing beyond it, and a line of events the first time.
+  for (const [difficulty, rate] of [['easy', 2], ['medium', 4], ['hard', 6]]) {
     const f = fresh(difficulty);
     const inRange = run(f, 3, f2 => ({...bessAt(f2.metres + 20), arrived: false}));
     near(inRange.escortBurn, rate * 3, rate * .05, `${difficulty}: ${rate} health a second at 20 m`);
@@ -127,23 +143,71 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
     same(typesOf(events).filter(type => type === 'cindersLand').length, 2, 'the cinders land again when it comes back into range');
   }
 
+  // New rule: a door begins to stoke only while the furnace is within cinder range of Big Bess. Out of range the stoke waits; a door that
+  // already glows keeps its time; the next stoke (after the door shuts) waits for range as well.
+  for (const difficulty of ['easy', 'medium', 'hard']) {
+    const glow = {easy: 6, medium: 4.5, hard: 3.5}[difficulty];
+    const f = fresh(difficulty);
+    const farAway = run(f, 40, outOfRange);
+    check(!farAway.events.some(event => ['stoke', 'doorOpen'].includes(event.type)) && f.phase === 'idle' && f.door === null, `${difficulty}: 40 s out of range, no door has begun to stoke`);
+    const inRange = run(f, .1, within());
+    check(typesOf(inRange.events).includes('stoke') && f.phase === 'stoke' && f.door === 'left', `${difficulty}: the left door begins to stoke as soon as it is within range`);
+    // Out of range again in the middle of the stoke: a stoke already begun goes on.
+    check(until(f, g => g.phase === 'glow', 60, outOfRange), `${difficulty}: a stoke already begun goes on out of range, to the glow`);
+    // A glowing door keeps its time out of range.
+    const opened = f.timeSec, seen = run(f, glow + 1, outOfRange);
+    const slam = seen.events.find(event => event.type === 'doorSlam');
+    check(slam && slam.reason === 'missed', `${difficulty}: a glowing door shuts when its time is up, not because Big Bess is out of range`);
+    near(slam.atSec - opened, glow, DT * 2, `${difficulty}: after its own ${glow} seconds of glow`);
+    // Shut, and the next stoke waits for range.
+    const waited = run(f, 30, outOfRange);
+    check(f.phase === 'shut' && !waited.events.some(event => ['stoke', 'doorOpen'].includes(event.type)), `${difficulty}: the shut door's next stoke waits while out of range`);
+    const back = run(f, .1, within());
+    check(typesOf(back.events).includes('stoke') && f.phase === 'stoke', `${difficulty}: and begins when she is back in range`);
+    // A door broken while out of range still leaves the furnace stopped for its time, then waiting for range before the next door.
+  }
+  {
+    // After a broken door the furnace waits to stoke the next until it is within range again.
+    const f = fresh('medium');
+    check(until(f, g => g.phase === 'glow', 60, within()) && furnaceHit(f, 'left'), 'medium: the left door breaks');
+    run(f, 8.5, outOfRange);
+    check(f.phase === 'idle', 'medium: after its stop with Big Bess far ahead, the next door has not begun to stoke');
+    run(f, 20, outOfRange);
+    check(f.phase === 'idle' && f.door === null, 'medium: nor does it while she stays out of range');
+  }
+  {
+    // The flag the scene reads (`burning`) is true exactly while cinders land: within range, moving (not held by a broken door), not dead.
+    const f = fresh('medium'); let mismatches = 0, burningSteps = 0, heldInRange = 0, gap = 20;
+    for (let t = 0; t < 60; t += DT) {
+      gap = Math.floor(t / 3) % 3 === 2 ? 60 : 20;
+      const out = stepFurnace(f, DT, {car: null, escort: bessAt(f.metres + gap)});
+      if ((out.escortBurn > 0) !== f.burning) mismatches++;
+      if (f.burning) burningSteps++;
+      if (f.phase === 'stagger' && f.inCinderRange && !f.burning) heldInRange++;
+      if (f.phase === 'glow' && f.hits < 2) furnaceHit(f, f.door);
+    }
+    same(mismatches, 0, 'burning is true on exactly the steps where cinders land on Big Bess (60 s, in and out of range, with doors broken)');
+    check(burningSteps > 0 && heldInRange > 0, 'and that run had steps with cinders landing, and steps held by a broken door within range, where nothing lands');
+    check(f.dead === false && f.burning !== undefined, 'a living furnace has the flag');
+  }
+
   // They burn Big Bess and not the player, and nothing shoves the player.
   for (const difficulty of ['easy', 'medium', 'hard']) {
     const f = fresh(difficulty);
-    const out = run(f, 25, aheadOf(60), g => ({x: g.x - Math.sin(g.heading) * 6, y: 0, z: g.z - Math.cos(g.heading) * 6}));
+    const out = run(f, 25, within(), g => ({x: g.x - Math.sin(g.heading) * 6, y: 0, z: g.z - Math.cos(g.heading) * 6}));
     same([out.armor, out.shove, out.speedCap], [0, null, null], `${difficulty}: a car sitting in the furnace's cinders loses no armour, is not shoved and is not slowed`);
-    const beside = run(fresh(difficulty), 12, aheadOf(60), g => ({x: g.x + Math.cos(g.heading) * 5, y: 0, z: g.z - Math.sin(g.heading) * 5}));
+    const beside = run(fresh(difficulty), 12, within(), g => ({x: g.x + Math.cos(g.heading) * 5, y: 0, z: g.z - Math.sin(g.heading) * 5}));
     same([beside.armor, beside.shove, typesOf(beside.events).includes('shoveWarning')], [0, null, false], `${difficulty}: a car beside it is never shoved`);
   }
 
   // The doors come in turn on one long leg, each broken door holds it for 8 seconds, and three break it (one on Easy).
   for (const difficulty of ['medium', 'hard']) {
     const f = fresh(difficulty), glow = difficulty === 'medium' ? 4.5 : 3.5;
-    same(run(fresh(difficulty), 30, aheadOf(500)).events.find(event => event.type === 'doorOpen').seconds, glow, `${difficulty}: a door glows for ${glow} seconds, as in the story`);
+    same(run(fresh(difficulty), 30, within()).events.find(event => event.type === 'doorOpen').seconds, glow, `${difficulty}: a door glows for ${glow} seconds, as in the story`);
     same(f.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'the legs are the three doors in turn');
     same(f.legs.map(leg => leg.fromMetres), [0, 0, 0], 'all on one long leg');
     for (const [index, door] of ['left', 'right', 'rear'].entries()) {
-      check(until(f, g => g.phase === 'glow', 60, aheadOf(500)), `${difficulty}: door ${index + 1} glows`);
+      check(until(f, g => g.phase === 'glow', 60, within()), `${difficulty}: door ${index + 1} glows`);
       same([f.door, f.hits], [door, index], `${difficulty}: the ${door} door is the one that glows, after ${index} broken`);
       const wrong = ['left', 'right', 'rear'].find(other => other !== door);
       check(furnaceHit(f, wrong) === false, `${difficulty}: a hit on the ${wrong} door while the ${door} door glows counts for nothing`);
@@ -151,25 +215,25 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
       if (index < 2) {
         near(f.staggerLeft, 8, 1e-9, `${difficulty}: each broken door stops it for 8 seconds`);
         const before = f.metres, x = f.x, z = f.z;
-        run(f, 7.9, aheadOf(500));
+        run(f, 7.9, within());
         same([f.metres, f.x, f.z], [before, x, z], `${difficulty}: it does not move for those 8 seconds`);
-        run(f, .3, aheadOf(500));
+        run(f, .3, within());
         check(f.metres > before, `${difficulty}: and rolls again after them`);
-        const after = f.metres; run(f, 5, aheadOf(500));
+        const after = f.metres; run(f, 5, within());
         near((f.metres - after) / 5, 11, .01, `${difficulty}: at 11 m/s, not at the story's faster pace`);
       }
     }
     check(f.dead && f.won && !f.fallen && f.phase === 'dead', `${difficulty}: the third door breaks it for good, where it stands`);
     same(furnaceHealth(f), 0, `${difficulty}: it has no health left`);
     const stopped = {x: f.x, z: f.z, metres: f.metres};
-    const after = run(f, 30, aheadOf(500));
+    const after = run(f, 30, within());
     same([f.x, f.z, f.metres], [stopped.x, stopped.z, stopped.metres], `${difficulty}: it stays where it stopped`);
     check(!after.events.some(event => ['rollIn', 'fell', 'turnAround', 'bolt'].includes(event.type)) && after.escortBurn === 0, `${difficulty}: it does not roll into the well, turn round or throw cinders`);
   }
   {
     const f = fresh('easy');
-    same(run(fresh('easy'), 30, aheadOf(500)).events.find(event => event.type === 'doorOpen').seconds, 6, 'easy: the door glows for 6 seconds');
-    check(until(f, g => g.phase === 'glow', 60, aheadOf(500)) && f.door === 'left', 'easy: the left door glows first');
+    same(run(fresh('easy'), 30, within()).events.find(event => event.type === 'doorOpen').seconds, 6, 'easy: the door glows for 6 seconds');
+    check(until(f, g => g.phase === 'glow', 60, within()) && f.door === 'left', 'easy: the left door glows first');
     f.pending.length = 0;
     check(furnaceHit(f, 'left') === true, 'easy: one broken door');
     check(f.dead && f.won && f.phase === 'dead' && furnaceHealth(f) === 0, 'easy: is enough to stop it for good');
@@ -178,19 +242,19 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   {
     // A ram counts, as in the story: a car just outside the glowing door.
     const f = fresh('medium');
-    until(f, g => g.phase === 'glow', 60, aheadOf(500));
+    until(f, g => g.phase === 'glow', 60, within());
     const spot = furnaceDoorSpot(f, 'left'), right = {x: -Math.cos(f.heading), z: Math.sin(f.heading)};
-    stepFurnace(f, DT, {car: {x: spot.x - right.x * 1.5, y: 0, z: spot.z - right.z * 1.5}, escort: aheadOf(500)(f)});
+    stepFurnace(f, DT, {car: {x: spot.x - right.x * 1.5, y: 0, z: spot.z - right.z * 1.5}, escort: within()(f)});
     same(f.hits, 1, 'a ram on the glowing door breaks it');
   }
 
   // It never bolts to the next leg's ground, never turns round at the road's end and never shoves: run it alone for a long time.
   const STORY_ONLY = ['bolt', 'turnAround', 'escaped', 'rollIn', 'fell', 'townReached', 'gateBurnt', 'shoveWarning', 'shove'];
   for (const difficulty of ['easy', 'medium', 'hard']) {
-    // A player who breaks every door the moment it glows, with nobody to hold the furnace back.
+    // A player who breaks every door the moment it glows, with Big Bess in front of the furnace (a door stokes only in cinder range).
     const f = fresh(difficulty), events = [];
     for (let t = 0; t < 200 && !f.dead; t += DT) {
-      events.push(...stepFurnace(f, DT, {car: null, escort: null}).events.map(event => event.type));
+      events.push(...stepFurnace(f, DT, {car: null, escort: within()(f)}).events.map(event => event.type));
       if (f.phase === 'glow') furnaceHit(f, f.door);
     }
     check(f.dead && f.hits === (difficulty === 'easy' ? 1 : 3), `${difficulty}: it is stopped by its doors alone`);
@@ -220,7 +284,7 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   // A rest sets Big Bess back; the furnace falls back to where it came out and keeps its broken doors.
   {
     const f = fresh('medium');
-    until(f, g => g.phase === 'glow', 60, aheadOf(500)); furnaceHit(f, 'left');
+    until(f, g => g.phase === 'glow', 60, within()); furnaceHit(f, 'left');
     run(f, 40, aheadOf(500));
     const before = f.metres;
     furnaceFallBack(f, FIELD_BATTLE.comesOutAtMetres);
@@ -251,7 +315,7 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same(step.ambushes.map(item => item.count), [3, 3], 'two ambushes of 3');
   same(fieldBattleJob({runs: 0, difficulty: 'easy'}).raids.map(item => item.count), [2, 2], 'and of 2 on Easy');
   same(job.raids.map(item => item.count), [3, 3], 'of 3 on Medium and Hard');
-  check(step.ambushes.every(item => alongPath(step.path, item.place).gap < .5 && alongPath(step.path, item.place).metres > FIELD_BATTLE.comesOutAtMetres + 100), 'both stand on the road, ahead of Big Bess when the furnace comes out');
+  check(step.ambushes.every(item => alongPath(step.path, item.place).gap < .5 && alongPath(step.path, item.place).metres > metresAtPlace(step.path, 2) + 100), 'both stand on the road, ahead of (0, 370) (the furnace now comes out 130 m further on, so the nearest place, 540 m, may stand just before it)');
   check(step.ambushes.every(item => FIELD_BATTLE.ambushMetres.includes(item.metres)), 'at two of the fixed places');
   same(fieldBattleJob({runs: 7}).steps[0].ambushes.map(item => item.place.position), fieldBattleJob({runs: 7}).steps[0].ambushes.map(item => item.place.position), 'the same save gets the same ambush places');
   let alike = 0;
@@ -320,12 +384,12 @@ const hitDoor = duel => {
 // A battle with no ambushes, so that only the furnace can hurt Big Bess.
 const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficulty}); return {...job, steps: [{...job.steps[0], ambushes: []}]}; };
 {
-  // The furnace does not exist until Big Bess passes (0, 370); then it comes out behind her and Clinker speaks.
+  // The furnace does not exist until Big Bess is 560 m along the road (130 m past (0, 370)); then it comes out behind her and Clinker speaks.
   const duel = startBattle('medium', {job: noRaiders('medium')});
   check(runUntil(duel, () => bessOf(duel)?.pathIndex >= 2, 60), 'Big Bess drives on');
-  check(!furnaceOf(duel), 'the furnace is not out before she passes (0, 370)');
+  check(!furnaceOf(duel), 'the furnace is not out when she passes (0, 370): it comes out 130 m later');
   same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), ['Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.'], 'the battle opened on Moss\'s line, once');
-  check(runUntil(duel, () => furnaceOf(duel), 30), 'the furnace comes out');
+  check(runUntil(duel, () => furnaceOf(duel), 60), 'the furnace comes out');
   const f = furnaceOf(duel).furnace, bess = bessOf(duel);
   near(pathShare(bess.position, bess.pathIndex, worldOf(duel).job.steps[0].path).metres - f.metres, 80, 3, 'about 80 m behind her');
   check(duel.lines.includes('Clinker: You put him in the well. I am putting you in the ground.'), 'and Clinker speaks, once the furnace has come out');
@@ -333,12 +397,12 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
   near(furnaceOf(duel).position.x - f.x, 0, 1e-6, 'the actor is where the furnace is');
   check(furnaceOf(duel).health === 3, 'with its three doors');
 
-  // Cinders: within 25 m behind her they cost 6 a second on Medium; Moss says so once.
+  // Cinders: within 25 m behind her they cost 4 a second on Medium (6 in the first build); Moss says so once.
   const gapOf = () => Math.hypot(f.x - bessOf(duel).position.x, f.z - bessOf(duel).position.z);
   let healthAtRange = null, rangeAt = null, last = bessOf(duel).health;
   check(runUntil(duel, () => { if (healthAtRange === null && gapOf() <= 25) { healthAtRange = bessOf(duel).health; rangeAt = duel.state.stageTimeSec; } return healthAtRange !== null && duel.state.stageTimeSec > rangeAt + 2; }, 60),
     'the furnace comes within 25 m of her');
-  near(healthAtRange - bessOf(duel).health, 12, 1.5, 'Medium: 6 health a second while it is within 25 m (12 in 2 s)');
+  near(healthAtRange - bessOf(duel).health, 8, 1.5, 'Medium: 4 health a second while it is within 25 m (8 in 2 s)');
   check(duel.lines.includes('Moss: It is throwing fire on the tank! Get it off us!'), 'Moss says the fire is on the tank');
   runUntil(duel, () => false, 3);
   same(duel.lines.filter(text => text.includes('throwing fire')).length, 1, 'once');
@@ -368,13 +432,17 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
   check(f.dead && furnaceOf(duel).health === 0, 'the third door breaks it for good');
   same(duel.lines.slice(lines), ['Cinder: That is the last of his fire, and it went out on a road. Bring the gas home.'], 'and Cinder says that is the last of his fire (nothing about a door as well)');
   const spot = {x: furnaceOf(duel).position.x, z: furnaceOf(duel).position.z};
+  // Re-recorded: the furnace now dies later on the road (it comes out at 560 m and a door stokes only in range), so Big Bess can reach Tin Town
+  // within the 20 seconds that used to be left; the claim that its death does not end the battle is checked at the moment of death, and the
+  // claim that she drives on to Tin Town is kept: by the end of those seconds the battle is either still going or won.
+  check(duel.state.arena.result == null, 'Big Bess is still on the road when the furnace dies: the battle is not over');
   runUntil(duel, () => false, 20);
   same([furnaceOf(duel).position.x, furnaceOf(duel).position.z], [spot.x, spot.z], 'it stays where it stopped');
-  check(duel.state.arena.result == null, 'and Big Bess drives on to Tin Town');
+  check(duel.state.arena.result == null || worldOf(duel).battleEnding === 'won', 'and Big Bess drives on to Tin Town: the battle is going on or won');
 }
 {
-  // Cinders by difficulty in a real Duel: 2 a second on Easy, 9 on Hard.
-  for (const [difficulty, rate] of [['easy', 2], ['hard', 9]]) {
+  // Cinders by difficulty in a real Duel: 2 a second on Easy, 6 on Hard (9 in the first build).
+  for (const [difficulty, rate] of [['easy', 2], ['hard', 6]]) {
     const duel = startBattle(difficulty, {job: noRaiders(difficulty)});
     check(runUntil(duel, () => furnaceOf(duel), 80), `${difficulty}: the furnace comes out`);
     const f = furnaceOf(duel).furnace, gapOf = () => Math.hypot(f.x - bessOf(duel).position.x, f.z - bessOf(duel).position.z);

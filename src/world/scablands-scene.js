@@ -683,7 +683,7 @@ export function createScablandsScene(course,options={}){
       if(sootMaterial){
         // The smoke is grey, turns orange through the 4-second stoke, and is blacker after each hit.
         sootMaterial.color.copy(SOOT_GREY).lerp(SOOT_BLACK,FURNACE_DOOR_ORDER.filter((_,index)=>doorGone(index)).length/OLD_SMOKE.hitsToWin);
-        if(furnace?.phase==='stoke')sootMaterial.color.lerp(SOOT_ORANGE,Math.min(1,furnace.phaseSec/OLD_SMOKE.stokeSec));
+        if(furnace?.phase==='stoke')sootMaterial.color.lerp(SOOT_ORANGE,Math.min(1,furnace.phaseSec/(furnace.battle?.stokeSec??OLD_SMOKE.stokeSec)));
       }
       const glowingDoor=actor&&furnace?furnaceGlowingDoor(furnace):null;
       for(const flame of furnaceEffects?.flames??[])flame.visible=flame.userData.door===glowingDoor;

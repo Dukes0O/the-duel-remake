@@ -136,23 +136,76 @@ full in place of 0.3). `tools/test-scablands-scene.mjs` checks each, and its thi
 the death (reviewed on the card). No rule, pay, save, replay fingerprint or world signature is touched. Sound: none
 new; cinders landing already play the fire cue.
 
-## Tuning (builder, 12 November 2026): stopped, no number moved
+## Tuning (builder, 12 November 2026)
 
-The card's tuning section asked for the fighting drivers to win less often (Medium 6 to 8 of 10, Hard 2 to 5 of 10) by moving the
-cinders, the stoke, the stop after a broken door and the glow time inside the card's limits. They cannot: the furnace has about 44 s
-of slack even with the stoke and stop at their limits, because the third door breaks at 94 to 98 s and Big Bess arrives at 142 s. The
-answer to the card's first question (the 1 health is the riders' doing, not the cinders'; no fault in a rule or the driver), the
-table at today's numbers with the Hard rows, and the way the numbers behaved are written in the card's "Tuning result".
+**First attempt: stopped.** The first tuning limits (cinders, stoke, stop, glow) could not lower the win counts: a fighting driver broke the third
+door about 44 s before Big Bess arrived and no cinder ever landed on her (the 1 health of the first build was the riders' doing, see the card's
+"Tuning result"). Claude then redesigned the hunt, and it was built as follows.
 
-- **What moved:** nothing in the game. To measure, the stoke time, stop time and glow time were made battle rules for a while in
-  `old-smoke.js` and `gas-run.js`; they were taken out again, since no value of them meets the targets. `git diff` of `src/` is empty.
-- **Tests:** none run, none needed (a notes-only change). `tools/test-board.mjs` and `tools/test-repo-hygiene.mjs` were run on the
-  commit. The scripted drivers were rerun through a scratch copy of the drivers in `tools/test-everburn-easy.mjs` and
-  `tools/test-run-gas-medium.mjs` (a Hard driver added): Easy 10 home, 10 won, lowest 60, longest 142 s; Medium fighting 10, 10,
-  lowest 1, 188 s; Medium never fights 10, 0, lowest 22, 272 s; Hard fighting 10, 10, lowest 10, 167 s; Hard never fights 10, 0, lowest 60,
-  240 s. These are the existing table's numbers, reproduced.
-- **Re-recorded assertions:** none. **Replay fingerprints:** unchanged, since no file under `src/` or `tools/` changed.
-- **Removed:** nothing. The scratch harness was deleted.
+**Three rule changes**, each only for a furnace whose definition says `battle` (`src/world/jobs/old-smoke.js`; the story's furnace is untouched and
+`tools/test-old-smoke.mjs` passes unedited, 616 checks):
+
+1. *It catches up.* More than 40 m behind Big Bess along the road the furnace drives at `catchUpSpeed` (15 m/s on Medium and Hard, 12 on Easy); within
+   40 m at its own pace (11, 10 on Easy). `furnacePace` reports whichever it is driving at (flag `catchingUp`). It still never comes nearer than 12 m.
+2. *A door begins to stoke only while the furnace is within cinder range of her* (flag `inCinderRange`, 25 m, set in `moveBattle`). Out of range the stoke
+   waits (at the start, and after a door has shut or a broken door's stop is over). A door already glowing keeps its time. A stoke already begun goes on.
+3. *Gentler cinders:* Medium 4 a second (was 6), Hard 6 (was 9), Easy 2 as before.
+
+To carry the rest as battle numbers, `stokeSec`, `stopSec` and `glowSec` became tables by difficulty on the battle's rules (`FIELD_BATTLE.furnace` in
+`gas-run.js`) and the rhythm reads them when the furnace is a battle's (the story's furnace reads `OLD_SMOKE` as before). The scene's stoke colour
+(`scablands-scene.js`) divides by the battle's own stoke time (drawing only).
+
+**What moved** (old, new):
+
+| Number | Old | New |
+| --- | --- | --- |
+| Cinders, Medium / Hard / Easy | 6 / 9 / 2 | 4 / 6 / 2 |
+| Catching-up pace beyond 40 m, Medium and Hard / Easy | none (11 / 10 at any distance) | 15 / 12 |
+| Stoke, Medium and Hard / Easy | 4 / 4 | 6 / 4 |
+| Stop after a broken door | 8 | 8 (unchanged) |
+| Glow, Medium / Hard / Easy | 4.5 / 3.5 / 6 | unchanged |
+| Where the furnace comes out (metres into the road; it starts 80 m behind her) | 430 (as she passes (0, 370)) | 560 (130 m past it; it starts at 480) |
+
+The comes-out place was decided from 30 tries of each fighting driver (table on the card): 560 m is where Medium (23 of 30 won) and Hard (16 of 30)
+both land in their targets. Nothing the card says must not move was touched: the riders and their damage, Big Bess's pace and health, one hit
+breaking a door, Easy's one door, pay, the save, the lines, job 6.
+
+**`burning` and the cinders.** `f.burning` is set in one place (`burnEscort`) from `inCinderRange && staggerLeft <= 0`, the same condition that adds
+`escortBurn`; the new check in `tools/test-field-battle.mjs` runs 60 s of steps in and out of range and with doors broken and asserts that
+`escortBurn > 0` exactly when `burning` is true, on every step.
+
+**Drivers** (scratch copies of the drivers in `tools/test-everburn-easy.mjs` and `tools/test-run-gas-medium.mjs`, a Hard driver added; 10 tries each, same
+seeds; the tests themselves still pass): Easy 10 home, 10 won, lowest 52, cinders 4.3 s; Medium fights 10 home, 9 won, 9 of 9 at 25 or more, cinders 11
+to 21 s; Medium never fights 10 home, 0 won; Hard fights 10 home, 7 won; Hard never fights 0 home (32 rests, stopped at 15 minutes), reported on the card.
+
+**Checks.** `node tools/test-field-battle.mjs` 684 (was 643, 41 more net: the two new rules, the burning flag and the ranges, see below), `test-old-smoke` 616
+(untouched), `test-run-gas` 1,088, `test-ember-save` 117, `test-ember-lines` 54 captions, `test-scablands-scene` pass. Lane tier
+(`--changed --jobs 4 --keep-going`, from PowerShell): 34 of 34 passed, 0 failed (it includes `test-everburn-easy`, `test-run-gas-medium`, `test-old-smoke`,
+`test-field-battle`, `test-replays` and `test-world-composition`). `npm run build`: pass. Browser scenarios `field-battle` (7 pictures), `run-gas`
+and `everburn-well`: 3 of 3 passed, 0 warnings, 0 errors. The field-battle scenario needed no change: it waits for the furnace to come out and for its
+cinders in loops long enough for the new timings, and it hits each door the moment it glows.
+
+**Re-recorded assertions in `tools/test-field-battle.mjs`** (each moved by design; none loosened, no tolerance widened, no check removed):
+
+- Cinder rates 6 and 9 become 4 and 6 (the unit loop, the Medium Duel check "4 health a second, 8 in 2 s", the Hard Duel check): the redesign's gentler cinders.
+- The pace and closing loop: one pace at any distance becomes the catching-up pace beyond 40 m and today's within it (covers 150 m in 10 s far behind her,
+  110 m at 39 m, closing 6 m/s then 2 m/s on Medium); the same checks for each difficulty plus new ones at 39 m and 41 m.
+- Door, stop and ram checks and the "never bolts" loop now keep Big Bess 20 m ahead of the furnace instead of 500 m (or nobody): a door begins to stoke only
+  in cinder range, so with her far away no door ever glows. The assertions themselves (which door glows, the 8 s stop, 11 m/s after it, the hits) are as they were.
+- The car-in-cinders and car-beside checks keep her 20 m ahead (was 60 m) so that the run still has doors and cinders in it.
+- "It comes out as Big Bess passes (0, 370)" and "about 430 m into the road" become 130 m past (0, 370) and 560 m; "that is 80 m behind (0, 370)" becomes
+  50 m past it, 80 m behind where she is; the furnace starts 480 m in. The Duel check allows 60 s (was 30) for her to reach the place, and says the furnace is
+  not out when she passes (0, 370).
+- The ambush places check "ahead of Big Bess when the furnace comes out" now says ahead of (0, 370) by 100 m (the same number, the same place); the nearest
+  place, 540 m, may stand just before the new comes-out place.
+- After the third door "Big Bess drives on to Tin Town" (no result 20 s later) becomes: no result at the moment of death (the card's claim), and 20 s later
+  no result or the battle won (she may now arrive inside those 20 s, because the furnace dies later on the road).
+- New: a door waits to stoke while she is out of range, at the start, after it has shut and after a broken door's stop; a stoke begun and a glow keep going out
+  of range, the glow for its own time; stoke begins at once when she is back; `burning` equals cinders landing (60 s).
+
+**Replay fingerprints and world signatures:** unchanged (no replay, race or world file is touched; `tools/test-combat-replays.mjs` is in the lane tier).
+
+**Removed:** nothing.
 
 ## Removed
 

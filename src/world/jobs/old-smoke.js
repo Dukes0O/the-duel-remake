@@ -14,8 +14,10 @@
 // one long road behind an escorted truck at its own pace and never past her, its doors come one after another on that one leg
 // (left, right, rear), a broken door stops it for a time, it throws cinders on the escort and not on the player, it does not
 // shove the player, it never bolts to the next leg's ground and never turns round at the road's end, it dies where it stands
-// after its last door (it does not roll into the well) and, when the escort arrives, turns away. Without `battle` nothing here
-// changes: Old Smoke's chase in job 6 runs exactly as before (tools/test-old-smoke.mjs).
+// after its last door (it does not roll into the well) and, when the escort arrives, turns away. It catches up: more than
+// catchUpBeyondMetres behind her it drives at the catching-up pace. A door begins to stoke only while the furnace is within
+// cinder range of her (out of range the stoke waits; a door already glowing keeps its time), so the fire lands before every door.
+// Without `battle` nothing here changes: Old Smoke's chase in job 6 runs exactly as before (tools/test-old-smoke.mjs).
 
 export const OLD_SMOKE = Object.freeze({
   hitsToWin: 3,
@@ -74,7 +76,7 @@ const byDifficulty = (table, difficulty) => table[difficulty] ?? table.medium;
 const wrapAngle = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 
 // The battle's rules for one difficulty (for each of these names, a number or a table by difficulty).
-const BATTLE_NAMES = ['speed', 'burnPerSecond', 'doorsToStop'];
+const BATTLE_NAMES = ['speed', 'catchUpSpeed', 'burnPerSecond', 'doorsToStop', 'glowSec', 'stokeSec', 'stopSec'];
 function resolveBattle(rules, difficulty) {
   const resolved = {...rules, hurtAtStart: [...(rules.hurtAtStart ?? [])]};
   for (const name of BATTLE_NAMES) if (rules[name] !== null && typeof rules[name] === 'object') resolved[name] = byDifficulty(rules[name], difficulty);
@@ -113,7 +115,7 @@ export function createFurnace(def, difficulty = 'medium') {
     fromMetres: path.cumulative[leg.fromWaypoint]}));
   const battle = def.battle ? resolveBattle(def.battle, level) : null;
   const start = pointAt(path, battle?.startMetres ?? 0);
-  return {difficulty: level, path, legs, timeSec: 0, battle, dead: false, turnedAway: false, burning: false,
+  return {difficulty: level, path, legs, timeSec: 0, battle, dead: false, turnedAway: false, burning: false, catchingUp: false, inCinderRange: false,
     metres: battle?.startMetres ?? 0, run: null, x: start.x, z: start.z, heading: start.heading, pathIndex: battle ? start.index : 0,
     legIndex: 0, hits: 0, broken: [false, false, false],
     gateMetres, townReached: false, gateBurnt: false,
@@ -134,7 +136,7 @@ export function furnaceSpeed(difficulty, hits) {
 // True while the furnace, after a hit, has not yet reached the ground of the leg whose door is next.
 export const furnaceBolting = f => f.hits > 0 && !f.won && f.run === null && f.staggerLeft <= 0 && f.legIndex >= 0 && f.legIndex < f.hits;
 // The pace the furnace wants right now, before the stagger's share is taken.
-export const furnacePace = f => f.battle ? f.battle.speed : furnaceBolting(f) ? byDifficulty(OLD_SMOKE.boltSpeed, f.difficulty) : furnaceSpeed(f.difficulty, f.hits);
+export const furnacePace = f => f.battle ? (f.catchingUp ? f.battle.catchUpSpeed : f.battle.speed) : furnaceBolting(f) ? byDifficulty(OLD_SMOKE.boltSpeed, f.difficulty) : furnaceSpeed(f.difficulty, f.hits);
 
 export const furnaceHealth = f => f.fallen || f.dead ? 0 : Math.max(1, OLD_SMOKE.hitsToWin - f.hits);
 // The door of the leg the furnace is working on, for the Easy arrow.
@@ -283,6 +285,7 @@ function legAt(f, metres) {
 
 // Stoke, glow, slam, and the 3 seconds shut before the next stoke. The rhythm
 // runs only for the leg the furnace is on while that leg's door is the next one.
+const stokeSec0 = f => f.battle?.stokeSec ?? OLD_SMOKE.stokeSec;
 function rhythm(f, dt, out) {
   if (f.staggerLeft > 0) {
     f.staggerLeft = Math.max(0, f.staggerLeft - dt);
@@ -298,21 +301,25 @@ function rhythm(f, dt, out) {
     return;
   }
   if (f.phase === 'idle') {
+    if (f.battle && !f.inCinderRange) return;
     f.phase = 'stoke'; f.door = wanted; f.phaseSec = 0;
-    out.events.push({type: 'stoke', door: wanted, seconds: OLD_SMOKE.stokeSec});
+    out.events.push({type: 'stoke', door: wanted, seconds: stokeSec0(f)});
   }
   f.phaseSec += dt;
-  const glowSec = byDifficulty(OLD_SMOKE.glowSec, f.difficulty);
+  // The battle's furnace carries its own stoke and glow times; the story's furnace keeps the story's.
+  const glowSec = f.battle?.glowSec ?? byDifficulty(OLD_SMOKE.glowSec, f.difficulty), stokeSec = f.battle?.stokeSec ?? OLD_SMOKE.stokeSec;
   for (let guard = 0; guard < 4; guard++) {
-    if (f.phase === 'stoke' && f.phaseSec >= OLD_SMOKE.stokeSec) {
-      f.phaseSec -= OLD_SMOKE.stokeSec; f.phase = 'glow';
+    if (f.phase === 'stoke' && f.phaseSec >= stokeSec) {
+      f.phaseSec -= stokeSec; f.phase = 'glow';
       out.events.push({type: 'doorOpen', door: f.door, seconds: glowSec});
     } else if (f.phase === 'glow' && f.phaseSec >= glowSec) {
       f.phaseSec -= glowSec; f.phase = 'shut';
       out.events.push({type: 'doorSlam', door: f.door, reason: 'missed'});
     } else if (f.phase === 'shut' && f.phaseSec >= OLD_SMOKE.shutSec) {
+      // The battle's next door begins to stoke only while its cinders can land on the escort; out of range the stoke waits.
+      if (f.battle && !f.inCinderRange) { f.phaseSec = OLD_SMOKE.shutSec; break; }
       f.phaseSec -= OLD_SMOKE.shutSec; f.phase = 'stoke';
-      out.events.push({type: 'stoke', door: f.door, seconds: OLD_SMOKE.stokeSec});
+      out.events.push({type: 'stoke', door: f.door, seconds: stokeSec});
     } else break;
   }
 }
@@ -394,11 +401,14 @@ function shoulder(f, dt, car, out) {
 // the road the truck is, where she stands and whether she has reached the end. The furnace never gets nearer than
 // holdBehindMetres (it never rams her), does not move while a broken door holds it, and turns away when she arrives.
 function moveBattle(f, dt, out, ctx) {
-  const rule = f.battle, escort = ctx.escort ?? null, before = f.metres, pace = rule.speed * dt;
+  const rule = f.battle, escort = ctx.escort ?? null, before = f.metres;
   if (escort?.arrived === true && !f.turnedAway) {
     f.turnedAway = true;
     out.events.push({type: 'turnAway'});
   }
+  // More than catchUpBeyondMetres behind her along the road it drives at the catching-up pace, within that at its own.
+  f.catchingUp = Boolean(escort) && Number.isFinite(escort.metres) && !f.turnedAway && escort.metres - f.metres > rule.catchUpBeyondMetres;
+  const pace = (f.catchingUp ? rule.catchUpSpeed : rule.speed) * dt;
   if (f.turnedAway) f.metres = Math.max(0, f.metres - pace);
   else {
     let metres = f.metres + (f.staggerLeft > 0 ? 0 : pace);
@@ -407,6 +417,8 @@ function moveBattle(f, dt, out, ctx) {
   }
   placeBattle(f);
   dropCinders(f, Math.abs(f.metres - before));
+  // Where it stands now decides whether cinders can land on her: the rhythm and the burn both read it.
+  f.inCinderRange = Boolean(escort) && !f.turnedAway && Math.hypot(f.x - escort.x, f.z - escort.z) <= rule.burnRangeMetres;
 }
 
 function placeBattle(f) {
@@ -429,7 +441,7 @@ export function furnaceFallBack(f, escortMetres) {
 // event each time they start to land.
 function burnEscort(f, dt, ctx, out) {
   const rule = f.battle, escort = ctx.escort ?? null;
-  const near = Boolean(escort) && !f.turnedAway && f.staggerLeft <= 0 && Math.hypot(f.x - escort.x, f.z - escort.z) <= rule.burnRangeMetres;
+  const near = f.inCinderRange && f.staggerLeft <= 0;
   if (near && !f.burning) out.events.push({type: 'cindersLand'});
   f.burning = near;
   if (near) out.escortBurn += rule.burnPerSecond * dt;
