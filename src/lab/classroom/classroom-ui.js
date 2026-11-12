@@ -18,6 +18,8 @@ let physicsChoice = null;
 export function createClassroomUi({stage, app, lesson, name, onLeave, startChallenge, sayVoice = () => {}, onCue = () => {}}) {
   const doc = stage.ownerDocument, win = doc.defaultView;
   const session = createClassroomSession(lesson), board = lesson.board;
+  // The board's own size when its lesson names one (the wide board), else the usual 1000 x 680.
+  const area = board.size ?? board.BOARD;
   const root = doc.createElement('section');
   root.className = 'lab-classroom'; root.setAttribute('aria-label', `${name} lesson`);
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
@@ -255,14 +257,14 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     ctx.setTransform(dpr * layout.scale, 0, 0, dpr * layout.scale, dpr * layout.left, dpr * layout.top);
     if (v.slow) {
       ctx.fillStyle = 'rgba(237,197,87,.9)'; ctx.font = '800 18px "Segoe UI", sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-      ctx.fillText('SLOW MOTION: half speed', board.BOARD.width - 16, 12);
+      ctx.fillText('SLOW MOTION: half speed', area.width - 16, 12);
     }
     if (v.pointer) pointer(v);
     // A right answer throws workshop sparks from where the player was working.
     if (v.celebrate && celebrated !== v.celebrate.at || burst) {
       if (v.celebrate) celebrated = v.celebrate.at;
       const big = burst || v.celebrate.big; burst = false;
-      const from = board.targetPoint(v, 'release') ?? [board.BOARD.width / 2, board.BOARD.height / 2];
+      const from = board.targetPoint(v, 'release') ?? [area.width / 2, area.height / 2];
       for (let i = 0; i < (big ? 90 : 45); i++) {
         const a = -Math.PI / 2 + (Math.random() - .5) * 2.4, speed = 220 + Math.random() * 380;
         sparks.push({x: from[0], y: from[1], vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .7 + Math.random() * .7, colour: SPARK_COLOURS[i % 4]});
@@ -281,7 +283,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     const to = board.targetPoint(v, v.pointer.action);
     if (!to) return;
     const k = Math.min(1, v.pointer.age / .9), e = k * k * (3 - 2 * k);
-    const x = board.BOARD.width + 40 + (to[0] - board.BOARD.width - 40) * e, y = board.BOARD.height * .45 + (to[1] - board.BOARD.height * .45) * e;
+    const x = area.width + 40 + (to[0] - area.width - 40) * e, y = area.height * .45 + (to[1] - area.height * .45) * e;
     const tap = k >= 1 ? Math.abs(Math.sin(v.pointer.age * 4)) * 6 : 0;
     if (k >= 1) { ctx.strokeStyle = 'rgba(237,197,87,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(to[0], to[1], 22 + tap * 2, 0, Math.PI * 2); ctx.stroke(); }
     ctx.save(); ctx.translate(x + 6, y + 8 + tap);

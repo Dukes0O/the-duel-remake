@@ -5,7 +5,7 @@ import {createClassroomSession, PARTS, SHOW_ME_S} from '../src/lab/classroom/cla
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {DRIVE} from '../src/config.js';
 import {STEPS, CORNERS, STEADY_FRONT, FRONT_LOAD, REAR_LOAD, REAR_TWO_LINE, TEST_CARS, FREE_TRIES, MIN_SPEED, MAX_SPEED, SPEED_STEP, SLOW, FAST, DECEL_SPEED, WATCH_SPEED, fastestFor, metresFrom, laneAt, stopOf, kmh, msOf, aOf, brakesOf, sumOf, benchAttempts} from '../src/lab/lessons/braking-classroom.js';
-import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint} from '../src/lab/lessons/braking-board.js';
+import {drawBoard, drawPicture, hitTest, hoverInfo, targetPoint, strip, size} from '../src/lab/lessons/braking-board.js';
 import {brakingBench, stopDistance, frontLoadShare} from '../src/lab/benches/tunnel.js';
 import {effectLine, TUNE_ROWS} from '../src/lab/tune-view.js';
 import {openBench, setControl, runBench, goalMet} from '../src/lab/lab-model.js';
@@ -444,7 +444,7 @@ test('mouse: the dial and the lever turn, a click on the strip brakes, and hover
   let v = session.view();
   for (const action of ['speed:up', 'speed:down', 'lever:front', 'lever:back']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
   assert.equal(hitTest(v, ...targetPoint(v, 'go'))?.action, 'go');
-  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'lever:front'), [300, 290], [300, 180], [500, 460]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
+  for (const point of [targetPoint(v, 'speed:up'), targetPoint(v, 'lever:front'), [430, 290], [430, 180], [500, 460]]) assert.ok(hoverInfo(v, ...point), `hover at ${point}`);
   session.act(hitTest(v, ...targetPoint(v, 'speed:up')).action);
   session.act(hitTest(v, ...targetPoint(v, 'lever:front')).action);
   v = session.view();
@@ -458,7 +458,8 @@ test('mouse: the dial and the lever turn, a click on the strip brakes, and hover
   v = free.view();
   for (const action of ['car:next', 'car:prev']) assert.equal(hitTest(v, ...targetPoint(v, action))?.action, action, action);
   assert.ok(hoverInfo(v, ...targetPoint(v, 'car:next')), 'the car chooser is named');
-  assert.ok(hoverInfo(v, 300, 200), 'the table is named');
+  assert.match(strip(v).hint, /keeps the result of each test/, 'the table is named, in the strip under the board');
+  assert.equal(strip(v).tables[0].title, 'Your tests');
 });
 
 test('the board draws every step and card', () => {
@@ -541,7 +542,7 @@ test('every speed in km/h that the lesson shows or lets the player set is a whol
     for (const row of v.table ?? []) assert.equal(row.kmh % 10, 0, where);
     for (const stop of v.stops ?? []) assert.equal(stop.kmh % 10, 0, where);
     if (v.dial) { read++; assert.equal(v.dial.kmh % 10, 0, where); assert.equal(v.dial.kmh, v.dial.speed, 'the dial reads its own setting'); }
-    for (const point of [[780, 100], [300, 200], [500, 460]]) round(hoverInfo(v, ...point), where);
+    for (const point of [[1100, 100], [430, 200], [500, 460]]) round(hoverInfo(v, ...point), where);
   };
   const helped = session => { for (let k = 0; k < 3; k++) { session.act('help'); look(session); } };
   const session = createClassroomSession(lesson);
@@ -585,4 +586,21 @@ test('every speed in km/h that the lesson shows or lets the player set is a whol
   for (const pick of [1, 2]) { const check = createClassroomSession(lesson); playThroughTo(check, 'check-four'); helped(check); check.act(`answer:${pick}`); look(check); }
   for (const id of ['word-speed', 'try-speed', 'try-free']) { const shown = createClassroomSession(lesson); playThroughTo(shown, id); helped(shown); run(shown, SHOW_ME_S + .1); look(shown); }
   assert.ok(read > 1000, `${read} speeds were read`);
+});
+
+// LAB-LOOK, the wide board: Braking names its own size, and its road fills the width with 40 px clear at each end.
+test('the wide board: Braking is 1320 wide, its readings and tests are in the strip, and the longest stop ends inside the road', () => {
+  assert.deepEqual({...size}, {width: 1320, height: 680});
+  const session = createClassroomSession(lesson);
+  playThroughTo(session, 'try-free');
+  const v = session.view();
+  assert.ok(strip(v).tables[0].rows.length >= 1, 'the table of tests is in the strip');
+  assert.ok(strip(v).readouts.length >= 1, 'the lane readings are in the strip');
+  assert.equal(strip({...v, scene: 'recap'}), null, 'a scene with no road has no strip');
+  const [left, right] = [hitTest(v, ...targetPoint(v, 'lever:back')), hitTest(v, ...targetPoint(v, 'speed:up'))];
+  assert.ok(left && right, 'the controls answer where they are drawn');
+  const [x] = targetPoint(v, 'lever:front'), [dx] = targetPoint(v, 'speed:up');
+  assert.ok(x <= size.width - 40 && dx <= size.width - 40, 'the controls sit inside the board');
+  const drawn = drawBoard(new Proxy({}, {get: (target, name) => name === 'measureText' ? value => ({width: String(value).length * 9}) : ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {}, set: () => true}), v, 1320, 680);
+  assert.deepEqual(drawn, {scale: 1, left: 0, top: 0}, 'a 1320 by 680 panel holds the wide board exactly');
 });

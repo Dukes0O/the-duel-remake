@@ -11,49 +11,56 @@ export const theme = Object.freeze({back: ['#2a3134', '#161b1d'], grain: 'rgba(2
 // The workshop wall behind every board (LAB-LOOK round 1): corrugated steel under one hanging lamp. It never
 // changes, so it is painted once into a spare canvas and copied each frame. Where there is no page (the tests)
 // it is painted directly.
-let wall = null;
-function paintWall(ctx) {
+// A board wider than the usual 1000 asks for the wall at its own width (the wide board); each width is painted once.
+const walls = new Map();
+function paintWall(ctx, width = BOARD.width) {
   const g = ctx.createLinearGradient(0, 0, 0, BOARD.height);
   g.addColorStop(0, '#2b3a44'); g.addColorStop(.55, '#1c262c'); g.addColorStop(1, '#101518');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, BOARD.width, BOARD.height);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, width, BOARD.height);
   // Corrugated sheets: a light and a dark side to every rib, with a seam every fifth rib.
-  for (let x = 0, i = 0; x < BOARD.width; x += 20, i++) {
+  for (let x = 0, i = 0; x < width; x += 20, i++) {
     ctx.fillStyle = 'rgba(255,255,255,.028)'; ctx.fillRect(x, 0, 7, BOARD.height);
     ctx.fillStyle = 'rgba(0,0,0,.10)'; ctx.fillRect(x + 11, 0, 7, BOARD.height);
     if (i % 5 === 0) { ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(x, 0, 1.5, BOARD.height); }
   }
   // Rust and damp creeping down from the sheets' top edge and up from the floor, the same every time.
   for (let i = 0; i < 46; i++) {
-    const x = (i * 7919) % BOARD.width, top = i % 3 !== 0, len = 40 + (i * 131) % 150, w = 3 + (i * 17) % 9;
+    const x = (i * 7919) % width, top = i % 3 !== 0, len = 40 + (i * 131) % 150, w = 3 + (i * 17) % 9;
     const r = ctx.createLinearGradient(0, top ? 0 : BOARD.height, 0, top ? len : BOARD.height - len);
     r.addColorStop(0, i % 2 ? 'rgba(150,84,40,.20)' : 'rgba(0,0,0,.22)'); r.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = r; ctx.fillRect(x, top ? 0 : BOARD.height - len, w, len);
   }
   // The lamp's pool of warm light, and the dark the lamp does not reach.
-  const lamp = ctx.createRadialGradient(500, -60, 40, 500, 120, 620);
+  const lamp = ctx.createRadialGradient(width / 2, -60, 40, width / 2, 120, 620);
   lamp.addColorStop(0, 'rgba(255,214,150,.26)'); lamp.addColorStop(.45, 'rgba(255,200,130,.07)'); lamp.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = lamp; ctx.fillRect(0, 0, BOARD.width, BOARD.height);
-  const v = ctx.createRadialGradient(500, 300, 260, 500, 340, 700);
+  ctx.fillStyle = lamp; ctx.fillRect(0, 0, width, BOARD.height);
+  const v = ctx.createRadialGradient(width / 2, 300, 260, width / 2, 340, 700);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.55)');
-  ctx.fillStyle = v; ctx.fillRect(0, 0, BOARD.width, BOARD.height);
+  ctx.fillStyle = v; ctx.fillRect(0, 0, width, BOARD.height);
 }
-export function background(ctx) {
-  if (typeof document === 'undefined') { paintWall(ctx); return; }
-  if (!wall) { wall = document.createElement('canvas'); wall.width = BOARD.width; wall.height = BOARD.height; paintWall(wall.getContext('2d')); }
+// The wall painted into a spare canvas of its own width, once; null where there is no page (the tests).
+function wallCanvas(width) {
+  if (typeof document === 'undefined') return null;
+  if (!walls.has(width)) { const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = BOARD.height; paintWall(canvas.getContext('2d'), width); walls.set(width, canvas); }
+  return walls.get(width);
+}
+export function background(ctx, width = BOARD.width) {
+  const wall = wallCanvas(width);
+  if (!wall) { paintWall(ctx, width); return; }
   ctx.drawImage(wall, 0, 0);
 }
-// A concrete workshop floor from `y` down, with a worn edge where it meets the wall.
-export function floor(ctx, y = GROUND_Y) {
+// A concrete workshop floor from `y` down, with a worn edge where it meets the wall; a wide board gives its width.
+export function floor(ctx, y = GROUND_Y, width = BOARD.width) {
   const g = ctx.createLinearGradient(0, y, 0, BOARD.height);
   g.addColorStop(0, '#4a4d49'); g.addColorStop(.12, '#35383a'); g.addColorStop(1, '#17191b');
-  ctx.fillStyle = g; ctx.fillRect(0, y, BOARD.width, BOARD.height - y);
-  ctx.fillStyle = 'rgba(255,236,200,.10)'; ctx.fillRect(0, y, BOARD.width, 1.5);
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, y - 3, BOARD.width, 3);
+  ctx.fillStyle = g; ctx.fillRect(0, y, width, BOARD.height - y);
+  ctx.fillStyle = 'rgba(255,236,200,.10)'; ctx.fillRect(0, y, width, 1.5);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, y - 3, width, 3);
   // Slab joints and oil stains, the same every time.
   ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = 1.2; ctx.beginPath();
-  for (let x = -40; x < BOARD.width + 200; x += 170) { ctx.moveTo(x, y); ctx.lineTo(x - 60, BOARD.height); }
+  for (let x = -40; x < width + 200; x += 170) { ctx.moveTo(x, y); ctx.lineTo(x - 60, BOARD.height); }
   ctx.stroke();
-  for (let i = 0; i < 7; i++) { ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.ellipse((i * 271 + 90) % BOARD.width, y + 18 + (i * 23) % 50, 26 + (i * 13) % 30, 5 + (i * 7) % 6, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (let i = 0; i < 7; i++) { ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.ellipse((i * 271 + 90) % width, y + 18 + (i * 23) % 50, 26 + (i * 13) % 30, 5 + (i * 7) % 6, 0, 0, Math.PI * 2); ctx.fill(); }
 }
 // A soft shadow on the floor under something that stands or hangs above it.
 export function shadow(ctx, x, y, halfWidth, strength = .5) {
@@ -862,8 +869,7 @@ export function cardScene(ctx, w, h, {outdoors: dusky = false, floorAt = h - 20}
   if (typeof document === 'undefined') { ctx.translate(-sx, -sy); if (dusky) paintDusk(ctx); else paintWall(ctx); }
   else {
     if (dusky) { if (!dusk) { dusk = document.createElement('canvas'); dusk.width = BOARD.width; dusk.height = BOARD.height; paintDusk(dusk.getContext('2d')); } }
-    else if (!wall) { wall = document.createElement('canvas'); wall.width = BOARD.width; wall.height = BOARD.height; paintWall(wall.getContext('2d')); }
-    ctx.drawImage(dusky ? dusk : wall, sx, sy, w, h, 0, 0, w, h);
+    ctx.drawImage(dusky ? dusk : wallCanvas(BOARD.width), sx, sy, w, h, 0, 0, w, h);
   }
   ctx.restore();
   if (!dusky) {
@@ -890,19 +896,21 @@ export function wrap(ctx, value, x, y, width, {size = 22, line: gap = size + 6, 
 }
 
 
-// Fits the 1000 x 680 board into the canvas, clipped, and draws it; answers where it went.
-export function fitBoard(ctx, width, height, draw) {
+// Fits a board into the canvas, clipped, and draws it; answers where it went. A board is 1000 x 680 unless its lesson names
+// another size (the wide board), in which case that size is fitted instead.
+export function fitBoard(ctx, width, height, draw, size = BOARD) {
   ctx.save();
-  const scale = Math.min(width / BOARD.width, height / BOARD.height), left = (width - BOARD.width * scale) / 2, top = (height - BOARD.height * scale) / 2;
+  const scale = Math.min(width / size.width, height / size.height), left = (width - size.width * scale) / 2, top = (height - size.height * scale) / 2;
   // Where the board does not fill its panel, the workshop wall carries on behind it and the board hangs in a thin brass frame.
   if (left > 2 || top > 2) {
+    const wall = walls.get(size.width);
     if (wall) ctx.drawImage(wall, 0, 0, width, height);
     ctx.fillStyle = 'rgba(8,11,13,.55)'; ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(left - 2, top + 5, BOARD.width * scale + 9, BOARD.height * scale);
-    ctx.strokeStyle = '#b08a3a'; ctx.lineWidth = 3; ctx.strokeRect(left - 1.5, top - 1.5, BOARD.width * scale + 3, BOARD.height * scale + 3);
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(left - 2, top + 5, size.width * scale + 9, size.height * scale);
+    ctx.strokeStyle = '#b08a3a'; ctx.lineWidth = 3; ctx.strokeRect(left - 1.5, top - 1.5, size.width * scale + 3, size.height * scale + 3);
   }
   ctx.translate(left, top); ctx.scale(scale, scale);
-  ctx.beginPath(); ctx.rect(0, 0, BOARD.width, BOARD.height); ctx.clip();
+  ctx.beginPath(); ctx.rect(0, 0, size.width, size.height); ctx.clip();
   draw();
   ctx.restore();
   return {scale, left, top};
