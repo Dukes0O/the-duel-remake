@@ -1,5 +1,6 @@
 import {createLessonSession, lessonDefinition, registeredWords, entryForWord, registerLesson} from './lesson-frame.js';
 import {labNotebookOf, learnLabWord} from './lab-save.js';
+import {wordMarkup, sentenceMarkup, LEFT_WHOLE} from './word-links.js';
 import './lesson-ui.css';
 import {CLASSROOM_LESSONS} from './classroom/classroom-lessons.js';
 import {createClassroomUi} from './classroom/classroom-ui.js';
@@ -37,18 +38,7 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
   }
   const clearHeld = () => held.clear();
   doc.addEventListener('keydown', leverKey); doc.addEventListener('keyup', leverKey); doc.defaultView.addEventListener('blur', clearHeld);
-  function textMarkup(text, words = knownWords(), interactive = true) {
-    const sorted = [...words].sort((a, b) => b.word.length - a.word.length);
-    if (!sorted.length) return escape(text);
-    const re = new RegExp(`(?<![\\p{L}\\p{N}])(${sorted.map(w => w.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?![\\p{L}\\p{N}])`, 'giu');
-    let html = '', start = 0;
-    for (const match of String(text).matchAll(re)) {
-      const word = sorted.find(w => w.word.toLowerCase() === match[0].toLowerCase());
-      html += escape(text.slice(start, match.index)) + (interactive ? `<button type="button" class="lab-word" data-word="${word.id}">${escape(match[0])}</button>` : `<u class="lab-word" data-word="${word.id}">${escape(match[0])}</u>`);
-      start = match.index + match[0].length;
-    }
-    return html + escape(text.slice(start));
-  }
+  const textMarkup = (text, words = knownWords(), interactive = true) => wordMarkup(text, words, interactive);
   function paint() {
     const v = session?.view();
     const pause = Boolean(v || hover || notebook || classroom);
@@ -143,8 +133,8 @@ export function createLessonUi({section, stage, host, app, room, onBack, onChall
       const walker = doc.createTreeWalker(el, 4), nodes = [];
       while (walker.nextNode()) nodes.push(walker.currentNode);
       for (const node of nodes) {
-        if (node.parentElement.closest('[data-word],select,script,style')) continue;
-        const html = textMarkup(node.textContent, knownWords(), !node.parentElement.closest('button'));
+        if (node.parentElement.closest(LEFT_WHOLE)) continue;
+        const html = sentenceMarkup(node.textContent, knownWords(), !node.parentElement.closest('button'));
         if (html === escape(node.textContent)) continue;
         const span = doc.createElement('span'); span.innerHTML = html; node.replaceWith(span);
       }

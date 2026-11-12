@@ -627,7 +627,7 @@ export function createModel() {
         radius: [`50 m: ${reading(BASE.speed, 50)} g`, `100 m: ${reading(BASE.speed, 100)} g`, `Both at ${BASE.speed} km/h`],
       },
       say: 'A turning car keeps changing direction, so it needs a sideways push that the driver feels. In this game the reading rises with the square of speed and falls as radius grows, and the G-force lap still asks you to reach at least 2 g in three different corners without leaving the road.',
-      prompt: 'Press Enter to finish the lesson and open the G-force lap challenge.',
+      prompt: 'Press Enter to leave the Lab and start the G-force lap.',
       hints: KEY_IDEAS.map(item => item.text),
     };
   }
@@ -647,6 +647,6 @@ export const lesson = Object.freeze({
   keyIdeas: KEY_IDEAS,
   challengeCard: CHALLENGE_CARD,
   words: WORDS,
-  finishLabel: 'Finish the lesson',
+  finishLabel: 'Start the lap',
   passSay: PASS_SAY,
 });

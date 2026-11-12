@@ -18,7 +18,7 @@ export function headerMarkup({credits: wallet, tab}) {
 
 export function boardMarkup({rows, message = ''}) {
   const groups = LAB_GROUPS.filter(group => rows.some(row => row.group === group));
-  const body = rows.length ? lessonBoardMarkup(rows.filter(row => groups.includes(row.group)).map(row => ({...row})), {action: 'data-lab-lesson'})
+  const body = rows.length ? lessonBoardMarkup(rows.filter(row => groups.includes(row.group)).map(row => ({...row})), {action: 'data-lab-lesson', markNames: true})
     : '<p class="lab-empty">The Lab is not open yet.</p>';
   return `<section class="lab-board" aria-label="Lessons"><p class="lab-hint">Pick a lesson to see its bench. Any open lesson can be taken in any order, and retaken.</p>${body}` +
     `${message ? `<p class="lab-message" role="status">${escape(message)}</p>` : ''}</section>`;
@@ -28,7 +28,7 @@ export function boardMarkup({rows, message = ''}) {
 export function protectionMarkup({protect, message = '', restore = ''}) {
   const rows = RUST_PARTS.map(part => {
     const last = protect.result?.rows.find(row => row.part === part.id);
-    return `<li data-part="${part.id}"><div><b>${escape(part.name)}</b><small>${escape(part.lives)}</small></div>` +
+    return `<li data-part="${part.id}"><div><b data-name>${escape(part.name)}</b><small>${escape(part.lives)}</small></div>` +
       `<select data-lab-protect="${part.id}" aria-label="${escape(part.name)} protection">${
         PROTECTIONS.map(item => `<option value="${item.id}"${protect.picks[part.id] === item.id ? ' selected' : ''}>${escape(item.name)}</option>`).join('')}</select>` +
       `${last ? `<em class="${last.ok ? 'good' : 'bad'}">${last.ok ? 'Right' : 'Not that'}: ${Math.round(last.rust * 100)}% rusted after a week (bare: ${Math.round(last.bareRust * 100)}%)</em>` : ''}</li>`;
@@ -53,7 +53,7 @@ export function shopMarkup({rows, choices, wallet, message = ''}) {
     const button = item.owned ? '<span class="lab-owned">✓ Owned</span>'
       : item.free ? `<small>${escape(item.note || 'Passed')}</small>`
         : `<button type="button" data-lab-buy="${escape(item.id)}"${item.canBuy ? '' : ' disabled'}>Buy</button>`;
-    return `<li class="lab-shop-${state}" data-upgrade="${escape(item.id)}"><div><b>${escape(item.name)}</b><small>${escape(item.lessonName)}</small></div>` +
+    return `<li class="lab-shop-${state}" data-upgrade="${escape(item.id)}"><div><b data-name>${escape(item.name)}</b><small data-name>${escape(item.lessonName)}</small></div>` +
       `<span class="lab-price">${price}</span>${button}${!item.owned && item.note && !item.free ? `<em>${escape(item.note)}</em>` : ''}</li>`;
   }).join('');
   const group = (title, key, list) => list.length > 1 ? `<div class="lab-choice"><span>${title}</span>${list.map(item =>

@@ -1,5 +1,5 @@
 /* The Lab screen (docs/LAB.md): the room on the left, the board, bench or shop on the right. */
-.lab-panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:#101516;color:var(--ink,#f3eddf);pointer-events:auto}
+.lab-panel{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:#101516;color:var(--ink,#f5f0dc);pointer-events:auto}
 .lab-panel[hidden]{display:none}
 .lab-top{flex:none;display:flex;align-items:center;gap:24px;padding:18px 32px;border-bottom:1px solid #ffffff1f;background:#121a1bf2}
 .lab-head{display:contents}
@@ -16,12 +16,12 @@
 .lab-stage{position:relative;flex:1;min-width:0;background:linear-gradient(#1b2224,#101516)}
 .lab-stage .lab-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .lab-stage-plain::after{content:'Brian\2019s workshop';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:italic 800 28px 'Segoe UI',sans-serif;color:#ffffff33}
-.lab-caption{z-index:2;position:absolute;left:24px;right:24px;bottom:24px;padding:12px 16px;background:#0b0f10e6;border-left:3px solid #ffcf3f;font-size:16px;line-height:1.5;text-shadow:none}
+.lab-caption{z-index:2;position:absolute;left:24px;right:24px;bottom:24px;padding:12px 16px;background:#0b0f10e6;border-left:3px solid #edc557;font-size:16px;line-height:1.5;text-shadow:none}
 .lab-caption[hidden]{display:none}
 .lab-caption-text{margin:0}
-.lab-caption-text b{margin-right:8px;font-size:11px;letter-spacing:2px;color:#ffcf3f}
+.lab-caption-text b{margin-right:8px;font-size:11px;letter-spacing:2px;color:#edc557}
 .lab-side{flex:none;width:min(460px,46%);overflow-y:auto;padding:22px 26px;background:#121a1bf2;border-left:1px solid #ffffff1f}
-.lab-side button,.lab-panel select{padding:8px 14px;font:600 13px/1.2 inherit;color:var(--ink,#f3eddf);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
+.lab-side button,.lab-panel select{padding:8px 14px;font:600 13px/1.2 inherit;color:var(--ink,#f5f0dc);background:#ffffff14;border:1px solid #ffffff33;border-radius:4px;cursor:pointer}
 .lab-side button:hover:not(:disabled){background:#ffffff26}
 .lab-side button:disabled{opacity:.45;cursor:default}
 .lab-hint{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--muted,#b6b1a5)}
@@ -58,18 +58,17 @@
 .lab-shop-shut b{opacity:.7}
 .lab-choice{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:16px}
 .lab-choice>span{font-size:12px;letter-spacing:2px;color:var(--muted,#b6b1a5);margin-right:6px}
-.lab-choice button.on{border-color:#ffcf3f;color:#ffcf3f}
+.lab-choice button.on{border-color:#edc557;color:#edc557}
 /* The garage tab and the G-force lap's strip. */
-.lab-tab{margin-left:12px;padding:9px 16px;border:1px solid #ffcf3f88;background:#ffcf3f14;font-size:11px;font-weight:800;letter-spacing:1.5px;color:#ffcf3f;white-space:nowrap}
+.lab-tab{margin-left:12px;padding:9px 16px;border:1px solid #edc55788;background:#edc55714;font-size:11px;font-weight:800;letter-spacing:1.5px;color:#edc557;white-space:nowrap}
 .lab-gforce-strip{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:8;pointer-events:none}
 .lab-gforce-strip button{pointer-events:auto}
-.lab-gforce{display:flex;align-items:center;gap:16px;padding:10px 18px;background:#0f1614e0;border:1px solid #ffcf3f66;border-radius:6px;font-size:14px;color:var(--ink,#f3eddf)}
+.lab-gforce{display:flex;align-items:center;gap:16px;padding:10px 18px;background:#0f1614e0;border:1px solid #edc55766;border-radius:6px;font-size:14px;color:var(--ink,#f5f0dc)}
 .lab-gforce b{font-size:22px;font-variant-numeric:tabular-nums;min-width:70px}
-.lab-gforce span{font-size:11px;font-weight:750;letter-spacing:2px;color:#ffcf3f}
+.lab-gforce span{font-size:11px;font-weight:750;letter-spacing:2px;color:#edc557}
 .lab-gforce em{font-style:normal;color:var(--muted,#b6b1a5)}
-@media (max-width:900px){.lab-main{flex-direction:column}.lab-side{width:100%;border-left:0;border-top:1px solid #ffffff1f;flex:none;max-height:55%}}
 /* LAB-RESTORE: the Rust bench's offer and the Sirena's restoration sequence. */
-.lab-restore{margin-top:16px;padding:14px;border:1px solid #ffcf3f66;border-radius:6px;background:#ffcf3f0d}
+.lab-restore{margin-top:16px;padding:14px;border:1px solid #edc55766;border-radius:6px;background:#edc5570d}
 .lab-restore p{margin:0 0 10px;font-size:13px;line-height:1.5;color:var(--muted,#b6b1a5)}
 .lab-restore em{display:block;margin-top:8px;font-style:normal;font-size:12px;color:#d6b68a}
 .lab-restore-button{width:100%}
@@ -77,7 +76,7 @@
 .lab-restore-steps{list-style:none;margin:0 0 14px;padding:0;display:flex;gap:6px;flex-wrap:wrap}
 .lab-restore-steps li{padding:6px 10px;border:1px solid #ffffff22;border-radius:4px;font-size:12px;letter-spacing:1px;color:var(--muted,#b6b1a5)}
 .lab-restore-steps li.done{color:#9ee0a8;border-color:#9ee0a855}
-.lab-restore-steps li.now{color:#ffcf3f;border-color:#ffcf3f;background:#ffcf3f14;font-weight:800}
+.lab-restore-steps li.now{color:#edc557;border-color:#edc557;background:#edc55714;font-weight:800}
 .lab-restore-label{margin:0 0 8px;font-size:15px}
 .lab-restore-bar{height:6px;margin-bottom:14px;background:#ffffff1a;border-radius:3px;overflow:hidden}
-.lab-restore-bar i{display:block;height:100%;background:#ffcf3f}
+.lab-restore-bar i{display:block;height:100%;background:#edc557}

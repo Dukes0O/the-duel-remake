@@ -4,7 +4,7 @@
 import {createClassroomSession} from './classroom-frame.js';
 import {KEY_NAMES} from './classroom-keys.js';
 import {splitSay, fullText, firstSentence, paragraphs} from './brian-text.js';
-import {brianPortrait} from './brian-portrait.js';
+import {mountBrianFaces} from './brian-faces.js';
 import {learnLabWord, labNotebookOf} from '../lab-save.js';
 import './classroom.css';
 
@@ -23,7 +23,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   root.innerHTML = `<header class="lc-top"><h2>${escape(name)}</h2><ol class="lc-progress"></ol><button type="button" class="lc-back" data-lc="back" hidden>Previous step ${kbd('Backspace')}</button><button type="button" class="lc-leave" data-lc="leave">Leave ${kbd('Esc')}</button></header>
     <div class="lc-main"><div class="lc-board"><h3 class="lc-step"></h3><button type="button" class="lc-show-physics" data-lc="physics" hidden>Show the physics ${kbd('F')}</button><canvas class="lc-canvas" aria-label="Lesson board"></canvas><p class="lc-hover" hidden></p></div>
     <aside class="lc-physics" aria-label="The physics" hidden><header><h3>The physics</h3><button type="button" data-lc="physics">Hide ${kbd('F')}</button></header><div class="lc-formulas"></div></aside>
-    <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk"><span>B</span></div><b class="lc-name">Brian</b></div>
+    <aside class="lc-brian"><div class="lc-who"><div class="lc-portrait" data-mood="talk" role="img" aria-label="Brian"><span>B</span></div><b class="lc-name">Brian</b></div>
       <div class="lc-page"><div class="lc-past"></div><p class="lc-bubble" aria-live="polite"></p><button type="button" class="lc-more-button" data-lc="more" hidden>Tell me more ${kbd('T')}</button></div><p class="lc-nudge" aria-live="polite" hidden></p><div class="lc-cards"></div>
       <button type="button" class="lc-help" data-lc="help">Help me, Brian ${kbd('H')}</button>
       <div class="lc-rungs" aria-label="Help used"><i></i><i></i><i></i></div></aside></div>
@@ -31,7 +31,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   stage.append(root);
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
-  let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '', disposed = false;
+  let pageMoved = false, layout = {scale: 1, left: 0, top: 0}, drag = null, last = {}, voiced = -1, celebrated = null, sparks = [], lastTime = 0, note = '';
   // A lesson passed in the classroom (a bench challenge): what Brian says, and the sparks it throws.
   let passed = null, burst = false;
   // LAB-BRIAN-SHORT: Brian says three sentences at a time. toldMore holds the texts of this step whose rest the player asked for;
@@ -39,11 +39,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   let toldMore = new Set(), toldStep = -1, moreText = null, keepPlace = false;
   const openRows = new Set();
 
-  brianPortrait(doc).then(url => {
-    if (!url || disposed) return;
-    const portrait = $('.lc-portrait');
-    portrait.innerHTML = `<img alt="Brian" src="${url}">`;
-  });
+  // Brian's four painted faces are asked for now, so a change of mood never shows a blank (the letter B stays if one is missing).
+  mountBrianFaces($('.lc-portrait'));
 
   const physicsOpen = () => physicsChoice ?? win.innerWidth >= 1500;
   function setHtml(element, key, html) { if (last[key] !== html) { element.innerHTML = html; last[key] = html; return true; } return false; }
@@ -303,7 +300,6 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     view: () => session.view(),
     act,
     dispose() {
-      disposed = true;
       win.removeEventListener('keydown', onKey, true);
       root.removeEventListener('click', onClick);
       root.remove();

@@ -44,6 +44,12 @@ Brian's workshop under one hanging lamp, and the pad outside at dusk. Every boar
   helicopter's shadow shrinking as it climbs, the workshop floor.
 - Checks: the lesson tests pass unchanged (no assertion touched). Claude looked at Lift's screens.
 
+## Round 2 (a Sonnet helper; judged by Claude, 11 November 2026)
+
+Brian's four painted portraits are wired in, and five of the six routine fixes are done
+(`docs/board/looks/lab-look/round-2.jpg`, `docs/changes/LAB-LOOK.md`). The sixth, removing the old five-step lesson
+frame, needs edits in the walking room and the lesson opener and waits for its own small job.
+
 ## Order of work
 
 1. **Claude looks at every lesson once** with the new shared art and lists what the wall broke (a label that lost

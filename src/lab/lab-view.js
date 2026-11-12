@@ -108,14 +108,15 @@ export function createLabUi({host, app, sceneFactory = createLabScene, loadManif
     if (panel.kind === 'board') return walkBack + doorBoardMarkup(rows);
     if (panel.kind === 'brian') {
       const lesson = rows.find(r => r.id === panel.id), next = rows.find(r => r.open && !r.done);
-      const answer = panel.answer === 'next' ? (next ? `Try ${next.name}. It opens ${next.reward}.` : 'You have passed every open lesson. Check the door board for what opens next.') :
-        panel.answer === 'machine' ? LAB_MACHINE_WORDS[panel.id] ?? '' : '';
-      return `${walkBack}<section class="lab-brian"><h3>Ask Brian</h3><p>Beside ${escapeWalk(lesson?.name ?? 'the Lift bench')}.</p>` +
+      // The lesson's name and what it opens are names, so the page never turns the words inside them into buttons.
+      const answer = panel.answer === 'next' ? (next ? `Try <span data-name>${escapeWalk(next.name)}</span>. It opens <span data-name>${escapeWalk(next.reward)}</span>.` : 'You have passed every open lesson. Check the door board for what opens next.') :
+        panel.answer === 'machine' ? escapeWalk(LAB_MACHINE_WORDS[panel.id] ?? '') : '';
+      return `${walkBack}<section class="lab-brian"><h3>Ask Brian</h3><p>Beside <span data-name>${escapeWalk(lesson?.name ?? 'the Lift bench')}</span>.</p>` +
         '<button type="button" data-lab="brian-next">What should I try next?</button><button type="button" data-lab="brian-machine">Tell me about this machine.</button>' +
-        `${answer ? `<p role="status">${escapeWalk(answer)}</p>` : ''}</section>`;
+        `${answer ? `<p role="status">${answer}</p>` : ''}</section>`;
     }
     return `${walkBack}<section class="lab-machine-choice"><h3>${panel.ids.length > 1 ? 'Wind tunnel' : 'This machine'}</h3>${rows.filter(r => panel.ids.includes(r.id)).map(r =>
-      `<p>${escapeWalk(r.name)}${r.done ? ' ✓' : ''}</p>${r.open ? `<button type="button" data-lab-lesson="start:${r.id}">Use the ${escapeWalk(r.name)} bench</button>` : `<p>${escapeWalk(r.note)}</p>`}`).join('')}</section>`;
+      `<p data-name>${escapeWalk(r.name)}${r.done ? ' ✓' : ''}</p>${r.open ? `<button type="button" data-lab-lesson="start:${r.id}">Use the <span data-name>${escapeWalk(r.name)}</span> bench</button>` : `<p>${escapeWalk(r.note)}</p>`}`).join('')}</section>`;
   }
 
   // ---- Brian ----

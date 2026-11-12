@@ -33,11 +33,19 @@
 
 .lc-brian { flex: 0 0 410px; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 2px solid #4a524e; border-radius: 8px; background: #1d2322; }
 .lc-who { flex: none; display: flex; align-items: center; gap: 12px; }
-.lc-portrait { flex: none; width: 72px; height: 72px; border-radius: 50%; border: 4px solid #8f9791; overflow: hidden; background: radial-gradient(#3a4448, #1a1f21);
-  display: grid; place-items: center; transition: border-color .25s, transform .25s; }
-.lc-portrait img { width: 100%; height: 100%; object-fit: cover; }
-.lc-portrait span { font: 800 32px "Segoe UI", sans-serif; color: #8f9791; }
-.lc-portrait[data-mood="cheer"] { border-color: #56d683; transform: scale(1.06); }
+.lc-portrait { position: relative; flex: none; width: 132px; height: 132px; border-radius: 14px; border: 4px solid #8f9791; overflow: hidden; background: radial-gradient(#3a4448, #1a1f21);
+  display: grid; place-items: center; transition: border-color .15s; }
+.lc-portrait span { font: 800 56px "Segoe UI", sans-serif; color: #8f9791; }
+/* Brian's four painted faces (brian-faces.js), one over the other; the mood on the portrait shows its own and the others fade out in 150 ms.
+   Each is enlarged from a corner chosen so that his face and one hand stay in the frame. */
+.lc-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.45); opacity: 0; transition: opacity .15s; }
+.lc-face[data-face="talk"] { transform-origin: 23% 0; }
+.lc-face[data-face="cheer"] { transform-origin: 23% 0; }
+.lc-face[data-face="hint"] { transform-origin: 6% 0; }
+.lc-face[data-face="explain"] { transform-origin: 30% 0; }
+.lc-portrait[data-mood="talk"] .lc-face[data-face="talk"].ready, .lc-portrait[data-mood="cheer"] .lc-face[data-face="cheer"].ready,
+.lc-portrait[data-mood="hint"] .lc-face[data-face="hint"].ready, .lc-portrait[data-mood="explain"] .lc-face[data-face="explain"].ready { opacity: 1; }
+.lc-portrait[data-mood="cheer"] { border-color: #56d683; }
 .lc-portrait[data-mood="hint"] { border-color: #edc557; }
 .lc-portrait[data-mood="explain"] { border-color: #f0a148; }
 .lc-name { font-size: 18px; color: #c9cfca; }

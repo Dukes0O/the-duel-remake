@@ -813,6 +813,8 @@ test('G-force is registered with its old notebook words, challenge and seven les
   ]);
   assert.deepEqual(gforce.words.map(word => word.id), ['gforce', 'one-g', 'radius', 'gforce-speed', 'gforce-acceleration']);
   assert.equal(gforce.challengeCard.title, 'Reach 2 g in three different corners.');
+  // The last button leaves the Lab for a lap, so it says so (LAB-LOOK routine fix); the bench lessons that pass in place say "Finish the lesson".
+  assert.equal(gforce.finishLabel, 'Start the lap');
   assert.equal(GFORCE_STEPS.find(step => step.id === 'recap').voice, 'lab.brian.gforce.explain');
 });
 
