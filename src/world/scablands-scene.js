@@ -9,7 +9,8 @@ import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
-import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
+import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createGroundShade,createDustTrail} from './scrap-look.js';
+import {createTinTownGate,TIN_TOWN_GATE} from './tin-town-gate.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -55,11 +56,15 @@ function findPart(root,name){
   return found;
 }
 
+// The far ground is a coarse copy of the same land. Where the four near tiles cover it (SCABLANDS_LAYOUT.halfWidth by
+// halfDepth) its corners drop by this much, so that it never shows through the near ground; elsewhere it is unchanged.
+const FAR_GROUND_DROP=40;
 function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
   const positions=[],uv=[],indices=[];
   for(let iz=0;iz<=segments;iz++)for(let ix=0;ix<=segments;ix++){
     const x=-width/2+width*ix/segments,z=-depth/2+depth*iz/segments;
-    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025,z);uv.push(ix/segments*12,iz/segments*12);
+    const underNear=!detail&&Math.abs(x+offsetX)<=SCABLANDS_LAYOUT.halfWidth&&Math.abs(z+offsetZ)<=SCABLANDS_LAYOUT.halfDepth;
+    positions.push(x,scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025-(underNear?FAR_GROUND_DROP:0),z);uv.push(ix/segments*12,iz/segments*12);
     if(ix<segments&&iz<segments){const a=iz*(segments+1)+ix,b=a+1,c=a+segments+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
@@ -67,6 +72,50 @@ function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,gro
   geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setIndex(indices);geometry.computeVertexNormals();
   const mesh=new THREE.Mesh(geometry,material);mesh.name=detail?'Scablands near ground':'Scablands far ground';mesh.receiveShadow=true;
   return mesh;
+}
+
+// The near ground as drawn: four tiles of 30 by 30 cells, each corner at the land's height. A cell is 23 by 17 m, so
+// between its corners the drawn ground is a straight slope, and where the land bends sharply (the foot of the north and
+// south ridges) it differs from the land's own height by several metres. This is the drawn height at (x, z), worked
+// out the way the tiles' triangles are cut (see makeGround), so that a thing laid on the ground can lie on what is seen.
+function nearGroundHeightAt(x,z){
+  const tileWidth=700,tileDepth=500,cells=detailCounts.near;
+  if(Math.abs(x)>=tileWidth||Math.abs(z)>=tileDepth)return scablandsSurfaceHeightAt(x,z)+.025;
+  const originX=Math.floor(x/tileWidth)*tileWidth,originZ=Math.floor(z/tileDepth)*tileDepth,cellX=tileWidth/cells,cellZ=tileDepth/cells;
+  const fx=(x-originX)/cellX,fz=(z-originZ)/cellZ,ix=Math.min(cells-1,Math.floor(fx)),iz=Math.min(cells-1,Math.floor(fz)),u=fx-ix,v=fz-iz;
+  const corner=(i,j)=>scablandsSurfaceHeightAt(originX+(ix+i)*cellX,originZ+(iz+j)*cellZ)+.025;
+  // Each cell is two triangles meeting along the line from its (1, 0) corner to its (0, 1) corner.
+  if(u+v<=1){const a=corner(0,0);return a+(corner(1,0)-a)*u+(corner(0,1)-a)*v;}
+  const d=corner(1,1);return d+(corner(0,1)-d)*(1-u)+(corner(1,0)-d)*(1-v);
+}
+
+// The dirt road: a ribbon laid flat along the oval the drivers follow, 1.2 times the road's half width to each side,
+// built from cross-sections of twelve points that each lie 6 cm above the ground at their own place. Two ruts run
+// along it as slightly darker strips (vertex colour), and the ground look is drawn over the whole.
+const ROAD_SECTIONS=384,ROAD_LIFT=.06,ROAD_REACH=1.2;
+const ROAD_ACROSS=Object.freeze([-1,-.62,-.40,-.33,-.26,-.10,.10,.26,.33,.40,.62,1]);
+const ROAD_RUT=Object.freeze([1,1,1,.68,1,1,1,1,.68,1,1,1]);
+function roadRibbon(){
+  const {frameRadiusX:rx,frameRadiusZ:rz,roadHalfWidth}=SCABLANDS_LAYOUT,reach=roadHalfWidth*ROAD_REACH,across=ROAD_ACROSS.length;
+  const positions=[],colours=[],indices=[];
+  for(let section=0;section<ROAD_SECTIONS;section++){
+    const angle=section/ROAD_SECTIONS*Math.PI*2,cx=Math.cos(angle)*rx,cz=Math.sin(angle)*rz;
+    // The line's outward normal: the oval's gradient.
+    const nx=Math.cos(angle)*rz,nz=Math.sin(angle)*rx,length=Math.hypot(nx,nz);
+    for(let point=0;point<across;point++){
+      const x=cx+nx/length*ROAD_ACROSS[point]*reach,z=cz+nz/length*ROAD_ACROSS[point]*reach;
+      positions.push(x,nearGroundHeightAt(x,z)-.025+ROAD_LIFT,z);colours.push(ROAD_RUT[point],ROAD_RUT[point],ROAD_RUT[point]);
+    }
+    const next=(section+1)%ROAD_SECTIONS;
+    for(let point=0;point<across-1;point++){
+      const a=section*across+point,b=a+1,c=next*across+point,d=c+1;
+      indices.push(a,c,b,b,c,d);
+    }
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));geometry.setIndex(indices);geometry.computeVertexNormals();
+  return geometry;
 }
 
 function mastAndSmoke(group){
@@ -85,7 +134,9 @@ function mastAndSmoke(group){
   group.add(smoke);
 }
 
-function tintArt(scene, placeId){
+// Parts that give off light keep the light: lamps, embers and flames are not worn.
+const glows=material=>/glow|ember|lamp|flame|fire/i.test(material.name||'')||(material.emissive&&material.emissiveIntensity>0&&material.emissive.getHex()!==0);
+function tintArt(scene, placeId, wear=null){
   // Many parts share one material, and one model file serves more than one place. Each material is copied
   // and tinted once for this place; tinting it again for every part that used it drew the art near black.
   const tinted=new Map();
@@ -96,6 +147,8 @@ function tintArt(scene, placeId){
     if(material.roughness!==undefined)material.roughness=Math.max(.78,material.roughness);
     if(placeId==='dead-mall'&&/sign|letter|goods/i.test(material.name||''))
       material.color?.set(/letter|goods/i.test(material.name)?0xf0d397:0x173e32);
+    // Rust, runs, grain and road dust are drawn over the plain colours in code (SCABLANDS-LAND).
+    if(wear&&!glows(material))wear.apply(material);
     return material;
   };
   scene.traverse(node=>{
@@ -318,8 +371,11 @@ export function createScablandsScene(course,options={}){
     rig.position.set(x,(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
-  const groundMaterial=new THREE.MeshStandardMaterial({color:0x76624b,roughness:1});
-  const roadMaterial=new THREE.MeshStandardMaterial({color:0x594b39,roughness:1});
+  // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
+  const groundLook=createGroundLook();
+  const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
+  const roadMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x594b39,roughness:1,vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
   // Four near tiles carry the shared physics height at a fine grid; the single
   // distant mesh uses a coarser grid to keep the horizon inexpensive.
@@ -329,21 +385,18 @@ export function createScablandsScene(course,options={}){
     tile.position.set(x*700+350,0,z*500+250);ground.add(tile);nearTiles.push(tile);
   }
   const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-.12;ground.add(far);
-  let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+  let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
   const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
-  // A broad gravel ribbon follows the stable oval frame used by driving and
-  // never changes the shared terrain height function.
-  const roadPoints=[];
-  for(let i=0;i<=192;i++){const a=i/192*Math.PI*2,x=Math.cos(a)*SCABLANDS_LAYOUT.frameRadiusX,z=Math.sin(a)*SCABLANDS_LAYOUT.frameRadiusZ;
-    roadPoints.push(new THREE.Vector3(x,scablandsSurfaceHeightAt(x,z)+.12,z));}
-  const roadGeometry=()=>{
-    const curve=new THREE.CatmullRomCurve3(roadPoints,true,'centripetal');
-    return new THREE.TubeGeometry(curve,384,SCABLANDS_LAYOUT.roadHalfWidth,6,true);
-  };
-  const road=new THREE.Mesh(roadGeometry(),roadMaterial);
+  // A broad flat dirt ribbon follows the stable oval frame used by driving and never changes the shared terrain height
+  // function: every point of it takes the ground's height at its own place.
+  const road=new THREE.Mesh(roadRibbon(),roadMaterial);
   road.name='Scablands dirt road';road.receiveShadow=true;ground.add(road);
+  // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
+  const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
+  // The fire stands on the gate's beam, with its three tongues along the beam.
+  gateFire.effects.rotation.y=tinTownGate.userData.yaw;
   mastAndSmoke(group);
 
   const ready=(async()=>{
@@ -357,12 +410,16 @@ export function createScablandsScene(course,options={}){
       if(retired)return;
       const lod=new THREE.LOD();lod.name=`${place.name} detail LOD`;
       const full=new THREE.Group();full.name=`${place.name} full detail`;
+      // One wear for the place, with the place's own ground point as its origin. Places do not move, so it is set once.
+      const placeWear=createScrapWear({paint:1});
+      placeWear.uniforms.uScrapInverse.value.makeTranslation(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z).invert();
       assets.forEach((asset,index)=>{
         const key=placeAssets[place.id][index];
         if(!asset?.scene)throw Error(`Scablands ${key} art has no scene.`);
         const source=vehiclePart[key]?findPart(asset.scene,vehiclePart[key]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
-        const model=source.clone(true);tintArt(model,place.id);
+        // The people carry their own look, and the two trucks their own wear.
+        const model=source.clone(true);tintArt(model,place.id,key==='folk'||vehiclePart[key]?null:placeWear);
         if(key==='furnace'){
           model.traverse(node=>{
             // Six armour plates; two fall off the furnace with each hit.
@@ -467,7 +524,7 @@ export function createScablandsScene(course,options={}){
       const gateAt=gateStep?.path?.[gateStep.actor.gateWaypoint],gateSpot=gateAt?.position??gateAt;
       const burning=Boolean(gateSpot)&&(worldJob?.gateBurnt===true||actor?.furnace?.gateBurnt===true);
       gateFire.effects.visible=burning;
-      if(burning)gateFire.effects.position.set(gateSpot.x,scablandsSurfaceHeightAt(gateSpot.x,gateSpot.z),gateSpot.z);
+      if(burning)gateFire.effects.position.set(gateSpot.x,scablandsSurfaceHeightAt(gateSpot.x,gateSpot.z)+tinTownGate.userData.fireHeight,gateSpot.z);
       const furnace=actor?.furnace;
       furnacePlates.forEach((plate,index)=>{plate.visible=index>=(furnace?.hits??0)*2;});
       // A broken door stays scorched: the left door after the first hit, the right after the second, the rear after the third.
@@ -499,7 +556,7 @@ export function createScablandsScene(course,options={}){
   function dispose(){
     if(retired)return;retired=true;
     stopOpenMarkWatch();
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
@@ -512,7 +569,8 @@ export function createScablandsScene(course,options={}){
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
   group.userData.updateGroundView=()=>{
     const changed=editedGround.update();
-    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();}
+    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
+      const previousRoad=road.geometry;road.geometry=roadRibbon();previousRoad.dispose();}
     return changed;
   };
   const refreshOpenMarks=marks=>{
@@ -525,10 +583,9 @@ export function createScablandsScene(course,options={}){
       const previous=tile.geometry;tile.geometry=geometry;previous.dispose();
     }
     editedGround.dispose();
-    editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit});
+    editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
     editedGround.update();
-    for(const point of roadPoints)point.y=scablandsSurfaceHeightAt(point.x,point.z)+.12;
-    const previousRoad=road.geometry;road.geometry=roadGeometry();previousRoad.dispose();
+    const previousRoad=road.geometry;road.geometry=roadRibbon();previousRoad.dispose();
     whites?.dispose();
     if(whites?.group.parent)whites.group.parent.remove(whites.group);
     whites=createTheWhitesScene({openMarks,loadAsset});
