@@ -166,8 +166,9 @@ function drawStrip(ctx, view, i) {
   // The snow: its name and temperature, with a small thermometer.
   const [lx, ly] = surface(g, 0, 0);
   thermometer(ctx, lx - 30, ly - 50 * g.scale, 70 * g.scale, s.celsius, false);
-  // Three strips are close together, so each name sits over its own strip, right of the start flag, where the strip above has dropped away.
-  const stacked = view.strips.length > 1;
+  // Strips that are close to the board's top or to each other put each name over their own strip, right of the start flag, where the strip
+  // above has dropped away; a strip on its own has room for it above the flag.
+  const stacked = view.strips.length > 1 || view.compact;
   text(ctx, `${s.name}, ${s.celsius} °C`, stacked ? lx + 62 : lx - 10, ly - (stacked ? 26 : 80) * g.scale, {size: 18 * g.scale + 2, align: 'left', colour: theme.text});
   if (view.glide) secondMarks(ctx, view, g);
   for (const [j, l] of s.lanes.entries()) ski(ctx, view, i, j, l, g);
