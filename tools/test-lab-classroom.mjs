@@ -5,6 +5,7 @@ import {createClassroomSession, PARTS, STUCK_OFFER_S, STUCK_HINT_S, SHOW_ME_S} f
 import {CLASSROOM_LESSONS} from '../src/lab/classroom/classroom-lessons.js';
 import {KEY_NAMES} from '../src/lab/classroom/classroom-keys.js';
 import {readFileSync} from 'node:fs';
+import {fitBoard, BOARD} from '../src/lab/classroom/board-art.js';
 import {STEPS, LENGTHS, HOOK_X, KEY_IDEAS, FREE_TRIES, MIN_PULL, PI_SHOWN, G_SHOWN, sumSeconds} from '../src/lab/lessons/pendulum-classroom.js';
 import {createLoad, stepCable} from '../src/heli/heli-cable.js';
 import {HELI_STEP} from '../src/heli/heli-flight.js';
@@ -1493,4 +1494,15 @@ test('Grip screen contract uses sendable keys, complete views and board points f
     assert.deepEqual(gripBoard.hitTest(view, ...point), {action: action === 'run' ? 'run' : action});
   }
   assert.equal(Number(bestSlideDegrees().toFixed(1)), 4.3);
+});
+
+// LAB-LOOK, the wide board: a board with no size is fitted exactly as before (1000 x 680), whatever the canvas.
+test('fitBoard fits a board that names no size exactly as it always did, and fits a named size by its own shape', () => {
+  const ctx = new Proxy({}, {get: (target, name) => ['createLinearGradient', 'createRadialGradient'].includes(name) ? () => ({addColorStop() {}}) : () => {}, set: () => true});
+  assert.deepEqual({...BOARD}, {width: 1000, height: 680});
+  assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}), {scale: 600 / 680, left: (1300 - 1000 * 600 / 680) / 2, top: 0});
+  assert.deepEqual(fitBoard(ctx, 800, 900, () => {}), {scale: .8, left: 0, top: (900 - 680 * .8) / 2});
+  assert.deepEqual(fitBoard(ctx, 1300, 600, () => {}, BOARD), fitBoard(ctx, 1300, 600, () => {}), 'naming the usual size changes nothing');
+  assert.deepEqual(fitBoard(ctx, 1320, 680, () => {}, {width: 1320, height: 680}), {scale: 1, left: 0, top: 0});
+  assert.deepEqual(fitBoard(ctx, 1000, 800, () => {}, {width: 1320, height: 680}), {scale: 1000 / 1320, left: 0, top: (800 - 680 * 1000 / 1320) / 2});
 });

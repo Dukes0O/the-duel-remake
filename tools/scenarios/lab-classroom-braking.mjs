@@ -22,8 +22,8 @@ export async function run(c) {
   const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 20_000);
   const prompt = (text, label) => c.waitFor(`document.querySelector('.lc-prompt')?.textContent.includes(${JSON.stringify(text)})`, label, 10_000);
   const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
-  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
-    return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
+  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
+    return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
 
   // The Lab map's click-to-go takes the player to the wind tunnel; E uses it and Braking opens as a classroom.
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
@@ -90,7 +90,7 @@ export async function run(c) {
   await next('try-free');
   // Keeping the back in line: brake as it is (the back slides), one click on the lever, then → and brake again.
   await at('try-slide'); await shot('try-slide'); await press('Space'); await saying('The back of the car slid', 'the slide says why'); await wait(300); await shot('try-slide-slid');
-  const lever = await toScreen(910, 280);
+  const lever = await toScreen(1230, 285);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: lever.x, y: lever.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: lever.x, y: lever.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
