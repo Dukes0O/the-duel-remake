@@ -468,7 +468,8 @@ tasks:
     owner: "claude"
     lane: "UI"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 11 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/LAB-LOOK.md"
@@ -488,7 +489,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 11 November 2026"
     needs: []
     locks: []
     flag: "story-everburn"
@@ -499,7 +501,8 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 11 November 2026"
     needs: [EVERBURN-RUN-AT-TOWN]
     locks: []
     flag: "scablands-runs"
@@ -510,7 +513,8 @@ tasks:
     owner: "claude"
     lane: "ART"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 11 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/SCABLANDS-LAND.md"
