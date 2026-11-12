@@ -22,8 +22,8 @@ export async function run(c) {
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
   const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 30_000);
   const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
-  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
-    return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
+  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
+    return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
   async function clearCard() {
     const collision = await c.evaluate(`(() => {const a=document.querySelector('.lab-key-idea');if(!a||a.hidden)return 'missing key idea';const x=a.getBoundingClientRect();
       for(const e of document.querySelectorAll('button,select,.lab-teaching,.ski-card,.ski-speed,.ski-targets,.ski-keys')) {
@@ -42,7 +42,7 @@ export async function run(c) {
   await next('wonder');
   // Wax: one mouse click on the medium tin.
   await at('word-wax'); await shot('word-wax');
-  const medium = await toScreen(500, 600);
+  const medium = await toScreen(660, 596);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: medium.x, y: medium.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: medium.x, y: medium.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});

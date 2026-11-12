@@ -624,3 +624,28 @@ test('the wide board keeps the old words, and the free test has the close-up car
   assert.ok(said.some(w => w.includes(`${m1(v.lanes[0].stopMetres)}, past the end ▶`)), `past the end is said, in ${said.length} words`);
   assert.ok(said.includes('80 m') && !said.includes('90 m'), 'the strip is marked to 80 m');
 });
+
+// LAB-LOOK round 11: no text on the wide board is smaller than 15 board units. The surface notes every text with its size in board
+// units (the font size times every scale in force when it is drawn).
+function smallestText(view) {
+  const stack = [], state = {scale: 1};
+  const target = {font: '10px x', found: [], save() { stack.push(state.scale); }, restore() { state.scale = stack.pop() ?? 1; }, scale(a) { state.scale *= a; }, setTransform(a) { state.scale = a; },
+    measureText: value => ({width: String(value).length * 9}), createLinearGradient: () => ({addColorStop() {}}), createRadialGradient: () => ({addColorStop() {}}),
+    fillText(value) { this.found.push([String(value), Number(/(\d+(?:\.\d+)?)px/.exec(this.font)[1]) * state.scale]); }};
+  const ctx = new Proxy(target, {get: (t, name) => name in t ? t[name] : () => {}, set: (t, name, value) => { t[name] = value; return true; }});
+  drawBoard(ctx, view, size.width, size.height);
+  return target.found.reduce((least, found) => found[1] < least[1] ? found : least, ['', Infinity]);
+}
+test('LAB-LOOK round 11: the wide board draws no text smaller than 15 board units, on any step', () => {
+  for (const step of STEPS) {
+    const session = createClassroomSession(lesson);
+    playThroughTo(session, step.id);
+    // The step as it opens, and while it plays (the car brakes and the marks, the tape and the blocks show).
+    if (session.view().keys.Space === 'go') session.act('go');
+    for (let t = 0; t < 10; t += .5) {
+      const [word, least] = smallestText(session.view());
+      assert.ok(least >= 14.99, `${step.id}: “${word}” is ${least.toFixed(1)} units`);
+      run(session, .5);
+    }
+  }
+});

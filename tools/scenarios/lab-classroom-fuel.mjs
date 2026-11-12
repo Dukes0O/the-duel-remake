@@ -20,8 +20,8 @@ export async function run(c) {
   const bubble = () => c.evaluate(`document.querySelector('.lc-bubble').textContent`);
   const saying = (text, label) => c.waitFor(`document.querySelector('.lc-bubble')?.textContent.includes(${JSON.stringify(text)})`, label, 20_000);
   const worked = text => c.evaluate(`[...document.querySelectorAll('.lc-worked')].some(e => e.textContent.includes(${JSON.stringify(text)}))`);
-  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 680);
-    return {x: r.left + (r.width - 1000 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
+  const toScreen = async (x, y) => c.evaluate(`(() => { const r = document.querySelector('.lc-canvas').getBoundingClientRect(), s = Math.min(r.width / 1320, r.height / 680);
+    return {x: r.left + (r.width - 1320 * s) / 2 + ${x} * s, y: r.top + (r.height - 680 * s) / 2 + ${y} * s}; })()`);
 
   // The Lab map's click-to-go takes the player to the wind tunnel; E uses it and the Fuel lesson opens as a classroom.
   await c.waitFor(`${canvas}?.dataset.labWalkReady === 'true'`, 'room', 60_000);
@@ -63,7 +63,7 @@ export async function run(c) {
   await next('try-free');
   // Half a tank: one mouse click on the tap, then ↓; racing at 55 litres says why, then 35 wins.
   await at('try-half'); await shot('try-half');
-  const tap = await toScreen(300, 418);
+  const tap = await toScreen(347, 446);
   await c.command('Input.dispatchMouseEvent', {type: 'mousePressed', x: tap.x, y: tap.y, button: 'left', buttons: 1, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseReleased', x: tap.x, y: tap.y, button: 'left', buttons: 0, clickCount: 1});
   await c.command('Input.dispatchMouseEvent', {type: 'mouseMoved', x: 20, y: 20});
