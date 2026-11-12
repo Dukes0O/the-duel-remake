@@ -121,7 +121,11 @@ function arenaFacts(arena) {
 export function arenaReward(arena, cpuDifficulty) {
   const facts = arenaFacts(arena), factor = DIFFICULTY_FACTORS[cpuDifficulty];
   if (!facts || !factor) return {base: 0, placing: 0, wrecks: 0, factor: 0, total: 0};
-  if(arena.mode==='world-job')return {base:80,placing:0,wrecks:0,factor,total:Math.round(80*factor)};
+  if(arena.mode==='world-job'){
+    // RUN-GAS: a job definition may carry `shares`, a whole number of the one world-job amount (1 when absent or not whole).
+    const shares=Number.isSafeInteger(arena.worldJob?.definition?.shares)&&arena.worldJob.definition.shares>=1?arena.worldJob.definition.shares:1;
+    return {base:80*shares,placing:0,wrecks:0,factor,total:Math.round(80*shares*factor)};
+  }
   if (arena.mode === 'convoy-raid') {
     const base = facts.won ? CONVOY_RULES.winScrap :
       CONVOY_RULES.valveScrap * arena.convoy.playerValvesBroken;

@@ -51,6 +51,27 @@ test('reward uses the settled finish, place, wreck and difficulty formula', () =
     'credited wrecks use CAR-01\'s four-wreck cap');
 });
 
+// RUN-GAS: a world job pays 80 times the difficulty factor, times its `shares` (1 when the definition has none).
+function worldJobArena(shares) {
+  return {version: 1, venueId: 'scablands', mode: 'world-job', phase: 'over',
+    participants: [player()], result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'},
+    worldJob: {definition: shares === undefined ? {} : {shares}, job: {stepIndex: 1, steps: [{}]}}};
+}
+test('a world job pays its shares times the one world-job amount', () => {
+  for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]]) {
+    assert.deepEqual(arenaReward(worldJobArena(), difficulty), {base: 80, placing: 0, wrecks: 0, factor, total: Math.round(80 * factor)},
+      `a job with no shares pays the old amount on ${difficulty}`);
+    assert.equal(arenaReward(worldJobArena(1), difficulty).total, Math.round(80 * factor), `one share on ${difficulty}`);
+    assert.equal(arenaReward(worldJobArena(2), difficulty).total, Math.round(160 * factor), `two shares on ${difficulty}`);
+  }
+  for (const odd of [0, -1, 1.5, '2', null, NaN])
+    assert.equal(arenaReward(worldJobArena(odd), 'medium').total, 96, `shares of ${JSON.stringify(odd)} pay one share`);
+  const settled = settleArenaResult(profile(), payload({arena: worldJobArena(2), cpuDifficulty: 'easy'}));
+  assert.equal(settled.awarded, true);
+  assert.equal(settled.scrapEarned, 160, 'two shares are paid once through the real settlement');
+  assert.equal(settled.holdAdded, 0, 'a world job adds no hold');
+});
+
 test('a completed event pays once and preserves unknown save fields', () => {
   const before = profile(), first = settleArenaResult(before, payload());
   assert.equal(first.awarded, true);
