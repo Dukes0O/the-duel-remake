@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {EMBER_CAPTIONS, EMBER_LINE_IDS, EMBER_NOTE, EMBER_NOTE_ID} from '../src/story/ember-lines.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
-import {GAS_RUN_PATHS, gasRunJob} from '../src/world/jobs/gas-run.js';
+import {GAS_RUN_PATHS, gasRunJob, fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
 
@@ -55,6 +55,14 @@ const EXPECTED = [
   ['A run arrives with Bess under 70 health', 'Moss', 'We are here, and most of the gas is too. That will do.'],
   ['An ambush gives up', 'Moss', 'They have had enough of waiting. Go, go, go.'],
   ['The feud reaches War party', 'Auntie Solder', 'They have stopped raiding and started gathering. That is a war party, driver. Mind how you go.'],
+  // FIELD-BATTLE-ASH: the seven lines of the battle on the Boneyard road, word for word from docs/board/cards/FIELD-BATTLE-ASH.md.
+  ['The battle starts', 'Moss', 'That is his furnace on the road behind us. Somebody pulled it out of the well.'],
+  ['The furnace comes out', 'Clinker', 'You put him in the well. I am putting you in the ground.'],
+  ['A door breaks', 'Clinker', 'That door was the last thing he made. You will pay for that door.'],
+  ['Cinders land on Big Bess', 'Moss', 'It is throwing fire on the tank! Get it off us!'],
+  ['The furnace dies', 'Cinder', 'That is the last of his fire, and it went out on a road. Bring the gas home.'],
+  ['Big Bess arrives with the furnace still rolling', 'Auntie Solder', 'The gas is in and the gate is shut. That thing will be back. Next time, finish it.'],
+  ['The battle is won', 'Auntie Solder', 'No more toll on the Boneyard road. Tin Town owes you a supper.'],
 ];
 
 assert.equal(Object.keys(EMBER_CAPTIONS).length, EXPECTED.length, 'every table caption is included');
@@ -201,6 +209,32 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   for (const [name, job] of [['Raiding', gasRunJob({road: 'boneyard', feud: 2})], ['War party already', gasRunJob({road: 'boneyard', feud: 4})],
     ['Hunting by the long road', gasRunJob({road: 'long', feud: 3})], ['Watching', gasRunJob({road: 'boneyard', feud: 1})]])
     assert.ok(!arrival(job, 100).heard.includes('story.ember.auntie-solder.9'), `Auntie Solder says nothing on arrival from ${name}`);
+}
+
+{
+  // FIELD-BATTLE-ASH: the battle starts with Moss's line; it closes on Auntie Solder's line for how it ended, fixed the moment Big Bess
+  // arrives. The lines said in play (Clinker's, Moss's about the cinders, Cinder's at the death) come from the furnace's events in the
+  // job mode and are checked in tools/test-field-battle.mjs.
+  const job = fieldBattleJob({runs: 0, difficulty: 'medium'});
+  const view = (extra = {}, furnace = {health: 3}) => ({player: {position: {x: 0, y: 0, z: 0}}, difficulty: 'medium', actors: [
+    {id: 'big-bess', position: {x: -424, y: 0, z: 304}, health: 100, pathIndex: 1, pathProgress: .1, atDestination: false, ...extra},
+    ...(furnace ? [{id: 'old-smoke-furnace', position: {x: -500, y: 0, z: 300}, ...furnace}] : [])]});
+  assert.deepEqual(lineIdsHeard(createJob(job, 1), () => view(), 1).heard, ['story.ember.moss.11'], 'the battle starts with Moss\'s line about the furnace');
+  const closing = (furnace, atEnd = {atDestination: true, pathProgress: 1, pathIndex: 7}, later = furnace) => {
+    const started = lineIdsHeard(createJob(job, 1), () => view(), 3).job;
+    const arrived = lineIdsHeard(started, () => view(atEnd, furnace), 0.5);
+    // A door broken while the line plays does not change which line it was.
+    const rest = lineIdsHeard(arrived.job, () => view(atEnd, later), 12);
+    return {heard: [...arrived.heard, ...rest.heard].filter(id => /auntie-solder|moss\.(8|9)/.test(id)), done: rest.job.done, heldAtFirst: arrived.job.done};
+  };
+  const won = closing({health: 0});
+  assert.deepEqual(won.heard, ['story.ember.auntie-solder.11'], 'arriving with the furnace dead, Auntie Solder says the battle is won, and only that');
+  assert.equal(won.heldAtFirst, false, 'and the job holds while the line shows');
+  assert.equal(won.done, true, 'then it ends');
+  assert.deepEqual(closing({health: 3}).heard, ['story.ember.auntie-solder.10'], 'arriving with the furnace still rolling, Auntie Solder says it will be back');
+  assert.deepEqual(closing({health: 3}, undefined, {health: 0}).heard, ['story.ember.auntie-solder.10'], 'a door broken while that line plays does not turn it into a win');
+  assert.deepEqual(closing({health: 0}, undefined, {health: 3}).heard, ['story.ember.auntie-solder.11'], 'nor the other way round');
+  assert.deepEqual(closing(null).heard, ['story.ember.auntie-solder.10'], 'arriving before the furnace came out counts as the furnace still rolling');
 }
 
 console.log(`test-ember-lines: ${EXPECTED.length} captions and note passed`);
