@@ -1,0 +1,102 @@
+// RUN-GAS: scripted drivers on Medium (docs/board/cards/RUN-GAS.md, "What play showed"). Memory only, headless Duels, real inputs.
+//   - A driver who never fights drives to Tin Town like the Easy driver does.
+//   - A fighting driver drives ahead of Big Bess to the next ambush, runs each raider down with the car when the raiders appear,
+//     and goes back to her.
+// Each case is 10 tries; the run count is the try's number, so each try has its own ambush places.
+import assert from 'node:assert/strict';
+import {Duel} from '../src/game.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {gasRunJob} from '../src/world/jobs/gas-run.js';
+import {alongPath} from '../src/world/jobs/steps/escort.js';
+import {pathShare} from '../src/world/jobs/furnace-sightings.js';
+
+const DT = 1 / 120, MAX_SECONDS = 900, TRIES = 10;
+const FLAGS = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true, 'warlord-cards': true, 'crew-gear': true};
+const FEUD_WORDS = ['Watching', 'Raiding', 'Hunting', 'War party'];
+const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+
+// Steer at a place and hold a speed (miles an hour).
+function drive(duel, target, mph) {
+  const state = duel.state, car = duel.course.groundAt(state.s, state.lateral);
+  const dx = target.x - car.x, dz = target.z - car.z;
+  const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0))), speed = Math.abs(state.speedMph || 0);
+  duel.setInput({throttle: speed < mph && Math.abs(turn) < 1.35 ? 1 : 0, brake: speed > mph + 3 || Math.abs(turn) > 1.8 ? 1 : 0,
+    steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
+}
+
+// The fighter: where to go this tick.
+function fighter(duel) {
+  const state = duel.state, worldJob = state.arena.worldJob, step = worldJob.job.steps[worldJob.job.stepIndex];
+  const bess = worldJob.actors.find(actor => actor.id === 'big-bess'), car = duel.course.groundAt(state.s, state.lateral);
+  const standing = worldJob.actors.filter(actor => actor.ambushKey && !actor.knockedDown && actor.health > 0)
+    .sort((a, b) => Math.hypot(a.x - car.x, a.z - car.z) - Math.hypot(b.x - car.x, b.z - car.z));
+  if (standing.length) {
+    // Run the nearest raider down: straight at him, quickly (the car must touch him at 4 m/s or more).
+    const raider = standing[0], gap = Math.hypot(raider.x - car.x, raider.z - car.z);
+    return drive(duel, {x: raider.x, z: raider.z}, gap < 12 ? 22 : 34);
+  }
+  // The next ambush that has not appeared yet (and that she has not passed): wait for it 45 m short of its place, on the side
+  // Big Bess comes from.
+  const spawned = new Set(worldJob.spawnedWaveKeys), along = bess ? pathShare(bess.position, bess.pathIndex, step.path).metres : 0;
+  const next = (step.ambushes ?? []).map(item => ({item, where: alongPath(step.path, item.place).metres}))
+    .filter(({item, where}) => !spawned.has(`ambush:${item.id}`) && along < where + 60).sort((a, b) => a.where - b.where)[0]?.item;
+  if (next && bess) {
+    const place = next.place.position, toward = {x: bess.position.x - place.x, z: bess.position.z - place.z}, length = Math.hypot(toward.x, toward.z) || 1;
+    const wait = {x: place.x + toward.x / length * 45, z: place.z + toward.z / length * 45};
+    return drive(duel, wait, Math.hypot(wait.x - car.x, wait.z - car.z) < 25 ? 0 : 34);
+  }
+  // No more ambushes ahead: go back to her.
+  if (bess) return drive(duel, bess.position, Math.hypot(bess.position.x - car.x, bess.position.z - car.z) < 20 ? 0 : 20);
+  return drive(duel, step.destination.position ?? step.destination, 30);
+}
+
+// The driver who never fights: straight to Tin Town.
+function coward(duel) {
+  const worldJob = duel.state.arena.worldJob, step = worldJob.job.steps[worldJob.job.stepIndex];
+  return drive(duel, step.destination.position ?? step.destination, 52);
+}
+
+function play(definition, seed, driver) {
+  const duel = new Duel({seed, featureFlags: FLAGS});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed, cpuDifficulty: 'medium', opponents: [],
+    weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job: {...definition, seed}}), true, `${definition.name} starts`);
+  let rests = 0;
+  const limit = Math.ceil(MAX_SECONDS / DT);
+  for (let tick = 0; tick < limit && duel.state.status !== 'arena_result'; tick++) {
+    if (duel.state.status === 'racing') driver(duel); else duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: false});
+    duel.step(DT);
+    if (duel.state.arena.worldJob.job.events.some(event => event.type === 'rest')) rests++;
+  }
+  const worldJob = duel.state.arena.worldJob;
+  return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete', rests, seconds: duel.state.stageTimeSec,
+    health: worldJob.actors.find(actor => actor.id === 'big-bess')?.health ?? NaN, wrecked: duel.state.combatWrecking === true};
+}
+
+const cases = [
+  {name: 'Job 4 (Slow Ride)', job: () => EVERBURN_JOBS[3]},
+  ...['long', 'boneyard'].flatMap(road => [1, 2, 3, 4].map(feud => ({name: `${road} road, ${FEUD_WORDS[feud - 1]}`, road, feud,
+    job: seed => gasRunJob({road, feud, runs: seed - 1, difficulty: 'medium'})}))),
+];
+const results = {};
+for (const [label, driver] of [['fighting driver', fighter], ['driver who never fights', coward]]) {
+  for (const entry of cases) {
+    const tries = Array.from({length: TRIES}, (_, index) => play(entry.job(index + 1), index + 1, driver));
+    const wins = tries.filter(item => item.won).length, wonTries = tries.filter(item => item.won);
+    const row = {wins, maxRests: Math.max(0, ...wonTries.map(item => item.rests)), mostRests: Math.max(...tries.map(item => item.rests)), lowest: wonTries.length ? Math.min(...wonTries.map(item => item.health)) : NaN};
+    results[`${label} / ${entry.name}`] = row;
+    console.log(`${label}, ${entry.name}: ${wins}/10 brought home, most rests in a try that arrived ${row.maxRests} (in any try ${row.mostRests}), Big Bess's lowest health on arrival ${Number.isFinite(row.lowest) ? row.lowest.toFixed(0) : 'none'}`);
+  }
+}
+const get = (label, name) => results[`${label} / ${name}`];
+// The card's targets.
+const FIGHT = 'fighting driver', COWARD = 'driver who never fights';
+assert(get(FIGHT, 'Job 4 (Slow Ride)').wins >= 8, `the fighting driver wins job 4: ${get(FIGHT, 'Job 4 (Slow Ride)').wins}/10, expected at least 8`);
+assert(get(FIGHT, 'boneyard road, Raiding').wins >= 8, `the fighting driver wins a Boneyard run at Raiding: ${get(FIGHT, 'boneyard road, Raiding').wins}/10, expected at least 8`);
+assert(get(FIGHT, 'boneyard road, War party').wins >= 5, `the fighting driver wins a Boneyard run at War party: ${get(FIGHT, 'boneyard road, War party').wins}/10, expected at least 5`);
+for (const name of ['long road, Watching', 'long road, Raiding'])
+  assert(get(COWARD, name).wins >= 8, `a driver who never fights still arrives on the ${name}: ${get(COWARD, name).wins}/10, expected at least 8`);
+for (const [key, row] of Object.entries(results)) if (row.wins > 0)
+  assert(row.maxRests <= 3, `${key}: at most 3 rests in a run that arrives (most seen ${row.maxRests})`);
+console.log('Medium drivers: the card\'s targets are met');
