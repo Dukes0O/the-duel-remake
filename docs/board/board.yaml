@@ -505,6 +505,16 @@ tasks:
     flag: "scablands-runs"
     details: "docs/board/cards/RUN-GAS.md"
 
+  - id: SCABLANDS-LAND
+    title: "The Scablands as a place: coloured models, drawn ground and wear, a flat road, Tin Town's gate"
+    owner: "claude"
+    lane: "ART"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/SCABLANDS-LAND.md"
+
   - id: EVERBURN-FURNACE-LOOK
     title: "Old Smoke's furnace reads as a black box; make it look like a furnace"
     owner: "claude"

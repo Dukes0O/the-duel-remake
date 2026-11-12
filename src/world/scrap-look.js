@@ -238,3 +238,57 @@ export function createDustTrail({count=18,colour=0x8a7458}={}){
   };
   return group;
 }
+
+// The look of open ground, drawn in code over one plain colour (SCABLANDS-LAND): pale and dark drifts of sand, warm
+// patches, cracked earth on the dark flats, wind ripples on the pale ones, gravel and stones, and rock with strata
+// wherever the ground is steep. It reads the ground's own place and slope, so it needs no pictures and no new files.
+export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
+  const uniforms={uGroundNoise:{value:scrapNoise()},uGroundRock:{value:new THREE.Color(rock)},uGroundStone:{value:new THREE.Color(stone)}};
+  function apply(material){
+    if(!material?.isMeshStandardMaterial||material.userData.groundLook)return material;
+    material.userData.groundLook=true;
+    material.onBeforeCompile=shader=>{
+      Object.assign(shader.uniforms,uniforms);
+      shader.vertexShader=shader.vertexShader
+        .replace('#include <common>','#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;')
+        .replace('#include <project_vertex>',`#include <project_vertex>
+          vGroundPos=(modelMatrix*vec4(transformed,1.0)).xyz;
+          vGroundNormal=mat3(modelMatrix)*objectNormal;`);
+      shader.fragmentShader=shader.fragmentShader
+        .replace('#include <common>',`#include <common>
+          uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
+          varying vec3 vGroundPos;varying vec3 vGroundNormal;`)
+        .replace('#include <color_fragment>',`#include <color_fragment>
+          vec2 gq=vGroundPos.xz;
+          float gSlope=1.0-normalize(vGroundNormal).y;
+          vec3 gBig=texture2D(uGroundNoise,gq*.0037).rgb;
+          vec3 gMid=texture2D(uGroundNoise,gq*.029+3.7).rgb;
+          vec3 gFine=texture2D(uGroundNoise,gq*.31).rgb;
+          vec3 gGrit=texture2D(uGroundNoise,gq*2.1).rgb;
+          float gFlat=1.0-smoothstep(.04,.22,gSlope);
+          vec3 gc=diffuseColor.rgb;
+          // Broad drifts: pale sand on the rises of the noise, darker packed dust in its hollows.
+          gc*=.70+.62*gBig.r;
+          gc=mix(gc,gc*vec3(1.16,.97,.78),smoothstep(.42,.72,gMid.g)*.55);
+          // Wind ripples across the pale sand.
+          float gRipple=sin((vGroundPos.x*.93+vGroundPos.z*.37)*2.6+gMid.b*11.0)*.5+.5;
+          gc*=1.0-.13*gRipple*smoothstep(.5,.78,gBig.r)*gFlat;
+          // Cracked earth where the dust is dark and flat: thin dark lines along the ridges of the fine noise.
+          float gCrack=smoothstep(.030,.0,abs(gFine.b-.5))+.6*smoothstep(.022,.0,abs(gFine.r-.47));
+          gc*=1.0-.5*min(gCrack,1.0)*gFlat*smoothstep(.55,.32,gBig.r);
+          // Rock with strata wherever the ground is steep.
+          vec3 gRock=uGroundRock*(.62+.7*gFine.g);
+          gRock*=1.0-.28*step(.55,fract(vGroundPos.y*.42+gMid.r*2.3));
+          gc=mix(gc,gRock,smoothstep(.16,.42,gSlope));
+          // Gravel and stones, thicker near rock.
+          float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
+          gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75);
+          gc*=.88+.24*gGrit.b;
+          diffuseColor.rgb=gc;`);
+    };
+    material.customProgramCacheKey=()=>'ground-look-1';
+    material.needsUpdate=true;
+    return material;
+  }
+  return {apply,uniforms};
+}

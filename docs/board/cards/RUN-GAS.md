@@ -147,6 +147,31 @@ Merged into Claude's branch as 945dbf2e3, switch `scablands-runs` off. Change no
 Still to do before this card closes: Claude drives both roads on Medium, where the raids matter (left alone, the
 first Boneyard ambush costs Big Bess about 58 health), and looks at a raid in the game.
 
+## What play showed, and the changes it needs (Claude, 12 November 2026)
+
+A Sonnet helper played job 4 and the runs on Medium with scripted drivers and took pictures. On Easy everything is
+won. On Medium nothing can be won: 0 of 10 everywhere. The causes are in Claude's design, not the build.
+
+1. **A car cannot knock a raider down.** Only the crossbow, the bomb and a lent flamethrower hurt a raider, and a
+   raider is back on his feet 3 seconds later. Change: in an ambush, a raider touched by the player's car moving at
+   4 m/s or more is knocked down, and a raider knocked down by anything stays down for the rest of that ambush.
+2. **A hurt truck never recovers,** so a player who loses one ambush restarts into the next with too little health,
+   for ever. Change: after a rest Big Bess has at least 60 health.
+3. **Job 4's first ambush stands 72 m from the start,** so its raiders are on her before the player can reach them,
+   in a hollow where she cannot be seen. Change: it moves along her road to (278, 188), 186 m from the start, and no
+   ambush anywhere may stand within 180 m of a run's start.
+4. **Big Bess's health bar covers the rear-view mirror.** It moves clear of the mirror and of the caption line.
+5. **The flamethrower** is lent for job 4 and for every run, as job 1 lends it.
+6. **Seen before fought, but barely.** In job 1 the furnace is a wisp at 260 m; it stands at (300, -60) instead,
+   nearer the player's road. In job 4 it paces Big Bess 90 m to the north and 40 m ahead of her, where the player's
+   view catches it, not 150 m abeam.
+7. **The burning gate is three small flames on bare sand.** Card SCABLANDS-LAND builds the gate. Here the fire grows:
+   five tongues 6 to 8 m tall along the gate, sparks, a wider plume, and firelight on the ground.
+
+New targets for the scripted drivers on Medium, each over 10 tries: a driver who drives ahead and runs the raiders
+down wins job 4 and a Boneyard run at Raiding at least 8 times in 10 and at War party at least 5 in 10; a driver who
+never fights still arrives on the long road at Watching and Raiding, and on any road needs at most 3 rests.
+
 ## Not in this card
 
 Other cargo and other roads, sending someone else, the boss coming out, the Scrapdome challenge, lasting damage.
