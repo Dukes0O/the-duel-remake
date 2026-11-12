@@ -75,6 +75,8 @@ export function stepLineTriggers(step,state,view,outcome) {
   if(step.afterFirstLineId&&events.some(item=>item.type==='rescued'))fire(step.afterFirstLineId,`after-first:${step.afterFirstLineId}`);
   if(step.wonLineId&&outcome.complete)fire(step.wonLineId,`won:${step.wonLineId}`);
   for(const event of events) {
+    if(event.type==='alarm')fire(step.alarmLineId,'alarm');
+    if(event.type==='taken' && event.id===step.takeId)fire(step.takenLineId,`taken:${event.id}`);
     if(event.type==='waveStarted')fire(step.waves?.[event.wave]?.lineId,`wave:${event.wave}`);
     if(event.type==='used'||event.type==='lit') {
       const place=(step.places??[]).find(item=>item.id===event.id);

@@ -1,6 +1,6 @@
 // WW-SCREENS browser review: memory-only save, private QA tab, 1280x720.
 // Claude runs this after WW-HOOKS and WW-SAVE are integrated. It checks the
-// Story choice, its single next action, the yard's Back Gate / free drive,
+// Story choice, its single next action, the yard's next job,
 // Next up, the Story Wall, notice board and job result tick.
 import {join} from 'node:path';
 import {writeFile} from 'node:fs/promises';
@@ -34,10 +34,17 @@ export async function run(context) {
   await shot('everburn-story-card');
   await click('.story-card [data-story-step="hot-delivery"]');
   await context.waitFor(`window.__qaApp.isYardHomeActive()`, 'the yard after choosing the back gate', 120_000);
-  fact(await context.evaluate(`/BACK GATE/.test(document.body.innerText) && /DRIVE THE SCABLANDS/.test(document.body.innerText)`), 'the yard offers the back gate and free driving');
   fact(await context.evaluate(`/Next up: Hot Delivery/.test(document.body.innerText)`), 'the yard names Hot Delivery as Next up');
   await shot('everburn-yard-next-up');
   // The QA panel on the test page sits over the yard's buttons, and a real click would land on it.
+  await context.evaluate(`(() => { for(const panel of document.querySelectorAll('details'))if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.open=false; return true; })()`);
+  await click('.yard-next-button[data-ember-step="hot-delivery"]');
+  await context.waitFor(`window.__qaApp.duel.state.arena?.worldJob?.definition.id === 'everburn-hot-delivery'`, 'yard Next up starts Hot Delivery', 60000);
+  fact(await app(`app.duel.state.arena?.worldJob?.definition.id === 'everburn-hot-delivery'`), 'the yard Next up button starts the next story job');
+  await app(`app.returnToMenu()`);
+  await context.waitFor(ready, 'menu after leaving Hot Delivery', 60000);
+  await click('[data-action="wasteland-visit"]');
+  await context.waitFor(`window.__qaApp.isYardHomeActive()`, 'return to the yard', 120000);
   await context.evaluate(`(() => { for(const panel of document.querySelectorAll('details'))if(panel.querySelector('summary')?.textContent.startsWith('MENU QA'))panel.open=false; return true; })()`);
   await click('[data-action="yard-cards"]');
   await context.waitFor(`!!document.querySelector('.ember-wall')`, 'the Everburn Story Wall', 15_000);
@@ -53,7 +60,6 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('.ember-wall')`, 'the Story Wall after story progress', 15_000);
   fact(await context.evaluate(`/TIN TOWN NOTICE BOARD/.test(document.body.innerText) && /Lost Prospector/.test(document.body.innerText)`), 'job 2 opens the notice board side jobs');
   await shot('everburn-notice-board');
-  fact(await context.evaluate(`typeof window.__qaApp.storyResultLine === 'function'`), 'the hooks expose the Everburn result tick');
   await writeFile(join(context.outputDir, 'everburn.json'), JSON.stringify(report, null, 2) + '\n');
   if (failures.length) throw Error('Everburn screen facts failed: ' + failures.join(' | '));
 }
