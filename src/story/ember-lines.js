@@ -51,6 +51,8 @@ export const EMBER_CAPTIONS = Object.freeze({
   'story.ember.cinder.20': line('Cinder', 'Job 6 won', 'Well, look at that. A hundred years old and still showing off.'),
   'story.ember.cinder.21': line('Cinder', 'Job 6 won', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'),
   'story.ember.hollis.1': line('Hollis', 'Job 6 won', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'),
+  'story.ember.cinder.26': line('Cinder', "The well's defence fails and the wave starts again", 'They reached the valve! I have shut it again. Same lot, once more.'),
+  'story.ember.auntie-solder.12': line('Auntie Solder', 'The soup spills', 'That was my good soup! Come back. There is more in the pot, and less in my patience.'),
   // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run, once the six jobs are won.
   'story.ember.moss.5': line('Moss', 'A long road run starts', 'The long way round, then. Bess likes a quiet road.'),
   'story.ember.moss.6': line('Moss', 'A Boneyard road run starts', 'Through the Boneyard. Keep your eyes on the planes; that is where they wait.'),

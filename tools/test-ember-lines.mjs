@@ -47,6 +47,8 @@ const EXPECTED = [
   ['Job 6 won', 'Cinder', 'Well, look at that. A hundred years old and still showing off.'],
   ['Job 6 won', 'Cinder', 'I\'m with you now, if you\'ll have me. Nobody else lets me bring the pot.'],
   ['Job 6 won', 'Hollis', 'I can see that fire from the gate. Good work, driver. The boiler has its parts.'],
+  ["The well's defence fails and the wave starts again", 'Cinder', 'They reached the valve! I have shut it again. Same lot, once more.'],
+  ['The soup spills', 'Auntie Solder', 'That was my good soup! Come back. There is more in the pot, and less in my patience.'],
   // RUN-GAS: the six lines of the gas run, word for word from docs/board/cards/RUN-GAS.md.
   ['A long road run starts', 'Moss', 'The long way round, then. Bess likes a quiet road.'],
   ['A Boneyard road run starts', 'Moss', 'Through the Boneyard. Keep your eyes on the planes; that is where they wait.'],

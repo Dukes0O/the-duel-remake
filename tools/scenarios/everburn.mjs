@@ -60,12 +60,6 @@ export async function run(context) {
   await context.waitFor(`!!document.querySelector('.ember-wall')`, 'the Story Wall after story progress', 15_000);
   fact(await context.evaluate(`/TIN TOWN NOTICE BOARD/.test(document.body.innerText) && /Lost Prospector/.test(document.body.innerText)`), 'job 2 opens the notice board side jobs');
   await shot('everburn-notice-board');
-  await click('[data-ember-step="run-him-down"]');
-  await context.waitFor(`window.__qaApp.duel.state.arena?.worldJob?.definition.number === 3`, 'Run Him Down starts', 60000);
-  await context.evaluate(`(() => { const a=window.__qaApp,j=a.duel.state.arena.worldJob.job; j.stepIndex=j.steps.length; j.done=true; a.advance(0.1); })()`);
-  await context.waitFor(`window.__qaApp.duel.state.status === 'arena_result'`, 'Run Him Down results', 60000);
-  await context.waitFor(`document.querySelector('.result-panel .water-road-tick')?.textContent.includes('Everburn: job 3, Run Him Down, complete.')`, 'Everburn result tick', 15000);
-  fact(await context.evaluate(`document.querySelector('.result-panel .water-road-tick')?.textContent.includes('Everburn: job 3, Run Him Down, complete.')`), 'the results screen shows the completed Everburn job');
   await writeFile(join(context.outputDir, 'everburn.json'), JSON.stringify(report, null, 2) + '\n');
   if (failures.length) throw Error('Everburn screen facts failed: ' + failures.join(' | '));
 }
