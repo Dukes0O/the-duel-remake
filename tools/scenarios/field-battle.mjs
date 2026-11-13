@@ -12,6 +12,8 @@ export async function run(c) {
   await c.waitFor('window.__qaApp?.duel.state.status==="menu"','menu',60000);
   const ember=`a.profile={...a.profile,wasteland:{...a.profile.wasteland,version:1,discoveredGate:true},story:{...a.profile.story,ember:{...(a.profile.story?.ember||{}),read:true,jobs:${SIX},feud:4,runs:3}}};a.cpuDifficulty='medium';a._saveProfile();`;
   await c.evaluate(`(()=>{const a=window.__qaApp;if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('memory-only storage missing');${ember}})()`);
+  // The menu redraws after the profile is set; on a busy laptop the button is not there yet.
+  await c.waitFor(`!!document.querySelector('#wasteland-visit')&&!document.querySelector('#wasteland-visit').hidden`,'WASTELAND button');
   await click(c,'#wasteland-visit');
   await c.waitFor('window.__qaApp?.isYardHomeActive?.()','yard',60000);
   await c.evaluate(`(()=>{const a=window.__qaApp;${ember}})()`);
