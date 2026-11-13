@@ -6,7 +6,7 @@
 //   2.5 seconds or 60 per cent of its reading time, whichever is longer.
 // - A line that has waited 6 seconds is dropped: a late line is worse than none.
 // - An urgent line goes to the front of the queue and is shown once the line on screen has had 1.5 seconds. The line it
-//   interrupts waits at the front and carries on afterwards.
+//   interrupts waits at the front and carries on afterwards, unless it had already had 60 per cent of its reading time.
 // - A line with its own time (an arrow for a door that is opening) keeps that time and never gives way, and is dropped when
 //   that time has passed from the moment it was handed over, even while another line or a crash hides it.
 export const MIN_CAPTION_SECONDS = 2.5;
@@ -62,7 +62,9 @@ export function createCaptionQueue() {
       const urgent = urgentIndex();
       if (urgent >= 0 && current.elapsed >= INTERRUPT_AFTER_SECONDS - EPSILON) {
         const next = waiting.splice(urgent, 1)[0];
-        waiting.unshift({...current, interrupted: true, waited: 0});
+        // The line cut short carries on afterwards only if it has not yet had 60 per cent of its reading time (a timed arrow always
+        // does, its own time decides): a short line that was read is not shown a second time.
+        if (current.fixed || current.elapsed < GIVE_WAY_SHARE * current.duration - EPSILON) waiting.unshift({...current, interrupted: true, waited: 0});
         current = next;
         continue;
       }

@@ -47,6 +47,9 @@ q.add(long, false, 0); q.add('urgent', true, 0.5);
 assert.equal(q.advance(1.49), long); assert.equal(q.advance(1.5), 'urgent');
 assert.equal(q.advance(1.5+2.49), 'urgent'); assert.equal(q.advance(1.5+2.5), long);
 assert.equal(q.advance(100), ''); q.add('again', false, 100); q.clear(100); assert.equal(q.advance(101), '');
+// A short line cut short after 60 per cent of its reading time is not shown a second time; a long one carries on.
+const shortCut=createCaptionQueue(); shortCut.add('short', false, 0); shortCut.add('urgent', true, 1.5);
+assert.equal(shortCut.advance(1.5), 'urgent'); assert.equal(shortCut.advance(4), '');
 // An urgent line that arrives after the line on screen has already had 1.5 seconds cuts in at once.
 const quick=createCaptionQueue(); quick.add(long, false, 0); assert.equal(quick.advance(3), long);
 quick.add('door', true, 3); assert.equal(quick.advance(3), 'door');
@@ -66,11 +69,14 @@ const state={s:5,lateral:4,arena:{mode:'world-job',worldJob:{definition,job:{ste
 const data=worldJobMapData({worldAt:(s,z)=>({x:s,z})},state);
 assert.deepEqual(data.path,[{x:0,z:0},{x:100,z:30}]); assert.equal(data.marks[0].kind,'player');
 // Timed instructions expire from their arrival, even while another caption or a crash hides them.
+// (Changed in the third round: the opening line was 7 characters, so after the arrow it was no longer shown again; a short line that has been
+// read is not repeated, so the opening is now long enough to carry on.)
+const opening='an opening line that takes a while to read, so it carries on';
 const timed=createCaptionQueue();
-timed.add('opening', false, 0);
+timed.add(opening, false, 0);
 timed.add('arrow', true, .1, 3);
 assert.equal(timed.advance(1.5), 'arrow');
-assert.equal(timed.advance(3.1), 'opening');
+assert.equal(timed.advance(3.1), opening);
 const expired=createCaptionQueue();
 expired.add('opening', false, 0);
 expired.add('old arrow', true, .1, 1.5, true);
