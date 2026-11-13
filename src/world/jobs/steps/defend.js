@@ -1,8 +1,12 @@
-export function stepDefend(step, state, view) {
+export function stepDefend(step, state, view, dt = 0) {
   const health = view.places?.[step.placeId]?.health ?? view.placeHealth ?? step.health ?? 100;
   const events = [];
   const waves = view.difficulty === 'easy' && step.easyWaves ? step.easyWaves : step.waves;
   let wave = state.wave ?? 0;
+  // EVERBURN-PLAY-FIXES: the first wave comes only after `firstWaveAfterSec` (the step's opening line is said first).
+  const waited = state.waited ?? 0;
+  if (!state.started && !state.restarting && waited < (step.firstWaveAfterSec ?? 0))
+    return { state: { wave, waited: waited + dt }, complete: false, events, requests: [] };
   if (health <= 0) {
     events.push({ type: 'waveRestarted', wave });
     return { state: { wave, restarting: true }, restart: true, events,

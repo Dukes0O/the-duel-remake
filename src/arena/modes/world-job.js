@@ -331,6 +331,15 @@ function updateBattleFurnace(duel, worldJob, step, dt) {
   stepFurnaceActor(duel, worldJob, actor, def, dt, {metres, x: bess.position.x, z: bess.position.z, arrived: bess.atDestination === true, actor: bess});
 }
 
+// EVERBURN-PLAY-FIXES: a defence step may name several places the raiders come from (`raiderEntries`). A wave comes from the one farthest
+// from the player's car (and from the player on foot), so that no raider appears near the player: with the places a compass apart at
+// 64 m from the well, that is never less than 64 m.
+function farthestEntry(duel, entries) {
+  const state = duel.state, car = position(duel, state), foot = state.onFoot && state.fighter ? state.fighter : null;
+  const gap = at => Math.min(Math.hypot(at.x - car.x, at.z - car.z), foot ? Math.hypot(at.x - foot.x, at.z - foot.z) : Infinity);
+  return entries.reduce((best, entry) => gap(entry.position ?? entry) > gap(best.position ?? best) ? entry : best);
+}
+
 function spawnWave(duel, worldJob, request, key) {
   if (worldJob.spawnedWaveKeys.includes(key)) return;
   const zones = createRaidZones(duel.course, worldJob.raidSeed + worldJob.spawnedWaves++);
@@ -361,6 +370,17 @@ function spawnWave(duel, worldJob, request, key) {
   worldJob.waveZones ??= {};
   worldJob.waveZones[key] = zone;
   worldJob.spawnedWaveKeys.push(key);
+}
+
+// Every raider of the waves a defence step spawned is taken away (their keys are '<step number>:<wave>').
+function removeWaveRaiders(duel, worldJob, stepIndex) {
+  for (const key of Object.keys(worldJob.waveZones ?? {}).filter(item => item.startsWith(`${stepIndex}:`))) {
+    const zone = worldJob.waveZones[key];
+    if (duel.state.raids) duel.state.raids.zones = duel.state.raids.zones.filter(candidate => candidate !== zone);
+    worldJob.actors = worldJob.actors.filter(actor => !zone.raiders.includes(actor));
+    delete worldJob.waveZones[key];
+    worldJob.spawnedWaveKeys = worldJob.spawnedWaveKeys.filter(existing => existing !== key);
+  }
 }
 
 // An ambush on an escort's road (src/world/jobs/steps/escort.js): the same foot raiders as the well's attackers, standing
@@ -467,7 +487,8 @@ function applyRequests(duel, worldJob, requests) {
     else if (request.type === 'clearWave') clearAmbush(duel, worldJob, request.key);
     else if (request.type === 'spawnWave') {
       const key = `${worldJob.job.stepIndex}:${worldJob.job.stepState.wave ?? 0}`;
-      spawnWave(duel, worldJob, request, key);
+      const entries = worldJob.job.steps[worldJob.job.stepIndex]?.raiderEntries;
+      spawnWave(duel, worldJob, entries?.length ? {...request, from: farthestEntry(duel, entries)} : request, key);
     }
     else if (request.type === 'say' && request.lineId) {
       duel._callout(captionFor(worldJob, request.lineId), 2.2);
@@ -595,7 +616,11 @@ export function stepWorldJob(duel, dt) {
   state.worldJobThingsHit = [];
   moveJobRaiders(worldJob, dt);
   updateJobActors(duel, worldJob, dt);
-  if (next.stepIndex !== previousStep) worldJob.clearedWaves = [];
+  if (next.stepIndex !== previousStep) {
+    worldJob.clearedWaves = [];
+    // EVERBURN-PLAY-FIXES: when a defence ends the raiders still standing are removed, so none is left piled at the well.
+    if (currentStep?.kind === 'defend') removeWaveRaiders(duel, worldJob, previousStep);
+  }
   if (next.stepIndex !== previousStep) applyStepLoan(duel, worldJob);
   for (const event of next.events) {
     // The battle's furnace counts each of Big Bess's rests once it is out; after the third it is spent (old-smoke.js).

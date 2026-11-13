@@ -6,14 +6,15 @@ import {escortCarStart} from './steps/escort.js';
 const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.freeze({x, y:0, z}), radius});
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
-
 // Where a job's car starts (EVERBURN-PLAY-FIXES): open ground, facing a place. src/arena/modes/world-job.js puts the car there.
 const carStart = (x, z, toward) => Object.freeze({x, z, heading: Math.atan2(toward.position.x - x, toward.position.z - z)});
+
 const yard = place('yard-gate', 0, 0), tinTown = place('tin-town', 600, 0, 18);
 const boneyard = place('boneyard', 424, 304, 18), mall = place('dead-mall', 0, 430, 14);
 const well = place('everburn', -424, 304, 18), safeRoad = place('safe-road', 230, 150, 16);
-const wellApproach = place('everburn-well-approach', -448, 288, 8);
 const wellRaidersHold = place('everburn-well-raiders-hold', -426, 303, 8);
+const wellRaiderEntries = Object.freeze([[0, 64], [64, 0], [0, -64], [-64, 0]]
+  .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, -424 + dx, 304 + dz, 8)));
 const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];
@@ -56,11 +57,11 @@ export const EVERBURN_JOBS = Object.freeze([
     easy:Object.freeze({markerRadius:3, knockedDownRecovery:'last-marker'}), lineId:'story.ember.auntie-solder.3',
     steps:[step('onfoot',{what:'Get out and light the three lamps at the cold forge.', places:lamps.map((lamp,index)=>Object.freeze({...lamp, action:'light',
       ...(index === 0 ? {lineId:'story.ember.cinder.6'} : {})})),
-      radius:3, lentWeapon:'cinders-hand-flamer', requiresExit:true, returnToCar:tinTown,
-      unlock:'tin-town-notice-board', startLineId:'story.ember.auntie-solder.3', afterStartLineId:['story.ember.cinder.5']})]}),
       // The car starts inside Tin Town's gate on open ground (18 m in from the gate's posts, 30 m from the town's own model),
       // facing the forge, not in the alley at the town's centre where the camera stood behind a pillar.
       carStart:carStart(582, 44, forge),
+      radius:3, lentWeapon:'cinders-hand-flamer', requiresExit:true, returnToCar:tinTown,
+      unlock:'tin-town-notice-board', startLineId:'story.ember.auntie-solder.3', afterStartLineId:['story.ember.cinder.5']})]}),
   Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
     resultLineId:'story.ember.cinder.10',
     easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
@@ -72,17 +73,17 @@ export const EVERBURN_JOBS = Object.freeze([
       // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
       closing:['story.ember.cinder.22']})]}),
   Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
+    // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
+    resultLine:'The gas is in Tin Town and the forge is lit.',
     easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
     steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
       path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
+      // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
+      carStart:escortCarStart(path(boneyard, safeRoad, tinTown)),
       speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
       // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The first stands on her road at
       // (278, 188), 186 m from the start (it was (360, 270), 72 m from it). The second was (500, 90), 48 m from her road,
-      // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
-      carStart:escortCarStart(path(boneyard, safeRoad, tinTown)),
-    // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
-    resultLine:'The gas is in Tin Town and the forge is lit.',
       // out of reach of the 30 m that wears her health; it now stands on the road at (500, 41). The flamethrower is lent, as in job 1.
       ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1',278,188), count:2}),
         Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2',500,41), count:2})]),
@@ -107,7 +108,10 @@ export const EVERBURN_JOBS = Object.freeze([
     easy:Object.freeze({placeHealth:120, waves:[1,2,2], furnaceHealth:3, ventRadius:2}), lineId:'story.ember.cinder.15',
     steps:[step('defend',{what:'Defend the Everburn well from the Ash Men.', origin:place('well-start', -445.2132034356, 282.7867965644), faceOriginToPlace:true, place:well, placeId:'everburn-valve', health:120, waveCount:3,
       waves:[{count:2},{count:2},{count:3}], easyWaves:[{count:1},{count:2},{count:2}],
-      raiderEntry:wellApproach, raiderHold:wellRaidersHold, approachSpeed:1.5,
+      // EVERBURN-PLAY-FIXES: a wave comes from the one of four places, a compass apart 64 m from the well, that is farthest from the player's car,
+      // so that no raider appears within 60 m of the car (the first wave used to appear 6 m from it); it walks in at 3 m a second (a quick walk,
+      // so that it arrives about as soon as before: 21 s for the 62 m, where it was 18 s for 27 m). The first wave comes after Cinder's opening line.
+      raiderEntries:wellRaiderEntries, raiderHold:wellRaidersHold, approachSpeed:3, firstWaveAfterSec:2.4,
       refill:{place:well,crateId:'hollis-well-supply',carWeapon:'flamethrower',footAmmo:'rpg'},
       lentWeapon:'flamethrower',
       restartLineId:'story.ember.cinder.26',

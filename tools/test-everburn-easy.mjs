@@ -15,7 +15,7 @@ assert.equal(new Set(jobs.map(job => job.id)).size, jobs.length);
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const spot = value => value?.position ?? value;
-const footProgress = new WeakMap();
+const footProgress = new WeakMap(), defendMode = new WeakMap();
 
 function currentMarker(duel) {
   const arena = duel.state.arena, worldJob = arena.worldJob;
@@ -123,7 +123,20 @@ function playerInput(duel) {
       duel.fireWeapon(worldJob.activeLoan);
       return;
     }
-    target = {x: raider.x, z: raider.z};
+    // EVERBURN-PLAY-FIXES: raiders now walk in from 64 m off and stand where they arrive, so the driver meets them in the open: it runs at the
+    // nearest one, and if it ends up point-blank and not lined up (a car cannot turn on the spot) it drives off to 28 m and runs at it again.
+    // (It used to drive at the raider at 20 mph and creep in at 4, which only worked while the raiders walked into its sights from beside it.)
+    const gap = Math.hypot(dx, dz), speed = Math.abs(state.speedMph || 0), mode = defendMode.get(duel) ?? 'run-at';
+    if (mode === 'run-at' && gap < 6) defendMode.set(duel, 'back-off');
+    else if (mode === 'back-off' && gap > 28) defendMode.set(duel, 'run-at');
+    if (defendMode.get(duel) === 'back-off') {
+      const away = {x: car.x - dx / (gap || 1) * 30, z: car.z - dz / (gap || 1) * 30};
+      const awayTurn = wrap(Math.atan2(away.x - car.x, away.z - car.z) - (car.heading + (state.headingError || 0)));
+      duel.setInput({throttle: speed < 20 ? 1 : 0, brake: 0, steer: clamp(-awayTurn * 2, -1, 1), boost: false, interact: false});
+    } else {
+      duel.setInput({throttle: speed < 20 ? 1 : 0, brake: speed > 24 ? 1 : 0, steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
+    }
+    return;
   }
   const wantsFoot = step.kind === 'onfoot' || step.kind === 'heist' && phase !== 'escape';
   const shouldExitNearMarker = wantsFoot && !state.onFoot &&
