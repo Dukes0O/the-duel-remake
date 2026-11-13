@@ -1,4 +1,4 @@
-# The current plan (12 November 2026, after the day's release)
+# The current plan (written the night of 12 November 2026)
 
 This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's direction of 11 November is in
 `docs/board/decisions.md`: draw in code before building model files, and a boss needs a reason.
@@ -20,10 +20,11 @@ This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's 
 | The Lab: a compelling place to learn | LAB-LOOK | All sixteen lesson boards and their answer cards are redrawn, Brian has painted portraits, the old lesson frame is gone, and Lift has the stage step (numbers in a strip under the board, the scene larger). Braking, Fuel, Wax, Launch and Projectile have the wide board (rounds 10 to 12, merged). With the physics panel open the two columns now give width to the picture (round 13). Next: the three weak pictures listed under round 13 on the card; then the challenges in the 3D world; then the walking hangar |
 | The Scablands as a place | SCABLANDS-LAND | Models carry their colours, wear and ground are drawn in code, the road is flat, Tin Town has a gate and 45 shacks. Next: the other places looked at the same way (the well, the Dead Mall, the Boneyard), then a frame check |
 | When a boss comes out | `docs/FEUDS_AND_RUNS.md` | Step 1 (EVERBURN-RUN-AT-TOWN), step 2 (RUN-GAS) and the first field battle (FIELD-BATTLE-ASH) are built with their switches off. The battle's hunt was redesigned on 12 November (the furnace catches up, fire lands before every door, it burns its coal after her third rest) and a job shows its own road on the map. Next: play all three through by hand; then feuds for a second group and the Scrapdome challenge |
-| Finish and release the Everburn | EVERBURN-PLAY-FIXES, EVERBURN-FURNACE-LOOK | The whole story was played in the real game by script on 12 November: it can be finished, and a child could not yet play it (captions too fast, cameras behind a pillar and inside the furnace, bad starts, an escort that starts a kilometre from its truck). EVERBURN-PLAY-FIXES holds the settled fixes in two parts (Codex: what the screen says; a helper: starts and cameras). Then a second play, a frame check, and the switch |
+| Finish and release the Everburn | EVERBURN-PLAY-FIXES, EVERBURN-FURNACE-LOOK | The story was played end to end twice by script on 12 November and fixed in three rounds: starts, cameras, captions, the screen's race leftovers, closing lines on the results screen, the yard after job 6. Before its switch goes on: a play by hand by Kyle or Gratian on Easy and on Medium (job 6's defence is the hardest part), a frame check in the Scablands with the laptop alone, and the full tier. The card lists five small things still open |
 
-The Lab's new look was released on 12 November (build 26.11.12 18:42 UTC). Everything else from 11 and 12 November
-is behind its switch. No frame check has run since 10 November: the next nightly check needs the laptop alone.
+The Lab's new look was released on the morning of 12 November (build 26.11.12 18:42 UTC). Since then, on integration
+and not released: four more wide boards and the stage change (LAB-LOOK rounds 11 to 13). They can go live as soon as
+a full check is green; the night check of 12 November was started for that. Everything else is behind its switch.
 
 ## Rules of thumb learned on 11 and 12 November
 
