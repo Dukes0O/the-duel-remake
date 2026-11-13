@@ -164,6 +164,23 @@ raiders' toll message lying over the rear-view mirror; the story caption running
 starting inside the well's box. Before the switch goes on: a play by hand by Kyle or Gratian on Easy and Medium, a
 frame check in the Scablands with the laptop alone, and the full tier.
 
+**Fourth round, 13 November (built by a Sonnet helper; Claude's verdict on `docs/board/looks/everburn-play/round-7.jpg`).**
+Five of the six open items are fixed and seen: job 2's three lamps are named and numbered on the big map; a spoken
+line such as "Road is clear" now stands under the story caption and the mirror is clear; the caption is drawn on a
+dark plate above the open big map (it covers the map's top edge while a line is up, which is accepted); Big Bess
+starts 36 m down her road, clear of the well's derrick box, on both gas roads and in the battle; Tin Town's solid
+stands on the drawn town and is the size of its buildings (19 by 27 m; resized as well as moved, confirmed). A new
+browser check, `everburn-frames`, times the Scablands at job 4's busiest view.
+Reviewed assertions (rule 18), none loosened: in `test-run-gas` and `test-field-battle` the last piece of a road
+that ends at Tin Town's centre may touch the town's own box, because the road ends inside the town it is driving to;
+every other piece and every other solid keeps its 8 m (3.4 m for the gate posts), and the counts stay 1,116 and 796.
+In `test-everburn-play-start` the car's place behind Big Bess is measured from her own start; the numbers are the
+same. Replay fingerprints unchanged; lane tier 80 of 80; build; five browser checks.
+Still open: the Hand Flamer's drawing; the small map panel still shows job 2's lamps as one mark; Old Smoke's furnace
+in job 6 starts at the well's middle, inside the derrick box (a chaser, so it drives out; watch it in the play by
+hand); job 1's delivery spot and Hot Soup's notice board lie at the edge of the town's solid and were shown reachable
+by a test, not driven by hand.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.
