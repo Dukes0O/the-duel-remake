@@ -71,7 +71,7 @@ function practiceSymbol(ctx,kind,x,y,color,size=5){
 }
 export function drawPracticeMarkers(ctx,map){
   if(!map.practiceMarkers)return;
-  ctx.save();ctx.font='bold 11px Segoe UI, sans-serif';ctx.textAlign='right';ctx.fillStyle='#ffce75';ctx.fillText('DRAG STRIP 4 KM →',map.width-10,18);ctx.restore();
+  ctx.save();ctx.font='bold 11px Segoe UI, sans-serif';ctx.textAlign='right';ctx.fillStyle='#ffce75';ctx.fillText('DRAG STRIP 4 KM â†’',map.width-10,18);ctx.restore();
   for(const feature of map.practiceMarkers){const style=PRACTICE_MAP_LEGEND.find(item=>item.kind===feature.kind);practiceSymbol(ctx,feature.kind,feature.marker.x,feature.marker.y,style.color);}
   ctx.save();ctx.font='10px Segoe UI, sans-serif';ctx.textAlign='left';
   for(const [i,item]of PRACTICE_MAP_LEGEND.entries()){const x=9+i*(map.width-12)/4,y=map.height-11;practiceSymbol(ctx,item.kind,x+4,y,item.color,3.5);ctx.fillStyle=item.color;ctx.fillText(item.label,x+12,y+3);}
@@ -140,7 +140,7 @@ export function worldJobMapData(course, state) {
 }
 
 // Pick a label position with room for the road, end mark and panel edges.
-function drawPlaceName(ctx, point, label, points, width, height, end) {
+function drawPlaceName(ctx, point, label, points, width, height, end, occupied = []) {
   if (!label) return;
   ctx.font = end ? 'bold 12px Segoe UI, sans-serif' : '10px Segoe UI, sans-serif';
   ctx.textAlign = 'left';
@@ -154,6 +154,7 @@ function drawPlaceName(ctx, point, label, points, width, height, end) {
   let best=null;
   for (const [dx,dy] of candidates) {
     const x=clamp(point.x+dx,4,Math.max(4,width-w-4)), y=clamp(point.y+dy,h+4,height-22);
+    if (occupied.some(box => x < box.right && x + w > box.left && y - h < box.bottom && y + 3 > box.top)) continue;
     // Sample the label rectangle densely enough to protect the road's thick stroke.
     let clearance=Infinity;
     for(let px=x;px<=x+w+4;px+=4) for(let py=y-h;py<=y+3;py+=4)
@@ -163,10 +164,12 @@ function drawPlaceName(ctx, point, label, points, width, height, end) {
     if(!best || score>best.score) best={x,y,score};
     if(score>=2) break;
   }
+  if (!best) return;
+  occupied.push({left:best.x,right:best.x+w,top:best.y-h,bottom:best.y+3});
   ctx.fillStyle=end?'#ffce75':'#b4b9a6'; ctx.fillText(label,best.x,best.y);
 }
 
-function drawWorldJobMap(ctx, canvas, data) {
+export function drawWorldJobMap(ctx, canvas, data) {
   const width = canvas.width, height = canvas.height, padding = 30;
   const xs = data.path.map(p => p.x), zs = data.path.map(p => p.z);
   const margin = data.margin ?? 0;
@@ -183,10 +186,13 @@ function drawWorldJobMap(ctx, canvas, data) {
     stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
   }
   const end = project(data.destination.position), start = project(data.start.position);
+  const occupiedLabels = [];
   for (const place of data.places ?? []) {
     const p = project(place.position);
     ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-    drawPlaceName(ctx, p, place.name, points, width, height, false);
+    const main = project(data.destination.position);
+    if (place === data.destination || place.name === data.destination.name || Math.hypot(p.x-main.x,p.y-main.y) >= 15)
+      drawPlaceName(ctx, p, place.name, points, width, height, false, occupiedLabels);
   }
   ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
   if (!data.places?.length) {

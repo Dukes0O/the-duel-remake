@@ -50,7 +50,7 @@ export function emberWallMarkup(props) {
 export function emberNextUp(props) {
   if (!props?.available) return null;
   if (props.step === 'read') return {text: 'Next up: read Hollis’s note on the Story Wall.', button: ''};
-  if (props.step === 'done') return {text: 'Next up: the Everburn is lit. Drive the Scablands or replay a job.', button: ''};
+  if (props.step === 'done') return {text: props.run ? 'Next up: The Everburn is lit. Big Bess is loading gas for Tin Town.' : 'Next up: The Everburn is lit. Replay any job from the Story Wall.', button: '<button type="button" class="start-button yard-next-button" data-action="yard-cards"><span>STORY WALL</span></button>'};
   const index = EMBER_JOBS.indexOf(props.step), job = props.steps[index];
   if (!job) return null;
   return {text: `Next up: ${EMBER_JOB_NAMES[index]}. ${job.note}`,
