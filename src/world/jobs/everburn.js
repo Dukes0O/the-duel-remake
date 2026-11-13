@@ -15,6 +15,8 @@ const well = place('everburn', -424, 304, 18), safeRoad = place('safe-road', 230
 const wellRaidersHold = place('everburn-well-raiders-hold', -426, 303, 8);
 const wellRaiderEntries = Object.freeze([[0, 64], [64, 0], [0, -64], [-64, 0]]
   .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, -424 + dx, 304 + dz, 8)));
+// The Scablands' five named places, as the jobs define them (the big map marks and names them in every job).
+export const SCABLANDS_PLACES = Object.freeze({yardGate: yard, tinTown, everburn: well, deadMall: mall, boneyard});
 const forge = place('cold-forge', 625, 14, 6), lamps = [
   place('forge-lamp-1', 618, 8, 3), place('forge-lamp-2', 625, 10, 3), place('forge-lamp-3', 632, 8, 3),
 ];

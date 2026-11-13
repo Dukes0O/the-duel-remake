@@ -1,11 +1,17 @@
-import assert from 'node:assert/strict';
+import strict from 'node:assert/strict';
+// Every assertion is counted, so that the message below is a real count.
+let checks = 0;
+const assert = new Proxy(strict, {apply: (target, self, args) => (checks++, target(...args)),
+  get: (target, key) => typeof target[key] === 'function' ? (...args) => (checks++, target[key](...args)) : target[key]});
 import {captionSeconds, createCaptionQueue} from '../src/story/caption-queue.js';
 import {stepChase} from '../src/world/jobs/steps/chase.js';
 import {emberNextUp} from '../src/story/ember-ui.js';
-import {worldJobMapData} from '../src/route-map.js';
+import {worldJobMapData, drawWorldJobMap} from '../src/route-map.js';
+import {SCABLANDS_LAND} from '../src/world/scablands-land.js';
+import {createJob} from '../src/world/jobs/job-engine.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {Duel} from '../src/game.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, SCABLANDS_PLACES} from '../src/world/jobs/everburn.js';
 import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
@@ -227,10 +233,46 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
     assert.ok(!screen.description.includes(EMBER_CAPTIONS[lineId].text));
   }
 }
+// Third round, item 6: the big map always has the land on it, in every Everburn job, both gas runs and the battle.
+{
+  const course={worldAt:(s,lateral)=>({x:s,z:lateral})}, jobs=[...EVERBURN_JOBS,gasRunJob({road:'long'}),gasRunJob({road:'boneyard',feud:4}),fieldBattleJob({runs:0})];
+  const names=SCABLANDS_LAND.places.map(place=>place.name);
+  assert.deepEqual(names,['YARD GATE','TIN TOWN','THE EVERBURN','DEAD MALL','BONEYARD']);
+  // The positions are the ones the jobs define; none is new.
+  assert.deepEqual(SCABLANDS_LAND.places.map(place=>[place.position.x,place.position.z]),Object.values(SCABLANDS_PLACES).map(place=>[place.position.x,place.position.z]));
+  assert.deepEqual(SCABLANDS_LAND.roads.map(road=>road.id),['long','boneyard']);
+  for (const road of SCABLANDS_LAND.roads) assert.deepEqual(road.points.map(point=>[point.x,point.z]),GAS_RUN_PATHS[road.id].map(place=>[place.position.x,place.position.z]));
+  const strokes=[], labels=[], arcs=[], fills=[];
+  globalThis.Path2D=class{moveTo(){} lineTo(){}};
+  const context=new Proxy({measureText:text=>({width:String(text).length*6}),fillText:text=>labels.push(text),
+    stroke:path=>{if(path)strokes.push(context.strokeStyle);},arc:(x,y,r)=>arcs.push({x,y,r,fill:context.fillStyle}),fill:()=>fills.push(context.fillStyle)},
+    {get:(target,key)=>target[key]??(()=>{}),set:(target,key,value)=>(target[key]=value,true)});
+  const canvas={width:640,height:440,getContext:()=>context};
+  for (const definition of jobs) {
+    const job=createJob(definition), state={s:0,lateral:0,arena:{mode:'world-job',worldJob:{definition,job,actors:[]}}};
+    const big=worldJobMapData(course,state,{land:SCABLANDS_LAND}), small=worldJobMapData(course,state);
+    assert.deepEqual(big.land.places.map(place=>place.name),names,`${definition.name}: the big map names the five places`);
+    assert.deepEqual(big.land.roads.map(road=>road.id),['long','boneyard'],`${definition.name}: and both roads`);
+    assert.equal(small.land,undefined,`${definition.name}: the small panel is unchanged`);
+    assert.deepEqual({...big,land:undefined},{...small,land:undefined});
+    labels.length=0; strokes.length=0; arcs.length=0;
+    drawWorldJobMap(context,canvas,big);
+    for (const place of names) assert.ok(labels.includes(place)||(place==='THE EVERBURN'&&labels.includes('EVERBURN'))||(place==='TIN TOWN'&&labels.includes('TIN TOWN')),`${definition.name}: ${place} is named on the big map (${labels.join(', ')})`);
+    assert.ok(labels.includes('LONG ROAD')&&labels.includes('BONEYARD ROAD'),`${definition.name}: the roads are named`);
+    assert.ok(strokes.filter(color=>color==='#c8d5c24d').length===2,`${definition.name}: both roads are drawn faintly`);
+    // Every one of the five places lies inside the picture, and the job's own ground is bright (the gold the small panel uses).
+    for (const place of SCABLANDS_LAND.places) assert.ok(arcs.some(arc=>arc.r===4&&arc.fill==='#8f9482'&&arc.x>0&&arc.x<640&&arc.y>0&&arc.y<440),`${definition.name}: ${place.name} is on the map`);
+    assert.ok(arcs.some(arc=>arc.fill==='#ffce75'),`${definition.name}: the job's own ground is bright`);
+    // The small panel's drawing has no land on it.
+    labels.length=0; strokes.length=0; arcs.length=0; drawWorldJobMap(context,canvas,small);
+    assert.ok(!labels.includes('LONG ROAD')&&!labels.includes('BONEYARD ROAD')&&!strokes.includes('#c8d5c24d')&&!arcs.some(arc=>arc.fill==='#8f9482'),
+      `${definition.name}: the small panel draws the job's own ground only`);
+  }
+}
 const marked=new Duel({seed:2}); let received;
 marked.onStoryCaption=(...args)=>{received=args;};
 marked._storyCallout('arrow', 3, true, true);
 assert.equal(received[3],3);
 marked._storyCallout('spoken', 2.2, true);
 assert.equal(received[3],undefined);
-console.log('everburn play fixes A: 43 checks passed');
+console.log(`everburn play fixes A and third round: ${checks} checks passed`);
