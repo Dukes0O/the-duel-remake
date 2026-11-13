@@ -124,11 +124,13 @@ What remains is mostly the caption queue, which Claude designed too simply. Sett
    had 1.5 seconds. In job 6's chase the opening order becomes Old Smoke's first line, then Cinder's "He is heading
    for Tin Town! When a door glows, hit it!", then Old Smoke's second line, so that the instruction is read before
    the first door glows.
-4. **Closing lines are never lost.** A step's closing lines, and a line said as a job arrives or ends (the war
-   party line after a run), are held: the job waits for each closing line for that line's reading time where it
-   waited 2.2 seconds, and when a closing line arrives the screen drops whatever else is waiting and shows it at
-   once. This is the one place where a job's clock changes: only after the job is decided, never its outcome.
-   Tests that pin an end time are re-recorded with a reason each.
+4. **Closing lines are never lost: they are on the results screen.** (Changed by Claude after Codex's first try
+   at holding the job's clock for them gave up: a hold after the job is decided is hard to get right and is not
+   needed.) No job's clock changes at all. The game keeps a list of every story line said from the moment a job's
+   last step is decided (its closing lines, a run's arrival lines, the war party line), and the results screen
+   shows them in order, each with who says it, above the job's own result line and without repeating a line. So
+   Cinder's "I'm with you now" is read on job 6's results screen for as long as the player likes. During the job the
+   captions show as today, and the queue is still emptied when the job ends.
 5. **No COLLISION flashes in a job.** In a world job the caption's place shows a crash message only while the car
    is wrecked and recovering or the crash ends the job; a bump shows nothing and never cuts a line.
 6. **The big map always has the land on it.** In every world job the big map marks and names the Scablands' five
