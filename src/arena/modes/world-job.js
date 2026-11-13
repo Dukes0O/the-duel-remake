@@ -240,7 +240,7 @@ function shoveCar(duel, shove) {
 // fire cue (the one the gate's flame uses) when cinders land on Big Bess. The riders' warning is the ambush's own (spawnAmbush).
 const BATTLE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch', doorSlam: 'vehicle.landing', hit: 'combat.hit-confirm',
   cindersLand: 'weapon.flame.start'});
-const BATTLE_LINES = Object.freeze({comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2', cinders: 'story.ember.moss.12',
+const BATTLE_LINES = Object.freeze({sighted: 'story.ember.moss.11', comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2', cinders: 'story.ember.moss.12',
   dead: 'story.ember.cinder.25'});
 
 function handleBattleEvent(duel, worldJob, actor, event) {
@@ -249,7 +249,11 @@ function handleBattleEvent(duel, worldJob, actor, event) {
   const cue = BATTLE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
   if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true, true);
-  else if (event.type === 'comesOut') duel._storyCallout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
+  else if (event.type === 'comesOut') {
+    // Moss sees it first, then Clinker speaks; the screen's caption queue shows both in order.
+    duel._storyCallout(captionFor(worldJob, BATTLE_LINES.sighted), 2.6);
+    duel._storyCallout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
+  }
   // A door that is not the last: Clinker. The last door ends the furnace, and the line for that is the one for its death.
   else if (event.type === 'hit' && event.hit < furnace.battle.doorsToStop) duel._storyCallout(captionFor(worldJob, BATTLE_LINES.door), 2.6);
   else if (event.type === 'dead') { worldJob.furnaceDied = true; duel._storyCallout(captionFor(worldJob, BATTLE_LINES.dead), 3); }

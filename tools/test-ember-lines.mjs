@@ -221,7 +221,7 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   const view = (extra = {}, furnace = {health: 3}) => ({player: {position: {x: 0, y: 0, z: 0}}, difficulty: 'medium', actors: [
     {id: 'big-bess', position: {x: -424, y: 0, z: 304}, health: 100, pathIndex: 1, pathProgress: .1, atDestination: false, ...extra},
     ...(furnace ? [{id: 'old-smoke-furnace', position: {x: -500, y: 0, z: 300}, ...furnace}] : [])]});
-  assert.deepEqual(lineIdsHeard(createJob(job, 1), () => view(), 1).heard, ['story.ember.moss.11'], 'the battle starts with Moss\'s line about the furnace');
+  assert.deepEqual(lineIdsHeard(createJob(job, 1), () => view(), 1).heard, ['story.ember.moss.6'], 'the battle starts with Moss\'s Boneyard line; his line about the furnace is said when it comes out');
   const closing = (furnace, atEnd = {atDestination: true, pathProgress: 1, pathIndex: 7}, later = furnace) => {
     const started = lineIdsHeard(createJob(job, 1), () => view(), 3).job;
     const arrived = lineIdsHeard(started, () => view(atEnd, furnace), 0.5);

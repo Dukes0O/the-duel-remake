@@ -32,4 +32,9 @@ Still wrong in the pictures (not part B's rules):
 - The staged pictures are staged: no player has been seen to put the camera next to the furnace since the camera follows the car's facing,
   so the lifted camera was shown only where the car was put to force it.
 
-Verdict (Claude): to be written.
+Verdict (Claude): accepted and merged. Every first second now shows the car in the open with the right thing ahead:
+the forge's town in job 2, Big Bess in job 4 and the runs, the mall's road in job 5, the derrick in job 6. The camera
+stays out of the furnace in the staged cases. What these pictures cannot show is play: the door and camera pictures
+were staged by script, so the second full play is still the proof. Still wrong: at a run's start the derrick stands
+between the car and Big Bess (she starts inside the well's box); Moss's furnace line at the battle's first second was
+moved by Claude after this sheet to the moment the furnace comes out.

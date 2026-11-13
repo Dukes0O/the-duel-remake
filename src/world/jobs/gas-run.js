@@ -182,7 +182,8 @@ export const FIELD_BATTLE = Object.freeze({
     // Drawn only: two of the six shields gone and one door scorched, at the rear (so the left door is the first to break).
     hurtAtStart: Object.freeze(['rear']),
   }),
-  lines: Object.freeze({start: 'story.ember.moss.11', comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2',
+  // The battle starts as any Boneyard run does; Moss names the furnace when it comes out behind them, and Clinker answers.
+  lines: Object.freeze({start: 'story.ember.moss.6', sighted: 'story.ember.moss.11', comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2',
     cinders: 'story.ember.moss.12', dead: 'story.ember.cinder.25', arrived: 'story.ember.auntie-solder.10', won: 'story.ember.auntie-solder.11'}),
   // The dead furnace as a wreck on later Boneyard runs: 8 m north of the road at (250, 415), lying along it.
   wreck: Object.freeze({x: 250, z: 407, heading: Math.atan2(250, 45)}),

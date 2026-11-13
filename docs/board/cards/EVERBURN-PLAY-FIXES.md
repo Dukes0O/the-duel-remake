@@ -71,6 +71,43 @@ Checks: Codex's part A test 43, `test-old-smoke` 650, `test-field-battle` 792, `
 `test-warlord-tollkeeper` 28), seven browser checks (`everburn`, `everburn-play`, `everburn-well`, `run-gas`,
 `field-battle`, `scrapdome`, `grand-prix`) and the build on the merged result by Claude.
 
+## Part B result (built by a Sonnet helper; reviewed by Claude, 12 November 2026): merged
+
+Change note: `docs/changes/EVERBURN-PLAY-FIXES-B.md`; sheet `docs/board/looks/everburn-play/round-3.jpg`. All six
+items are built. Where the build differs from the design, accepted by Claude:
+
+- The camera stands behind the car's own facing for the whole of a world job, not only its first frame: a camera
+  tied to the venue's oval could not show a car that starts across it.
+- A gas run and the battle start 13 m behind Big Bess, not 10, because she begins inside the well's 18 m box and at
+  10 m the car or its camera is against it. Job 4 keeps 10 m.
+- Job 6's raiders come from whichever of four places 64 m out is farthest from the car, at 3 m/s where they came at
+  1.5 from 27 m, so that a wave still takes about 21 seconds to arrive.
+
+**The tables, measured again on the same seeds (the car now starts beside Big Bess).** No target is missed and
+nothing was retuned. Gas runs, Medium driver who fights: home 10 of 10 on every road and feud as before, and Big
+Bess's lowest health on arrival is higher everywhere (Boneyard road at War party 25, was 2). The battle: Easy 10 home,
+10 won; Medium who fights 10 home, 8 won (was 9), fire on her 12 to 22 s in 10 of 10; Hard who fights 10 home, 7 won
+(was 4), which is the top of its range of 3 to 7. The drivers who never fight are unchanged.
+
+**Changed test input, reviewed by Claude (rule 18).** With raiders coming from far off, the child-pace driver in
+`tools/test-everburn-easy.mjs` won job 6 on Easy 0 times in 10: it circled a raider at arm's length, because a car
+cannot turn on the spot. The helper changed that driver's defence only: it runs at the nearest raider, and when it
+is nearer than 6 m and not lined up it drives off to 28 m and runs at it again. The assertion (8 of 10) is as it
+was, and the driver now wins 10 of 10 in 199 s (223 s before). Claude accepts it, because backing off and coming
+again is what a child does, with one caution written down: the old driver's failure is a real sign that fighting a
+raider at arm's length is awkward, and the second play and a play by hand on Easy must look at it.
+
+**Changed assertions after the merge, by Claude (rule 18).** Moss's "That is his furnace on the road behind us"
+was said at the battle's first second, 560 m of road before any furnace is out. It is now said as the furnace comes
+out, before Clinker's line, and the battle starts on Moss's Boneyard line. Three checks follow that change: the
+battle's start line in `tools/test-field-battle.mjs` and `tools/test-ember-lines.mjs`, the count of the battle's
+lines (8, was 7), and the real-game check, which now proves Moss does not name the furnace before it is out, names it
+once as it comes out, and does so before Clinker speaks. That last check is stronger than the one it replaces.
+
+Left for other cards: Big Bess starts inside the well's box, so the derrick stands between her and the car at a
+run's start (with the well's oversized box, SCABLANDS-LAND); the `tin-town-shell` solid sits 46 m west of the town
+that is drawn.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.

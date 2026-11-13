@@ -384,11 +384,12 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same([fieldBattlePay('easy'), fieldBattlePay('medium'), fieldBattlePay('hard')], [320, 384, 448], 'which is 320, 384 and 448 on Easy, Medium and Hard');
   same(fieldBattlePay('medium'), gasRunPay('boneyard', 'medium') * 2, 'twice the Boneyard road\'s two shares');
   same([job.arrivedShares, fieldBattlePay('medium', job.arrivedShares)], [2, gasRunPay('boneyard', 'medium')], 'Big Bess arriving with the furnace still rolling pays the Boneyard road\'s own two shares');
-  same(step.startLineId, 'story.ember.moss.11', 'it starts on Moss\'s line about the furnace');
+  same(step.startLineId, 'story.ember.moss.6', 'it starts on Moss\'s Boneyard line; his line about the furnace waits until the furnace is out');
+  same(FIELD_BATTLE.lines.sighted, 'story.ember.moss.11', 'Moss names the furnace when it comes out');
   same(step.arrival.battle.wonLineIds.concat(step.arrival.battle.arrivedLineIds), ['story.ember.auntie-solder.11', 'story.ember.auntie-solder.10'], 'and ends on Auntie Solder\'s line for how it ended');
   check(step.what.endsWith('.') && !step.what.includes(String.fromCharCode(0x2014)), 'its line on screen is a whole sentence');
   same(step.furnaceActor.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'the furnace\'s doors come left, right, rear');
-  same(Object.keys(FIELD_BATTLE.lines).length, 7, 'seven lines');
+  same(Object.keys(FIELD_BATTLE.lines).length, 8, 'eight lines: the seven written for the battle and Moss\'s Boneyard line that starts it');
   check(Object.values(FIELD_BATTLE.lines).every(id => EMBER_CAPTIONS[id]), 'each has words');
   // Both roads clear every solid: the battle drives the Boneyard road itself, so it is the same road, and the long road is untouched.
   const distanceToBox = (x, z, solid) => {
@@ -447,8 +448,12 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
   const duel = startBattle('medium', {job: noRaiders('medium')});
   check(runUntil(duel, () => bessOf(duel)?.pathIndex >= 2, 60), 'Big Bess drives on');
   check(!furnaceOf(duel), 'the furnace is not out when she passes (0, 370): it comes out 130 m later');
-  same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), ['Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.'], 'the battle opened on Moss\'s line, once');
+  // Moss names the furnace when it comes out, not at the start (the first play found him naming a furnace nobody could see).
+  same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), [], 'Moss does not name the furnace before it is out');
+  same(duel.lines.filter(text => text.startsWith('Moss: Through the Boneyard')).length, 1, 'the battle opened on Moss\'s Boneyard line, once');
   check(runUntil(duel, () => furnaceOf(duel), 60), 'the furnace comes out');
+  same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), ['Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.'], 'Moss names it as it comes out, once');
+  check(duel.lines.indexOf('Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.') < duel.lines.indexOf('Clinker: You put him in the well. I am putting you in the ground.'), 'and before Clinker speaks');
   const f = furnaceOf(duel).furnace, bess = bessOf(duel);
   near(pathShare(bess.position, bess.pathIndex, worldOf(duel).job.steps[0].path).metres - f.metres, 80, 3, 'about 80 m behind her');
   check(duel.lines.includes('Clinker: You put him in the well. I am putting you in the ground.'), 'and Clinker speaks, once the furnace has come out');
