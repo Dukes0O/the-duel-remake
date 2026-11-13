@@ -668,9 +668,10 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   const worldJob = duel.state.arena.worldJob, heard = [];
   worldJob.job = {...worldJob.job, stepIndex: 1, stepState: {}};
   for (let n = 0; n < 16 / DT; n++) { tick(duel); if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); }
+  // EVERBURN-PLAY-FIXES, third round: Old Smoke's first line, then Cinder's instruction, then Old Smoke's second line.
   same(heard.filter(text => text !== 'GO. MAKE IT COUNT.').slice(0, 3), ['Old Smoke: Fire is mine. Everything goes grey in the end.',
-    'Old Smoke: If I cannot have the fire, nobody has it. I am going to put out your forge.',
-    'Cinder: He is heading for Tin Town! When a door glows, hit it!'], 'the chase opens with three lines in the card\'s order');
+    'Cinder: He is heading for Tin Town! When a door glows, hit it!',
+    'Old Smoke: If I cannot have the fire, nobody has it. I am going to put out your forge.'], 'the chase opens with three lines in the card\'s order');
   check(!heard.some(text => text.includes('He\'s running!')), 'the old chase line is never played');
   check(worldJob.furnaceLog.find(event => event.type === 'stoke').tSec > 6.6, 'the first door stokes only after the third line has played');
 }

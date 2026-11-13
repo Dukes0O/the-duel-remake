@@ -116,8 +116,9 @@ export function worldJobMapRoad(state) {
   return road;
 }
 
-// A read-only view of the current job, including a local view for a step without a road.
-export function worldJobMapData(course, state) {
+// A read-only view of the current job, including a local view for a step without a road. The big map passes `land` (the Scablands'
+// five places and two gas roads, src/world/scablands-land.js) so that it always shows the land; the small panel does not.
+export function worldJobMapData(course, state, {land = null} = {}) {
   const road = worldJobMapRoad(state);
   if (!road) return null;
   const worldJob = state.arena.worldJob, step = worldJob.job?.steps?.[worldJob.job.stepIndex];
@@ -136,11 +137,12 @@ export function worldJobMapData(course, state) {
   return {path: road.path.length ? road.path : [player], start: road.start ?? fallback,
     destination: road.destination ?? fallback, places: road.places, margin: road.margin, marks,
     jobName: (worldJob.definition?.name ?? 'WORLD JOB').toUpperCase(),
-    roadName: worldJob.definition?.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS'};
+    roadName: worldJob.definition?.road ? `${worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS',
+    ...(land ? {land} : {})};
 }
 
 // Pick a label position with room for the road, end mark and panel edges.
-function drawPlaceName(ctx, point, label, points, width, height, end, occupied = []) {
+function drawPlaceName(ctx, point, label, points, width, height, end, occupied = [], color = null) {
   if (!label) return;
   ctx.font = end ? 'bold 12px Segoe UI, sans-serif' : '10px Segoe UI, sans-serif';
   ctx.textAlign = 'left';
@@ -166,13 +168,18 @@ function drawPlaceName(ctx, point, label, points, width, height, end, occupied =
   }
   if (!best) return;
   occupied.push({left:best.x,right:best.x+w,top:best.y-h,bottom:best.y+3});
-  ctx.fillStyle=end?'#ffce75':'#b4b9a6'; ctx.fillText(label,best.x,best.y);
+  ctx.fillStyle=color??(end?'#ffce75':'#b4b9a6'); ctx.fillText(label,best.x,best.y);
 }
 
 export function drawWorldJobMap(ctx, canvas, data) {
   const width = canvas.width, height = canvas.height, padding = 30;
-  const xs = data.path.map(p => p.x), zs = data.path.map(p => p.z);
-  const margin = data.margin ?? 0;
+  // The big map (data.land): fitted to show the whole land, the job's own ground and the player; the job's ground is drawn bright
+  // on top of the faint land.
+  const land = data.land ?? null;
+  const fit = land ? [...data.path, ...(data.places ?? []).map(place => place.position), ...land.places.map(place => place.position),
+    ...land.roads.flatMap(road => road.points), ...data.marks.filter(mark => mark.kind === 'player').map(mark => mark.position)] : data.path;
+  const xs = fit.map(p => p.x), zs = fit.map(p => p.z);
+  const margin = land ? 0 : data.margin ?? 0;
   const minX = Math.min(...xs) - margin, maxX = Math.max(...xs) + margin;
   const minZ = Math.min(...zs) - margin, maxZ = Math.max(...zs) + margin;
   const scale = Math.min((width - 2 * padding) / Math.max(1, maxX - minX), (height - 2 * padding) / Math.max(1, maxZ - minZ));
@@ -180,24 +187,54 @@ export function drawWorldJobMap(ctx, canvas, data) {
   const project = p => ({x: (width - (maxX - minX) * scale) / 2 + (p.x - minX) * scale,
     y: (height - (maxZ - minZ) * scale) / 2 + (maxZ - p.z) * scale});
   ctx.clearRect(0, 0, width, height); ctx.lineCap = ctx.lineJoin = 'round';
+  const occupiedLabels = [];
+  if (land) {
+    for (const road of land.roads) {
+      const faint = new Path2D(), line = road.points.map(project);
+      line.forEach((p, i) => i ? faint.lineTo(p.x, p.y) : faint.moveTo(p.x, p.y));
+      stroke(ctx, faint, '#0b181e66', 9); stroke(ctx, faint, '#c8d5c24d', 3);
+    }
+    for (const place of land.places) {
+      const p = project(place.position);
+      ctx.fillStyle = '#8f9482'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
   const points = data.path.map(project), path = new Path2D();
   points.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y));
   if (!data.places?.length && points.length > 1) {
     stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
   }
   const end = project(data.destination.position), start = project(data.start.position);
-  const occupiedLabels = [];
   for (const place of data.places ?? []) {
     const p = project(place.position);
-    ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(p.x, p.y, land ? 6 : 4, 0, Math.PI * 2); ctx.fill();
+    if (land) { ctx.lineWidth = 2; ctx.strokeStyle = '#102026'; ctx.stroke(); }
     const main = project(data.destination.position);
     if (place === data.destination || place.name === data.destination.name || Math.hypot(p.x-main.x,p.y-main.y) >= 15)
       drawPlaceName(ctx, p, place.name, points, width, height, false, occupiedLabels);
   }
   ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
   if (!data.places?.length) {
-    drawPlaceName(ctx, end, data.destination.name, points, width, height, true);
-    drawPlaceName(ctx, start, data.start.name, points, width, height, false);
+    drawPlaceName(ctx, end, data.destination.name, points, width, height, true, land ? occupiedLabels : undefined);
+    drawPlaceName(ctx, start, data.start.name, points, width, height, false, land ? occupiedLabels : undefined);
+  }
+  if (land) {
+    // The land's names go on after the job's own, and none is printed where the job already names that very spot.
+    const named = [...(data.places ?? []), data.destination, data.start].map(place => project(place.position));
+    for (const place of land.places) {
+      const p = project(place.position);
+      if (!named.some(other => Math.hypot(other.x - p.x, other.y - p.y) < 4)) drawPlaceName(ctx, p, place.name, points, width, height, false, occupiedLabels);
+    }
+    for (const road of land.roads) {
+      const line = road.points.map(project), total = line.slice(1).reduce((sum, p, i) => sum + Math.hypot(p.x - line[i].x, p.y - line[i].y), 0);
+      let left = total / 2, at = line[0];
+      for (let i = 1; i < line.length; i++) {
+        const length = Math.hypot(line[i].x - line[i - 1].x, line[i].y - line[i - 1].y);
+        if (left <= length) { at = {x: line[i - 1].x + (line[i].x - line[i - 1].x) * left / (length || 1), y: line[i - 1].y + (line[i].y - line[i - 1].y) * left / (length || 1)}; break; }
+        left -= length; at = line[i];
+      }
+      drawPlaceName(ctx, at, road.name, points, width, height, false, occupiedLabels, '#8f9482');
+    }
   }
   const colors = {player: '#fff1d0', escort: '#62dabc', hunter: '#ff683a', rider: '#ef9f75'};
   ctx.font = '12px Segoe UI, sans-serif'; ctx.textAlign = 'left';

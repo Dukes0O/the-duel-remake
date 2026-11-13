@@ -1,4 +1,5 @@
 import {worldJobMapData, drawWorldJobMap} from '../route-map.js';
+import {SCABLANDS_LAND} from './scablands-land.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 
 const pointOf = value => value?.position ?? value;
@@ -168,7 +169,8 @@ export function createWorldHud({host}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
-      const mapData = worldJobMapData(duel.course, state);
+      // The big map always has the land on it; the small panel (src/route-map.js, RouteMap) draws the job's own ground only.
+      const mapData = worldJobMapData(duel.course, state, {land: SCABLANDS_LAND});
       const mapKey = JSON.stringify(mapData);
       if (mapKey !== lastMap) {
         lastMap = mapKey;

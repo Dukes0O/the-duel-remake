@@ -1,6 +1,9 @@
 .result-panel{width:710px;max-width:calc(100% - 112px);margin:auto 0 auto 8%;padding:45px 0}
 .result-panel .eyebrow{color:#ddd3bd}
 .result-panel h2{font-family:'Arial Black','Segoe UI',Arial,sans-serif;font-size:clamp(45px,6.2vw,86px);font-weight:950;font-style:italic;line-height:.97;letter-spacing:-4px;margin:25px 0}
+.result-closing{max-width:460px;margin:0 0 14px;border-left:3px solid #e8bb82;padding:2px 0 2px 14px}
+.result-closing p{margin:0 0 6px;font-size:14px;font-style:italic;color:#e3e6d8;line-height:1.5}
+.result-closing p:last-child{margin-bottom:0}
 .result-description{font-size:14px;color:#c4c9b9;line-height:1.6;max-width:460px}
 .result-metrics{display:flex;gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:30px 0;padding:21px 0;width:max-content;max-width:100%}
 .result-metric{padding:0 27px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
