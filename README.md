@@ -6,6 +6,10 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Four more Lab lessons have the wide board.** Fuel, Ski wax, Launch and Projectile now draw a
+  larger picture with their numbers in a strip underneath, as Braking does, and no label on a board
+  is smaller than Braking's. With the physics panel open, the picture keeps more of the width than
+  before.
 - **The Lab has a new look.** Every lesson's board is redrawn as a lit workshop scene: a real floor and
   wall, the car, the helicopter and the tools drawn as things, and arrows that glow. The pictures on
   the answer cards are redrawn to match, and Brian has painted portraits with four moods. In Lift
