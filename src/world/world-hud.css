@@ -18,3 +18,6 @@
 .world-hud-finds{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;padding:0;list-style:none;font-size:12px}
 .world-hud-finds .is-found{color:#91d29a}
 .world-hud-map-button:focus-visible,.world-hud-map button:focus-visible{outline:2px solid #f4bb58;outline-offset:2px}
+/* EVERBURN-PLAY-FIXES, fourth round: the story caption (the stage's .race-callout) is drawn above the open big map, on its own plate. */
+.world-map-open .race-callout{z-index:9;width:auto;max-width:min(76vw,52rem);padding:8px 22px 10px;background:#191914f6;border:1px solid #e4d4b277;border-left:4px solid #e69a38;border-radius:4px;box-shadow:0 .5rem 1.5rem #000a}
+.world-map-open .race-callout>b{font-size:24px;letter-spacing:0}

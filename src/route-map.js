@@ -171,6 +171,62 @@ function drawPlaceName(ctx, point, label, points, width, height, end, occupied =
   ctx.fillStyle=color??(end?'#ffce75':'#b4b9a6'); ctx.fillText(label,best.x,best.y);
 }
 
+// EVERBURN-PLAY-FIXES, fourth round: on the big map a job that has only places (no road) draws each place as a numbered ring with its own
+// name. Places nearer than CROWDED_PIXELS to each other (job 2's three forge lamps are 7 m apart, 4 pixels on this map) would merge, so
+// they are drawn as a small group: each keeps a true dot where it stands, joined by a thin line to a numbered badge, and the badges stand
+// in a column with a name each, to one side of the group where nothing else is printed. Drawing only.
+const CROWDED_PIXELS = 34, BADGE_RADIUS = 9, BADGE_ROW = 24;
+function numberedPlaces(ctx, places, project, width, height, occupied, avoid) {
+  const points = places.map(place => project(place.position));
+  const group = points.map((_, index) => index);
+  const find = index => group[index] === index ? index : (group[index] = find(group[index]));
+  for (let i = 0; i < points.length; i++) for (let j = i + 1; j < points.length; j++)
+    if (Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) < CROWDED_PIXELS) group[find(j)] = find(i);
+  const clusters = new Map();
+  points.forEach((_, index) => { const key = find(index); clusters.set(key, [...(clusters.get(key) ?? []), index]); });
+  ctx.font = 'bold 11px Segoe UI, sans-serif';
+  const widths = places.map(place => ctx.measureText(place.name).width);
+  const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  const badge = (index, at, side) => ({index, x: at.x, y: at.y, side, label: {left: side === 'left' ? at.x - BADGE_RADIUS - 6 - widths[index] : at.x + BADGE_RADIUS + 6,
+    right: side === 'left' ? at.x - BADGE_RADIUS - 6 : at.x + BADGE_RADIUS + 6 + widths[index]}});
+  const box = item => ({left: Math.min(item.x - BADGE_RADIUS, item.label.left), right: Math.max(item.x + BADGE_RADIUS, item.label.right),
+    top: item.y - BADGE_RADIUS, bottom: item.y + BADGE_RADIUS});
+  const drawn = [];
+  const mark = (index, at, radius, text) => {
+    ctx.beginPath(); ctx.arc(at.x, at.y, radius, 0, Math.PI * 2); ctx.fillStyle = '#ffce75'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#102026'; ctx.stroke();
+    if (text) { ctx.fillStyle = '#102026'; ctx.textAlign = 'center'; ctx.font = 'bold 11px Segoe UI, sans-serif'; ctx.fillText(String(index + 1), at.x, at.y + 4); }
+  };
+  const label = (item, name) => {
+    ctx.font = 'bold 11px Segoe UI, sans-serif'; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = '#102026e0';
+    ctx.strokeText(name, item.label.left, item.y + 4); ctx.fillStyle = '#ffce75'; ctx.fillText(name, item.label.left, item.y + 4);
+  };
+  for (const members of clusters.values()) {
+    if (members.length === 1) {
+      const index = members[0], at = points[index];
+      mark(index, at, BADGE_RADIUS - 1, true);
+      const item = badge(index, at, 'right'), rect = box(item);
+      // A lone place keeps its name beside the ring, to the left when the right-hand side runs off the picture.
+      const placed = rect.right <= width - 4 ? item : badge(index, at, 'left');
+      label(placed, places[index].name); const taken = box(placed); occupied.push(taken); drawn.push(taken);
+      continue;
+    }
+    // A crowd: the true dots first (small, so that they stay told apart), then a column of badges to one side.
+    const centre = {x: members.reduce((sum, index) => sum + points[index].x, 0) / members.length, y: members.reduce((sum, index) => sum + points[index].y, 0) / members.length};
+    const ordered = [...members].sort((a, b) => points[a].x - points[b].x || points[a].y - points[b].y);
+    const column = (side, dx, dy) => ordered.map((index, row) => badge(index, {x: centre.x + dx, y: centre.y + dy + (row - (ordered.length - 1) / 2) * BADGE_ROW}, side));
+    const options = [column('left', -52, 0), column('right', 52, 0), column('right', 18, 44), column('left', -18, 44), column('right', 18, -44), column('left', -18, -44)];
+    const fits = items => items.every(item => { const rect = box(item); return rect.left >= 4 && rect.right <= width - 4 && rect.top >= 4 && rect.bottom <= height - 24 &&
+      !occupied.some(other => overlaps(rect, other)) && !drawn.some(other => overlaps(rect, other)) &&
+      !avoid.some(point => point.x > rect.left - 6 && point.x < rect.right + 6 && point.y > rect.top - 6 && point.y < rect.bottom + 6); });
+    const chosen = options.find(fits) ?? options.find(items => items.every(item => { const rect = box(item); return rect.left >= 4 && rect.right <= width - 4 && rect.top >= 4 && rect.bottom <= height - 24; })) ?? options[0];
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#ffce75cc';
+    for (const item of chosen) { ctx.beginPath(); ctx.moveTo(points[item.index].x, points[item.index].y); ctx.lineTo(item.x, item.y); ctx.stroke(); }
+    for (const item of chosen) mark(item.index, points[item.index], 3.5, false);
+    for (const item of chosen) { mark(item.index, item, BADGE_RADIUS, true); label(item, places[item.index].name); const taken = box(item); occupied.push(taken); drawn.push(taken); }
+  }
+}
+
 export function drawWorldJobMap(ctx, canvas, data) {
   const width = canvas.width, height = canvas.height, padding = 30;
   // The big map (data.land): fitted to show the whole land, the job's own ground and the player; the job's ground is drawn bright
@@ -205,7 +261,11 @@ export function drawWorldJobMap(ctx, canvas, data) {
     stroke(ctx, path, '#0b181ee8', 13); stroke(ctx, path, '#e8bb82', 4);
   }
   const end = project(data.destination.position), start = project(data.start.position);
-  for (const place of data.places ?? []) {
+  // The big map names a job's places one by one (a numbered ring each, a small group where they stand close together).
+  const numbered = Boolean(land) && (data.places?.length ?? 0) >= 2;
+  if (numbered) numberedPlaces(ctx, data.places, project, width, height, occupiedLabels,
+    [...land.places.map(place => project(place.position)), ...data.marks.map(mark => project(mark.position))]);
+  for (const place of numbered ? [] : data.places ?? []) {
     const p = project(place.position);
     ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(p.x, p.y, land ? 6 : 4, 0, Math.PI * 2); ctx.fill();
     if (land) { ctx.lineWidth = 2; ctx.strokeStyle = '#102026'; ctx.stroke(); }
@@ -213,7 +273,7 @@ export function drawWorldJobMap(ctx, canvas, data) {
     if (place === data.destination || place.name === data.destination.name || Math.hypot(p.x-main.x,p.y-main.y) >= 15)
       drawPlaceName(ctx, p, place.name, points, width, height, false, occupiedLabels);
   }
-  ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill();
+  if (!numbered) { ctx.fillStyle = '#ffce75'; ctx.beginPath(); ctx.arc(end.x, end.y, 5, 0, Math.PI * 2); ctx.fill(); }
   if (!data.places?.length) {
     drawPlaceName(ctx, end, data.destination.name, points, width, height, true, land ? occupiedLabels : undefined);
     drawPlaceName(ctx, start, data.start.name, points, width, height, false, land ? occupiedLabels : undefined);

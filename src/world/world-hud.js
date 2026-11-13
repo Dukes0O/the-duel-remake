@@ -137,7 +137,8 @@ export function createWorldHud({host}) {
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
   let active = false, mapOpen = false, lastMap = '', disposed = false;
-  const setMapOpen = value => { mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); };
+  // While the big map is open the stage carries `world-map-open`, which lifts the story caption above the map (world-hud.css).
+  const setMapOpen = value => { mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); host.classList?.toggle('world-map-open', mapOpen); };
   const click = event => {
     if (event.target.closest?.('[data-world-map-close]')) setMapOpen(false);
     else if (event.target.closest?.('.world-hud-map-button')) setMapOpen(!mapOpen);
@@ -179,7 +180,7 @@ export function createWorldHud({host}) {
     },
     dispose() {
       if (disposed) return;
-      disposed = true; root.removeEventListener('click', click); doc.removeEventListener('keydown', keydown); root.remove();
+      disposed = true; root.removeEventListener('click', click); doc.removeEventListener('keydown', keydown); host.classList?.remove('world-map-open'); root.remove();
     },
   };
 }

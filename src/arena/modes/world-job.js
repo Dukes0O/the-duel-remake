@@ -172,10 +172,14 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   if (!actorDef) return;
   let actor = worldJob.actors.find(item => item.id === actorDef.id);
   if (!actor) {
-    const start = actorDef.path?.[0]?.position ?? actorDef.path?.[0];
+    // EVERBURN-PLAY-FIXES, fourth round: an actor may name its own start on its first piece (`start`), clear of the solid that stands on
+    // the road's first place. It then begins on its way to the second place (pathIndex 1), as an actor on the first place would in a tick.
+    const named = actorDef.start?.position ?? actorDef.start;
+    const start = named ?? actorDef.path?.[0]?.position ?? actorDef.path?.[0];
     if (!start) return;
     actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
       pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null, stretchHealth: actorDef.health ?? 100,
+      ...(named && (actorDef.path?.length ?? 0) > 1 ? {pathIndex: 1, pathProgress: 1 / (actorDef.path.length - 1)} : {}),
       ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
     if (actorDef.id === FURNACE_ID && actorDef.legs) {
       actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
@@ -673,7 +677,9 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'restarted') {
       // The escorted truck starts the stretch again: back at the last place she reached, with the health she left it with.
       const truck = worldJob.actors.find(actor => actor.id === event.actorId), path = next.steps[next.stepIndex]?.path;
-      const start = path?.[Math.max(0, (truck?.pathIndex ?? 1) - 1)];
+      // On her first stretch that place is her named start (the road's first place may be a solid), when she has one.
+      const index = Math.max(0, (truck?.pathIndex ?? 1) - 1), named = index === 0 ? next.steps[next.stepIndex]?.actor?.start : null;
+      const start = named ?? path?.[index];
       if (truck && start) {
         truck.position = {...(start.position ?? start)};
         // After a rest she has at least REST_HEALTH_MINIMUM, and more if she had more when the stretch began.

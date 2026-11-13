@@ -57,6 +57,15 @@ export async function run(c) {
     const over=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
     for(const [name,r] of Object.entries(others))if(r&&over(bar,r))throw Error('The Big Bess health bar covers the '+name);
     return {bar,others};})()`);
+  // EVERBURN-PLAY-FIXES, fourth round: a spoken-line subtitle ("Road is clear...", the raiders' toll) covers neither the rear-view mirror nor the caption.
+  out.subtitle=await c.evaluate(`(()=>{const a=window.__qaApp;a.audio.fightVoices.event({weaponFired:true},a.duel.state);a.advance(0.1);
+    const rect=sel=>{const n=document.querySelector(sel);if(!n||n.hidden)return null;const r=n.getBoundingClientRect();return r.width&&r.height?{x:r.left,y:r.top,w:r.width,h:r.height}:null;};
+    const sub=rect('.combat-fight-subtitle'),mirror=rect('.rear-view-frame'),caption=rect('.race-callout');
+    if(!sub)throw Error('The spoken-line subtitle is not shown');
+    const over=(p,q)=>p.x<q.x+q.w&&q.x<p.x+p.w&&p.y<q.y+q.h&&q.y<p.y+p.h;
+    if(mirror&&over(sub,mirror))throw Error('The subtitle covers the rear-view mirror');
+    if(caption&&over(sub,caption))throw Error('The subtitle covers the story caption');
+    return {sub,mirror,caption};})()`);
   await c.screenshot('run-gas-raid');
   await c.screenshot('run-gas-map');
 

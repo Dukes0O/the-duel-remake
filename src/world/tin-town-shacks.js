@@ -21,8 +21,9 @@ export const TIN_TOWN_ROADS=Object.freeze([
   [[250,415],[447,308]],[[447,308],[575,112]],[[575,112],[575,62]],
   [[230,150],[600,0]],
 ].map(line=>Object.freeze(line.map(point=>Object.freeze(point)))));
-// The existing Tin Town model's footprint, its solid box (SCABLANDS_SOLIDS 'tin-town-shell') and the gate with its fence
-// (src/world/tin-town-gate.js: 6.6 to 20.6 m each side of (575, 62) along x): kept off, with a margin.
+// The existing Tin Town model's footprint and the gate with its fence (src/world/tin-town-gate.js: 6.6 to 20.6 m each side of
+// (575, 62) along x): kept off, with a margin. The middle rectangle is where the model's solid box (SCABLANDS_SOLIDS 'tin-town-shell')
+// stood until the fourth round of EVERBURN-PLAY-FIXES moved it onto the model; it stays in the list so that the clusters keep their places.
 const OFF_LIMITS=Object.freeze([
   {x0:570,x1:634,z0:-30,z1:30},{x0:538.5,x1:569.5,z0:-11.5,z1:11.5},{x0:553,x1:597,z0:58,z1:66},
 ]);

@@ -65,5 +65,24 @@ export async function run(c) {
   await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"&&window.__qaApp.duel.state.arena.worldJob.definition.number===2','Get Out and Walk starts',60000);
   await c.waitFor('document.querySelector(".world-hud-line")?.textContent.includes("three lamps")','job 2 first step');
   await c.screenshot('everburn-job-two');
-  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:10,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
+  // EVERBURN-PLAY-FIXES, fourth round: with the big map open the story caption is drawn above it, so that it can be read; and the big map
+  // names job 2's three lamps one by one (a numbered badge each) instead of showing them as one blob.
+  // The job's own opening line is gone by now (the game runs in real time while the scenario waits), so a line is handed to the screen
+  // through the game's own caption hook, as the job does for each line it says.
+  await c.evaluate(`(()=>{const a=window.__qaApp;a.duel._storyCallout("Auntie Solder: You can't get that car down my alleys. You've legs, haven't you?",2.2,true);a.advance(0.2);})()`);
+  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
+  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
+  await c.waitFor('document.querySelector(".world-hud-map:not([hidden])")','Scablands map open in job 2');
+  await c.evaluate(`(()=>{const caption=document.querySelector('.race-callout'),map=document.querySelector('.world-hud-map');
+    if(!caption||caption.hidden||!caption.innerText.trim())throw Error('No story caption was on screen while the big map was open');
+    const z=node=>Number(getComputedStyle(node).zIndex)||0;
+    if(z(caption)<=z(map))throw Error('The story caption is under the open big map');
+    const rect=caption.querySelector('b').getBoundingClientRect();
+    if(!rect.width||!rect.height||rect.left<0||rect.right>innerWidth)throw Error('The story caption is not wholly on screen');})()`);
+  await c.screenshot('everburn-job-two-map');
+  await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
+  await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
+  await c.evaluate(`(()=>{if(document.querySelector('.world-hud-map:not([hidden])'))throw Error('The big map did not close');
+    if(document.querySelector('#stage').classList.contains('world-map-open'))throw Error('The stage still says the big map is open');})()`);
+  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:11,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
 }

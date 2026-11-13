@@ -32,7 +32,9 @@ export const SCABLANDS_ASSETS = Object.freeze({
 // local offsets keep roads and the eight named destinations clear.
 const BONEYARD_PLACE=SCABLANDS_PLACES.find(row=>row.id==='boneyard');
 export const SCABLANDS_SOLIDS = Object.freeze([
-  ['tin-town-shell','tin-town',-46,0,31,15,23],
+  // The solid stands where the town's own model is drawn: the buildings of tintown.glb fill x -9.3 to 8.8 and z -13.5 to 13.4 and stand up to 7.6 m round the place
+  // (600, 0). (It stood 46 m west of there, at x 554, from the first Scablands build; EVERBURN-PLAY-FIXES, fourth round.)
+  ['tin-town-shell','tin-town',0,0,19,8,27],
   // The Boneyard's three wrecks, one box each, where each is drawn (src/world/boneyard-wrecks.js).
   ...BONEYARD_WRECKS.map(wreck=>[`boneyard-wreck-${wreck.id}`,'boneyard',wreck.x-BONEYARD_PLACE.x,wreck.z-BONEYARD_PLACE.z,...wreck.size]),
   ['dead-mall-shell','dead-mall',0,0,38,13,35],

@@ -26,11 +26,24 @@ const at = place => place?.position ?? place;
 // (the direction of travel is (sin, cos)); her right-hand side is (-cos, sin).
 export const ESCORT_START_BEHIND_METRES = 10;
 export const ESCORT_START_RIGHT_METRES = 6;
-export function escortCarStart(path, behind = ESCORT_START_BEHIND_METRES, right = ESCORT_START_RIGHT_METRES) {
+// `along` is how far down her road her own start stands (a road that begins at the well starts her past the well's box, fourth round).
+export function escortCarStart(path, behind = ESCORT_START_BEHIND_METRES, right = ESCORT_START_RIGHT_METRES, along = 0) {
   const from = at(path[0]), to = at(path[1]), length = Math.hypot(to.x - from.x, to.z - from.z);
   const forwardX = (to.x - from.x) / length, forwardZ = (to.z - from.z) / length, tenth = value => Math.round(value * 10) / 10;
-  return Object.freeze({x: tenth(from.x - forwardX * behind - forwardZ * right), z: tenth(from.z - forwardZ * behind + forwardX * right),
+  const baseX = from.x + forwardX * along, baseZ = from.z + forwardZ * along;
+  return Object.freeze({x: tenth(baseX - forwardX * behind - forwardZ * right), z: tenth(baseZ - forwardZ * behind + forwardX * right),
     heading: Math.atan2(forwardX, forwardZ)});
+}
+
+// EVERBURN-PLAY-FIXES, fourth round: where the escorted truck herself starts when her road begins inside a solid. Both gas roads and the
+// battle begin at the Everburn well, whose derrick box she would stand in. She starts `along` metres down her first piece instead, on the
+// road and facing along it; her pathIndex is 1 from the first tick, so she drives on to her second place and never back to the well.
+// A rest and restart on her first stretch puts her back here, not in the derrick.
+export const ESCORT_TRUCK_START_ALONG_METRES = 36;
+export function escortTruckStart(path, along = ESCORT_TRUCK_START_ALONG_METRES) {
+  const from = at(path[0]), to = at(path[1]), length = Math.hypot(to.x - from.x, to.z - from.z), tenth = value => Math.round(value * 10) / 10;
+  return Object.freeze({id: 'big-bess-start', radius: 3, position: Object.freeze({x: tenth(from.x + (to.x - from.x) / length * along), y: 0,
+    z: tenth(from.z + (to.z - from.z) / length * along)})});
 }
 
 // How far along `path` the point `place` lies (the nearest point of the road to it), and the road's unit direction there.

@@ -15,7 +15,7 @@ export const QUIET_SCENARIOS = Object.freeze([
   'arena-ambush-alley', 'arena-fuel-run', 'arena-pit', 'arena-shove',
   'armor-kit-visuals', 'arsenal-core', 'blackiron', 'combat-armor-frame-pacing',
   'combat-ramming', 'convoy-frames', 'convoy-raid', 'convoy-tanker-art',
-  'crew-fighters', 'deep-frames', 'first-person-gear', 'first-person-polish', 'frame-pacing',
+  'crew-fighters', 'deep-frames', 'everburn-frames', 'first-person-gear', 'first-person-polish', 'frame-pacing',
   'grand-prix', 'gunn', 'harbour-night', 'hidden-road-discovery',
   'onfoot-camera-choice', 'p4-daynight', 'p4-snow', 'polish-arena', 'polish-flame',
   'rustwall', 'rustwall-frame', 'sal-art', 'salt-flats', 'scrapdome',

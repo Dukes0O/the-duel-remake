@@ -404,7 +404,10 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
         if (solid.id === 'everburn-well' && piece === 0) continue;
         let closest = Infinity;
         for (let metres = 0; metres <= length; metres += .5) closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, solid));
-        check(closest >= (/^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8), `${label}: piece ${piece + 1} clears ${solid.id}`);
+        // A road that ends at Tin Town's centre ends inside the town's own box (it stands on the drawn town since the fourth round of
+        // EVERBURN-PLAY-FIXES): its last piece may touch that box (0 m) and no other.
+        const endsInTown = solid.id === 'tin-town-shell' && piece === list.length - 2 && list.at(-1).x === 600 && list.at(-1).z === 0;
+        check(closest >= (endsInTown ? 0 : /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8), `${label}: piece ${piece + 1} clears ${solid.id}`);
       }
     }
   }

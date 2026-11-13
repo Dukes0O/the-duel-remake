@@ -10,6 +10,7 @@ import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_START_BEHIND_METRES, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
+import {EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {ESCORT_START_BEHIND_METRES, ESCORT_START_RIGHT_METRES} from '../src/world/jobs/steps/escort.js';
 import {BIG_MACHINE_BOXES, SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {scablandsRoadDistance} from '../src/world/scablands-ground.js';
@@ -69,15 +70,30 @@ for (const [name, job] of starts) {
     near(car.z, step.carStart.z, .05, `${name}: the car starts where the step says (z)`);
     near(facingAngle(car, {x: car.x + Math.sin(step.carStart.heading), z: car.z + Math.cos(step.carStart.heading)}), 0, .001, `${name}: the car faces the way the step says`);
   }
-  // An escort starts beside what it escorts: behind her and to her right, facing along her road.
+  // An escort starts beside what it escorts: behind her and to her right, facing along her road. Her own start is where her road
+  // begins, or the start the actor names (the gas roads and the battle begin inside the well's box, so she starts down the road).
   if (step.kind === 'escort') {
-    const from = at(step.path[0]), to = at(step.path[1]), length = Math.hypot(to.x - from.x, to.z - from.z);
+    const truckStart = step.actor?.start ? at(step.actor.start) : at(step.path[0]);
+    const from = truckStart, to = at(step.path[1]), length = Math.hypot(to.x - from.x, to.z - from.z);
     const forward = {x: (to.x - from.x) / length, z: (to.z - from.z) / length}, right = {x: -forward.z, z: forward.x};
     const along = (car.x - from.x) * forward.x + (car.z - from.z) * forward.z, across = (car.x - from.x) * right.x + (car.z - from.z) * right.z;
     const behind = job.run === true ? GAS_RUN_START_BEHIND_METRES : ESCORT_START_BEHIND_METRES;
     near(-along, behind, .15, `${name}: the car starts ${behind} m behind Big Bess`);
     near(across, ESCORT_START_RIGHT_METRES, .15, `${name}: the car starts ${ESCORT_START_RIGHT_METRES} m to her right`);
     check(facingAngle(car, {x: car.x + forward.x, z: car.z + forward.z}) < .001, `${name}: the car faces along her road`);
+    // Big Bess herself starts clear of every solid: every point of her outline (her box, read from her model) is at least 3 m from each.
+    const box = BIG_MACHINE_BOXES['big-bess'];
+    let tightest = {gap: Infinity, id: ''};
+    for (let side = -1; side <= 1; side++) for (let step4 = 0; step4 <= 4; step4++) {
+      const u = side * box.halfX, v = box.minZ + (box.maxZ - box.minZ) * step4 / 4;
+      const point = clearance(from.x + forward.x * v + right.x * u, from.z + forward.z * v + right.z * u);
+      if (point.gap < tightest.gap) tightest = point;
+    }
+    check(tightest.gap >= 3, `${name}: Big Bess starts at least 3 m clear of every solid (${tightest.gap.toFixed(1)} m from ${tightest.id})`);
+    // And on her road: her start lies on the road's first piece, and the piece is the one she is facing along.
+    const first = at(step.path[0]);
+    const onRoad = Math.abs((from.x - first.x) * forward.z - (from.z - first.z) * forward.x) < .06 && (from.x - first.x) * forward.x + (from.z - first.z) * forward.z >= -.06;
+    check(onRoad, `${name}: Big Bess starts on her road`);
   }
 }
 {
@@ -230,4 +246,53 @@ function begin(job) {
     }
   }
 }
-console.log(`everburn play start (part B): ${checks} checks passed`);
+// ---- 5. Big Bess's start in a real job, and Tin Town's solid (EVERBURN-PLAY-FIXES, fourth round) -------------------------------------------
+for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'escort')) {
+  const duel = begin(job), worldJob = duel.state.arena.worldJob, step = job.steps[0];
+  duel.step(DT); duel.step(DT); // the job puts her on the road in its second tick
+  const truck = worldJob.actors.find(actor => actor.id === 'big-bess'), named = at(step.actor.start ?? step.path[0]);
+  check(truck && Math.hypot(truck.position.x - named.x, truck.position.z - named.z) < .5, `${name}: the truck stands at her start in the real job`);
+  check(truck.pathIndex === 1 || !step.actor.start && truck.pathIndex === undefined, `${name}: she sets off for the road's second place, never back to its first`);
+  for (let tick = 0; tick < 120; tick++) duel.step(DT);
+  const moved = Math.hypot(truck.position.x - named.x, truck.position.z - named.z), to = at(step.path[1]);
+  check(moved > 15 && moved < 21 && Math.hypot(to.x - truck.position.x, to.z - truck.position.z) < Math.hypot(to.x - named.x, to.z - named.z),
+    `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (9 m a second)`);
+}
+{
+  // The solid called tin-town-shell stands on the town as it is drawn: wholly inside the drawn model's footprint, round the place (600, 0).
+  const shell = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-shell'), [cx, , cz] = shell.center, [width, , depth] = shell.size;
+  const model = DRAWN[0];
+  check(cx - width / 2 >= model.x0 && cx + width / 2 <= model.x1 && cz - depth / 2 >= model.z0 && cz + depth / 2 <= model.z1, 'the Tin Town solid lies inside the footprint of the drawn town');
+  near(cx, 600, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, 0, 1, 'the Tin Town solid is centred on the town (z)');
+  // No job's start, car start, safe point or road comes inside it, except the places a job is meant to end at (the town's own centre for
+  // job 1 and the roads, the notice board for Hot Soup), and those can be reached from outside it, the car's own half length (2.4 m) allowed.
+  const jobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS, gasRunJob({road: 'long'}), gasRunJob({road: 'boneyard'}), fieldBattleJob()];
+  const x0 = cx - width / 2, x1 = cx + width / 2, z0 = cz - depth / 2, z1 = cz + depth / 2;
+  const inside = point => point.x > x0 && point.x < x1 && point.z > z0 && point.z < z1;
+  const pieceGap = (a, b) => { let closest = Infinity; const length = Math.hypot(b.x - a.x, b.z - a.z);
+    for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, boxGap(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, x0, x1, z0, z1));
+    return closest; };
+  const townCentre = {x: 600, z: 0};
+  for (const job of jobs) for (const step of job.steps) {
+    for (const key of ['carStart', 'origin']) if (step[key]) check(!inside(at(step[key])), `${job.id}: its ${key} is outside the Tin Town solid`);
+    for (const point of step.safePoints ?? []) check(!inside(at(point)), `${job.id}: its safe point is outside the Tin Town solid`);
+    for (const point of step.places ?? []) check(!inside(at(point)), `${job.id}: its place ${point.id} is outside the Tin Town solid`);
+    for (const key of ['path', 'returnPath']) {
+      const points = (step[key] ?? []).map(at);
+      points.forEach((point, index) => {
+        if (index < points.length - 1 || !inside(point)) return;
+        check(point.x === townCentre.x && point.z === townCentre.z, `${job.id}: a road may end inside the Tin Town solid only at the town's own centre`);
+      });
+      for (let piece = 1; piece < points.length; piece++) {
+        const endsInTown = piece === points.length - 1 && inside(points[piece]);
+        check(endsInTown || pieceGap(points[piece - 1], points[piece]) >= 8, `${job.id}: ${key} piece ${piece} keeps 8 m from the Tin Town solid unless it ends in the town`);
+      }
+    }
+    if (step.destination && inside(at(step.destination))) {
+      const goal = at(step.destination), radius = step.destination.radius ?? step.radius;
+      check(boxGap(goal.x, goal.z, x0, x1, z0, z1) === 0 && Math.min(goal.x - x0, x1 - goal.x, goal.z - z0, z1 - goal.z) <= radius - 2.4,
+        `${job.id}: its goal inside the town can be reached from the edge of the solid (${radius} m, the car's half length allowed)`);
+    }
+  }
+}
+console.log(`everburn play start (part B and fourth round): ${checks} checks passed`);

@@ -282,6 +282,8 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     text('callout-text',callout);
     ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
+    // A world job moves the spoken-line subtitle below the story caption, off the rear-view mirror (src/combat-hud.css).
+    ui.stage.classList.toggle('is-world-job',worldJob);
     ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;
     const crushed=Math.max(0,Math.floor(s.crushCount||0));
     text('arena-crush',app.duel.stageDef.practice?`CRUSHED ${crushed}`:`CRUSHED ${Math.min(6,crushed)} / 6`);

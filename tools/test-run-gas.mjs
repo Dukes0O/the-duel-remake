@@ -448,7 +448,8 @@ function runUntil(duel, condition, seconds = 90) {
   }
 
   // Both roads clear every box in SCABLANDS_SOLIDS by 8 m. The road begins at the well, so its first piece is let touch the
-  // well's own box and no other.
+  // well's own box and no other; it ends at Tin Town's centre, so its last piece is let end inside the town's own box (the box stands on the
+  // drawn town since the fourth round of EVERBURN-PLAY-FIXES; it stood 46 m west of it before) and touches no other.
   const distanceToBox = (x, z, solid) => {
     const [cx, , cz] = solid.center, [width, , depth] = solid.size;
     return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
@@ -466,7 +467,8 @@ function runUntil(duel, condition, seconds = 90) {
         // An opening is meant to be driven through: a road that passes through Tin Town's gate keeps at least 3.4 m from each of
         // the gate's two post boxes (the opening is 9 m, Big Bess is 2.8 m wide, the boxes are the posts' own 2.1 m). Every other
         // solid keeps 8 m from every road.
-        const needed = /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
+        // The last piece ends in Tin Town, inside the town's own box: it may touch that box (0 m) and no other.
+        const needed = solid.id === 'tin-town-shell' && piece === points.length - 2 ? 0 : /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
         check(closest >= needed, `${road}: piece ${piece + 1} clears ${solid.id} by ${needed} m (got ${closest.toFixed(1)})`);
       }
     }
