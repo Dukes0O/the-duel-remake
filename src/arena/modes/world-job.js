@@ -239,7 +239,7 @@ function handleBattleEvent(duel, worldJob, actor, event) {
   logFurnace(duel, worldJob, event);
   const cue = BATTLE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
-  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true);
+  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true, true);
   else if (event.type === 'comesOut') duel._storyCallout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
   // A door that is not the last: Clinker. The last door ends the furnace, and the line for that is the one for its death.
   else if (event.type === 'hit' && event.hit < furnace.battle.doorsToStop) duel._storyCallout(captionFor(worldJob, BATTLE_LINES.door), 2.6);
@@ -254,9 +254,9 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
   const cue = FURNACE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
   if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy')
-    duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true);
+    duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true, true);
   else if (event.type === 'hit') duel._storyCallout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6, event.hit === 3);
-  else if (event.type === 'shoveWarning') duel._storyCallout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4, true);
+  else if (event.type === 'shoveWarning') duel._storyCallout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4, true, true);
   else if (event.type === 'shove') {
     duel._storyCallout('SHOVED!', 1.2);
     duel.emit({combatHit: true, strength: .4, enemy: true, victim: 'player',

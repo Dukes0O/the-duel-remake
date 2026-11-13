@@ -10,7 +10,17 @@
 
 No new sound event: these changes use existing callouts and cues.
 
-## Checks
+## Follow-up: wreck messages and timed instructions
+
+- World-job crashes show the same crash text, kicker and `crash-callout` styling as other Wasteland events. The screen pauses its story caption until the crash ends; race-only warnings stay hidden.
+- The furnace's Easy door arrows and chimney warning carry their requested time into the screen queue, with a 1.5-second minimum. Their deadline starts when issued, including while hidden by a crash; stale instructions are dropped. Spoken captions retain their reading-time rule.
+- The job clock, outcomes and sound cues are unchanged. No existing assertion was changed in this follow-up. New focused checks cover the actual HUD, queue timing and the callout timing marker.
+- Follow-up `test-everburn-play-fixes-a`: 43 checks passed. `test-world-jobs`, `test-old-smoke` (650 checks), `test-field-battle` (792) and `test-run-gas` (1116) passed. `test-everburn-easy` passed all nine jobs 10/10, both gas roads at all four feud levels 10/10, and the battle 10/10.
+- Follow-up replay fingerprints unchanged: `test-replays` passed 297 checks over 33 cases; `test-combat-replays` passed 12 checks over four encounters. `test-board` passed 630 checks; `test-repo-hygiene` passed.
+- Follow-up lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`): 108 passed, 2 failed, 0 not run. `test-warlord-blackiron` and `test-warlord-tollkeeper` failed because `ffmpeg` cannot launch in protected mode (`EPERM`); Claude runs them. `test-world-jobs` passed in the lane.
+- Follow-up `npm.cmd run build -- --outDir .qa-dist/everburn-followup-build`: passed; scratch output was recycled. Browser scenarios and independent review remain for Claude, per the lane instructions.
+
+## Checks (original part A)
 
 - `test-everburn-play-fixes-a`: 24 checks passed (queue, chase, both yard switch states and job map data).
 - `test-ember-lines`: 56 captions and note passed; `test-ember-save`: 117 checks passed; `test-ember-screens`: 20 checks passed.
@@ -27,7 +37,7 @@ No new sound event: these changes use existing callouts and cues.
 
 ## Changed assertions
 
-`tools/test-world-jobs.mjs`: the old assertion expected a `say` event on the first tick with an already-broken leash and no line ID. The new assertion expects the named `closer` event after 8 seconds and a 25 m increase from the initial gap; the existing immediate restart assertion remains. This records the card's changed warning moment, and the new focused test also checks that neither threshold alone fires the line. Claude's written review on the card is required before merge. The new focused test contains new assertions only.
+`tools/test-world-jobs.mjs`: the old assertion expected a `say` event on the first tick with an already-broken leash and no line ID. The new assertion expects the named `closer` event after 8 seconds and a 25 m increase from the initial gap; the existing immediate restart assertion remains. This records the card's changed warning moment, and the new focused test also checks that neither threshold alone fires the line. Claude accepted this assertion change and confirmed that the restart check remains (12 November 2026). The new focused test contains new assertions only.
 
 ## Removed
 

@@ -889,9 +889,9 @@ export class Duel {
 
   // ---- input helpers ---------------------------------------------------
   _callout(text, seconds = 2.2) { this.state.callout = text; this.state.calloutTimer = seconds; }
-  _storyCallout(text, seconds = 2.2, urgent = false) {
+  _storyCallout(text, seconds = 2.2, urgent = false, fixedTime = false) {
     this._callout(text, seconds);
-    this.onStoryCaption?.(text, urgent, this.state);
+    this.onStoryCaption?.(text, urgent, this.state, fixedTime ? seconds : undefined);
   }
   setInput(partial) {
     if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};

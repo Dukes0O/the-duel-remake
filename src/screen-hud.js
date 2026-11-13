@@ -127,17 +127,17 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
   let lastWorldJob=false, lastJobHeading='CIRCUIT / LIVE';
   const captions = createCaptionQueue();
   let captionJob = null;
-  app.duel.onStoryCaption = (line, urgent, state) => {
+  app.duel.onStoryCaption = (line, urgent, state, fixedTime) => {
     const job = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
     if (!job) return;
     if (job !== captionJob) { captions.clear(state.stageTimeSec); captionJob = job; }
-    captions.add(line, urgent, state.stageTimeSec);
+    captions.add(line, urgent, state.stageTimeSec, fixedTime, state.crashFlash > 0 || state.impactTimer > 0);
   };
   function updateHud(s) {
     const worldJob=s.arena?.mode==='world-job';
     const jobRoad=worldJob ? worldJobMapRoad(s) : null;
     if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
-    const storyCaption = worldJob ? captions.advance(s.stageTimeSec) : '';
+    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, s.crashFlash > 0 || s.impactTimer > 0) : '';
     if(worldJob!==lastWorldJob) {
       if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
       lastWorldJob=worldJob;
@@ -271,11 +271,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
     // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
     const boatRamp=!!app.duel.course.deepRamp&&!!app.duel.course.surfaceAt(s.s,s.lateral).deepRamp;
-    const callout=worldJob?storyCaption:crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):worldJob?storyCaption:s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
     ui['race-callout'].hidden=!callout||!!s.paused;
-    text('callout-kicker',worldJob?'':s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
+    text('callout-kicker',worldJob&&!crash?'':s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
     text('callout-text',callout);
-    ui['race-callout'].classList.toggle('crash-callout',!worldJob&&crash);
+    ui['race-callout'].classList.toggle('crash-callout',crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
     ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;
     const crushed=Math.max(0,Math.floor(s.crushCount||0));

@@ -3,6 +3,9 @@ import {captionSeconds, createCaptionQueue} from '../src/story/caption-queue.js'
 import {stepChase} from '../src/world/jobs/steps/chase.js';
 import {emberNextUp} from '../src/story/ember-ui.js';
 import {worldJobMapData} from '../src/route-map.js';
+import {createHudScreen} from '../src/screen-hud.js';
+import {Duel} from '../src/game.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 
 assert.equal(captionSeconds('x'), 2.5);
 assert.equal(captionSeconds('x'.repeat(100)), 6.7);
@@ -33,4 +36,48 @@ const definition={name:'test',steps:[{kind:'escort',path:[{position:{x:0,z:0}},{
 const state={s:5,lateral:4,arena:{mode:'world-job',worldJob:{definition,job:{steps:definition.steps,stepIndex:0},actors:[]}}};
 const data=worldJobMapData({worldAt:(s,z)=>({x:s,z})},state);
 assert.deepEqual(data.path,[{x:0,z:0},{x:100,z:30}]); assert.equal(data.marks[0].kind,'player');
-console.log('everburn play fixes A: 24 checks passed');
+// Timed instructions expire from their arrival, even while another caption or a crash hides them.
+const timed=createCaptionQueue();
+timed.add('opening', false, 0);
+timed.add('arrow', true, .1, 3);
+assert.equal(timed.advance(1.5), 'arrow');
+assert.equal(timed.advance(3.1), 'opening');
+const expired=createCaptionQueue();
+expired.add('opening', false, 0);
+expired.add('old arrow', true, .1, 1.5, true);
+assert.equal(expired.advance(2, true), 'opening');
+assert.equal(expired.advance(2.1), 'opening');
+const direct=createCaptionQueue(); direct.add('arrow', true, 0, 3);
+assert.equal(direct.advance(2.99), 'arrow'); assert.equal(direct.advance(3), '');
+const minimum=createCaptionQueue(); minimum.add('warning', true, 0, .2);
+assert.equal(minimum.advance(1.49), 'warning'); assert.equal(minimum.advance(1.5), '');
+
+// Exercise the actual HUD with a real job: crash messages win while the spoken line pauses.
+const duel=new Duel({seed:1,featureFlags:{'hidden-road':true,arsenal:true}});
+duel.state.wastelandGateDiscovered=true;
+assert(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:1,opponents:[],job:EVERBURN_JOBS[0]}));
+const classes=new Map();
+const node=()=>({hidden:false,textContent:'',dataset:{},style:{},firstChild:{textContent:''},lastChild:{textContent:''},classList:{toggle(name,on){classes.set(name,on);}},setAttribute(){}});
+const ui=new Proxy({}, {get:(target,key)=>target[key] ??= node()});
+ui['race-position'].closest=()=>({hidden:false}); ui['route-section'].closest=()=>({querySelector:()=>({textContent:''})});
+const update=createHudScreen({app:{duel,player:{name:'Test'}},ui,text:(id,value)=>{ui[id].textContent=String(value);},time:String,credits:String,clamp:value=>Math.max(0,Math.min(1,value)),routeMap:{update(){}}});
+const hud=duel.state; hud.status='racing'; hud.stageTimeSec=0;
+duel._storyCallout('A spoken story line', 2.2); update(hud);
+assert.equal(ui['callout-text'].textContent,'A spoken story line');
+hud.stageTimeSec=1; hud.crashFlash=1; hud.combatWrecking=true; update(hud);
+assert.equal(ui['callout-text'].textContent,'WRECKED / RECOVERING');
+assert.equal(ui['callout-kicker'].textContent,'ARMOR GONE. RECOVERY IN PROGRESS.');
+assert.equal(classes.get('crash-callout'),true);
+hud.stageTimeSec=4; update(hud); hud.crashFlash=0; hud.combatWrecking=false; update(hud);
+assert.equal(ui['callout-text'].textContent,'A spoken story line');
+assert.equal(classes.get('crash-callout'),false);
+hud.stageTimeSec=5; hud.crashFlash=1; hud.combat=true; update(hud);
+assert.equal(ui['callout-text'].textContent,'COLLISION');
+assert.equal(ui['callout-kicker'].textContent,'ARMOR HIT. AUTO RECOVERY.');
+const marked=new Duel({seed:2}); let received;
+marked.onStoryCaption=(...args)=>{received=args;};
+marked._storyCallout('arrow', 3, true, true);
+assert.equal(received[3],3);
+marked._storyCallout('spoken', 2.2, true);
+assert.equal(received[3],undefined);
+console.log('everburn play fixes A: 43 checks passed');
