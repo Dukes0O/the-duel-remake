@@ -50,6 +50,10 @@ assert.equal(q.advance(100), ''); q.add('again', false, 100); q.clear(100); asse
 // A short line cut short after 60 per cent of its reading time is not shown a second time; a long one carries on.
 const shortCut=createCaptionQueue(); shortCut.add('short', false, 0); shortCut.add('urgent', true, 1.5);
 assert.equal(shortCut.advance(1.5), 'urgent'); assert.equal(shortCut.advance(4), '');
+// A long line comes back once after an urgent line, and never a second time.
+const once=createCaptionQueue(); once.add(long, false, 0); once.add('first', true, 0); once.add('second', true, 0);
+assert.equal(once.advance(1.5), 'first'); assert.equal(once.advance(3), 'second'); assert.equal(once.advance(5.5), long);
+once.add('third', true, 6); assert.equal(once.advance(6), 'third'); assert.equal(once.advance(8.5), '');
 // An urgent line that arrives after the line on screen has already had 1.5 seconds cuts in at once.
 const quick=createCaptionQueue(); quick.add(long, false, 0); assert.equal(quick.advance(3), long);
 quick.add('door', true, 3); assert.equal(quick.advance(3), 'door');
