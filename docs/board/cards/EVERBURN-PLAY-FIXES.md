@@ -52,6 +52,25 @@ stands). Switches: `story-everburn` and `scablands-runs`, both off.
    during the chase.
 6. **Job 4's result line** is "The gas is in Tin Town and the forge is lit."
 
+## Part A result (built by Codex; reviewed by Claude, 12 November 2026): merged
+
+Change note: `docs/changes/EVERBURN-PLAY-FIXES-A.md`. All seven items are built. The caption queue lives in
+`src/story/caption-queue.js` and is fed by a one-way notice from the game (`_storyCallout`); the job's clock and
+rules are untouched, and the replay fingerprints did not move (297 race and 12 combat checks).
+
+Two points from Claude's review, both made: a wrecked or recovering car still gets its message in a job (only race
+words are gone); and the Easy arrows for the furnace's doors and the chimney warning keep their own time and are
+dropped once their moment has passed, so that an arrow never points at a door that has shut.
+
+**Changed assertion, reviewed by Claude (rule 18).** `tools/test-world-jobs.mjs` expected the falling-behind line
+the instant the leash broke. Item 2 moves that line to eight seconds in and a gap grown by 20 m, so the test now
+expects it then; the check that the chase restarts when the leash breaks is as it was. Nothing is loosened.
+
+Checks: Codex's part A test 43, `test-old-smoke` 650, `test-field-battle` 792, `test-run-gas` 1,116,
+`test-everburn-easy`, lane tier 108 of 110 on the branch; the two it could not run (`test-warlord-blackiron` 16,
+`test-warlord-tollkeeper` 28), seven browser checks (`everburn`, `everburn-play`, `everburn-well`, `run-gas`,
+`field-battle`, `scrapdome`, `grand-prix`) and the build on the merged result by Claude.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.

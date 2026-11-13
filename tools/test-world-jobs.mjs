@@ -23,11 +23,12 @@ job = tick(next, { player: { position: pos(10) }, thingsHit: [{ id: 'fence', kin
 assert(job.events.some(event => event.type === 'burn'));
 assert.equal(job.done, true);
 
-// Chase warns and restarts when the leash is broken, then catches by health or contact.
-job = createJob({ steps: [{ kind: 'chase', targetId: 'runner', leashDistance: 20, path: [pos(0)] }] });
-next = tick(job, { player: { position: pos(0) }, actors: [{ id: 'runner', position: pos(30), health: 1 }] });
+// The leash still restarts immediately; its warning waits for eight seconds and 20 m of lost ground.
+job = createJob({ steps: [{ kind: 'chase', targetId: 'runner', leashDistance: 20, leashLineId: 'closer', path: [pos(0)] }] });
+job = tick(job, { player: { position: pos(0) }, actors: [{ id: 'runner', position: pos(5), health: 1 }] });
+next = tick(job, { player: { position: pos(0) }, actors: [{ id: 'runner', position: pos(30), health: 1 }] }, 8);
 assert.equal(next.failedStep, true);
-assert(next.events.some(event => event.type === 'say'));
+assert(next.events.some(event => event.type === 'say' && event.lineId === 'closer'));
 job = tick(next, { player: { position: pos(0) }, actors: [{ id: 'runner', position: pos(2), health: 0 }] });
 assert.equal(job.done, true);
 

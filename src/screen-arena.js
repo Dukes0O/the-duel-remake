@@ -230,8 +230,8 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
     return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description,
       metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
-      extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : action('BACK TO THE YARD', 'arena-yard', true)) +
-        action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu') :
+      extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +
+        action('BACK TO THE YARD', 'arena-yard', !next && job?.run !== true) + action('MAIN MENU', 'menu') :
         action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
   }
   if (arena.mode === 'ambush-alley') {
