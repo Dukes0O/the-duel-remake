@@ -6,6 +6,8 @@ const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.free
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
 
+// Where a job's car starts (EVERBURN-PLAY-FIXES): open ground, facing a place. src/arena/modes/world-job.js puts the car there.
+const carStart = (x, z, toward) => Object.freeze({x, z, heading: Math.atan2(toward.position.x - x, toward.position.z - z)});
 const yard = place('yard-gate', 0, 0), tinTown = place('tin-town', 600, 0, 18);
 const boneyard = place('boneyard', 424, 304, 18), mall = place('dead-mall', 0, 430, 14);
 const well = place('everburn', -424, 304, 18), safeRoad = place('safe-road', 230, 150, 16);
@@ -55,6 +57,9 @@ export const EVERBURN_JOBS = Object.freeze([
       ...(index === 0 ? {lineId:'story.ember.cinder.6'} : {})})),
       radius:3, lentWeapon:'cinders-hand-flamer', requiresExit:true, returnToCar:tinTown,
       unlock:'tin-town-notice-board', startLineId:'story.ember.auntie-solder.3', afterStartLineId:['story.ember.cinder.5']})]}),
+      // The car starts inside Tin Town's gate on open ground (18 m in from the gate's posts, 30 m from the town's own model),
+      // facing the forge, not in the alley at the town's centre where the camera stood behind a pillar.
+      carStart:carStart(582, 44, forge),
   Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
     resultLineId:'story.ember.cinder.10',
     easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
@@ -85,7 +90,10 @@ export const EVERBURN_JOBS = Object.freeze([
   Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
     resultLineId:'story.ember.old-smoke.1',
     easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'story.ember.cinder.11',
-    steps:[step('heist',{what:'Find the valve key under the Dead Mall and bring it to the Everburn.', takeId:'everburn-valve-key', zone:place('mall-valve-room',-12,430,7), carPlace:mall, carRadius:18,
+    steps:[step('heist',{what:'Find the valve key under the Dead Mall and bring it to the Everburn.',
+      // The car starts on the road 150 m short of the mall, facing it (it started inside the mall's box), so that Cinder's "Leave the
+      // car outside" is heard on the way in. The mall stands on the dirt road at (0, 430); the road is the oval 600 m by 430 m.
+      carStart:carStart(150, 416, mall), takeId:'everburn-valve-key', zone:place('mall-valve-room',-12,430,7), carPlace:mall, carRadius:18,
       escapePlace:well, escapeRadius:18, returnPath:path(mall, safeRoad, well), walkSpeed:1,
       lamps:[place('mall-search-lamp-1',-25,420),place('mall-search-lamp-2',10,444)], coneDegrees:65,
       alarmWaveSize:2, alarmLineId:'story.ember.cinder.14', lentWeapon:'cinders-hand-flamer',

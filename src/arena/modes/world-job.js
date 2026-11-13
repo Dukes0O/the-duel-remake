@@ -13,6 +13,7 @@ import {applyArmorDamage} from '../../combat-armor.js';
 import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
+import {wrapHeading} from '../../offroad-physics.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -66,6 +67,14 @@ export function initializeWorldJob(duel, definition) {
     const target = definition.steps[0].place.position;
     const at = duel.course.worldAt(state.s, state.lateral);
     state.headingError = Math.atan2(target.x - at.x, target.z - at.z) - duel.course.at(state.s).heading;
+  }
+  // EVERBURN-PLAY-FIXES: a first step may name where the car starts and which way it faces ({x, z, heading}).
+  const carStart = definition.steps[0]?.carStart;
+  if (carStart && Number.isFinite(carStart.x) && Number.isFinite(carStart.z) && Number.isFinite(carStart.heading)) {
+    const pose = duel.course.nearest(carStart.x, carStart.z);
+    state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+    state.speedMph = 0; state.yawVelocity = 0; state.pushVelocity = 0;
+    state.headingError = wrapHeading(carStart.heading - duel.course.at(pose.s).heading);
   }
   if(definition.kind==='town-drive'&&definition.layout?.start){
     const start=definition.layout.start,pose=duel.course.nearest(start.x,start.z);
