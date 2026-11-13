@@ -518,6 +518,18 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
 
+  - id: EVERBURN-PLAY-FIXES
+    title: "The Everburn's first full play: captions, cameras, starts and the yard after job 6"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "building"
+    claimed_by: "Claude (Director) with Codex and a Sonnet helper, since 12 November 2026"
+    needs: []
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/EVERBURN-PLAY-FIXES.md"
+
   - id: FIELD-BATTLE-ASH
     title: "The Ash Men's war party: the patched furnace hunts Big Bess on the Boneyard road"
     owner: "claude"

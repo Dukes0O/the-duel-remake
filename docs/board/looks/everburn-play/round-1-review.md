@@ -81,4 +81,8 @@ Smaller facts: jobs 2, 3 and 5 are over in 8.8, 22.8 and 21.2 s, short enough th
 
 Not without help. The story can be driven end to end, and the jobs, the runs and the battle all complete with the right pay and the right feud words. What stops a child first is job 2: the camera starts behind a pillar and the car is not seen, and the three lines said in the first seven seconds of job 1 are too fast to read. The next stoppers are the camera inside the furnace in job 6 and the battle, the unreadable captions, and the end of the story, where the yard points at driving that does not exist.
 
-Verdict (Claude): to be written.
+Verdict (Claude): the story can be finished, and it is not ready for a child. The pictures are honest about why: a
+caption gone in two seconds, a camera behind a pillar in job 2 and inside the furnace in job 6, a job that starts
+with its key already in reach, an escort that starts a kilometre from its truck, and a yard that points at driving
+which does not exist. None of these was caught by a test. The fixes are settled on card EVERBURN-PLAY-FIXES; the
+story's switch stays off until a second play is clean.

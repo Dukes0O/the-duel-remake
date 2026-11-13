@@ -13,4 +13,4 @@ What the sheet shows, in rows of three:
 
 Taken at 1536 by 864 and shown at 640 wide, High graphics, Medium, from the game's own camera, by scripted drivers stepping the real game. The Boneyard runs and the battle were won by the "fights" driver of `tools/test-run-gas-medium.mjs`.
 
-Verdict (Claude): to be written.
+Verdict (Claude): as for round 1; see its note and card EVERBURN-PLAY-FIXES.
