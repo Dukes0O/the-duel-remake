@@ -38,6 +38,13 @@ function captionFor(worldJob, lineId) {
   const story = captionRecord(lineId);
   return story ? `${story.who}: ${story.text}` : '';
 }
+// The screen uses this only for presentation; the job's own line sequencing is unchanged.
+function urgentCaption(worldJob, lineId, marked = false) {
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  return marked || lineId === step?.alarmLineId || lineId === step?.urgentLineId ||
+    (step?.urgentLineIds ?? []).includes(lineId) ||
+    [...(step?.sayNear ?? []), ...(step?.sayOnce ?? [])].some(cue => cue?.lineId === lineId && cue.urgent === true);
+}
 const WELL_WEAR_RANGE = 10;
 const WELL_WEAR_PER_SECOND = 1;
 
@@ -232,12 +239,12 @@ function handleBattleEvent(duel, worldJob, actor, event) {
   logFurnace(duel, worldJob, event);
   const cue = BATTLE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
-  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._callout(FURNACE_ARROWS[event.door] ?? '', event.seconds);
-  else if (event.type === 'comesOut') duel._callout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
+  if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy') duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true);
+  else if (event.type === 'comesOut') duel._storyCallout(captionFor(worldJob, BATTLE_LINES.comesOut), 2.6);
   // A door that is not the last: Clinker. The last door ends the furnace, and the line for that is the one for its death.
-  else if (event.type === 'hit' && event.hit < furnace.battle.doorsToStop) duel._callout(captionFor(worldJob, BATTLE_LINES.door), 2.6);
-  else if (event.type === 'dead') { worldJob.furnaceDied = true; duel._callout(captionFor(worldJob, BATTLE_LINES.dead), 3); }
-  else if (event.type === 'cindersLand' && !worldJob.cindersSaid) { worldJob.cindersSaid = true; duel._callout(captionFor(worldJob, BATTLE_LINES.cinders), 2.6); }
+  else if (event.type === 'hit' && event.hit < furnace.battle.doorsToStop) duel._storyCallout(captionFor(worldJob, BATTLE_LINES.door), 2.6);
+  else if (event.type === 'dead') { worldJob.furnaceDied = true; duel._storyCallout(captionFor(worldJob, BATTLE_LINES.dead), 3); }
+  else if (event.type === 'cindersLand' && !worldJob.cindersSaid) { worldJob.cindersSaid = true; duel._storyCallout(captionFor(worldJob, BATTLE_LINES.cinders), 2.6); }
 }
 
 function handleFurnaceEvent(duel, worldJob, actor, event) {
@@ -247,22 +254,22 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
   const cue = FURNACE_CUES[event.type];
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
   if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy')
-    duel._callout(FURNACE_ARROWS[event.door] ?? '', event.seconds);
-  else if (event.type === 'hit') duel._callout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6);
-  else if (event.type === 'shoveWarning') duel._callout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4);
+    duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true);
+  else if (event.type === 'hit') duel._storyCallout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6, event.hit === 3);
+  else if (event.type === 'shoveWarning') duel._storyCallout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4, true);
   else if (event.type === 'shove') {
-    duel._callout('SHOVED!', 1.2);
+    duel._storyCallout('SHOVED!', 1.2);
     duel.emit({combatHit: true, strength: .4, enemy: true, victim: 'player',
       hitPosition: {x: actor.position.x, y: actor.position.y, z: actor.position.z}});
   }
-  else if (event.type === 'bolt') duel._callout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
-  else if (event.type === 'turnAround') duel._callout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
+  else if (event.type === 'bolt') duel._storyCallout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
+  else if (event.type === 'turnAround') duel._storyCallout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
   else if (event.type === 'gateBurnt') {
     // The scene keeps the fire on the gate until the job ends, even if a wreck starts the chase again.
     worldJob.gateBurnt = true;
-    duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.7'), 3);
+    duel._storyCallout(captionFor(worldJob, 'story.ember.auntie-solder.7'), 3);
   }
-  else if (event.type === 'townReached' && !event.burnt) duel._callout(captionFor(worldJob, 'story.ember.auntie-solder.8'), 3);
+  else if (event.type === 'townReached' && !event.burnt) duel._storyCallout(captionFor(worldJob, 'story.ember.auntie-solder.8'), 3);
   return furnace;
 }
 
@@ -272,7 +279,7 @@ function restartFurnace(duel, worldJob, actor, actorDef, reason) {
   actor.startedAtSec = worldJob.clockSec ?? 0;
   syncFurnaceActor(actor);
   logFurnace(duel, worldJob, {type: 'restart', reason});
-  duel._callout(reason === 'escaped' ? 'HE GOT AWAY. HE IS BACK AT THE WELL.' :
+  duel._storyCallout(reason === 'escaped' ? 'HE GOT AWAY. HE IS BACK AT THE WELL.' :
     'WRECKED. THE CHASE STARTS OVER.', 3);
 }
 
@@ -461,7 +468,7 @@ function applyRequests(duel, worldJob, requests) {
       spawnWave(duel, worldJob, request, key);
     }
     else if (request.type === 'say' && request.lineId) {
-      duel._callout(captionFor(worldJob, request.lineId), 2.2);
+      duel._storyCallout(captionFor(worldJob, request.lineId), 2.2, urgentCaption(worldJob, request.lineId, request.urgent === true));
     }
     else if (request.type === 'lendWeapon' && typeof request.weapon === 'string') {
       duel.state.weaponLoadout = [...new Set([...(duel.state.weaponLoadout || []), request.weapon])];
@@ -631,7 +638,7 @@ export function stepWorldJob(duel, dt) {
       worldJob.inventory = [...new Set([...(worldJob.inventory ?? []), event.id])];
     }
     if (event.type === 'say' && event.lineId) {
-      duel._callout(captionFor(worldJob, event.lineId), 2.2);
+      duel._storyCallout(captionFor(worldJob, event.lineId), 2.2, urgentCaption(worldJob, event.lineId, event.urgent === true));
     }
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});

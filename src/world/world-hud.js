@@ -1,3 +1,4 @@
+import {worldJobMapData, drawWorldJobMap} from '../route-map.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 
 const pointOf = value => value?.position ?? value;
@@ -115,34 +116,6 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
 const STYLE_ID = 'world-hud-style';
 const MAP_WIDTH = 640, MAP_HEIGHT = 440;
 
-function drawWorldMap(ctx, model) {
-  ctx.clearRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
-  ctx.fillStyle = '#b8a27e'; ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
-  const project = (x, z) => [28 + (x + 700) / 1400 * (MAP_WIDTH - 56), 26 + (500 - z) / 1000 * (MAP_HEIGHT - 52)];
-  ctx.fillStyle = '#82765e'; ctx.beginPath(); ctx.ellipse(MAP_WIDTH / 2, MAP_HEIGHT / 2, 264, 174, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#d5bd90'; ctx.lineWidth = 8; ctx.setLineDash([10, 8]); ctx.beginPath();
-  model.places.forEach((place, index) => { const [x, y] = project(place.x, place.z); if (index) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
-  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
-  for (const place of model.places) {
-    const [x, y] = project(place.x, place.z);
-    ctx.fillStyle = '#e4d4b2'; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#201d18'; ctx.font = '12px system-ui'; ctx.textAlign = 'center'; ctx.fillText(place.name, x, y - 9);
-  }
-  for (const find of model.finds) {
-    const [x, y] = project(find.x, find.z); ctx.fillStyle = find.found ? '#91d29a' : '#f0c04f';
-    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#201d18'; ctx.textAlign = 'left'; ctx.fillText(find.found ? '✓' : '?', x + 8, y + 4);
-  }
-  if (model.target) {
-    const [x, y] = project(model.target.x, model.target.z); ctx.strokeStyle = '#ff6e36'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.stroke();
-  }
-  if (model.player) {
-    const [x, y] = project(model.player.x, model.player.z); ctx.fillStyle = '#71c8ff';
-    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#102536'; ctx.lineWidth = 2; ctx.stroke();
-  }
-}
-
 export function createWorldHud({host}) {
   const doc = host.ownerDocument;
   if (doc?.head && !doc.getElementById(STYLE_ID)) {
@@ -155,14 +128,13 @@ export function createWorldHud({host}) {
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>SCABLANDS</b><button type="button" data-world-map-close>CLOSE</button></header>
       <canvas width="${MAP_WIDTH}" height="${MAP_HEIGHT}" aria-label="Map with your position and job marker"></canvas>
-      <p class="world-hud-find-label">FINDS</p><ul class="world-hud-finds"></ul></section>`;
+      </section>`;
   host.append(root);
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
-  const findList = root.querySelector('.world-hud-finds');
   let active = false, mapOpen = false, lastMap = '', disposed = false;
   const setMapOpen = value => { mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); };
   const click = event => {
@@ -196,12 +168,11 @@ export function createWorldHud({host}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
-      const mapKey = JSON.stringify([model.places, model.finds, model.target, model.player]);
+      const mapData = worldJobMapData(duel.course, state);
+      const mapKey = JSON.stringify(mapData);
       if (mapKey !== lastMap) {
         lastMap = mapKey;
-        if (context) drawWorldMap(context, model);
-        findList.innerHTML = model.finds.length ? model.finds.map(item =>
-          `<li class="${item.found ? 'is-found' : ''}"><span>${item.found ? '✓' : '○'}</span> ${item.name}</li>`).join('') : '<li>Nothing found yet</li>';
+        if (context && mapData) drawWorldJobMap(context, canvas, mapData);
       }
     },
     dispose() {

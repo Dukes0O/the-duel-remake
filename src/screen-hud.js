@@ -1,3 +1,4 @@
+import {createCaptionQueue} from './story/caption-queue.js';
 import {worldJobMapRoad} from './route-map.js';
 import {DRIVE, LIVES} from './config.js';
 import {speedKph, formatSpeed} from './speed-format.js';
@@ -124,9 +125,19 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
   const positionPanel=ui['race-position'].closest?.('.race-position');
   const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
   let lastWorldJob=false, lastJobHeading='CIRCUIT / LIVE';
+  const captions = createCaptionQueue();
+  let captionJob = null;
+  app.duel.onStoryCaption = (line, urgent, state) => {
+    const job = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+    if (!job) return;
+    if (job !== captionJob) { captions.clear(state.stageTimeSec); captionJob = job; }
+    captions.add(line, urgent, state.stageTimeSec);
+  };
   function updateHud(s) {
     const worldJob=s.arena?.mode==='world-job';
     const jobRoad=worldJob ? worldJobMapRoad(s) : null;
+    if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
+    const storyCaption = worldJob ? captions.advance(s.stageTimeSec) : '';
     if(worldJob!==lastWorldJob) {
       if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
       lastWorldJob=worldJob;
@@ -260,11 +271,11 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
     // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
     const boatRamp=!!app.duel.course.deepRamp&&!!app.duel.course.surfaceAt(s.s,s.lateral).deepRamp;
-    const callout=crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
+    const callout=worldJob?storyCaption:crash?(s.combatWrecking?'WRECKED / RECOVERING':s.catastrophic?'CATASTROPHIC IMPACT':trafficWreckCrash?s.callout:s.lastCrashReason==='engine_blew'?'ENGINE BLOWN':s.lastCrashReason==='rock'?'ROCK IMPACT':'COLLISION'):s.calloutTimer>0?s.callout:boatRamp?'BOAT RAMP':s.boundaryWarning?'RETURN TO THE ROUTE':s.preparedGravel&&!s.arena?'GRAVEL TRACK':s.offRoad?'LOOSE SURFACE':s.drifting?'DRIFT':'';
     ui['race-callout'].hidden=!callout||!!s.paused;
-    text('callout-kicker',s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
+    text('callout-kicker',worldJob?'':s.combatWrecking?'ARMOR GONE. RECOVERY IN PROGRESS.':s.catastrophic?'FIVE HITS. END OF THE ROAD.':crash?persistent?'THE CAR SURVIVES. THE CLOCK KEEPS RUNNING.':s.combat?'ARMOR HIT. AUTO RECOVERY.':hits===limit-1?'CHASSIS CRITICAL. NEXT CRASH ENDS RACE.':'SHAKE IT OFF. KEEP DRIVING.':boatRamp?'SLOW ROLL. STEER TO THE WATER. BRAKE TO BACK UP.':s.boundaryWarning?'COURSE BOUNDARY · RESET AHEAD':s.preparedGravel?'KEEP YOUR LINE':s.offRoad?dirtCourse?'CONTROL THE SLIDE':'FIND THE TARMAC':s.boosting?'FULL SEND':'MAKE EVERY MOVE COUNT');
     text('callout-text',callout);
-    ui['race-callout'].classList.toggle('crash-callout',crash);
+    ui['race-callout'].classList.toggle('crash-callout',!worldJob&&crash);
     ui.stage.classList.toggle('is-arena',!!app.duel.stageDef.arena);
     ui['arena-crush'].hidden=!app.duel.stageDef.arena||!!s.arena;
     const crushed=Math.max(0,Math.floor(s.crushCount||0));
@@ -312,15 +323,15 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('race-time',arena.ambush && arena.remainingSec === 0 ? `${arena.fortHealth} / 300` : arena.fuel && arena.phase==='sudden-death' ? 'NEXT DELIVERY' : time(arena.remainingSec));
       text('penalty-time','');
       text('lap-number',arena.modeLabel);
-      text('lap-time',arena.scoreText);
+      text('lap-time',worldJob ? '' : arena.scoreText);
       text('stage-label',arena.worldJob ? `${arena.modeLabel.toUpperCase()} · STEP ${s.arena.worldJob.job.stepIndex+1}` : `${app.player.name.toUpperCase()} · ${(s.cpuDifficulty||'medium').toUpperCase()} · SCRAPDOME`);
-      text('stage-objective',arena.worldJob ? arena.scoreText : arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
+      text('stage-objective',arena.worldJob ? '' : arena.ambush ? arena.enemyText : arena.convoy ? arena.scoreText : s.arena.mode === 'warlord' ?
         'FIRST TO THREE WRECKS' : arena.bounty ? 'HUNT THE BEACON · SURVIVE WITH THE BOUNTY' :
           arena.fuel ? `BRING FUEL TO YOUR ${arena.fuelColorName ?? 'MATCHING'} DEPOT` : 'WRECK THEM MORE THAN THEY WRECK YOU');
       // The objective line takes the colour of the player's own depot.
       ui['stage-objective'].style.color=arena.fuel&&arena.fuelColor?arena.fuelColor:'';
       text('route-percent','');
-      text('route-remaining',arena.scoreText);
+      text('route-remaining',worldJob ? '' : arena.scoreText);
       text('route-lap',worldJob ? '' : 'ARENA');
       text('route-section',worldJob ? (s.arena.worldJob.definition?.road ? `${s.arena.worldJob.definition.road.toUpperCase()} ROAD` : 'THE SCABLANDS') : 'THE SCRAPDOME');
       ui['progress-fill'].style.transform=`scaleX(${arena.ambush ? arena.progress : clamp(1-arena.remainingSec/Math.max(1,s.arena.timeLimitSec))})`;
