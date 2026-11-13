@@ -268,15 +268,16 @@ function handleFurnaceEvent(duel, worldJob, actor, event) {
   if (cue) furnaceCue(duel, actor, cue, event.seconds ?? 0);
   if (event.type === 'stoke' && duel.state.cpuDifficulty === 'easy')
     duel._storyCallout(FURNACE_ARROWS[event.door] ?? '', event.seconds, true, true);
-  else if (event.type === 'hit') duel._storyCallout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6, event.hit === 3);
+  // A door hit's line, the furnace bolting and turning round are instructions: the screen puts them first (urgent).
+  else if (event.type === 'hit') duel._storyCallout(captionFor(worldJob, FURNACE_HIT_LINES[event.hit]), 2.6, true);
   else if (event.type === 'shoveWarning') duel._storyCallout('HIS CHIMNEY IS LEANING. DROP BACK OR CROSS OVER!', event.seconds + .4, true, true);
   else if (event.type === 'shove') {
     duel._storyCallout('SHOVED!', 1.2);
     duel.emit({combatHit: true, strength: .4, enemy: true, victim: 'player',
       hitPosition: {x: actor.position.x, y: actor.position.y, z: actor.position.z}});
   }
-  else if (event.type === 'bolt') duel._storyCallout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3);
-  else if (event.type === 'turnAround') duel._storyCallout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4);
+  else if (event.type === 'bolt') duel._storyCallout(event.toLeg === 'run-back' ? 'HE IS RUNNING BACK TO THE WELL. AFTER HIM!' : 'HE IS RUNNING FOR THE BONEYARD. AFTER HIM!', 3, true);
+  else if (event.type === 'turnAround') duel._storyCallout('HE IS TURNING AROUND. KEEP WITH HIM!', 2.4, true);
   else if (event.type === 'gateBurnt') {
     // The scene keeps the fire on the gate until the job ends, even if a wreck starts the chase again.
     worldJob.gateBurnt = true;

@@ -6,6 +6,8 @@ import {worldJobMapData} from '../src/route-map.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
+import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 
 assert.equal(captionSeconds('x'), 2.5);
 assert.equal(captionSeconds('x'.repeat(100)), 6.7);
@@ -93,6 +95,39 @@ assert.equal(classes.get('crash-callout'),false);
 hud.stageTimeSec=5; hud.crashFlash=1; hud.combat=true; update(hud);
 assert.equal(ui['callout-text'].textContent,'COLLISION');
 assert.equal(ui['callout-kicker'].textContent,'ARMOR HIT. AUTO RECOVERY.');
+// Third round, item 3: instructions go first. The chase opens with Old Smoke's first line, then Cinder's instruction, then his second.
+const chase=EVERBURN_JOBS[5].steps[1];
+assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old-smoke.2','story.ember.cinder.23','story.ember.old-smoke.4']);
+{
+  const DT=1/120, said=[];
+  const chased=new Duel({seed:5,featureFlags:{'hidden-road':true,arsenal:true}});
+  chased.state.wastelandGateDiscovered=true;
+  assert(chased.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:5,cpuDifficulty:'medium',opponents:[],
+    weaponLoadout:['bomb','crossbow','star'],arsenalRank:9,job:{...EVERBURN_JOBS[5],seed:5,steps:[chase]}}));
+  const at=chased.course.nearest(0,-200); Object.assign(chased.state,{s:at.s,lateral:at.lateral,speedMph:0,headingError:0,yawVelocity:0});
+  chased.onStoryCaption=(text,urgent)=>said.push({text,urgent});
+  const furnace=()=>chased.state.arena.worldJob.actors.find(actor=>actor.id==='old-smoke-furnace');
+  const run=(until,limit=120)=>{for(let n=0;n<limit/DT&&!until();n++){chased.setInput(chased.state.status==='racing'?{throttle:0,brake:0,steer:0}:{throttle:0,brake:0,steer:0});chased.step(DT);}return until();};
+  const urgentOf=text=>said.find(item=>item.text.startsWith(text))?.urgent;
+  for (const [hit,lineId] of [[1,'story.ember.cinder.18'],[2,'story.ember.old-smoke.3'],[3,'story.ember.cinder.19']]) {
+    assert(run(()=>furnace()?.furnace.phase==='glow'),`door ${hit} glows`);
+    const door=worldJobHitTargets(chased).find(target=>target.kind==='furnace-vent');
+    reportWorldJobThingHit(chased,{...door,damage:1}); run(()=>said.some(item=>item.text.endsWith(EMBER_CAPTIONS[lineId].text)),2);
+    const line=said.find(item=>item.text.endsWith(EMBER_CAPTIONS[lineId].text));
+    assert.equal(line?.urgent,true,`the line for door hit ${hit} is urgent`);
+    if (hit===1) { run(()=>said.some(item=>item.text.startsWith('HE IS RUNNING')),6); assert.equal(urgentOf('HE IS RUNNING'),true,'the furnace bolting is urgent'); }
+  }
+  // The opening lines are not urgent: they come in order, one after another.
+  assert.equal(said.filter(item=>/^(Old Smoke|Cinder): /.test(item.text)).slice(0,3).map(item=>item.urgent).join(),'false,false,false');
+  const turner=new Duel({seed:6,featureFlags:{'hidden-road':true,arsenal:true}}); turner.state.wastelandGateDiscovered=true;
+  assert(turner.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:6,cpuDifficulty:'medium',opponents:[],job:{...EVERBURN_JOBS[5],seed:6,steps:[chase]}}));
+  const far=turner.course.nearest(0,-200); Object.assign(turner.state,{s:far.s,lateral:far.lateral,speedMph:0,headingError:0,yawVelocity:0});
+  const turned=[]; turner.onStoryCaption=(text,urgent)=>turned.push({text,urgent});
+  for(let n=0;n<8/DT&&!turner.state.arena.worldJob.actors.some(actor=>actor.furnace);n++){turner.setInput({throttle:0,brake:0,steer:0});turner.step(DT);}
+  const f=turner.state.arena.worldJob.actors.find(actor=>actor.furnace).furnace; f.metres=f.path.total-1;
+  for(let n=0;n<4/DT&&!turned.some(item=>item.text.startsWith('HE IS TURNING')) ;n++){turner.setInput({throttle:0,brake:0,steer:0});turner.step(DT);}
+  assert.equal(turned.find(item=>item.text.startsWith('HE IS TURNING'))?.urgent,true,'the furnace turning round is urgent');
+}
 const marked=new Duel({seed:2}); let received;
 marked.onStoryCaption=(...args)=>{received=args;};
 marked._storyCallout('arrow', 3, true, true);

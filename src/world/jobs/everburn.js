@@ -116,12 +116,14 @@ export const EVERBURN_JOBS = Object.freeze([
       lentWeapon:'flamethrower',
       restartLineId:'story.ember.cinder.26',
       startLineId:'story.ember.cinder.15', closing:['story.ember.cinder.16']}),
+      // EVERBURN-PLAY-FIXES: the opening order is Old Smoke's first line, then Cinder's instruction (hit a door while it glows), then
+      // Old Smoke's second line, so that the instruction is read before the first door glows.
       step('chase',{what:'Stop the furnace before it reaches Tin Town. Hit a door while it glows.', targetId:'old-smoke-furnace', actor:{id:'old-smoke-furnace', health:3, speed:14,
         path:furnacePath, legs:furnaceLegs, gateWaypoint:furnacePath.indexOf(furnaceGate)}, path:furnacePath, legs:furnaceLegs,
         // The chase ends on the third door hit, never on contact or distance
         // (src/world/jobs/old-smoke.js owns the rules).
         targetSpeed:14, leashDistance:Infinity, contactRadius:0, targetHealth:3, hitPart:'glowing-vent',
-        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:['story.ember.old-smoke.4', 'story.ember.cinder.23'],
+        requiredHits:3, lentWeapon:'flamethrower', startLineId:'story.ember.old-smoke.2', afterStartLineId:['story.ember.cinder.23', 'story.ember.old-smoke.4'],
         closing:['story.ember.cinder.20', 'story.ember.cinder.21']})],
     rewards:['cinder-crew-member','cinders-hand-flamer','ember-paint','everburn-lit']}),
 ]);

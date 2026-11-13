@@ -84,8 +84,8 @@ for (const [id, where] of Object.entries(NEW_IDS)) assert.equal(EMBER_CAPTIONS[i
 assert.equal(EMBER_CAPTIONS['story.ember.cinder.17'], undefined, 'the old chase line cinder.17 is removed');
 assert.match(EMBER_CAPTIONS['story.ember.cinder.21'].text, /^I'm with you now/, 'the existing Job 6 line cinder.21 is unchanged');
 const chase = EVERBURN_JOBS[5].steps[1];
-assert.deepEqual([chase.startLineId, ...[].concat(chase.afterStartLineId)], ['story.ember.old-smoke.2', 'story.ember.old-smoke.4', 'story.ember.cinder.23'],
-  'the chase starts with Old Smoke\'s two lines, then Cinder\'s');
+assert.deepEqual([chase.startLineId, ...[].concat(chase.afterStartLineId)], ['story.ember.old-smoke.2', 'story.ember.cinder.23', 'story.ember.old-smoke.4'],
+  'the chase starts with Old Smoke\'s first line, then Cinder\'s instruction, then Old Smoke\'s second line');
 assert.equal(chase.what, 'Stop the furnace before it reaches Tin Town. Hit a door while it glows.', 'the job\'s line on screen names Tin Town');
 assert.equal(EMBER_NOTE.id, EMBER_NOTE_ID);
 assert.equal(EMBER_NOTE.text, 'Driver, the forge at Tin Town has gone cold, and no forge means no boiler parts. A woman named Cinder is at the back gate with a pot of fire and a bad attitude. I like her. Go and see. Hollis');
