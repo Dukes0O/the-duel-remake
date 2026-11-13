@@ -425,6 +425,15 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-WAVE1-AUDIO-FLIGHT.md"
 
+  - id: QA-TEMP-CLEANUP
+    title: "Browser checks leave folders in Temp; one-time disk cleanup"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-TEMP-CLEANUP.md"
+
   - id: QA-SKI-FINISH-TIMEOUT
     title: "ski-finish browser scenario times out after the slalom"
     owner: "codex"
