@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-11-12T18:45:01.504Z
+Observed at: 2026-11-12T21:52:19.127Z
 
-Observation commit: 8c4bb175724b3d44978752ed5d9f124eb4e21cfb
+Observation commit: 8b4801892591748314a7e4172e1263e2625565a4
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 8c4bb175724b3d44978752ed5d9f124eb4e21cfb
+Integration HEAD: 8b4801892591748314a7e4172e1263e2625565a4
 
-Integration source: dirty (only the full-tier evidence ledger is excluded).
+Integration source: clean (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -31,8 +31,8 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | --- | --- | --- | --- | --- | --- |
 | codex/batch-3 | 6 | unknown | true | false | unknown |
 | codex/board-lines | 6 | unknown | true | false | unknown |
-| codex/bowl-art-rex | 6 | unknown | false | false | unknown |
-| codex/bowl-course | 6 | unknown | true | false | unknown |
+| codex/bowl-art-rex | 7 | unknown | false | false | unknown |
+| codex/bowl-course | 7 | unknown | true | false | unknown |
 | codex/car-art-bully | 6 | unknown | false | false | unknown |
 | codex/crew-story-join | 6 | unknown | true | false | unknown |
 | codex/mule-rails | 6 | unknown | true | false | unknown |
@@ -43,18 +43,18 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/rail-lines | 6 | unknown | true | false | unknown |
 | codex/rail-region | 5 | unknown | true | false | unknown |
 | codex/rail-steps | 6 | unknown | true | false | unknown |
-| codex/skin-waste | 6 | unknown | true | false | unknown |
+| codex/skin-waste | 7 | unknown | true | false | unknown |
 | codex/town-art-works | 3 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/town-art-works |
 | codex/tunnel-trial | 6 | unknown | false | false | unknown |
 | codex/wild-art-city | 6 | unknown | false | false | unknown |
-| codex/wild-art-desert | 6 | unknown | false | false | unknown |
+| codex/wild-art-desert | 7 | unknown | false | false | unknown |
 | codex/wild-art-waste | 6 | unknown | false | false | unknown |
 | codex/ww-art-crew | 6 | unknown | true | false | unknown |
 | codex/ww-art-dam | 6 | unknown | true | false | unknown |
 | codex/ww-art-mule | 7 | unknown | false | false | unknown |
 | codex/ww-art-rail | 5 | unknown | true | false | unknown |
 | codex/ww-art-whites | 5 | unknown | true | false | unknown |
-| codex/ww-boss | 6 | unknown | true | false | unknown |
+| codex/ww-boss | 7 | unknown | true | false | unknown |
 | lane/lab-formula-closed | 3 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
 
 ## Unmerged branches for idle review
@@ -63,13 +63,13 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 
 | Branch | Card | Last commit | Age (days) | Activity | Holds |
 | --- | --- | --- | ---: | --- | --- |
-| codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 6 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
+| codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 7 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 6 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 28 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/town-art-works | unknown | 2026-11-09T11:01:51-07:00 | 3 | last commit 2026-11-09T11:01:51-07:00 | docs/board/looks/town-art-works-sawmill/round-1-review.md, docs/board/looks/town-art-works-sawmill/round-1.jpg, docs/board/looks/town-art-works-sawmill/round-2-review.md, docs/board/looks/town-art-works-sawmill/round-2.jpg, docs/board/looks/town-art-works-sawmill/round-3.jpg |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 6 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 6 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
-| codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 6 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
+| codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 7 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 6 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 7 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
 
@@ -85,9 +85,9 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 497,720 B | +0 B | 500,000 B |
 | Review `looks/` | 77,987,976 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 1,336,970 B | +0 B | 5,000,000 B |
+| Added bytes in last merge | 319,223 B | -1,017,747 B | 5,000,000 B |
 | All `public/` | 703,857,851 B | +0 B | unavailable |
-| Git objects | 1,705,522,176 B | +6,144 B | unavailable |
+| Git objects | 1,709,580,288 B | +4,058,112 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: da2545fff86189e7a9e201316792c616233af341
 - Local main: missing
-- Local integration/wasteland: 8c4bb175724b3d44978752ed5d9f124eb4e21cfb
+- Local integration/wasteland: 8b4801892591748314a7e4172e1263e2625565a4
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
