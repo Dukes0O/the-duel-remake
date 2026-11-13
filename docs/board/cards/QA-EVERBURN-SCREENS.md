@@ -44,3 +44,21 @@ Job 6's defend step shows its opening line as the raw id "everburn-job-6-start".
   map draws only a step with a path. Every world job in the Scablands now draws its own ground: the path, else
   origin to destination through its safe points, else the return path, else the step's named places.
 
+## Result (built by Codex in three rounds; reviewed by Claude, 12 November 2026): merged
+
+Change note: `docs/changes/QA-EVERBURN-SCREENS.md`. Every placeholder line id is gone from the Everburn's jobs and a
+test keeps it so; 56 written lines, of which two are still asked for by nothing (`story.ember.cinder.7`, raiders in
+job 2, and `story.ember.moss.2`, Big Bess hit: their steps raise no event). The yard's unused gate buttons are
+removed. Job 6 starts 30 m short of the derrick. Every world job draws its own ground on the map.
+
+**Changed and removed assertions, reviewed by Claude (rule 18).** The three checks of the removed gate markup went
+with the markup. The scenario's gate fact became "the yard's Next up button starts Hot Delivery". The result fact
+moved from a hook that never existed to the tick and Auntie Solder's line on Hot Delivery's real results screen in
+`everburn-play`. The caption table grew from 54 to 56 with the two new lines. The map test's "a job with no path
+gives today's map" became "gives a local map with 120 m of ground", by the third round's design. Nothing is
+loosened.
+
+Claude ran `everburn`, `everburn-play` and `everburn-well` on the branch (3 of 3), `test-review-evidence` and
+`test-warlord-tollkeeper`, and on the merged result the build with `the-dig`, `field-battle`, `run-gas`,
+`scrapdome` and `grand-prix` (5 of 5). Not confirmed from a picture: job 6's first view of the derrick.
+
