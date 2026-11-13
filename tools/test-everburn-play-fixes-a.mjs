@@ -94,9 +94,34 @@ assert.equal(classes.get('crash-callout'),true);
 hud.stageTimeSec=4; update(hud); hud.crashFlash=0; hud.combatWrecking=false; update(hud);
 assert.equal(ui['callout-text'].textContent,'A spoken story line');
 assert.equal(classes.get('crash-callout'),false);
+// Third round, item 5. Changed from the first build, which showed COLLISION and its kicker here: a plain collision in a job shows
+// nothing in the caption's place and does not pause or cut the line on screen (the red flash over the picture stays).
 hud.stageTimeSec=5; hud.crashFlash=1; hud.combat=true; update(hud);
-assert.equal(ui['callout-text'].textContent,'COLLISION');
-assert.equal(ui['callout-kicker'].textContent,'ARMOR HIT. AUTO RECOVERY.');
+assert.equal(ui['callout-text'].textContent,'A spoken story line');
+assert.equal(ui['callout-kicker'].textContent,'');
+assert.equal(classes.get('crash-callout'),false);
+assert.equal(ui['crash-flash'].hidden,false);
+hud.stageTimeSec=5.5; hud.impactTimer=.5; hud.lastCrashReason='rock'; update(hud);
+assert.equal(ui['callout-text'].textContent,'A spoken story line'); assert.equal(ui['callout-kicker'].textContent,'');
+hud.stageTimeSec=6.6; hud.crashFlash=0; hud.impactTimer=0; update(hud);
+assert.equal(ui['callout-text'].textContent,'');
+// The wreck and the catastrophic crash still say so in a job.
+hud.stageTimeSec=7; hud.crashFlash=1; hud.catastrophic=true; update(hud);
+assert.equal(ui['callout-text'].textContent,'CATASTROPHIC IMPACT'); assert.equal(classes.get('crash-callout'),true);
+hud.catastrophic=false; hud.crashFlash=0;
+// A race and a Scrapdome event are exactly as before: a collision says COLLISION with its kicker.
+for (const kind of ['race','scrapdome']) {
+  const other=new Duel({seed:9,featureFlags:{'hidden-road':true}}), otherUi=new Proxy({}, {get:(target,key)=>target[key] ??= node()}), otherClasses=new Map();
+  other.state.wastelandGateDiscovered=true;
+  if (kind==='race') other.startCampaign({mode:'wasteland',car:'falcone_f42',discoveredGate:false});
+  else assert(other.startArenaEvent({car:'banshee_muscle',cpuDifficulty:'medium',seed:9,opponents:[{car:'dusthawk_rally'}]}));
+  otherUi['race-position'].closest=()=>({hidden:false}); otherUi['route-section'].closest=()=>({querySelector:()=>({textContent:''})});
+  otherUi['race-callout'].classList.toggle=(name,on)=>otherClasses.set(name,on);
+  const otherUpdate=createHudScreen({app:{duel:other,player:{name:'Test'},cameraMode:'chase'},ui:otherUi,text:(id,value)=>{otherUi[id].textContent=String(value);},time:String,credits:String,clamp:value=>Math.max(0,Math.min(1,value)),routeMap:{update(){}}});
+  const otherHud=other.state; otherHud.status='racing'; otherHud.countdown=0; otherHud.crashFlash=1; otherHud.combat=true; otherHud.combatWrecking=false; otherUpdate(otherHud);
+  assert.equal(otherUi['callout-text'].textContent,'COLLISION',kind); assert.equal(otherUi['callout-kicker'].textContent,'ARMOR HIT. AUTO RECOVERY.',kind);
+  assert.equal(otherClasses.get('crash-callout'),true,kind);
+}
 // Third round, item 3: instructions go first. The chase opens with Old Smoke's first line, then Cinder's instruction, then his second.
 const chase=EVERBURN_JOBS[5].steps[1];
 assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old-smoke.2','story.ember.cinder.23','story.ember.old-smoke.4']);

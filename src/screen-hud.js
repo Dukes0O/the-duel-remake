@@ -121,6 +121,9 @@ export function presentJumpHeight(readout, s, app, ui, text) {
   text('jump-height-peak',jumpHeight.phase==='landed'?'LANDED':`PEAK ${jumpHeight.peakMeters.toFixed(1)} m`);
   text('jump-distance',`DISTANCE ${(jumpHeight.distanceMeters||0).toFixed(1)} m · ${(jumpHeight.durationSeconds||0).toFixed(1)} s`);
 }
+// EVERBURN-PLAY-FIXES, third round: in a world job the crash message (and its kicker) shows only while the car is wrecked and
+// recovering or the crash is the catastrophic one. A plain collision shows nothing there and does not pause or cut the caption.
+const jobCrashShown = s => (s.crashFlash > 0 || s.impactTimer > 0) && (s.combatWrecking === true || s.catastrophic === true);
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
   const positionPanel=ui['race-position'].closest?.('.race-position');
   const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
@@ -131,13 +134,13 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const job = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
     if (!job) return;
     if (job !== captionJob) { captions.clear(state.stageTimeSec); captionJob = job; }
-    captions.add(line, urgent, state.stageTimeSec, fixedTime, state.crashFlash > 0 || state.impactTimer > 0);
+    captions.add(line, urgent, state.stageTimeSec, fixedTime, jobCrashShown(state));
   };
   function updateHud(s) {
     const worldJob=s.arena?.mode==='world-job';
     const jobRoad=worldJob ? worldJobMapRoad(s) : null;
     if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
-    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, s.crashFlash > 0 || s.impactTimer > 0) : '';
+    const storyCaption = worldJob ? captions.advance(s.stageTimeSec, jobCrashShown(s)) : '';
     if(worldJob!==lastWorldJob) {
       if(positionPanel && positionPanel.hidden!==worldJob) positionPanel.hidden=worldJob;
       lastWorldJob=worldJob;
@@ -265,8 +268,10 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
       text('countdown-number',Math.max(1,Math.ceil(s.countdown)));
       text('countdown-word',s.countdown>1?'GET READY':'MAKE IT COUNT');
     }
-    const crash=s.crashFlash>0||s.impactTimer>0;
-    ui['crash-flash'].hidden=!crash;
+    const crashFlashing=s.crashFlash>0||s.impactTimer>0;
+    // In a world job only a wreck (the car recovering) or the catastrophic crash takes the caption's place; a bump shows nothing here.
+    const crash=worldJob?jobCrashShown(s):crashFlashing;
+    ui['crash-flash'].hidden=!crashFlashing;
     const dirtCourse=!!app.duel.stageDef.offroad||!!app.duel.stageDef.arena;
     const trafficWreckCrash=crash&&s.combat&&s.calloutTimer>0&&s.callout?.startsWith('TRAFFIC WRECKED / IMPACT');
     // DEEP-RAMP-2: the concrete ramp has its own calm guidance, not a loose-surface warning.
