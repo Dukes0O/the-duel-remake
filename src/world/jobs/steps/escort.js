@@ -21,6 +21,18 @@ export const AMBUSH_WEAR_PER_SECOND = Object.freeze({easy: 1.5, medium: 5, hard:
 
 const at = place => place?.position ?? place;
 
+// EVERBURN-PLAY-FIXES, "An escort starts beside what it escorts": the player's car starts this far behind the truck's first
+// place and this far to her right, facing along her road, so the truck is in the first picture. `heading` is the game's own
+// (the direction of travel is (sin, cos)); her right-hand side is (-cos, sin).
+export const ESCORT_START_BEHIND_METRES = 10;
+export const ESCORT_START_RIGHT_METRES = 6;
+export function escortCarStart(path, behind = ESCORT_START_BEHIND_METRES, right = ESCORT_START_RIGHT_METRES) {
+  const from = at(path[0]), to = at(path[1]), length = Math.hypot(to.x - from.x, to.z - from.z);
+  const forwardX = (to.x - from.x) / length, forwardZ = (to.z - from.z) / length, tenth = value => Math.round(value * 10) / 10;
+  return Object.freeze({x: tenth(from.x - forwardX * behind - forwardZ * right), z: tenth(from.z - forwardZ * behind + forwardX * right),
+    heading: Math.atan2(forwardX, forwardZ)});
+}
+
 // How far along `path` the point `place` lies (the nearest point of the road to it), and the road's unit direction there.
 export function alongPath(path, place) {
   const points = (path ?? []).map(at), point = at(place);

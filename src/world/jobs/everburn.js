@@ -1,6 +1,7 @@
 // The Everburn story and Tin Town notice-board jobs. These definitions contain
 // only world-job data; the shared job engine owns all simulation rules.
 import {FURNACE_SKYLINE} from './furnace-sightings.js';
+import {escortCarStart} from './steps/escort.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.freeze({x, y:0, z}), radius});
 const path = (...places) => Object.freeze(places);
@@ -78,6 +79,8 @@ export const EVERBURN_JOBS = Object.freeze([
       speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
       // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. The first stands on her road at
       // (278, 188), 186 m from the start (it was (360, 270), 72 m from it). The second was (500, 90), 48 m from her road,
+      // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
+      carStart:escortCarStart(path(boneyard, safeRoad, tinTown)),
     // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
     resultLine:'The gas is in Tin Town and the forge is lit.',
       // out of reach of the 30 m that wears her health; it now stands on the road at (500, 41). The flamethrower is lent, as in job 1.
