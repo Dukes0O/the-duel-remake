@@ -12,4 +12,4 @@ What the sheet shows, in rows of three, to set beside `round-2.jpg`:
 
 Taken at 1536 by 864 and shown at 640 wide, High graphics, Medium, from the game's own camera, by scripted drivers stepping the real game.
 
-Verdict (Claude): to be written.
+Verdict (Claude): as for round 4; see its note and card EVERBURN-PLAY-FIXES, "Third round".

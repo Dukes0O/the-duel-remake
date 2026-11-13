@@ -119,4 +119,9 @@ In the first picture of every run and of the battle the derrick stands directly 
 
 Much closer, and the camera and the starts no longer stop a child: every job opens where the player can see the car and what to do, the clock reads, the lines stay long enough to read, and the yard says what to do after job 6. The first thing that would stop that child now is job 6's chase: the three or four lines said at its start queue up, so "When a door glows, hit it!" arrives after the door has glowed, and the line that says Cinder has joined the crew never appears at all. After that, the sparse map in job 2 and the Hand Flamer drawn as a launcher are small stops; the number of collisions flashing in the caption slot is a nuisance, not a stop. What I could not test is a real child's hands on the keys, which job 6's defence on Medium (a lost wave at 72 s, 229 s in all) will test hardest.
 
-Verdict (Claude): to be written.
+Verdict (Claude): much closer, and now it looks like a game being played: every job opens with the car and its task
+in view, Big Bess is beside the player at a run's start, the camera rides above the furnace when it must, the clock
+reads, and the yard says what to do after job 6. Ten of the thirteen faults are fixed. It is still not ready, for one
+reason that is Claude's own design: the caption queue shows every line for its full time one after another, so in
+job 6's chase "When a door glows, hit it!" comes after the door has glowed and broken, and the story's last line,
+Cinder joining the crew, is thrown away when the job ends. The third round is settled on card EVERBURN-PLAY-FIXES.

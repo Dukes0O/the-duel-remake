@@ -108,6 +108,36 @@ Left for other cards: Big Bess starts inside the well's box, so the derrick stan
 run's start (with the well's oversized box, SCABLANDS-LAND); the `tin-town-shell` solid sits 46 m west of the town
 that is drawn.
 
+## The second play, and the third round it calls for (Claude, 12 November 2026)
+
+Sheets `round-4.jpg` and `round-5.jpg` with `round-4-review.md`: the same play after parts A and B. Ten of the
+thirteen faults are fixed, the camera was never inside the furnace in real play, and the Easy driver did not circle.
+What remains is mostly the caption queue, which Claude designed too simply. Settled for part A's third round
+(Codex):
+
+1. **A line gives way when another is waiting.** With nothing waiting a line keeps its full reading time. Once
+   another line waits, the line on screen ends when it has had 2.5 seconds or 60 per cent of its reading time,
+   whichever is longer. The "crowded" rule of the first round goes.
+2. **A line that has waited 6 seconds is dropped,** unless it is a closing line. A late line is worse than none.
+3. **Instructions go first.** A door hit's line ("One down. Stay on him!" and the others), the furnace bolting or
+   turning round, and any line marked urgent on its step go to the front and are shown once the line on screen has
+   had 1.5 seconds. In job 6's chase the opening order becomes Old Smoke's first line, then Cinder's "He is heading
+   for Tin Town! When a door glows, hit it!", then Old Smoke's second line, so that the instruction is read before
+   the first door glows.
+4. **Closing lines are never lost.** A step's closing lines, and a line said as a job arrives or ends (the war
+   party line after a run), are held: the job waits for each closing line for that line's reading time where it
+   waited 2.2 seconds, and when a closing line arrives the screen drops whatever else is waiting and shows it at
+   once. This is the one place where a job's clock changes: only after the job is decided, never its outcome.
+   Tests that pin an end time are re-recorded with a reason each.
+5. **No COLLISION flashes in a job.** In a world job the caption's place shows a crash message only while the car
+   is wrecked and recovering or the crash ends the job; a bump shows nothing and never cuts a line.
+6. **The big map always has the land on it.** In every world job the big map marks and names the Scablands' five
+   places (the yard gate, Tin Town, the Everburn, the Dead Mall, the Boneyard) and draws the two gas roads faintly,
+   with the job's own ground bright on top, fitted to show all of it. The small panel is unchanged.
+
+Not in the third round: the Hand Flamer's look, the fire's glare over the small map when the furnace stops beside
+the car, and the Story Wall's "is done" rows.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.
