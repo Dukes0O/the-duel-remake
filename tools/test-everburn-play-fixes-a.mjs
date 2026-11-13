@@ -10,20 +10,39 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 assert.equal(captionSeconds('x'), 2.5);
 assert.equal(captionSeconds('x'.repeat(100)), 6.7);
 assert.equal(captionSeconds('x'.repeat(200)), 7.5);
-assert.equal(captionSeconds('x'.repeat(200), true), 5.25);
+// Third round: with nothing waiting a line keeps its full reading time.
+const long='x'.repeat(100), reading=captionSeconds(long);
+const alone=createCaptionQueue(); alone.add(long, false, 0);
+assert.equal(alone.advance(reading-.01), long); assert.equal(alone.advance(reading), '');
+// With another waiting, the line gives way after 60 per cent of its reading time (never under 2.5 s).
+const crowded=createCaptionQueue();
+crowded.add(long+'A', false, 0); crowded.add(long+'B', false, 0);
+assert.equal(crowded.advance(.6*captionSeconds(long+'A')-.01), long+'A');
+assert.equal(crowded.advance(.6*captionSeconds(long+'A')+.01), long+'B');
+const brief=createCaptionQueue(); brief.add('first', false, 0); brief.add('second', false, 0);
+assert.equal(brief.advance(2.49), 'first'); assert.equal(brief.advance(2.5), 'second');
+// A line already shown past its give-way time ends the moment another arrives; before that it kept its full time.
+const late=createCaptionQueue(); late.add(long, false, 0);
+assert.equal(late.advance(5), long); late.add('next', false, 5); assert.equal(late.advance(5), 'next');
+// A line that has waited 6 seconds is dropped. The line on screen is a timed one (12 s), which never gives way.
+const dropped=createCaptionQueue(); dropped.add('stays', false, 0, 12);
+dropped.add('late', false, 1); dropped.add('on time', false, 7);
+assert.equal(dropped.advance(6.99), 'stays'); assert.equal(dropped.advance(11.99), 'stays');
+assert.equal(dropped.advance(12), 'on time'); assert.equal(dropped.advance(30), '');
+const waits=createCaptionQueue(); waits.add('stays', false, 0, 12); waits.add('late', false, 1);
+assert.equal(waits.advance(6.99), 'stays'); assert.equal(waits.advance(12), '');
+// An urgent line is shown once the line on screen has had 1.5 seconds; the interrupted line carries on afterwards.
 const q=createCaptionQueue();
-q.add('first', false, 0); q.add('second', false, 0); q.add('third', false, 0); q.add('fourth', false, 0);
-assert.equal(q.advance(2.5), 'second');
-assert.equal(q.advance(5), 'third');
-q.add('urgent', true, 5.1); assert.equal(q.advance(6.49), 'third');
-assert.equal(q.advance(6.5), 'urgent'); assert.equal(q.advance(9), 'third');
-q.clear(9); assert.equal(q.advance(100), '');
-const crowded=createCaptionQueue(), long='x'.repeat(100);
-crowded.add('short', false, 0);
-for (let i=0;i<3;i++) crowded.add(long + i, false, 0);
-assert.equal(crowded.advance(2.5), long+'0');
-assert.equal(crowded.advance(7.23), long+'1');
-assert.equal(crowded.advance(11.96), long+'2');
+q.add(long, false, 0); q.add('urgent', true, 0.5);
+assert.equal(q.advance(1.49), long); assert.equal(q.advance(1.5), 'urgent');
+assert.equal(q.advance(1.5+2.49), 'urgent'); assert.equal(q.advance(1.5+2.5), long);
+assert.equal(q.advance(100), ''); q.add('again', false, 100); q.clear(100); assert.equal(q.advance(101), '');
+// An urgent line that arrives after the line on screen has already had 1.5 seconds cuts in at once.
+const quick=createCaptionQueue(); quick.add(long, false, 0); assert.equal(quick.advance(3), long);
+quick.add('door', true, 3); assert.equal(quick.advance(3), 'door');
+// Several urgent lines keep their order and none cuts the one before it until that line has had 1.5 seconds.
+const many=createCaptionQueue(); many.add(long, false, 0); many.add('one', true, 0); many.add('two', true, 0);
+assert.equal(many.advance(1.5), 'one'); assert.equal(many.advance(2.99), 'one'); assert.equal(many.advance(3), 'two');
 const step={targetId:'thief',leashDistance:150,leashLineId:'closer'}, view=gap=>({player:{position:{x:0,z:0}},actors:[{id:'thief',position:{x:gap,z:0}}]});
 let result=stepChase(step,{},view(100),0); result=stepChase(step,result.state,view(121),7.9);
 assert.equal(result.events.length,0); result=stepChase(step,result.state,view(119),.1); assert.equal(result.events.length,0);
