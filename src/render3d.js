@@ -747,9 +747,14 @@ export function attachRenderer(host, app) {
     const crashEffectsEnabled=!menu;
     const effectsField=armoredField||crashEffectsEnabled;
     if(combatPlayerExplosion && (!armoredField || opponentExplosions.length!==wreckCars)){
-      combatPlayerExplosion.dispose();combatPlayerExplosion=null;
-      opponentExplosions.forEach(effect=>effect.dispose());
-      opponentExplosions=null;sceneRevision++;
+      // Three's compileAsync polls every material it collected until its program is ready, and a disposed material has no
+      // program. A player who leaves a job soon after it starts can retire these effects while that poll is still open, so
+      // they leave the scene now and release their materials once the warmup is idle (the same rule retireObject follows).
+      const retiredEffects=[combatPlayerExplosion,...opponentExplosions];
+      combatPlayerExplosion=null;opponentExplosions=null;sceneRevision++;
+      for(const effect of retiredEffects)effect.group.removeFromParent();
+      const releaseEffects=()=>{for(const effect of retiredEffects)effect.dispose();};
+      if(warmup)warmup.releaseWhenIdle(releaseEffects);else releaseEffects();
     }
     if(effectsField&&!combatEffectsPrepared){
       if(!readinessClaimed){app.claimVisualReadiness?.(readinessOwner);readinessClaimed=true;}

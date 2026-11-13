@@ -307,3 +307,26 @@ after).
 - The solid `boneyard-planes`, and Big Bess's resting place at the Boneyard's own spot plus 18 m.
 - The 32 by 12 by 24 m far stand-in of the well.
 - The mall's 254 separate meshes (now merged at load).
+
+## Round 3 follow-up: the `everburn` browser scenario's `isReady` error (12 November)
+
+**Fault.** With the round 3 fixes and Codex's Everburn work on one branch, the `everburn` scenario failed 3 times in 3 with
+`Uncaught: TypeError: Cannot read properties of undefined (reading 'isReady')` inside three's `compileAsync`. It passed without the
+fixes.
+
+**Cause (measured, not assumed).** Three's `compileAsync` collects the scene's materials and polls each one's `currentProgram`
+every 10 ms; a material disposed while the poll is open has no program, so the poll throws. The scenario starts job 1 and leaves
+for the menu at once. An instrumented run (hooks on `renderer.compileAsync` and the renderer's property store, in an unminified
+bundle) showed the first `compileAsync` of the world's warmup opening at 13.4 s and still open at 15.5 s. At 15.05 s `frame()` in
+`src/render3d.js` retired the combat explosion effects (`combatPlayerExplosion.dispose()` and the opponents', because the mode left
+`wasteland`), disposing an unnamed `ShaderMaterial` straight away; the poll threw 23 ms later. It was not the Scablands scene's
+materials: every material the new Scablands code makes was still alive. The retirement was an old race that the round 3 fixes moved
+inside the window by making the warmup poll longer.
+
+**Fix.** `src/render3d.js` (the block that retires the explosion effects, near the `armoredField` check): the effects leave the scene
+at once and release their materials through `warmup.releaseWhenIdle`, the rule `retireObject` already follows, so they are disposed
+once no native poll remains. A player who starts a job and leaves at once no longer raises the error.
+
+**Checks.** `everburn` 3 passes in 3; `everburn-play`, `everburn-well`, `run-gas` and `field-battle` once; `test-scablands-scene`,
+`test-render-warmup` (304), `test-render-warmup-key` (39), `test-render-warmup-passes` (143), `test-render-readiness` (65); lane
+tier (84 passed, 0 failed); build (pass); the four other scenarios 4 of 4.
