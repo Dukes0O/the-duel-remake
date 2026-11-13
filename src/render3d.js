@@ -43,6 +43,7 @@ import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
+import { facingChaseView, machineLift, easeMachineLift, machineLookBlend } from './world-job-camera.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -639,7 +640,7 @@ export function attachRenderer(host, app) {
       for (const [object, visible] of visibility) object.visible = visible;
     }
   }
-  let ready = false, lastMenu = null, previousT = performance.now();
+  let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0;
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
@@ -896,6 +897,14 @@ export function attachRenderer(host, app) {
       camTarget.set(cp.x, cp.y + height + groundLift, cp.z);
       const aim = worldAtExtended(course, distance + (mode === 'hood' ? 42 : 26), lateral);
       lookTarget.set(aim.x, aim.y + (tall?1.65:1.05) + groundLift, aim.z);
+      // EVERBURN-PLAY-FIXES: a world job's chase camera stands behind the car along the car's own facing, not along the oval.
+      if(st.arena?.mode==='world-job'&&(mode==='chase'||mode==='wide')){
+        const facing=facingChaseView({x:pp.x,y:pp.y+supportLift+(st.airHeight||0)*.65,z:pp.z},pp.heading+(st.headingError||0),
+          {back:-back,height,aimHeight:tall?1.65:1.05});
+        camTarget.set(facing.position.x,facing.position.y,facing.position.z);lookTarget.set(facing.target.x,facing.target.y,facing.target.z);
+        const behind=course.nearest(camTarget.x,camTarget.z,distance);
+        camTarget.y=Math.max(camTarget.y,course.groundAt(behind.s,behind.lateral).y+.65);
+      }
       const view=directionalCameraPose(mode,{x:pp.x,y:pp.y+supportLift+(st.airHeight||0),z:pp.z},pp.heading+(st.headingError||0)+(st.slipAngle||0),tall);
       if(view){
         camTarget.set(view.position.x,view.position.y,view.position.z);lookTarget.set(view.target.x,view.target.y,view.target.z);
@@ -940,6 +949,7 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
+    camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
     if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
       camera.position.lerp(camTarget, 1 - Math.exp(-14 * dt));
@@ -953,6 +963,19 @@ export function attachRenderer(host, app) {
     if(!menu&&!st.onFoot&&app.cameraMode!=='hood'&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       camera.position.copy(clearCameraSightline(course,camera.position,
         {x:player.position.x,y:player.position.y+(tall?1.65:1.05),z:player.position.z},distance));
+    // EVERBURN-PLAY-FIXES: the camera never sits inside the furnace or Big Bess (a world job that has one): it rises above the machine and
+    // looks down at the car, and comes down smoothly when clear. Drawing only; nothing here reads or writes race state.
+    {
+      const jobActors=!menu&&!st.onFoot&&st.arena?.mode==='world-job'&&app.cameraMode!=='hood'?st.arena.worldJob?.actors:null;
+      const machines=jobActors?.length?world?.userData?.bigMachineBoxes?.().filter(box=>jobActors.some(actor=>actor.id===box.id)):null;
+      const required=machines?.length?machineLift(camera.position,machines):0;
+      machineLiftNow=jobActors?easeMachineLift(machineLiftNow,required,dt):0;
+      if(machineLiftNow>0){
+        camera.position.y+=machineLiftNow;machineLiftApplied=machineLiftNow;
+        const carAt=player.position,blend=machineLookBlend(machineLiftNow);
+        lookTarget.lerp(cameraBodyTarget.set(carAt.x,carAt.y+(tall?1.65:1.05),carAt.z),blend);
+      }
+    }
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){

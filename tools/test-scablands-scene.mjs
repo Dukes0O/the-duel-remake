@@ -8,7 +8,7 @@ import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 import {scablandsSurfaceHeightAt,scablandsGroundEdit,resetScablandsGroundEdit} from '../src/world/scablands-ground.js';
-import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+import {createScablandsScene,SCABLANDS_ASSETS,SCABLANDS_SOLIDS,BIG_MACHINE_BOXES} from '../src/world/scablands-scene.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {BONEYARD_WRECKS,BESS_REST} from '../src/world/boneyard-wrecks.js';
 import {createEverburnProps} from '../src/world/everburn-props.js';
@@ -105,6 +105,14 @@ bessActor.heading=undefined;bessActor.position={x:0,y:0,z:0};bessActor.pathIndex
 const escortAt=(actors,path=[])=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path}]},actors}}});
 syncScene(scene.group,escortAt([bessActor],[{position:{x:0,z:0}},{position:{x:100,z:0}}]));
 assert.ok(Math.abs(bessRig.rotation.y-Math.PI/2)<.001,'with no heading of her own, Big Bess faces the path point she is driving to');
+// EVERBURN-PLAY-FIXES: the camera reads the two big machines as boxes at their rigs, as drawn this frame.
+{
+  const bessBox=scene.group.userData.bigMachineBoxes().find(box=>box.id==='big-bess');
+  assert.ok(bessBox&&Math.abs(bessBox.x-bessRig.position.x)<.001&&Math.abs(bessBox.y-bessRig.position.y)<.001&&Math.abs(bessBox.z-bessRig.position.z)<.001&&Math.abs(bessBox.heading-bessRig.rotation.y)<.001,
+    "Big Bess's camera box stands where her rig is drawn, with her heading");
+  assert.deepEqual([bessBox.halfX,bessBox.minZ,bessBox.maxZ,bessBox.height],[1.4,-4.1,4.02,3.4],'and has her size');
+  bessRig.visible=false;assert.ok(!scene.group.userData.bigMachineBoxes().some(box=>box.id==='big-bess'),'a machine that is not drawn gives no box');bessRig.visible=true;
+}
 assert.ok(bessRig.getObjectByName('Exhaust smoke'),'Big Bess has her exhaust smoke');
 const doorMaterials=door=>[1,2,3].map(index=>scene.group.getObjectByName(
   door==='rear'?`old-smoke-vent-${index}-glow`:`Flank vent ${door==='left'?'':'-'}1 ${index} ember`).material.emissiveIntensity);
@@ -130,6 +138,12 @@ furnace.getWorldPosition(furnaceWorld);scene.group.getObjectByName('Flank vent 1
 assert.ok(furnaceWorld.distanceTo(new THREE.Vector3(actor.position.x,actor.position.y,actor.position.z))<8,
   'after the actor moves 100 m, the authored furnace follows within 8 m');
 assert.ok(Math.abs(furnace.parent.rotation.y-actor.heading)<.001,'the furnace follows the chase actor heading');
+{
+  const box=scene.group.userData.bigMachineBoxes().find(item=>item.id==='old-smoke-furnace');
+  assert.ok(box&&Math.abs(box.x-furnace.parent.position.x)<.001&&Math.abs(box.z-furnace.parent.position.z)<.001&&Math.abs(box.heading-actor.heading)<.001,
+    "the furnace's camera box follows the furnace's rig and heading");
+  assert.equal(box.height,BIG_MACHINE_BOXES['old-smoke-furnace'].height,'and is the size the camera rule reads');
+}
 assert.ok(litVentWorld.distanceTo(new THREE.Vector3(actor.position.x,actor.position.y,actor.position.z))<8,
   'the lit vent on the moving furnace is within 8 m of the hit target');
 const lit=()=>[doorMaterials('left'),doorMaterials('right'),doorMaterials('rear')];

@@ -3,7 +3,7 @@
 // World-job data only: the job engine and the job mode own every rule (raids: src/world/jobs/steps/escort.js).
 import {makeRng} from '../../rng.js';
 import {arenaReward} from '../../arena/arena-settlement.js';
-import {ambushRaiders} from './steps/escort.js';
+import {ambushRaiders, escortCarStart} from './steps/escort.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position: Object.freeze({x, y: 0, z}), radius});
 const path = (...places) => Object.freeze(places);
@@ -82,6 +82,9 @@ function drawPlaces(road, count, runs, marks = GAS_RUN_AMBUSH_METRES[road], salt
   return chosen;
 }
 
+// Both roads begin at the well, whose derrick box (18 m square) the truck's first place stands in. The car starts 13 m behind her instead of
+// the usual 10 so that it, and the camera behind it, stay at least 3 m clear of the derrick on both roads (EVERBURN-PLAY-FIXES).
+export const GAS_RUN_START_BEHIND_METRES = 13;
 const validRoad = road => Object.hasOwn(GAS_RUN_PATHS, road);
 const clampFeud = feud => Number.isSafeInteger(feud) ? Math.max(1, Math.min(4, feud)) : 2;
 
@@ -120,6 +123,7 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furn
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot, as in job 4.
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route}),
     path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp,
+    carStart: escortCarStart(route, GAS_RUN_START_BEHIND_METRES),
     ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: START_LINE[road],
     arrival: Object.freeze({wholeLineId: GAS_RUN_LINES.whole, hurtLineId: GAS_RUN_LINES.hurt, hurtBelow: GAS_RUN_LINES.hurtBelow,
       thenLineIds: reachesWarParty ? Object.freeze([GAS_RUN_LINES.warParty]) : Object.freeze([])})});
@@ -213,6 +217,7 @@ export function fieldBattleJob({runs = 0, difficulty = 'medium'} = {}) {
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route}),
     furnaceActor: furnace,
     path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3,
+    carStart: escortCarStart(route, GAS_RUN_START_BEHIND_METRES),
     lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp, ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: lines.start,
     // How it ends decides the closing line: the furnace dead (the battle is won), or still rolling when she arrives.
     arrival: Object.freeze({battle: Object.freeze({furnaceId: FURNACE_ID, wonLineIds: Object.freeze([lines.won]), arrivedLineIds: Object.freeze([lines.arrived])})})});

@@ -286,6 +286,12 @@ function arrangeWrecks(full,model,place,placeGround){
 // Old Smoke's model is stored at 1/1.5 and drawn at 1.5, so its wheels read 0.449 m stored and 0.673 m drawn.
 const BESS_WHEEL=Object.freeze({name:/^Big Bess wheel \d (left|right)$/,radius:.555});
 const FURNACE_WHEEL=Object.freeze({name:/^Furnace wheel \d (left|right)$/,radius:85*3.2/404});
+// The two big machines as boxes in their rig's own metres (+z is the way they face, +x their left), read from the models' own extents (the
+// furnace is drawn 1.5 times its stored size). Only the camera reads them: it keeps out of the boxes (src/world-job-camera.js).
+export const BIG_MACHINE_BOXES=Object.freeze({
+  'old-smoke-furnace':Object.freeze({halfX:2.12,minZ:-4.22,maxZ:6.18,height:5.06}),
+  'big-bess':Object.freeze({halfX:1.4,minZ:-4.1,maxZ:4.02,height:3.4}),
+});
 const wheelsOf=(model,kind)=>{const found=[];model.traverse(node=>{if(kind.name.test(plainName(node.name)))found.push(node);});return found;};
 const spinWheels=(wheels,turn)=>{for(const wheel of wheels)wheel.rotation.x=(wheel.rotation.x+turn)%(Math.PI*2);};
 
@@ -804,6 +810,13 @@ export function createScablandsScene(course,options={}){
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
+  // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].
+  group.userData.bigMachineBoxes=()=>{
+    const boxes=[];
+    for(const [id,rig] of [['old-smoke-furnace',furnaceRig],['big-bess',bessRig]])
+      if(rig?.visible)boxes.push({id,x:rig.position.x,y:rig.position.y,z:rig.position.z,heading:rig.rotation.y,...BIG_MACHINE_BOXES[id]});
+    return boxes;
+  };
   // Call after a work order commits its edits. The same height layer drives
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
   group.userData.updateGroundView=()=>{
