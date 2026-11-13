@@ -8,6 +8,8 @@ import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
+import {gasRunJob, fieldBattleJob, gasRunLength, GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 
 assert.equal(captionSeconds('x'), 2.5);
 assert.equal(captionSeconds('x'.repeat(100)), 6.7);
@@ -127,6 +129,78 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
   const f=turner.state.arena.worldJob.actors.find(actor=>actor.furnace).furnace; f.metres=f.path.total-1;
   for(let n=0;n<4/DT&&!turned.some(item=>item.text.startsWith('HE IS TURNING')) ;n++){turner.setInput({throttle:0,brake:0,steer:0});turner.step(DT);}
   assert.equal(turned.find(item=>item.text.startsWith('HE IS TURNING'))?.urgent,true,'the furnace turning round is urgent');
+}
+// Third round, item 4: the lines said as a job is decided are kept, in order, and the results screen shows them above the result line.
+{
+  const DT=1/120, metric=(label,value)=>`<m>${label}:${value}</m>`, action=(label,verb)=>`<b>${verb}</b>`;
+  const flags={'hidden-road':true,arsenal:true,'arsenal-wave3':true,'warlord-cards':true,'crew-gear':true};
+  const start=(job,seed=1)=>{
+    const duel=new Duel({seed,featureFlags:flags}); duel.state.wastelandGateDiscovered=true;
+    assert(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed,cpuDifficulty:'medium',opponents:[],
+      weaponLoadout:['bomb','crossbow','star'],arsenalRank:9,job:{...job,seed}}));
+    return duel;
+  };
+  const jobOf=duel=>duel.state.arena.worldJob, furnaceOf=duel=>jobOf(duel).actors.find(actor=>actor.furnace), bessOf=duel=>jobOf(duel).actors.find(actor=>actor.id==='big-bess');
+  const play=(duel,until,seconds=400,each=null)=>{for(let n=0;n<seconds/DT&&!until()&&duel.state.status!=='arena_result';n++){
+    duel.setInput({throttle:0,brake:duel.state.status==='racing'?1:0,steer:0,boost:false,interact:false}); each?.(); duel.step(DT);} return until();};
+  const hitDoor=duel=>{const f=furnaceOf(duel).furnace; reportWorldJobThingHit(duel,{id:`old-smoke-furnace:door-${f.door}`,actorId:'old-smoke-furnace',kind:'furnace-vent',door:f.door,damage:1,glowing:true});};
+  const stand=(truck,path,metres)=>{ // Big Bess `metres` from the start of her road, heading for the next place.
+    const points=path.map(item=>item.position??item); let left=metres;
+    for(let i=1;i<points.length;i++){const length=Math.hypot(points[i].x-points[i-1].x,points[i].z-points[i-1].z);
+      if(left<=length||i===points.length-1){Object.assign(truck.position,{x:points[i-1].x+(points[i].x-points[i-1].x)*left/length,z:points[i-1].z+(points[i].z-points[i-1].z)*left/length});truck.pathIndex=i;return;} left-=length;}};
+  const screenOf=(duel,gasRun)=>{ if(gasRun) duel.state.arena.result.gasRun=gasRun; return arenaResultsScreen(duel.state,{metric,action,escapeHTML:String}); };
+  const said=id=>{const record=EMBER_CAPTIONS[id]; return `${record.who}: ${record.text}`;};
+  // Job 6: both of Cinder's closing lines, then the result line, and nothing twice.
+  {
+    const duel=start({...EVERBURN_JOBS[5],steps:[chase]});
+    const at=duel.course.nearest(0,-200); Object.assign(duel.state,{s:at.s,lateral:at.lateral,speedMph:0,headingError:0,yawVelocity:0});
+    let hits=0;
+    play(duel,()=>false,400,()=>{if(hits<3&&furnaceOf(duel)?.furnace.phase==='glow'){hitDoor(duel);hits++;}});
+    assert.equal(duel.state.status,'arena_result'); assert.equal(duel.state.arena.result.winnerId,'player');
+    assert.deepEqual(jobOf(duel).endLines.map(line=>line.lineId),['story.ember.cinder.20','story.ember.cinder.21']);
+    const screen=screenOf(duel);
+    assert.deepEqual(screen.closing,[said('story.ember.cinder.20'),said('story.ember.cinder.21')]);
+    assert.ok(screen.description.includes(EMBER_CAPTIONS['story.ember.hollis.1'].text));
+    assert.ok(!screen.closing.some(line=>screen.description.includes(line.replace(/^[^:]*: /,''))));
+    // Only the last step's closing lines count: the defence's own closing line ("Valve's free") is not on the list.
+    assert.ok(!jobOf(duel).endLines.some(line=>line.lineId==='story.ember.cinder.16'));
+  }
+  // A line the result line already shows is not said twice, and a lost job shows no closing lines.
+  {
+    const duel=new Duel({seed:3}); duel.state.arena={mode:'world-job',result:{winnerId:'player'},worldJob:{definition:{...EVERBURN_JOBS[2]},
+      endLines:[{lineId:'story.ember.cinder.10',text:said('story.ember.cinder.10')},{lineId:'story.ember.cinder.22',text:said('story.ember.cinder.22')}]}};
+    assert.deepEqual(screenOf(duel).closing,[said('story.ember.cinder.22')]);
+    duel.state.arena.result.winnerId='cpu'; assert.deepEqual(screenOf(duel).closing,[]);
+  }
+  // A Boneyard run that takes the feud to War party: Moss's arrival line, then Auntie Solder's war party line.
+  for (const [health,arrival] of [[100,'story.ember.moss.8'],[40,'story.ember.moss.9']]) {
+    const job=gasRunJob({road:'boneyard',feud:3,runs:2,difficulty:'medium'}), duel=start(job);
+    play(duel,()=>duel.state.status==='racing'&&!!bessOf(duel),20);
+    stand(bessOf(duel),GAS_RUN_PATHS.boneyard,gasRunLength('boneyard')-30);
+    play(duel,()=>false,120,()=>{ if(duel.state.status==='racing'&&!bessOf(duel).atDestination) bessOf(duel).health=health; });
+    assert.equal(duel.state.arena.result?.winnerId,'player');
+    assert.deepEqual(jobOf(duel).endLines.map(line=>line.lineId),[arrival,'story.ember.auntie-solder.9']);
+    const screen=screenOf(duel,{road:'boneyard',feud:4,word:'War party',runs:3,reachedWarParty:true});
+    assert.deepEqual(screen.closing,[said(arrival),said('story.ember.auntie-solder.9')]);
+    assert.ok(!screen.closing.some(line=>screen.description.includes(line)));
+  }
+  // The battle's two endings.
+  for (const [ending,lineId] of [['arrived','story.ember.auntie-solder.10'],['won','story.ember.auntie-solder.11']]) {
+    const duel=start(fieldBattleJob({runs:0,difficulty:'medium'})), path=GAS_RUN_PATHS.boneyard;
+    play(duel,()=>duel.state.status==='racing'&&!!bessOf(duel),20);
+    stand(bessOf(duel),path,560);
+    if (ending==='won') {
+      play(duel,()=>furnaceOf(duel)?.furnace.dead===true,300,()=>{bessOf(duel).health=100; const f=furnaceOf(duel)?.furnace; if(f&&f.phase==='glow')hitDoor(duel);});
+      assert.equal(furnaceOf(duel).furnace.dead,true);
+    }
+    stand(bessOf(duel),path,gasRunLength('boneyard')-30);
+    play(duel,()=>false,120,()=>{ if(!bessOf(duel).atDestination) bessOf(duel).health=100; });
+    assert.equal(jobOf(duel).battleEnding,ending); assert.equal(duel.state.arena.result?.winnerId,'player');
+    assert.deepEqual(jobOf(duel).endLines.map(line=>line.lineId),[lineId]);
+    const screen=screenOf(duel,{road:'boneyard',feud:4,word:'War party',runs:1,battle:ending});
+    assert.deepEqual(screen.closing,[said(lineId)]);
+    assert.ok(!screen.description.includes(EMBER_CAPTIONS[lineId].text));
+  }
 }
 const marked=new Duel({seed:2}); let received;
 marked.onStoryCaption=(...args)=>{received=args;};

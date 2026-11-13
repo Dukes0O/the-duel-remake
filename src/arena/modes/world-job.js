@@ -46,6 +46,22 @@ function urgentCaption(worldJob, lineId, marked = false) {
     (step?.urgentLineIds ?? []).includes(lineId) ||
     [...(step?.sayNear ?? []), ...(step?.sayOnce ?? [])].some(cue => cue?.lineId === lineId && cue.urgent === true);
 }
+// EVERBURN-PLAY-FIXES, third round: every story line said from the moment a job's last step is decided (the step's closing lines, a
+// run's arrival lines, the war party line) is kept, in order, on the world job (`endLines`: {lineId, text}), so that the results
+// screen can show them. Nothing in a job reads this list: no rule, clock, pay or outcome depends on it.
+function rememberEndLine(worldJob, lineId, text) {
+  const job = worldJob.job, last = job.steps.length - 1, step = job.steps[last];
+  if (!text || job.stepIndex !== last || job.stepState?.linesClosing !== true) return;
+  if (![...(step.closing ?? []), ...(job.stepState.closingLines ?? [])].includes(lineId)) return;
+  worldJob.endLines ??= [];
+  if (!worldJob.endLines.some(line => line.lineId === lineId)) worldJob.endLines.push({lineId, text});
+}
+// A line the job says: the screen gets it as a caption, and the list above keeps it if the job is ending.
+function sayLine(duel, worldJob, lineId, marked) {
+  const text = captionFor(worldJob, lineId);
+  duel._storyCallout(text, 2.2, urgentCaption(worldJob, lineId, marked === true));
+  rememberEndLine(worldJob, lineId, text);
+}
 const WELL_WEAR_RANGE = 10;
 const WELL_WEAR_PER_SECOND = 1;
 
@@ -502,9 +518,7 @@ function applyRequests(duel, worldJob, requests) {
       const entries = worldJob.job.steps[worldJob.job.stepIndex]?.raiderEntries;
       spawnWave(duel, worldJob, entries?.length ? {...request, from: farthestEntry(duel, entries)} : request, key);
     }
-    else if (request.type === 'say' && request.lineId) {
-      duel._storyCallout(captionFor(worldJob, request.lineId), 2.2, urgentCaption(worldJob, request.lineId, request.urgent === true));
-    }
+    else if (request.type === 'say' && request.lineId) sayLine(duel, worldJob, request.lineId, request.urgent);
     else if (request.type === 'lendWeapon' && typeof request.weapon === 'string') {
       duel.state.weaponLoadout = [...new Set([...(duel.state.weaponLoadout || []), request.weapon])];
     }
@@ -676,9 +690,7 @@ export function stepWorldJob(duel, dt) {
       worldJob.carrying = event.id;
       worldJob.inventory = [...new Set([...(worldJob.inventory ?? []), event.id])];
     }
-    if (event.type === 'say' && event.lineId) {
-      duel._storyCallout(captionFor(worldJob, event.lineId), 2.2, urgentCaption(worldJob, event.lineId, event.urgent === true));
-    }
+    if (event.type === 'say' && event.lineId) sayLine(duel, worldJob, event.lineId, event.urgent);
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
