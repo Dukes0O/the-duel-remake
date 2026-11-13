@@ -32,6 +32,8 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
     <footer class="lc-bar"><p class="lc-prompt"></p><div class="lc-actions"></div></footer>`;
   // A lesson that hands its numbers to the page (the stage step) gets a tighter frame, so that the board keeps its height.
   if (board.strip) root.classList.add('lc-staged');
+  // A wide board (LAB-LOOK round 13): while the physics panel is open, Brian's column and the panel give up width to the picture.
+  if (area.width > 1000) root.classList.add('lc-wide');
   stage.append(root);
   const $ = selector => root.querySelector(selector);
   const canvas = $('.lc-canvas'), ctx = canvas.getContext('2d');
@@ -223,6 +225,7 @@ export function createClassroomUi({stage, app, lesson, name, onLeave, startChall
   function paintPhysics(v) {
     const formulas = v.formulas ?? [], open = formulas.length > 0 && physicsOpen();
     if ($('.lc-physics').hidden === open) $('.lc-physics').hidden = !open;
+    if (root.classList.contains('lc-physics-open') !== open) root.classList.toggle('lc-physics-open', open);
     const offer = formulas.length > 0 && !open;
     if ($('.lc-show-physics').hidden === offer) $('.lc-show-physics').hidden = !offer;
     if (!open) return;

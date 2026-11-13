@@ -162,15 +162,15 @@ has none. Each follows a thing this round removed or moved by design; nothing is
 Next round (not started): a redder flame core seen close, a boarded front and a sign on the mall's road side, larger
 things beside the well, stand-ins beyond 280 m that look like the place, and the three items left out above.
 
-## Open fault, found when the round 3 fixes met Codex's Everburn work (12 November 2026, paused at 14:50)
+## The fault found when the round 3 fixes met Codex's Everburn work: fixed (12 November 2026)
 
-On branch `c/game-audit-experience-2d694d` the `everburn` browser check fails every time, alone, with "Cannot read
-properties of undefined (reading 'isReady')" inside three's `compileAsync` poll. It passes on integration at
-62065711b, which has Codex's work without the round 3 fixes. The check starts job 1 and leaves for the Story Wall at
-once. Claude's guess, not confirmed: something is released, or never compiled, while the warm-up's poll is still
-running (`src/render-warmup.js`), and the well's new shader materials make the warm-up long enough to show it. A
-helper was looking for the cause and was stopped for the pause before it reported. **Until this is fixed in the
-game, the branch does not go to integration.** The fix must not be to make the check wait.
+The `everburn` browser check threw "Cannot read properties of undefined (reading 'isReady')" on the combined branch
+every time. Cause, measured by the helper in an unminified build: an old race in `src/render3d.js`. Leaving the
+Wasteland retired the combat explosion effects and released their materials at once, while three's `compileAsync`
+poll from the job's start was still reading them. Every other retirement in that file already waits for the warm-up
+to be idle; this one did not. The round 3 fixes only made the warm-up long enough for the check to leave inside it.
+Fix (commit e9e23a123): the effects leave the scene at once and their materials are released when the warm-up is
+idle. `everburn` passes 3 times in 3; the four warm-up tests pass (304, 39, 143, 65); lane tier 84 of 84; build.
 
 ## Checks (named before code)
 

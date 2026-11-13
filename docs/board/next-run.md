@@ -13,26 +13,11 @@ This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's 
 - **Codex:** photos and painted pictures with its image tool, long runs, the nightly full check, and its ready cards
   on the board. No new Blender art card starts until Claude's list of code-drawn work is on the board.
 
-## Where the afternoon run stopped (12 November, 14:50, paused for quota until after 16:40)
-
-- **On integration:** Codex's Everburn work (QA-EVERBURN-SCREENS: the story's written lines are shown, every
-  Scablands job draws its own ground on the map, job 6 starts outside the derrick). Checked and built.
-- **On branch `c/game-audit-experience-2d694d` only, not on integration:** the wide board on Fuel, Wax, Launch and
-  Projectile (LAB-LOOK rounds 11 and 12, judged and accepted) and SCABLANDS-LAND round 3 (seven fixes to the well,
-  the Dead Mall and the Boneyard, judged and accepted). Lane tier 71 of 72 (the one is the town timing test, which
-  passes alone), build, and 28 of 29 browser checks on the combined branch.
-- **What holds the branch back:** the `everburn` browser check throws an error on it every time (card
-  SCABLANDS-LAND, "Open fault"). First job on resuming: find the cause, fix it in the game, rerun `everburn` three
-  times and the 24 Lab checks once (Launch and Projectile merged after the combined run), then fast-forward
-  integration.
-- **Then:** play the Everburn end to end by script on Medium with pictures; LAB-LOOK round 13 (the physics panel);
-  SCABLANDS-LAND's next round.
-
 ## Now, in this order
 
 | Work | Card | Where it stands |
 | --- | --- | --- |
-| The Lab: a compelling place to learn | LAB-LOOK | All sixteen lesson boards and their answer cards are redrawn, Brian has painted portraits, the old lesson frame is gone, and Lift has the stage step (numbers in a strip under the board, the scene larger). Braking, Fuel, Wax, Launch and Projectile have the wide board (rounds 10 to 12, merged). Next: round 13, by Claude: with the physics panel open the wide boards are too small, so the panel must take its room from Brian's column; then the challenges in the 3D world; then the walking hangar |
+| The Lab: a compelling place to learn | LAB-LOOK | All sixteen lesson boards and their answer cards are redrawn, Brian has painted portraits, the old lesson frame is gone, and Lift has the stage step (numbers in a strip under the board, the scene larger). Braking, Fuel, Wax, Launch and Projectile have the wide board (rounds 10 to 12, merged). With the physics panel open the two columns now give width to the picture (round 13). Next: the three weak pictures listed under round 13 on the card; then the challenges in the 3D world; then the walking hangar |
 | The Scablands as a place | SCABLANDS-LAND | Models carry their colours, wear and ground are drawn in code, the road is flat, Tin Town has a gate and 45 shacks. Next: the other places looked at the same way (the well, the Dead Mall, the Boneyard), then a frame check |
 | When a boss comes out | `docs/FEUDS_AND_RUNS.md` | Step 1 (EVERBURN-RUN-AT-TOWN), step 2 (RUN-GAS) and the first field battle (FIELD-BATTLE-ASH) are built with their switches off. The battle's hunt was redesigned on 12 November (the furnace catches up, fire lands before every door, it burns its coal after her third rest) and a job shows its own road on the map. Next: play all three through by hand; then feuds for a second group and the Scrapdome challenge |
 | Finish and release the Everburn | QA-EVERBURN-SCREENS, EVERBURN-FURNACE-LOOK | Raw line names still show at the start of jobs 1, 2, 5 and 6. The story needs one play from end to end and a frame check before its switch goes on |

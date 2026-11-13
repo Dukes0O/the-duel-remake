@@ -275,16 +275,29 @@ against fixed numbers, which is stronger. `tools/test-lab-classroom-projectile.m
 the board's own geometry, and "Show me lands on the board" allows the board's width, 1320, where it allowed 1000.
 The two scenarios fit a board 1320 wide, and their click and drag moved with the controls. Nothing is loosened.
 
-## Round 13 (not started; Claude): the physics panel must not shrink the picture
+## Round 13 (Claude, 12 November 2026): with the physics panel open, the two columns give up width to the picture
 
-With the physics panel open a wide board is fitted by width and is about a quarter smaller than the old board was,
-with text near 8 pixels. "That is accepted" in the wide board's rules above was wrong. The stage changes, not the
-boards: when the physics panel is open on a wide board it takes its room from Brian's column (Brian's page narrows
-or the physics shows as a tab of his column), so that the picture keeps its width. One change in
-`classroom-ui.js` and `classroom.css`, with a sheet of all five wide boards, panel open, before and after.
+The physics panel is open by default on a window 1,500 pixels wide or more, so on the laptop the open state is the
+one a player sees first. Measured on Braking with a scratch browser script (not kept), window 1536 by 864:
 
-Also for round 13: Projectile's short falls leave the right of the board to sky and ruler; Launch's job card hides a
-rising arc for ramps of 70 degrees or more; Wax's three-strip step leaves the right third bare.
+| State | Picture's width | Scale of the board |
+| --- | --- | --- |
+| Panel closed | 1,072 px | 0.81 |
+| Panel open, before this round | 758 px | 0.57 |
+| Panel open, after this round | 872 px | 0.66 |
+| The old board (1000 wide), panel open | 758 px | 0.76 |
+
+At 1920 by 1080 the open picture goes from 1,142 to 1,256 px. The change: on a wide board with the panel open,
+Brian's column narrows from 410 to 340 px and the panel from 300 to 264 (`classroom.css`, two classes set by
+`classroom-ui.js`: `lc-wide` and `lc-physics-open`). A board 1000 wide is laid out exactly as before.
+
+Why this is enough for now: the wide boards draw their subjects larger inside the board (Braking's close-up car
+1.3 times, Launch's flight 2.3 times), so with the panel open a subject is now as large as on the old board or
+larger, and the smallest text is about 10 pixels where the old boards had 8 to 10. What it does not fix: with the
+panel open the board is fitted by width and the wall shows above and below it.
+
+Still open for a later round: Projectile's short falls leave the right of the board to sky and ruler; Launch's job
+card hides a rising arc for ramps of 70 degrees or more; Wax's three-strip step leaves the right third bare.
 
 ## Order of work
 

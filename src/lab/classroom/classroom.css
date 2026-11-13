@@ -61,6 +61,10 @@
 /* The physics panel: the formulas of this step, with the numbers now on the board. */
 .lc-physics { flex: 0 0 300px; min-width: 0; display: flex; flex-direction: column; border: 2px solid #4a524e; border-radius: 8px; background: #161c1d; overflow: hidden; }
 .lc-physics[hidden], .lc-show-physics[hidden] { display: none; }
+/* A wide board with the physics panel open (LAB-LOOK round 13): the two columns narrow so that the picture keeps its size. */
+.lc-wide.lc-physics-open .lc-main { gap: 10px; }
+.lc-wide.lc-physics-open .lc-brian { flex-basis: 340px; }
+.lc-wide.lc-physics-open .lc-physics { flex-basis: 264px; }
 .lc-physics header { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 5px 8px 5px 12px; border-bottom: 1px solid #343c39; }
 .lc-physics h3 { margin: 0; font-size: 19px; color: #edc557; }
 .lc-physics header button { padding: 2px 8px; border: 1px solid #8f9791; border-radius: 5px; background: #252c29; font-size: 14px; }
