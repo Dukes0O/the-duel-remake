@@ -140,6 +140,30 @@ What remains is mostly the caption queue, which Claude designed too simply. Sett
 Not in the third round: the Hand Flamer's look, the fire's glare over the small map when the furnace stops beside
 the car, and the Story Wall's "is done" rows.
 
+## Third round result (built by a Sonnet helper; reviewed by Claude, 12 November 2026): merged
+
+Sheet `docs/board/looks/everburn-play/round-6.jpg` with the caption tables in its note; change note
+`docs/changes/EVERBURN-PLAY-FIXES-A.md`, "Third round". All six items are built. In job 6's chase the longest wait
+for a line is 2.0 s on Medium (was 7.7) and 1.25 s on Easy (was 12.4), and nothing is dropped. One rule the helper
+added and Claude accepts: a line cut short by an urgent one comes back once at most, and only if it had less than
+60 per cent of its time.
+
+**Changed assertions, reviewed by Claude (rule 18).** `tools/test-ember-lines.mjs` and `tools/test-old-smoke.mjs`:
+the chase's three opening lines are in the new order (Old Smoke, Cinder's instruction, Old Smoke), by item 3; the
+check that the first door stokes after the third line is untouched. `tools/test-everburn-play-fixes-a.mjs`, the
+queue's own test from this morning: the checks of the "crowded" rule went with the rule; the timings of the
+four-line case are replaced by checks of the new rules; a collision in a job now leaves the caption alone where it
+said COLLISION (a race and the Scrapdome keep their values); and the test now counts every assertion, 291 where it
+said 43. Each follows a rule this round changed by design; nothing is loosened. Replay fingerprints did not move
+(297 race and 12 combat checks); `test-field-battle` 796, `test-run-gas` 1,116, `test-old-smoke` 650.
+
+**Where the story stands after three rounds.** Fixed and seen in real play: starts, cameras, captions, the screen's
+race leftovers, the yard after job 6, closing lines. Still open, none of which stops a child: the Hand Flamer drawn
+as a launcher tube; a place-only job as a few dots on the big map (job 2's lamps merge); "Road is clear" and the
+raiders' toll message lying over the rear-view mirror; the story caption running under the open big map; Big Bess
+starting inside the well's box. Before the switch goes on: a play by hand by Kyle or Gratian on Easy and Medium, a
+frame check in the Scablands with the laptop alone, and the full tier.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.

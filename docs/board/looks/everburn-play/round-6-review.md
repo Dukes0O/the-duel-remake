@@ -97,4 +97,9 @@ At 13.75 s of a Boneyard run (the fighting driver, its first touch of anything) 
 5. While the big map is open, the large italic story caption still runs under its edges (pictures 1 and 3).
 6. Cinder's last line, "I'm with you now", is up for only 1.2 s before the screen changes; it stays on the results screen, so nothing is lost.
 
-Verdict (Claude): to be written.
+Verdict (Claude): accepted and merged. The longest wait for any line in job 6's chase fell from 7.7 seconds to 2.0 on
+Medium and from 12.4 to 1.25 on Easy, and no line was dropped. Cinder's instruction is read 5 seconds before the first
+door glows; the bar at the top of the screen says "Hit a door while it glows" throughout, so the instruction need not
+still be on screen at the glow. Cinder's two closing lines, the war party line and the battle's ending line are on
+their results screens. The big map shows the land. Still to do, on the card: a place-only job is a few dots on the big
+map, two other messages still lie over the rear-view mirror, and the story caption runs under the open big map.
