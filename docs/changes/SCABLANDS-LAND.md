@@ -640,7 +640,7 @@ under 12 microseconds. `test-ember-pot` holds the ember's three drives. The thre
 ### Results
 
 - `test-scablands-regions` 12 of 12; `test-scablands-size` 9; `test-scablands-scene` pass; `test-scablands-ground` 5; `test-ember-pot` 50 checks; `test-everburn-play-start` 358; `test-everburn-play-fixes-a` 291 and `-round4` 78;
-  `test-run-gas` 1,118; `test-field-battle` 796; `test-old-smoke` 655; `test-everburn-easy` pass (18 min: all nine jobs, both roads); `test-circuits` 232,142 checks; `test-replays` 297 and
+  `test-run-gas` 1,118; `test-field-battle` 796; `test-old-smoke` 655; `test-everburn-easy` pass (18 min: all nine jobs, both roads); `test-run-gas-medium` pass (28 min); `test-circuits` 232,142 checks; `test-replays` 297 and
   `test-combat-replays` 12: no fingerprint moved. No world signature exists for the Scablands and none was regenerated.
 - Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, PowerShell): 131 suites. Two failed at first: `test-p4-audio` (the pinned old sound bank saw the nine new cues; they are excluded from the pin as the ember's three were: `GROUND_CUES`) and
   `test-review-evidence`, which fails until Claude writes `docs/board/looks/scablands-land/round-5-review.md` for the sheet `round-5.jpg` (expected). `npm run build`: pass.
