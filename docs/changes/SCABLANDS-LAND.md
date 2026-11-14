@@ -695,6 +695,104 @@ more than 1,000 m from the oval road).
 The dirt ring round the yard (`ellipseClosest`, the oval road ribbon, `roadRibbon`, `scablandsSurfaceAt`'s ring), the delivery road (`deliveryRoad`, `DELIVERY_ROAD`), the ember's
 road yes or no (`onRoad`, `roughFreeKmh`), the old crack picture (`createGroundLook` in `scrap-look.js`, replaced by `scablands-ground-look.js`).
 
+## Round 4 slice 4: the map (14 November 2026)
+
+Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Slice 4 design". Kyle: "that map is entirely ridiculous". No switch changed:
+`story-everburn` and `scablands-runs` stay `dev`. The review note for the sheet is Claude's: `tools/test-review-evidence.mjs` fails until
+`docs/board/looks/scablands-land/round-7-review.md` is written.
+
+### What was built
+
+- **One picture of the land** (`src/world/scablands-picture.js`). A grid of 560 by 400 cells of 25 m (224,000 cells) over the whole 14 km by 10 km. Each cell is asked what
+  its ground is (`scablandsDriveAt`, the question the wheels ask) and how high it is (`scablandsHeightAt`), and is painted in a muted version of that ground's own colour
+  (`GROUND_COLOURS`, now exported from `scablands-ground-look.js`: the table the shader reads) shaded as a soft relief lit from the north-west. The picture reads the height
+  only through `scablandsHeightAt`, so the hills and scarps of slices 2b and 2c show without a change here. Where the land is 100 m or more high (the ridge's wall) the
+  colour fades to rock. The marks are read from the tables: the twelve roads, the dry river, the five crossings, the eight places and the yard, the halfway camp, and a plan of
+  each place made of its solid boxes (`SCABLANDS_SOLIDS`). The grounds are named where each is widest (found on a 100 m grid, ground by ground).
+  **Size and time.** 224,000 cells, 0.9 MB. Made in one go it takes 340 to 390 ms of work on this laptop (node). It is made in slices from the first frame of a job:
+  10 ms a frame while the countdown runs, 4 ms a frame once the car drives, 67 to 79 slices, none over 17 ms; until it is whole the maps show what is done. In the
+  headless browser walk it took 640 to 1,100 ms by the clock, with the 3D scene drawing at the same time. 25 m is the finest cell that makes in this time; the roads, river,
+  crossings, places and names are drawn as lines and writing on top, so they are sharp at any size.
+- **The small map** (`drawSmallMap`, in `scablands-map.js`; mounted by `world-hud.js`). Always on the screen in a job, at the lower left where the circuit panel stood (the
+  circuit panel is hidden there), on a dark panel with a 2 px border, 300 px wide or 40 percent of the screen's height, whichever is more. 2.5 km across, north up. The car
+  is an arrow turned with it (white with an orange edge and a ring), always in the middle. The job's place is a gold ring; off the map it is a gold arrow on the edge pointing
+  its way, with its name and the distance in km beside it. Roads are a dark edge and a pale line; the river is a dark cut with pale banks; each crossing has its own little picture
+  (bridge, pipe, steps, wash, ford) and name; places have their plan and name, and the halfway camp too. Names are written only where there is room, never over the scale bar,
+  the compass or the car. Drawn at most every 33 ms. A person on foot is the arrow.
+- **What the player has learnt**, drawn and kept for the job (`createKnowledge`, `learn`): a barricade once the car is within 450 m of it (a cross), the crossing it stands
+  at as held, by the holder named in the barricade's own id (a ring round the crossing), and the furnace's sight once the car is within 1,200 m of the furnace: a hatched outline
+  cut by the ground's height (`sightOutline`, 48 rays, one every 40 m, the furnace's eye 5 m up, a car 1.5 m), which goes when the furnace goes.
+- **The big map** (key M or the button). The whole land, the grounds, the roads, the river and the crossings named along their lines, every place with its plan, the halfway camp, the
+  car, the job's place, what has been learnt, and the ways to the job's place as thin dashed lines with a letter each. At the side a list of the ways with what is known of each, and
+  what has been learnt. The game stands still while it is open (the app pauses; the pause screen is not drawn over it; M or Escape or CLOSE lets it go). 1,400 by 1,000 pixels,
+  shown 850 wide at 1280 by 720 and 1,060 wide at 1920 by 1080. Opening it costs 17 to 27 ms, once.
+- **The ways** (`src/world/scablands-ways.js`). Written as legs of named things (a road of the net, a named point, the river's bed between two named points) and worked out from the
+  data: the length along the line, the ground (every 25 m, `scablandsDriveAt`), the crossings on it (and whether it runs along the river under them), the barricades on it and the
+  crossing they hold, and who can see it (the furnace on its skyline within 1,400 m, the Ridge's lookout within 3,000 m, each along a clear line over the ground). Hot Delivery has the card's
+  four ways, from its own starting place, the yard: the East Road 7.9 km (road 99 percent, the Girder Bridge held by the Ash Men, both barricades, 2.9 km in the furnace's sight);
+  across the scab plates 6.0 km (scab plates 84 percent, the Steps, 2.5 km in the furnace's sight); by the salt pan 8.9 km (road 98 percent, the Pipe, 3.0 km seen from the Ridge);
+  along the river bed 9.4 km (road 41, scab plates 28, river bed 22 and soft sand 8 percent, under the bridge and the Steps, the Wash, 1.4 km in the furnace's sight). Any other job
+  gets the way by the roads (a shortest path over the net's junctions) and the straight run, from the same data.
+- **What the jobs already know that is wired:** a step's `barriers` (Hot Delivery's two barricades of the Ash Men), the furnace on its skyline (`furnaceSighting`: jobs 1, 3 and 4) and any furnace that is an
+  actor of a job (the field battle's), the job's own start (`origin`) for the ways, and the next place the step asks for (`worldHudStep`'s target). **Not wired:** a barricade that has been burnt is still
+  drawn (nothing in the job records it); the Ash Men's hold on a road "growing with the feud" (the card, item 10) has no data yet; a job's several places (the three lamps, the five flags, the people)
+  are not drawn all at once, the map marks the next one (the numbered rings of EVERBURN-PLAY-FIXES' fourth round are gone with the job line); the Ridge's lookout is listed only for Hot Delivery's salt pan way.
+- **Pause.** `createWorldHud({host, app})` pauses the app with `togglePause` and sets `app.worldMapOpen`; `screen-results.js`'s `modalScreen` draws no pause screen while it is set.
+
+### Numbers chosen, and why
+
+Cell 25 m (the finest that makes in under half a second); small map 2,500 m across on a 400 by 280 canvas (6.25 m a pixel); big map canvas 1,400 by 1,000 (10 m a pixel); relief: the vertical
+stretched 9 times, a slope under 2.5 percent not drawn (the plain's own roll of 2 m over 700 m would stripe the whole land), light from the north-west; colours: each ground's own colour moved 36 percent
+of the way to a dusty paper (so black plates stay dark and white salt stays pale), the soft sand in the bed a shade darker; the rim fades from 100 m to 150 m high; sight: furnace 1,400 m, eye 5 m; lookout 3,000 m,
+eye 12 m; a barricade is learnt at 450 m and the furnace at 1,200 m (the scene draws things to 1,800 m); the small map is drawn at most every 33 ms.
+
+### Checks
+
+- `tools/test-scablands-map.mjs` (new, 1,798 checks): every place, road and crossing is on the picture at its own position, with its own line; along every road the picture is road; for 400 and more
+  random points the colour is that ground's colour, muted and shaded (97 percent or more of points on the very ground, the rest within a cell of an edge); a hill gives a lit side and a shaded side and flat ground
+  none; the small map's arrow, edge mark and distance for five places and five headings; names on the map only when the place is; what is learnt is learnt at the distances, kept, drawn and goes with the furnace; the four ways
+  of Hot Delivery by their numbers; the same job run for 900 steps with the maps drawn every frame and the big map opened and shut is in the very same state as without them; nothing in the map is a bare position.
+- `tools/test-scablands-size.mjs`: the no-bare-coordinate scan covers `scablands-picture.js`, `scablands-map.js`, `scablands-ways.js` and `world-hud.js`.
+- Passing: `test-scablands-map`, `test-scablands-job-map` (42), `test-everburn-play-start` (358), `test-everburn-play-fixes-a` (388), `test-everburn-play-fixes-round4` (48), `test-everburn-screens-start` (9), `test-ember-screens` (20),
+  `test-world-job-mode`, `test-scablands-size` (9), `test-replays` (297 checks), `test-combat-replays` (12). The lane tier and `npm run build`: see "Results" below.
+- Browser: `tools/scenarios/scablands-map.mjs` (memory-only saves, Performance): the small map at the yard, on the East Road, at the Girder Bridge, on the salt pan and at Tin Town's gate, the big map for Hot Delivery at
+  1280 by 720 and 1920 by 1080 and the small map at 1920 by 1080; the big map pauses the game, no pause screen is drawn, and closing lets it go. The sheet: `docs/board/looks/scablands-land/round-7.jpg` (380 KB).
+
+### Cost
+
+On the 2D canvas of the headless browser (software drawing, so slower than a laptop's own): a small map draw averaged 0.33 ms and took 3 ms at the slowest; it is drawn at most every 33 ms, so at 60 frames a second the
+average is under 0.2 ms a frame. The HUD's whole update (the job's line, bars, learning, the small map) averaged 0.25 ms a frame once the picture was made. The picture's own slices were 1.1 ms a frame averaged over the
+walk. The big map costs 17 to 27 ms once when it is opened (9 to 15 ms of it the ways) and nothing after: the game stands still.
+
+### What reads badly (honest)
+
+- On the big map a few road names still lie over something when there is no room: the Salt Road's long name over the Pipe, the Mall to the Boneyard over the South Ford, the Boneyard Road over Halfway Camp and part of WRECK FIELDS. Every road is named; some are cramped.
+- The rises show as soft lumps like pebbles, because the land's rises are lumps; the scarps and hills to come will change that.
+- At 25 m a cell the grounds' edges are soft and the road's cell leaves a faint wider halo round the pale line (the line is exact; the halo is the ground under it).
+- The furnace's sight is a large hatched region and covers much of the map's left half near the bridge; the number of kilometres of each way in its sight is the better reading.
+- The first second of a job shows the map filling in from the top, while the picture is made.
+- Not driven in real time by Claude, and not seen on a laptop's own screen: the pictures are from a headless browser. A frame check (rule 8) is owed before players see the Scablands.
+
+### Changed assertions, for Claude to review (rule 18)
+
+By suite:
+- `tools/test-everburn-play-fixes-a.mjs`, "third round, item 6" (the big map always has the land on it): was five places and the two gas roads of the jobs, with Tin Town's name allowed to be missing where a job's own place
+  stood within 60 m (`coveredByJob`); now every place of the table and the yard, every road of the net and every crossing is named in every Everburn job, both gas runs and the battle, with no exemption, and no line of the
+  job's own is drawn (only the roads and the river are strokes). Stronger, not looser. The old checks of the faint gas roads and of the small panel's job ground go: that drawing is gone.
+- `tools/test-everburn-play-fixes-round4.mjs`, item 1 and 2 (numbered rings for a job's several places): the exemption `coveredByLamps` is gone (every land name is printed beside the three lamps); the numbered rings and badges
+  are replaced by "the marker is the next lamp, the next flag", because the map marks one place, the next the job asks for. The checks of the style sheet and the mirror (item 3) are unchanged.
+- `tools/test-scablands-job-map.mjs`: the check that a place-only job's drawing labels each place and strokes no road (the circuit panel's drawing) is replaced by: the circuit panel draws nothing in a world job.
+- `tools/test-scablands-size.mjs`: the scan list gains the four new files (no assertion changed).
+- `tools/test-everburn-play-start.mjs` has no exemption of that kind and is unchanged.
+- No pinned number moved: the replay, combat replay and world-signature suites are unchanged.
+- `tools/scenarios/run-gas.mjs`: its overlap check reads the small map's panel (`.world-hud-minimap`) where it read `#route-map`, which is hidden in a job now.
+
+### Removed
+
+The job's own line on the small map (`drawWorldJobMap`, `drawPlaceName`, `numberedPlaces`, the pixel rule that dropped "TIN TOWN", and the circuit panel's drawing in a world job) in `src/route-map.js`; the five-place, two-road
+`src/world/scablands-land.js`; the two exemptions in `tools/test-everburn-play-fixes-a.mjs` (`coveredByJob`) and `tools/test-everburn-play-fixes-round4.mjs` (`coveredByLamps`). Other game modes use
+`route-map.js` for their circuit map (`RouteMap`, `buildRouteMapGeometry`, the practice and hidden-road marks): all left exactly as they were.
+
 ## Round 4 slice 2b: the land's shape is solid, and every drawn thing is solid (14 November 2026)
 
 Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Slice 2b design". No switch changed: `story-everburn` and

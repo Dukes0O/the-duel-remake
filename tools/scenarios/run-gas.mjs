@@ -52,7 +52,7 @@ export async function run(c) {
       hud:document.querySelector('.world-hud-truck')?.innerText||'',caption:document.body.innerText.includes('Here they come')};})()`);
   // Big Bess's health bar is shown and stands clear of the rear-view mirror, the caption line and the armour bar.
   out.bar=await c.evaluate(`(()=>{const rect=sel=>{const n=document.querySelector(sel);if(!n)return null;const r=n.getBoundingClientRect();return r.width&&r.height?{x:r.left,y:r.top,w:r.width,h:r.height}:null;};
-    const bar=rect('.world-hud-truck:not([hidden])'),others={mirror:rect('.rear-view-frame'),line:rect('.world-hud-line'),armour:rect('.combat-player-armor'),route:rect('#route-map')};
+    const bar=rect('.world-hud-truck:not([hidden])'),others={mirror:rect('.rear-view-frame'),line:rect('.world-hud-line'),armour:rect('.combat-player-armor'),route:rect('.world-hud-minimap')};
     if(!bar)throw Error('The Big Bess health bar is not shown');
     const over=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
     for(const [name,r] of Object.entries(others))if(r&&over(bar,r))throw Error('The Big Bess health bar covers the '+name);

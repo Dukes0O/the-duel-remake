@@ -6,12 +6,16 @@ const assert = new Proxy(strict, {apply: (target, self, args) => (checks++, targ
 import {captionSeconds, createCaptionQueue} from '../src/story/caption-queue.js';
 import {stepChase} from '../src/world/jobs/steps/chase.js';
 import {emberNextUp} from '../src/story/ember-ui.js';
-import {worldJobMapData, drawWorldJobMap} from '../src/route-map.js';
-import {SCABLANDS_LAND} from '../src/world/scablands-land.js';
+import {worldJobMapData} from '../src/route-map.js';
+import {worldHudModel} from '../src/world/world-hud.js';
+import {createLandPicture} from '../src/world/scablands-picture.js';
+import {drawBigMap, createKnowledge} from '../src/world/scablands-map.js';
+import {SCABLANDS_PLACES as SCABLANDS_TABLE} from '../src/world/scablands.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {Duel} from '../src/game.js';
-import {EVERBURN_JOBS, SCABLANDS_PLACES} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
@@ -247,44 +251,35 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
     assert.ok(!screen.description.includes(EMBER_CAPTIONS[lineId].text));
   }
 }
-// Third round, item 6: the big map always has the land on it, in every Everburn job, both gas runs and the battle.
+// Third round, item 6, rewritten for SCABLANDS-LAND round 4, slice 4: the big map always has the whole land on it, in every Everburn job, both gas runs and the
+// battle. Where it had the five places and the two gas roads of the jobs, it now names every place of the land and every road of the net, with no exemption for a
+// place near one of a job's own, and it draws no line of the job's own: only the ways (src/world/scablands-ways.js) are drawn, and only when given.
 {
   const course={worldAt:(s,lateral)=>({x:s,z:lateral})}, jobs=[...EVERBURN_JOBS,gasRunJob({road:'long'}),gasRunJob({road:'boneyard',feud:4}),fieldBattleJob({runs:0})];
-  const names=SCABLANDS_LAND.places.map(place=>place.name);
-  assert.deepEqual(names,['YARD GATE','TIN TOWN','THE EVERBURN','DEAD MALL','BONEYARD']);
-  // The positions are the ones the jobs define; none is new.
-  assert.deepEqual(SCABLANDS_LAND.places.map(place=>[place.position.x,place.position.z]),Object.values(SCABLANDS_PLACES).map(place=>[place.position.x,place.position.z]));
-  assert.deepEqual(SCABLANDS_LAND.roads.map(road=>road.id),['long','boneyard']);
-  for (const road of SCABLANDS_LAND.roads) assert.deepEqual(road.points.map(point=>[point.x,point.z]),GAS_RUN_PATHS[road.id].map(place=>[place.position.x,place.position.z]));
-  const strokes=[], labels=[], arcs=[], fills=[];
+  const picture=createLandPicture(), marks=picture.marks;
+  const names=marks.places.map(place=>place.name.replace(/^The /i,'').toUpperCase());
+  assert.deepEqual(names,['YARD','TIN TOWN','BONEYARD','DEAD MALL','EVERBURN','IRON LINE','DRY DAM','SHIPS IN THE SAND','RIDGE']);
+  // The places and roads are the land's own tables: none is new.
+  assert.deepEqual(marks.places.slice(1).map(place=>[place.x,place.z]),SCABLANDS_TABLE.map(place=>[place.x,place.z]));
+  assert.deepEqual(marks.roads.map(road=>road.id),ROAD_NET.roads.map(road=>road.id));
+  const strokes=[], labels=[], arcs=[];
   globalThis.Path2D=class{moveTo(){} lineTo(){}};
   const context=new Proxy({measureText:text=>({width:String(text).length*6}),fillText:text=>labels.push(text),
-    stroke:path=>{if(path)strokes.push(context.strokeStyle);},arc:(x,y,r)=>arcs.push({x,y,r,fill:context.fillStyle}),fill:()=>fills.push(context.fillStyle)},
+    stroke:path=>{if(path)strokes.push(context.strokeStyle);},arc:(x,y,r)=>arcs.push({x,y,r,fill:context.fillStyle})},
     {get:(target,key)=>target[key]??(()=>{}),set:(target,key,value)=>(target[key]=value,true)});
-  const canvas={width:640,height:440,getContext:()=>context};
   for (const definition of jobs) {
-    const job=createJob(definition), state={s:0,lateral:0,arena:{mode:'world-job',worldJob:{definition,job,actors:[]}}};
-    const big=worldJobMapData(course,state,{land:SCABLANDS_LAND}), small=worldJobMapData(course,state);
-    assert.deepEqual(big.land.places.map(place=>place.name),names,`${definition.name}: the big map names the five places`);
-    assert.deepEqual(big.land.roads.map(road=>road.id),['long','boneyard'],`${definition.name}: and both roads`);
-    assert.equal(small.land,undefined,`${definition.name}: the small panel is unchanged`);
-    assert.deepEqual({...big,land:undefined},{...small,land:undefined});
+    const job=createJob(definition), worldJob={definition,job,actors:[]}, state={s:0,lateral:0,arena:{mode:'world-job',worldJob}};
+    const data=worldJobMapData(course,state);
+    assert.equal(data.land,undefined,`${definition.name}: the job's map data carries no land (the land is the picture)`);
     labels.length=0; strokes.length=0; arcs.length=0;
-    drawWorldJobMap(context,canvas,big);
-    // SCABLANDS-LAND round 4: the map now fits a land 14 km wide, so the job's own rings in Tin Town (the forge lamps, 30 m from the town) fall within the
-    // map's 4 pixel rule and the land's name is left off where the job already names that very spot. A land name may be missing only where one of the job's
-    // own places stands within 60 m of it; every other name must still be printed.
-    const coveredByJob=place=>(big.places??[]).some(own=>Math.hypot(own.position.x-place.position.x,own.position.z-place.position.z)<60);
-    for (const place of SCABLANDS_LAND.places) assert.ok(labels.includes(place.name)||(place.name==='THE EVERBURN'&&labels.includes('EVERBURN'))||(place.name==='TIN TOWN'&&coveredByJob(place)),`${definition.name}: ${place.name} is named on the big map (${labels.join(', ')})`);
-    assert.ok(labels.includes('LONG ROAD')&&labels.includes('BONEYARD ROAD'),`${definition.name}: the roads are named`);
-    assert.ok(strokes.filter(color=>color==='#c8d5c24d').length===2,`${definition.name}: both roads are drawn faintly`);
-    // Every one of the five places lies inside the picture, and the job's own ground is bright (the gold the small panel uses).
-    for (const place of SCABLANDS_LAND.places) assert.ok(arcs.some(arc=>arc.r===4&&arc.fill==='#8f9482'&&arc.x>0&&arc.x<640&&arc.y>0&&arc.y<440),`${definition.name}: ${place.name} is on the map`);
-    assert.ok(arcs.some(arc=>arc.fill==='#ffce75'),`${definition.name}: the job's own ground is bright`);
-    // The small panel's drawing has no land on it.
-    labels.length=0; strokes.length=0; arcs.length=0; drawWorldJobMap(context,canvas,small);
-    assert.ok(!labels.includes('LONG ROAD')&&!labels.includes('BONEYARD ROAD')&&!strokes.includes('#c8d5c24d')&&!arcs.some(arc=>arc.fill==='#8f9482'),
-      `${definition.name}: the small panel draws the job's own ground only`);
+    const model=worldHudModel({worldJob,player:{x:0,z:0}});
+    drawBigMap(context,{picture,canvas:null,car:{x:0,z:0,heading:0},target:model.target,knowledge:createKnowledge(),actors:[],ways:[]},{width:1400,height:1000});
+    for (const name of names) assert.ok(labels.includes(name),`${definition.name}: ${name} is named on the big map`);
+    for (const road of marks.roads) assert.ok(labels.includes(road.name.toUpperCase()),`${definition.name}: ${road.name} is named`);
+    for (const crossing of marks.crossings) assert.ok(labels.includes(crossing.name),`${definition.name}: ${crossing.name} is named`);
+    // Every road is stroked twice (its edge and its line), the river twice, and nothing else is a line: no line of the job's own.
+    assert.equal(strokes.length,marks.roads.length*2+2,`${definition.name}: only the roads and the river are lines`);
+    if (model.target) assert.ok(arcs.some(arc=>arc.fill==='#ffce75'),`${definition.name}: the job's place is marked in gold`);
   }
 }
 const marked=new Duel({seed:2}); let received;
