@@ -225,7 +225,9 @@ test('moving a place in a copy of the table moves everything that belongs to it,
 
 test('no file that places a thing in the land holds a bare coordinate of it', () => {
   const files = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/furnace-sightings.js', 'src/world/scablands-road.js', 'src/world/scablands-regions.js', 'src/world/scablands-draw.js', 'src/world/scablands-road-geometry.js',
-    'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js'];
+    'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js',
+    // SCABLANDS-LAND round 4, slice 4: the map reads every position from the land's names and tables.
+    'src/world/scablands-picture.js', 'src/world/scablands-map.js', 'src/world/scablands-ways.js', 'src/world/world-hud.js'];
   for (const file of files) {
     const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n');
     // A place written as (id, x, z), a point written {x: 575, z: 62} or a list of pairs of three-figure numbers.

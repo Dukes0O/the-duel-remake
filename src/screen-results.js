@@ -36,6 +36,8 @@ export function createResultsScreen({app, profile, credits, escapeHTML, time, ar
     return result.lapChoiceEnabled===true ? `<div>${pay}${distanceLine(result)}</div>` : pay;
   };
 function modalScreen(s) {
+  // The Scablands' big map holds the game still without the pause screen (src/world/world-hud.js).
+  if (s.paused && app.worldMapOpen === true) return '';
   const r = s.results || {};
   const scrapResult = Number.isSafeInteger(r.scrapEarned);
   let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='',arenaExtra='',arenaClosing=[];

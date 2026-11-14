@@ -65,18 +65,21 @@ defenceJob.stepIndex=defenceJob.steps.length;
 check(worldJobMapData(course,defenceState)?.destination.name === 'CURRENT POSITION', 'finished job with raiders keeps a safe local map');
 
 
-// Draw the real place-only map: every named place is labelled and no fake road is stroked.
+// SCABLANDS-LAND round 4, slice 4: the circuit panel (RouteMap) draws nothing in a world job. It used to draw the job's own road between the start and the end, with
+// the places named at its ends; the Scablands' own maps (src/world/scablands-map.js, tested in tools/test-scablands-map.mjs) are drawn instead, and a job's line from
+// point to point is not drawn at all.
 globalThis.Path2D = class {moveTo(){} lineTo(){}};
-const labels=[], strokes=[];
+const labels=[], strokes=[], draws=[];
 const context=new Proxy({measureText:text=>({width:String(text).length*6}), fillText:text=>labels.push(text), stroke:()=>strokes.push(true)},
-  {get:(target,key)=>target[key] ?? (()=>{}),set:(target,key,value)=>(target[key]=value,true)});
+  {get:(target,key)=>target[key] ?? ((...args)=>draws.push(String(key))),set:(target,key,value)=>(target[key]=value,true)});
 const canvas={width:400,height:280,getContext:()=>context,setAttribute(){}};
 const visualJob={name:'Places',steps:[{kind:'heist',place:a,places:[b],zone:c}]};
 const visualState={s:0,lateral:0,arena:{mode:'world-job',worldJob:{definition:visualJob,job:createJob(visualJob),actors:[]}}};
-new RouteMap(canvas).update({...course,samples:[{}]},visualState,0);
-check(['START','MIDDLE','END'].every(label=>labels.includes(label)), 'place-only drawing labels each place');
-check(strokes.length === 1, 'place-only drawing has no fake connecting road'); // only the player dot outline
-
+const panel=new RouteMap(canvas);
+panel.update({...course,samples:[{}]},visualState,0);
+panel.update({...course,samples:[{}]},visualState,500);
+check(labels.length===0 && strokes.length===0 && draws.length===0, 'the circuit panel draws nothing in a world job: no line of the job, no names');
+check(panel.showingJob===true, 'and knows that a job is showing, so that the circuit map is drawn afresh when the job ends');
 const duel=new Duel({seed:1,featureFlags:{'hidden-road':true,arsenal:true}});
 duel.state.wastelandGateDiscovered=true;
 check(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:1,opponents:[],job:EVERBURN_JOBS[5]}), 'defence HUD starts a real job');

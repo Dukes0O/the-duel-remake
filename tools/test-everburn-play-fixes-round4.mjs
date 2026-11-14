@@ -1,9 +1,12 @@
-// EVERBURN-PLAY-FIXES, fourth round: the big map names each place of a job that has only places, so that they can be told apart (item 1),
-// and the spoken-line subtitle and the story caption keep clear of the mirror and of each other (items 2 and 3). Drawing and layout only.
+// EVERBURN-PLAY-FIXES, fourth round: the big map shows a job that has only places one place at a time and keeps the land's names (items 1; rewritten for the
+// whole-land map of SCABLANDS-LAND round 4, slice 4), and the spoken-line subtitle and the story caption keep clear of the mirror and of each other (items 2
+// and 3). Drawing and layout only.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {worldJobMapData, drawWorldJobMap} from '../src/route-map.js';
-import {SCABLANDS_LAND} from '../src/world/scablands-land.js';
+import {worldJobMapData} from '../src/route-map.js';
+import {worldHudModel} from '../src/world/world-hud.js';
+import {createLandPicture} from '../src/world/scablands-picture.js';
+import {drawBigMap, createKnowledge} from '../src/world/scablands-map.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 
@@ -20,51 +23,36 @@ function recorder(width, height) {
   const context = new Proxy(target, {get: (t, key) => t[key] ?? (() => {}), set: (t, key, value) => (t[key] = value, true)});
   return {context, texts, arcs, canvas: {width, height, getContext: () => context}};
 }
-const box = item => ({left: item.align === 'center' ? item.x - 3 : item.x, right: item.align === 'center' ? item.x + 3 : item.x + item.text.length * 6.5, top: item.y - 10, bottom: item.y + 3});
-const overlap = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-const mapOf = definition => worldJobMapData(course, {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob: {definition, job: createJob(definition), actors: []}}}, {land: SCABLANDS_LAND});
 
-// ---- 1. Job 2: three lamps 7 m apart, four pixels on the big map ------------------------------------------------------------------------
-{
-  const job2 = EVERBURN_JOBS[1], big = mapOf(job2), names = big.places.map(place => place.name);
-  check(names.length === 3 && new Set(names).size === 3, 'job 2 has three places with three different names');
-  const {context, texts, arcs, canvas} = recorder(640, 440);
-  drawWorldJobMap(context, canvas, big);
-  for (const [index, name] of names.entries()) {
-    check(texts.filter(item => item.text === name).length === 1, `${name} is named once`);
-    check(texts.some(item => item.text === String(index + 1) && item.align === 'center'), `${name} has the number ${index + 1} on its mark`);
-  }
-  // The names, the numbers and the land's own five names stand apart from each other and inside the picture.
-  const named = texts.filter(item => names.includes(item.text) || SCABLANDS_LAND.places.some(place => place.name === item.text));
-  // SCABLANDS-LAND round 4: the map now fits a land 14 km wide, so the three lamps (30 m or less from the town) fall within the map's 4 pixel rule and the
-  // land's name for Tin Town is left off, the lamps already naming that very spot. Each of the other four names must still be printed (it was all five).
-  const coveredByLamps = place => big.places.some(lamp => Math.hypot(lamp.position.x - place.position.x, lamp.position.z - place.position.z) < 60);
-  check(SCABLANDS_LAND.places.every(place => texts.some(item => item.text === place.name) || (place.name === 'TIN TOWN' && coveredByLamps(place))), 'the land keeps its names beside the lamps (Tin Town is named by the lamps themselves)');
-  for (let i = 0; i < named.length; i++) {
-    const a = box(named[i]);
-    check(a.left >= 0 && a.right <= 640 && a.top >= 0 && a.bottom <= 440, `${named[i].text} lies inside the picture`);
-    for (let j = i + 1; j < named.length; j++) check(!overlap(a, box(named[j])), `${named[i].text} and ${named[j].text} do not print over each other`);
-  }
-  // The three numbered badges are told apart: no two stand nearer than their own width, and each has a true dot where its lamp is.
-  const badges = arcs.filter(arc => arc.r === 9 && arc.fill === '#ffce75'), dots = arcs.filter(arc => arc.r === 3.5);
-  check(badges.length === 3 && dots.length === 3, 'three numbered badges and three true dots');
-  for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) check(Math.hypot(badges[i].x - badges[j].x, badges[i].y - badges[j].y) >= 18, 'two badges never touch');
-  check(dots.every(dot => dot.x > 0 && dot.x < 640 && dot.y > 0 && dot.y < 440), 'the true dots lie on the map');
+// SCABLANDS-LAND round 4, slice 4 (replaces EVERBURN-PLAY-FIXES' numbered rings): the big map is the whole land (src/world/scablands-map.js). It names every place
+// of the land, Tin Town among them (the old map left a name off where a job's own ring stood within 4 pixels of it), marks the one place the job asks for next, and
+// does not draw a job's several places at once: the marker follows the next lamp, the next flag, the next person.
+const picture = createLandPicture();
+const placeNames = picture.marks.places.map(place => place.name.replace(/^The /i, '').toUpperCase());
+function bigMapOf(definition, {index = 0} = {}) {
+  const job = createJob(definition); job.stepState.index = index;
+  const worldJob = {definition, job, actors: []}, state = {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob}};
+  const model = worldHudModel({worldJob, player: {x: 0, z: 0}});
+  const {context, texts, arcs} = recorder(1400, 1000);
+  drawBigMap(context, {picture, canvas: null, car: {x: 0, z: 0, heading: 0}, target: model.target, knowledge: createKnowledge(), actors: [], ways: []}, {width: 1400, height: 1000});
+  return {model, texts, arcs, data: worldJobMapData(course, state)};
 }
-// ---- 2. A job with places far apart keeps one numbered ring and one name for each; the small panel is not changed ------------------------
+// ---- 1. Job 2: three lamps 7 m apart: the land keeps every name, and the marker is the next lamp --------------------------------------------------------
+{
+  const job2 = EVERBURN_JOBS[1], first = bigMapOf(job2), second = bigMapOf(job2, {index: 1});
+  const lamps = first.data.places.map(place => place.name);
+  check(lamps.length === 3 && new Set(lamps).size === 3, 'job 2 has three places with three different names');
+  for (const name of placeNames) check(first.texts.some(item => item.text === name), `${name} is named on the big map beside the lamps (no exemption: Tin Town is named too)`);
+  check(first.model.target && second.model.target && first.model.target.name !== second.model.target.name, 'the marker is the next lamp: it moves from one lamp to the next');
+  check(first.arcs.some(arc => arc.fill === '#ffce75'), 'the next lamp is marked in gold');
+}
+// ---- 2. A job with places far apart: the marker is the next find, and the land's names are as before ----------------------------------------------------------
 {
   const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags'), pick = {...flags, steps: [{kind: 'onfoot', places: flags.steps[0].finds, returnToCar: flags.steps[0].finds[0]}]};
-  const big = mapOf(pick), names = big.places.map(place => place.name);
-  check(names.length === 5, 'five survey flags are five places');
-  const {context, texts, canvas} = recorder(640, 440);
-  drawWorldJobMap(context, canvas, big);
-  for (const [index, name] of names.entries()) {
-    check(texts.some(item => item.text === name), `${name} is named`);
-    check(texts.some(item => item.text === String(index + 1)), `${name} is numbered ${index + 1}`);
-  }
-  const small = recorder(400, 280);
-  drawWorldJobMap(small.context, small.canvas, {...big, land: undefined});
-  check(!small.texts.some(item => /^[1-5]$/.test(item.text)), 'the small panel draws no numbers: its names are as they were');
+  const first = bigMapOf(pick), fifth = bigMapOf(pick, {index: 4});
+  check(first.data.places.length === 5, 'five survey flags are five places');
+  check(first.model.target.name.toUpperCase() === first.data.places[0].name && fifth.model.target.name.toUpperCase() === first.data.places[4].name, 'the marker is the first flag, then the fifth');
+  for (const name of placeNames) check(fifth.texts.some(item => item.text === name), `${name} is named`);
 }
 // ---- 3. The subtitle and the caption keep clear of the mirror (the rules in the style sheets, read as text) ---------------------------------
 {

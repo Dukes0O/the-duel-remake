@@ -99,7 +99,7 @@ const hiddenRoadUi=createHiddenRoadUi({host:root.querySelector('#stage'),
   onChoose:choice=>app.chooseHiddenRoad(choice),onMenu:()=>app.requestNavigation('menu')});
 const deepUi=createDeepUi({host:root.querySelector('#stage'),onChoose:choice=>app.chooseDeep(choice)});
 const sirenaHud=createSirenaHud({host:root.querySelector('#stage'),app}); // DEEP-SIRENA-VIEW
-const worldHud=createWorldHud({host:root.querySelector('#stage')});
+const worldHud=createWorldHud({host:root.querySelector('#stage'),app});
 const heliUi=createHeliUi({host:root.querySelector('#stage'),app,onMenu:()=>refreshRaceSetup()});
 const labUi=createLabUi({host:root.querySelector('#stage'),app}); // LAB-VIEW: the Lab screen
 // Presentation-only QA switch, absent from normal production builds.

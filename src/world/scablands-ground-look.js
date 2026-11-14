@@ -42,11 +42,18 @@ const polygonFunction = (name, uniform, count) => `
 
 // `regions` is {areas, field, box, burn}: the regions' areas (GROUND_AREAS), the river's distance picture and its box, and the
 // burn's centre (the Everburn). Without it the ground is the flats everywhere.
-export function createGroundLook({rock = 0x57493c, stone = 0x302b26, regions = null} = {}) {
+// The base colour of each ground (the shader multiplies each by its own pattern). The map of the land (src/world/scablands-picture.js)
+// draws each region in a muted version of the same colour, so that the map and the ground are drawn from one table. The flats' colour
+// is the one the scene gives the ground's material (src/world/scablands-scene.js).
+export const GROUND_COLOURS = Object.freeze({flats: 0x76624b, 'scab-plates': 0x2a2825, 'salt-pan': 0xdedacd, 'river-bed': 0x6a665d,
+  'wreck-fields': 0x74503a, sand: 0xc9b07a, burn: 0x1b1917, bank: 0x8a7a63, road: 0x6e5d47, rock: 0x57493c});
+
+export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null} = {}) {
   const colour = hex => new THREE.Color(hex);
   const uniforms = {uGroundNoise: {value: scrapNoise()}, uGroundRock: {value: colour(rock)}, uGroundStone: {value: colour(stone)},
-    uColPlate: {value: colour(0x2a2825)}, uColSalt: {value: colour(0xdedacd)}, uColBed: {value: colour(0x6a665d)}, uColWreck: {value: colour(0x74503a)},
-    uColSand: {value: colour(0xc9b07a)}, uColBurn: {value: colour(0x1b1917)}, uColBank: {value: colour(0x8a7a63)}};
+    uColPlate: {value: colour(GROUND_COLOURS['scab-plates'])}, uColSalt: {value: colour(GROUND_COLOURS['salt-pan'])}, uColBed: {value: colour(GROUND_COLOURS['river-bed'])},
+    uColWreck: {value: colour(GROUND_COLOURS['wreck-fields'])}, uColSand: {value: colour(GROUND_COLOURS.sand)}, uColBurn: {value: colour(GROUND_COLOURS.burn)},
+    uColBank: {value: colour(GROUND_COLOURS.bank)}};
   let areaCode = '', areaFunctions = '';
   if (regions) {
     const {areas, field, box, burn} = regions, disc = id => areas.discs.find(area => area.id === id);
