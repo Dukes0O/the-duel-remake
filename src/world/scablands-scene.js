@@ -811,6 +811,8 @@ export function createScablandsScene(course,options={}){
   }
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
+  // The road net, the gorge and the crossings are drawn in pieces built as the player nears them; a check or a picture can build them all.
+  group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;
   // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].
   group.userData.bigMachineBoxes=()=>{
     const boxes=[];

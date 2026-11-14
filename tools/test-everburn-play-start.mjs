@@ -119,9 +119,9 @@ for (const [name, job] of starts) {
   check(Math.hypot(forge.x - car2.x, forge.z - car2.z) > 40, 'job 2: the first lamp is a walk from the car');
   const job5 = start(EVERBURN_JOBS[4]), car5 = carAt(job5), mall = LAND.place('dead-mall');
   near(Math.hypot(car5.x - mall.x, car5.z - mall.z), 124, 2, 'job 5: the car starts 124 m short of the Dead Mall, past the junk cars on the road');
-  // SCABLANDS-LAND round 4: the oval road lies round the yard and no longer passes the mall (roads between places are a later slice), so the
-  // start is on open ground 124 m short of the mall, far from the oval (it started on the road).
-  check(scablandsRoadDistance(car5.x, car5.z) > 1000, 'job 5: the car starts on open ground short of the mall, far from the oval road');
+  // SCABLANDS-LAND round 4, slice 2a: the roads are the net of src/world/scablands-road.js. The Mall Road and the Mall to the Boneyard end and
+  // start 60 m north of the mall; the start is on open ground 124 m east of the mall's own place and about 80 m off them (it was on the oval road).
+  check(scablandsRoadDistance(car5.x, car5.z) > 60, 'job 5: the car starts on open ground short of the mall, more than 60 m from any road');
   check(facingAngle(car5, mall) < .02, 'job 5: the car faces the Dead Mall');
   // Cinder's "Leave the car outside" is Cinder's start line, heard at once; her line for inside the mall waits until the car is within
   // 22 m of the valve room, and the car starts well outside that.

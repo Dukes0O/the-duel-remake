@@ -38,10 +38,10 @@ const NAMED_POINTS = Object.freeze([
   named('the-pipe', 'The Pipe', 'river-3', 'river-4', .43),
   named('south-ford', 'The South Ford', 'river-8', 'river-9', .615),
   // The halfway camp, on the East Road's straight stretch between the yard and the bend before the Girder Bridge.
-  named('safe-road', 'The halfway camp', 'yard', 'boneyard', .47, 8, -330),
+  named('safe-road', 'The halfway camp', 'yard', 'boneyard', .47, 8, -230),
   // The Ash Men's two barricades stand on the East Road: the first before the bridge, the second after it.
-  named('ash-barricade-1', 'First barricade', 'safe-road', 'girder-bridge', .8484, 10.59, 16.2),
-  named('ash-barricade-2', 'Second barricade', 'girder-bridge', 'tin-town', .2862, -41.22, -383.88),
+  named('ash-barricade-1', 'First barricade', 'safe-road', 'girder-bridge', .8481, 13.67, 18.58),
+  named('ash-barricade-2', 'Second barricade', 'girder-bridge', 'tin-town', .2768, -46.15, -429.75),
 ]);
 
 export function createLand(table = SCABLANDS_PLACES) {

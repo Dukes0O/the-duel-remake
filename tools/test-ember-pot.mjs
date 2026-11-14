@@ -11,7 +11,8 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {EMBER_RULE, emberLoss, emberGrade, emberPay, emberSentence, MPH_TO_KMH} from '../src/world/jobs/ember-rule.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
-import {DELIVERY_ROAD, distanceToRoad, onRoadPoints, onScablandsRoad} from '../src/world/scablands-road.js';
+import {EAST_ROAD, distanceToRoad, onRoadPoints, onScablandsRoad} from '../src/world/scablands-road.js';
+import {scablandsDriveAt, DRIVE} from '../src/world/scablands-regions.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import {captionRecord} from '../src/story/story-lines.js';
 import '../src/story/ember-lines.js';
@@ -20,12 +21,17 @@ import {createEmberPot} from '../src/world/ember-pot.js';
 
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
+// The three drives the card sets also print what they measured, for the change note.
+const report = (value, message) => { console.log('  ' + message); check(value, message); };
 const DT = 1 / 120;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true};
 const hot = EVERBURN_JOBS[0], carry = hot.steps[0];
 const tinTown = carry.destination.position;
-const roadRoute = [...DELIVERY_ROAD.points.slice(1), tinTown].map(point => ({x: point.x, z: point.z}));
-const roadLine = [...DELIVERY_ROAD.points, tinTown].map(point => ({x: point.x, z: point.z}));
+// SCABLANDS-LAND round 4, slice 2a: Hot Delivery follows the East Road (7.7 km); the last 47 m to the town's centre are open ground.
+// A driver slows for the last 160 m, where the road ends and the town's own ground (the flats, safe to 90 km/h) begins.
+const approach = (duel, car) => Math.hypot(car.x - tinTown.x, car.z - tinTown.z) < 160 ? 60 : 150;
+const roadRoute = [tinTown].map(point => ({x: point.x, z: point.z}));
+const roadLine = [...EAST_ROAD.points, tinTown].map(point => ({x: point.x, z: point.z}));
 
 // ---- the road question: points in, answer out ----------------------------------------------------------------------------------------
 {
@@ -36,8 +42,10 @@ const roadLine = [...DELIVERY_ROAD.points, tinTown].map(point => ({x: point.x, z
   const moved = {halfWidth: 5, points: line.points.map(point => ({x: point.x + 1000, z: point.z - 500}))};
   check(onRoadPoints(1050, -496, moved) && !onRoadPoints(50, 4, moved), 'moving the points moves the road: nothing assumes the land');
   const camp = LAND.at('safe-road');
-  check(onScablandsRoad(camp.x / 2, camp.z / 2) && onScablandsRoad(camp.x, camp.z) && onScablandsRoad(0, 0), 'the yard gate, the halfway camp and the way between are road');
+  check(onScablandsRoad(EAST_ROAD.points[1].x, EAST_ROAD.points[1].z) && onScablandsRoad(camp.x, camp.z) && !onScablandsRoad(0, 0), 'the start of the East Road and the halfway camp are road; the yard itself is not');
   check(!onScablandsRoad(3000, 0) && !onScablandsRoad(1500, 0), 'the scab field straight across is not road');
+  // The ember reads the ground's own safe speed in place of a road yes or no.
+  check(scablandsDriveAt(camp.x, camp.z).safeKmh === Infinity && scablandsDriveAt(300, 0).safeKmh === 90 && scablandsDriveAt(2000, 0).safeKmh === 50, 'the ground says the speed it is safe at: any on the road, 90 on the flats, 50 on the scab plates');
 }
 
 // ---- driving a real Duel ---------------------------------------------------------------------------------------------------------------
@@ -102,19 +110,27 @@ function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () 
 }
 const field = [{x: tinTown.x, z: tinTown.z}];
 
-// (a) the road at 150 km/h arrives with nothing taken but cold. SCABLANDS-LAND round 4 (re-recorded): the delivery road is 7,984 m
-// (it was 640 m), so about 150 km/h takes about 200 seconds with the corners, and the cold (0.15 a second now) takes about 30 of the 100: it arrives alive, close to the bright line, not bright and 120.
-// The rule changed once for the larger land: cold 0.15 a second (it was 0.33), see src/world/jobs/ember-rule.js.
+// The three drives the card sets (SCABLANDS-LAND round 4, slice 2a), each driven in a real Duel:
+//   1. a clean drive along the East Road arrives bright;
+//   2. the scab short cut (the straight line across the plates) held at 50 km/h arrives alive and not bright;
+//   3. a car that never passes 30 km/h goes out before Tin Town, by the short cut and by the road.
 {
-  // The road bends by up to 80 degrees at its corners now that its legs are kilometres long, and a car at 150 km/h cannot turn in the 14 m of the
-  // road's half width; the driver takes each corner at 80 km/h, as a driver of a car this fast does.
-  const atSpeed = (duel, car) => roadRoute.slice(0, -1).some(point => Math.hypot(point.x - car.x, point.z - car.z) < 90) ? 80 : 150;
-  const out = run(start(), roadRoute, atSpeed, {seconds: 400, follow: roadLine});
-  check(out.done && out.result, 'the road at speed reaches Tin Town');
+  const out = run(start(), roadRoute, approach, {seconds: 400, follow: roadLine});
+  check(out.done && out.result, 'the East Road at 150 km/h reaches Tin Town');
   check(out.result.relights === 0 && out.result.grade === emberGrade(EMBER_RULE, out.result.ember) && out.result.pay === emberPay(EMBER_RULE, out.result.ember, 0), 'the grade and the pay are the rule for what is left');
-  check(out.result.grade !== 'bright' && out.result.ember > 10, `a fast drive on this road arrives alive or barely (${out.result.ember.toFixed(1)}, ${out.result.grade}): the cold takes a quarter of the pot or more even for the best drive`);
+  report(out.result.grade === 'bright', `a clean drive on the East Road arrives bright (${out.result.ember.toFixed(1)} left after ${out.duel.state.stageTimeSec.toFixed(0)} s)`);
   const taken = 100 - out.result.ember, cold = EMBER_RULE.coldPerSecond * out.duel.state.stageTimeSec;
-  check(taken >= cold - 3 && taken - cold < 12, `on the road almost only cold takes ember (${taken.toFixed(1)} taken, ${cold.toFixed(1)} of it cold, in ${out.duel.state.stageTimeSec.toFixed(0)} s)`);
+  check(taken >= cold - 1 && taken - cold < 6, `on the road almost only cold takes ember (${taken.toFixed(1)} taken, ${cold.toFixed(1)} of it cold, in ${out.duel.state.stageTimeSec.toFixed(0)} s)`);
+}
+{
+  // 49.5 km/h: held under the plates' safe speed of 50 with a driver that never overshoots.
+  const short = run(start(), field, 49.5, {seconds: 700});
+  check(short.done && short.result, 'the short cut at 50 km/h reaches Tin Town');
+  report(short.result.grade === 'alive', `the scab short cut held at 50 km/h arrives alive and not bright (${short.result.ember.toFixed(1)}, ${short.result.grade}, in ${short.duel.state.stageTimeSec.toFixed(0)} s)`);
+  const slowShort = run(start(), field, 29.9, {seconds: 800, until: duel => held(duel).out === true});
+  report(slowShort.firstOut !== null && !slowShort.done && carAt(slowShort.duel).x < tinTown.x - 18, `a car that never passes 30 km/h goes out before Tin Town on the short cut (at ${Math.round(carAt(slowShort.duel).x)} m, ${slowShort.firstOut?.toFixed(0)} s)`);
+  const slowRoad = run(start(), roadRoute, 29.9, {seconds: 800, follow: roadLine, until: duel => held(duel).out === true});
+  report(slowRoad.firstOut !== null && !slowRoad.done, `and by the East Road, which is longer (out at ${slowRoad.firstOut?.toFixed(0)} s, ${Math.round(carAt(slowRoad.duel).x)} m)`);
 }
 // (b) the scab field straight across at 120 km/h puts the pot out before Tin Town.
 {
@@ -136,7 +152,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
 }
 // (d) a hard hit takes a large share at once; a light touch takes nothing. The rule alone, then a real hit on a real solid.
 {
-  const view = (hitKmh, extra = {}) => ({player: {position: {x: 300, z: 300}}, speedKmh: 0, hitKmh, onRoad: true, difficulty: 'medium', ...extra});
+  const view = (hitKmh, extra = {}) => ({player: {position: {x: 300, z: 300}}, speedKmh: 0, hitKmh, safeKmh: Infinity, difficulty: 'medium', ...extra});
   const quiet = stepCarry(carry, {}, view(0), DT).state.ember, touched = stepCarry(carry, {}, view(7), DT).state.ember, hard = stepCarry(carry, {}, view(40), DT).state.ember;
   check(Math.abs(touched - quiet) < 1e-9, 'a touch that sheds 7 km/h takes nothing');
   check(quiet - hard >= 50, `a hit that sheds 40 km/h takes a large share at once (${(quiet - hard).toFixed(1)})`);
@@ -170,8 +186,8 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const back = run(duel, [home], (d, car) => Math.hypot(car.x - home.x, car.z - home.z) < 60 ? 8 : 60, {seconds: 120, until: d => held(d).out !== true && (held(d).relights ?? 0) > 0});
   check(back.done === false && held(duel).relights === 1 && held(duel).ember === 100 && held(duel).out === false, 'stopping at the brazier refills the pot to 100 and counts one relight');
   check(worldJob.marker.id === 'tin-town', 'once relit the marker points at Tin Town again');
-  // Then the road, fast: alive at arrival (the road is 8 km), and the pay is 80 after a relight.
-  const finish = run(duel, roadRoute, (d, car) => roadRoute.slice(0, -1).some(point => Math.hypot(point.x - car.x, point.z - car.z) < 90) ? 80 : 150, {seconds: 400, follow: roadLine});
+  // Then the road, fast: the pay is 80 after a relight (the road is 7.7 km).
+  const finish = run(duel, roadRoute, approach, {seconds: 400, follow: roadLine});
   check(finish.done && finish.result?.relights === 1 && finish.result.pay === emberPay(EMBER_RULE, finish.result.ember, 1) && finish.result.pay <= 80, `after a relight the pay is the rule's and never above 80 (${finish.result?.grade}, ${finish.result?.pay})`);
   check(/relight/.test(finish.result.sentence) && /pays less/.test(finish.result.sentence) && !/\d/.test(finish.result.sentence), `the results sentence says so: ${finish.result.sentence}`);
 }
@@ -209,10 +225,11 @@ const field = [{x: tinTown.x, z: tinTown.z}];
 }
 // (g) Easy halves rough ground and hits; cold is the same.
 {
-  const input = {kmh: 120, lostKmh: 30, onRoad: false, dt: 1};
+  const input = {kmh: 120, lostKmh: 30, safeKmh: 50, dt: 1};
   const medium = emberLoss(EMBER_RULE, {...input, difficulty: 'medium'}), easy = emberLoss(EMBER_RULE, {...input, difficulty: 'easy'});
   check(Math.abs(easy.rough * 2 - medium.rough) < 1e-9 && Math.abs(easy.hit * 2 - medium.hit) < 1e-9 && easy.cold === medium.cold, 'Easy halves rough ground and hits and leaves cold alone');
-  check(Math.abs(medium.cold - .15) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.15 a second (SCABLANDS-LAND round 4; it was 0.33), rock 0.003 a metre for each km/h over 50, hits 1.5 for each km/h');
+  check(Math.abs(medium.cold - .14) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.14 a second (SCABLANDS-LAND round 4, slice 2a; it was 0.33), ground 0.003 a metre for each km/h over its safe speed, hits 1.5 for each km/h');
+  check(emberLoss(EMBER_RULE, {kmh: 200, safeKmh: Infinity, dt: 1}).rough === 0, 'a ground that is safe at any speed takes nothing at 200 km/h');
 }
 // (h) the same seed and inputs give the same ember, twice.
 {

@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE,SCABLANDS_LAYOUT} from '../src/world/scablands.js';
+import {ROAD_HALF_WIDTH} from '../src/world/scablands-road.js';
 import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
@@ -429,32 +430,42 @@ for(const [key,url] of Object.entries(SCABLANDS_ASSETS)){
 scene.group.updateMatrixWorld(true);
 const raycaster=new THREE.Raycaster(),straightDown=new THREE.Vector3(0,-1,0);
 const heightOn=(meshes,x,z)=>{raycaster.set(new THREE.Vector3(x,5000,z),straightDown);const hit=raycaster.intersectObjects(meshes,false)[0];return hit?hit.point.y:null;};
-const road=ground.children.find(mesh=>mesh.name==='Scablands dirt road');
-assert.ok(road,'the dirt road is drawn');
+// SCABLANDS-LAND round 4, slice 2a: the road net is flat ribbons built in pieces when the player is near them (src/world/scablands-draw.js).
+const roadsDraw=scene.group.userData.roads;
+assert.ok(roadsDraw&&ground.children.includes(roadsDraw.group),'the road net is drawn');
+while(roadsDraw.update(0,0)>0);
+const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
 {
-  const roadAt=road.geometry.attributes.position,across=20,sections=roadAt.count/across;
-  assert.ok(across>=3&&Number.isInteger(sections),'the road is cut across at three or more points');
-  // The first cross-section lies across the oval at its east end: 1.2 times the road's half width each side.
-  const reach=SCABLANDS_LAYOUT.roadHalfWidth*1.2;
-  assert.ok(Math.abs(roadAt.getX(0)-(SCABLANDS_LAYOUT.frameRadiusX-reach))<.01&&Math.abs(roadAt.getX(across-1)-(SCABLANDS_LAYOUT.frameRadiusX+reach))<.01,'the road is 1.2 times the road half width to each side');
-  assert.ok(road.material.vertexColors&&road.material.userData.groundLook,'the road has its ruts and the ground look');
+  assert.ok(roadPieces.length>=6&&roadPieces.length<roadsDraw.pieces.length,`only the pieces near the player are built (${roadPieces.length} of ${roadsDraw.pieces.length})`);
+  const across=7;
+  for(const road of roadPieces){
+    const roadAt=road.geometry.attributes.position,sections=roadAt.count/across;
+    assert.ok(Number.isInteger(sections),'the road is cut across at seven points');
+    assert.ok(road.material.userData.roadLook&&road.material.transparent,'the road has its ruts, berm and soft edge');
+  }
+  // A section of an ordinary stretch is 1.2 times the road's half width to each side, so 33.6 m across.
+  const first=roadPieces[0].geometry.attributes.position;
+  assert.ok(Math.abs(Math.hypot(first.getX(across-1)-first.getX(0),first.getZ(across-1)-first.getZ(0))-ROAD_HALF_WIDTH*2.4)<.01,'the road is 1.2 times the road half width to each side');
   // It lies on the ground as drawn: never more than 0.3 m above it, and sunk into it more than 0.5 m only at the steepest edges.
   let sampled=0,sunk=0,highest=-1e9;
-  for(let section=0;section<sections;section+=3)for(let point=0;point<across-1;point++)for(const part of [0,.5]){
-    const i=section*across+point,j=i+1,x=roadAt.getX(i)+(roadAt.getX(j)-roadAt.getX(i))*part,z=roadAt.getZ(i)+(roadAt.getZ(j)-roadAt.getZ(i))*part;
-    const onRoad=heightOn([road],x,z),onGround=heightOn(near,x,z);
-    if(onRoad===null||onGround===null)continue;
-    sampled++;highest=Math.max(highest,onRoad-onGround);if(onRoad-onGround<-.5)sunk++;
+  for(const road of roadPieces){
+    const roadAt=road.geometry.attributes.position,sections=roadAt.count/across;
+    for(let section=0;section<sections;section+=2)for(let point=0;point<across-1;point++)for(const part of [0,.5]){
+      const i=section*across+point,j=i+1,x=roadAt.getX(i)+(roadAt.getX(j)-roadAt.getX(i))*part,z=roadAt.getZ(i)+(roadAt.getZ(j)-roadAt.getZ(i))*part;
+      const onRoad=heightOn([road],x,z),onGround=heightOn(near,x,z);
+      if(onRoad===null||onGround===null)continue;
+      sampled++;highest=Math.max(highest,onRoad-onGround);if(onRoad-onGround<-.5)sunk++;
+    }
+    const index=road.geometry.index.array,a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let faceDown=0;
+    for(let k=0;k<index.length;k+=3){a.fromBufferAttribute(roadAt,index[k]);b.fromBufferAttribute(roadAt,index[k+1]);c.fromBufferAttribute(roadAt,index[k+2]);
+      if(b.sub(a).cross(c.sub(a)).y<=0)faceDown++;}
+    assert.equal(faceDown,0,`every face of ${road.name} looks up`);
+    const middle=Math.floor(sections/2)*across+Math.floor(across/2);
+    assert.ok(Math.abs(roadAt.getY(middle)-scablandsSurfaceHeightAt(roadAt.getX(middle),roadAt.getZ(middle)))<.5,`the middle of ${road.name} lies on the land`);
   }
-  assert.ok(sampled>3000,'the road is sampled along its whole length');
+  assert.ok(sampled>1500,`the road is sampled along the pieces near the yard (${sampled})`);
   assert.ok(highest<=.3,`the road is no taller than 0.3 m above the ground anywhere (highest ${highest.toFixed(2)} m)`);
   assert.ok(sunk/sampled<.05,`the road is sunk more than 0.5 m only at the steepest edges (${sunk} of ${sampled})`);
-  const index=road.geometry.index.array,a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();let faceDown=0;
-  for(let k=0;k<index.length;k+=3){a.fromBufferAttribute(roadAt,index[k]);b.fromBufferAttribute(roadAt,index[k+1]);c.fromBufferAttribute(roadAt,index[k+2]);
-    if(b.sub(a).cross(c.sub(a)).y<=0)faceDown++;}
-  assert.equal(faceDown,0,'every face of the road looks up');
-  const middle=Math.floor(sections/2)*across+across/2;
-  assert.ok(Math.abs(roadAt.getY(middle)-scablandsSurfaceHeightAt(roadAt.getX(middle),roadAt.getZ(middle)))<.5,'the middle of the road lies on the land');
 }
 // Check 1c (round 4): the coarse ground is not drawn where the detailed window lies (its material cuts a hole there), and along the
 // hole's edge it lies below the detailed ground, so that it is never seen through a gap. Its corners are the land's own height less 35 cm.
@@ -585,7 +596,7 @@ assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.user
   assert.ok(scene.group.userData.updateGroundView()>0,'a cut refreshes the ground');
   const chunk=ground.children.find(mesh=>/^Scablands edited ground/.test(mesh.name));
   assert.ok(chunk&&chunk.material.userData.groundLook,'an edited chunk carries the ground look');
-  assert.ok(ground.children.includes(road)&&road.name==='Scablands dirt road','the road is rebuilt after an edit and keeps its name');
+  assert.ok(ground.children.includes(roadsDraw.group)&&roadsDraw.group.name==='Scablands roads','the road net keeps its place after an edit (its pieces are laid again when the player is near)');
   // The coarse ground stays below the land after a rebuild (the corner at the yard is the 4,091st).
   const lowered=far.geometry.attributes.position.getY(40*101+50);
   assert.ok(lowered<=scablandsSurfaceHeightAt(0,0)-.3,'the coarse ground stays under the land after an edit');

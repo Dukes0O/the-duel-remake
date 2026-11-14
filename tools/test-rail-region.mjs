@@ -4,6 +4,7 @@ import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {getScablandsOpenMarks,resetScablandsGroundEdit,scablandsGroundEdit,scablandsNaturalHeightAt,
   scablandsSurfaceAt,scablandsSurfaceHeightAt,setScablandsOpenMarks} from '../src/world/scablands-ground.js';
 import {CUTS,REGIONS,WHITES_BASE,regionAt,regionNaturalHeightAt,placeToWorld} from '../src/world/regions.js';
+import {riseHeightAt,riverDepthAt} from '../src/world/scablands-regions.js';
 import {Duel} from '../src/game.js';
 import {applySaltStormFog,saltStormActive,THE_WHITES_NODES,createTheWhitesScene} from '../src/world/the-whites-scene.js';
 
@@ -16,12 +17,13 @@ function originalScablandsHeightAt(x,z){
   const ridge=smooth((edge-SCABLANDS_LAYOUT.ridgeStart)/.1)*
     (1-smooth((edge-SCABLANDS_LAYOUT.ridgeCrest)/.16))*108;
   const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
-  let height=rolling+ridge+wall;
+  // SCABLANDS-LAND round 4, slice 2a: the rises stand under every place's flat ground, and the dry river is cut into the plain.
+  let height=rolling+ridge+wall+riseHeightAt(x,z);
   for(const place of SCABLANDS_PLACES){
     const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
     height+=(place.height-height)*weight;
   }
-  return height;
+  return height-riverDepthAt(x,z);
 }
 // SCABLANDS-LAND round 4: the Whites and their cut are offsets from the land's east edge; EAST is that edge (the cut began 140 m inside the old edge at 700 m).
 const EAST=SCABLANDS_LAYOUT.halfWidth;
