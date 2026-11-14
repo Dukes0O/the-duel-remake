@@ -330,3 +330,78 @@ once no native poll remains. A player who starts a job and leaves at once no lon
 **Checks.** `everburn` 3 passes in 3; `everburn-play`, `everburn-well`, `run-gas` and `field-battle` once; `test-scablands-scene`,
 `test-render-warmup` (304), `test-render-warmup-key` (39), `test-render-warmup-passes` (143), `test-render-readiness` (65); lane
 tier (84 passed, 0 failed); build (pass); the four other scenarios 4 of 4.
+
+## Round 4 slice 1: the larger land (14 November 2026)
+
+Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Round 4: a larger land", slice 1. No switch
+changed: `story-everburn` and `scablands-runs` stay `dev`, so nothing here reaches a player.
+
+### Stage A: what was found before anything was changed
+
+Measured with a throwaway probe against the real `Course` (deleted afterwards), not read off the code alone.
+
+**1. What the car's frame needs for a land 14 km by 10 km.** The frame is the oval of `SCABLANDS_VENUE` (about 606 m by 434 m
+once its length of 3,290 is scaled to a closed curve; the `SCABLANDS_LAYOUT` radii of 600 and 430 are a little off it and are
+used only by the dirt ring). A car is kept as `(s, lateral)` and turned to world `(x, z)` by `worldAt` and back by `nearest`
+(a normal-projection solve, 40 steps of up to 16 m each). The sim moves an arena car in world space and re-projects it every
+step (`src/sim-driving.js`, the `freeHeading` branch), so what matters is that the round trip is exact and that nothing
+jumps. Findings:
+
+- **The frame's size and shape do not need to change, and neither does any other arena venue or the car physics.** On a grid of
+  2,347 points over the whole land (every 250 m, the four corners, and points 8.6 km and 9 km out) the round trip is exact to
+  1e-9 m once the seam below is mended. The corner (7000, 5000), 8,050 m from the oval, comes back to 1e-9 m.
+- **One real fault, in the Scablands' own definition: the seam.** `lengthU: 3290` is not a whole number of the course's 8 m
+  steps (3,290 / 8 = 411.25), so the last segment of the frame is 2 m long but is read as 8 m. Near the seam a point far from
+  the oval comes back wrong by its lateral distance times the angle error: 13 m at (4000, 0), 16.6 m from about x = 5,740 on
+  the line from the yard to Tin Town, and 22 m at (6750, 0). The seam lies exactly on the east axis, where Tin Town now
+  stands, so this is the line every east-west drive crosses. The fix is one number in `SCABLANDS_VENUE`: `lengthU: 3288` (411
+  whole steps). The frame shrinks by 0.06 percent (the oval is 605.6 m by 433.8 m instead of 605.9 by 434.1). With it, a
+  drive in 0.25 m steps from the yard to 6 km along the east axis stays within 1e-9 m of the true line. The same holds for
+  `lengthU` 3,296, 3,200 and 3,360, so the cause is the whole-step count and nothing else.
+- **The floor must be widened.** The floor limit (`floorHalfWidth`, 2,000) is the largest lateral distance from the oval a car
+  may have; `containInArena` pushes a car back at it. The furthest corner of the land is 8,050 m from the oval, so
+  `floorHalfWidth`, `wallOffset` and `outerWallOffset` become 9,000. Only the Scablands' own layout object changes; the
+  Scrapdome, Salt Flats and Pit layouts are not touched.
+- **Known and unchanged: the frame's own medial axis.** Inside the oval, along the east axis from the yard to x = 292 m, the
+  nearest point on the oval flips between the top and the bottom branch from one step to the next, so `s` jumps by half a lap
+  (about 1,630 m). The world position, the speed and the heading come back exactly (1e-13 m) because the car's pose is
+  re-derived from the world point each step and `headingError` is recomputed against the new frame heading. It is the same
+  today at the yard (0, 0), which stands on that axis. Nothing in the world-job mode reads the player's `s` as a distance. A
+  player cannot feel it, and the new suite checks position and speed, not `s`.
+- Cost: a ground height costs about 1.9 microseconds, so a full redraw of a 61 by 61 point detailed ground is about 7 ms and one
+  strip of 61 points about 0.1 ms (the detailed ground follows the player a strip at a time).
+
+**2. Everything else that assumes the present size.**
+
+| Where | What it assumes | Change |
+| --- | --- | --- |
+| `src/world/scablands.js` | places on the oval (600, 430), `halfWidth` 700, `halfDepth` 500, floor 2,000, `lengthU` 3,290 | places by name at ten times the distance; half size 7,000 by 5,000; floor 9,000; `lengthU` 3,288 |
+| `src/world/scablands-height.js` | the ridge (edge .94 to 1.08) and the wall (from 1.25) are fractions of 700 by 500 | the same ridge and wall profile in metres, moved to the new edge |
+| `src/world/scablands-scene.js` | four near tiles of 700 by 500 at the origin; one far mesh of 2,800 by 2,000 dropped 40 m under them; road ribbon on the oval; every place always updated | detailed ground follows the player on a fixed grid; the coarse ground covers the whole land with a hole where the detailed ground is; places updated only when near |
+| `src/world/scablands-ground.js` | the dirt ring (`ellipseClosest`, 600 by 430, 36 m) is the only road | unchanged: the ring stays round the yard |
+| `src/world/regions.js` | the Whites at (1500, 0) and the branch cut from (560, -120): east of the old ridge | held as offsets from the land's east edge |
+| solids table | boxes at places plus absolute wreck and Tin Town boxes | all offsets from a place |
+| arena bounds | `onfoot.js` line 49 keeps a walker inside 700 by 500; `crew-gear/boarding.js` uses `wallOffset` | the first reads the layout; the second follows the new 9,000 |
+| AI and targeting | none: the Scablands runs no computer cars (`opponents: 0`); raiders and the furnace move by world position | nothing to change |
+| projectiles | ranges are in metres from the shooter, not from the frame | nothing to change |
+| small and big maps (`world-hud.js`, `route-map.js`, `scablands-land.js`) | fit themselves to the job's own points; the small map adds a 120 m margin to a step with no road | nothing to change in this slice (the maps are slice 4); checked that they still draw |
+| camera far 2,400 m, fog 260 to 1,650 m | the horizon | unchanged: nothing beyond 2.4 km is drawn, so the land's edge is never seen from the middle |
+| `src/machines/dig-sandbox.js` | protects each place's disc ("Dig around it") | follows the places; see point 4 |
+| `src/town/view/town-scene.js` | draws a ground of the land's size at fixed segments | follows the new size (a development screen) |
+
+**3. Every position written as numbers.** About 40 points in `everburn.js` (every job's path points, the side jobs' points, the
+ambush places, the lamps, the forge, the car starts), `gas-run.js` (both roads, the ambush and battle marks in metres along a
+road, the furnace's wreck, `comesOutAt`), `furnace-sightings.js` (the skyline, the leaving path), `scablands-road.js` (the
+delivery road's six points), `tin-town-gate.js` (the gate), `tin-town-shacks.js` (the centre, 11 road lines for the shack
+layout, three keep-off boxes), `boneyard-wrecks.js` (three wrecks and Big Bess's rest), `everburn-props.js` (already offsets
+from the well), the scene (the radio mast at (-601, 0); the solids table is already offsets for most boxes), `iron-line.js`
+(27 points on the rail), `regions.js` (the Whites and its cuts), and the pinned values in about 14 test files.
+`old-smoke.js` holds no position (only speeds and times).
+
+**4. The Home Yard.** The Home Yard players have today is the Scrapdome yard that stands at the end of the Hidden Road
+(`src/scrapdome-yard.js`, drawn on the hidden-road course with `yard.glb`). It is not drawn from the Scablands scene and reads
+no Scablands height or place. The Scablands scene is drawn only for the `scablands` venue, whose only way in is a world job
+(`startArenaEvent` with mode `world-job`, which needs `story-everburn`, `dev`). The one other reader of the Scablands' land is
+the machine yard (`src/machines/dig-game.js`, behind `wasteland-town`, `dev`): it draws an 800 by 800 m floor from
+`scablandsNaturalHeightAt`, so its four corners, which climb the old ridge's foot (up to about 9 m at (400, 400)), become
+flat plain. That is the only visible change near the yard, and it is nothing a player can reach today. Reported for Claude.
