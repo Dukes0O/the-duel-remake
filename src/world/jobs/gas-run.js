@@ -4,23 +4,31 @@
 import {makeRng} from '../../rng.js';
 import {arenaReward} from '../../arena/arena-settlement.js';
 import {ambushRaiders, escortCarStart, escortTruckStart, ESCORT_TRUCK_START_ALONG_METRES} from './steps/escort.js';
+import {LAND} from '../scablands-names.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position: Object.freeze({x, y: 0, z}), radius});
 const path = (...places) => Object.freeze(places);
 
-const well = place('everburn', -424, 304, 18), tinTown = place('tin-town', 600, 0, 18);
-
-// The two roads. The long road is the card's table as it stands. The Boneyard road goes straight on from the Boneyard to
-// Tin Town's gate and the town (by a place 50 m south of the gate, so that it passes squarely through the gate's opening);
-// it no longer doubles back to the safe road. The planes' box lies just north-west of the
-// Boneyard's place (424, 304), so that place is moved 23 m east and south, to (447, 308), the one move that keeps the road
-// 8 m from every solid; Tin Town's gate, (575, 62), brings the road in from the south of the town's box.
-export const GAS_RUN_PATHS = Object.freeze({
-  long: path(well, place('long-road-1', -450, 40), place('long-road-2', -300, -230), place('long-road-3', -60, -380),
-    place('long-road-4', 170, -340), place('long-road-5', 350, -200), place('long-road-6', 480, -90), tinTown),
-  boneyard: path(well, place('boneyard-road-1', -200, 350), place('boneyard-road-2', 0, 370), place('boneyard-road-3', 250, 415),
-    place('boneyard-road-4', 447, 308), place('tin-town-gate-approach', 575, 112), place('tin-town-gate', 575, 62), tinTown),
-});
+// The two roads, from a land (src/world/scablands-names.js). The long road goes round the open flats, past the Dry Dam, the
+// Ships and the Ridge. The Boneyard road goes straight on from the Boneyard to Tin Town's gate and the town (by a place 50 m
+// south of the gate, so that it passes squarely through the gate's opening); it never doubles back to the safe road. The planes'
+// box lies just north-west of the Boneyard's place, so the road's place at the Boneyard stands 23 m east and 4 m south of it, the
+// one move that keeps the road 8 m from every solid; Tin Town's gate brings the road in from the south of the town's box.
+export function gasRunPaths(land) {
+  const {at, between} = land, at3 = (id, point, radius = 12) => place(id, point.x, point.z, radius);
+  const well = at3('everburn', at('everburn'), 18), tinTown = at3('tin-town', at('tin-town'), 18);
+  return Object.freeze({
+    long: path(well, at3('long-road-1', between('everburn', 'iron-line', .688, 95, -55)), at3('long-road-2', at('dry-dam', 124, 74)),
+      at3('long-road-3', at('ships-in-sand', -60, 50)), at3('long-road-4', between('ships-in-sand', 'ridge', .426, -10.78, 36.28)),
+      at3('long-road-5', at('ridge', -74, 104)), at3('long-road-6', at('tin-town', -120, -90)), tinTown),
+    boneyard: path(well, at3('boneyard-road-1', between('dead-mall', 'everburn', .485, 5.62, -18.9)),
+      at3('boneyard-road-2', at('dead-mall', 0, -60)), at3('boneyard-road-3', between('dead-mall', 'boneyard', .551, 16.19, 54.48)),
+      at3('boneyard-road-4', at('boneyard', 23, 4)), at3('tin-town-gate-approach', at('tin-town', -25, 112)),
+      at3('tin-town-gate', at('tin-town', -25, 62)), tinTown),
+  });
+}
+export const GAS_RUN_PATHS = gasRunPaths(LAND);
+const tinTown = GAS_RUN_PATHS.long.at(-1);
 export const GAS_RUN_ROADS = Object.freeze(Object.keys(GAS_RUN_PATHS));
 // One share, two on the Boneyard road. A share is the one amount every world job pays (src/arena/arena-settlement.js).
 export const GAS_RUN_SHARES = Object.freeze({long: 1, boneyard: 2});
@@ -51,10 +59,13 @@ export function pointAlongRoad(road, metres) {
   return {x: places[0].position.x, z: places[0].position.z};
 }
 
-// Where the Ash Men may wait: a fixed list of places along each road, by metres from the well. The raid on the long road is
+// Where the Ash Men may wait: a fixed list of places along each road, by metres from the well. On the Boneyard road they are
+// shares of the road's own length, so that they stay in the same places along it however far apart the places stand (they were
+// 260, 400, 540, 690, 830, 977 and 1,107 m along a road of 1,259 m on the first, small land). The raid on the long road is
 // the one place where that road comes nearest the Boneyard (110 m before Tin Town; the road's far end is its nearest approach).
+export const GAS_RUN_AMBUSH_SHARES = Object.freeze({boneyard: Object.freeze([.2065, .3178, .429, .5481, .6593, .7761, .8794])});
 export const GAS_RUN_AMBUSH_METRES = Object.freeze({
-  boneyard: Object.freeze([260, 400, 540, 690, 830, 977, 1107]),
+  boneyard: Object.freeze(GAS_RUN_AMBUSH_SHARES.boneyard.map(share => Math.round(share * gasRunLength('boneyard')))),
   long: Object.freeze([Math.round(gasRunLength('long') - 110)]),
 });
 
@@ -139,6 +150,12 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furn
 
 export const isGasRun = job => job?.run === true && job?.storyId === 'everburn' && validRoad(job.road);
 
+// Where the dead furnace lies, from the Boneyard road's places.
+export function gasRunWreck(boneyardPath) {
+  const before = boneyardPath[2].position, here = boneyardPath[3].position;
+  return Object.freeze({x: here.x, z: here.z - 8, heading: Math.atan2(here.x - before.x, here.z - before.z)});
+}
+
 // ---- The battle on the Boneyard road (docs/board/cards/FIELD-BATTLE-ASH.md) ----------------------------------------------------
 // At War party, while the furnace is alive, the next Boneyard run is not a run but a battle: Big Bess drives the same road with two
 // ambushes of 3 (2 on Easy) ahead of her, and the Ash Men's patched furnace comes out behind her 560 m along the road (past (0, 370)) and hunts her.
@@ -148,7 +165,8 @@ const FURNACE_ID = 'old-smoke-furnace';
 // How far into the road Big Bess is when the furnace comes out: 130 m past (0, 370), which is 430 m in. It was 430 in the first build; with
 // 430 the three doors were broken long before the gate and the furnace never caught up. At 560 there is about 700 m of road, 78 s, left for
 // three doors (chosen from 30 tries of each driver, docs/board/cards/FIELD-BATTLE-ASH.md "Tuning result").
-const comesOutAtMetres = 560;
+// On the first, small land that was 560 m of a road of 1,259 m, so it is held as the same share (.4449) of the road's length.
+const comesOutAtMetres = Math.round(.4449 * gasRunLength('boneyard'));
 // Where it comes out, this far behind Big Bess on her road. The card puts its start at (250, 415) and has it drive "her road
 // behind her", but (250, 415) is 254 m ahead of (0, 370): the furnace comes out on the road behind her instead.
 export const FIELD_BATTLE_GAP_METRES = 80;
@@ -158,7 +176,7 @@ export const FIELD_BATTLE = Object.freeze({
   arrivedShares: GAS_RUN_SHARES.boneyard,
   ambushCounts: Object.freeze([3, 3]),
   // Fixed places along the road, ahead of (0, 370), where the two ambushes may stand; the seeded generator draws two.
-  ambushMetres: Object.freeze([540, 690, 830, 977, 1107]),
+  ambushMetres: Object.freeze(GAS_RUN_AMBUSH_SHARES.boneyard.slice(2).map(share => Math.round(share * gasRunLength('boneyard')))),
   comesOutAt: Object.freeze(pointAlongRoad('boneyard', comesOutAtMetres)),
   comesOutAtMetres,
   furnace: Object.freeze({
@@ -186,8 +204,9 @@ export const FIELD_BATTLE = Object.freeze({
   // The battle starts as any Boneyard run does; Moss names the furnace when it comes out behind them, and Clinker answers.
   lines: Object.freeze({start: 'story.ember.moss.6', sighted: 'story.ember.moss.11', comesOut: 'story.ember.clinker.1', door: 'story.ember.clinker.2',
     cinders: 'story.ember.moss.12', dead: 'story.ember.cinder.25', arrived: 'story.ember.auntie-solder.10', won: 'story.ember.auntie-solder.11'}),
-  // The dead furnace as a wreck on later Boneyard runs: 8 m north of the road at (250, 415), lying along it.
-  wreck: Object.freeze({x: 250, z: 407, heading: Math.atan2(250, 45)}),
+  // The dead furnace as a wreck on later Boneyard runs: 8 m north of the road's third place (between the Dead Mall and the Boneyard),
+  // lying along the road's piece that ends there.
+  wreck: gasRunWreck(GAS_RUN_PATHS.boneyard),
 });
 
 // The ambushes of a battle: two of 3 raiders (the escort step takes Easy's one fewer), from the run count.

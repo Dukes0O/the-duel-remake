@@ -13,6 +13,9 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {BONEYARD_WRECKS,BESS_REST} from '../src/world/boneyard-wrecks.js';
 import {createEverburnProps} from '../src/world/everburn-props.js';
 import {animateScene,syncScene} from '../src/scene-systems.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {FURNACE_SKYLINE,FURNACE_LEAVING} from '../src/world/jobs/furnace-sightings.js';
+import {TIN_TOWN_CENTRE} from '../src/world/tin-town-shacks.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
 const loaded=[];
@@ -58,20 +61,27 @@ for(const solid of SCABLANDS_SOLIDS){
 }
 
 const ground=scene.group.getObjectByName('Scablands ground chunks');
-const near=ground.children.filter(mesh=>mesh.name==='Scablands near ground');
+// SCABLANDS-LAND round 4: one detailed window (61 by 61 corners) follows the player; the coarse ground covers the whole land.
+const nearGroundMeshes=ground.children.filter(mesh=>mesh.name==='Scablands near ground');
 const far=ground.children.find(mesh=>mesh.name==='Scablands far ground');
-assert.equal(near.length,4,'near ground is split into four chunks');
+assert.equal(nearGroundMeshes.length,1,'the detailed ground is one window that follows the player');
+const nearWindow=nearGroundMeshes[0],near=[nearWindow];
 assert.ok(far,'a coarse horizon ground is present');
-assert.ok(near[0].geometry.attributes.position.count>far.geometry.attributes.position.count,'far ground uses fewer vertices');
-const nearVertex=near[0].geometry.attributes.position;
-const x=near[0].position.x+nearVertex.getX(0),z=near[0].position.z+nearVertex.getZ(0);
-assert.ok(Math.abs(near[0].position.y+nearVertex.getY(0)-scablandsSurfaceHeightAt(x,z)-.025)<.001,'rendered terrain samples the shared physics height');
-const untouchedX=far.geometry.attributes.position.getX(0),untouchedZ=far.geometry.attributes.position.getZ(0);
-const untouchedY=far.geometry.attributes.position.getY(0);
-const editX=far.geometry.attributes.position.getX(1),editZ=far.geometry.attributes.position.getZ(1);
-scablandsGroundEdit.cut({x:editX,z:editZ,radius:1},scablandsGroundEdit.heightAt(editX,editZ)-3);
+assert.equal(nearWindow.geometry.attributes.position.count,61*61,'the window is 60 by 60 cells, 1,400 m by 1,000 m');
+assert.ok(nearWindow.geometry.attributes.position.count<far.geometry.attributes.position.count,'the coarse ground has more corners than the window: it covers ten times the land at coarser cells');
+far.geometry.computeBoundingBox();
+assert.deepEqual([far.geometry.boundingBox.min.x,far.geometry.boundingBox.max.x,far.geometry.boundingBox.min.z,far.geometry.boundingBox.max.z],
+  [-SCABLANDS_LAYOUT.halfWidth,SCABLANDS_LAYOUT.halfWidth,-SCABLANDS_LAYOUT.halfDepth,SCABLANDS_LAYOUT.halfDepth],'the coarse ground covers the whole land');
+const nearVertex=nearWindow.geometry.attributes.position;
+const x=nearWindow.position.x+nearVertex.getX(0),z=nearWindow.position.z+nearVertex.getZ(0);
+assert.ok(Math.abs(nearWindow.position.y+nearVertex.getY(0)-scablandsSurfaceHeightAt(x,z)-.025)<.001,'rendered terrain samples the shared physics height');
+// The coarse vertex at the yard (the 51st of the 41st row of 101): cutting the land there changes it, and the first corner stays as it was.
+const yardCorner=40*101+50;
+assert.deepEqual([far.geometry.attributes.position.getX(yardCorner),far.geometry.attributes.position.getZ(yardCorner)],[0,0],'the coarse ground has a corner at the yard');
+const untouchedY=far.geometry.attributes.position.getY(0),yardBefore=far.geometry.attributes.position.getY(yardCorner);
+scablandsGroundEdit.cut({x:0,z:0,radius:1},scablandsGroundEdit.heightAt(0,0)-3);
 assert.ok(scene.group.userData.updateGroundView()>0,'committed edits refresh near ground and horizon');
-assert.ok(Math.abs(far.geometry.attributes.position.getY(1)-untouchedY)>0.1,'far ground rebuild includes edited terrain');
+assert.ok(Math.abs(far.geometry.attributes.position.getY(yardCorner)-yardBefore)>0.1,'far ground rebuild includes edited terrain');
 assert.equal(far.geometry.attributes.position.getY(0),untouchedY,'far ground keeps undug terrain exactly unchanged');
 resetScablandsGroundEdit();
 assert.ok(scene.group.getObjectByName('Radio mast visible across the Scablands'),'mast is placed in the world');
@@ -307,7 +317,7 @@ assert.ok(gateFire,'the scene carries a fire for Tin Town\'s gate');
 assert.equal(gateFire.children.filter(node=>node.name==='Fire on the gate').length,9,'the gate has nine flames: two posts, three over the beam, four along the fences');
 assert.ok(gateFire.children.some(node=>node.name==='Gate smoke'),'the gate has a plume of smoke');
 const everburnJob=EVERBURN_JOBS[5],gateAt=everburnJob.steps[1].path[everburnJob.steps[1].actor.gateWaypoint].position;
-assert.deepEqual([gateAt.x,gateAt.z],[575,82],'the job stops the furnace at (575, 82): the furnace stops in front of the gate');
+assert.deepEqual([gateAt.x,gateAt.z],[LAND.at('tin-town',-25,82).x,LAND.at('tin-town',-25,82).z],'the job stops the furnace 82 m south of Tin Town centre and 25 m west: the furnace stops in front of the gate');
 const atGate=(furnace,extra={})=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number:6},clockSec:0,job:{stepIndex:1,steps:everburnJob.steps},
   actors:[{id:'old-smoke-furnace',startedAtSec:0,position:{x:500,y:0,z:60},heading:1.5,furnace}],...extra}}});
 syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,gateBurnt:false}));
@@ -346,11 +356,11 @@ assert.equal(gateFire.visible,false,'another job starts with the gate whole');
 const sightingState=(number,job,worldJob={})=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn',number},clockSec:0,job,actors:[],...worldJob}}});
 const rigAt=()=>{const point=new THREE.Vector3();furnace.parent.updateWorldMatrix(true,false);furnace.parent.getWorldPosition(point);return point;};
 const rig=furnace.parent,restAt=new THREE.Vector3(places.get('everburn').x+18,scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z),places.get('everburn').z);
-// Job 1: standing on the skyline at (300, -60), smoke and no door fire, until the pot is delivered.
+// Job 1: standing on the skyline half way to Tin Town and 60 m north of the line, smoke and no door fire, until the pot is delivered.
 const hot={stepIndex:0,steps:EVERBURN_JOBS[0].steps,done:false};
 syncScene(scene.group,sightingState(1,hot));
-assert.ok(Math.hypot(rigAt().x-300,rigAt().z+60)<.001&&rig.visible,'job 1: the furnace stands at (300, -60)');
-assert.ok(Math.abs(rigAt().y-scablandsSurfaceHeightAt(300,-60))<.001,'job 1: it stands on the ground');
+assert.ok(Math.hypot(rigAt().x-FURNACE_SKYLINE.x,rigAt().z-FURNACE_SKYLINE.z)<.001&&rig.visible,'job 1: the furnace stands on the skyline');
+assert.ok(Math.abs(rigAt().y-scablandsSurfaceHeightAt(FURNACE_SKYLINE.x,FURNACE_SKYLINE.z))<.001,'job 1: it stands on the ground');
 assert.deepEqual(fireOver(),[],'job 1: no door fire shows on the standing furnace');
 assert.ok(furnaceFire.children.slice(6,20).every(puff=>puff.name==='Chimney smoke'),'job 1: its chimney smoke is drawn');
 animateScene(scene.group,200);
@@ -358,15 +368,15 @@ assert.ok(furnaceFire.visible&&furnace.visible,'job 1: the furnace and its smoke
 syncScene(scene.group,sightingState(1,{...hot,done:true}));
 assert.equal(rig.visible,false,'job 1: once the pot is delivered the furnace is gone');
 assert.equal(sightingState(1,hot).arena.worldJob.actors.length,0,'job 1: no furnace actor stands behind the sighting');
-// Job 3: until the thief is caught the furnace keeps its place; then it rolls from (140, 470) toward (-60, 440) for 20 s and is gone.
+// Job 3: until the thief is caught the furnace keeps its place; then it rolls from the Boneyard's far end 200 m west for 20 s and is gone.
 const run={stepIndex:0,steps:EVERBURN_JOBS[2].steps,done:false};
 syncScene(scene.group,sightingState(3,run,{clockSec:40}));
 assert.ok(rigAt().distanceTo(restAt)<.001&&rig.visible,'job 3: before the catch the furnace stays where it was');
 const rolling=seconds=>{syncScene(scene.group,sightingState(3,run,{clockSec:100+seconds,wonAtSec:100}));return rigAt();};
-assert.ok(Math.hypot(rolling(0).x-140,rigAt().z-470)<.001,'job 3: it starts at (140, 470) as the thief is caught');
-assert.ok(Math.abs(rig.rotation.y-Math.atan2(-200,-30))<.001,'job 3: it faces the way it rolls');
-assert.ok(Math.hypot(rolling(10).x-40,rigAt().z-455)<.001,'job 3: halfway through the 20 seconds it is halfway along');
-assert.ok(rolling(19.9).x<-59&&rig.visible,'job 3: it is still rolling just before 20 seconds');
+assert.ok(Math.hypot(rolling(0).x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001,'job 3: it starts at the far end of the Boneyard as the thief is caught');
+assert.ok(Math.abs(rig.rotation.y-Math.atan2(FURNACE_LEAVING.to.x-FURNACE_LEAVING.from.x,FURNACE_LEAVING.to.z-FURNACE_LEAVING.from.z))<.001,'job 3: it faces the way it rolls');
+assert.ok(Math.hypot(rolling(10).x-(FURNACE_LEAVING.from.x+FURNACE_LEAVING.to.x)/2,rigAt().z-(FURNACE_LEAVING.from.z+FURNACE_LEAVING.to.z)/2)<.001,'job 3: halfway through the 20 seconds it is halfway along');
+assert.ok(rolling(19.9).x<FURNACE_LEAVING.to.x+2&&rig.visible,'job 3: it is still rolling just before 20 seconds');
 rolling(20);
 assert.equal(rig.visible,false,'job 3: after 20 seconds it is gone');
 assert.deepEqual([rolling(5).x,rolling(5).z],[rolling(5).x,rolling(5).z],'job 3: the same clock gives the same place');
@@ -388,7 +398,8 @@ for(const share of [.31,.5,.69]){
 assert.deepEqual(fireOver(),[],'job 4: no door fire shows on the pacing furnace');
 syncScene(scene.group,escorting(.69));
 const beforeTurn=rigAt().clone();
-syncScene(scene.group,escorting(.76));
+// 40.5 m of her road past the 70 percent mark is 63 m for the furnace at its own pace (14 m a second against her 9): past the 30 m it takes to turn, and short of the 220 m after which it is gone. (On the first land that was .76 of her road.)
+syncScene(scene.group,escorting(.7+40.5/total));
 assert.ok(Math.abs(wrapAngle(rig.rotation.y-Math.PI))<.001,'job 4: past 70% it has turned to face north');
 assert.ok(rigAt().z<beforeTurn.z&&rig.visible,'job 4: and it is further north than before');
 syncScene(scene.group,escorting(.99));
@@ -445,23 +456,26 @@ assert.ok(road,'the dirt road is drawn');
   const middle=Math.floor(sections/2)*across+across/2;
   assert.ok(Math.abs(roadAt.getY(middle)-scablandsSurfaceHeightAt(roadAt.getX(middle),roadAt.getZ(middle)))<.5,'the middle of the road lies on the land');
 }
-// Check 1c: the far ground lies below the near ground wherever both exist.
+// Check 1c (round 4): the coarse ground is not drawn where the detailed window lies (its material cuts a hole there), and along the
+// hole's edge it lies below the detailed ground, so that it is never seen through a gap. Its corners are the land's own height less 35 cm.
 {
+  const holeUniform=far.material.onBeforeCompile,shader={uniforms:{},vertexShader:'#include <common>\n#include <project_vertex>',fragmentShader:'#include <common>\nvoid main() {\n#include <color_fragment>\n}'};
+  holeUniform(shader,null);
+  assert.ok(/discard/.test(shader.fragmentShader)&&shader.uniforms.uNearHole,'the coarse ground cuts a hole out of itself');
+  const hole=shader.uniforms.uNearHole.value;
+  assert.ok(Math.abs(hole.x-nearWindow.position.x)<1e-9&&Math.abs(hole.y-nearWindow.position.z)<1e-9&&Math.abs(hole.z-699)<1e-9&&Math.abs(hole.w-499)<1e-9,'the hole is the window, a metre smaller each way');
   let samples=0,smallest=1e9;
-  for(let x=-695;x<=695;x+=17)for(let z=-495;z<=495;z+=13){
-    const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);
-    assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);
-    samples++;smallest=Math.min(smallest,nearHeight-farHeight);
-  }
-  assert.ok(samples>5000&&smallest>0,`the far ground lies below the near ground everywhere it was sampled (closest ${smallest.toFixed(2)} m, ${samples} places)`);
+  for(let x=-699;x<=699;x+=7)for(const z of [-499,499]){const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);samples++;smallest=Math.min(smallest,nearHeight-farHeight);}
+  for(let z=-499;z<=499;z+=7)for(const x of [-699,699]){const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);samples++;smallest=Math.min(smallest,nearHeight-farHeight);}
+  assert.ok(samples>400&&smallest>0,`the coarse ground lies below the detailed ground along the hole's edge (closest ${smallest.toFixed(2)} m, ${samples} places)`);
   const farAt=far.geometry.attributes.position;
-  assert.ok(Math.abs(farAt.getY(0)+far.position.y-(scablandsSurfaceHeightAt(-1400,-1000)+.025-.12))<.001,'the far ground is unchanged outside the near ground');
+  assert.ok(Math.abs(farAt.getY(0)-(scablandsSurfaceHeightAt(-SCABLANDS_LAYOUT.halfWidth,-SCABLANDS_LAYOUT.halfDepth)-.35))<.001,'the coarse ground stands 35 cm below the land');
 }
 // Check 1d: Tin Town's gate stands at its place, across the line the trucks drive, with a 9 m opening.
 {
-  const gate=scene.group.getObjectByName('Tin Town gate'),land=scablandsSurfaceHeightAt(575,62);
+  const gate=scene.group.getObjectByName('Tin Town gate'),land=scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z);
   assert.ok(gate&&gate.parent===scene.group,'the scene carries Tin Town\'s gate');
-  assert.ok(Math.hypot(gate.position.x-575,gate.position.z-62)<.001&&Math.abs(gate.position.y-land)<.001,'the gate stands at (575, 62), on the ground');
+  assert.ok(Math.hypot(gate.position.x-TIN_TOWN_GATE.x,gate.position.z-TIN_TOWN_GATE.z)<.001&&Math.abs(gate.position.y-land)<.001,'the gate stands 25 m west and 62 m south of Tin Town centre, on the ground');
   gate.updateMatrixWorld(true);
   const left=gate.getObjectByName('Gate post left'),right=gate.getObjectByName('Gate post right');
   assert.ok(left&&right,'the gate has two posts');
@@ -475,7 +489,7 @@ assert.ok(road,'the dirt road is drawn');
   // (from (447, 308)) both cross the opening within 30 degrees of straight, and the road goes on to the town's centre.
   const through=new THREE.Vector3(0,0,1).transformDirection(gate.matrixWorld),across=(from,to)=>Math.abs(through.dot(new THREE.Vector3(to.x-from.x,0,to.z-from.z).normalize()));
   // The furnace does not drive through the gate (it stops 20 m in front of it); the Boneyard road does, squarely, from (575, 112) to (575, 62).
-  assert.ok(across({x:575,z:112},{x:575,z:62})>.9999,'the gas run Boneyard road passes squarely through the opening of the gate');
+  assert.ok(across(LAND.at('tin-town',-25,112),LAND.at('tin-town',-25,62))>.9999,'the gas run Boneyard road passes squarely through the opening of the gate');
   assert.deepEqual([TIN_TOWN_GATE.x,TIN_TOWN_GATE.z+20],[gateAt.x,gateAt.z],'the furnace stops 20 m in front of the gate, south of it');
   assert.equal(gate.getObjectByName('Gate sign plate').userData.text,'TIN TOWN','the gate carries a tin sign reading TIN TOWN');
   const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
@@ -489,7 +503,7 @@ assert.ok(road,'the dirt road is drawn');
   assert.ok(materials.length>5&&materials.every(material=>Boolean(material.userData.scrapWear)===!glowing(material)),'the wear is drawn over every material of the gate except its lamp glass');
   // When it burns, the fire takes the whole gate, from the ground up (redrawn by Claude, 12 November).
   syncScene(scene.group,atGate({phase:'idle',door:null,hits:0,phaseSec:0,townReached:true,gateBurnt:true}));
-  assert.ok(Math.hypot(gateFire.position.x-575,gateFire.position.z-62)<.001,'the fire stands at the gate');
+  assert.ok(Math.hypot(gateFire.position.x-TIN_TOWN_GATE.x,gateFire.position.z-TIN_TOWN_GATE.z)<.001,'the fire stands at the gate');
   assert.ok(Math.abs(gateFire.position.y-land)<.05&&Math.abs(Math.max(...gateFire.children.filter(node=>node.name==='Fire on the gate'&&node.position.y>6).map(node=>node.position.y))-beam.max.y)<1.2,`the fire stands from the ground up, with three flames over the beam (beam top ${beam.max.y.toFixed(2)})`);
   assert.ok(Math.abs(gateFire.rotation.y-gate.rotation.y)<1e-9,'the flames stand along the gate');
 }
@@ -504,7 +518,7 @@ assert.ok(road,'the dirt road is drawn');
   assert.ok(data.tower&&data.tower.height>=10.5&&data.tower.height<=12.5,`the water tower is about 11 m tall (${data.tower?.height.toFixed(1)})`);
   assert.ok(data.pole&&data.pole.height>=12,'the radio pole stands in a cluster');
   // Seen from far off: a 16 m watchtower with a lamp in the cluster nearest the gate, and chimney smoke from three shacks in different clusters.
-  const nearestToGate=data.clusters.map(cluster=>({index:cluster.index,distance:Math.hypot((cluster.rect.x0+cluster.rect.x1)/2-575,(cluster.rect.z0+cluster.rect.z1)/2-62)})).sort((a,b)=>a.distance-b.distance)[0].index;
+  const nearestToGate=data.clusters.map(cluster=>({index:cluster.index,distance:Math.hypot((cluster.rect.x0+cluster.rect.x1)/2-TIN_TOWN_GATE.x,(cluster.rect.z0+cluster.rect.z1)/2-TIN_TOWN_GATE.z)})).sort((a,b)=>a.distance-b.distance)[0].index;
   assert.ok(data.watchtower&&Math.abs(data.watchtower.height-16)<.6,`the watchtower is 16 m tall (${data.watchtower?.height.toFixed(1)})`);
   const towerCluster=data.clusters.find(cluster=>data.watchtower.x>=cluster.rect.x0&&data.watchtower.x<=cluster.rect.x1&&data.watchtower.z>=cluster.rect.z0&&data.watchtower.z<=cluster.rect.z1);
   assert.equal(towerCluster?.index,nearestToGate,'the watchtower stands in the cluster nearest the gate');
@@ -533,7 +547,7 @@ assert.ok(road,'the dirt road is drawn');
   addLine(flat(furnaceSteps.slice(planes,roadHome+1)));
   addLine(flat(GAS_RUN_PATHS.long));addLine(flat(GAS_RUN_PATHS.boneyard));
   addLine(flat(EVERBURN_JOBS[3].steps[0].path).slice(1));
-  addLine([{x:0,z:0},{x:600,z:0}]);addLine([{x:575,z:62},{x:600,z:0}]);
+  addLine([LAND.yard,LAND.at('tin-town')]);addLine([LAND.at('tin-town',-25,62),LAND.at('tin-town')]);
   assert.ok(lines.length>=12,'the roads and lines are read from the real job paths');
   const distanceToLine=(x,z,[a,b])=>{const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)));return Math.hypot(x-a.x-dx*t,z-a.z-dz*t);};
   let nearestCentre=1e9,nearestRoad=1e9,vertices=0;
@@ -541,7 +555,7 @@ assert.ok(road,'the dirt road is drawn');
     const at=mesh.geometry.attributes.position;
     for(let index=0;index<at.count;index++){
       const x=at.getX(index),z=at.getZ(index);vertices++;
-      nearestCentre=Math.min(nearestCentre,Math.hypot(x-600,z));
+      nearestCentre=Math.min(nearestCentre,Math.hypot(x-TIN_TOWN_CENTRE.x,z-TIN_TOWN_CENTRE.z));
       for(const line of lines)nearestRoad=Math.min(nearestRoad,distanceToLine(x,z,line));
     }
   }
@@ -565,16 +579,16 @@ assert.ok(road,'the dirt road is drawn');
   }
 }
 // The ground look is drawn over the near ground, the far ground, the road and any edited chunk.
-assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.userData.groundLook,'the near and far ground carry the ground look');
+assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.userData.groundLook,'the detailed window and the coarse ground carry the ground look');
 {
   scablandsGroundEdit.cut({x:100,z:100,radius:4},scablandsGroundEdit.heightAt(100,100)-2);
   assert.ok(scene.group.userData.updateGroundView()>0,'a cut refreshes the ground');
   const chunk=ground.children.find(mesh=>/^Scablands edited ground/.test(mesh.name));
   assert.ok(chunk&&chunk.material.userData.groundLook,'an edited chunk carries the ground look');
   assert.ok(ground.children.includes(road)&&road.name==='Scablands dirt road','the road is rebuilt after an edit and keeps its name');
-  // The far ground stays dropped under the near ground after a rebuild: the vertex at (0, 0) is the 179th.
-  const lowered=far.geometry.attributes.position.getY(8*21+10)+far.position.y;
-  assert.ok(lowered<scablandsSurfaceHeightAt(0,0)-39,'the far ground stays dropped under the near ground after an edit');
+  // The coarse ground stays below the land after a rebuild (the corner at the yard is the 4,091st).
+  const lowered=far.geometry.attributes.position.getY(40*101+50);
+  assert.ok(lowered<=scablandsSurfaceHeightAt(0,0)-.3,'the coarse ground stays under the land after an edit');
   resetScablandsGroundEdit();scene.group.userData.updateGroundView();
 }
 scene.dispose();
@@ -764,7 +778,7 @@ assert.ok(sceneMeshes.length>=2&&sceneMeshes.length<=12,`the props are drawn in 
 const propKit=await realParse(SCABLANDS_ASSETS.kit),propCluster=createEverburnProps(propKit.scene,{groundAt:(east,south)=>scablandsSurfaceHeightAt(places.get('everburn').x+east,places.get('everburn').z+south)-scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z)});
 const propRoot=new THREE.Group();propRoot.position.set(places.get('everburn').x,scablandsSurfaceHeightAt(places.get('everburn').x,places.get('everburn').z),places.get('everburn').z);propRoot.add(propCluster);propRoot.updateMatrixWorld(true);
 assert.ok(propCluster&&propCluster.children.length>=8&&propCluster.children.length<=12,`eight to twelve props stand by the well (${propCluster?.children.length})`);
-const wellAt=places.get('everburn'),avoid=[['the raiders way in',-448,288,14],['the raiders hold',-426,303,14],['the furnace parking place',wellAt.x+18,wellAt.z,12],['the car start at the well',wellAt.x,wellAt.z,12]];
+const wellAt=places.get('everburn'),avoid=[['the raiders way in',wellAt.x-24,wellAt.z-16,14],['the raiders hold',wellAt.x-2,wellAt.z-1,14],['the furnace parking place',wellAt.x+18,wellAt.z,12],['the car start at the well',wellAt.x,wellAt.z,12]];
 const propGround=scablandsSurfaceHeightAt(wellAt.x,wellAt.z);
 for(const prop of propCluster.children){
   const bounds=new THREE.Box3().setFromObject(prop),size=bounds.getSize(new THREE.Vector3());

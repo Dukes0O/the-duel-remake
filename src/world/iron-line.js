@@ -1,19 +1,34 @@
-// Shared Iron Line geometry for Iron Mule and later freight jobs.
-const place = (id, x, z, y = 0) => Object.freeze({id, position:Object.freeze({x, y, z})});
-export const IRON_LINE = Object.freeze([
-  place('rail-siding-end', -620, 90), place('rail-halt', -600, 0),
-  place('rail-north-cut', -590, -130, 1.6), place('rail-dam-junction', -500, -245, -2.8),
-  place('rail-bed-west', -300, -335, .4), place('rail-bed-mid', -120, -335, 1.9),
-  place('rail-loop-west', -60, -325, 1.7), place('rail-loop-north', 0, -350, -2),
-  place('rail-loop-east', 40, -325, .8), place('rail-bed-east', 170, -340, -.9),
-  place('rail-bridge', 300, -335, -1.5), place('rail-east-cut', 330, -200, -1.9),
-  place('rail-east-run', 560, -120, 1), place('rail-tin-town', 650, -60),
-]);
-export const IRON_LOOP_ARCS=Object.freeze({
-  north:Object.freeze([place('rail-loop-west',-60,-325,1.7),place('rail-loop-north',0,-350,-2),place('rail-loop-east',40,-325,.8)]),
-  south:Object.freeze([place('rail-loop-west',-60,-325,1.7),place('rail-loop-south',0,-310,1.1),place('rail-loop-east',40,-325,.8)]),
-});
-export const IRON_RAIL_GATE_SPUR=Object.freeze([place('rail-bed-west',-300,-335,.4),place('dam-rail-gate',-445,-345,-3),place('dam-filling-shed',-462,-368,-3)]);
+// Shared Iron Line geometry for Iron Mule and later freight jobs. Every rail point is a place of the land plus an offset, or a
+// share of the way between two places plus an offset (src/world/scablands-names.js); `ironLineFor(land)` builds the rail for any
+// land, so that it moves with the places it runs through. The third number of a point is its height above the ground's own.
+import {LAND} from './scablands-names.js';
+
+export function ironLineFor(land) {
+  const {at, between} = land;
+  const place = (id, point, y = 0) => Object.freeze({id, position:Object.freeze({x:point.x, y, z:point.z})});
+  const bedWest = () => place('rail-bed-west', at('dry-dam', 124, -31), .4);
+  const loopWest = () => place('rail-loop-west', at('ships-in-sand', -60, 105), 1.7), loopEast = () => place('rail-loop-east', at('ships-in-sand', 40, 105), .8);
+  return Object.freeze({
+    line: Object.freeze([
+      place('rail-siding-end', at('iron-line', -20, 90)), place('rail-halt', at('iron-line')),
+      place('rail-north-cut', at('iron-line', 10, -130), 1.6), place('rail-dam-junction', at('dry-dam', -76, 59), -2.8),
+      bedWest(), place('rail-bed-mid', between('dry-dam', 'ships-in-sand', .679, 16.2, 54.52), 1.9),
+      loopWest(), place('rail-loop-north', at('ships-in-sand', 0, 80), -2),
+      loopEast(), place('rail-bed-east', between('ships-in-sand', 'ridge', .426, -10.78, 36.28), -.9),
+      place('rail-bridge', between('ships-in-sand', 'ridge', .711, -1.6, 5.37), -1.5), place('rail-east-cut', at('ridge', -94, 104), -1.9),
+      place('rail-east-run', at('tin-town', -40, -120), 1), place('rail-tin-town', at('tin-town', 50, -60)),
+    ]),
+    loopArcs: Object.freeze({
+      north: Object.freeze([loopWest(), place('rail-loop-north', at('ships-in-sand', 0, 80), -2), loopEast()]),
+      south: Object.freeze([loopWest(), place('rail-loop-south', at('ships-in-sand', 0, 120), 1.1), loopEast()]),
+    }),
+    gateSpur: Object.freeze([bedWest(), place('dam-rail-gate', at('dry-dam', -21, -41), -3), place('dam-filling-shed', at('dry-dam', -38, -64), -3)]),
+  });
+}
+const BUILT = ironLineFor(LAND);
+export const IRON_LINE = BUILT.line;
+export const IRON_LOOP_ARCS = BUILT.loopArcs;
+export const IRON_RAIL_GATE_SPUR = BUILT.gateSpur;
 
 const point = p => p?.position ?? p;
 const distance = (a,b) => Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);

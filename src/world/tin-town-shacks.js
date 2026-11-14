@@ -8,24 +8,47 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {createScrapWear,createSmokeMaterial} from './scrap-look.js';
 
-export const TIN_TOWN_CENTRE=Object.freeze({x:600,z:0});
+import {LAND} from './scablands-names.js';
+
+// The town's centre, the roads that run into it and the layout of its shacks all come from a land (src/world/scablands-names.js),
+// so they move with Tin Town. Every other number below is an offset from the centre or a size.
+export const TIN_TOWN_CENTRE=Object.freeze({x:LAND.at('tin-town').x,z:LAND.at('tin-town').z});
 // The places where jobs arrive and the roads they use keep clear of everything drawn here: a circle of 24 m round the
 // town's centre and 10 m either side of these lines (the furnace's path, both gas-run roads, job 4's safe road, the line
-// from the yard, and the line from the gate to the town's centre). Copied from src/world/jobs/everburn.js and
-// gas-run.js; tools/test-scablands-scene.mjs reads the real paths and checks the drawing against them.
+// from the yard, and the line from the gate to the town's centre). They are the same places as in src/world/jobs/everburn.js
+// and gas-run.js; tools/test-scablands-scene.mjs reads the real paths and checks the drawing against them.
 export const TIN_TOWN_CLEAR_RADIUS=24,TIN_TOWN_CLEAR_ROAD=10;
-export const TIN_TOWN_ROADS=Object.freeze([
-  [[0,0],[600,0]],[[575,62],[600,0]],
-  [[545,252],[610,170]],[[610,170],[575,82]],[[575,82],[430,70]],
-  [[350,-200],[480,-90]],[[480,-90],[600,0]],
-  [[250,415],[447,308]],[[447,308],[575,112]],[[575,112],[575,62]],
-  [[230,150],[600,0]],
-].map(line=>Object.freeze(line.map(point=>Object.freeze(point)))));
+// The roads that matter to the layout lie within a few hundred metres of the town; each line is cut to the circle of this
+// radius round the centre (a road has no use for a shack 200 m away, and the long lines from the yard cost time to measure).
+const ROAD_REACH=200;
+export function tinTownRoads(land){
+  const {at,between,yard}=land,centre=at('tin-town'),gate=at('tin-town',-25,62),approach=at('tin-town',10,170),front=at('tin-town',-25,82);
+  const lines=[
+    [yard,centre],[gate,centre],
+    [at('boneyard',121,-52),approach],[approach,front],[front,between('yard','tin-town',.717,0,70)],
+    [at('ridge',-74,104),at('tin-town',-120,-90)],[at('tin-town',-120,-90),centre],
+    [between('dead-mall','boneyard',.551,16.19,54.48),at('boneyard',23,4)],[at('boneyard',23,4),at('tin-town',-25,112)],[at('tin-town',-25,112),gate],
+    [at('safe-road'),centre],
+  ];
+  return Object.freeze(lines.map(line=>clipToCircle(line,centre,ROAD_REACH)).filter(Boolean).map(line=>Object.freeze(line.map(point=>Object.freeze([point.x,point.z])))));
+}
+// The part of a line inside a circle, or null when none of it is.
+function clipToCircle([a,b],centre,radius){
+  const dx=b.x-a.x,dz=b.z-a.z,fx=a.x-centre.x,fz=a.z-centre.z,quad=dx*dx+dz*dz;
+  if(quad===0)return Math.hypot(fx,fz)<=radius?[a,b]:null;
+  const half=(fx*dx+fz*dz)/quad,under=half*half-(fx*fx+fz*fz-radius*radius)/quad;
+  if(under<0)return null;
+  const root=Math.sqrt(under),t0=Math.max(0,-half-root),t1=Math.min(1,-half+root);
+  if(t0>t1)return null;
+  return [{x:a.x+dx*t0,z:a.z+dz*t0},{x:a.x+dx*t1,z:a.z+dz*t1}];
+}
+export const TIN_TOWN_ROADS=tinTownRoads(LAND);
 // The existing Tin Town model's footprint and the gate with its fence (src/world/tin-town-gate.js: 6.6 to 20.6 m each side of
-// (575, 62) along x): kept off, with a margin. The middle rectangle is where the model's solid box (SCABLANDS_SOLIDS 'tin-town-shell')
-// stood until the fourth round of EVERBURN-PLAY-FIXES moved it onto the model; it stays in the list so that the clusters keep their places.
+// the gate, 25 m west and 62 m south of the centre, along x): kept off, with a margin. The middle rectangle is where the model's
+// solid box (SCABLANDS_SOLIDS 'tin-town-shell') stood until the fourth round of EVERBURN-PLAY-FIXES moved it onto the model; it
+// stays in the list so that the clusters keep their places. Offsets from the centre.
 const OFF_LIMITS=Object.freeze([
-  {x0:570,x1:634,z0:-30,z1:30},{x0:538.5,x1:569.5,z0:-11.5,z1:11.5},{x0:553,x1:597,z0:58,z1:66},
+  {x0:-30,x1:34,z0:-30,z1:30},{x0:-61.5,x1:-30.5,z0:-11.5,z1:11.5},{x0:-47,x1:-3,z0:58,z1:66},
 ]);
 
 // Shack sizes, in metres: width, depth, wall height.
@@ -65,25 +88,27 @@ const groundSpread=rect=>{
   return high-low;
 };
 
-let layout=null;
+const layouts=new WeakMap();
 // The clusters' places, found once: the first spot near each cluster's angle that keeps every rule (35 to 80 m from the
 // centre, clear of the circle, the roads and the existing model, 10 m of clear ground between clusters, flat ground).
-export function tinTownLayout(){
-  if(layout)return layout;
+export function tinTownLayout(land=LAND){
+  if(layouts.has(land))return layouts.get(land);
+  const centre=land.at('tin-town'),roads=land===LAND?TIN_TOWN_ROADS:tinTownRoads(land);
+  const keepOff=OFF_LIMITS.map(box=>({x0:box.x0+centre.x,x1:box.x1+centre.x,z0:box.z0+centre.z,z1:box.z1+centre.z}));
   const clusters=[];
   for(const [index,spec] of CLUSTERS.entries()){
     let placed=null;
     search:for(const radius of [50,56,44,62,40,68,36]){
       for(const turnAngle of [0,5,-5,10,-10,15,-15,20,-20,25,-25,30,-30,35,-35,40,-40]){
-        const angle=(spec.angle+turnAngle)*Math.PI/180,cx=Math.round(TIN_TOWN_CENTRE.x+Math.cos(angle)*radius),cz=Math.round(TIN_TOWN_CENTRE.z+Math.sin(angle)*radius);
+        const angle=(spec.angle+turnAngle)*Math.PI/180,cx=Math.round(centre.x+Math.cos(angle)*radius),cz=Math.round(centre.z+Math.sin(angle)*radius);
         // Clusters that stand east or west of the town are turned, so that their long side runs round the ring.
         const turned=Math.abs(Math.cos(angle))>.72,long=CELL.x+2.5+MARGIN,short=CELL.z/2+2+MARGIN,halfX=turned?short:long,halfZ=turned?long:short;
         const rect={x0:cx-halfX,x1:cx+halfX,z0:cz-halfZ,z1:cz+halfZ};
-        const ring=Math.hypot(cx-TIN_TOWN_CENTRE.x,cz-TIN_TOWN_CENTRE.z);
+        const ring=Math.hypot(cx-centre.x,cz-centre.z);
         if(ring<35||ring>80)continue;
-        if(rectDistance(rect,TIN_TOWN_CENTRE.x,TIN_TOWN_CENTRE.z)<TIN_TOWN_CLEAR_RADIUS+3)continue;
-        if(TIN_TOWN_ROADS.some(line=>rectRoadDistance(rect,line)<TIN_TOWN_CLEAR_ROAD+1))continue;
-        if(OFF_LIMITS.some(box=>overlap(rect,box,3)))continue;
+        if(rectDistance(rect,centre.x,centre.z)<TIN_TOWN_CLEAR_RADIUS+3)continue;
+        if(roads.some(line=>rectRoadDistance(rect,line)<TIN_TOWN_CLEAR_ROAD+1))continue;
+        if(keepOff.some(box=>overlap(rect,box,3)))continue;
         if(clusters.some(other=>overlap(rect,other.rect,10)))continue;
         if(groundSpread(rect)>1.5)continue;
         placed={index,centre:{x:cx,z:cz},turned,rect};break search;
@@ -105,8 +130,8 @@ export function tinTownLayout(){
     });
     cluster.shacks=cluster.slots.reduce((sum,slot)=>sum+slot.levels,0);
   }
-  layout=Object.freeze({clusters:Object.freeze(clusters),shacks:clusters.reduce((sum,cluster)=>sum+cluster.shacks,0)});
-  return layout;
+  const built=Object.freeze({clusters:Object.freeze(clusters),shacks:clusters.reduce((sum,cluster)=>sum+cluster.shacks,0)});
+  layouts.set(land,built);return built;
 }
 
 // ---- Drawing ----------------------------------------------------------------------------------------------------------

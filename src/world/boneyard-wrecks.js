@@ -3,12 +3,26 @@
 // uneven gaps, and one rolled onto a wing. Each is also solid where it is drawn, so the table gives each wreck's footprint
 // (an axis-aligned box in world metres, width then height then depth; tools/test-scablands-scene.mjs checks that the real model's
 // parts all lie inside it).
-// Positions are world metres of the middle of the wreck's footprint; `heading` is degrees turned from the model's own
-// line (positive turns the nose toward +z); `roll` is degrees about the fuselage (0 is level).
-export const BONEYARD_WRECKS=Object.freeze([
-  Object.freeze({id:'north',part:'North Wreck',x:418,z:272,heading:8,roll:0,size:Object.freeze([38,9,23])}),
-  Object.freeze({id:'east',part:'East Wreck',x:466,z:338,heading:-30,roll:0,size:Object.freeze([33,9,30])}),
-  Object.freeze({id:'south',part:'South Wreck',x:372,z:296,heading:62,roll:40,size:Object.freeze([20,15,38])}),
+// Each wreck stands at an offset (`dx`, `dz`, metres east and south) from the Boneyard's place, and the table is built from a
+// land (src/world/scablands-names.js), so the wrecks move with the Boneyard. `x` and `z` are the world position of the middle of
+// the wreck's footprint; `heading` is degrees turned from the model's own line (positive turns the nose toward +z); `roll` is
+// degrees about the fuselage (0 is level).
+import {LAND} from './scablands-names.js';
+
+const wreck = (id, part, dx, dz, heading, roll, size) => ({id, part, dx, dz, heading, roll, size: Object.freeze(size)});
+const WRECKS = Object.freeze([
+  wreck('north', 'North Wreck', -6, -32, 8, 0, [38, 9, 23]),
+  wreck('east', 'East Wreck', 42, 34, -30, 0, [33, 9, 30]),
+  wreck('south', 'South Wreck', -52, -8, 62, 40, [20, 15, 38]),
 ]);
+export function boneyardWrecks(land) {
+  const {x, z} = land.at('boneyard');
+  return Object.freeze(WRECKS.map(row => Object.freeze({...row, x: x + row.dx, z: z + row.dz})));
+}
 // Where Big Bess stands when no job moves her: clear of every wreck by at least 5 m and off both gas-run roads.
-export const BESS_REST=Object.freeze({x:464,z:262,heading:2.2});
+export function bessRest(land) {
+  const {x, z} = land.at('boneyard', 40, -42);
+  return Object.freeze({x, z, heading: 2.2});
+}
+export const BONEYARD_WRECKS = boneyardWrecks(LAND);
+export const BESS_REST = bessRest(LAND);

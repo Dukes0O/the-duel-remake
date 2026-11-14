@@ -4,11 +4,23 @@
 // (and Big Bess's own place on her road), so the same inputs always give the same picture. Nothing here draws or
 // changes a race; the scene reads `furnaceSighting` and the job engine reads `pathShare`.
 import {OLD_SMOKE} from './old-smoke.js';
+import {LAND} from '../scablands-names.js';
 
-// Job 1: standing on the skyline north of the road (at (300, -60), nearer the player's road than it first stood; RUN-GAS) (smaller z is north in the Scablands), until the pot is delivered.
-export const FURNACE_SKYLINE = Object.freeze({x: 300, z: -60});
+// Where the furnace is seen in jobs 1 and 3, from a land (src/world/scablands-names.js), so that the marks move with the places they stand by.
+// Job 1: standing on the skyline north of the road, half way from the yard to Tin Town and 60 m north of the line (smaller z is
+// north in the Scablands; nearer the player's road than it first stood; RUN-GAS), until the pot is delivered.
 // Job 3: rolling away west from the Boneyard's far end for 20 seconds from the moment the thief is caught, then gone.
-export const FURNACE_LEAVING = Object.freeze({from: Object.freeze({x: 140, z: 470}), to: Object.freeze({x: -60, z: 440}), seconds: 20});
+export function furnaceMarks(land) {
+  const skyline = land.between('yard', 'tin-town', .5, 0, -60);
+  const from = land.at('boneyard', -284, 166), to = land.at('boneyard', -484, 136);
+  return Object.freeze({
+    skyline: Object.freeze({x: skyline.x, z: skyline.z}),
+    leaving: Object.freeze({from: Object.freeze({x: from.x, z: from.z}), to: Object.freeze({x: to.x, z: to.z}), seconds: 20}),
+  });
+}
+const MARKS = furnaceMarks(LAND);
+export const FURNACE_SKYLINE = MARKS.skyline;
+export const FURNACE_LEAVING = MARKS.leaving;
 // Job 4: 90 m to the north of Big Bess and 40 m ahead of her along her direction of travel, while she is between 30% and 70% of
 // her road, at her speed (RUN-GAS: it was 150 m abeam, out of the player's view). Past 70% it turns away north, at its own base
 // pace, and is gone once it has gone 220 m.

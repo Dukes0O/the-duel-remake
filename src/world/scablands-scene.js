@@ -4,16 +4,18 @@ import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
+import {createNearGround,nearGroundHeightAt as nearGroundHeightFor,NEAR_GROUND} from './near-ground.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
-import {createTinTownGate,TIN_TOWN_GATE,TIN_TOWN_GATE_POSTS} from './tin-town-gate.js';
-import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CENTRE} from './tin-town-shacks.js';
+import {createTinTownGate,tinTownGateFor,TIN_TOWN_GATE} from './tin-town-gate.js';
+import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
-import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
+import {BONEYARD_WRECKS,BESS_REST,boneyardWrecks} from './boneyard-wrecks.js';
+import {LAND} from './scablands-names.js';
 import {createEverburnProps} from './everburn-props.js';
 import {DELIVERY_ROAD} from './scablands-road.js';
 import {createBraziers,brazierSpot} from './ember-pot.js';
@@ -30,41 +32,42 @@ export const SCABLANDS_ASSETS = Object.freeze({
   furnace: '/assets/models/wasteland/scablands/old-smoke.glb',
 });
 
-// Every placed solid names its anchor in the shared place table. The small
-// local offsets keep roads and the eight named destinations clear.
-const BONEYARD_PLACE=SCABLANDS_PLACES.find(row=>row.id==='boneyard');
-export const SCABLANDS_SOLIDS = Object.freeze([
-  // The solid stands where the town's own model is drawn: the buildings of tintown.glb fill x -9.3 to 8.8 and z -13.5 to 13.4 and stand up to 7.6 m round the place
-  // (600, 0). (It stood 46 m west of there, at x 554, from the first Scablands build; EVERBURN-PLAY-FIXES, fourth round.)
-  ['tin-town-shell','tin-town',0,0,19,8,27],
-  // The Boneyard's three wrecks, one box each, where each is drawn (src/world/boneyard-wrecks.js).
-  ...BONEYARD_WRECKS.map(wreck=>[`boneyard-wreck-${wreck.id}`,'boneyard',wreck.x-BONEYARD_PLACE.x,wreck.z-BONEYARD_PLACE.z,...wreck.size]),
-  ['dead-mall-shell','dead-mall',0,0,38,13,35],
-  ['everburn-well','everburn',0,0,18,9,18],
-  ['iron-line-station','iron-line',12,0,28,8,20],
-  ['dry-dam-gate','dry-dam',0,0,34,13,10],
-  ['ships-hulk-field','ships-in-sand',0,0,60,14,27],
-  ['ridge-rocks','ridge',-16,18,80,24,20],
-  // Tin Town's six clusters of stacked shacks, one box each (src/world/tin-town-shacks.js), and the gate's two posts.
-  ...tinTownLayout().clusters.map(cluster=>[`tin-town-cluster-${cluster.index+1}`,'tin-town',cluster.centre.x-TIN_TOWN_CENTRE.x,cluster.centre.z-TIN_TOWN_CENTRE.z,
-    cluster.rect.x1-cluster.rect.x0,12,cluster.rect.z1-cluster.rect.z0]),
-  ...TIN_TOWN_GATE_POSTS.map(post=>[`tin-town-gate-post-${post.side}`,'tin-town',post.x-TIN_TOWN_CENTRE.x,post.z-TIN_TOWN_CENTRE.z,post.size,7,post.size]),
-].map(([id,placeId,dx,dz,width,height,depth])=>{
-  const place=SCABLANDS_PLACES.find(row=>row.id===placeId);
-  const center=Object.freeze([place.x+dx,place.height+height/2,place.z+dz]);
-  const size=Object.freeze([width,height,depth]);
-  return Object.freeze({id,placeId,center,size,
-    collision:Object.freeze({center,halfExtents:Object.freeze(size.map(value=>value/2)),heading:0})});
-}));
+// Every placed solid names its anchor in the place table and holds only an offset from it. The small local offsets keep roads
+// and the eight named destinations clear. `scablandsSolids(land)` builds the table for any land, so that the solids move with
+// the places they stand by; the game's own table is built from the real land.
+export function scablandsSolids(land=LAND){
+  const boneyard=land.place('boneyard'),centre=land.at('tin-town'),clusters=tinTownLayout(land).clusters,posts=tinTownGateFor(land).posts;
+  return Object.freeze([
+    // The solid stands where the town's own model is drawn: the buildings of tintown.glb fill x -9.3 to 8.8 and z -13.5 to 13.4 and stand up to 7.6 m round the place.
+    // (It stood 46 m west of there from the first Scablands build; EVERBURN-PLAY-FIXES, fourth round.)
+    ['tin-town-shell','tin-town',0,0,19,8,27],
+    // The Boneyard's three wrecks, one box each, where each is drawn (src/world/boneyard-wrecks.js).
+    ...boneyardWrecks(land).map(wreck=>[`boneyard-wreck-${wreck.id}`,'boneyard',wreck.x-boneyard.x,wreck.z-boneyard.z,...wreck.size]),
+    ['dead-mall-shell','dead-mall',0,0,38,13,35],
+    ['everburn-well','everburn',0,0,18,9,18],
+    ['iron-line-station','iron-line',12,0,28,8,20],
+    ['dry-dam-gate','dry-dam',0,0,34,13,10],
+    ['ships-hulk-field','ships-in-sand',0,0,60,14,27],
+    ['ridge-rocks','ridge',-16,18,80,24,20],
+    // Tin Town's six clusters of stacked shacks, one box each (src/world/tin-town-shacks.js), and the gate's two posts.
+    ...clusters.map(cluster=>[`tin-town-cluster-${cluster.index+1}`,'tin-town',cluster.centre.x-centre.x,cluster.centre.z-centre.z,
+      cluster.rect.x1-cluster.rect.x0,12,cluster.rect.z1-cluster.rect.z0]),
+    ...posts.map(post=>[`tin-town-gate-post-${post.side}`,'tin-town',post.x-centre.x,post.z-centre.z,post.size,7,post.size]),
+  ].map(([id,placeId,dx,dz,width,height,depth])=>{
+    const place=land.place(placeId);
+    const center=Object.freeze([place.x+dx,place.height+height/2,place.z+dz]);
+    const size=Object.freeze([width,height,depth]);
+    return Object.freeze({id,placeId,center,size,
+      collision:Object.freeze({center,halfExtents:Object.freeze(size.map(value=>value/2)),heading:0})});
+  }));
+}
+export const SCABLANDS_SOLIDS = scablandsSolids();
 
 const placeAssets={
   'tin-town':['tintown','folk'],'boneyard':['boneyard','bess'],'dead-mall':['mall'],'everburn':['everburn','furnace'],
   'iron-line':[],'dry-dam':[],'ships-in-sand':[],'ridge':['kit'],
 };
 const vehiclePart={bess:'Big Bess gas truck',furnace:"Old Smoke's rolling furnace"};
-// The far ground's cells are 140 by 125 m, so that the edge of the near tiles (x = 700, z = 500) falls on a line between
-// cells and no far cell lies half under the near ground.
-const detailCounts=Object.freeze({near:30,far:Object.freeze({x:20,z:16})});
 // The model loader renames every part: a space becomes an underscore and a full stop is dropped
 // ("Furnace side armor.001" arrives as "Furnace_side_armor001"). Part names are compared in this plain form.
 const plainName=name=>String(name??'').replace(/_/g,' ');
@@ -72,76 +75,47 @@ function findPart(root,name){
   let found=null;root.traverse(node=>{if(!found&&plainName(node.name)===name)found=node;});
   return found;
 }
+// The land is 14 km by 10 km (SCABLANDS-LAND round 4). Two grounds are drawn: the detailed ground, a window of 1,400 by 1,000 m
+// that follows the player (src/world/near-ground.js), and the coarse ground, one mesh of 140 by 125 m cells over the whole
+// land. The coarse ground has a hole where the detailed one lies (a fragment inside the window is not drawn), so the two never
+// fight, and it stands a little below the land's own height so that nothing of it shows through at the window's edge.
+const COARSE_CELLS=Object.freeze({x:100,z:80});
+const COARSE_LOWER=.35;
+// Nothing a place carries is drawn, animated or looked at further from the player than this: it is beyond the horizon (the camera
+// sees 2,400 m and the fog is thick from 1,650 m).
+const DRAW_RANGE=1800;
 
-// The far ground is a coarse copy of the same land. Where the four near tiles cover it (SCABLANDS_LAYOUT.halfWidth by
-// halfDepth) its corners drop by FAR_GROUND_DROP, and further wherever its straight slopes would still show through the
-// near ground as drawn (at the foot of the ridges the land climbs faster than a far cell can follow); elsewhere it is
-// unchanged. The far mesh itself stands .12 m below its own heights.
-const FAR_GROUND_DROP=40,FAR_GROUND_LOWER=.12,FAR_GROUND_CLEARANCE=.3;
-function lowerFarUnderNear(heights,cellsX,cellsZ,width,depth,underNear){
-  const across=cellsX+1,stepsX=6,stepsZ=15,cells=[];
-  // Where the near ground bends is along its own grid lines (23.3 m by 16.7 m), which a far cell (140 m by 125 m) holds
-  // 6 and 7.5 of, so the samples are taken at those lines: the far ground can only come through at a place where
-  // the near ground bends. The near heights are worked out once; the passes below only reread the far corners.
-  for(let iz=0;iz<cellsZ;iz++)for(let ix=0;ix<cellsX;ix++){
-    const a=iz*across+ix,b=a+1,c=a+across,d=c+1;
-    if(!(underNear[a]&&underNear[b]&&underNear[c]&&underNear[d]))continue;
-    const samples=[];
-    for(let sz=0;sz<=stepsZ;sz++)for(let sx=0;sx<=stepsX;sx++){
-      const u=sx/stepsX,v=sz/stepsZ;
-      samples.push([u,v,nearGroundHeightAt(-width/2+width*(ix+u)/cellsX,-depth/2+depth*(iz+v)/cellsZ)-FAR_GROUND_CLEARANCE+FAR_GROUND_LOWER]);
-    }
-    cells.push({a,b,c,d,samples});
-  }
-  for(let pass=0;pass<20;pass++){
-    let lowered=false;
-    for(const {a,b,c,d,samples} of cells){
-      let worst=0;
-      for(const [u,v,limit] of samples){
-        // The cell's two triangles meet along the line from its (1, 0) corner to its (0, 1) corner.
-        const far=u+v<=1?heights[a]+(heights[b]-heights[a])*u+(heights[c]-heights[a])*v:heights[d]+(heights[c]-heights[d])*(1-u)+(heights[b]-heights[d])*(1-v);
-        worst=Math.max(worst,far-limit);
-      }
-      if(worst>0){for(const corner of [a,b,c,d])heights[corner]-=worst+.05;lowered=true;}
-    }
-    if(!lowered)break;
-  }
-}
-function makeGround(width,depth,segments,material,detail,offsetX=0,offsetZ=0,groundEdit=scablandsGroundEdit){
-  const positions=[],uv=[],indices=[];
-  const cellsX=segments.x??segments,cellsZ=segments.z??segments,heights=[],underNear=[];
+// The coarse ground: 100 by 80 cells over the whole land. `hole` is a vec4 uniform (middle x, middle z, half width, half depth)
+// of the area not drawn, where the detailed ground is; the material is the ground's own with that hole cut out of it.
+function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
+  const width=SCABLANDS_LAYOUT.halfWidth*2,depth=SCABLANDS_LAYOUT.halfDepth*2,cellsX=COARSE_CELLS.x,cellsZ=COARSE_CELLS.z;
+  const positions=new Float32Array((cellsX+1)*(cellsZ+1)*3),indices=[];
   for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
-    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ;
-    const covered=!detail&&Math.abs(x+offsetX)<=SCABLANDS_LAYOUT.halfWidth&&Math.abs(z+offsetZ)<=SCABLANDS_LAYOUT.halfDepth;
-    heights.push(scablandsSurfaceHeightAt(x+offsetX,z+offsetZ,groundEdit)+.025-(covered?FAR_GROUND_DROP:0));underNear.push(covered);
-  }
-  if(!detail)lowerFarUnderNear(heights,cellsX,cellsZ,width,depth,underNear);
-  for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
-    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ;
-    positions.push(x,heights[iz*(cellsX+1)+ix],z);uv.push(ix/cellsX*12,iz/cellsZ*12);
+    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ,at=(iz*(cellsX+1)+ix)*3;
+    positions[at]=x;positions[at+1]=scablandsSurfaceHeightAt(x,z,groundEdit)-COARSE_LOWER;positions[at+2]=z;
     if(ix<cellsX&&iz<cellsZ){const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setIndex(indices);geometry.computeVertexNormals();
-  const mesh=new THREE.Mesh(geometry,material);mesh.name=detail?'Scablands near ground':'Scablands far ground';mesh.receiveShadow=true;
+  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
+  const mesh=new THREE.Mesh(geometry,material);mesh.name='Scablands far ground';mesh.receiveShadow=true;
   return mesh;
 }
 
-// The near ground as drawn: four tiles of 30 by 30 cells, each corner at the land's height. A cell is 23 by 17 m, so
-// between its corners the drawn ground is a straight slope, and where the land bends sharply (the foot of the north and
-// south ridges) it differs from the land's own height by several metres. This is the drawn height at (x, z), worked
-// out the way the tiles' triangles are cut (see makeGround), so that a thing laid on the ground can lie on what is seen.
-function nearGroundHeightAt(x,z){
-  const tileWidth=700,tileDepth=500,cells=detailCounts.near;
-  if(Math.abs(x)>=tileWidth||Math.abs(z)>=tileDepth)return scablandsSurfaceHeightAt(x,z)+.025;
-  const originX=Math.floor(x/tileWidth)*tileWidth,originZ=Math.floor(z/tileDepth)*tileDepth,cellX=tileWidth/cells,cellZ=tileDepth/cells;
-  const fx=(x-originX)/cellX,fz=(z-originZ)/cellZ,ix=Math.min(cells-1,Math.floor(fx)),iz=Math.min(cells-1,Math.floor(fz)),u=fx-ix,v=fz-iz;
-  const corner=(i,j)=>scablandsSurfaceHeightAt(originX+(ix+i)*cellX,originZ+(iz+j)*cellZ)+.025;
-  // Each cell is two triangles meeting along the line from its (1, 0) corner to its (0, 1) corner.
-  if(u+v<=1){const a=corner(0,0);return a+(corner(1,0)-a)*u+(corner(0,1)-a)*v;}
-  const d=corner(1,1);return d+(corner(0,1)-d)*(1-u)+(corner(1,0)-d)*(1-v);
+// Cut a rectangle out of the ground's material: the rectangle is the detailed ground's window (the material is changed in place).
+function withHole(material,hole){
+  const lookCompile=material.onBeforeCompile;
+  material.onBeforeCompile=(shader,renderer)=>{
+    lookCompile?.call(material,shader,renderer);
+    shader.uniforms.uNearHole=hole;
+    shader.fragmentShader=shader.fragmentShader
+      .replace('#include <common>','#include <common>\nuniform vec4 uNearHole;')
+      .replace('void main() {','void main() {\n  if(abs(vGroundPos.x-uNearHole.x)<uNearHole.z&&abs(vGroundPos.z-uNearHole.y)<uNearHole.w)discard;');
+  };
+  return material;
 }
+
+// The detailed ground as drawn at (x, z), for a thing laid on the ground there (the road ribbon): see near-ground.js.
+const nearGroundHeightAt=(x,z)=>nearGroundHeightFor(x,z,(px,pz)=>scablandsSurfaceHeightAt(px,pz));
 
 // Where the ground drops away steeply the ribbon takes the lowest drawn ground within 1.5 m of a point, so that its edge
 // is tucked into the slope there and never stands out from it.
@@ -180,13 +154,14 @@ function roadRibbon(){
   return geometry;
 }
 
+// The mast stands at the Iron Line, 1 m west of its place. Its parts are placed from the mast's own origin, so the mast is moved as one.
 function radioMast(group){
   const mast=new THREE.Group();mast.name='Radio mast visible across the Scablands';
   const dark=new THREE.MeshStandardMaterial({color:0x302b25,metalness:.52,roughness:.78});
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.65,.95,76,8),dark);
-  pole.position.set(-601,38,0);mast.add(pole);
-  for(let y=9;y<70;y+=10){const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.max(.8,(76-y)*.025),.12,4,8),dark);ring.position.set(-601,y,0);ring.rotation.x=Math.PI/2;mast.add(ring);}
-  group.add(mast);
+  pole.position.set(0,38,0);mast.add(pole);
+  for(let y=9;y<70;y+=10){const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.max(.8,(76-y)*.025),.12,4,8),dark);ring.position.set(0,y,0);ring.rotation.x=Math.PI/2;mast.add(ring);}
+  const spot=LAND.at('iron-line',-1,0);mast.position.set(spot.x,0,spot.z);group.add(mast);return mast;
 }
 
 // Parts that give off light keep the light: lamps, embers and flames are not worn.
@@ -554,14 +529,18 @@ export function createScablandsScene(course,options={}){
   const roadMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x594b39,roughness:1,vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
-  // Four near tiles carry the shared physics height at a fine grid; the single
-  // distant mesh uses a coarser grid to keep the horizon inexpensive.
-  const nearTiles=[];
-  for(let z=-1;z<=0;z++)for(let x=-1;x<=0;x++){
-    const tile=makeGround(700,500,detailCounts.near,groundMaterial,true,x*700+350,z*500+250);
-    tile.position.set(x*700+350,0,z*500+250);ground.add(tile);nearTiles.push(tile);
-  }
-  const far=makeGround(2800,2000,detailCounts.far,groundMaterial,false);far.position.y=-FAR_GROUND_LOWER;ground.add(far);
+  // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
+  // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
+  const nearHole={value:new THREE.Vector4(0,0,0,0)};
+  const coarseMaterial=withHole(groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1})),nearHole);
+  const near=createNearGround({material:groundMaterial,heightAt:(x,z)=>scablandsSurfaceHeightAt(x,z,scablandsGroundEdit)});
+  // The hole is a metre smaller each way than the window, so that the coarse ground (which stands a little lower) is never seen through a gap.
+  const placeNearGround=(x,z)=>{
+    if(!near.follow(x,z))return;
+    nearHole.value.set(near.centreX,near.centreZ,NEAR_GROUND.cellsX*NEAR_GROUND.cellX/2-1,NEAR_GROUND.cellsZ*NEAR_GROUND.cellZ/2-1);
+  };
+  placeNearGround(0,0);ground.add(near.mesh);
+  const far=makeCoarseGround(coarseMaterial);ground.add(far);
   let editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
@@ -578,9 +557,9 @@ export function createScablandsScene(course,options={}){
   const chimneySmoke=createTinTownChimneySmoke(tinTownShacks.userData.chimneys);group.add(chimneySmoke.group);chimneySmoke.animate(0);
   // The fire stands on the gate's beam, with its three tongues along the beam.
   gateFire.effects.rotation.y=tinTownGate.userData.yaw;
-  radioMast(group);
+  const mast=radioMast(group);
   // The Everburn's fire and its column of smoke, drawn in code and always burning (src/world/everburn-fire.js).
-  const everburnPlace=SCABLANDS_PLACES.find(place=>place.id==='everburn');
+  const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The two braziers where a fresh scoop is taken in Hot Delivery (src/world/ember-pot.js): shown only while that job's carry step is on.
   const braziers=createBraziers(2);group.add(braziers.group);let brazierKey='';
   const everburnFire=createEverburnFire();
@@ -678,12 +657,28 @@ export function createScablandsScene(course,options={}){
       const distant=new THREE.Mesh(wellMast?new THREE.CylinderGeometry(.35,.6,EVERBURN_DERRICK_TOP,6):new THREE.BoxGeometry(32,12,24),
         new THREE.MeshStandardMaterial({color:wellMast?0x2b2622:0x4c4236,roughness:1}));
       distant.name=`${place.name} far silhouette`;distant.position.y=wellMast?EVERBURN_DERRICK_TOP/2:6;distant.castShadow=true;
-      lod.addLevel(full,0);lod.addLevel(distant,280);
-      lod.position.set(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z);group.add(lod);
+      // Beyond the draw range a place is not drawn at all.
+      lod.addLevel(full,0);lod.addLevel(distant,280);lod.addLevel(new THREE.Object3D(),DRAW_RANGE);
+      lod.position.set(place.x,scablandsSurfaceHeightAt(place.x,place.z),place.z);
+      // A place does not move: its matrices are worked out once, not every frame.
+      lod.updateMatrixWorld(true);lod.traverse(node=>{node.matrixAutoUpdate=false;});group.add(lod);
     }));
     group.userData.assetStatus='ready';return true;
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));
     console.error('Scablands art did not load:',String(error?.message||error));}return false;});
+  // Where the player is, as world x and z, read from the game's state without allocating anything (the frame of the course is
+  // read the way Course.worldAt reads it). `locate` is false when the state has no position (the menu).
+  const here={x:0,z:0};
+  let nearTinTown=true,nearWell=true;
+  const within=spot=>{const dx=here.x-spot.x,dz=here.z-spot.z;return dx*dx+dz*dz<=DRAW_RANGE*DRAW_RANGE;};
+  function locate(state){
+    if(state?.onFoot&&Number.isFinite(state.fighter?.x)&&Number.isFinite(state.fighter?.z)){here.x=state.fighter.x;here.z=state.fighter.z;return true;}
+    if(!Number.isFinite(state?.s)||!Number.isFinite(state?.lateral))return false;
+    const {samples,step,length}=course,p=((state.s%length)+length)%length,index=Math.min(samples.length-2,Math.floor(p/step));
+    const a=samples[index],b=samples[index+1],t=(p-a.s)/step,heading=a.heading+(b.heading-a.heading)*t;
+    here.x=a.x+(b.x-a.x)*t+Math.cos(heading)*state.lateral;here.z=a.z+(b.z-a.z)*t-Math.sin(heading)*state.lateral;
+    return true;
+  }
   registerSceneSystem(group,{
     animate(seconds){
       if(bessRig&&bessEffects){
@@ -702,7 +697,10 @@ export function createScablandsScene(course,options={}){
         group.worldToLocal(bessRig.localToWorld(arcTo.set(BESS_TANK_TOP.x,BESS_TANK_TOP.y,BESS_TANK_TOP.z)));
         cinderArc.userData.place(seconds,arcFrom,arcTo);
       }
-      gateFire.animate(seconds);chimneySmoke.animate(seconds);everburnFire.animate(seconds);braziers.animate(seconds);
+      // What stands in a place is worked out only while the player is near it (see `sync`).
+      if(nearTinTown){gateFire.animate(seconds);chimneySmoke.animate(seconds);}
+      if(nearWell)everburnFire.animate(seconds);
+      braziers.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.
@@ -722,6 +720,14 @@ export function createScablandsScene(course,options={}){
       }
     },
     sync(state){
+      // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
+      if(locate(state)){
+        placeNearGround(here.x,here.z);
+        nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
+        tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=nearTinTown;
+        everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
+        road.visible=Math.hypot(here.x,here.z)<DRAW_RANGE+SCABLANDS_LAYOUT.frameRadiusX;
+      }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
       // The furnace follows its actor in Old Smoke's chase and in the battle on the Boneyard road (FIELD-BATTLE-ASH), where it stays
@@ -768,7 +774,7 @@ export function createScablandsScene(course,options={}){
       const gateStep=worldJob?.definition?.storyId==='everburn'?worldJob.job?.steps?.find(step=>Number.isInteger(step.actor?.gateWaypoint)):null;
       const gateAt=gateStep?.path?.[gateStep.actor.gateWaypoint],gateSpot=gateAt?.position??gateAt;
       const burning=Boolean(gateSpot)&&(worldJob?.gateBurnt===true||actor?.furnace?.gateBurnt===true);
-      gateFire.effects.visible=burning;
+      gateFire.effects.visible=burning&&nearTinTown;
       // The fire stands on the gate itself, from the ground up, wherever the job's path stops in front of it.
       if(burning)gateFire.effects.position.set(tinTownGate.position.x,scablandsSurfaceHeightAt(tinTownGate.position.x,tinTownGate.position.z),tinTownGate.position.z);
       const furnace=actor?.furnace??(wreck?WRECKED_FURNACE:null);
@@ -841,19 +847,16 @@ export function createScablandsScene(course,options={}){
   // physics; only changed chunk meshes are replaced, then the horizon is rebuilt.
   group.userData.updateGroundView=()=>{
     const changed=editedGround.update();
-    if(changed){const geometry=makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
+    if(changed){const geometry=makeCoarseGround(coarseMaterial,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
       const previousRoad=road.geometry;road.geometry=roadRibbon();previousRoad.dispose();}
     return changed;
   };
   const refreshOpenMarks=marks=>{
     if(retired||!followsOpenMarks)return;
     openMarks=marks;
-    for(const tile of [...nearTiles,far]){
-      const offsetX=tile.position.x,offsetZ=tile.position.z;
-      const geometry=tile===far?makeGround(2800,2000,detailCounts.far,groundMaterial,false,0,0,scablandsGroundEdit).geometry:
-        makeGround(700,500,detailCounts.near,groundMaterial,true,offsetX,offsetZ,scablandsGroundEdit).geometry;
-      const previous=tile.geometry;tile.geometry=geometry;previous.dispose();
-    }
+    // The detailed window and the coarse ground are worked out again; the road and the edited chunks follow.
+    near.refresh();
+    const coarse=makeCoarseGround(coarseMaterial,scablandsGroundEdit).geometry,coarseBefore=far.geometry;far.geometry=coarse;coarseBefore.dispose();
     editedGround.dispose();
     editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
     editedGround.update();

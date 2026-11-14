@@ -3,12 +3,16 @@
 // about how big the land is, so that the points can move when the land is rebuilt. The same data is drawn as a darker band
 // (src/world/scrap-look.js, createGroundLook) so that the picture and the rule cannot disagree.
 import {scablandsSurfaceAt} from './scablands-ground.js';
+import {LAND} from './scablands-names.js';
 
-// Yard gate, halfway camp (the job's safe point), round the south side of the scab field, up to Tin Town's gate and in.
-export const DELIVERY_ROAD = Object.freeze({
-  halfWidth: 14,
-  points: Object.freeze([[0, 0], [230, 150], [410, 210], [560, 150], [575, 62], [588, 30]].map(([x, z]) => Object.freeze({x, z}))),
-});
+// The delivery road, from a land (src/world/scablands-names.js): the yard gate, the halfway camp (the job's safe point), the
+// second Ash Men barricade near the Boneyard, round the south side of the scab field, up to Tin Town's gate and in.
+export function deliveryRoad(land) {
+  const spots = [land.yard, land.at('safe-road'), land.at('ash-barricade-2'), land.at('tin-town', -40, 150),
+    land.at('tin-town', -25, 62), land.at('tin-town', -12, 30)];
+  return Object.freeze({halfWidth: 14, points: Object.freeze(spots.map(({x, z}) => Object.freeze({x, z})))});
+}
+export const DELIVERY_ROAD = deliveryRoad(LAND);
 
 // Distance in metres from (x, z) to the nearest stretch of a line of points.
 export function distanceToRoad(x, z, points) {

@@ -1,0 +1,305 @@
+// SCABLANDS-LAND round 4, slice 1: the land is 14 km by 10 km. The checks are the card's: a car can be anywhere on the land and
+// is read back exactly; a drive across it takes the time distance and speed give, with no jump; the same inputs give the same
+// drive; everything that belongs to a place moves with it; the detailed ground follows the player on a fixed lattice.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import * as THREE from 'three';
+import {Course} from '../src/course.js';
+import {Duel} from '../src/game.js';
+import {DRIVE} from '../src/config.js';
+import {wrapHeading} from '../src/offroad-physics.js';
+import {ARENA_VENUES} from '../src/arena/venues.js';
+import {placeActor} from '../src/arena/arena-event.js';
+import {SCABLANDS_PLACES, SCABLANDS_LAYOUT, SCABLANDS_VENUE} from '../src/world/scablands.js';
+import {scablandsHeightAt} from '../src/world/scablands-height.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
+import {buildEverburn} from '../src/world/jobs/everburn.js';
+import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
+import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
+import {deliveryRoad} from '../src/world/scablands-road.js';
+import {tinTownGateFor} from '../src/world/tin-town-gate.js';
+import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
+import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
+import {ironLineFor} from '../src/world/iron-line.js';
+import {scablandsSolids, createScablandsScene, SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
+import {createNearGround, NEAR_GROUND, nearGroundHeightAt} from '../src/world/near-ground.js';
+import {syncScene} from '../src/scene-systems.js';
+
+const venue = ARENA_VENUES.scablands;
+const course = new Course(venue, 1989);
+const place = id => SCABLANDS_PLACES.find(row => row.id === id);
+const CENTIMETRE = .01;
+
+// The eight places on the first, small land: the land grew ten times as far each way from the yard.
+const OLD_PLACES = Object.freeze({'tin-town': [600, 0], boneyard: [424, 304], 'dead-mall': [0, 430], everburn: [-424, 304],
+  'iron-line': [-600, 0], 'dry-dam': [-424, -304], 'ships-in-sand': [0, -430], ridge: [424, -304]});
+
+test('the land is 14 km by 10 km and its eight places stand ten times as far from the yard', () => {
+  assert.equal(SCABLANDS_LAYOUT.halfWidth * 2, 14000);
+  assert.equal(SCABLANDS_LAYOUT.halfDepth * 2, 10000);
+  for (const [id, [x, z]] of Object.entries(OLD_PLACES)) assert.deepEqual([place(id).x, place(id).z], [x * 10, z * 10], `${id} is ten times as far`);
+  assert.deepEqual([place('tin-town').x, place('tin-town').z], [6000, 0], 'Tin Town is 6 km from the yard');
+  assert.deepEqual(SCABLANDS_PLACES.map(row => [row.id, row.flatRadius, row.height]),
+    [['tin-town', 86, 0], ['boneyard', 94, 1], ['dead-mall', 82, -1], ['everburn', 78, 2], ['iron-line', 88, 0], ['dry-dam', 94, -3], ['ships-in-sand', 92, -2], ['ridge', 70, 18]],
+    'each place keeps its own size and height');
+  assert.deepEqual([SCABLANDS_VENUE.townGate.x, SCABLANDS_VENUE.townGate.z], [0, -92], 'the Scrapdome gate stays where it was');
+  // Longest lap in the game is 6.7 km; the road to Tin Town is longer than that.
+  assert.ok(Math.hypot(place('tin-town').x, place('tin-town').z) < 6700 && 6000 > 5000, 'Tin Town is 6 km from the yard');
+});
+
+test('the ridge and the wall stand at the new edge, as steep as they were', () => {
+  const crest = (x, z = 0) => scablandsHeightAt(x, z);
+  // Nothing rises in the middle of the land or near the old edge.
+  for (const [x, z] of [[0, 0], [700, 0], [756, 0], [875, 0], [0, 500], [3000, 2000], [6500, 0]]) assert.ok(Math.abs(crest(x, z)) < 4, `flat at ${x}, ${z}: ${crest(x, z).toFixed(1)} m`);
+  // On the east axis the ridge climbs to about 108 m just past 7,000 m and the wall stands 175 m high beyond 7,200 m (as on the old land, in metres).
+  assert.ok(crest(7056) > 95 && crest(7056) < 125, `the ridge crest is about 108 m (${crest(7056).toFixed(1)})`);
+  assert.ok(crest(7300) > 160, `the wall stands about 175 m high (${crest(7300).toFixed(1)})`);
+  // Its slope in metres is the old one: it takes about the same distance to climb 100 m.
+  let start = 6900; while (crest(start) < 10) start++;
+  let top = start; while (crest(top) < 100) top++;
+  assert.ok(top - start > 40 && top - start < 140, `the ridge climbs 90 m in ${top - start} m, about as quickly as before`);
+  assert.ok(crest(7000, 5000 * .0) < 80, 'the edge of the land is the foot of the ridge, not its top');
+});
+
+test('a car can be placed at and read back from any point of the land, and the floor reaches every corner', () => {
+  let worst = 0, widest = 0;
+  const check = (x, z) => {
+    const near = course.nearest(x, z), back = course.worldAt(near.s, near.lateral);
+    worst = Math.max(worst, Math.hypot(back.x - x, back.z - z)); widest = Math.max(widest, Math.abs(near.lateral));
+    return near;
+  };
+  for (let x = -7000; x <= 7000; x += 250) for (let z = -5000; z <= 5000; z += 250) check(x, z);
+  for (const [x, z] of [[7000, 5000], [-7000, 5000], [7000, -5000], [-7000, -5000], [0, 0], [6000, 0], [-6000, 0]]) check(x, z);
+  // Both sides of every line where a frame could jump: the seam of the oval on the east axis, the frame's own middle line, the
+  // oval itself, the north-south line through the yard, and the land's four edges.
+  for (const side of [-1e-6, 0, 1e-6, -1, 1]) {
+    for (let x = -7000; x <= 7000; x += 97) { check(x, side); check(x, 5000 + side); check(x, -5000 + side); }
+    for (let z = -5000; z <= 5000; z += 97) { check(side, z); check(7000 + side, z); check(-7000 + side, z); }
+  }
+  for (let angle = 0; angle < Math.PI * 2; angle += .013) for (const bend of [-.5, 0, .5]) check(Math.cos(angle) * (605.6 + bend), Math.sin(angle) * (433.8 + bend));
+  assert.ok(worst <= CENTIMETRE, `every point reads back to within 1 cm (worst ${worst.toExponential(2)} m)`);
+  assert.ok(widest < SCABLANDS_LAYOUT.floorHalfWidth - 500, `the floor (${SCABLANDS_LAYOUT.floorHalfWidth} m) reaches past the furthest corner (${widest.toFixed(0)} m from the oval)`);
+  assert.equal(venue.scablands.wallOffset, venue.scablands.floorHalfWidth, 'the wall is at the floor limit');
+  // The frame's length is a whole number of the course's 8 m steps: the old 3,290 put the seam 13 to 22 m out for a car far from the oval.
+  assert.equal(course.length % course.step, 0, 'the frame is a whole number of steps long');
+  // A real car actor placed at each corner reads back from the sim's own state.
+  const duel = new Duel({seed: 1989, car: 'banshee_muscle', featureFlags: {'hidden-road': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'banshee_muscle', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+  for (const [x, z] of [[7000, 5000], [-7000, 5000], [7000, -5000], [-7000, -5000], [6000, 0]]) {
+    const near = course.nearest(x, z);
+    placeActor(duel, duel.state, {s: near.s, lateral: near.lateral});
+    const back = course.worldAt(duel.state.s, duel.state.lateral);
+    assert.ok(Math.hypot(back.x - x, back.z - z) <= CENTIMETRE, `the car stands at ${x}, ${z}`);
+  }
+});
+
+// A drive from the yard to Tin Town in a straight line at a fixed speed, through the real sim (the arena's own rule that a car
+// is kept against the oval frame, re-derived from its world position each step).
+function drive({speedMph = 100, dt = 1 / 60, target = 6000} = {}) {
+  const duel = new Duel({seed: 1989, car: 'banshee_muscle', featureFlags: {'hidden-road': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'banshee_muscle', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+  const player = duel.state, opponent = player.opponents[0], arena = player.arena;
+  arena.timeLimitSec = Infinity; opponent.finished = true;
+  const start = course.nearest(0, 0.5);
+  placeActor(duel, opponent, {s: start.s + course.length / 2, lateral: 0});
+  const east = Math.PI / 2;
+  placeActor(duel, player, {s: start.s, lateral: start.lateral, headingError: wrapHeading(east - course.at(start.s).heading)}, speedMph);
+  const log = [], metresPerSecond = speedMph * DRIVE.mphToWorld;
+  let previous = course.worldAt(player.s, player.lateral), steps = 0, jump = 0, speedJump = 0, widest = 0, waited = 0;
+  while (previous.x < target && steps < 60 * 400) {
+    const heading = course.at(player.s).heading + player.headingError;
+    player.speedMph = speedMph;
+    duel.setInput({throttle: 1, brake: 0, steer: Math.max(-1, Math.min(1, 2 * wrapHeading(heading - east))), boost: false});
+    duel.step(dt); steps++;
+    const here = course.worldAt(player.s, player.lateral), moved = Math.hypot(here.x - previous.x, here.z - previous.z);
+    // The game holds every car for its first moments (the arena's own start); it is not counted as driving.
+    if (moved === 0 && waited === steps - 1) { waited = steps; previous = here; continue; }
+    jump = Math.max(jump, Math.abs(moved - Math.abs(player.speedMph) * DRIVE.mphToWorld * dt));
+    speedJump = Math.max(speedJump, Math.abs(player.speedMph - speedMph));
+    widest = Math.max(widest, Math.abs(here.z));
+    log.push(here.x, here.z, player.speedMph);
+    previous = here;
+  }
+  return {steps, waited, seconds: (steps - waited) * dt, x: previous.x, z: previous.z, jump, speedJump, widest, metresPerSecond, log, lateral: player.lateral};
+}
+
+test('a drive from the yard to Tin Town takes the time that distance and speed give, with no jump', () => {
+  const run = drive();
+  const expected = 6000 / run.metresPerSecond;
+  assert.ok(run.waited * (1 / 60) < 5, `the game holds the car for ${(run.waited / 60).toFixed(1)} s at the start`);
+  assert.ok(Math.abs(run.seconds - expected) < 1.5, `${run.seconds.toFixed(1)} s for 6 km at 100 mph (${expected.toFixed(1)} s expected)`);
+  assert.ok(run.x >= 6000 && run.x < 6000 + run.metresPerSecond / 30, 'the car arrives at Tin Town');
+  assert.ok(run.jump < .02, `no step moves the car more than its speed gives (worst difference ${run.jump.toExponential(2)} m)`);
+  assert.ok(run.speedJump < 2, `no step changes the speed (worst ${run.speedJump.toFixed(2)} mph)`);
+  assert.ok(run.widest < 150, `the car stays on the line (${run.widest.toFixed(0)} m off at most)`);
+  assert.ok(Math.abs(run.lateral) < SCABLANDS_LAYOUT.floorHalfWidth, 'the floor never holds it back');
+});
+
+test('the same seed and inputs give the same drive twice', () => {
+  const first = drive({speedMph: 90, target: 1500}), second = drive({speedMph: 90, target: 1500});
+  assert.equal(first.steps, second.steps);
+  assert.deepEqual(first.log, second.log);
+});
+
+// ---- Places by name ------------------------------------------------------------------------------------------------------------
+const walk = (value, visit, seen = new Set()) => {
+  if (!value || typeof value !== 'object' || seen.has(value)) return;
+  seen.add(value); visit(value);
+  for (const child of Array.isArray(value) ? value : Object.values(value)) walk(child, visit, seen);
+};
+// Every named position in a pile of data: an object with an id and a {x, z} position (or x and z of its own).
+const positionsOf = (...piles) => {
+  const found = new Map();
+  for (const pile of piles) walk(pile, node => {
+    const point = node.position ?? (Number.isFinite(node.x) && Number.isFinite(node.z) ? node : null);
+    if (typeof node.id === 'string' && Number.isFinite(point?.x) && Number.isFinite(point?.z)) found.set(node.id, [point.x, point.z]);
+  });
+  return found;
+};
+const everything = land => {
+  const built = buildEverburn(land), paths = gasRunPaths(land);
+  return {jobs: built.EVERBURN_JOBS, side: built.EVERBURN_SIDE_JOBS, five: built.SCABLANDS_PLACES, paths, wreck: gasRunWreck(paths.boneyard),
+    marks: furnaceMarks(land), road: deliveryRoad(land), gate: tinTownGateFor(land), wrecks: boneyardWrecks(land), rest: bessRest(land),
+    rail: ironLineFor(land), solids: scablandsSolids(land)};
+};
+
+test('moving a place in a copy of the table moves everything that belongs to it, and nothing else', () => {
+  const delta = [123, -77];
+  for (const moved of ['tin-town', 'boneyard', 'everburn', 'dead-mall', 'ridge', 'dry-dam', 'ships-in-sand', 'iron-line']) {
+    const before = everything(LAND), after = everything(createLand(movedTable(SCABLANDS_PLACES, moved, ...delta)));
+    const a = positionsOf(before), b = positionsOf(after);
+    assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), `${moved}: the same things exist`);
+    let withIt = 0, shares = 0;
+    for (const [id, [x, z]] of a) {
+      const [mx, mz] = b.get(id), shift = [mx - x, mz - z];
+      const share = Math.abs(delta[0]) > 0 ? shift[0] / delta[0] : 0;
+      assert.ok(Math.abs(shift[1] - share * delta[1]) < 1e-6, `${moved}: ${id} moves along the way the place moved`);
+      assert.ok(share > -1e-9 && share < 1 + 1e-9, `${moved}: ${id} moves by no more than the place (${share})`);
+      if (share > 1 - 1e-9) withIt++; else if (share > 1e-9) shares++;
+    }
+    assert.ok(withIt >= 1, `${moved}: something stands in it and moves with it (${withIt})`);
+  }
+  // The things named in the card, by name: all of Tin Town's follow Tin Town.
+  const before = positionsOf(everything(LAND)), after = positionsOf(everything(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))));
+  for (const id of ['tin-town', 'tin-town-gate-front', 'forge-lamp-1', 'forge-lamp-2', 'forge-lamp-3', 'auntie-kitchen', 'town-safe-corner', 'south-road',
+    'furnace-approach', 'tin-town-gate', 'tin-town-gate-approach', 'long-road-6', 'rail-tin-town', 'rail-east-run']) {
+    assert.ok(before.has(id), `${id} exists`);
+    assert.deepEqual([after.get(id)[0] - before.get(id)[0], after.get(id)[1] - before.get(id)[1]], delta, `${id} moves with Tin Town`);
+  }
+  for (const id of ['everburn', 'boneyard', 'dead-mall', 'yard-gate', 'ridge-rocks']) if (before.has(id)) assert.deepEqual(after.get(id), before.get(id), `${id} stays`);
+  // A point on the way moves by a share of the way: the halfway camp, between the yard (which never moves) and the Boneyard.
+  const camp = LAND.at('safe-road'), campMoved = createLand(movedTable(SCABLANDS_PLACES, 'boneyard', ...delta)).at('safe-road');
+  assert.ok(Math.abs((campMoved.x - camp.x) - .526 * 123) < 1e-9 && Math.abs((campMoved.z - camp.z) + .526 * 77) < 1e-9, 'the halfway camp moves .526 of the way with the Boneyard');
+  // The solids, the wrecks, Big Bess's rest, the gate's posts and the shacks of Tin Town follow their places.
+  const solidsBefore = scablandsSolids(LAND), solidsAfter = scablandsSolids(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta)));
+  assert.equal(solidsAfter.length, solidsBefore.length);
+  for (const [index, solid] of solidsBefore.entries()) {
+    const other = solidsAfter[index], follows = solid.placeId === 'tin-town';
+    assert.deepEqual([other.center[0] - solid.center[0], other.center[2] - solid.center[2]], follows ? delta : [0, 0], `${solid.id} ${follows ? 'moves with' : 'stays beside'} its place`);
+  }
+  const moved = createLand(movedTable(SCABLANDS_PLACES, 'boneyard', ...delta));
+  const wrecksBefore = boneyardWrecks(LAND), wrecksAfter = boneyardWrecks(moved);
+  for (const [index, wreck] of wrecksBefore.entries()) assert.deepEqual([wrecksAfter[index].x - wreck.x, wrecksAfter[index].z - wreck.z], delta, `the ${wreck.id} wreck moves with the Boneyard`);
+  assert.deepEqual([bessRest(moved).x - bessRest(LAND).x, bessRest(moved).z - bessRest(LAND).z], delta, "Big Bess's resting place moves with the Boneyard");
+  const layoutBefore = tinTownLayout(LAND), layoutAfter = tinTownLayout(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta)));
+  for (const [index, cluster] of layoutBefore.clusters.entries()) {
+    assert.deepEqual([layoutAfter.clusters[index].centre.x - cluster.centre.x, layoutAfter.clusters[index].centre.z - cluster.centre.z].map(Math.round), delta, `Tin Town's cluster ${index + 1} moves with the town`);
+  }
+  assert.equal(layoutAfter.shacks, layoutBefore.shacks, 'and the same shacks stand in it');
+  const postsBefore = tinTownGateFor(LAND).posts, postsAfter = tinTownGateFor(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))).posts;
+  for (const [index, post] of postsBefore.entries()) assert.deepEqual([postsAfter[index].x - post.x, postsAfter[index].z - post.z], delta, 'the gate posts move with the town');
+  assert.equal(tinTownRoads(LAND).length, tinTownRoads(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))).length, "the roads that run into Tin Town move with it and keep their number");
+});
+
+test('no file that places a thing in the land holds a bare coordinate of it', () => {
+  const files = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/furnace-sightings.js', 'src/world/scablands-road.js',
+    'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js'];
+  for (const file of files) {
+    const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n');
+    // A place written as (id, x, z), a point written {x: 575, z: 62} or a list of pairs of three-figure numbers.
+    assert.ok(!/place\('[^']+',\s*-?\d+(\.\d+)?,\s*-?\d+/.test(text), `${file}: no place is written with bare numbers`);
+    assert.ok(!/\bx:\s*-?\d{3,}/.test(text) && !/\bz:\s*-?\d{3,}/.test(text), `${file}: no point is written with a bare three-figure coordinate`);
+    assert.ok(!/\[\[?\s*-?\d{3,}(\.\d+)?\s*,\s*-?\d{2,}(\.\d+)?\s*\]/.test(text), `${file}: no pair of coordinates is written out`);
+  }
+});
+
+// ---- The detailed ground follows the player --------------------------------------------------------------------------------------
+const {cellX, cellZ, cellsX, cellsZ, lift} = NEAR_GROUND;
+const landHeight = (x, z) => scablandsSurfaceHeightAt(x, z);
+
+test('the detailed ground moves in whole cells, keeps every corner on one lattice and allocates nothing as it moves', () => {
+  const window = createNearGround({material: new THREE.MeshStandardMaterial(), heightAt: landHeight});
+  const positions = window.geometry.attributes.position, normals = window.geometry.attributes.normal;
+  const arrays = [positions.array, normals.array, window.geometry.index.array];
+  assert.equal(positions.count, 61 * 61, 'the window is 60 by 60 cells');
+  assert.ok(Math.abs(cellsX * cellX - 1400) < 1e-9 && Math.abs(cellsZ * cellZ - 1000) < 1e-9, 'the window is 1,400 m by 1,000 m, the size the whole land was');
+  const route = [[0, 0], [5, 3], [11.6, 8.3], [30, 0], [-40, -700], [2500, 1900], [2512, 1900], [6000, 12], [6001, 12], [-6990, 4990]];
+  for (const [x, z] of route) {
+    window.follow(x, z);
+    // The middle is a lattice corner, the window's own corners stand on the lattice, and each height is the land's.
+    assert.ok(Math.abs(window.centreX / cellX - Math.round(window.centreX / cellX)) < 1e-9 && Math.abs(window.centreZ / cellZ - Math.round(window.centreZ / cellZ)) < 1e-9, `the window's middle is a whole number of cells from the yard at ${x}, ${z}`);
+    assert.ok(Math.abs(x - window.centreX) <= cellX / 2 + 1e-9 && Math.abs(z - window.centreZ) <= cellZ / 2 + 1e-9, `the player is within half a cell of the window's middle at ${x}, ${z}`);
+    for (const index of [0, 60, 61 * 30 + 30, 61 * 60, 61 * 61 - 1, 777, 2310]) {
+      const worldX = window.mesh.position.x + positions.getX(index), worldZ = window.mesh.position.z + positions.getZ(index);
+      assert.ok(Math.abs(worldX / cellX - Math.round(worldX / cellX)) < 1e-6 && Math.abs(worldZ / cellZ - Math.round(worldZ / cellZ)) < 1e-6, 'every corner lies on the fixed lattice');
+      assert.ok(Math.abs(positions.getY(index) - (landHeight(worldX, worldZ) + lift)) < 1e-3, `corner ${index} has the land's height at ${x}, ${z}`);
+    }
+    // A window reached by a path is the same as one built where it stands: the corners kept by a move are exact.
+    const fresh = createNearGround({material: new THREE.MeshStandardMaterial(), heightAt: landHeight});
+    fresh.follow(x, z);
+    assert.deepEqual(Array.from(fresh.geometry.attributes.position.array), Array.from(positions.array), `a window moved to ${x}, ${z} equals one built there`);
+    assert.deepEqual(Array.from(fresh.geometry.attributes.normal.array), Array.from(normals.array), 'and has the same normals');
+    fresh.dispose();
+  }
+  assert.ok(arrays.every((array, index) => array === [positions.array, normals.array, window.geometry.index.array][index]), 'no array is replaced as the window moves');
+  // A step of less than half a cell does not move it; a step of one cell moves it by exactly that.
+  window.follow(100, 100); const settled = window.centreX; assert.equal(window.follow(settled + cellX * .4, 100), false); assert.equal(window.centreX, settled);
+  assert.equal(window.follow(settled + cellX * 1.1, 100), true); assert.ok(Math.abs(window.centreX - settled - cellX) < 1e-9, 'one cell on, exactly one cell');
+  // Moving the window by one cell works out only the new strip: 200 steps along the east axis cost almost nothing.
+  const t0 = performance.now(); for (let step = 0; step < 200; step++) window.follow(100 + cellX * (step + 2), 100); const ms = performance.now() - t0;
+  assert.ok(ms < 400, `200 one-cell moves cost ${ms.toFixed(0)} ms in all`);
+  // The height as drawn there (what a thing laid on the ground reads) is the straight slope between corners.
+  const x = window.centreX + 33.3, z = window.centreZ - 21.7;
+  assert.ok(Math.abs(window.heightAtDrawn(x, z) - nearGroundHeightAt(x, z, landHeight)) < 1e-3, 'the drawn height read from the window matches the lattice formula');
+  window.dispose();
+});
+
+test('the scene follows the player: the window moves, and a place is drawn and updated only while the player is near it', async () => {
+  const stub = async path => ({scene: new THREE.Group()});
+  const scene = createScablandsScene(course, {loadAsset: async path => {
+    const root = new THREE.Group();
+    if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace)
+      for (const name of ['Big Bess gas truck', "Old Smoke's rolling furnace"]) { const part = new THREE.Group(); part.name = name; root.add(part); }
+    return {scene: root};
+  }});
+  assert.equal(await scene.ready, true);
+  const ground = scene.group.getObjectByName('Scablands ground chunks'), window = ground.children.find(mesh => mesh.name === 'Scablands near ground');
+  const gate = scene.group.getObjectByName('Tin Town gate'), shacks = scene.group.getObjectByName('Tin Town shacks'), well = scene.group.getObjectByName('Everburn fire and smoke');
+  const mast = scene.group.getObjectByName('Radio mast visible across the Scablands');
+  const stateAt = (x, z) => { const near = course.nearest(x, z); return {s: near.s, lateral: near.lateral}; };
+  const draw = (x, z) => { syncScene(scene.group, stateAt(x, z)); };
+  draw(0, 0);
+  assert.ok(Math.abs(window.position.x) <= cellX && Math.abs(window.position.z) <= cellZ, 'at the yard the window is at the yard');
+  assert.deepEqual([gate.visible, shacks.visible, well.visible, mast.visible], [false, false, false, false], 'at the yard no place is drawn: the nearest is 4 km away');
+  for (const lod of scene.group.children.filter(node => node.isLOD)) assert.equal(lod.levels.length, 3, `${lod.name} has a detailed view, a far shape and nothing beyond the draw range`);
+  draw(5800, 40);
+  assert.ok(Math.abs(window.position.x - 5800) <= cellX && Math.abs(window.position.z - 40) <= cellZ, 'at Tin Town the window is at Tin Town');
+  assert.deepEqual([gate.visible, shacks.visible, well.visible], [true, true, false], "at Tin Town the town's gate and shacks are drawn and the well is not");
+  draw(-4200, 3000);
+  assert.equal(well.visible, true, 'at the Everburn the well burns');
+  assert.equal(gate.visible, false, 'and the gate of a town 10 km away is not drawn');
+  draw(-5900, 30);
+  assert.equal(mast.visible, true, 'at the Iron Line the radio mast stands');
+  const hole = (() => { const shader = {uniforms: {}, vertexShader: '', fragmentShader: '#include <common>\nvoid main() {\n#include <color_fragment>\n}'}; ground.children.find(mesh => mesh.name === 'Scablands far ground').material.onBeforeCompile(shader, null); return shader.uniforms.uNearHole.value; })();
+  assert.ok(Math.abs(hole.x - window.position.x) < 1e-9 && Math.abs(hole.y - window.position.z) < 1e-9, 'the hole in the coarse ground follows the window');
+  // Walking: a fighter's position moves the window too.
+  syncScene(scene.group, {onFoot: true, fighter: {x: 3000, z: -2000}});
+  assert.ok(Math.abs(window.position.x - 3000) <= cellX && Math.abs(window.position.z + 2000) <= cellZ, 'a walking player moves the window');
+  syncScene(scene.group, {crushedProps: []});
+  assert.ok(Math.abs(window.position.x - 3000) <= cellX, 'a state with no position leaves the window where it is');
+  scene.dispose();
+});
