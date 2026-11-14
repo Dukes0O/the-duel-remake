@@ -6,6 +6,14 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **The Everburn story can be played.** A player who has found the Wasteland gate now sees the
+  Everburn in the STORY choice and on the yard's Story Wall: Hollis's note, then six jobs in the
+  Scablands for Cinder and Tin Town. After the second job, Tin Town's notice board offers three
+  more jobs that can be taken as often as wanted (Lost Prospector, Survey Flags, Hot Soup). After
+  the sixth job the wall offers gas runs with Big Bess on two roads; the Ash Men's feud grows with
+  each run, and at War party the furnace is fought on the Boneyard road. The story was played from
+  start to finish by script on Medium, not yet by hand. One gap is known: a hard crash does not
+  yet spill the ember pot or the soup.
 - **Four more Lab lessons have the wide board.** Fuel, Ski wax, Launch and Projectile now draw a
   larger picture with their numbers in a strip underneath, as Braking does, and no label on a board
   is smaller than Braking's. With the physics panel open, the picture keeps more of the width than
