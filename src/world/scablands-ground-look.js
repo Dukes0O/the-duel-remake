@@ -200,7 +200,7 @@ export function createGroundLook({rock = 0x57493c, stone = 0x302b26, regions = n
           float gBank=smoothstep(46.0,54.0,gRiver)*(1.0-smoothstep(76.0,92.0,gRiver));
           if(gBank>.004){
             float layer=vGroundPos.y*.55+gBig.b*3.0+gMid.r*2.2;
-            vec3 kc=uColBank*(.7+.5*gFine.g)*(.82+.3*smoothstep(.3,.7,abs(fract(layer)-.5)*2.0));
+            vec3 kc=uColBank*(.78+.34*gFine.g)*(.93+.12*smoothstep(.3,.7,abs(fract(layer)-.5)*2.0));
             gc=mix(gc,kc,gBank*.85);
           }` : ''}
           // Rock with strata wherever the ground is steep.

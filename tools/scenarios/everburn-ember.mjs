@@ -3,6 +3,13 @@
 // and the arrival. The car is put on each spot the way a job puts its car at its start, then driven by the game's own rules.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {LAND} from '../../src/world/scablands-names.js';
+import {EAST_ROAD} from '../../src/world/scablands-road.js';
+import {pointAlong} from '../../src/world/scablands-road-geometry.js';
+
+// SCABLANDS-LAND round 4, slice 2a: every spot is written from the land's names and the East Road (it was typed at the first land's positions).
+const on = (point, dx = 0, dz = 0) => ({x: point.x + dx, z: point.z + dz});
+const eastRoad = metres => pointAlong(EAST_ROAD.points, metres);
 
 async function click(c, selector) {
   return c.evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});if(!b||b.hidden||b.disabled)throw Error('Missing '+${JSON.stringify(selector)});b.click();return true})()`);
@@ -37,28 +44,33 @@ export async function run(c) {
   await c.screenshot('1-start');
 
   // 2. On the road: the darker band under the wheels, the gauge nearly full and not falling faster than cold.
-  await place(c, 60, 39, 230, 150, 100);
+  const road = eastRoad(300), ahead = eastRoad(360);
+  await place(c, road.x, road.z, ahead.x, ahead.z, 100);
   await key(c, 'keyDown', 'w', 'KeyW', 87);
   await c.evaluate(`window.__qaApp.advance(1.5)`);
   await c.screenshot('2-road');
-  const road = await held(c);
+  const onRoad = await held(c);
 
   // 3. On scab rock at speed: sparks off the pot, the gauge flickering, ember falling fast.
-  await place(c, 150, 0, 600, 0, 140);
-  await c.evaluate(`window.__qaApp.advance(2)`);
+  // (the straight way to Tin Town crosses the scab plates from 600 m east of the yard; 140 km/h there is far over the plates' safe 50)
+  const plates = LAND.at('yard', 1200, 0), town = LAND.place('tin-town');
+  await place(c, plates.x, plates.z, town.x, town.z, 140);
+  await c.evaluate(`window.__qaApp.advance(4)`);
   await c.screenshot('3-rock-at-speed');
   const rock = await held(c);
 
   // 3b. A hit: the pot throws sparks and the gauge flashes. The car runs at the pair of junk cars by the Boneyard and is stopped on the first jolt.
-  await place(c, 460, 200, 460, 289, 70);
+  const junk = LAND.at('yard', 460, 289), before = on(junk, 0, -89);
+  await place(c, before.x, before.z, junk.x, junk.z, 70);
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<120&&!(a.duel.state.arena.worldJob.job.stepState.joltCount>0);i++)a.advance(0.05)})()`);
   await c.evaluate(`window.__qaApp.advance(0.1)`);
   await c.screenshot('3b-hit');
   const hit = await held(c);
 
   // 4. The pot out: nothing ends, the marker is at the nearest brazier.
-  await place(c, 120, 0, 600, 0, 150);
-  await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<40&&!a.duel.state.arena.worldJob.job.stepState.out;i++)a.advance(0.5)})()`);
+  const start = LAND.at('yard', 1200, 0);
+  await place(c, start.x, start.z, town.x, town.z, 150);
+  await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<80&&!a.duel.state.arena.worldJob.job.stepState.out;i++)a.advance(0.5)})()`);
   await key(c, 'keyUp', 'w', 'KeyW', 87);
   await c.evaluate(`window.__qaApp.advance(0.4)`);
   await place(c, 36, -8, 0, 0, 25);
@@ -74,7 +86,8 @@ export async function run(c) {
   const scoop = await held(c);
 
   // 6. The arrival: the results screen says how the ember arrived.
-  await place(c, 595, 70, 600, 0, 55);
+  const gate = LAND.at('tin-town', -5, 70);
+  await place(c, gate.x, gate.z, town.x, town.z, 55);
   await key(c, 'keyDown', 'w', 'KeyW', 87);
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<80&&a.duel.state.status!=='arena_result';i++)a.advance(0.25)})()`);
   await key(c, 'keyUp', 'w', 'KeyW', 87);
@@ -83,9 +96,9 @@ export async function run(c) {
   const text = await c.evaluate(`document.querySelector('.result-panel').innerText`);
   if (!/The ember arrived/.test(text)) throw Error('The results screen does not say how the ember arrived: ' + text);
   await c.screenshot('6-arrival');
-  const summary = {road: road.ember, rock: rock.ember, hit: hit.ember, hitJolts: hit.joltCount, out: out.out, outMarker: out.marker, scoopRelights: scoop.relights, scoopEmber: scoop.ember, result: text.slice(0, 400)};
-  if (!(road.ember > 95)) throw Error('On the road the ember should barely fall: ' + JSON.stringify(summary));
-  if (!(rock.ember < road.ember - 10)) throw Error('On rock at speed the ember should fall fast: ' + JSON.stringify(summary));
+  const summary = {road: onRoad.ember, rock: rock.ember, hit: hit.ember, hitJolts: hit.joltCount, out: out.out, outMarker: out.marker, scoopRelights: scoop.relights, scoopEmber: scoop.ember, result: text.slice(0, 400)};
+  if (!(onRoad.ember > 95)) throw Error('On the road the ember should barely fall: ' + JSON.stringify(summary));
+  if (!(rock.ember < onRoad.ember - 10)) throw Error('On rock at speed the ember should fall fast: ' + JSON.stringify(summary));
   if (!(hit.joltCount > 0)) throw Error('The hit did not jolt the pot: ' + JSON.stringify(summary));
   if (out.out !== true || out.marker !== 'yard-gate') throw Error('The pot did not go out with the marker at the yard brazier: ' + JSON.stringify(summary));
   if (!(scoop.relights >= 1 && scoop.ember > 95)) throw Error('The scoop did not light the pot again: ' + JSON.stringify(summary));

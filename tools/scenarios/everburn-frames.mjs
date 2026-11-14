@@ -11,10 +11,11 @@ import {summarizeNightFrames} from './frame-pacing.mjs';
 const QUALITY = 'performance';
 const P95_LIMIT_MS = 18.5;
 const DONE_BEFORE_JOB_4 = ['hot-delivery', 'get-out-and-walk', 'run-him-down'];
-// Big Bess is put 197 m down her road (the road is 647 m): just past 30 per cent, where the furnace begins to pace her on the high ground
-// (src/world/jobs/furnace-sightings.js), and 11 m past the first ambush at 186 m, whose raiders stand on the road behind her (they give up
-// 60 m beyond it). The car is then put behind her, at the first distance from which she, the raiders and the furnace are all in one picture.
-const BESS_METRES = 197;
+// Big Bess is put 11 m past the first ambush on her road (SCABLANDS-LAND round 4, slice 2a: the ambush is where the job's data puts it, 2,183 m of
+// her 7,074 m road, which is just past 30 per cent, where the furnace begins to pace her on the high ground (src/world/jobs/furnace-sightings.js)).
+// The raiders of that ambush stand on the road behind her (they give up 60 m beyond it). The car is then put behind her, at the first distance
+// from which she, the raiders and the furnace are all in one picture.
+const PAST_AMBUSH_METRES = 11;
 
 const click = (context, selector) => context.evaluate(`(() => {
   const button = document.querySelector(${JSON.stringify(selector)});
@@ -25,7 +26,7 @@ const click = (context, selector) => context.evaluate(`(() => {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   const report = {card: 'EVERBURN-PLAY-FIXES', recipe: 'everburn-frames', quality: QUALITY, limitMs: P95_LIMIT_MS, passed: false,
-    method: 'Job 4 on Performance, memory-only saves, zero player input. Big Bess is put 197 m down her road, the car 14 to 44 m behind her and 6 m to one side, ' +
+    method: 'Job 4 on Performance, memory-only saves, zero player input. Big Bess is put 11 m past her first ambush, the car 14 to 44 m behind her and 6 m to one side, ' +
       'aimed at the middle of her, the raiders and the furnace. 120 delivered requestAnimationFrame intervals once all three stand in the picture.',
     headed: context.headed === true, launchMode: context.launchMode ?? null};
   const persist = () => writeFile(join(context.outputDir, 'everburn-frames.json'), JSON.stringify(report, null, 2) + '\n');
@@ -64,14 +65,16 @@ export async function run(context) {
       const bess = job.actors.find(actor => actor.id === 'big-bess');
       if (!bess) throw Error('Big Bess is not on her road yet');
       const points = step.path.map(place => place.position ?? place);
-      let left = ${BESS_METRES}, index = 1;
+      // The first ambush stands on her road's first leg, so its metres are its distance from her start.
+      const ambush = step.ambushes[0].place.position, metres = Math.hypot(ambush.x - points[0].x, ambush.z - points[0].z) + ${PAST_AMBUSH_METRES};
+      let left = metres, index = 1;
       while (index < points.length - 1 && left > Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z)) {
         left -= Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z); index++;
       }
       const from = points[index - 1], to = points[index], length = Math.hypot(to.x - from.x, to.z - from.z);
       bess.position = {x: from.x + (to.x - from.x) / length * left, y: 0, z: from.z + (to.z - from.z) / length * left}; bess.pathIndex = index;
       bess.stretchHealth = bess.health;
-      return {bess: bess.position, metres: ${BESS_METRES}};
+      return {bess: bess.position, metres};
     })()`);
     await context.evaluate('window.__qaApp.advance(1.5)');
     // The car is put behind her and to one side, and aimed at the middle of Big Bess, the raiders and the furnace, at the first distance
