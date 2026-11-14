@@ -181,6 +181,54 @@ in job 6 starts at the well's middle, inside the derrick box (a chaser, so it dr
 hand); job 1's delivery spot and Hot Soup's notice board lie at the edge of the town's solid and were shown reachable
 by a test, not driven by hand.
 
+**Frame check in the Scablands, 13 November (Claude; laptop alone, visible window, the HDMI Dell as the only screen).**
+`everburn-frames` on integration at 88a180b66, Performance, job 4 with Big Bess, one raider and the furnace in the
+picture: delivered p95 18.2 ms (limit 18.5), p50 17.7 ms, worst 18.7 ms over 120 frames; world build 214 ms. It passes
+with little room: anything added to the Scablands is timed again before it merges. The check's own first load read
+16.9 s, which includes its walk through the menu and the Story Wall; the wait a player meets when a job starts is
+measured in the go-live step.
+
+## Go-live round (built by a Sonnet helper; reviewed by Claude, 13 November 2026): merged, switches on
+
+The helper played the whole story by script on Medium in the real game (memory-only saves): all six jobs, both gas
+roads and the battle can be finished. The play found three faults and the review two more; all five are fixed in this
+round (commits 8b16fb042, 6ea8824fb, c21d1de5c). Sheet and note: `docs/board/looks/everburn-play/round-8.jpg`.
+
+- The Tin Town notice board's three side jobs start from "Take job", end on the results screen and return to the
+  yard. They stay on the board and pay the one world-job amount each time; nothing about them is saved.
+- Hot Soup was a 4-second drive for full pay. Claude's decision: it is a delivery of 1,148 m from Auntie's kitchen to
+  the Everburn well (49.5 s by script).
+- Job 5 starts 124 m short of the Dead Mall, past the junk cars; every start is checked for junk within 40 m ahead.
+- Nothing is drawn over the rear-view mirror in jobs 2 and 6.
+- Pausing a world job shows the job's own card (name, goal, time, BACK TO THE JOB, START AGAIN, BACK TO THE YARD), and
+  leaving takes one click.
+- `story-everburn` and `scablands-runs` are on. The save shape is unchanged.
+
+Checks: full tier on 8b16fb042, 650 of 651 (`test-town-people`'s speed limit failed beside other work and passed
+alone at 29.38 ms; added to QA-TIMING-UNDER-LOAD); the two later commits change a job definition, the pause card and
+their checks, covered by the lane tier (124 of 124 each time), the build and the browser checks. Replay fingerprints
+did not move (`test-replays` 297, `test-combat-replays` 12).
+
+Changed assertions, reviewed by Claude (rule 18); nothing is loosened:
+
+- `tools/test-feature-flags.mjs`: the two switches move from the dev list to the on list. The count is unchanged.
+- `tools/test-run-gas.mjs`, `tools/test-field-battle.mjs`: the fixtures meant "off" by leaving a switch out; they now
+  set both Everburn switches to false unless listed. Every assertion and both counts (1,116 and 796) are as they were.
+- `tools/test-everburn-play-start.mjs`: job 5's distance from the mall is 124 m, was 150 m, because the start moved
+  on purpose. On the road, facing the mall, and the mall's line not heard for 100 m are as they were.
+- `tools/scenarios/everburn-play.mjs`: the caption check waits for the job to be racing, because the caption is
+  hidden during the countdown. The check itself is as it was.
+- `tools/test-scablands-job-map.mjs`: Hot Soup's road has five points and ends at EVERBURN, was three ending at the
+  notice board, because the job changed on purpose.
+- `tools/test-everburn-easy.mjs`: the scripted driver follows Hot Soup's safe points in turn, since the town stands
+  between the kitchen and the well. The 8 of 10 limit is untouched and Hot Soup finishes 10 of 10.
+- `tools/scenarios/everburn-side-jobs.mjs`: Hot Soup's expected start is (624, -2).
+
+Left open, none holding the release: a hard crash never spills the ember pot or the soup (card EVERBURN-SPILL); the
+board's jobs carry no tick; Lost Prospector and Survey Flags have no spoken lines; the Hand Flamer is drawn as a
+launcher tube; the small map shows job 2's lamps as one mark; the pause card's small print is the race one; no play
+by hand yet.
+
 ## Not in this card
 
 The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Driving the Scablands freely.
