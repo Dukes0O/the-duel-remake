@@ -2062,3 +2062,8 @@ Browser scenarios on the go-live branch: everburn, everburn-play, everburn-well,
 Frames in the Scablands, 13 November, on the merged result, the HDMI Dell as the only screen and the laptop alone: Performance p95 18.1 ms against 18.5 ms (p50 17.6 ms, 120 frames, Big Bess, a raider and the furnace in view), world build 204 ms. The race courses keep the morning's pass (Performance p95 16.8 ms), their scenes and code unchanged.
 Seen by Claude: sheet `docs/board/looks/everburn-play/round-8.jpg` (nine pictures from the browser harness). Not seen in a visible browser window.
 Known and not fixed: a hard crash never spills the ember pot or the soup (card EVERBURN-SPILL); the notice board's jobs carry no tick and pay each time; Lost Prospector and Survey Flags have no spoken lines; the Hand Flamer is drawn as a launcher tube; the small map shows job 2's lamps as one mark.
+## Release, 14 November 2026, the Everburn is taken out (Claude, Release Manager)
+
+Kyle played the Everburn's first two jobs by hand and found them not fit to be seen (card EVERBURN-REMAKE has his findings). `story-everburn` and `scablands-runs` are `dev` again; no other code changed since the 13 November release.
+The 13 November release proved only that each job could be finished by a script. That was the wrong proof for a new world, and the card now asks for a play by hand, by Claude and then by Kyle, before either switch is on.
+Saves: nothing is wiped. Everburn progress and scrap stay in the save and are not shown while the switches are off.

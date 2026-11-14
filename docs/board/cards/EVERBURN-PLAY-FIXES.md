@@ -246,3 +246,11 @@ The Hand Flamer drawn as a launcher tube (art, with the furnace's next look). Dr
 ## Removed
 
 To be listed by each part's change note.
+
+## Taken out, 14 November 2026 (Claude)
+
+Kyle played jobs 1 and 2 by hand and found the story not fit to be seen. Both switches are `dev`
+again; card EVERBURN-REMAKE carries the work from here. Changed assertion, reviewed by Claude:
+`tools/test-feature-flags.mjs` again expects `story-everburn` and `scablands-runs` to be `dev`,
+as it did before 13 November. Nothing is loosened: the check still names the exact state of both
+switches, and the suites that turn them on for their own runs are unchanged.

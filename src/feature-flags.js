@@ -65,10 +65,10 @@ export const FEATURE_STATES = Object.freeze({
   'water-road': 'on',
   // MACHINE-HAUL: Wasteland Town systems are built behind this switch, off for players.
   'wasteland-town': 'dev',
-  // Everburn story screens and Scablands jobs (docs/board/cards/EVERBURN-PLAY-FIXES.md). On in the game (13 November 2026, no Preview step); it shows only to a player who has found the Wasteland gate.
-  'story-everburn': 'on',
-  // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn. On in the game (13 November 2026, no Preview step).
-  'scablands-runs': 'on',
+  // Everburn story screens and Scablands jobs. Off for players since 14 November 2026: Kyle played it and found it not ready to be seen (docs/board/cards/EVERBURN-REMAKE.md says what must be true before it comes back).
+  'story-everburn': 'dev',
+  // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn. Off for players since 14 November 2026, with the story.
+  'scablands-runs': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.

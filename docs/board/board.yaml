@@ -527,13 +527,24 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
 
+  - id: EVERBURN-REMAKE
+    title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: []
+    locks: []
+    flag: "story-everburn"
+    details: "docs/board/cards/EVERBURN-REMAKE.md"
+
   - id: EVERBURN-SPILL
     title: "A hard crash never spills the ember pot or the soup"
     owner: "codex"
     lane: "SIM"
     size: "S"
     status: "ready"
-    needs: []
+    needs: ["EVERBURN-REMAKE"]
     locks: []
     flag: "story-everburn"
     details: "docs/board/cards/EVERBURN-SPILL.md"
