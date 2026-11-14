@@ -136,6 +136,8 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
     const a = points[piece], b = points[piece + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
     for (const solid of SCABLANDS_SOLIDS) {
       if (solid.id === 'everburn-well' && (piece === 0 || piece === points.length - 2)) continue;
+      // The bridge's piers and the pipe's posts stand on the bed under the deck: a path over the deck passes over them.
+      if (solid.verticalClearance && /pier|-post-/.test(solid.id)) continue;
       let closest = Infinity;
       for (let metres = 0; metres <= length; metres += .1) {
         const t = metres / length;
@@ -516,7 +518,7 @@ function waitUntil(duel, test, limitSec, input) {
 // cinders, then rams the open door. It never fires a weapon.
 // SCABLANDS-LAND round 4, slice 2b: the dry river's banks are solid, and the furnace outruns the young driver by a kilometre on its bolts, so a driver that aimed
 // straight at it crossed the river anywhere and fell into it. When the furnace is far off the driver follows the trail the furnace left (which crosses the river
-// by the Girder Bridge, as its path does), 48 m ahead of the nearest point of it, but only where the straight line to the furnace would cross the river; everywhere
+// by the Girder Bridge, as its path does), 18 m ahead of the nearest point of it (48 m cut the corner at the bridge and drove into the gorge), but only where the straight line to the furnace would cross the river; everywhere
 // else it steers at the furnace as before (a driver that followed the trail everywhere could not cut the path's corners, and the chase took a quarter as long again).
 const trails = new WeakMap();
 function trailTarget(duel, f, car) {
@@ -529,7 +531,7 @@ function trailTarget(duel, f, car) {
     if (d < best) { best = d; nearest = index; }
   }
   trail.from = nearest;
-  return trail.points[Math.min(trail.points.length - 1, nearest + 8)];
+  return trail.points[Math.min(trail.points.length - 1, nearest + 3)];
 }
 function youngDriver(duel) {
   const state = duel.state, actor = furnaceOf(duel);
@@ -563,8 +565,8 @@ function youngDriver(duel) {
 // SCABLANDS-LAND round 4: the limit was 700 s, about three times the 231 s path; the young driver's Easy chase now takes 1,042 s
 // (two bolts of about 21 km and 13 km at 36 m/s, then the doors), so the limit is 1,500 s.
 // SCABLANDS-LAND round 4, slice 2b: 4,000 s. A slope pulls a car down it and holds it back going up (the courses' rule), the car cannot take any speed back from the
-// limit going down, and the furnace's bolts (36 m/s) are quicker than the car's flats speed, so the chase takes longer: the careful Medium driver's takes about 2,600 s
-// (one wreck and a restart; 2,768 s with the driver that goes by the bridge) where it took 1,204 s without the slope. A limit on the driver, not a claim about the game.
+// limit going down, and the furnace's bolts (36 m/s) are quicker than the car's flats speed, so the chase takes longer: the young driver's Easy chase takes about
+// 1,300 s (1,042 s before) and the careful Medium driver's 1,527 s (1,204 s without the slope). A limit on the driver, not a claim about the game.
 function playChase(seed, difficulty, maxSec = 4000, driver = youngDriver) {
   const duel = startDuel(seed, difficulty);
   const cues = new Set(), callouts = [];

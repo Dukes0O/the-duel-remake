@@ -212,12 +212,11 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
     actor.position.z += dz / gap * travel;
   }
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
-  // pushed out of a building. A truck held by one within the place's own radius of the place she is driving to has arrived there: the last place of her road
-  // may stand in a town's alley, where a truck cannot go.
+  // pushed out of a building. The last place of her road may stand in a town's alley, where a truck cannot go: within that place's own radius she is let into it.
   if (duel.course.def.scablands && actor.position && !actor.train) {
-    const at = stepMover(before, actor.position, {radius: 2.4, grade: TRUCK_GRADE});
+    const last = index >= path.length - 1 && Math.hypot(target.x - actor.position.x, target.z - actor.position.z) <= (actorDef.path[index].radius ?? 12);
+    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, solids: !last});
     actor.position.x = at.x; actor.position.z = at.z;
-    if (at.blocked && !arrived && Math.hypot(target.x - at.x, target.z - at.z) <= (actorDef.path[index].radius ?? 12)) arrived = true;
   }
   if (arrived) {
     actor.pathIndex = Math.min(index + 1, path.length - 1);

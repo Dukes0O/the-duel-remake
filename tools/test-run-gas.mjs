@@ -177,12 +177,14 @@ function runUntil(duel, condition, seconds = 400) {
     runUntil(duel, () => raidersOf(duel).length > 0);
     const bess = bessOf(duel), place = ambushes[0].place.position;
     Object.assign(bess.position, {x: place.x + 4, z: place.z + 4});
+    // Slice 2b: Slow Ride goes by the Wash, so the first raid stands on the stretch from the Wash (her third place) to the camp: she is driving to the fourth.
+    bess.pathIndex = 3;
     bess.health = 1; // two raiders at 5 a second each take it in a tenth of a second
     check(runUntil(duel, () => worldOf(duel).job.stepState.rested === true, 30), 'at 0 health Big Bess rests');
     check(bessOf(duel).health === 0, 'with no health left');
     check(runUntil(duel, () => worldOf(duel).job.stepState.rested === false && bessOf(duel).health > 0, 10), 'and the stretch starts again after the rest');
     same(Math.round(bessOf(duel).health), 100, 'with the health she had when she began it');
-    const boneyard = job4.steps[0].path[0].position;
+    const boneyard = job4.steps[0].path[2].position; // the Wash, the last place she reached before the raid (it was the Boneyard)
     near(Math.hypot(bessOf(duel).position.x - boneyard.x, bessOf(duel).position.z - boneyard.z), 0, 30, 'back at the last place she reached (she has moved off a little)');
     check(!bessOf(duel).atDestination, 'a restart is never an arrival');
     // SCABLANDS-LAND round 4: she restarts at the Boneyard, 1.9 km from the raid (it was 186 m), so she needs about 190 s to come within 160 m of it again; the wait is 400 s (it was 10 s).
@@ -278,15 +280,14 @@ function runUntil(duel, condition, seconds = 400) {
   // Where ambushes stand: none within 180 m of the start along the road, on job 4 and on every road, feud and run sampled.
   {
     const firstAmbush = step4.ambushes[0];
-    // SCABLANDS-LAND round 4: the first ambush is the same point of the way, three quarters of the way from the Boneyard to the halfway camp,
-    // so it is stated by those two places (it was the typed point (278, 188) of the first, small land).
-    const firstAt = LAND.between('boneyard', 'safe-road', .753);
-    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [firstAt.x, firstAt.z], 'job 4\'s first ambush stands three quarters of the way from the Boneyard to the halfway camp');
+    // Slice 2b: Slow Ride goes by the Wash, so the first ambush stands .4 of the way from the Wash to the halfway camp (the same 30 percent of her road, 2,251 m of 7,376).
+    const firstAt = LAND.between('the-wash', 'safe-road', .4);
+    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [firstAt.x, firstAt.z], 'job 4 first ambush stands two fifths of the way from the Wash to the halfway camp');
     near(alongPath(step4.path, firstAmbush.place).gap, 0, .5, 'on her road');
     check(step4.ambushes.every(item => alongPath(step4.path, item.place).metres >= AMBUSH_MIN_FROM_START_METRES), 'no ambush of job 4 within 180 m of its start');
-    // SCABLANDS-LAND round 4: it was the typed 186 m; it is the same share, .753, of the road's first piece, from the Boneyard to the halfway camp.
-    const boneyardToCamp = Math.hypot(LAND.at('safe-road').x - LAND.at('boneyard').x, LAND.at('safe-road').z - LAND.at('boneyard').z);
-    near(alongPath(step4.path, firstAmbush.place).metres, .753 * boneyardToCamp, 1, 'the first is .753 of the first piece along her road');
+    // Slice 2b: its metres along her road are the road to the Wash (past the Boneyard's west edge) and two fifths of the stretch from the Wash to the camp.
+    const stretch = (a, b) => Math.hypot(b.x - a.x, b.z - a.z), pts = step4.path.map(item => item.position);
+    near(alongPath(step4.path, firstAmbush.place).metres, stretch(pts[0], pts[1]) + stretch(pts[1], pts[2]) + .4 * stretch(pts[2], pts[3]), 1, 'the first is two fifths of the way from the Wash to the camp along her road');
     let sampled = 0;
     for (const road of GAS_RUN_ROADS) for (let feud = 1; feud <= 4; feud++) for (let runs = 0; runs < 200; runs++) {
       const job = gasRunJob({road, feud, runs});
@@ -476,9 +477,11 @@ function runUntil(duel, condition, seconds = 400) {
   // Both roads clear every box in SCABLANDS_SOLIDS by 8 m. The road begins at the well, so its first piece is let touch the
   // well's own box and no other; it ends at Tin Town's centre, so its last piece is let end inside the town's own box (the box stands on the
   // drawn town since the fourth round of EVERBURN-PLAY-FIXES; it stood 46 m west of it before) and touches no other.
+  // Slice 2b: a solid is turned (its heading), so the distance is measured in its own frame (a round post is read as its box); the gate's fences stand on either side
+  // of its opening, further from the road through it than the posts do, and keep the posts' 3.4 m; the town's own box is the thirteen blocks cut from its model.
   const distanceToBox = (x, z, solid) => {
-    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
-    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z, lx = dx * c - dz * n, lz = dx * n + dz * c;
+    return Math.hypot(Math.max(Math.abs(lx) - solid.halfX, 0), Math.max(Math.abs(lz) - solid.halfZ, 0));
   };
   for (const road of GAS_RUN_ROADS) {
     const points = GAS_RUN_PATHS[road].map(item => item.position);
@@ -494,7 +497,7 @@ function runUntil(duel, condition, seconds = 400) {
         // the gate's two post boxes (the opening is 9 m, Big Bess is 2.8 m wide, the boxes are the posts' own 2.1 m). Every other
         // solid keeps 8 m from every road.
         // The last piece ends in Tin Town, inside the town's own box: it may touch that box (0 m) and no other.
-        const needed = solid.id === 'tin-town-shell' && piece === points.length - 2 ? 0 : /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8;
+        const needed = /^tin-town-block-/.test(solid.id) && piece === points.length - 2 ? 0 : /^tin-town-gate-(post|fence)-/.test(solid.id) ? 3.4 : 8;
         check(closest >= needed, `${road}: piece ${piece + 1} clears ${solid.id} by ${needed} m (got ${closest.toFixed(1)})`);
       }
     }

@@ -210,15 +210,15 @@ export function createGroundLook({rock = 0x57493c, stone = 0x302b26, regions = n
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
           float gLayer=vGroundPos.y*.21+gBig.b*2.6+gMid.r*1.9+gFine.g*.7;
           gRock*=.95+.07*smoothstep(.3,.7,abs(fract(gLayer)-.5)*2.0)*(.5+gFine.r)*smoothstep(.35,.6,gBig.g);
-          // From a slope of about .35 (a scarp's face, a river bank) the face is bare rock broken into blocks with dark joints, and pale scree lies
+          // From a slope of about .25 (a scarp's face, a river bank; the near ground's cells are 23 m, so a face seen through its mesh reads gentler than it is) the face is bare rock broken into blocks with dark joints, and pale scree lies
           // where the face eases. The blocks are cut from a cell pattern worked out from the point and its height, so they do not repeat.
           vec3 gj=gVoronoi(vec2((gq.x*.74+gq.y*.67)/5.5,vGroundPos.y/2.6));
           float gSeeJ=smoothstep(2.0,9.0,5.5/gPix);
           gRock*=.8+.4*mix(.5,gj.z,gSeeJ);
-          gRock*=1.0-.5*mix(.1,1.0-smoothstep(.0,.09,gj.y),gSeeJ)*smoothstep(.06,.14,gSlope);
-          float gScree=smoothstep(.04,.14,gSlope)*(1.0-smoothstep(.14,.24,gSlope));
+          gRock*=1.0-.5*mix(.1,1.0-smoothstep(.0,.09,gj.y),gSeeJ)*smoothstep(.03,.08,gSlope);
+          float gScree=smoothstep(.02,.05,gSlope)*(1.0-smoothstep(.07,.14,gSlope));
           gRock=mix(gRock,vec3(.46,.4,.33)*(.7+.6*gGrit.r),gScree*.5);
-          gc=mix(gc,gRock,smoothstep(.05,.18,gSlope));
+          gc=mix(gc,gRock,smoothstep(.025,.075,gSlope));
           // Gravel and stones, thicker near rock.
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
           gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75*(1.0-wPan*.8-wSand*.7));

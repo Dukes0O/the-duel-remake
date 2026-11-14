@@ -386,9 +386,11 @@ assert.equal(rig.visible,false,'job 3: after 20 seconds it is gone');
 assert.deepEqual([rolling(5).x,rolling(5).z],[rolling(5).x,rolling(5).z],'job 3: the same clock gives the same place');
 // Job 4: 90 m to the north of Big Bess and 40 m ahead of her while she is between 30% and 70% of her road, at her speed, then turning away north.
 const slow=EVERBURN_JOBS[3].steps[0],points=slow.path.map(item=>item.position);
-const legs=points.slice(1).map((point,index)=>Math.hypot(point.x-points[index].x,point.z-points[index].z)),total=legs[0]+legs[1];
-const escortAtShare=share=>{const metres=share*total,second=metres>legs[0],from=points[second?1:0],to=points[second?2:1],t=(metres-(second?legs[0]:0))/legs[second?1:0];
-  return {id:'big-bess',position:{x:from.x+(to.x-from.x)*t,y:0,z:from.z+(to.z-from.z)*t},pathIndex:second?2:1,roadHeading:Math.atan2(to.x-from.x,to.z-from.z)};};
+const legs=points.slice(1).map((point,index)=>Math.hypot(point.x-points[index].x,point.z-points[index].z)),total=legs.reduce((sum,length)=>sum+length,0);
+// Slice 2b: Slow Ride's road has more than two legs (it goes by the Wash and the Girder Bridge), so the share is walked along all of them.
+const escortAtShare=share=>{let metres=share*total,index=0;while(index<legs.length-1&&metres>legs[index]){metres-=legs[index];index++;}
+  const from=points[index],to=points[index+1],t=metres/legs[index];
+  return {id:'big-bess',position:{x:from.x+(to.x-from.x)*t,y:0,z:from.z+(to.z-from.z)*t},pathIndex:index+1,roadHeading:Math.atan2(to.x-from.x,to.z-from.z)};};
 const escorting=(share,job={stepIndex:0,steps:EVERBURN_JOBS[3].steps,done:false})=>sightingState(4,job,{actors:[escortAtShare(share)]});
 const wrapAngle=angle=>Math.atan2(Math.sin(angle),Math.cos(angle));
 syncScene(scene.group,escorting(.2));

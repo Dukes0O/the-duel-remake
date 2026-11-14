@@ -86,7 +86,7 @@ export async function run(c) {
   const scoop = await held(c);
 
   // 6. The arrival: the results screen says how the ember arrived.
-  const gate = LAND.at('tin-town', -5, 70);
+  const gate = LAND.at('tin-town', -25, 70); // slice 2b: the gate's fence stands at -5 (it is solid now): the car starts on the road, in line with the opening
   await place(c, gate.x, gate.z, town.x, town.z, 55);
   await key(c, 'keyDown', 'w', 'KeyW', 87);
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<80&&a.duel.state.status!=='arena_result';i++)a.advance(0.25)})()`);

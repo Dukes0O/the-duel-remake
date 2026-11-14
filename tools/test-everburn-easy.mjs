@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {EAST_ROAD} from '../src/world/scablands-road.js';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
@@ -37,6 +38,21 @@ function currentMarker(duel) {
 }
 
 // The only motion helper: steer or walk toward the marker the job currently shows.
+const carStuck = new WeakMap();
+function eastRoadAim(car, ahead = 70) {
+  const line = EAST_ROAD.points;
+  let best = {index: 0, t: 0, d: Infinity};
+  for (let index = 0; index + 1 < line.length; index++) {
+    const a = line[index], b = line[index + 1], dx = b.x - a.x, dz = b.z - a.z, l = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((car.x - a.x) * dx + (car.z - a.z) * dz) / l)), d = Math.hypot(car.x - a.x - t * dx, car.z - a.z - t * dz);
+    if (d < best.d) best = {index, t, d};
+  }
+  let index = best.index, left = ahead + best.t * Math.hypot(line[index + 1].x - line[index].x, line[index + 1].z - line[index].z);
+  for (;;) {
+    const a = line[index], b = line[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= length || index + 2 >= line.length) { const t = Math.min(1, left / length); return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t}; }
+    left -= length; index++;
+  }
+}
 function moveTowardMarker(duel, target) {
   if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.z)) return;
   const state = duel.state;
@@ -67,6 +83,19 @@ function moveTowardMarker(duel, target) {
     return;
   }
   const car = duel.course.groundAt(state.s, state.lateral);
+  // SCABLANDS-LAND round 4, slice 2b: the dry river's banks and every drawn thing are solid. Hot Delivery's driver follows the East Road (aiming 70 m ahead of its
+  // nearest point on it) until it is within 250 m of Tin Town; every driver that is stopped against something (a wreck, a wall, a post) backs out and turns for a
+  // second and a half, the way the foot driver above steps aside.
+  const jobStep = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex];
+  if (jobStep?.kind === 'carry' && Math.hypot(target.x - car.x, target.z - car.z) > 250) target = eastRoadAim(car);
+  const stuck = carStuck.get(duel) ?? {x: car.x, z: car.z, seconds: 0, backing: 0, side: 1};
+  stuck.seconds += DT; stuck.backing = Math.max(0, stuck.backing - DT);
+  if (stuck.seconds >= 1) {
+    if (stuck.backing === 0 && Math.hypot(target.x - car.x, target.z - car.z) > 12 && Math.hypot(car.x - stuck.x, car.z - stuck.z) < 1.2) { stuck.backing = 1.5; stuck.side = -stuck.side; }
+    stuck.x = car.x; stuck.z = car.z; stuck.seconds = 0;
+  }
+  carStuck.set(duel, stuck);
+  if (stuck.backing > 0) { duel.setInput({throttle: 0, brake: 1, steer: stuck.side, boost: false, interact: false}); return; }
   const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
   const desired = Math.atan2(dx, dz), turn = wrap(desired - (car.heading + (state.headingError || 0)));
   const speed = Math.abs(state.speedMph || 0);

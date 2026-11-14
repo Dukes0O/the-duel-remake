@@ -121,7 +121,7 @@ export function buildEverburn(land) {
         // quarters of the way from the Boneyard to the halfway camp (past the Wash), the second three quarters of the way from the camp to Tin
         // Town (past the bridge). The flamethrower is lent, as in job 1.
         ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1', between('the-wash', 'safe-road', .4)), count:2}),
-          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', between('girder-bridge', 'tin-town', .583)), count:2})]),
+          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', {x: bridgeOut.position.x + (at('tin-town').x - bridgeOut.position.x) * .5, z: bridgeOut.position.z + (at('tin-town').z - bridgeOut.position.z) * .5}), count:2})]),
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.

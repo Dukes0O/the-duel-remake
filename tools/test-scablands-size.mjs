@@ -194,7 +194,7 @@ const everything = land => {
     // Slice 2b: the bridge's trusses, the pipeline and the Steps' marker posts stand at offsets across their road's or the river's own direction, which turns a
     // little when a place moves (they follow their named crossing, which is checked above), and the ring fence is made of the sheets the ground there is flat
     // enough for, which is not the same sheets when the ground under the town moves with it.
-    solids: scablandsSolids(land).filter(solid => solid.kind !== 'girder' && !/^the-steps-marker|^tin-town-fence-/.test(solid.id))};
+    solids: scablandsSolids(land).filter(solid => solid.kind !== 'girder' && !/^the-steps-marker|^the-pipe-post-|^tin-town-fence-/.test(solid.id))};
 };
 
 test('moving a place in a copy of the table moves everything that belongs to it, and nothing else', () => {
@@ -205,6 +205,9 @@ test('moving a place in a copy of the table moves everything that belongs to it,
     assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), `${moved}: the same things exist`);
     let withIt = 0, shares = 0;
     for (const [id, [x, z]] of a) {
+      // Slice 2b: the places a job lines up on the East Road 150 m either side of the Girder Bridge are points of the road (a curve that bends as a place moves), as the
+      // road's own derived nodes are, so they do not move by a straight share of a place's move; the bridge itself (a named point) is checked above.
+      if (/^(furnace-)?bridge-(in|out)$|^ash-men-raid-2$/.test(id)) continue;
       const [mx, mz] = b.get(id), shift = [mx - x, mz - z];
       const share = Math.abs(delta[0]) > 0 ? shift[0] / delta[0] : 0;
       assert.ok(Math.abs(shift[1] - share * delta[1]) < 1e-6, `${moved}: ${id} moves along the way the place moved`);
@@ -225,7 +228,7 @@ test('moving a place in a copy of the table moves everything that belongs to it,
   const camp = LAND.at('safe-road'), campMoved = createLand(movedTable(SCABLANDS_PLACES, 'boneyard', ...delta)).at('safe-road');
   assert.ok(Math.abs((campMoved.x - camp.x) - .47 * 123) < 1e-9 && Math.abs((campMoved.z - camp.z) + .47 * 77) < 1e-9, 'the halfway camp moves .47 of the way with the Boneyard');
   // The solids, the wrecks, Big Bess's rest, the gate's posts and the shacks of Tin Town follow their places.
-  const kept = solid => solid.kind !== 'girder' && !/^the-steps-marker|^tin-town-fence-/.test(solid.id);
+  const kept = solid => solid.kind !== 'girder' && !/^the-steps-marker|^the-pipe-post-|^tin-town-fence-/.test(solid.id);
   const solidsBefore = scablandsSolids(LAND).filter(kept), solidsAfter = scablandsSolids(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))).filter(kept);
   assert.equal(solidsAfter.length, solidsBefore.length);
   for (const [index, solid] of solidsBefore.entries()) {
