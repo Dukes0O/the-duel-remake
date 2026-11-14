@@ -181,6 +181,17 @@ happen). Those come with the larger land, and the numbers are set again there.
 Seen and not yet right: the pot is large for the car and covers the style-points readout; the
 road band is plain by design; the three new sounds are code-made and unheard.
 
+Checks at the merge: lane tier 154 of 155 (the one failure was the missing review note for the
+sheet, since written), `test-ember-pot` 42, replay fingerprints unchanged (297 and 12), build
+passes, browser scenarios `everburn-ember` and `everburn-well` pass.
+
+**Open, owed by Claude:** browser scenario `everburn-play` fails. It used to hold the accelerator
+and require job 1 to finish; it now requires the pot to go out (that part passes), takes a scoop
+at the brazier and is set down at Tin Town. One run then reached its last line and the next
+stopped at the results screen with "World job result or next job is missing". Not explained
+within the half hour rule 4 allows. The walk's start and end are rewritten in slice 3, and this
+is settled there, with the cause found first in case it is the game and not the scenario.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
