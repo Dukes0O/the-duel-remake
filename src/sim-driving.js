@@ -276,8 +276,13 @@ export function _drive(dt) {
     const scrub = surface.scrub;
     s.speedMph *= Math.exp(-scrub * dt * (s.speedMph > offRoadLimit ? 1 : .25));
     // A car at full throttle settles a little over the limit (the pull against it is 1.4 a second). On the Scablands' regions the pull is
-    // 4 a second, so that a region's share of the top speed is the speed a car settles at, give or take a few percent.
-    if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-(surface.region ? 4 : 1.4) * dt));
+    // 4 a second, so that a region's share of the top speed is the speed a car settles at, give or take a few percent; but it never takes
+    // more than 40 mph in a second, so that a car leaving a road at speed is dragged down over a second or two and is not stopped as if by
+    // a wall (at 4 a second alone a car coming off the salt pan onto rock shed 9 km/h in one step, which the ember's rule read as a hit).
+    if (s.speedMph > offRoadLimit) {
+      const over = s.speedMph - offRoadLimit;
+      s.speedMph -= surface.region ? Math.min(over * (1 - Math.exp(-4 * dt)), 40 * dt) : over * (1 - Math.exp(-1.4 * dt));
+    }
     if (!surface.boostAllowed) s.boosting = false;
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);

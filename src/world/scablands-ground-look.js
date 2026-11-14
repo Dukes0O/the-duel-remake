@@ -8,7 +8,7 @@
 //   the river bed  grey packed sand with ripples, dark soft patches, banks of layered rock;
 //   wreck fields   rust-stained dirt with flecks of metal;
 //   sand           pale dunes with fine ripples on them;
-//   the burn       black ash with dim red glints in its cracks near the Everburn.
+//   the burn       ground that has burnt: black soot near the Everburn, grey ash drifted over it, pale ash in the cracks.
 // The edges between regions are uneven (the same wave the driving uses). Cracks are cut from a cell pattern worked out from the
 // point itself, so that nothing repeats at any distance: the old crack pattern was read from a picture 413 m across and showed as a
 // grid a few hundred metres ahead. Roads (createRoadLook) are graded dirt with ruts and a berm.
@@ -177,14 +177,17 @@ export function createGroundLook({rock = 0x57493c, stone = 0x302b26, regions = n
             dc=mix(dc,dc*vec3(.82,.76,.7),smoothstep(.6,.85,gMid.r)*.4);
             gc+=dc*wSand;
           }
-          // ---- The burn: black ash, with dim red glints in its cracks near the Everburn.
+          // ---- The burn: ground that has burnt. Black soot near the Everburn, grey ash drifted over it further out, pale ash lying
+          // in the cracks. Nothing glows (glowing cracks read as lava); the vents and their fire come with the Everburn's job.
           if(wBurn>.004){
             vec3 bv=gVoronoi(gq/5.5);float seeB=smoothstep(2.0,9.0,5.5/gPix);
-            vec3 bc=uColBurn*(.6+.9*gBig.r)*(.8+.4*gFine.g);
-            float crack=mix(.1,1.0-smoothstep(.0,.09,bv.y),seeB);
-            bc=mix(bc,bc*.4,crack*.6);
             float near=1.0-smoothstep(300.0,1500.0,length(gq-uBurnCentre));
-            gGlow+=vec3(.5,.11,.02)*crack*near*smoothstep(.45,.7,gMid.g)*wBurn;
+            vec3 bc=uColBurn*(.6+.9*gBig.r)*(.8+.4*gFine.g);
+            float drift=smoothstep(.42,.74,gMid.g)*(1.0-.6*near);
+            bc=mix(bc,vec3(.2,.19,.18)*(.75+.5*gFine.r),drift*.6);
+            float crack=mix(.06,1.0-smoothstep(.0,.045,bv.y),seeB);
+            bc=mix(bc,vec3(.29,.28,.26)*(.7+.4*gFine.g),crack*.32*(1.0-drift*.5));
+            bc*=1.0-.35*smoothstep(.6,.85,gBig.g)*near;
             gc+=bc*wBurn;
           }
           // ---- The river bed and its banks: grey packed sand with ripples and dark soft patches; banks of layered rock.

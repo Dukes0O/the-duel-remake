@@ -262,6 +262,9 @@ suites, and the replay fingerprints of those jobs. None of that is in the game f
 3. **Beside the roads:** the seeded things and the hand-placed ones. A look round, sheet to Kyle.
 4. **The map:** the big and small maps redrawn from the same road and ground data.
 
+Order changed on 14 November after Kyle's second note (below): 2a, then 2b and the map (4) side
+by side, then 2c (hill country), 3 (beside the roads) and 2d (buildings fall).
+
 ### Slice 1 result (a Sonnet helper; reviewed by Claude, 14 November 2026): merged, switches off
 
 The land is 14 km by 10 km. The eight places stand ten times as far from the yard; the ridge and
@@ -412,10 +415,216 @@ toy-like.
 - **2a: regions, roads and how the ground drives.** All of the above. The river bed is drawn sunk
   with its banks but a car can still cross anywhere (so this build alone does not yet make
   routes).
-- **2b: ground that cannot be crossed.** The river's banks, the rises' steep faces and the
-  places' own buildings are solid: a car that meets one is stopped and pushed back, loses the
-  speed, and takes the hit. The crossings are the only ways over. Then Claude drives every road
-  and tries every short cut, in a window.
+- **2b: ground that cannot be crossed.** Designed below ("Slice 2b design").
+
+### Slice 2a result (a Sonnet helper; reviewed and corrected by Claude, 14 November 2026): merged, switches off
+
+Built as designed. Full note: `docs/changes/SCABLANDS-LAND.md`, "Round 4 slice 2a". Sheet
+`docs/board/looks/scablands-land/round-5.jpg` with Claude's review beside it.
+
+- **Twelve roads, 54 km**, curved so that the quickest car in the game holds every one within
+  2.4 m of its line at full speed. The old ring and the delivery road are gone.
+- **The dry river** with its five crossings, cut 8 m into the land. A car can still cross it
+  anywhere until slice 2b.
+- **Eight kinds of ground**, each drawn in code and each driving by the design's table. A car at
+  full throttle settles at about 194 km/h on a road, 240 on the salt pan, 146 on the flats, 96
+  on the scab plates and 74 in the sand.
+- **Sixteen low rises**, 26 m high (30 m made a road too steep), so a place is not seen from
+  the last one.
+- **The ember** reads the ground's safe speed; cold is 0.14 a second. Its three drives hold: the
+  East Road at 150 km/h arrives bright (72.5 left); the scab short cut at 50 km/h arrives alive
+  (39.1); a car held under 30 km/h goes out before Tin Town (at 5,966 m, with only six seconds
+  to spare; set again when the job is remade).
+- **Felt:** the camera shakes on scab rock and in the river bed, more with speed; the dust takes
+  the ground's colour; nine sound cues, one for each ground (`world.ground.road`, `.flats`,
+  `.salt-pan`, `.scab-plates`, `.river-bed`, `.river-soft`, `.sand`, `.wreck-fields`, `.burn`),
+  made from sounds the game has and not yet heard by anyone.
+- The East Road is 7.8 km, not 7: the bridge stands where the river runs north to south.
+
+**Two corrections by Claude at the merge.**
+1. *A car leaving a road was stopped as if by a wall.* To make a car settle at the table's
+   speed the helper raised the pull toward the ground's speed from 1.4 to 4 a second. A car
+   coming off the salt pan onto rock then shed 9 km/h in one step, more than twelve times a
+   hard brake, and the ember's rule read that as a hit. The pull stays 4 a second near the
+   ground's speed and never takes more than 40 mph in a second, so a car is dragged down over a
+   second or two. With that, the size suite's limit on a step's change of speed is back at 2 mph
+   (the helper had raised it to 3.2).
+2. *The burn read as lava.* Redrawn as burnt ground with nothing glowing (see the look review).
+
+**Changed assertions, reviewed by Claude (rule 18).** Listed by suite in the change note. Each
+follows the land's change and none is loosened: the ring and delivery-road checks became road
+net checks; the ember's road question became the ground's safe speed, and its three drives are
+the design's; the starts of jobs 5 and 6 are checked as more than 60 m from any road; the rail
+suite's copy of the height adds the rises and the river. Judged one by one:
+- `test-p4-audio` leaves the nine new ground cues out of the old sound bank's pin, as it did
+  the ember's three. Accepted: the pin guards the old records, which did not change.
+- `test-scablands-size`: the step limit of 3.2 mph is refused and is 2 again (correction 1).
+
+**Not driven by Claude in real time.** The app's browser pane was hidden again and the game
+does not load in it. Claude judged the pictures from a visible window. The real drive, every
+road and every short cut, is owed at the end of slice 2b, where the land first resists.
+
+**Left for the slices that own them.** Jobs 3 to 6 and the gas runs keep straight legs between
+names, off the new roads (each is set when its job is remade). A car flies off the far lip of a
+bank at 100 mph and drops 8 m into the bed in half a second with no harm (2b). The Steps have
+no way marked (2b). The six junk cars and three ramps of the old oval remain (2b).
+
+### Slice 2b design (Claude, 14 November 2026): the land's shape is solid
+
+**The fault.** In the Scablands a car does not feel the ground's shape. It drives up any bank,
+drops 8 m into the river in half a second with no harm, and passes through every building,
+wreck, post and fence. Kyle: "you could drive through any object".
+
+**One rule for the ground: the shape that is drawn is the shape that is driven.** The race
+courses already have the rules (`limitClimb` and `slopeSpeedDelta` in `src/offroad-physics.js`,
+used by `src/sim-driving.js`); the Scablands floor skips them. In the Scablands only:
+
+- **A slope slows a car going up and speeds it going down**, by the rule the courses use.
+- **A car cannot climb ground steeper than it can grip.** It is stopped at the foot, pushed back
+  and loses its speed: a hit, with the armour and ember loss a hit of that speed has. The
+  river's banks (8 m in 26 m) are too steep for every car; so the bed is left only at a
+  crossing.
+- **A car that drives off a lip falls.** It is in the air, it lands, and the landing is a hit
+  sized by the drop: about nothing under 1 m, hard at 3 m, and off the full 8 m bank it wrecks a
+  light car's armour by half and puts the ember out. A fall never ends a job by itself.
+- **The crossings are shaped so the rule lets a car through.** The Wash and the South Ford are
+  gentle enough to drive at speed. The Steps are a rough ramp: under 25 km/h a car climbs them,
+  faster it is thrown back, and the ember is safe there only under 20 km/h. The Girder Bridge
+  and the Pipe have decks; off the side of a deck is a fall into the bed.
+- **Jumps stay.** A car that leaves a rise or a ledge at speed flies and lands, as on the Summit
+  (`docs/board/decisions.md`, "Keep these"). The three old ramps of the first oval go.
+
+**One rule for things: everything drawn that is taller than a wheel is solid.** Buildings,
+Tin Town's wall, gate posts and shacks, the Boneyard's wrecks, the mall, the well's props, the
+bridge's girders, the pipeline, braziers, barricades, the radio mast. A car that meets one is
+stopped and pushed out along the nearest face, keeps the speed that runs along the face, and
+takes a hit for the speed that ran into it. Each thing is a box or a round post, built from the
+same data that draws it (the table `SCABLANDS_SOLIDS` is test data today and becomes the real
+list). Things are found by a grid, so the cost does not grow with the land. Raiders and Big
+Bess obey the same things. A person on foot already cannot walk through them.
+
+**Scarps.** Four of the sixteen rises get a steep face on one side, 12 to 20 m high and too
+steep to climb, drawn as broken rock: the two rises on the scab plates either side of the
+Steps (so the scab short cut is a way through a gap, not a line), one north of the Halfway
+Camp, and one between the salt pan and the Ridge. A road never meets a scarp.
+
+**Gone.** The six junk cars and the three ramps of the old oval; the test car the harness
+parks 1,058 m east of the yard is found and explained or removed.
+
+**Proved by driving at each** (a check for each kind, then Claude in a window): into a bank
+from the bed; off a lip at 30, 100 and 200 km/h; up the Steps at 20 and at 60 km/h; off the
+side of the bridge; into a shack, a wreck, a gate post and a girder, head on and at a glance;
+every crossing by its road at the road's top speed; and each of the four ways from the yard to
+Tin Town driven end to end by a scripted driver as a builder's check. Race replays and the
+Scrapdome's fights must not move.
+
+### More direction from Kyle (14 November 2026, on seeing the regions being built)
+
+"I like what you're working on." Then, in his words:
+
+- **The map.** "That map is entirely ridiculous." (His picture: a bent line with "YARD GATE" and
+  "TIN TOWN" and two dots, lying over the ground with nothing behind it.)
+- **Hills.** "The scablands seem all flat, but what if we introduced parts where there are hills
+  and other terrain?" Hills and obstacles "that we can hide behind or drive over and likewise
+  the opponents do the same". "Some flatlands are good, some variation would be too. A wide
+  flat land is great for a major skirmish, but sometimes a hide and seek game could be fun too."
+- **An idea for later, not scheduled.** A version of the old "Scorched Earth" game that ties in
+  the Lab's lessons on parabolas: "our tank in one place and fire at other fixed locations, or
+  maybe a catapult instead of a tank". It needs terrain to be a fun view.
+- **Buildings.** "All the buildings could be driven through, they had no hit box. We might as
+  well make it reasonably real in that you can't walk or drive through buildings. If we drive
+  through buildings, they must collapse and cost scrap to rebuild."
+
+What Claude does with it: the map is redrawn now, beside slice 2b, and not last. Slice 2b makes
+every drawn thing solid. Two slices are added: 2c, hill country, and 2d, buildings that fall.
+
+### Slice 4 design (Claude, 14 November 2026): the map
+
+**The fault.** The small map draws the job's own line and nothing of the land, so it cannot be
+used to choose a way or to tell where the car is. On some screens it has no panel behind it.
+
+**One picture of the land, made once.** When the Scablands loads, the game draws the whole land
+into one image from the same data the ground is drawn from: each region in its own muted
+colour, the river as a dark cut with its banks, the five crossings, every road as a pale line,
+the rises and hills as shading, the places as small plans of what stands there. Nothing in it
+is typed by hand, so the map cannot disagree with the land.
+
+**The small map** (always on screen in the Scablands, bottom left, on a dark panel with a
+border):
+- shows the land round the car, about 2.5 km across, north at the top;
+- the car is an arrow that turns with the car;
+- the job's place is a marker; when it is off the map it sits on the edge in the right
+  direction with the distance in km beside it;
+- roads, the river and its crossings are plain to read at a glance; place names appear when
+  the place is on the map;
+- what the player has learnt is drawn and stays drawn: a barricade once seen, a held bridge, the
+  furnace's sight as a shaded fan;
+- no job line is drawn from point to point. A way is the player's choice.
+
+**The big map** (M): the whole land, with the regions named, each road and crossing named,
+every place, the car, the job's place, and for the job in hand the ways to it with what is
+known of each (length in km, the ground, who holds it). The game pauses while it is open.
+
+**Rules.** The map only reads the game; it changes nothing in a job. Drawing it costs no more
+than a fraction of a millisecond a frame (the land's picture is made once; only the arrow and
+markers move). The old route map's job line, its pixel rule that drops "TIN TOWN", and the two
+exemptions in the Everburn suites go.
+
+### Slice 2c design (Claude, 14 November 2026): hill country
+
+**Where the land rises.** Flat ground stays where a large fight belongs: the salt pan, the flats
+west of the yard, and the Boneyard road's battle ground. Hills go where a chase or a hunt
+belongs:
+
+- **The Breaks**, south-west of the yard toward the Everburn and the Dead Mall: rolling hills
+  40 to 90 m high, 400 to 900 m from crest to crest, with valleys a car can thread and passes
+  where the Burn Road and the Mall Road go through.
+- **The mesas** on the scab plates between the yard and Tin Town: flat tops 15 to 25 m up with
+  steep broken sides (the scarps of slice 2b) and a few ramps. Cover from the furnace's sight.
+- **The Ridge's foothills** in the north-east, climbing to the Ridge.
+- **The dunes** round the Ships: soft crests 8 to 15 m high that hide a car and take its speed.
+- **One hill that overlooks**, the Lookout, with a flat top and a long clear view over the
+  flats: kept in mind as a firing place for Kyle's artillery idea.
+
+**Hills are played, not only seen.**
+- A car slows going up, gathers speed going down, and flies off a crest taken fast (slice 2b's
+  rules).
+- **Sight.** A raider, the furnace or a lookout sees a car only along a clear line over the
+  ground, within its range. A car behind a hill is not seen. When a pursuer loses sight for
+  five seconds it goes to where the car was last seen and searches from there; it does not know
+  where the car is. The screen tells the player when the car is seen and when it is lost.
+- Raiders and Big Bess obey the same ground: they slow on the climb, cannot climb a scarp and
+  can be hidden from, ambushed from a crest, or led into a valley.
+- The furnace's sight over the scab plates (Hot Delivery) is cut by the mesas: the short cut
+  becomes a run from cover to cover.
+
+**Drawn.** The near ground already follows the land's height. The coarse ground gets cells
+fine enough that a hill 400 m across keeps its shape at a distance, inside the frame limit.
+Hill ground is drawn in code as what it is: scree on the steep faces, bare rock at the crests,
+the region's own ground in the valleys.
+
+### Slice 2d design (Claude, 14 November 2026): buildings fall
+
+Slice 2b makes every building solid. This slice makes the light ones fall, as Kyle asked.
+
+- **Light things fall, strong things do not.** A stall, a fence, a shed, a shack or a
+  barricade falls when a car hits it hard enough: about 70 km/h into the wall for a car, 40 for
+  a truck. The forge, the mall, Tin Town's gate towers, the Scrapdome, the bridge, a mast and
+  rock never fall; the car takes the whole hit.
+- **What a fall does.** The car takes the hit for its speed and loses most of it. The building
+  drops into a heap of its own boards and sheets with dust, and stays a heap: rough ground,
+  safe under 20 km/h. Cue `world.building.fall`.
+- **It costs scrap to rebuild.** Each thing has a price: a stall or fence 15, a shed 25, a
+  shack 40, a large shack 90. A building of a town that the player knocks down is charged to
+  the player: from the pay of the job in hand, or else owed to the town. While scrap is owed to
+  a town its notice board gives no work (the story's own jobs still run), and the gate keeper
+  says why. The player pays at the heap or at the gate, and the building stands again at the
+  next visit. In the player's own town the player pays to rebuild their own.
+- **Raiders** who knock a building down cost the player nothing.
+- **The save.** A list of what has fallen and what is owed to each town is added to the save.
+  A save from before reads as nothing fallen and nothing owed. Nothing else in the save
+  changes. Saves and pay: one independent review, and the save checker (rule 6).
+- **Not here:** races and their roadside buildings, which keep their crash rules.
 
 ### Open at the end of slice 1
 
@@ -423,9 +632,8 @@ toy-like.
   `everburn-ember` and `everburn-side-jobs` put the car at a position of the old land;
   `everburn-frames` fails at its start; `run-gas` sees no raid and `field-battle` no furnace in
   the time they wait, because the roads are ten times as long. `everburn-well` passes. The suites
-  that hold the rules of those jobs all pass. `everburn-ember` and `everburn-frames` are put
-  right by the builder of slice 2a, from the land's names, because slice 2a moves the roads
-  again. The other three, and `everburn-play` (card EVERBURN-REMAKE), stay failing and are
+  that hold the rules of those jobs all pass. `everburn-ember` and `everburn-frames` were put
+  right in slice 2a, from the land's names, and pass. The other three, and `everburn-play` (card EVERBURN-REMAKE), stay failing and are
   rewritten when their jobs are remade on the finished land; until then the nightly report
   lists them under this card.
 - **The machine yard** (`wasteland-town`, off) loses the ridge's foot at its four corners.

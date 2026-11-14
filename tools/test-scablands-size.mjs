@@ -138,8 +138,9 @@ test('a drive from the yard to Tin Town takes the time that distance and speed g
   assert.ok(Math.abs(run.seconds - expected) < 1.5, `${run.seconds.toFixed(1)} s for 6 km at the logged speeds (${expected.toFixed(1)} s expected)`);
   assert.ok(run.x >= 6000 && run.x < 6000 + run.metresPerSecond / 30, 'the car arrives at Tin Town');
   assert.ok(run.jump < .02, `no step moves the car more than its speed gives (worst difference ${run.jump.toExponential(2)} m)`);
-  // SCABLANDS-LAND round 4, slice 2a: on the scab plates the ground pulls a car at 100 mph toward the plates' 52 mph by 4 a second: up to 3 mph in a 1/60 s step (it was under 2).
-  assert.ok(run.speedJump < 3.2, `no step changes the speed but by the ground's pull (worst ${run.speedJump.toFixed(2)} mph)`);
+  // On the scab plates the ground pulls a car that asks for 100 mph down toward the plates' own speed, by at most 40 mph in a second
+  // (two thirds of a mph in a step), so the limit of 2 mph a step stands as it was.
+  assert.ok(run.speedJump < 2, `no step changes the speed (worst ${run.speedJump.toFixed(2)} mph)`);
   assert.ok(run.widest < 150, `the car stays on the line (${run.widest.toFixed(0)} m off at most)`);
   assert.ok(Math.abs(run.lateral) < SCABLANDS_LAYOUT.floorHalfWidth, 'the floor never holds it back');
 });

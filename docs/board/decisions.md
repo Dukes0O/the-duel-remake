@@ -14,6 +14,26 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle, 14 November 2026: the Scablands (after playing the Everburn, and on seeing the land rebuilt)
+
+- The Everburn's first two jobs are not fit to be seen and Gratian must not find them. Both
+  switches are off until Kyle has tried a remade job (card EVERBURN-REMAKE).
+- Build the land before the jobs: "doesn't it make sense to expand the scablands first so we
+  have a larger canvas to work on?"
+- "When our race courses run many km, then the scablands must be even larger. The art must
+  reflect a new land, the danger must be felt from game play. Route choices must be decisions
+  the player should weigh."
+- The small map on screen "is entirely ridiculous".
+- Hills and other terrain: "hills and obstacles that we can hide behind or drive over and
+  likewise the opponents do the same". "A wide flat land is great for a major skirmish, but
+  sometimes a hide and seek game could be fun too."
+- An idea for later: a version of the old "Scorched Earth" game tied to the Lab's lessons on
+  parabolas, with "our tank in one place" firing at fixed places, "or maybe a catapult".
+- "You can't walk or drive through buildings. If we drive through buildings, they must collapse
+  and cost scrap to rebuild."
+
+Where each is built: card SCABLANDS-LAND, round 4.
+
 ## Kyle, 11 November 2026: draw in code before building model files
 
 On Old Smoke's furnace, round 2: "this art looks toy like." Then: "are we putting effort into creating 3d assets
