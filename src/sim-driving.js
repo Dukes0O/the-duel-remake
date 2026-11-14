@@ -454,12 +454,17 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     // A descending convex crest can leave the road too: the car keeps its
     // signed tangent velocity while the road falls away faster. The arena
     // retains its authored upward-ramp threshold and exact existing timing.
-    // On the Scablands a car also leaves the ground, at any speed, where the ground falls away by more than half a metre in a step (a ledge, the
-    // edge of a deck): it falls, it does not follow the edge down.
-    const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28 || scablands && predicted > ground + .5;
-    if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
+    const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28;
+    // On the Scablands a car also leaves the ground, at any speed, over a lip: where the ground falls away more than 15 cm further in a step than the
+    // car's own free fall from the speed it had (a ledge, the edge of a deck). It falls, it does not follow the edge down (the averaged speed above
+    // follows any slope, however steep, so it never lets go of a lip).
+    const lipped = scablands && actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5 > ground + .15;
+    if (lipped || predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
-      actor._verticalSpeed = verticalSpeed;
+      // On the Scablands a car leaves with the upward or downward speed it had on the ground before the step, not the average with the ground's own speed over the
+      // step (which, off a lip or a wall of ground, is hundreds of metres a second and made the fall hit the ground at that).
+      actor._verticalSpeed = scablands ? actor._verticalSpeed : verticalSpeed;
+      if (scablands) predicted = actor._jumpY + actor._verticalSpeed * dt - gravity * dt * dt * .5;
       actor._airOrigin = { x: previousPoint.x, z: previousPoint.z,
         time: simulationTime - dt };
       actor.airDistance = 0; actor.airTime = 0;
@@ -488,8 +493,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (actor._jumpY > ground) return;
   // Rejoin a descending road at its tangent speed. Zeroing this for natural
   // roads would manufacture a second hop on the next downhill step.
-  // The speed the Scablands' car met the ground at, along the ground's own rise or fall, for the landing's hit (src/sim-scablands.js).
-  if (scablands) actor._scablandsLanding = Math.max(0, groundVelocity - actor._verticalSpeed);
+  // The speed the Scablands' car fell at when it met the ground, for the landing's hit (src/sim-scablands.js). Only its own fall counts: the ground's rise or fall under
+  // it is not added (against a wall of ground it would be hundreds of metres a second).
+  if (scablands) actor._scablandsLanding = Math.max(0, -actor._verticalSpeed);
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {

@@ -9,6 +9,8 @@ import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceSpeed, furnace
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {EAST_ROAD, roadPointFrom} from '../src/world/scablands-road.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
 // The Everburn's lines register when the story's own modules load (the game's screens do it); this test reads them through the job code.
 import '../src/story/ember-lines.js';
 
@@ -85,17 +87,19 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
 // and the gate's place in the list are exactly the card's table.
 {
   const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
-  // SCABLANDS-LAND round 4: the same 18 places, restated as places of the land (a place plus an offset, or a share of the way
+  // SCABLANDS-LAND round 4: the same 18 places (21 with the bridge, below), restated as places of the land (a place plus an offset, or a share of the way
   // between two places plus an offset) in place of 18 typed points of the old land, so the check is on names, not numbers.
   const listed = [LAND.at('everburn'), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
     LAND.at('ships-in-sand', -60, 50), LAND.between('ships-in-sand', 'ridge', .426, -10.78, 36.28), LAND.at('ridge', -74, 104),
     LAND.between('ridge', 'boneyard', .599, -74, 0), LAND.at('boneyard', -89, -134), LAND.at('boneyard', -79, -58),
     LAND.at('boneyard', 16, -56), LAND.at('boneyard', 121, -52), LAND.at('tin-town', 10, 170), LAND.at('tin-town', -25, 82),
-    LAND.between('yard', 'tin-town', .717, 0, 70), LAND.at('safe-road'), LAND.between('yard', 'dead-mall', .535),
+    // Slice 2b: the way home crosses the dry river by the Girder Bridge, lined up on the East Road 150 m before and after it (three more places).
+    LAND.between('yard', 'tin-town', .717, 0, 70), roadPointFrom(EAST_ROAD, LAND.at('girder-bridge').x, LAND.at('girder-bridge').z, 150), LAND.at('girder-bridge'),
+    roadPointFrom(EAST_ROAD, LAND.at('girder-bridge').x, LAND.at('girder-bridge').z, -150), LAND.at('safe-road'), LAND.between('yard', 'dead-mall', .535),
     LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('everburn')];
   same(def.path.map(place => [place.position.x, place.position.z]), listed.map(spot => [spot.x, spot.z]),
     'the path is the card\'s list of places');
-  same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 16]],
+  same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 19]],
     'the three legs begin at the well, at the Boneyard and at the place between the Dead Mall and the well');
   check(def.path[def.gateWaypoint].id === 'tin-town-gate-front' && def.gateWaypoint === 12, 'the furnace stops at the place named tin-town-gate-front, the 13th in the list');
   same(placeAt(def.gateWaypoint), [LAND.at('tin-town', -25, 82).x, LAND.at('tin-town', -25, 82).z],
@@ -120,9 +124,11 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
 // Every straight piece of the path clears every solid in the Scablands by 8 m. The furnace begins at the well and
 // rolls into it, so the first and last pieces are allowed to touch the Everburn well's own box and no other.
 {
+  // Slice 2b: a solid is turned (its heading), so the distance is measured in its own frame; the Girder Bridge's trusses stand 7.35 m either side of the middle of
+  // a deck the way home crosses, so a path on the bridge keeps 4 m from them and 8 m from everything else.
   const distanceToBox = (x, z, solid) => {
-    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
-    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z, lx = dx * c - dz * n, lz = dx * n + dz * c;
+    return Math.hypot(Math.max(Math.abs(lx) - solid.halfX, 0), Math.max(Math.abs(lz) - solid.halfZ, 0));
   };
   const points = def.path.map(place => place.position);
   let tightest = Infinity;
@@ -136,7 +142,8 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
         closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, solid));
       }
       tightest = Math.min(tightest, closest);
-      check(closest >= 8, `piece ${piece + 1} of the path clears ${solid.id} by 8 m (got ${closest.toFixed(1)})`);
+      const need = solid.kind === 'girder' ? 4 : 8;
+      check(closest >= need, `piece ${piece + 1} of the path clears ${solid.id} by ${need} m (got ${closest.toFixed(1)})`);
     }
   }
   console.log(`Old Smoke: the path's tightest clearance from a solid is ${tightest.toFixed(1)} m`);
@@ -507,6 +514,23 @@ function waitUntil(duel, test, limitSec, input) {
 // A scripted young driver for Easy. It reads only what the player sees: the furnace, its
 // next door (the arrow) and the glow. It waits behind and beside the furnace, outside the
 // cinders, then rams the open door. It never fires a weapon.
+// SCABLANDS-LAND round 4, slice 2b: the dry river's banks are solid, and the furnace outruns the young driver by a kilometre on its bolts, so a driver that aimed
+// straight at it crossed the river anywhere and fell into it. When the furnace is far off the driver follows the trail the furnace left (which crosses the river
+// by the Girder Bridge, as its path does), 48 m ahead of the nearest point of it, but only where the straight line to the furnace would cross the river; everywhere
+// else it steers at the furnace as before (a driver that followed the trail everywhere could not cut the path's corners, and the chase took a quarter as long again).
+const trails = new WeakMap();
+function trailTarget(duel, f, car) {
+  const trail = trails.get(duel) ?? (trails.set(duel, {points: [], from: 0}), trails.get(duel));
+  const last = trail.points.at(-1);
+  if (!last || Math.hypot(f.x - last.x, f.z - last.z) > 6) trail.points.push({x: f.x, z: f.z});
+  let nearest = trail.from, best = Infinity;
+  for (let index = trail.from; index < Math.min(trail.points.length, trail.from + 400); index++) {
+    const d = Math.hypot(trail.points[index].x - car.x, trail.points[index].z - car.z);
+    if (d < best) { best = d; nearest = index; }
+  }
+  trail.from = nearest;
+  return trail.points[Math.min(trail.points.length - 1, nearest + 8)];
+}
 function youngDriver(duel) {
   const state = duel.state, actor = furnaceOf(duel);
   if (!actor) return {throttle: 0, brake: 1, steer: 0, boost: false, interact: false};
@@ -522,7 +546,13 @@ function youngDriver(duel) {
     const wait = door === 'rear' ? right(f) : out;
     target = {x: f.x - forward(f).x * 14 + wait.x * 6, z: f.z - forward(f).z * 14 + wait.z * 6};
   }
-  const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
+  const away = Math.hypot(target.x - car.x, target.z - car.z);
+  const trail = trailTarget(duel, f, car);
+  // Straight at the furnace as before, unless the line to it crosses the river's gorge (the sum of what is sunk along it): then along its trail.
+  let sunk = 0;
+  for (let share = .04; share < 1; share += .04) sunk += riverDepthAt(car.x + (target.x - car.x) * share, car.z + (target.z - car.z) * share);
+  const aim = sunk > 1 ? trail : target;
+  const dx = aim.x - car.x, dz = aim.z - car.z, gap = away;
   const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0)));
   const furnaceMph = furnaceSpeed(f.difficulty, f.hits) * MPH;
   const want = clamp(furnaceMph + gap * 1.5, 0, furnaceMph + 40);
@@ -532,20 +562,27 @@ function youngDriver(duel) {
 
 // SCABLANDS-LAND round 4: the limit was 700 s, about three times the 231 s path; the young driver's Easy chase now takes 1,042 s
 // (two bolts of about 21 km and 13 km at 36 m/s, then the doors), so the limit is 1,500 s.
-function playChase(seed, difficulty, maxSec = 1500, driver = youngDriver) {
+// SCABLANDS-LAND round 4, slice 2b: 4,000 s. A slope pulls a car down it and holds it back going up (the courses' rule), the car cannot take any speed back from the
+// limit going down, and the furnace's bolts (36 m/s) are quicker than the car's flats speed, so the chase takes longer: the careful Medium driver's takes about 2,600 s
+// (one wreck and a restart; 2,768 s with the driver that goes by the bridge) where it took 1,204 s without the slope. A limit on the driver, not a claim about the game.
+function playChase(seed, difficulty, maxSec = 4000, driver = youngDriver) {
   const duel = startDuel(seed, difficulty);
   const cues = new Set(), callouts = [];
   duel.onChange((_state, event) => {
     if (event.arenaTell?.cue) cues.add(event.arenaTell.cue);
   });
+  // The furnace's own log keeps its last 80 events; a chase that takes 1,300 s (slice 2b: the slopes and the bridge slow the young driver) fills it, so the
+  // events are collected as they happen and the order of the doors is read from all of them.
+  const seen = new Set(), collected = [];
   for (let n = 0; n < maxSec / DT && duel.state.status !== 'arena_result'; n++) {
     tick(duel, duel.state.status === 'racing' ? driver(duel) : undefined);
+    for (const event of duel.state.arena.worldJob.furnaceLog ?? []) if (!seen.has(event)) { seen.add(event); collected.push(event); }
     const stoke = duel.state.arena.worldJob.furnaceLog?.at(-1);
     if (stoke?.type === 'stoke' && callouts.at(-1)?.atSec !== stoke.tSec) callouts.push({atSec: stoke.tSec, text: duel.state.callout});
   }
   const worldJob = duel.state.arena.worldJob;
   return {duel, cues, callouts, won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
-    log: worldJob.furnaceLog, secs: duel.state.stageTimeSec};
+    log: collected, secs: duel.state.stageTimeSec};
 }
 
 {

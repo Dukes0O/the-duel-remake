@@ -128,3 +128,28 @@ export function distanceToNet(x, z, net = ROAD_NET) {
   for (const road of net.roads) best = Math.min(best, distanceToRoad(x, z, road.points));
   return best;
 }
+
+// The point `metres` along a road from the point of it nearest (x, z): the way a job lines up on a narrow crossing (the Girder Bridge's deck is 14 m wide
+// and its trusses are solid, SCABLANDS-LAND round 4 slice 2b). Negative metres go back toward the road's start.
+export function roadPointFrom(road, x, z, metres) {
+  const points = road.points;
+  let best = {index: 0, t: 0, distance: Infinity};
+  for (let index = 0; index + 1 < points.length; index++) {
+    const a = points[index], b = points[index + 1], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const t = length > 0 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0, distance = Math.hypot(x - a.x - t * dx, z - a.z - t * dz);
+    if (distance < best.distance) best = {index, t, distance};
+  }
+  let {index, t} = best, left = metres;
+  for (;;) {
+    const a = points[index], b = points[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left >= 0) {
+      const room = length * (1 - t);
+      if (left <= room || index + 2 >= points.length) { const u = Math.min(1, t + left / length); return {x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u}; }
+      left -= room; index++; t = 0;
+    } else {
+      const room = length * t;
+      if (-left <= room || index === 0) { const u = Math.max(0, t + left / length); return {x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u}; }
+      left += room; index--; t = 1;
+    }
+  }
+}

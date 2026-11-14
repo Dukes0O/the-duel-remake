@@ -23,24 +23,33 @@ import {ROAD_NET, roadNet} from './scablands-road.js';
 export const WHEEL_HEIGHT = .9;
 
 // ---- Boxes cut from the models ----------------------------------------------------------------------------------------------------------
+// The mall's four sand drifts are not drawn (scablands-scene.js removes them), so they are not cut.
 // A place's model is drawn at the place with a turn that is a whole number of quarter turns (`SCABLANDS_PLACES.indexOf(place) % 4`, in
 // scablands-scene.js). These are the model's own parts taller than a wheel, cut into boxes from where they stand in the model: each is
-// [west, north, east, south, height] in the model's own metres (x east, z south at no turn). Every table was cut at a cell of 1 m (the
-// town, the Ridge's kit) or 2 m (the mall) from the real model file, and tools/test-scablands-solid.mjs reads the file again and checks
+// [west, north, east, south, height] in the model's own metres (x east, z south at no turn). Every table was cut at a cell of 1 m from the real model file, and tools/test-scablands-solid.mjs reads the file again and checks
 // that every part taller than a wheel lies inside a box, and that every box holds some of it.
 const TIN_TOWN_BOXES = Object.freeze([
   [-3, -14, 3, -12, 3.4], [-9, -12, -1, -6, 5.1], [1, -12, 9, -6, 4.5], [-4, -7, 4, -5, 7.1], [-8, -5, -2, 0, 6.8], [1, -5, 9, 1, 7.6],
   [-10, 1, -2, 4, 3.9], [-9, 4, -1, 6, 4.6], [-9, 6, -1, 12, 6.8], [1, 1, 8, 6, 4.3], [1, 6, 9, 12, 4.2], [-4, 13, -3, 14, 2.1], [7, 13, 8, 14, 2.1],
 ]);
 const MALL_BOXES = Object.freeze([
-  [6, -12, 16, -10, 8.6], [-2, -12, 2, -8, 7.9], [6, -10, 10, -8, 8.6], [12, -10, 16, -8, 8.6], [-16, -12, -6, -6, 8.6], [-16, -6, 12, -4, 8.4],
-  [-16, -4, -14, -2, 8], [14, -8, 16, -2, 8], [-14, -2, -12, 0, 7.4], [-8, -2, -6, 0, 7.4], [-8, 0, -4, 2, 7.6], [6, -2, 10, 2, 7.6],
-  [12, -2, 16, 2, 8], [-16, 0, -10, 4, 8], [-2, -4, 2, 4, 7.6], [14, 2, 16, 4, 8], [-16, 4, -6, 6, 7.9], [4, 4, 16, 6, 8.4], [-16, 6, -14, 8, 7.9],
-  [6, 6, 16, 8, 8.4], [-16, 8, -12, 10, 8.6], [-8, 8, 2, 10, 8.6], [4, 8, 16, 10, 8.6], [-16, 10, -6, 12, 8.6], [-4, 10, 4, 12, 8.6], [6, 10, 16, 12, 8.6],
+  [-15, -11, -6, -10, 8.6], [-3, -11, -2, -10, 7.4], [-1, -11, 1, -10, 7.4], [2, -11, 3, -10, 7.4], [6, -11, 15, -10, 8.6], [-15, -10, -12, -9, 8.6],
+  [-1, -10, 2, -9, 7.7], [6, -10, 9, -9, 8.6], [-15, -9, -11, -8, 8.4], [-8, -10, -6, -8, 8.6], [0, -9, 2, -8, 7.9], [7, -9, 9, -8, 7.9],
+  [12, -10, 15, -8, 8.6], [-15, -8, -6, -6, 8.4], [14, -8, 15, -6, 8], [-14, -6, 11, -5, 8.4], [-15, -5, -14, -4, 7.9], [-13, -5, -6, -4, 5.2],
+  [-5, -5, 3, -4, 5.2], [4, -5, 11, -4, 5.2], [-15, -4, -13, -3, 8], [-7, -4, -6, -3, 7.2], [7, -4, 8, -3, 7.2], [14, -5, 15, -3, 8],
+  [-15, -3, -12, -2, 7.9], [-8, -3, -6, -2, 7.7], [7, -3, 9, -2, 7.7], [12, -3, 15, -2, 7.9], [-15, -2, -14, -1, 7.9], [6, -2, 8, -1, 4.9],
+  [14, -2, 15, -1, 7.9], [-8, -1, -6, 0, 7.3], [6, -1, 9, 0, 7.3], [-15, -1, -12, 1, 8], [-8, 0, -4, 1, 7.6], [7, 0, 9, 1, 7.6], [12, -1, 15, 1, 8],
+  [-6, 1, -4, 2, 4.9], [14, 1, 15, 2, 7.9], [-15, 1, -14, 3, 7.9], [-13, 2, -12, 3, 7.5], [-2, -4, -1, 3, 4], [0, -4, 2, 3, 7.7], [8, 2, 9, 3, 7.5],
+  [13, 2, 15, 3, 7.9], [-15, 3, -13, 4, 8], [-7, 2, -6, 4, 7.5], [0, 3, 1, 4, 7.1], [7, 3, 8, 4, 7.1], [-15, 4, -14, 5, 7.9], [-13, 4, -6, 5, 5.2],
+  [5, 4, 12, 5, 5.2], [14, 3, 15, 5, 8], [-14, 5, -6, 6, 6.2], [4, 5, 13, 6, 8.4], [6, 6, 15, 7, 8.4], [7, 7, 15, 8, 8.4], [-15, 6, -14, 9, 8],
+  [-13, 8, -12, 9, 7.2], [-8, 8, -5, 9, 8.4], [-4, 8, -2, 9, 8.4], [1, 8, 2, 9, 7.2], [7, 8, 11, 9, 8.4], [-15, 9, -12, 10, 8.6],
+  [-8, 9, -6, 10, 8.6], [-5, 9, -2, 10, 8.4], [-1, 9, 2, 10, 8.6], [6, 9, 9, 10, 8.6], [12, 8, 15, 10, 8.6], [-15, 10, -9, 11, 8.6],
+  [-8, 10, 8, 11, 8.6], [9, 10, 15, 11, 8.6],
 ]);
 const KIT_BOXES = Object.freeze([[-8, -4, -3, -2, 3.3], [-7, -2, -4, -1, 2.6], [-4, -1, 10, 1, 5.7]]);
-// The well: one flare stack 8.3 m tall with its cap and hand wheel, within 1.2 m of the place's middle.
-const WELL_POST = Object.freeze({radius: 1.2, height: 8.3});
+// The well: one flare stack 8.5 m tall with its braces, cap and hand wheel, in a footprint of 4 by 2 m round the place's middle (a round post 2.3 m across
+// its radius holds all of it).
+const WELL_POST = Object.freeze({radius: 2.3, height: 8.5});
 // The radio mast at the Iron Line: 76 m tall, 0.95 m across at its foot, stands 1 m west of the place.
 const MAST_POST = Object.freeze({dx: -1, dz: 0, radius: 1, height: 76});
 
@@ -53,18 +62,23 @@ function turnBox([x0, z0, x1, z1, height], turns) {
 }
 
 // ---- One solid ----------------------------------------------------------------------------------------------------------------------------
-function make({id, placeId = null, kind, shape = 'box', x, z, halfX, halfZ, heading = 0, height, base}) {
+function make({id, placeId = null, kind, shape = 'box', x, z, halfX, halfZ, heading = 0, height, base, verticalClearance = false}) {
   const y = base ?? scablandsSurfaceHeightAt(x, z);
   const center = Object.freeze([x, y + height / 2, z]), size = Object.freeze([halfX * 2, height, halfZ * 2]);
-  return Object.freeze({id, placeId, kind, shape, x, z, y, halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size,
+  // `verticalClearance`: a thing under a deck (the bridge's piers), which a car on the deck passes over, or on it (the trusses), which a car in the bed passes under: its height is read for a car on the ground too
+  // (src/sim-contacts.js reads it for the overhead roofs of other courses the same way).
+  return Object.freeze({id, placeId, kind, shape, x, z, y, halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size, ...(verticalClearance ? {verticalClearance: true} : {}),
     collision: Object.freeze({center, halfExtents: Object.freeze([halfX, height / 2, halfZ]), heading})});
 }
 
 // The Girder Bridge's two trusses and the Pipe's pipeline, for a land: along the road that crosses at each, in the road's own frame
 // (src/world/scablands-draw.js draws them the same: a truss .4 m wide at 7.8 m from the middle of a deck 15 m wide, 5.7 m high with its top
-// chord, and a pipeline 2.3 m across, its middle 1.5 m up, 6.4 m from the middle of a deck 8.4 m wide; both 176 m long).
-const BRIDGE = Object.freeze({length: 176, rail: 7.8, truss: .4, height: 5.7});
-const PIPE = Object.freeze({length: 176, offset: 6.4, radius: 1.15, base: .35, height: 2.3});
+// chord, and a pipeline 2.3 m across with flanges 2.74 m across, its middle 1.5 m up, 6.4 m from the middle of a deck 8.4 m wide; both 176 m long).
+// The piers stand on the bed: 8 m below the deck, up to its underside (the bridge's are 12 m by 3.4 m, 7.7 m of them above the bed; the pipe's 6.4 m by 2.6 m).
+const RIVER_DEPTH = 8;
+const BRIDGE = Object.freeze({length: 176, rail: 7.8, truss: .4, height: 5.7, pier: Object.freeze({halfX: 6, halfZ: 1.7, height: 7.7})});
+// The pipeline is 2.3 m across, with a flange 2.74 m across every 11 m; the solid is as wide as its flanges (its middle stands 1.5 m up).
+const PIPE = Object.freeze({length: 176, offset: 6.4, radius: 1.37, base: .13, height: 2.74, pier: Object.freeze({halfX: 3.2, halfZ: 1.3, height: 7.6}), postHeight: 8.4});
 function crossingSolids(land) {
   const river = riverFor(land), net = land === LAND ? ROAD_NET : roadNet(land), out = [];
   for (const crossing of river.crossings) {
@@ -77,12 +91,24 @@ function crossingSolids(land) {
     const dx = Math.sin(heading) * 88, dz = Math.cos(heading) * 88;
     const deck = (scablandsSurfaceHeightAt(crossing.x + dx, crossing.z + dz) + scablandsSurfaceHeightAt(crossing.x - dx, crossing.z - dz)) / 2;
     const placeId = null;
+    // A point `lengthwise` metres along the road from the crossing's middle and `offset` across it (the road's own frame, as the drawing builds them).
+    // The bed under a point of the deck: the deck is level with the plain there (the ground a car on it drives on), 8 m above the bed.
+    const underDeck = spot => scablandsSurfaceHeightAt(spot.x, spot.z) - RIVER_DEPTH;
+    const at = (offset, lengthwise) => ({x: crossing.x + offset * Math.cos(heading) + lengthwise * Math.sin(heading), z: crossing.z - offset * Math.sin(heading) + lengthwise * Math.cos(heading)});
     if (crossing.kind === 'bridge') {
       for (const side of [-1, 1]) out.push({id: `girder-bridge-truss-${side < 0 ? 'left' : 'right'}`, placeId, kind: 'girder', ...along(side * BRIDGE.rail),
-        halfX: BRIDGE.truss, halfZ: BRIDGE.length / 2, heading, height: BRIDGE.height, base: deck});
+        halfX: BRIDGE.truss, halfZ: BRIDGE.length / 2, heading, height: BRIDGE.height, base: deck, verticalClearance: true});
+      // The three concrete piers down to the bed: slabs 12 m long along the river and 3.4 m across it, at the middle and 62 percent of the way to each end.
+      [-.62, 0, .62].forEach((share, index) => { const spot = at(0, share * BRIDGE.length / 2); out.push({id: `girder-bridge-pier-${index + 1}`, placeId, kind: 'girder', ...spot,
+        halfX: BRIDGE.pier.halfX, halfZ: BRIDGE.pier.halfZ, heading, height: BRIDGE.pier.height, base: underDeck(spot), verticalClearance: true}); });
     } else {
       out.push({id: 'the-pipe-pipeline', placeId, kind: 'girder', ...along(PIPE.offset), halfX: PIPE.radius, halfZ: PIPE.length / 2, heading,
-        height: PIPE.height, base: deck + PIPE.base});
+        height: PIPE.height, base: deck + PIPE.base, verticalClearance: true});
+      // Three concrete piers under its deck (6.4 m by 2.6 m) and the posts that carry the pipeline every 22 m from 9 m in from its first end.
+      [-.6, 0, .6].forEach((share, index) => { const spot = at(0, share * PIPE.length / 2); out.push({id: `the-pipe-pier-${index + 1}`, placeId, kind: 'girder', ...spot,
+        halfX: PIPE.pier.halfX, halfZ: PIPE.pier.halfZ, heading, height: PIPE.pier.height, base: underDeck(spot), verticalClearance: true}); });
+      for (let lengthwise = -PIPE.length / 2 + 9, index = 1; lengthwise < PIPE.length / 2; lengthwise += 22, index++) { const spot = at(PIPE.offset, lengthwise); out.push({id: `the-pipe-post-${index}`, placeId, kind: 'post',
+        shape: 'box', ...spot, halfX: .55, halfZ: .55, heading, height: PIPE.postHeight, base: underDeck(spot), verticalClearance: true}); }
     }
   }
   return out;
@@ -96,7 +122,8 @@ export function scablandsSolids(land = LAND) {
     table.forEach((row, index) => {
       const box = turnBox(row, turns);
       rows.push({id: `${name}-${index + 1}`, placeId, kind: 'building', x: place.x + (box.west + box.east) / 2, z: place.z + (box.north + box.south) / 2,
-        halfX: (box.east - box.west) / 2, halfZ: (box.south - box.north) / 2, heading: 0, height: box.height, base: place.height});
+        // 0.3 m is added on every side: the cells the boxes were cut from are 1 and 2 m, and a drawn part may stand just past a cell's edge.
+        halfX: (box.east - box.west) / 2 + .3, halfZ: (box.south - box.north) / 2 + .3, heading: 0, height: box.height, base: place.height});
     });
   };
   // The places draw their models turned by SCABLANDS_PLACES.indexOf(place) % 4 quarter turns (scablands-scene.js).
@@ -182,6 +209,8 @@ export function pushOutOfSolids(x, z, radius = .4, grid = SOLID_GRID) {
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     for (const solid of grid.near(x, z, x, z, radius + 2)) {
+      // A mover on a deck passes over what stands under it (the bridge's piers), and a mover down in the bed passes under the deck's trusses and pipeline.
+      if (solid.verticalClearance) { const ground = scablandsSurfaceHeightAt(x, z); if (ground > solid.maxY - .01 || ground + 2.5 < solid.minY) continue; }
       const cos = Math.cos(solid.heading), sin = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
       const lx = dx * cos - dz * sin, lz = dx * sin + dz * cos;
       let nx, nz, depth;

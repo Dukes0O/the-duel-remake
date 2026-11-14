@@ -205,21 +205,26 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   const target = path[index];
   const dx = target.x - actor.position.x, dz = target.z - actor.position.z;
   const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, z: actor.position.z};
-  if (gap <= travel || gap < .01) {
-    actor.position = {...target};
+  let arrived = gap <= travel || gap < .01;
+  if (arrived) actor.position = {...target};
+  else {
+    actor.position.x += dx / gap * travel;
+    actor.position.z += dz / gap * travel;
+  }
+  // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
+  // pushed out of a building. A truck held by one within the place's own radius of the place she is driving to has arrived there: the last place of her road
+  // may stand in a town's alley, where a truck cannot go.
+  if (duel.course.def.scablands && actor.position && !actor.train) {
+    const at = stepMover(before, actor.position, {radius: 2.4, grade: TRUCK_GRADE});
+    actor.position.x = at.x; actor.position.z = at.z;
+    if (at.blocked && !arrived && Math.hypot(target.x - at.x, target.z - at.z) <= (actorDef.path[index].radius ?? 12)) arrived = true;
+  }
+  if (arrived) {
     actor.pathIndex = Math.min(index + 1, path.length - 1);
     actor.pathProgress = path.length <= 1 ? 1 : actor.pathIndex / (path.length - 1);
     // Health at the start of this stretch: what a rest and restart of the stretch gives back (RUN-GAS).
     actor.stretchHealth = actor.health;
     if (index >= path.length - 1) actor.reachedEnd = true;
-  } else {
-    actor.position.x += dx / gap * travel;
-    actor.position.z += dz / gap * travel;
-  }
-  // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken.
-  if (duel.course.def.scablands && actor.position && !actor.train) {
-    const at = stepMover(before, actor.position, {radius: 2.4, grade: TRUCK_GRADE});
-    actor.position.x = at.x; actor.position.z = at.z;
   }
   // An escorted truck has arrived when she has reached the last place of her road, not when she sets out for it
   // (RUN-GAS: her pathProgress already reads 1 while she is on her way to the last place).

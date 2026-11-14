@@ -20,7 +20,8 @@ const named = (id, name, from, to, share, dx = 0, dz = 0) => Object.freeze({id, 
 const NAMED_POINTS = Object.freeze([
   // The dry river (SCABLANDS-LAND round 4, slice 2a): from the Dry Dam's spillway, along the yard's north side, south between the yard
   // and Tin Town, out by the south side east of the Dead Mall. Eleven nodes; the bed is 120 m wide.
-  named('river-0', 'The river head', 'dry-dam', 'ridge', 0.035, 5, 40),
+  // The head stands 980 m east of the Dry Dam (it was 300), so that the long road and Old Smoke's way, which pass the Dam's east side and turn toward the Ships, do not cross its rounded end (slice 2b).
+  named('river-0', 'The river head', 'dry-dam', 'ridge', 0.13, 5, 40),
   named('river-1', 'River bend 1', 'dry-dam', 'tin-town', 0.162, -20, 50),
   named('river-2', 'River bend 2', 'ships-in-sand', 'everburn', 0.316, 140, 80),
   named('river-3', 'River bend 3', 'dry-dam', 'tin-town', 0.452, 10, -35),

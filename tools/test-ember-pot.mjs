@@ -12,7 +12,8 @@ import {LAND} from '../src/world/scablands-names.js';
 import {EMBER_RULE, emberLoss, emberGrade, emberPay, emberSentence, MPH_TO_KMH} from '../src/world/jobs/ember-rule.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
 import {EAST_ROAD, distanceToRoad, onRoadPoints, onScablandsRoad} from '../src/world/scablands-road.js';
-import {scablandsDriveAt, DRIVE} from '../src/world/scablands-regions.js';
+import {scablandsDriveAt, DRIVE, stepsWayFor, RIVER} from '../src/world/scablands-regions.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import {captionRecord} from '../src/story/story-lines.js';
 import '../src/story/ember-lines.js';
@@ -76,7 +77,7 @@ function place(duel, at, toward, kmh = 0) {
 }
 // Drives a route at a speed until the job ends or `until` says stop. Returns what happened.
 // `follow` is a line of points to keep to (the way a driver keeps to a road whose legs are kilometres long): the car aims 90 m ahead of its nearest point on the line,
-// not at the next corner.
+// not at the next corner; in the last 300 m it aims 25 m ahead, so that it goes through Tin Town's gate and not past its post (slice 2b: the gate is solid).
 function aimAlong(line, car, ahead = 90) {
   let best = null;
   for (let index = 0; index + 1 < line.length; index++) {
@@ -96,7 +97,7 @@ function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () 
   for (let tick = 0; tick < seconds / DT && duel.state.status !== 'arena_result'; tick++) {
     const car = carAt(duel);
     if (leg < route.length - 1 && Math.hypot(route[leg].x - car.x, route[leg].z - car.z) < 25) leg++;
-    drive(duel, follow ? aimAlong(follow, car) : route[leg], typeof kmh === 'function' ? kmh(duel, car) : kmh);
+    drive(duel, follow ? aimAlong(follow, car, Math.hypot(car.x - tinTown.x, car.z - tinTown.z) < 300 ? 25 : 90) : route[leg], typeof kmh === 'function' ? kmh(duel, car) : kmh);
     duel.step(DT);
     const step = held(duel), out = step.out === true;
     if (out && !wasOut) { outCount++; firstOut ??= duel.state.stageTimeSec; }
@@ -109,6 +110,15 @@ function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () 
   return {duel, worldJob, firstOut, outCount, trace, done: duel.state.status === 'arena_result', result: worldJob.emberResult ?? null};
 }
 const field = [{x: tinTown.x, z: tinTown.z}];
+// SCABLANDS-LAND round 4, slice 2b: the dry river's banks are solid, so the scab short cut goes over the Steps: a straight line to the near end of the
+// Steps' marked way, across it, and a straight line on to the town. A car crosses the ledges at 20 km/h or less (the ember is safe there under 20),
+// and holds the speed it was asked for everywhere else (the driver slows to 20 km/h within 112 m of the crossing, the ledges' own width: a car that comes down them speeds up, and must be under 25 at the foot of each climb).
+const stepsWay = stepsWayFor(), lip = RIVER.rampLipHalfWidth - 6;
+const nearLip = {x: stepsWay.x - stepsWay.nx * lip, z: stepsWay.z - stepsWay.nz * lip}, farLip = {x: stepsWay.x + stepsWay.nx * lip, z: stepsWay.z + stepsWay.nz * lip};
+// The marked way has a post either side at each end, so the driver lines up on it 150 m out and leaves it straight on for 150 m.
+const onWay = across => ({x: stepsWay.x + stepsWay.nx * across, z: stepsWay.z + stepsWay.nz * across});
+const shortCut = [onWay(-150), nearLip, farLip, onWay(150), {x: tinTown.x, z: tinTown.z}];
+const overSteps = kmh => (duel, car) => Math.hypot(car.x - stepsWay.x, car.z - stepsWay.z) < 112 ? Math.min(kmh, 20) : kmh;
 
 // The three drives the card sets (SCABLANDS-LAND round 4, slice 2a), each driven in a real Duel:
 //   1. a clean drive along the East Road arrives bright;
@@ -124,23 +134,23 @@ const field = [{x: tinTown.x, z: tinTown.z}];
 }
 {
   // 49.5 km/h: held under the plates' safe speed of 50 with a driver that never overshoots.
-  const short = run(start(), field, 49.5, {seconds: 700});
+  const short = run(start(), shortCut, overSteps(49.5), {seconds: 900});
   check(short.done && short.result, 'the short cut at 50 km/h reaches Tin Town');
   report(short.result.grade === 'alive', `the scab short cut held at 50 km/h arrives alive and not bright (${short.result.ember.toFixed(1)}, ${short.result.grade}, in ${short.duel.state.stageTimeSec.toFixed(0)} s)`);
-  const slowShort = run(start(), field, 29.9, {seconds: 800, until: duel => held(duel).out === true});
+  const slowShort = run(start(), shortCut, overSteps(29.9), {seconds: 800, until: duel => held(duel).out === true});
   report(slowShort.firstOut !== null && !slowShort.done && carAt(slowShort.duel).x < tinTown.x - 18, `a car that never passes 30 km/h goes out before Tin Town on the short cut (at ${Math.round(carAt(slowShort.duel).x)} m, ${slowShort.firstOut?.toFixed(0)} s)`);
   const slowRoad = run(start(), roadRoute, 29.9, {seconds: 800, follow: roadLine, until: duel => held(duel).out === true});
   report(slowRoad.firstOut !== null && !slowRoad.done, `and by the East Road, which is longer (out at ${slowRoad.firstOut?.toFixed(0)} s, ${Math.round(carAt(slowRoad.duel).x)} m)`);
 }
 // (b) the scab field straight across at 120 km/h puts the pot out before Tin Town.
 {
-  const out = run(start(), field, 120, {until: duel => held(duel).out === true});
+  const out = run(start(), shortCut, overSteps(120), {until: duel => held(duel).out === true});
   check(out.firstOut !== null && !out.done, `the field at 120 km/h puts the pot out (at ${out.firstOut?.toFixed(1)} s) before the town`);
   check(carAt(out.duel).x < tinTown.x - 30, 'the pot is out before Tin Town');
   // Flat out is never a way to outrun the loss, on Easy either (Claude's drive, 14 November: with a loss by the second, 206 km/h on Easy arrived).
-  const flat = run(start({difficulty: 'easy'}), field, 205, {until: duel => held(duel).out === true});
+  const flat = run(start({difficulty: 'easy'}), shortCut, overSteps(205), {until: duel => held(duel).out === true});
   check(flat.firstOut !== null && !flat.done && carAt(flat.duel).x < tinTown.x - 30, `the field flat out on Easy puts the pot out before the town (at ${Math.round(carAt(flat.duel).x)} m)`);
-  const fast = run(start(), field, 200, {until: duel => held(duel).out === true}), slow = run(start(), field, 100, {until: duel => held(duel).out === true});
+  const fast = run(start(), shortCut, overSteps(200), {until: duel => held(duel).out === true}), slow = run(start(), shortCut, overSteps(100), {until: duel => held(duel).out === true});
   check(carAt(fast.duel).x < carAt(slow.duel).x, `faster over rock gets less far before the pot is out (${Math.round(carAt(fast.duel).x)} m at 200 km/h, ${Math.round(carAt(slow.duel).x)} m at 100)`);
 }
 // (c) the field at 45 km/h takes nothing from the rock: it is safe up to 50. SCABLANDS-LAND round 4 (re-recorded): Tin Town is 6 km across the field,
@@ -157,17 +167,16 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   check(Math.abs(touched - quiet) < 1e-9, 'a touch that sheds 7 km/h takes nothing');
   check(quiet - hard >= 50, `a hit that sheds 40 km/h takes a large share at once (${(quiet - hard).toFixed(1)})`);
   check(Math.abs((100 - 1.5 * 40) - hard) < .1, 'a hit takes 1.5 for each km/h shed');
-  // Real: drive at the pair of junk cars that lie on the dirt road by the Boneyard, at 100 km/h. (Solids such as the gate posts are not yet
-  // hit by the car: that is a later slice, "a solid world". The junk cars are.)
-  const duel = start(), junk = {x: 460, z: 289};
-  place(duel, {x: junk.x, z: junk.z - 89}, junk, 100);
+  // Real: drive at a Boneyard wreck (a solid) at 100 km/h from 89 m off. SCABLANDS-LAND round 4, slice 2b: the junk cars of the old oval are gone, and a solid is hit now.
+  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-south'), duel = start(), junk = {x: wreck.x, z: wreck.z};
+  place(duel, {x: wreck.x - wreck.halfX - 89, z: wreck.z}, junk, 100);
   let before = null, drop = 0, jolts = 0;
   run(duel, [junk], 100, {seconds: 6, onTick: d => {
     const step = held(d);
     if (Number.isFinite(before) && Number.isFinite(step.ember)) drop = Math.max(drop, before - step.ember);
     before = step.ember; jolts = step.joltCount ?? 0;
   }, until: d => (held(d).joltCount ?? 0) > 0});
-  check(jolts > 0 && drop >= 30, `a real hit on a junk car jolts the pot at once (took ${drop.toFixed(1)} in one step)`);
+  check(jolts > 0 && drop >= 30, `a real hit on a wreck jolts the pot at once (took ${drop.toFixed(1)} in one step)`);
 }
 // (e) at 0 the job goes on; the marker points at the nearest brazier; stopping there refills and caps the pay.
 {

@@ -59,6 +59,10 @@ export function scablandsGround(duel, actor, dt) {
     const along = dx * nx + dz * nz;
     const pose = duel._roadPosition({x: from.x + dx - nx * along + nx * GROUND.pushBack * incoming, z: from.z + dz - nz * along + nz * GROUND.pushBack * incoming}, actor.s);
     if (Number.isFinite(pose.s) && Number.isFinite(pose.lateral)) { actor.s = pose.s; actor.lateral = pose.lateral; }
+    // The car stands on the ground where it was put, with none of the upward speed it had: the flight rules (`_jump`) must not read the move back down the face
+    // as the ground falling away from a car still rising.
+    const put = course.worldAt(actor.s, actor.lateral);
+    actor._jumpY = height(put.x, put.z); actor._verticalSpeed = 0;
     actor.pushVelocity = (actor.pushVelocity || 0) * .25;
     actor.speedMph *= Math.max(.08, 1 - incoming * .94);
     if (impactMph > 3) hitGround(duel, actor, impactMph, nx, nz);

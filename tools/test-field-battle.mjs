@@ -402,9 +402,10 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same(Object.keys(FIELD_BATTLE.lines).length, 8, 'eight lines: the seven written for the battle and Moss\'s Boneyard line that starts it');
   check(Object.values(FIELD_BATTLE.lines).every(id => EMBER_CAPTIONS[id]), 'each has words');
   // Both roads clear every solid: the battle drives the Boneyard road itself, so it is the same road, and the long road is untouched.
+  // Slice 2b: a solid is turned (its heading): the distance is measured in its own frame (a round post is read as its box).
   const distanceToBox = (x, z, solid) => {
-    const [cx, , cz] = solid.center, [width, , depth] = solid.size;
-    return Math.hypot(Math.max(Math.abs(x - cx) - width / 2, 0), Math.max(Math.abs(z - cz) - depth / 2, 0));
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z, lx = dx * c - dz * n, lz = dx * n + dz * c;
+    return Math.hypot(Math.max(Math.abs(lx) - solid.halfX, 0), Math.max(Math.abs(lz) - solid.halfZ, 0));
   };
   for (const [label, points] of [['Big Bess\'s road', step.path], ['the furnace\'s road', step.furnaceActor.path], ['the long road', GAS_RUN_PATHS.long]]) {
     const list = points.map(item => item.position ?? item);
@@ -417,8 +418,9 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
         // A road that ends at Tin Town's centre ends inside the town's own box (it stands on the drawn town since the fourth round of
         // EVERBURN-PLAY-FIXES): its last piece may touch that box (0 m) and no other.
         // SCABLANDS-LAND round 4: Tin Town's centre is the place's own position (it was the typed (600, 0)).
-        const endsInTown = solid.id === 'tin-town-shell' && piece === list.length - 2 && list.at(-1).x === LAND.place('tin-town').x && list.at(-1).z === LAND.place('tin-town').z;
-        check(closest >= (endsInTown ? 0 : /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8), `${label}: piece ${piece + 1} clears ${solid.id}`);
+        const endsInTown = /^tin-town-block-/.test(solid.id) && piece === list.length - 2 && list.at(-1).x === LAND.place('tin-town').x && list.at(-1).z === LAND.place('tin-town').z;
+        // Slice 2b: the gate's two fences stand on either side of its opening, further from the road through it than the posts do (6.65 m from its middle line and the posts 4.5), so they keep the posts' 3.4 m.
+        check(closest >= (endsInTown ? 0 : /^tin-town-gate-(post|fence)-/.test(solid.id) ? 3.4 : 8), `${label}: piece ${piece + 1} clears ${solid.id}`);
       }
     }
   }

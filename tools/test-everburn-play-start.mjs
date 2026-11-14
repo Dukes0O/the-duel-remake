@@ -33,8 +33,10 @@ const DRAWN = [{id: 'tin-town-model', x0: TOWN.x - 17.5, x1: TOWN.x + 15.4, z0: 
 const boxGap = (x, z, x0, x1, z0, z1) => Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(z0 - z, 0, z - z1));
 function clearance(x, z) {
   let worst = {gap: Infinity, id: ''};
+  // SCABLANDS-LAND round 4, slice 2b: a solid is turned (its heading), so the gap is measured in its own frame (a round post is read as its box).
   for (const solid of SCABLANDS_SOLIDS) {
-    const [cx, , cz] = solid.center, [width, , depth] = solid.size, gap = boxGap(x, z, cx - width / 2, cx + width / 2, cz - depth / 2, cz + depth / 2);
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
+    const gap = boxGap(dx * c - dz * n, dx * n + dz * c, -solid.halfX, solid.halfX, -solid.halfZ, solid.halfZ);
     if (gap < worst.gap) worst = {gap, id: solid.id};
   }
   for (const box of DRAWN) { const gap = boxGap(x, z, box.x0, box.x1, box.z0, box.z1); if (gap < worst.gap) worst = {gap, id: box.id}; }
@@ -277,8 +279,12 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
     `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (9 m a second)`);
 }
 {
-  // The solid called tin-town-shell stands on the town as it is drawn: wholly inside the drawn model's footprint, round the place (Tin Town's own position).
-  const shell = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-shell'), [cx, , cz] = shell.center, [width, , depth] = shell.size;
+  // The town's solids (slice 2b: thirteen blocks cut from the model, in place of the one box called tin-town-shell) stand on the town as it is drawn: wholly inside
+  // the drawn model's footprint, round the place (Tin Town's own position). The rectangle they fill is what the job points below are kept out of, as the shell was.
+  const blocks = SCABLANDS_SOLIDS.filter(solid => /^tin-town-block-/.test(solid.id));
+  const shell = {center: [(Math.min(...blocks.map(b => b.x - b.halfX)) + Math.max(...blocks.map(b => b.x + b.halfX))) / 2, 0, (Math.min(...blocks.map(b => b.z - b.halfZ)) + Math.max(...blocks.map(b => b.z + b.halfZ))) / 2],
+    size: [Math.max(...blocks.map(b => b.x + b.halfX)) - Math.min(...blocks.map(b => b.x - b.halfX)), 0, Math.max(...blocks.map(b => b.z + b.halfZ)) - Math.min(...blocks.map(b => b.z - b.halfZ))]};
+  const [cx, , cz] = shell.center, [width, , depth] = shell.size;
   const model = DRAWN[0];
   check(cx - width / 2 >= model.x0 && cx + width / 2 <= model.x1 && cz - depth / 2 >= model.z0 && cz + depth / 2 <= model.z1, 'the Tin Town solid lies inside the footprint of the drawn town');
   near(cx, TOWN.x, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, TOWN.z, 1, 'the Tin Town solid is centred on the town (z)');

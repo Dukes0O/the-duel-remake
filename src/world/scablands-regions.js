@@ -106,6 +106,10 @@ export const RIVER_LAND = riverFor(LAND);
 // The bank's profile with three ledges: flat treads joined by short risers, from the plain (0) to the bed (1).
 const terrace = bank => { const scaled = bank * 3, step = Math.min(2, Math.floor(scaled)); return (step + smooth((scaled - step - .45) / .55)) / 3; };
 
+// The Steps' ledges: the terraces eased half way back toward the plain bank, so that a riser climbs at a slope of at most .9 (a slow car climbs it, the
+// rule in src/world/scablands-ground-rules.js lets a car under 25 km/h up a slope of 1.0) where the terraces alone climbed 1.26 (slice 2b).
+const ledges = bank => .45 * bank + .55 * terrace(bank);
+
 // Depth in metres that the river sinks the ground at (x, z). `gorge` is true for the picture of the gorge (a deck is drawn above it,
 // and the gorge runs on beneath it) and false for the ground a car drives on, where a deck is level with the plain.
 function depthAt(x, z, gorge, river = RIVER_LAND) {
@@ -123,7 +127,7 @@ function depthAt(x, z, gorge, river = RIVER_LAND) {
     if (apart >= crossing.reach) continue;
     const near = 1 - smooth(apart / crossing.reach);
     if (crossing.kind === 'wash' || crossing.kind === 'ford') { share += (ramp - share) * near; share *= 1 - crossing.fill * near; }
-    else if (crossing.kind === 'steps') share += (terrace(bank) - bank) * near;
+    else if (crossing.kind === 'steps') share += (ledges(bank) - bank) * near;
     else if (!gorge) {
       // A deck is as wide as the road across the crossing (a car stays on it) and level with the plain.
       const road = ROAD_NET.nearest(x, z);
