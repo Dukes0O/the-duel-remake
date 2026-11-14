@@ -157,6 +157,30 @@ Then Claude drives the whole job, sends Kyle pictures, and Kyle tries it on an a
 does not use. The switches stay `dev` until Kyle says the story may be seen (AGENTS rule 18,
 "anything he asked to try first"). Job 2 is designed only after that.
 
+## Slice 1 result (a Sonnet helper; reviewed and driven by Claude, 14 November 2026): merged, switches off
+
+Built as designed: the ember rule in the simulation, the pot on the car, the EMBER gauge, two
+braziers, the scoop at 0, pay by ember, and a darker band for the road from the rule's own road
+points. Code reviewed by Claude. Sheet `docs/board/looks/everburn-remake/round-1.jpg`.
+
+Claude's drive (the helper's build in a browser window that was not on screen, so the game was
+stepped forward under Claude's key presses, not run in real time): flat out straight across the
+rock with one key held, on Easy, the pot **still arrived**, barely alive, in 20 seconds, for 50
+scrap. Cause: Claude's own number. A loss by the second lets a fast car cross the ground before
+the pot dies, and Easy halves it. Changed by Claude at the merge: rock now costs ember **by the
+metre** (0.003 for each km/h over 50, for each metre), so going faster always costs more a metre.
+The suite now checks flat out on Easy and that faster gets less far.
+
+Verdict on the question this slice was built to answer: **the pot is not a game yet, and it is
+the right base.** A player can see and read the ember, and the rule answers to driving. But with
+nothing else on a 600 m land, the best play is a slow straight crawl over the rock, and going out
+costs only a short drive back. The pot needs distance (so cold matters and a crawl fails), the
+watched road and the Ash Men (so the smooth way has a price), and solid things (so a hit can
+happen). Those come with the larger land, and the numbers are set again there.
+
+Seen and not yet right: the pot is large for the car and covers the style-points readout; the
+road band is plain by design; the three new sounds are code-made and unheard.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

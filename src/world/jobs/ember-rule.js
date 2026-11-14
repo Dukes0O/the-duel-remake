@@ -7,7 +7,7 @@ export const MPH_TO_KMH = 1.609344;
 export const EMBER_RULE = Object.freeze({
   start: 100,
   coldPerSecond: 0.33,        // full to dead in about five minutes with no jolts
-  roughPerKmh: 0.12,          // on rock: 0.12 for each km/h over the free speed, each second
+  roughPerMetre: 0.003,       // on rock: 0.003 for each km/h over the free speed, for each metre driven (so going faster always costs more a metre)
   roughFreeKmh: 50,           // rock is safe up to this speed
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing
   hitPerKmh: 1.5,             // ember taken for each km/h shed in a hit
@@ -22,7 +22,7 @@ export const EMBER_RULE = Object.freeze({
 export function emberLoss(rule, {kmh = 0, lostKmh = 0, onRoad = false, difficulty = 'medium', dt = 0} = {}) {
   const scale = difficulty === 'easy' ? rule.easyScale : 1;
   const cold = rule.coldPerSecond * dt;
-  const rough = onRoad ? 0 : rule.roughPerKmh * Math.max(0, kmh - rule.roughFreeKmh) * dt * scale;
+  const rough = onRoad ? 0 : rule.roughPerMetre * Math.max(0, kmh - rule.roughFreeKmh) * (kmh / 3.6) * dt * scale;
   const hit = lostKmh > rule.hitFreeKmh ? rule.hitPerKmh * lostKmh * scale : 0;
   return {cold, rough, hit, total: cold + rough + hit};
 }
@@ -41,5 +41,5 @@ export function emberPay(rule, ember, relights) {
 export function emberSentence(rule, ember, relights) {
   const grade = emberGrade(rule, ember);
   const how = grade === 'bright' ? 'The ember arrived bright.' : grade === 'alive' ? 'The ember arrived alive.' : 'The ember arrived barely alive.';
-  return relights > 0 ? `${how} You had to relight it, so the most it pays is ${rule.pay.afterRelight} scrap.` : how;
+  return relights > 0 ? `${how} You had to relight it, so it pays less.` : how;
 }

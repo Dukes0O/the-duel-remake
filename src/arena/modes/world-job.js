@@ -32,7 +32,7 @@ const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.e
   3: 'story.ember.cinder.19'});
 // The pot's cues (src/sound-bank.js), by the carry step's event.
 const EMBER_CUES = Object.freeze({emberJolt: 'world.ember.spark', emberOut: 'world.ember.out', emberRelit: 'world.ember.scoop'});
-const FURNACE_ARROWS =Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
+const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
 

@@ -95,6 +95,11 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const out = run(start(), field, 120, {until: duel => held(duel).out === true});
   check(out.firstOut !== null && !out.done, `the field at 120 km/h puts the pot out (at ${out.firstOut?.toFixed(1)} s) before the town`);
   check(carAt(out.duel).x < tinTown.x - 30, 'the pot is out before Tin Town');
+  // Flat out is never a way to outrun the loss, on Easy either (Claude's drive, 14 November: with a loss by the second, 206 km/h on Easy arrived).
+  const flat = run(start({difficulty: 'easy'}), field, 205, {until: duel => held(duel).out === true});
+  check(flat.firstOut !== null && !flat.done && carAt(flat.duel).x < tinTown.x - 30, `the field flat out on Easy puts the pot out before the town (at ${Math.round(carAt(flat.duel).x)} m)`);
+  const fast = run(start(), field, 200, {until: duel => held(duel).out === true}), slow = run(start(), field, 100, {until: duel => held(duel).out === true});
+  check(carAt(fast.duel).x < carAt(slow.duel).x, `faster over rock gets less far before the pot is out (${Math.round(carAt(fast.duel).x)} m at 200 km/h, ${Math.round(carAt(slow.duel).x)} m at 100)`);
 }
 // (c) the field at 45 km/h arrives alive or better: rock is safe up to 50.
 {
@@ -140,7 +145,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   // Then the road, fast: bright at arrival, but the pay is capped at 80 after a relight.
   const finish = run(duel, roadRoute, 150);
   check(finish.done && finish.result?.relights === 1 && finish.result.grade === 'bright' && finish.result.pay === 80, `a relight caps the pay at 80 (${finish.result?.grade}, ${finish.result?.pay})`);
-  check(/relight/.test(finish.result.sentence) && /80 scrap/.test(finish.result.sentence), `the results sentence says so: ${finish.result.sentence}`);
+  check(/relight/.test(finish.result.sentence) && /pays less/.test(finish.result.sentence) && !/\d/.test(finish.result.sentence), `the results sentence says so: ${finish.result.sentence}`);
 }
 // The halfway camp is a brazier too once the car has passed it.
 {
@@ -178,7 +183,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const input = {kmh: 120, lostKmh: 30, onRoad: false, dt: 1};
   const medium = emberLoss(EMBER_RULE, {...input, difficulty: 'medium'}), easy = emberLoss(EMBER_RULE, {...input, difficulty: 'easy'});
   check(Math.abs(easy.rough * 2 - medium.rough) < 1e-9 && Math.abs(easy.hit * 2 - medium.hit) < 1e-9 && easy.cold === medium.cold, 'Easy halves rough ground and hits and leaves cold alone');
-  check(Math.abs(medium.cold - .33) < 1e-9 && Math.abs(medium.rough - .12 * 70) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.33 a second, rock 0.12 for each km/h over 50, hits 1.5 for each km/h');
+  check(Math.abs(medium.cold - .33) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.33 a second, rock 0.003 a metre for each km/h over 50, hits 1.5 for each km/h');
 }
 // (h) the same seed and inputs give the same ember, twice.
 {
