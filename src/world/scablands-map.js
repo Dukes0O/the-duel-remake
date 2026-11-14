@@ -210,11 +210,11 @@ function drawSights(ctx, view, knowledge) {
     });
     outline.closePath();
     ctx.save();
-    ctx.fillStyle = '#ff3c142e'; ctx.fill(outline);
+    ctx.fillStyle = '#ff3c1416'; ctx.fill(outline);
     // Hatched, so that it is read as a region of sight and not as a ground: diagonal lines, cut to the outline.
     const hatch = new Path2D(), height = bottom - top;
     for (let x = Math.max(left - height, -height) - ((Math.max(left - height, -height)) % 11); x < Math.min(right, view.width); x += 11) { hatch.moveTo(x, bottom); hatch.lineTo(x + height, top); }
-    ctx.save(); ctx.clip(outline); ctx.strokeStyle = '#ff5a2a88'; ctx.lineWidth = 1.6; ctx.stroke(hatch); ctx.restore();
+    ctx.save(); ctx.clip(outline); ctx.strokeStyle = '#ff5a2a4a'; ctx.lineWidth = 1.1; ctx.stroke(hatch); ctx.restore();
     ctx.strokeStyle = '#17120d'; ctx.lineWidth = 4.5; ctx.stroke(outline);
     ctx.strokeStyle = '#ff6a2a'; ctx.lineWidth = 2.2; ctx.setLineDash([7, 5]); ctx.stroke(outline); ctx.setLineDash([]);
     const at = toScreen(view, sight.x, sight.z);

@@ -570,6 +570,42 @@ than a fraction of a millisecond a frame (the land's picture is made once; only 
 markers move). The old route map's job line, its pixel rule that drops "TIN TOWN", and the two
 exemptions in the Everburn suites go.
 
+### Slice 4 result (a Sonnet helper; reviewed by Claude, 14 November 2026): merged, switches off
+
+Built as designed. Full note: `docs/changes/SCABLANDS-LAND.md`, "Round 4 slice 4". Sheet
+`docs/board/looks/scablands-land/round-7.jpg` with Claude's review beside it.
+
+- **One picture of the land** (560 by 400 cells of 25 m), painted from the ground's own colours
+  and the land's own height, made in small pieces over the first second of a job so that no
+  frame waits for it.
+- **The small map** on a dark panel at the lower left: 2.5 km across, north up, the car's arrow,
+  the job's place or an arrow at the edge with the distance, crossings and place names.
+- **The big map** (M) of the whole land, with the ways to the job listed from data. For Hot
+  Delivery: the East Road 7.9 km; across the scab plates 6.0 km by the Steps; by the salt pan
+  8.9 km over the Pipe; along the river bed 9.4 km by the Wash. The game stands still while it
+  is open, through the game's own pause.
+- **What the player has learnt** is kept and drawn: a barricade within 450 m, the bridge it
+  holds, the furnace's sight cut by the ground.
+- **Cost:** about a fifth of a millisecond a frame for the small map; 17 to 27 ms once when the
+  big map opens (measured in a browser with no graphics card; a guide).
+- The old job line, the rule that dropped "TIN TOWN" and the two exemptions in the Everburn
+  suites are gone.
+
+**Changed by Claude at the merge:** the furnace's sight is a light wash, not a heavy hatch.
+
+**Changed assertions, reviewed by Claude (rule 18).** None is loosened.
+- `test-everburn-play-fixes-a`, item 6: stronger. Every place, road and crossing must be named
+  on the big map in every job, with no exemption.
+- `test-everburn-play-fixes-round4`, items 1 and 2: the numbered rings for a job's several
+  places are replaced by "the marker is the next lamp, the next flag". This drops something a
+  player had on the old map. Accepted because jobs 2 and 5 are remade and their markers are
+  set then; recorded as owed in the look review.
+- `test-scablands-job-map`: the old drawing check becomes "the circuit panel draws nothing in a
+  world job". `tools/scenarios/run-gas.mjs` reads the new map's panel for its overlap check.
+
+**Not right yet:** see the look review (crowded road names, box-like edges of two regions, a
+ways list that tells all before it is learnt).
+
 ### Slice 2c design (Claude, 14 November 2026): hill country
 
 **Where the land rises.** Flat ground stays where a large fight belongs: the salt pan, the flats
