@@ -1,4 +1,5 @@
 import {sweepObstacle} from './collision.js';
+import {solidsNear} from './world/scablands-solids.js';
 
 export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
@@ -31,13 +32,15 @@ function carPoint(course, car) {
   return course.groundAt(car.s, car.lateral);
 }
 
-function nearbyObstacles(course, fromS, toS) {
-  return course.obstaclesNear(fromS, toS);
+function nearbyObstacles(course, fromS, toS, from, to) {
+  const obstacles = course.obstaclesNear(fromS, toS);
+  // The Scablands' solids are found by a grid by world position (SCABLANDS-LAND round 4, slice 2b): a person cannot walk through a building.
+  return course.def?.scablands ? [...obstacles, ...solidsNear(from.x, from.z, to.x, to.z, 3)] : obstacles;
 }
 
 function blockedByScenery(course, from, to, fromS, toS) {
   let earliest = null;
-  for (const obstacle of nearbyObstacles(course, fromS, toS)) {
+  for (const obstacle of nearbyObstacles(course, fromS, toS, from, to)) {
     const hit = sweepObstacle(from, to, obstacle, 0, BODY);
     if (hit && (!earliest || hit.t < earliest.t)) earliest = hit;
   }

@@ -126,7 +126,9 @@ test('every road holds at the top speed of the quickest car and of Hot Delivery\
 // ---- Regions --------------------------------------------------------------------------------------------------------------------------
 // The card's table: top speed share, grip, the ember's safe speed (km/h).
 const CARD = Object.freeze({road: [1, .95, Infinity], 'salt-pan': [1.25, .80, Infinity], flats: [.75, .90, 90], 'scab-plates': [.45, .85, 50],
-  'river-bed': [.60, .75, 70], 'river-bed-soft': [.30, .75, 70], sand: [.35, .60, Infinity], burn: [.75, .90, 90], 'wreck-fields': [.75, .90, 90]});
+  'river-bed': [.60, .75, 70], 'river-bed-soft': [.30, .75, 70], sand: [.35, .60, Infinity], burn: [.75, .90, 90], 'wreck-fields': [.75, .90, 90],
+  // Slice 2b: the Steps' ledges, on the scab plates (their own id, cue and dust), where the ember is safe only under 20 km/h.
+  steps: [.35, .85, 20]});
 
 test('each region drives as the card\'s table says, and a change of ground names a sound cue', () => {
   assert.deepEqual(Object.keys(DRIVE).sort(), Object.keys(CARD).sort());
@@ -139,7 +141,8 @@ test('each region drives as the card\'s table says, and a change of ground names
   assert.ok(DRIVE['scab-plates'].roughness >= 4 * DRIVE.road.roughness && DRIVE['scab-plates'].shake > DRIVE.flats.shake, 'scab rock shakes the car and the camera most');
   assert.deepEqual(REGION_ORDER, ['road', 'river-bed', 'wreck-fields', 'sand', 'burn', 'salt-pan', 'scab-plates', 'flats'], 'the regions are read in the card\'s order');
   const cues = Object.values(DRIVE).map(row => row.cue);
-  assert.equal(new Set(cues).size, 9, 'each ground has its own cue');
+  assert.equal(new Set(cues).size, 9, 'each ground has its own cue (the Steps share the scab plates cue)');
+  assert.equal(DRIVE.steps.id, 'scab-plates', 'the Steps are scab plates to the cue and the dust');
   for (const cue of cues) assert.ok(SOUND_BANK[cue], `${cue} is in the sound bank`);
 });
 

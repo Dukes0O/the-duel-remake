@@ -50,17 +50,20 @@ assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
-assert.equal(SCABLANDS_SOLIDS.length,18,'the seven named places other than the Boneyard, its three wrecks, six Tin Town clusters and two gate posts each have a solid');
+// SCABLANDS-LAND round 4, slice 2b: the solids are everything drawn that stands taller than a wheel (src/world/scablands-solids.js), built from the same
+// data that draws it; tools/test-scablands-solid.mjs reads the real models and drives at each kind. The old table's 18 boxes (a box for each place, the
+// wrecks, six clusters and two posts) are replaced; the places that draw nothing (the Dry Dam, the Ships and the Iron Line's station) have no solid now.
+assert.ok(SCABLANDS_SOLIDS.length>100,`the solids list is every drawn thing taller than a wheel (${SCABLANDS_SOLIDS.length} of them)`);
+assert.equal(new Set(SCABLANDS_SOLIDS.map(solid=>solid.id)).size,SCABLANDS_SOLIDS.length,'every solid has its own name');
 for(const solid of SCABLANDS_SOLIDS){
-  const place=places.get(solid.placeId);
-  assert.ok(place,`${solid.id} names a place table entry`);
   assert.ok(solid.collision,`${solid.id} has collision`);
-  assert.deepEqual(solid.collision.center,solid.center,`${solid.id} collision center matches its place placement`);
-  assert.deepEqual(solid.collision.halfExtents,solid.size.map(value=>value/2),`${solid.id} collision covers its declared solid dimensions`);
-  assert.ok(Math.abs(solid.center[0]-place.x)<100&&Math.abs(solid.center[2]-place.z)<100,`${solid.id} remains at ${place.name}`);
-  assert.ok(solid.size.every(value=>value>0),'solid dimensions are positive');
+  assert.deepEqual(solid.collision.center,solid.center,`${solid.id} collision center matches its placement`);
+  assert.deepEqual(solid.collision.halfExtents,[solid.halfX,solid.height/2,solid.halfZ],`${solid.id} collision covers its declared solid dimensions`);
+  assert.ok(solid.height>.9,`${solid.id} stands taller than a wheel (${solid.height.toFixed(2)} m)`);
+  assert.ok(['box','ellipse'].includes(solid.shape)&&solid.halfX>0&&solid.halfZ>0,'a solid is a box or a round post with a size');
 }
-
+for(const id of ['boneyard','dead-mall','everburn','ridge','tin-town','iron-line'])assert.ok(SCABLANDS_SOLIDS.some(solid=>solid.placeId===id),`${id} has a solid`);
+for(const id of ['dry-dam','ships-in-sand'])assert.ok(!SCABLANDS_SOLIDS.some(solid=>solid.placeId===id),`${id} draws nothing and has no solid`);
 const ground=scene.group.getObjectByName('Scablands ground chunks');
 // SCABLANDS-LAND round 4: one detailed window (61 by 61 corners) follows the player; the coarse ground covers the whole land.
 const nearGroundMeshes=ground.children.filter(mesh=>mesh.name==='Scablands near ground');
@@ -577,16 +580,22 @@ const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
   assert.ok(data.feet.length>150,'every leg, post and sheet has a foot');
   const worst=Math.max(...data.feet.map(foot=>Math.abs(foot.y-scablandsSurfaceHeightAt(foot.x,foot.z))));
   assert.ok(worst<=.15,`every leg's foot is within 0.15 m of the ground (worst ${worst.toFixed(3)} m)`);
-  // The solids: one box a cluster, two for the gate's posts, and every shack stands inside its cluster's box.
-  const clusterSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-cluster-\d$/.test(solid.id)),postSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-gate-post-/.test(solid.id));
-  assert.equal(clusterSolids.length,6,'one solid for each cluster');assert.equal(postSolids.length,2,'two solids for the gate\'s posts');
+  // The solids (slice 2b): one box for each standing stack of shacks, the water tower, the watchtower, the radio pole, the gate's posts and fences and
+  // the ring fence; every shack stands inside its slot's box, and none of them comes within 10 m of a road.
+  const slotSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-cluster-\d+-slot-\d+$/.test(solid.id)),postSolids=SCABLANDS_SOLIDS.filter(solid=>/^tin-town-gate-post-/.test(solid.id));
+  assert.equal(postSolids.length,2,'two solids for the gate posts');
+  assert.ok(SCABLANDS_SOLIDS.filter(solid=>/^tin-town-gate-fence-/.test(solid.id)).length===2&&SCABLANDS_SOLIDS.filter(solid=>/^tin-town-fence-/.test(solid.id)).length>20,'the two gate fences and the ring fence are solid');
+  const inside=(solid,x,z)=>{const c=Math.cos(solid.heading),n=Math.sin(solid.heading),dx=x-solid.x,dz=z-solid.z;return Math.abs(dx*c-dz*n)<=solid.halfX+.01&&Math.abs(dx*n+dz*c)<=solid.halfZ+.01;};
   for(const shack of data.shacks){
-    const solid=clusterSolids[shack.cluster];
-    assert.ok(Math.abs(shack.x-solid.center[0])<=solid.size[0]/2&&Math.abs(shack.z-solid.center[2])<=solid.size[2]/2,`a shack of cluster ${shack.cluster+1} stands inside its solid`);
+    const solid=SCABLANDS_SOLIDS.find(row=>row.id===`tin-town-cluster-${shack.cluster+1}-slot-${shack.slot+1}`);
+    assert.ok(solid&&inside(solid,shack.x,shack.z),`a shack of cluster ${shack.cluster+1} stands inside its slot's solid`);
   }
-  for(const solid of clusterSolids)for(const line of lines)for(let metres=0;metres<=Math.hypot(line[1].x-line[0].x,line[1].z-line[0].z);metres+=1){
+  for(const special of [data.tower,data.watchtower,data.pole]){
+    assert.ok(SCABLANDS_SOLIDS.some(solid=>/water-tower|watchtower|radio-pole/.test(solid.id)&&inside(solid,special.x,special.z)),'the tower, the watchtower and the pole are solid');
+  }
+  for(const solid of slotSolids)for(const line of lines)for(let metres=0;metres<=Math.hypot(line[1].x-line[0].x,line[1].z-line[0].z);metres+=1){
     const length=Math.hypot(line[1].x-line[0].x,line[1].z-line[0].z),x=line[0].x+(line[1].x-line[0].x)*metres/length,z=line[0].z+(line[1].z-line[0].z)*metres/length;
-    if(Math.hypot(Math.max(Math.abs(x-solid.center[0])-solid.size[0]/2,0),Math.max(Math.abs(z-solid.center[2])-solid.size[2]/2,0))<10)assert.fail(`${solid.id} is within 10 m of a road`);
+    if(Math.hypot(Math.max(Math.abs(x-solid.x)-solid.halfX,0),Math.max(Math.abs(z-solid.z)-solid.halfZ,0))<10)assert.fail(`${solid.id} is within 10 m of a road`);
   }
 }
 // The ground look is drawn over the near ground, the far ground, the road and any edited chunk.

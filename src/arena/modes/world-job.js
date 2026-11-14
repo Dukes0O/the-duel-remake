@@ -16,6 +16,9 @@ import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
 import {scablandsDriveAt} from '../../world/scablands-regions.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
+import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
+import {setBraziers} from '../../world/scablands-solids.js';
+import {brazierSpotsFor} from '../../world/ember-pot.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -201,7 +204,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   const index = Math.min(actor.pathIndex ?? 0, path.length - 1);
   const target = path[index];
   const dx = target.x - actor.position.x, dz = target.z - actor.position.z;
-  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt;
+  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, z: actor.position.z};
   if (gap <= travel || gap < .01) {
     actor.position = {...target};
     actor.pathIndex = Math.min(index + 1, path.length - 1);
@@ -212,6 +215,11 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   } else {
     actor.position.x += dx / gap * travel;
     actor.position.z += dz / gap * travel;
+  }
+  // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken.
+  if (duel.course.def.scablands && actor.position && !actor.train) {
+    const at = stepMover(before, actor.position, {radius: 2.4, grade: TRUCK_GRADE});
+    actor.position.x = at.x; actor.position.z = at.z;
   }
   // An escorted truck has arrived when she has reached the last place of her road, not when she sets out for it
   // (RUN-GAS: her pathProgress already reads 1 while she is on her way to the last place).
@@ -544,17 +552,20 @@ function applyRequests(duel, worldJob, requests) {
   }
 }
 
-function moveJobRaiders(worldJob, dt) {
+function moveJobRaiders(duel, worldJob, dt) {
+  const scablands = !!duel.course.def.scablands;
   for (const actor of worldJob.actors) {
     if (!actor.approachTarget || actor.knockedDown || !(actor.approachSpeed > 0)) continue;
     const dx = actor.approachTarget.x - actor.x, dz = actor.approachTarget.z - actor.z;
-    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt;
+    const gap = Math.hypot(dx, dz), travel = actor.approachSpeed * dt, from = scablands ? {x: actor.x, z: actor.z} : null;
     if (gap <= travel) {
       actor.x = actor.approachTarget.x; actor.z = actor.approachTarget.z;
     } else {
       actor.x += dx / gap * travel; actor.z += dz / gap * travel;
     }
     actor.yaw = Math.atan2(dx, dz);
+    // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
+    if (scablands) { const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE}); actor.x = at.x; actor.z = at.z; }
   }
 }
 
@@ -583,6 +594,9 @@ export function stepWorldJob(duel, dt) {
   const playerView = {position: point, s: player.s, lateral: player.lateral,
     speed: player.speedMph ?? 0};
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
+  const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
+  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
   const trainMetresBefore=worldJob.job.stepState.trainMetres??0;
@@ -632,7 +646,9 @@ export function stepWorldJob(duel, dt) {
   // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, the speed the ground under it is safe at (its region, src/world/scablands-regions.js), and the speed it shed in
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
-  const hitKmh = Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0;
+  // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
+  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0);
+  state.scablandsHitKmh = 0;
   worldJob.lastKmh = kmh;
   const view = {player: playerView, onFoot: !!state.onFoot,
     speedKmh: kmh, hitKmh, safeKmh: scablandsDriveAt(point.x, point.z).safeKmh,
@@ -654,7 +670,7 @@ export function stepWorldJob(duel, dt) {
   // FIELD-BATTLE-ASH: how the battle ended, fixed by the escort step the moment Big Bess arrived ('won' or 'arrived').
   if (next.stepState.ending) worldJob.battleEnding = next.stepState.ending;
   state.worldJobThingsHit = [];
-  moveJobRaiders(worldJob, dt);
+  moveJobRaiders(duel, worldJob, dt);
   updateJobActors(duel, worldJob, dt);
   if (next.stepIndex !== previousStep) {
     worldJob.clearedWaves = [];

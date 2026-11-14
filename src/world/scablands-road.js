@@ -32,7 +32,9 @@ function roadNodes(land) {
     node(at('tin-town', -25, 1500), {radius: TIGHT_CORNER}), node(town)];
 
   // The Boneyard Road: the halfway camp, the Wash (straight across the crossing), the Boneyard.
-  nodes['boneyard-road'] = [node(camp), node(wash), derived(beyond(camp, wash, 350)), node(boneyard)];
+  // It stops at the wreck field's west edge, 95 m from the place's middle: the three wrecks are solid (slice 2b) and the straight way in from the west
+  // runs through the south one. The roads from the Mall and to Tin Town still end at the place's own approach point between the wrecks.
+  nodes['boneyard-road'] = [node(camp), node(wash), derived(beyond(camp, wash, 350)), node(at('boneyard', -95, -30))];
   // The Tin Road: the Boneyard to the East Road's last stretch, short of Tin Town's gate.
   nodes['tin-road'] = [node(boneyard), node(between('tin-town', 'boneyard', .484, 50, 30)), node(at('tin-town', -25, 300))];
   // The Salt Road: yard, the Pipe, then a fork to the Ships (west) and to the Ridge (east).

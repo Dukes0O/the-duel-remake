@@ -26,6 +26,7 @@ import {arenaJunkSpec, contactArenaJunk} from './arena/arena-junk.js';
 import {carAlongPush,dampCarAlongPush} from './arsenal/car-effects.js';
 import {actorForTarget} from './arsenal/targeting.js';
 import {CONVOY_BODY, isConvoyRig} from './arena/modes/convoy-raid.js';
+import {scablandsContactObstacles} from './sim-scablands.js';
 
 function recordBoardingCrash(duel, a, b, crash) {
   const boarding = duel.state.boarding;
@@ -299,7 +300,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
   }
   const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
   const heading = travelHeading + (car.slipAngle || 0);
-  const obstacles = this._obstacles(oldS, car.s);
+  // The Scablands' solids are found by a grid by world position (src/world/scablands-solids.js), not by the car's place along the oval frame.
+  const obstacles = this.course.def.scablands ? scablandsContactObstacles(this, car, start, end, this._obstacles(oldS, car.s)) : this._obstacles(oldS, car.s);
   const dimensions = {...this._vehicleSpec(car),
     useModelBounds: !!(car.airborne || car.airHeight > 0 || car.prevAirHeight > 0)};
   const capability = player ? offroadCapability(this.car) : null;

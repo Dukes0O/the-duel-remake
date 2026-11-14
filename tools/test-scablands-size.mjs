@@ -18,7 +18,7 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {buildEverburn} from '../src/world/jobs/everburn.js';
 import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
 import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
-import {roadNet} from '../src/world/scablands-road.js';
+import {roadNet, EAST_ROAD} from '../src/world/scablands-road.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -98,50 +98,68 @@ test('a car can be placed at and read back from any point of the land, and the f
 
 // A drive from the yard to Tin Town in a straight line at a fixed speed, through the real sim (the arena's own rule that a car
 // is kept against the oval frame, re-derived from its world position each step).
-function drive({speedMph = 100, dt = 1 / 60, target = 6000} = {}) {
+function drive({speedMph = 100, dt = 1 / 60, target = EAST_ROAD.length} = {}) {
   const duel = new Duel({seed: 1989, car: 'banshee_muscle', featureFlags: {'hidden-road': true}});
   duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'banshee_muscle', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
   const player = duel.state, opponent = player.opponents[0], arena = player.arena;
   arena.timeLimitSec = Infinity; opponent.finished = true;
-  const start = course.nearest(0, 0.5);
-  placeActor(duel, opponent, {s: start.s + course.length / 2, lateral: 0});
-  const east = Math.PI / 2;
-  placeActor(duel, player, {s: start.s, lateral: start.lateral, headingError: wrapHeading(east - course.at(start.s).heading)}, speedMph);
-  const log = [], metresPerSecond = speedMph * DRIVE.mphToWorld;
-  let previous = course.worldAt(player.s, player.lateral), steps = 0, jump = 0, speedJump = 0, widest = 0, waited = 0;
-  while (previous.x < target && steps < 60 * 400) {
-    const heading = course.at(player.s).heading + player.headingError;
+  // SCABLANDS-LAND round 4, slice 2b: the straight line from the yard to Tin Town crosses the dry river, whose banks are solid now, so the drive follows the
+  // East Road (the same 7.8 km of road, kept to by a driver that aims 90 m ahead of its nearest point on the line, as the road suites' drivers do).
+  const line = EAST_ROAD.points, first = line[0], pose = course.nearest(first.x, first.z);
+  // The harness's own second car: parked at the far corner of the land, off every road (it stood at the opposite point of the oval, 1,058 m east of the yard,
+  // on the line of the drive: stage A).
+  const corner = course.nearest(-6500, 4500);
+  placeActor(duel, opponent, {s: corner.s, lateral: corner.lateral});
+  placeActor(duel, player, {s: pose.s, lateral: pose.lateral, headingError: wrapHeading(Math.atan2(line[1].x - first.x, line[1].z - first.z) - course.at(pose.s).heading)}, speedMph);
+  const aim = (x, z) => {
+    let best = {index: 0, t: 0, d: Infinity};
+    for (let index = 0; index + 1 < line.length; index++) {
+      const a = line[index], b = line[index + 1], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+      const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)), d = Math.hypot(x - a.x - t * dx, z - a.z - t * dz);
+      if (d < best.d) best = {index, t, d};
+    }
+    let index = best.index, left = 90 + best.t * Math.hypot(line[index + 1].x - line[index].x, line[index + 1].z - line[index].z);
+    for (;;) {
+      const a = line[index], b = line[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+      if (left <= length || index + 2 >= line.length) { const t = Math.min(1, left / length); return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, off: best.d}; }
+      left -= length; index++;
+    }
+  };
+  const end = line.at(-1), log = [], metresPerSecond = speedMph * DRIVE.mphToWorld;
+  let previous = course.worldAt(player.s, player.lateral), steps = 0, jump = 0, speedJump = 0, widest = 0, waited = 0, travelled = 0;
+  while (travelled < target && Math.hypot(previous.x - end.x, previous.z - end.z) > 25 && steps < 60 * 400) {
+    const here0 = course.worldAt(player.s, player.lateral), goal = aim(here0.x, here0.z), heading = course.at(player.s).heading + player.headingError;
     player.speedMph = speedMph;
-    duel.setInput({throttle: 1, brake: 0, steer: Math.max(-1, Math.min(1, 2 * wrapHeading(heading - east))), boost: false});
+    duel.setInput({throttle: 1, brake: 0, steer: Math.max(-1, Math.min(1, -2 * wrapHeading(Math.atan2(goal.x - here0.x, goal.z - here0.z) - heading))), boost: false});
     duel.step(dt); steps++;
     const here = course.worldAt(player.s, player.lateral), moved = Math.hypot(here.x - previous.x, here.z - previous.z);
     // The game holds every car for its first moments (the arena's own start); it is not counted as driving.
     if (moved === 0 && waited === steps - 1) { waited = steps; previous = here; continue; }
     jump = Math.max(jump, Math.abs(moved - Math.abs(player.speedMph) * DRIVE.mphToWorld * dt));
     speedJump = Math.max(speedJump, Math.abs(player.speedMph - speedMph));
-    widest = Math.max(widest, Math.abs(here.z));
+    widest = Math.max(widest, goal.off);
+    travelled += moved;
     log.push(here.x, here.z, player.speedMph);
     previous = here;
   }
-  return {steps, waited, seconds: (steps - waited) * dt, x: previous.x, z: previous.z, jump, speedJump, widest, metresPerSecond, log, lateral: player.lateral};
+  return {steps, waited, seconds: (steps - waited) * dt, x: previous.x, z: previous.z, jump, speedJump, widest, metresPerSecond, log, lateral: player.lateral, travelled, arrived: Math.hypot(previous.x - end.x, previous.z - end.z) <= 25};
 }
 
 test('a drive from the yard to Tin Town takes the time that distance and speed give, with no jump', () => {
   const run = drive();
   // SCABLANDS-LAND round 4, slice 2a: the scab plates hold a car to 52 mph, so the time is the distance over the speed the car had, step by step (the
-  // speeds are in the log), not over the 100 mph the drive asks for.
+  // speeds are in the log), not over the 100 mph the drive asks for. Slice 2b: the drive is the East Road's 7.8 km.
   let sum = 0, count = 0;
   for (let index = 2; index < run.log.length; index += 3) { sum += Math.abs(run.log[index]); count++; }
-  const expected = 6000 / (sum / count * DRIVE.mphToWorld);
+  const expected = run.travelled / (sum / count * DRIVE.mphToWorld);
   assert.ok(run.waited * (1 / 60) < 5, `the game holds the car for ${(run.waited / 60).toFixed(1)} s at the start`);
-  assert.ok(Math.abs(run.seconds - expected) < 1.5, `${run.seconds.toFixed(1)} s for 6 km at the logged speeds (${expected.toFixed(1)} s expected)`);
-  assert.ok(run.x >= 6000 && run.x < 6000 + run.metresPerSecond / 30, 'the car arrives at Tin Town');
+  assert.ok(Math.abs(run.seconds - expected) < 1.5, `${run.seconds.toFixed(1)} s for ${run.travelled.toFixed(0)} m at the logged speeds (${expected.toFixed(1)} s expected)`);
+  assert.ok(run.arrived && run.travelled > EAST_ROAD.length - 100, `the car arrives at Tin Town's gate (${run.travelled.toFixed(0)} m driven of the road's ${EAST_ROAD.length.toFixed(0)} m)`);
   assert.ok(run.jump < .02, `no step moves the car more than its speed gives (worst difference ${run.jump.toExponential(2)} m)`);
-  // On the scab plates the ground pulls a car that asks for 100 mph down toward the plates' own speed, by at most 40 mph in a second
-  // (two thirds of a mph in a step), so the limit of 2 mph a step stands as it was.
+  // The car is held to 100 mph each step and the road's ground lets it keep it, so the limit of 2 mph a step stands as it was.
   assert.ok(run.speedJump < 2, `no step changes the speed (worst ${run.speedJump.toFixed(2)} mph)`);
-  assert.ok(run.widest < 150, `the car stays on the line (${run.widest.toFixed(0)} m off at most)`);
+  assert.ok(run.widest < 14, `the car stays on the road (${run.widest.toFixed(1)} m off its line at most, the half width is 14 m)`);
   assert.ok(Math.abs(run.lateral) < SCABLANDS_LAYOUT.floorHalfWidth, 'the floor never holds it back');
 });
 
@@ -172,7 +190,11 @@ const everything = land => {
   const built = buildEverburn(land), paths = gasRunPaths(land);
   return {jobs: built.EVERBURN_JOBS, side: built.EVERBURN_SIDE_JOBS, five: built.SCABLANDS_PLACES, paths, wreck: gasRunWreck(paths.boneyard),
     marks: furnaceMarks(land), named: land.named, net: netNodes(land), gate: tinTownGateFor(land), wrecks: boneyardWrecks(land), rest: bessRest(land),
-    rail: ironLineFor(land), solids: scablandsSolids(land)};
+    rail: ironLineFor(land),
+    // Slice 2b: the bridge's trusses, the pipeline and the Steps' marker posts stand at offsets across their road's or the river's own direction, which turns a
+    // little when a place moves (they follow their named crossing, which is checked above), and the ring fence is made of the sheets the ground there is flat
+    // enough for, which is not the same sheets when the ground under the town moves with it.
+    solids: scablandsSolids(land).filter(solid => solid.kind !== 'girder' && !/^the-steps-marker|^tin-town-fence-/.test(solid.id))};
 };
 
 test('moving a place in a copy of the table moves everything that belongs to it, and nothing else', () => {
@@ -203,7 +225,8 @@ test('moving a place in a copy of the table moves everything that belongs to it,
   const camp = LAND.at('safe-road'), campMoved = createLand(movedTable(SCABLANDS_PLACES, 'boneyard', ...delta)).at('safe-road');
   assert.ok(Math.abs((campMoved.x - camp.x) - .47 * 123) < 1e-9 && Math.abs((campMoved.z - camp.z) + .47 * 77) < 1e-9, 'the halfway camp moves .47 of the way with the Boneyard');
   // The solids, the wrecks, Big Bess's rest, the gate's posts and the shacks of Tin Town follow their places.
-  const solidsBefore = scablandsSolids(LAND), solidsAfter = scablandsSolids(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta)));
+  const kept = solid => solid.kind !== 'girder' && !/^the-steps-marker|^tin-town-fence-/.test(solid.id);
+  const solidsBefore = scablandsSolids(LAND).filter(kept), solidsAfter = scablandsSolids(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))).filter(kept);
   assert.equal(solidsAfter.length, solidsBefore.length);
   for (const [index, solid] of solidsBefore.entries()) {
     const other = solidsAfter[index], follows = solid.placeId === 'tin-town';
@@ -225,7 +248,9 @@ test('moving a place in a copy of the table moves everything that belongs to it,
 
 test('no file that places a thing in the land holds a bare coordinate of it', () => {
   const files = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/furnace-sightings.js', 'src/world/scablands-road.js', 'src/world/scablands-regions.js', 'src/world/scablands-draw.js', 'src/world/scablands-road-geometry.js',
-    'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js'];
+    'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js',
+    // Slice 2b: the new files that place or move a thing in the land.
+    'src/world/scablands-solids.js', 'src/world/scablands-scarps.js', 'src/world/scablands-ground-rules.js', 'src/world/scablands-movers.js', 'src/world/everburn-props.js', 'src/sim-scablands.js'];
   for (const file of files) {
     const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n');
     // A place written as (id, x, z), a point written {x: 575, z: 62} or a list of pairs of three-figure numbers.

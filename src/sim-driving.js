@@ -416,13 +416,16 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     }
     setCarMortarHop(actor, false);
   }
-  const arena = this.course.def.kind === 'arena';
+  // The Scablands is an arena only for who is in it: its ground has its own shape, so a car there leaves it and lands by the natural-terrain
+  // rules (a crest, a lip, a bank), with no authored ramp to cap it (SCABLANDS-LAND round 4, slice 2b; src/sim-scablands.js sizes the landing).
+  const scablands = !!this.course.def.scablands;
+  const arena = this.course.def.kind === 'arena' && !scablands;
   const road = actor === this.state && this.featureFlags?.enabled('the-deep') === true
     ? this._roadGrip(actor.s, actor.lateral) : null;
   const seaFloor = road?.kind === 'sea-floor';
   const diveHop = seaFloor && actor.deepJourney?.phase === 'underwater';
   const allTerrain = actor === this.state && offroadCapability(this.car) && (actor.airborne || !this._surface(actor.s, actor.lateral).road);
-  if (actor.tumble || (!arena && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
+  if (actor.tumble || (!arena && !scablands && this.course.def.airborne !== true && !allTerrain && !seaFloor) || !Number.isFinite(dt) || dt <= 0) {
     // On the prepared road or a shortcut the all-terrain rules sleep. Forget
     // the height they last tracked, or the next step off the road measures
     // from a stale height and drops the car from the air (DUSTHAWK-AIR).
@@ -451,7 +454,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     // A descending convex crest can leave the road too: the car keeps its
     // signed tangent velocity while the road falls away faster. The arena
     // retains its authored upward-ramp threshold and exact existing timing.
-    const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28;
+    // On the Scablands a car also leaves the ground, at any speed, where the ground falls away by more than half a metre in a step (a ledge, the
+    // edge of a deck): it falls, it does not follow the edge down.
+    const fastEnough = (arena ? actor.speedMph : Math.abs(actor.speedMph)) > 28 || scablands && predicted > ground + .5;
     if (predicted > ground + .0001 && (!arena || verticalSpeed > 1) && fastEnough) {
       actor.airborne = true;
       actor._verticalSpeed = verticalSpeed;
@@ -483,6 +488,8 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (actor._jumpY > ground) return;
   // Rejoin a descending road at its tangent speed. Zeroing this for natural
   // roads would manufacture a second hop on the next downhill step.
+  // The speed the Scablands' car met the ground at, along the ground's own rise or fall, for the landing's hit (src/sim-scablands.js).
+  if (scablands) actor._scablandsLanding = Math.max(0, groundVelocity - actor._verticalSpeed);
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {

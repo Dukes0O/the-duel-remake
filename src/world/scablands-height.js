@@ -1,5 +1,6 @@
 import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
 import {riseHeightAt,riverDepthAt} from './scablands-regions.js';
+import {scarpHeightAt} from './scablands-scarps.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -13,7 +14,8 @@ export function scablandsTerrainHeightAt(x,z){
     (1-smooth((edge-SCABLANDS_LAYOUT.ridgeCrest)/.16))*108;
   const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
   // The rises that hide each place from the last (src/world/scablands-regions.js): height only, gentle enough to drive over.
-  return rolling+ridge+wall+riseHeightAt(x,z);
+  // The four scarps (src/world/scablands-scarps.js): steep faces of broken rock on the scab plates, near the camp and by the Ridge.
+  return rolling+ridge+wall+riseHeightAt(x,z)+scarpHeightAt(x,z);
 }
 
 // The land with its rises and with every place's own flat ground, before the dry river is cut: the plain.
