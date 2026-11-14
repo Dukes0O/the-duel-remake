@@ -695,6 +695,63 @@ more than 1,000 m from the oval road).
 The dirt ring round the yard (`ellipseClosest`, the oval road ribbon, `roadRibbon`, `scablandsSurfaceAt`'s ring), the delivery road (`deliveryRoad`, `DELIVERY_ROAD`), the ember's
 road yes or no (`onRoad`, `roughFreeKmh`), the old crack picture (`createGroundLook` in `scrap-look.js`, replaced by `scablands-ground-look.js`).
 
+## Round 4 slice 2b: the land's shape is solid, and every drawn thing is solid (14 November 2026)
+
+Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Slice 2b design". No switch changed: `story-everburn` and
+`scablands-runs` stay `dev`.
+
+### Stage A: what was found before anything was changed
+
+1. **How a Scablands car's height, slope, jumps and landings are worked out, and why the courses' rules are skipped.** The car's ground
+   height is `course.groundAt`, which for the Scablands reads `scablandsSurfaceHeightAt` through the oval frame. Nothing else reads it for
+   driving. The courses' climb and slope rules (`limitClimb`, `slopeSpeedDelta`, `src/offroad-physics.js`) are called only from
+   `_offroadStep` (`src/sim-driving.js`), and `_offroadStep` returns at once unless `offroadCapability(car)` finds a rally car or a monster
+   truck; an ordinary car has no slope rule on any course. For a rally car or a truck in the Scablands it still never reaches the rules:
+   the floor is `road: true` there (`_drivingSurface`), and the rules run only "off the prepared route". `_jump` treats every arena as a
+   ring of authored ramps (`arena = def.kind === 'arena'`): a car's upward speed is capped at the slope of the steepest authored ramp
+   (`rampLaunchGrade`, read from `course.features.ramps`), a take-off needs a rising ground (`verticalSpeed > 1`), and a landing is scored
+   only against a ramp's token. The Scablands inherits the Titan arena's three ramps (`course.js`: `else if (arena)` adds ramps at .17, .55
+   and .78 of the oval and six junk cars; the Scrapdome branch skips the Scablands, the Titan branch does not), so the cap was the old
+   ramps' slope (2.6 m over 38 m, about .24), which is why a bank of 8 m in 26 m was flown off in half a second with no harm and why a car
+   going downhill falls with no landing at all. Nothing in the sim reads the ground's steepness, and `_supportAt` returns the plain
+   ground for every car but a rally car or a truck.
+2. **What already stops a car in an arena.** Four things: `containInArena` (the floor limit by distance from the oval: a hit at 30 mph or
+   more takes armour through `applySceneryArmorDamage`, a glancing touch slides); `_staticContacts` (the swept box test `sweepObstacle`
+   against `course.obstaclesNear`: pushed out along the nearest face, the speed along the face kept, `speed *= 1 - incoming * .94`, a
+   scrape below the crash speed and a crash or armour hit above it, which is the Scrapdome's walls); the junk cars and ramps
+   (`arena-junk.js`, `_crushProps`); and car-to-car (`_vehicleContact`). `sweepObstacle` already takes a box with a heading and
+   `shape: 'ellipse'` for a round post, so the mechanism can carry what a grid finds. What it cannot do is the finding: `obstaclesNear`
+   looks things up by the car's distance along the oval frame (64 m buckets of `s`), and 5 km from the oval the same `s` belongs to
+   places kilometres apart, so the Scablands needs a grid by world position. Today `obstaclesNear` for the Scablands returns nothing
+   but a town layout's solids, and `SCABLANDS_SOLIDS` (18 boxes, heading 0) is read only by tests: the player, a raider and a person on
+   foot (`onfoot.js` reads `course.obstaclesNear`) all walk through everything.
+3. **Every drawn thing taller than a wheel (0.9 m), and where its shape comes from.** The five places that load a model: Tin Town
+   (`tintown.glb`, twenty-five blocks of the town's own buildings, 3 to 7.6 m), the Dead Mall (`mall.glb`, a walled shell 8.6 m), the
+   Everburn (`everburn.glb`: one flare stack 8.3 m tall and its cap, not the 18 by 18 m box the table had), the Ridge (`kit.glb`: a row
+   of props 5.7 m), and the Boneyard (`boneyard.glb`: three wrecks, whose footprint table `boneyard-wrecks.js` already holds). Drawn in
+   code from tables in `src/`: Tin Town's gate (`tin-town-gate.js`: two posts 7 m, a beam, 14 m of fence on each side up to 3.3 m), the
+   shacks (`tin-town-shacks.js`: forty-five shacks stacked up to three high on a layout, a water tower, a radio pole, a watchtower,
+   and a fence of 2 m sheets round a ring of 88 m), the well's props (`everburn-props.js`: pots, barricades, a sign, a mast, rocks cut
+   from the kit), the two braziers (`ember-pot.js`, shown only in Hot Delivery), the radio mast at the Iron Line (76 m), the Girder
+   Bridge (two trusses 5.4 m high, `scablands-draw.js`) and the Pipe (a pipeline 2.65 m high beside the deck). Not drawn and so not
+   solid: the Iron Line's rail and station, the Dry Dam's gate, the Ships' hulk field (those three places load no model, and their three
+   boxes in the old table stood in the air), and the Ash Men's barricades (job data only). Not made solid in this slice: the people of
+   `folk.glb`, Big Bess and the furnace (they move; they are targets, not scenery).
+4. **How raiders, Big Bess and the furnace move.** None of them is a car. A foot raider walks a straight line toward `approachTarget`
+   (`moveJobRaiders`); Big Bess and any other escorted truck step along their path nodes at a set speed (`updateJobActor`); the
+   furnace steps along its own path (`stepFurnace`, `old-smoke.js`). All three write a plain position and never read a height, a
+   slope or a solid. To obey the same ground and things each needs one call after its step: push the position out of any solid (a
+   round or square footprint against the same boxes) and refuse a step that climbs ground steeper than a car can grip. A road that
+   leads one of them through a bank or a building then has to be moved by the smallest change; that is listed under "Drivers" below.
+5. **The test car 1,058 m east of the yard.** It is the size suite's own second car: `tools/test-scablands-size.mjs` starts every drive with
+   `opponents: [{car: 'dusthawk_rally'}]` and parks it with `placeActor(duel, opponent, {s: start.s + course.length / 2, lateral: 0})`,
+   the point of the oval opposite the yard, which lies on the east axis. It is an ordinary arena car, solid to the player (the contact
+   test between two cars), so a drive along the axis at 45 mph meets it. Nothing in the game parks a car there; the fixture is moved
+   off the line in the suites that drive along the axis (why the 100 mph drive passed it was not chased: the fixture is the cause).
+
+The stop rule did not apply: nothing here changes how a car drives on a race course or in the Scrapdome (every change is behind
+`course.def.scablands`), no replay fingerprint can move, and the save does not change.
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
