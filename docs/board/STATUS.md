@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-14T15:28:48.479Z
+Observed at: 2026-11-14T17:28:26.201Z
 
-Observation commit: f634ceceb14c0d8a5331b714078fd9a2d464548f
+Observation commit: eacc06459cf77b28ce0d277221c6c48737795aa6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: f634ceceb14c0d8a5331b714078fd9a2d464548f
+Integration HEAD: eacc06459cf77b28ce0d277221c6c48737795aa6
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -55,7 +55,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/ww-art-rail | 7 | unknown | true | false | unknown |
 | codex/ww-art-whites | 7 | unknown | true | false | unknown |
 | codex/ww-boss | 8 | unknown | true | false | unknown |
-| lane/lab-formula-closed | 4 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
+| lane/lab-formula-closed | 5 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
 
 ## Unmerged branches for idle review
 
@@ -79,15 +79,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 712,092,227 B | +13,512 B | 250,000,000 B |
+| Build `dist/` | 712,092,227 B | +0 B | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 83,113,493 B | +236,676 B | 20,000,000 B |
-| Added bytes in last merge | 649,010 B | -246,781 B | 5,000,000 B |
+| Review `looks/` | 83,113,493 B | +0 B | 20,000,000 B |
+| Added bytes in last merge | 649,010 B | +0 B | 5,000,000 B |
 | All `public/` | 703,858,947 B | +0 B | unavailable |
-| Git objects | 1,719,193,600 B | +1,438,720 B | unavailable |
+| Git objects | 1,719,801,856 B | +608,256 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +96,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
 - Local main: missing
-- Local integration/wasteland: f634ceceb14c0d8a5331b714078fd9a2d464548f
+- Local integration/wasteland: eacc06459cf77b28ce0d277221c6c48737795aa6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
