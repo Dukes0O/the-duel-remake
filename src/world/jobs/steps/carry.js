@@ -1,4 +1,53 @@
-export function stepCarry(step, state, view) {
+import {emberLoss, emberGrade, emberPay} from '../ember-rule.js';
+
+const spot = value => value?.position ?? value ?? {};
+const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
+
+// A carry that holds a live ember (step.ember, src/world/jobs/ember-rule.js). Driving takes ember; at 0 the pot is out and the
+// marker moves to the nearest brazier (the origin, or the safe point once it has been passed), where a stop gives a fresh scoop.
+// The job does not end and the car is not moved. It completes at the destination only with the pot alight.
+function stepEmberCarry(step, state, view, dt) {
+  const rule = step.ember, here = view.player?.position ?? {};
+  const events = [], requests = [];
+  if (step.burnable && (view.thingsHit ?? []).some(hit => hit.kind === 'barricade' && hit.burnable)) {
+    for (const hit of view.thingsHit.filter(hit => hit.kind === 'barricade' && hit.burnable)) events.push({type: 'burn', id: hit.id});
+  }
+  let safeIndex = state.safeIndex ?? 0, ember = state.ember ?? rule.start, relights = state.relights ?? 0, out = state.out === true;
+  while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
+  const next = {safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
+  if (!out) {
+    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, onRoad: view.onRoad === true, difficulty: view.difficulty, dt});
+    next.ember = Math.max(0, Math.min(rule.start, ember - loss.total));
+    // How fast the pot is losing ember from rough ground and hits, per second (cold alone is slower than 1).
+    next.rate = dt > 0 ? (loss.rough + loss.hit) / dt : 0;
+    if (loss.hit > 0) { next.jolt = loss.hit; next.joltCount++; events.push({type: 'emberJolt', amount: loss.hit}); }
+    if (next.ember <= 0) {
+      next.out = true; next.rate = 0;
+      events.push({type: 'emberOut'});
+      requests.push({type: 'say', lineId: step.spillLineId});
+    }
+  }
+  if (next.out) {
+    // The nearest place a fresh scoop can be taken: the yard gate always, the halfway camp once passed.
+    const scoops = [step.origin, ...(step.safePoints ?? []).slice(0, safeIndex)].filter(Boolean);
+    const nearest = scoops.reduce((best, place) => gap(here, place) < gap(here, best) ? place : best, scoops[0]);
+    requests.push({type: 'marker', place: nearest});
+    if (out && nearest && gap(here, nearest) <= (spot(nearest).radius ?? 5) && (view.speedKmh ?? 0) < rule.scoopKmh) {
+      next.ember = rule.start; next.out = false; next.relights = relights + 1;
+      events.push({type: 'emberRelit', place: nearest.id ?? null});
+      requests[requests.length - 1] = {type: 'marker', place: step.destination};
+    }
+    return {state: next, complete: false, events, requests};
+  }
+  requests.push({type: 'marker', place: step.destination});
+  const complete = gap(here, step.destination) <= (step.radius ?? 5);
+  if (complete) events.push({type: 'emberArrived', ember: next.ember, relights: next.relights,
+    grade: emberGrade(rule, next.ember), pay: emberPay(rule, next.ember, next.relights)});
+  return {state: next, complete, events, requests};
+}
+
+export function stepCarry(step, state, view, dt = 0) {
+  if (step.ember) return stepEmberCarry(step, state, view, dt);
   const events = [];
   const requests = [{ type: 'marker', place: step.destination }];
   if (step.burnable && (view.thingsHit ?? []).some(hit => hit.kind === 'barricade' && hit.burnable)) {

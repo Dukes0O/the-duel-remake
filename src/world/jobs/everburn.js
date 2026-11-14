@@ -2,6 +2,7 @@
 // only world-job data; the shared job engine owns all simulation rules.
 import {FURNACE_SKYLINE} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
+import {EMBER_RULE} from './ember-rule.js';
 
 const place = (id, x, z, radius = 12) => Object.freeze({id, position:Object.freeze({x, y:0, z}), radius});
 const path = (...places) => Object.freeze(places);
@@ -45,9 +46,11 @@ const furnaceLegs = Object.freeze([
 export const EVERBURN_JOBS = Object.freeze([
   Object.freeze({id:'everburn-hot-delivery', storyId:'everburn', number:1, name:'Hot Delivery', kind:'delivery',
     resultLineId:'story.ember.auntie-solder.2',
-    easy:Object.freeze({crashLimit:8, markerRadius:18}), lineId:'story.ember.cinder.1',
+    easy:Object.freeze({markerRadius:18}), lineId:'story.ember.cinder.1',
+    // The pot holds a live ember (src/world/jobs/ember-rule.js): driving takes it, and at 0 Cinder's spill line is said and the marker
+    // moves to the nearest brazier (the yard gate, or the halfway camp once passed), where a stop gives a fresh scoop.
     steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
-      safePoints:path(safeRoad), crashLimit:8, burnable:true, spillLineId:'story.ember.cinder.4',
+      safePoints:path(safeRoad), ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
       barriers:path(place('ash-men-barricade-1', 180, 100), place('ash-men-barricade-2', 410, 210)),
       // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
       sayNear:[{place:place('furnace-skyline', FURNACE_SKYLINE.x, FURNACE_SKYLINE.z), radius:260, lineId:'story.ember.cinder.24'},

@@ -124,6 +124,10 @@ export function arenaReward(arena, cpuDifficulty) {
   if(arena.mode==='world-job'){
     // RUN-GAS: a job definition may carry `shares`, a whole number of the one world-job amount (1 when absent or not whole).
     const shares=Number.isSafeInteger(arena.worldJob?.definition?.shares)&&arena.worldJob.definition.shares>=1?arena.worldJob.definition.shares:1;
+    // EVERBURN-REMAKE: Hot Delivery pays by the ember at arrival (src/world/jobs/ember-rule.js: 120, 80 or 50, and at most 80 after a relight).
+    // It is not stored: the grade is shown on the results screen only.
+    const ember=arena.worldJob?.emberResult;
+    if(ember&&Number.isSafeInteger(ember.pay)&&ember.pay>0)return {base:ember.pay,placing:0,wrecks:0,factor,total:Math.round(ember.pay*factor)};
     return {base:80*shares,placing:0,wrecks:0,factor,total:Math.round(80*shares*factor)};
   }
   if (arena.mode === 'convoy-raid') {
