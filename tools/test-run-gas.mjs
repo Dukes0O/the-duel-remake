@@ -487,7 +487,8 @@ function runUntil(duel, condition, seconds = 90) {
   function yard({jobs = 6, on = ['story-everburn', 'scablands-runs'], extra = {}} = {}) {
     values.clear();
     const app = new App(); app.audio.unlock = () => {};
-    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))});
+    // Both Everburn switches are on in the game since 13 November 2026, so a switch not in `on` is asked to be off.
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'story-everburn': false, 'scablands-runs': false, ...Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))}});
     let profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
     profile = markEmberRead(profile).profile;
     for (const id of EMBER_JOBS.slice(0, jobs)) profile = markEmberJob(profile, id).profile;
@@ -594,7 +595,7 @@ function runUntil(duel, condition, seconds = 90) {
     // With the run's switch switched off during a run, an arrival writes nothing (nothing changes when the switch is off).
     const app = yard({extra: {feud: 2, runs: 1}});
     check(app.gasRun('long'));
-    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'hidden-road': true, 'story-everburn': true, arsenal: true, 'arsenal-wave3': true}});
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'hidden-road': true, 'story-everburn': true, 'scablands-runs': false, arsenal: true, 'arsenal-wave3': true}});
     finish(app);
     same([emberFeud(app.profile), emberRuns(app.profile)], [2, 1], 'an arrival with the switch off moves nothing');
     app.dispose?.();

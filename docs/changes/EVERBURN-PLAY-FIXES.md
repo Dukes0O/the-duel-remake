@@ -114,3 +114,119 @@ lamps as one blob on the big map. Nothing else was replaced.
 
 The small panel still shows job 2's lamps as one blob (the card asked for the big map). Old Smoke's furnace in job 6 starts at the well's middle
 (a chaser, not an escorted machine; nothing in the card names it). The Hand Flamer's drawing, new story lines and the Lab are out of scope.
+
+## Go-live, 13 November 2026 (a Sonnet helper for Claude, branch `worktree-agent-a7125fe6064531951`)
+
+`story-everburn` and `scablands-runs` are on (rule 18, no Preview step), dated 13 November 2026 in `src/feature-flags.js`. `titan-bowl`, `wasteland-town`,
+`menu-front-door`, `deep-vasca` and every other switch are as they were. Before the switch, the story was played once more on Medium in the real
+game, which found three faults; each was fixed in this round (A, B and C below). Pictures: `docs/board/looks/everburn-play/round-8.jpg` with
+`round-8-review.md`. No new sound cue: nothing here adds a game event.
+
+### Part 1: the play before the switch (Medium, memory-only saves, scripted drivers through the QA harness)
+
+The drivers were the child-pace driver of `tools/test-everburn-easy.mjs` (jobs 1, 2, 3, 5 and 6) and the fighting driver of
+`tools/test-run-gas-medium.mjs` (job 4, the gas runs and the battle), fed through the game's own input hook and simulation step, with the screen's own
+caption code running every 0.2 s of game time. The script lived under `.qa-dist/` and is not committed. The waits were measured in headless
+Chrome with software drawing, so a real graphics card should be faster.
+
+| Job | Started in the open | Finished | Time | Notes |
+| --- | --- | --- | --- | --- |
+| 1 Hot Delivery | yes | yes | 25.7 s | Delivery spot at the town's edge reached; no wall. |
+| 2 Get Out and Walk | yes | yes | 10.3 s | "Hold F to get out" straddled the mirror's top edge (fixed, C). |
+| 3 Run Him Down | yes | yes | 22.6 s | |
+| 4 Slow Ride | yes | yes | 74.1 s | Big Bess reached the town's centre (600, 0) smoothly at 72 s; no stall against the solid. |
+| 5 The Key Under the Mall | partly | yes | 40.5 s | The car stopped for about 11 s against a junk car 9 m ahead (fixed, B). |
+| 6 The Everburn | yes | yes | 192.1 s | Old Smoke's furnace drove out of the derrick box cleanly (14 m/s, 26 m clear in 2 s). The wave and well bars lay over the mirror (fixed, C). |
+| Gas run, long road | yes | yes | 180.4 s | Big Bess arrived at (600, 0). |
+| Gas run, Boneyard road | yes | yes | 138.1 s | Big Bess arrived at (600, 0). |
+| Battle (War party) | yes | yes, won | 175.1 s | Big Bess arrived at (600, 0) with 26 health after one rest. |
+
+The waits from choosing a job on the Story Wall to the first drawn frame, in seconds: job 1 on the first Scablands load of the session 8.3; job 4 chosen
+from the wall in a fresh page 8.2; job 4 reached from job 3's result in a continuing session 3.6; jobs 2, 3, 5 and 6 in the chain 4.6, 4.3, 3.9 and 3.9; the
+two gas runs and the battle in fresh pages 8.3, 8.5 and 8.3. The Scablands art was ready in the same second as the first frame every time.
+
+### A. The notice board's three jobs now start (it found the Story Wall's "Take job" buttons did nothing)
+
+`data-ember-side-job` had no handler, and `startArenaEvent` refused any world job that was not one of the six. Now:
+
+- `src/screen-router.js`: the button calls `app.everburnSideJob(key)`, beside `emberStep` and `emberRun`; TRY AGAIN on a notice-board job's result starts it again by its board name.
+- `src/app.js`: `everburnSideJob(key)` and `_sideJobOpen(job)`. `startArenaEvent` accepts exactly the three definitions the board hands over (checked by identity), and only once the note is read and the second story job is won. Anything that is neither one of the six, a gas run nor one of these three is still refused.
+- `src/world/jobs/everburn.js`: each side job's step names its car's start (`carStart`), so that it starts in the open like the six: Lost Prospector and Survey Flags at (543, 192) facing the first goal; Hot Soup at (603, -100), 90 m south of Tin Town facing the notice board, which stands inside the town's own box and is reached from the south side (the straight way goes through the gap between the two southern shack groups and stops 4.5 m short of the box). `sideJobKey` and `sideJobOf` map the board's names to the definitions.
+- `src/screen-arena.js`: a notice-board job's result has no NEXT JOB; it ends at BACK TO THE YARD, with the scrap line, and TRY AGAIN if it was lost.
+- `src/route-map.js`: a rescue's people and home and an exploration's finds are drawn as the job's own places on the small and big maps (they were not drawn at all; the panel said "CURRENT POSITION" twice, over itself).
+- The save is unchanged in shape. A finished side job pays the one world-job amount every finished world job pays (80 scrap, 96 on Medium) and adds its run id to `wasteland.settledResults`, exactly as the six do. It writes nothing under `story`. The board never shows a side job as done: it offers the job again every time (the board already listed all three whenever it was open, and no save field was added). The same job pays again each time it is taken.
+
+Played in the real game by script on Medium, from the board's button through the result screen and back to the yard:
+
+| Side job | Started from the board | Finished | Time | Pay on the results screen |
+| --- | --- | --- | --- | --- |
+| Lost Prospector | yes | yes | 51.9 s | SCRAP EARNED +96 |
+| Survey Flags | yes | yes | 69.6 s | SCRAP EARNED +96 |
+| Hot Soup | yes | yes | 4.2 s | SCRAP EARNED +96 |
+
+Hot Soup's end spot was driven to by the finished job (the car came up on the south side, 14 m short of the board at 4.0 s, and the job ended at 4.2 s). Its safe corner (610, -2) was driven to on purpose in a second run: the car arrived 0.02 m off and stopped on it. The story save was identical before and after each job, and the board offered all three again afterwards. The 90-minute limit that would have hidden the board behind a switch `ember-side-jobs` was not reached, and that switch was not made.
+
+### B. Job 5's start moved past the junk cars
+
+The Scablands road carries pairs of crushable junk cars (`src/course.js`, left as it is). Job 5's car started on the road at (150, 416), 9 m behind the first
+of a pair, and a car driven straight at the Dead Mall stopped against it for about 11 s (reproduced headless). `src/world/jobs/everburn.js` now starts it at
+(123.72, 421), on the same road, 124 m short of the mall (it was 150 m), facing it; the pair is 12 and 18 m behind it. It is still on the road (0.24 m from it) and clear of every
+solid (104.7 m), the camera behind it is 113.4 m clear, and the mall's own line is still not heard for the first 100 m (the car is 102 m from the cue's edge). Replayed in the real game
+on Medium: no stop, 26.5 s in all (the key taken on the way), and "Leave the car outside" is heard in the first second. `tools/test-everburn-play-start.mjs` now checks every start (the six jobs, the two gas runs, the battle
+and the three notice-board jobs; before, the six, the runs and the battle) for **no junk car within 40 m ahead of the car's nose in the direction it
+faces**: a new check, not a loosened one.
+
+### C. Nothing is drawn over the rear-view mirror in a world job
+
+`src/world/world-hud.css`, drawing only. The key prompt ("HOLD F TO GET OUT") stands to the right of the mirror, level with its top. Job 6's wave and well bars stand to its left, under the job's
+heading and above the small map, wide enough that "WELL 120 / 120" does not wrap. Both are clear of the story caption and of the spoken-line strip, which stand under the mirror. In
+play on Medium nothing lay over the mirror in job 2 or job 6 (the play measured the HUD's objective bar, prompt, bars, map button, compass, truck bar and the
+spoken-line strip against the mirror's box every 0.2 s of game time). `tools/test-everburn-play-fixes-round4.mjs` reads the style sheet at five screen widths; two browser
+scenarios check the real boxes (`everburn-play` for the prompt in job 2, `everburn-well` for the bars in job 6).
+
+### Changed assertions (each for Claude's review; nothing is loosened)
+
+1. `tools/test-feature-flags.mjs`: it said `story-everburn` and `scablands-runs` are `'dev'` (with `titan-bowl`, `snow-world`, `rival-voices`, `engine-curve`, `tyre-slip`, `wasteland-town`
+   and `deep-vasca`); it now says both are `'on'` (with the Water Road, the Nine and the other released switches), and its message names the release of 13 November 2026. Why: the switches were switched
+   on. Nothing is loosened: each name is still pinned, to its new state, and the number of switches is unchanged.
+2. `tools/test-run-gas.mjs` and `tools/test-field-battle.mjs`, the App fixture `yard()`: a switch not listed in `on` was left out of the overrides, which meant off while the catalog said `'dev'`. Both Everburn
+   switches are now set to `false` unless listed, so "with its switch off" and "without the Everburn switch" still mean off. In `test-run-gas.mjs`'s "an arrival with the switch off moves nothing" the override
+   list adds `'scablands-runs': false` for the same reason. Every assertion is as it was and the counts stay 1,116 and 796.
+3. `tools/test-everburn-play-start.mjs`: "job 5: the car starts 150 m short of the Dead Mall" (150, within 2 m) now says 124 (within 2 m), because the start moved past the junk cars (B). The checks that it is on the
+   road (under 1 m), faces the mall, and that the mall's own line is not heard for the first 100 m are as they were and pass. The additions are the three notice-board jobs in the start check and "no junk car within 40 m ahead" for every start. 319 checks became 349.
+4. `tools/scenarios/everburn-play.mjs`: the check that the story caption is on screen while the big map is open now waits for the job to be racing before it hands the line over. The caption is hidden during the
+   start countdown, and the new checks before it, though quick, showed the countdown on a slow run. The check itself is as it was. Added: the get-out prompt is clear of the mirror and the caption.
+5. `tools/scenarios/everburn-well.mjs`: added only (the wave and well bars are clear of the mirror and the caption).
+6. `tools/test-scablands-job-map.mjs`: added only (38 checks became 42): the notice-board jobs' small-map data.
+7. `tools/test-everburn-play-fixes-round4.mjs`: added only (73 became 86 checks): the prompt's and the bars' places in the style sheet at five widths.
+
+No other assertion changed. The search for tests, scenarios and documents that say the two switches are off found `tools/test-feature-flags.mjs` (item 1), the two App fixtures (item 2), and
+`docs/WASTELAND_WORLD.md` ("dev until finished", corrected). `start-preview.bat` still lists both names in its Preview flags, which does no harm now that they are on (as with `kogane-invitation` and `lab-classroom`).
+The board, the cards, the inbox, `README.md`, `docs/VERIFICATION.md` and `docs/board/next-run.md` still say "off" in places and were not touched.
+
+### What a player sees, and the save
+
+A player who has not found the Wasteland gate sees nothing new: the Everburn needs the gate (`wastelandUnlocked`). A player who has found it sees the Everburn card in the main menu's STORY choice (with a red dot until Hollis's note is read), the yard's
+"Next up" line with its button into the jobs, and the Story Wall's Everburn section with the six jobs, the Tin Town notice board once the second job is done, and, once the sixth is won, the gas run with its two roads and, at War party, the battle. The old menu's Next up line does
+not read the Everburn and the front door stays off. Nothing is added to or moved in the save: a career with story progress keeps it exactly, and the switches only decide what is shown and what can start. The one field a job writes is the run id in `wasteland.settledResults`, as every finished arena or world job does.
+
+### Checks
+
+- `node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`: 122 of 122 suites passed. The first run, before the two App fixtures and the new test were given an explicit "off", had 3 failures (`test-ember-side-jobs`, `test-run-gas`, `test-field-battle`), all for that reason; the run recorded here is the second, on the final code. It includes `test-replays` (297 checks) and `test-combat-replays` (12): **replay fingerprints did not move**. `test-run-gas` 1,116, `test-field-battle` 796, `test-old-smoke` 650, `test-ember-lines` 56, `test-everburn-easy` (all nine jobs 10 of 10 with the new starts, both roads at every feud word, and the battle 10 of 10) and `test-run-gas-medium` ("the card's targets are met") pass.
+- New and extended suites: `tools/test-ember-side-jobs.mjs` (new) 136 checks; `tools/test-everburn-play-start.mjs` 349; `tools/test-everburn-play-fixes-round4.mjs` 86; `tools/test-scablands-job-map.mjs` 42.
+- `npm run build`: passed (built in 1.4 s).
+- Browser, once: `node tools/run-browser-scenarios.mjs --scenarios everburn,everburn-play,everburn-well,run-gas,field-battle,scrapdome,grand-prix,arena-fuel-run,menu-front-door,map-view,combat-hud,release-controls,everburn-side-jobs --jobs 2`: 13 of 13 passed, 0 warnings, 0 errors (every name existed). `everburn-side-jobs` is new: it takes each notice-board job from the board's button, checks it starts as a world job at its start place with its name on the HUD and no arena labels, takes one picture each, goes back to the yard and checks the board offers all three again. Earlier runs of `everburn-play` and `everburn-side-jobs` failed on faults in the new checks themselves (a timing precondition, and a negative number written into a script string), which were fixed.
+- Whole tier, once: `node tools/run-tests.mjs --tier full --jobs 4 --keep-going`: 651 suites, **650 passed, 1 failed, 0 not run**, in 4,656 s. The one failure was `tools/test-town-people.mjs` ("a 10,000-person, 5,000-building day stays under 30 ms (observed 37.49 ms)"), a timing check in town code this round did not touch, run while the laptop was busy with other work. Rerun alone on the same code, it passed with 29.38 ms (36 checks), only just under its own 30 ms line. An earlier rerun, started while other work was still running, failed again; I did not see its figure. It is an unreliable suite under load (rule 3), not a fault of this change, and it should get a card for its margin.
+- Replay fingerprints did not move (`test-replays` 297 checks across 33 cases, `test-combat-replays` 12), in the lane run and in the whole tier.
+- Not run, as the brief said: the frame-timing scenarios (`everburn-frames`, `frame-pacing`, `deep-frames`, `convoy-frames`). The frame check in the Scablands with the laptop alone, and a play by hand on Easy and Medium, are still to do (card EVERBURN-PLAY-FIXES).
+
+### Removed
+
+The Story Wall's three "Take job" buttons that did nothing (replaced by working ones); job 5's start at (150, 416) behind the junk cars (replaced by (123.72, 421)); the wave and well bars and the "HOLD F TO GET OUT" prompt drawn over the rear-view mirror (replaced by their new places); the small map's "CURRENT POSITION" fallback for a rescue and an exploration (replaced by their own places); the two App fixtures' "off by leaving the switch out" (replaced by an explicit false). Nothing else was replaced.
+
+### Left open
+
+- The notice-board jobs repeat for ever and pay the one world-job amount (96 scrap on Medium) each time, with no tick: that follows the board as it was (it listed all three whenever it was open) and the save has no field for them. If the board should show a job done or pay once, that is a design call and a new save field.
+- Hot Soup is short (4 s at the child-pace script's speed) and its first picture is a plank fence; Lost Prospector and Survey Flags say nothing aloud (their definitions carry no lines). All three have the plain result line.
+- The junk cars stay on the road as they were; job 5's way on to the mall and the well passed them in the play, and nothing else starts within 40 m ahead of one.
+- The Hand Flamer's drawing, new story lines and the Lab are out of scope, as before.

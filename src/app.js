@@ -75,7 +75,7 @@ import {ARENA_VENUES} from './arena/venues.js';
 import {ARENA_FIELD} from './arena/arena-event.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
-import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
@@ -795,6 +795,19 @@ export class App {
     const index=EMBER_JOBS.indexOf(id),open=props.steps.find(step=>step.id===id);
     if(index<0||open?.state!=='open'||props.read!==true)return false;
     return this.startArenaEvent({venueId:'scablands',mode:'world-job',job:EVERBURN_JOBS[index]});
+  }
+  // The Tin Town notice board (the Story Wall's "Take job"): a side job starts exactly as a story job does, in the same world-job mode.
+  // It is on the board once the second story job is won, and it stays on the board: nothing about it is written to the save except the
+  // scrap the settlement pays for any finished world job.
+  _sideJobOpen(job){
+    const props=emberStoryProps(this.profile,{available:true});
+    return props.read===true&&props.sideJobs.some(item=>`everburn-${item.id}`===job?.id);
+  }
+  everburnSideJob(key){
+    if(this._switches().enabled('story-everburn')!==true||!this.wastelandUnlocked())return false;
+    const job=sideJobOf(key);
+    if(!job||!this._sideJobOpen(job))return false;
+    return this.startArenaEvent({venueId:'scablands',mode:'world-job',job});
   }
   // RUN-GAS: the gas run needs both switches (the run's own and the Everburn's) and the sixth Everburn job won.
   gasRunAvailable(){
@@ -1874,7 +1887,9 @@ export class App {
   startArenaEvent({venueId = 'scrapdome', mode = 'last-car-rolling', opponents = this._arenaOpponents ?? 3, job = null} = {}) {
     if (!Object.hasOwn(ARENA_VENUES, venueId) || !['last-car-rolling', 'fuel-run', 'bounty-hunt', 'convoy-raid', 'ambush-alley', 'world-job'].includes(mode)) return false;
     // A gas run is the one job here that is not one of the six: it is allowed only when gasRunAvailable() says so.
+    // A notice-board job is the other job allowed here (the very definition the board hands over): only once the board is open and the note is read.
     if(mode==='world-job'&&(this._switches().enabled('story-everburn')!==true||venueId!=='scablands'||(isGasRun(job)?!this.gasRunAvailable():
+      EVERBURN_SIDE_JOBS.includes(job)?!this._sideJobOpen(job):
       !EVERBURN_JOBS.includes(job)||emberStoryProps(this.profile,{available:true}).steps.find(step=>step.id===EMBER_JOBS[job.number-1])?.state!=='open')))return false;
     return this._startArenaFight({venueId, mode, opponents, job});
   }

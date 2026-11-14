@@ -78,6 +78,20 @@ const mapOf = definition => worldJobMapData(course, {s: 0, lateral: 0, arena: {m
     const mirrorBottom = 90 + width * 0.3 / 3.2, subtitleTop = mirrorBottom + 24 + below;
     check(subtitleTop > mirrorBottom + 24 + 3 * 34 * 1.2, `at ${width} px wide the subtitle (${subtitleTop.toFixed(0)}) is under the mirror (${mirrorBottom.toFixed(0)}) and the caption`);
   }
+  // Go-live round: the key prompt and the wave and well bars are drawn clear of the mirror (and so of the caption and subtitle under it), at every width.
+  const prompt = world.match(/\n\.world-hud-prompt\{left:calc\(65vw \+ (\d+)px\);max-width:calc\(35vw - (\d+)px - (\d+)px\)\}/);
+  const bars = world.match(/\n\.world-hud-progress\{left:(\d+)px;top:(\d+)px;width:min\((\d+)px,calc\(35vw - (\d+)px\)\);/);
+  const top = world.match(/\.world-hud-prompt,\.world-hud-progress\{position:absolute;top:(\d+)px;/);
+  check(prompt && bars && top, 'the prompt stands right of the mirror and the bars left of it, both level with the mirror\'s top');
+  for (const width of [1280, 1366, 1536, 1920, 2560]) {
+    const mirrorLeft = width * .35, mirrorRight = width * .65;
+    const promptLeft = mirrorRight + Number(prompt[1]), promptRight = promptLeft + (width * .35 - Number(prompt[2]) - Number(prompt[3]));
+    const barsLeft = Number(bars[1]), barsRight = barsLeft + Math.min(Number(bars[3]), width * .35 - Number(bars[4]));
+    check(promptLeft >= mirrorRight + 1 && promptRight <= width - 22 - 58, `at ${width} px wide the prompt (${promptLeft.toFixed(0)} to ${promptRight.toFixed(0)}) is right of the mirror and inside the compass's column`);
+    check(barsRight + 24 <= mirrorLeft, `at ${width} px wide the wave and well bars (${barsLeft} to ${barsRight.toFixed(0)}) are left of the mirror (${mirrorLeft.toFixed(0)})`);
+  }
+  check(Number(top[1]) >= 90 && Number(top[1]) + 60 < 90 + 1280 * .3 / 3.2 + 24, 'the prompt starts at the mirror\'s top, above the caption');
+  check(Number(bars[2]) >= 160 && Number(bars[2]) <= 200, 'the bars stand under the job\'s heading (which ends about 150 px down) and above the small map');
   check(/ui\.stage\.classList\.toggle\('is-world-job',worldJob\)/.test(readFileSync(new URL('../src/screen-hud.js', import.meta.url), 'utf8')), 'the screen marks the stage while a world job runs');
   check(/\.world-map-open \.race-callout\{z-index:9;/.test(world), 'while the big map is open the caption is drawn above it, on its own plate');
   check(/classList\?\.toggle\('world-map-open', mapOpen\)/.test(readFileSync(new URL('../src/world/world-hud.js', import.meta.url), 'utf8')), 'opening and closing the big map marks the stage');

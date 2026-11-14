@@ -23,6 +23,7 @@ import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
+import {sideJobKey} from './world/jobs/everburn.js';
 import {finishArenaEvent} from './arena/arena-event.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW,crewMember} from './crew.js';
@@ -263,6 +264,7 @@ root.addEventListener('click',e => {
   }
   if(button.dataset.emberRun){const ok=app.gasRun?.(button.dataset.emberRun);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.emberStep){const ok=app.everburnStep?.(button.dataset.emberStep);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
+  if(button.dataset.emberSideJob){const ok=app.everburnSideJob?.(button.dataset.emberSideJob);if(ok){lastScreen=null;renderState(app.duel.state);}return;}
   if(button.dataset.action==='ember-next-job'){
     const job=app.duel.state.arena?.worldJob?.definition,index=job?.number;
     const id=EMBER_JOBS[index];
@@ -356,6 +358,8 @@ root.addEventListener('click',e => {
       const definition=app.duel.state.arena?.worldJob?.definition;
       // A gas run starts again on the same road; the six jobs start again by their number.
       if(definition?.run===true){if(app.gasRun?.(definition.road)){lastScreen=null;renderState(app.duel.state);}return;}
+      // A notice-board job starts again by its board name.
+      const side=sideJobKey(definition);if(side){if(app.everburnSideJob?.(side)){lastScreen=null;renderState(app.duel.state);}return;}
       const number=definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){

@@ -4,7 +4,7 @@ import {createHudScreen} from '../src/screen-hud.js';
 import {Duel} from '../src/game.js';
 import {gasRunJob} from '../src/world/jobs/gas-run.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
@@ -82,6 +82,15 @@ duel.state.wastelandGateDiscovered=true;
 check(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:1,opponents:[],job:EVERBURN_JOBS[5]}), 'defence HUD starts a real job');
 const heading={textContent:'CIRCUIT / LIVE'},positionPanel={hidden:false};
 const node=()=>({hidden:false,textContent:'',dataset:{},style:{},firstChild:{textContent:''},lastChild:{textContent:''},classList:{toggle(){}},setAttribute(){}});
+// The notice-board jobs: a rescue's people and home and an exploration's finds are drawn as the job's own places (go-live round); Hot Soup has a road.
+{
+  const sides = Object.fromEntries(EVERBURN_SIDE_JOBS.map(job => [job.id, mapFor(job.steps[0])]));
+  const rescue = sides['everburn-lost-prospector'], explore = sides['everburn-survey-flags'], soup = sides['everburn-hot-soup'];
+  check(rescue.places.map(item => item.name).join('|') === 'PROSPECTOR 1|PROSPECTOR 2|TIN TOWN' && rescue.destination.name === 'TIN TOWN', 'a rescue shows its two people and Tin Town');
+  check(explore.places.length === 5 && explore.places[0].name === 'SURVEY FLAG 1', 'an exploration shows its five finds');
+  check(soup.path.length === 3 && soup.start.name === 'AUNTIE KITCHEN' && soup.destination.name === 'TIN TOWN NOTICE BOARD', 'Hot Soup has a road from the kitchen by the safe corner to the notice board');
+  check(![rescue, explore, soup].some(item => item.start.name === 'CURRENT POSITION' || item.destination.name === 'CURRENT POSITION'), 'none of the three falls back to CURRENT POSITION');
+}
 const ui=new Proxy({}, {get:(target,key)=>target[key] ??= node()});
 ui['race-position'].closest=()=>positionPanel;
 ui['route-section'].closest=()=>({querySelector:()=>heading});

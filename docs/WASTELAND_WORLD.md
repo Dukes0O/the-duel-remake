@@ -292,8 +292,8 @@ These are settled. A card's own open question goes in writing first (AGENTS.md).
 - **Air control** only when `def.bowl`, and the launch off cars (FUN-TITAN-LAUNCH) is
   unchanged and tested.
 - **Switches** (`src/feature-flags.js`): `gear-find` (on at its release), `scablands`,
-  `story-everburn`, `titan-bowl` (all dev until finished). A dev switch also needs its line
-  in the Preview launcher.
+  `story-everburn` and `scablands-runs` (both on since 13 November 2026, no Preview step),
+  `titan-bowl` (dev until finished). A dev switch also needs its line in the Preview launcher.
 - **Top rule in code:** one line on screen says what to do now; the world compass and map
   always agree with it. Renderer, HUD and menus never change race state.
 

@@ -54,6 +54,13 @@ export async function run(c) {
   const out={};
   out.defend=await c.evaluate(probe);
   check(out.defend,'defend');
+  // Go-live round: the wave and well bars stand clear of the rear-view mirror and of the story caption.
+  await c.waitFor('(()=>{const p=document.querySelector(".world-hud-progress");return p&&!p.hidden&&p.textContent.trim()})()','the wave and well bars');
+  await c.evaluate(`(()=>{const clear=(a,b)=>a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom;
+    const bars=document.querySelector('.world-hud-progress').getBoundingClientRect(),mirror=document.querySelector('.rear-view-frame').getBoundingClientRect();
+    if(!(mirror.width>50))throw Error('The rear-view mirror is not on screen');
+    if(!clear(bars,mirror))throw Error('The wave and well bars lie over the rear-view mirror');
+    const caption=document.querySelector('.race-callout');if(caption&&!caption.hidden&&!clear(bars,caption.getBoundingClientRect()))throw Error('The wave and well bars lie over the story caption');})()`);
   await c.screenshot('well-defend');
   await c.evaluate(`(()=>{const a=window.__qaApp;a.duel.state.arena.worldJob.job.stepIndex=1;a.advance(0.5);})()`);
   for(let i=0;i<10;i++)await c.evaluate('window.__qaApp.advance(0.2)');

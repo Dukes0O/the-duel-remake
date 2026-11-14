@@ -97,9 +97,11 @@ export const EVERBURN_JOBS = Object.freeze([
     resultLineId:'story.ember.old-smoke.1',
     easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'story.ember.cinder.11',
     steps:[step('heist',{what:'Find the valve key under the Dead Mall and bring it to the Everburn.',
-      // The car starts on the road 150 m short of the mall, facing it (it started inside the mall's box), so that Cinder's "Leave the
-      // car outside" is heard on the way in. The mall stands on the dirt road at (0, 430); the road is the oval 600 m by 430 m.
-      carStart:carStart(150, 416, mall), takeId:'everburn-valve-key', zone:place('mall-valve-room',-12,430,7), carPlace:mall, carRadius:18,
+      // The car starts on the road 124 m short of the mall, facing it (it started inside the mall's box), so that Cinder's "Leave the
+      // car outside" is heard on the way in. The mall stands on the dirt road at (0, 430); the road is the oval 600 m by 430 m. The start
+      // is past the pair of junk cars that lie on the road at 135 to 141 m (it was 150 m out, 9 m behind the first of them, and a car
+      // driven straight at the mall stopped against it); nothing lies within 40 m ahead of the car's nose.
+      carStart:carStart(123.72, 421, mall), takeId:'everburn-valve-key', zone:place('mall-valve-room',-12,430,7), carPlace:mall, carRadius:18,
       escapePlace:well, escapeRadius:18, returnPath:path(mall, safeRoad, well), walkSpeed:1,
       lamps:[place('mall-search-lamp-1',-25,420),place('mall-search-lamp-2',10,444)], coneDegrees:65,
       alarmWaveSize:2, alarmLineId:'story.ember.cinder.14', lentWeapon:'cinders-hand-flamer',
@@ -134,15 +136,25 @@ export const EVERBURN_SIDE_JOBS = Object.freeze([
   Object.freeze({id:'everburn-lost-prospector', name:'Lost Prospector', kind:'rescue',
     unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({seats:2, boardSeconds:1.5}),
     steps:[step('rescue',{what:'Rescue the two lost prospectors and bring them to Tin Town.', people:[place('prospector-1',400,330),place('prospector-2',448,280)], seats:2,
+      // Taken from the notice board (go-live, 13 November 2026): the car starts on open ground beside the Boneyard, facing the first prospector.
+      carStart:carStart(543, 192, place('prospector-1',400,330)),
       boardSeconds:1.5, radius:8, stopSpeed:0.5, home:tinTown, homeRadius:18, reward:'scrap'})]}),
   Object.freeze({id:'everburn-survey-flags', name:'Survey Flags', kind:'explore',
     unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({findCount:5, markerRadius:8}),
     steps:[step('explore',{what:'Find and raise all five survey flags.', finds:[place('survey-flag-1',450,300),place('survey-flag-2',150,390),
       place('survey-flag-3',-140,260),place('survey-flag-4',280,-250),place('survey-flag-5',430,-300)]
-      .map(flag=>Object.freeze({...flag})), reward:'scrap'})]}),
+      .map(flag=>Object.freeze({...flag})), carStart:carStart(543, 192, place('survey-flag-1',450,300)), reward:'scrap'})]}),
   Object.freeze({id:'everburn-hot-soup', name:'Hot Soup', kind:'delivery',
     unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({crashLimit:10, markerRadius:8}),
     steps:[step('carry',{what:'Carry Auntie’s hot soup from her kitchen to the notice board.', load:'hot-soup', origin:place('auntie-kitchen',615,4,4),
       destination:place('tin-town-notice-board',600,-10,8), safePoints:path(place('town-safe-corner',610,-2,6)),
+      // The car starts on open ground 90 m south of the town, facing the notice board, which stands inside the town's own box and is reached
+      // from the south side: the straight way runs through the gap between the two southern shack clusters and stops 4.5 m short of the box.
+      carStart:carStart(603, -100, place('tin-town-notice-board',600,-10,8)),
       radius:8, crashLimit:10, spillLineId:'story.ember.auntie-solder.12', reward:'scrap'})]}),
 ]);
+
+// The notice board's own name for a side job ('hot-soup') and its definition's id ('everburn-hot-soup').
+// (Matched by id: the game copies a definition when it starts the job.)
+export const sideJobKey = job => EVERBURN_SIDE_JOBS.some(item => item.id === job?.id) ? job.id.replace(/^everburn-/, '') : null;
+export const sideJobOf = key => EVERBURN_SIDE_JOBS.find(job => job.id === `everburn-${key}`) ?? null;

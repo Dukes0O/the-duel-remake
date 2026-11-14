@@ -552,7 +552,8 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
   function yard({jobs = 6, on = ['story-everburn', 'scablands-runs'], extra = {}, difficulty = 'medium'} = {}) {
     values.clear();
     const app = new App(); app.audio.unlock = () => {};
-    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))});
+    // Both Everburn switches are on in the game since 13 November 2026, so a switch not in `on` is asked to be off.
+    app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'story-everburn': false, 'scablands-runs': false, ...Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))}});
     let profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
     profile = markEmberRead(profile).profile;
     for (const id of EMBER_JOBS.slice(0, jobs)) profile = markEmberJob(profile, id).profile;

@@ -8,9 +8,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {Duel} from '../src/game.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_START_BEHIND_METRES, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
-import {EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {ESCORT_START_BEHIND_METRES, ESCORT_START_RIGHT_METRES} from '../src/world/jobs/steps/escort.js';
 import {BIG_MACHINE_BOXES, SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {scablandsRoadDistance} from '../src/world/scablands-ground.js';
@@ -55,6 +54,8 @@ const starts = [
   ...EVERBURN_JOBS.map(job => [`job ${job.number}, ${job.name}`, job]),
   ['gas run, long road', gasRunJob({road: 'long'})], ['gas run, Boneyard road', gasRunJob({road: 'boneyard'})],
   ['the battle on the Boneyard road', fieldBattleJob()],
+  // The notice board's three jobs start the same way (go-live, 13 November 2026).
+  ...EVERBURN_SIDE_JOBS.map(job => [`side job, ${job.name}`, job]),
 ];
 for (const [name, job] of starts) {
   const duel = start(job), car = carAt(duel);
@@ -62,6 +63,13 @@ for (const [name, job] of starts) {
   const underCar = clearance(car.x, car.z), underCamera = clearance(camera.x, camera.z);
   check(underCar.gap >= 3, `${name}: the car starts at least 3 m clear of every solid (${underCar.gap.toFixed(1)} m from ${underCar.id})`);
   check(underCamera.gap >= 3, `${name}: the camera's place behind it is at least 3 m clear too (${underCamera.gap.toFixed(1)} m from ${underCamera.id})`);
+  // No junk car lies within 40 m ahead of the car's nose, in the direction it faces (the Scablands road carries pairs of them, and a car driven
+  // straight at one stops against it). New in the go-live round; every start is held to it.
+  const junkAhead = duel.course.features.crushables.filter(junk => junk.kind === 'junkCar').map(junk => {
+    const dx = junk.x - car.x, dz = junk.z - car.z;
+    return {id: junk.id, distance: Math.hypot(dx, dz), ahead: dx * car.forward.x + dz * car.forward.z};
+  }).filter(junk => junk.distance < 40 && junk.ahead > 0);
+  check(junkAhead.length === 0, `${name}: no junk car within 40 m ahead of the car's nose (${junkAhead.map(junk => `${junk.id} at ${junk.distance.toFixed(0)} m`).join(', ') || 'none'})`);
   console.log(`${name}: car at (${car.x.toFixed(1)}, ${car.z.toFixed(1)}) ${underCar.gap.toFixed(1)} m clear; camera ${underCamera.gap.toFixed(1)} m clear`);
   const step = job.steps[0];
   // Where a named start is, the car is there to the centimetre (a start is a point on the ground, not a place on the oval).
@@ -97,13 +105,14 @@ for (const [name, job] of starts) {
   }
 }
 {
-  // Job 2 starts inside Tin Town's gate on open ground, facing the forge. Job 5 starts on the road 150 m short of the Dead Mall, facing it.
+  // Job 2 starts inside Tin Town's gate on open ground, facing the forge. Job 5 starts on the road 124 m short of the Dead Mall, facing it:
+  // it was 150 m, 9 m behind a pair of junk cars on the road; the new start is past them (the go-live round).
   const job2 = start(EVERBURN_JOBS[1]), car2 = carAt(job2), forge = at(EVERBURN_JOBS[1].steps[0].places[0]);
   check(car2.z < 62 && car2.z > 25 && Math.abs(car2.x - 575) < 20, 'job 2: the car is inside Tin Town, just in from the gate');
   check(facingAngle(car2, {x: 625, z: 14}) < .02, 'job 2: the car faces the forge');
   check(Math.hypot(forge.x - car2.x, forge.z - car2.z) > 40, 'job 2: the first lamp is a walk from the car');
   const job5 = start(EVERBURN_JOBS[4]), car5 = carAt(job5), mall = {x: 0, z: 430};
-  near(Math.hypot(car5.x - mall.x, car5.z - mall.z), 150, 2, 'job 5: the car starts 150 m short of the Dead Mall');
+  near(Math.hypot(car5.x - mall.x, car5.z - mall.z), 124, 2, 'job 5: the car starts 124 m short of the Dead Mall, past the junk cars on the road');
   check(scablandsRoadDistance(car5.x, car5.z) < 1, 'job 5: the car starts on the road');
   check(facingAngle(car5, mall) < .02, 'job 5: the car faces the Dead Mall');
   // Cinder's "Leave the car outside" is Cinder's start line, heard at once; her line for inside the mall waits until the car is within

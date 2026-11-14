@@ -95,14 +95,15 @@ export function worldJobMapRoad(state) {
   const step = worldJob.job?.steps?.[worldJob.job.stepIndex];
   if (!step) return {path: [], places: [], margin: 120};
   const sources = [step.path, step.origin, step.safePoints, step.destination, step.returnPath,
-    step.place, step.places, step.zone, step.carPlace, step.escapePlace];
+    step.place, step.places, step.zone, step.carPlace, step.escapePlace, step.people, step.home, step.finds];
   const cached = jobRoadCache.get(step);
   if (cached && sources.every((source, index) => source === cached.sources[index])) return cached;
   const path = Array.isArray(step.path) && step.path.length >= 2 && step.path.every(validPlace) ? step.path :
     validPlace(step.origin) && validPlace(step.destination) && (step.safePoints ?? []).every(validPlace) ?
       [step.origin, ...(step.safePoints ?? []), step.destination] :
     Array.isArray(step.returnPath) && step.returnPath.length >= 2 && step.returnPath.every(validPlace) ? step.returnPath : null;
-  const places = path ? [] : [step.place, ...(step.places ?? []), step.zone, step.carPlace, step.escapePlace]
+  // A rescue's people and home and an exploration's finds are places too (the notice-board jobs; they have no road).
+  const places = path ? [] : [step.place, ...(step.places ?? []), step.zone, step.carPlace, step.escapePlace, ...(step.people ?? []), step.home, ...(step.finds ?? [])]
     .filter(validPlace).map((place, index) => namedPlace(place, `PLACE ${index + 1}`));
   const namedPath = path?.map((place, index) => namedPlace(place, index === 0 ? 'START' : 'DESTINATION')) ?? places;
   const mainPlace = step.place ?? step.zone ?? step.places?.[0] ?? step.carPlace ?? step.escapePlace;

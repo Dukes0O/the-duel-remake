@@ -64,11 +64,21 @@ export async function run(c) {
   await click(c,'[data-action="ember-next-job"]');
   await c.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job"&&window.__qaApp.duel.state.arena.worldJob.definition.number===2','Get Out and Walk starts',60000);
   await c.waitFor('document.querySelector(".world-hud-line")?.textContent.includes("three lamps")','job 2 first step');
+  // Go-live round: the "Hold F to get out" prompt stands clear of the rear-view mirror and of the story caption.
+  await c.waitFor('(()=>{const p=document.querySelector(".world-hud-prompt");return p&&!p.hidden&&p.textContent.trim()})()','the get-out prompt');
+  await c.waitFor('document.querySelector(".rear-view-frame")?.getBoundingClientRect().width>50','the rear-view mirror',20000);
+  await c.evaluate(`(()=>{const clear=(a,b)=>a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom;
+    const prompt=document.querySelector('.world-hud-prompt').getBoundingClientRect(),mirror=document.querySelector('.rear-view-frame').getBoundingClientRect();
+    if(!(mirror.width>50))throw Error('The rear-view mirror is not on screen');
+    if(!clear(prompt,mirror))throw Error('The get-out prompt lies over the rear-view mirror');
+    const caption=document.querySelector('.race-callout');if(caption&&!caption.hidden&&!clear(prompt,caption.getBoundingClientRect()))throw Error('The get-out prompt lies over the story caption');})()`);
   await c.screenshot('everburn-job-two');
   // EVERBURN-PLAY-FIXES, fourth round: with the big map open the story caption is drawn above it, so that it can be read; and the big map
   // names job 2's three lamps one by one (a numbered badge each) instead of showing them as one blob.
   // The job's own opening line is gone by now (the game runs in real time while the scenario waits), so a line is handed to the screen
   // through the game's own caption hook, as the job does for each line it says.
+  // The caption is hidden during the start countdown, so the line is handed over once the job is racing.
+  await c.waitFor('window.__qaApp.duel.state.status==="racing"','job 2 racing',30000);
   await c.evaluate(`(()=>{const a=window.__qaApp;a.duel._storyCallout("Auntie Solder: You can't get that car down my alleys. You've legs, haven't you?",2.2,true);a.advance(0.2);})()`);
   await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
   await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'m',code:'KeyM',windowsVirtualKeyCode:77});

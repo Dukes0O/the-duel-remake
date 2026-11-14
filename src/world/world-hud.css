@@ -1,8 +1,12 @@
 .world-hud{position:absolute;z-index:8;inset:0;pointer-events:none;color:#f3eddf;font-family:inherit;text-shadow:0 2px 8px #000b}
 .world-hud[hidden],.world-hud [hidden]{display:none!important}
 .world-hud-line{position:absolute;top:20px;left:50%;transform:translateX(-50%);max-width:min(76vw,46rem);padding:9px 18px;background:#171711dc;border:1px solid #e4d4b255;border-left:4px solid #e69a38;border-radius:4px;text-align:center;font-size:16px;font-weight:750;letter-spacing:.035em}
-.world-hud-prompt,.world-hud-progress{position:absolute;top:73px;left:50%;transform:translateX(-50%);padding:5px 12px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;font-size:12px;font-weight:800;letter-spacing:.08em}
-.world-hud-progress{top:105px;display:grid;grid-template-columns:auto minmax(72px,130px);align-items:center;gap:3px 8px;color:#f3c36e;text-align:left}
+.world-hud-prompt,.world-hud-progress{position:absolute;top:90px;padding:5px 12px;background:#171711dc;border:1px solid #e4d4b255;border-radius:3px;font-size:12px;font-weight:800;letter-spacing:.08em}
+/* EVERBURN-PLAY-FIXES, go-live: nothing is drawn over the rear-view mirror (top 90 px, 30vw wide, centred). The key prompt stands to its right,
+   level with its top, and the wave and well bars stand to its left, under the job's heading (which ends about 150 px down) and above the small map; both are clear of
+   the story caption and the spoken-line strip, which are under the mirror. */
+.world-hud-prompt{left:calc(65vw + 24px);max-width:calc(35vw - 24px - 150px)}
+.world-hud-progress{left:35px;top:170px;width:min(300px,calc(35vw - 59px));display:grid;grid-template-columns:auto minmax(72px,130px);align-items:center;gap:3px 8px;color:#f3c36e;text-align:left}
 .world-hud-progress progress{width:100%;height:8px;accent-color:#e69a38}
 .world-hud-truck{position:absolute;left:35px;bottom:78px;width:188px;padding:5px 8px 6px;background:#171711dc;border:1px solid #e4d4b255;border-left:3px solid #e69a38;border-radius:3px;display:grid;gap:4px;color:#f3c36e;font-size:10px;font-weight:800;letter-spacing:.08em}
 .world-hud-truck progress{width:100%;height:8px;accent-color:#e69a38}

@@ -4,7 +4,7 @@ import {teamTotal} from './arena/warlord-event.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {EMBER_CAPTIONS} from './story/ember-lines.js';
-import {EVERBURN_JOBS} from './world/jobs/everburn.js';
+import {EVERBURN_JOBS, sideJobKey} from './world/jobs/everburn.js';
 import {EMBER_BATTLE_RESULTS, emberFeudSentence} from './story/ember-road.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
@@ -218,7 +218,8 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const job = definition ?? EVERBURN_JOBS.find(item => item.id === arena.worldJob?.job?.id);
     const won = result.winnerId === 'player';
     const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
-    const next = won && job?.run !== true ? EVERBURN_JOBS[jobIndex + 1] : null;
+    // A notice-board job has no next job: it ends at BACK TO THE YARD.
+    const next = won && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
     // RUN-GAS: a gas run says where the Ash Men stand now, and how many runs have arrived.
     const run = job?.run === true && won ? result.gasRun : null;
     const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
