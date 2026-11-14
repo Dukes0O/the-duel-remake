@@ -191,9 +191,16 @@ before the rest of EVERBURN-REMAKE.
 
 ### Settled
 
-1. **Size: four times as far each way.** The land becomes 5,600 m by 4,000 m. Tin Town stands
-   2,400 m from the yard and about 3 km by road. The places keep their own size; only the ground
-   between them grows.
+1. **Size: ten times as far each way** (Kyle, the same day, after Claude had settled four times:
+   "When our race courses run many km, then the Scablands must be even larger. The art must
+   reflect a new land, the danger must be felt from game play. Route choices must be decisions
+   the player should weigh."). The land becomes 14 km by 10 km. Tin Town stands 6 km from the
+   yard and 7 to 8 km by road, which is longer than the longest lap in the game (6.7 km); the
+   road round all eight places is about 35 km. The places keep their own size; only the ground
+   between them grows. Positions are held by name (item 6) so the land can grow again.
+   Not yet known: the car's position in this venue is kept against an oval frame with a floor
+   2,000 m to each side (`SCABLANDS_LAYOUT`). Slice 1 finds out what that frame needs for a land
+   this size, before anything else is built on it.
 2. **Ground that makes routes.** Roads are fast and smooth. Open rock is rough and slower (about
    six tenths of road speed). Some ground cannot be crossed at all: scarps, a dry river's banks,
    wreck fields. These are solid and drawn as what they are. A road goes round them, through a
@@ -215,6 +222,30 @@ before the rest of EVERBURN-REMAKE.
 7. **The yard stays as players have it.** The Home Yard that is in the game today is drawn from
    this scene. What a player sees from the yard changes only in the far distance.
 
+8. **A new land, in regions.** The Scablands stop being one cracked plain. Each region has its
+   own ground, drawn in code, its own things beside the road, and its own way of driving:
+   - **The scab plates:** broken black rock. Slow and rough. Nothing on wheels follows fast.
+   - **The salt pan:** white, flat, fast, and open for kilometres. A car there raises a dust
+     plume and is seen from far off.
+   - **The dry river:** a winding bed between banks a car cannot climb. Hidden from the plain,
+     soft in places, with few ways in and out.
+   - **The burn:** blackened ground round the Everburn where gas vents flare. The short way to
+     the well, and the ground itself is the danger.
+   - **The wreck fields** round the Boneyard and **the sand** round the Ships: narrow ways
+     between solid things; soft ground that drags a car down to a crawl.
+   - **The roads:** graded, fast, and held by whoever holds them.
+9. **Danger that is felt in the driving.** Every danger does something to the car, the load or
+   the way ahead that the player feels at once and can answer by driving: a ram that turns the
+   car and shakes the load, a toll bar that must be burnt or paid, a vent that flares on a
+   rhythm the player can read, sand that takes the speed away, riders who come because the car
+   was seen. A danger is never only a number or a spoken line. What is lost can be won back
+   (the load, time, pay, armour), and a wrecked car is towed home, not ended.
+10. **Routes the player weighs.** Between any two places there are at least two ways that differ
+    in length, speed, ground and who is on them. The map shows each way and what is known of it
+    before the player sets off (a toll here, open ground under watch there), and what is known
+    changes: the Ash Men's hold on a road grows with the feud, so the way that was right last
+    week may be wrong this week. A job never has one right road.
+
 ### What moves, and is re-recorded with a reason
 
 Scablands world signatures, the positions pinned in the Everburn, gas run and field battle
@@ -226,7 +257,7 @@ suites, and the replay fingerprints of those jobs. None of that is in the game f
 1. **Size and frame time:** the places moved out, positions by name, the detailed ground
    following the player, the coarse ground over all of it, the ridge at the new edge. Flat and
    empty on purpose. Ends with a frame check and Claude driving yard to Tin Town.
-2. **Routes:** the road net as data, rough rock, the ground that cannot be crossed, the rises
+2. **Routes and regions:** the road net as data, each region's ground and how it drives, the ground that cannot be crossed, the rises
    that hide places. Ends with Claude driving every road and trying every short cut.
 3. **Beside the roads:** the seeded things and the hand-placed ones. A look round, sheet to Kyle.
 4. **The map:** the big and small maps redrawn from the same road and ground data.
