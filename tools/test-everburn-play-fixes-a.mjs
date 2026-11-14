@@ -15,7 +15,7 @@ import {EVERBURN_JOBS, SCABLANDS_PLACES} from '../src/world/jobs/everburn.js';
 import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
-import {gasRunJob, fieldBattleJob, gasRunLength, GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
+import {gasRunJob, fieldBattleJob, gasRunLength, GAS_RUN_PATHS, FIELD_BATTLE} from '../src/world/jobs/gas-run.js';
 
 assert.equal(captionSeconds('x'), 2.5);
 assert.equal(captionSeconds('x'.repeat(100)), 6.7);
@@ -150,7 +150,9 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
   const at=chased.course.nearest(0,-200); Object.assign(chased.state,{s:at.s,lateral:at.lateral,speedMph:0,headingError:0,yawVelocity:0});
   chased.onStoryCaption=(text,urgent)=>said.push({text,urgent});
   const furnace=()=>chased.state.arena.worldJob.actors.find(actor=>actor.id==='old-smoke-furnace');
-  const run=(until,limit=120)=>{for(let n=0;n<limit/DT&&!until();n++){chased.setInput(chased.state.status==='racing'?{throttle:0,brake:0,steer:0}:{throttle:0,brake:0,steer:0});chased.step(DT);}return until();};
+  // SCABLANDS-LAND round 4: the furnace's path is 36 km long now; its bolt from the first door to the second ground alone is about 470 s at 45 m/s
+  // (it was about 47 s), so the wait for each door is allowed 900 s (it was 120 s). Nothing else about the wait changed.
+  const run=(until,limit=900)=>{for(let n=0;n<limit/DT&&!until();n++){chased.setInput(chased.state.status==='racing'?{throttle:0,brake:0,steer:0}:{throttle:0,brake:0,steer:0});chased.step(DT);}return until();};
   const urgentOf=text=>said.find(item=>item.text.startsWith(text))?.urgent;
   for (const [hit,lineId] of [[1,'story.ember.cinder.18'],[2,'story.ember.old-smoke.3'],[3,'story.ember.cinder.19']]) {
     assert(run(()=>furnace()?.furnace.phase==='glow'),`door ${hit} glows`);
@@ -196,7 +198,8 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
     const duel=start({...EVERBURN_JOBS[5],steps:[chase]});
     const at=duel.course.nearest(0,-200); Object.assign(duel.state,{s:at.s,lateral:at.lateral,speedMph:0,headingError:0,yawVelocity:0});
     let hits=0;
-    play(duel,()=>false,400,()=>{if(hits<3&&furnaceOf(duel)?.furnace.phase==='glow'){hitDoor(duel);hits++;}});
+    // SCABLANDS-LAND round 4: the whole chase over 36 km takes about 800 s of play (it took about 80 s), so the job is given 1,500 s (it was 400 s).
+    play(duel,()=>false,1500,()=>{if(hits<3&&furnaceOf(duel)?.furnace.phase==='glow'){hitDoor(duel);hits++;}});
     assert.equal(duel.state.status,'arena_result'); assert.equal(duel.state.arena.result.winnerId,'player');
     assert.deepEqual(jobOf(duel).endLines.map(line=>line.lineId),['story.ember.cinder.20','story.ember.cinder.21']);
     const screen=screenOf(duel);
@@ -229,7 +232,8 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
   for (const [ending,lineId] of [['arrived','story.ember.auntie-solder.10'],['won','story.ember.auntie-solder.11']]) {
     const duel=start(fieldBattleJob({runs:0,difficulty:'medium'})), path=GAS_RUN_PATHS.boneyard;
     play(duel,()=>duel.state.status==='racing'&&!!bessOf(duel),20);
-    stand(bessOf(duel),path,560);
+    // SCABLANDS-LAND round 4: where the furnace comes out is the battle's own figure (it was the typed 560 m of a 1,259 m road; it is the same share of the longer road now).
+    stand(bessOf(duel),path,FIELD_BATTLE.comesOutAtMetres);
     if (ending==='won') {
       play(duel,()=>furnaceOf(duel)?.furnace.dead===true,300,()=>{bessOf(duel).health=100; const f=furnaceOf(duel)?.furnace; if(f&&f.phase==='glow')hitDoor(duel);});
       assert.equal(furnaceOf(duel).furnace.dead,true);
@@ -267,7 +271,11 @@ assert.deepEqual([chase.startLineId,...chase.afterStartLineId],['story.ember.old
     assert.deepEqual({...big,land:undefined},{...small,land:undefined});
     labels.length=0; strokes.length=0; arcs.length=0;
     drawWorldJobMap(context,canvas,big);
-    for (const place of names) assert.ok(labels.includes(place)||(place==='THE EVERBURN'&&labels.includes('EVERBURN'))||(place==='TIN TOWN'&&labels.includes('TIN TOWN')),`${definition.name}: ${place} is named on the big map (${labels.join(', ')})`);
+    // SCABLANDS-LAND round 4: the map now fits a land 14 km wide, so the job's own rings in Tin Town (the forge lamps, 30 m from the town) fall within the
+    // map's 4 pixel rule and the land's name is left off where the job already names that very spot. A land name may be missing only where one of the job's
+    // own places stands within 60 m of it; every other name must still be printed.
+    const coveredByJob=place=>(big.places??[]).some(own=>Math.hypot(own.position.x-place.position.x,own.position.z-place.position.z)<60);
+    for (const place of SCABLANDS_LAND.places) assert.ok(labels.includes(place.name)||(place.name==='THE EVERBURN'&&labels.includes('EVERBURN'))||(place.name==='TIN TOWN'&&coveredByJob(place)),`${definition.name}: ${place.name} is named on the big map (${labels.join(', ')})`);
     assert.ok(labels.includes('LONG ROAD')&&labels.includes('BONEYARD ROAD'),`${definition.name}: the roads are named`);
     assert.ok(strokes.filter(color=>color==='#c8d5c24d').length===2,`${definition.name}: both roads are drawn faintly`);
     // Every one of the five places lies inside the picture, and the job's own ground is bright (the gold the small panel uses).

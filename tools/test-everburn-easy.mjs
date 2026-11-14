@@ -4,7 +4,8 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
 import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
 
-const DT = 1 / 120, MAX_SECONDS = 720;
+// SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
+const DT = 1 / 120, MAX_SECONDS = 3000;
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
   'warlord-cards': true, 'crew-gear': true};
 const allJobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS];

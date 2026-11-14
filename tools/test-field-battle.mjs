@@ -9,7 +9,8 @@ import {Duel} from '../src/game.js';
 import '../src/story/ember-lines.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceHealth, furnaceDoorSpot, furnaceFallBack, furnacePace, furnaceRested} from '../src/world/jobs/old-smoke.js';
-import {GAS_RUN_PATHS, GAS_RUN_ROADS, FIELD_BATTLE, fieldBattleAmbushes, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isFieldBattle, isGasRun} from '../src/world/jobs/gas-run.js';
+import {GAS_RUN_PATHS, GAS_RUN_ROADS, FIELD_BATTLE, fieldBattleAmbushes, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunLength, gasRunPay, isFieldBattle, isGasRun} from '../src/world/jobs/gas-run.js';
+import {LAND} from '../src/world/scablands-names.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
 import {pathShare} from '../src/world/jobs/furnace-sightings.js';
 import {reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
@@ -29,6 +30,9 @@ const same = (actual, expected, message) => { assert.deepEqual(actual, expected,
 const near = (actual, expected, tolerance, message) => { assert.ok(Math.abs(actual - expected) <= tolerance, `${message}: ${actual} is not within ${tolerance} of ${expected}`); checks++; };
 
 const ROAD = GAS_RUN_PATHS.boneyard, DT = 1 / 60;
+// SCABLANDS-LAND round 4: Big Bess drives to where the furnace comes out in about 610 s on the larger land (it was about 62 s), so every wait in a real
+// Duel that begins before the furnace is out is its old wait plus this drive.
+const BESS_MPS = 9, COMES_OUT_SECONDS = Math.ceil(FIELD_BATTLE.comesOutAtMetres / BESS_MPS);
 const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
 
 // ---- 1. The furnace's rules in the battle ---------------------------------------------------------------------------------
@@ -74,15 +78,20 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same(def.id, 'old-smoke-furnace', 'the battle\'s furnace is the furnace actor the scene already draws');
   // Re-recorded for the redesigned hunt: it comes out at 560 m (130 m past (0, 370)), not as she passes (0, 370) at 430 m, so that three
   // doors take most of the road that is left (chosen from 30 tries of each scripted driver).
-  near(FIELD_BATTLE.comesOutAtMetres, metresAtPlace(ROAD, 2) + 130, .5, 'it comes out as Big Bess is 130 m past (0, 370)');
-  same([ROAD[2].position.x, ROAD[2].position.z], [0, 370], 'which is the road\'s third place');
-  near(FIELD_BATTLE.comesOutAtMetres, 560, 1e-9, '560 m into the road');
-  near(FIELD_BATTLE.furnace.startMetres, 480, 1e-9, 'and it starts 480 m in');
+  // SCABLANDS-LAND round 4: the road is ten times as long and the furnace comes out at the same share of it (.4449, 560 m of 1,259 m before), so it no
+  // longer comes out 130 m past the Dead Mall's place; the claim is now its share of the road, and the road's third place is still the one 60 m north of the Dead Mall.
+  near(FIELD_BATTLE.comesOutAtMetres, .4449 * gasRunLength('boneyard'), .5, 'it comes out at .4449 of the way along the Boneyard road');
+  same([ROAD[2].position.x, ROAD[2].position.z], [LAND.at('dead-mall', 0, -60).x, LAND.at('dead-mall', 0, -60).z], 'the road\'s third place is the one 60 m north of the Dead Mall');
+  near(FIELD_BATTLE.comesOutAtMetres, 5494, 1e-9, '5,494 m into the road (560 m on the first, small land)');
+  near(FIELD_BATTLE.furnace.startMetres, 5414, 1e-9, 'and it starts 5,414 m in');
   near(FIELD_BATTLE.furnace.comesOutAtMetres - FIELD_BATTLE.furnace.startMetres, 80, 1e-9, 'it comes out 80 m behind her');
   {
     const f = fresh('medium'), start = alongAt(f.metres);
     near(Math.hypot(f.x - start.x, f.z - start.z), 0, 1e-6, 'it starts on the road at its start metre');
-    near(Math.hypot(f.x - 0, f.z - 370), 50, .5, 'which is 50 m past (0, 370), 80 m behind where she is as it comes out (it was 80 m from (0, 370) when it came out at 430 m)');
+    // SCABLANDS-LAND round 4: it was 50 m past the typed point (0, 370); the road's third place no longer lies near where it comes out, so the
+    // distance is now measured to where Big Bess stands on the road as it comes out: 80 m (the same claim, in a straight piece of road).
+    const bessOut = alongAt(FIELD_BATTLE.comesOutAtMetres);
+    near(Math.hypot(f.x - bessOut.x, f.z - bessOut.z), 80, .5, 'which is 80 m behind where she is as it comes out');
     near(f.metres, FIELD_BATTLE.furnace.startMetres, 1e-9, 'its metres are measured along Big Bess\'s own road');
     const out = run(f, .5, aheadOf(500));
     same(typesOf(out.events).filter(type => type === 'comesOut').length, 1, 'it says it has come out, once');
@@ -323,7 +332,8 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   }
   {
     const f = fresh('medium');
-    run(f, 200);
+    // SCABLANDS-LAND round 4: it has 6.9 km of road to cover alone at its own 11 m/s (about 630 s; it had 0.7 km and 200 s); it is given 800 s now.
+    run(f, 800);
     near(f.metres, f.path.total, 1e-6, 'with nobody to hold it back it drives to the road\'s end and stops there');
   }
 
@@ -374,7 +384,7 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   same(step.ambushes.map(item => item.count), [3, 3], 'two ambushes of 3');
   same(fieldBattleJob({runs: 0, difficulty: 'easy'}).raids.map(item => item.count), [2, 2], 'and of 2 on Easy');
   same(job.raids.map(item => item.count), [3, 3], 'of 3 on Medium and Hard');
-  check(step.ambushes.every(item => alongPath(step.path, item.place).gap < .5 && alongPath(step.path, item.place).metres > metresAtPlace(step.path, 2) + 100), 'both stand on the road, ahead of (0, 370) (the furnace now comes out 130 m further on, so the nearest place, 540 m, may stand just before it)');
+  check(step.ambushes.every(item => alongPath(step.path, item.place).gap < .5 && alongPath(step.path, item.place).metres > metresAtPlace(step.path, 2) + 100), 'both stand on the road, ahead of the third place of the road (60 m north of the Dead Mall) (the furnace now comes out 130 m further on, so the nearest place, 540 m, may stand just before it)');
   check(step.ambushes.every(item => FIELD_BATTLE.ambushMetres.includes(item.metres)), 'at two of the fixed places');
   same(fieldBattleJob({runs: 7}).steps[0].ambushes.map(item => item.place.position), fieldBattleJob({runs: 7}).steps[0].ambushes.map(item => item.place.position), 'the same save gets the same ambush places');
   let alike = 0;
@@ -406,7 +416,8 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
         for (let metres = 0; metres <= length; metres += .5) closest = Math.min(closest, distanceToBox(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, solid));
         // A road that ends at Tin Town's centre ends inside the town's own box (it stands on the drawn town since the fourth round of
         // EVERBURN-PLAY-FIXES): its last piece may touch that box (0 m) and no other.
-        const endsInTown = solid.id === 'tin-town-shell' && piece === list.length - 2 && list.at(-1).x === 600 && list.at(-1).z === 0;
+        // SCABLANDS-LAND round 4: Tin Town's centre is the place's own position (it was the typed (600, 0)).
+        const endsInTown = solid.id === 'tin-town-shell' && piece === list.length - 2 && list.at(-1).x === LAND.place('tin-town').x && list.at(-1).z === LAND.place('tin-town').z;
         check(closest >= (endsInTown ? 0 : /^tin-town-gate-post-/.test(solid.id) ? 3.4 : 8), `${label}: piece ${piece + 1} clears ${solid.id}`);
       }
     }
@@ -447,14 +458,15 @@ const hitDoor = duel => {
 // A battle with no ambushes, so that only the furnace can hurt Big Bess.
 const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficulty}); return {...job, steps: [{...job.steps[0], ambushes: []}]}; };
 {
-  // The furnace does not exist until Big Bess is 560 m along the road (130 m past (0, 370)); then it comes out behind her and Clinker speaks.
+  // The furnace does not exist until Big Bess is 5,494 m along the road (560 m on the first, small land); then it comes out behind her and Clinker speaks.
   const duel = startBattle('medium', {job: noRaiders('medium')});
-  check(runUntil(duel, () => bessOf(duel)?.pathIndex >= 2, 60), 'Big Bess drives on');
-  check(!furnaceOf(duel), 'the furnace is not out when she passes (0, 370): it comes out 130 m later');
+  // SCABLANDS-LAND round 4: every wait here that comes before the furnace is out is its old time plus the drive to where it comes out (COMES_OUT_SECONDS, above).
+  check(runUntil(duel, () => bessOf(duel)?.pathIndex >= 2, 60 + COMES_OUT_SECONDS), 'Big Bess drives on');
+  check(!furnaceOf(duel), 'the furnace is not out when she is past the first place of the road: it comes out much later (SCABLANDS-LAND round 4: at 5,494 m)');
   // Moss names the furnace when it comes out, not at the start (the first play found him naming a furnace nobody could see).
   same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), [], 'Moss does not name the furnace before it is out');
   same(duel.lines.filter(text => text.startsWith('Moss: Through the Boneyard')).length, 1, 'the battle opened on Moss\'s Boneyard line, once');
-  check(runUntil(duel, () => furnaceOf(duel), 60), 'the furnace comes out');
+  check(runUntil(duel, () => furnaceOf(duel), 60 + COMES_OUT_SECONDS), 'the furnace comes out');
   same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), ['Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.'], 'Moss names it as it comes out, once');
   check(duel.lines.indexOf('Moss: That is his furnace on the road behind us. Somebody pulled it out of the well.') < duel.lines.indexOf('Clinker: You put him in the well. I am putting you in the ground.'), 'and before Clinker speaks');
   const f = furnaceOf(duel).furnace, bess = bessOf(duel);
@@ -480,7 +492,7 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
 {
   // A broken door stops it for 8 seconds; Clinker speaks about the door; the fire cue is the story's.
   const duel = startBattle('medium', {job: noRaiders('medium')});
-  check(runUntil(duel, () => furnaceOf(duel)?.furnace.phase === 'glow', 120), 'the left door glows');
+  check(runUntil(duel, () => furnaceOf(duel)?.furnace.phase === 'glow', 120 + COMES_OUT_SECONDS), 'the left door glows');
   const f = furnaceOf(duel).furnace, metres = f.metres;
   hitDoor(duel); runUntil(duel, () => false, .05);
   same([f.hits, furnaceOf(duel).health], [1, 2], 'a hit on the glowing door breaks it');
@@ -511,7 +523,7 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
   // Cinders by difficulty in a real Duel: 2 a second on Easy, 6 on Hard (9 in the first build).
   for (const [difficulty, rate] of [['easy', 2], ['hard', 6]]) {
     const duel = startBattle(difficulty, {job: noRaiders(difficulty)});
-    check(runUntil(duel, () => furnaceOf(duel), 80), `${difficulty}: the furnace comes out`);
+    check(runUntil(duel, () => furnaceOf(duel), 80 + COMES_OUT_SECONDS), `${difficulty}: the furnace comes out`);
     const f = furnaceOf(duel).furnace, gapOf = () => Math.hypot(f.x - bessOf(duel).position.x, f.z - bessOf(duel).position.z);
     let start = null;
     check(runUntil(duel, () => { if (start === null && gapOf() <= 25) start = {health: bessOf(duel).health, at: duel.state.stageTimeSec}; return start !== null && duel.state.stageTimeSec > start.at + 2; }, 120), `${difficulty}: it comes within 25 m`);
@@ -521,7 +533,7 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
 {
   // Big Bess rests when she is at 0; she starts the stretch again with at least 60, the furnace falls back behind her and keeps its door.
   const duel = startBattle('medium', {job: noRaiders('medium')});
-  check(runUntil(duel, () => furnaceOf(duel)?.furnace.phase === 'glow', 120), 'the left door glows');
+  check(runUntil(duel, () => furnaceOf(duel)?.furnace.phase === 'glow', 120 + COMES_OUT_SECONDS), 'the left door glows');
   hitDoor(duel); runUntil(duel, () => false, .05);
   const f = furnaceOf(duel).furnace, path = worldOf(duel).job.steps[0].path;
   runUntil(duel, () => false, 3);
@@ -538,7 +550,9 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
 {
   // Riders: both ambushes appear with the raid warning, and the furnace rules do not touch them.
   const duel = startBattle('medium');
-  check(runUntil(duel, () => duel.cues.includes('raiderWarning'), 120), 'the riders appear with the raid warning');
+  // SCABLANDS-LAND round 4: the first raid stands 5 to 11 km along the road now (it was 0.5 to 1.1 km), so the wait is the drive to 160 m short of it plus the old 120 s.
+  const firstRaidSeconds = Math.ceil((fieldBattleJob({runs: 0, difficulty: 'medium'}).steps[0].ambushes[0].metres - 160) / BESS_MPS);
+  check(runUntil(duel, () => duel.cues.includes('raiderWarning'), 120 + Math.max(0, firstRaidSeconds)), 'the riders appear with the raid warning');
   same(worldOf(duel).actors.filter(actor => actor.ambushKey).length, 3, 'three of them');
 }
 
@@ -613,7 +627,8 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
     const duel = app.duel, lines = [];
     const callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
     let broken = 0;
-    for (let tick = 0; tick < 900 * 120 && duel.state.status !== 'arena_result'; tick++) {
+    // SCABLANDS-LAND round 4: the whole battle is 12.3 km, about 1,370 s of driving at 9 m a second, plus rests; it is allowed 3,000 s (it was 900 s, for 1.26 km).
+    for (let tick = 0; tick < 3000 * 120 && duel.state.status !== 'arena_result'; tick++) {
       duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
       const hunter = worldOf(duel).actors.find(actor => actor.furnace);
       if (hunter && broken < breaks && hunter.furnace.phase === 'glow') { hitDoor(duel); broken++; }
@@ -694,7 +709,8 @@ const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficult
     check(app.gasRun('boneyard') && worldOf(duel).definition.battle === true, 'the battle starts');
     let forced = 0, nextKill = 0, spentAt = null, burningAfter = 0, stokeAfter = 0, restsSeen = 0, spentEarly = 0;
     const lines = [], callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
-    for (let tick = 0; tick < 900 * 120 && duel.state.status !== 'arena_result'; tick++) {
+    // SCABLANDS-LAND round 4: allowed 3,000 s for the battle's 12.3 km and its rests (it was 900 s for 1.26 km).
+    for (let tick = 0; tick < 3000 * 120 && duel.state.status !== 'arena_result'; tick++) {
       duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
       const hunter = worldOf(duel).actors.find(actor => actor.furnace), bess = bessOf(duel);
       if (hunter && forced < 3 && bess && bess.health > 0 && worldOf(duel).job.stepState.rested !== true && duel.state.stageTimeSec >= nextKill) { bess.health = 0; forced++; nextKill = duel.state.stageTimeSec + 12; }

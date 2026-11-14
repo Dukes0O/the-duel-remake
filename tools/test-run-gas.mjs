@@ -5,6 +5,7 @@ import {Duel} from '../src/game.js';
 import {damageRaider} from '../src/raiders.js';
 import '../src/story/ember-lines.js'; // the Everburn's words, for the callouts read through the job code
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {LAND} from '../src/world/scablands-names.js';
 import {stepEscort, alongPath, metresAtPlace, ambushRaiders, AMBUSH_ALERT_METRES, AMBUSH_GONE_METRES, AMBUSH_WEAR_METRES, AMBUSH_MIN_FROM_START_METRES,
   AMBUSH_WEAR_PER_SECOND} from '../src/world/jobs/steps/escort.js';
 import {GAS_RUN_AMBUSH_METRES, GAS_RUN_PATHS, GAS_RUN_ROADS, GAS_RUN_SHARES, gasRunJob, gasRunLength, gasRunPay} from '../src/world/jobs/gas-run.js';
@@ -125,7 +126,9 @@ function placeOnPath(truck, path, metres) {
     left -= length;
   }
 }
-function runUntil(duel, condition, seconds = 90) {
+// SCABLANDS-LAND round 4: Big Bess's drive to job 4's first raid is about 1.9 km on the larger land (it was about 190 m), about 190 s at 9 m a second,
+// so the wait for a first raid is allowed 400 s (it was 90 s). A shorter limit that a call names is not changed.
+function runUntil(duel, condition, seconds = 400) {
   for (let tick = 0; tick < Math.round(seconds / DT) && !condition(); tick++) {
     duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
     duel.step(DT);
@@ -182,7 +185,8 @@ function runUntil(duel, condition, seconds = 90) {
     const boneyard = job4.steps[0].path[0].position;
     near(Math.hypot(bessOf(duel).position.x - boneyard.x, bessOf(duel).position.z - boneyard.z), 0, 30, 'back at the last place she reached (she has moved off a little)');
     check(!bessOf(duel).atDestination, 'a restart is never an arrival');
-    check(runUntil(duel, () => raidersOf(duel).length === 2 && raidersOf(duel).every(raider => raider.health > 0), 10), 'and the ambush is back in place');
+    // SCABLANDS-LAND round 4: she restarts at the Boneyard, 1.9 km from the raid (it was 186 m), so she needs about 190 s to come within 160 m of it again; the wait is 400 s (it was 10 s).
+    check(runUntil(duel, () => raidersOf(duel).length === 2 && raidersOf(duel).every(raider => raider.health > 0), 400), 'and the ambush is back in place');
     check(duel.state.status === 'racing', 'a run is never lost for good: the job is still going');
   }
 
@@ -274,10 +278,15 @@ function runUntil(duel, condition, seconds = 90) {
   // Where ambushes stand: none within 180 m of the start along the road, on job 4 and on every road, feud and run sampled.
   {
     const firstAmbush = step4.ambushes[0];
-    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [278, 188], 'job 4\'s first ambush stands at (278, 188)');
+    // SCABLANDS-LAND round 4: the first ambush is the same point of the way, three quarters of the way from the Boneyard to the halfway camp,
+    // so it is stated by those two places (it was the typed point (278, 188) of the first, small land).
+    const firstAt = LAND.between('boneyard', 'safe-road', .753);
+    same([firstAmbush.place.position.x, firstAmbush.place.position.z], [firstAt.x, firstAt.z], 'job 4\'s first ambush stands three quarters of the way from the Boneyard to the halfway camp');
     near(alongPath(step4.path, firstAmbush.place).gap, 0, .5, 'on her road');
     check(step4.ambushes.every(item => alongPath(step4.path, item.place).metres >= AMBUSH_MIN_FROM_START_METRES), 'no ambush of job 4 within 180 m of its start');
-    near(alongPath(step4.path, firstAmbush.place).metres, 186, 1, 'the first is 186 m along her road');
+    // SCABLANDS-LAND round 4: it was the typed 186 m; it is the same share, .753, of the road's first piece, from the Boneyard to the halfway camp.
+    const boneyardToCamp = Math.hypot(LAND.at('safe-road').x - LAND.at('boneyard').x, LAND.at('safe-road').z - LAND.at('boneyard').z);
+    near(alongPath(step4.path, firstAmbush.place).metres, .753 * boneyardToCamp, 1, 'the first is .753 of the first piece along her road');
     let sampled = 0;
     for (const road of GAS_RUN_ROADS) for (let feud = 1; feud <= 4; feud++) for (let runs = 0; runs < 200; runs++) {
       const job = gasRunJob({road, feud, runs});
@@ -345,7 +354,9 @@ function runUntil(duel, condition, seconds = 90) {
     const duel = startJob(lethal, difficulty), lines = [];
     const callout = duel._callout.bind(duel); duel._callout = (text, seconds) => { lines.push(String(text)); return callout(text, seconds); };
     let rests = 0, gaveUp = 0;
-    for (let tick = 0; tick < Math.round(900 / DT) && duel.state.status !== 'arena_result'; tick++) {
+    // SCABLANDS-LAND round 4: the drive is about 6.6 km (it was about 0.66 km) and each rest puts her back at the Boneyard, 1.9 km before the raid,
+    // so the whole run is allowed 1,800 s (it was 900 s).
+    for (let tick = 0; tick < Math.round(1800 / DT) && duel.state.status !== 'arena_result'; tick++) {
       duel.setInput(duel.state.status === 'racing' ? idle : {...idle, brake: 0});
       duel.step(DT);
       const events = worldOf(duel).job.events;
@@ -368,18 +379,33 @@ function runUntil(duel, condition, seconds = 90) {
 // ---- 3. The gas run's two roads, feud table, pay and clearance ------------------------------------------------------
 {
   const at = places => places.map(item => [item.position.x, item.position.z]);
-  same(at(GAS_RUN_PATHS.long), [[-424, 304], [-450, 40], [-300, -230], [-60, -380], [170, -340], [350, -200], [480, -90], [600, 0]],
+  // SCABLANDS-LAND round 4: the same two lists of places as before, built from the land's names (a place, or a share of the way between two
+  // places, plus an offset in metres) in place of the typed pairs of the first, small land, so that they follow the places on the larger land.
+  const pairs = list => list.map(item => [item.x, item.z]);
+  const longPlaces = [LAND.at('everburn'), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
+    LAND.at('ships-in-sand', -60, 50), LAND.between('ships-in-sand', 'ridge', .426, -10.78, 36.28), LAND.at('ridge', -74, 104),
+    LAND.at('tin-town', -120, -90), LAND.at('tin-town')];
+  same(at(GAS_RUN_PATHS.long), pairs(longPlaces),
     'the long road is the card\'s eight places, well to Tin Town');
-  same(at(GAS_RUN_PATHS.boneyard), [[-424, 304], [-200, 350], [0, 370], [250, 415], [447, 308], [575, 112], [575, 62], [600, 0]],
+  const boneyardPlaces = [LAND.at('everburn'), LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('dead-mall', 0, -60),
+    LAND.between('dead-mall', 'boneyard', .551, 16.19, 54.48), LAND.at('boneyard', 23, 4), LAND.at('tin-town', -25, 112), LAND.at('tin-town', -25, 62),
+    LAND.at('tin-town')];
+  same(at(GAS_RUN_PATHS.boneyard), pairs(boneyardPlaces),
     'the Boneyard road goes from the Boneyard to a place 50 m south of Tin Town\'s gate, straight north through it, and on to the town');
-  check(!at(GAS_RUN_PATHS.boneyard).some(([x, z]) => x === 230 && z === 150), 'and never doubles back to the safe road');
+  check(!at(GAS_RUN_PATHS.boneyard).some(([x, z]) => x === LAND.at('safe-road').x && z === LAND.at('safe-road').z), 'and never doubles back to the safe road');
   same(GAS_RUN_ROADS, ['long', 'boneyard'], 'two roads');
   same([GAS_RUN_SHARES.long, GAS_RUN_SHARES.boneyard], [1, 2], 'the long road pays 1 share and the Boneyard road 2');
   // Re-recorded: the road now comes up to a place at (575, 112) and goes straight north through the gate's opening, in place
   // of running diagonally to the gate's middle: the last two pieces are 6.8 m longer (1,252 m before).
-  near(gasRunLength('boneyard'), 1259, 5, 'the Boneyard road is about 1.26 km (the road no longer doubles back)');
-  check(gasRunLength('boneyard') < gasRunLength('long') - 300, 'and 300 m or more shorter than the long road: short and dangerous, or long and safe');
-  near(gasRunLength('long'), 1640, 5, 'the long road, as the card\'s places lie, is 1.64 km (the card says about 1.9 km)');
+  // SCABLANDS-LAND round 4: the places stand ten times as far apart, so the roads are about 12.35 km (Boneyard) and 18.63 km (long), found by
+  // adding up the pieces between the places above (they were 1,259 m and 1,640 m); the same 5 m tolerance as before.
+  const walk = list => list.slice(1).reduce((sum, item, index) => sum + Math.hypot(item.x - list[index].x, item.z - list[index].z), 0);
+  near(gasRunLength('boneyard'), walk(boneyardPlaces), 5, 'the Boneyard road is about 12.35 km (the road no longer doubles back)');
+  near(gasRunLength('boneyard'), 12349, 5, 'and its figure on the larger land is 12,349 m');
+  // SCABLANDS-LAND round 4: 300 m of 1.64 km (about 18%) is 3,000 m of the 18.6 km road; the roads are 6.3 km apart.
+  check(gasRunLength('boneyard') < gasRunLength('long') - 3000, 'and 3 km or more shorter than the long road: short and dangerous, or long and safe');
+  near(gasRunLength('long'), walk(longPlaces), 5, 'the long road, as the places lie, is 18.63 km (the card says about 1.9 km on the first, small land)');
+  near(gasRunLength('long'), 18626, 5, 'and its figure is 18,626 m on the larger land');
   for (const road of GAS_RUN_ROADS) {
     const route = GAS_RUN_PATHS[road];
     check(route[0].id === 'everburn' && route.at(-1).id === 'tin-town', `${road}: from the well to Tin Town`);

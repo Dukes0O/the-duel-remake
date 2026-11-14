@@ -12,7 +12,9 @@ import {pathShare} from '../src/world/jobs/furnace-sightings.js';
 import {furnaceDoorSpot, furnacePace} from '../src/world/jobs/old-smoke.js';
 import '../src/story/ember-lines.js';
 
-const DT = 1 / 120, MAX_SECONDS = 900, TRIES = 10;
+// SCABLANDS-LAND round 4: the longest road is 18.6 km, 2,070 s at Big Bess's 9 m a second, and a rest puts her back a whole piece, so a try is allowed
+// 4,500 s (it was 900 s, for a longest road of 1.64 km). Nothing else about the drivers or the targets changed.
+const DT = 1 / 120, MAX_SECONDS = 4500, TRIES = 10;
 const FLAGS = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true, 'warlord-cards': true, 'crew-gear': true};
 const FEUD_WORDS = ['Watching', 'Raiding', 'Hunting', 'War party'];
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));

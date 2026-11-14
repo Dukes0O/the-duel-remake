@@ -15,7 +15,9 @@ const duel = start(EVERBURN_JOBS[5]);
 const state = duel.state, at = duel.course.worldAt(state.s, state.lateral);
 const target = EVERBURN_JOBS[5].steps[0].place.position;
 assert.ok(Math.abs(Math.hypot(at.x-target.x, at.z-target.z)-30)<0.01, 'start is 30 m from the derrick');
-assert.ok(scablandsRoadDistance(at.x, at.z)<36, 'start is on the approach road');
+// SCABLANDS-LAND round 4: the oval road lies round the yard and no longer passes the well (roads between places are a later slice), so the start
+// is on open ground by the derrick, far from the oval (it was on the approach road, under 36 m from it).
+assert.ok(scablandsRoadDistance(at.x, at.z)>1000, 'start is on open ground by the derrick, far from the oval road');
 const heading = duel.course.at(state.s).heading + state.headingError;
 assert.ok(Math.cos(heading-Math.atan2(target.x-at.x,target.z-at.z))>.999, 'car faces the derrick');
 for (const solid of SCABLANDS_SOLIDS.filter(s => s.placeId === 'everburn')) {

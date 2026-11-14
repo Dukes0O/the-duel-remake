@@ -4,6 +4,7 @@ import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+import {LAND} from '../src/world/scablands-names.js';
 
 // These lines have no existing event at their written moment. The allow-list may only shrink.
 const notYet = new Set(['story.ember.cinder.7', 'story.ember.moss.2']);
@@ -37,18 +38,18 @@ function heard(definition, views) {
 const far = {player:{position:{x:0,y:0,z:0}}, actors:[]};
 
 for (const [jobIndex, id, x, z, radius] of [
-  [0,'story.ember.cinder.3',180,100,60], [0,'story.ember.auntie-solder.1',600,0,170],
-  [2,'story.ember.cinder.8',280,380,70], [4,'story.ember.cinder.12',-12,430,22],
+  [0,'story.ember.cinder.3',...Object.values(LAND.at('ash-barricade-1')),60], [0,'story.ember.auntie-solder.1',...Object.values(LAND.at('tin-town')),170],
+  [2,'story.ember.cinder.8',...Object.values(LAND.at('boneyard',-144,76)),70], [4,'story.ember.cinder.12',...Object.values(LAND.at('dead-mall',-12,0)),22],
 ]) {
   const cue=EVERBURN_JOBS[jobIndex].steps[0].sayNear.find(item=>item.lineId===id);
   assert.deepEqual([cue.place.position.x,cue.place.position.z,cue.radius],[x,z,radius], `${id} uses the agreed place and radius`);
 }
 
 // The view's walker is authoritative on foot, even when the parked car is far away.
-const mallView = {onFoot:true, player:{position:{x:0,y:0,z:0}}, fighter:{position:{x:-12,y:0,z:430}}, actors:[]};
+const mallView = {onFoot:true, player:{position:{x:0,y:0,z:0}}, fighter:{position:{x:LAND.at('dead-mall',-12,0).x,y:0,z:LAND.at('dead-mall',-12,0).z}}, actors:[]};
 const mall = heard(EVERBURN_JOBS[4], [[mallView,55]]);
 assert.equal(mall.lines.filter(id => id === 'story.ember.cinder.12').length, 1, 'mall proximity uses walker and speaks once');
-for (const [index, x, z, id] of [[0,180,100,'story.ember.cinder.3'], [0,600,0,'story.ember.auntie-solder.1'], [2,280,380,'story.ember.cinder.8']]) {
+for (const [index, {x, z}, id] of [[0,LAND.at('ash-barricade-1'),'story.ember.cinder.3'], [0,LAND.at('tin-town'),'story.ember.auntie-solder.1'], [2,LAND.at('boneyard',-144,76),'story.ember.cinder.8']]) {
   const near=heard(EVERBURN_JOBS[index], [[{player:{position:{x,y:0,z}},actors:[]},70]]);
   assert.equal(near.lines.filter(line => line === id).length, 1, `${id} speaks once near its place`);
 }

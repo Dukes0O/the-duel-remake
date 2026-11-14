@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {LAND} from '../src/world/scablands-names.js';
 import {EMBER_RULE, emberLoss, emberGrade, emberPay, emberSentence, MPH_TO_KMH} from '../src/world/jobs/ember-rule.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
 import {DELIVERY_ROAD, distanceToRoad, onRoadPoints, onScablandsRoad} from '../src/world/scablands-road.js';
@@ -24,6 +25,7 @@ const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true};
 const hot = EVERBURN_JOBS[0], carry = hot.steps[0];
 const tinTown = carry.destination.position;
 const roadRoute = [...DELIVERY_ROAD.points.slice(1), tinTown].map(point => ({x: point.x, z: point.z}));
+const roadLine = [...DELIVERY_ROAD.points, tinTown].map(point => ({x: point.x, z: point.z}));
 
 // ---- the road question: points in, answer out ----------------------------------------------------------------------------------------
 {
@@ -33,8 +35,9 @@ const roadRoute = [...DELIVERY_ROAD.points.slice(1), tinTown].map(point => ({x: 
   check(Math.abs(distanceToRoad(200, 0, line.points) - 100) < 1e-9, 'distance is to the nearest end of the last stretch');
   const moved = {halfWidth: 5, points: line.points.map(point => ({x: point.x + 1000, z: point.z - 500}))};
   check(onRoadPoints(1050, -496, moved) && !onRoadPoints(50, 4, moved), 'moving the points moves the road: nothing assumes the land');
-  check(onScablandsRoad(115, 75) && onScablandsRoad(230, 150) && onScablandsRoad(0, 0), 'the yard gate, the halfway camp and the way between are road');
-  check(!onScablandsRoad(300, 0) && !onScablandsRoad(150, 0), 'the scab field straight across is not road');
+  const camp = LAND.at('safe-road');
+  check(onScablandsRoad(camp.x / 2, camp.z / 2) && onScablandsRoad(camp.x, camp.z) && onScablandsRoad(0, 0), 'the yard gate, the halfway camp and the way between are road');
+  check(!onScablandsRoad(3000, 0) && !onScablandsRoad(1500, 0), 'the scab field straight across is not road');
 }
 
 // ---- driving a real Duel ---------------------------------------------------------------------------------------------------------------
@@ -64,12 +67,28 @@ function place(duel, at, toward, kmh = 0) {
   duel.state.arena.worldJob.lastKmh = kmh;
 }
 // Drives a route at a speed until the job ends or `until` says stop. Returns what happened.
-function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () => {}} = {}) {
+// `follow` is a line of points to keep to (the way a driver keeps to a road whose legs are kilometres long): the car aims 90 m ahead of its nearest point on the line,
+// not at the next corner.
+function aimAlong(line, car, ahead = 90) {
+  let best = null;
+  for (let index = 0; index + 1 < line.length; index++) {
+    const a = line[index], b = line[index + 1], dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    const t = Math.max(0, Math.min(length, ((car.x - a.x) * dx + (car.z - a.z) * dz) / length)), distance = Math.hypot(car.x - a.x - dx * t / length, car.z - a.z - dz * t / length);
+    if (!best || distance < best.distance - 1e-9) best = {distance, index, t};
+  }
+  let index = best.index, left = best.t + ahead;
+  while (true) {
+    const a = line[index], b = line[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= length || index + 2 >= line.length) { const t = Math.min(1, left / length); return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t}; }
+    left -= length; index++;
+  }
+}
+function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () => {}, follow = null} = {}) {
   let leg = 0, firstOut = null, outCount = 0, wasOut = false, trace = [];
   for (let tick = 0; tick < seconds / DT && duel.state.status !== 'arena_result'; tick++) {
     const car = carAt(duel);
     if (leg < route.length - 1 && Math.hypot(route[leg].x - car.x, route[leg].z - car.z) < 25) leg++;
-    drive(duel, route[leg], typeof kmh === 'function' ? kmh(duel, car) : kmh);
+    drive(duel, follow ? aimAlong(follow, car) : route[leg], typeof kmh === 'function' ? kmh(duel, car) : kmh);
     duel.step(DT);
     const step = held(duel), out = step.out === true;
     if (out && !wasOut) { outCount++; firstOut ??= duel.state.stageTimeSec; }
@@ -83,12 +102,19 @@ function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () 
 }
 const field = [{x: tinTown.x, z: tinTown.z}];
 
-// (a) the road at 150 km/h arrives bright, with nothing taken but cold.
+// (a) the road at 150 km/h arrives with nothing taken but cold. SCABLANDS-LAND round 4 (re-recorded): the delivery road is 7,984 m
+// (it was 640 m), so about 150 km/h takes about 230 seconds with the corners, and the cold takes 75 of the 100: it arrives barely alive and pays 50, not bright and 120.
+// The rule is unchanged (cold 0.33 a second, "full to dead in about five minutes").
 {
-  const out = run(start(), roadRoute, 150);
+  // The road bends by up to 80 degrees at its corners now that its legs are kilometres long, and a car at 150 km/h cannot turn in the 14 m of the
+  // road's half width; the driver takes each corner at 80 km/h, as a driver of a car this fast does.
+  const atSpeed = (duel, car) => roadRoute.slice(0, -1).some(point => Math.hypot(point.x - car.x, point.z - car.z) < 90) ? 80 : 150;
+  const out = run(start(), roadRoute, atSpeed, {seconds: 400, follow: roadLine});
   check(out.done && out.result, 'the road at speed reaches Tin Town');
-  check(out.result.grade === 'bright' && out.result.relights === 0 && out.result.pay === 120, `the road at 150 km/h arrives bright and pays 120 (${out.result.ember.toFixed(1)}, ${out.result.grade})`);
-  check(out.result.ember > 90, `on the road only cold takes ember (arrived with ${out.result.ember.toFixed(1)})`);
+  check(out.result.relights === 0 && out.result.grade === emberGrade(EMBER_RULE, out.result.ember) && out.result.pay === emberPay(EMBER_RULE, out.result.ember, 0), 'the grade and the pay are the rule for what is left');
+  check(out.result.grade !== 'bright' && out.result.ember > 10, `a fast drive on this road arrives alive or barely (${out.result.ember.toFixed(1)}, ${out.result.grade}): the cold takes most of a third of the pot even for the best drive`);
+  const taken = 100 - out.result.ember, cold = EMBER_RULE.coldPerSecond * out.duel.state.stageTimeSec;
+  check(taken >= cold - 3 && taken - cold < 12, `on the road almost only cold takes ember (${taken.toFixed(1)} taken, ${cold.toFixed(1)} of it cold, in ${out.duel.state.stageTimeSec.toFixed(0)} s)`);
 }
 // (b) the scab field straight across at 120 km/h puts the pot out before Tin Town.
 {
@@ -101,10 +127,12 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const fast = run(start(), field, 200, {until: duel => held(duel).out === true}), slow = run(start(), field, 100, {until: duel => held(duel).out === true});
   check(carAt(fast.duel).x < carAt(slow.duel).x, `faster over rock gets less far before the pot is out (${Math.round(carAt(fast.duel).x)} m at 200 km/h, ${Math.round(carAt(slow.duel).x)} m at 100)`);
 }
-// (c) the field at 45 km/h arrives alive or better: rock is safe up to 50.
+// (c) the field at 45 km/h takes nothing from the rock: it is safe up to 50. SCABLANDS-LAND round 4 (re-recorded): Tin Town is 6 km across the field,
+// so at 45 km/h only the cold takes ember, and it is still full of it after 100 seconds and not yet out; on the first land the same drive arrived.
 {
-  const out = run(start(), field, 45);
-  check(out.done && out.result && ['bright', 'alive'].includes(out.result.grade) && out.outCount === 0, `the field at 45 km/h arrives alive or better (${out.result?.ember.toFixed(1)}, ${out.result?.grade})`);
+  const out = run(start(), field, 45, {seconds: 100});
+  check(out.outCount === 0 && !out.done, 'the field at 45 km/h does not put the pot out in the first 100 seconds');
+  check(Math.abs(held(out.duel).ember - (100 - EMBER_RULE.coldPerSecond * 100)) < 1.5, `and rock takes nothing, only cold (${held(out.duel).ember.toFixed(1)} left after 100 s)`);
 }
 // (d) a hard hit takes a large share at once; a light touch takes nothing. The rule alone, then a real hit on a real solid.
 {
@@ -142,19 +170,20 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const back = run(duel, [home], (d, car) => Math.hypot(car.x - home.x, car.z - home.z) < 60 ? 8 : 60, {seconds: 120, until: d => held(d).out !== true && (held(d).relights ?? 0) > 0});
   check(back.done === false && held(duel).relights === 1 && held(duel).ember === 100 && held(duel).out === false, 'stopping at the brazier refills the pot to 100 and counts one relight');
   check(worldJob.marker.id === 'tin-town', 'once relit the marker points at Tin Town again');
-  // Then the road, fast: bright at arrival, but the pay is capped at 80 after a relight.
-  const finish = run(duel, roadRoute, 150);
-  check(finish.done && finish.result?.relights === 1 && finish.result.grade === 'bright' && finish.result.pay === 80, `a relight caps the pay at 80 (${finish.result?.grade}, ${finish.result?.pay})`);
+  // Then the road, fast: alive at arrival (the road is 8 km), and the pay is 80 after a relight.
+  const finish = run(duel, roadRoute, (d, car) => roadRoute.slice(0, -1).some(point => Math.hypot(point.x - car.x, point.z - car.z) < 90) ? 80 : 150, {seconds: 400, follow: roadLine});
+  check(finish.done && finish.result?.relights === 1 && finish.result.pay === emberPay(EMBER_RULE, finish.result.ember, 1) && finish.result.pay <= 80, `after a relight the pay is the rule's and never above 80 (${finish.result?.grade}, ${finish.result?.pay})`);
   check(/relight/.test(finish.result.sentence) && /pays less/.test(finish.result.sentence) && !/\d/.test(finish.result.sentence), `the results sentence says so: ${finish.result.sentence}`);
 }
 // The halfway camp is a brazier too once the car has passed it.
 {
   const duel = start(), worldJob = duel.state.arena.worldJob;
-  place(duel, {x: 300, z: 180}, tinTown, 0);
-  place(duel, {x: 230, z: 150}, {x: 410, z: 210}, 5);
+  const camp = LAND.at('safe-road'), nextStop = LAND.at('ash-barricade-2');
+  place(duel, {x: camp.x + 70, z: camp.z + 30}, tinTown, 0);
+  place(duel, camp, nextStop, 5);
   for (let tick = 0; tick < 10; tick++) { duel.setInput({throttle: 0, brake: 1, steer: 0, boost: false, interact: false}); duel.step(DT); }
   check(held(duel).safeIndex === 1, 'passing the halfway camp is counted');
-  worldJob.job.stepState.ember = 0.001; place(duel, {x: 300, z: 175}, tinTown, 40);
+  worldJob.job.stepState.ember = 0.001; place(duel, {x: camp.x + 70, z: camp.z + 25}, tinTown, 40);
   for (let tick = 0; tick < 60 && held(duel).out !== true; tick++) { drive(duel, tinTown, 40); duel.step(DT); }
   duel.step(DT);
   check(held(duel).out === true && worldJob.marker.id === 'safe-road', `past the halfway camp the nearest brazier is the camp (${worldJob.marker?.id})`);

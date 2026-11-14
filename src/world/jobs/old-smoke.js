@@ -66,6 +66,9 @@ export const OLD_SMOKE = Object.freeze({
     armor: Object.freeze({easy: 10, medium: 20, hard: 20}),
   }),
   rollInSec: 5,
+  // The roll into the well never goes faster than this (about the slowest car's top speed less a little): on the small land its last leg
+  // was 229 m, 46 m a second at 5 s; on the larger land the leg is kilometres long, and the roll takes as long as that needs.
+  rollInMaxMps: 46,
   wellReachMetres: 30,
   wellArmor: Object.freeze({easy: 0, medium: 15, hard: 20}),
   mphPerMps: 2.236936,
@@ -187,8 +190,9 @@ export function furnaceHit(f, door, source = 'weapon') {
       f.pending.push({type: 'dead', hits: f.hits});
     } else {
       f.phase = 'rollin';
-      f.rollIn = {fromX: f.x, fromZ: f.z, sec: 0};
-      f.pending.push({type: 'rollIn', seconds: OLD_SMOKE.rollInSec});
+      const well = f.path.points[f.path.points.length - 1];
+      f.rollIn = {fromX: f.x, fromZ: f.z, sec: 0, seconds: Math.max(OLD_SMOKE.rollInSec, Math.hypot(well.x - f.x, well.z - f.z) / OLD_SMOKE.rollInMaxMps)};
+      f.pending.push({type: 'rollIn', seconds: f.rollIn.seconds});
     }
   } else {
     f.phase = 'stagger';
@@ -329,7 +333,7 @@ function rhythm(f, dt, out) {
 function rollIn(f, dt, out, ctx) {
   const roll = f.rollIn, well = f.path.points[f.path.points.length - 1];
   roll.sec += dt;
-  const t = Math.min(1, roll.sec / OLD_SMOKE.rollInSec);
+  const t = Math.min(1, roll.sec / roll.seconds);
   f.x = roll.fromX + (well.x - roll.fromX) * t;
   f.z = roll.fromZ + (well.z - roll.fromZ) * t;
   if (Math.hypot(well.x - roll.fromX, well.z - roll.fromZ) > 1e-6)

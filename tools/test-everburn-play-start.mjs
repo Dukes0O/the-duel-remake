@@ -13,6 +13,7 @@ import {GAS_RUN_START_BEHIND_METRES, fieldBattleJob, gasRunJob} from '../src/wor
 import {ESCORT_START_BEHIND_METRES, ESCORT_START_RIGHT_METRES} from '../src/world/jobs/steps/escort.js';
 import {BIG_MACHINE_BOXES, SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {scablandsRoadDistance} from '../src/world/scablands-ground.js';
+import {LAND} from '../src/world/scablands-names.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {facingChaseView, insideMachine, machineLift, easeMachineLift, machineLookBlend, MACHINE_CLEARANCE_METRES} from '../src/world-job-camera.js';
 import '../src/story/ember-lines.js';
@@ -25,7 +26,10 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
 const CHASE_BACK = 8.7; // the chase camera's own distance behind the car (src/render3d.js)
 // Tin Town's own model (its footprint is 582.5 to 615.4 by -16.4 to 15.1, read from the model) and the gate's fence line (62 m north
 // of the town's centre, src/world/tin-town-shacks.js OFF_LIMITS) are drawn but are not in the solids list, so they are checked here too.
-const DRAWN = [{id: 'tin-town-model', x0: 582.5, x1: 615.4, z0: -16.4, z1: 15.1}, {id: 'tin-town-gate-fence', x0: 553, x1: 597, z0: 58, z1: 66}];
+// SCABLANDS-LAND round 4: the two boxes are written as offsets from Tin Town's place (the town stands 6,000 m east of the yard now), the same offsets as before.
+const TOWN = LAND.place('tin-town');
+const DRAWN = [{id: 'tin-town-model', x0: TOWN.x - 17.5, x1: TOWN.x + 15.4, z0: TOWN.z - 16.4, z1: TOWN.z + 15.1},
+  {id: 'tin-town-gate-fence', x0: TOWN.x - 47, x1: TOWN.x - 3, z0: TOWN.z + 58, z1: TOWN.z + 66}];
 const boxGap = (x, z, x0, x1, z0, z1) => Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(z0 - z, 0, z - z1));
 function clearance(x, z) {
   let worst = {gap: Infinity, id: ''};
@@ -108,12 +112,16 @@ for (const [name, job] of starts) {
   // Job 2 starts inside Tin Town's gate on open ground, facing the forge. Job 5 starts on the road 124 m short of the Dead Mall, facing it:
   // it was 150 m, 9 m behind a pair of junk cars on the road; the new start is past them (the go-live round).
   const job2 = start(EVERBURN_JOBS[1]), car2 = carAt(job2), forge = at(EVERBURN_JOBS[1].steps[0].places[0]);
-  check(car2.z < 62 && car2.z > 25 && Math.abs(car2.x - 575) < 20, 'job 2: the car is inside Tin Town, just in from the gate');
-  check(facingAngle(car2, {x: 625, z: 14}) < .02, 'job 2: the car faces the forge');
+  // SCABLANDS-LAND round 4: the gate (25 m west, 62 m south of the town's centre) and the forge are worked out from Tin Town's place, not typed.
+  const gate = LAND.at('tin-town', -25, 62);
+  check(car2.z < gate.z && car2.z > TOWN.z + 25 && Math.abs(car2.x - gate.x) < 20, 'job 2: the car is inside Tin Town, just in from the gate');
+  check(facingAngle(car2, LAND.at('tin-town', 25, 14)) < .02, 'job 2: the car faces the forge');
   check(Math.hypot(forge.x - car2.x, forge.z - car2.z) > 40, 'job 2: the first lamp is a walk from the car');
-  const job5 = start(EVERBURN_JOBS[4]), car5 = carAt(job5), mall = {x: 0, z: 430};
+  const job5 = start(EVERBURN_JOBS[4]), car5 = carAt(job5), mall = LAND.place('dead-mall');
   near(Math.hypot(car5.x - mall.x, car5.z - mall.z), 124, 2, 'job 5: the car starts 124 m short of the Dead Mall, past the junk cars on the road');
-  check(scablandsRoadDistance(car5.x, car5.z) < 1, 'job 5: the car starts on the road');
+  // SCABLANDS-LAND round 4: the oval road lies round the yard and no longer passes the mall (roads between places are a later slice), so the
+  // start is on open ground 124 m short of the mall, far from the oval (it started on the road).
+  check(scablandsRoadDistance(car5.x, car5.z) > 1000, 'job 5: the car starts on open ground short of the mall, far from the oval road');
   check(facingAngle(car5, mall) < .02, 'job 5: the car faces the Dead Mall');
   // Cinder's "Leave the car outside" is Cinder's start line, heard at once; her line for inside the mall waits until the car is within
   // 22 m of the valve room, and the car starts well outside that.
@@ -156,8 +164,9 @@ function begin(job) {
 }
 {
   // Wherever the car stands, no wave appears within 60 m of it (the car at the well, at each place a wave may come from, and out on the flats).
-  const well = {x: -424, z: 304}, spots = [well, {x: well.x, z: well.z + 64}, {x: well.x + 64, z: well.z}, {x: well.x, z: well.z - 64},
-    {x: well.x - 64, z: well.z}, {x: well.x + 45, z: well.z + 45}, {x: well.x - 150, z: well.z + 20}, {x: 0, z: 0}];
+  // SCABLANDS-LAND round 4: the well is read from the place table (it stands 5,200 m from the yard now).
+  const well = LAND.place('everburn'), spots = [well, {x: well.x, z: well.z + 64}, {x: well.x + 64, z: well.z}, {x: well.x, z: well.z - 64},
+    {x: well.x - 64, z: well.z}, {x: well.x + 45, z: well.z + 45}, {x: well.x - 150, z: well.z + 20}, LAND.yard];
   for (const spot of spots) {
     const duel = begin(EVERBURN_JOBS[5]), state = duel.state, pose = duel.course.nearest(spot.x, spot.z);
     state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
@@ -201,7 +210,7 @@ function begin(job) {
   }
   // Job 6 at its first frame: the derrick is in the picture (inside a 55 degree half-angle of the camera's aim, and ahead of it).
   const duel = start(EVERBURN_JOBS[5]), car = carAt(duel), view = facingChaseView({x: car.x, y: 0, z: car.z}, car.heading, {back: CHASE_BACK, height: 3.65});
-  const aim = Math.atan2(view.target.x - view.position.x, view.target.z - view.position.z), derrick = Math.atan2(-424 - view.position.x, 304 - view.position.z);
+  const aim = Math.atan2(view.target.x - view.position.x, view.target.z - view.position.z), derrick = Math.atan2(LAND.place('everburn').x - view.position.x, LAND.place('everburn').z - view.position.z);
   check(Math.abs(Math.atan2(Math.sin(aim - derrick), Math.cos(aim - derrick))) < .2, 'job 6: the derrick is straight ahead of the camera at the first frame');
 }
 {
@@ -268,11 +277,11 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
     `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (9 m a second)`);
 }
 {
-  // The solid called tin-town-shell stands on the town as it is drawn: wholly inside the drawn model's footprint, round the place (600, 0).
+  // The solid called tin-town-shell stands on the town as it is drawn: wholly inside the drawn model's footprint, round the place (Tin Town's own position).
   const shell = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-shell'), [cx, , cz] = shell.center, [width, , depth] = shell.size;
   const model = DRAWN[0];
   check(cx - width / 2 >= model.x0 && cx + width / 2 <= model.x1 && cz - depth / 2 >= model.z0 && cz + depth / 2 <= model.z1, 'the Tin Town solid lies inside the footprint of the drawn town');
-  near(cx, 600, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, 0, 1, 'the Tin Town solid is centred on the town (z)');
+  near(cx, TOWN.x, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, TOWN.z, 1, 'the Tin Town solid is centred on the town (z)');
   // No job's start, car start, safe point or road comes inside it, except the places a job is meant to end at (the town's own centre for
   // job 1 and the roads), and those can be reached from outside it, the car's own half length (2.4 m) allowed. (Hot Soup used to end at the
   // notice board inside it; it now ends at the Everburn well.)
@@ -282,7 +291,7 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
   const pieceGap = (a, b) => { let closest = Infinity; const length = Math.hypot(b.x - a.x, b.z - a.z);
     for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, boxGap(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, x0, x1, z0, z1));
     return closest; };
-  const townCentre = {x: 600, z: 0};
+  const townCentre = {x: TOWN.x, z: TOWN.z};
   for (const job of jobs) for (const step of job.steps) {
     for (const key of ['carStart', 'origin']) if (step[key]) check(!inside(at(step[key])), `${job.id}: its ${key} is outside the Tin Town solid`);
     for (const point of step.safePoints ?? []) check(!inside(at(point)), `${job.id}: its safe point is outside the Tin Town solid`);
@@ -311,7 +320,8 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
   // a long drive.
   const soup = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
   const way = [soup.origin, ...soup.safePoints, soup.destination].map(at);
-  check(at(soup.destination).x === -424 && at(soup.destination).z === 304 && soup.destination.radius === 18 && soup.radius === 18, 'Hot Soup ends at the Everburn well (-424, 304), 18 m');
+  const well = LAND.place('everburn');
+  check(at(soup.destination).x === well.x && at(soup.destination).z === well.z && soup.destination.radius === 18 && soup.radius === 18, 'Hot Soup ends at the Everburn well, 18 m');
   let length = 0, tightest = {gap: Infinity, id: ''};
   for (let piece = 1; piece < way.length; piece++) {
     const a = way[piece - 1], b = way[piece], metres = Math.hypot(b.x - a.x, b.z - a.z); length += metres;

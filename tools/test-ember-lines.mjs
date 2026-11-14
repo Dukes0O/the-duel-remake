@@ -4,6 +4,7 @@ import {EMBER_CAPTIONS, EMBER_LINE_IDS, EMBER_NOTE, EMBER_NOTE_ID} from '../src/
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS, gasRunJob, fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
 
 const EXPECTED = [
@@ -104,15 +105,15 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   return {heard, job};
 }
 {
-  // Job 1: Cinder speaks once, when the player first comes within 260 m of the furnace at (300, -60).
+  // Job 1: Cinder speaks once, when the player first comes within 260 m of the furnace on the skyline.
   const at = (x, z) => ({player: {position: {x, y: 0, z}}, actors: []});
   const far = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(0, 0), 12);
   assert.ok(!far.heard.includes('story.ember.cinder.24'), 'job 1: nothing is said while the furnace is out of sight');
-  const near = lineIdsHeard(far.job, () => at(67, -60), 12);
+  const near = lineIdsHeard(far.job, () => at(FURNACE_SKYLINE.x - 233, FURNACE_SKYLINE.z), 12);
   assert.equal(near.heard.filter(id => id === 'story.ember.cinder.24').length, 1, 'job 1: Cinder points out the furnace once, 233 m away');
-  const again = lineIdsHeard(near.job, () => at(300, -10), 12);
+  const again = lineIdsHeard(near.job, () => at(FURNACE_SKYLINE.x, FURNACE_SKYLINE.z + 50), 12);
   assert.ok(!again.heard.includes('story.ember.cinder.24'), 'job 1: she does not say it twice');
-  const edge = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(30, -60), 12);
+  const edge = lineIdsHeard(createJob(EVERBURN_JOBS[0], 1), () => at(FURNACE_SKYLINE.x - 270, FURNACE_SKYLINE.z), 12);
   assert.ok(!edge.heard.includes('story.ember.cinder.24'), 'job 1: 270 m away is still too far');
 }
 {

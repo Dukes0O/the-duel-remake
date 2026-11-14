@@ -36,7 +36,10 @@ const mapOf = definition => worldJobMapData(course, {s: 0, lateral: 0, arena: {m
   }
   // The names, the numbers and the land's own five names stand apart from each other and inside the picture.
   const named = texts.filter(item => names.includes(item.text) || SCABLANDS_LAND.places.some(place => place.name === item.text));
-  check(SCABLANDS_LAND.places.every(place => texts.some(item => item.text === place.name)), 'the land keeps its five names beside the lamps');
+  // SCABLANDS-LAND round 4: the map now fits a land 14 km wide, so the three lamps (30 m or less from the town) fall within the map's 4 pixel rule and the
+  // land's name for Tin Town is left off, the lamps already naming that very spot. Each of the other four names must still be printed (it was all five).
+  const coveredByLamps = place => big.places.some(lamp => Math.hypot(lamp.position.x - place.position.x, lamp.position.z - place.position.z) < 60);
+  check(SCABLANDS_LAND.places.every(place => texts.some(item => item.text === place.name) || (place.name === 'TIN TOWN' && coveredByLamps(place))), 'the land keeps its names beside the lamps (Tin Town is named by the lamps themselves)');
   for (let i = 0; i < named.length; i++) {
     const a = box(named[i]);
     check(a.left >= 0 && a.right <= 640 && a.top >= 0 && a.bottom <= 440, `${named[i].text} lies inside the picture`);

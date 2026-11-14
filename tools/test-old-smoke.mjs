@@ -8,6 +8,7 @@ import {OLD_SMOKE, createFurnace, stepFurnace, furnaceHit, furnaceSpeed, furnace
   furnaceDoorSpot, furnaceGlowingDoor, oldSmokeVentTargets} from '../src/world/jobs/old-smoke.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
+import {LAND} from '../src/world/scablands-names.js';
 // The Everburn's lines register when the story's own modules load (the game's screens do it); this test reads them through the job code.
 import '../src/story/ember-lines.js';
 
@@ -52,7 +53,9 @@ function run(f, seconds, carFor = () => null) {
   return {events, effects};
 }
 // Run until the furnace has this phase (with no car), up to a limit.
-function until(f, phase, limitSec = 600) {
+// SCABLANDS-LAND round 4: the limit was 600 s; after a hit on Easy the furnace bolts about 21 km (at 36 m/s, 580 s) to the next leg's
+// ground, so the limit is 1,000 s.
+function until(f, phase, limitSec = 1000) {
   for (let t = 0; t < limitSec && f.phase !== phase; t += DT) stepFurnace(f, DT, {car: null});
   return f.phase === phase;
 }
@@ -63,12 +66,16 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   const f = fresh('medium');
   check(f.legs.every((leg, index) => index === 0 || leg.fromMetres > f.legs[index - 1].fromMetres),
     'the legs follow one another along the path');
-  check(f.path.total / OLD_SMOKE.baseSpeed > 200 && f.path.total / OLD_SMOKE.baseSpeed < 250,
-    'the whole path takes about four minutes at the base pace');
+  // SCABLANDS-LAND round 4: the land is ten times as wide each way, so the whole path takes about 43 minutes at the base pace
+  // (it took about four, 200 to 250 s, on the small land): the claim is now 40 to 45 minutes.
+  check(f.path.total / OLD_SMOKE.baseSpeed > 40 * 60 && f.path.total / OLD_SMOKE.baseSpeed < 45 * 60,
+    'the whole path takes about 43 minutes at the base pace');
   const well = def.path[0].position;
   const last = def.path.at(-1).position;
   near(Math.hypot(last.x - well.x, last.z - well.z), 0, 1e-9, 'the path ends at the well it starts from');
-  const planes = {x: 412, z: 278};
+  // SCABLANDS-LAND round 4: the planes stand where they stood from the Boneyard (18 m east, 26 m north of its point), so they
+  // are named from the place, not typed as a point of the old land (it was (412, 278)).
+  const planes = LAND.at('boneyard', 18, -26);
   const boneyardLeg = f.path.points.slice(7, 11);
   check(boneyardLeg.every(point => Math.abs(point.z - planes.z) > 20 || Math.abs(point.x - planes.x) > 40),
     'the Boneyard leg passes beside the planes, not through them');
@@ -78,18 +85,32 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
 // and the gate's place in the list are exactly the card's table.
 {
   const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
-  same(def.path.map(place => [place.position.x, place.position.z]), [[-424, 304], [-450, 40], [-300, -230], [-60, -380],
-    [170, -340], [350, -200], [350, 60], [335, 170], [345, 246], [440, 248], [545, 252], [610, 170], [575, 82],
-    [430, 70], [230, 150], [0, 230], [-200, 350], [-424, 304]], 'the path is the card\'s list of places');
+  // SCABLANDS-LAND round 4: the same 18 places, restated as places of the land (a place plus an offset, or a share of the way
+  // between two places plus an offset) in place of 18 typed points of the old land, so the check is on names, not numbers.
+  const listed = [LAND.at('everburn'), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
+    LAND.at('ships-in-sand', -60, 50), LAND.between('ships-in-sand', 'ridge', .426, -10.78, 36.28), LAND.at('ridge', -74, 104),
+    LAND.between('ridge', 'boneyard', .599, -74, 0), LAND.at('boneyard', -89, -134), LAND.at('boneyard', -79, -58),
+    LAND.at('boneyard', 16, -56), LAND.at('boneyard', 121, -52), LAND.at('tin-town', 10, 170), LAND.at('tin-town', -25, 82),
+    LAND.between('yard', 'tin-town', .717, 0, 70), LAND.at('safe-road'), LAND.between('yard', 'dead-mall', .535),
+    LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('everburn')];
+  same(def.path.map(place => [place.position.x, place.position.z]), listed.map(spot => [spot.x, spot.z]),
+    'the path is the card\'s list of places');
   same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 16]],
-    'the three legs begin at the well, at the Boneyard and at the place (-200, 350)');
+    'the three legs begin at the well, at the Boneyard and at the place between the Dead Mall and the well');
   check(def.path[def.gateWaypoint].id === 'tin-town-gate-front' && def.gateWaypoint === 12, 'the furnace stops at the place named tin-town-gate-front, the 13th in the list');
-  same(placeAt(def.gateWaypoint), [575, 82], 'the furnace stops in front of the gate, at (575, 82)');
+  same(placeAt(def.gateWaypoint), [LAND.at('tin-town', -25, 82).x, LAND.at('tin-town', -25, 82).z],
+    'the furnace stops in front of the gate, 25 m west and 82 m south of Tin Town\'s point');
   // Re-recorded: the furnace stops 20 m in front of the gate, at (575, 82), and turns west from there, in place of running
   // up to (575, 62) and back out: the two pieces round the gate are 18.5 m shorter (3,250.6 m and 232.2 s before).
-  near(f.path.total, 3232.1, .1, 'the path is about 3,232 m');
-  near(f.path.total / OLD_SMOKE.baseSpeed, 230.9, .1, 'the path takes 3 minutes 51 seconds at the base pace');
-  near(f.path.total - f.legs[2].fromMetres, 228.7, .1, 'the rear door is fought on the last 229 m');
+  // SCABLANDS-LAND round 4: the path was about 3,232 m (3 minutes 51 seconds at the base pace). On the larger land its length is
+  // worked out from the straight pieces between the places above, and the time from that length at the base pace.
+  const pieces = listed.slice(1).map((spot, index) => Math.hypot(spot.x - listed[index].x, spot.z - listed[index].z));
+  const worked = pieces.reduce((sum, length) => sum + length, 0);
+  near(f.path.total, worked, .1, 'the path is the sum of its straight pieces between the places of the land');
+  near(f.path.total / OLD_SMOKE.baseSpeed, worked / OLD_SMOKE.baseSpeed, .1, 'the path takes its length divided by the base pace');
+  // SCABLANDS-LAND round 4: the rear door was fought on the last 229 m; it is now the last straight piece, from the place
+  // between the Dead Mall and the well into the well.
+  near(f.path.total - f.legs[2].fromMetres, pieces.at(-1), .1, 'the rear door is fought on the last piece, into the well');
   check(f.legs[1].fromMetres < f.path.cumulative[def.gateWaypoint] && f.path.cumulative[def.gateWaypoint] < f.legs[2].fromMetres,
     'the gate lies on the Boneyard leg, before the run home');
   // The old loop is gone: no place of the path comes from the old turning points.
@@ -210,12 +231,16 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     // Only the right door counts: with just the left door broken the gate still burns.
     const h = fresh(difficulty);
     until(h, 'glow'); furnaceHit(h, h.door);
-    const leftOnly = run(h, 200).events;
+    // SCABLANDS-LAND round 4: 200 s became 900 s: after the hit the furnace bolts about 21 km to the Boneyard ground (580 s on Easy)
+    // and then runs 3.6 km at the base pace to the gate (260 s on Easy), so the gate is reached after about 840 s on Easy.
+    const leftOnly = run(h, 900).events;
     check(h.gateBurnt && count(leftOnly, 'gateBurnt') === 1, `${difficulty}: with only the left door broken the gate burns`);
   }
   // Once only: three more laps past the gate set nothing again, and breaking the right door later does not mend the gate.
   const f = fresh('easy');
-  const {events} = run(f, 1200);
+  // SCABLANDS-LAND round 4: three laps took 1,200 s on the small land (a lap was under four minutes); a lap is now the whole path
+  // at the base pace, so the run is three laps of it and a minute over.
+  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 3 + 60);
   check(f.laps >= 3 && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 1, 'the gate facts are set once, however many laps it runs');
   const late = fresh('easy');
   run(late, late.gateMetres / OLD_SMOKE.baseSpeed + 2);
@@ -224,11 +249,14 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   check(burntBefore && late.broken[1] && late.gateBurnt, 'the gate burnt, and breaking the doors afterwards does not mend it');
   // A furnace made without a gate place has no gate facts.
   const bare = createFurnace({path: def.path, legs: def.legs}, 'medium');
-  const bareRun = run(bare, 200);
+  // SCABLANDS-LAND round 4: it ran 200 s, long enough to pass the gate on the small land; it now runs until the gate's place is
+  // well behind it (the gate is a share of the way along the path: fresh() knows where).
+  const bareRun = run(bare, fresh('medium').gateMetres / OLD_SMOKE.baseSpeed + 30);
   check(bare.gateMetres === null && !bare.townReached && !bare.gateBurnt && !bareRun.events.some(event => /^(townReached|gateBurnt)$/.test(event.type)),
     'without gateWaypoint the furnace records no gate facts');
   // The same inputs give the same facts.
-  const facts = () => { const x = fresh('medium'); const out = run(x, 170); return JSON.stringify([x.townReached, x.gateBurnt, out.events.filter(e => /^(townReached|gateBurnt)$/.test(e.type))]); };
+  // SCABLANDS-LAND round 4: 170 s took the furnace past the gate on the small land; it now runs to the gate and 10 s beyond.
+  const facts = () => { const x = fresh('medium'); const out = run(x, x.gateMetres / OLD_SMOKE.baseSpeed + 10); return JSON.stringify([x.townReached, x.gateBurnt, out.events.filter(e => /^(townReached|gateBurnt)$/.test(e.type))]); };
   check(facts() === facts(), 'the gate facts are the same every time');
 }
 
@@ -261,9 +289,13 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     near(f.metres - resumed, OLD_SMOKE.boltSpeed[difficulty], .2, `${difficulty}: after the stagger it runs for the next leg's ground`);
     check(OLD_SMOKE.boltSpeed[difficulty] < slowestMps, `${difficulty}: that run is slower than the slowest car the story allows`);
     check(f.phase === 'idle' && f.door === null, `${difficulty}: no door stokes during the run`);
-    const startedRun = f.timeSec;
-    while (f.legIndex < 1 && f.timeSec - startedRun < 120) run(f, .5);
-    check(f.legIndex === 1 && f.timeSec - startedRun <= 50, `${difficulty}: it reaches the Boneyard ground within 50 seconds of the hit (took ${(f.timeSec - startedRun).toFixed(1)})`);
+    const startedRun = f.timeSec, groundAhead = f.legs[1].fromMetres - f.metres;
+    // SCABLANDS-LAND round 4 (re-recorded): the guard was 120 s and the claim "within 50 seconds"; the bolt keeps its pace (36 or 45 m a second),
+    // so on the larger land it takes as long as the distance needs: about 21 km to the Boneyard ground, 580 s on Easy and 460 s on the others.
+    // Listed for Claude, who sets the play numbers.
+    while (f.legIndex < 1 && f.timeSec - startedRun < 1000) run(f, .5);
+    const boltSeconds = groundAhead / OLD_SMOKE.boltSpeed[difficulty];
+    check(f.legIndex === 1 && f.timeSec - startedRun <= boltSeconds + 5,`${difficulty}: it reaches the Boneyard ground at its bolt pace, ${boltSeconds.toFixed(0)} s for ${groundAhead.toFixed(0)} m (took ${(f.timeSec - startedRun).toFixed(1)})`);
     run(f, .5);
     const onGround = f.metres;
     run(f, 1);
@@ -273,33 +305,43 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   // The roll-in distance is the leg-3 ground, so even that dash is no faster than the slowest car.
   const f = fresh('medium');
   const leg3 = f.path.total - f.legs[2].fromMetres;
-  check(leg3 / OLD_SMOKE.rollInSec < slowestMps, 'even the 5-second roll into the well is slower than the slowest car');
+  // SCABLANDS-LAND round 4 (src changed, listed for Claude): the last leg is now 2,278 m (it was 229 m), so a 5-second roll would be 456 m/s. The roll
+  // now takes 5 s or the distance over OLD_SMOKE.rollInMaxMps (46 m/s), whichever is longer; on the old land that was the same 5 s.
+  const rollSeconds = Math.max(OLD_SMOKE.rollInSec, leg3 / OLD_SMOKE.rollInMaxMps);
+  check(leg3 / rollSeconds < slowestMps, 'even the roll into the well from the start of the last leg is slower than the slowest car');
+  check(Math.max(OLD_SMOKE.rollInSec, 229 / OLD_SMOKE.rollInMaxMps) === OLD_SMOKE.rollInSec, 'and from 229 m it still takes the old 5 seconds');
 }
 
 // ---- 6. A miss never loses; the Hard rule ------------------------------------------
 for (const difficulty of ['easy', 'medium']) {
   const f = fresh(difficulty);
-  const {events} = run(f, 1200);
-  check(!f.escaped && !f.fallen && !f.won, `${difficulty}: twenty minutes of misses never lose`);
+  // SCABLANDS-LAND round 4: twenty minutes (1,200 s, over three laps of the small land's path) became three laps of the larger
+  // land's path at the base pace and a minute over (about 2 hours 9 minutes).
+  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 3 + 60);
+  check(!f.escaped && !f.fallen && !f.won, `${difficulty}: three laps of misses never lose`);
   check(events.some(event => event.type === 'turnAround') && f.laps >= 3, `${difficulty}: it turns round at the well and keeps going`);
   check(events.filter(event => event.type === 'doorSlam').length >= 10, `${difficulty}: its door keeps opening and slamming`);
   check(!events.some(event => event.type === 'escaped'), `${difficulty}: it never escapes`);
 }
 {
   const f = fresh('hard');
-  const {events} = run(f, 1200);
+  // SCABLANDS-LAND round 4: every run limit in this block (1,200 s) is now the whole path at the base pace and a minute over.
+  const wholePathSec = f.path.total / OLD_SMOKE.baseSpeed;
+  const {events} = run(f, wholePathSec + 60);
   const escaped = events.find(event => event.type === 'escaped');
   check(escaped && f.escaped, 'Hard: finishing the whole path with a door unbroken is an escape');
-  check(escaped.atSec > 200 && escaped.atSec < 260, 'Hard: the escape comes after about four minutes');
+  // SCABLANDS-LAND round 4: it escaped after about four minutes (200 to 260 s, the path's time was 231 s); it now escapes after
+  // about 43 minutes (40 to 45 minutes, the path's time is 42 minutes 49 seconds).
+  check(escaped.atSec > 40 * 60 && escaped.atSec < 45 * 60, 'Hard: the escape comes after about 43 minutes');
   const second = fresh('hard');
   run(second, 10);
   until(second, 'glow');
   furnaceHit(second, second.door);
-  const later = run(second, 1200);
+  const later = run(second, wholePathSec + 60);
   check(later.events.some(event => event.type === 'escaped'), 'Hard: one hit is not enough to stop it escaping');
   const won = fresh('hard');
   for (let leg = 0; leg < 3; leg++) { until(won, 'glow'); furnaceHit(won, won.door); }
-  const finish = run(won, 30);
+  const finish = run(won, 60); // SCABLANDS-LAND round 4: 30 s was enough for a 5 s roll; the roll can now take up to 50 s
   check(!won.escaped && won.fallen && finish.events.some(event => event.type === 'fell'),
     'Hard: three hits roll it into the well, not away');
 }
@@ -311,15 +353,17 @@ for (const [difficulty, armor] of [['easy', 0], ['medium', 15], ['hard', 20]]) {
   const well = def.path[0].position;
   same(stepFurnace(f, DT, {car: null}).events.map(event => event.type).includes('rollIn'), true, `${difficulty}: it turns for the well`);
   check(furnaceHealth(f) === 1, `${difficulty}: the job is not ended until the furnace has fallen in`);
-  run(f, 4.8, () => ({x: well.x + 10, y: 0, z: well.z}));
-  check(!f.fallen, `${difficulty}: it is still rolling before 5 seconds`);
+  const rollSec = f.rollIn.seconds; // SCABLANDS-LAND round 4: 5 s when the third hit is within 230 m of the well, longer from further out (OLD_SMOKE.rollInMaxMps)
+  check(rollSec >= OLD_SMOKE.rollInSec, `${difficulty}: the roll takes at least 5 seconds (${rollSec.toFixed(1)})`);
+  run(f, rollSec - .2, () => ({x: well.x + 10, y: 0, z: well.z}));
+  check(!f.fallen, `${difficulty}: it is still rolling before its roll is over`);
   const { events, effects } = run(f, .5, () => ({x: well.x + 10, y: 0, z: well.z}));
-  check(f.fallen && events.some(event => event.type === 'fell'), `${difficulty}: it falls in 5 seconds after the third hit`);
+  check(f.fallen && events.some(event => event.type === 'fell'), `${difficulty}: it falls when its roll is over`);
   check(furnaceHealth(f) === 0, `${difficulty}: the job can end once it has fallen in`);
   near(effects.armor, armor, 1e-9, `${difficulty}: a car near the well loses ${armor} armour`);
   const far = fresh(difficulty);
   for (let leg = 0; leg < 3; leg++) { until(far, 'glow'); furnaceHit(far, far.door); }
-  same(run(far, 6, () => ({x: well.x + 200, y: 0, z: well.z})).effects.armor, 0, `${difficulty}: a car well clear loses nothing`);
+  same(run(far, 60, () => ({x: well.x + 200, y: 0, z: well.z})).effects.armor, 0, `${difficulty}: a car well clear loses nothing`);
 }
 
 // ---- 8. Cinders ----------------------------------------------------------------------
@@ -423,6 +467,19 @@ const FURNACE_ID = 'old-smoke-furnace';
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const well = def.path[0].position;
+// SCABLANDS-LAND round 4: the waiting car stood at (0, -200) of the old land, 660 m from the well and well clear of the furnace's
+// road. The point is the same 200 m north of the yard (the yard is still at (0, 0)); on the larger land it is more than 2 km from
+// every piece of the furnace's path (2.4 km), so a car that waits there is still out of the furnace's way.
+const FAR = LAND.at('yard', 0, -200);
+{
+  const points = def.path.map(place => place.position);
+  const gap = Math.min(...points.slice(1).map((b, index) => {
+    const a = points[index], length2 = (b.x - a.x) ** 2 + (b.z - a.z) ** 2;
+    const t = Math.max(0, Math.min(1, ((FAR.x - a.x) * (b.x - a.x) + (FAR.z - a.z) * (b.z - a.z)) / length2));
+    return Math.hypot(FAR.x - (a.x + (b.x - a.x) * t), FAR.z - (a.z + (b.z - a.z) * t));
+  }));
+  check(gap > 2000, `the waiting car stands more than 2 km from every piece of the furnace's path (${gap.toFixed(0)} m)`);
+}
 
 function startDuel(seed, difficulty, {fullJob = false, carAt = {x: well.x + 12, z: well.z + 6}} = {}) {
   const duel = new Duel({seed, featureFlags: flags});
@@ -473,7 +530,9 @@ function youngDriver(duel) {
   return {throttle: speed < cap ? 1 : 0, brake: speed > cap + 3 ? 1 : 0, steer: clamp(-turn * 2, -1, 1), boost: false, interact: false};
 }
 
-function playChase(seed, difficulty, maxSec = 700, driver = youngDriver) {
+// SCABLANDS-LAND round 4: the limit was 700 s, about three times the 231 s path; the young driver's Easy chase now takes 1,042 s
+// (two bolts of about 21 km and 13 km at 36 m/s, then the doors), so the limit is 1,500 s.
+function playChase(seed, difficulty, maxSec = 1500, driver = youngDriver) {
   const duel = startDuel(seed, difficulty);
   const cues = new Set(), callouts = [];
   duel.onChange((_state, event) => {
@@ -491,7 +550,7 @@ function playChase(seed, difficulty, maxSec = 700, driver = youngDriver) {
 
 {
   // The world-job hooks: only the open door is hit-able, and hits are counted by the furnace's rules.
-  const duel = startDuel(5, 'medium', {carAt: {x: 0, z: -200}});
+  const duel = startDuel(5, 'medium', {carAt: FAR});
   check(waitUntil(duel, () => furnaceOf(duel)?.furnace.phase === 'stoke', 10), 'the furnace begins to stoke');
   same(worldJobHitTargets(duel).filter(target => target.kind === 'furnace-vent'), [], 'a shut door is not offered as a target');
   const aShut = {id: `${FURNACE_ID}:door-left`, actorId: FURNACE_ID, kind: 'furnace-vent', door: 'left', damage: 1};
@@ -516,8 +575,12 @@ function playChase(seed, difficulty, maxSec = 700, driver = youngDriver) {
 
 for (const difficulty of ['easy', 'medium', 'hard']) {
   // A car that never goes near cannot lose, on any difficulty, however long the furnace runs.
-  const duel = startDuel(7, difficulty, {carAt: {x: 0, z: -200}});
-  waitUntil(duel, () => duel.state.stageTimeSec > 330, 340);
+  const duel = startDuel(7, difficulty, {carAt: FAR});
+  // SCABLANDS-LAND round 4: it waited 330 s, about 100 s past the whole path's 231 s (Hard's escape); it now waits the whole path at
+  // the base pace and the same 99 s over (the limit is 10 s above that, as it was).
+  const waitSec = def.path.slice(1).reduce((sum, place, index) => sum + Math.hypot(place.position.x - def.path[index].position.x,
+    place.position.z - def.path[index].position.z), 0) / OLD_SMOKE.baseSpeed + 99;
+  waitUntil(duel, () => duel.state.stageTimeSec > waitSec, waitSec + 10);
   const log = duel.state.arena.worldJob.furnaceLog;
   check(!duel.state.arena.result && duel.state.status === 'racing', `${difficulty}: misses alone never end the job`);
   check(!duel.state.combatWrecking && furnaceOf(duel).health === 3, `${difficulty}: nothing was hit and nothing was lost`);
@@ -611,7 +674,7 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
 
 {
   // The slam and the horn also play their cues in a real Duel.
-  const duel = startDuel(13, 'medium', {carAt: {x: 0, z: -200}});
+  const duel = startDuel(13, 'medium', {carAt: FAR});
   const cues = new Set();
   duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
   // The first stoke begins after the three opening lines (6.7 s), so the first slam comes at about 15.2 s on Medium.
@@ -643,7 +706,7 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
 {
   // EVERBURN-RUN-AT-TOWN: reaching the gate plays a cue and a line in a real Duel, and a burnt gate is remembered for the job.
   for (const rightDoorBroken of [false, true]) {
-    const duel = startDuel(21, 'medium', {carAt: {x: 0, z: -200}});
+    const duel = startDuel(21, 'medium', {carAt: FAR});
     const cues = new Set(), seen = [];
     duel.onChange((_state, event) => { if (event.arenaTell?.cue) cues.add(event.arenaTell.cue); });
     waitUntil(duel, () => !!furnaceOf(duel), 5);
@@ -664,7 +727,7 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   }
   check(SOUND_BANK['arena.toll-gate'] && SOUND_BANK['weapon.flame.start'], 'both gate cues already exist in the sound bank');
   // The chase opens with Old Smoke's two lines and Cinder's, one after another, and the old line is not played.
-  const duel = startDuel(22, 'medium', {fullJob: true, carAt: {x: 0, z: -200}});
+  const duel = startDuel(22, 'medium', {fullJob: true, carAt: FAR});
   const worldJob = duel.state.arena.worldJob, heard = [];
   worldJob.job = {...worldJob.job, stepIndex: 1, stepState: {}};
   for (let n = 0; n < 16 / DT; n++) { tick(duel); if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); }
@@ -684,7 +747,9 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job: {...EVERBURN_JOBS[2], seed}}), true, 'job 3 starts in a real headless Duel');
   const worldJob = duel.state.arena.worldJob, heard = [];
   // The car waits 30 m from the thief's start: inside the leash, out of reach.
-  const start = duel.course.nearest(394, 304);
+  // SCABLANDS-LAND round 4: the waiting point was typed (394, 304), which is 30 m west of the Boneyard's point (the thief's start);
+  // it is named from the place now, with the same 30 m.
+  const waiting = LAND.at('boneyard', -30, 0), start = duel.course.nearest(waiting.x, waiting.z);
   Object.assign(duel.state, {s: start.s, lateral: start.lateral, speedMph: 0, headingError: 0, yawVelocity: 0});
   const watch = () => { if (duel.state.callout && heard.at(-1) !== duel.state.callout) heard.push(duel.state.callout); };
   for (let n = 0; n < 8 / DT && !worldJob.actors.length; n++) { tick(duel); watch(); }

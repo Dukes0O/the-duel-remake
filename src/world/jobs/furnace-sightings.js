@@ -7,11 +7,11 @@ import {OLD_SMOKE} from './old-smoke.js';
 import {LAND} from '../scablands-names.js';
 
 // Where the furnace is seen in jobs 1 and 3, from a land (src/world/scablands-names.js), so that the marks move with the places they stand by.
-// Job 1: standing on the skyline north of the road, half way from the yard to Tin Town and 60 m north of the line (smaller z is
+// Job 1: standing on the skyline north of the road, half way along the road's second leg (between the halfway camp and the second barricade) and 233 m north of it (smaller z is
 // north in the Scablands; nearer the player's road than it first stood; RUN-GAS), until the pot is delivered.
 // Job 3: rolling away west from the Boneyard's far end for 20 seconds from the moment the thief is caught, then gone.
 export function furnaceMarks(land) {
-  const skyline = land.between('yard', 'tin-town', .5, 0, -60);
+  const skyline = land.between('safe-road', 'ash-barricade-2', .5, 0, -233);
   const from = land.at('boneyard', -284, 166), to = land.at('boneyard', -484, 136);
   return Object.freeze({
     skyline: Object.freeze({x: skyline.x, z: skyline.z}),
