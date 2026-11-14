@@ -275,7 +275,9 @@ export function _drive(dt) {
     const offRoadLimit = surface.speedLimit * (s.boosting ? boostTopSpeed : 1);
     const scrub = surface.scrub;
     s.speedMph *= Math.exp(-scrub * dt * (s.speedMph > offRoadLimit ? 1 : .25));
-    if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-1.4 * dt));
+    // A car at full throttle settles a little over the limit (the pull against it is 1.4 a second). On the Scablands' regions the pull is
+    // 4 a second, so that a region's share of the top speed is the speed a car settles at, give or take a few percent.
+    if (s.speedMph > offRoadLimit) s.speedMph -= (s.speedMph - offRoadLimit) * (1 - Math.exp(-(surface.region ? 4 : 1.4) * dt));
     if (!surface.boostAllowed) s.boosting = false;
   }
   if(mud>0)s.speedMph*=Math.exp(-mud*.36*dt);

@@ -38,7 +38,8 @@ function roadNodes(land) {
   // The Salt Road: yard, the Pipe, then a fork to the Ships (west) and to the Ridge (east).
   const saltStart = toward(yard, pipe, YARD_CLEAR), fork = beyond(saltStart, pipe, 1100);
   nodes['salt-road'] = [derived(saltStart), node(pipe), derived(fork), node(ships)];
-  nodes['ridge-spur'] = [derived(fork), node(ridge)];
+  // The spur to the Ridge leaves the Salt Road 700 m before the fork's corner, on the straight, where the road is still a line.
+  nodes['ridge-spur'] = [derived(toward(fork, pipe, 700)), node(ridge)];
   // The Ridge Road comes down the east side of the pan to Tin Town.
   nodes['ridge-road'] = [node(ridge), node(between('tin-town', 'ridge', .469, 125, -75)), node(at('tin-town', -120, -90))];
   nodes['west-road'] = [derived(toward(yard, ironLine, YARD_CLEAR)), node(between('yard', 'iron-line', .5, 0, -300)), node(ironLine)];

@@ -18,16 +18,35 @@ const smooth = value => { value = clamp(value); return value * value * (3 - 2 * 
 // The bed is 120 m wide and 8 m below the plain; its banks climb from the bed's foot (52 m from the middle) to the plain (78 m).
 export const RIVER = Object.freeze({bedHalfWidth: 60, depth: 8, footHalfWidth: 52, lipHalfWidth: 78, reach: 110, nodes: 11});
 
-// The eleven named nodes, smoothed so that the river bends and never kinks: each stretch is cut into four with a Catmull-Rom curve.
+// The eleven named nodes and the five crossings (each a named point on a stretch between two nodes), smoothed so that the river bends and never
+// kinks: a curve that passes through every one of them, so that each crossing stands exactly on the river's line. Each stretch between two
+// points is a cubic curve whose direction at each end is the average of the two chords that meet there, sampled about every 100 m.
 export function riverLine(land) {
   const nodes = Array.from({length: RIVER.nodes}, (_, index) => land.at(`river-${index}`));
+  const crossings = ['the-pipe', 'the-steps', 'girder-bridge', 'the-wash', 'south-ford'].map(id => land.at(id));
+  const through = [];
+  for (let i = 0; i < nodes.length; i++) {
+    through.push(nodes[i]);
+    if (i + 1 === nodes.length) break;
+    const a = nodes[i], b = nodes[i + 1], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const here = crossings.map(point => {
+      const t = ((point.x - a.x) * dx + (point.z - a.z) * dz) / length;
+      return {point, t, apart: Math.hypot(point.x - a.x - dx * t, point.z - a.z - dz * t)};
+    }).filter(item => item.t > 0 && item.t < 1 && item.apart < 1).sort((p, q) => p.t - q.t);
+    for (const item of here) through.push(item.point);
+  }
+  const direction = (i) => {
+    const before = through[Math.max(0, i - 1)], here = through[i], after = through[Math.min(through.length - 1, i + 1)];
+    const unit = (from, to) => { const length = Math.hypot(to.x - from.x, to.z - from.z) || 1; return {x: (to.x - from.x) / length, z: (to.z - from.z) / length}; };
+    const left = unit(before, here), right = unit(here, after), x = left.x + right.x, z = left.z + right.z, length = Math.hypot(x, z) || 1;
+    return {x: x / length, z: z / length};
+  };
   const points = [];
-  for (let i = 0; i + 1 < nodes.length; i++) {
-    const p0 = nodes[Math.max(0, i - 1)], p1 = nodes[i], p2 = nodes[i + 1], p3 = nodes[Math.min(nodes.length - 1, i + 2)];
-    for (let step = 0; step < 4; step++) {
-      const t = step / 4, t2 = t * t, t3 = t2 * t;
-      const at = key => .5 * (2 * p1[key] + (-p0[key] + p2[key]) * t + (2 * p0[key] - 5 * p1[key] + 4 * p2[key] - p3[key]) * t2 + (-p0[key] + 3 * p1[key] - 3 * p2[key] + p3[key]) * t3);
-      points.push(Object.freeze({x: at('x'), z: at('z')}));
+  for (let i = 0; i + 1 < through.length; i++) {
+    const a = through[i], b = through[i + 1], span = Math.hypot(b.x - a.x, b.z - a.z), da = direction(i), db = direction(i + 1), steps = Math.max(2, Math.ceil(span / 100));
+    for (let step = 0; step < steps; step++) {
+      const u = step / steps, u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+      points.push(Object.freeze({x: h00 * a.x + h10 * da.x * span + h01 * b.x + h11 * db.x * span, z: h00 * a.z + h10 * da.z * span + h01 * b.z + h11 * db.z * span}));
     }
   }
   points.push(Object.freeze({x: nodes.at(-1).x, z: nodes.at(-1).z}));
@@ -117,18 +136,20 @@ export const riverDistanceAt = (x, z) => RIVER_LAND.nearest(x, z)?.distance ?? I
 // ---- The rises -----------------------------------------------------------------------------------------------------------------------
 // Low rises stand across each road 1,500 m from where it leaves a place (1,700 m from the yard), so that a place is not seen from
 // the last one: 20 to 40 m high and 600 to 1,000 m across the road. A rise is height only and gentle enough to drive over (the
-// steepest slope of one is under 12 percent). The places' own flat ground stays flat (SCABLANDS_PLACES carry their own height).
-export const RISE = Object.freeze({height: 30, yardHeight: 20, halfAlong: 420, halfAcross: 1100, fromEnd: 1500, fromYard: 1700, shortest: 2400});
+// steepest slope of one is under 10 percent). The places' own flat ground stays flat (SCABLANDS_PLACES carry their own height).
+export const RISE = Object.freeze({height: 26, yardHeight: 20, halfAlong: 460, halfAcross: 1100, fromEnd: 1500, fromYard: 1700, shortest: 2400});
 export function risesFor(net, land) {
   const yard = land.yard, rises = [];
   for (const road of net.roads) {
     if (road.length < RISE.shortest) continue;
     const samples = resampleRoad(road.points, 100);
     for (const end of [0, 1]) {
-      const start = end === 0 ? samples[0] : samples.at(-1);
+      // The rise stands where the road is 1,500 m (1,700 m from the yard) in a straight line from the place, so that it lies across the way
+      // a car sees the place by, round a bend as well as on a straight; on a short road, 42 percent of the road's length.
+      const ordered = end === 0 ? samples : [...samples].reverse(), start = ordered[0];
       const fromYard = Math.hypot(start.x - yard.x, start.z - yard.z) < 80;
-      const metres = Math.min(fromYard ? RISE.fromYard : RISE.fromEnd, road.length * .42), along = end === 0 ? metres : road.length - metres;
-      const at = samples.reduce((best, sample) => Math.abs(sample.along - along) < Math.abs(best.along - along) ? sample : best);
+      const metres = Math.min(fromYard ? RISE.fromYard : RISE.fromEnd, road.length * .42);
+      const at = ordered.find(sample => Math.hypot(sample.x - start.x, sample.z - start.z) >= metres) ?? ordered.at(-1);
       rises.push(Object.freeze({road: road.id, end, x: at.x, z: at.z, heading: at.heading, height: fromYard ? RISE.yardHeight : RISE.height,
         cos: Math.cos(at.heading), sin: Math.sin(at.heading)}));
     }
