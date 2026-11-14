@@ -58,7 +58,11 @@ export async function run(c) {
   if(!out)throw Error('Keyboard drive never put the ember pot out');
   await c.waitFor('/OUT/.test(document.querySelector(".world-hud-ember")?.textContent??"")','the gauge says the pot is out');
   await c.screenshot('everburn-driving');
-  await c.evaluate(`(()=>{const a=window.__qaApp,j=a.duel.state.arena.worldJob.job;j.stepIndex=j.steps.length;j.done=true;a.advance(0.1)})()`);
+  // The rest of this walk is about the results screen and the next job, so the pot is relit and the car is set down at
+  // Tin Town's marker; the job then ends by its own rule. (tools/scenarios/everburn-ember.mjs drives the delivery itself.)
+  await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,j=s.arena.worldJob.job,to=j.steps[0].destination.position;
+    j.stepState={...j.stepState,out:false,ember:60,rate:0};const pose=a.duel.course.nearest(to.x,to.z);
+    s.s=s.prevS=pose.s;s.lateral=s.prevLateral=pose.lateral;s.speedMph=0;a.advance(0.2)})()`);
   await c.waitFor('window.__qaApp.duel.state.status==="arena_result"','Hot Delivery result');
   await c.evaluate(`(()=>{const text=document.body.innerText;if(/LAST CAR ROLLING|REMATCH/i.test(text))throw Error('Arena results leaked into a world job');if(!text.includes('HOT DELIVERY')||!text.includes('NEXT JOB: GET OUT AND WALK'))throw Error('World job result or next job is missing');if(/PLACE|WRECKS|WRECKED|HOLD/i.test(text))throw Error('Arena metrics leaked into world job results')})()`);
   await c.evaluate(`(()=>{const tick=document.querySelector('.result-panel .water-road-tick');
