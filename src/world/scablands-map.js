@@ -201,16 +201,28 @@ function drawPlace(ctx, view, place, {minimum}) {
 
 function drawSights(ctx, view, knowledge) {
   for (const sight of knowledge.sights.values()) {
-    ctx.save(); ctx.beginPath();
-    sight.outline.forEach((p, i) => { const at = toScreen(view, p.x, p.z); i ? ctx.lineTo(at.x, at.y) : ctx.moveTo(at.x, at.y); });
-    ctx.closePath(); ctx.fillStyle = '#ff3c1438'; ctx.fill();
-    ctx.strokeStyle = '#17120d'; ctx.lineWidth = 4.5; ctx.stroke();
-    ctx.strokeStyle = '#ff6a2a'; ctx.lineWidth = 2.2; ctx.setLineDash([7, 5]); ctx.stroke(); ctx.setLineDash([]);
+    const outline = new Path2D();
+    let left = Infinity, top = Infinity, bottom = -Infinity, right = -Infinity;
+    sight.outline.forEach((p, i) => {
+      const at = toScreen(view, p.x, p.z);
+      i ? outline.lineTo(at.x, at.y) : outline.moveTo(at.x, at.y);
+      left = Math.min(left, at.x); right = Math.max(right, at.x); top = Math.min(top, at.y); bottom = Math.max(bottom, at.y);
+    });
+    outline.closePath();
+    ctx.save();
+    ctx.fillStyle = '#ff3c142e'; ctx.fill(outline);
+    // Hatched, so that it is read as a region of sight and not as a ground: diagonal lines, cut to the outline.
+    const hatch = new Path2D(), height = bottom - top;
+    for (let x = Math.max(left - height, -height) - ((Math.max(left - height, -height)) % 11); x < Math.min(right, view.width); x += 11) { hatch.moveTo(x, bottom); hatch.lineTo(x + height, top); }
+    ctx.save(); ctx.clip(outline); ctx.strokeStyle = '#ff5a2a88'; ctx.lineWidth = 1.6; ctx.stroke(hatch); ctx.restore();
+    ctx.strokeStyle = '#17120d'; ctx.lineWidth = 4.5; ctx.stroke(outline);
+    ctx.strokeStyle = '#ff6a2a'; ctx.lineWidth = 2.2; ctx.setLineDash([7, 5]); ctx.stroke(outline); ctx.setLineDash([]);
     const at = toScreen(view, sight.x, sight.z);
     ctx.fillStyle = INK.sight; ctx.strokeStyle = INK.paper; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(at.x, at.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 }
+
 function drawBarricades(ctx, view, knowledge, size) {
   for (const item of knowledge.barricades.values()) {
     const at = toScreen(view, item.x, item.z);
@@ -237,13 +249,12 @@ export function drawTargetMark(ctx, x, y, size = 10) {
   ctx.fillStyle = INK.gold; ctx.beginPath(); ctx.arc(0, 0, size * .32, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
-function drawEdgeMarker(ctx, marker, label, size) {
+function drawEdgeMarker(ctx, marker, size) {
   ctx.save(); ctx.translate(marker.x, marker.y);
   ctx.save(); ctx.rotate(marker.angle);
   ctx.beginPath(); ctx.moveTo(size * 1.1, 0); ctx.lineTo(-size * .7, -size * .85); ctx.lineTo(-size * .7, size * .85); ctx.closePath();
   ctx.fillStyle = INK.gold; ctx.lineWidth = 3; ctx.strokeStyle = INK.paper; ctx.lineJoin = 'round'; ctx.stroke(); ctx.fill(); ctx.restore();
   ctx.restore();
-  return label;
 }
 const ACTOR_COLOURS = Object.freeze({escort: '#62dabc', hunter: '#ff683a', rider: '#ef9f75'});
 function drawActors(ctx, view, actors, size) {
@@ -283,7 +294,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   if (target) {
     marker = edgeMarker(view, target, car);
     if (marker.onMap) drawTargetMark(ctx, marker.x, marker.y, 10);
-    else drawEdgeMarker(ctx, marker, target.name, 8);
+    else drawEdgeMarker(ctx, marker, 8);
   }
   drawCarArrow(ctx, width / 2, height / 2, car.heading ?? 0, 13);
   // On the map a place already carries its name; a mark on the edge, or a point that is no place, says what it is and how far (km).
@@ -331,31 +342,44 @@ function nameAt(ctx, boxes, string, x, y, tries, options, view, force = false) {
   return false;
 }
 // A name written along a line, turned to lie along it (never upside down), at the first of `fractions` of the line's length where
-// there is room for it (no other name, and the whole name on the map). A name that must be written is written in the middle over
-// whatever is there when there is no room. Returns true when it was written in the clear.
-function textAlong(ctx, view, boxes, points, string, options, fractions = [.5, .3, .7, .15, .85, .4, .6, .22, .78], force = true) {
+// there is room for it (no other name, and the whole name on the map), first at its own size, then smaller. A name that must be
+// written is written in the middle at the smallest size over whatever is there when there is no room. Returns true when it was
+// written in the clear. A turned name takes the room of a chain of small boxes laid along it, so that a diagonal name does not
+// shut out the whole square round it.
+function textAlong(ctx, view, boxes, points, string, options, fractions = [.5, .3, .7, .15, .85, .4, .6, .22, .78, .1, .9, .35, .65], force = true) {
   const cumulative = [0];
   for (let i = 1; i < points.length; i++) cumulative.push(cumulative[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].z - points[i - 1].z));
-  const size = options.size ?? 14, w = measure(ctx, string, size) + (options.spacing ?? 0) * string.length;
-  const at = fraction => {
-    const wanted = cumulative.at(-1) * fraction;
-    let i = 1; while (i < points.length - 1 && cumulative[i] < wanted) i++;
+  const sizes = [options.size ?? 14, (options.size ?? 14) * .85, (options.size ?? 14) * .72];
+  const place = (fraction, size) => {
+    const w = measure(ctx, string, size) + (options.spacing ?? 0) * string.length, wanted = cumulative.at(-1) * fraction;
+    // The point `metres` along the line (a straight road has only its two ends, so the points between are worked out).
+    const along = metres => {
+      let i = 1; const m = Math.max(0, Math.min(cumulative.at(-1), metres));
+      while (i < points.length - 1 && cumulative[i] < m) i++;
+      const span = cumulative[i] - cumulative[i - 1], t = span > 0 ? (m - cumulative[i - 1]) / span : 0;
+      return toScreen(view, points[i - 1].x + (points[i].x - points[i - 1].x) * t, points[i - 1].z + (points[i].z - points[i - 1].z) * t);
+    };
     // The direction of the line over the length of the name, round that point.
-    const span = Math.max(2, Math.round(w / view.scale / Math.max(1, cumulative.at(-1) / points.length) / 2));
-    const back = Math.max(0, i - span), ahead = Math.min(points.length - 1, i + span);
-    const a = toScreen(view, points[back].x, points[back].z), b = toScreen(view, points[ahead].x, points[ahead].z), mid = toScreen(view, points[i].x, points[i].z);
+    const reach = w / view.scale / 2, a = along(wanted - reach), b = along(wanted + reach), mid = along(wanted);
     let angle = Math.atan2(b.y - a.y, b.x - a.x); if (angle > Math.PI / 2) angle -= Math.PI; else if (angle < -Math.PI / 2) angle += Math.PI;
     const lift = size * .75, cx = mid.x + Math.sin(angle) * lift, cy = mid.y - Math.cos(angle) * lift;
-    const ex = Math.abs(Math.cos(angle)) * w / 2 + Math.abs(Math.sin(angle)) * size / 2 + 3, ey = Math.abs(Math.sin(angle)) * w / 2 + Math.abs(Math.cos(angle)) * size / 2 + 3;
-    return {cx, cy, angle, box: {left: cx - ex, right: cx + ex, top: cy - ey, bottom: cy + ey}};
+    const chain = [], count = Math.max(1, Math.ceil(w / (size * .9))), half = size / 2 + 2;
+    for (let k = 0; k < count; k++) {
+      const along = (k + .5) / count * w - w / 2, x = cx + Math.cos(angle) * along, y = cy + Math.sin(angle) * along;
+      chain.push({left: x - half, right: x + half, top: y - half, bottom: y + half});
+    }
+    return {cx, cy, angle, size, chain};
   };
-  const write = ({cx, cy, angle, box}) => { boxes.push(box); ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle); text(ctx, string, 0, 0, options); ctx.restore(); };
-  for (const fraction of fractions) {
-    const found = at(fraction), {box} = found;
-    if (box.left < 2 || box.right > view.width - 2 || box.top < 2 || box.bottom > view.height - 2 || boxes.some(other => overlaps(box, other))) continue;
-    write(found); return true;
+  const write = ({cx, cy, angle, size, chain}) => { boxes.push(...chain); ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle); text(ctx, string, 0, 0, {...options, size}); ctx.restore(); };
+  // A place is scored by how many of its boxes touch another name (or fall off the map: that counts for more); a free place scores nothing.
+  let best = null;
+  for (const size of sizes) for (const fraction of fractions) {
+    const found = place(fraction, size);
+    const score = found.chain.reduce((sum, box) => sum + (box.left < 2 || box.right > view.width - 2 || box.top < 2 || box.bottom > view.height - 2 ? 20 : boxes.some(other => overlaps(box, other)) ? 1 : 0), 0);
+    if (score === 0) { write(found); return true; }
+    if (!best || score < best.score) best = {score, found};
   }
-  if (force) write(at(.5));
+  if (force && best) write(best.found);
   return false;
 }
 
@@ -393,8 +417,9 @@ export function drawBigMap(ctx, frame, {width, height}) {
     for (const [dx, dy] of [[0, 0], [0, -64], [0, 64], [-170, 0], [170, 0], [0, -120], [0, 120]])
       if (labelAt(ctx, boxes, label.name.toUpperCase(), at.x + dx, at.y + dy, {size: 32, colour: light ? '#3a3328' : '#cfc3a4', halo: 'transparent', weight: 'bold', spacing: 11, italic: true}, view)) break;
   }
-  textAlong(ctx, view, boxes, marks.river.points, marks.river.name.toUpperCase(), {size: 22, colour: '#b9ac8a', spacing: 7, italic: true, halo: '#14120ee6'}, [.14, .3, .75, .5, .9]);
-  for (const road of marks.roads) textAlong(ctx, view, boxes, road.points, road.name.toUpperCase(), {size: 18, colour: INK.road, spacing: 1.5, halo: '#14120ee6'});
+  // Every road is named, the longest first (it has the most room); the river's name is written where there is room.
+  for (const road of [...marks.roads].sort((a, b) => b.length - a.length)) textAlong(ctx, view, boxes, road.points, road.name.toUpperCase(), {size: 18, colour: INK.road, spacing: 1.5, halo: '#14120ee6'});
+  textAlong(ctx, view, boxes, marks.river.points, marks.river.name.toUpperCase(), {size: 22, colour: '#b9ac8a', spacing: 7, italic: true, halo: '#14120ee6'}, [.14, .3, .75, .5, .9, .2, .6, .4], false);
   ways.forEach((way, index) => {
     const mid = way.points[Math.floor(way.points.length * (.3 + .12 * index))], at = toScreen(view, mid.x, mid.z);
     ctx.beginPath(); ctx.arc(at.x, at.y, 13, 0, Math.PI * 2); ctx.fillStyle = wayColour(index); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = INK.paper; ctx.stroke();

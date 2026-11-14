@@ -26,7 +26,7 @@ const check = (value, message) => { assert.ok(value, message); checks++; };
 const near = (actual, expected, tolerance, message) => { assert.ok(Math.abs(actual - expected) <= tolerance, `${message}: ${actual} is not within ${tolerance} of ${expected}`); checks++; };
 
 // A recording canvas: what is drawn, where, in what order.
-globalThis.Path2D = class { constructor() { this.points = []; } moveTo(x, z) { this.points.push([x, z]); } lineTo(x, z) { this.points.push([x, z]); } };
+globalThis.Path2D = class { constructor() { this.points = []; } moveTo(x, z) { this.points.push([x, z]); } lineTo(x, z) { this.points.push([x, z]); } closePath() {} };
 function recorder() {
   const texts = [], arcs = [], paths = [], rotations = [], translations = [], scales = [], images = [];
   const state = {};
@@ -211,6 +211,12 @@ check(buildMs < 5000, 'the picture is made in a few seconds at the most even on 
   const held = [...knowledge.crossings.values()];
   check(held.length === 1 && held[0].id === 'girder-bridge' && held[0].who === 'Ash Men', 'the crossing it stands at is learnt as held, by the Ash Men');
   check(knowledge.sights.size === 1 && knowledge.sights.get('furnace-skyline').outline.length >= 24, "the furnace's sight is learnt as an outline cut by the ground");
+  // What is learnt is drawn, on both maps: the barricade's cross, the held crossing's ring, the furnace's sight as a hatched outline cut by the ground.
+  for (const [name, draw] of [['small', context => drawSmallMap(context, {picture, canvas: null, car: {x: first.x - 100, z: first.z, heading: 0}, target: null, knowledge, actors: []}, SMALL_MAP)],
+    ['big', context => drawBigMap(context, {picture, canvas: null, car: {x: first.x - 100, z: first.z, heading: 0}, target: null, knowledge, actors: [], ways: []}, {width: 1400, height: 1000})]]) {
+    const rec = recorder(); draw(rec.context);
+    check(rec.paths.length >= picture.marks.roads.length * 2 + 2 + 3, `the ${name} map draws what has been learnt (the sight's outline and hatching are stroked on top of the roads and the river)`);
+  }
   const version = knowledge.version;
   learn(knowledge, {car: far, ...facts, crossings});
   check(knowledge.barricades.size === 1 && knowledge.crossings.size === 1 && knowledge.version === version, 'what has been learnt stays when the car drives away, and nothing changes by looking again');

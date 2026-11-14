@@ -27,7 +27,7 @@ export function spots() {
     {name: 'tin-town-gate', from: at('tin-town', -25, 200), to: at('tin-town', -25, 62)},
   ];
 }
-const SHEET = ['yard', 'east-road', 'girder-bridge', 'salt-pan', 'tin-town-gate'];
+const SHEET_ORDER = ['yard', 'east-road', 'girder-bridge', 'salt-pan', 'tin-town-gate', 'small-1920'];
 
 const click = (context, selector) => context.evaluate(`(() => {
   const button = document.querySelector(${JSON.stringify(selector)});
@@ -124,7 +124,8 @@ export async function run(context) {
   }
 }
 
-// The sheet: for each of the five spots the whole picture (scaled down) beside the small map as it stood on the screen, then the big map at 1280 and at 1920.
+// The sheet (1920 wide): row 1 the whole screen at each of the five spots and the small map at 1920 by 1080; row 2 the small map of each, cut out of the screen at its own
+// size; row 3 the big map for Hot Delivery at 1280 by 720 and at 1920 by 1080. JPEG, 500 KB at most.
 async function makeSheet(context, pictures) {
   const images = [];
   for (const [name, entry] of pictures) {
@@ -134,28 +135,29 @@ async function makeSheet(context, pictures) {
   await context.evaluate(`window.__sheet = {items: []}`);
   for (const item of images) await context.evaluate(`(async () => { const image = new Image(); image.src = 'data:image/png;base64,${item.base64}'; await image.decode(); window.__sheet.items.push({name: ${JSON.stringify(item.name)}, image, panel: ${JSON.stringify(item.panel)}}); })()`);
   const data = await context.evaluate(`(() => {
-    const order = ${JSON.stringify(SHEET)}, items = window.__sheet.items, by = name => items.find(item => item.name === name);
-    const tile = {width: 480, height: 270}, crop = {width: 360, height: 270}, gap = 6, label = 22;
-    const rows = order.length, big = by('big-1280'), width = tile.width + crop.width + gap, rowHeight = tile.height + label;
+    const order = ${JSON.stringify(SHEET_ORDER)}, items = window.__sheet.items, by = name => items.find(item => item.name === name);
+    const columns = order.length, tile = {width: 1920 / columns, height: 1920 / columns * 9 / 16}, label = 20, bigWidth = 960, bigHeight = 540;
+    const crop = {width: tile.width, height: tile.width * 3 / 4};
     const canvas = document.createElement('canvas');
-    canvas.width = width * 2 + gap; canvas.height = rowHeight * 3 + (big ? 0 : 0);
+    canvas.width = 1920; canvas.height = (tile.height + label) + (crop.height + label) + (bigHeight + label);
     const g = canvas.getContext('2d'); g.fillStyle = '#14120e'; g.fillRect(0, 0, canvas.width, canvas.height);
-    const caption = (text, x, y) => { g.fillStyle = '#f2e9d0'; g.font = 'bold 13px sans-serif'; g.fillText(text, x + 6, y + 15); };
+    const caption = (text, x, y) => { g.fillStyle = '#f2e9d0'; g.font = 'bold 12px sans-serif'; g.fillText(text, x + 6, y + 14); };
+    const names = {'small-1920': 'GIRDER BRIDGE, 1920 BY 1080'};
     order.forEach((name, index) => {
-      const item = by(name), col = index % 2, row = Math.floor(index / 2), x = col * (width + gap), y = row * rowHeight;
-      caption('SMALL MAP: ' + name.toUpperCase().replace(/-/g, ' '), x, y);
-      g.drawImage(item.image, x, y + label, tile.width, tile.height);
-      const p = item.panel; g.drawImage(item.image, p.x, p.y, p.width, p.height, x + tile.width + gap, y + label, crop.width, crop.width * p.height / p.width);
+      const item = by(name), x = index * tile.width, label1 = (names[name] ?? name.toUpperCase().replace(/-/g, ' '));
+      caption(label1, x, 0); g.drawImage(item.image, x, label, tile.width - 3, (tile.width - 3) * 9 / 16);
+      const p = item.panel, y2 = tile.height + label;
+      caption('SMALL MAP: ' + label1, x, y2); g.drawImage(item.image, p.x, p.y, p.width, p.height, x, y2 + label, tile.width - 3, (tile.width - 3) * p.height / p.width);
     });
-    const slot = order.length, col = slot % 2, row = Math.floor(slot / 2), x = col * (width + gap), y = row * rowHeight;
-    const wide = by('big-1280');
-    caption('BIG MAP (M), 1280 BY 720', x, y); g.drawImage(wide.image, x, y + label, width, width * 9 / 16);
-    for (let quality = .8; quality >= .35; quality -= .05) { const url = canvas.toDataURL('image/jpeg', quality); if (url.length * .75 <= 480000) return url; }
-    return canvas.toDataURL('image/jpeg', .35);
+    const y3 = tile.height + label + crop.height + label;
+    caption('BIG MAP (M) FOR HOT DELIVERY, 1280 BY 720', 0, y3); g.drawImage(by('big-1280').image, 0, y3 + label, bigWidth - 3, bigHeight);
+    caption('BIG MAP (M), 1920 BY 1080', bigWidth, y3); g.drawImage(by('big-1920').image, bigWidth, y3 + label, bigWidth, bigHeight);
+    for (let quality = .85; quality >= .3; quality -= .05) { const url = canvas.toDataURL('image/jpeg', quality); if (url.length * .75 <= 490000) return url; }
+    return canvas.toDataURL('image/jpeg', .3);
   })()`);
   const buffer = Buffer.from(data.split(',')[1], 'base64');
   if (buffer.length > 500 * 1024) throw Error('The sheet is over 500 KB: ' + buffer.length);
   const target = new URL('../../docs/board/looks/scablands-land/round-7.jpg', import.meta.url);
   await writeFile(target, buffer);
-  return {file: 'docs/board/looks/scablands-land/round-7.jpg', bytes: buffer.length, pictures: [...SHEET, 'big-1280']};
+  return {file: 'docs/board/looks/scablands-land/round-7.jpg', bytes: buffer.length, pictures: [...SHEET_ORDER, 'big-1280', 'big-1920']};
 }
