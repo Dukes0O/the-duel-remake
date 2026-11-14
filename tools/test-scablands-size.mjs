@@ -18,7 +18,7 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {buildEverburn} from '../src/world/jobs/everburn.js';
 import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
 import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
-import {deliveryRoad} from '../src/world/scablands-road.js';
+import {roadNet} from '../src/world/scablands-road.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -52,7 +52,7 @@ test('the land is 14 km by 10 km and its eight places stand ten times as far fro
 test('the ridge and the wall stand at the new edge, as steep as they were', () => {
   const crest = (x, z = 0) => scablandsHeightAt(x, z);
   // Nothing rises in the middle of the land or near the old edge.
-  for (const [x, z] of [[0, 0], [700, 0], [756, 0], [875, 0], [0, 500], [3000, 2000], [6500, 0]]) assert.ok(Math.abs(crest(x, z)) < 4, `flat at ${x}, ${z}: ${crest(x, z).toFixed(1)} m`);
+  for (const [x, z] of [[0, 0], [700, 0], [756, 0], [875, 0], [0, 500], [3500, 1500], [6500, 0]]) assert.ok(Math.abs(crest(x, z)) < 4, `flat at ${x}, ${z}: ${crest(x, z).toFixed(1)} m`);
   // On the east axis the ridge climbs to about 108 m just past 7,000 m and the wall stands 175 m high beyond 7,200 m (as on the old land, in metres).
   assert.ok(crest(7056) > 95 && crest(7056) < 125, `the ridge crest is about 108 m (${crest(7056).toFixed(1)})`);
   assert.ok(crest(7300) > 160, `the wall stands about 175 m high (${crest(7300).toFixed(1)})`);
@@ -160,10 +160,12 @@ const positionsOf = (...piles) => {
   });
   return found;
 };
+// Every node of every road of the net, named like the things in a job (SCABLANDS-LAND round 4, slice 2a).
+const netNodes = land => roadNet(land).roads.flatMap(road => road.nodes.flatMap((node, index) => node.derived ? [] : [{id: `${road.id}-node-${index + 1}`, x: node.x, z: node.z}]));
 const everything = land => {
   const built = buildEverburn(land), paths = gasRunPaths(land);
   return {jobs: built.EVERBURN_JOBS, side: built.EVERBURN_SIDE_JOBS, five: built.SCABLANDS_PLACES, paths, wreck: gasRunWreck(paths.boneyard),
-    marks: furnaceMarks(land), road: deliveryRoad(land), gate: tinTownGateFor(land), wrecks: boneyardWrecks(land), rest: bessRest(land),
+    marks: furnaceMarks(land), named: land.named, net: netNodes(land), gate: tinTownGateFor(land), wrecks: boneyardWrecks(land), rest: bessRest(land),
     rail: ironLineFor(land), solids: scablandsSolids(land)};
 };
 
@@ -193,7 +195,7 @@ test('moving a place in a copy of the table moves everything that belongs to it,
   for (const id of ['everburn', 'boneyard', 'dead-mall', 'yard-gate', 'ridge-rocks']) if (before.has(id)) assert.deepEqual(after.get(id), before.get(id), `${id} stays`);
   // A point on the way moves by a share of the way: the halfway camp, between the yard (which never moves) and the Boneyard.
   const camp = LAND.at('safe-road'), campMoved = createLand(movedTable(SCABLANDS_PLACES, 'boneyard', ...delta)).at('safe-road');
-  assert.ok(Math.abs((campMoved.x - camp.x) - .526 * 123) < 1e-9 && Math.abs((campMoved.z - camp.z) + .526 * 77) < 1e-9, 'the halfway camp moves .526 of the way with the Boneyard');
+  assert.ok(Math.abs((campMoved.x - camp.x) - .47 * 123) < 1e-9 && Math.abs((campMoved.z - camp.z) + .47 * 77) < 1e-9, 'the halfway camp moves .47 of the way with the Boneyard');
   // The solids, the wrecks, Big Bess's rest, the gate's posts and the shacks of Tin Town follow their places.
   const solidsBefore = scablandsSolids(LAND), solidsAfter = scablandsSolids(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta)));
   assert.equal(solidsAfter.length, solidsBefore.length);
@@ -216,7 +218,7 @@ test('moving a place in a copy of the table moves everything that belongs to it,
 });
 
 test('no file that places a thing in the land holds a bare coordinate of it', () => {
-  const files = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/furnace-sightings.js', 'src/world/scablands-road.js',
+  const files = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/furnace-sightings.js', 'src/world/scablands-road.js', 'src/world/scablands-regions.js', 'src/world/scablands-draw.js', 'src/world/scablands-road-geometry.js',
     'src/world/tin-town-gate.js', 'src/world/tin-town-shacks.js', 'src/world/boneyard-wrecks.js', 'src/world/iron-line.js', 'src/world/regions.js'];
   for (const file of files) {
     const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n');

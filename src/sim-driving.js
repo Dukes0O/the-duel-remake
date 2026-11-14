@@ -6,6 +6,7 @@ import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAtt
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
+import { scablandsDriveAt } from './world/scablands-regions.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
@@ -32,9 +33,19 @@ export function _roadGrip(distance, lateral, car = this.car, tyre) {
 
 export function _drivingSurface(distance, lateral, car = this.car, hasContact = true, tyre) {
   const floor = this.state.arena && this.course.def.scrapdome;
-  if (floor) return { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
-    boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
-    scrub: floor.floorScrub, roughness: floor.floorRoughness };
+  if (floor) {
+    const surface = { ...this._surface(distance, lateral), road: true, mainRoad: false, preparedGravel: true,
+      boostAllowed: true, traction: floor.floorTraction, speedLimit: arenaFloorSpeed(floor, car.topSpeed),
+      scrub: floor.floorScrub, roughness: floor.floorRoughness };
+    if (!this.course.def.scablands) return surface;
+    // The Scablands floor drives by region (SCABLANDS-LAND round 4, slice 2a, src/world/scablands-regions.js): the region's share
+    // of the floor's top speed (the salt pan's is above 1, up to the car's own top speed), its grip, drag and shake. Every other
+    // venue keeps the one floor it has.
+    const at = this.course.worldAt(distance, lateral), ground = scablandsDriveAt(at.x, at.z);
+    surface.traction = ground.grip; surface.speedLimit = Math.min(car.topSpeed, surface.speedLimit * ground.top);
+    surface.scrub = ground.scrub; surface.roughness = ground.roughness; surface.region = ground;
+    return surface;
+  }
   const hidden = car === this.car && onHiddenRoad(this.course, { s: distance, lateral });
   const surface = hidden ? { ...this._surface(distance, lateral), road: true, mainRoad: false } : this._surface(distance, lateral);
   const preparedGravel = hidden || surface.road && !surface.mainRoad && (this.course.def.offroad || !!surface.shortcutId);
@@ -176,6 +187,17 @@ export function _drive(dt) {
   // water and their entry latch until the tyres have ground contact.
   const surface = this._drivingSurface(s.s, s.lateral, car, !s.airborne);
   if (nitroSpeedShare > 1) surface.speedLimit *= nitroSpeedShare;
+  if (surface.region) {
+    // The ground a Scablands car is on: the camera shakes with it and the dust takes its colour (the renderer reads these), and a
+    // change of ground is a sound cue (src/audio.js), at most one in half a second so that an edge never chatters.
+    const ground = surface.region;
+    s.groundShake = ground.shake; s.groundDust = ground.dust; s.groundRegion = ground.id;
+    if (this._ground?.course !== this.course) this._ground = { course: this.course, cue: null, at: -Infinity };
+    if (this._ground.cue !== ground.cue && s.stageTimeSec - this._ground.at >= .5) {
+      if (this._ground.cue !== null) this.emit({ groundChanged: { id: ground.id, soft: ground.soft, cue: ground.cue, speedMph: s.speedMph } });
+      this._ground.cue = ground.cue; this._ground.at = s.stageTimeSec;
+    }
+  }
   const mud = surface.mud || 0, waterDepth = surface.waterDepth || 0;
   const surfaceEntrySpeed = Math.abs(s.speedMph);
   const wasInWater = (s.waterDepth || 0) >= .05;

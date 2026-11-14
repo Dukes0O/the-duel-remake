@@ -4,20 +4,22 @@ import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
-import {createNearGround,nearGroundHeightAt as nearGroundHeightFor,NEAR_GROUND} from './near-ground.js';
+import {createNearGround,NEAR_GROUND} from './near-ground.js';
+import {createGroundLook,createRoadLook} from './scablands-ground-look.js';
+import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings} from './scablands-draw.js';
+import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
-import {createScrapWear,createGroundLook,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
+import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,tinTownGateFor,TIN_TOWN_GATE} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST,boneyardWrecks} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createEverburnProps} from './everburn-props.js';
-import {DELIVERY_ROAD} from './scablands-road.js';
 import {createBraziers,brazierSpot} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -92,7 +94,7 @@ function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
   const positions=new Float32Array((cellsX+1)*(cellsZ+1)*3),indices=[];
   for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
     const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ,at=(iz*(cellsX+1)+ix)*3;
-    positions[at]=x;positions[at+1]=scablandsSurfaceHeightAt(x,z,groundEdit)-COARSE_LOWER;positions[at+2]=z;
+    positions[at]=x;positions[at+1]=plainHeightAt(x,z,groundEdit)-COARSE_LOWER;positions[at+2]=z;
     if(ix<cellsX&&iz<cellsZ){const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;indices.push(a,c,b,b,c,d);}
   }
   const geometry=new THREE.BufferGeometry();
@@ -114,45 +116,10 @@ function withHole(material,hole){
   return material;
 }
 
-// The detailed ground as drawn at (x, z), for a thing laid on the ground there (the road ribbon): see near-ground.js.
-const nearGroundHeightAt=(x,z)=>nearGroundHeightFor(x,z,(px,pz)=>scablandsSurfaceHeightAt(px,pz));
-
-// Where the ground drops away steeply the ribbon takes the lowest drawn ground within 1.5 m of a point, so that its edge
-// is tucked into the slope there and never stands out from it.
-function roadHeightAt(x,z){
-  let low=nearGroundHeightAt(x,z);
-  for(const [dx,dz] of [[1.5,0],[-1.5,0],[0,1.5],[0,-1.5]])low=Math.min(low,nearGroundHeightAt(x+dx,z+dz));
-  return low-.025+ROAD_LIFT;
-}
-
-// The dirt road: a ribbon laid flat along the oval the drivers follow, 1.2 times the road's half width to each side,
-// built from cross-sections of twenty points that each lie 6 cm above the ground at their own place. Two ruts run
-// along it as slightly darker strips (vertex colour), and the ground look is drawn over the whole.
-const ROAD_SECTIONS=384,ROAD_LIFT=.06,ROAD_REACH=1.2;
-const ROAD_ACROSS=Object.freeze([-1,-.94,-.88,-.76,-.64,-.50,-.40,-.33,-.26,-.10,.10,.26,.33,.40,.50,.64,.76,.88,.94,1]);
-const ROAD_RUT=Object.freeze([1,1,1,1,1,1,1,.68,1,1,1,1,.68,1,1,1,1,1,1,1]);
-function roadRibbon(){
-  const {frameRadiusX:rx,frameRadiusZ:rz,roadHalfWidth}=SCABLANDS_LAYOUT,reach=roadHalfWidth*ROAD_REACH,across=ROAD_ACROSS.length;
-  const positions=[],colours=[],indices=[];
-  for(let section=0;section<ROAD_SECTIONS;section++){
-    const angle=section/ROAD_SECTIONS*Math.PI*2,cx=Math.cos(angle)*rx,cz=Math.sin(angle)*rz;
-    // The line's outward normal: the oval's gradient.
-    const nx=Math.cos(angle)*rz,nz=Math.sin(angle)*rx,length=Math.hypot(nx,nz);
-    for(let point=0;point<across;point++){
-      const x=cx+nx/length*ROAD_ACROSS[point]*reach,z=cz+nz/length*ROAD_ACROSS[point]*reach;
-      positions.push(x,roadHeightAt(x,z),z);colours.push(ROAD_RUT[point],ROAD_RUT[point],ROAD_RUT[point]);
-    }
-    const next=(section+1)%ROAD_SECTIONS;
-    for(let point=0;point<across-1;point++){
-      const a=section*across+point,b=a+1,c=next*across+point,d=c+1;
-      indices.push(a,c,b,b,c,d);
-    }
-  }
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
-  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colours,3));geometry.setIndex(indices);geometry.computeVertexNormals();
-  return geometry;
-}
+// The ground as the ground meshes draw it: the land's own height with the dry river's cut put back. The river's gorge is drawn by its own
+// ribbons (src/world/scablands-draw.js) and the ground is not drawn where the river is, so the ground's meshes stay smooth and the gorge
+// keeps its steep banks at any distance.
+const plainHeightAt=(x,z,groundEdit=scablandsGroundEdit)=>scablandsSurfaceHeightAt(x,z,groundEdit)+riverDepthAt(x,z);
 
 // The mast stands at the Iron Line, 1 m west of its place. Its parts are placed from the mast's own origin, so the mast is moved as one.
 function radioMast(group){
@@ -524,16 +491,19 @@ export function createScablandsScene(course,options={}){
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
-  const groundLook=createGroundLook({road:DELIVERY_ROAD});
+  // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
+  const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
+  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
-  const roadMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x594b39,roughness:1,vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  const roadMaterial=createRoadLook().apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
   const nearHole={value:new THREE.Vector4(0,0,0,0)};
   const coarseMaterial=withHole(groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1})),nearHole);
-  const near=createNearGround({material:groundMaterial,heightAt:(x,z)=>scablandsSurfaceHeightAt(x,z,scablandsGroundEdit)});
+  const near=createNearGround({material:groundMaterial,heightAt:(x,z)=>plainHeightAt(x,z)});
   // The hole is a metre smaller each way than the window, so that the coarse ground (which stands a little lower) is never seen through a gap.
   const placeNearGround=(x,z)=>{
     if(!near.follow(x,z))return;
@@ -545,10 +515,15 @@ export function createScablandsScene(course,options={}){
   const digTexture=typeof document==='undefined'?null:new THREE.TextureLoader().load('/assets/textures/dig-dirt.png');
   if(digTexture)digTexture.colorSpace=THREE.SRGBColorSpace;
   const digFx=createDigFx({group,atlasTexture:digTexture,seed:course.seed});
-  // A broad flat dirt ribbon follows the stable oval frame used by driving and never changes the shared terrain height
-  // function: every point of it takes the ground's height at its own place.
-  const road=new THREE.Mesh(roadRibbon(),roadMaterial);
-  road.name='Scablands dirt road';road.receiveShadow=true;ground.add(road);
+  // The road net as flat ribbons laid on the ground (never changing a height a car touches), the dry river's gorge, and the Girder Bridge
+  // and the Pipe over it. Each is built in pieces of about a kilometre when the player nears it (src/world/scablands-draw.js).
+  const roads=createRoadsDraw({plainAt:plainHeightAt,material:roadMaterial});ground.add(roads.group);
+  const gorge=createRiverDraw({plainAt:plainHeightAt,material:gorgeMaterial});ground.add(gorge.group);
+  const crossings=createCrossings({plainAt:plainHeightAt,material:(crossing,mesh)=>{
+    const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.82,metalness:.3}),wear=createScrapWear({paint:1,dust:0x6b5a44,dustTop:3});
+    wear.uniforms.uScrapInverse.value.makeTranslation(mesh.position.x,mesh.position.y,mesh.position.z).invert();return wear.apply(material);
+  }});group.add(crossings.group);
+  roads.update(0,0);gorge.update(0,0);crossings.update(0,0);
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
@@ -726,7 +701,7 @@ export function createScablandsScene(course,options={}){
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
         tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=nearTinTown;
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
-        road.visible=Math.hypot(here.x,here.z)<DRAW_RANGE+SCABLANDS_LAYOUT.frameRadiusX;
+        roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
@@ -827,7 +802,7 @@ export function createScablandsScene(course,options={}){
   function dispose(){
     if(retired)return;retired=true;
     stopOpenMarkWatch();
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
@@ -848,7 +823,7 @@ export function createScablandsScene(course,options={}){
   group.userData.updateGroundView=()=>{
     const changed=editedGround.update();
     if(changed){const geometry=makeCoarseGround(coarseMaterial,scablandsGroundEdit).geometry;const old=far.geometry;far.geometry=geometry;old.dispose();
-      const previousRoad=road.geometry;road.geometry=roadRibbon();previousRoad.dispose();}
+      roads.refresh();gorge.refresh();}
     return changed;
   };
   const refreshOpenMarks=marks=>{
@@ -860,7 +835,7 @@ export function createScablandsScene(course,options={}){
     editedGround.dispose();
     editedGround=createGroundView({group:ground,groundEdit:scablandsGroundEdit,material:editedMaterial});
     editedGround.update();
-    const previousRoad=road.geometry;road.geometry=roadRibbon();previousRoad.dispose();
+    roads.refresh();gorge.refresh();
     whites?.dispose();
     if(whites?.group.parent)whites.group.parent.remove(whites.group);
     whites=createTheWhitesScene({openMarks,loadAsset});

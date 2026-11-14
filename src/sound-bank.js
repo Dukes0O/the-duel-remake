@@ -611,6 +611,19 @@ export const SOUND_BANK = {
     layers: [noise(2600, .16, .5, 'highpass'), tone(1400, .1, .15, 'triangle', 0, 900)]}),
   'world.ember.out': cue('impacts', {priority: 78, limit: 1, volume: .6,
     layers: [{...noise(900, .9, .6, 'lowpass'), endFrequency: 200, attack: .02}, tone(180, .7, .25, 'sine', 0, 70)]}),
+  // SCABLANDS-LAND round 4, slice 2a: the sound of driving on to a new ground in the Scablands (src/world/scablands-regions.js names one
+  // cue for each ground; src/audio.js plays it when the car's ground changes, scaled by its speed). Nothing new is recorded: the rough
+  // grounds reuse the recorded crashes and the muddy hollow's mud, and the others are the same kind of filtered noise the crush and the
+  // landing are made of.
+  'world.ground.road': cue('vehicle', {filter: ['lowpass', 900], duration: .2, tail: .25, noiseVolume: .14, priority: 40, limit: 2, layers: [tone(82, .2, .05, 'sine', 0, 60)]}),
+  'world.ground.flats': cue('vehicle', {filter: ['bandpass', 720], duration: .22, tail: .26, noiseVolume: .18, priority: 40, limit: 2, layers: [tone(145, .18, .04, 'triangle', 0, 80)]}),
+  'world.ground.salt-pan': cue('vehicle', {filter: ['highpass', 1800], duration: .3, tail: .3, noiseVolume: .12, priority: 40, limit: 2, layers: [tone(1400, .12, .02, 'triangle', 0, 900)]}),
+  'world.ground.scab-plates': cue('impacts', {buffersFrom: 'vehicle.crash.recorded', volume: 1.1, priority: 62, limit: 2, farCutoff: 1200, layers: [tone(70, .3, .16, 'sine', 0, 36)]}),
+  'world.ground.river-bed': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.1, priority: 52, limit: 2, layers: [tone(110, .2, .05, 'sine', 0, 70)]}),
+  'world.ground.river-soft': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 2, priority: 60, limit: 2, layers: [tone(90, .3, .08, 'sine', 0, 45)]}),
+  'world.ground.sand': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.3, priority: 52, limit: 2, layers: [tone(100, .25, .06, 'sine', 0, 60)]}),
+  'world.ground.wreck-fields': cue('vehicle', {filter: ['bandpass', 2400], duration: .18, tail: .2, noiseVolume: .2, priority: 45, limit: 2, layers: [tone(1100, .1, .04, 'square', 0, 500)]}),
+  'world.ground.burn': cue('vehicle', {filter: ['lowpass', 500], duration: .3, tail: .35, noiseVolume: .2, priority: 45, limit: 2, layers: [tone(60, .3, .08, 'sine', 0, 40)]}),
   'world.ember.scoop': cue('interface', {priority: 70, limit: 1, volume: .5,
     layers: [{...noise(500, .5, .5, 'lowpass'), endFrequency: 1800, attack: .3}, tone(220, .5, .2, 'triangle', .05, 440)]}),
   'arena.toll-gate': cue('impacts', {

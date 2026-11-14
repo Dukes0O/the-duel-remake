@@ -916,7 +916,9 @@ export function attachRenderer(host, app) {
         camTarget.y=Math.max(camTarget.y,course.groundAt(near.s,near.lateral).y+.65);
       }
       camera.fov = THREE.MathUtils.damp(camera.fov, 55 + Math.min(speed / 200, 1) * 10 + (st.boosting ? 7 : 0) + impact * 7, 4, dt);
-      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + (avalancheView?summitAvalancheShake(st):0);
+      // Scab rock and the river bed shake the camera, more the faster the car goes (SCABLANDS-LAND round 4, slice 2a: the sim names the ground's shake in metres, src/world/scablands-regions.js).
+      const groundShake = menu ? 0 : (st.groundShake || 0) * Math.min(1, (speed / 70) ** 1.4);
+      const shake = impact * (st.impactStrength || 0) * .34 + rough * Math.min(speed / 100, 1) * .10 + groundShake + (avalancheView?summitAvalancheShake(st):0);
       camTarget.x += Math.sin(motionTime * 81) * shake;
       camTarget.y += Math.cos(motionTime * 93) * shake * .62;
       if(st.catastrophic){

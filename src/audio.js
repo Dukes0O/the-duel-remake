@@ -1990,6 +1990,10 @@ export class EngineAudio {
     if (ev.arenaRespawn) this._playCue('arena.respawn');
     if (ev.arenaWreck?.creditedId === 'player')
       this._playCue('arena.wreck-credit');
+    if (ev.groundChanged)
+      this._playCue(ev.groundChanged.cue, {
+        scale: clamp(0.4 + Math.abs(Number(ev.groundChanged.speedMph) || 0) / 90, 0.4, 1.4),
+      });
     if (ev.muddyHollowSplash)
       this._playCue('world.muddy-hollow-splash', {
         scale: clamp(

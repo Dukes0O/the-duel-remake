@@ -12,22 +12,44 @@ import {SCABLANDS_PLACES} from './scablands.js';
 const YARD = Object.freeze({id: 'yard', name: 'The Yard', x: 0, z: 0});
 const point = (x, z) => Object.freeze({x, z});
 
-// Named points that are not places but that more than one job names: the halfway camp on the way from the yard to the
-// Boneyard (job 1's safe point, the escort's road, the furnace's way home). Each is a share of the way between two places
-// plus an offset, like any other point.
+// Named points that are not places but that more than one thing names: the halfway camp on the East Road (job 1's safe point, the
+// escort's road, the furnace's way home), the Ash Men's two barricades on that road, the nodes of the dry river and the five
+// places where it can be crossed. Each is a share of the way between two places or points that come earlier in this list, plus an
+// offset, like any other point (`to` left out means the point is the offset from `from`).
+const named = (id, name, from, to, share, dx = 0, dz = 0) => Object.freeze({id, name, from, to, share, dx, dz});
 const NAMED_POINTS = Object.freeze([
-  Object.freeze({id: 'safe-road', name: 'The halfway camp', from: 'yard', to: 'boneyard', share: .526, dx: 7.06, dz: -9.84}),
-  // The Ash Men's two barricades on the way, near the start and near the Boneyard.
-  Object.freeze({id: 'ash-barricade-1', name: 'First barricade', from: 'yard', to: 'boneyard', share: .392, dx: 13.76, dz: -19.19}),
-  Object.freeze({id: 'ash-barricade-2', name: 'Second barricade', from: 'yard', to: 'boneyard', share: .873, dx: 39.76, dz: -55.45}),
+  // The dry river (SCABLANDS-LAND round 4, slice 2a): from the Dry Dam's spillway, along the yard's north side, south between the yard
+  // and Tin Town, out by the south side east of the Dead Mall. Eleven nodes; the bed is 120 m wide.
+  named('river-0', 'The river head', 'dry-dam', 'ridge', 0.035, 5, 40),
+  named('river-1', 'River bend 1', 'dry-dam', 'tin-town', 0.162, -20, 50),
+  named('river-2', 'River bend 2', 'ships-in-sand', 'everburn', 0.316, 140, 80),
+  named('river-3', 'River bend 3', 'dry-dam', 'tin-town', 0.452, 10, -35),
+  named('river-4', 'River bend 4', 'boneyard', 'ships-in-sand', 0.608, 140, -75),
+  named('river-5', 'River bend 5', 'dead-mall', 'ridge', 0.672, 50, 30),
+  named('river-6', 'River bend 6', 'tin-town', 'everburn', 0.256, -80, -280),
+  named('river-7', 'River bend 7', 'dead-mall', 'tin-town', 0.536, -215, -295),
+  named('river-8', 'River bend 8', 'boneyard', 'everburn', 0.217, 0, -140),
+  named('river-9', 'River bend 9', 'boneyard', 'dead-mall', 0.56, 135, 455),
+  named('river-10', 'The river mouth', 'boneyard', 'dead-mall', 0.601, 240, 805),
+  // The five crossings, each a share of the way along one stretch of the river.
+  named('girder-bridge', 'The Girder Bridge', 'river-5', 'river-6', .818),
+  named('the-steps', 'The Steps', 'river-5', 'river-6', .318),
+  named('the-wash', 'The Wash', 'river-7', 'river-8', .5),
+  named('the-pipe', 'The Pipe', 'river-3', 'river-4', .43),
+  named('south-ford', 'The South Ford', 'river-8', 'river-9', .615),
+  // The halfway camp, on the East Road's straight stretch between the yard and the bend before the Girder Bridge.
+  named('safe-road', 'The halfway camp', 'yard', 'boneyard', .47, 8, -330),
+  // The Ash Men's two barricades stand on the East Road: the first before the bridge, the second after it.
+  named('ash-barricade-1', 'First barricade', 'safe-road', 'girder-bridge', .8484, 10.59, 16.2),
+  named('ash-barricade-2', 'Second barricade', 'girder-bridge', 'tin-town', .2862, -41.22, -383.88),
 ]);
 
 export function createLand(table = SCABLANDS_PLACES) {
   const rows = new Map([[YARD.id, YARD], ...table.map(row => [row.id, row])]);
-  for (const named of NAMED_POINTS) {
-    const a = rows.get(named.from), b = rows.get(named.to);
-    rows.set(named.id, Object.freeze({id: named.id, name: named.name,
-      x: a.x + (b.x - a.x) * named.share + named.dx, z: a.z + (b.z - a.z) * named.share + named.dz}));
+  for (const point of NAMED_POINTS) {
+    const a = rows.get(point.from), b = point.to ? rows.get(point.to) : a, share = point.to ? point.share : 0;
+    rows.set(point.id, Object.freeze({id: point.id, name: point.name,
+      x: a.x + (b.x - a.x) * share + point.dx, z: a.z + (b.z - a.z) * share + point.dz}));
   }
   const row = id => {
     const found = rows.get(id);
@@ -36,6 +58,8 @@ export function createLand(table = SCABLANDS_PLACES) {
   };
   return Object.freeze({
     table, yard: YARD,
+    // The named points that are not places (the river's nodes, the crossings, the halfway camp, the barricades), each {id, name, x, z}.
+    named: Object.freeze(NAMED_POINTS.map(point => rows.get(point.id))),
     place: row,
     // The place's own position plus an offset (east, south) in metres.
     at: (id, dx = 0, dz = 0) => point(row(id).x + dx, row(id).z + dz),

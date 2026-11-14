@@ -14,7 +14,7 @@ import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
-import {onScablandsRoad} from '../../world/scablands-road.js';
+import {scablandsDriveAt} from '../../world/scablands-regions.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 
 const position = (duel, actor) => {
@@ -629,13 +629,13 @@ export function stepWorldJob(duel, dt) {
       {share: pathShare(actor.position, actor.pathIndex, currentStep.path).share} : {})})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
-  // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, whether it is on a road, and the speed it shed in
+  // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, the speed the ground under it is safe at (its region, src/world/scablands-regions.js), and the speed it shed in
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   const hitKmh = Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0;
   worldJob.lastKmh = kmh;
   const view = {player: playerView, onFoot: !!state.onFoot,
-    speedKmh: kmh, hitKmh, onRoad: onScablandsRoad(point.x, point.z),
+    speedKmh: kmh, hitKmh, safeKmh: scablandsDriveAt(point.x, point.z).safeKmh,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,

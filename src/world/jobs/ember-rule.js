@@ -1,17 +1,18 @@
 // The ember in Cinder's open pot (EVERBURN-REMAKE, Hot Delivery). Pure rules, repeatable from the same inputs, with no
 // graphics: the carry step (steps/carry.js) feeds it what the car did this step and keeps the result in its step state.
-// The pot holds an ember from 100 down to 0. Cold takes a little all the time, rough ground taken fast takes more, and a
-// hard hit takes a lot at once. At 0 the pot is out and must be relit at a brazier.
+// The pot holds an ember from 100 down to 0. Cold takes a little all the time, ground taken faster than it is safe takes more, and a
+// hard hit takes a lot at once. At 0 the pot is out and must be relit at a brazier. How fast a ground is safe is the ground's own
+// (src/world/scablands-regions.js: any speed on a road, the salt pan and the sand, 90 km/h on the flats, 70 in the river bed, 50 on
+// the scab plates), and the carry step reads it for the point the car is on.
 export const MPH_TO_KMH = 1.609344;
 
 export const EMBER_RULE = Object.freeze({
   start: 100,
-  // SCABLANDS-LAND round 4: 0.33 (full to dead in about five minutes) made Hot Delivery impossible for a driver who goes straight at the marker over
-  // rock, now that Tin Town is 6 km away (the straight drive takes 610 s at the free speed; the child-pace Easy driver finished 0 of 4 at 0.2 and 4 of 4
-  // at 0.15). Full to dead in about eleven minutes with no jolts. Listed for Claude, who sets the play numbers.
-  coldPerSecond: 0.15,
-  roughPerMetre: 0.003,       // on rock: 0.003 for each km/h over the free speed, for each metre driven (so going faster always costs more a metre)
-  roughFreeKmh: 50,           // rock is safe up to this speed
+  // SCABLANDS-LAND round 4, slice 2a: 0.14 a second (full to dead in about twelve minutes with no jolts). A clean drive along the East Road
+  // (7.7 km, about three minutes) arrives bright; the straight drive across the scab plates held at 50 km/h takes about seven minutes and
+  // arrives alive; a car that never passes 30 km/h goes out before Tin Town by any way (6 km takes it twelve minutes).
+  coldPerSecond: 0.14,
+  roughPerMetre: 0.003,       // ground driven faster than it is safe: 0.003 for each km/h over the safe speed, for each metre driven (so going faster always costs more a metre)
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing
   hitPerKmh: 1.5,             // ember taken for each km/h shed in a hit
   easyScale: 0.5,             // on Easy, rough ground and hits take half; cold is the same
@@ -20,12 +21,13 @@ export const EMBER_RULE = Object.freeze({
   pay: Object.freeze({bright: 120, alive: 80, barely: 50, afterRelight: 80}),
 });
 
-// What one step of driving takes from the pot. `kmh` is the car's speed, `lostKmh` the speed it shed in this step, `onRoad`
-// whether it is on a road. Returns the ember taken by each cause (cold, rough ground, a hit) and the total.
-export function emberLoss(rule, {kmh = 0, lostKmh = 0, onRoad = false, difficulty = 'medium', dt = 0} = {}) {
+// What one step of driving takes from the pot. `kmh` is the car's speed, `lostKmh` the speed it shed in this step, `safeKmh` the speed
+// the ground under the car is safe at (Infinity when it takes nothing at any speed). Returns the ember taken by each cause (cold, rough
+// ground, a hit) and the total.
+export function emberLoss(rule, {kmh = 0, lostKmh = 0, safeKmh = Infinity, difficulty = 'medium', dt = 0} = {}) {
   const scale = difficulty === 'easy' ? rule.easyScale : 1;
   const cold = rule.coldPerSecond * dt;
-  const rough = onRoad ? 0 : rule.roughPerMetre * Math.max(0, kmh - rule.roughFreeKmh) * (kmh / 3.6) * dt * scale;
+  const rough = rule.roughPerMetre * Math.max(0, kmh - safeKmh) * (kmh / 3.6) * dt * scale;
   const hit = lostKmh > rule.hitFreeKmh ? rule.hitPerKmh * lostKmh * scale : 0;
   return {cold, rough, hit, total: cold + rough + hit};
 }

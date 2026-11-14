@@ -1,22 +1,9 @@
-import {SCABLANDS_LAYOUT} from './scablands.js';
+import {SCABLANDS_PLACES} from './scablands.js';
+import {ROAD_HALF_WIDTH,ROAD_NET,distanceToNet} from './scablands-road.js';
 import {createGroundEdit} from './ground-edit.js';
 import {cutAt,regionAt,regionNaturalHeightAt} from './regions.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
-const {frameRadiusX:rx,frameRadiusZ:rz,roadHalfWidth}=SCABLANDS_LAYOUT;
-
-function ellipseClosest(x,z){
-  let angle=Math.atan2(z/rz,x/rx);
-  for(let i=0;i<5;i++){
-    const c=Math.cos(angle),s=Math.sin(angle),px=rx*c,pz=rz*s;
-    const dx=-rx*s,dz=rz*c;
-    const step=((x-px)*dx+(z-pz)*dz)/(dx*dx+dz*dz);
-    angle+=clamp(step,-.22,.22);
-  }
-  const px=rx*Math.cos(angle),pz=rz*Math.sin(angle);
-  return {distance:Math.hypot(x-px,z-pz),x:px,z:pz,angle};
-}
-
 let scablandsOpenMarks=new Set();
 const openMarkListeners=new Set();
 
@@ -91,11 +78,12 @@ export function scablandsSurfaceAt(x,z){
     const t=clamp(((x-segment.a.x)*dx+(z-segment.a.z)*dz)/(dx*dx+dz*dz||1));
     if(Math.hypot(x-segment.a.x-t*dx,z-segment.a.z-t*dz)<=segment.halfWidth){townRoad=true;break;}
   }
-  const nearest=ellipseClosest(x,z),roadCut=cutAt(x,z,scablandsOpenMarks);
+  const roadCut=cutAt(x,z,scablandsOpenMarks);
   const whites=regionAt(x,z,scablandsOpenMarks)?.id==='the-whites';
   const saltCut=roadCut?.id==='whites-cut';
-  const road=nearest.distance<=roadHalfWidth||townRoad||roadCut!==null;
-  return {road,mainRoad:false,shortcutId:null,roadHalfWidth,
+  // A road of the net (src/world/scablands-road.js), a town road or the Whites' cut.
+  const road=ROAD_NET.nearest(x,z)!==null||townRoad||roadCut!==null;
+  return {road,mainRoad:false,shortcutId:null,roadHalfWidth:ROAD_HALF_WIDTH,
     preparedGravel:road&&!whites&&!saltCut,mud:0,waterDepth:0,gripKind:whites||saltCut?'salt':'gravel'};
 }
 
@@ -105,4 +93,5 @@ export function scablandsRoadPoint(placeIndex){
   return SCABLANDS_PLACES[placeIndex];
 }
 
-export function scablandsRoadDistance(x,z){return ellipseClosest(x,z).distance;}
+// Distance in metres to the nearest road of the net, searched everywhere (for a check, not for a frame).
+export function scablandsRoadDistance(x,z){return distanceToNet(x,z);}
