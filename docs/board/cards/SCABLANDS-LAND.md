@@ -262,6 +262,175 @@ suites, and the replay fingerprints of those jobs. None of that is in the game f
 3. **Beside the roads:** the seeded things and the hand-placed ones. A look round, sheet to Kyle.
 4. **The map:** the big and small maps redrawn from the same road and ground data.
 
+### Slice 1 result (a Sonnet helper; reviewed by Claude, 14 November 2026): merged, switches off
+
+The land is 14 km by 10 km. The eight places stand ten times as far from the yard; the ridge and
+wall keep their size at the new edge. Full note: `docs/changes/SCABLANDS-LAND.md`, "Round 4
+slice 1".
+
+- **The unknown in item 1 is answered.** The oval that a car's position is kept against needs no
+  change in size, and no other arena and no car physics changed. One fault was found and fixed:
+  the oval's length (3,290 m) was not a whole number of its 8 m steps, which put a far car up to
+  22 m off; it is 3,288 m now. The floor is widened to 9,000 m for this land only.
+- **Item 7 was wrong.** The Home Yard that players have is the Scrapdome yard of the Hidden Road
+  and is not drawn from this scene. Nothing a player can reach changed.
+- **Places by name.** `src/world/scablands-names.js`; a check moves each place in a copy of the
+  table and sees that what belongs to it follows, and a scan forbids a bare position in the job,
+  scene and road files.
+- **Drawn near.** One window of detailed ground (1,400 m by 1,000 m) follows the player on a
+  fixed lattice; coarse ground covers the rest; places are drawn within 1,800 m.
+
+Seen by Claude in a visible browser window (scenario `scablands-size`, Performance, five spots
+from the yard to Tin Town's gate): the ground is continuous, no edge of the window shows, Tin
+Town is seen from a kilometre off and reads at its gate. Frame times there were 18.1 to 18.3 ms
+p95 with 128 to 277 draw calls and 183,000 to 273,000 triangles, another job running, so this is
+a guide and not a frame check. A frame check under rule 8 is owed before any of this is shown to
+a player (rule 9: nothing here can be reached); the nightly check times the Scablands.
+
+Claude did not drive it in real time: the app's own browser pane was hidden and the game in it
+would not load. A check drives the 6 km at 100 mph with no jump. Kyle's try, and Claude's drive
+in a window, come with the next slice, when there is something on the land to drive round.
+
+Seen and for the next slices: the ground's cracks repeat as a visible grid a few hundred metres
+ahead; the far ridge is a flat blue shape; the old dirt ring lies round the yard as a dark band
+and joins nothing; the delivery road bends by 80 degrees between legs kilometres long; at the
+ridge's foot the coarse ground stands a few metres off the detailed ground.
+
+**Changed assertions, reviewed by Claude (rule 18).** About 80, listed by suite in the change
+note. Each is a position, length or time that moved because the land grew, re-recorded as a
+claim of the same kind from the land's own names. None is loosened, with these judged one by one:
+- The big map may leave "TIN TOWN" off in job 2 where the lamps lie within four pixels of it.
+  Accepted until slice 4 redraws the maps; the two exemptions go then.
+- The scripted drivers' time limits were raised (a limit on the driver, not a claim about the
+  game).
+- `test-ember-pot`: a fast drive on the delivery road now arrives alive, not bright. Accepted for
+  this slice only. The rule Claude wants is the opposite and is set in slice 2 (below).
+
+**Numbers left long, on purpose.** The furnace's chase is 43 minutes, its bolt after a hit is 8
+minutes of nothing, and Big Bess's drive is 23 to 34 minutes. Those belong to jobs 4 to 6 and
+the gas runs, all hidden. Each is set when its job is remade on the finished land, not now.
+
+**Older browser scenarios.** Six still put the car at the old land's positions (`everburn-ember`,
+`everburn-frames`, `everburn-well`, `run-gas`, `field-battle`, `everburn-side-jobs`). See "Open"
+at the end of this round.
+
+### Slice 2 design (Claude, 14 November 2026)
+
+East is +x and south is +z. Positions below are a first drawing in metres from the yard; the
+builder writes each as a share between named places, and may move a point by up to 200 m to make
+a road run well.
+
+**What is wrong in the driving today.** In the Scablands every metre of ground drives the same:
+the game gives one grip and one top speed for the whole floor (`_drivingSurface` in
+`src/sim-driving.js`), about 185 km/h for the fastest car. A road is only a colour. So no route
+can be better than a straight line.
+
+**The dry river divides the land.** It runs from the Dry Dam east past the yard's north side,
+turns south between the yard and Tin Town, and leaves by the south edge east of the Dead Mall:
+(-4240, -3040), (-2600, -2500), (-1200, -1900), (400, -1700), (1800, -1500), (2900, -600),
+(3300, 500), (3000, 1700), (2400, 2900), (2000, 4200), (1900, 5000). The bed is 120 m wide and
+8 m below the plain. The yard, the Dead Mall, the Everburn and the Iron Line are on one bank; Tin
+Town, the Boneyard, the Ridge and the Ships are on the other. Every trip from the yard to those
+four crosses it, and there are five places to cross:
+
+| Crossing | Where | What it is |
+| --- | --- | --- |
+| The Girder Bridge | (3250, 300) | The East Road's bridge, two cars wide. The Ash Men hold it. |
+| The Steps | (3050, -250) | Rock ledges down and up on the scab plates. Slow, or a hard jolt. |
+| The Wash | (2700, 2300) | A fallen bank on the Boneyard Road. Soft sand at the bottom. |
+| The Pipe | (1000, -1750) | An old pipeline on the Salt Road, one car wide. |
+| The South Ford | (2150, 3700) | Shallow banks between the Dead Mall and the Boneyard. |
+
+A car can also drive along the bed between any two of these, hidden from the plain.
+
+**The road net** (graded roads, 14 m half width, curved so a car at full speed can hold them):
+
+- The East Road: yard, the Halfway Camp (2000, 1100), the Girder Bridge, (4600, 500), Tin Town's
+  gate. About 7 km.
+- The Boneyard Road: the Halfway Camp, the Wash, the Boneyard.
+- The Tin Road: Tin Town, (5200, 1500), the Boneyard.
+- The Salt Road: yard, the Pipe, then a fork to the Ships and to the Ridge across the salt pan;
+  the Ridge Road comes down the east side, (5300, -1500), to Tin Town.
+- The West Road to the Iron Line; the Dam Road to the Dry Dam; the Burn Road to the Everburn by
+  (-2000, 1500); the Mall Road to the Dead Mall; the Mall to the Everburn; the Mall to the
+  Boneyard over the South Ford.
+
+The old dirt ring round the yard and the present delivery road go. Jobs name roads and points on
+them by name.
+
+**Regions.** Each is data (a band along a line, a disc round a place, or an outline), read in
+this order, the first that holds a point winning: roads, the river bed, the wreck fields (1,300 m
+round the Boneyard), the sand (1,500 m round the Ships), the burn (1,600 m round the Everburn,
+uneven), the salt pan (the north-east, between the river and the north edge, from the Pipe to the
+Ridge's foot), the scab plates (both banks from the yard's east side to Tin Town, between the pan
+and the wreck fields), and the flats (everything else: the cracked earth the land has now).
+
+**How each drives.** Top speed is a share of what the Scablands floor gives a car today.
+
+| Region | Top speed | Grip | The ember is safe up to | What the player feels |
+| --- | --- | --- | --- | --- |
+| Road | 1 | .95 | any speed | Smooth and fast. |
+| Salt pan | 1.25 | .80 | any speed | Fastest ground in the land; long slides; a dust plume. |
+| Flats | .75 | .90 | 90 km/h | Plain going. |
+| Scab plates | .45 | .85 | 50 km/h | The car shakes and will not go fast. |
+| River bed | .60, soft patches .30 | .75 | 70 km/h | Hidden; the soft patches grab. |
+| Sand | .35 | .60 | any speed | The speed drains away. |
+| The burn | .75 | .90 | 90 km/h | As the flats; its vents come with the Everburn's job. |
+| Wreck fields | .75 | .90 | 90 km/h | As the flats; the wrecks are solid in slice 2b. |
+
+Only the Scablands changes: race courses, the Scrapdome and every replay stay as they are. The
+change of ground is felt at once: the engine note, a shake of the camera on scab rock and a
+different dust colour for each region (no new sound files; name a cue for each change).
+
+**The ember on this ground** (replaces the helper's working number). Cold takes 0.14 a second.
+What must be true, and is checked by driving each in a test: a clean drive on the East Road
+arrives bright; the scab short cut held at 50 km/h arrives alive and not bright; a car that
+never passes 30 km/h goes out before Tin Town by any way.
+
+**What the player weighs, yard to Tin Town:**
+
+- The East Road: 7 km, about two and a half minutes. The bridge is held.
+- Across the scab plates: 6 km straight, seven minutes with the pot, down and up the Steps, in
+  the furnace's sight.
+- By the salt pan: 10 km, about three and a half minutes, over the one-car Pipe; a car on the
+  pan is seen from the Ridge.
+- Along the river bed from the Wash to the Steps: hidden from bridge and furnace, slow and soft.
+
+**Rises.** Low rises, 20 to 40 m high and 600 to 1,000 m across, stand between each place and the
+next so that a place is not seen from the last one. They are drawn height only and gentle enough
+to drive over. Steep ground is slice 2b.
+
+**Drawn in code.** Each region has its own ground in the ground's own shader: black broken
+plates; white salt with a pale crust pattern; ochre cracked flats; a grey river bed with rippled
+sand; rust-stained dirt in the wreck fields; pale dunes of sand; blackened ground in the burn.
+Edges between regions are uneven, not straight lines. The cracks must not repeat as a visible
+grid at any distance. Roads are graded dirt with ruts and a berm, not a dark band. Gritty, never
+toy-like.
+
+**Two builds.**
+
+- **2a: regions, roads and how the ground drives.** All of the above. The river bed is drawn sunk
+  with its banks but a car can still cross anywhere (so this build alone does not yet make
+  routes).
+- **2b: ground that cannot be crossed.** The river's banks, the rises' steep faces and the
+  places' own buildings are solid: a car that meets one is stopped and pushed back, loses the
+  speed, and takes the hit. The crossings are the only ways over. Then Claude drives every road
+  and tries every short cut, in a window.
+
+### Open at the end of slice 1
+
+- **Five older browser scenarios fail on the larger land** (run by Claude at the merge):
+  `everburn-ember` and `everburn-side-jobs` put the car at a position of the old land;
+  `everburn-frames` fails at its start; `run-gas` sees no raid and `field-battle` no furnace in
+  the time they wait, because the roads are ten times as long. `everburn-well` passes. The suites
+  that hold the rules of those jobs all pass. `everburn-ember` and `everburn-frames` are put
+  right by the builder of slice 2a, from the land's names, because slice 2a moves the roads
+  again. The other three, and `everburn-play` (card EVERBURN-REMAKE), stay failing and are
+  rewritten when their jobs are remade on the finished land; until then the nightly report
+  lists them under this card.
+- **The machine yard** (`wasteland-town`, off) loses the ridge's foot at its four corners.
+- **A frame check under rule 8** before anything on this land is shown to a player.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read

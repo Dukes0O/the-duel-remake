@@ -192,6 +192,16 @@ stopped at the results screen with "World job result or next job is missing". No
 within the half hour rule 4 allows. The walk's start and end are rewritten in slice 3, and this
 is settled there, with the cause found first in case it is the game and not the scenario.
 
+## The ember on the larger land (14 November 2026)
+
+The land is 14 km by 10 km (SCABLANDS-LAND round 4 slice 1, merged) and Tin Town is 6 km from the
+yard. The builder set cold to 0.15 a second so that the job can still be finished. Claude sets
+the ember's numbers in SCABLANDS-LAND slice 2, when roads and regions exist: cold 0.14 a second
+and a safe speed for each kind of ground, held by three checks (a clean drive on the East Road
+arrives bright; the scab short cut held at 50 km/h arrives alive and not bright; a car that never
+passes 30 km/h goes out before Tin Town). The lengths in "The road and who is on it" above are
+rewritten after slice 2b, when the river and its crossings are solid.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

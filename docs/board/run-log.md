@@ -1,5 +1,6 @@
 # Wasteland run log
 
+14 November, SCABLANDS-LAND round 4 slice 1 merged, switches off (Claude; built by a Sonnet helper): the Scablands are 14 km by 10 km, places held by name, detailed ground follows the player; the oval's length corrected to 3,288 m; builder's lane tier 106 suites (2 re-recorded for the land's size), build, `test-scablands-size` 9, replays unchanged; seen in a visible window at five spots, 18.1 to 18.3 ms p95 as a guide; five older Scablands browser scenarios fail and are listed on the card; slice 2 (river, roads, regions) designed.
 14 November, EVERBURN-REMAKE slice 1 merged, switches off (Claude; built by a Sonnet helper): the ember in Cinder's pot, the pot on the car, the gauge, braziers, pay by ember; rock costs ember by the metre after Claude's drive; lane tier 154 of 155 then the review note written; `everburn-play` scenario open on the card. Kyle: the larger Scablands first, 14 km by 10 km (SCABLANDS-LAND round 4).
 14 November, released: the Everburn taken out again (`story-everburn` and `scablands-runs` back to `dev`) after Kyle played jobs 1 and 2 and found them not fit to be seen; build 26.11.14 14:19 UTC; card EVERBURN-REMAKE.
 13 November, released: the Everburn story (build 26.11.14 02:37 UTC), `story-everburn` and `scablands-runs` on; Scablands frame check Performance 18.1 ms, world build 204 ms; build checked on port 5188.
