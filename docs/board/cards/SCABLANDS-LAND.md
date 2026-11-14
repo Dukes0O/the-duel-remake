@@ -172,6 +172,65 @@ to be idle; this one did not. The round 3 fixes only made the warm-up long enoug
 Fix (commit e9e23a123): the effects leave the scene at once and their materials are released when the warm-up is
 idle. `everburn` passes 3 times in 3; the four warm-up tests pass (304, 39, 143, 65); lane tier 84 of 84; build.
 
+
+## Round 4: a larger land (direction from Kyle, 14 November 2026; settled by Claude)
+
+Kyle, after playing the Everburn's first two jobs: "The amount of ground covered was minuscule
+to get to Tin Town. It seems this world is tiny and safe." And, asked about the order of the
+remake: expand the Scablands first, so there is a larger canvas to work on. This round goes
+before the rest of EVERBURN-REMAKE.
+
+### What is wrong with the land today (from the files)
+
+- It is 1,400 m by 1,000 m. Eight named places stand on one oval, 600 m east and west of the yard
+  and 430 m north and south. A car at 200 km/h crosses it in 25 seconds.
+- It is flat. The ground rises and falls by about 2 m, so every place is in sight of every other
+  and a straight line to anywhere is open.
+- All ground is the same to a car. A road is a picture; rock is as fast as road.
+- The car does not feel height. `scablandsHeightAt` is read for drawing and for regions only.
+
+### Settled
+
+1. **Size: four times as far each way.** The land becomes 5,600 m by 4,000 m. Tin Town stands
+   2,400 m from the yard and about 3 km by road. The places keep their own size; only the ground
+   between them grows.
+2. **Ground that makes routes.** Roads are fast and smooth. Open rock is rough and slower (about
+   six tenths of road speed). Some ground cannot be crossed at all: scarps, a dry river's banks,
+   wreck fields. These are solid and drawn as what they are. A road goes round them, through a
+   gap or over a crossing, so the way to a place is a route with a narrow point, not a line.
+3. **A place is not seen from the last one.** Rises, mesas and scarps stand between places, tall
+   enough to hide what is behind them. Whether the car slows on a slope is a later question;
+   this round a rise is either gentle and only seen, or steep and solid.
+4. **Something beside every road.** No more than about 300 m of road without a thing to steer by
+   or look at: a wreck train, a line of pylons, a camp, a toll post, a crossing, a sign. These
+   are placed along the roads from a seed, from models the game already has, with a few placed by
+   hand where a job needs them.
+5. **Drawn near, not everywhere.** The detailed ground stays the size it is now and moves with
+   the player; the coarse ground covers the whole land; things are drawn by distance. The frame
+   limit is unchanged (Performance p95 18.5 ms) and is checked on the first slice, before any
+   scenery is added.
+6. **Places by name, not by number.** The jobs hold some 40 positions written as numbers. Each
+   becomes an offset from a named place or a named point on a road, so the land can be moved
+   again without touching a job.
+7. **The yard stays as players have it.** The Home Yard that is in the game today is drawn from
+   this scene. What a player sees from the yard changes only in the far distance.
+
+### What moves, and is re-recorded with a reason
+
+Scablands world signatures, the positions pinned in the Everburn, gas run and field battle
+suites, and the replay fingerprints of those jobs. None of that is in the game for players
+(both switches are `dev`). Race replays and the Scrapdome's own fights must not move.
+
+### Slices
+
+1. **Size and frame time:** the places moved out, positions by name, the detailed ground
+   following the player, the coarse ground over all of it, the ridge at the new edge. Flat and
+   empty on purpose. Ends with a frame check and Claude driving yard to Tin Town.
+2. **Routes:** the road net as data, rough rock, the ground that cannot be crossed, the rises
+   that hide places. Ends with Claude driving every road and trying every short cut.
+3. **Beside the roads:** the seeded things and the hand-placed ones. A look round, sheet to Kyle.
+4. **The map:** the big and small maps redrawn from the same road and ground data.
+
 ## Checks (named before code)
 
 1. `tools/test-scablands-scene.mjs`: every Scablands place material arrives with a colour that is not white (read

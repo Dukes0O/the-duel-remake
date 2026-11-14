@@ -131,11 +131,20 @@ the land.
 
 ## Order of work
 
+**Changed by Kyle, 14 November 2026: the larger land comes first.** Kyle asked whether the
+Scablands should be expanded before the jobs are remade, so that there is a larger canvas to
+work on. He is right: slices 2, 3 and 5 below put barricades, raiders, a gate, a bay and solid
+things at places on the land, and each would be placed twice if the land grew afterwards. Slice 1
+is a rule and does not depend on the land's size, so it finishes (with the plainest road
+drawing that works). Then SCABLANDS-LAND round 4, the larger land, is built. Slices 2 to 5 are
+built on it, and the lengths in "The road and who is on it" above are rewritten for it.
+
 Each slice is built by a helper in its own lane and ends with Claude driving it in a window.
 
 1. **The ember and the ground** (building): the gauge, the jolt and cold rules, the pot seen on
    the car with its glow and sparks, the brazier scoop, pay by ember, the road smooth and the scab
    field rough. Judged first, alone: if carrying the pot is not a game, the rest changes.
+   *Then the larger land (SCABLANDS-LAND round 4), before anything below.*
 2. **The road and the Ash Men:** barricades moved onto the road with waiting raiders, rams as
    jolts, the furnace's sight and horn, the turn-back at Tin Town.
 3. **Start and end:** Cinder and her brazier at the gate, the drive-up and loading; the gate, the
