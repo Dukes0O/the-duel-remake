@@ -104,6 +104,9 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
     truck: step?.kind==='escort'&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
+    // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
+    ember: step?.ember ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
+      rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -125,7 +128,7 @@ export function createWorldHud({host}) {
   }
   const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
   root.setAttribute('aria-label', 'Scablands job guidance');
-  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-ember" hidden><b>EMBER</b><span class="world-hud-ember-bar"><i></i></span><em></em></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>SCABLANDS</b><button type="button" data-world-map-close>CLOSE</button></header>
       <canvas width="${MAP_WIDTH}" height="${MAP_HEIGHT}" aria-label="Map with your position and job marker"></canvas>
@@ -134,6 +137,8 @@ export function createWorldHud({host}) {
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
+  const emberGauge = root.querySelector('.world-hud-ember'), emberBar = emberGauge.querySelector('i'), emberNote = emberGauge.querySelector('em'), emberLabel = emberGauge.querySelector('b');
+  let lastJolts = 0;
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('canvas'), context = canvas?.getContext?.('2d');
   let active = false, mapOpen = false, lastMap = '', disposed = false;
@@ -169,6 +174,22 @@ export function createWorldHud({host}) {
       // RUN-GAS: Big Bess's health sits at the lower left above the armour bar, clear of the rear-view mirror and the caption line.
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
+      // The ember gauge: a glowing bar that dims as the ember falls, flashes when a jolt takes ember, and says OUT at 0.
+      emberGauge.hidden = !model.ember;
+      if (model.ember) {
+        const share = Math.max(0, Math.min(1, model.ember.value / model.ember.max));
+        emberBar.style.width = `${(share * 100).toFixed(1)}%`;
+        emberGauge.style.setProperty('--ember-glow', share.toFixed(2));
+        emberGauge.classList.toggle('is-out', model.ember.out);
+        emberGauge.classList.toggle('is-losing', !model.ember.out && model.ember.rate > 1);
+        emberLabel.textContent = model.ember.out ? 'OUT' : 'EMBER';
+        emberNote.textContent = model.ember.out ? 'back to the brazier' : `${Math.ceil(model.ember.value)}`;
+        if (model.ember.jolts !== lastJolts) {
+          lastJolts = model.ember.jolts;
+          emberGauge.classList.remove('is-flashing'); void emberGauge.offsetWidth; emberGauge.classList.add('is-flashing');
+        }
+        emberGauge.setAttribute('aria-label', model.ember.out ? 'Ember out, go back to the brazier' : `Ember ${Math.ceil(model.ember.value)} out of ${model.ember.max}`);
+      }
       compass.style.transform = model.arrow === null ? 'rotate(0deg)' : `rotate(${model.arrow}deg)`;
       // The big map always has the land on it; the small panel (src/route-map.js, RouteMap) draws the job's own ground only.
       const mapData = worldJobMapData(duel.course, state, {land: SCABLANDS_LAND});

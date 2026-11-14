@@ -14,6 +14,8 @@ import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
+import {onScablandsRoad} from '../../world/scablands-road.js';
+import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 
 const position = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -28,7 +30,9 @@ const FURNACE_CUES = Object.freeze({stoke: 'arena.tell', doorOpen: 'gate.latch',
   fell: 'combat.explosion', townReached: 'arena.toll-gate', gateBurnt: 'weapon.flame.start'});
 const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.ember.old-smoke.3',
   3: 'story.ember.cinder.19'});
-const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
+// The pot's cues (src/sound-bank.js), by the carry step's event.
+const EMBER_CUES = Object.freeze({emberJolt: 'world.ember.spark', emberOut: 'world.ember.out', emberRelit: 'world.ember.scoop'});
+const FURNACE_ARROWS =Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
 
@@ -625,7 +629,13 @@ export function stepWorldJob(duel, dt) {
       {share: pathShare(actor.position, actor.pathIndex, currentStep.path).share} : {})})),
   ...state.opponents.map((actor, index) => ({id: actor.jobId ?? `cpu-${index + 1}`,
     position: position(duel, actor), health: actor.armor}))];
+  // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, whether it is on a road, and the speed it shed in
+  // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
+  const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
+  const hitKmh = Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0;
+  worldJob.lastKmh = kmh;
   const view = {player: playerView, onFoot: !!state.onFoot,
+    speedKmh: kmh, hitKmh, onRoad: onScablandsRoad(point.x, point.z),
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,
@@ -697,6 +707,11 @@ export function stepWorldJob(duel, dt) {
       worldJob.inventory = [...new Set([...(worldJob.inventory ?? []), event.id])];
     }
     if (event.type === 'say' && event.lineId) sayLine(duel, worldJob, event.lineId, event.urgent);
+    // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
+    // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
+    if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
+    if (event.type === 'emberArrived') worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
+      sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};

@@ -24,6 +24,9 @@ const SKYLINE_CUES = new Set(['vehicle.turbo-whistle', 'vehicle.blowoff']);
 // Eifel forest and birds bed and the village bell behind the Eifel switch. Exactly those are left out here.
 const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landmark.shrine-bell', 'ambience.eifel', 'landmark.village-bell']);
 
+// EVERBURN-REMAKE adds Cinder's pot cues, made in code. Exactly those three are left out; the pinned hash below is unchanged.
+const EMBER_CUES = new Set(['world.ember.spark', 'world.ember.out', 'world.ember.scoop']);
+
 const CUES = [
   'race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final',
   'race.finish.flag', 'pit.limiter', 'pit.wrench', 'pit.go', 'surface.gravel',
@@ -43,7 +46,7 @@ const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !SKI_BANK_CUES.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
-  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id)))),
+  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id)))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
 assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !SKI_BANK_CUES.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue) && !SKYLINE_CUES.has(row.cue) && !KOGANE_CUES.has(row.cue))}),
   '772989c2d66e55d6c7c6f795b85cbf3395c30abe4edc8a6cc3a526421a06e8f0', 'pre-P4 catalog changed');

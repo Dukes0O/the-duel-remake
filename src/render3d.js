@@ -51,6 +51,7 @@ import { createAdaptiveResolution } from './adaptive-resolution.js';
 import { renderMainView } from './scene-presentation.js';
 import { createSceneLighting } from './scene-lighting.js';
 import { animateScene, syncScene } from './scene-systems.js';
+import {createEmberPot} from './world/ember-pot.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
@@ -453,6 +454,8 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionBuildMs='0';
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
+  // EVERBURN-REMAKE: Cinder's ember pot rides on the player's car in Hot Delivery. It only reads the job's state.
+  const emberPot=createEmberPot();
   // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
   // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
   const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
@@ -694,7 +697,7 @@ export function attachRenderer(host, app) {
     if (menu !== lastMenu) { ready = false; lastMenu = menu; }
     if (carKey !== loadedCar || player?.userData.finish !== (modelFinish ?? undefined)) {
       if(ghost){const style=ghostStyle;retireObject(ghost,()=>style.restore());ghost=null;ghostStyle=null;}
-      if (player) {roadRoof.detachVehicle(player);retireObject(player);}
+      if (player) {emberPot.detach();roadRoof.detachVehicle(player);retireObject(player);}
       if(rival){retireObject(rival);rival=null;}
       for(const entry of extraOpponents)retireObject(entry.mesh, () => entry.droneStyle?.restore());
       extraOpponents.length=0;
@@ -1132,6 +1135,10 @@ export function attachRenderer(host, app) {
     lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
     animateScene(world,presentationSeconds);
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
+    {
+      const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
+      emberPot.update(carry?.ember&&!st.onFoot?player:null,carry?.ember?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
+    }
     world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
     lighting.updateCar(player, !!braking && !menu);
@@ -1311,6 +1318,7 @@ export function attachRenderer(host, app) {
       tanker?.dispose();
       rearView.dispose();
       firstPersonGear.dispose();
+      emberPot.dispose();
       combatScene.dispose();
       combatEffects?.dispose();
       vehicleAttachments.clear();

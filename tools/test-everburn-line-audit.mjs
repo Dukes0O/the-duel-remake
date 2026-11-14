@@ -67,8 +67,10 @@ const alarmView = {...far, onFoot:true, fighter:{position:{x:0,y:0,z:5}},
   lamps:[{position:{x:0,z:0},direction:{x:0,z:1},range:12}]};
 const alarm=heard(EVERBURN_JOBS[4], [[far,30],[alarmView,35]]);
 assert.ok(alarm.lines.includes('story.ember.cinder.14'), 'a search lamp raises the alarm line');
-const spill=heard(EVERBURN_JOBS[0], [[far,50],[{...far,crashSize:9},35]]);
-assert.ok(spill.lines.includes('story.ember.cinder.4'), 'a hard crash raises the spill line');
+// EVERBURN-REMAKE: job 1's spill line is said when the pot goes out (rough ground taken fast), no longer for one crash above a limit.
+const spill=heard(EVERBURN_JOBS[0], [[far,50],[{...far,speedKmh:300,onRoad:false,difficulty:'medium'},35]]);
+assert.ok(spill.lines.includes('story.ember.cinder.4'), 'the pot going out raises the spill line');
+assert.ok(!heard(EVERBURN_JOBS[0], [[far,50],[{...far,crashSize:9},35]]).lines.includes('story.ember.cinder.4'), 'a crash size no longer spills job 1');
 
 const restart=heard(EVERBURN_JOBS[5], [[far,30],[{...far,placeHealth:0},1],[{...far,placeHealth:120},35]]);
 assert.ok(restart.lines.includes('story.ember.cinder.26'), 'failed defence requests the wave restart line');

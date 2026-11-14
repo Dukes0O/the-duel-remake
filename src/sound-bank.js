@@ -605,6 +605,14 @@ export const SOUND_BANK = {
       tone(184, 0.55, 0.06, 'square', 0.06, 370),
     ],
   }),
+  // EVERBURN-REMAKE: Cinder's open pot. A spark thrown off by a jolt, the ember going out, a fresh scoop at a brazier.
+  // Made in code like the machine cues; the world job plays them through the arena tell event.
+  'world.ember.spark': cue('impacts', {priority: 60, limit: 2, volume: .5,
+    layers: [noise(2600, .16, .5, 'highpass'), tone(1400, .1, .15, 'triangle', 0, 900)]}),
+  'world.ember.out': cue('impacts', {priority: 78, limit: 1, volume: .6,
+    layers: [{...noise(900, .9, .6, 'lowpass'), endFrequency: 200, attack: .02}, tone(180, .7, .25, 'sine', 0, 70)]}),
+  'world.ember.scoop': cue('interface', {priority: 70, limit: 1, volume: .5,
+    layers: [{...noise(500, .5, .5, 'lowpass'), endFrequency: 1800, attack: .3}, tone(220, .5, .2, 'triangle', .05, 440)]}),
   'arena.toll-gate': cue('impacts', {
     priority: 85,
     limit: 1,

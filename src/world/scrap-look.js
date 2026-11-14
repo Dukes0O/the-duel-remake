@@ -283,8 +283,15 @@ export function createDustTrail({count=18,colour=0x8a7458}={}){
 // The look of open ground, drawn in code over one plain colour (SCABLANDS-LAND): pale and dark drifts of sand, warm
 // patches, cracked earth on the dark flats, wind ripples on the pale ones, gravel and stones, and rock with strata
 // wherever the ground is steep. It reads the ground's own place and slope, so it needs no pictures and no new files.
-export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
+// `road` ({points:[{x,z}], halfWidth}, EVERBURN-REMAKE) draws a darker band along the road's own line, so that a player can tell
+// the road from the rock at a glance. It reads the same points the ember rule reads (src/world/scablands-road.js).
+export function createGroundLook({rock=0x57493c,stone=0x302b26,road=null}={}){
   const uniforms={uGroundNoise:{value:scrapNoise()},uGroundRock:{value:new THREE.Color(rock)},uGroundStone:{value:new THREE.Color(stone)}};
+  const legs=road?Math.max(0,road.points.length-1):0;
+  if(legs){
+    uniforms.uGroundRoad={value:Array.from({length:legs},(_,i)=>new THREE.Vector4(road.points[i].x,road.points[i].z,road.points[i+1].x,road.points[i+1].z))};
+    uniforms.uGroundRoadHalf={value:road.halfWidth};
+  }
   function apply(material){
     if(!material?.isMeshStandardMaterial||material.userData.groundLook)return material;
     material.userData.groundLook=true;
@@ -298,6 +305,7 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
       shader.fragmentShader=shader.fragmentShader
         .replace('#include <common>',`#include <common>
           uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
+          ${legs?`uniform vec4 uGroundRoad[${legs}];uniform float uGroundRoadHalf;`:''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;`)
         .replace('#include <color_fragment>',`#include <color_fragment>
           vec2 gq=vGroundPos.xz;
@@ -329,9 +337,18 @@ export function createGroundLook({rock=0x57493c,stone=0x302b26}={}){
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
           gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75);
           gc*=.88+.24*gGrit.b;
+          ${legs?`// The road: a darker band, with a soft edge, along the road's line.
+          float gRoadGap=1e5;
+          for(int i=0;i<${legs};i++){
+            vec2 ra=uGroundRoad[i].xy,rb=uGroundRoad[i].zw,rd=rb-ra;
+            float rt=clamp(dot(gq-ra,rd)/max(dot(rd,rd),1e-4),0.0,1.0);
+            gRoadGap=min(gRoadGap,length(gq-ra-rd*rt));
+          }
+          float gRoadBand=1.0-smoothstep(uGroundRoadHalf-1.5,uGroundRoadHalf+.5,gRoadGap);
+          gc=mix(gc,gc*vec3(.4,.38,.36),gRoadBand*.92);`:''}
           diffuseColor.rgb=gc;`);
     };
-    material.customProgramCacheKey=()=>'ground-look-3';
+    material.customProgramCacheKey=()=>`ground-look-3-road${legs}`;
     material.needsUpdate=true;
     return material;
   }

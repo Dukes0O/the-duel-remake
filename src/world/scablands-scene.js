@@ -15,6 +15,8 @@ import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout,TIN_TOWN_CEN
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {createEverburnProps} from './everburn-props.js';
+import {DELIVERY_ROAD} from './scablands-road.js';
+import {createBraziers,brazierSpot} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
@@ -547,7 +549,7 @@ export function createScablandsScene(course,options={}){
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
-  const groundLook=createGroundLook();
+  const groundLook=createGroundLook({road:DELIVERY_ROAD});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x594b39,roughness:1,vertexColors:true,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
@@ -579,6 +581,8 @@ export function createScablandsScene(course,options={}){
   radioMast(group);
   // The Everburn's fire and its column of smoke, drawn in code and always burning (src/world/everburn-fire.js).
   const everburnPlace=SCABLANDS_PLACES.find(place=>place.id==='everburn');
+  // The two braziers where a fresh scoop is taken in Hot Delivery (src/world/ember-pot.js): shown only while that job's carry step is on.
+  const braziers=createBraziers(2);group.add(braziers.group);let brazierKey='';
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
@@ -698,7 +702,7 @@ export function createScablandsScene(course,options={}){
         group.worldToLocal(bessRig.localToWorld(arcTo.set(BESS_TANK_TOP.x,BESS_TANK_TOP.y,BESS_TANK_TOP.z)));
         cinderArc.userData.place(seconds,arcFrom,arcTo);
       }
-      gateFire.animate(seconds);chimneySmoke.animate(seconds);everburnFire.animate(seconds);
+      gateFire.animate(seconds);chimneySmoke.animate(seconds);everburnFire.animate(seconds);braziers.animate(seconds);
       if(!furnaceEffects||!furnaceRig)return;
       furnaceWear.follow(furnaceRig);
       // How fast the furnace is moving, from where it stood at the last frame; this only leans the smoke and turns the wheels.
@@ -745,6 +749,20 @@ export function createScablandsScene(course,options={}){
         const escort=worldJob?.definition?.storyId==='everburn'?worldJob.actors?.find(item=>item.id==='big-bess'):null;
         placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace,BESS_REST);
         bessWear.follow(bessRig);
+      }
+      // The braziers stand beside the yard gate and the halfway camp, on the side of the road away from the line of the way.
+      const emberStep=stepNow?.ember?stepNow:null;
+      braziers.group.visible=Boolean(emberStep);
+      if(emberStep){
+        const spots=[emberStep.origin,...(emberStep.safePoints??[])],key=JSON.stringify(spots);
+        if(key!==brazierKey){
+          brazierKey=key;
+          const at=value=>value.position??value;
+          braziers.place(spots.map((spot,index)=>{
+            const here=at(spot),toward=at(spots[index+1]??emberStep.destination),offset=brazierSpot(here,toward,9);
+            return {x:offset.x,y:scablandsSurfaceHeightAt(offset.x,offset.z),z:offset.z};
+          }));
+        }
       }
       // Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
       const gateStep=worldJob?.definition?.storyId==='everburn'?worldJob.job?.steps?.find(step=>Number.isInteger(step.actor?.gateWaypoint)):null;
