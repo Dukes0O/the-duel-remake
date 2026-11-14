@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 
-export const TOWN_ZOOM = Object.freeze({street: 28, scablands: 2450});
+// SCABLANDS-LAND round 4: the farthest zoom sees the whole land, which is ten times as far across (it was 2,450 m for 1,400 m).
+export const TOWN_ZOOM = Object.freeze({street: 28, scablands: 24500});
 
 export function createTownCamera({width = 1, height = 1, target = {x: 0, y: 0, z: 0}, zoom = 0.08} = {}) {
-  const camera = new THREE.PerspectiveCamera(48, width / Math.max(1, height), 0.1, 9000);
+  const camera = new THREE.PerspectiveCamera(48, width / Math.max(1, height), 0.1, 90000);
   const state = {target: new THREE.Vector3(target.x, target.y, target.z), zoom: THREE.MathUtils.clamp(zoom, 0, 1), heading: 0};
   camera.userData.townView = state;
   updateTownCamera(camera);
@@ -32,7 +33,7 @@ export function moveTownCamera(camera, {forward = 0, right = 0, turn = 0, zoom =
   if (!state) throw new TypeError('Choose a town camera first.');
   state.heading += turn * delta * 1.8;
   state.zoom = THREE.MathUtils.clamp(state.zoom + zoom, 0, 1);
-  const speed = THREE.MathUtils.lerp(18, 680, state.zoom) * delta;
+  const speed = THREE.MathUtils.lerp(18, 6800, state.zoom) * delta;
   state.target.x += (Math.sin(state.heading) * forward + Math.cos(state.heading) * right) * speed;
   state.target.z += (Math.cos(state.heading) * forward - Math.sin(state.heading) * right) * speed;
   updateTownCamera(camera, delta);

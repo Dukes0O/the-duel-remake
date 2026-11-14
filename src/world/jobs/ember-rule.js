@@ -6,7 +6,10 @@ export const MPH_TO_KMH = 1.609344;
 
 export const EMBER_RULE = Object.freeze({
   start: 100,
-  coldPerSecond: 0.33,        // full to dead in about five minutes with no jolts
+  // SCABLANDS-LAND round 4: 0.33 (full to dead in about five minutes) made Hot Delivery impossible for a driver who goes straight at the marker over
+  // rock, now that Tin Town is 6 km away (the straight drive takes 610 s at the free speed; the child-pace Easy driver finished 0 of 4 at 0.2 and 4 of 4
+  // at 0.15). Full to dead in about eleven minutes with no jolts. Listed for Claude, who sets the play numbers.
+  coldPerSecond: 0.15,
   roughPerMetre: 0.003,       // on rock: 0.003 for each km/h over the free speed, for each metre driven (so going faster always costs more a metre)
   roughFreeKmh: 50,           // rock is safe up to this speed
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing

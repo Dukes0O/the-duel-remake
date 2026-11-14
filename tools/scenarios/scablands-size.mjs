@@ -1,14 +1,14 @@
 // SCABLANDS-LAND round 4, slice 1: the larger land, seen. A memory-only browser walk that takes a picture at the yard looking east, 1 km, 3 km
 // and 5 km out on the straight way to Tin Town, and at Tin Town's gate, and records for each the frame time it measured and the number of draw
 // calls and triangles. Job 1 (Hot Delivery) starts the Scablands; the car is then put on each spot, facing Tin Town, the way a job puts its car
-// at its start, and the game runs for 60 delivered frames. This is a guide for Claude and NOT a frame check (AGENTS.md rule 8 needs the laptop
+// at its start, and the game runs for 120 delivered frames. This is a guide for Claude and NOT a frame check (AGENTS.md rule 8 needs the laptop
 // alone, its own screen off, headed, nothing else on the graphics card). The report is `scablands-size.json` in the scenario's output folder.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {summarizeNightFrames} from './frame-pacing.mjs';
 
 const QUALITY = 'performance';
-const FRAMES = 60;
+const FRAMES = 120;
 // Metres east of the yard along the straight way to Tin Town; the last view is Tin Town's own gate.
 const VIEWS = [{name: 'yard-east', east: 0}, {name: '1km', east: 1000}, {name: '3km', east: 3000}, {name: '5km', east: 5000}, {name: 'tin-town-gate', gate: true}];
 

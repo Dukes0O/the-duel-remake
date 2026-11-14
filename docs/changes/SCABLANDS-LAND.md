@@ -405,3 +405,183 @@ no Scablands height or place. The Scablands scene is drawn only for the `scablan
 the machine yard (`src/machines/dig-game.js`, behind `wasteland-town`, `dev`): it draws an 800 by 800 m floor from
 `scablandsNaturalHeightAt`, so its four corners, which climb the old ridge's foot (up to about 9 m at (400, 400)), become
 flat plain. That is the only visible change near the yard, and it is nothing a player can reach today. Reported for Claude.
+
+### Stage B: what was built
+
+The stop rule did not apply: nothing in how every arena venue keeps positions, and nothing in car physics, changed.
+
+- **Size.** `src/world/scablands.js`: the eight places moved to ten times their distance from the yard (Tin Town (6000, 0), the Boneyard
+  (4240, 3040), the Dead Mall (0, 4300), the Everburn (-4240, 3040), the Iron Line (-6000, 0), the Dry Dam (-4240, -3040), the Ships (0, -4300),
+  the Ridge (4240, -3040)), each with its own `flatRadius` and height. `halfWidth` 7,000 and `halfDepth` 5,000. The yard and the Scrapdome gate
+  (0, -92) did not move. The frame: `lengthU` 3,288 (the seam fix); `floorHalfWidth`, `wallOffset` and `outerWallOffset` 9,000 (the furthest corner
+  is 8,050 m from the oval). `src/onfoot.js` keeps a walker inside the layout's half sizes instead of 700 by 500.
+- **The ridge and the wall** (`src/world/scablands-height.js`): the same profile in metres as on the old land, standing at the new edge
+  (`edgeScale` 10 turns a distance past the new edge into the same distance past the old one). The ridge climbs to about 108 m just past 7,000 m
+  east and the wall stands 175 m high beyond about 7,200 m.
+- **Positions by name** (`src/world/scablands-names.js`, new). `createLand(table)` gives `at(place, dx, dz)`, `between(a, b, share, dx, dz)`, `yard`,
+  and three named points (`safe-road`, `ash-barricade-1`, `ash-barricade-2`). Built from it, each as a function of a land with the real land's
+  value exported under the old name: `buildEverburn(land)` (all jobs and side jobs), `gasRunPaths(land)` and `gasRunWreck`, `furnaceMarks(land)`,
+  `deliveryRoad(land)`, `tinTownGateFor(land)`, `tinTownRoads(land)` and `tinTownLayout(land)`, `boneyardWrecks(land)` and `bessRest(land)`,
+  `ironLineFor(land)`, `scablandsSolids(land)`. The radio mast stands at the Iron Line. The Whites (`regions.js`) are offsets from the land's east
+  edge. The gas road's ambush marks, the battle's come-out point and its ambushes are shares of the Boneyard road's length. The road test and
+  the ember rule (`scablands-road.js`) take the moved points as input.
+- **Drawn near, not everywhere** (`src/world/near-ground.js`, new, and `scablands-scene.js`). The detailed ground is one window of 60 by 60
+  cells (1,400 m by 1,000 m, cells 23.3 m by 16.7 m, the size the whole old land was) that follows the player in whole cells on one fixed lattice.
+  A move copies the heights it still holds and works out only the new strip (about 120 heights, well under a millisecond); nothing is allocated
+  after it is built. The coarse ground is one mesh of 100 by 80 cells (140 m by 125 m) over the whole land, 35 cm below the land, with a hole
+  cut out of its fragments where the window is (the hole is a metre smaller each way than the window). A place's models are drawn by the LOD at
+  full detail to 280 m, as a far shape to 1,800 m and not at all beyond; the gate, the shacks, the chimney smoke, the well's fire and the radio
+  mast are shown and updated only within 1,800 m of the player; places do not recalculate their matrices. No new lights. The player's position is
+  read from the game's state with no allocation. Nothing collides now (the solids are data for the tests, as before), so there is nothing to
+  stop colliding with when far.
+- **The Whites, the dig yard, the town screen.** `regions.js` offsets from the east edge; `dig-sandbox.js` and `town-scene.js` read the places and the layout
+  and needed no change.
+
+### Numbers chosen
+
+Places 10 times as far; half size 7,000 by 5,000; `edgeScale` 10; floor 9,000; `lengthU` 3,288; window 60 by 60 cells of 23.33 by 16.67 m; coarse
+ground 100 by 80 cells, 0.35 m below the land; hole 1 m smaller each way; draw range 1,800 m (the far shape from 280 m, as before); the delivery
+road (7,984 m), the halfway camp at .526 of the way from the yard to the Boneyard (7.06, -9.84 m off the line), the barricades at .392 and .873
+of it; free points of every path as shares between two places with the old offsets kept; road lengths: Boneyard road 12,349 m, long road 18,626 m,
+the furnace's path 35,961 m, delivery road 7,984 m, rail 17,241 m.
+
+### Job timers and limits (for Claude, who sets the play numbers)
+
+Changed in `src` (each only where a job would otherwise be impossible or wrong):
+
+1. **The ember's cold rate: 0.33 to 0.15 a second** (`src/world/jobs/ember-rule.js`). At 0.33 a driver going straight at Tin Town over rock (the child-pace
+   Easy driver) never arrived: it takes 610 s at the free speed and the pot is dead at 303 s (0 of 10 finished; 0 of 4 at 0.2, 4 of 4 at 0.15). At
+   0.15 the pot is full to dead in about eleven minutes. Effect on the road: about 200 s at 150 km/h costs about 30 of the 100, so a good drive arrives alive
+   and near the bright line (70); at 0.33 even the best drive would arrive barely alive.
+2. **The roll into the well** (`src/world/jobs/old-smoke.js`, new `rollInMaxMps` 46). It took 5 s from wherever the third door was hit; the last leg is now
+   2,278 m, which would have been 456 m a second on screen. It now takes 5 s or the distance over 46 m a second, whichever is longer (the same 5 s
+   from 229 m, as before).
+
+Left as they were, and now long (not impossible):
+
+3. **The bolt after a hit** (36 m/s Easy, 45 Medium and Hard): about 21 km to the Boneyard ground, 578 s on Easy and about 460 s on the others, where it was
+   under 50 s. The second bolt is 12.7 km (352 s on Easy). The wait with no door to hit was the reason for the bolt; on this land it is back.
+4. **The furnace's pace** (base 14 m/s): its whole path is 42 minutes 49 seconds at the base pace (3 minutes 51 seconds). Door 2 glows after 467 s and door 3
+   after 284 s of play in the scripted chase.
+5. **The Boneyard gas road** takes Big Bess (9 m/s) 23 minutes; the long road 34 minutes. The battle's furnace comes out about 610 s into the drive (at .4449
+   of the road, where it was 560 m of 1,259 m) and the drive after it is about 6.9 km. Raids and ambush marks are the same shares of the road, so
+   there are the same number of raids over ten times the road (a raid every 1.5 to 2 km instead of every 150 m).
+6. **Raid and ambush distances, the furnace's head start, `AMBUSH_ALERT_METRES` 160, the furnace's sighting offsets (90 m north, 40 m ahead, gone after 220 m)**
+   are in metres from the thing they follow and are unchanged. The sighting furnace of job 4 turns away after 141 m of Big Bess's drive past 70 percent.
+7. **Job 1's furnace skyline** moved to the middle of the road's second leg, 233 m north of it (it was 233 m north of the old road there), so that Cinder's
+   line still plays when the player passes. Its `sayNear` radii (260, 60, 170 m) are unchanged.
+8. **Time limits in the scripted drivers** were raised (listed below); no rule has a time limit of its own.
+9. **Job 3 (Run Him Down) now has a start of its own** (`src/world/jobs/everburn.js`): open ground 163 m from the Boneyard, facing it. It had none: the arena put the
+   car on the oval, which on the first land happened to be 163 m from the Boneyard and is 4.7 km from it now (the child-pace driver finished 0 of 10, the thief
+   being 4.7 km past the 150 m leash). The same offset as the notice-board jobs' start beside the Boneyard.
+
+### What looks or drives wrong on the larger land (honest)
+
+- The yard is on the frame's medial axis: along the east axis from the yard to x = 292 m the car's `s` flips by half a lap from one step to the next
+  (position and speed are exact). It is how it was.
+- A drive of 6 km to Tin Town is two minutes of empty plain. That is the slice's point; roads, ground that makes routes and things beside the road are
+  the next slices. The dirt ring road (606 m by 434 m) still lies round the yard and now joins nothing.
+- The delivery road bends by up to 80 degrees where its legs, kilometres long, meet at the second barricade; a car at 150 km/h cannot turn in the road's 14 m,
+  so the scripted driver slows to 80 km/h for each corner.
+- The coarse ground can stand up to a few metres off the detailed one along the hole's edge where the land climbs fast (the ridge foot), seen at
+  700 m; on the plain the difference is a few centimetres.
+- The Hot Delivery marker on the big and small maps now sits 6 km away; the maps fit the job's own points and were not changed (slice 4). On the big map
+  "TIN TOWN" is left off in job 2 because the lamps lie within four pixels of it (a rule in `src/route-map.js` counts pixels, not metres); two of
+  the suites accept the missing name (see changed assertions).
+- The scenarios `everburn-ember`, `everburn-frames`, `everburn-well`, `run-gas`, `field-battle` and `everburn-side-jobs` still place the car at coordinates of the old
+  land; they were not run or changed in this slice.
+- The machine yard (`dig-game.js`, `wasteland-town` is `dev`) loses the ridge's foot at its four corners (up to 9 m), as stage A says.
+
+### Changed assertions
+
+All are pins that moved because the land grew; none was loosened. Each is re-recorded as a claim of the same kind.
+
+`tools/test-scablands-scene.mjs` (13): the near ground is one window of 61 by 61 corners where it was four tiles (and the coarse ground covers the
+whole land, has a hole where the window is, lies 35 cm below the land and below the window along the hole's edge, where the far ground had been
+dropped 40 m); the edit check reads the coarse corner at the yard; the gate, the gate's road, the fire, the furnace skyline, its leaving path and the
+roads and lines checked against the shacks are read from `LAND` instead of typed at (575, 62), (300, -60), (140, 470) and so on; the job 4 furnace
+turn is tested at 40.5 m past the 70 percent mark (it was .76 of a 680 m road; the same 63 m of travel); the well's raiders' way in is an offset
+from the well.
+
+`tools/test-scablands-ground.mjs` (4): the places are not on the oval, so the two oval checks use eight ring stops (where the places stood) and say
+"on the dirt ring"; the fighter's walk crosses a line 40 m east of Tin Town's centre; the Ridge climb starts at the same distance past the ridge's edge.
+
+`tools/test-ember-pot.mjs` (6): the delivery road at about 150 km/h arrives with the grade and pay the rule gives for what is left (it was bright and 120 on a
+640 m road) and only cold takes ember, with the driver following the road's line and slowing to 80 km/h at the corners; the field at 45 km/h takes
+nothing from rock and is not yet out after 100 s (it arrived on the old land); after a relight the pay is the rule's and never above 80; the
+halfway camp tests use `LAND`; cold is 0.15 a second.
+
+`tools/test-ember-lines.mjs` (4), `tools/test-everburn-line-audit.mjs` (3): the furnace skyline and the lines' places read from `LAND`.
+
+`tools/test-everburn-play-start.mjs`, `test-everburn-screens-start.mjs`, `test-everburn-play-fixes-a.mjs`, `test-everburn-play-fixes-round4.mjs`
+(a colleague, reviewed): positions typed at the old land read from `LAND` offsets (the drawn boxes of Tin Town, job 2's start and the forge, job 5's
+mall and start, job 6's raider spots and derrick, the Tin Town solid, Hot Soup's end); job 5's and job 6's starts are on open ground and no longer on
+the oval road (the road does not pass the mall or the well now: "start is more than 1,000 m from the oval road"); the furnace's glow waits 120 s to
+900 s and the whole job 6 400 s to 1,500 s; the battle's Big Bess stands at `FIELD_BATTLE.comesOutAtMetres`; the big map's "TIN TOWN" name may be missing in
+job 2 where the lamps lie within four pixels (two exemptions, "coveredByJob" and "coveredByLamps").
+
+`tools/test-run-gas.mjs`, `test-run-gas-medium.mjs`, `test-field-battle.mjs` (a colleague, reviewed): the first raid wait 90 s to 400 s; the never-cleared
+ambush run 900 s to 1,800 s; the road point lists are built from `LAND` calls instead of typed pairs; the Boneyard road is 12,349 m (1,259) and the long
+road 18,626 m (1,640); "300 m shorter" is 3,000 m shorter; the battle comes out at .4449 of the road (5,494 m, was 560) and starts 5,414 m in; the drive
+waits before the furnace is out gain the 611 s it takes Big Bess to reach the come-out point; both full battle plays 900 s to 3,000 s;
+`MAX_SECONDS` in the Medium drivers 900 to 4,500.
+
+`tools/test-old-smoke.mjs` (a colleague, reviewed, and mine): the path's 18 points are the same places built from `LAND`; "3,232 m", "3 minutes 51 seconds" and "229 m"
+are the path's own sums and shares (35,961 m, 42 minutes 49 seconds, the last piece into the well, 2,278 m); the escape on Hard comes after about 43 minutes
+(it was about four); run limits are the whole path at the base pace and a minute over; the bolt reaches the Boneyard ground at its own pace (distance over
+bolt speed; was "within 50 seconds"); the roll takes 5 s or the distance over 46 m a second; the waiting car is 200 m north of the yard (2.4 km
+from the path; checked); job 3's waiting point is 30 m west of the Boneyard.
+
+`tools/test-everburn-easy.mjs` (1): `MAX_SECONDS` 720 to 3,000.
+
+`tools/test-rail-region.mjs` (about 25 pins, one reason): its copy of the height function uses `edgeScale`, and the Whites' absolute positions (560, -120 ... 1520, 0) are
+offsets from the east edge; "bank foot at the Scablands floor" is the Whites' own base height (1.21 m now, 1 m before: the rolling ground at the cut's start).
+`tools/test-town-map-markers.mjs` (2): Tin Town at (6000, 0) and the legacy outpost on the Ridge at (4240, -3040).
+
+The changed assertions in the suites above come to about 80 in all, grouped by suite.
+
+
+### Results
+
+- `tools/test-scablands-size.mjs` (new, 9 tests): pass. Round trip of 2,347 grid points, the four corners and both sides of every frame line to 1e-9 m;
+  the 6 km drive at 100 mph takes the time distance and speed give (no step differs from its speed by 2 cm; the car holds within 150 m of the line); the
+  same drive twice is identical; moving each of the eight places in a copy of the table moves exactly what belongs to it (jobs, side jobs, roads, gate and
+  posts, shacks, wrecks, Big Bess's rest, rail, solids, the halfway camp by its share); no job, scene or road file holds a bare coordinate; the window
+  keeps every corner on one lattice, equals a window built where it stands, replaces no array, and 200 one-cell moves cost under 400 ms; the scene follows
+  the player and draws places only when near.
+- Existing suites: `test-scablands-scene` pass; `test-scablands-ground` 5 of 5; `test-scablands-job-map` 42; `test-ember-pot` 44; `test-ember-lines` 56;
+  `test-everburn-line-audit` 21 behaviour checks; `test-everburn-play-start` 358; `test-everburn-play-fixes-a` 291; `test-everburn-play-fixes-round4` 78;
+  `test-everburn-screens-start` 9; `test-run-gas` 1,118 (27 s); `test-field-battle` 796 (54 s); `test-old-smoke` 655 (84 s); `test-run-gas-medium` pass (24 min 45 s,
+  38 rows of 10 tries; targets met; the fighting driver wins the battle 7 of 10); `test-everburn-easy` pass (17 min 41 s: all nine jobs 10 of 10, both
+  roads at every feud word 10 of 10, the battle home 10 of 10 and won 10 of 10); `test-world-jobs`, `test-world-job-mode`, `test-ember-save`,
+  `test-ember-screens`, `test-ember-side-jobs` pass unchanged; `test-rail-region` and `test-town-map-markers` re-recorded and pass (see below).
+- `tools/test-circuits.mjs`: pass (232,138 checks). `test-replays` 297 checks and `test-combat-replays` 12 checks: pass, no fingerprint moved (no Scablands
+  job has a pinned replay). `test-feature-flags`, `test-repo-hygiene`, `test-review-evidence`: pass. No Scablands world signature exists in the repository
+  (none of the signature suites names the Scablands), so none was re-recorded and there is no sheet `round-5.jpg`.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, PowerShell): 106 suites; 104 passed at first and 2 failed, both from
+  the land's size and both re-recorded and rerun alone: `test-rail-region` (its copy of the height function and the Whites' coordinates; now from the
+  east edge and `edgeScale`) and `test-town-map-markers` (Tin Town at 6,000 and the Ridge at (4240, -3040); the town view's farthest zoom, 2,450 m, could
+  not show all eight pins on a land ten times as wide, so `TOWN_ZOOM.scablands` is 24,500 m, the camera's far plane 90,000 m and its pan speed at the
+  farthest zoom 6,800 m a second: a development screen behind `wasteland-town`). The town suites (`test-town-view`, `-hooks`, `-ui`, `-visits`,
+  `-wasteland-map`, `-world`) pass after it.
+- `npm run build`: pass.
+- Browser scenario `tools/scenarios/scablands-size.mjs` (new): pass, memory-only saves, headless, Performance, 120 delivered frames per view, with the
+  laptop in use, so a guide only and not a frame check. First load 18.1 s (a fresh headless browser; over 5 s is a warning), world build 227 ms.
+
+  | View | p50 | p95 | max | Draw calls | Triangles |
+  | --- | --- | --- | --- | --- | --- |
+  | The yard, looking east | 17.9 ms | 18.2 ms | 18.5 ms | 138 | 221,578 |
+  | 1 km out | 18.0 ms | 18.2 ms | 18.6 ms | 121 | 166,932 |
+  | 3 km out | 17.9 ms | 18.5 ms | 18.9 ms | 128 | 191,352 |
+  | 5 km out | 17.9 ms | 18.1 ms | 18.6 ms | 172 | 196,560 |
+  | Tin Town's gate | 17.9 ms | 18.1 ms | 18.5 ms | 277 | 273,044 |
+
+  Every view sits at about 18 ms, which is the display's own refresh interval in that headless browser, not a measure of load; the draw calls and
+  triangles are the useful numbers. Claude runs the real frame check.
+- `tools/scenarios/everburn-play.mjs`: not run (known to fail on EVERBURN-REMAKE). `tools/test-review-evidence.mjs` does not fail (no sheet was made).
+
+## Removed
+
+The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
+far ground's 40 m drop, `detailCounts`, and every typed coordinate of the land in the jobs, solids, wrecks, gate, shacks and rail (replaced by
+`scablands-names.js`). The Whites' absolute positions. Nothing a player can reach.

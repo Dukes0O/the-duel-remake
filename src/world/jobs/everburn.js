@@ -90,7 +90,10 @@ export function buildEverburn(land) {
       steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
         path:thiefPath}, path:thiefPath,
         targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
-        targetHealth:20, reward:'flamethrower', startLineId:'story.ember.auntie-solder.5',
+        targetHealth:20, reward:'flamethrower',
+        // SCABLANDS-LAND round 4: the car starts on open ground 163 m from the Boneyard, facing it. (It had no start of its own: the arena put it on the oval, which on
+        // the first land happened to be 163 m from the Boneyard and is 4.7 km away now.)
+        carStart:carStart(at('boneyard', 119, -112), boneyard), startLineId:'story.ember.auntie-solder.5',
         sayNear:[{place:planeRow, radius:70, lineId:'story.ember.cinder.8'}],
         // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
         closing:['story.ember.cinder.22']})]}),

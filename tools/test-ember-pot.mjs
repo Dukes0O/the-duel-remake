@@ -103,8 +103,8 @@ function run(duel, route, kmh, {seconds = 200, until = () => false, onTick = () 
 const field = [{x: tinTown.x, z: tinTown.z}];
 
 // (a) the road at 150 km/h arrives with nothing taken but cold. SCABLANDS-LAND round 4 (re-recorded): the delivery road is 7,984 m
-// (it was 640 m), so about 150 km/h takes about 230 seconds with the corners, and the cold takes 75 of the 100: it arrives barely alive and pays 50, not bright and 120.
-// The rule is unchanged (cold 0.33 a second, "full to dead in about five minutes").
+// (it was 640 m), so about 150 km/h takes about 200 seconds with the corners, and the cold (0.15 a second now) takes about 30 of the 100: it arrives alive, close to the bright line, not bright and 120.
+// The rule changed once for the larger land: cold 0.15 a second (it was 0.33), see src/world/jobs/ember-rule.js.
 {
   // The road bends by up to 80 degrees at its corners now that its legs are kilometres long, and a car at 150 km/h cannot turn in the 14 m of the
   // road's half width; the driver takes each corner at 80 km/h, as a driver of a car this fast does.
@@ -112,7 +112,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const out = run(start(), roadRoute, atSpeed, {seconds: 400, follow: roadLine});
   check(out.done && out.result, 'the road at speed reaches Tin Town');
   check(out.result.relights === 0 && out.result.grade === emberGrade(EMBER_RULE, out.result.ember) && out.result.pay === emberPay(EMBER_RULE, out.result.ember, 0), 'the grade and the pay are the rule for what is left');
-  check(out.result.grade !== 'bright' && out.result.ember > 10, `a fast drive on this road arrives alive or barely (${out.result.ember.toFixed(1)}, ${out.result.grade}): the cold takes most of a third of the pot even for the best drive`);
+  check(out.result.grade !== 'bright' && out.result.ember > 10, `a fast drive on this road arrives alive or barely (${out.result.ember.toFixed(1)}, ${out.result.grade}): the cold takes a quarter of the pot or more even for the best drive`);
   const taken = 100 - out.result.ember, cold = EMBER_RULE.coldPerSecond * out.duel.state.stageTimeSec;
   check(taken >= cold - 3 && taken - cold < 12, `on the road almost only cold takes ember (${taken.toFixed(1)} taken, ${cold.toFixed(1)} of it cold, in ${out.duel.state.stageTimeSec.toFixed(0)} s)`);
 }
@@ -212,7 +212,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const input = {kmh: 120, lostKmh: 30, onRoad: false, dt: 1};
   const medium = emberLoss(EMBER_RULE, {...input, difficulty: 'medium'}), easy = emberLoss(EMBER_RULE, {...input, difficulty: 'easy'});
   check(Math.abs(easy.rough * 2 - medium.rough) < 1e-9 && Math.abs(easy.hit * 2 - medium.hit) < 1e-9 && easy.cold === medium.cold, 'Easy halves rough ground and hits and leaves cold alone');
-  check(Math.abs(medium.cold - .33) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.33 a second, rock 0.003 a metre for each km/h over 50, hits 1.5 for each km/h');
+  check(Math.abs(medium.cold - .15) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.15 a second (SCABLANDS-LAND round 4; it was 0.33), rock 0.003 a metre for each km/h over 50, hits 1.5 for each km/h');
 }
 // (h) the same seed and inputs give the same ember, twice.
 {

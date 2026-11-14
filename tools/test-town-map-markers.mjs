@@ -20,10 +20,11 @@ const town = {
 const before = JSON.stringify(town,(_key,value)=>typeof value==='bigint'?String(value):value);
 const markers = buildTownMapMarkers(town);
 const marker = (kind,id) => markers.find(item => item.kind===kind && item.id===`${kind}:${id}`);
-assert.ok(markers.some(item=>item.id==='place:tin-town'&&item.x===600&&item.z===0),'named world places provide base map markers');
+// SCABLANDS-LAND round 4: Tin Town stands at (6000, 0) and the Ridge at (4240, -3040), ten times as far from the yard.
+assert.ok(markers.some(item=>item.id==='place:tin-town'&&item.x===6000&&item.z===0),'named world places provide base map markers');
 assert.ok(markers.some(item=>item.id==='town'&&item.kind==='town'&&item.x===0&&item.z===0),'the player town has a map pin at its world location');
 assert.deepEqual({x:marker('outpost','dot').x,z:marker('outpost','dot').z},{x:55,z:70},'outposts use their saved map position');
-assert.deepEqual({x:marker('outpost','tam').x,z:marker('outpost','tam').z},{x:424,z:-304},'legacy outpost records read their place id from content');
+assert.deepEqual({x:marker('outpost','tam').x,z:marker('outpost','tam').z},{x:4240,z:-3040},'legacy outpost records read their place id from content');
 assert.deepEqual({x:marker('truck','dot-1').x,z:marker('truck','dot-1').z},{x:4,z:0},'trade trucks interpolate on saved route coordinates using the town tick');
 assert.deepEqual({x:marker('truck','hauler-1').x,z:marker('truck','hauler-1').z},{x:12,z:20},'haulers follow their explicit route in world metres');
 assert.equal(marker('truck','missing-position'),undefined,'trucks without a route position are not pinned to a false location');
