@@ -31,6 +31,9 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   parabolas, with "our tank in one place" firing at fixed places, "or maybe a catapult".
 - "You can't walk or drive through buildings. If we drive through buildings, they must collapse
   and cost scrap to rebuild."
+- On seeing the new map and the regions: "This is so far really good. Coming along nicely."
+  "Curious what it would take to make things more photo-realistic? I think more photo realism
+  (doesn't need perfection) could make a lot of the game play really enticing."
 
 Where each is built: card SCABLANDS-LAND, round 4.
 

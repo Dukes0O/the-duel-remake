@@ -662,6 +662,39 @@ Slice 2b makes every building solid. This slice makes the light ones fall, as Ky
   changes. Saves and pay: one independent review, and the save checker (rule 6).
 - **Not here:** races and their roadside buildings, which keep their crash rules.
 
+### Kyle on realism (14 November 2026), and a trial on one scene
+
+Kyle, on seeing the map and the regions: "This is so far really good. Coming along nicely."
+"Curious what it would take to make things more photo-realistic? I think more photo realism
+(doesn't need perfection) could make a lot of the game play really enticing."
+
+**Where the land stands.** The game already has a film-like exposure, soft shadows from one sun
+and a sky picture that lights the cars. The Scablands ground is one fully matt surface whose
+colour is drawn in code; it has no relief of its own, the light on it is even, the distance has
+little haze and almost nothing stands on it.
+
+**What Claude does with it.** Slice 3 (beside the roads) opens with a trial on one scene, the
+East Road at the Girder Bridge, in three steps. Each step is judged from a before-and-after
+picture sent to Kyle and timed roughly on Performance, so nothing is picked that the laptop
+cannot hold.
+
+1. **Light and air.** A sky with a low sun; haze with distance that takes the sky's colour;
+   shadows that reach as far as the player sees; soft dark shading where a thing meets the
+   ground; the exposure set for a bright desert.
+2. **Photographed surfaces.** Free-to-use (CC0) photographs of rock, salt, sand, gravel and ash
+   with their relief, laid where the code-drawn regions say, with the code breaking up the
+   repeat. Credits in `public/assets/textures/CREDITS.md`; sizes against
+   `tools/size-targets.json`.
+3. **Things at every size.** Stones, scrub, tracks, posts and wire scattered by seed; the
+   bridge and what stands beside the road at true size.
+
+What passes on the one scene is carried across the land as hill country (2c) and the roadside
+(3) are built. This keeps Kyle's direction of 11 November: code decides what is where,
+photographs supply the grain, and nothing is built as a box model.
+
+Not chosen: anything this laptop cannot hold inside the frame limit (traced light, dense plants
+to the horizon, whole scanned landscapes).
+
 ### Open at the end of slice 1
 
 - **Five older browser scenarios fail on the larger land** (run by Claude at the merge):
