@@ -109,6 +109,12 @@ function playerInput(duel) {
   const phase = worldJob.job.stepState.phase;
   const needsRelease = state.footTransition?.needsRelease === true;
   let target = currentMarker(duel);
+  // Hot Soup's goal is across the Scablands and the town stands between the kitchen and it, so the driver follows the marked way, the safe
+  // points in turn (go-live, 13 November 2026), as a child follows the road on the map. The other carries still drive straight at their goal.
+  if (step.kind === 'carry' && step.load === 'hot-soup' && !state.onFoot) {
+    const next = step.safePoints?.[worldJob.job.stepState.safeIndex ?? 0];
+    if (next) target = spot(next);
+  }
   const raiders = worldJob.actors.filter(actor => Number.isFinite(actor.health) &&
     Number.isFinite(actor.x) && !actor.knockedDown);
   if (step.kind === 'defend' && raiders.length && !state.onFoot) {

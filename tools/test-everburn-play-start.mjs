@@ -274,7 +274,8 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
   check(cx - width / 2 >= model.x0 && cx + width / 2 <= model.x1 && cz - depth / 2 >= model.z0 && cz + depth / 2 <= model.z1, 'the Tin Town solid lies inside the footprint of the drawn town');
   near(cx, 600, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, 0, 1, 'the Tin Town solid is centred on the town (z)');
   // No job's start, car start, safe point or road comes inside it, except the places a job is meant to end at (the town's own centre for
-  // job 1 and the roads, the notice board for Hot Soup), and those can be reached from outside it, the car's own half length (2.4 m) allowed.
+  // job 1 and the roads), and those can be reached from outside it, the car's own half length (2.4 m) allowed. (Hot Soup used to end at the
+  // notice board inside it; it now ends at the Everburn well.)
   const jobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS, gasRunJob({road: 'long'}), gasRunJob({road: 'boneyard'}), fieldBattleJob()];
   const x0 = cx - width / 2, x1 = cx + width / 2, z0 = cz - depth / 2, z1 = cz + depth / 2;
   const inside = point => point.x > x0 && point.x < x1 && point.z > z0 && point.z < z1;
@@ -303,5 +304,26 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
         `${job.id}: its goal inside the town can be reached from the edge of the solid (${radius} m, the car's half length allowed)`);
     }
   }
+}
+{
+  // Hot Soup is a real delivery from Auntie's kitchen to the Everburn well (go-live, 13 November 2026): its marked way (the kitchen, the three safe
+  // points, the well) never comes within 6 m of any solid or of the drawn town and fence, except inside the well's own 18 m ring at the very end and the first 15 m beside the kitchen (which is at the drawn town's edge), and it is
+  // a long drive.
+  const soup = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const way = [soup.origin, ...soup.safePoints, soup.destination].map(at);
+  check(at(soup.destination).x === -424 && at(soup.destination).z === 304 && soup.destination.radius === 18 && soup.radius === 18, 'Hot Soup ends at the Everburn well (-424, 304), 18 m');
+  let length = 0, tightest = {gap: Infinity, id: ''};
+  for (let piece = 1; piece < way.length; piece++) {
+    const a = way[piece - 1], b = way[piece], metres = Math.hypot(b.x - a.x, b.z - a.z); length += metres;
+    for (let m = 0; m <= metres; m += .5) {
+      const x = a.x + (b.x - a.x) * m / metres, z = a.z + (b.z - a.z) * m / metres;
+      if (Math.hypot(x - way.at(-1).x, z - way.at(-1).z) <= 18 || Math.hypot(x - way[0].x, z - way[0].z) <= 15) continue;
+      const gap = clearance(x, z); if (gap.gap < tightest.gap) tightest = gap;
+    }
+  }
+  check(tightest.gap >= 6, `Hot Soup's marked way keeps ${tightest.gap.toFixed(1)} m from every solid (${tightest.id}), at least 6`);
+  check(length > 1000, `Hot Soup is a long drive (${length.toFixed(0)} m by the marked way)`);
+  const car = carAt(start(EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup')));
+  check(Math.hypot(car.x - at(soup.origin).x, car.z - at(soup.origin).z) < 15 && facingAngle(car, at(soup.safePoints[0])) < .01, 'Hot Soup starts beside the kitchen, facing its first safe point');
 }
 console.log(`everburn play start (part B and fourth round): ${checks} checks passed`);

@@ -9,7 +9,7 @@ const TWO = `['hot-delivery','get-out-and-walk']`;
 const BOARD = [
   {key: 'lost-prospector', name: 'LOST PROSPECTOR', start: [543, 192]},
   {key: 'survey-flags', name: 'SURVEY FLAGS', start: [543, 192]},
-  {key: 'hot-soup', name: 'HOT SOUP', start: [603, -100]},
+  {key: 'hot-soup', name: 'HOT SOUP', start: [624, -2]},
 ];
 
 export async function run(c) {

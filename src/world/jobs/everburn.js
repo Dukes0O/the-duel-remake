@@ -146,12 +146,14 @@ export const EVERBURN_SIDE_JOBS = Object.freeze([
       .map(flag=>Object.freeze({...flag})), carStart:carStart(543, 192, place('survey-flag-1',450,300)), reward:'scrap'})]}),
   Object.freeze({id:'everburn-hot-soup', name:'Hot Soup', kind:'delivery',
     unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({crashLimit:10, markerRadius:8}),
-    steps:[step('carry',{what:'Carry Auntie’s hot soup from her kitchen to the notice board.', load:'hot-soup', origin:place('auntie-kitchen',615,4,4),
-      destination:place('tin-town-notice-board',600,-10,8), safePoints:path(place('town-safe-corner',610,-2,6)),
-      // The car starts on open ground 90 m south of the town, facing the notice board, which stands inside the town's own box and is reached
-      // from the south side: the straight way runs through the gap between the two southern shack clusters and stops 4.5 m short of the box.
-      carStart:carStart(603, -100, place('tin-town-notice-board',600,-10,8)),
-      radius:8, crashLimit:10, spillLineId:'story.ember.auntie-solder.12', reward:'scrap'})]}),
+    // A real delivery across the Scablands (go-live, 13 November 2026): Auntie's soup goes from her kitchen at the east edge of Tin Town to the
+    // diggers at the Everburn well, 1,148 m by the marked way, which goes round the town's south side and then by the safe road. No part of it
+    // comes within 6 m of a solid (the well's own box at the very end excepted). A spill sends the car back to the last safe point it passed.
+    steps:[step('carry',{what:'Carry Auntie’s hot soup from her kitchen to the diggers at the Everburn well.', load:'hot-soup', origin:place('auntie-kitchen',615,4,4),
+      destination:well, safePoints:path(place('town-safe-corner',632,-30,6), place('south-road',570,-30,10), safeRoad),
+      // The car starts on open ground beside the kitchen, outside the town's solid, facing the first safe point.
+      carStart:carStart(624, -2, place('town-safe-corner',632,-30,6)),
+      radius:18, crashLimit:10, spillLineId:'story.ember.auntie-solder.12', reward:'scrap'})]}),
 ]);
 
 // The notice board's own name for a side job ('hot-soup') and its definition's id ('everburn-hot-soup').

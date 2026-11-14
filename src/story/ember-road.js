@@ -17,7 +17,7 @@ const JOB_NOTES = Object.freeze([
 const SIDE_JOBS = Object.freeze([
   {id: 'lost-prospector', name: 'Lost Prospector', kind: 'Rescue', note: 'Find two stranded people near the Boneyard and bring them home.'},
   {id: 'survey-flags', name: 'Survey Flags', kind: 'Explore', note: 'Find five old survey flags. One is up on the Ridge.'},
-  {id: 'hot-soup', name: 'Hot Soup', kind: 'Delivery', note: 'Carry Auntie Solder’s soup across town without spilling it.'},
+  {id: 'hot-soup', name: 'Hot Soup', kind: 'Delivery', note: 'Carry Auntie Solder’s soup to the diggers at the Everburn well without spilling it.'},
 ]);
 
 // RUN-GAS: how things stand with the Ash Men, one sentence for each word of the feud (docs/board/cards/RUN-GAS.md).

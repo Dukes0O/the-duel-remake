@@ -88,7 +88,7 @@ const node=()=>({hidden:false,textContent:'',dataset:{},style:{},firstChild:{tex
   const rescue = sides['everburn-lost-prospector'], explore = sides['everburn-survey-flags'], soup = sides['everburn-hot-soup'];
   check(rescue.places.map(item => item.name).join('|') === 'PROSPECTOR 1|PROSPECTOR 2|TIN TOWN' && rescue.destination.name === 'TIN TOWN', 'a rescue shows its two people and Tin Town');
   check(explore.places.length === 5 && explore.places[0].name === 'SURVEY FLAG 1', 'an exploration shows its five finds');
-  check(soup.path.length === 3 && soup.start.name === 'AUNTIE KITCHEN' && soup.destination.name === 'TIN TOWN NOTICE BOARD', 'Hot Soup has a road from the kitchen by the safe corner to the notice board');
+  check(soup.path.length === 5 && soup.start.name === 'AUNTIE KITCHEN' && soup.destination.name === 'EVERBURN', 'Hot Soup has a road from the kitchen by three safe points to the Everburn well');
   check(![rescue, explore, soup].some(item => item.start.name === 'CURRENT POSITION' || item.destination.name === 'CURRENT POSITION'), 'none of the three falls back to CURRENT POSITION');
 }
 const ui=new Proxy({}, {get:(target,key)=>target[key] ??= node()});

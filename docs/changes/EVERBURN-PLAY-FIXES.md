@@ -151,7 +151,7 @@ two gas runs and the battle in fresh pages 8.3, 8.5 and 8.3. The Scablands art w
 
 - `src/screen-router.js`: the button calls `app.everburnSideJob(key)`, beside `emberStep` and `emberRun`; TRY AGAIN on a notice-board job's result starts it again by its board name.
 - `src/app.js`: `everburnSideJob(key)` and `_sideJobOpen(job)`. `startArenaEvent` accepts exactly the three definitions the board hands over (checked by identity), and only once the note is read and the second story job is won. Anything that is neither one of the six, a gas run nor one of these three is still refused.
-- `src/world/jobs/everburn.js`: each side job's step names its car's start (`carStart`), so that it starts in the open like the six: Lost Prospector and Survey Flags at (543, 192) facing the first goal; Hot Soup at (603, -100), 90 m south of Tin Town facing the notice board, which stands inside the town's own box and is reached from the south side (the straight way goes through the gap between the two southern shack groups and stops 4.5 m short of the box). `sideJobKey` and `sideJobOf` map the board's names to the definitions.
+- `src/world/jobs/everburn.js`: each side job's step names its car's start (`carStart`), so that it starts in the open like the six: Lost Prospector and Survey Flags at (543, 192) facing the first goal; Hot Soup beside the kitchen (see "Hot Soup becomes a real delivery" below). `sideJobKey` and `sideJobOf` map the board's names to the definitions.
 - `src/screen-arena.js`: a notice-board job's result has no NEXT JOB; it ends at BACK TO THE YARD, with the scrap line, and TRY AGAIN if it was lost.
 - `src/route-map.js`: a rescue's people and home and an exploration's finds are drawn as the job's own places on the small and big maps (they were not drawn at all; the panel said "CURRENT POSITION" twice, over itself).
 - The save is unchanged in shape. A finished side job pays the one world-job amount every finished world job pays (80 scrap, 96 on Medium) and adds its run id to `wasteland.settledResults`, exactly as the six do. It writes nothing under `story`. The board never shows a side job as done: it offers the job again every time (the board already listed all three whenever it was open, and no save field was added). The same job pays again each time it is taken.
@@ -162,9 +162,9 @@ Played in the real game by script on Medium, from the board's button through the
 | --- | --- | --- | --- | --- |
 | Lost Prospector | yes | yes | 51.9 s | SCRAP EARNED +96 |
 | Survey Flags | yes | yes | 69.6 s | SCRAP EARNED +96 |
-| Hot Soup | yes | yes | 4.2 s | SCRAP EARNED +96 |
+| Hot Soup | yes | yes | 49.5 s (it was 4.2 s before the fix below) | SCRAP EARNED +96 |
 
-Hot Soup's end spot was driven to by the finished job (the car came up on the south side, 14 m short of the board at 4.0 s, and the job ended at 4.2 s). Its safe corner (610, -2) was driven to on purpose in a second run: the car arrived 0.02 m off and stopped on it. The story save was identical before and after each job, and the board offered all three again afterwards. The 90-minute limit that would have hidden the board behind a switch `ember-side-jobs` was not reached, and that switch was not made.
+The story save was identical before and after each job, and the board offered all three again afterwards. The 90-minute limit that would have hidden the board behind a switch `ember-side-jobs` was not reached, and that switch was not made.
 
 ### B. Job 5's start moved past the junk cars
 
@@ -227,6 +227,27 @@ The Story Wall's three "Take job" buttons that did nothing (replaced by working 
 ### Left open
 
 - The notice-board jobs repeat for ever and pay the one world-job amount (96 scrap on Medium) each time, with no tick: that follows the board as it was (it listed all three whenever it was open) and the save has no field for them. If the board should show a job done or pay once, that is a design call and a new save field.
-- Hot Soup is short (4 s at the child-pace script's speed) and its first picture is a plank fence; Lost Prospector and Survey Flags say nothing aloud (their definitions carry no lines). All three have the plain result line.
+- Hot Soup, Lost Prospector and Survey Flags say nothing aloud at the start (their definitions carry no lines). All three have the plain result line. (Hot Soup was 4 s long with a fence in its first picture; it is now a 49 s delivery, see the section above.)
 - The junk cars stay on the road as they were; job 5's way on to the mall and the well passed them in the play, and nothing else starts within 40 m ahead of one.
 - The Hand Flamer's drawing, new story lines and the Lab are out of scope, as before.
+
+### Hot Soup becomes a real delivery (a second commit, Claude's design decision after the review)
+
+Hot Soup took 4 seconds, paid 96 scrap and was offered again without limit. It is now a delivery across the Scablands: Auntie's soup goes from her kitchen in Tin Town to the diggers at the Everburn well.
+
+- `src/world/jobs/everburn.js`: origin stays `auntie-kitchen` (615, 4); the destination is the existing `well` place (-424, 304), radius 18 (the step's `radius` is 18); the objective reads "Carry Auntie's hot soup from her kitchen to the diggers at the Everburn well."; `load`, `crashLimit` 10, `easy`, `spillLineId` and `reward` are as they were. Safe points: (632, -30), (570, -30) and the existing `safeRoad` (230, 150). The marked way is 1,148 m: south of the kitchen, west along the town's south side, then across the flats by the safe road to the well. It never comes within 6 m of any solid or of the drawn town and fence (8.6 m at the tightest, except the first 15 m beside the kitchen, which stands at the drawn town's edge, and the well's own 18 m ring at the end).
+- Start: (624, -2), open ground 9 m east of the kitchen, outside the town's solid, facing the first safe point; 8.6 m clear of solids, the camera behind it 6.2 m clear, no junk car within 40 m ahead.
+- `src/story/ember-road.js`: the board's note reads "Carry Auntie Solder’s soup to the diggers at the Everburn well without spilling it."
+- The small and the big map draw the road from AUNTIE KITCHEN to EVERBURN (by the same road code as every other carry job).
+- Played in the real game on Medium from the board's button to the results screen: finished in **49.5 s** (the child-pace script goes at most 52 mph, so a slower child takes longer), SCRAP EARNED +96, story save unchanged, BACK TO THE YARD, no next job. First frame 7.6 s after the button in headless Chrome.
+- **Driving it badly, and what was found.** The spill rule reads `state.lastCrashSize`, and nothing in the game sets it, so no crash can spill the soup (job 1's ember pot has the same rule and the same gap). Driving at 75 mph into the southern shack group only stopped the car. When the game was told of a large crash by hand (`lastCrashSize` set to 20), the rule worked as written: the spill event fired, Auntie said "That was my good soup! Come back. There is more in the pot, and less in my patience.", the progress along the way was kept and the job went on; the job does not fail on a spill, it restarts its step. TRY AGAIN after a lost or left job is proved at App level for all three jobs (`test-ember-side-jobs`, 136 checks, each job taken again after failing or leaving, now at Hot Soup's new start); in the browser, leaving from the pause screen ends the job but leaves the pause screen up (BACK TO THE YARD again goes to the yard), so a results screen with TRY AGAIN was not reached by that way. Both gaps are older than this change and were not touched: connecting real crashes to the rule is a balance call that would also change job 1.
+
+Changed assertions for this change (each for Claude's review; nothing is loosened):
+
+1. `tools/test-scablands-job-map.mjs`: Hot Soup's map said the road has 3 points and ends at TIN TOWN NOTICE BOARD; it says 5 points ending at EVERBURN (start AUNTIE KITCHEN as before). Why: the job now ends at the well. Deliberate.
+2. `tools/test-everburn-play-start.mjs`: the comment on the Tin Town solid no longer names the notice board as a goal inside it (the existing check for a goal inside the solid simply has nothing to test for Hot Soup now); no assertion changed. New checks (349 became 354): Hot Soup ends at the well with radius 18, its marked way keeps 6 m from every solid, it is over 1,000 m long, and it starts beside the kitchen facing the first safe point. The start check, camera clearance and "no junk car within 40 m ahead" apply to its new start as to the others.
+3. `tools/scenarios/everburn-side-jobs.mjs`: Hot Soup's expected start (603, -100) became (624, -2).
+4. `tools/test-everburn-easy.mjs`, the child-pace driver: for Hot Soup only it now drives to the safe points in turn (it used to drive straight at the goal), because the town stands between the kitchen and the well. Every other job is driven as before. The assertion (8 of 10 finishes) is as it was; Hot Soup finishes 10 of 10, and all nine jobs, both roads at every feud word and the battle pass as before.
+5. `tools/test-ember-side-jobs.mjs` needed no change (it reads each job's start from its definition).
+
+Checks for this change, once: `test-ember-side-jobs` 136, `test-everburn-play-start` 354, `test-scablands-job-map` 42, `test-everburn-easy` (all nine jobs 10 of 10), the lane tier (124 of 124 suites passed; `test-replays` 297 checks and `test-combat-replays` 12, so the replay fingerprints did not move), `npm run build` (passed), and the browser scenarios `everburn-side-jobs`, `everburn-play` and `everburn` (3 of 3 passed, 0 warnings, 0 errors); the whole tier was not run again (only a job definition, a board note and tests changed). Pictures 3, 4 and 8 of `round-8.jpg` are replaced (Hot Soup after Take job, halfway, arriving at the well) and `round-8-review.md` is corrected.
