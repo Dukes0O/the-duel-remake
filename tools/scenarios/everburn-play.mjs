@@ -58,11 +58,15 @@ export async function run(c) {
   if(!out)throw Error('Keyboard drive never put the ember pot out');
   await c.waitFor('/OUT/.test(document.querySelector(".world-hud-ember")?.textContent??"")','the gauge says the pot is out');
   await c.screenshot('everburn-driving');
-  // The rest of this walk is about the results screen and the next job, so the pot is relit and the car is set down at
-  // Tin Town's marker; the job then ends by its own rule. (tools/scenarios/everburn-ember.mjs drives the delivery itself.)
-  await c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,j=s.arena.worldJob.job,to=j.steps[0].destination.position;
-    j.stepState={...j.stepState,out:false,ember:60,rate:0};const pose=a.duel.course.nearest(to.x,to.z);
-    s.s=s.prevS=pose.s;s.lateral=s.prevLateral=pose.lateral;s.speedMph=0;a.advance(0.2)})()`);
+  // The rest of this walk is about the results screen and the next job. The car is set down at the yard gate's brazier,
+  // where it takes a fresh scoop by the job's own rule, and then at Tin Town's marker, where the job ends by its own rule.
+  // (tools/scenarios/everburn-ember.mjs drives the delivery itself.)
+  const setDown=place=>c.evaluate(`(()=>{const a=window.__qaApp,s=a.duel.state,step=s.arena.worldJob.job.steps[0],to=step.${place}.position,pose=a.duel.course.nearest(to.x,to.z);
+    s.s=s.prevS=pose.s;s.lateral=s.prevLateral=pose.lateral;s.speedMph=0;s.arena.worldJob.lastKmh=0;for(let i=0;i<10;i++)a.advance(0.1);
+    const held=s.arena.worldJob.job.stepState??{};return {out:held.out===true,ember:held.ember??null,status:s.status};})()`);
+  const scoop=await setDown('origin');
+  if(scoop.out)throw Error('A stop at the yard gate brazier did not relight the pot: '+JSON.stringify(scoop));
+  await setDown('destination');
   await c.waitFor('window.__qaApp.duel.state.status==="arena_result"','Hot Delivery result');
   await c.evaluate(`(()=>{const text=document.body.innerText;if(/LAST CAR ROLLING|REMATCH/i.test(text))throw Error('Arena results leaked into a world job');if(!text.includes('HOT DELIVERY')||!text.includes('NEXT JOB: GET OUT AND WALK'))throw Error('World job result or next job is missing');if(/PLACE|WRECKS|WRECKED|HOLD/i.test(text))throw Error('Arena metrics leaked into world job results')})()`);
   await c.evaluate(`(()=>{const tick=document.querySelector('.result-panel .water-road-tick');
