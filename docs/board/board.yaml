@@ -532,22 +532,12 @@ tasks:
     owner: "claude"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude (Director) with Sonnet helpers, since 14 November 2026"
     needs: []
     locks: []
     flag: "story-everburn"
     details: "docs/board/cards/EVERBURN-REMAKE.md"
-
-  - id: EVERBURN-SPILL
-    title: "A hard crash never spills the ember pot or the soup"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "ready"
-    needs: ["EVERBURN-REMAKE"]
-    locks: []
-    flag: "story-everburn"
-    details: "docs/board/cards/EVERBURN-SPILL.md"
 
   - id: EVERBURN-PLAY-FIXES
     title: "The Everburn's first full play: captions, cameras, starts and the yard after job 6"
