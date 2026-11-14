@@ -580,6 +580,121 @@ The changed assertions in the suites above come to about 80 in all, grouped by s
   triangles are the useful numbers. Claude runs the real frame check.
 - `tools/scenarios/everburn-play.mjs`: not run (known to fail on EVERBURN-REMAKE). `tools/test-review-evidence.mjs` does not fail (no sheet was made).
 
+## Round 4 slice 2a: regions, roads and how the ground drives (14 November 2026)
+
+Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Slice 2 design", build 2a. No switch changed: `story-everburn` and
+`scablands-runs` stay `dev`. Solid ground (build 2b) is not started: a car can still cross the river anywhere.
+
+### What was built
+
+- **Roads.** `src/world/scablands-road.js` and `scablands-road-geometry.js`. Twelve roads (East, Boneyard, Tin, Salt, the Salt Road's spur to the Ridge,
+  Ridge, West, Dam, Burn, Mall, Mall to the Everburn, Mall to the Boneyard), 54 km in all. Each is a list of nodes written through the land's names
+  (`land.at`, `land.between`, named points), laid out with rounded corners (radius 700 m, 450 m before Tin Town's gate). A node that is worked out from others
+  (a start 30 m from the yard, the straight beyond a crossing) is marked `derived`. The halfway camp is a node the East Road passes exactly. The roads are
+  cut into 256 m cells, so "is this point on a road" asks only the segments in its cell.
+- **Named points** (`scablands-names.js`): the eleven river nodes, the five crossings (shares of a stretch of the river), the camp and the two barricades. The
+  names file now lets a named point stand on an earlier named point. `land.named` lists them for the moving-a-place check.
+- **Regions, river, rises** (`src/world/scablands-regions.js`). `scablandsDriveAt(x, z)` gives the region and its driving numbers in about 0.7 microseconds; read
+  in the card's order: roads, river bed, wreck fields (1,300 m round the Boneyard), sand (1,500 m round the Ships), the burn (1,600 m round the Everburn), salt
+  pan, scab plates, flats. Edges are moved by one wave (`edgeWarp`, up to about 100 m), the same wave as in the ground's shader. The river is a curve through its
+  eleven nodes and the five crossings; its cut (`riverDepthAt`) is 8 m with banks from 52 to 78 m from its middle. Rises (`RISES`, `riseHeightAt`).
+- **How the ground drives.** `_drivingSurface` (`src/sim-driving.js`): for the Scablands only, the floor's grip, drag, shake and top speed come from the region.
+  Every other venue returns the same object as before (a test checks the Scrapdome). On the Scablands' regions the pull toward the limit is 4 a second where it
+  was 1.4, so that a car settles at the region's share of the floor's speed (measured below). A change of ground emits `groundChanged` (at most once in half a second).
+- **The ember.** `emberLoss` takes `safeKmh` from the ground under the car (`world-job.js` asks `scablandsDriveAt`) in place of the road yes or no. Cold is 0.14 a second.
+- **Drawn in code.** `src/world/scablands-ground-look.js` (new; the ground look moved out of `scrap-look.js`): each region has its own ground in the ground's shader;
+  region edges use the same wave as the driving; cracks and plates are cut from a cell pattern worked out from the point (`gVoronoi`), so nothing repeats (the old cracks
+  were read from a picture 413 m across, which showed as a grid); fine patterns fade to their average where their cells are under a few pixels. Roads
+  (`createRoadLook`) are graded dirt with blade marks, a crown, two dark ruts, a gravel berm and an uneven soft edge. `src/world/scablands-draw.js`: the road ribbons (in
+  pieces of about a kilometre, one built a frame when the player nears it), the gorge (bed and banks as ribbons; the ground is cut away where the river is, using a small
+  picture of the river's distance made in code), the Girder Bridge (a deck and two trusses) and the Pipe (a one-car deck and a pipeline on piers). The far ridge is unchanged.
+- **Felt.** Camera shake on rough ground grows with speed (`groundShake` x (speed/70)^1.4: scab plates 0.16 m, river bed 0.05, soft sand 0.07, sand 0.04). Dust takes the colour
+  of the ground (`effects.js`). Cues (`sound-bank.js`, played by `audio.js`, from sounds the game already has): `world.ground.road`, `.flats`, `.salt-pan`, `.scab-plates`,
+  `.river-bed`, `.river-soft`, `.sand`, `.wreck-fields`, `.burn`.
+- **Scenarios put right:** `tools/scenarios/everburn-ember.mjs` and `everburn-frames.mjs` from the land's names. New: `tools/scenarios/scablands-regions.mjs`.
+
+### Numbers chosen or changed, and why
+
+- **Camp moved** from (2237, 1589) to (2001, 1199), the card's camp within 100 m. The East Road passes it exactly.
+  The old camp was 540 m off the new road. Barricades are on the East Road, 220 m before the bridge and 900 m after it.
+- **River nodes** are the card's, except the head: it starts 300 m east of the Dry Dam (so that the cut stays clear of the dam's flat ground) and the mouth
+  stops 165 m short of the ridge at (1930, 4600) (a cut into the ridge would be a gorge 100 m deep). The crossings sit on the river's own line: the Pipe is 136 m
+  from the card's spot.
+- **East Road** is 7,838 m (card: about 7 km), because the bridge stands where the river runs north to south and the road must reach Tin Town's gate from the south.
+- **Rises:** 26 m high (card 20 to 40), 920 m long along the road, 2,200 m across it, standing where the road is 1,500 m in a straight line from the place (1,700 m from the yard),
+  or 42 percent of a short road. 30 m made the road's steepest grade 13.9 percent; at 26 m it is under 10 percent beyond the places' own ramps.
+- **Ember:** cold 0.14 as the card says; nothing needed changing. Margin of the third drive is thin: 6 km at 30 km/h is 720 s and the pot is out at 714 s.
+- **Ground pull 4 a second** (above). At the old 1.4 a car at full throttle settled 22 km/h over the road's limit and 29 km/h over the plates'.
+- **Dust colours and shakes** are in `DRIVE` in `scablands-regions.js`.
+
+### Checks
+
+New: `tools/test-scablands-regions.mjs` (12 tests). Every road holds at the top speed of the quickest car (Koenigsegg Jesko, 253 km/h on the road) and of Hot Delivery's Falcone F42 (207 km/h): a driver
+that aims 90 m ahead stays at most 2.4 m off the line on all twelve roads (the half width is 14 m), so the corners (700 m, 450 m at the gate) are not the limit; every point of a 150 m grid of
+the land has one region and each of the eight is found where the card puts it; `DRIVE` is the card's table, and a car at full throttle in a real Duel settles at road 194, flats 146, scab plates 96, salt pan 240,
+sand 74 and wreck fields 146 km/h (the road's limit is 185); the old ring and the delivery road are gone (a scan of the source and a check of 36 ring points); a place is hidden from the road before it by the rise between
+(a camera 3 m up, 520 m past the rise, sees the top of the place's buildings 6 m up: hidden by 15 to 23 m of ground on the 16 road ends checked); rises 20 to 40 m, never within 600 m of a place, under 10 percent;
+the steepest road grade is under 12 percent; the river is 8 m deep with banks, there are five named crossings on its line, a deck is level with the plain, and a road crosses the river only at one of them; a point is classified in
+under 12 microseconds. `test-ember-pot` holds the ember's three drives. The three new files are in the no-bare-coordinate scan.
+
+### Results
+
+- `test-scablands-regions` 12 of 12; `test-scablands-size` 9; `test-scablands-scene` pass; `test-scablands-ground` 5; `test-ember-pot` 50 checks; `test-everburn-play-start` 358; `test-everburn-play-fixes-a` 291 and `-round4` 78;
+  `test-run-gas` 1,118; `test-field-battle` 796; `test-old-smoke` 655; `test-everburn-easy` pass (18 min: all nine jobs, both roads); `test-circuits` 232,142 checks; `test-replays` 297 and
+  `test-combat-replays` 12: no fingerprint moved. No world signature exists for the Scablands and none was regenerated.
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, PowerShell): 131 suites. Two failed at first: `test-p4-audio` (the pinned old sound bank saw the nine new cues; they are excluded from the pin as the ember's three were: `GROUND_CUES`) and
+  `test-review-evidence`, which fails until Claude writes `docs/board/looks/scablands-land/round-5-review.md` for the sheet `round-5.jpg` (expected). `npm run build`: pass.
+- Browser scenarios (memory-only saves, headless, Performance, laptop in use, so a guide and not a frame check): `everburn-ember`, `everburn-frames`, `scablands-size` and `scablands-regions` pass.
+  `everburn-frames`: p50 16.7 ms, p95 16.8 ms, max 17.8 ms. `scablands-size`: p95 16.8 to 16.9 ms; first load 23 s (a fresh headless browser); world build 134 to 146 ms.
+
+  | View | Draw calls | Triangles |
+  | --- | --- | --- |
+  | yard, looking east | 140 | 184,292 |
+  | 1 km out | 172 | 192,902 |
+  | 3 km out | 132 | 180,680 |
+  | 5 km out | 211 | 226,812 |
+  | Tin Town's gate | 250 | 251,120 |
+
+  `scablands-regions` (34 pictures): flats 146 / 185,104; scab plates 178 / 216,362; salt pan 129 / 177,080; river bed 138 / 186,930; wreck fields 156 / 182,354; sand 126 / 170,196; the burn 148 / 170,668; road 134 / 181,672;
+  Girder Bridge 144 / 211,192 (from the air 76 / 138,946); Steps 139 / 208,312 (64 / 106,550); Wash 159 / 190,742 (75 / 138,998); Pipe 141 / 208,904 (66 / 108,742); South Ford 160 / 193,302 (64 / 107,538); the twelve roads 126 to 172 draw calls and
+  171,000 to 199,248 triangles; from above the four ways 128 to 181 / 179,412 to 220,818. Slice 1 was 128 to 277 draw calls and 183,000 to 273,000 triangles.
+  The sheet is `docs/board/looks/scablands-land/round-5.jpg` (310 KB): the plates, the pan, the river bed, the sand, the burn, the bridge, the pipe, the steps, the East Road, and the East Road, the scab plates and the river bed from above.
+  Claude writes `round-5-review.md`.
+
+### What looks or drives wrong (honest)
+
+- The banks of the gorge read as wood grain from above (layered rock bent by noise); the river bed's soft patches show as long diagonal shapes; the sand is a flat pale plain with little to steer by.
+- The burn's glints are bright orange at 300 m from the Everburn and read as lava rather than ash.
+- The rises are felt more than seen from inside a car: the crest of each hides the place, but there is nothing on the rise itself.
+- A car at 100 mph that meets a bank of the river leaves the ground off the far lip (seen at the Steps: the floor's launch limit comes from three old ramps of the first land's oval, which the sim still reads), and a car going down a bank drops 8 m in under half a second.
+  Neither is a fault in the rules of 2a (a car can cross anywhere); 2b makes the banks solid.
+- The ember's third drive has a thin margin (6 s of 720 s, and a car held at 29.9 km/h is out 16 m before the town's ring).
+- Bess, the furnace and the other jobs' paths are the old straight legs between names, not the roads: the Boneyard gas road passes the Wash 600 m from the Boneyard Road. Only the halfway camp and the barricades moved (their shares changed). Job 1 uses the East Road.
+- The East Road ends 47 m from Tin Town's centre at the gate (the last stretch is the town's own ground); the Steps have no road; the six old junk cars still stand on the oval round the yard, now 19 to 25 m off the East Road.
+- A test car parked by the harness (the opposite point of the oval, 1,058 m east of the yard) stops a 45 mph drive along the east axis; the 100 mph drive passes it. Not investigated: it is old and not on a road.
+- The gorge and the roads are drawn only within 3 km of the player, in pieces built one a frame; the coarse ground does not show the gorge (it is cut only where the ribbons are), so a distant river is a pale strip.
+
+### Changed assertions, for Claude to review (rule 18)
+
+`tools/test-scablands-size.mjs`: (1) the flat-land check uses (3500, 1500) in place of (3000, 2000), which is on a rise now; (2) the moving-a-place check
+reads the named points and the net's non-derived nodes in place of the delivery road, and the camp moves .47 of the way (was .526); (3) the no-bare-coordinate scan
+covers `scablands-regions.js`, `scablands-draw.js` and `scablands-road-geometry.js`; (4) the 6 km drive at 100 mph takes the distance over the speeds the car had (the plates hold
+it to 52 mph) and no step changes the speed by more than 3.2 mph (was 2): the ground's pull, 3 mph at most.
+`tools/test-scablands-scene.mjs`: the dirt-road checks are rewritten for the net (pieces built near the yard: 7 points across, 1.2 times the half width each side, no more than 0.3 m above
+the ground, every face up, the middle on the land, the look has ruts and a soft edge); the edit check keeps the net's group.
+`tools/test-scablands-ground.mjs`: the two ring tests are replaced: every road end is road, the yard and open ground are not; an ordinary car follows the East Road to the bridge and
+stays on it. `tools/test-ember-pot.mjs`: the road question reads the East Road and the ground's safe speed; the delivery road drive is replaced by the three drives of the card
+(East Road bright 72.5 left after 195 s; the short cut at 49.5 km/h arrives alive with 39.1 in 435 s; at 29.9 km/h the pot is out at 714 s, 5,966 m, before Tin Town; and by the road
+at 714 s, 4,890 m); the Easy-halves check uses a safe speed of 50 and cold 0.14; the driver slows for the last 160 m (the town's ground is flats).
+`tools/test-everburn-line-audit.mjs` (`safeKmh` 50 where `onRoad` was false); `tools/test-rail-region.mjs` (its copy of the land's height adds the rises and the river);
+`tools/test-everburn-play-start.mjs` and `test-everburn-screens-start.mjs` (the starts of jobs 5 and 6 are 80 and 125 m from the nearest road: "more than 60 m from any road" where it said
+more than 1,000 m from the oval road).
+
+### Removed
+
+The dirt ring round the yard (`ellipseClosest`, the oval road ribbon, `roadRibbon`, `scablandsSurfaceAt`'s ring), the delivery road (`deliveryRoad`, `DELIVERY_ROAD`), the ember's
+road yes or no (`onRoad`, `roughFreeKmh`), the old crack picture (`createGroundLook` in `scrap-look.js`, replaced by `scablands-ground-look.js`).
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
