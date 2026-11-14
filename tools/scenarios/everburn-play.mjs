@@ -106,5 +106,5 @@ export async function run(c) {
   await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
   await c.evaluate(`(()=>{if(document.querySelector('.world-hud-map:not([hidden])'))throw Error('The big map did not close');
     if(document.querySelector('#stage').classList.contains('world-map-open'))throw Error('The stage still says the big map is open');})()`);
-  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:11,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,moved,nextJob:'get-out-and-walk'})+'\n');
+  await writeFile(join(c.outputDir,'everburn-play.json'),JSON.stringify({screenshots:11,started:'everburn-hot-delivery',venue:firstJob.venue,marker:firstJob.marker,potWentOut:out,nextJob:'get-out-and-walk'})+'\n');
 }
