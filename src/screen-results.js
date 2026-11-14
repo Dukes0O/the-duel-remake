@@ -39,7 +39,7 @@ function modalScreen(s) {
   const r = s.results || {};
   const scrapResult = Number.isSafeInteger(r.scrapEarned);
   let eyebrow='',title='',description='',metrics='',combatMetrics='',actions='',arenaExtra='',arenaClosing=[];
-  const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):s.status==='warlord_intro'?warlordIntroScreen(s,{metric,action,escapeHTML}):null);
+  const arenaScreen=s.arena&&(s.paused?arenaPauseScreen(s,{metric,action,time,escapeHTML}):s.status==='arena_result'?arenaResultsScreen(s,{metric,action,escapeHTML}):s.status==='warlord_intro'?warlordIntroScreen(s,{metric,action,escapeHTML}):null);
   if (arenaScreen) ({eyebrow,title,description,metrics,actions,extra:arenaExtra,closing:arenaClosing=[]}=arenaScreen);
   else if (s.paused && s.status === 'heli') {
     // The helicopter (docs/HELICOPTER.md): no run to restart, only back to

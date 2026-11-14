@@ -23,7 +23,6 @@ import {createArmoryScreen} from './screen-armory.js';
 import {yardHomeScreen} from './screen-yard-home.js';
 import {arenaYardPanel} from './screen-arena.js';
 import {EMBER_JOBS} from './story/ember-save.js';
-import {sideJobKey} from './world/jobs/everburn.js';
 import {finishArenaEvent} from './arena/arena-event.js';
 import {crewPanel} from './crew-ui.js';
 import {CREW,crewMember} from './crew.js';
@@ -354,16 +353,11 @@ root.addEventListener('click',e => {
       return;
     case 'warlord-retry-save': app.retryArenaSettlement();lastScreen=null;renderState(app.duel.state);return;
     case 'arena-rematch': if(app.restart())lastScreen=null; return;
-    case 'world-job-retry': {
-      const definition=app.duel.state.arena?.worldJob?.definition;
-      // A gas run starts again on the same road; the six jobs start again by their number.
-      if(definition?.run===true){if(app.gasRun?.(definition.road)){lastScreen=null;renderState(app.duel.state);}return;}
-      // A notice-board job starts again by its board name.
-      const side=sideJobKey(definition);if(side){if(app.everburnSideJob?.(side)){lastScreen=null;renderState(app.duel.state);}return;}
-      const number=definition?.number,id=EMBER_JOBS[number-1];if(id&&app.everburnStep?.(id)){lastScreen=null;renderState(app.duel.state);}return;}
+    // TRY AGAIN on the results screen and START AGAIN on the pause screen: the app leaves the job if it is still in play, then starts it again.
+    case 'world-job-retry': app.worldJobAgain?.();lastScreen=null;renderState(app.duel.state);return;
     case 'warlord-begin': if(app.beginWarlordFight())lastScreen=null; return;
     case 'arena-yard': if(app.duel.state.arena?.mode==='world-job'&&app.duel.state.status!=='arena_result'){
-      finishArenaEvent(app.duel,'job-quit','raiders');lastScreen=null;renderState(app.duel.state);return;
+      app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.
     case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;

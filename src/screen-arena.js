@@ -306,7 +306,17 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
       action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
 }
 
-export function arenaPauseScreen(state, {metric, action, time}) {
+export function arenaPauseScreen(state, {metric, action, time, escapeHTML = String}) {
+  // A world job (the Everburn's jobs, the gas runs, the battle, the notice-board jobs) has no fight to put on hold: the card names the job and
+  // what it asks, shows the time spent on it, and offers BACK TO THE JOB, START AGAIN (the action TRY AGAIN uses on the results screen) and the yard.
+  if (state.arena?.mode === 'world-job') {
+    const worldJob = state.arena.worldJob, step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+    const name = worldJob?.definition?.name ?? 'The job';
+    return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
+      description: escapeHTML(step?.what ? `${name}. ${step.what}` : `${name}.`),
+      metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
+      extra: '', actions: action('BACK TO THE JOB', 'resume', true) + action('START AGAIN', 'world-job-retry') + action('BACK TO THE YARD', 'arena-yard')};
+  }
   const hud = arenaHud(state);
   if (!hud) return null;
   return {eyebrow: 'SCRAPDOME / PAUSED', title: 'FIGHT<br>ON HOLD.',

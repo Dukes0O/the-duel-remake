@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import {App} from '../src/app.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
 import {finishArenaEvent} from '../src/arena/arena-event.js';
-import {arenaResultsScreen} from '../src/screen-arena.js';
+import {arenaResultsScreen, arenaPauseScreen} from '../src/screen-arena.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead} from '../src/story/ember-save.js';
 import {emberWallMarkup} from '../src/story/ember-ui.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from '../src/world/jobs/everburn.js';
@@ -22,13 +22,14 @@ const metric = (label, value) => `<m>${label}:${value}</m>`, action = (label, ve
 const KEYS = ['lost-prospector', 'survey-flags', 'hot-soup'];
 
 // An App in the yard with `jobs` story jobs won (and the note read unless `read` is false).
-function yard({jobs = 2, read = true, on = ['story-everburn']} = {}) {
+function yard({jobs = 2, read = true, on = ['story-everburn'], extra = {}} = {}) {
   values.clear();
   const app = new App(); app.audio.unlock = () => {};
   app.duel.featureFlags = createFeatureFlags({storage: null, overrides: {'story-everburn': false, 'scablands-runs': false, ...Object.fromEntries([...['hidden-road', 'arsenal', 'arsenal-wave3', 'warlord-cards'], ...on].map(name => [name, true]))}});
   let profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
   if (read) profile = markEmberRead(profile).profile;
   for (const id of EMBER_JOBS.slice(0, jobs)) profile = markEmberJob(profile, id).profile;
+  if (Object.keys(extra).length) profile = {...profile, story: {...profile.story, ember: {...profile.story.ember, ...extra}}};
   app.profile = profile;
   assert.equal(app._saveProfile(), true); checks++;
   const state = app.duel.state; state.status = 'exploring'; state.playerId = app.player.id;
@@ -51,7 +52,7 @@ const shapeOf = value => value === null ? 'null' : Array.isArray(value) ? 'list'
 {
   const router = readFileSync(new URL('../src/screen-router.js', import.meta.url), 'utf8');
   check(/if\(button\.dataset\.emberSideJob\)\{const ok=app\.everburnSideJob\?\.\(button\.dataset\.emberSideJob\)/.test(router), 'the router handles data-ember-side-job by calling app.everburnSideJob');
-  check(/sideJobKey\(definition\)/.test(router) && /app\.everburnSideJob\?\.\(side\)/.test(router), 'TRY AGAIN on a notice-board job starts it again by its board name');
+  check(/case 'world-job-retry': app\.worldJobAgain\?\.\(\)/.test(router), 'TRY AGAIN and START AGAIN both call app.worldJobAgain, which starts a notice-board job again by its board name');
   same(EVERBURN_SIDE_JOBS.map(sideJobKey), KEYS, 'the three board names are the ids the wall prints');
   same(KEYS.map(key => sideJobOf(key)?.id), EVERBURN_SIDE_JOBS.map(job => job.id), 'each board name finds its definition');
   check(sideJobOf('hot-delivery') === null && sideJobKey(EVERBURN_JOBS[0]) === null, 'a story job is not a notice-board job');
@@ -122,4 +123,48 @@ for (const [label, reason, winner] of [['failing', 'job-failed', 'raiders'], ['l
   }
 }
 
+// ---- The pause screen of a world job, leaving from it, and START AGAIN (go-live, 13 November 2026) -------------------------------------------------
+{
+  const views = {metric: (label, value) => `<m>${label}:${value}</m>`, action: (label, verb, primary = false) => `<button data-action="${verb}"${primary ? ' data-primary="true"' : ''}>${label}</button>`,
+    time: seconds => `t${Math.round(seconds)}`, escapeHTML: String};
+  const kinds = [
+    ['a story job', () => yard({jobs: 2}), app => app.everburnStep('run-him-down'), 'everburn-run-him-down', 'Run Him Down'],
+    ['a gas run', () => yard({jobs: 6, on: ['story-everburn', 'scablands-runs'], extra: {feud: 2, runs: 1}}), app => app.gasRun('long'), 'gas-run-long', 'Gas Run'],
+    ['the battle', () => yard({jobs: 6, on: ['story-everburn', 'scablands-runs'], extra: {feud: 4, runs: 3}}), app => app.gasRun('boneyard'), 'gas-run-boneyard-battle', null],
+    ['a board job', () => yard({jobs: 2}), app => app.everburnSideJob('hot-soup'), 'everburn-hot-soup', 'Hot Soup'],
+  ];
+  for (const [label, make, start, id, name] of kinds) {
+    const app = make();
+    check(start(app) === true, `${label}: starts`);
+    const state = app.duel.state, profileBefore = JSON.stringify(app.profile);
+    app.togglePause();
+    check(state.paused === true, `${label}: the game is paused`);
+    const pause = arenaPauseScreen(state, views);
+    check(pause.eyebrow === 'THE SCABLANDS / PAUSED' && pause.title === 'JOB<br>ON HOLD.', `${label}: the pause screen says THE SCABLANDS / PAUSED and JOB ON HOLD`);
+    const what = state.arena.worldJob.job.steps[0].what;
+    check(pause.description.includes(what) && (!name || pause.description.startsWith(name)), `${label}: it names the job and what it asks ("${pause.description.slice(0, 50)}...")`);
+    check(!/TIME LEFT|PLACE|SCORE|SUDDEN/.test(pause.metrics) && /TIME ON THE JOB/.test(pause.metrics), `${label}: no fight figures, only the time on the job`);
+    const verbs = [...pause.actions.matchAll(/data-action="([^"]+)"/g)].map(match => match[1]);
+    same(verbs, ['resume', 'world-job-retry', 'arena-yard'], `${label}: three actions, back to the job, start again, back to the yard`);
+    check(/BACK TO THE JOB/.test(pause.actions) && /START AGAIN/.test(pause.actions) && /BACK TO THE YARD/.test(pause.actions) && !/REMATCH|FIGHT/.test(pause.actions), `${label}: their words, no REMATCH and no FIGHT`);
+    // START AGAIN from the pause: the same job again from its start, unpaused, nothing paid.
+    check(app.worldJobAgain() === true, `${label}: START AGAIN starts the job again`);
+    const again = app.duel.state;
+    check(again !== state || again.arena.worldJob.definition.id === id, `${label}: a new run`);
+    same(again.arena.worldJob.definition.id, id, `${label}: the same job`);
+    check(again.paused !== true && again.arena.worldJob.job.stepIndex === 0 && again.stageTimeSec < 1, `${label}: unpaused and at its start`);
+    same(JSON.stringify(app.profile), profileBefore, `${label}: nothing was paid and nothing was written`);
+    // Leaving from the pause: one call, the pause is gone, the job ends as left, nothing is paid, and the results screen has TRY AGAIN and the yard.
+    app.togglePause();
+    check(app.duel.state.paused === true, `${label}: paused again`);
+    check(app.leaveWorldJob() === true, `${label}: BACK TO THE YARD from the pause leaves the job in one call`);
+    const left = app.duel.state;
+    check(left.paused !== true && left.status === 'arena_result' && left.arena.result.winnerId !== 'player', `${label}: the pause is gone and the job has ended as left`);
+    same(JSON.stringify(app.profile), profileBefore, `${label}: leaving paid nothing and wrote nothing`);
+    const results = arenaResultsScreen(left, {metric: views.metric, action: views.action, escapeHTML: String});
+    check(/world-job-retry/.test(results.actions) && /arena-yard/.test(results.actions) && /left the job unfinished/.test(results.description), `${label}: the results screen says it was left and offers TRY AGAIN and the yard`);
+    check(app.leaveWorldJob() === false, `${label}: leaving twice does nothing more`);
+    app.dispose?.();
+  }
+}
 console.log(`test-ember-side-jobs: ${checks} checks passed`);

@@ -72,10 +72,10 @@ import {hiddenRoadDiscoverySnapshot} from './hidden-road-discovery.js';
 import {featureFlags} from './feature-flags.js';
 import {arenaVenueAvailable, raceFeatureFlags, wastelandRulesActive, wastelandUnlocked} from './wasteland-access.js';
 import {ARENA_VENUES} from './arena/venues.js';
-import {ARENA_FIELD} from './arena/arena-event.js';
+import {ARENA_FIELD, finishArenaEvent} from './arena/arena-event.js';
 import {cleanupWorldJobLoan} from './arena/modes/world-job.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead, applyArrivedRun, applyBattleEnding, emberBattleOpen, emberFurnaceDead, emberFeud, emberFeudWord, emberOf, emberRuns} from './story/ember-save.js';
-import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobOf} from './world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from './world/jobs/everburn.js';
 import {GAS_RUN_ROADS, fieldBattleJob, fieldBattlePay, gasRunJob, gasRunPay, isGasRun} from './world/jobs/gas-run.js';
 import {emberStoryProps} from './story/ember-road.js';
 import {settleArenaResult} from './arena/arena-settlement.js';
@@ -808,6 +808,27 @@ export class App {
     const job=sideJobOf(key);
     if(!job||!this._sideJobOpen(job))return false;
     return this.startArenaEvent({venueId:'scablands',mode:'world-job',job});
+  }
+  // Leaving a world job that is still in play, from the pause screen's BACK TO THE YARD: the game's own resume clears the pause, then the job
+  // ends as left (nothing is paid) and its results screen, with TRY AGAIN and BACK TO THE YARD, shows at once.
+  leaveWorldJob(){
+    const state=this.duel.state;
+    if(state.arena?.mode!=='world-job'||state.status==='arena_result')return false;
+    this.resume();
+    finishArenaEvent(this.duel,'job-quit','raiders');
+    return true;
+  }
+  // TRY AGAIN (results screen) and START AGAIN (pause screen): the same job starts again from its start. A job still in play is left first.
+  // A gas run starts again on its road (the battle is chosen by the save, as on the wall), a notice-board job by its board name, a story job by its number.
+  worldJobAgain(){
+    this.leaveWorldJob();
+    const definition=this.duel.state.arena?.worldJob?.definition;
+    if(!definition)return false;
+    if(definition.run===true)return this.gasRun(definition.road);
+    const side=sideJobKey(definition);
+    if(side)return this.everburnSideJob(side);
+    const id=EMBER_JOBS[definition.number-1];
+    return id?this.everburnStep(id):false;
   }
   // RUN-GAS: the gas run needs both switches (the run's own and the Everburn's) and the sixth Everburn job won.
   gasRunAvailable(){
