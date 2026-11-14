@@ -32,7 +32,7 @@ Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven
 ## Changed assertions
 
 - `tools/test-everburn-line-audit.mjs`: "a hard crash raises the spill line" for job 1 is now "the pot going out raises the spill line" (rough ground at 300 km/h for 3.5 s on Medium). Why: job 1 no longer spills on a crash size; it spills when the ember is out. Nothing is loosened: a crash size is also asserted to no longer spill job 1, and Hot Soup's own spill assertion (crash size 11) is unchanged.
-- `tools/test-p4-audio.mjs`: the projection of the sound bank that is hashed now also leaves out the three new `world.ember.*` cue names. Why: they are new cues, as the Deep, machine, Lab and helicopter cues were before them. Nothing is loosened: the pinned hash is the same, every old record is still covered, and the three new cues are exercised by the ember tests through the same cue table.
+- `tools/test-p4-audio.mjs`: the projection of the sound bank that is hashed now also leaves out the three new `world.ember.*` cue names. Why: they are new cues, as the Deep, machine, Lab and helicopter cues were before them. Nothing is loosened: the pinned hash is the same, every old record is still covered. The cues are made in code, so there is no recorded file to pin; they were heard by nobody here (no listening claim).
 - No other assertion was changed.
 
 ## Race fingerprints
