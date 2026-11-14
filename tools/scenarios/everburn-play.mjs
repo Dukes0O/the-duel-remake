@@ -45,14 +45,18 @@ export async function run(c) {
   await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'m',code:'KeyM',windowsVirtualKeyCode:77});
   await c.screenshot('everburn-first-job');
   await c.command('Input.dispatchKeyEvent',{type:'keyDown',key:'w',code:'KeyW',windowsVirtualKeyCode:87});
-  let moved=false;
-  for(let second=0;second<120&&!moved;second++){
+  // EVERBURN-REMAKE: holding the accelerator alone no longer finishes the job. Flat out across the rock the ember
+  // pot goes out before Tin Town, the job goes on, and the gauge sends the driver back to a brazier.
+  let out=false,finished=false;
+  for(let second=0;second<120&&!out&&!finished;second++){
     await c.evaluate('window.__qaApp.advance(1)');
-    moved=await c.evaluate('window.__qaApp.duel.state.arena.worldJob.job.stepIndex>0');
+    out=await c.evaluate('window.__qaApp.duel.state.arena.worldJob.job.stepState?.out===true');
+    finished=await c.evaluate('window.__qaApp.duel.state.arena.worldJob.job.stepIndex>0||window.__qaApp.duel.state.status==="arena_result"');
   }
   await c.command('Input.dispatchKeyEvent',{type:'keyUp',key:'w',code:'KeyW',windowsVirtualKeyCode:87});
-  if(!moved)throw Error('Keyboard drive did not advance the first Everburn job');
-  await c.waitFor('window.__qaApp.duel.state.arena.worldJob.job.stepIndex>0','first job step advances');
+  if(finished)throw Error('Holding the accelerator alone finished the first Everburn job');
+  if(!out)throw Error('Keyboard drive never put the ember pot out');
+  await c.waitFor('/OUT/.test(document.querySelector(".world-hud-ember")?.textContent??"")','the gauge says the pot is out');
   await c.screenshot('everburn-driving');
   await c.evaluate(`(()=>{const a=window.__qaApp,j=a.duel.state.arena.worldJob.job;j.stepIndex=j.steps.length;j.done=true;a.advance(0.1)})()`);
   await c.waitFor('window.__qaApp.duel.state.status==="arena_result"','Hot Delivery result');
