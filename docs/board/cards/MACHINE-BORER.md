@@ -203,6 +203,45 @@ land has a difference of this kind (0.5 to 24 m). So the line of a tunnel is a t
   and on level ground, and the start at the mesa's side.
 - **Sound:** `borer.daylight` for breaking through (wind, and the head running free), beside the cues she has.
 
+### After the third review (Claude, 15 November 2026, late night): no state of hers is a dead end
+
+Codex built the break-through as ruled above and an independent Codex review read it. Three of its findings are faults in the
+ruling, which Claude wrote, and one rule replaces them: **whatever stops her, some control the screen names gets her moving
+again.**
+
+- **The trench sentence warns; it does not stop her.** As ruled, an exit cutting stopped at 60 m, and since her head tilts only
+  as she moves, she could then neither move nor tilt. She now hears the sentence at 60 m and at each further 30 m and goes on.
+- **Out of the side of the hill, the cure is spoil.** As ruled she was told to back up and turn her down, which she cannot do:
+  backing follows the bore already cut. The sentence is now "She has come out 2.4 m up the face. Tip spoil below the mouth
+  until she can drive out." Filling the ground beyond the mouth with the dump truck or the dozer frees her. That is the right
+  game: another machine's work, done by hand.
+- **Rising under open ground ends that heading.** The sentence said "Turn her down, or stop here", and she cannot turn down
+  where she stands. It now says "She is coming up under open ground with no face to come out of. This heading ends here. Back
+  her out." The same sentence serves where the ground beyond a far face stands more than 3 m above her floor, a case the ruling
+  left out and the code turned into a cutting 3 to 6 m deep.
+- **Kept as built:** a drop of 1 m or less is driven off and counted as daylight; the spoil bank holds the compacted volume.
+- **Also from the review:** the steep drive's test must name the one refusal it meets; the bound on where a refusal happens
+  goes back; the screen's survey words are built when her numbers change and not every frame.
+
+### Claude's third hand drive, at the mesa (15 November 2026, late night): not ready to merge
+
+Commit 890610c2d in a visible window with real keys. Codex's picture check failed at "following camera enters the bore".
+
+- **Good.** Her model reads as a real machine: a segmented yellow shield gone to rust, a cutter head, a trailing gantry. The
+  survey is plain ("Far side on this line: 301 m on, 1.5 m higher. Hold a rise of 1 in 199."), with a strip of the hill beside
+  it. She stalls in rock at half lever and frees after a second at nothing. The Dig holds 57 frames a second while she bores.
+  Drawn ground and the rules agree at every place measured.
+- **She stays in plain sight inside the hill.** 16.3 m in, under 23 m of ground by the rules, she is seen whole from outside,
+  with no portal and no lining at the mouth. The pictures alone could have been misread again, so this is from rays: straight
+  down over her the drawn ground is there at 26.2 m; from the camera toward her a ray meets drawn ground after 10.6 m.
+- **The up arrow stops her** where it should tilt her (0.00 m in 12 seconds; the down arrow works).
+- **The first push of W after Tab is lost** for about 1.2 seconds.
+- **The Dig's ground is not the land's:** no hills' rock and no photographs, so the mesa is a mound of cracked plain.
+- **Her pace, ruled:** 1.5 m a second at full lever where the rock allows (it was 0.5), about ten minutes for this mesa,
+  until a bore can be saved. A bore that is lost when the player leaves must not take an hour.
+
+All six are with Codex, each with its numbers. Not heard: her sounds. Not seen: a break-through, the lining, a bend.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
