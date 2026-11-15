@@ -216,7 +216,7 @@ function dropCinders(f, advance) {
   }
 }
 
-// Drive along the path (or along a straight run back to the start of a leg).
+// Drive along the path, following it backwards to restart a missed leg.
 function move(f, dt, out) {
   const share = f.staggerLeft > 0 ? OLD_SMOKE.staggerSpeedShare : 1;
   const bolting = furnaceBolting(f);
@@ -226,15 +226,13 @@ function move(f, dt, out) {
   }
   const advance = furnacePace(f) * share * dt;
   if (f.run) {
-    const run = f.run, remaining = run.length - run.done;
-    const step = Math.min(advance, remaining);
-    run.done += step;
-    const t = run.length > 0 ? run.done / run.length : 1;
-    f.x = run.fromX + (run.toX - run.fromX) * t;
-    f.z = run.fromZ + (run.toZ - run.fromZ) * t;
-    f.heading = headingOf(run.toX - run.fromX, run.toZ - run.fromZ);
+    const run = f.run, step = Math.min(advance, f.metres - run.toMetres);
+    f.metres -= step;
+    const point = pointAt(f.path, f.metres);
+    f.x = point.x; f.z = point.z; f.pathIndex = point.index;
+    f.heading = wrapAngle(point.heading + Math.PI);
     dropCinders(f, step);
-    if (run.done >= run.length) { f.metres = run.toMetres; f.run = null; f.legIndex = legAt(f, f.metres); }
+    if (f.metres <= run.toMetres) { f.metres = run.toMetres; f.run = null; f.legIndex = legAt(f, f.metres); }
     return;
   }
   f.metres += advance;
@@ -250,12 +248,11 @@ function move(f, dt, out) {
     f.laps++;
     out.events.push({type: 'turnAround', lap: f.laps, leg: f.hits});
     const toMetres = f.legs[Math.min(f.hits, f.legs.length - 1)].fromMetres;
-    const end = pointAt(f.path, f.path.total), target = pointAt(f.path, toMetres);
-    const length = Math.hypot(target.x - end.x, target.z - end.z);
+    const end = pointAt(f.path, f.path.total);
     f.x = end.x; f.z = end.z;
-    if (length > 1e-6) {
-      f.run = {fromX: end.x, fromZ: end.z, toX: target.x, toZ: target.z, length, done: 0, toMetres};
-      f.heading = headingOf(target.x - end.x, target.z - end.z);
+    if (f.path.total - toMetres > 1e-6) {
+      f.run = {toMetres};
+      f.heading = wrapAngle(end.heading + Math.PI);
       f.metres = f.path.total;
       f.legIndex = -1;
     } else {

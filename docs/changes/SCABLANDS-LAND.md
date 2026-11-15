@@ -1129,6 +1129,14 @@ Check: `test-old-smoke` passes 4,092 checks, including 10 of 10 Easy chases. Rac
 
 Removed: the straight line from the last hit to the well.
 
+### Furnace return, in progress
+
+After a missed chase, the furnace follows its path backwards to the start of the current leg. A bent-path check covers the turn. No new game event or sound cue was added. The three-lap test drives for five path lengths instead of three so that it includes the two longer returns; its assertions are unchanged.
+
+Check: `test-old-smoke` passes 4,094 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change.
+
+Removed: the straight return from the well to the start of the leg.
+
 ### Still to do
 
-The furnace's return after a missed chase still takes a straight line. Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.
+Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.

@@ -248,8 +248,8 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
   // Once only: three more laps past the gate set nothing again, and breaking the right door later does not mend the gate.
   const f = fresh('easy');
   // SCABLANDS-LAND round 4: three laps took 1,200 s on the small land (a lap was under four minutes); a lap is now the whole path
-  // at the base pace, so the run is three laps of it and a minute over.
-  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 3 + 60);
+  // at the base pace. The return follows the path backwards, so three outward runs include two returns.
+  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 5 + 60);
   check(f.laps >= 3 && count(events, 'townReached') === 1 && count(events, 'gateBurnt') === 1, 'the gate facts are set once, however many laps it runs');
   const late = fresh('easy');
   run(late, late.gateMetres / OLD_SMOKE.baseSpeed + 2);
@@ -325,8 +325,8 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
 for (const difficulty of ['easy', 'medium']) {
   const f = fresh(difficulty);
   // SCABLANDS-LAND round 4: twenty minutes (1,200 s, over three laps of the small land's path) became three laps of the larger
-  // land's path at the base pace and a minute over (about 2 hours 9 minutes).
-  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 3 + 60);
+  // land's path at the base pace. Two returns follow that same path backwards.
+  const {events} = run(f, f.path.total / OLD_SMOKE.baseSpeed * 5 + 60);
   check(!f.escaped && !f.fallen && !f.won, `${difficulty}: three laps of misses never lose`);
   check(events.some(event => event.type === 'turnAround') && f.laps >= 3, `${difficulty}: it turns round at the well and keeps going`);
   check(events.filter(event => event.type === 'doorSlam').length >= 10, `${difficulty}: its door keeps opening and slamming`);
@@ -356,6 +356,15 @@ for (const difficulty of ['easy', 'medium']) {
 }
 
 // ---- 7. The end: it turns for the well and rolls in after 5 seconds -------------
+{
+  const returning = createFurnace({path: [{x: 0, z: 0}, {x: 100, z: 0}, {x: 100, z: 100}],
+    legs: [{id: 'one', door: 'left', fromWaypoint: 0}]}, 'easy');
+  returning.metres = returning.path.total - 0.01;
+  stepFurnace(returning, DT, {car: null});
+  run(returning, 100 / OLD_SMOKE.baseSpeed);
+  near(returning.x, 100, .2, 'the return follows the path to the bend');
+  near(returning.z, 0, .2, 'the return reaches the bend instead of cutting across it');
+}
 {
   const bend = createFurnace({path: [{x: 0, z: 0}, {x: 100, z: 0}, {x: 100, z: 100}],
     legs: [{id: 'one', door: 'left', fromWaypoint: 0}, {id: 'two', door: 'right', fromWaypoint: 0},
