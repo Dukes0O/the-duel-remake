@@ -118,6 +118,7 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
   // A thing is drawn within its range of the player, growing from nothing over the range's last tenth so that it does
   // not appear all at once. The batches are filled again after 60 m of travel.
   let filledX = NaN, filledZ = NaN;
+  let fallen = new Set(), fallenCount = 0;
   const tint = new THREE.Color();
   function update(x, z) {
     if (Math.hypot(x - filledX, z - filledZ) < 60) return;
@@ -130,6 +131,10 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
         const grown = Math.min(1, (range - away) / (range * .1) + .35);
         object.position.set(part.center[0], part.center[1] - part.size[1] * (1 - grown) / 2, part.center[2]);
         object.rotation.set(0, part.heading, 0);
+        if (part.kind === 'fence-post' && fallen.has(part.id)) {
+          object.position.y = part.center[1] - part.size[1] / 2 + part.size[0] / 2;
+          object.rotation.z = Math.PI / 2;
+        }
         object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
         object.updateMatrix();
         if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? 1));
@@ -143,13 +148,17 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
     for (const mesh of group.children) { mesh.geometry.dispose(); mesh.material.dispose(); mesh.dispose(); }
     group.clear();
   }
-  return {group, update, dispose};
+  function setFallen(ids) {
+    if (ids === fallen && ids.size === fallenCount) return;
+    fallen = ids; fallenCount = ids.size; filledX = NaN; filledZ = NaN;
+  }
+  return {group, update, setFallen, dispose};
 }
 
 // A separate batch for the parts above the collision footprints. Missing
 // supports deliberately break a span rather than drawing wire across a gap.
 export function createThingsLinesView(fixed) {
-  const wires = [];
+  const wires = [], fenceSpans = [];
   const segment = (out, a, b) => out.push(...a, ...b);
   const span = (a, b, height, sag) => {
     const start = [a.x, a.y + height, a.z], end = [b.x, b.y + height, b.z];
@@ -172,7 +181,10 @@ export function createThingsLinesView(fixed) {
   }
   for (const run of fixed.fences) for (let i = 1; i < run.posts.length; i++) {
     const a = run.posts[i - 1], b = run.posts[i];
-    if (a && b) span(a, b, 1.2, .2);
+    if (a && b) {
+      const start = wires.length; span(a, b, 1.2, .2);
+      fenceSpans.push({a: a.id, b: b.id, start, end: wires.length});
+    }
   }
   const group = new THREE.Group();
   const standing = fixed.pylons.filter(Boolean);
@@ -186,15 +198,27 @@ export function createThingsLinesView(fixed) {
     towers.computeBoundingSphere();
     group.add(towers);
   }
+  let wirePosition = null;
   for (const [name, points, color] of [['wires', wires, 0x2f2b26]]) {
     if (!points.length) continue;
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    wirePosition = geometry.getAttribute('position');
     const lines = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color}));
     lines.name = `Scablands ${name}`;
     group.add(lines);
   }
-  return {group, dispose() {
+  let fallenCount = 0, fallen = null;
+  function setFallen(ids) {
+    if (!wirePosition || ids === fallen && ids.size === fallenCount) return;
+    fallen = ids; fallenCount = ids.size;
+    for (const span of fenceSpans) for (let i = span.start; i < span.end; i++) {
+      wirePosition.array[i] = wires[i];
+      if (i % 3 === 1 && (ids.has(span.a) || ids.has(span.b))) wirePosition.array[i] -= 1.1;
+    }
+    wirePosition.needsUpdate = true;
+  }
+  return {group, setFallen, dispose() {
     for (const child of group.children) { child.geometry.dispose(); child.material.map?.dispose(); child.material.dispose(); child.dispose?.(); }
     group.clear();
   }};
@@ -278,7 +302,7 @@ export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, ha
   const group = new THREE.Group();
   group.name = 'Scablands realism things';
   group.add(small.group, large.group, lines.group, signs.group);
-  return {group, fixed, loneBoulders, update(x, z) { small.update(x, z); large.update(x, z); }, dispose() {
+  return {group, fixed, loneBoulders, setFallen(ids) { large.setFallen(ids); lines.setFallen(ids); }, update(x, z) { small.update(x, z); large.update(x, z); }, dispose() {
     small.dispose(); large.dispose(); lines.dispose(); signs.dispose(); group.clear();
   }};
 }

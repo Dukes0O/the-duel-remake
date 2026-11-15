@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
@@ -509,4 +509,60 @@ test('named ways, truck routes and crossing ramps reject new footprints', () => 
   }
   for (const crossing of RIVER_LAND.crossings.filter(item => ['wash', 'ford', 'bridge', 'pipe'].includes(item.kind)))
     assert.equal(thingFootprintClear(crossing.x, crossing.z, 0, []), false, crossing.id);
+});
+
+test('a fast fence hit removes only that visit post, lowers the wire and does no damage', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {_staticContacts} = await import('../src/sim-contacts.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  const run = course.realismThings.fixed.fences.find(r => r.posts.some((p, i) => p && r.posts[i + 1]));
+  const id = run.posts.find((p, i) => p && run.posts[i + 1]).id;
+  const post = course.solidGrid.solids.find(s => s.id === id);
+  const job = createJobSolidGrid(course.solidGrid);
+  const view = createRealismThingsView({enabled: true, seed: course.seed, ...SCABLANDS_VENUE.scablands,
+    jobStarts: course.realismThings.jobStarts, data: course.realismThings});
+  view.update(post.x, post.z);
+  const mesh = view.group.getObjectByName('Scablands fence-post');
+  const before = Array.from(mesh.instanceMatrix.array);
+  const wire = view.group.getObjectByName('Scablands wires').geometry.getAttribute('position');
+  const wireBefore = Array.from(wire.array);
+  const car = {prevS: -5, s: 5, prevLateral: 0, lateral: 0, speedMph: 30, headingError: 0};
+  const events = [];
+  const duel = {course, state: {opponents: []}, car: {}, _obstacles: () => [], _vehicleSpec: () => ({}),
+    _breakDrift() {}, _surface: () => ({mainRoad: false}), emit: e => events.push(e)};
+  course.worldAt = s => ({x: post.x, z: post.z + s});
+  course.at = () => ({heading: 0});
+  _staticContacts.call(duel, car, true);
+  assert.ok(course.fallenFenceIds.has(post.id));
+  assert.ok(!course.solidGrid.near(post.x, post.z, post.x, post.z).includes(post));
+  assert.ok(!job.near(post.x, post.z, post.x, post.z).includes(post));
+  assert.equal(car.speedMph, 27.6);
+  assert.equal(events[0].fenceSnap.cue, 'world.fence.snap');
+  view.setFallen(course.fallenFenceIds); view.update(post.x, post.z);
+  assert.notDeepEqual(Array.from(mesh.instanceMatrix.array), before);
+  assert.notDeepEqual(Array.from(wire.array), wireBefore);
+  assert.ok(new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true}).solidGrid.near(post.x, post.z, post.x, post.z).some(s => s.id === post.id));
+  view.dispose();
+});
+
+
+test('a slow fence hit leaves the post standing', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {_staticContacts} = await import('../src/sim-contacts.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  const post = course.solidGrid.solids.find(s => s.kind === 'fence-post');
+  course.worldAt = s => ({x: post.x, z: post.z + s});
+  course.at = () => ({heading: 0});
+  const car = {prevS: -5, s: 5, prevLateral: 0, lateral: 0, speedMph: 10};
+  const events = [];
+  const duel = {course, state: {opponents: []}, _obstacles: () => [], _vehicleSpec: () => ({}),
+    roadsideKnockAwayEnabled: () => false, destructionEnabled: () => false,
+    _roadPosition: p => ({s: p.z - post.z, lateral: 0}), _surface: () => ({mainRoad: false}), emit: e => events.push(e)};
+  _staticContacts.call(duel, car, false);
+  assert.equal(course.fallenFenceIds.size, 0);
+  assert.ok(course.solidGrid.near(post.x, post.z, post.x, post.z).includes(post));
+  assert.ok(car.speedMph < 10);
+  assert.equal(events.length, 0);
 });

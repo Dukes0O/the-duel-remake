@@ -85,7 +85,8 @@ export class Course {
       const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
       const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
       this.realismThings={jobStarts,...realismThingsData({enabled:true,seed:this.seed,jobStarts,...SCABLANDS_LAYOUT})};
-      this.solidGrid=createSolidGrid([...SCABLANDS_SOLIDS,...thingSolids(this.realismThings.fixed,this.realismThings.loneBoulders)]);
+      this.fallenFenceIds=new Set();
+      this.solidGrid=createSolidGrid([...SCABLANDS_SOLIDS,...thingSolids(this.realismThings.fixed,this.realismThings.loneBoulders)],this.fallenFenceIds);
     }
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;

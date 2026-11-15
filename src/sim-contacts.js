@@ -345,6 +345,14 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const impactMph = Math.max(0, Math.abs(car.speedMph) * incoming +
       Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld -
       alongPush * alongNormal / DRIVE.mphToWorld);
+    if (!journeyColliders && obstacle.canFall && this.course.fallenFenceIds && impactMph * 1.609344 > 25) {
+      this.course.fallenFenceIds.add(obstacle.id);
+      car.speedMph *= .92;
+      this.emit({fenceSnap: {id: obstacle.id, impactMph, cue: 'world.fence.snap'}});
+      obstacles.splice(obstacles.indexOf(obstacle), 1);
+      attempt--;
+      continue;
+    }
     // A shallow hit on a continuous rail/lining is a sliding scrape, not a
     // crash. Measure incidence against the actual contacted face: striking
     // a rail end remains head-on. Signed reverse travel and sideways pushes

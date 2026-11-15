@@ -689,6 +689,7 @@ export function createScablandsScene(course,options={}){
     },
     sync(state){
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
+      if(things)things.setFallen(course.fallenFenceIds);
       if(locate(state)){
         placeNearGround(here.x,here.z);things?.update(here.x,here.z);tracks?.update(here.x,here.z);
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
