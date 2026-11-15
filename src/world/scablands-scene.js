@@ -5,7 +5,8 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
-import {createGroundLook,createRoadLook} from './scablands-ground-look.js';
+import {createGroundLook,createRoadLook,createTunnelMesh} from './scablands-ground-look.js';
+import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
@@ -493,12 +494,14 @@ export function createScablandsScene(course,options={}){
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
-  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
+  const tunnels=featureFlags.enabled('wasteland-town')?course.groundTunnels:null;
+  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook().apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
+  if(tunnels?.segments.length)ground.add(createTunnelMesh(tunnels));
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
   const nearHole={value:new THREE.Vector4(0,0,0,0)};

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T01:14:36.254Z
+Observed at: 2026-11-15T01:20:03.556Z
 
-Observation commit: 2a22b346d9065428af03aa1a10f1f7038ea3bbee
+Observation commit: 14eca1d98ebb88d76597ae454819c6519bd2668d
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 2a22b346d9065428af03aa1a10f1f7038ea3bbee
+Integration HEAD: 14eca1d98ebb88d76597ae454819c6519bd2668d
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -74,7 +74,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 8 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/machine-drill | unknown | 2026-11-14T18:13:52-07:00 | 0 | last commit 2026-11-14T18:13:52-07:00 | docs/board/cards/MACHINE-DRILL.md, docs/changes/MACHINE-DRILL.md, src/machines/content/machines.js, src/machines/dig-game.js, src/machines/dig-sandbox.js |
+| lane/machine-drill | unknown | 2026-11-14T18:18:26-07:00 | 0 | last commit 2026-11-14T18:18:26-07:00 | docs/board/cards/MACHINE-DRILL.md, docs/changes/MACHINE-DRILL.md, src/machines/content/machines.js, src/machines/dig-game.js, src/machines/dig-sandbox.js |
 
 ## Size targets
 
@@ -82,7 +82,7 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | unavailable | unavailable | 250,000,000 B |
+| Build `dist/` | 712,165,612 B | unavailable | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
@@ -90,7 +90,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 84,036,150 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 7,426 B | +0 B | 5,000,000 B |
 | All `public/` | 703,858,947 B | +0 B | unavailable |
-| Git objects | 1,731,169,280 B | +6,102,016 B | unavailable |
+| Git objects | 1,731,665,920 B | +496,640 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
