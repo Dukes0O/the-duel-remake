@@ -304,7 +304,11 @@ assert.ok(Math.abs(pileVolume() / expectedMuck - 1) < 0.02, 'The pile contains t
 assert.ok(muckCut.spoilBank.far > 6, 'The bank extends as the cut grows.');
 for (const cell of muckCut.spoilBank.cells) {
   assert.ok(muckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001, 'The bank stays at most five metres high.');
-  assert.ok(cell.x >= 12 && cell.z === 0, 'The bank stays beside the mouth and away from the track.');
+  assert.ok(cell.x >= 12 && Math.abs(cell.z) <= 1, 'The bank stays beside the mouth and away from the track.');
+}
+for (let x = 12; x < Math.floor(12 + muckCut.spoilBank.far - 6); x++) {
+  assert.ok(muckGround.heightAt(x, 0) > 0, 'The bank has no gaps between its loads.');
+  assert.ok(muckGround.heightAt(x, 1) > 0, 'The bank is wide enough to draw as a ridge.');
 }
 const bentMuckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
   reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});

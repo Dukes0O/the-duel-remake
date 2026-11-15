@@ -66,14 +66,20 @@ function planSpoil(ground, segments, bank, amount) {
       for (let tries = 0; tries < 128; tries++) {
         const along = bank.far + 1.5;
         bank.far = along;
-        const x = Math.round(start.x + rightX * (12 + along));
-        const z = Math.round(start.z + rightZ * (12 + along));
-        if (cells.some(cell => cell.x === x && cell.z === z)) continue;
-        const shape = {x, z, radius:0.49};
-        const reason = (ground.spoilRefusal || ground.refusal)(shape);
-        if (reason) { lastReason = reason; continue; }
-        const cell = {x, z, along, base:ground.heightAt(x, z)};
-        cells.push(cell); added = true; break;
+        // Bridge the 1.5 m load positions on the one-metre ground grid.
+        // A three-cell-wide strip remains visible on the two-metre view grid.
+        for (const back of [1, 0.5, 0]) for (const across of [0, -1, 1]) {
+          const distance = Math.max(0, along - back);
+          const x = Math.round(start.x + rightX * (12 + distance) - rightZ * across);
+          const z = Math.round(start.z + rightZ * (12 + distance) + rightX * across);
+          if (cells.some(cell => cell.x === x && cell.z === z)) continue;
+          const shape = {x, z, radius:0.49};
+          const reason = (ground.spoilRefusal || ground.refusal)(shape);
+          if (reason) { lastReason = reason; continue; }
+          cells.push({x, z, along:distance, base:ground.heightAt(x, z)});
+          added = true;
+        }
+        if (added) break;
       }
       if (!added) return {reason:lastReason || BORER_OBSTRUCTION};
       continue;

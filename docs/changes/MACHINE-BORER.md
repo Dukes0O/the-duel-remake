@@ -4,6 +4,8 @@ Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to
 
 ## Late drive follow-up
 
+The spoil bank now fills a connected three-cell-wide strip between load positions 1.5 m apart. This lets the Dig's two-metre ground view show a ridge rather than isolated spikes. Each ground cell still checks protected land and the five-metre height limit. `node tools/test-machine-borer.mjs` passed, including connected ground, straight and bent volume, and road and river protection. Claude still needs to inspect the bank in the browser.
+
 The tunnel index now has a revision that makes the Dig redraw the lining as the cut grows. The following camera keeps clear of Mabel while she reverses, including at the mouth. Borer steps share unchanged segment objects instead of copying every segment; they copy the segment list and its last segment only when a cut advances. Spoil avoids the river bed and banks using the land's river index. `node tools/test-machine-borer.mjs` passed, including index revisions, a reverse around a bend and a river-bed refusal. The camera and redraw still need Claude's browser check.
 
 The Dig now uses the Scablands moving near-ground window at two-metre spacing, following the active machine and sampling the Dig surface. The focused test checks the drawn scarp every five metres for 60 metres from Mabel?s parking place, within 0.3 m. The browser scenario takes a mouth view at 20 m and checks the drawn surface 15 m beyond the mouth covers the bore by at least 4 m. `node tools/test-machine-borer.mjs` passed; the browser scenario still needs Claude to run it.
@@ -51,6 +53,8 @@ To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times t
 ## Changed assertions, for Claude to review
 
 Part A updates the old Shift-thrust assertion to expect full lever input, and checks reverse after the lever reaches zero; the prior behavior was explicitly replaced by Claude. `test-machine-borer` selected Mabel after one Q press; it now checks that seven presses select her, because Claude directed that she go last. The drive-mode assertion still checks the selected machine. `test-machine-roads` now includes the borer before the wrap to the excavator, as Claude reviewed.
+
+The spoil position assertion now allows one metre on either side of the bank centre line instead of requiring exactly zero, because the bank is now a connected three-cell-wide ridge. It still checks that the bank starts at least 12 m from the mouth; new checks require connected filled cells.
 
 ## Codex decided
 
