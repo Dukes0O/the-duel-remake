@@ -2062,3 +2062,9 @@ A diagnostic identified one seeded mesa on the furnace's sixth leg, four Breaks 
 The hills suite now checks the first three Hot Soup legs at 10 m intervals and five offsets across the 60 m corridor. All samples retain their former ground height. The hills suite passed 48 of 48. This is a new assertion and loosens none. No event or sound was added. Removed: none.
 
 The final leg from the safe road to the Everburn is not clear: a diagnostic found added hill height at 1,559 sampled points, with a maximum rise of about 66 m. The Mall return's second leg also crosses six Breaks hills and one mesa. These findings are samples, not proof of the complete corridors. The other corridor findings and the failed Everburn drive above remain unresolved. The four ways, Easy jobs and gas roads need their final proof, followed by the integration merge and final checks. Claude must run and judge the picture scenario. Codex decided: use Hot Soup's own safe points and the existing gas-road sampling intervals.
+
+### Hill country: clear the furnace descent
+
+The seeded mesa on the furnace's descent from the Ridge has moved from about (4388, -859) to (4988, -657). Mesa selection now keeps the descent and its 60 m corridor clear. The hills suite passed 49 of 49, including a new clearance check. The solid suite passed 25 of 25, including all four ways with realism on and off and the Ridge and Lookout climbs. No assertion was changed or loosened. No event or sound was added. Removed: the former mesa site.
+
+The other job corridors and the Everburn Easy drive still need proof. Both gas roads need their full driver run. The final integration merge, replay and world-composition checks, and build remain. Claude must run and judge the picture scenario. Race fingerprints were not checked in this step.

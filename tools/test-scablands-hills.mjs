@@ -20,6 +20,15 @@ import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} fr
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 
+test('mesas leave the furnace descent clear', () => {
+  const points = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path
+    .slice(5, 7).map(point => point.position);
+  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+    assert.ok(distanceToRoad(mesa.x, mesa.z, points) >= mesa.radius + mesa.ramp + 60,
+      'the mesa and its ramp clear the furnace descent and its 60 m corridor');
+  }
+});
+
 test('the first three Hot Soup legs have clear hill corridors', () => {
   const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
   const points = [step.origin, ...step.safePoints].map(place => place.position);

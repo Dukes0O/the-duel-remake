@@ -60,6 +60,8 @@ export function hillsFor(land=LAND,seed=1989){
   // endpoints use the same named places as the job's third and fourth flags.
   const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
     LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
+  // Keep the furnace's descent from the Ridge to the Boneyard open.
+  const furnaceDescent=[LAND.at('ridge',-74,104),LAND.between('ridge','boneyard',.599,-74,0)];
   const tunnel=westScarpTrial(()=>0).segment;
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
@@ -78,6 +80,7 @@ export function hillsFor(land=LAND,seed=1989){
     if(polygonMargin(plates.points,x,z)<=reach) continue;
     if(distanceToRoad(x,z,platesWay)<radius+200) continue;
     if(distanceToRoad(x,z,surveyLeg)<reach+60) continue;
+    if(distanceToRoad(x,z,furnaceDescent)<reach+60) continue;
     if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
     if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;
