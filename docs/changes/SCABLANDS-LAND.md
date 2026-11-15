@@ -1730,3 +1730,11 @@ The picture scenario now includes a view 250 m beyond the mesa face, looking tow
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: the scenario visibility and placement checks, the dune picture, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture car visibility
+
+The picture scenario now checks the rendered player car before each terrain picture and fails if it cannot identify the car or its centre is outside the camera view. It parses each evaluated page expression in Node before sending it to the page. The map picture has no car check. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so the new check and its viewpoint thresholds need Claude's browser run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the visibility check is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: scenario checks for ground clearance, nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

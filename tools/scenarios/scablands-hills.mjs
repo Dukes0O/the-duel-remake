@@ -2,6 +2,7 @@
 // The report records the draw calls and triangles at every view. This is not a frame check.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {Script} from 'node:vm';
 import {LAND} from '../../src/world/scablands-names.js';
 import {HILLS} from '../../src/world/scablands-height.js';
 import {SCARPS} from '../../src/world/scablands-scarps.js';
@@ -50,7 +51,12 @@ export function views() {
   ];
 }
 
-const click = (context, selector) => context.evaluate(`(() => {
+// Parse every expression in Node before sending it to the bundled page.
+const evaluate = (context, expression) => {
+  new Script(expression);
+  return context.evaluate(expression);
+};
+const click = (context, selector) => evaluate(context, `(() => {
   const button = document.querySelector(${JSON.stringify(selector)});
   if (!button || button.hidden || button.disabled) throw Error('Missing ' + ${JSON.stringify(selector)});
   button.click();
@@ -64,7 +70,7 @@ export async function run(context) {
   try {
     await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards,scablands-realism&harness=scablands-hills');
     await context.waitFor('window.__qaApp?.duel.state.status==="menu" && !!window.__render', 'memory-only menu', 90000);
-    await context.evaluate(`(() => {
+    await evaluate(context, `(() => {
       const a = window.__qaApp, select = document.querySelector('#graphics-quality');
       if (!window.name.startsWith('__duel_qa_tab_v2:') || !Object.getOwnPropertyDescriptor(window, 'localStorage')?.value) throw Error('Memory-only fixture required');
       select.value = 'performance'; select.dispatchEvent(new Event('change', {bubbles: true}));
@@ -74,21 +80,37 @@ export async function run(context) {
     await context.waitFor('window.__qaApp?.isYardHomeActive?.()', 'Scablands yard', 90000);
     await click(context, '[data-action="yard-cards"]');
     await context.waitFor('document.querySelector(".ember-wall")', 'Hollis note', 30000);
-    if (!await context.evaluate('window.__qaApp.profile.story?.ember?.read===true')) await click(context, '[data-ember-step="read"]');
+    if (!await evaluate(context, '(() => window.__qaApp.profile.story?.ember?.read===true)()')) await click(context, '[data-ember-step="read"]');
     await context.waitFor('window.__qaApp.profile.story?.ember?.read===true', 'Hollis note read');
     await click(context, '[data-ember-step="hot-delivery"]');
     await context.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing" && window.__qaApp.visualReady', 'Hot Delivery racing', 120000);
     await context.waitFor(`(() => { let root = null; window.__render.scene.traverse(n => { if (n.name === 'The Scablands') root = n; }); return root?.userData.assetStatus === 'ready'; })()`, 'Scablands art', 120000);
-    await context.evaluate(`(() => { const style = document.createElement('style'); style.id = 'hills-picture-style'; style.textContent = 'body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important}'; document.head.appendChild(style); })()`);
+    await evaluate(context, `(() => { const style = document.createElement('style'); style.id = 'hills-picture-style'; style.textContent = 'body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important}'; document.head.appendChild(style); })()`);
     const capture = async name => {
       await pause(2600);
+      if (name !== 'large-map') {
+      await evaluate(context, `(() => {
+        const a = window.__qaApp, r = window.__render, s = a.duel.state;
+        r.renderFrame();
+        const ground = a.duel.course.groundAt(s.s, s.lateral);
+        const cars = r.scene.children.filter(node => node.visible && node.userData?.vehicleKey === s.car &&
+          Math.hypot(node.position.x - ground.x, node.position.z - ground.z) < 1);
+        if (cars.length !== 1) throw Error('Player car missing or ambiguous in ' + ${JSON.stringify(name)});
+        const car = cars[0];
+        car.updateWorldMatrix(true, false);
+        r.camera.updateMatrixWorld(true);
+        const point = car.localToWorld(car.position.clone().set(0, 1, 0)).project(r.camera);
+        if (Math.abs(point.x) > 1 || Math.abs(point.y) > 1 || point.z < -1 || point.z > 1)
+          throw Error('Player car is outside the picture in ' + ${JSON.stringify(name)});
+      })()`);
+      }
       const picture = await context.screenshot('scablands-hills-' + name);
-      const counts = await context.evaluate(`(() => { const info = window.__render.renderer.info.render; return {draws: info.calls, triangles: info.triangles}; })()`);
+      const counts = await evaluate(context, `(() => { const info = window.__render.renderer.info.render; return {draws: info.calls, triangles: info.triangles}; })()`);
       report.views.push({name, picture, ...counts});
       console.log(JSON.stringify(report.views.at(-1)));
     };
     for (const view of views()) {
-      await context.evaluate(`(() => {
+      await evaluate(context, `(() => {
         const a = window.__qaApp, d = a.duel, s = d.state, from = ${JSON.stringify(view.from)}, to = ${JSON.stringify(view.to)};
         const pose = d.course.nearest(from.x, from.z), wrap = v => Math.atan2(Math.sin(v), Math.cos(v));
         s.s = s.prevS = pose.s; s.lateral = s.prevLateral = pose.lateral; s.speedMph = 0; s.yawVelocity = 0; s.pushVelocity = 0;
@@ -98,10 +120,10 @@ export async function run(context) {
         s.headingError = wrap(Math.atan2(to.x - from.x, to.z - from.z) - d.course.at(pose.s).heading);
         s.arena.worldJob.job.stepState.ember = 100; a.inspectionCamera = null;
       })()`);
-      await context.evaluate('window.__qaApp.advance(1.5)');
+      await evaluate(context, '(() => window.__qaApp.advance(1.5))()');
       await capture(view.name);
     }
-    await context.evaluate(`(() => { document.querySelector('#hills-picture-style').remove(); document.querySelectorAll('body > details').forEach(panel => { panel.style.display = 'none'; }); document.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyM', bubbles: true, cancelable: true})); })()`);
+    await evaluate(context, `(() => { document.querySelector('#hills-picture-style').remove(); document.querySelectorAll('body > details').forEach(panel => { panel.style.display = 'none'; }); document.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyM', bubbles: true, cancelable: true})); })()`);
     await context.waitFor('document.querySelector(".world-hud-map") && !document.querySelector(".world-hud-map").hidden', 'large map', 30000);
     await capture('large-map');
     await persist();
