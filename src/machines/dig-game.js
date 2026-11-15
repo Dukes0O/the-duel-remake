@@ -12,6 +12,11 @@ import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
 import {createNearGround} from '../world/near-ground.js';
+import {SCABLANDS_LAYOUT} from '../world/scablands.js';
+import {GROUND_AREAS} from '../world/scablands-regions.js';
+import {createRiverField} from '../world/scablands-draw.js';
+import {LAND} from '../world/scablands-names.js';
+import {SUN_OFFSET} from '../atmosphere.js';
 import {createGroundLook, createTunnelMesh} from '../world/scablands-ground-look.js';
 import {tunnelPortalShape, tunnelPortalSurface} from '../world/tunnel-look.js';
 import {machineToolPosition} from './machine.js';
@@ -210,17 +215,18 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   window.addEventListener('storage',onStorage);
   let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
-  scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
-  const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-  Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:180});scene.add(sun,sun.target);
+  scene.add(new THREE.HemisphereLight(0xb2cde0,0x714226,1.65));
+  const sun=new THREE.DirectionalLight(0xffddac,3.3);sun.position.set(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:240});sun.shadow.bias=-.00035;sun.shadow.normalBias=.03;scene.add(sun,sun.target);
   const camera=new THREE.PerspectiveCamera(55,1,.1,900);
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   const world=new THREE.Group();scene.add(world);
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
-  const groundLook=createGroundLook();
+  const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
+  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}));
   const yardFloor=staticYard(world,groundMaterial);
-  const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x9c8b72,roughness:1}));
+  const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const nearGround=createDigNearGround(nearMaterial,sim.ground);
   nearGround.follow(0,18);world.add(nearGround.mesh);
   const editedGroup=new THREE.Group();world.add(editedGroup);
@@ -314,7 +320,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);window.removeEventListener('storage',onStorage);unsubscribeMapping();observer.disconnect();for(const view of machineViews.values())view.dispose();
-    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
+    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
@@ -428,7 +434,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
       else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});
       previousCameraMachine=sim.activeMachine;
-      sun.position.set(active.x-30,y+55,active.z-20);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
+      sun.position.set(active.x+SUN_OFFSET.x,y+SUN_OFFSET.y,active.z+SUN_OFFSET.z);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
     }
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,

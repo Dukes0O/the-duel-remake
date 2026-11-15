@@ -29,16 +29,23 @@ const page = {
     m.updateWorldMatrix(true,false);
     return {visible:m.visible, parentVisible:m.parent?.visible, centreX:g.centreX, centreZ:g.centreZ,
       worldMatrix:m.matrixWorld.toArray(), materialVisible:m.material.visible,
-      materialSide:m.material.side, positionVersion:m.geometry.attributes.position.version}; })()`,
+      materialSide:m.material.side, groundLook:!!m.material.userData.groundLook, positionVersion:m.geometry.attributes.position.version}; })()`,
   cover: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
     const crown=b.y+1.65+3, hit=v.groundRay({x:b.x,y:200,z:b.z},{x:0,y:-1,z:0});
     return {crown,rules:v.surfaceHeight(b.x,b.z),drawn:hit?.y ?? null}; })()`,
   roofRay: `(() => { const dig=window.__theDig, v=dig.viewForCheck, s=dig.simulation.tunnels.segments[0];
     const dx=s.end.x-s.start.x,dz=s.end.z-s.start.z,length=Math.hypot(dx,dz);
-    const target={x:s.start.x+10*dx/length,y:s.start.y+s.radius+3,z:s.start.z+10*dz/length};
+    let coverStart=null;
+    for(let d=0; d<=dig.simulation.borer.distanceM; d+=0.25) {
+      const x=s.start.x+d*dx/length, z=s.start.z+d*dz/length;
+      if(v.surfaceHeight(x,z)>=s.start.y+s.radius) {coverStart=d;break;}
+    }
+    if(coverStart===null) return {coverStart,hit:null};
+    const d=coverStart+10;
+    const target={x:s.start.x+d*dx/length,y:s.start.y+s.radius+3,z:s.start.z+d*dz/length};
     const origin=v.camera.position, direction={x:target.x-origin.x,y:target.y-origin.y,z:target.z-origin.z};
     const distance=Math.hypot(direction.x,direction.y,direction.z);
-    return {origin:{x:origin.x,y:origin.y,z:origin.z},target,
+    return {coverStart,origin:{x:origin.x,y:origin.y,z:origin.z},target,
       travel:dig.simulation.borer.travelM,cameraIndex:dig.simulation.cameraIndex,
       cameraRoute:v.camera.userData.borerRoute ?? null,
       originSurface:v.surfaceHeight(origin.x,origin.z),targetSurface:v.surfaceHeight(target.x,target.z),
@@ -138,6 +145,7 @@ export async function run(context) {
   for (const sample of samples) {
     console.log(`Ground ${sample.distance} m ahead, ${sample.side} m right: rules ${sample.rules.toFixed(2)}, mesh ${sample.hit?.y?.toFixed(2) ?? 'no hit'}`);
   }
+  assert.ok(measurements.groundView.groundLook, 'the ground uses the Scablands ground look');
   for (const sample of samples) {
     assert.ok(sample.hit && Math.abs(sample.rules - sample.hit.y) <= 0.5, 'drawn ground matches the rules');
   }
@@ -145,12 +153,18 @@ export async function run(context) {
   await press(context, 'Tab');
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
-  await press(context, 'KeyC');
   const cover = await context.evaluate(page.cover);
   measurements.cover = cover;
   await persist();
   console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
   assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
+  const roof = await context.evaluate(page.roofRay);
+  measurements.roofRay = roof;
+  await persist();
+  console.log(`Ground above the bore: ${JSON.stringify(roof)}`);
+  assert.ok(roof.cameraRoute?.inside && roof.cameraIndex === 0, 'the roof ray starts at the following camera inside the bore');
+  assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
+  await press(context, 'KeyC');
   await picture(context, 'machine-borer-mouth-20m', 20);
   await press(context, 'KeyC');
   await cutUntil(context, 30);
@@ -162,11 +176,6 @@ export async function run(context) {
   await key(context, 'KeyS', 'keydown');
   try {
     await context.waitFor(page.inside, '20 m back from the face', 60000);
-    const roof = await context.evaluate(page.roofRay);
-    measurements.roofRay = roof;
-    await persist();
-    console.log(`Ground above the bore: ${JSON.stringify(roof)}`);
-    assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
     const inside = await picture(context, 'machine-borer-inside');
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }

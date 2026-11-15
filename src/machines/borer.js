@@ -13,7 +13,7 @@ const refusalMessage = refusal => (refusal === 'A building or protected place is
 
 /** Ground height includes any cutting already dug by another machine. */
 export function borerHasFace(ground, position, heading, radius = 3) {
-  const floor = ground.heightAt(position.x, position.z);
+  const floor = Number.isFinite(position.y) ? position.y : ground.heightAt(position.x, position.z);
   for (let distance = 1; distance <= 12; distance++) {
     const x = position.x + Math.sin(heading) * distance;
     const z = position.z + Math.cos(heading) * distance;

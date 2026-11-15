@@ -312,8 +312,11 @@ assert.ok(exampleTarget.y > scablandsSurfaceHeightAt(exampleTarget.x, exampleTar
 assert.equal(exampleRay.intersectObject(drawnGround.mesh).length, 0,
   'The representative outside-to-sky ray clears the actual ground mesh.');
 drawnGround.dispose();
-const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
-assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');
+const foot = {x:realParked.x + 30 * Math.sin(realParked.heading), z:realParked.z + 30 * Math.cos(realParked.heading), y:realParked.y};
+assert.equal(borerHasFace(realGround, foot, realParked.heading), false, 'The west scarp slope is not a six-metre face within twelve metres of the head.');
+assert.equal(stepBorer(createBorerState({...foot,heading:realParked.heading}), {thrust:1}, realGround, 'rock', 1).state.message, BORER_NO_FACE);
+assert.equal(borerHasFace(cutting, {x:0,y:0,z:0}, 0), true, 'A six-metre wall dug in the ground is a face.');
+assert.equal(borerHasFace(hill, {x:0,y:1,z:0}, 0), false, 'The rise is measured from the machine floor, not the ground under its head.');
 
 // Follow the actual scarp height profile at a safe depth for 100 m.
 const realDeep = {...realGround, seed:19, materialAt:()=> 'rock', refusal:()=>null,
