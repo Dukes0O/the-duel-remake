@@ -319,7 +319,7 @@ export function attachRenderer(host, app) {
   const ambientShading=createAmbientShading(scene,camera);ambientShading.name='Contact shading';composer.addPass(ambientShading);
   const bloom=new UnrealBloomPass(new THREE.Vector2(host.clientWidth,host.clientHeight),.20,.55,1.9);
   bloom.name='Bloom';composer.addPass(bloom);composer.addPass(Object.assign(new OutputPass(),{name:'Tone and colour'}));
-  const lighting=createSceneLighting({scene,renderer,bloom,host});
+  const lighting=createSceneLighting({scene,renderer,bloom,host,useTrialLight:()=>(app._switches?.()??app.duel.featureFlags).enabled('scablands-realism')});
   const deepView=createDeepView({renderer,createUnderwaterScene,createWaterline,createAmbientShading,createExtras:createSirenaScene,
     createPipeline(privateScene,privateCamera,ambient,high){
       const privateComposer=new EffectComposer(renderer);

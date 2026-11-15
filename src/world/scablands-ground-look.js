@@ -48,7 +48,52 @@ const polygonFunction = (name, uniform, count) => `
 export const GROUND_COLOURS = Object.freeze({flats: 0x76624b, 'scab-plates': 0x2a2825, 'salt-pan': 0xdedacd, 'river-bed': 0x6a665d,
   'wreck-fields': 0x74503a, sand: 0xc9b07a, burn: 0x1b1917, bank: 0x8a7a63, road: 0x6e5d47, rock: 0x57493c});
 
-export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null} = {}) {
+// The realism trial, step 2 (SCABLANDS-LAND, "Kyle on realism"; switch `scablands-realism`): photographed surfaces. Each is a
+// colour picture and a relief picture, 1,024 pixels square, from Poly Haven (CC0; public/assets/textures/CREDITS.md). The code above
+// still decides what ground is where and its broad colour; a photograph gives that ground its grain and its relief. `size` is the
+// metres one copy of the picture covers (the size of the ground that was photographed, but for the salt, whose cracks are drawn
+// three times life size to stand for a salt pan's larger plates); `mean` is the picture's average colour (linear), so that the grain can be laid over the
+// code's colour without shifting it.
+export const GROUND_PHOTOS = Object.freeze({
+  flats: Object.freeze({file: 'scablands-hardpan', size: 4, mean: Object.freeze([.3017, .1744, .0776])}),
+  plates: Object.freeze({file: 'scablands-scab-rock', size: 2.4, mean: Object.freeze([.0431, .0342, .0254])}),
+  pan: Object.freeze({file: 'scablands-salt-crust', size: 5, mean: Object.freeze([.6274, .3978, .2215])}),
+  sand: Object.freeze({file: 'scablands-sand-ripples', size: 2.2, mean: Object.freeze([.15, .1173, .0777])}),
+  bed: Object.freeze({file: 'scablands-river-pebbles', size: 2.2, mean: Object.freeze([.2254, .1891, .1498])}),
+  road: Object.freeze({file: 'scablands-gravel-road', size: 2, mean: Object.freeze([.1922, .0984, .0506])}),
+});
+export function loadGroundPhotos(loader = new THREE.TextureLoader()) {
+  const textures = [], out = {};
+  const load = (path, colour) => {
+    const texture = loader.load(path); texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8;
+    if (colour) texture.colorSpace = THREE.SRGBColorSpace;
+    textures.push(texture); return texture;
+  };
+  for (const [key, photo] of Object.entries(GROUND_PHOTOS)) out[key] = {map: load(`/assets/textures/${photo.file}-colour.jpg`, true),
+    normal: load(`/assets/textures/${photo.file}-relief.jpg`, false), mean: new THREE.Color().setRGB(...photo.mean), size: photo.size};
+  out.dispose = () => { for (const texture of textures) texture.dispose(); };
+  return out;
+}
+const PHOTO_UNIFORMS = [['flats', 'Flats'], ['plates', 'Plate'], ['pan', 'Salt'], ['sand', 'Sand'], ['bed', 'Bed']];
+// A photograph is read at two sizes that never line up, the larger one turned, so that its repeat does not show: the small one
+// near the camera, the large one where a pixel covers more than a few centimetres of ground (`far`), and only the one that shows
+// is read. The slopes of the picture are passed in (`dx`, `dy`) because the pictures are read inside a region's own branch.
+const PHOTO_FUNCTIONS = `
+  const mat2 gTurn=mat2(.8,.6,-.6,.8);
+  vec3 gPhotoCol(sampler2D map,vec2 q,float size,vec2 dx,vec2 dy,float far){
+    vec3 a=vec3(0.0),b=vec3(0.0);float wide=size*4.3;
+    if(far<.999)a=textureGrad(map,q/size,dx/size,dy/size).rgb;
+    if(far>.001)b=textureGrad(map,gTurn*q/wide+.37,gTurn*dx/wide,gTurn*dy/wide).rgb;
+    return mix(a,b,far);
+  }
+  vec2 gPhotoRel(sampler2D map,vec2 q,float size,vec2 dx,vec2 dy,float far){
+    vec2 a=vec2(0.0),b=vec2(0.0);float wide=size*4.3;
+    if(far<.999)a=textureGrad(map,q/size,dx/size,dy/size).xy*2.0-1.0;
+    if(far>.001)b=(textureGrad(map,gTurn*q/wide+.37,gTurn*dx/wide,gTurn*dy/wide).xy*2.0-1.0)*gTurn;
+    return mix(a,b,far);
+  }`;
+
+export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null, photos = null} = {}) {
   const colour = hex => new THREE.Color(hex);
   const uniforms = {uGroundNoise: {value: scrapNoise()}, uGroundRock: {value: colour(rock)}, uGroundStone: {value: colour(stone)},
     uColPlate: {value: colour(GROUND_COLOURS['scab-plates'])}, uColSalt: {value: colour(GROUND_COLOURS['salt-pan'])}, uColBed: {value: colour(GROUND_COLOURS['river-bed'])},
@@ -71,6 +116,21 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       uniform vec2 uPan[${pan.points.length}];uniform float uPanPhase;uniform vec2 uPlates[${plates.points.length}];uniform float uPlatesPhase;`;
   }
   const regionsOn = regions !== null;
+  const photosOn = regionsOn && photos !== null;
+  if (photosOn) for (const [key, name] of PHOTO_UNIFORMS) {
+    uniforms[`uPh${name}`] = {value: photos[key].map}; uniforms[`uPhN${name}`] = {value: photos[key].normal}; uniforms[`uPhMean${name}`] = {value: photos[key].mean};
+  }
+  const photoCode = photosOn ? PHOTO_UNIFORMS.map(([, name]) => `uniform sampler2D uPh${name};uniform sampler2D uPhN${name};uniform vec3 uPhMean${name};`).join('') + PHOTO_FUNCTIONS : '';
+  // One ground's photograph: its grain multiplies the colour drawn in code (`colour`), and its relief, by the ground's share of this
+  // pixel (`weight`), is added to the ground's own. A ground that lies over the others (`over`: a bank, steep rock) takes their
+  // place in the relief by its share, as it does in the colour.
+  const photo = (key, colour, weight, relief = 1, over = false) => {
+    if (!photosOn) return '';
+    const name = PHOTO_UNIFORMS.find(row => row[0] === key)[1], size = photos[key].size.toFixed(1);
+    const tilt = `${relief.toFixed(2)}*gPhotoRel(uPhN${name},gq,${size},gDx,gDy,gFar)`;
+    return `${colour}*=clamp(mix(vec3(1.0),gPhotoCol(uPh${name},gq,${size},gDx,gDy,gFar)/uPhMean${name},.92),.2,2.4);` +
+      (over ? `gRelief=mix(gRelief,${tilt},${weight});` : `gRelief+=${weight}*${tilt};`);
+  };
   // How far the dry river's middle is from here (metres, 128 where it is further than that), read from its picture.
   const riverDistance = regionsOn ? `
     vec2 gRuv=(gq-uRiverBox.xy)*uRiverBox.zw;
@@ -97,9 +157,9 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           uniform vec3 uColPlate;uniform vec3 uColSalt;uniform vec3 uColBed;uniform vec3 uColWreck;uniform vec3 uColSand;uniform vec3 uColBurn;uniform vec3 uColBank;
           ${areaCode}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
-          vec3 gGlow;
+          vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
-          ${areaFunctions}`)
+          ${areaFunctions}${photoCode}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
           vec2 gq=vGroundPos.xz;
           ${riverDistance}
@@ -113,7 +173,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           float gFlat=1.0-smoothstep(.04,.22,gSlope);
           // Metres a pixel covers: a pattern whose cells are only a few pixels across is replaced by its average.
           float gPix=max(fwidth(gq.x),fwidth(gq.y))+1e-5;
-          gGlow=vec3(0.0);
+          gGlow=vec3(0.0);${photosOn ? 'gRelief=vec2(0.0);vec2 gDx=dFdx(gq),gDy=dFdy(gq);float gFar=smoothstep(.012,.09,gPix);' : ''}
           // Which region this is: each margin is the metres inside it, moved by the same wave the driving uses (src/world/scablands-regions.js).
           ${regionsOn ? `
           float mBed=60.0+gWarp(gq,.5)*.25-gRiver;
@@ -145,7 +205,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float gCrack=mix(.16,1.0-smoothstep(.0,.075,gv.y),gSee)+.5*mix(.0,smoothstep(.03,.0,abs(gFine.r-.47)),gSee);
             fc*=1.0-.5*min(gCrack,1.0)*gFlat*smoothstep(.55,.32,gBig.r);
             fc*=.93+.14*gv.z*gSee+.07*(1.0-gSee);
-            gc+=fc*wFlats;
+            ${photo('flats', 'fc', 'wFlats')}gc+=fc*wFlats;
           }
           ${regionsOn ? `
           // ---- Scab plates: black broken rock. Slabs 11 m across, each its own shade, with black crevices and small fractures.
@@ -157,7 +217,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             pc=mix(pc*.2,pc,mix(.82,smoothstep(.0,.085,pv.y),seeP));
             pc+=vec3(.05,.04,.03)*smoothstep(.72,1.0,gGrit.g)*gFlat;
             pc=mix(pc,pc*vec3(1.5,1.25,1.0),smoothstep(.55,.85,gMid.r)*.35);
-            gc+=pc*wPlates;
+            ${photo('plates', 'pc', 'wPlates', 1.2)}gc+=pc*wPlates;
           }
           // ---- The salt pan: white crust standing in ridges round each cell, buff stains where the dust has settled.
           if(wPan>.004){
@@ -167,14 +227,14 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             sc*=.96+.06*mix(.5,sv.z,seeS);
             sc=mix(sc,sc*vec3(.93,.9,.8),smoothstep(.5,.8,gBig.g)*.6);
             sc*=.9+.16*gMid.r;
-            gc+=sc*wPan;
+            ${photo('pan', 'sc', 'wPan', .8)}gc+=sc*wPan;
           }
           // ---- Wreck fields: rust-stained dirt with flecks of metal.
           if(wWreck>.004){
             vec3 wc=uColWreck*(.7+.6*gBig.r)*(.85+.3*gFine.g);
             wc=mix(wc,wc*vec3(1.55,.95,.55),smoothstep(.5,.78,gMid.g)*.7);
             wc=mix(wc,vec3(.52,.47,.42)*(.6+.8*gGrit.r),smoothstep(.93,.97,gGrit.g)*.8);
-            gc+=wc*wWreck;
+            ${photo('flats', 'wc', 'wWreck')}gc+=wc*wWreck;
           }
           // ---- Sand: pale dunes, with fine ripples on them.
           if(wSand>.004){
@@ -182,7 +242,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float ripple=sin(dot(gq,vec2(.55,.8))*1.8+gMid.g*9.0)*.5+.5;
             vec3 dc=uColSand*(.8+.34*dune)*(.94+.06*ripple*(1.0-smoothstep(.5,1.4,gPix)))*(.92+.16*gFine.g);
             dc=mix(dc,dc*vec3(.82,.76,.7),smoothstep(.6,.85,gMid.r)*.4);
-            gc+=dc*wSand;
+            ${photo('sand', 'dc', 'wSand')}gc+=dc*wSand;
           }
           // ---- The burn: ground that has burnt. Black soot near the Everburn, grey ash drifted over it further out, pale ash lying
           // in the cracks. Nothing glows (glowing cracks read as lava); the vents and their fire come with the Everburn's job.
@@ -195,7 +255,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float crack=mix(.06,1.0-smoothstep(.0,.045,bv.y),seeB);
             bc=mix(bc,vec3(.29,.28,.26)*(.7+.4*gFine.g),crack*.32*(1.0-drift*.5));
             bc*=1.0-.35*smoothstep(.6,.85,gBig.g)*near;
-            gc+=bc*wBurn;
+            ${photo('flats', 'bc', 'wBurn')}gc+=bc*wBurn;
           }
           // ---- The river bed and its banks: grey packed sand with ripples and dark soft patches; banks of layered rock.
           if(wBed>.004){
@@ -203,7 +263,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             vec3 rc=uColBed*(.78+.4*gBig.r)*(.9+.2*gFine.g)*(1.0-.08*rip*(1.0-smoothstep(.5,1.4,gPix)));
             float softPatch=smoothstep(.36,.5,sin(gq.x*.0153+gq.y*.0101)*sin(gq.x*.0121-gq.y*.0187+1.3)*.5+.5);
             rc=mix(rc,rc*vec3(.62,.58,.52),softPatch*.75);
-            gc+=rc*wBed;
+            ${photo('bed', 'rc', 'wBed')}gc+=rc*wBed;
           }` : ''}
           // Banks: layered pale rock between the bed's foot and the plain.
           ${regionsOn ? `
@@ -211,7 +271,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           if(gBank>.004){
             float layer=vGroundPos.y*.55+gBig.b*3.0+gMid.r*2.2;
             vec3 kc=uColBank*(.78+.34*gFine.g)*(.93+.12*smoothstep(.3,.7,abs(fract(layer)-.5)*2.0));
-            gc=mix(gc,kc,gBank*.85);
+            ${photo('plates', 'kc', 'gBank*.85', 1, true)}gc=mix(gc,kc,gBank*.85);
           }` : ''}
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
@@ -225,15 +285,18 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           gRock*=1.0-.5*mix(.1,1.0-smoothstep(.0,.09,gj.y),gSeeJ)*smoothstep(.03,.08,gSlope);
           float gScree=smoothstep(.02,.05,gSlope)*(1.0-smoothstep(.07,.14,gSlope));
           gRock=mix(gRock,vec3(.46,.4,.33)*(.7+.6*gGrit.r),gScree*.5);
-          gc=mix(gc,gRock,smoothstep(.025,.075,gSlope));
+          ${photosOn ? `float gSteep=smoothstep(.025,.075,gSlope);if(gSteep>.004){${photo('plates', 'gRock', 'gSteep', 1, true)}}` : ''}gc=mix(gc,gRock,smoothstep(.025,.075,gSlope));
           // Gravel and stones, thicker near rock.
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
           gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75*(1.0-wPan*.8-wSand*.7));
           gc*=.88+.24*gGrit.b;
           diffuseColor.rgb=gc;`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n          totalEmissiveRadiance+=gGlow;');
+      // The photographs' relief tilts the ground's own direction (worked out in the world, then turned to the camera's view).
+      if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+          normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}`;
+    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}`;
     material.needsUpdate = true;
     return material;
   }
@@ -243,8 +306,11 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
 // A graded dirt road: a flat ribbon whose vertices carry (across, along): `across` is metres from the middle over the road's half
 // width, so -1.2 to 1.2. The surface has fine streaks left by the grader's blade, a crown between two dark worn ruts, a berm of loose
 // gravel along each edge, and an uneven edge that wears away into the ground. Drawn with a soft edge, so the material is transparent.
-export function createRoadLook({dirt = 0x6e5d47} = {}) {
+export function createRoadLook({dirt = 0x6e5d47, photo = null} = {}) {
   const uniforms = {uRoadNoise: {value: scrapNoise()}, uRoadDirt: {value: new THREE.Color(dirt)}};
+  // The realism trial, step 2: the road's own photograph (graded gravel), laid as the ground's are.
+  if (photo) Object.assign(uniforms, {uRoadPhoto: {value: photo.map}, uRoadPhotoN: {value: photo.normal}, uRoadPhotoMean: {value: photo.mean}});
+  const size = photo ? photo.size.toFixed(1) : '1.0';
   function apply(material) {
     if (!material?.isMeshStandardMaterial || material.userData.roadLook) return material;
     material.userData.roadLook = true;
@@ -252,12 +318,13 @@ export function createRoadLook({dirt = 0x6e5d47} = {}) {
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute vec2 aRoad;\nvarying vec2 vRoad;\nvarying vec3 vRoadPos;')
+        .replace('#include <common>', '#include <common>\nattribute vec2 aRoad;\nvarying vec2 vRoad;\nvarying vec3 vRoadPos;' + (photo ? '\nvarying vec3 vRoadNormal;' : ''))
         .replace('#include <project_vertex>', `#include <project_vertex>
-          vRoad=aRoad;vRoadPos=(modelMatrix*vec4(transformed,1.0)).xyz;`);
+          vRoad=aRoad;vRoadPos=(modelMatrix*vec4(transformed,1.0)).xyz;${photo ? 'vRoadNormal=mat3(modelMatrix)*objectNormal;' : ''}`);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>
-          uniform sampler2D uRoadNoise;uniform vec3 uRoadDirt;varying vec2 vRoad;varying vec3 vRoadPos;`)
+          uniform sampler2D uRoadNoise;uniform vec3 uRoadDirt;varying vec2 vRoad;varying vec3 vRoadPos;${photo ? `
+          uniform sampler2D uRoadPhoto;uniform sampler2D uRoadPhotoN;uniform vec3 uRoadPhotoMean;varying vec3 vRoadNormal;vec2 rRelief;${PHOTO_FUNCTIONS}` : ''}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
           float ru=vRoad.x,rau=abs(ru);
           vec3 rWide=texture2D(uRoadNoise,vRoadPos.xz*.011).rgb;
@@ -272,13 +339,18 @@ export function createRoadLook({dirt = 0x6e5d47} = {}) {
           // The berm: loose pale gravel thrown up along the edge, with stones in it.
           float berm=exp(-pow((rau-1.0)/.1,2.0));
           rc=mix(rc,rc*vec3(1.28,1.2,1.1)*(.75+.5*rFine.b),berm*.8);
-          rc*=1.0-.25*smoothstep(.55,.8,rFine.g)*smoothstep(.6,1.1,rau);
+          rc*=1.0-.25*smoothstep(.55,.8,rFine.g)*smoothstep(.6,1.1,rau);${photo ? `
+          vec2 rq=vRoadPos.xz,rDx=dFdx(rq),rDy=dFdy(rq);float rFar=smoothstep(.012,.09,max(fwidth(rq.x),fwidth(rq.y)));
+          rc*=clamp(mix(vec3(1.0),gPhotoCol(uRoadPhoto,rq,${size},rDx,rDy,rFar)/uRoadPhotoMean,.92),.2,2.4);
+          rRelief=gPhotoRel(uRoadPhotoN,rq,${size},rDx,rDy,rFar);` : ''}
           diffuseColor.rgb=rc;
           // The edge is uneven and wears away into the ground.
           float rEdge=1.04+.1*rWide.g+.06*rFine.r;
           diffuseColor.a*=1.0-smoothstep(rEdge,rEdge+.13,rau);`);
+      if (photo) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+          normal=normalize((viewMatrix*vec4(normalize(normalize(vRoadNormal)+vec3(rRelief.x,0.0,rRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => 'road-look-1';
+    material.customProgramCacheKey = () => photo ? 'road-look-1-photo' : 'road-look-1';
     material.needsUpdate = true;
     return material;
   }

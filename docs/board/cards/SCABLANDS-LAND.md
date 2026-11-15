@@ -662,6 +662,139 @@ Slice 2b makes every building solid. This slice makes the light ones fall, as Ky
   changes. Saves and pay: one independent review, and the save checker (rule 6).
 - **Not here:** races and their roadside buildings, which keep their crash rules.
 
+### Kyle on realism (14 November 2026), and a trial on one scene
+
+Kyle, on seeing the map and the regions: "This is so far really good. Coming along nicely."
+"Curious what it would take to make things more photo-realistic? I think more photo realism
+(doesn't need perfection) could make a lot of the game play really enticing."
+
+**Where the land stands.** The game already has a film-like exposure, soft shadows from one sun
+and a sky picture that lights the cars. The Scablands ground is one fully matt surface whose
+colour is drawn in code; it has no relief of its own, the light on it is even, the distance has
+little haze and almost nothing stands on it.
+
+**What Claude does with it.** Slice 3 (beside the roads) opens with a trial on one scene, the
+East Road at the Girder Bridge, in three steps. Each step is judged from a before-and-after
+picture sent to Kyle and timed roughly on Performance, so nothing is picked that the laptop
+cannot hold.
+
+1. **Light and air.** A sky with a low sun; haze with distance that takes the sky's colour;
+   shadows that reach as far as the player sees; soft dark shading where a thing meets the
+   ground; the exposure set for a bright desert.
+2. **Photographed surfaces.** Free-to-use (CC0) photographs of rock, salt, sand, gravel and ash
+   with their relief, laid where the code-drawn regions say, with the code breaking up the
+   repeat. Credits in `public/assets/textures/CREDITS.md`; sizes against
+   `tools/size-targets.json`.
+3. **Things at every size.** Stones, scrub, tracks, posts and wire scattered by seed; the
+   bridge and what stands beside the road at true size.
+
+What passes on the one scene is carried across the land as hill country (2c) and the roadside
+(3) are built. This keeps Kyle's direction of 11 November: code decides what is where,
+photographs supply the grain, and nothing is built as a box model.
+
+Not chosen: anything this laptop cannot hold inside the frame limit (traced light, dense plants
+to the horizon, whole scanned landscapes).
+
+### Realism trial, step 1 result (Claude, 14 November 2026): light and air, switch off
+
+Kyle, on the plan above: "Yeah! Let's experiment and go for it."
+
+Built behind a new switch, `scablands-realism` (off). Sheet
+`docs/board/looks/scablands-land/round-8.jpg` with Claude's review beside it; two before-and-after
+pictures sent to Kyle.
+
+- **Built:** a low strong sun from the south-south-west, a desert afternoon sky, haze that
+  thickens evenly from the car to the edge of sight in the horizon's colour, and shadows that
+  reach 100 m ahead of the car. With the switch off every course is lit exactly as before.
+- **Finding:** a small gain alone. Shadows and the far hill are better; the ground is still one
+  flat matt sheet, and that is now the plain fault. Light alone does not make this land look
+  real; the photographed surfaces of step 2 are where the gain is.
+- **Step 2 needs files from outside:** free-to-use (CC0) photographs of ground from Poly Haven or
+  ambientCG. Claude asks Kyle before downloading any file.
+- **Not timed as a frame check.** 60 pictures a second held before and after in a visible
+  window (the screen's limit).
+- **Changed assertions, reviewed by Claude (rule 18):** `tools/test-feature-flags.mjs` counts 55
+  switches (was 54) and requires `scablands-realism` to be `dev`; `start-preview.bat` lists it.
+  Neither is loosened: the new switch is pinned off for players.
+- **Independent review of the code:** no real faults; with the switch off nothing changes.
+
+### Realism trial, step 2 result (Claude, 14 November 2026): photographed surfaces, switch off
+
+Kyle agreed to the download ("Yes, download"). Six Poly Haven surfaces (CC0), a colour and a
+relief picture each: credits in `public/assets/textures/CREDITS.md`, sources and checksums in
+`tools/art/catalog.json`, recipe `tools/art/scablands-ground-photos.py`, originals in the art
+library. Sheet `docs/board/looks/scablands-land/round-9.jpg` with Claude's review beside it; four
+before-and-after pictures sent to Kyle.
+
+- **Built:** each ground takes its grain and relief from a photograph, laid at its true size
+  near the car and four times that further off. The code still decides which ground lies where
+  and its broad colour. With the switch off no photograph is loaded and the ground is drawn
+  exactly as before.
+- **Finding:** a clear gain. The salt pan, the scab plates and the road read as real ground in
+  the low sun. The plain fault is now that nothing stands on the land (step 3 and slice 2c).
+- **Cost:** 4.9 MB in the game; about 67 MB of graphics memory while the Scablands is loaded.
+  Not timed as a frame check.
+- **Owed before the switch goes on:** step 3, a real drive (does the grain shimmer at speed?),
+  the frame check under rule 8, and Kyle's word after trying it.
+- **Changed assertions, reviewed by Claude (rule 18):** two suites pin a checksum of the art
+  catalogue's earlier rows (`test-p4-kits`, `test-tanker-valve-source`). The six new rows are
+  left out of each pinned set, as the wildlife rows are; the checksums did not change, so
+  nothing is loosened.
+- **Independent review of the code:** three points, all put right (the shader text with the
+  switch off is byte for byte the old one; the road's relief follows the road's slope; the
+  scene and the renderer read the same switches).
+- **Kyle, on the pictures:** "pretty solid stuff, definitely a gain! Let's keep going where we
+  can." And on who does what: Codex for code and for checks, Claude for graphics, design and
+  story.
+
+### Realism trial, step 3 design (Claude, 14 November 2026): things at every size
+
+**The fault.** After steps 1 and 2 the ground looks real and nothing stands on it. A real land
+has things at every size, and the eye judges distance and speed by them. All of this is behind
+`scablands-realism` and is placed by seed, so the land is the same on every visit.
+
+**Small, by the thousand, near the car** (within 120 m; each kind one batch; they fade in with
+distance and never pop):
+- stones in three shapes, 0.1 to 0.6 m, thicker near rock, the river and the plates' edges;
+- dry scrub: low grey-green tufts and dead brush, on the flats and the banks, none on salt;
+- bones, cans and scraps of sheet in the wreck fields and beside roads;
+- lumps of salt crust at the pan's edge; burnt stumps in the burn.
+Nothing here is solid: a wheel rolls over it. Scrub and scraps bend or scatter when driven
+through (a puff of dust; no rule of the drive changes).
+
+**Middle, by the hundred, within 600 m:**
+- boulders 1 to 4 m, alone and in falls below the scarps; solid (slice 2b's rule);
+- **telegraph poles along the East Road and the Iron Line**, 60 m apart, wire sagging between
+  them, some leaning, some down: the eye follows them to the horizon, and at speed they count
+  the distance;
+- **fence lines** of posts and sagging wire beside roads near each town, in runs of 200 to 600 m
+  with gaps; they fall when driven through (slice 2d's rule);
+- hand-painted road signs at every fork ("TIN TOWN 3 km", an arrow), from the land's own data;
+- hulks, tyre stacks and drums from the scrap kit at the camps and crossings.
+
+**Large, by hand, seen from kilometres:**
+- **a line of dead power pylons** from the Dry Dam past the yard to the Dead Mall, 40 m tall,
+  350 m apart, cables down between some: the land's long landmark, on the map too;
+- the Girder Bridge at its true size (its frames stand 9 m over the deck, with piers down into
+  the gorge), and the Pipe as a pipe 3 m across on trestles;
+- the mesas and hills of slice 2c.
+
+**Tracks.** The ground shows where others drive: faint twin ruts along each known way that is
+not a road (drawn in the ground's code from the same data the map lists its ways from), deeper
+at the crossings. A player who reads the ground finds the short cuts.
+
+**Air.** Low dust blowing across the flats in the wind's direction, and a far dust devil now
+and then. Dust from the car's wheels takes the ground's colour (it does already).
+
+**Who builds what.** Codex builds the placing (seeded cells, batches, fading, the pole, fence
+and pylon lines from the road data, the ruts' data, solidity through slice 2b's index) with
+plain shapes made in code. Claude then draws each kind (its shape, its surface, how it catches
+the low sun) from pictures, one sheet a round.
+
+**Limits.** No more than 40 more draw calls and 150,000 more triangles in any view on
+Performance; shadows from small things only within 40 m. Counted in the trial's scenario; the
+frame check under rule 8 comes before the switch goes on.
+
 ### Open at the end of slice 1
 
 - **Five older browser scenarios fail on the larger land** (run by Claude at the merge):

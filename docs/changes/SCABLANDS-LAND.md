@@ -1004,6 +1004,92 @@ The 14 views of `scablands-solid` draw 133 to 242 calls and 174,000 to 297,000 t
 The three ramps and six junk cars the Scablands inherited from the Titan arena; the 18-box `SCABLANDS_SOLIDS` table, its `tin-town-shell`, `dry-dam-gate`, `ships-hulk-field`, `iron-line-station` and `ridge-rocks` boxes (the last four stood where nothing is drawn, or
 far larger than what is); the straight drives and the straight legs of job 4 across the river; the terraced bank's 1.26 risers. Nothing a player can reach.
 
+## Realism trial, step 1: light and air (Claude, 14 November 2026)
+
+Card section "Kyle on realism". Behind a new switch, `scablands-realism` (`dev`, off for players).
+
+### What was built
+
+- `src/world/scablands.js`: `SCABLANDS_LIGHT`, the trial's light, carried on the venue as `trialLight`: the sun's place, colour and
+  strength, the sky's light, the sky's and haze's colours, the haze's start and end, the exposure, the cloud cover, and the shadow box
+  (`shadowReach` 100 m, `shadowAhead` 45 m, `shadowFar` 560 m).
+- `src/scene-lighting.js`: a course's `trialLight` is laid over the day's look in place of its `light` when `useTrialLight()` says so
+  (asked once for each course). A light may widen the sun's shadow box; a widened box lies ahead of the camera and moves in whole shadow
+  texels so that shadow edges do not crawl. With no trial light the box, the sun's place and every setting are computed as before.
+- `src/render3d.js`: passes the switch's answer to the lighting.
+- `tools/scenarios/scablands-realism.mjs`: the before-and-after pictures (switch off, then on) at seven places on Performance and one on
+  High, with draw calls, triangles and the time between frames, and the sheet.
+
+No game event is added, so no sound cue.
+
+### Checks
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, from PowerShell): lane tier 89 of 92, and the three that failed pass after the new switch was counted in the two lists that pin the switches (`tools/test-feature-flags.mjs`, `start-preview.bat`); replays unchanged.
+- `npm run build`: passes.
+- Browser, visible window, memory-only saves: `scablands-realism` passes, 16 pictures. Draw calls and triangles before and after are the
+  same within a few per cent (134 to 303 draw calls, 177,000 to 320,000 triangles); the time between frames is the screen's 16.7 ms in
+  both. Not a frame check (rule 9).
+- One independent review of the code (a Sonnet reviewer, read only): no real faults; with the switch off the sun's place, the shadow box and every setting are computed exactly as before. On its
+  advice the sun's light starts 320 m from the shadow box's middle (it was 220 m), so that a hill on the sunward edge still throws
+  its shadow. Left as they are: the box jumps when an inspection camera looks straight down, and a switch turned mid-course takes
+  effect at the next course.
+- Race fingerprints: unchanged (no rule of a race is touched).
+
+### Changed assertions, for the card (rule 18)
+
+- `tools/test-feature-flags.mjs`: the count of switches is 55 (was 54) and `scablands-realism` joins the list that must be `dev`.
+  Nothing is loosened: the new switch is pinned off for players like the others.
+- `start-preview.bat`: the Preview's list of dev switches gains `scablands-realism`, as `tools/test-preview-launcher.mjs` requires.
+
+### Removed
+
+Nothing. The old light stays for players until the trial's three steps are judged; the card says what is removed when the switch goes on.
+
+## Realism trial, step 2: photographed surfaces (Claude, 14 November 2026)
+
+Card section "Realism trial, step 2 result". Behind the switch `scablands-realism` (`dev`, off for players).
+
+### What was built
+
+- `public/assets/textures/scablands-*-colour.jpg` and `-relief.jpg`: twelve pictures, 4.9 MB, made by `tools/art/scablands-ground-photos.py`
+  from six Poly Haven surfaces (CC0) kept in the art library. Credits in `public/assets/textures/CREDITS.md`; sources and checksums in
+  `tools/art/catalog.json`.
+- `src/world/scablands-ground-look.js`: `GROUND_PHOTOS` (file, true size and average colour of each), `loadGroundPhotos`, and in the
+  ground's and the road's shaders the photograph's grain (multiplied into the colour drawn in code) and relief (added to the ground's
+  own direction). Each photograph is read at two sizes, the larger turned, blended by how much ground a pixel covers. With no
+  photographs the shaders and their cache keys are the ones from before.
+- `src/world/scablands-scene.js`: loads the photographs when the switch is on and there is a screen, hands them to the ground and the
+  road, and disposes of them with the scene.
+- `tools/scenarios/scablands-realism.mjs`: unchanged; its sheet for this step is round 9.
+
+No game event is added, so no sound cue. No rule of a race is touched.
+
+### Checks
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, from PowerShell): 80 of 82. The two that failed (`test-p4-kits`, `test-tanker-valve-source`) pin the art catalogue's
+  earlier rows; the six new rows are left out of each pin as the wildlife rows are, and both pass. Replays unchanged.
+- `npm run build`: passes.
+- Browser, visible window, memory-only saves: `scablands-realism` passes, 16 pictures; draw calls and triangles as in step 1; the time
+  between frames is the screen's 16.7 ms before and after. Not a frame check (rule 9).
+- One independent review of the code (a Sonnet reviewer, read only): three points, all put right and confirmed by a comparison in Node and by retaken pictures.
+  (1) With the switch off the ground's shader text was not byte for byte the old one (three unused lines). It is now: the text, cache
+  key, defines and uniforms of the ground with regions, the plain ground and the road are identical to the commit before. (2) The road's
+  relief tilted a level plane, not the road's own slope; it tilts the road's slope now. (3) The scene and the renderer read the switch
+  from two names: they are the same catalogue (`app._switches()` returns the base of the race's switches, which is the shared one).
+  Also on its notes: only the size of a photograph that shows is read, and a bank or steep rock takes the other grounds' place in the
+  relief.
+
+### Changed assertions, for the card (rule 18)
+
+- `tools/test-p4-kits.mjs` and `tools/test-tanker-valve-source.mjs`: each pins a checksum of the art catalogue's earlier rows. Rows of
+  card SCABLANDS-LAND are left out of the pinned set, as rows of WILD-ART-SRC already are. The checksums are unchanged, so every
+  earlier row is still protected.
+
+### Removed
+
+Nothing. The ground drawn wholly in code stays for players until the trial is judged; when the switch goes on, the code's own fine
+grain that a photograph replaces is removed in that change.
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the

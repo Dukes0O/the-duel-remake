@@ -5,7 +5,8 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
-import {createGroundLook,createRoadLook} from './scablands-ground-look.js';
+import {createGroundLook,createRoadLook,loadGroundPhotos} from './scablands-ground-look.js';
+import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
@@ -468,9 +469,11 @@ export function createScablandsScene(course,options={}){
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
-  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
+  // The realism trial's photographed surfaces (switch `scablands-realism`), only where there is a screen to draw on.
+  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&featureFlags.enabled('scablands-realism')))?loadGroundPhotos():null;
+  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
-  const roadMaterial=createRoadLook().apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
@@ -775,7 +778,7 @@ export function createScablandsScene(course,options={}){
   function dispose(){
     if(retired)return;retired=true;
     stopOpenMarkWatch();
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();

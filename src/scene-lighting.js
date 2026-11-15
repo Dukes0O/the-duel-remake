@@ -9,7 +9,9 @@ import { createVehicleNightLighting } from './vehicles.js';
 
 // One owner for scene lights, the sky and environment targets. The renderer
 // owns the composer passes and decides when pending GPU work permits disposal.
-export function createSceneLighting({ scene, renderer, bloom, host }, {
+// `useTrialLight` says whether a course's trial light (`trialLight` in its definition, such as the Scablands' realism trial) is
+// laid over the day's look in place of the course's own `light`. Asked once for each course.
+export function createSceneLighting({ scene, renderer, bloom, host, useTrialLight = () => false }, {
   createPMREM = () => new THREE.PMREMGenerator(renderer),
   createRoom = () => new RoomEnvironment(),
   loadEnvironment = (loaded, failed) => new RGBELoader().load('/assets/textures/sunset-lighting.hdr', loaded, undefined, failed),
@@ -17,6 +19,10 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
   let stopped = false, disposed = false, course, naturalEnvironment, pmremReleased = false, pathSample = null;
   const sampleBuffer = {}, sampleInputs = {}, vehicleUpdate = {}, worldUpdate = {}, vehicleLights = new Map(), vehicleInputs = new Map(), worldDetails = new Map();
   let activeWorld = null, activeWinter = false, winterDryPalette = null;
+  // The sun's shadow box: its half width, how far ahead of the camera its middle lies and how deep it is. A course's light may
+  // widen it (`shadowReach`, `shadowAhead`, `shadowFar`); every other course keeps 45 m round the car.
+  let trialLight = null, shadowReach = 45, shadowAhead = 0, shadowFar = 240;
+  const shadowRight = new THREE.Vector3(), shadowUp = new THREE.Vector3(), shadowDir = new THREE.Vector3(), shadowMiddle = new THREE.Vector3();
   const pmrem = createPMREM(), room = createRoom();
   const releasePMREM = () => { if (!pmremReleased) { pmremReleased = true; pmrem.dispose(); } };
   const environment = pmrem.fromScene(room, .04);
@@ -79,13 +85,14 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
     sun,
     apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter }) {
       if (stopped) return;
+      if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
       const night = theme === 'city' || course.def.timeOfDay === 'night';
       sampleInputs.distance = distance;sampleInputs.raceLength = raceLength;sampleInputs.theme = theme;
       sampleInputs.tunnel = tunnel;sampleInputs.menu = menu;
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
-      if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, course.def.light);
+      if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
       const settings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
@@ -102,6 +109,16 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       activeWinter = !!winter;
       if (!winter) {winterDryPalette = null;paletteKey(baseSettings,dryPaletteKey,true);hasDryPalette = true;}
       atmosphere.setLightPath(!!pathSample);
+      const reach = settings.shadowReach || 45, far = settings.shadowFar || 240;
+      shadowAhead = settings.shadowAhead || 0;
+      if (reach !== shadowReach || far !== shadowFar) {
+        shadowReach = reach;shadowFar = far;
+        Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, far });
+        sun.shadow.camera.updateProjectionMatrix();
+        // The same offsets in metres as the 45 m box: the depth offset is a share of the box's depth, the other of a texel.
+        sun.shadow.bias = -.00035 * 240 / far;sun.shadow.normalBias = .03 * reach / 45;
+        host.dataset.shadowReach = String(reach);
+      }
       if (!scene.fog) scene.fog = new THREE.Fog(colour(settings.fog), 260, 1650);
       scene.fog.color.lerp(colour(settings.fog), amount);
       scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, settings.fogNear, amount);
@@ -149,8 +166,23 @@ export function createSceneLighting({ scene, renderer, bloom, host }, {
       if (stopped) return;
       sky.position.copy(camera.position);
       atmosphere.update(seconds);
-      sun.position.set(position.x + sunOffset.x, position.y + sunOffset.y, position.z + sunOffset.z);
-      sun.target.position.set(position.x, position.y, position.z);
+      shadowMiddle.set(position.x, position.y, position.z);
+      if (shadowReach !== 45 || shadowAhead) {
+        // A wide box lies ahead of the camera, where the player looks, and moves in whole shadow texels so that the edges of
+        // shadows do not crawl as the car moves.
+        camera.getWorldDirection(shadowDir);
+        const flat = Math.hypot(shadowDir.x, shadowDir.z);
+        if (flat > .2) { shadowMiddle.x += shadowDir.x / flat * shadowAhead;shadowMiddle.z += shadowDir.z / flat * shadowAhead; }
+        shadowDir.copy(sunOffset).normalize();
+        shadowRight.set(shadowDir.z, 0, -shadowDir.x).normalize();
+        shadowUp.crossVectors(shadowDir, shadowRight);
+        const texel = 2 * shadowReach / sun.shadow.mapSize.x;
+        const across = Math.round(shadowMiddle.dot(shadowRight) / texel) * texel, up = Math.round(shadowMiddle.dot(shadowUp) / texel) * texel;
+        const along = shadowMiddle.dot(shadowDir);
+        shadowMiddle.set(0, 0, 0).addScaledVector(shadowRight, across).addScaledVector(shadowUp, up).addScaledVector(shadowDir, along);
+      }
+      sun.position.set(shadowMiddle.x + sunOffset.x, shadowMiddle.y + sunOffset.y, shadowMiddle.z + sunOffset.z);
+      sun.target.position.copy(shadowMiddle);
       sun.target.updateMatrixWorld();
     },
     updateVehicles({ course: current, position, player, police, distance, tall, now, high, menu }) {
