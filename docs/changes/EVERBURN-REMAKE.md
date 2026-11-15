@@ -442,3 +442,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: check the caption's placement in the browser scenario, then run the final checks and both long drivers. Race fingerprints were not checked in this round.
 - Changed assertions: none. Codex decided: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: the caption's position across the middle of the open map. The old `everburn-play` scenario still needs replacement or removal. Still to build: the six drives, camera, cover and scenario.
+
+## Larger land, scripted drive opening (15 November 2026)
+
+- Added the shared opening for the Medium proof drives. From the real yard start, the car drives to Cinder, stops and waits for the pot. This is the first part of step 7a; it does not yet drive the East Road or prove an arrival band. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real seeded game drives to the pickup and checks that the pot is loaded with more than 99 ember. `git diff --check`: passed.
+- Changed assertions: none. Codex decided: none. Race fingerprints were not checked in this round.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road drive and its arrival band, the other five drives, camera, cover and scenario.

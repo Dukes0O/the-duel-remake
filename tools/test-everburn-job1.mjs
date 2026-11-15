@@ -25,6 +25,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
+import {driveToCinder} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -284,6 +285,18 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// Start the Medium proof drive at the actual yard start and pick up the pot by driving to Cinder.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  const state = duel.state, world = state.arena.worldJob;
+  state.countdown = 0;
+  const result = driveToCinder(duel, pickup);
+  assert.equal(world.job.stepState.loaded, true, `the real car collects the pot from Cinder; distance ${result.distance.toFixed(1)} m`);
+  assert.ok(world.job.stepState.ember > 99, 'the pickup begins with a bright ember');
+}
 // The real job requests the gate only for a car approaching slowly.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
