@@ -4,13 +4,15 @@
 
 Step 1 adds Mabel's machine data and pure rules for a face, thrust, head speed, stall recovery, protection and slow steering. The face reads edited ground, so a dug cutting can expose it. The rules are not connected to the game yet. The material at the face is supplied by the caller; the ground layer does not yet expose a material query at depth.
 
-Step 2 has begun: cutting now records centre-line segments, coalescing straight runs, and leaves the far end closed. The trial's ground rules accept and preserve explicit open-end fields, using surface inference only for older segments without them. A closed face stays solid even when it reaches surface height. Breakthrough, joining another tunnel, and stopping below open ground remain to be built. This is not a finished cutting step.
+Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Joining another tunnel remains to be built. This is not a finished cutting step.
 
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
 - `node tools/test-machine-borer.mjs`: passed again with explicit open and closed ends, including collision and preservation through the tunnel rules.
 - `node tools/test-tunnels.mjs`: passed, including the existing trial and simulated drives.
+- `node tools/test-machine-borer.mjs`: passed after adding far-face breakthrough, passage in both directions, and the shallow-ground stop.
+- `node tools/test-tunnels.mjs`: passed again after the breakthrough change.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -28,7 +30,7 @@ For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and
 
 ## Sound cues
 
-The rules emit `borer.stall` and `borer.refuse` events. The remaining cues are `borer.head`, `borer.breakthrough`, and `borer.muck`. Sound playback remains to be built.
+The rules emit `borer.stall`, `borer.refuse`, and `borer.breakthrough` events. The remaining cues are `borer.head` and `borer.muck`. Sound playback remains to be built.
 
 ## Removed
 

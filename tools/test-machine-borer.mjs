@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_STALL, borerHasFace, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 
@@ -48,4 +48,18 @@ const openEnds = createGroundTunnels([{...forty.segments[0], endOpen:true}], {he
 assert.equal(openEnds.endOpen, true, 'An explicitly opened mouth remains open.');
 assert.equal(openEnds.constrainMotion({x:0,y:0,z:39}, {x:0,y:0,z:41}).hit, false);
 assert.throws(() => createGroundTunnels([{...forty.segments[0], endOpen:'yes'}]), TypeError);
+const farFace = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 && z < 30 ? 8 : 0});
+const breakthrough = stepBorer(createBorerState(), {thrust:1}, farFace, 'topsoil', 100);
+assert.equal(breakthrough.state.finished, true);
+assert.equal(breakthrough.state.segments.at(-1).endOpen, true);
+assert.equal(breakthrough.events.filter(event => event.cue === 'borer.breakthrough').length, 1);
+const openBore = createGroundTunnels(breakthrough.state.segments, {heightAt:(x,z)=>farFace.heightAt(x,z)});
+assert.equal(openBore.constrainMotion({x:0,y:0,z:29}, {x:0,y:0,z:31}).hit, false);
+assert.equal(openBore.constrainMotion({x:0,y:0,z:31}, {x:0,y:0,z:29}).hit, false);
+const shallow = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 2});
+const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100);
+assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);
+assert.equal(stoppedUnderGround.state.segments.at(-1).endOpen, false);
+assert.ok(stoppedUnderGround.state.z <= 27.01);
+assert.equal(stoppedUnderGround.events.filter(event => event.message === BORER_OPEN_GROUND).length, 1);
 console.log('Borer: machine data, controls and a 40 m closed cut passed.');

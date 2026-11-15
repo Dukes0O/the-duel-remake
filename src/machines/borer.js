@@ -22,7 +22,18 @@ export function borerHasFace(ground, position, heading, radius = 3) {
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, headSpeed:0,
-    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[]};
+    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
+}
+
+// Look for the matching wall from the other side of the approaching surface.
+function exitFace(ground, position, heading, radius) {
+  for (let distance = radius; distance <= 12; distance += 0.5) {
+    const x = position.x + Math.sin(heading) * distance;
+    const z = position.z + Math.cos(heading) * distance;
+    if (Math.abs(ground.heightAt(x, z) - position.y) <= 0.3 &&
+        borerHasFace(ground, {x, z}, heading + Math.PI, radius)) return {x, z};
+  }
+  return null;
 }
 
 // Keep straight cuts as one segment; a change in direction starts a new one.
@@ -63,14 +74,13 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
       }
       continue;
     }
-    if (!thrust) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
+    if (!thrust || next.finished) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
     const refusal = ground.refusal({x:next.x, z:next.z, radius});
     if (refusal || (!next.started && !borerHasFace(ground, next, next.heading, radius))) {
       const message = refusal ? ((refusal === 'A building or protected place is in the way.' || refusal === 'This region is protected ground.') ? BORER_OBSTRUCTION : refusal) : BORER_NO_FACE;
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
       next.message = message; next.headSpeed = 1; next.overloadSeconds = 0; continue;
     }
-    next.message = null;
     const capacity = hardness[material];
     const overloaded = thrust > capacity + 1e-9;
     next.headSpeed = overloaded ? capacity / thrust : 1;
@@ -81,6 +91,21 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
       continue;
     }
     const distance = 0.5 * Math.min(thrust, capacity) * step;
+    if (ground.heightAt(next.x, next.z) >= next.y + 2 * radius) next.covered = true;
+    if (next.covered) {
+      const aheadX = next.x + Math.sin(next.heading) * radius;
+      const aheadZ = next.z + Math.cos(next.heading) * radius;
+      const aheadY = next.y + Math.tan(next.slope) * radius;
+      if (ground.heightAt(aheadX, aheadZ) < aheadY + radius) {
+        if (!exitFace(ground, next, next.heading, radius)) {
+          if (next.message !== BORER_OPEN_GROUND)
+            events.push({type:'refuse', cue:'borer.refuse', message:BORER_OPEN_GROUND});
+          next.message = BORER_OPEN_GROUND;
+          continue;
+        }
+      }
+    }
+    next.message = null;
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
     next.heading += steer * radians(0.5) * distance;
     next.slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
@@ -89,6 +114,12 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
     next.y += Math.sin(next.slope) * distance;
     addCut(next.segments, start, {x:next.x, y:next.y + radius * 0.55, z:next.z}, radius);
     next.distanceM += distance; next.started = true;
+    if (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
+        borerHasFace(ground, next, next.heading + Math.PI, radius)) {
+      next.segments.at(-1).endOpen = true;
+      next.finished = true;
+      events.push({type:'breakthrough', cue:'borer.breakthrough'});
+    }
   }
   next.stepCarrySeconds = Math.max(0, carry);
   return {state:next, events};
