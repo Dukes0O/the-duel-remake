@@ -48,7 +48,7 @@ const polygonFunction = (name, uniform, count) => `
 export const GROUND_COLOURS = Object.freeze({flats: 0x76624b, 'scab-plates': 0x2a2825, 'salt-pan': 0xdedacd, 'river-bed': 0x6a665d,
   'wreck-fields': 0x74503a, sand: 0xc9b07a, burn: 0x1b1917, bank: 0x8a7a63, road: 0x6e5d47, rock: 0x57493c});
 
-export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null} = {}) {
+export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null, tunnels = null} = {}) {
   const colour = hex => new THREE.Color(hex);
   const uniforms = {uGroundNoise: {value: scrapNoise()}, uGroundRock: {value: colour(rock)}, uGroundStone: {value: colour(stone)},
     uColPlate: {value: colour(GROUND_COLOURS['scab-plates'])}, uColSalt: {value: colour(GROUND_COLOURS['salt-pan'])}, uColBed: {value: colour(GROUND_COLOURS['river-bed'])},
@@ -70,6 +70,19 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       uniform sampler2D uRiverField;uniform vec4 uRiverBox;uniform vec4 uWreck;uniform vec4 uSand;uniform vec4 uBurn;uniform float uBurnWobble;uniform vec2 uBurnCentre;
       uniform vec2 uPan[${pan.points.length}];uniform float uPanPhase;uniform vec2 uPlates[${plates.points.length}];uniform float uPlatesPhase;`;
   }
+  // Generate only the capsules supplied to this material. An ordinary material
+  // receives exactly the same shader text as before.
+  const segments = tunnels?.segments ?? [];
+  const tunnelDeclarations = segments.map((segment, i) => {
+    uniforms[`uTunnelStart${i}`] = {value: new THREE.Vector3(segment.start.x, segment.start.y, segment.start.z)};
+    uniforms[`uTunnelEnd${i}`] = {value: new THREE.Vector3(segment.end.x, segment.end.y, segment.end.z)};
+    uniforms[`uTunnelRadius${i}`] = {value: segment.radius};
+    return `uniform vec3 uTunnelStart${i};uniform vec3 uTunnelEnd${i};uniform float uTunnelRadius${i};`;
+  }).join('\n');
+  const tunnelClips = segments.map((segment, i) => `
+    {vec3 a=uTunnelStart${i},d=uTunnelEnd${i}-a,p=vGroundPos-a;
+    float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0);
+    vec3 q=p-d*t;if(dot(q,q)<uTunnelRadius${i}*uTunnelRadius${i})discard;}`).join('');
   const regionsOn = regions !== null;
   // How far the dry river's middle is from here (metres, 128 where it is further than that), read from its picture.
   const riverDistance = regionsOn ? `
@@ -95,13 +108,13 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
         .replace('#include <common>', `#include <common>
           uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
           uniform vec3 uColPlate;uniform vec3 uColSalt;uniform vec3 uColBed;uniform vec3 uColWreck;uniform vec3 uColSand;uniform vec3 uColBurn;uniform vec3 uColBank;
-          ${areaCode}
+          ${areaCode}${tunnelDeclarations ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
           vec3 gGlow;
           ${CELLS}
           ${areaFunctions}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
-          vec2 gq=vGroundPos.xz;
+          ${tunnelClips ? `${tunnelClips}\n          ` : ''}vec2 gq=vGroundPos.xz;
           ${riverDistance}
           float gSlope=1.0-normalize(vGroundNormal).y;
           // The noise picture is read at sizes that never line up with each other, and nothing that must not repeat is read from it
@@ -225,11 +238,29 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           diffuseColor.rgb=gc;`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n          totalEmissiveRadiance+=gGlow;');
     };
-    material.customProgramCacheKey = () => `ground-look-4-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}`;
+    material.customProgramCacheKey = () => `ground-look-4-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${segments.length ? `-tunnels-${segments.length}` : ''}`;
     material.needsUpdate = true;
     return material;
   }
   return {apply, uniforms};
+}
+
+
+// The trial's lining is separate from simulation and may be disposed with the scene.
+export function createTunnelMesh(tunnels) {
+  const group = new THREE.Group();
+  const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.BackSide});
+  for (const segment of tunnels.segments) {
+    const start = new THREE.Vector3(segment.start.x, segment.start.y, segment.start.z);
+    const end = new THREE.Vector3(segment.end.x, segment.end.y, segment.end.z);
+    const axis = end.clone().sub(start);
+    if (axis.lengthSq() === 0) continue;
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(segment.radius, segment.radius, axis.length(), 32, 1, true), material);
+    mesh.position.copy(start).add(end).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis.normalize());
+    group.add(mesh);
+  }
+  return group;
 }
 
 // A graded dirt road: a flat ribbon whose vertices carry (across, along): `across` is metres from the middle over the road's half

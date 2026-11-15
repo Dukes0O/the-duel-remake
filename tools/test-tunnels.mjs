@@ -129,3 +129,30 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
 }
 
 console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');
+
+// Both ground materials can use the same capsule test; the empty case keeps
+// the original shader and cache key, while a tube adds uniforms and a lining.
+{
+  const THREE = await import('three');
+  const {createGroundLook, createTunnelMesh} = await import('../src/world/scablands-ground-look.js');
+  const compile = tunnels => {
+    const material = createGroundLook({tunnels}).apply(new THREE.MeshStandardMaterial());
+    const shader = {uniforms: {}, vertexShader: '#include <common>\n#include <project_vertex>',
+      fragmentShader: '#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};
+    material.onBeforeCompile(shader);
+    return {material, shader};
+  };
+  const ordinary = compile(null), emptyLook = compile(empty), cut = compile(tunnel);
+  assert.equal(emptyLook.shader.vertexShader, ordinary.shader.vertexShader);
+  assert.equal(emptyLook.shader.fragmentShader, ordinary.shader.fragmentShader);
+  assert.equal(emptyLook.material.customProgramCacheKey(), ordinary.material.customProgramCacheKey());
+  assert.match(cut.shader.fragmentShader, /uTunnelRadius0/);
+  assert.match(cut.shader.fragmentShader, /if\(dot\(q,q\)<uTunnelRadius0\*uTunnelRadius0\)discard/);
+  assert.equal(cut.shader.uniforms.uTunnelRadius0.value, 4);
+  const lining = createTunnelMesh(tunnel);
+  assert.equal(lining.children.length, 1);
+  assert.equal(lining.children[0].material.side, THREE.BackSide);
+  assert.equal(lining.children[0].geometry.parameters.height, 100);
+  lining.children[0].geometry.dispose();
+  lining.children[0].material.dispose();
+}
