@@ -51,6 +51,23 @@ test('the furnace-cover mesa adds cover on the plates way', () => {
   assert.ok(addedMetres >= 150, `the mesa adds about ${addedMetres} m of cover`);
 });
 
+test('mesa faces and ramps leave the plates way and its corridor clear', () => {
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const withoutMesas = HILLS.filter(hill => hill.kind !== 'mesa');
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const point of sampleLine([a, b], 5)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, withoutMesas),
+          `a mesa reaches the plates way corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
 test('the Ridge lookout sees only within range and over clear ground', () => {
   const ridge = LAND.at('ridge'), car = {x: ridge.x + 100, z: ridge.z};
   const flat = () => 0;

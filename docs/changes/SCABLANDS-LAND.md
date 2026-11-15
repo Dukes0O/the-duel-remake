@@ -1962,3 +1962,11 @@ Check: `node tools/test-scablands-hills.mjs` passed 41 of 41. Race fingerprints,
 Changed assertions: none. The mesa contribution check is new and does not weaken the existing cover assertion. Codex decided: compare the current surface to the same terrain without that mesa, sampling at 5 m. Removed: none.
 
 Still needed: provide and prove three separate 150 m mesa-cover stretches, prove job corridors, drive the routes and jobs, merge integration and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: plates way corridor
+
+The hills suite now compares the ground with and without mesas every 5 m along the plates' way, at the centre and at offsets up to 60 m on both sides. The mesa faces and ramps do not raise any of those sampled points. This covers the whole way, including the first cover mesa. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 42 of 42. Changed assertions: none; the corridor check is new. Codex decided: sample across the corridor at 30 m intervals; this is a sampled check, not a proof for every point. Removed: none. Race fingerprints, world signatures, route drives, build and browser pictures were not run in this step.
+
+The three cover stretches are still not met. A 10 m grid search for a 120 m radius mesa found no candidate shadow on the visible part of the way beyond 3,100 m along it, within the examined region and the road, river, plates and 200 m way clearances. The search used circular shadow geometry and is not an exhaustive proof. Continue with mesa cover, then check the remaining job corridors and drive the routes and jobs. Merge integration and run the final checks. Claude must run and judge the pictures.
