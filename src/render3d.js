@@ -1147,7 +1147,7 @@ export function attachRenderer(host, app) {
     syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
     {
       const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
-      emberPot.update(carry?.ember&&!st.onFoot?player:null,carry?.ember?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
+      emberPot.update(carry?.ember&&(!carry.pickup||held.loaded)&&!st.onFoot?player:null,carry?.ember&&(!carry.pickup||held.loaded)?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
     }
     world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});

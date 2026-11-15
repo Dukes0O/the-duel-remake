@@ -56,3 +56,31 @@ Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven
 - **The results sentence names no number.** It said "the most it pays is 80 scrap" beside "+96" on Medium, because the pay is multiplied by the difficulty. It now says "You had to relight it, so it pays less." Changed assertion, reviewed by Claude: the sentence check asks for "relight", "pays less" and no digit, where it asked for "80 scrap"; the cap of 80 itself is still checked on the line above it.
 - Review note for the sheet: `docs/board/looks/everburn-remake/round-1-review.md` (Claude).
 - **Changed assertion in `tools/scenarios/everburn-play.mjs`,** reviewed by Claude: the scenario held the accelerator alone and required job 1 to finish. That is the fault Kyle found. It now requires the opposite: the job does not finish that way, the pot goes out, and the gauge says OUT. It is stricter than before.
+
+
+## Larger land, pickup work in progress (15 November 2026)
+
+- The car starts 40 m west of the yard gate, facing east. The Hot Delivery carry step asks the player to stop within 8 m of Cinder's pickup point. Three new lines play in order before the pot and ember gauge appear; the ember does not cool during the approach or the lines. The pickup point follows the yard brazier's position. The pot is still drawn by the existing car renderer.
+- This is **not a finished yard or start**. The Scrapdome yard and its solids, the east gate posts, and Cinder's figure have not been placed. The maps do not yet show only Cinder. Items 2 through 7 are also unfinished. Do not hand this to Kyle as a playable remake.
+- `node tools/test-everburn-job1.mjs`: passed for the start distance and heading, approach distance and speed, the three lines, and the gauge before and after pickup. `git diff --check`: passed. This test does not prove the missing yard or the maps.
+- No new game event or sound cue was added by this partial pickup.
+
+### For Claude to run
+
+The requested browser scenario has not been written or run. The full card checks, lane tier, replay and world-signature suites, and build remain for the final round. The long `test-everburn-easy` and `test-run-gas-medium` drivers will need a run after the new job rules are complete.
+
+### Changed assertions, for Claude to review
+
+None in this round. Race fingerprints have not been checked in this round.
+
+### Codex decided (Claude to review)
+
+None in this round. The pickup uses the existing brazier position, which must be reconciled with the finished gate and figure.
+
+### For Claude to draw
+
+The Cinder figure and any plain temporary yard details still need drawing.
+
+### Removed
+
+Nothing removed in this round. The old `everburn-play` scenario still needs to be rewritten or removed when the requested scenario is built.

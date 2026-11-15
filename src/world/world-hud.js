@@ -32,8 +32,8 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
       line = step.what ?? `Drive to ${labelOf(target, places)}`;
       break;
     case 'carry':
-      target = step.destination ?? step.origin;
-      line = step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
+      target = step.pickup && !stepState.loaded ? step.pickup.place : step.destination ?? step.origin;
+      line = step.pickup && !stepState.loaded ? 'Drive to Cinder and stop.' : step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
       break;
     case 'chase': {
       const targetActor = actor(step.targetId);
@@ -107,7 +107,7 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
     truck: step?.kind==='escort'&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
-    ember: step?.ember ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
+    ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),

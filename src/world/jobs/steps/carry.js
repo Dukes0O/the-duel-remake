@@ -9,12 +9,26 @@ const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (
 function stepEmberCarry(step, state, view, dt) {
   const rule = step.ember, here = view.player?.position ?? {};
   const events = [], requests = [];
+  // The pickup is a job phase: cold and jolts start only after Cinder has spoken.
+  if (step.pickup && !state.loaded) {
+    const place = step.pickup.place;
+    if (!state.pickingUp) {
+      const stopped = Math.abs(view.speedKmh ?? 0) < 1;
+      if (stopped && gap(here, place) <= step.pickup.radius) {
+        return {state: {...state, pickingUp: true}, complete: false, events: [],
+          requests: [{type: 'marker', place}, ...step.pickup.lines.map(lineId => ({type: 'say', lineId}))]};
+      }
+    } else if ((state.lineQueue?.length ?? 0) === 0 && (state.lineRemaining ?? 0) <= 0) {
+      state = {...state, loaded: true, ember: rule.start};
+    }
+    if (!state.loaded) return {state, complete: false, events: [], requests: [{type: 'marker', place}]};
+  }
   if (step.burnable && (view.thingsHit ?? []).some(hit => hit.kind === 'barricade' && hit.burnable)) {
     for (const hit of view.thingsHit.filter(hit => hit.kind === 'barricade' && hit.burnable)) events.push({type: 'burn', id: hit.id});
   }
   let safeIndex = state.safeIndex ?? 0, ember = state.ember ?? rule.start, relights = state.relights ?? 0, out = state.out === true;
   while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
-  const next = {safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
+  const next = {...state, safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
   if (!out) {
     const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, safeKmh: view.safeKmh, difficulty: view.difficulty, dt});
     next.ember = Math.max(0, Math.min(rule.start, ember - loss.total));

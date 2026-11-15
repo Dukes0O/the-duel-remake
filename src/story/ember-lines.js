@@ -11,6 +11,9 @@ export const EMBER_NOTE = note(EMBER_NOTE_ID, 'Hollis (a note, never spoken)', '
   'Driver, the forge at Tin Town has gone cold, and no forge means no boiler parts. A woman named Cinder is at the back gate with a pot of fire and a bad attitude. I like her. Go and see. Hollis');
 
 export const EMBER_CAPTIONS = Object.freeze({
+  'story.ember.cinder.pickup.1': line('Cinder', 'Job 1 pickup', 'Tin Town needs fire for its forge, so it can mend its pump.'),
+  'story.ember.cinder.pickup.2': line('Cinder', 'Job 1 pickup', 'This is the last fire we have. Old Smoke says all fire belongs to his furnace.'),
+  'story.ember.cinder.pickup.3': line('Cinder', 'Job 1 pickup', 'Take the East Road. The Ash Men hold the Girder Bridge. Burn their barricades.'),
   'story.ember.cinder.1': line('Cinder', 'Job 1 start', 'This pot holds the last of the Everburn. Don\'t drop it. I mean it.'),
   'story.ember.cinder.2': line('Cinder', 'Job 1 start', 'I\'ve bolted a flamethrower to your car. Press its number and burn anything in the way.'),
   'story.ember.cinder.3': line('Cinder', 'First barricade', 'Ash Men\'s fence. Get close, and burn it.'),

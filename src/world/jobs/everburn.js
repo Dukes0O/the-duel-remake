@@ -23,6 +23,8 @@ export function buildEverburn(land) {
   const yard = place('yard-gate', land.yard), tinTown = place('tin-town', at('tin-town'), 18);
   const boneyard = place('boneyard', at('boneyard'), 18), mall = place('dead-mall', at('dead-mall'), 14);
   const well = place('everburn', at('everburn'), 18), safeRoad = place('safe-road', at('safe-road'), 16);
+  const yardToCamp = Math.hypot(safeRoad.position.x - yard.position.x, safeRoad.position.z - yard.position.z) || 1;
+  const cinderAt = at('yard', (safeRoad.position.z - yard.position.z) / yardToCamp * 9, -(safeRoad.position.x - yard.position.x) / yardToCamp * 9);
   const wellRaidersHold = place('everburn-well-raiders-hold', at('everburn', -2, -1), 8);
   const wellRaiderEntries = Object.freeze([[0, 64], [64, 0], [0, -64], [-64, 0]]
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));
@@ -80,13 +82,15 @@ export function buildEverburn(land) {
       // The pot holds a live ember (src/world/jobs/ember-rule.js): driving takes it, and at 0 Cinder's spill line is said and the marker
       // moves to the nearest brazier (the yard gate, or the halfway camp once passed), where a stop gives a fresh scoop.
       steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
+        carStart:carStart(at('yard', -40, 0), yard),
+        pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},
           {place:ashBarricade1, radius:60, lineId:'story.ember.cinder.3'},
           {place:tinTown, radius:170, lineId:'story.ember.auntie-solder.1'}],
-        unlock:'tin-town', lentWeapon:'flamethrower', startLineId:'story.ember.cinder.1', afterStartLineId:['story.ember.cinder.2']})]}),
+        unlock:'tin-town', lentWeapon:'flamethrower'})]}),
     Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Get Out and Walk', kind:'on-foot',
       resultLineId:'story.ember.auntie-solder.4',
       easy:Object.freeze({markerRadius:3, knockedDownRecovery:'last-marker'}), lineId:'story.ember.auntie-solder.3',
