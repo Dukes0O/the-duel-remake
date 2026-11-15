@@ -46,6 +46,8 @@ To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times t
 
 ## Checks
 
+- After merging integration at `b71c91b03`, the borer, tunnel and all seven machine suites passed. Both replay suites passed: 297 race fingerprints and 12 combat fingerprints. No suite filename contains `world-sign`. The build passed with Vite's chunk and mixed-import warnings. The scenario's page expressions parse in Node; Claude must run the browser scenario and lane tier.
+- The latest segment-list change adds assertions without changing existing assertions. The browser view and the separately restored passage remain unverified and incomplete, respectively.
 - After merging `integration/wasteland`, `test-machine-borer` passed, including the face, seams, tunnel joining, spoil bank, input and bent data checks.
 - After the merge, `test-tunnels` and all seven `test-machine-*` suites passed, including `test-machine-roads`.
 - `test-machine-roads`: the selection sequence now includes Mabel before wrapping to the excavator, as Claude reviewed and directed.
