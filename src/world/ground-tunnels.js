@@ -78,6 +78,17 @@ function horizontalProjection(position, segment) {
 export function createGroundTunnels(segments = []) {
   if (!Array.isArray(segments)) throw new TypeError('Tunnel segments must be a list.');
   const tubes = segments.map(validSegment);
+  for (let i = 0; i < tubes.length; i++) {
+    const tube = tubes[i];
+    if (Math.hypot(tube.end.x - tube.start.x, tube.end.z - tube.start.z) < 1e-7)
+      throw new RangeError('A tunnel segment needs a horizontal length.');
+    if (i > 0) {
+      const previous = tubes[i - 1];
+      if (Math.hypot(tube.start.x - previous.end.x, tube.start.y - previous.end.y,
+        tube.start.z - previous.end.z) > 1e-7 || Math.abs(tube.radius - previous.radius) > 1e-7)
+        throw new RangeError('Tunnel segments must join without a gap or a step.');
+    }
+  }
 
   function tubeAt(position, actorHeight = position?.y, floorTolerance = 0) {
     point(position, 'Actor position');

@@ -505,6 +505,17 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   }
 }
 
+// A bore cannot be made with a gap, a floor step or a zero-length segment.
+{
+  const first = {start: {x: 0, y: 4, z: 0}, end: {x: 10, y: 4, z: 0}, radius: 4};
+  const second = {start: {x: 10, y: 4, z: 0}, end: {x: 20, y: 4, z: 0}, radius: 4};
+  assert.doesNotThrow(() => createGroundTunnels([first, second]));
+  assert.throws(() => createGroundTunnels([first, {...second, start: {x: 10.01, y: 4, z: 0}}]), RangeError);
+  assert.throws(() => createGroundTunnels([first, {...second, start: {x: 10, y: 4.01, z: 0}}]), RangeError);
+  assert.throws(() => createGroundTunnels([first, {...second, radius: 5}]), RangeError);
+  assert.throws(() => createGroundTunnels([{...first, end: first.start}]), RangeError);
+}
+
 // A chain must hand support to the next segment as the car crosses a joint.
 {
   const joined = createGroundTunnels([
