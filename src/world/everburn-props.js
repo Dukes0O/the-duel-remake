@@ -21,6 +21,28 @@ export const EVERBURN_PROPS=Object.freeze([
   ['rock-1',14,-17,.5,1.2],['rock-2',17,-21,2.2,1.2],['rock-3',9,-27,1,1.1],['rock-4',5,-20,3,1.3],
 ].map(row=>Object.freeze(row)));
 
+// How big each kind is in the kit's own metres before the table above scales it (width, height, depth, measured from the kit's own
+// parts: tools/test-scablands-solid.mjs reads the real model and checks every size here) and the shape it is solid as: a round post
+// (`ellipse`) or a box. A prop is solid when it stands taller than a wheel (0.9 m); the smallest rock (0.64 m) is not.
+export const EVERBURN_PROP_FORM=Object.freeze({
+  pot:Object.freeze({size:[.94,.94,.94],shape:'ellipse'}),barricade:Object.freeze({size:[2.36,1.59,1.45],shape:'box'}),
+  sign:Object.freeze({size:[1.82,2.2,.13],shape:'box'}),mast:Object.freeze({size:[1.14,5.72,1.03],shape:'ellipse'}),
+  'rock-1':Object.freeze({size:[2.43,1.1,1.57],shape:'ellipse'}),'rock-2':Object.freeze({size:[1.28,.84,1.26],shape:'ellipse'}),
+  'rock-3':Object.freeze({size:[1.07,1.5,1],shape:'ellipse'}),'rock-4':Object.freeze({size:[.98,.64,.84],shape:'ellipse'}),
+});
+// The solids of the props that stand taller than a wheel, for a land: each {id, kind, shape, x, z, halfX, halfZ, heading, height}, turned as
+// the prop is drawn (`heading` is the prop's own turn, so its x runs the way the drawing's does).
+export function everburnPropSolids(land,wheelHeight=.9){
+  const well=land.at('everburn'),out=[];
+  EVERBURN_PROPS.forEach(([kind,east,south,turn,size],index)=>{
+    const form=EVERBURN_PROP_FORM[kind],height=form.size[1]*size;
+    if(!(height>wheelHeight))return;
+    out.push({id:`everburn-prop-${index+1}-${kind}`,kind:kind==='barricade'||kind==='sign'?'wall':'prop',shape:form.shape,x:well.x+east,z:well.z+south,
+      halfX:form.size[0]*size/2,halfZ:form.size[2]*size/2,heading:turn,height});
+  });
+  return out;
+}
+
 // Each prop is a group of the kit's meshes (cloned, moved so that its middle stands on the group's origin and its lowest point
 // on the ground). Returns the cluster as one group and the number of props found; a kind the kit lacks is skipped.
 export function createEverburnProps(kitScene,{groundAt=()=>0}={}){

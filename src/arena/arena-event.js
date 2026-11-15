@@ -20,6 +20,7 @@ import {createWorldJob, cleanupWorldJobLoan, initializeWorldJob, stepWorldJob, w
 import {stepRaiders} from '../raiders.js';
 import {sweepObstacle} from '../collision.js';
 import {armorDamageFor} from '../combat-armor.js';
+import {scablandsGround, scablandsLanded} from '../sim-scablands.js';
 
 // Arena event rules (docs/SCRAPDOME.md sections 3 and 7). `state.arena` is the
 // whole event; its presence replaces laps, finish, traffic, police and raiders.
@@ -286,6 +287,7 @@ function stepWreckedActor(duel, actor, dt) {
 export function stepArenaEvent(duel, dt) {
   const state = duel.state, arena = state.arena;
   const ambush = arena.mode === 'ambush-alley';
+  const scablands = !!duel.course.def.scablands;
   state.stageTimeSec += dt; state.totalTimeSec += dt;
   if (state.crashFlash > 0) state.crashFlash = Math.max(0, state.crashFlash - dt);
   state.invulnerableSec = Math.max(0, state.invulnerableSec - dt);
@@ -328,7 +330,9 @@ export function stepArenaEvent(duel, dt) {
     if (!onFoot || state.airborne || state.knock || state.tumble ||
         Math.abs(state.speedMph) > .1 || Math.abs(state.pushVelocity || 0) > .001) {
       duel._drive(dt);
+      if (scablands) scablandsGround(duel, state, dt);
       duel._jump(state, dt);
+      if (scablands) scablandsLanded(duel, state);
     } else { state.prevS = state.s; state.prevLateral = state.lateral; }
     containInArena(duel, state, dt);
   }
@@ -358,7 +362,9 @@ export function stepArenaEvent(duel, dt) {
       continue;
     }
     pilotStep(duel, actor, pilotGoal, dt);
+    if (scablands) scablandsGround(duel, actor, dt);
     if (!duel._ramFlight(actor, dt)) duel._jump(actor, dt);
+    if (scablands) scablandsLanded(duel, actor);
     containInArena(duel, actor, dt);
   }
   duel._collisions();

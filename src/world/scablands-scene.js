@@ -5,9 +5,9 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
-import {createGroundLook,createRoadLook,createTunnelMesh} from './scablands-ground-look.js';
+import {createGroundLook,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
 import {featureFlags} from '../feature-flags.js';
-import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings} from './scablands-draw.js';
+import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
@@ -15,14 +15,15 @@ import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
-import {createTinTownGate,tinTownGateFor,TIN_TOWN_GATE} from './tin-town-gate.js';
-import {createTinTownShacks,createTinTownChimneySmoke,tinTownLayout} from './tin-town-shacks.js';
+import {createTinTownGate,TIN_TOWN_GATE} from './tin-town-gate.js';
+import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
-import {BONEYARD_WRECKS,BESS_REST,boneyardWrecks} from './boneyard-wrecks.js';
+import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createEverburnProps} from './everburn-props.js';
-import {createBraziers,brazierSpot} from './ember-pot.js';
+import {createBraziers,brazierSpotsFor} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -35,36 +36,10 @@ export const SCABLANDS_ASSETS = Object.freeze({
   furnace: '/assets/models/wasteland/scablands/old-smoke.glb',
 });
 
-// Every placed solid names its anchor in the place table and holds only an offset from it. The small local offsets keep roads
-// and the eight named destinations clear. `scablandsSolids(land)` builds the table for any land, so that the solids move with
-// the places they stand by; the game's own table is built from the real land.
-export function scablandsSolids(land=LAND){
-  const boneyard=land.place('boneyard'),centre=land.at('tin-town'),clusters=tinTownLayout(land).clusters,posts=tinTownGateFor(land).posts;
-  return Object.freeze([
-    // The solid stands where the town's own model is drawn: the buildings of tintown.glb fill x -9.3 to 8.8 and z -13.5 to 13.4 and stand up to 7.6 m round the place.
-    // (It stood 46 m west of there from the first Scablands build; EVERBURN-PLAY-FIXES, fourth round.)
-    ['tin-town-shell','tin-town',0,0,19,8,27],
-    // The Boneyard's three wrecks, one box each, where each is drawn (src/world/boneyard-wrecks.js).
-    ...boneyardWrecks(land).map(wreck=>[`boneyard-wreck-${wreck.id}`,'boneyard',wreck.x-boneyard.x,wreck.z-boneyard.z,...wreck.size]),
-    ['dead-mall-shell','dead-mall',0,0,38,13,35],
-    ['everburn-well','everburn',0,0,18,9,18],
-    ['iron-line-station','iron-line',12,0,28,8,20],
-    ['dry-dam-gate','dry-dam',0,0,34,13,10],
-    ['ships-hulk-field','ships-in-sand',0,0,60,14,27],
-    ['ridge-rocks','ridge',-16,18,80,24,20],
-    // Tin Town's six clusters of stacked shacks, one box each (src/world/tin-town-shacks.js), and the gate's two posts.
-    ...clusters.map(cluster=>[`tin-town-cluster-${cluster.index+1}`,'tin-town',cluster.centre.x-centre.x,cluster.centre.z-centre.z,
-      cluster.rect.x1-cluster.rect.x0,12,cluster.rect.z1-cluster.rect.z0]),
-    ...posts.map(post=>[`tin-town-gate-post-${post.side}`,'tin-town',post.x-centre.x,post.z-centre.z,post.size,7,post.size]),
-  ].map(([id,placeId,dx,dz,width,height,depth])=>{
-    const place=land.place(placeId);
-    const center=Object.freeze([place.x+dx,place.height+height/2,place.z+dz]);
-    const size=Object.freeze([width,height,depth]);
-    return Object.freeze({id,placeId,center,size,
-      collision:Object.freeze({center,halfExtents:Object.freeze(size.map(value=>value/2)),heading:0})});
-  }));
-}
-export const SCABLANDS_SOLIDS = scablandsSolids();
+// What a car, a raider or a person on foot cannot pass is everything drawn that stands taller than a wheel, built from the same data that
+// draws it (src/world/scablands-solids.js, SCABLANDS-LAND round 4, slice 2b). The list and its builder for any land live there and are
+// shown here for the scene's callers and the tests.
+export {scablandsSolids,SCABLANDS_SOLIDS};
 
 const placeAssets={
   'tin-town':['tintown','folk'],'boneyard':['boneyard','bess'],'dead-mall':['mall'],'everburn':['everburn','furnace'],
@@ -495,9 +470,10 @@ export function createScablandsScene(course,options={}){
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   const tunnels=featureFlags.enabled('wasteland-town')?course.groundTunnels:null;
-  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
+  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&featureFlags.enabled('scablands-realism')))?loadGroundPhotos():null;
+  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
-  const roadMaterial=createRoadLook().apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+  const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
@@ -526,7 +502,9 @@ export function createScablandsScene(course,options={}){
     const material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.82,metalness:.3}),wear=createScrapWear({paint:1,dust:0x6b5a44,dustTop:3});
     wear.uniforms.uScrapInverse.value.makeTranslation(mesh.position.x,mesh.position.y,mesh.position.z).invert();return wear.apply(material);
   }});group.add(crossings.group);
-  roads.update(0,0);gorge.update(0,0);crossings.update(0,0);
+  // The Steps' marked way: a worn lane with a dashed line, cairns and painted posts, where the river's ledges are climbed (slice 2b).
+  const stepsWay=createStepsWay({plainAt:plainHeightAt});ground.add(stepsWay.group);
+  roads.update(0,0);gorge.update(0,0);crossings.update(0,0);stepsWay.update(0,0);
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
@@ -704,7 +682,7 @@ export function createScablandsScene(course,options={}){
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
         tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=nearTinTown;
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
-        roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);
+        roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
@@ -738,14 +716,10 @@ export function createScablandsScene(course,options={}){
       const emberStep=stepNow?.ember?stepNow:null;
       braziers.group.visible=Boolean(emberStep);
       if(emberStep){
-        const spots=[emberStep.origin,...(emberStep.safePoints??[])],key=JSON.stringify(spots);
+        const spots=brazierSpotsFor(emberStep),key=JSON.stringify(spots);
         if(key!==brazierKey){
           brazierKey=key;
-          const at=value=>value.position??value;
-          braziers.place(spots.map((spot,index)=>{
-            const here=at(spot),toward=at(spots[index+1]??emberStep.destination),offset=brazierSpot(here,toward,9);
-            return {x:offset.x,y:scablandsSurfaceHeightAt(offset.x,offset.z),z:offset.z};
-          }));
+          braziers.place(spots.map(offset=>({x:offset.x,y:scablandsSurfaceHeightAt(offset.x,offset.z),z:offset.z})));
         }
       }
       // Tin Town's gate burns once the furnace has set it alight, and stays alight until the job ends.
@@ -805,7 +779,7 @@ export function createScablandsScene(course,options={}){
   function dispose(){
     if(retired)return;retired=true;
     stopOpenMarkWatch();
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();
+    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();
@@ -815,7 +789,7 @@ export function createScablandsScene(course,options={}){
   registerSceneSystem(group,{dispose});
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
   // The road net, the gorge and the crossings are drawn in pieces built as the player nears them; a check or a picture can build them all.
-  group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;
+  group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;group.userData.stepsWay=stepsWay;
   // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].
   group.userData.bigMachineBoxes=()=>{
     const boxes=[];

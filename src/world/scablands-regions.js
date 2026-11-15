@@ -16,7 +16,7 @@ const smooth = value => { value = clamp(value); return value * value * (3 - 2 * 
 
 // ---- The dry river -------------------------------------------------------------------------------------------------------------------
 // The bed is 120 m wide and 8 m below the plain; its banks climb from the bed's foot (52 m from the middle) to the plain (78 m).
-export const RIVER = Object.freeze({bedHalfWidth: 60, depth: 8, footHalfWidth: 52, lipHalfWidth: 78, reach: 110, nodes: 11});
+export const RIVER = Object.freeze({bedHalfWidth: 60, depth: 8, footHalfWidth: 52, lipHalfWidth: 78, reach: 110, nodes: 11, rampFootHalfWidth: 10, rampLipHalfWidth: 92});
 
 // The eleven named nodes and the five crossings (each a named point on a stretch between two nodes), smoothed so that the river bends and never
 // kinks: a curve that passes through every one of them, so that each crossing stands exactly on the river's line. Each stretch between two
@@ -106,21 +106,28 @@ export const RIVER_LAND = riverFor(LAND);
 // The bank's profile with three ledges: flat treads joined by short risers, from the plain (0) to the bed (1).
 const terrace = bank => { const scaled = bank * 3, step = Math.min(2, Math.floor(scaled)); return (step + smooth((scaled - step - .45) / .55)) / 3; };
 
+// The Steps' ledges: the terraces eased half way back toward the plain bank, so that a riser climbs at a slope of at most .9 (a slow car climbs it, the
+// rule in src/world/scablands-ground-rules.js lets a car under 25 km/h up a slope of 1.0) where the terraces alone climbed 1.26 (slice 2b).
+const ledges = bank => .45 * bank + .55 * terrace(bank);
+
 // Depth in metres that the river sinks the ground at (x, z). `gorge` is true for the picture of the gorge (a deck is drawn above it,
 // and the gorge runs on beneath it) and false for the ground a car drives on, where a deck is level with the plain.
 function depthAt(x, z, gorge, river = RIVER_LAND) {
   const hit = river.nearest(x, z);
   if (!hit) return 0;
   const d = hit.distance;
-  if (d >= RIVER.lipHalfWidth) return 0;
+  if (d >= RIVER.rampLipHalfWidth) return 0;
   const bank = 1 - smooth((d - RIVER.footHalfWidth) / (RIVER.lipHalfWidth - RIVER.footHalfWidth));
+  // The ford's and the wash's banks are one long ramp from the bed's middle to 92 m out (a smooth slope of at most .05, which a car at 250 km/h
+  // takes without leaving the ground), where the river's own banks climb .46 in 26 m (slice 2b: the shape drawn is the shape driven).
+  const ramp = 1 - smooth((d - RIVER.rampFootHalfWidth) / (RIVER.rampLipHalfWidth - RIVER.rampFootHalfWidth));
   let share = bank, deck = 0;
   for (const crossing of river.crossings) {
     const apart = Math.abs(hit.along - crossing.along);
     if (apart >= crossing.reach) continue;
     const near = 1 - smooth(apart / crossing.reach);
-    if (crossing.kind === 'wash' || crossing.kind === 'ford') share *= 1 - crossing.fill * near;
-    else if (crossing.kind === 'steps') share += (terrace(bank) - bank) * near;
+    if (crossing.kind === 'wash' || crossing.kind === 'ford') { share += (ramp - share) * near; share *= 1 - crossing.fill * near; }
+    else if (crossing.kind === 'steps') share += (ledges(bank) - bank) * near;
     else if (!gorge) {
       // A deck is as wide as the road across the crossing (a car stays on it) and level with the plain.
       const road = ROAD_NET.nearest(x, z);
@@ -190,7 +197,28 @@ export const DRIVE = Object.freeze({
   sand: drive('sand', 'Sand', .35, .60, .08, .20, Infinity, 0xc9b27c, {shake: .04}),
   burn: drive('burn', 'The burn', .75, .90, .03, .14, 90, 0x2b2825),
   'wreck-fields': drive('wreck-fields', 'Wreck fields', .75, .90, .03, .16, 90, 0x7a4f35),
+  // The Steps (slice 2b): the scab plates' own rock cut into ledges down to the river and up again. A car crawls and shakes, and the ember is
+  // safe there only under 20 km/h. It is the scab plates to the cue and the dust (its `id`); only its numbers differ.
+  steps: drive('scab-plates', 'The Steps', .35, .85, .06, .75, 20, 0x45403b, {shake: .3}),
 });
+// True on the Steps' ledges: the banks of the river along the Steps crossing (its reach), from the bed's edge to the plain.
+export function ledgeAt(x, z, river = RIVER_LAND, hit = river.nearest(x, z)) {
+  if (!hit || hit.distance >= RIVER.lipHalfWidth) return false;
+  for (const crossing of river.crossings) if (crossing.kind === 'steps') return Math.abs(hit.along - crossing.along) < crossing.reach;
+  return false;
+}
+// The Steps' marked way: the line a car crosses them by, straight across the river at the crossing: {x, z} the crossing's middle, (tx, tz) the
+// river's own direction there and (nx, nz) the way across it (a unit vector pointing to the east or south bank). `null` for a river without the
+// Steps. The way is drawn (src/world/scablands-draw.js) and its end posts are solid (src/world/scablands-solids.js) from this.
+export function stepsWayFor(river = RIVER_LAND) {
+  const crossing = river.crossings.find(item => item.kind === 'steps');
+  if (!crossing) return null;
+  const {points, along} = river.line;
+  let index = 1;
+  while (index < points.length - 1 && along[index] < crossing.along) index++;
+  const a = points[index - 1], b = points[index], length = Math.hypot(b.x - a.x, b.z - a.z) || 1, tx = (b.x - a.x) / length, tz = (b.z - a.z) / length;
+  return Object.freeze({x: crossing.x, z: crossing.z, tx, tz, nx: tz, nz: -tx, reach: RIVER.rampLipHalfWidth});
+}
 export const REGION_ORDER = Object.freeze(['road', 'river-bed', 'wreck-fields', 'sand', 'burn', 'salt-pan', 'scab-plates', 'flats']);
 
 // Region edges are uneven: every margin below is moved by this wave (metres, up to about 100), the same wave in the ground's
@@ -247,6 +275,7 @@ export function scablandsDriveAt(x, z, areas = GROUND_AREAS, river = RIVER_LAND)
   if (ROAD_NET.nearest(x, z) !== null) return DRIVE.road;
   const hit = river.nearest(x, z);
   if (hit && RIVER.bedHalfWidth + edgeWarp(x, z, .5) * .25 - hit.distance > 0) return riverSoftAt(x, z, river) ? DRIVE['river-bed-soft'] : DRIVE['river-bed'];
+  if (hit && ledgeAt(x, z, river, hit)) return DRIVE.steps;
   for (const disc of areas.discs) {
     const dx = x - disc.x, dz = z - disc.z;
     if (disc.radius + edgeWarp(x, z, disc.phase) * disc.wobble - Math.hypot(dx, dz) > 0) return DRIVE[disc.id];

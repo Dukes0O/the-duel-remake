@@ -134,6 +134,56 @@ export function tinTownLayout(land=LAND){
   layouts.set(land,built);return built;
 }
 
+// The fence's sheets, for a land: 2 m sheets on posts along the outside of the ring, beginning where the gate's own fence ends and running
+// round, with a gap wherever a road comes in or the ground is not flat. Each is {x, z, radians (its place on the ring), yaw (its own turn:
+// its width runs along the ring), high (its height)}. The drawing below and the solids list (tinTownSolids) both read this list.
+export function tinTownFence(land=LAND){
+  const centre=land.at('tin-town'),plan=tinTownLayout(land),roads=land===LAND?TIN_TOWN_ROADS:tinTownRoads(land),sheets=[];
+  const step=2/FENCE_RADIUS*180/Math.PI;
+  for(let angle=FENCE_FROM;angle>=FENCE_TO;angle-=step){
+    const radians=angle*Math.PI/180,x=centre.x+Math.cos(radians)*FENCE_RADIUS,z=centre.z+Math.sin(radians)*FENCE_RADIUS;
+    if(Math.min(...roads.map(line=>segmentDistance(x,z,line)))<TIN_TOWN_CLEAR_ROAD+2.5)continue;
+    if(Math.abs(height(x,z))>1.6||Math.abs(height(x,z)-height(x+2,z))>.8||Math.abs(height(x,z)-height(x,z+2))>.8)continue;
+    if(plan.clusters.some(cluster=>rectDistance(cluster.rect,x,z)<4))continue;
+    sheets.push({x,z,radians,yaw:Math.atan2(-Math.cos(radians),-Math.sin(radians)),high:2.4+(sheets.length%4)*.18});
+  }
+  return sheets;
+}
+
+// What a car, a raider or a person on foot cannot pass in Tin Town's shack ring (SCABLANDS-LAND round 4, slice 2b), for a land: each
+// standing shack stack (its deck and legs, as the drawing builds them), the water tower, the radio pole, the watchtower and the fence. Each
+// is {id, kind, shape, x, z, halfX, halfZ, heading, height, base} with `base` the ground it stands on (its lowest corner).
+export function tinTownSolids(land=LAND){
+  const plan=tinTownLayout(land),out=[];
+  for(const cluster of plan.clusters)for(const slot of cluster.slots){
+    const {x,z,cell,size,levels}=slot,name=`tin-town-cluster-${cluster.index+1}-slot-${slot.slot+1}`;
+    if(slot.kind==='shack'&&levels>0){
+      const halfW=cell.w/2+.3,halfD=cell.d/2+.3,corners=[[-halfW,-halfD],[halfW,-halfD],[-halfW,halfD],[halfW,halfD]].map(([cx,cz])=>height(x+cx,z+cz));
+      const low=Math.min(...corners),base=Math.max(...corners)+DECK_LIFT,top=base+(levels-1)*LEVEL+size[2]+.4;
+      out.push({id:name,kind:'building',shape:'box',x,z,halfX:(cell.w+.8)/2,halfZ:(cell.d+.8)/2,heading:0,height:top-low,base:low});
+    }else if(slot.kind==='T'||slot.kind==='W'){
+      const half=slot.kind==='T'?1.6:1.5,legs=[[-half,-half],[half,-half],[-half,half],[half,half]].map(([lx,lz])=>height(x+lx,z+lz)),low=Math.min(...legs),base=Math.max(...legs);
+      // The tower's tank is 11.7 m above its foot; the watchtower's roof 16.4 m. Both are braced on every side between their legs.
+      out.push({id:`${name}-${slot.kind==='T'?'water-tower':'watchtower'}`,kind:'building',shape:'box',x,z,halfX:half+.35,halfZ:half+.35,heading:0,
+        height:base-low+(slot.kind==='T'?11.7:16.4),base:low});
+    }else if(slot.kind==='P'){
+      out.push({id:`${name}-radio-pole`,kind:'post',shape:'ellipse',x,z,halfX:.3,halfZ:.3,heading:0,height:13.6,base:height(x,z)});
+    }
+  }
+  // The ring fence, in runs of up to four sheets (a chord of 8 m on a ring of 88 m is within 9 cm of the arc): one box for each run.
+  const sheets=tinTownFence(land);
+  for(let first=0;first<sheets.length;){
+    let last=first;
+    while(last+1<sheets.length&&last-first<3&&Math.hypot(sheets[last+1].x-sheets[last].x,sheets[last+1].z-sheets[last].z)<2.2)last++;
+    const a=sheets[first],b=sheets[last],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz)+2;
+    // The run's own turn: its x runs along the chord (the heading a mesh turned about the vertical has: x goes to (cos h, -sin h)).
+    out.push({id:`tin-town-fence-${first+1}`,kind:'wall',shape:'box',x:(a.x+b.x)/2,z:(a.z+b.z)/2,halfX:length/2,halfZ:.15,heading:last>first?Math.atan2(-dz,dx):a.yaw,
+      height:3.2,base:Math.min(...sheets.slice(first,last+1).map(sheet=>height(sheet.x,sheet.z)))});
+    first=last+1;
+  }
+  return out;
+}
+
 // ---- Drawing ----------------------------------------------------------------------------------------------------------
 // Colours from tintown.glb's own materials (linear values, as the file stores them), so that the new shacks match the old.
 const color=(r,g,b,k=.84)=>new THREE.Color().setRGB(r*k,g*k,b*k);
@@ -344,19 +394,12 @@ export function createTinTownShacks(){
   // The fence: 2 m sheets on posts along the outside of the ring, beginning where the gate's own fence ends and running
   // round, with a gap wherever a road comes in or the ground is not flat.
   const fence=[];
-  {
-    const step=2/FENCE_RADIUS*180/Math.PI;
-    for(let angle=FENCE_FROM;angle>=FENCE_TO;angle-=step){
-      const radians=angle*Math.PI/180,x=TIN_TOWN_CENTRE.x+Math.cos(radians)*FENCE_RADIUS,z=TIN_TOWN_CENTRE.z+Math.sin(radians)*FENCE_RADIUS;
-      if(nearestTinTownRoad(x,z)<TIN_TOWN_CLEAR_ROAD+2.5)continue;
-      if(Math.abs(landAt(x,z))>1.6||Math.abs(landAt(x,z)-landAt(x+2,z))>.8||Math.abs(landAt(x,z)-landAt(x,z+2))>.8)continue;
-      if(plan.clusters.some(cluster=>rectDistance(cluster.rect,x,z)<4))continue;
-      // The sheet runs along the ring and faces the town.
-      const yaw=Math.atan2(-Math.cos(radians),-Math.sin(radians)),low=foot(x,z),high=2.4+(fence.length%4)*.18;
-      put('sheet',stripOfSheet(2,high),PALETTE.sheet[fence.length%PALETTE.sheet.length],x,low,z,[0,yaw,0]);
-      box('frame',.12,high+.3,.12,PALETTE.girder,x-Math.sin(radians),low+(high+.3)/2,z+Math.cos(radians));
-      fence.push({x,z});
-    }
+  for(const {x,z,radians,yaw,high} of tinTownFence()){
+    // The sheet runs along the ring and faces the town.
+    const low=foot(x,z);
+    put('sheet',stripOfSheet(2,high),PALETTE.sheet[fence.length%PALETTE.sheet.length],x,low,z,[0,yaw,0]);
+    box('frame',.12,high+.3,.12,PALETTE.girder,x-Math.sin(radians),low+(high+.3)/2,z+Math.cos(radians));
+    fence.push({x,z});
   }
 
   // Merge each material's pieces, put the wear over everything that does not glow, and report.

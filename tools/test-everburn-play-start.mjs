@@ -33,8 +33,10 @@ const DRAWN = [{id: 'tin-town-model', x0: TOWN.x - 17.5, x1: TOWN.x + 15.4, z0: 
 const boxGap = (x, z, x0, x1, z0, z1) => Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(z0 - z, 0, z - z1));
 function clearance(x, z) {
   let worst = {gap: Infinity, id: ''};
+  // SCABLANDS-LAND round 4, slice 2b: a solid is turned (its heading), so the gap is measured in its own frame (a round post is read as its box).
   for (const solid of SCABLANDS_SOLIDS) {
-    const [cx, , cz] = solid.center, [width, , depth] = solid.size, gap = boxGap(x, z, cx - width / 2, cx + width / 2, cz - depth / 2, cz + depth / 2);
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
+    const gap = boxGap(dx * c - dz * n, dx * n + dz * c, -solid.halfX, solid.halfX, -solid.halfZ, solid.halfZ);
     if (gap < worst.gap) worst = {gap, id: solid.id};
   }
   for (const box of DRAWN) { const gap = boxGap(x, z, box.x0, box.x1, box.z0, box.z1); if (gap < worst.gap) worst = {gap, id: box.id}; }
@@ -277,20 +279,50 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
     `${name}: two seconds on she has driven ${moved.toFixed(1)} m toward the second place (9 m a second)`);
 }
 {
-  // The solid called tin-town-shell stands on the town as it is drawn: wholly inside the drawn model's footprint, round the place (Tin Town's own position).
-  const shell = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-shell'), [cx, , cz] = shell.center, [width, , depth] = shell.size;
+  // The town's solids (slice 2b: thirteen blocks cut from the model, in place of the one box called tin-town-shell) stand on the town as it is drawn: wholly inside
+  // the drawn model's footprint, round the place (Tin Town's own position). The rectangle they fill is what the job points below are kept out of, as the shell was.
+  const blocks = SCABLANDS_SOLIDS.filter(solid => /^tin-town-block-/.test(solid.id));
+  const shell = {center: [(Math.min(...blocks.map(b => b.x - b.halfX)) + Math.max(...blocks.map(b => b.x + b.halfX))) / 2, 0, (Math.min(...blocks.map(b => b.z - b.halfZ)) + Math.max(...blocks.map(b => b.z + b.halfZ))) / 2],
+    size: [Math.max(...blocks.map(b => b.x + b.halfX)) - Math.min(...blocks.map(b => b.x - b.halfX)), 0, Math.max(...blocks.map(b => b.z + b.halfZ)) - Math.min(...blocks.map(b => b.z - b.halfZ))]};
+  const [cx, , cz] = shell.center, [width, , depth] = shell.size;
   const model = DRAWN[0];
   check(cx - width / 2 >= model.x0 && cx + width / 2 <= model.x1 && cz - depth / 2 >= model.z0 && cz + depth / 2 <= model.z1, 'the Tin Town solid lies inside the footprint of the drawn town');
   near(cx, TOWN.x, 1, 'the Tin Town solid is centred on the town (x)'); near(cz, TOWN.z, 1, 'the Tin Town solid is centred on the town (z)');
   // No job's start, car start, safe point or road comes inside it, except the places a job is meant to end at (the town's own centre for
   // job 1 and the roads), and those can be reached from outside it, the car's own half length (2.4 m) allowed. (Hot Soup used to end at the
   // notice board inside it; it now ends at the Everburn well.)
-  const jobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS, gasRunJob({road: 'long'}), gasRunJob({road: 'boneyard'}), fieldBattleJob()];
+  const longGas = gasRunJob({road: 'long'});
+  const jobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS, longGas, gasRunJob({road: 'boneyard'}), fieldBattleJob()];
   const x0 = cx - width / 2, x1 = cx + width / 2, z0 = cz - depth / 2, z1 = cz + depth / 2;
   const inside = point => point.x > x0 && point.x < x1 && point.z > z0 && point.z < z1;
   const pieceGap = (a, b) => { let closest = Infinity; const length = Math.hypot(b.x - a.x, b.z - a.z);
     for (let metres = 0; metres <= length; metres += .25) closest = Math.min(closest, boxGap(a.x + (b.x - a.x) * metres / length, a.z + (b.z - a.z) * metres / length, x0, x1, z0, z1));
     return closest; };
+  // Find the exact minimum distance from a road segment to each turned solid's rectangle.
+  const segmentSolidGap = (a, b, solid) => {
+    const c = Math.cos(solid.heading), n = Math.sin(solid.heading);
+    const local = p => ({x: (p.x - solid.x) * c - (p.z - solid.z) * n, z: (p.x - solid.x) * n + (p.z - solid.z) * c});
+    const start = local(a), end = local(b), dx = end.x - start.x, dz = end.z - start.z;
+    const cuts = [0, 1];
+    for (const [v, d, half] of [[start.x, dx, solid.halfX], [start.z, dz, solid.halfZ]]) {
+      if (d !== 0) for (const edge of [-half, half]) { const t = (edge - v) / d; if (t > 0 && t < 1) cuts.push(t); }
+    }
+    cuts.sort((a, b) => a - b);
+    const gapAt = t => boxGap(start.x + dx * t, start.z + dz * t, -solid.halfX, solid.halfX, -solid.halfZ, solid.halfZ);
+    let closest = Math.min(...cuts.map(gapAt));
+    for (let i = 1; i < cuts.length; i++) {
+      const lo = cuts[i - 1], hi = cuts[i], mid = (lo + hi) / 2;
+      let numerator = 0, denominator = 0;
+      for (const [v, d, half] of [[start.x, dx, solid.halfX], [start.z, dz, solid.halfZ]]) {
+        const pos = v + d * mid, edge = pos < -half ? -half : pos > half ? half : null;
+        if (edge !== null) { numerator += d * (v - edge); denominator += d * d; }
+      }
+      if (denominator) closest = Math.min(closest, gapAt(Math.max(lo, Math.min(hi, -numerator / denominator))));
+    }
+    return closest;
+  };
+  const townSolids = SCABLANDS_SOLIDS.filter(solid => solid.placeId === 'tin-town');
+  check(townSolids.length > 0, 'Tin Town has solids to check');
   const townCentre = {x: TOWN.x, z: TOWN.z};
   for (const job of jobs) for (const step of job.steps) {
     for (const key of ['carStart', 'origin']) if (step[key]) check(!inside(at(step[key])), `${job.id}: its ${key} is outside the Tin Town solid`);
@@ -299,12 +331,17 @@ for (const [name, job] of starts.filter(([, job]) => job.steps[0].kind === 'esco
     for (const key of ['path', 'returnPath']) {
       const points = (step[key] ?? []).map(at);
       points.forEach((point, index) => {
-        if (index < points.length - 1 || !inside(point)) return;
+        if (job === longGas || index < points.length - 1 || !inside(point)) return;
         check(point.x === townCentre.x && point.z === townCentre.z, `${job.id}: a road may end inside the Tin Town solid only at the town's own centre`);
       });
       for (let piece = 1; piece < points.length; piece++) {
-        const endsInTown = piece === points.length - 1 && inside(points[piece]);
-        check(endsInTown || pieceGap(points[piece - 1], points[piece]) >= 8, `${job.id}: ${key} piece ${piece} keeps 8 m from the Tin Town solid unless it ends in the town`);
+        if (job === longGas) {
+          for (const solid of townSolids) check(segmentSolidGap(points[piece - 1], points[piece], solid) >= 1.3 + .5,
+            `${job.id}: ${key} piece ${piece}, including its ends, clears ${solid.id} by Big Bess's half width and 0.5 m`);
+        } else {
+          const endsInTown = piece === points.length - 1 && inside(points[piece]);
+          check(endsInTown || pieceGap(points[piece - 1], points[piece]) >= 8, `${job.id}: ${key} piece ${piece} keeps 8 m from the Tin Town solid unless it ends in the town`);
+        }
       }
     }
     if (step.destination && inside(at(step.destination))) {

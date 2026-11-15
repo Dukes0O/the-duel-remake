@@ -120,6 +120,13 @@ export function brazierSpot(place, toward, offset = 9) {
   return {x: place.x + dz / length * offset, z: place.z - dx / length * offset};
 }
 
+// Where the braziers of a Hot Delivery carry step stand: beside the step's origin and each of its safe points, on the side of the way to the
+// next place (the last toward the step's destination). The scene draws them here and the sim makes each a solid here (src/world/scablands-solids.js).
+export function brazierSpotsFor(step) {
+  const at = value => value.position ?? value, spots = [step.origin, ...(step.safePoints ?? [])];
+  return spots.map((spot, index) => brazierSpot(at(spot), at(spots[index + 1] ?? step.destination), 9));
+}
+
 // A brazier: an iron bowl on three legs with live coals and a tall flame, firelight on the ground and sparks.
 function bowlGeometry() {
   const bowl = new THREE.LatheGeometry([[0, .86], [.3, .82], [.55, .98], [.62, 1.12], [.56, 1.12], [.5, .98], [.28, .9], [0, .9]].map(([r, y]) => new THREE.Vector2(r, y)), 14);

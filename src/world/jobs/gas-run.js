@@ -11,24 +11,25 @@ const path = (...places) => Object.freeze(places);
 
 // The two roads, from a land (src/world/scablands-names.js). The long road goes round the open flats, past the Dry Dam, the
 // Ships and the Ridge. The Boneyard road goes straight on from the Boneyard to Tin Town's gate and the town (by a place 50 m
-// south of the gate, so that it passes squarely through the gate's opening); it never doubles back to the safe road. The planes'
+// south of the gate, so that it passes squarely through the gate's opening); it never doubles back to the safe road. Each road stops clear of the town's buildings. The planes'
 // box lies just north-west of the Boneyard's place, so the road's place at the Boneyard stands 23 m east and 4 m south of it, the
 // one move that keeps the road 8 m from every solid; Tin Town's gate brings the road in from the south of the town's box.
 export function gasRunPaths(land) {
   const {at, between} = land, at3 = (id, point, radius = 12) => place(id, point.x, point.z, radius);
-  const well = at3('everburn', at('everburn'), 18), tinTown = at3('tin-town', at('tin-town'), 18);
+  const well = at3('everburn', at('everburn'), 18);
+  const longStop = at3('tin-town', at('tin-town', -18, -13.5), 18);
+  const boneyardStop = at3('tin-town', at('tin-town', -10, 25), 18);
   return Object.freeze({
     long: path(well, at3('long-road-1', between('everburn', 'iron-line', .688, 95, -55)), at3('long-road-2', at('dry-dam', 124, 74)),
       at3('long-road-3', at('ships-in-sand', -60, 50)), at3('long-road-4', between('ships-in-sand', 'ridge', .426, -10.78, 36.28)),
-      at3('long-road-5', at('ridge', -74, 104)), at3('long-road-6', at('tin-town', -120, -90)), tinTown),
-    boneyard: path(well, at3('boneyard-road-1', between('dead-mall', 'everburn', .485, 5.62, -18.9)),
+      at3('long-road-5', at('ridge', -74, 104)), at3('long-road-6', at('tin-town', -120, -90)), longStop),
+    boneyard: path(at3('everburn', at('everburn', 12, 3.5), 18), at3('boneyard-road-1', between('dead-mall', 'everburn', .485, 5.62, -18.9)),
       at3('boneyard-road-2', at('dead-mall', 0, -60)), at3('boneyard-road-3', between('dead-mall', 'boneyard', .551, 16.19, 54.48)),
       at3('boneyard-road-4', at('boneyard', 23, 4)), at3('tin-town-gate-approach', at('tin-town', -25, 112)),
-      at3('tin-town-gate', at('tin-town', -25, 62)), tinTown),
+      at3('tin-town-gate', at('tin-town', -25, 62)), boneyardStop),
   });
 }
 export const GAS_RUN_PATHS = gasRunPaths(LAND);
-const tinTown = GAS_RUN_PATHS.long.at(-1);
 export const GAS_RUN_ROADS = Object.freeze(Object.keys(GAS_RUN_PATHS));
 // One share, two on the Boneyard road. A share is the one amount every world job pays (src/arena/arena-settlement.js).
 export const GAS_RUN_SHARES = Object.freeze({long: 1, boneyard: 2});
@@ -93,7 +94,7 @@ function drawPlaces(road, count, runs, marks = GAS_RUN_AMBUSH_METRES[road], salt
   return chosen;
 }
 
-// Both roads begin at the well, whose derrick box (18 m square) the truck's first place stands in. Since the fourth round of
+// Both roads begin by the well. The Boneyard road starts clear of the post because the battle furnace can return to its first point. Since the fourth round of
 // EVERBURN-PLAY-FIXES she starts ESCORT_TRUCK_START_ALONG_METRES down her first piece, clear of every solid (src/world/jobs/steps/escort.js),
 // and the car starts 13 m behind her there (the usual 10 from round 2 left the camera too near the derrick), 6 m to her right.
 export const GAS_RUN_START_BEHIND_METRES = 13;
@@ -134,7 +135,7 @@ export function gasRunJob({road, feud = 2, runs = 0, difficulty = 'medium', furn
     actorId: 'big-bess',
     // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot, as in job 4.
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route, start: escortTruckStart(route)}),
-    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp,
+    path: route, destination: route.at(-1), speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3, lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp,
     carStart: escortCarStart(route, GAS_RUN_START_BEHIND_METRES, undefined, ESCORT_TRUCK_START_ALONG_METRES),
     ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: START_LINE[road],
     arrival: Object.freeze({wholeLineId: GAS_RUN_LINES.whole, hurtLineId: GAS_RUN_LINES.hurt, hurtBelow: GAS_RUN_LINES.hurtBelow,
@@ -237,7 +238,7 @@ export function fieldBattleJob({runs = 0, difficulty = 'medium'} = {}) {
     actorId: 'big-bess',
     actor: Object.freeze({id: 'big-bess', renderCar: false, escort: true, health: 100, speed: 9, path: route, start: escortTruckStart(route)}),
     furnaceActor: furnace,
-    path: route, destination: tinTown, speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3,
+    path: route, destination: route.at(-1), speed: 9, health: 100, restLineId: 'story.ember.moss.3', restartFrom: 'last-marker', restSeconds: 3,
     carStart: escortCarStart(route, GAS_RUN_START_BEHIND_METRES, undefined, ESCORT_TRUCK_START_ALONG_METRES),
     lentWeapon: 'flamethrower', giveUpLineId: GAS_RUN_LINES.giveUp, ambushes, raidLineId: GAS_RUN_LINES.raid, startLineId: lines.start,
     // How it ends decides the closing line: the furnace dead (the battle is won), or still rolling when she arrives.

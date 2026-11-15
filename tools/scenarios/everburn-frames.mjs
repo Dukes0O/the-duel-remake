@@ -65,8 +65,14 @@ export async function run(context) {
       const bess = job.actors.find(actor => actor.id === 'big-bess');
       if (!bess) throw Error('Big Bess is not on her road yet');
       const points = step.path.map(place => place.position ?? place);
-      // The first ambush stands on her road's first leg, so its metres are its distance from her start.
-      const ambush = step.ambushes[0].place.position, metres = Math.hypot(ambush.x - points[0].x, ambush.z - points[0].z) + ${PAST_AMBUSH_METRES};
+      // The first ambush stands on her road; its metres are the length of road to the point of it nearest the ambush (slice 2b: her road has several legs, it goes by the Wash).
+      const ambush = step.ambushes[0].place.position; let metres = ${PAST_AMBUSH_METRES}, along = 0, bestGap = Infinity;
+      for (let leg = 1; leg < points.length; leg++) {
+        const a = points[leg - 1], b = points[leg], dx = b.x - a.x, dz = b.z - a.z, size = Math.hypot(dx, dz), t = Math.max(0, Math.min(1, ((ambush.x - a.x) * dx + (ambush.z - a.z) * dz) / (size * size)));
+        const gap = Math.hypot(ambush.x - a.x - dx * t, ambush.z - a.z - dz * t);
+        if (gap < bestGap) { bestGap = gap; metres = along + size * t + ${PAST_AMBUSH_METRES}; }
+        along += size;
+      }
       let left = metres, index = 1;
       while (index < points.length - 1 && left > Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z)) {
         left -= Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z); index++;

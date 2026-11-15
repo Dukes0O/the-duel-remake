@@ -518,6 +518,52 @@ every crossing by its road at the road's top speed; and each of the four ways fr
 Tin Town driven end to end by a scripted driver as a builder's check. Race replays and the
 Scrapdome's fights must not move.
 
+### Slice 2b result (a Sonnet helper built it; Codex reviewed and fixed it; Claude judged the look, 14 November 2026): merged, switches off
+
+Full notes: `docs/changes/SCABLANDS-LAND.md`, "Round 4 slice 2b" and "Round 4 slice 2b: fixes after
+the review". Sheet `docs/board/looks/scablands-land/round-6.jpg` with Claude's review beside it.
+
+- **Built:** slopes pull a car by the courses' own rule; ground steeper than a tyre grips stops
+  it and counts as a hit; an edge is a fall that hurts by the drop. The Wash and the South Ford
+  are long ramps, the Steps are ledges with a marked way, the Girder Bridge and the Pipe have
+  solid decks, frames and piers. About 200 things are solid, found by a grid; raiders, Big Bess
+  and people on foot obey them. Four scarps, 12 to 20 m high. The old oval's ramps and junk cars
+  are gone.
+- **Codex's independent review found three real faults.** Two are put right: a job's own solids
+  (the braziers) now belong to that game and go when it ends; Big Bess stops clear of every
+  solid and both furnace roads are proved clear of solids and of ground too steep, every 2 m.
+  The third is open, below.
+- **Open fault: the river bed is a dead end under the Girder Bridge and the Pipe**, because the
+  land holds one height at each place and a deck is level with the plain. It cuts the fourth
+  way to Tin Town (the bed from the Wash). The cure is a ground that an actor reads at its own
+  height, which the tunnel lane has begun (TUNNEL-TRIAL); decks become its second use. The test
+  that records the dead end stays until then.
+- **Also open:** the Ridge's top cannot be reached by a car (Survey Flags' fifth flag stands at
+  its foot until slice 2c gives the Ridge a way up); the furnace and Big Bess are not solid to a
+  car (EVERBURN-REMAKE); Tin Town's gate leaves a car nowhere to go but to stop; chases take
+  about a quarter longer because of the slopes (each job's numbers are set when it is remade).
+
+**Changed assertions, reviewed by Claude (rule 18).** The helper's list is in the change note.
+Codex's review marked three as loosened, and Claude refused all three; they are restored:
+- `test-old-smoke`: the chase limit had gone from 1,500 to 4,000 s. It is 1,753 s: the suite's
+  own driver takes 1,524 s on the new ground, plus 15 per cent.
+- `test-scablands-scene`: the checks that each place exists and that its solids lie within 100 m
+  of it had been removed. They are back in the new form (every place that draws a thing taller
+  than a wheel has a solid; every solid lies within 100 m of what it belongs to).
+- `test-scablands-size`: the moving-a-place check had left out the bridge's frames and piers, the
+  Pipe's posts, the Steps' posts, the ring fence and the bridge-side job places. Each is checked
+  again, against the rule that places it.
+- Accepted as given: the gate fence's 3.4 m, the bridge's 4 m, the ambush moved to the Wash.
+- One changed by Claude's ruling: `test-everburn-play-start` measured the long gas road against
+  a rectangle round Tin Town with 8 m to spare. It now measures Big Bess's body against every
+  one of the town's solids. That is the stricter truth.
+
+**Checks.** By Codex: every changed suite, the long Easy suite, both replay suites (fingerprints
+unchanged) and the build. By Claude at the merge: the lane tier on the merged result, 275 of 275 (it includes the suites Codex's sandbox cannot run), and the browser scenarios `scablands-solid`, `scablands-size` and `everburn-ember` in a visible window, all passing.
+
+**Not driven by Claude in real time.** Owed still, with the frame check, before any of this land
+is shown.
+
 ### More direction from Kyle (14 November 2026, on seeing the regions being built)
 
 "I like what you're working on." Then, in his words:
@@ -717,6 +763,83 @@ pictures sent to Kyle.
   switches (was 54) and requires `scablands-realism` to be `dev`; `start-preview.bat` lists it.
   Neither is loosened: the new switch is pinned off for players.
 - **Independent review of the code:** no real faults; with the switch off nothing changes.
+
+### Realism trial, step 2 result (Claude, 14 November 2026): photographed surfaces, switch off
+
+Kyle agreed to the download ("Yes, download"). Six Poly Haven surfaces (CC0), a colour and a
+relief picture each: credits in `public/assets/textures/CREDITS.md`, sources and checksums in
+`tools/art/catalog.json`, recipe `tools/art/scablands-ground-photos.py`, originals in the art
+library. Sheet `docs/board/looks/scablands-land/round-9.jpg` with Claude's review beside it; four
+before-and-after pictures sent to Kyle.
+
+- **Built:** each ground takes its grain and relief from a photograph, laid at its true size
+  near the car and four times that further off. The code still decides which ground lies where
+  and its broad colour. With the switch off no photograph is loaded and the ground is drawn
+  exactly as before.
+- **Finding:** a clear gain. The salt pan, the scab plates and the road read as real ground in
+  the low sun. The plain fault is now that nothing stands on the land (step 3 and slice 2c).
+- **Cost:** 4.9 MB in the game; about 67 MB of graphics memory while the Scablands is loaded.
+  Not timed as a frame check.
+- **Owed before the switch goes on:** step 3, a real drive (does the grain shimmer at speed?),
+  the frame check under rule 8, and Kyle's word after trying it.
+- **Changed assertions, reviewed by Claude (rule 18):** two suites pin a checksum of the art
+  catalogue's earlier rows (`test-p4-kits`, `test-tanker-valve-source`). The six new rows are
+  left out of each pinned set, as the wildlife rows are; the checksums did not change, so
+  nothing is loosened.
+- **Independent review of the code:** three points, all put right (the shader text with the
+  switch off is byte for byte the old one; the road's relief follows the road's slope; the
+  scene and the renderer read the same switches).
+- **Kyle, on the pictures:** "pretty solid stuff, definitely a gain! Let's keep going where we
+  can." And on who does what: Codex for code and for checks, Claude for graphics, design and
+  story.
+
+### Realism trial, step 3 design (Claude, 14 November 2026): things at every size
+
+**The fault.** After steps 1 and 2 the ground looks real and nothing stands on it. A real land
+has things at every size, and the eye judges distance and speed by them. All of this is behind
+`scablands-realism` and is placed by seed, so the land is the same on every visit.
+
+**Small, by the thousand, near the car** (within 120 m; each kind one batch; they fade in with
+distance and never pop):
+- stones in three shapes, 0.1 to 0.6 m, thicker near rock, the river and the plates' edges;
+- dry scrub: low grey-green tufts and dead brush, on the flats and the banks, none on salt;
+- bones, cans and scraps of sheet in the wreck fields and beside roads;
+- lumps of salt crust at the pan's edge; burnt stumps in the burn.
+Nothing here is solid: a wheel rolls over it. Scrub and scraps bend or scatter when driven
+through (a puff of dust; no rule of the drive changes).
+
+**Middle, by the hundred, within 600 m:**
+- boulders 1 to 4 m, alone and in falls below the scarps; solid (slice 2b's rule);
+- **telegraph poles along the East Road and the Iron Line**, 60 m apart, wire sagging between
+  them, some leaning, some down: the eye follows them to the horizon, and at speed they count
+  the distance;
+- **fence lines** of posts and sagging wire beside roads near each town, in runs of 200 to 600 m
+  with gaps; they fall when driven through (slice 2d's rule);
+- hand-painted road signs at every fork ("TIN TOWN 3 km", an arrow), from the land's own data;
+- hulks, tyre stacks and drums from the scrap kit at the camps and crossings.
+
+**Large, by hand, seen from kilometres:**
+- **a line of dead power pylons** from the Dry Dam past the yard to the Dead Mall, 40 m tall,
+  350 m apart, cables down between some: the land's long landmark, on the map too;
+- the Girder Bridge at its true size (its frames stand 9 m over the deck, with piers down into
+  the gorge), and the Pipe as a pipe 3 m across on trestles;
+- the mesas and hills of slice 2c.
+
+**Tracks.** The ground shows where others drive: faint twin ruts along each known way that is
+not a road (drawn in the ground's code from the same data the map lists its ways from), deeper
+at the crossings. A player who reads the ground finds the short cuts.
+
+**Air.** Low dust blowing across the flats in the wind's direction, and a far dust devil now
+and then. Dust from the car's wheels takes the ground's colour (it does already).
+
+**Who builds what.** Codex builds the placing (seeded cells, batches, fading, the pole, fence
+and pylon lines from the road data, the ruts' data, solidity through slice 2b's index) with
+plain shapes made in code. Claude then draws each kind (its shape, its surface, how it catches
+the low sun) from pictures, one sheet a round.
+
+**Limits.** No more than 40 more draw calls and 150,000 more triangles in any view on
+Performance; shadows from small things only within 40 m. Counted in the trial's scenario; the
+frame check under rule 8 comes before the switch goes on.
 
 ### Open at the end of slice 1
 

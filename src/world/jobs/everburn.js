@@ -8,6 +8,7 @@ import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {LAND} from '../scablands-names.js';
+import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -37,16 +38,28 @@ export function buildEverburn(land) {
   // reaches the place in front of the gate, the gate burns (old-smoke.js). The furnace does not drive through the gate: it stops
   // 82 m south of the gate's centre, in front of it, and turns west along the outside of the fence.
   const furnaceGate = place('tin-town-gate-front', at('tin-town', -25, 82), 18);
+  // Slow Ride follows the Boneyard Road and the East Road (SCABLANDS-LAND round 4, slice 2b): from the Boneyard over the Wash to the halfway camp, then over
+  // the Girder Bridge to Tin Town. Big Bess obeys the ground, and the dry river's banks are too steep for her: the straight lines between the places crossed them.
+  // The bridge's deck is 14 m wide with a solid truss each side, so the road is lined up on it 150 m before and after, on the East Road's own line.
+  const net = land === LAND ? ROAD_NET : roadNet(land), eastRoad = net.road('east-road'), bridgeAt = at('girder-bridge');
+  const bridgeIn = place('bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12), bridgeOut = place('bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12);
+  const furnaceBridgeIn = place('furnace-bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12), furnaceBridgeOut = place('furnace-bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12);
+  // She sets out from where she stands in the Boneyard (the wrecks are solid: the straight way west from its middle runs through the south wreck) and leaves it by the west edge of the wreck field.
+  const slowRidePath = path(place('boneyard', at('boneyard', 40, -42), 18), place('boneyard-west-edge', at('boneyard', -110, -80), 12), place('the-wash', at('the-wash'), 12), safeRoad, bridgeIn, place('girder-bridge', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 10), 12), bridgeOut, place('tin-town', at('tin-town', -27, 2), 18));
   const furnaceRunBack = place('furnace-run-3', between('dead-mall', 'everburn', .485, 5.62, -18.9));
-  const furnacePath = path(well,
+  // The well's post is solid. Start and finish outside it, on the sides reached by the two road pieces.
+  const furnaceStart = place('furnace-well-start', at('everburn', -5, -10), 18);
+  const furnaceEnd = place('furnace-well-end', at('everburn', 12, 3.5), 18);
+  const furnacePath = path(furnaceStart,
     place('furnace-flats-1', between('everburn', 'iron-line', .688, 95, -55)), place('furnace-flats-2', at('dry-dam', 124, 74)),
     place('furnace-flats-3', at('ships-in-sand', -60, 50)), place('furnace-flats-4', between('ships-in-sand', 'ridge', .426, -10.78, 36.28)),
     place('furnace-flats-5', at('ridge', -74, 104)), place('furnace-flats-6', between('ridge', 'boneyard', .599, -74, 0)),
     place('furnace-boneyard-in', at('boneyard', -89, -134)), place('furnace-planes-1', at('boneyard', -79, -58)),
     place('furnace-planes-2', at('boneyard', 16, -56)), place('furnace-planes-3', at('boneyard', 121, -52)),
     place('furnace-approach', at('tin-town', 10, 170)), furnaceGate,
-    place('furnace-road-1', between('yard', 'tin-town', .717, 0, 70)), safeRoad,
-    place('furnace-road-2', between('yard', 'dead-mall', .535)), furnaceRunBack, well);
+    // Slice 2b: the way home crosses the dry river by the Girder Bridge (the straight line from here to the camp crossed its steep bank).
+    place('furnace-road-1', between('yard', 'tin-town', .717, 0, 70)), furnaceBridgeIn, place('furnace-bridge', at('girder-bridge'), 12), furnaceBridgeOut, safeRoad,
+    place('furnace-road-2', between('yard', 'dead-mall', .535)), furnaceRunBack, furnaceEnd);
   const furnaceLegs = Object.freeze([
     Object.freeze({id:'open-flats', door:'left', fromWaypoint:0}),
     Object.freeze({id:'boneyard', door:'right', fromWaypoint:7}),
@@ -103,15 +116,15 @@ export function buildEverburn(land) {
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
       steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
-        path:path(boneyard, safeRoad, tinTown)}, path:path(boneyard, safeRoad, tinTown), destination:tinTown,
+        path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),
         // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
-        carStart:escortCarStart(path(boneyard, safeRoad, tinTown)),
+        carStart:escortCarStart(slowRidePath),
         speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
         // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. Both stand on her road: the first three
-        // quarters of the way from the Boneyard to the halfway camp, the second three quarters of the way from the camp to Tin
-        // Town. The flamethrower is lent, as in job 1.
-        ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1', between('boneyard', 'safe-road', .753)), count:2}),
-          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', between('safe-road', 'tin-town', .73)), count:2})]),
+        // quarters of the way from the Boneyard to the halfway camp (past the Wash), the second three quarters of the way from the camp to Tin
+        // Town (past the bridge). The flamethrower is lent, as in job 1.
+        ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1', between('the-wash', 'safe-road', .4)), count:2}),
+          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', {x: bridgeOut.position.x + (at('tin-town').x - bridgeOut.position.x) * .5, z: bridgeOut.position.z + (at('tin-town').z - bridgeOut.position.z) * .5}), count:2})]),
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
@@ -166,7 +179,7 @@ export function buildEverburn(land) {
       unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({findCount:5, markerRadius:8}),
       steps:[step('explore',{what:'Find and raise all five survey flags.', finds:[survey1, place('survey-flag-2', at('dead-mall', 150, -40)),
         place('survey-flag-3', between('dead-mall', 'everburn', .413, 35.06, -117.98)), place('survey-flag-4', between('ships-in-sand', 'ridge', .723, -26.43, 88.94)),
-        place('survey-flag-5', at('ridge', 6, 4))]
+        place('survey-flag-5', at('ridge', -74, 104))]
         .map(flag=>Object.freeze({...flag})), carStart:carStart(at('boneyard', 119, -112), survey1), reward:'scrap'})]}),
     Object.freeze({id:'everburn-hot-soup', name:'Hot Soup', kind:'delivery',
       unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({crashLimit:10, markerRadius:8}),

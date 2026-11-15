@@ -1,4 +1,5 @@
 import {sweepObstacle} from './collision.js';
+import {SOLID_GRID} from './world/scablands-solids.js';
 
 export const FIGHTER_STEP_SECONDS = 1 / 120;
 export const FIGHTER_RULES = Object.freeze({
@@ -31,13 +32,15 @@ function carPoint(course, car) {
   return course.groundAt(car.s, car.lateral);
 }
 
-function nearbyObstacles(course, fromS, toS) {
-  return course.obstaclesNear(fromS, toS);
+function nearbyObstacles(course, car, fromS, toS, from, to) {
+  const obstacles = course.obstaclesNear(fromS, toS);
+  // The Scablands' solids are found by a grid by world position (SCABLANDS-LAND round 4, slice 2b): a person cannot walk through a building.
+  return course.def?.scablands ? [...obstacles, ...(car.arena?.worldJob?.solidGrid ?? SOLID_GRID).near(from.x, from.z, to.x, to.z, 3)] : obstacles;
 }
 
-function blockedByScenery(course, from, to, fromS, toS) {
+function blockedByScenery(course, car, from, to, fromS, toS) {
   let earliest = null;
-  for (const obstacle of nearbyObstacles(course, fromS, toS)) {
+  for (const obstacle of nearbyObstacles(course, car, fromS, toS, from, to)) {
     const hit = sweepObstacle(from, to, obstacle, 0, BODY);
     if (hit && (!earliest || hit.t < earliest.t)) earliest = hit;
   }
@@ -68,7 +71,7 @@ function besideCar(course, car) {
     const point = course.groundAt(s, lateral);
     const projected = {...point, s, lateral};
     if (!allowedGround(course, projected, car)) continue;
-    if (!blockedByScenery(course, point, point, s, s)) return projected;
+    if (!blockedByScenery(course, car, point, point, s, s)) return projected;
   }
   // A car can be parked in a dense obstacle field. FOOT-02 can choose a
   // broader safe-reset site; this local fallback still stays by that car.
@@ -83,7 +86,7 @@ export function createFighter(course, car, options = {}) {
     : besideCar(course, car);
   if (!allowedGround(course, initial, car))
     throw new Error('Fighter must start on dry ground inside the car or arena boundary.');
-  if (blockedByScenery(course, initial, initial, initial.s, initial.s))
+  if (blockedByScenery(course, car, initial, initial, initial.s, initial.s))
     throw new Error('Fighter cannot start inside solid scenery.');
   return {
     x: initial.x, y: initial.y, z: initial.z,
@@ -154,7 +157,7 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   }
   const from = {x: fighter.x, y: fighter.y, z: fighter.z};
   const to = {x, y: airborne ? feetY : ground.y, z};
-  const hit = blockedByScenery(course, from, to, fighter.s, nearest.s);
+  const hit = blockedByScenery(course, car, from, to, fighter.s, nearest.s);
   if (hit) {
     fighter.contacts++;
     return {moved: false, hit};

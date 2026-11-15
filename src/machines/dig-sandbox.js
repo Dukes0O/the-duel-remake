@@ -6,6 +6,8 @@ import {createGroundEdit} from '../world/ground-edit.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
+import {createDrillRigState, stepDrillRig} from './drill.js';
+import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -22,6 +24,18 @@ const RESERVATIONS = Object.freeze([
 ]);
 const STEP = 1 / 60;
 
+// A raised patch followed by a shallow ditch gives the blade material to carry.
+// These are yard-only cells, separate from the town and from the ground save.
+function yardRoadWork(ground) {
+  const work = createRoadWork();
+  for (let z = 12; z <= 19; z++) {
+    const height = z < 16 ? 1 : -1;
+    ground.setHeight(40, z, height);
+    work.cells[`40:${z}`] = {height, spread:0, compaction:0, surface:0, roughness:0};
+  }
+  return work;
+}
+
 /** Frame edges stay queued until a simulation step consumes them. */
 export function createPendingDigActions(){
   const pending=new Set();
@@ -32,6 +46,23 @@ function newGround(seed) {
   return createGroundEdit({region:{id:'scablands',editable:true},seed,naturalHeight:scablandsNaturalHeightAt,
     reservedShapes:RESERVATIONS});
 }
+
+function roadGround(edit) {
+  return {
+    refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
+    height(x,z) { return edit.heightAt(x,z) - scablandsNaturalHeightAt(x,z); },
+    setHeight(x,z,height) {
+      const shape = {x,z,radius:0.1};
+      const target = scablandsNaturalHeightAt(x,z) + height;
+      const before = edit.heightAt(x,z);
+      const difference = target - before;
+      if (difference > 0) edit.fill(shape, 'topsoil', difference * 1.25);
+      else if (difference < 0) edit.cut(shape, target);
+    },
+  };
+}
+
+const suppliedGroundWork = new WeakMap();
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
 export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} = {}) {
@@ -49,7 +80,18 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
-  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
+  const roadMemory = globalThis.__theDigRoadMemory ??= {};
+  const priorRoad = ground ? suppliedGroundWork.get(edit) : roadMemory[playerId];
+  const roadWork = priorRoad ?? (loaded ? createRoadWork() : yardRoadWork(roadGround(edit)));
+  if (ground) suppliedGroundWork.set(edit, roadWork);
+  else {
+    roadMemory[playerId] = roadWork;
+    memory[playerId] = edit.toSave();
+  }
+  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
+    drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
+    roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
+      [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
@@ -58,7 +100,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher'];
+  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
   return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
 }
@@ -68,7 +110,14 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
-  if(sim.activeMachine==='trencher'){
+  if(sim.roadMachines[sim.activeMachine]){
+    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
+    next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
+    events.push(...result.events);
+  } else if(sim.activeMachine==='drill'){
+    const result=stepDrillRig(sim.drill,input.controls,STEP);
+    next={...next,drill:result.state}; events.push(...result.events);
+  } else if(sim.activeMachine==='trencher'){
     const result=stepTrencher(sim.trencher,{...input.controls,chainDown:input.action==='trench'},STEP,sim.ground);
     next={...next,trencher:result.state}; events.push(...result.events);
   } else {
@@ -119,10 +168,15 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   let carry=sim.fixedCarry+dtSeconds,next={...sim,events:[]};
   while(carry+1e-10>=STEP){next=fixedStep(next,input);carry-=STEP;}
   next.fixedCarry=carry;next.elapsed=sim.elapsed+dtSeconds;
+  if (next.roadWork !== sim.roadWork) {
+    suppliedGroundWork.set(next.ground, next.roadWork);
+    (globalThis.__theDigRoadMemory??={})[next.playerId]=next.roadWork;
+    next.dirty=true;
+  }
   if(next.dirty){(globalThis.__theDigGroundMemory??={})[next.playerId]=next.ground.toSave();next.dirty=false;}
   return next;
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
-  return id==='trencher'?sim.trencher.machine:sim.haul.machines[id];
+  return sim.roadMachines[id]?.machine??(id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
 }

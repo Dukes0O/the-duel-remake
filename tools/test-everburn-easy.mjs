@@ -1,4 +1,10 @@
 import assert from 'node:assert/strict';
+import {LAND} from '../src/world/scablands-names.js';
+import {EAST_ROAD} from '../src/world/scablands-road.js';
+import {roadGraph, roadWay} from '../src/world/scablands-ways.js';
+import {pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
@@ -37,6 +43,128 @@ function currentMarker(duel) {
 }
 
 // The only motion helper: steer or walk toward the marker the job currently shows.
+const carStuck = new WeakMap();
+function eastRoadAim(car, ahead = 70, line = EAST_ROAD.points) {
+  let best = {index: 0, t: 0, d: Infinity};
+  for (let index = 0; index + 1 < line.length; index++) {
+    const a = line[index], b = line[index + 1], dx = b.x - a.x, dz = b.z - a.z, l = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((car.x - a.x) * dx + (car.z - a.z) * dz) / l)), d = Math.hypot(car.x - a.x - t * dx, car.z - a.z - t * dz);
+    if (d < best.d) best = {index, t, d};
+  }
+  let index = best.index, left = ahead + best.t * Math.hypot(line[index + 1].x - line[index].x, line[index + 1].z - line[index].z);
+  for (;;) {
+    const a = line[index], b = line[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left <= length || index + 2 >= line.length) { const t = Math.min(1, left / length); return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t}; }
+    left -= length; index++;
+  }
+}
+// A wreck, a wall, a post or ground too steep to grip in the way of a straight run: the driver aims at a point 20 m to 1.1 km to one side of the first thing in its way
+// instead, the way a child steers round a car in the road or round the end of a cliff (and, when the second leg is blocked too, round that as well). A straight run
+// that is clear is left alone. The last 8 m of a run are not tested, since the goal itself may stand against a wall.
+const blockedAt = (a, b) => {
+  const length = Math.hypot(b.x - a.x, b.z - a.z), step = Math.max(4, Math.min(40, length / 150));
+  let before = scablandsSurfaceHeightAt(a.x, a.z);
+  for (let d = step; d < length - 8; d += step) {
+    const x = a.x + (b.x - a.x) * d / length, z = a.z + (b.z - a.z) * d / length, height = scablandsSurfaceHeightAt(x, z);
+    if (Math.abs(height - before) / step > .3 || pushOutOfSolids(x, z, 3).hit) return {x, z};
+    before = height;
+  }
+  return null;
+};
+function detour(from, target, depth) {
+  const block = blockedAt(from, target);
+  if (!block) return [];
+  if (depth === 0) return null;
+  const length = Math.hypot(target.x - from.x, target.z - from.z), px = -(target.z - from.z) / length, pz = (target.x - from.x) / length;
+  for (const d of [20, 40, 60, 90, 150, 250, 400, 700, 1100]) for (const side of [1, -1]) {
+    const via = {x: block.x + px * d * side, z: block.z + pz * d * side};
+    if (blockedAt(from, via)) continue;
+    const rest = detour(via, target, depth - 1);
+    if (rest) return [via, ...rest];
+  }
+  return null;
+}
+// The dry river: a run that goes in at one bank and out at the other has no way over but a crossing. The driver takes the Wash or the South Ford (slopes a car drives at
+// speed; the Steps want 25 km/h, the Pipe and the Bridge are one lane wide), in at 110 m from the crossing on its own side, through the crossing's middle and out 110 m on the far side.
+const GORGE = 92;
+const crossesRiver = (a, b) => {
+  if (riverGorgeDepthAt(a.x, a.z) > .5) return false;
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  let went = false;
+  for (let d = 12; d < length - 8; d += 12) {
+    const inside = riverGorgeDepthAt(a.x + (b.x - a.x) * d / length, a.z + (b.z - a.z) * d / length) > .5;
+    if (inside) went = true; else if (went) return true;
+  }
+  return false;
+};
+function riverNormal(point) {
+  const line = RIVER_LAND.line.points;
+  let best = {d: Infinity, t: {x: 1, z: 0}};
+  for (let index = 0; index + 1 < line.length; index++) {
+    const a = line[index], b = line[index + 1], dx = b.x - a.x, dz = b.z - a.z, l = dx * dx + dz * dz || 1, f = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.z - a.z) * dz) / l));
+    const d = Math.hypot(point.x - a.x - f * dx, point.z - a.z - f * dz);
+    if (d < best.d) best = {d, t: {x: dx / Math.sqrt(l), z: dz / Math.sqrt(l)}};
+  }
+  return {x: -best.t.z, z: best.t.x};
+}
+// The shortest way over the river: a small graph of the car, the goal and the in and out points of each crossing, joined where a straight run is clear (no river between, nothing
+// steep or solid in the way); a crossing's own run (in, middle, out) is always open. Null when there is no way.
+function crossingRoute(car, target) {
+  const nodes = [{...car, id: 'car'}, {...target, id: 'goal'}], through = new Map();
+  for (const id of ['the-wash', 'south-ford']) {
+    const c = RIVER_LAND.crossings.find(item => item.id === id), n = riverNormal(c), reach = GORGE + 18;
+    const a = {x: c.x + n.x * reach, z: c.z + n.z * reach, id: `${id}-in`}, b = {x: c.x - n.x * reach, z: c.z - n.z * reach, id: `${id}-out`}, m = {x: c.x, z: c.z};
+    nodes.push(a, b); through.set(a, {to: b, via: m}); through.set(b, {to: a, via: m});
+  }
+  const cost = new Map(nodes.map(node => [node, Infinity])), from = new Map(), done = new Set();
+  cost.set(nodes[0], 0);
+  for (;;) {
+    let node = null;
+    for (const item of nodes) if (!done.has(item) && cost.get(item) < Infinity && (!node || cost.get(item) < cost.get(node))) node = item;
+    if (!node || node === nodes[1]) break;
+    done.add(node);
+    for (const other of nodes) {
+      if (done.has(other) || other === node) continue;
+      const open = through.get(node)?.to === other || !crossesRiver(node, other) && !blockedAt(node, other);
+      const length = Math.hypot(other.x - node.x, other.z - node.z);
+      if (open && cost.get(node) + length < cost.get(other)) { cost.set(other, cost.get(node) + length); from.set(other, node); }
+    }
+  }
+  if (!from.has(nodes[1])) return null;
+  const chain = [];
+  for (let node = nodes[1]; node; node = from.get(node)) chain.unshift(node);
+  const points = [];
+  for (let index = 1; index < chain.length; index++) {
+    const link = through.get(chain[index - 1]);
+    if (link && link.to === chain[index]) points.push(link.via);
+    if (chain[index] !== nodes[1]) points.push({x: chain[index].x, z: chain[index].z});
+  }
+  return points;
+}
+const GRAPH = roadGraph(), ways = new WeakMap();
+function wayFor(duel, car, target) {
+  let kept = ways.get(duel);
+  if (!kept || Math.hypot(kept.goal.x - target.x, kept.goal.z - target.z) > 3) {
+    // Only a run that has a river, a cliff or a building in its way is taken by the roads.
+    const needed = crossesRiver(car, target) || blockedAt(car, target) !== null;
+    kept = {goal: {x: target.x, z: target.z}, way: needed ? roadWay(car, target, {reach: 1500, graph: GRAPH}) : null};
+    ways.set(duel, kept);
+  }
+  return kept.way;
+}
+const detours = new WeakMap();
+function aroundSolids(duel, car, target, tick) {
+  // The way round is a short list of points, worked out when the goal moves more than 3 m, when the list runs out, and every quarter second while the run is clear.
+  let route = detours.get(duel);
+  if (route && route.points.length && Math.hypot(route.points[0].x - car.x, route.points[0].z - car.z) < 12) route.points.shift();
+  const stale = !route || Math.hypot(route.goal.x - target.x, route.goal.z - target.z) > 3 || !route.points.length && tick - route.tick >= route.wait;
+  if (stale) {
+    const clear = !crossesRiver(car, target) && !blockedAt(car, target);
+    const points = clear ? [] : (crossesRiver(car, target) ? crossingRoute(car, target) : null) ?? detour(car, target, 2) ?? [];
+    route = {goal: {x: target.x, z: target.z}, points, tick, wait: clear ? 30 : 240};
+    detours.set(duel, route);
+  }
+  return route.points[0] ?? target;
+}
 function moveTowardMarker(duel, target) {
   if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.z)) return;
   const state = duel.state;
@@ -67,14 +195,37 @@ function moveTowardMarker(duel, target) {
     return;
   }
   const car = duel.course.groundAt(state.s, state.lateral);
+  // SCABLANDS-LAND round 4, slice 2b: the dry river's banks and every drawn thing are solid. Hot Delivery's driver follows the East Road (aiming 70 m ahead of its
+  // nearest point on it) until it is within 250 m of Tin Town; every driver that is stopped against something (a wreck, a wall, a post) backs out and turns for a
+  // second and a half, the way the foot driver above steps aside.
+  const jobStep = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex];
+  const toGoal = Math.hypot(target.x - car.x, target.z - car.z);
+  // The East Road leads to Tin Town: a carry bound for the town follows it; any other goal is taken by the road net like a search.
+  const toTown = Math.hypot(target.x - LAND.at('tin-town').x, target.z - LAND.at('tin-town').z);
+  const towardTown = jobStep?.kind === 'carry' && toTown < 60;
+  const onTheRoad = towardTown && toGoal > 45;
+  // A search, a rescue, a heist or a walk drives to a goal that a river, a cliff or a building bars by the road net (the map's own shortest way over the roads, with a straight run at each end of up to 1.5 km), the way a child follows the roads.
+  const way = !towardTown && toGoal > 45 && jobStep?.kind !== 'chase' ? wayFor(duel, car, target) : null;
+  if (way) target = eastRoadAim(car, toGoal > 250 ? 70 : 25, way);
+  else if (onTheRoad) target = eastRoadAim(car, toGoal > 250 ? 70 : 25); else if (!towardTown && (toGoal > 45 || jobStep?.kind === 'chase')) target = aroundSolids(duel, car, target, Math.round(state.stageTimeSec * 120));
+  const stuck = carStuck.get(duel) ?? {x: car.x, z: car.z, seconds: 0, backing: 0, side: 1};
+  stuck.seconds += DT; stuck.backing = Math.max(0, stuck.backing - DT);
+  if (stuck.seconds >= 1) {
+    if (stuck.backing === 0 && Math.hypot(target.x - car.x, target.z - car.z) > 12 && Math.hypot(car.x - stuck.x, car.z - stuck.z) < 1.2) { stuck.backing = 1.5; stuck.side = -stuck.side; }
+    stuck.x = car.x; stuck.z = car.z; stuck.seconds = 0;
+  }
+  carStuck.set(duel, stuck);
+  if (stuck.backing > 0) { duel.setInput({throttle: 0, brake: 1, steer: stuck.side, boost: false, interact: false}); return; }
   const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
   const desired = Math.atan2(dx, dz), turn = wrap(desired - (car.heading + (state.headingError || 0)));
   const speed = Math.abs(state.speedMph || 0);
+  // A driver that has to turn right round (the road, a search, a heist) drives a wide circle forward; it does not back all the way there in reverse.
+  const turnsAround = onTheRoad || ['explore', 'heist', 'rescue'].includes(jobStep?.kind);
   const nearRescue = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'rescue' && gap < 14;
   const defending = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'defend';
-  const targetSpeed = nearRescue ? 0 : defending ? gap < 9 ? 4 : 20 : gap < 10 ? 12 : 52;
-  duel.setInput({throttle: speed < targetSpeed && Math.abs(turn) < 1.35 ? 1 : 0,
-    brake: speed > targetSpeed + 2 || Math.abs(turn) > 1.8 ? 1 : 0,
+  const targetSpeed = nearRescue ? 0 : defending ? gap < 9 ? 4 : 20 : onTheRoad && toGoal < 250 ? 14 : gap < (turnsAround ? 40 : 10) ? 12 : 52;
+  duel.setInput({throttle: speed < targetSpeed && (turnsAround || Math.abs(turn) < 1.35) ? 1 : 0,
+    brake: speed > targetSpeed + 2 || (!turnsAround && Math.abs(turn) > 1.8) ? 1 : 0,
     steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
 }
 

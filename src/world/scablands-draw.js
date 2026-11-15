@@ -8,7 +8,7 @@
 // No file is loaded and nothing here changes a height a car touches.
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, riverDistanceAt} from './scablands-regions.js';
+import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, riverDistanceAt, stepsWayFor} from './scablands-regions.js';
 import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
 import {resampleRoad} from './scablands-road-geometry.js';
 import {NEAR_GROUND, nearGroundHeightAt} from './near-ground.js';
@@ -272,4 +272,54 @@ export function createCrossings({river = RIVER_LAND, net = ROAD_NET, plainAt, ma
   }
   const limit = range * range;
   return {group, made, update(x, z) { for (const item of made) item.mesh.visible = (item.crossing.x - x) ** 2 + (item.crossing.z - z) ** 2 < limit; }, dispose() { for (const item of made) item.mesh.geometry.dispose(); }};
+}
+
+// ---- The Steps' marked way ---------------------------------------------------------------------------------------------------------------
+// The Steps are rock ledges cut down to the river and up again (the ground's own shape, src/world/scablands-regions.js). The way a car climbs
+// them is marked: a worn lane 3.6 m wide straight across the river with a dashed pale line down its middle, a low cairn every 16 m beside it, and a
+// painted post (2.2 m, solid: src/world/scablands-solids.js) either side of the lane where the ledges meet the plain. Built once, when the player nears it.
+export function createStepsWay({river = RIVER_LAND, plainAt, range = 2600}) {
+  const way = stepsWayFor(river), group = new THREE.Group();
+  group.name = 'The Steps, marked way';
+  if (!way) return {group, way, update() {}, dispose() {}};
+  const parts = [], reach = RIVER.rampLipHalfWidth + 10, step = 3;
+  const heightAt = (x, z) => plainAt(x, z) - riverGorgeDepthAt(x, z);
+  const at = (across, lane) => ({x: way.x + way.nx * across + way.tx * lane, z: way.z + way.nz * across + way.tz * lane});
+  // The lane: a ribbon laid on the ledges, worn pale, with a dash of lighter chalk every other 3 m along its middle.
+  const positions = [], colours = [], indices = [], lanes = [-1.8, -.35, .35, 1.8];
+  for (let across = -reach, row = 0; across <= reach; across += step, row++) {
+    const dash = Math.floor((across + reach) / step) % 3 !== 2;
+    for (const [index, lane] of lanes.entries()) {
+      const p = at(across, lane), chalk = index === 1 || index === 2 ? (dash ? .86 : .62) : .5;
+      positions.push(p.x, heightAt(p.x, p.z) + .09, p.z);
+      colours.push(.62 * chalk + .1, .54 * chalk + .09, .42 * chalk + .07);
+    }
+    if (across + step <= reach) { const a = row * 4; for (let k = 0; k < 3; k++) indices.push(a + k, a + k + 4, a + k + 1, a + k + 1, a + k + 4, a + k + 5); }
+  }
+  const lane = new THREE.BufferGeometry();
+  lane.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  lane.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
+  lane.setIndex(indices); lane.computeVertexNormals();
+  parts.push(lane.toNonIndexed());
+  // Cairns: three flat stones stacked, 0.8 m high in all (a car drives over a stone that low), every 16 m, on both sides of the lane.
+  for (let across = -reach + 8; across < reach; across += 16) for (const side of [-1, 1]) {
+    const p = at(across, side * 3.4), base = heightAt(p.x, p.z);
+    for (const [width, height, lift] of [[1.1, .3, 0], [.8, .26, .3], [.5, .24, .56]]) {
+      const stone = new THREE.BoxGeometry(width, height, width * .9); stone.rotateY((across * .13 + side) % 1.2); stone.translate(p.x, base + lift + height / 2, p.z);
+      parts.push(colour(stone, 0x6f6455).toNonIndexed());
+    }
+  }
+  // Painted posts at each end, either side of the lane, with a band of rust-orange paint near the top.
+  for (const across of [-88, 88]) for (const side of [-3.5, 3.5]) {
+    const p = at(across, side), base = heightAt(p.x, p.z);
+    const post = new THREE.BoxGeometry(.2, 2.2, .2); post.translate(p.x, base + 1.1, p.z); parts.push(colour(post, 0x7a6e5e).toNonIndexed());
+    const band = new THREE.BoxGeometry(.24, .5, .24); band.translate(p.x, base + 1.9, p.z); parts.push(colour(band, 0xb5532a).toNonIndexed());
+  }
+  for (const part of parts) part.deleteAttribute('uv');
+  const merged = mergeGeometries(parts);
+  const mesh = new THREE.Mesh(merged, new THREE.MeshStandardMaterial({vertexColors: true, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2}));
+  mesh.name = 'The Steps, lane, cairns and posts'; mesh.receiveShadow = true; mesh.castShadow = true;
+  group.add(mesh); group.visible = false;
+  const limit = range * range;
+  return {group, way, mesh, update(x, z) { group.visible = (way.x - x) ** 2 + (way.z - z) ** 2 < limit; }, dispose() { merged.dispose(); mesh.material.dispose(); }};
 }

@@ -179,6 +179,10 @@ export class Course {
         f.crushables.push({id:`scrapdome-junk-${i}`,kind:'junkCar',s:distance,off,...p,halfX:1.06,halfZ:2.25,height:1.30,shape:'box',color:[0x53645b,0x935143,0x557185][i%3]});
       }
     }
+    else if(arena&&this.def.scablands){
+      // The Scablands has no ramps and no junk cars: it inherited the Titan arena's three ramps and six junk cars on its oval frame, which stood in the
+      // yard's ring and capped every flight at their slope (SCABLANDS-LAND round 4, slice 2b). Its jumps are its own ground's.
+    }
     else if(arena){
       for(const frac of [.17,.55,.78])f.ramps.push({start:this.length*frac,end:this.length*frac+38,height:2.6});
       for(const [row,s]of[330,680,960].entries())for(let i=0;i<2;i++){

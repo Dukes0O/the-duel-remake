@@ -793,6 +793,217 @@ The job's own line on the small map (`drawWorldJobMap`, `drawPlaceName`, `number
 `src/world/scablands-land.js`; the two exemptions in `tools/test-everburn-play-fixes-a.mjs` (`coveredByJob`) and `tools/test-everburn-play-fixes-round4.mjs` (`coveredByLamps`). Other game modes use
 `route-map.js` for their circuit map (`RouteMap`, `buildRouteMapGeometry`, the practice and hidden-road marks): all left exactly as they were.
 
+## Round 4 slice 2b: the land's shape is solid, and every drawn thing is solid (14 November 2026)
+
+Built by a Sonnet helper for Claude. Card: `docs/board/cards/SCABLANDS-LAND.md`, "Slice 2b design". No switch changed: `story-everburn` and
+`scablands-runs` stay `dev`.
+
+### Stage A: what was found before anything was changed
+
+1. **How a Scablands car's height, slope, jumps and landings are worked out, and why the courses' rules are skipped.** The car's ground
+   height is `course.groundAt`, which for the Scablands reads `scablandsSurfaceHeightAt` through the oval frame. Nothing else reads it for
+   driving. The courses' climb and slope rules (`limitClimb`, `slopeSpeedDelta`, `src/offroad-physics.js`) are called only from
+   `_offroadStep` (`src/sim-driving.js`), and `_offroadStep` returns at once unless `offroadCapability(car)` finds a rally car or a monster
+   truck; an ordinary car has no slope rule on any course. For a rally car or a truck in the Scablands it still never reaches the rules:
+   the floor is `road: true` there (`_drivingSurface`), and the rules run only "off the prepared route". `_jump` treats every arena as a
+   ring of authored ramps (`arena = def.kind === 'arena'`): a car's upward speed is capped at the slope of the steepest authored ramp
+   (`rampLaunchGrade`, read from `course.features.ramps`), a take-off needs a rising ground (`verticalSpeed > 1`), and a landing is scored
+   only against a ramp's token. The Scablands inherits the Titan arena's three ramps (`course.js`: `else if (arena)` adds ramps at .17, .55
+   and .78 of the oval and six junk cars; the Scrapdome branch skips the Scablands, the Titan branch does not), so the cap was the old
+   ramps' slope (2.6 m over 38 m, about .24), which is why a bank of 8 m in 26 m was flown off in half a second with no harm and why a car
+   going downhill falls with no landing at all. Nothing in the sim reads the ground's steepness, and `_supportAt` returns the plain
+   ground for every car but a rally car or a truck.
+2. **What already stops a car in an arena.** Four things: `containInArena` (the floor limit by distance from the oval: a hit at 30 mph or
+   more takes armour through `applySceneryArmorDamage`, a glancing touch slides); `_staticContacts` (the swept box test `sweepObstacle`
+   against `course.obstaclesNear`: pushed out along the nearest face, the speed along the face kept, `speed *= 1 - incoming * .94`, a
+   scrape below the crash speed and a crash or armour hit above it, which is the Scrapdome's walls); the junk cars and ramps
+   (`arena-junk.js`, `_crushProps`); and car-to-car (`_vehicleContact`). `sweepObstacle` already takes a box with a heading and
+   `shape: 'ellipse'` for a round post, so the mechanism can carry what a grid finds. What it cannot do is the finding: `obstaclesNear`
+   looks things up by the car's distance along the oval frame (64 m buckets of `s`), and 5 km from the oval the same `s` belongs to
+   places kilometres apart, so the Scablands needs a grid by world position. Today `obstaclesNear` for the Scablands returns nothing
+   but a town layout's solids, and `SCABLANDS_SOLIDS` (18 boxes, heading 0) is read only by tests: the player, a raider and a person on
+   foot (`onfoot.js` reads `course.obstaclesNear`) all walk through everything.
+3. **Every drawn thing taller than a wheel (0.9 m), and where its shape comes from.** The five places that load a model: Tin Town
+   (`tintown.glb`, twenty-five blocks of the town's own buildings, 3 to 7.6 m), the Dead Mall (`mall.glb`, a walled shell 8.6 m), the
+   Everburn (`everburn.glb`: one flare stack 8.3 m tall and its cap, not the 18 by 18 m box the table had), the Ridge (`kit.glb`: a row
+   of props 5.7 m), and the Boneyard (`boneyard.glb`: three wrecks, whose footprint table `boneyard-wrecks.js` already holds). Drawn in
+   code from tables in `src/`: Tin Town's gate (`tin-town-gate.js`: two posts 7 m, a beam, 14 m of fence on each side up to 3.3 m), the
+   shacks (`tin-town-shacks.js`: forty-five shacks stacked up to three high on a layout, a water tower, a radio pole, a watchtower,
+   and a fence of 2 m sheets round a ring of 88 m), the well's props (`everburn-props.js`: pots, barricades, a sign, a mast, rocks cut
+   from the kit), the two braziers (`ember-pot.js`, shown only in Hot Delivery), the radio mast at the Iron Line (76 m), the Girder
+   Bridge (two trusses 5.4 m high, `scablands-draw.js`) and the Pipe (a pipeline 2.65 m high beside the deck). Not drawn and so not
+   solid: the Iron Line's rail and station, the Dry Dam's gate, the Ships' hulk field (those three places load no model, and their three
+   boxes in the old table stood in the air), and the Ash Men's barricades (job data only). Not made solid in this slice: the people of
+   `folk.glb`, Big Bess and the furnace (they move; they are targets, not scenery).
+4. **How raiders, Big Bess and the furnace move.** None of them is a car. A foot raider walks a straight line toward `approachTarget`
+   (`moveJobRaiders`); Big Bess and any other escorted truck step along their path nodes at a set speed (`updateJobActor`); the
+   furnace steps along its own path (`stepFurnace`, `old-smoke.js`). All three write a plain position and never read a height, a
+   slope or a solid. To obey the same ground and things each needs one call after its step: push the position out of any solid (a
+   round or square footprint against the same boxes) and refuse a step that climbs ground steeper than a car can grip. A road that
+   leads one of them through a bank or a building then has to be moved by the smallest change; that is listed under "Drivers" below.
+5. **The test car 1,058 m east of the yard.** It is the size suite's own second car: `tools/test-scablands-size.mjs` starts every drive with
+   `opponents: [{car: 'dusthawk_rally'}]` and parks it with `placeActor(duel, opponent, {s: start.s + course.length / 2, lateral: 0})`,
+   the point of the oval opposite the yard, which lies on the east axis. It is an ordinary arena car, solid to the player (the contact
+   test between two cars), so a drive along the axis at 45 mph meets it. Nothing in the game parks a car there; the fixture is moved
+   off the line in the suites that drive along the axis (why the 100 mph drive passed it was not chased: the fixture is the cause).
+
+The stop rule did not apply: nothing here changes how a car drives on a race course or in the Scrapdome (every change is behind
+`course.def.scablands`), no replay fingerprint can move, and the save does not change.
+
+### Stage B: what was built
+
+Behind `course.def.scablands` only: race courses, the Scrapdome and every replay never run any of it.
+
+- **The ground's rules** (`src/sim-scablands.js`, numbers in `src/world/scablands-ground-rules.js`). Called by the arena event after a car's move and before its flight, for the
+  player and every computer car. A slope pulls a car by the courses' own function (`slopeSpeedDelta`, the truck's gravity): going up slows it, going down speeds it, and the
+  ground's top-speed pull takes any gain back. A step up ground steeper than .30 (a tyre grips 16 degrees) is not taken: the car is put back where it was, keeps the part of the
+  move that runs along the face, is pushed back .35 m down it, and takes the speed into the face as a hit with the Scrapdome wall's own consequences (speed times
+  `1 - incoming * .94`, a dent or a scrape below the crash speed, armour at it). The ember reads the speed shed through `hitKmh` as it does for any hit.
+- **Flights and landings** (`_jump`, `src/sim-driving.js`). The Scablands is no longer treated as a ring of authored ramps (it had inherited the Titan arena's three, which capped every
+  flight at their slope; they and the six junk cars are gone from `course.js`). A car leaves the ground over a crest as before, and now also over a lip: where the ground falls away
+  more than 15 cm further in a step than the car's own free fall gives. It leaves with the speed it had on the ground, and its landing is a hit sized by the speed it fell at:
+  nothing under a metre of drop, 20 km/h of hit at 2 m, 34 at 3 m, 86 at 8 m (`fallHit`); armour taken is half of the car's at 8 m, never the last point. The ember takes the
+  hit's km/h through `state.scablandsHitKmh` (read once by `world-job.js`): 8 m puts it out at any speed.
+- **Crossings.** The Wash and the South Ford are one long ramp from the middle of the bed to 92 m out (a slope of .05 at most), so a car takes them at the road's top speed
+  without leaving the ground (it did leave it, and fell 4 m, at 233 km/h). The Steps are the scab rock cut into ledges, eased half way back toward the plain bank so that a
+  riser climbs .9 at most (the terraces alone climbed 1.26): a car at 25 km/h or under climbs them (the limit is 1.0 there and a slope pulls a quarter as much), a faster one meets
+  the .30 limit at the first riser, is thrown back with a hit and loses its speed. The ember is safe there only under 20 km/h (`DRIVE.steps`: the scab plates' cue and dust,
+  their own numbers). Their way is marked: a worn lane with a dashed line, a cairn every 16 m and four painted posts (solid) where the ledges meet the plain
+  (`createStepsWay`, `stepsWayFor`). The Girder Bridge has a solid truss each side (7.4 m from its middle) and three piers; the Pipe's deck is one car wide with its pipeline
+  beside it, three piers and eight posts, and a car that leaves its side falls 8 m into the bed.
+- **Solids** (`src/world/scablands-solids.js`): 201 solids, every drawn thing taller than a wheel (0.9 m), as a box or a round post cut from the data that draws it. Tin Town's
+  model (13 blocks), the Dead Mall's (72), the Ridge's kit (3) and the Everburn's well (a post 2.3 m across, 8.5 m high) are cut from the real model files at a cell of 1 m, with
+  0.3 m added on every side; the Boneyard's three wrecks are the table `boneyard-wrecks.js` holds; Tin Town's gate (two posts, two fences), shacks (one box for each stack, the
+  water tower, the watchtower, the radio pole) and ring fence (runs of four sheets) come from the lists `tin-town-gate.js` and `tin-town-shacks.js` draw from (the fence
+  is one pure function, `tinTownFence`, that the drawing now reads); the well's props (pots, barricades, sign, mast, three rocks; the fourth rock is under a wheel) from
+  `everburn-props.js`'s own table and sizes; the radio mast; the bridge's and the pipe's trusses, piers, pipeline and posts; the Steps' four marker posts; the braziers of Hot
+  Delivery while that step is on. A grid of 32 m cells by world position finds them (`solidsNear`, `pushOutOfSolids`); the arena's own `_staticContacts` does the rest:
+  the car is stopped, pushed out along the nearest face, keeps the speed along the face and takes a hit for the speed into it. The things under or over a deck carry
+  `verticalClearance`, so that a car on the deck passes over the piers and a car in the bed passes under the trusses (the deck itself is ground, see "What I could not do").
+- **Raiders, Big Bess and people on foot.** A foot raider's step and the escorted truck's step go through `stepMover` (`src/world/scablands-movers.js`): not up ground steeper
+  than 40 degrees (a person) or .30 (a truck), pushed out of a solid. A truck within the place's own radius of the last place of her road is let into it
+  (Tin Town's alley is too narrow for her). `onfoot.js` reads the same grid for the walker's sweep. The furnace follows its own path and does not obey the ground or the
+  solids (its path is data; it is checked clear of both below).
+- **Scarps** (`src/world/scablands-scarps.js`): four, each a table of raised ground with a face twice as wide as it is high (a slope of .75) and a back that dips away at .07
+  over 300 m; each stretch fades out at its ends over 140 m, which is the way round. West scab (14 m, north of the short cut at 1,750 m east, with the short cut passing at
+  its south end), East scab (18 m, at 3,500 m), the camp scarp (12 m, 560 m north of the halfway camp, face to the south) and the Ridge scarp (20 m, 740 m south of the Ridge, face
+  to the north). No road lies on ground a scarp raises and the nearest is 200 m from a foot. The ground's shader draws a face (a slope of .35 or more) as broken blocks
+  with dark joints and pale scree where it eases.
+- **Jobs and drivers.** Where a scripted route now met a bank or a building it was moved the least that clears it, each listed under "Drivers and routes" below.
+- **Names.** Every new position is a place of the land, a share between places, or a point of a road (`roadPointFrom`); the bare-position scan of
+  `tools/test-scablands-size.mjs` covers `scablands-solids.js`, `scablands-scarps.js`, `scablands-ground-rules.js`, `scablands-movers.js`, `everburn-props.js` and `sim-scablands.js`.
+
+### Numbers chosen, and why
+
+| Number | Value | Why |
+| --- | --- | --- |
+| Slope a tyre grips | .30 | roads climb at most .12 and rises .085; the river's banks climb .46 and a scarp .75, so neither can be climbed by any car |
+| Steps climb limit | 25 km/h, slope 1.0, slope pull x .25 | the card; the terraces climbed 1.26, now eased to .9; a car coming down the ledges speeds up, so the working speed is 20 or less |
+| Fall hit | 0 under 1 m; 20 * (drop - 1)^.75 km/h; armour .5 * (drop - 1) / 7 of the car's | 3 m is 34 km/h (the ember loses 50: hard), 8 m is 86 km/h (the ember is out) and half the armour |
+| Leaving a lip | 15 cm beyond free fall in a step | a smooth bank is not a lip (a car at 30 km/h drives down it); a deck edge or a ledge is |
+| Wash and Ford ramp | bed middle to 92 m out | the narrowest slope that a car at 250 km/h takes without leaving the ground; 92 m is the gorge ribbon's reach, so the drawn and driven shapes agree |
+| River head | 980 m east of the Dry Dam (it was 300) | the gas run's long road and Old Smoke's way turn at the Dam's east side and crossed its rounded end |
+| Scarp faces | 12 to 20 m, 2:1, back 300 m, ends 140 m | slope .75 reads as rock in the shader and is too steep to grip; the ends are open ground, climbable under .30 |
+| Solid margin | 0.3 m | the models' cells are 1 m |
+
+### Drivers and routes (each place a scripted route met a bank or a building)
+
+- **Job 4, Slow Ride** (`everburn.js`): Big Bess's road was Boneyard, camp, Tin Town as two straight lines, which crossed the river's bank twice. It is now her own resting place, the
+  wreck field's west edge, the Wash, the camp, the East Road 150 m before the Girder Bridge, the bridge, 150 m after it, Tin Town (7,376 m). The first ambush is .4 of the way from the
+  Wash to the camp (30.5 percent of her road, where the furnace begins to pace her), the second half way from the bridge to the town. The bridge's deck is 14 m wide between solid
+  trusses, so those places are points of the East Road itself (`roadPointFrom`).
+- **Old Smoke's way home** (job 6): three places added between the second gate place and the camp (the bridge and 150 m either side of it); the `run-back` leg is now the 20th place.
+- **The river's head** moved from 300 to 980 m east of the Dry Dam (the long gas road and Old Smoke's way turn at the Dam and crossed its rounded end).
+- **The Boneyard Road** bends once, 280 m west and 50 m south of the place, and comes in on the side of the Mall road, 10 m clear of the south wreck: its old straight line in ran
+  through the wreck, and a road cannot turn tighter than 450 m to pass between the wrecks. It still ends at the place's approach point, so the map's way by the roads is unchanged.
+- **Tin Town's alley**: the town's centre lies in an alley 3 m wide, which a truck cannot enter; a truck within a place's own radius of the last place of her road is let into it (she may stand in
+  a solid there). Hot Delivery arrives within 18 m of the centre, which the car does at the town's south end.
+- **Test drivers** (not the game): the ember test's East Road driver aims 25 m ahead near the gate (it cut past the post); its short cut goes over the Steps at 20 km/h (the straight line
+  crossed the bank); its hit on "a pair of junk cars" is a hit on a Boneyard wreck; the size suite's drive from the yard to Tin Town follows the East Road; Old Smoke's young driver follows
+  the furnace's trail where the straight line to it crosses the river (it fell into the gorge) and its time limit is 4,000 s; the harness's own second car stands at the far corner.
+- **Survey Flags** (`everburn.js`): the fifth flag stood on the Ridge's top (`at('ridge', 6, 4)`), 18 m up, with a slope of 1.3 to 1.5 on every side: no car can climb it (a tyre grips .30). The flag
+  is now at the Ridge's foot, the road's own approach point (`at('ridge', -74, 104)`, the point the long gas road and the furnace's trail already use). This is a change to where a player goes: Claude may want the
+  flag back on the top with a ramp built (see "What I could not do").
+- **The Easy driver** (`tools/test-everburn-easy.mjs`, a test, not the game): it now follows the East Road for Hot Delivery until 45 m from Tin Town (aiming 70 m ahead, 25 m near the gate, 14 mph in the
+  last 250 m), backs out for 1.5 s when it has not moved for a second, drives forward in a wide turn (it used to back the whole way in reverse at 22 mph when its goal lay behind it), steers round the first wreck,
+  wall or post in the way of a straight run (a point 20 m to 1.1 km to one side), takes a search (Survey Flags) along the map's shortest way over the roads (`roadWay`, runs of up to 1.5 km at each end), and
+  where a straight run goes in at one bank of the river and out at the other it takes the Wash or the South Ford (a small graph of the car, the goal and the crossings' in and out points). Result: all nine jobs 10/10.
+- **Scenarios**: `everburn-frames` finds the first ambush along Bess's road (not on its first leg); `everburn-ember` starts its last drive on the road in line with the gate's opening.
+
+### What I could not do, and what looks or drives wrong
+
+- **The river bed cannot be driven under the Girder Bridge or the Pipe.** The land has one height for each point and a deck is level with the plain, so each deck stands across the
+  bed as a wall 8 m high and the bed is a dead end at the bridge (from the Wash north) and at the Pipe. The card's fourth way (the bed from the Wash to the Steps) is therefore driven only
+  as far as the bridge and out again by the Wash (`test-scablands-solid`, "the four ways"). A second layer of ground under decks is a change to what a car reads (and to what the camera
+  and the picture read); it was not made here. Claude: this wants a decision.
+- **The Ridge's top cannot be reached by a car** (see Survey Flags above). The same holds for any place on it: the ridge is a cone 18 m high with a slope of 1.3 to 1.5 on every side and a rock kit on top. A ramp
+  (a way up at .30 or less, 60 m or more long) is a change to the land's height tables and wants Claude's design.
+- **The furnace and Big Bess are not solid** to a car (they move; they are targets), and the furnace does not obey the ground or the solids (it follows its path).
+- **Scarps read dark.** The detailed ground's cells are 23 m by 17 m, so a face 28 m wide is drawn as one or two sloped cells; the rock look keys on the mesh's slope and reads weak, and the
+  four scarps look in the pictures like a long dark rise against the dark plates and a bare horizon, not like broken rock. The shader's threshold was lowered (a slope of .25), not enough.
+  A face wants cells of its own or a hand-built mesh.
+- **The gate's fence blocks every approach but the opening**, and Tin Town's alley is closed to a car 2 m wide at its south end (the blocks leave 2.4 m): the town is a place to leave the car at.
+- **Mid-hit speed**: a car pressed against a long wall at a fixed heading loses about a tenth of its speed each step (the Scrapdome wall's own rule); a driver steers off.
+- **Chases take longer** (the young driver's Easy chase 1,042 to about 1,300 s, the careful Medium driver's 1,204 to 1,527 s): a slope pulls a car down going up and the ground's limit takes nothing back
+  going down. The play numbers belong to the jobs' remake.
+- The old crash `scrape` fires at about 3 mph into a face; a very slow touch is a push-out with no hit event (the threshold is 3 mph).
+
+### Changed assertions, for Claude to review (rule 18), by suite
+
+`test-scablands-regions`: the table of how each ground drives gains the Steps (.35, .85, 20 km/h; their own id, cue and dust are the scab plates').
+`test-scablands-scene`: the 18-box solids table (and the six cluster boxes and two posts) is replaced by checks on the new list: every solid taller than a wheel, a box or a round post, named once; each shack stands in
+its slot's solid; the tower, watchtower and pole are solid; the places that draw nothing have none; job 4's furnace sighting is read along all of Slow Ride's legs.
+`test-scablands-size`: the yard-to-Tin-Town drive follows the East Road (7,838 m, expected time from the logged speeds, within 1.5 s; the car stays within 14 m of the line); the harness's second car stands off the
+road; the moving-a-place check leaves out the bridge's trusses and piers, the pipe's posts, the Steps' posts, the ring fence, the bridge-side job places and the second ambush (positions that follow a road's bend or the ground's
+flatness, not a share of a place); the bare-position scan covers six more files.
+`test-ember-pot`: see "Test drivers" above; the three drives keep their rule (East Road bright 72.4 after 194 s; the short cut by the Steps arrives alive, 32.8 in 458 s; 29.9 km/h goes out at 5,856 m / 4,940 m).
+`test-everburn-play-start` (366 checks, was 358), `test-field-battle`, `test-run-gas`, `test-old-smoke`: solids are measured in their own frame; the town's box is the 13 blocks' bounding rectangle; the gate's fences keep the posts'
+3.4 m (they stand further from the road than the posts); a path on the bridge keeps 4 m from a truss; old-smoke's path list has the three bridge places and its third leg begins at the 20th; Slow Ride's first ambush and restart place
+are at the Wash stretch; Old Smoke's young driver and its limit as above.
+`test-everburn-easy`: the driver only (see "The Easy driver" above); the claim (at least 8 of 10 finish) is unchanged and no assertion was touched.
+`test-rail-region`: its copy of the land's height adds the scarps.
+New: `tools/test-scablands-solid.mjs` (16 tests) and the browser scenario `scablands-solid`.
+Counts that rose without a claim changing: `test-field-battle` 796 to 4,639 and `test-run-gas` 1,118 to 3,680 (one check for each solid for each road piece).
+
+### Checks run, and their results
+
+Run on this branch with `integration/wasteland` (slice 4, the map) merged in, in PowerShell, memory-only saves.
+
+| Check | Result |
+| --- | --- |
+| `test-scablands-solid` (new, 16 tests) | pass |
+| `test-scablands-regions`, `-size`, `-scene`, `-ground`, `-map`, `-job-map`, `test-rail-region`, `rail-steps`, `iron-line` | pass |
+| `test-ember-pot` | 50 checks pass (East Road bright 72.4 after 194 s; short cut by the Steps alive 32.8 in 458 s; 29.9 km/h out at 5,856 m and 4,940 m) |
+| `test-everburn-play-start` | 366 checks (was 358); `-screens-start` 9; `-play-fixes-a` 388; `-play-fixes-round4` 48; `-line-audit` pass |
+| `test-everburn-easy` | all nine jobs and both gas roads at all four feud words, 10 of 10 (see "The Easy driver") |
+| `test-run-gas` | 3,680 checks; `test-run-gas-medium` pass (2,708 s) |
+| `test-field-battle` | 4,639 checks |
+| `test-old-smoke` | 4,089 checks; the young driver won 10 of 10 chases on Easy |
+| `test-ember-side-jobs`, `test-world-job-mode`, `test-arena-settlement` | pass (216 checks for the side jobs) |
+| `test-circuits` | 232,142 and 232,138 checks pass |
+| `test-replays` | 297 checks, fingerprints unchanged |
+| `test-combat-replays` | 12 checks, fingerprints unchanged |
+| Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`) | 271 of 273 passed. The two others: `test-review-evidence` (the sheet `round-6.jpg` has no review note yet: Claude's to write) and `test-everburn-easy` (stopped by hand in that run while its driver was being corrected; it passes on its own, above) |
+| `npm run build` | pass |
+| Browser scenarios `everburn-ember`, `everburn-frames`, `scablands-size`, `scablands-regions`, `scablands-solid` | all pass, 0 warnings, 0 errors |
+
+Frame and picture numbers, as a guide only (Performance, laptop in use, not a frame check): `everburn-frames` p95 16.8 ms, first load 19.5 s, world build 117 ms. `scablands-size` at the five spots:
+
+| Spot | Draw calls | Triangles | p95 |
+| --- | --- | --- | --- |
+| Yard, east | 140 | 184,292 | 16.8 ms |
+| 1 km | 174 | 196,902 | 16.8 ms |
+| 3 km | 141 | 208,620 | 16.8 ms |
+| 5 km | 179 | 201,384 | 16.8 ms |
+| Tin Town's gate | 250 | 251,120 | 16.8 ms |
+
+The 14 views of `scablands-solid` draw 133 to 242 calls and 174,000 to 297,000 triangles. The sheet `docs/board/looks/scablands-land/round-6.jpg` (12 views, 371 KB) is made; its review note is Claude's.
+
+### Removed
+
+The three ramps and six junk cars the Scablands inherited from the Titan arena; the 18-box `SCABLANDS_SOLIDS` table, its `tin-town-shell`, `dry-dam-gate`, `ships-hulk-field`, `iron-line-station` and `ridge-rocks` boxes (the last four stood where nothing is drawn, or
+far larger than what is); the straight drives and the straight legs of job 4 across the river; the terraced bank's 1.26 risers. Nothing a player can reach.
+
 ## Realism trial, step 1: light and air (Claude, 14 November 2026)
 
 Card section "Kyle on realism". Behind a new switch, `scablands-realism` (`dev`, off for players).
@@ -834,8 +1045,157 @@ No game event is added, so no sound cue.
 
 Nothing. The old light stays for players until the trial's three steps are judged; the card says what is removed when the switch goes on.
 
+## Realism trial, step 2: photographed surfaces (Claude, 14 November 2026)
+
+Card section "Realism trial, step 2 result". Behind the switch `scablands-realism` (`dev`, off for players).
+
+### What was built
+
+- `public/assets/textures/scablands-*-colour.jpg` and `-relief.jpg`: twelve pictures, 4.9 MB, made by `tools/art/scablands-ground-photos.py`
+  from six Poly Haven surfaces (CC0) kept in the art library. Credits in `public/assets/textures/CREDITS.md`; sources and checksums in
+  `tools/art/catalog.json`.
+- `src/world/scablands-ground-look.js`: `GROUND_PHOTOS` (file, true size and average colour of each), `loadGroundPhotos`, and in the
+  ground's and the road's shaders the photograph's grain (multiplied into the colour drawn in code) and relief (added to the ground's
+  own direction). Each photograph is read at two sizes, the larger turned, blended by how much ground a pixel covers. With no
+  photographs the shaders and their cache keys are the ones from before.
+- `src/world/scablands-scene.js`: loads the photographs when the switch is on and there is a screen, hands them to the ground and the
+  road, and disposes of them with the scene.
+- `tools/scenarios/scablands-realism.mjs`: unchanged; its sheet for this step is round 9.
+
+No game event is added, so no sound cue. No rule of a race is touched.
+
+### Checks
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, from PowerShell): 80 of 82. The two that failed (`test-p4-kits`, `test-tanker-valve-source`) pin the art catalogue's
+  earlier rows; the six new rows are left out of each pin as the wildlife rows are, and both pass. Replays unchanged.
+- `npm run build`: passes.
+- Browser, visible window, memory-only saves: `scablands-realism` passes, 16 pictures; draw calls and triangles as in step 1; the time
+  between frames is the screen's 16.7 ms before and after. Not a frame check (rule 9).
+- One independent review of the code (a Sonnet reviewer, read only): three points, all put right and confirmed by a comparison in Node and by retaken pictures.
+  (1) With the switch off the ground's shader text was not byte for byte the old one (three unused lines). It is now: the text, cache
+  key, defines and uniforms of the ground with regions, the plain ground and the road are identical to the commit before. (2) The road's
+  relief tilted a level plane, not the road's own slope; it tilts the road's slope now. (3) The scene and the renderer read the switch
+  from two names: they are the same catalogue (`app._switches()` returns the base of the race's switches, which is the shared one).
+  Also on its notes: only the size of a photograph that shows is read, and a bank or steep rock takes the other grounds' place in the
+  relief.
+
+### Changed assertions, for the card (rule 18)
+
+- `tools/test-p4-kits.mjs` and `tools/test-tanker-valve-source.mjs`: each pins a checksum of the art catalogue's earlier rows. Rows of
+  card SCABLANDS-LAND are left out of the pinned set, as rows of WILD-ART-SRC already are. The checksums are unchanged, so every
+  earlier row is still protected.
+
+### Removed
+
+Nothing. The ground drawn wholly in code stays for players until the trial is judged; when the switch goes on, the code's own fine
+grain that a photograph replaces is removed in that change.
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
 far ground's 40 m drop, `detailCounts`, and every typed coordinate of the land in the jobs, solids, wrecks, gate, shacks and rail (replaced by
 `scablands-names.js`). The Whites' absolute positions. Nothing a player can reach.
+
+
+## Round 4 slice 2b: fixes after the review
+
+### Job solids
+
+Braziers now belong to the current job. Cars, people on foot and job actors use that job's list, while the fixed land grid stays shared. Ending a job leaves no braziers in another event. No new game event or sound cue was added.
+
+Checks: `test-scablands-solid` passes all 17 tests, including two jobs at once, a later event and repeat inputs after a job; `test-onfoot` passes 9 tests; `test-world-job-mode` passes. The other card checks, replay fingerprints, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions: none. A new isolation test was added.
+
+### Removed
+
+The shared grid's mutable extra-solids list was removed.
+
+### Big Bess's stopping places
+
+The truck now obeys solids all the way to her destination and does not mark a blocked step as arrived. Both gas roads and Slow Ride stop clear of Tin Town's buildings. Slow Ride's bridge waypoint moves 10 m along the road, clear of the pier. The gas jobs use the destination of their own road. All stopping and restart points, including each truck's actual start, are checked against every solid with 1.8 m clearance. No new game event or sound cue was added.
+
+Checks: `test-run-gas` passes 8,504 checks, `test-field-battle` passes 4,639, `test-world-job-mode` passes, and `test-scablands-solid` passes 17 tests. The remaining card checks, replay fingerprints, lane tier, build and browser scenario remain for the completed card.
+
+Changed assertions, for Claude to review: the two gas-road end coordinates changed from Tin Town's centre to offsets (-18, -13.5) and (-10, 25) m. Their pinned lengths changed from 18,626 to 18,604 m and 12,349 to 12,322 m. The battle's appearance and start distances changed from 5,494 to 5,482 m and 5,414 to 5,402 m because they follow the shortened road. Its turn-around test starts 15 m from the end instead of 30 m and runs for 1 second instead of 3, so it checks the same turn before reaching the preceding bend. Its heading tolerance is unchanged.
+
+Removed: the exemption that let the truck pass through solids near the last stop.
+
+### Furnace roll, in progress
+
+After the third door is hit, the furnace follows the remaining bends of its path to the well. Its roll still takes at least five seconds and respects its speed limit. The test now checks a bent path and places a forced rear-door hit on the last leg. No new game event or sound cue was added.
+
+Check: `test-old-smoke` passes 4,092 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change. Changed assertions: none. The forced-hit setup was moved onto the last leg; its checks are unchanged.
+
+Removed: the straight line from the last hit to the well.
+
+### Furnace return, in progress
+
+After a missed chase, the furnace follows its path backwards to the start of the current leg. A bent-path check covers the turn. No new game event or sound cue was added. The three-lap test drives for five path lengths instead of three so that it includes the two longer returns; its assertions are unchanged.
+
+Check: `test-old-smoke` passes 4,094 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change.
+
+Removed: the straight return from the well to the start of the leg.
+
+### Still to do
+
+Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.
+
+### Furnace well clearance, in progress
+
+The chase starts and ends on the two sides of the well's solid post, clear of it. The old clearance test now includes the post on both pieces. No new game event or sound cue was added.
+
+`test-old-smoke` passed 4,097 checks and 10 of 10 Easy chases. `test-scablands-size` passed 9 tests and `test-scablands-solid` passed 17. The path's closest clearance in the existing test was 7.4 m. Race fingerprints, the build and the lane tier remain to be checked after the other fixes.
+
+Changed assertions, for Claude to review: the chase used to start and end at the well's centre. It now starts at offset (-5, -10) m and ends at (12, 3.5) m, so neither path crosses the post. The endpoint test now pins both positions. The former exception for the well post was removed from the clearance test.
+
+Removed: the chase path through the well post.
+
+Still needed: the fall now happens 12.5 m from the well's centre and must be made visually convincing while keeping the path clear. The three refused assertions and per-step allocations remain.
+
+### Furnace roads, in progress
+
+The battle furnace can return all the way to the beginning of the Boneyard road. Its old starting point crossed the well post. The road now starts 12 m east and 3.5 m south of the well, clear of the post. Both complete furnace roads are checked at intervals of at most 2 m, with 2.62 m clearance and the land's climbing limit. The check accounts for the height of bridge piers under the deck. It found no gate-post collision on the current road. No new event or sound cue was added.
+
+Checks: `test-scablands-solid` passed 18 tests, `test-run-gas` passed 8,504 checks, and `test-field-battle` passed 4,639 checks. Race fingerprints, the other card checks, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions, for Claude to review: the Boneyard road starts at offset (12, 3.5) m instead of the well centre, and its length pin moves from 12,322 to 12,310 m. The battle furnace's appearance and start distances move from 5,482 to 5,477 m and 5,402 to 5,397 m because they follow that road. The tolerances are unchanged.
+
+Removed: the Boneyard road's start through the well post.
+
+### Restored checks after review
+
+The scene check again requires a solid for each place that draws one, and checks that every solid is within 100 m of its own place or crossing. The moving-place check now checks the bridge trusses and piers, the Pipe, the Steps' posts, the ring fence, the bridge-side job places and the second ambush against their own placement rules, within 1 m.
+
+Changed assertions, for Claude to review: the Old Smoke chase limit was 1,500 seconds before slice 2b, was raised to 4,000 seconds, and is now 1,753 seconds. The slowest measured run was the Medium driver at 1,523.5084 seconds; 15 percent headroom, rounded up, gives 1,753 seconds. The Easy driver took 1,129.025 seconds on each of ten seeds. The restored placement checks add requirements and do not loosen the other assertions.
+
+Checks: `test-scablands-scene` passed; `test-scablands-size` passed all 9 tests. `test-old-smoke` passed all 4,097 checks with the new limit, including 10 of 10 Easy chases. The other requested checks remain to be recorded. No game event or sound cue was added.
+
+Removed: the missing placement checks and the 4,000-second chase limit are replaced by the checks above.
+
+### Car-step allocations
+
+The Scablands car step reuses its world positions, slope input and collision point per game, and calls the existing height function directly. The step reads the course sampled positions directly using the same calculation as the course. Other callers are unchanged. No game event or sound cue was added.
+
+Removed: the car step's repeated temporary position and slope objects and its new height function.
+
+Checks after the review fixes: `test-scablands-solid` passed 18 tests; `test-scablands-scene`, `test-scablands-size`, `test-old-smoke`, `test-run-gas`, and `test-field-battle` passed. `test-everburn-easy` passed: all nine jobs and both roads at all four feud levels finished 10 of 10, and the battle was won 10 of 10. `test-replays` passed 297 checks over 33 cases; `test-combat-replays` passed 12 checks over four encounters. The recorded race fingerprints are unchanged.
+
+For Claude to run: the `scablands-solid` browser scenario, with memory-only saves, and the card's drive checks in a visible window: bank and lip, Steps, bridge, shack, wreck, gate post and girder, crossings and all four routes. Chrome cannot start in this job.
+
+Changed assertions, for Claude to review: the car-step allocation fix changed none. The earlier fixes and restored checks are recorded above, including the old and new values. Codex decided: no new design choice. The switches remain off.
+
+Lane tier: 258 of 274 suites passed. `test-run-gas-medium` passed all targets. `test-everburn-play-start` failed because the last segment of the long gas road comes within 8 m of the old single Tin Town bounding box. The revised stopping place is clear of the actual solids, as `test-run-gas` and `test-scablands-solid` check. The old assertion was not changed; Claude must decide how to reconcile the box check with the new stops.
+
+The known job-environment failures were `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave3-audio`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-warlord-blackiron`, and `test-warlord-tollkeeper` (recordings or ffmpeg), `test-full-check` (fixture cleanup), and `test-review-evidence` (audio analysis). Claude should rerun them at merge. The build passed with `npm.cmd run build`.
+
+
+### Long gas road assertion after Claude's ruling
+
+Claude ruled that the Tin Town bounding rectangle was an approximation of its solids. The old check required each long gas road piece to stay 8 m from that rectangle unless it ended at the town centre, and required an end inside the rectangle to be at the centre. The new check requires every point of every long gas road piece, including its stopping place, to clear every Tin Town solid by Big Bess's 1.3 m half width plus 0.5 m. Each solid is measured in its own frame, and the minimum distance covers the whole segment. The other jobs keep their existing checks.
+
+Checks: `test-everburn-play-start` passed 982 checks; `test-run-gas` passed 8,504 checks; `test-scablands-solid` passed 18 tests; `npm.cmd run build` passed with bundle size warnings. The earlier lane-tier failure in `test-everburn-play-start` is resolved by Claude's ruling and this passing check. The known environment failures and the browser checks for Claude remain as listed above. Race fingerprints are unchanged from the replay checks recorded above; this change affects only a test. No new event or sound cue was added.
+
+Codex decided: no new design choice.
+
+Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.

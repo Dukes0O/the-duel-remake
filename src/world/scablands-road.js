@@ -31,8 +31,9 @@ function roadNodes(land) {
   nodes['east-road'] = [derived(start), node(camp, {through: true, radius: CORNER}), node(bridge), derived(beyond(campVertex, bridge, 1100)),
     node(at('tin-town', -25, 1500), {radius: TIGHT_CORNER}), node(town)];
 
-  // The Boneyard Road: the halfway camp, the Wash (straight across the crossing), the Boneyard.
-  nodes['boneyard-road'] = [node(camp), node(wash), derived(beyond(camp, wash, 350)), node(boneyard)];
+  // The Boneyard Road: the halfway camp, the Wash (straight across the crossing), the Boneyard. The three wrecks are solid (slice 2b) and the old straight
+  // way in ran through the south one: the road bends south of that line 280 m out and comes in along the Mall road's side of the field, 4 m clear of the wreck.
+  nodes['boneyard-road'] = [node(camp), node(wash), derived(beyond(camp, wash, 350)), node(at('boneyard', -280, 50)), node(boneyard)];
   // The Tin Road: the Boneyard to the East Road's last stretch, short of Tin Town's gate.
   nodes['tin-road'] = [node(boneyard), node(between('tin-town', 'boneyard', .484, 50, 30)), node(at('tin-town', -25, 300))];
   // The Salt Road: yard, the Pipe, then a fork to the Ships (west) and to the Ridge (east).
@@ -125,4 +126,29 @@ export function distanceToNet(x, z, net = ROAD_NET) {
   let best = Infinity;
   for (const road of net.roads) best = Math.min(best, distanceToRoad(x, z, road.points));
   return best;
+}
+
+// The point `metres` along a road from the point of it nearest (x, z): the way a job lines up on a narrow crossing (the Girder Bridge's deck is 14 m wide
+// and its trusses are solid, SCABLANDS-LAND round 4 slice 2b). Negative metres go back toward the road's start.
+export function roadPointFrom(road, x, z, metres) {
+  const points = road.points;
+  let best = {index: 0, t: 0, distance: Infinity};
+  for (let index = 0; index + 1 < points.length; index++) {
+    const a = points[index], b = points[index + 1], dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const t = length > 0 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0, distance = Math.hypot(x - a.x - t * dx, z - a.z - t * dz);
+    if (distance < best.distance) best = {index, t, distance};
+  }
+  let {index, t} = best, left = metres;
+  for (;;) {
+    const a = points[index], b = points[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (left >= 0) {
+      const room = length * (1 - t);
+      if (left <= room || index + 2 >= points.length) { const u = Math.min(1, t + left / length); return {x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u}; }
+      left -= room; index++; t = 0;
+    } else {
+      const room = length * t;
+      if (-left <= room || index === 0) { const u = Math.max(0, t + left / length); return {x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u}; }
+      left += room; index--; t = 1;
+    }
+  }
 }

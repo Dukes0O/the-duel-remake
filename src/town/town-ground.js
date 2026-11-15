@@ -10,7 +10,7 @@ const hash = value => {
   return (h ^ (h >>> 16)) >>> 0;
 };
 
-function fieldAt(seed, x, z) {
+export function groundWaterFieldAt(seed, x, z) {
   const creek = Math.abs(Math.sin((x * 13 + z * 7 + (seed % 97)) * 0.019));
   const noise = hash((seed ^ Math.imul(x, 0x9e3779b1) ^ Math.imul(z, 0x85ebca77)) >>> 0) / 0xffffffff;
   return {
@@ -63,6 +63,20 @@ registerTownCommand('buildWell', (town, command) => {
   return reply(true,`The workers have started the well. It will take ${days} days.`);
 });
 
+registerTownCommand('drillWell', (town, command) => {
+  if (!validSite(command)) return reply(false,'Choose a place on the map first.');
+  const state=groundState(town,command.regionId||'scablands');
+  if (!state) return reply(false,'That ground is not ready for drilling.');
+  const {x,z}=command, key=siteKey(x,z);
+  if (state.wells[key] || state.wellJobs?.[key]) return reply(false,'There is already a well here.');
+  const field=groundWaterFieldAt(town.seed,x,z);
+  if (!state.pits[key]) {
+    state.pits[key]={x,z,state:'found',startedAt:BigInt(town.tick),...field,finishedAt:BigInt(town.tick)};
+  }
+  state.wells[key]={x,z,...field,waterLitres:field.yieldLitresPerDay,drawdownLitres:0,drilled:true};
+  return reply(true,'The drilled well is ready.');
+});
+
 registerTownCommand('drawWellWater', (town, command) => {
   const state=groundState(town,command.regionId||'scablands'), well=state?.wells?.[siteKey(command.x,command.z)];
   if (!well) return reply(false,'There is no well here.');
@@ -80,7 +94,7 @@ registerTownSystem('ground-water',20,24,({town})=>{
     state.droughtDays=(state.droughtDays||0)+1;
     for (const pit of Object.values(state.pits||{})) {
       if (pit.state==='working' && BigInt(town.tick)-BigInt(pit.startedAt)>=PIT_TICKS) {
-        const field=fieldAt(town.seed,pit.x,pit.z);
+        const field=groundWaterFieldAt(town.seed,pit.x,pit.z);
         pit.depth=field.depth;
         pit.yieldLitresPerDay=field.yieldLitresPerDay;
         pit.state='found';

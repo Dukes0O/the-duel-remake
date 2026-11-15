@@ -28,6 +28,19 @@ export function tinTownGateFor(land){
   }));
   return Object.freeze({gate,posts});
 }
+// The gate's solid parts, for a land: the two posts (2.1 m square, 7 m high) and the 14 m of corrugated fence on each side of them (a
+// sheet and its posts are 0.3 m thick and up to 3.2 m high). Each is {id, kind, x, z, halfX, halfZ, heading, height} in the gate's own
+// turn (`heading` is the gate's yaw, so that the box's own x runs along the beam), the same shapes `createTinTownGate` draws below.
+// The beam stands from 6.85 m up and the lamps hang from it: a car and Big Bess pass under them, so they are not solid.
+export function tinTownGateSolids(land){
+  const {gate,posts}=tinTownGateFor(land),yaw=Math.atan2(gate.through.x,gate.through.z);
+  const centre=gate.opening/2+POST_WIDTH/2,start=centre+POST_WIDTH/2,along=gate.fenceLength/2;
+  const across=distance=>({x:gate.x+distance*Math.cos(yaw),z:gate.z-distance*Math.sin(yaw)});
+  return Object.freeze([
+    ...posts.map(post=>Object.freeze({id:`tin-town-gate-post-${post.side}`,kind:'post',x:post.x,z:post.z,halfX:POST_WIDTH/2,halfZ:POST_WIDTH/2,heading:yaw,height:gate.postHeight})),
+    ...[-1,1].map(side=>Object.freeze({id:`tin-town-gate-fence-${side<0?'left':'right'}`,kind:'wall',...across(side*(start+along)),halfX:along,halfZ:.15,heading:yaw,height:3.2})),
+  ]);
+}
 const BUILT=tinTownGateFor(LAND);
 export const TIN_TOWN_GATE=BUILT.gate;
 export const TIN_TOWN_GATE_POSTS=BUILT.posts;
