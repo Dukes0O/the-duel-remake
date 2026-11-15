@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createRoadWork, roadCell, roadCondition, workRoadCell} from '../src/machines/roads.js';
+import {createRoadMachineState, createRoadWork, roadCell, roadCondition, stepRoadMachine, workRoadCell} from '../src/machines/roads.js';
 
 function buildRoad() {
   let work = createRoadWork();
@@ -20,4 +20,17 @@ function buildRoad() {
 }
 assert.deepEqual(buildRoad(), buildRoad(), 'The same work produces the same road.');
 assert.equal(roadCondition(roadCell(createRoadWork(), 0, 0)), 'unfinished');
+for (const kind of ['dozer', 'roller', 'paver']) {
+  const initial = createRoadMachineState(kind);
+  const ground = createRoadWork();
+  const idle = stepRoadMachine(initial, ground, {working:true}, 1);
+  assert.deepEqual(idle.work, ground, 'A stopped machine does not make a road.');
+  const driving = stepRoadMachine(initial, ground, {forward:1, working:true}, 4);
+  assert.ok(driving.state.machine.z > 0, 'The machine drives.');
+  assert.ok(driving.events.length > 0, 'Working while driving changes ground along the path.');
+  assert.deepEqual(driving, stepRoadMachine(initial, ground, {forward:1, working:true}, 4));
+  assert.equal(driving.events[0].cue, {dozer:'dozer-blade', roller:'roller-ground', paver:'paver-surface'}[kind]);
+  const raised = stepRoadMachine(initial, ground, {forward:1}, 4);
+  assert.deepEqual(raised.work, ground, 'Driving with the tool raised leaves the ground alone.');
+}
 console.log('Road work rules pass.');

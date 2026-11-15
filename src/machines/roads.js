@@ -1,4 +1,6 @@
 // Road work is kept as plain data so it can be used without a renderer or a town.
+import {createMachineState, stepMachine} from './machine.js';
+import {machineDefinition} from './content/machines.js';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const key = (x, z) => `${x}:${z}`;
 
@@ -56,4 +58,36 @@ export function roadCondition(cell) {
   if (!cell.surface) return 'unfinished';
   if (cell.compaction < 0.9) return 'soft';
   return cell.roughness > 0.2 ? 'rough' : 'good';
+}
+
+/** A yard machine works only as it travels, and leaves its work in the supplied yard. */
+export function createRoadMachineState(kind, position = {}) {
+  if (!['dozer', 'roller', 'paver'].includes(kind)) throw new RangeError('Choose a road machine.');
+  return {kind, machine:createMachineState(machineDefinition(kind), position), distanceCarryM:0};
+}
+
+export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
+  if (!state?.machine || !work?.cells || !Number.isFinite(dtSeconds) || dtSeconds < 0)
+    throw new TypeError('Road work needs a machine, ground and elapsed time.');
+  const before = state.machine;
+  const machine = stepMachine(machineDefinition(state.kind), before, controls, dtSeconds);
+  const distance = Math.hypot(machine.x - before.x, machine.z - before.z);
+  let carry = controls.working === true ? state.distanceCarryM : 0;
+  let nextWork = work;
+  const events = [];
+  if (controls.working === true && distance > 0) {
+    const steps = Math.floor(carry + distance);
+    for (let i = 0; i < steps; i++) {
+      const fraction = (1 - carry + i) / distance;
+      const x = Math.round(before.x + (machine.x - before.x) * fraction);
+      const z = Math.round(before.z + (machine.z - before.z) * fraction);
+      const result = workRoadCell(nextWork, {kind:state.kind, x, z,
+        bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : 0,
+        speedMps:Math.abs(machine.speedMps), edgeOffsetM:Number.isFinite(controls.edgeOffsetM) ? controls.edgeOffsetM : 0});
+      nextWork = result.work;
+      events.push(...result.events.map(event => ({...event, x, z})));
+    }
+    carry = (carry + distance) % 1;
+  }
+  return {state:{...state, machine, distanceCarryM:carry}, work:nextWork, events};
 }

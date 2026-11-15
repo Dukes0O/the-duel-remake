@@ -37,6 +37,24 @@ export const MACHINE_CONTENT = Object.freeze({
     joints:Object.freeze([]), tools:Object.freeze({}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['mast','feed'])}),
   }),
+  dozer: Object.freeze({
+    id:'dozer', name:'Dozer', driveKind:'tracks', massKg:14_000, maxSpeedMps:1.5,
+    trackWidthM:2.2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
+    joints:Object.freeze([]), tools:Object.freeze({}),
+    controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['blade'])}),
+  }),
+  roller: Object.freeze({
+    id:'roller', name:'Road roller', driveKind:'wheels', massKg:10_000, maxSpeedMps:1,
+    maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
+    joints:Object.freeze([]), tools:Object.freeze({}),
+    controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['roller'])}),
+  }),
+  paver: Object.freeze({
+    id:'paver', name:'Paver', driveKind:'tracks', massKg:12_000, maxSpeedMps:1,
+    trackWidthM:2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0]),
+    joints:Object.freeze([]), tools:Object.freeze({}),
+    controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['paver'])}),
+  }),
 });
 
 export function machineDefinition(id) {
