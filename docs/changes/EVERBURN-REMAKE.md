@@ -105,6 +105,15 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 
+## Larger land, Pipe landing (15 November 2026)
+
+- The Pipe's sideways slide now leaves flight and landing to the Scablands ground rules. The fall produces one landing hit and jolts the pot. The existing landing and `world.ember.spark` cues apply.
+- `node tools/test-everburn-job1.mjs`: passed. The real car stays on at 35 km/h; at 50 km/h it leaves the deck, lands once after a fall over 2 m and loses ember. `git diff --check`: passed.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: the competing knock-flight update for this Pipe slide. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the bed route and remaining steps.
+
 ## Larger land, brazier locations (15 November 2026)
 
 - Added three named brazier positions to Hot Delivery: beside the yard and Halfway Camp, and at the Wash in the river bed. The first two match the existing brazier positions. The positions use the land's names and record the ground height.

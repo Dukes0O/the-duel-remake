@@ -709,6 +709,7 @@ export function stepWorldJob(duel, dt) {
       const across = (car.x - PIPE_CROSSING.x) * pipeDirection.z - (car.z - PIPE_CROSSING.z) * pipeDirection.x;
       const side = across < 0 ? -1 : 1;
       shoveCar(duel, {x:side * pipeDirection.z, z:-side * pipeDirection.x, metresPerSecond:18});
+      if (state.knock) state.knock.scablandsFlight = true;
       worldJob.pipeSlip = true;
     }
     if (!worldJob.pipeDeck.onDeck) worldJob.pipeSlip = false;

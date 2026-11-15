@@ -141,19 +141,30 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     state.countdown = 0;
     world.job.stepState = {loaded:true, ember:100};
     let maxAcross = 0, highestAir = 0;
+    const falls = [];
+    duel.onChange((s, event) => {
+      if (event.scablandsHit?.kind === 'fall' && event.scablandsHit.player) falls.push(event.scablandsHit);
+    });
+    let emberBeforeLanding, emberAfterLanding;
     for (let i = 0; i < (kmh === 50 ? 600 : 150); i++) {
       duel.setInput({throttle:0});
+      const previousFalls = falls.length, previousEmber = world.job.stepState.ember;
       duel.step(1 / 60);
+      if (falls.length > previousFalls) { emberBeforeLanding = previousEmber; emberAfterLanding = world.job.stepState.ember; }
       const point = duel.course.worldAt(state.s, state.lateral);
       highestAir = Math.max(highestAir, state.airHeight || 0);
       maxAcross = Math.max(maxAcross, Math.abs((point.x - pipe.x) * Math.cos(heading) - (point.z - pipe.z) * Math.sin(heading)));
     }
-    return {maxAcross, highestAir};
+    return {maxAcross, highestAir, falls, emberBeforeLanding, emberAfterLanding};
   };
   const slow = drive(35), fast = drive(50);
   assert.ok(slow.maxAcross < 3.6, 'a car below 40 km/h stays on the Pipe');
   assert.ok(fast.maxAcross > 3.6, 'a faster car slides off the Pipe');
   assert.ok(fast.highestAir > 3, 'the fast car leaves the deck above the bed');
+  assert.equal(slow.falls.length, 0, 'the slow car does not fall');
+  assert.equal(fast.falls.length, 1, 'the fast car takes one landing hit');
+  assert.ok(fast.falls[0].drop > 2, 'the hit measures the real fall');
+  assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
 }
 // The actual world-job update applies the salt wind only on the pan.
 {

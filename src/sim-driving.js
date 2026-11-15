@@ -109,7 +109,12 @@ export function _drive(dt) {
   // bite, and the driver has no control meanwhile (docs/CRASH_PHYSICS.md).
   if (s.knock) {
     if (Object.hasOwn(s, 'tyreSlip')) s.tyreSlip = 0;
+    // The Pipe's shove uses the Scablands floor and flight rules, including
+    // the landing hit. The knock still supplies the sideways motion.
+    const groundFlight = s.knock.scablandsFlight && this.course.def.scablands;
+    const airborne = s.airborne, airHeight = s.airHeight;
     stepKnock(this, s, dt);
+    if (groundFlight) { s.airborne = airborne; s.airHeight = airHeight; }
     s.revs = Math.abs(s.speedMph) / (s.gear < 0 ? DRIVE.reverseMaxMph : car.gears[Math.max(0, s.gear)]);
     s.boosting = false; s.steerVisual = 0; s.yawVelocity = 0;
     this._boundary(s);
