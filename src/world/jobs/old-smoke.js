@@ -190,8 +190,8 @@ export function furnaceHit(f, door, source = 'weapon') {
       f.pending.push({type: 'dead', hits: f.hits});
     } else {
       f.phase = 'rollin';
-      const well = f.path.points[f.path.points.length - 1];
-      f.rollIn = {fromX: f.x, fromZ: f.z, sec: 0, seconds: Math.max(OLD_SMOKE.rollInSec, Math.hypot(well.x - f.x, well.z - f.z) / OLD_SMOKE.rollInMaxMps)};
+      const distance = f.path.total - f.metres;
+      f.rollIn = {fromMetres: f.metres, sec: 0, seconds: Math.max(OLD_SMOKE.rollInSec, distance / OLD_SMOKE.rollInMaxMps)};
       f.pending.push({type: 'rollIn', seconds: f.rollIn.seconds});
     }
   } else {
@@ -334,10 +334,9 @@ function rollIn(f, dt, out, ctx) {
   const roll = f.rollIn, well = f.path.points[f.path.points.length - 1];
   roll.sec += dt;
   const t = Math.min(1, roll.sec / roll.seconds);
-  f.x = roll.fromX + (well.x - roll.fromX) * t;
-  f.z = roll.fromZ + (well.z - roll.fromZ) * t;
-  if (Math.hypot(well.x - roll.fromX, well.z - roll.fromZ) > 1e-6)
-    f.heading = headingOf(well.x - roll.fromX, well.z - roll.fromZ);
+  f.metres = roll.fromMetres + (f.path.total - roll.fromMetres) * t;
+  const point = pointAt(f.path, f.metres);
+  f.x = point.x; f.z = point.z; f.heading = point.heading; f.pathIndex = point.index;
   if (t < 1) return;
   f.fallen = true; f.phase = 'fallen';
   out.events.push({type: 'fell', x: f.x, z: f.z});

@@ -356,6 +356,16 @@ for (const difficulty of ['easy', 'medium']) {
 }
 
 // ---- 7. The end: it turns for the well and rolls in after 5 seconds -------------
+{
+  const bend = createFurnace({path: [{x: 0, z: 0}, {x: 100, z: 0}, {x: 100, z: 100}],
+    legs: [{id: 'one', door: 'left', fromWaypoint: 0}, {id: 'two', door: 'right', fromWaypoint: 0},
+      {id: 'three', door: 'rear', fromWaypoint: 0}]}, 'easy');
+  bend.hits = 2; bend.phase = 'glow'; bend.door = 'rear';
+  check(furnaceHit(bend, 'rear'), 'the last hit starts the roll');
+  run(bend, bend.rollIn.seconds / 2);
+  near(bend.x, 100, .1, 'the roll follows the bend instead of cutting across it');
+  near(bend.z, 0, .1, 'the roll reaches the bend halfway through');
+}
 for (const [difficulty, armor] of [['easy', 0], ['medium', 15], ['hard', 20]]) {
   const f = fresh(difficulty);
   for (let leg = 0; leg < 3; leg++) { until(f, 'glow'); furnaceHit(f, f.door); }
@@ -666,6 +676,11 @@ for (const difficulty of ['easy', 'medium', 'hard']) {
     const duel = startDuel(11, difficulty, {carAt: {x: well.x + 6, z: well.z}});
     const furnace = furnaceOf(duel);
     waitUntil(duel, () => !!furnaceOf(duel), 10);
+    // The rear door opens on the last leg; put this forced hit near the well on that leg.
+    const chase = furnaceOf(duel).furnace, end = chase.path.points.at(-1), previous = chase.path.points.at(-2);
+    const share = 20 / Math.hypot(end.x - previous.x, end.z - previous.z);
+    chase.metres = chase.path.total - 20;
+    chase.x = end.x + (previous.x - end.x) * share; chase.z = end.z + (previous.z - end.z) * share;
     for (const door of ['left', 'right', 'rear']) { furnaceOf(duel).furnace.phase = 'glow'; furnaceOf(duel).furnace.door = door; furnaceHit(furnaceOf(duel).furnace, door); }
     check(furnaceOf(duel).furnace.won, `${difficulty}: three hits won it`);
     duel.state.armor = 4;

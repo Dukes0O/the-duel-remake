@@ -1121,6 +1121,14 @@ Changed assertions, for Claude to review: the two gas-road end coordinates chang
 
 Removed: the exemption that let the truck pass through solids near the last stop.
 
+### Furnace roll, in progress
+
+After the third door is hit, the furnace follows the remaining bends of its path to the well. Its roll still takes at least five seconds and respects its speed limit. The test now checks a bent path and places a forced rear-door hit on the last leg. No new game event or sound cue was added.
+
+Check: `test-old-smoke` passes 4,092 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change. Changed assertions: none. The forced-hit setup was moved onto the last leg; its checks are unchanged.
+
+Removed: the straight line from the last hit to the well.
+
 ### Still to do
 
-The furnace paths, the three refused assertions and per-step allocations remain. Merge integration into this lane and run the complete card checks before handover.
+The furnace's return after a missed chase still takes a straight line. Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.
