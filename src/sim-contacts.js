@@ -266,7 +266,8 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const height = actor?.groundHeight ?? (this.course.groundTunnels ? actor?._jumpY : undefined);
+  const layeredGround = this.course.def?.scablands && this.featureFlags?.enabled('wasteland-town') === true;
+  const height = this.course.groundTunnels || layeredGround ? actor?.groundHeight ?? actor?._jumpY : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;

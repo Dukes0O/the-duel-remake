@@ -19,7 +19,7 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
-import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {buildBowlFeatures} from './bowl/bowl-course.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
@@ -293,6 +293,7 @@ export class Course {
     return p;}
   groundAt(s,off=0,actorHeight){const p=this._baseGroundAt(s,off);
     if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
+    if(this.def.scablands && Number.isFinite(actorHeight))p.y=scablandsActorHeightAt(p.x,p.z,actorHeight);
     if(this.def.scablands && Number.isFinite(actorHeight) && this.groundTunnels)
       p.y=this.groundTunnels.groundAt({x:p.x,y:actorHeight,z:p.z},actorHeight,p.y);
     return p;}

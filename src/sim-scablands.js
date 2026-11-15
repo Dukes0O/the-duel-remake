@@ -7,7 +7,7 @@ import {slopeSpeedDelta} from './offroad-physics.js';
 import {contactZone} from './collision.js';
 import {combatArmorEnabled, applyArmorDamage, applySceneryArmorDamage} from './combat-armor.js';
 import {combatCrashThresholdMph} from './vehicle-impact.js';
-import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {ledgeAt} from './world/scablands-regions.js';
 import {GROUND, MPH_TO_KMH, climbLimit, dropFor, fallHit} from './world/scablands-ground-rules.js';
 import {SOLID_GRID} from './world/scablands-solids.js';
@@ -60,9 +60,12 @@ export function scablandsGround(duel, actor, dt) {
   if (distance < 1e-4) return;
   // Use the same floor as vehicle support when this course has a trial tube.
   const actorHeight = actor.groundHeight ?? actor._jumpY;
-  const height = course.groundTunnels && Number.isFinite(actorHeight)
-    ? (x, z) => course.groundTunnels.groundAt({x, y: actorHeight, z}, actorHeight, scablandsSurfaceHeightAt(x, z))
-    : scablandsSurfaceHeightAt;
+  const layeredGround = duel.featureFlags?.enabled('wasteland-town') === true;
+  const height = Number.isFinite(actorHeight) && (course.groundTunnels || layeredGround)
+    ? (x, z) => {
+      const surface = layeredGround ? scablandsActorHeightAt(x, z, actorHeight) : scablandsSurfaceHeightAt(x, z);
+      return course.groundTunnels ? course.groundTunnels.groundAt({x, y: actorHeight, z}, actorHeight, surface) : surface;
+    } : scablandsSurfaceHeightAt;
   const gain = height(to.x, to.z) - height(from.x, from.z);
   const kmh = Math.abs(actor.speedMph || 0) * MPH_TO_KMH, ledges = ledgeAt(to.x, to.z);
   const limit = climbLimit(kmh, ledges);

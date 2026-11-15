@@ -17,6 +17,12 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.equal(scablandsActorHeightAt(x, z, surface), surface);
   assert.equal(scablandsActorHeightAt(x, z), surface);
   assert.equal(scablandsActorHeightAt(x, z, surface - 1.2), surface);
+  const course = new Course(SCABLANDS_VENUE, 1989), at = course.nearest(x, z);
+  const actor = {groundHeight: bed};
+  const duel = {course, state: actor, car: {}, featureFlags: {enabled: () => true}};
+  assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: car support uses the bed`);
+  duel.featureFlags.enabled = () => false;
+  assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - surface) < .01, `${id}: switch off keeps the surface`);
 }
 
 // Use the real west scarp, with both ends joined to the ground.
