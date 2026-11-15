@@ -165,7 +165,10 @@ for (const kind of ['dozer', 'roller', 'paver']) {
 }
 assert.ok(Object.keys(yard.roadWork.cells).length > 0, 'Road work remains in the yard when machines change.');
 const freshYard = createDigSandbox({playerId:'road-test'});
-assert.notDeepEqual(freshYard.roadWork, yard.roadWork, 'Road work lasts for the visit only.');
+const expectedPractice = {cells:{}, bladeLoad:0};
+for (let z=12; z<=19; z++) expectedPractice.cells[`40:${z}`] =
+  {height:z<16 ? 1 : -1, spread:0, compaction:0, surface:0, roughness:0};
+assert.deepEqual(freshYard.roadWork, expectedPractice, 'A fresh visit contains exactly the practice ground.');
 assert.equal(roadCell(freshYard.roadWork, 40, 12).height, 1, 'The yard has material to cut.');
 assert.equal(roadCell(freshYard.roadWork, 40, 16).height, -1, 'The yard has a low place to fill.');
 let practice = {...freshYard, activeMachine:'dozer'};
