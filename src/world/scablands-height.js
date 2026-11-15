@@ -133,7 +133,7 @@ export function hillsFor(land=LAND,seed=1989){
   // A pair of shoulders makes a pass on each road, while leaving its centre
   // outside both hill footprints. Derive the positions from the road itself.
   const roads=land===LAND?ROAD_NET:roadNet(land);
-  for(const [id,share] of [['burn-road',.3],['mall-road',.3],['mall-burn-road',.655]]){
+  for(const [id,share] of [['burn-road',.3],['mall-road',.855],['mall-burn-road',.655]]){
     const road=roads.road(id), start=road.points[0];
     const centre=roadPointFrom(road,start.x,start.z,road.length*share);
     const before=roadPointFrom(road,centre.x,centre.z,-5), after=roadPointFrom(road,centre.x,centre.z,5);

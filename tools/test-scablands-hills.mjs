@@ -80,6 +80,15 @@ test('the first 900 m of the shared Soup and Mall return leg is clear', () => {
   }
 });
 
+test('Mall Road pass shoulders leave both remaining job corridors clear', () => {
+  const soup = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const legs = [[soup.safePoints.at(-1).position, soup.destination.position], [flags[2].position, flags[3].position]];
+  for (const hill of HILLS.filter(item => item.passRoad === 'mall-road')) {
+    for (const leg of legs) assert.ok(distanceToRoad(hill.x, hill.z, leg) >= hill.radius + 60);
+  }
+});
+
 test('the final 5 km of the third Survey Flags leg is clear', () => {
   const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
   const start = flags[2].position, b = flags[3].position;

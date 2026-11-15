@@ -2133,3 +2133,11 @@ Changed assertions: none; the two checks are new. Codex decided: check the porti
 Seeded mesa placement now keeps the full 60 m corridor from the safe road to the Everburn clear, including each ramp. The mesa at about (909, 1394) moved to (2214, -518); another moved from about (3750, -979) to (3755, -992) as the seeded search continued. Mesa heights retain their seeded values to floating-point precision, expressed as the actual difference from their ground level. The hills suite passed 53 of 53, including a new check of every mesa against the shared return. An initial run failed an exact height comparison by rounding; the recorded height now matches the actual crest difference. No assertion was changed or loosened.
 
 Not right yet: Breaks hills still cross the rest of the return and the third Survey Flags leg. The Mall Road pass shoulder also crosses the flag leg. These corridors still need the full proof. The aim-allocation fix, Easy chase driver and final checks remain. No new event or sound was added. Codex decided: use the job's named safe road and Everburn places for the mesa clearance. Removed: the two former seeded mesa sites. Race fingerprints and the browser were not checked in this step.
+
+### Hill country: move the Mall Road pass
+
+The Mall Road pass now stands 85.5 percent along the road instead of 30 percent. Both shoulders clear the shared Soup and Mall return and the third Survey Flags leg by 60 m. The hills suite passed 54 of 54, including the new shoulder clearance check and the existing pass, spacing and place-clearance checks.
+
+Not right yet: other Breaks hills still cross both corridors. Their full clearance proof, the aim-allocation fix, the Easy chase driver and final checks remain. Claude must judge the pictures. Race fingerprints were not checked in this step.
+
+Changed assertions: none; the shoulder clearance check is new. Codex decided: move the pair together along its own road. Removed: the former Mall Road pass position. No event or sound cue was added.
