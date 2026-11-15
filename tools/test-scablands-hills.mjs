@@ -73,13 +73,24 @@ test('the furnace warning needs more than six continuous seconds and sounds once
   assert.equal(skylineWarningDue(sight, true), false);
 });
 
+test('a raider follows a car it can see and keeps room to fire', () => {
+  const raider = {x: 0, z: 0};
+  const car = {x: 30, z: 0};
+  const move = (_from, to) => to;
+  stepRaiderSearch(raider, car, 1, move);
+  assert.equal(raider.search.phase, 'seen');
+  assert.equal(raider.x, 3);
+  for (let i = 0; i < 20; i++) stepRaiderSearch(raider, car, 1, move);
+  assert.equal(raider.x, 18);
+});
+
 test('a raider searches the last visible place and returns to its post', () => {
   const mesa = HILLS.find(hill => hill.kind === 'mesa');
   const raider = {x: mesa.x - mesa.radius - 30, z: mesa.z};
   const home = {...raider}, visible = {x: raider.x - 30, z: raider.z};
   const hidden = {x: mesa.x + mesa.radius + 30, z: mesa.z};
   const move = (_from, to) => to;
-  stepRaiderSearch(raider, visible, 1, move);
+  stepRaiderSearch(raider, visible, 0, move);
   assert.equal(raider.search.phase, 'seen');
   assert.deepEqual(raider.search.last, visible);
   stepRaiderSearch(raider, hidden, 1, move);

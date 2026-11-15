@@ -34,9 +34,8 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   if (visible) {
     memory.last = {x: target.x, z: target.z};
     memory.phase = 'seen'; memory.seconds = 0;
-    return;
   }
-  if (memory.phase === 'seen') memory.phase = 'going';
+  if (!visible && memory.phase === 'seen') memory.phase = 'going';
   if (memory.phase === 'post') return;
   if (memory.phase === 'searching') {
     memory.seconds += dt;
@@ -45,7 +44,9 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   }
   const destination = memory.phase === 'returning' ? memory.home : memory.last;
   const dx = destination.x - raider.x, dz = destination.z - raider.z;
-  const distance = Math.hypot(dx, dz), travel = Math.min(distance, 3 * dt);
+  const distance = Math.hypot(dx, dz);
+  // Keep a little room to fire while following a car in sight.
+  const travel = Math.min(Math.max(0, distance - (memory.phase === 'seen' ? 12 : 0)), 3 * dt);
   if (distance > 1e-6 && travel > 0) {
     const heading = Math.atan2(dx, dz);
     const options = {radius: .4, grade: FOOT_GRADE};
@@ -82,7 +83,7 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
     raider.x = next.x; raider.z = next.z; raider.yaw = usedHeading;
     raider.y = raider.groundY = scablandsSurfaceHeightAt(raider.x, raider.z);
   }
-  if (Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
+  if (memory.phase !== 'seen' && Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
     if (memory.phase === 'returning') { memory.phase = 'post'; memory.last = null; }
     else { memory.phase = 'searching'; memory.seconds = 0; }
   }

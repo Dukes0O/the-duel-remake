@@ -1466,3 +1466,16 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 19 tests, including the
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: item 2, send the two riders after the horn, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+
+### Round 4, slice 2c: visible pursuit
+
+Camp raiders now follow a car while they can see it. They use the existing walking pace and obstacle checks, and stop 12 m away to leave room to fire. Once sight is lost, they still go to the last seen place, search, and return. No event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 20 tests. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop.
+
+Changed assertions, for Claude to review: no assertion values changed. The search test's first sight step uses 0 seconds instead of 1, so it still starts its loss-of-sight check at the original post now that raiders move during sight. Codex decided: raiders stop 12 m from a visible car and walk at the existing 3 m/s. Removed: the rule that kept a raider standing still while the car was visible.
+
+Still needed: item 2, send the furnace's two riders and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
