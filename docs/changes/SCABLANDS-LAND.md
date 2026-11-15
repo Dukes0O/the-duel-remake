@@ -1259,3 +1259,22 @@ Changed assertions, for Claude to review: none. Codex decided: the Lookout's pos
 Removed: none in this partial step. The former terrain remains outside the Lookout's shoulder.
 
 Still needed: fix the Easy driver's Survey Flags route; finish the mesas, Ridge foothills and way up, detailed faces, sight and search, natural outlines, route checks and picture scenario. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.
+
+
+### Round 4, slice 2c: natural region outlines in progress
+
+The salt pan and scab plates now have bends in their outlines, made from the named corner points in the land's shared data. Driving, ground and map read that same data. The smaller edge waves remain. The switches stay off. Survey Flags' fifth flag has not moved. No new game event or sound cue was added.
+
+Checks: `test-scablands-regions` passed 12 tests, including every road with two cars; `test-scablands-hills` passed 5, `test-scablands-size` passed 9, the scene check passed, and `test-scablands-map` passed 1,798 checks. Race replays passed 297 checks and combat replays passed 12; `test-course-kit` passed 8. Race fingerprints and checked world signatures are unchanged. Integration was already included.
+
+Changed assertions, for Claude to review: none. A new test checks the shared outlines and their bends. Codex decided: the card records the alternating bends and their size for Claude to review.
+
+Removed: the long straight sides of the former region outlines, replaced by bent sides.
+
+Still needed: investigate the Easy driver's Survey Flags failure; finish the mesas, Ridge foothills and way up, detailed faces, sight and search, route checks and the hills picture scenario. The scratch trace stopped at the first flag, so it did not establish the earlier fourth-flag failure's cause. The card is not ready to merge.
+
+Lane tier: 41 of 43 suites passed. `test-everburn-easy` again failed Survey Flags, 0 of 10 against the unchanged minimum of 8; all eight other jobs finished 10 of 10. The sample stopped on the way to the fourth flag near (2083, -1413), and gas roads were not reached. `test-full-check` failed in the known temporary-copy setup because starting `pwsh` was denied (`EACCES`). The build passed with bundle warnings.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written, including draw calls and triangles. The new outlines need visual judgment.
+
+Cockpit sync could not open its protected credential. The repository audit ran; its candidates are advisory and none were removed.

@@ -4,7 +4,7 @@ import {HILLS, hillsFor, hillHeightAt, scablandsTerrainHeightAt} from '../src/wo
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
-import {riseHeightAt} from '../src/world/scablands-regions.js';
+import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
 import {scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 
@@ -79,5 +79,19 @@ test('an empty hill table leaves the former terrain height exact', () => {
     const ridge = smooth((edge - SCABLANDS_LAYOUT.ridgeStart) / .1) * (1 - smooth((edge - SCABLANDS_LAYOUT.ridgeCrest) / .16)) * 108;
     const wall = smooth((edge - SCABLANDS_LAYOUT.wallStart) / .035) * 175;
     assert.equal(scablandsTerrainHeightAt(x, z, []), rolling + ridge + wall + riseHeightAt(x, z) + scarpHeightAt(x, z));
+  }
+});
+
+test('the salt pan and plates have uneven outlines in the shared land data', () => {
+  assert.deepEqual(groundAreas(LAND), GROUND_AREAS);
+  for (const area of GROUND_AREAS.polygons) {
+    assert.ok(['salt-pan', 'scab-plates'].includes(area.id));
+    assert.ok(area.points.length >= 8);
+    for (let i = 0; i < area.points.length; i += 2) {
+      const a = area.points[i], bend = area.points[i + 1], b = area.points[(i + 2) % area.points.length];
+      const cross = (bend.x - a.x) * (b.z - a.z) - (bend.z - a.z) * (b.x - a.x);
+      assert.ok(Math.abs(cross) > 1, `${area.id} has a bent edge`);
+      assert.ok(Math.abs(polygonMargin(area.points, bend.x, bend.z)) < 1e-8);
+    }
   }
 });

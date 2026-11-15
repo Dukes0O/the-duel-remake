@@ -673,6 +673,10 @@ flats. Its top is 45 m above the former ground, with a 60 m level radius. This p
 of the roads and gives it a clear view towards the yard. Survey Flags' fifth flag stays where
 it is.
 
+**Codex decided (Claude to review):** Each long edge of the salt pan and the scab plates
+bends once, alternating in and out by up to 180 m. The bends follow the named corner points.
+The existing smaller edge waves remain.
+
 **Hills are played, not only seen.**
 - A car slows going up, gathers speed going down, and flies off a crest taken fast (slice 2b's
   rules).
