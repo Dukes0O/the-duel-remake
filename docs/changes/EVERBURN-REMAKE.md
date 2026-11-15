@@ -376,3 +376,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Changed assertions: none. Codex decided: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: the race clock, style points and jump readout from world-job screens. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, world-job weapon bar (15 November 2026)
+
+- The world-job weapon bar shows only the lent flamethrower, in its actual slot. When there is no flamethrower on loan it shows no car weapons. The normal weapon bar returns outside a world job. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real combat screen checks loans in the first and fourth slots, no loan, and the return to the normal bar. `git diff --check`: passed.
+- Changed assertions: none. Codex decided: none. Race fingerprints were not checked in this round.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: other car weapon slots from world-job screens. The old `everburn-play` scenario still needs replacement or removal. Still to build: the pause screen, map, drives, camera, cover and scenario. The Pipe landing hit also remains unfinished.

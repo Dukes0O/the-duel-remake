@@ -4,6 +4,8 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame, brazierArrow} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
+import {createCombatHud} from '../src/combat-hud.js';
+import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
@@ -27,6 +29,55 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// Inspect the actual weapon bar as the loan changes and the job ends.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:definition}));
+  duel.state.status = 'racing';
+  function element() {
+    const children = new Map(), attrs = new Map(), styles = new Map();
+    return {dataset:{}, hidden:false, disabled:false, textContent:'', style:{getPropertyValue:k => styles.get(k) || '',
+      setProperty:(k,v) => styles.set(k,String(v))}, classList:{toggle(){}}, append(){}, remove(){}, addEventListener(){},
+      getBoundingClientRect:() => ({x:0,y:0,left:0,top:0,right:1280,bottom:800,width:1280,height:800}),
+      setAttribute:(k,v) => attrs.set(k,String(v)), getAttribute:k => attrs.get(k) ?? null,
+      querySelector(k) {if (!children.has(k)) children.set(k,element()); return children.get(k);},
+      querySelectorAll(k) {
+        if (!children.has(k)) children.set(k, k === '[data-combat-weapon]' ? WEAPON_IDS.map((id,slot) =>
+          Object.assign(element(), {dataset:{combatWeapon:id,combatSlot:String(slot)}})) : k === '.combat-edge-cue' ?
+          ['left','right'].map(side => Object.assign(element(), {dataset:{side}})) : []);
+        return children.get(k);
+      }};
+  }
+  const previous = globalThis.document, created = [];
+  globalThis.document = {createElement() {const node = element(); created.push(node); return node;}};
+  let hud;
+  try {
+    hud = createCombatHud({root:element(), app:{duel}});
+    const slots = created[0].querySelectorAll('[data-combat-weapon]'), loan = created[3];
+    const world = duel.state.arena.worldJob;
+    for (const index of [0, 3]) {
+      duel.state.weaponLoadout = ['crossbow','tesla','decoy','nitro'].slice(0,index).concat('flamethrower');
+      world.activeLoan = 'flamethrower';
+      hud.update(duel.state);
+      const visible = [...slots,loan].filter(button => !button.hidden);
+      assert.equal(visible.length, 1);
+      assert.equal(visible[0].dataset.combatWeapon, 'flamethrower');
+      assert.equal(Number(visible[0].dataset.combatSlot), index);
+    }
+    world.activeLoan = null;
+    hud.update(duel.state);
+    assert.equal([...slots,loan].filter(button => !button.hidden).length, 0);
+    duel.state.arena = null;
+    duel.state.weaponLoadout = ['crossbow','tesla','decoy','nitro'];
+    hud.update(duel.state);
+    assert.equal(slots.filter(button => !button.hidden).length, 4);
+  } finally {
+    hud?.dispose();
+    if (previous === undefined) delete globalThis.document; else globalThis.document = previous;
+  }
+}
 // The real screen hides race-only readouts during a world job and restores them afterwards.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
