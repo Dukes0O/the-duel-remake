@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel, worldMapFrame, brazierArrow} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -30,6 +30,17 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The starting map tells Cinder's one known way without revealing other routes or dangers.
+{
+  const worldJob = {definition, job:createJob(definition), actors:[]};
+  const result = worldMapWays({worldJob, car:LAND.yard, target:LAND.at('tin-town')});
+  const markup = waysMarkup(result, 'Tin Town', createKnowledge(), {hotDelivery:true});
+  assert.match(markup, /WHAT YOU KNOW/);
+  assert.match(markup, /The East Road/);
+  assert.match(markup, /The Ash Men hold the Girder Bridge\./);
+  for (const way of result.ways.slice(1)) assert.ok(!markup.includes(way.name));
+  assert.doesNotMatch(markup, /barricade|furnace|Pipe|salt pan/i);
+}
 // The actual pause screen names the job and the land, including between steps.
 {
   const views = {metric: () => '', action: () => '', time: () => '0:00', escapeHTML: String};

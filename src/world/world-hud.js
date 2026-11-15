@@ -183,7 +183,11 @@ export function worldMapWays({worldJob, car, target, land = LAND}) {
 }
 
 const escapeText = value => String(value).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-export function waysMarkup(result, targetName, knowledge) {
+export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} = {}) {
+  if (hotDelivery) {
+    const east = result.ways.find(way => way.id === 'east-road');
+    return `<h3>WHAT YOU KNOW</h3><ol>${east ? `<li class="world-hud-way" style="--way:${wayColour(0)}"><b>A</b><div><strong>${escapeText(east.name)}</strong><ul><li>The Ash Men hold the Girder Bridge.</li></ul></div></li>` : ''}</ol>`;
+  }
   const heading = `<h3>WAYS TO ${escapeText((targetName ?? 'THE MARKED PLACE').toUpperCase())}</h3>`;
   const items = result.ways.map((way, index) => {
     const lines = wayLines(way).map(line => `<li>${escapeText(line)}</li>`).join('');
@@ -231,10 +235,12 @@ export function createWorldHud({host, app = null, picture = null}) {
   const clock = () => globalThis.performance?.now?.() ?? Date.now();
   const drawBig = frame => {
     const began = clock();
-    const result = worldMapWays({worldJob: frame.worldJob, car: frame.car, target: frame.target});
+    const hotDelivery = frame.worldJob?.definition?.id === 'everburn-hot-delivery';
+    const target = hotDelivery ? LAND.at('tin-town') : frame.target;
+    const result = worldMapWays({worldJob: frame.worldJob, car: frame.car, target});
     stats.waysMs = clock() - began;
-    ways.innerHTML = waysMarkup(result, frame.target?.name, frame.knowledge);
-    if (context) drawBigMap(context, {...frame, ways: result.ways}, BIG_MAP);
+    ways.innerHTML = waysMarkup(result, frame.target?.name, frame.knowledge, {hotDelivery});
+    if (context) drawBigMap(context, {...frame, ways: hotDelivery ? result.ways.filter(way => way.id === 'east-road') : result.ways}, BIG_MAP);
     stats.bigDraws++; stats.bigMs = clock() - began;
   };
   // While the big map is open the stage carries `world-map-open`, which lifts the story caption above the map (world-hud.css). The game

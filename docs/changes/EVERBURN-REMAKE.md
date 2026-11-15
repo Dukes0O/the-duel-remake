@@ -392,3 +392,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none. Race fingerprints were not checked in this round.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: other car weapon slots from world-job screens. The old `everburn-play` scenario still needs replacement or removal. Still to build: the pause screen, map, drives, camera, cover and scenario. The Pipe landing hit also remains unfinished.
+
+## Larger land, map at the start (15 November 2026)
+
+- Hot Delivery's large map begins with “What you know”, the East Road and Cinder's warning that the Ash Men hold the Girder Bridge. It does not list or draw the other route lines or disclose their dangers. The route is calculated to Tin Town even before pickup. This is the first part of step 6c; discovering other routes and dangers remains to be built. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test reads the map's real route descriptions and list markup and checks the starting words and hidden routes. `git diff --check`: passed.
+- Changed assertions: none. Codex decided: none. Race fingerprints: not checked this round.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: the initial list of all four routes and their unearned danger descriptions from Hot Delivery's map. The old `everburn-play` scenario still needs replacement or removal.
