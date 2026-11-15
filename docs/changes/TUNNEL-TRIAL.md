@@ -1,5 +1,9 @@
 # TUNNEL-TRIAL
 
+A Titan and a Falcone now drive a four-segment tube with 10, 20 and 30 degree bends in both directions in the real simulation. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed. No game event or sound was added.
+
+The scarp-lip drive is still failing: a Titan starting 40 m inside the low mouth and driving out at 40 mph lands 6.21 m inside the mouth on the tube floor, which there is 0.69 m above the open surface. Simply choosing the lower surface there breaks the existing drive into the mouth. The next round must resolve the exposed floor and falling-car selection without weakening either drive. The rest of enclosure, drawing, scenario and final checks remain open.
+
 The tunnel floor now uses the same 0.6 m step as the deck floor. Car support,
 wall contact and the crown check use the selected floor, so thin covered ground
 does not acquire the bore's walls or roof. The focused tunnel and Scablands

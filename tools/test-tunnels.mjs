@@ -560,6 +560,58 @@ assert.equal(car.lateral, 5, 'a car on selected covered ground is not held by bo
   }
 }
 
+// Drive both cars through a chain with 10, 20 and 30 degree bends.
+{
+  const {Duel} = await import('../src/game.js');
+  const {COURSE} = await import('../src/config.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  const points = [{x: 0, z: 0}];
+  for (const degrees of [0, 10, 30, 60]) {
+    const angle = degrees * Math.PI / 180, last = points.at(-1);
+    points.push({x: last.x + 40 * Math.sin(angle), z: last.z + 40 * Math.cos(angle)});
+  }
+  const tubes = createGroundTunnels(points.slice(1).map((end, i) => ({
+    start: {...points[i], y: 2.2}, end: {...end, y: 2.2}, radius: 5})));
+  for (const car of ['titan_monster', 'falcone_f42']) for (const direction of [1, -1]) {
+    const d = new Duel({seed: 1989});
+    d.startCampaign({car, startStage: COURSE.findIndex(row => row.practice), difficulty: 'casual', mode: 'timetrial'});
+    d.state.status = 'racing';
+    const at = (s, lateral = 0) => ({x: lateral, y: 20, z: s, heading: 0, curvature: 0});
+    d.course = {def: {id: 'bent-tunnel-test', practice: true, kind: 'arena', theme: 'desert'},
+      groundTunnels: tubes, closed: false, length: 10000, raceLength: 20000,
+      features: {obstacles: [], mountains: [], ramps: [], crushables: [], shortcuts: [], flocks: []},
+      at, worldAt: at, groundAt(s, lateral, height) {
+        const p = at(s, lateral);
+        if (Number.isFinite(height)) p.y = tubes.groundAt(p, height, p.y);
+        return p;
+      }, nearest: (x, z) => ({s: z, lateral: x}), phase: s => s,
+      surfaceAt: () => ({mainRoad: false, road: false, roadHalfWidth: 7}),
+      themeAt: () => 'desert', roadHalfWidthAt: () => 7, nearestRadar: () => null,
+      obstaclesNear: () => d.course.features.obstacles};
+    d._obstacleArray = d.course.features.obstacles; d._obstacleQueryCache.clear(); d._lapGates = [];
+    const route = direction > 0 ? points : [...points].reverse();
+    const start = route[0], next = route[1], state = d.state;
+    const heading = Math.atan2(next.x - start.x, next.z - start.z);
+    Object.assign(state, {s: start.z + (next.z - start.z) * .03,
+      lateral: start.x + (next.x - start.x) * .03, headingError: heading,
+      groundHeight: -.55, speedMph: 10});
+    state.prevS = state.s; state.prevLateral = state.lateral;
+    let target = 1;
+    for (let i = 0; i < 60 * 90 && target < route.length; i++) {
+      const here = {x: state.lateral, z: state.s};
+      if (Math.hypot(here.x - route[target].x, here.z - route[target].z) < 5) {
+        target++;
+        if (target === route.length) break;
+      }
+      const turn = wrapHeading(Math.atan2(route[target].x - here.x, route[target].z - here.z) - state.headingError);
+      d.setInput({throttle: state.speedMph < 18 ? 1 : 0, steer: Math.max(-1, Math.min(1, -turn * 2))});
+      d.step(1 / 60);
+      assert.ok(Math.abs(state.groundHeight + .55) < .1, `${car} stays on the bent tunnel floor, direction ${direction}`);
+    }
+    assert.equal(target, route.length, `${car} drives all bends, direction ${direction}`);
+  }
+}
+
 // A bore cannot be made with a gap, a floor step or a zero-length segment.
 {
   const first = {start: {x: 0, y: 4, z: 0}, end: {x: 10, y: 4, z: 0}, radius: 4};
