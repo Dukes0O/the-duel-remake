@@ -6,6 +6,8 @@ Integration was merged at b23714b22 (current integration was c88f8366974e060acae
 
 This round added a height-aware river-bed query, car support and slope checks, height-aware collision against deck trusses and piers, and the height read for job raiders and Big Bess. With the trial switch on, a car drives under the Girder Bridge and the Pipe in both directions. The four-way drive now travels from the Wash under the bridge, up the Steps and to Tin Town. The switch is off for players. The tests check the piers stay solid below the bridge and do not block the deck.
 
+A later fix keeps the side wall solid when a move crosses a joint between connected tube segments. The focused test checks the joint in both directions. A true mouth remains open.
+
 The browser scenario is written and syntax checked but has not run. It now draws each sampled frame and requires the bridge-bed drive to leave the far side after the picture. Big Bess is drawn at her stored support height with the switch on, so she can be shown beneath a deck. It supplies a temporary refresh of both ground materials and the lining as the cylinder advances. The game scene itself still reads tubes only when it is built. Do not claim a visual, frame, save-budget, or boring-machine pass. A mover's height selection has a focused check but a complete raider or Big Bess chase under the deck has not been driven. Other actor and effect callers still need review before this can support a complete underground game.
 
 The scenario now places the camera at the requested height before each picture. The renderer normally eases the camera vertically, so a picture taken after one frame could otherwise show the wrong view. This correction still needs Claude's browser check.
@@ -19,6 +21,7 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 ## Checks
 
 - `node tools/test-tunnels.mjs`: passed after the deck changes. It checks the scarp in both directions, both decks in both directions, the height switch, and a pier.
+- `node tools/test-tunnels.mjs`: passed with the segment-joint wall fix, including both directions and open mouths. `npm.cmd run build` also passed after that fix.
 - A later run of `node tools/test-tunnels.mjs` also passed with job movers stepping under both decks in both directions, carrying their ground height between steps and checking for solid obstructions. This does not replace a full chase or visual check.
 - `node tools/test-everburn-easy.mjs`: all nine story jobs passed 10 of 10 on a repeat. The run was stopped during the gas routes, so the suite remains incomplete.
 - A further isolated repeat again passed all nine story jobs 10 of 10; it was stopped during the first gas route. The complete suite remains unverified.

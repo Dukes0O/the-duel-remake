@@ -311,6 +311,11 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
         `floor follows the joined segments at ${x}, got ${height}`);
     }
   }
+  for (const [from, to] of [[49, 51], [51, 49]]) {
+    const move = joined.constrainMotion({x: from, y: 4, z: 0}, {x: to, y: 4, z: 5}, 1);
+    assert.equal(move.hit, true, 'the wall remains solid across a segment joint');
+    assert.equal(move.position.z, 3);
+  }
 }
 
 console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');

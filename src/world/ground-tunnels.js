@@ -125,12 +125,32 @@ export function createGroundTunnels(segments = []) {
     if (!finite(clearance) || clearance < 0) throw new TypeError('Clearance must be non-negative.');
     const inside = tubeAt(start, start.y);
     if (!inside) return {position: {...end}, hit: false};
-    const tube = inside.tube;
-    const dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
-    const length = Math.hypot(dx, dz);
+    let tube = inside.tube;
+    let dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
+    let length = Math.hypot(dx, dz);
     if (!length) return {position: {...end}, hit: false};
     const along = ((end.x - tube.start.x) * dx + (end.z - tube.start.z) * dz) / length;
-    if (along < 0 || along > length) return {position: {...end}, hit: false};
+    if (along < 0 || along > length) {
+      // A joint is not a mouth: use the adjoining segment's walls when the
+      // move crosses it. Only exact joins are considered, leaving mouths open.
+      const joint = along < 0 ? tube.start : tube.end;
+      const next = tubes.find(candidate => {
+        if (candidate === tube) return false;
+        const joined = [candidate.start, candidate.end].some(p =>
+          Math.hypot(p.x - joint.x, p.y - joint.y, p.z - joint.z) < 1e-7);
+        if (!joined) return false;
+        const cx = candidate.end.x - candidate.start.x, cz = candidate.end.z - candidate.start.z;
+        const squared = cx * cx + cz * cz;
+        if (!squared) return false;
+        const t = ((end.x - candidate.start.x) * cx + (end.z - candidate.start.z) * cz) / squared;
+        const centerY = candidate.start.y + (candidate.end.y - candidate.start.y) * t;
+        return t >= 0 && t <= 1 && end.y >= centerY - candidate.radius - 0.5 && end.y <= centerY + candidate.radius;
+      });
+      if (!next) return {position: {...end}, hit: false};
+      tube = next;
+      dx = tube.end.x - tube.start.x; dz = tube.end.z - tube.start.z;
+      length = Math.hypot(dx, dz);
+    }
     const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
     const limit = Math.max(0, tube.radius - clearance);
     if (Math.abs(side) <= limit) return {position: {...end}, hit: false};
