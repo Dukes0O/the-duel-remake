@@ -9,7 +9,7 @@ import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scar
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
-import {sees} from '../src/world/scablands-ways.js';
+import {sampleLine, sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
@@ -373,6 +373,15 @@ test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
     assert.ok(nearest >= 400 && nearest <= 900);
     assert.ok(hill.radius >= 260 && hill.radius <= 460);
     assert.ok(hill.height >= 40 && hill.height <= 90);
+  }
+});
+
+test('the Breaks raise each pass road centre by at most half a metre', () => {
+  const hills = HILLS.filter(hill => hill.kind === 'breaks');
+  for (const id of ['burn-road', 'mall-road', 'mall-burn-road']) {
+    for (const point of sampleLine(ROAD_NET.road(id).points, 5)) {
+      assert.ok(hillHeightAt(point.x, point.z, hills) <= .5, `${id} centre stays clear`);
+    }
   }
 });
 

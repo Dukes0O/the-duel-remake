@@ -1859,3 +1859,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 34 of 34. Race fingerprints 
 Changed assertions: none. The placement check is new. Codex decided: no new design choice. The check measures clearance from the full outer radius. Removed: none.
 
 Still needed: build the three Breaks road passes, prove mesa cover and the protected corridors, drive the routes and jobs, complete the remaining hill-country requirements and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: pass road centre check
+
+The hills suite now samples the Burn Road, Mall Road and Mall to Everburn road every 5 m and checks that Breaks hills raise each centre line by no more than 0.5 m. This protects the road-centre requirement while the passes are designed. It does not show that any pass exists. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 35 of 35. Race fingerprints and world signatures were not rerun. The picture scenario was not run.
+
+Changed assertions: none; the road-centre check is new. The older assertion that every Breaks hill clears every road remains in place and conflicts with building the required passes. A deliberate change to that assertion will need Claude's review. Codex decided: sample at intervals of at most 5 m. Removed: none.
+
+Still needed: build and prove all three Breaks passes, prove mesa cover and protected corridors, drive routes and jobs, and run final checks. Claude must run and judge the picture scenario.
