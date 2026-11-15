@@ -231,6 +231,8 @@ for (const id of ['girder-bridge', 'the-pipe']) {
       assert.equal(raider.z, centre.z, `${id}: raider stays in place`);
       assert.equal(raider.y, scablandsActorHeightAt(centre.x, centre.z, -100));
       const truck = job.actors.find(actor => actor.id === 'big-bess');
+      if (truck) assert.ok(Math.abs(truck.position.y - scablandsActorHeightAt(truck.position.x, truck.position.z)) < .01,
+        `${id}: Big Bess stays on the upper floor`);
       if (truck && Math.hypot(truck.position.x - centre.x, truck.position.z - centre.z) < 1) {
         assert.ok(truck.position.y - raider.y > 4, `${id}: the deck separates them`);
         passedOver = true;
