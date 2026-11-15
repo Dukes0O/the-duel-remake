@@ -6,6 +6,7 @@ import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/worl
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 import {_jump} from '../src/sim-driving.js';
 import {makeRng} from '../src/rng.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsFloorsAt, selectScablandsFloor, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
@@ -192,6 +193,56 @@ for (const id of ['girder-bridge', 'the-pipe']) {
     }
     assert.ok(below > 60, `${id}: job raider travels below the deck`);
     assert.ok(Math.hypot(raider.x - target.x, raider.z - target.z) < 1, `${id}: job raider reaches the far side`);
+  }
+}
+
+// Big Bess crosses each deck while a raider remains directly beneath it.
+// Exercise the job update, not only the mover helper.
+{
+  const {Duel} = await import('../src/game.js');
+  const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+  for (const id of ['girder-bridge', 'the-pipe']) {
+    const crossing = RIVER_LAND.crossings.find(item => item.id === id);
+    const hit = ROAD_NET.nearest(crossing.x, crossing.z);
+    const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+    const centre = {x: crossing.x + dx * 20, z: crossing.z + dz * 20};
+    const start = {x: centre.x - dx * 12, z: centre.z - dz * 12};
+    const end = {x: centre.x + dx * 12, z: centre.z + dz * 12};
+    start.y = scablandsActorHeightAt(start.x, start.z);
+    end.y = scablandsActorHeightAt(end.x, end.z);
+    const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+      seed: 1, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1}}), true);
+    duel.state.countdown = 0;
+    const job = duel.state.arena.worldJob;
+    const step = job.job.steps[job.job.stepIndex];
+    step.actor = {id: 'big-bess', escort: true, speed: 6, start, path: [start, end]};
+    const raider = {id: 'under-bess', x: centre.x, z: centre.z,
+      y: scablandsActorHeightAt(centre.x, centre.z, -100), health: 70};
+    job.actors.push(raider);
+    let passedOver = false;
+    for (let tick = 0; tick < 600; tick++) {
+      job.follow = {actorId: 'big-bess', speed: 6};
+      duel.step(1 / 60);
+      assert.equal(raider.x, centre.x, `${id}: raider stays in place`);
+      assert.equal(raider.z, centre.z, `${id}: raider stays in place`);
+      assert.equal(raider.y, scablandsActorHeightAt(centre.x, centre.z, -100));
+      const truck = job.actors.find(actor => actor.id === 'big-bess');
+      if (truck && Math.hypot(truck.position.x - centre.x, truck.position.z - centre.z) < 1) {
+        assert.ok(truck.position.y - raider.y > 4, `${id}: the deck separates them`);
+        passedOver = true;
+      }
+    }
+    assert.ok(passedOver, `${id}: Big Bess passes directly over the raider`);
+    const bess = job.actors.find(actor => actor.id === 'big-bess');
+    assert.ok(bess, `${id}: Big Bess is present`);
+    assert.ok(Math.hypot(bess.position.x - end.x, bess.position.z - end.z) < 1,
+      `${id}: Big Bess reaches the far side ${JSON.stringify(bess.position)} end ${JSON.stringify(end)}`);
+    assert.ok(Math.abs(bess.position.y - scablandsActorHeightAt(end.x, end.z)) < .01,
+      `${id}: Big Bess stays on the deck`);
   }
 }
 
