@@ -1630,3 +1630,11 @@ Checks: `node tools/test-scablands-hills.mjs` passed 25 of 25; `node tools/test-
 Changed assertions: none. Codex decided: stagger the two checks by 15 steps to avoid their long traces landing together. Removed: per-target filtered distance lists and repeated long traces on every step.
 
 Still needed: measure the full Hot Delivery worst step, prove an actual shot after the sight delay, add open-bed and along-bore coverage, and finish parts B and C before the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight firing and tunnel coverage
+
+The hill suite now checks that a raider actually fires at a stopped car after 1.2 seconds of sight and that actors can see along the trial tunnel bore. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 27 of 27. Race fingerprints and world signatures were not checked in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: a separate open-bed approach check and the worst-step Hot Delivery sight sample count, then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

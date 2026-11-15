@@ -15,7 +15,7 @@ import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 
 test('the Ridge lookout sees only within range and over clear ground', () => {
@@ -207,6 +207,25 @@ test('a stopped car needs continuous sight on the Scablands but is ignored in ra
   assert.equal(targetFor(duel, zone), null);
   car.speedMph = 8;
   assert.equal(targetFor(duel, zone)?.actor, car);
+});
+
+test('a raider fires at a stopped car after continuous sight', () => {
+  const yard = LAND.at('yard'), y = scablandsSurfaceHeightAt(yard.x, yard.z);
+  const raider = {id: 'test', x: yard.x, z: yard.z, y, groundY: y};
+  const zone = {id: 'test', s: 0, raiders: [raider], nextShotAt: 0, shotCount: 0};
+  const state = {s: 0, lateral: 0, speedMph: 0, groundHeight: y, opponents: [], currentLap: 1,
+    status: 'racing', stageTimeSec: 0, cpuDifficulty: 'medium', combat: {projectiles: [], serial: 0},
+    raids: {zones: [zone], shots: 0}};
+  const events = [];
+  const duel = {state, course: {def: {scablands: true}, seed: 1,
+    groundAt: () => ({x: yard.x + 10, z: yard.z, y, heading: 0}), at: () => ({curvature: 0})},
+    relativeS: () => 0, _callout: () => {}, emit: event => events.push(event)};
+  stepRaiders(duel, 1);
+  assert.equal(state.combat.projectiles.length, 0);
+  stepRaiders(duel, .2);
+  assert.equal(state.combat.projectiles.length, 1);
+  assert.equal(state.combat.projectiles[0].targetIndex, -1);
+  assert.ok(events.some(event => event.raiderShot));
 });
 
 test('each distant scarp face has fine cells at the land height', () => {
@@ -461,4 +480,14 @@ test('the tunnel roof hides a car from a watcher above', () => {
   const watcher = {x, z, y: scablandsSurfaceHeightAt(x, z)};
   assert.ok(watcher.y > car.y + radius * 2, 'trial has rock above the car');
   assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels, step: .5}), false);
+});
+
+test('actors can see along the trial tunnel bore', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  const tunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
+  const {start, end, radius} = trial.segment;
+  const at = t => ({x: start.x + (end.x - start.x) * t,
+    z: start.z + (end.z - start.z) * t, y: start.y + (end.y - start.y) * t - radius * .55});
+  assert.equal(sees(at(.3), at(.7), {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+    tunnels, eye: 1.5, target: 1.5, step: 1}), true);
 });
