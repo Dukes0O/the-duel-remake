@@ -71,6 +71,24 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit,open
   return edited-previousNatural+requestedNatural;
 }
 
+// Fill caller-owned storage in descending order, without making a list per step.
+// The bed is a second floor only where the terrain has been lifted for a deck.
+export function scablandsFloorsAt(x,z,floors){
+  const surface=scablandsSurfaceHeightAt(x,z);
+  const deckLift=riverGorgeDepthAt(x,z)-riverDepthAt(x,z);
+  floors[0]=surface;
+  if(deckLift>0){floors[1]=surface-deckLift;return 2;}
+  return 1;
+}
+
+// An actor without a stored height starts on the top floor. If its feet are
+// below all floors, the lowest floor is its support rather than the deck.
+export function selectScablandsFloor(floors,count,feet){
+  if(!Number.isFinite(feet))return floors[0];
+  for(let i=0;i<count;i++)if(floors[i]<=feet+.6)return floors[i];
+  return floors[count-1];
+}
+
 // With an actor below a bridge deck, return the continuous bed instead of the deck.
 // The edit applies to both levels. With no height hint, preserve the surface exactly.
 export function scablandsActorHeightAt(x,z,actorHeight){
