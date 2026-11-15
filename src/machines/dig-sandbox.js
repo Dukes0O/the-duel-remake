@@ -24,6 +24,16 @@ const RESERVATIONS = Object.freeze([
 ]);
 const STEP = 1 / 60;
 
+// A raised patch followed by a shallow ditch gives the blade material to carry.
+// These are yard-only cells, separate from the town and from the ground save.
+function yardRoadWork() {
+  const work = createRoadWork();
+  for (let z = 12; z <= 19; z++) {
+    work.cells[`40:${z}`] = {height:z < 16 ? 1 : -1, spread:0, compaction:0, surface:0, roughness:0};
+  }
+  return work;
+}
+
 /** Frame edges stay queued until a simulation step consumes them. */
 export function createPendingDigActions(){
   const pending=new Set();
@@ -53,7 +63,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
   return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
-    roadWork:createRoadWork(), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
+    roadWork:yardRoadWork(), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};

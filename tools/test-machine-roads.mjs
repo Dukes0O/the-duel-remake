@@ -47,7 +47,12 @@ for (const kind of ['dozer', 'roller', 'paver']) {
 }
 assert.ok(Object.keys(yard.roadWork.cells).length > 0, 'Road work remains in the yard when machines change.');
 const freshYard = createDigSandbox({playerId:'road-test'});
-assert.deepEqual(freshYard.roadWork, createRoadWork(), 'Road work lasts for the visit only.');
+assert.notDeepEqual(freshYard.roadWork, yard.roadWork, 'Road work lasts for the visit only.');
+assert.equal(roadCell(freshYard.roadWork, 40, 12).height, 1, 'The yard has material to cut.');
+assert.equal(roadCell(freshYard.roadWork, 40, 16).height, -1, 'The yard has a low place to fill.');
+let practice = {...freshYard, activeMachine:'dozer'};
+practice = stepDigSandbox(practice, {controls:{forward:1, working:true}}, 12);
+assert.ok(roadCell(practice.roadWork, 40, 16).spread > 0, 'Driving the blade carries yard material into the low ground.');
 closeDigSandbox();
 console.log('Road work rules pass.');
 import * as THREE from 'three';
