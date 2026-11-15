@@ -169,6 +169,40 @@ the land's own look; the scenario's roof ray is taken from inside the bore; and 
 that rises only about 5 m within 12 m, is made what this card says (6 m, from her floor, across her width). At the west scarp
 she will then refuse, rightly, and she is finished at a mesa once hill country is merged.
 
+### Coming out the far side (Claude, 15 November 2026, night): she climbs by the player's hand
+
+Codex parked Mabel at the mesa nearest (2214, -518) and found that a level bore never comes out: the plain is not level. Her
+floor at the near foot is at -1.6 m and the ground at the far foot is at +1.2 m, 2.8 m higher, 307 m on. Every mesa on this
+land has a difference of this kind (0.5 to 24 m). So the line of a tunnel is a thing the player sets, as a real crew does.
+
+- **The head tilts.** The rules already hold it: the arrows tilt the head up or down, 0.3 degrees for each metre bored, to 6
+  degrees at most, and the floor follows. Nothing new is needed in the rules for climbing.
+- **The survey line.** When she stands at a face that the face rule accepts, before the first thrust, the screen gives the
+  line a surveyor would: how far on the far side is on her heading (the first place beyond the hill where the ground comes
+  down to her crown or lower), and how much higher or lower the ground is there than her floor. In words: "Far side on this
+  line: 307 m on, 2.8 m higher. Hold a rise of 1 in 110." While she bores the screen keeps three numbers: her floor's height
+  from the mouth, her head's grade as "1 in N up", "1 in N down" or "level", and what is left ("212 m to go, 1.9 m to gain").
+  Beside the numbers a plain strip shows the hill from the side on her line: the ground, the bore so far and the far foot.
+  The player still steers; the numbers only say where to aim.
+- **Breaking through.** The covered tunnel ends where the ground over her centre line comes down to her crown across her
+  whole width, if that place is in a face (12 m back along the bore the ground stands 6 m or more above her floor). A second
+  mouth is cut there with its portal. Then:
+  - ground beyond within 0.5 m of her floor: she is out. "Daylight. She is through, 0.3 m off level."
+  - ground beyond up to 3 m above her floor: she goes on in the open as an exit cutting, climbing as the player tilts her,
+    until her floor meets the ground. A cutting longer than 60 m stops her: "She is cutting a trench, not a tunnel. Raise her
+    head and bring her up to the ground."
+  - ground beyond more than 1 m below her floor: she stops at the lip. "She has come out 2.4 m up the face. Back her up and
+    turn her down." A drop of 1 m or less she drives off; the spoil makes the step.
+  - no face behind (she is rising under level ground): the sentence already built, "She is coming up under open ground. Turn
+    her down, or stop here."
+- **The result differs with how she was driven:** how far off level she came out is kept in her state and shown. Half a
+  metre or less is a clean hole.
+- **The west scarp, corrected again.** I asked for a refusal at every metre of its first 20 m. That was wrong: partway up,
+  the scarp does rise 6 m within 12 m, and a bore started there sits in a real face. The rule stays as written (6 m within
+  12 m, from her floor at her head, the lowest of left edge, centre and right edge). The test keeps the refusal at the foot
+  and on level ground, and the start at the mesa's side.
+- **Sound:** `borer.daylight` for breaking through (wind, and the head running free), beside the cues she has.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
