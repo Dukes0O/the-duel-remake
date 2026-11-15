@@ -84,3 +84,13 @@ The Cinder figure and any plain temporary yard details still need drawing.
 ### Removed
 
 Nothing removed in this round. The old `everburn-play` scenario still needs to be rewritten or removed when the requested scenario is built.
+
+## Larger land, start continued (15 November 2026)
+
+- A simple Cinder figure now stands two metres from the yard brazier, at the pickup point. Other actor markers are hidden on both maps until the pot is loaded.
+- `node tools/test-everburn-job1.mjs`: passed, including the figure, its distance from the brazier, and the map frame before and after pickup. `git diff --check`: passed.
+- The yard, its gate and solids, and the remaining map work are still missing. Item 1 is not complete. No new sound event was added.
+- For Claude to draw: Cinder's final figure.
+- For Claude to run: the requested browser scenario remains unwritten. The lane tier, replay and world-signature checks, build, and long drivers remain for the final round.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

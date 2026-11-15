@@ -127,6 +127,21 @@ export function brazierSpotsFor(step) {
   return spots.map((spot, index) => brazierSpot(at(spot), at(spots[index + 1] ?? step.destination), 9));
 }
 
+// A simple standing figure until the character has her own drawing.
+export function createCinderFigure() {
+  const group = new THREE.Group();
+  group.name = 'Cinder at the yard gate';
+  const coat = new THREE.MeshStandardMaterial({color: 0x514137, roughness: 1});
+  const head = new THREE.MeshStandardMaterial({color: 0x98765e, roughness: 1});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.25, .4, 1.25, 8), coat);
+  body.position.y = .78;
+  const face = new THREE.Mesh(new THREE.SphereGeometry(.22, 8, 6), head);
+  face.position.y = 1.6;
+  group.add(body, face);
+  group.visible = false;
+  return group;
+}
+
 // A brazier: an iron bowl on three legs with live coals and a tall flame, firelight on the ground and sparks.
 function bowlGeometry() {
   const bowl = new THREE.LatheGeometry([[0, .86], [.3, .82], [.55, .98], [.62, 1.12], [.56, 1.12], [.5, .98], [.28, .9], [0, .9]].map(([r, y]) => new THREE.Vector2(r, y)), 14);

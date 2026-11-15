@@ -24,7 +24,7 @@ export function buildEverburn(land) {
   const boneyard = place('boneyard', at('boneyard'), 18), mall = place('dead-mall', at('dead-mall'), 14);
   const well = place('everburn', at('everburn'), 18), safeRoad = place('safe-road', at('safe-road'), 16);
   const yardToCamp = Math.hypot(safeRoad.position.x - yard.position.x, safeRoad.position.z - yard.position.z) || 1;
-  const cinderAt = at('yard', (safeRoad.position.z - yard.position.z) / yardToCamp * 9, -(safeRoad.position.x - yard.position.x) / yardToCamp * 9);
+  const cinderAt = at('yard', (safeRoad.position.z - yard.position.z) / yardToCamp * 9, -(safeRoad.position.x - yard.position.x) / yardToCamp * 9 + 2);
   const wellRaidersHold = place('everburn-well-raiders-hold', at('everburn', -2, -1), 8);
   const wellRaiderEntries = Object.freeze([[0, 64], [64, 0], [0, -64], [-64, 0]]
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));

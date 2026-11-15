@@ -139,7 +139,9 @@ export function worldMapFrame({state, course, model, knowledge, picture, canvas}
   const worldJob = state.arena.worldJob, car = worldMapCar(state, course);
   const data = worldJobMapData(course, state);
   const target = model?.target ? {id: model.target.id, name: model.target.name, x: model.target.x, z: model.target.z} : null;
-  const actors = (data?.marks ?? []).filter(mark => mark.kind !== 'player');
+  const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+  const awaitingPickup = worldJob?.definition?.id === 'everburn-hot-delivery' && step?.pickup && !worldJob.job.stepState.loaded;
+  const actors = awaitingPickup ? [] : (data?.marks ?? []).filter(mark => mark.kind !== 'player');
   return {picture, canvas, car, target, knowledge, actors, worldJob};
 }
 

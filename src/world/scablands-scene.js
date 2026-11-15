@@ -23,7 +23,7 @@ import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createEverburnProps} from './everburn-props.js';
-import {createBraziers,brazierSpotsFor} from './ember-pot.js';
+import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
 import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
@@ -575,6 +575,7 @@ export function createScablandsScene(course,options={}){
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
   // The two braziers where a fresh scoop is taken in Hot Delivery (src/world/ember-pot.js): shown only while that job's carry step is on.
   const braziers=createBraziers(2);group.add(braziers.group);let brazierKey='';
+  const cinder=createCinderFigure();group.add(cinder);
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
@@ -799,6 +800,11 @@ export function createScablandsScene(course,options={}){
       // The braziers stand beside the yard gate and the halfway camp, on the side of the road away from the line of the way.
       const emberStep=stepNow?.ember?stepNow:null;
       braziers.group.visible=Boolean(emberStep);
+      cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);
+      if(cinder.visible){
+        const at=emberStep.pickup.place.position;
+        cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
+      }
       if(emberStep){
         const spots=brazierSpotsFor(emberStep),key=JSON.stringify(spots);
         if(key!==brazierKey){

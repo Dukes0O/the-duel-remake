@@ -1,10 +1,15 @@
 ﻿import assert from 'node:assert/strict';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
+import {brazierSpotsFor, createCinderFigure} from '../src/world/ember-pot.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
+const figure = createCinderFigure();
+assert.equal(figure.name, 'Cinder at the yard gate');
+assert.ok(figure.children.some(child => child.isMesh));
+assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSpotsFor(step)[0].z) < 3);
 assert.equal(Math.hypot(step.carStart.x - step.origin.position.x, step.carStart.z - step.origin.position.z), 40);
 assert.ok(Math.abs(step.carStart.heading - Math.PI / 2) < 1e-9);
 let job = createJob(definition, 19);
@@ -14,6 +19,12 @@ job = stepJob(job, view(step.carStart.x, step.carStart.z), 5);
 assert.equal(job.stepState.loaded, undefined);
 assert.equal(hud().ember, null);
 assert.equal(hud().target.id, 'cinder');
+const worldJob = {job, definition, actors: [{id: 'rider', ambushKey: 'camp', position: {x: pickup.x, z: pickup.z}}]};
+const state = {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob}};
+const course = {worldAt: () => ({x: step.carStart.x, z: step.carStart.z, heading: step.carStart.heading})};
+const frame = () => worldMapFrame({state, course, model: worldHudModel({worldJob}), knowledge: {}, picture: {}, canvas: null});
+assert.equal(frame().target.id, 'cinder');
+assert.deepEqual(frame().actors, []);
 job = stepJob(job, view(pickup.x, pickup.z, 10), 1);
 assert.equal(job.stepState.pickingUp, undefined);
 job = stepJob(job, view(pickup.x + 8.1, pickup.z), 1);
@@ -27,6 +38,8 @@ for (let i = 0; i < 100 && !job.stepState.loaded; i++) {
 }
 assert.deepEqual(lines, step.pickup.lines);
 assert.equal(job.stepState.loaded, true);
+worldJob.job = job;
+assert.equal(frame().actors.length, 1);
 assert.ok(hud().ember.value > 99);
 assert.equal(hud().target.id, 'tin-town');
 console.log('Hot Delivery pickup: start, stop, three lines and ember passed.');
