@@ -1,0 +1,76 @@
+import {machineDefinition} from './content/machines.js';
+
+export const BORER_NO_FACE = 'There is not enough hill over her here. Dig her a cutting first.';
+export const BORER_OBSTRUCTION = 'She will not cut there. Something stands in the way.';
+export const BORER_STALL = 'The head has stalled. Ease off, then push again.';
+export const BORER_OPEN_GROUND = 'She is coming up under open ground. Turn her down, or stop here.';
+const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+const radians = degrees => degrees * Math.PI / 180;
+const hardness = Object.freeze({topsoil:1, clay:0.8, gravel:0.55, rock:1 / 3});
+
+/** Ground height includes any cutting already dug by another machine. */
+export function borerHasFace(ground, position, heading, radius = 3) {
+  const floor = ground.heightAt(position.x, position.z);
+  for (let distance = 1; distance <= 12; distance++) {
+    const x = position.x + Math.sin(heading) * distance;
+    const z = position.z + Math.cos(heading) * distance;
+    if (ground.heightAt(x, z) >= floor + 2 * radius) return true;
+  }
+  return false;
+}
+
+export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
+  if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
+  return {x, y, z, heading, slope:0, name, started:false, distanceM:0, headSpeed:0,
+    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null};
+}
+
+/** Work is deterministic in fixed steps. The caller supplies the face material and ground layer. */
+export function stepBorer(state, controls = {}, ground, material = 'rock', dtSeconds = 0) {
+  if (!state || !ground || typeof ground.heightAt !== 'function' || typeof ground.refusal !== 'function' ||
+      !Number.isFinite(dtSeconds) || dtSeconds < 0 || !Object.hasOwn(hardness, material))
+    throw new TypeError('The borer needs ground, material and non-negative time.');
+  const radius = machineDefinition('borer').boreRadiusM;
+  const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, 0, 1);
+  const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
+  const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
+  let next = {...state}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
+  const events = [], step = 1 / 120;
+  while (carry >= step - 1e-10) {
+    carry -= step;
+    if (next.stalled) {
+      next.headSpeed = 0;
+      next.releaseSeconds = thrust === 0 ? next.releaseSeconds + step : 0;
+      if (next.releaseSeconds >= 1 - 1e-9) {
+        next.stalled = false; next.releaseSeconds = 0; next.overloadSeconds = 0; next.message = null;
+      }
+      continue;
+    }
+    if (!thrust) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
+    const refusal = ground.refusal({x:next.x, z:next.z, radius});
+    if (refusal || (!next.started && !borerHasFace(ground, next, next.heading, radius))) {
+      const message = refusal ? ((refusal === 'A building or protected place is in the way.' || refusal === 'This region is protected ground.') ? BORER_OBSTRUCTION : refusal) : BORER_NO_FACE;
+      if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+      next.message = message; next.headSpeed = 1; next.overloadSeconds = 0; continue;
+    }
+    next.message = null;
+    const capacity = hardness[material];
+    const overloaded = thrust > capacity + 1e-9;
+    next.headSpeed = overloaded ? capacity / thrust : 1;
+    next.overloadSeconds = overloaded ? next.overloadSeconds + step : 0;
+    if (next.overloadSeconds >= 2 - 1e-9) {
+      next.stalled = true; next.headSpeed = 0; next.message = BORER_STALL;
+      events.push({type:'stall', cue:'borer.stall', message:BORER_STALL});
+      continue;
+    }
+    const distance = 0.5 * Math.min(thrust, capacity) * step;
+    next.heading += steer * radians(0.5) * distance;
+    next.slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
+    next.x += Math.sin(next.heading) * Math.cos(next.slope) * distance;
+    next.z += Math.cos(next.heading) * Math.cos(next.slope) * distance;
+    next.y += Math.sin(next.slope) * distance;
+    next.distanceM += distance; next.started = true;
+  }
+  next.stepCarrySeconds = Math.max(0, carry);
+  return {state:next, events};
+}
