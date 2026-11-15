@@ -265,7 +265,7 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const ground = this.course.groundAt(distance, lateral);
+  const ground = this.course.groundAt(distance, lateral, actor?.groundHeight);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
   const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);

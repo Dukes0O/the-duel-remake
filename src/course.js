@@ -287,8 +287,10 @@ export class Course {
       p.y=lerp(p.y,hidden.y,blend);
     }
     return p;}
-  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+  groundAt(s,off=0,actorHeight){const p=this._baseGroundAt(s,off);
     if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
+    if(this.def.scablands && Number.isFinite(actorHeight) && this.groundTunnels)
+      p.y=this.groundTunnels.groundAt({x:p.x,y:actorHeight,z:p.z},actorHeight,p.y);
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;
