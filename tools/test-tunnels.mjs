@@ -37,10 +37,10 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
   const {scablandsSurfaceHeightAt} = await import('../src/world/scablands-ground.js');
   const trial = westScarpTrial(scablandsSurfaceHeightAt), {start, end, radius} = trial.segment;
   const dx = (end.x - start.x) / 100, dz = (end.z - start.z) / 100;
-  for (const direction of [1, -1]) {
+  for (const car of ['titan_monster', 'falcone_f42']) for (const direction of [1, -1]) {
     const d = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
     d.state.wastelandGateDiscovered = true;
-    assert.equal(d.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'titan_monster', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+    assert.equal(d.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car, seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
     d.state.arena.timeLimitSec = Infinity;
     d.state.opponents[0].finished = true;
     d.course.groundTunnels = createGroundTunnels([trial.segment]);
@@ -59,7 +59,7 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
       if (along > 2 && along < 98 && side < radius - 1) {
         floorSamples++;
         const floor = start.y - radius + (end.y - start.y) * along / 100;
-        assert.ok(Math.abs(d.state.groundHeight - floor) < 1, `scarp floor direction ${direction}, at ${along.toFixed(1)}: ${d.state.groundHeight} vs ${floor}`);
+        assert.ok(Math.abs((d.state.groundHeight ?? d.state._jumpY) - floor) < 1, `scarp floor ${car} direction ${direction}, at ${along.toFixed(1)}: ${d.state.groundHeight ?? d.state._jumpY} vs ${floor}`);
       }
       if (furthest > 103) break;
       const target = direction > 0 ? {x: end.x + dx * 30, z: end.z + dz * 30} : {x: start.x - dx * 30, z: start.z - dz * 30};

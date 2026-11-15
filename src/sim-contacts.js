@@ -266,7 +266,8 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const ground = this.course.groundAt(distance, lateral, actor?.groundHeight);
+  const height = actor?.groundHeight ?? (this.course.groundTunnels ? actor?._jumpY : undefined);
+  const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
   // Surface obstacles must not lift an underground car back onto the hill.
@@ -295,9 +296,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
-  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null) {
-    start.y = (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
-    end.y = (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
+      (this.course.groundTunnels && Number.isFinite(car._jumpY))) {
+    start.y = (car.prevGroundHeight ?? (this.course.groundTunnels ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
+    end.y = (car.groundHeight ?? (this.course.groundTunnels ? car._jumpY : undefined) ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
   } else {
     // Grounded cars keep the established horizontal contact rules; only
     // airborne vehicles need extra terrain samples and vertical clearance.
