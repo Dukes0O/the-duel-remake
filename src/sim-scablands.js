@@ -7,7 +7,7 @@ import {slopeSpeedDelta} from './offroad-physics.js';
 import {contactZone} from './collision.js';
 import {combatArmorEnabled, applyArmorDamage, applySceneryArmorDamage} from './combat-armor.js';
 import {combatCrashThresholdMph} from './vehicle-impact.js';
-import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsSurfaceHeightAt, scablandsActorFeet} from './world/scablands-ground.js';
 import {ledgeAt} from './world/scablands-regions.js';
 import {GROUND, MPH_TO_KMH, climbLimit, dropFor, fallHit} from './world/scablands-ground-rules.js';
 import {SOLID_GRID} from './world/scablands-solids.js';
@@ -59,7 +59,7 @@ export function scablandsGround(duel, actor, dt) {
   const dx = to.x - from.x, dz = to.z - from.z, distance = Math.hypot(dx, dz);
   if (distance < 1e-4) return;
   // Use the same floor as vehicle support when this course has a trial tube.
-  const actorHeight = actor.groundHeight ?? actor._jumpY;
+  const actorHeight = scablandsActorFeet(actor);
   const height = Number.isFinite(actorHeight)
     ? (x, z) => {
       const surface = scablandsActorHeightAt(x, z, actorHeight);

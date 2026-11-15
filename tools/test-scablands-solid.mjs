@@ -18,7 +18,7 @@ import {placeActor} from '../src/arena/arena-event.js';
 import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, EAST_ROAD, ROAD_HALF_WIDTH, roadPointFrom} from '../src/world/scablands-road.js';
-import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../src/world/scablands-ground.js';
 import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
@@ -206,6 +206,32 @@ test('a car driven off the bank beside the bridge lands in the bed', () => {
   assert.ok(Math.hypot(landing.x - bridge.x, landing.z - bridge.z) < 100, 'the landing is beside the bridge');
   assert.ok(Math.abs(landing.feet - scablandsSurfaceHeightAt(landing.x, landing.z)) < .1,
     `landing: ${JSON.stringify(landing)} surface ${scablandsSurfaceHeightAt(landing.x, landing.z)}`);
+});
+
+test('the same feet select support throughout flight beside the bridge at 80 km/h', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line, index = along.findIndex(v => v >= bridge.along);
+  const a = points[index - 1], b = points[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+  const centre = {x: bridge.x + dx * 35, z: bridge.z + dz * 35};
+  const normal = {x: dz, z: -dx}, start = {x: centre.x + normal.x * 260, z: centre.z + normal.z * 260};
+  const duel = newDuel(), heading = Math.atan2(-normal.x, -normal.z);
+  put(duel, start.x, start.z, heading, 80);
+  let flight = 0;
+  for (let i = 0; i < 1200; i++) {
+    const here = where(duel);
+    drive(duel, {x: here.x + Math.sin(heading) * 100, z: here.z + Math.cos(heading) * 100}, 80);
+    duel.step(DT);
+    const actor = duel.state;
+    if (actor.airborne) {
+      flight++;
+      const feet = scablandsActorFeet(actor);
+      assert.equal(feet, actor._jumpY);
+      assert.equal(duel._supportAt(actor.s, actor.lateral, actor).y,
+        duel.course.groundAt(actor.s, actor.lateral, feet).y);
+    }
+  }
+  assert.ok(flight > 0, 'the car leaves the bank');
 });
 
 test('the Steps: a car under 25 km/h climbs the ledges, a car at 60 is thrown back; the ember is safe there only under 20', () => {

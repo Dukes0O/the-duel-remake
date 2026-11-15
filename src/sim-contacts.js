@@ -1,3 +1,4 @@
+import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
 import {hitSnowman} from './snowmen.js';
@@ -267,7 +268,7 @@ export function _roadPosition(world, hintS) {
 
 export function _supportAt(distance, lateral, actor = this.state) {
   const height = this.course.def?.scablands || this.course.groundTunnels
-    ? (actor?.airborne && Number.isFinite(actor?._jumpY) ? actor._jumpY : actor?.groundHeight ?? actor?._jumpY) : undefined;
+    ? scablandsActorFeet(actor) : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
@@ -302,7 +303,8 @@ export function _staticContacts(car, player, journeyColliders = null) {
   if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
       ((this.course.groundTunnels || layeredGround) && Number.isFinite(car._jumpY))) {
     start.y = (car.prevGroundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
-    end.y = (car.groundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+    end.y = scablandsActorFeet(car);
+    if (!Number.isFinite(end.y)) end.y = this.course.groundAt(car.s, car.lateral).y;
   } else {
     // Grounded cars keep the established horizontal contact rules; only
     // airborne vehicles need extra terrain samples and vertical clearance.

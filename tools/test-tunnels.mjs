@@ -297,8 +297,8 @@ for (const id of ['girder-bridge', 'the-pipe']) {
     const centre = {x: crossing.x + dx * 20, z: crossing.z + dz * 20};
     const start = {x: centre.x - dx * 12, z: centre.z - dz * 12};
     const end = {x: centre.x + dx * 12, z: centre.z + dz * 12};
-    start.y = scablandsActorHeightAt(start.x, start.z);
-    end.y = scablandsActorHeightAt(end.x, end.z);
+    start.y = 0; // Job positions give an offset, not an absolute floor.
+    end.y = 0;
     const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
     duel.state.wastelandGateDiscovered = true;
     assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',

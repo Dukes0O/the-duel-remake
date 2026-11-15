@@ -87,6 +87,13 @@ export function scablandsFloorsAt(x,z,floors){
   return 1;
 }
 
+// Flight stores the absolute height in _jumpY. On the ground, groundHeight is the last support.
+export function scablandsActorFeet(actor, fallback) {
+  if (actor?.airborne && Number.isFinite(actor._jumpY)) return actor._jumpY;
+  if (Number.isFinite(actor?.groundHeight)) return actor.groundHeight + (actor.airHeight || 0);
+  return Number.isFinite(actor?._jumpY) ? actor._jumpY : fallback;
+}
+
 // An actor without a stored height starts on the top floor. If its feet are
 // below all floors, the lowest floor is its support rather than the deck.
 export function selectScablandsFloor(floors,count,feet){

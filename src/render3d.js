@@ -1,3 +1,4 @@
+import {scablandsActorFeet} from './world/scablands-ground.js';
 import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
@@ -982,7 +983,7 @@ export function attachRenderer(host, app) {
       }
     }
     if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
-      constrainScablandsCamera(course,camera.position,player.position,(st.groundHeight??pp.y)+(st.airHeight||0));
+      constrainScablandsCamera(course,camera.position,player.position,scablandsActorFeet(st, pp.y));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){

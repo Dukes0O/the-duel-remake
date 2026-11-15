@@ -2,7 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
+import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
 import {pathShare} from '../../world/jobs/furnace-sightings.js';
@@ -22,9 +22,7 @@ import {brazierSpotsFor} from '../../world/ember-pot.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
-  const feet = actor.airborne && Number.isFinite(actor._jumpY)
-    ? actor._jumpY : Number.isFinite(actor.groundHeight)
-      ? actor.groundHeight + (actor.airHeight || 0) : at.y;
+  const feet = scablandsActorFeet(actor, at.y);
   return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
 const position = worldJobPosition;
@@ -192,6 +190,10 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
       pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null, stretchHealth: actorDef.health ?? 100,
       ...(named && (actorDef.path?.length ?? 0) > 1 ? {pathIndex: 1, pathProgress: 1 / (actorDef.path.length - 1)} : {}),
       ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
+    if (duel.course.def.scablands) {
+      actor.position.y = scablandsActorHeightAt(start.x, start.z) + (start.y || 0);
+      actor.hasFloorHeight = true;
+    }
     if (actorDef.id === FURNACE_ID && actorDef.legs) {
       actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
       syncFurnaceActor(actor);
