@@ -231,7 +231,7 @@ for (const id of ['girder-bridge', 'the-pipe']) {
     const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
     const centre = {x: crossing.x + dz * 27, z: crossing.z - dx * 27};
     for (const direction of [-1, 1]) {
-      const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
+      const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true}});
       duel.state.wastelandGateDiscovered = true;
       assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'falcone_f42', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
       duel.state.countdown = 0; duel.state.arena.timeLimitSec = Infinity; duel.state.opponents[0].finished = true;
@@ -252,6 +252,27 @@ for (const id of ['girder-bridge', 'the-pipe']) {
       }
       assert.ok(below && furthest > 35, `${id}, direction ${direction}: crossed beneath the deck (${furthest.toFixed(1)} m)`);
     }
+  }
+}
+
+// A car explicitly placed in the bed keeps that floor. An ordinary placement
+// at the same coordinates chooses the top floor, even after a previous visit.
+{
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const course = new Course(SCABLANDS_VENUE, 1989);
+  for (const id of ['girder-bridge', 'the-pipe']) {
+    const {x, z} = RIVER_LAND.crossings.find(crossing => crossing.id === id);
+    const at = course.nearest(x, z), bed = scablandsActorHeightAt(x, z, -100);
+    const top = scablandsActorHeightAt(x, z), actor = {};
+    const duel = {course, state: actor, car: {}};
+    placeActor(duel, actor, {...at, height: bed});
+    assert.equal(actor.prevGroundHeight, bed, `${id}: placement retains the previous height`);
+    assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01,
+      `${id}: explicit placement selects the bed`);
+    placeActor(duel, actor, at);
+    assert.equal(actor.groundHeight, null, `${id}: ordinary placement clears the old height`);
+    assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - top) < .01,
+      `${id}: ordinary placement selects the top`);
   }
 }
 
