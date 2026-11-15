@@ -18,6 +18,7 @@ const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
 const raiderSightOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: 1.48, target: 1.5, step: 2};
+const aimScratch = {};
 
 // Only Scablands camps use its land for cover. Other venues keep their shot rules.
 export function raiderHasClearShot(course, raider, target) {
@@ -263,7 +264,7 @@ export function targetFor(duel, zone, preview = null, seconds = 0, ready = false
         (!duel.course.def.scablands && Math.abs(actor.speedMph || 0) < 8)) continue;
     let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
     if (duel.course.def.scablands) {
-      const at = point(duel, actor);
+      const at = point(duel, actor, aimScratch);
       at.y = scablandsActorFeet(actor, undefined);
       gap = Infinity;
       for (const member of zone.raiders) {
@@ -288,7 +289,7 @@ export function stepRaiderAim(duel, zone, dt) {
       const actor = index < 0 ? state : state.opponents[index];
       let visible = !member.knockedDown && !actor.finished && !actor.crushed && !actor.combatWrecking;
       if (visible) {
-        const at = point(duel, actor);
+        const at = point(duel, actor, aimScratch);
         at.y = scablandsActorFeet(actor, undefined);
         visible = Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS &&
           raiderHasClearShot(duel.course, member, at);

@@ -611,7 +611,7 @@ export function stepWorldJob(duel, dt) {
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
-    const car = position(duel, state);
+    const car = player === state ? point : position(duel, state);
     // The simulation runs at 120 steps per second. Stagger the two long
     // traces, keeping each result for 30 steps between checks.
     const sightStep = worldJob.sightStep ?? 0;

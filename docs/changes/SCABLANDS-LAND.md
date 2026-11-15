@@ -2153,3 +2153,9 @@ Changed assertions for Claude to review: the shared return check now covers the 
 The rail-region test now compares the closed region with the current Scablands terrain, including the hills, before applying the existing place and river shapes. The 3,500 exact comparisons still check that the closed region leaves the land unchanged. The rail-region suite passed.
 
 Changed assertions, for Claude to review: at (1470, 247), the expected height changes from 1.1866134534972772 m to 2.1196134024079134 m because the west ramp of the mesa at (1800, 350) crosses open land there. Other grid expectations now include the same hill terrain. The closed-region equality is unchanged; this updates the reference for the intended terrain change, without loosening its tolerance. Codex decided: retain this mesa on open land. Removed: the pre-hill terrain reference. No event or sound cue was added. Race fingerprints were not checked in this step.
+
+### Hill country: reuse the aim point
+
+Scablands raider target selection and sight timing now reuse one point object instead of making a second point object for each candidate. The course's existing ground lookup still makes its own result. Hot Delivery also reuses the current car position for furnace and lookout sight when the player is driving. Race and arena calls retain their existing behavior. The hills suite passed 54 of 54.
+
+Changed assertions: none. Codex decided: no new design decision. Removed: the extra point allocation in these Scablands aim updates and the duplicate driving position lookup. No event or sound cue was added. Race fingerprints were not checked in this step. The Easy chase driver and final checks remain.
