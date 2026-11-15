@@ -1,15 +1,15 @@
 // The detailed ground of the Scablands (SCABLANDS-LAND round 4, slice 1). The land is 14 km by 10 km, so the fine ground is
-// not drawn everywhere: one window of 60 by 60 cells (1,400 m by 1,000 m, cells 23.3 m by 16.7 m, the size the whole land had
-// on the first, small version) follows the player. Its corners always lie on one fixed lattice of the whole land, and it moves
+// not drawn everywhere: one window of 120 by 120 cells (1,400 m by 1,000 m, cells 11.7 m by 8.3 m) follows the player.
+// Its corners always lie on one fixed lattice of the whole land, and it moves
 // only in whole cells, so a given corner has the same height whichever way the window is standing and nothing swims.
 //
 // Moving the window by a cell keeps the heights of the corners it still holds (they are copied across) and works out the new
-// strip only, about 60 to 120 heights, so a move costs a small fraction of a millisecond. Nothing is allocated after
-// the window is built. `refresh` works out every corner again (about 3,700 heights), for when the land's own height changes.
+// strip only, about 120 to 240 heights. Nothing is allocated after
+// the window is built. `refresh` works out every corner again (about 14,600 heights), for when the land's own height changes.
 import * as THREE from 'three';
 
 export const NEAR_GROUND = Object.freeze({
-  cellX: 700 / 30, cellZ: 500 / 30, cellsX: 60, cellsZ: 60,
+  cellX: 700 / 60, cellZ: 500 / 60, cellsX: 120, cellsZ: 120,
   // The drawn ground rides this far above the land's own height, so that nothing laid on the land sinks into it.
   lift: .025,
 });

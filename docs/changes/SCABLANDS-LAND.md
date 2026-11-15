@@ -1356,3 +1356,17 @@ For Claude to run: `test-full-check` on the laptop, and the memory-only Performa
 Changed assertions, for Claude to review: the scene check's far-ground vertex count changed from 32,361 to 40,623, and triangle count from 64,000 to 76,852, because scarp cells now have finer triangles. The checks remain exact. Codex decided: no new design choice. Removed: the former coarse triangles at the four scarp faces are replaced by finer triangles.
 
 Still needed: refine the nearby scarp faces, then complete sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: nearby ground sampling in progress
+
+The nearby ground now has 120 by 120 cells across the same window, instead of 60 by 60. Its cells are about 11.7 by 8.3 m instead of 23.3 by 16.7 m, giving each scarp face more samples. The existing material and height remain shared. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+This is an interim improvement, not the finished face work: the extra cells cover the whole window rather than the scarps alone. The nearby ground still takes one draw call, but its triangles rose from 7,200 to 28,800 and its vertices from 3,721 to 14,641. The extra work has not been timed. Replace this broad increase with face-specific cells and check the joins and performance before the card is finished.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 11 tests; `node tools/test-scablands-scene.mjs` passed. Race fingerprints and world signatures were not checked in this run. The final route checks, lane tier, replay and world-signature checks and build remain for the final run after integration.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario once written. The faces and their performance need judgment.
+
+Changed assertions, for Claude to review: the scene check's near-ground vertex count changed from 3,721 to 14,641 because the window has twice as many cells in each direction. The exact check remains. Codex decided: no new design choice. Removed: the former 60 by 60 near-ground grid was replaced by a finer grid.
+
+Still needed: face-specific nearby scarp cells and performance checks, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.

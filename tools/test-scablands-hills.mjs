@@ -7,6 +7,7 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
 import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scarps.js';
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
+import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
@@ -31,6 +32,23 @@ test('each distant scarp face has fine cells at the land height', () => {
     assert.ok(Math.abs(Math.hypot(normals.getX(found), normals.getY(found), normals.getZ(found)) - 1) < .001);
   }
   geometry.dispose();
+});
+
+test('near ground samples each scarp face on a finer lattice', () => {
+  const near = createNearGround({material: null, heightAt: (x, z) => scablandsSurfaceHeightAt(x, z) + riverGorgeDepthAt(x, z)});
+  assert.ok(NEAR_GROUND.cellX <= 12 && NEAR_GROUND.cellZ <= 9);
+  for (const face of preparedScarps(SCARPS)) {
+    const x = face.a.x + face.tx * face.length / 2 - face.tz * face.width / 2;
+    const z = face.a.z + face.tz * face.length / 2 + face.tx * face.width / 2;
+    near.follow(x, z);
+    const px = Math.round(x / NEAR_GROUND.cellX) * NEAR_GROUND.cellX;
+    const pz = Math.round(z / NEAR_GROUND.cellZ) * NEAR_GROUND.cellZ;
+    assert.ok(Math.abs(near.heightAtDrawn(px, pz) - (scablandsSurfaceHeightAt(px, pz) + riverGorgeDepthAt(px, pz) + NEAR_GROUND.lift)) < .01);
+    const normals = near.geometry.getAttribute('normal');
+    const i = (NEAR_GROUND.cellsZ / 2 * (NEAR_GROUND.cellsX + 1) + NEAR_GROUND.cellsX / 2);
+    assert.ok(Math.abs(Math.hypot(normals.getX(i), normals.getY(i), normals.getZ(i)) - 1) < .001);
+  }
+  near.dispose();
 });
 
 test('the drawn Steps and river banks follow the ledges with fine cells', () => {
