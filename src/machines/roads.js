@@ -115,7 +115,7 @@ export function createRoadMachineState(kind, position = {}) {
   return {kind, machine:createMachineState(machineDefinition(kind), position), distanceCarryM:0};
 }
 
-export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
+export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0, ground = null) {
   if (!state?.machine || !work?.cells || !Number.isFinite(dtSeconds) || dtSeconds < 0)
     throw new TypeError('Road work needs a machine, ground and elapsed time.');
   const before = state.machine;
@@ -138,11 +138,20 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
       const fraction = (1 - carry + i) / distance;
       const x = Math.round(before.x + (machine.x - before.x) * fraction);
       const z = Math.round(before.z + (machine.z - before.z) * fraction);
+      if (ground?.refusal(x,z)) {
+        events.push({type:'cut-refused', x, z, reason:ground.refusal(x,z)});
+        continue;
+      }
+      if (ground) {
+        const cell = roadCell(nextWork, x, z);
+        nextWork = {...nextWork, cells:{...nextWork.cells, [key(x,z)]:{...cell, height:ground.height(x,z)}}};
+      }
       if (state.kind === 'paver' && roadCell(nextWork, x, z).spread <= 0) roadLine = null;
       else if (!roadLine) roadLine = {x:before.x, z:before.z, heading:before.heading};
       const result = workRoadCell(nextWork, {kind:state.kind, x, z,
         bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : -0.1, spreading,
         speedMps:Math.abs(machine.speedMps), edgeOffsetM:!roadLine ? 0 : (before.x + (machine.x-before.x)*fraction-roadLine.x)*Math.cos(roadLine.heading) - (before.z + (machine.z-before.z)*fraction-roadLine.z)*Math.sin(roadLine.heading)});
+      if (ground) ground.setHeight(x, z, roadCell(result.work, x, z).height);
       nextWork = result.work;
       events.push(...result.events.map(event => ({...event, x, z})));
     }

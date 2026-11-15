@@ -184,6 +184,24 @@ assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'rough', 'A heap creates
 for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
 bumpGround = drivePass('paver', bumpGround);
 assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
+// The trencher and road machines all alter the same yard ground.
+let sharedYard = createDigSandbox({playerId:'shared-road-ground-test'});
+sharedYard.activeMachine='trencher';
+Object.assign(sharedYard.trencher.machine, {x:60,z:10,heading:0,speedMps:0});
+const originalHeight=sharedYard.ground.heightAt(60,15);
+sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1},action:'trench'}, 12);
+assert.ok(sharedYard.ground.heightAt(60,15)<originalHeight-1, 'The trencher digs the shared ground.');
+sharedYard.activeMachine='dozer';
+Object.assign(sharedYard.roadMachines.dozer.machine, {x:60,z:-120,heading:0,speedMps:0});
+sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1,working:true}}, 100);
+assert.ok(sharedYard.ground.heightAt(60,15)>originalHeight-0.11, 'The dozer fills the trencher ditch in the same ground.');
+for (const kind of ['roller','roller','roller','paver']) {
+  sharedYard.activeMachine=kind;
+  Object.assign(sharedYard.roadMachines[kind].machine, {x:60,z:13,heading:0,speedMps:0});
+  sharedYard=stepDigSandbox(sharedYard, {controls:{forward:kind==='paver'?0.5:1,working:true}}, 5);
+}
+assert.equal(roadCondition(roadCell(sharedYard.roadWork,60,15)), 'good', 'The road crosses the filled ditch.');
+closeDigSandbox();
 // Send the same held keys and machine positions as the browser scenario.
 let keyboardYard = createDigSandbox({playerId:'keyboard-road-test'});
 for (let i=0; i<4; i++) keyboardYard=switchDigMachine(keyboardYard);

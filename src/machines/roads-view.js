@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {roadCondition} from './roads.js';
 
 // Road work reshapes and colours the yard floor rather than covering it with tiles.
-export function createRoadWorkView(parent, heightAt, floor) {
+export function createRoadWorkView(parent, heightAt, floor, sharedGround = false) {
   const group = new THREE.Group();
   group.name = 'yard-road-work';
   parent.add(group);
@@ -60,7 +60,7 @@ export function createRoadWorkView(parent, heightAt, floor) {
             const amount = Math.max(0, Math.min(1, 1.65 - Math.max(Math.abs(x-cx), Math.abs(z-cz))));
             if (cell && amount > strength) { chosen = cell; strength = amount; }
           }
-        positions.setY(index, heightAt(x, z) + (chosen?.height || 0) * strength);
+        positions.setY(index, heightAt(x, z) + (sharedGround ? 0 : (chosen?.height || 0) * strength));
         mixed.setRGB(baseColors[index*3], baseColors[index*3+1], baseColors[index*3+2]);
         if (chosen) {
           const condition = roadCondition(chosen);

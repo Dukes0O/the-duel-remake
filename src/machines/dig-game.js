@@ -93,7 +93,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const cuttingsView=createDrillCuttingsView(world,(x,z)=>sim.ground.heightAt(x,z));
   const drillSounds=createDrillSounds(app?.audio);
   const roadSounds=createRoadSounds(app?.audio);
-  const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor);
+  const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor,true);
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null;

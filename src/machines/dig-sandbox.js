@@ -26,10 +26,12 @@ const STEP = 1 / 60;
 
 // A raised patch followed by a shallow ditch gives the blade material to carry.
 // These are yard-only cells, separate from the town and from the ground save.
-function yardRoadWork() {
+function yardRoadWork(ground) {
   const work = createRoadWork();
   for (let z = 12; z <= 19; z++) {
-    work.cells[`40:${z}`] = {height:z < 16 ? 1 : -1, spread:0, compaction:0, surface:0, roughness:0};
+    const height = z < 16 ? 1 : -1;
+    ground.setHeight(40, z, height);
+    work.cells[`40:${z}`] = {height, spread:0, compaction:0, surface:0, roughness:0};
   }
   return work;
 }
@@ -43,6 +45,20 @@ export function createPendingDigActions(){
 function newGround(seed) {
   return createGroundEdit({region:{id:'scablands',editable:true},seed,naturalHeight:scablandsNaturalHeightAt,
     reservedShapes:RESERVATIONS});
+}
+
+function roadGround(edit) {
+  return {
+    refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
+    height(x,z) { return edit.heightAt(x,z) - scablandsNaturalHeightAt(x,z); },
+    setHeight(x,z,height) {
+      const shape = {x,z,radius:0.1};
+      const target = scablandsNaturalHeightAt(x,z) + height;
+      const difference = target - edit.heightAt(x,z);
+      if (difference > 0) edit.fill(shape, 'topsoil', difference * 1.25);
+      else if (difference < 0) edit.cut(shape, target);
+    },
+  };
 }
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
@@ -63,7 +79,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
   return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
-    roadWork:yardRoadWork(), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
+    roadWork:yardRoadWork(roadGround(edit)), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
@@ -84,7 +100,7 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
   if(sim.roadMachines[sim.activeMachine]){
-    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP);
+    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
   } else if(sim.activeMachine==='drill'){
