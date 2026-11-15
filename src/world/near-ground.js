@@ -16,6 +16,15 @@ export const NEAR_GROUND = Object.freeze({
 });
 const {cellX, cellZ, cellsX, cellsZ, lift} = NEAR_GROUND;
 const across = cellsX + 1, down = cellsZ + 1, corners = across * down;
+const divisions = 8;
+const faces = preparedScarps(SCARPS).map(s => {
+  const points = [];
+  for (const along of [-SCARP.taper, s.length + SCARP.taper]) for (const across of [0, s.width])
+    points.push({x: s.a.x + s.tx * along - s.tz * across, z: s.a.z + s.tz * along + s.tx * across});
+  return {x0: Math.min(...points.map(p => p.x)), x1: Math.max(...points.map(p => p.x)),
+    z0: Math.min(...points.map(p => p.z)), z1: Math.max(...points.map(p => p.z))};
+});
+const isFaceCell = (x, z) => faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z <= f.z1 && z + cellZ >= f.z0);
 
 // The height at (x, z) of the ground as it is drawn: the straight slopes between lattice corners, cut the way the window's
 // triangles are cut (each cell is two triangles meeting along the line from its (1, 0) corner to its (0, 1) corner). Used to lay
@@ -23,6 +32,22 @@ const across = cellsX + 1, down = cellsZ + 1, corners = across * down;
 export function nearGroundHeightAt(x, z, heightAt) {
   const fx = x / cellX, fz = z / cellZ, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz;
   const corner = (i, j) => heightAt((ix + i) * cellX, (iz + j) * cellZ) + lift;
+  if (isFaceCell(ix * cellX, iz * cellZ)) {
+    const a = Math.fround(corner(0, 0)), b = Math.fround(corner(1, 0));
+    const c = Math.fround(corner(0, 1)), d = Math.fround(corner(1, 1));
+    const sample = (i, j) => {
+      const s = i / divisions, t = j / divisions;
+      if (j === 0) return a * (1 - s) + b * s;
+      if (j === divisions) return c * (1 - s) + d * s;
+      if (i === 0) return a * (1 - t) + c * t;
+      if (i === divisions) return b * (1 - t) + d * t;
+      return heightAt((ix + s) * cellX, (iz + t) * cellZ) + lift;
+    };
+    const sx = u * divisions, sz = v * divisions, i = Math.floor(sx), j = Math.floor(sz), s = sx - i, t = sz - j;
+    if (s + t <= 1) { const h = sample(i, j); return h + (sample(i + 1, j) - h) * s + (sample(i, j + 1) - h) * t; }
+    const h = sample(i + 1, j + 1);
+    return h + (sample(i, j + 1) - h) * (1 - s) + (sample(i + 1, j) - h) * (1 - t);
+  }
   if (u + v <= 1) { const a = corner(0, 0); return a + (corner(1, 0) - a) * u + (corner(0, 1) - a) * v; }
   const d = corner(1, 1);
   return d + (corner(0, 1) - d) * (1 - u) + (corner(1, 0) - d) * (1 - v);
@@ -54,13 +79,6 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
 
   // Replace only cells touching a scarp with a separate finer mesh. Its borders follow
   // the original cell edges, so the two meshes meet without cracks or overlap.
-  const faces = preparedScarps(SCARPS).map(s => {
-    const points = [];
-    for (const along of [-SCARP.taper, s.length + SCARP.taper]) for (const across of [0, s.width])
-      points.push({x: s.a.x + s.tx * along - s.tz * across, z: s.a.z + s.tz * along + s.tx * across});
-    return {x0: Math.min(...points.map(p => p.x)), x1: Math.max(...points.map(p => p.x)),
-      z0: Math.min(...points.map(p => p.z)), z1: Math.max(...points.map(p => p.z))};
-  });
   const faceGeometry = new THREE.BufferGeometry();
   const faceMesh = new THREE.Mesh(faceGeometry, material);
   faceMesh.name = 'Scablands near scarp faces'; faceMesh.receiveShadow = true; faceMesh.frustumCulled = false;
@@ -70,11 +88,10 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   function updateFaces() {
     const facePositions = [], faceIndices = [];
     let baseCount = 0;
-    const divisions = 8;
     for (let iz = 0; iz < cellsZ; iz++) for (let ix = 0; ix < cellsX; ix++) {
       const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
       const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
-      if (!faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z <= f.z1 && z + cellZ >= f.z0)) {
+      if (!isFaceCell(x, z)) {
         indices[baseCount++] = a; indices[baseCount++] = c; indices[baseCount++] = b;
         indices[baseCount++] = b; indices[baseCount++] = c; indices[baseCount++] = d;
         continue;
@@ -169,6 +186,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (Number.isNaN(centreI)) return null;
       const fx = x / cellX - (centreI - cellsX / 2), fz = z / cellZ - (centreJ - cellsZ / 2);
       if (fx < 0 || fz < 0 || fx >= cellsX || fz >= cellsZ) return null;
+      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt);
       const ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, at = iz * across + ix;
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :
         heights[at + across + 1] + (heights[at + across] - heights[at + across + 1]) * (1 - u) + (heights[at + 1] - heights[at + across + 1]) * (1 - v);

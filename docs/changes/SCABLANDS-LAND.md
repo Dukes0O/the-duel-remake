@@ -1599,3 +1599,216 @@ For Claude to run: `test-review-evidence`, `test-warlord-tollkeeper`, and the me
 Changed assertions, for Claude to review: the far scene changes from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed faces; near ground stays at 3,721 corners. The Ridge flat-ground expectation changes from 18 m to the designed 45 m summit, with the 0.01 m tolerance unchanged. The search test's initial sight step changes from one second to zero because the raider now moves while it sees the car. The river check now drives from the yard to Tin Town and passes beneath the bridge, replacing the former Boneyard endpoint and the former blocked-deck assertion because the tunnel work opened that route. No pass mark was lowered.
 
 Codex decided: no further design choice. Removed: the blocked-deck route and its assertion, replaced by the through-route check.
+
+
+### Review fixes: sight at covered floors
+
+Sight now starts at each actor's stored feet height, checks the bridge deck and tunnel rock, and uses the tunnel bore where it is open. The furnace and Ridge lookout receive the active tunnel. Walking raiders retain their floor height. No new game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 22 of 22, including the bridge deck and trial tunnel roof. The open-bed check currently covers the bed under the deck; a separate open-bed approach check and sight along the tunnel still need coverage. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: sight and walking-raider height based solely on the top surface.
+
+Still needed: the remaining part A checks and fixes, including stopped cars, sight cost and search coverage; then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: stopped cars
+
+Scablands camp raiders can target a stopped car after 1.2 seconds of uninterrupted sight. Each raider tracks each car separately and losing sight resets that car's timer. Finished, crushed and wrecking cars remain ineligible. Other venues retain the 8 mph rule. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 23 of 23, including stopped cars, sight interruption, the delay and the other venues' speed rule. `node tools/test-raiders.mjs` passed 7 of 7. Race fingerprints and world signatures were not checked in this step.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: the Scablands-only speed restriction on camp targets.
+
+Still needed: prove an actual shot follows the sight delay; reduce and measure sight cost, restore the one-second walking search test, finish parts B and C, and run the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight cost and walking search
+
+Camp target selection checks distance before tracing and no longer makes filtered lists. The furnace and Ridge lookout keep their last answers and take turns tracing every 30 simulation steps, four times a second each. The first lookout check is delayed by 15 steps. The sight options and results are reused. The walking search now has a separate test starting with one full second of pursuit. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 25 of 25; `node tools/test-raiders.mjs` passed 7 of 7. Race fingerprints and world signatures were not checked in this step. The long traces are staggered: a lookout trace can take up to 601 ground samples on its step, and a furnace trace up to 281 on another. The total worst Hot Delivery step, including camp raiders, has not yet been measured.
+
+Changed assertions: none. Codex decided: stagger the two checks by 15 steps to avoid their long traces landing together. Removed: per-target filtered distance lists and repeated long traces on every step.
+
+Still needed: measure the full Hot Delivery worst step, prove an actual shot after the sight delay, add open-bed and along-bore coverage, and finish parts B and C before the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight firing and tunnel coverage
+
+The hill suite now checks that a raider actually fires at a stopped car after 1.2 seconds of sight and that actors can see along the trial tunnel bore. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 27 of 27. Race fingerprints and world signatures were not checked in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: a separate open-bed approach check and the worst-step Hot Delivery sight sample count, then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: open river bed sight
+
+A new check places both actors in the open river bed beyond the Girder Bridge deck and confirms that they can see each other. It also checks that the car is in the bed and beyond the deck. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 28 of 28. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: measure the worst-step Hot Delivery sight sample count, then complete parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight sampling measurement
+
+The existing Easy driver completed Hot Delivery on seed 1 in 362.24 seconds. Temporary counters around every sight trace measured a maximum of 600 sampled positions in one simulation step, including camp raiders and the furnace and lookout. This is an observed maximum for that run, not a bound for every seed or player route. The counters were removed after the measurement. The hill suite now checks that the Ridge lookout also reuses its answer for 29 steps and that a full-range flat-ground trace takes 601 height samples.
+
+Check: `node tools/test-scablands-hills.mjs` passed 29 of 29. The measured Hot Delivery run finished. Race fingerprints and world signatures were not rerun in this step. Changed assertions: one new caching and sampling check; no existing assertion changed or loosened. Codex decided: no new design choice. Sound cues: no new event. Removed: temporary measurement counters.
+
+Still needed: parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: drawn scarp height
+
+Small things now read the same finer triangles that draw the near scarp faces. The near ground's drawn-height query uses those triangles too. A ray test checks the answer against the actual mesh at many points across a face. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 33 of 33. Changed assertions: none; the mesh comparison is a new check. Race fingerprints and world signatures were not rerun in this step. Codex decided: no new design choice. Removed: the coarse-triangle height estimate inside scarp face cells.
+
+Still needed: the river has a separate drawn gorge while small things currently sample the filled-in plain; resolve that and check standing things, hills and mesa faces. Finish the camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: small things in the river
+
+Small things in the river opening now take their height from the drawn bed and bank triangles. The opening uses the same interpolated distance field as the ground shader. A new check compares the lookup with the river mesh. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 34 of 34. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the river mesh check is new. Codex decided: no new design choice. Removed: the filled-in plain as the height source for small things inside the river opening.
+
+Still needed: check standing things on all drawn terrain and the cost of river height lookup; finish the camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: standing things on drawn ground
+
+Standing footprints, pylons, wires and sign boards now use the drawn ground height as small things do. Collision positions remain unchanged. Heights for standing batches and lines are calculated when the view is created; small things retain their cell cache. No new game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The new check verifies standing batches and pylons follow a changed drawn height. It does not yet prove all terrain types or measure river lookup cost. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the placement check is new. Codex decided: no new design choice. Removed: using physical ground height alone for standing artwork.
+
+Still needed: verify standing objects against the actual hill, mesa, river and scarp meshes and assess river lookup cost; finish the camera and scenario fixes, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: river height lookup cost
+
+River height queries now interpolate the ribbon's own triangles without building distant river meshes or raycasting their geometry. They use the same corner coordinates and heights as the drawing. Standing objects and small things still use the same lookup. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The river check compares heights against the mesh and now also verifies that a lookup does not build a mesh. This removes the unbounded mesh construction from each lookup; frame timing has not been measured. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the no-build check is new. Codex decided: no new design choice. Removed: raycasting and building river meshes solely to place objects.
+
+Still needed: verify standing objects against all terrain meshes; finish the camera and scenario fixes, part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: hill and mesa placement checks
+
+The things suite now compares the height used for placement with the actual near-ground triangles across a Breaks hill and a mesa, including the mesa face. Together with the existing scarp and river mesh checks and the standing-object offset check, this checks the common height source and its use by standing objects. It does not inspect each standing object against every mesh. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 36 of 36. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the mesh comparison is a new check. Codex decided: no new design choice. Removed: none.
+
+Still needed: camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture car placement
+
+Each picture now clears the car's stored floor and flight height before placing it at the next view. The game can then choose the top floor at the new position. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the previous view's stored height from the next view's placement.
+
+Still needed: chase camera ground clearance and the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: chase camera ground clearance
+
+The chase and wide cameras use the actual drawn near ground and river triangles to stay at least 1.2 m above the ground. The target rises with the terrain and follows the existing camera smoothing; a final clearance check prevents the camera entering a slope during the transition. Under decks and in tunnels the camera uses the car's floor. This changes only the view. No game event or sound cue was added.
+
+Checks: `node tools/test-camera-clearance.mjs` passed 2,091 checks, including the drawn hill clearance. `node tools/test-tunnels.mjs` passed, including new deck and tunnel floor checks. The first camera check attempt used the wrong Ridge name and was corrected before the passing run. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the clearance checks are new. Codex decided: no new design choice. Removed: allowing the chase camera to remain beneath the drawn ground.
+
+Still needed: the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks. The camera has not been judged in the browser.
+
+### Review fixes: picture viewpoints
+
+The scarp picture now starts 80 m from the foot on its low side. The Lookout picture starts near the edge of its flat top facing the yard. A new picture looks toward the valley between two Breaks crests. These positions have not yet been judged in the browser. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the old scarp and Lookout picture positions.
+
+Still needed: the mesa view from the plates' way, the scenario's visibility and placement checks, the dune picture after part C, all of part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: mesa picture from the plates
+
+The picture scenario now includes a view 250 m beyond the mesa face, looking toward it from the direction of the plates shortcut. The present mesa is too far from the shortcut for that position to be on the way itself. Recheck the position when part C places the six mesas. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: the scenario visibility and placement checks, the dune picture, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture car visibility
+
+The picture scenario now checks the rendered player car before each terrain picture and fails if it cannot identify the car or its centre is outside the camera view. It parses each evaluated page expression in Node before sending it to the page. The map picture has no car check. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so the new check and its viewpoint thresholds need Claude's browser run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the visibility check is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: scenario checks for ground clearance, nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture camera clearance check
+
+The picture scenario now checks the camera's world position against the drawn ground before each terrain picture. It fails if the ground lookup is unavailable, invalid, or above the camera. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so Claude still needs to check the new guard in the browser. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the camera check is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: scenario checks for nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture ground contact check
+
+The picture scenario now checks the ground contact points of nearby instanced small things, standing footprints and pylons against the drawn ground within 300 m of the camera. The drawing supplies contact offsets so that intentional sinking and scaled objects are judged at their placement point. Sign boards and wires are not checked separately. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. `node tools/test-scablands-things.mjs` passed 37 of 37, including a new contact-point check. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the contact-point test is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: the scenario's named-landmark check and dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture landscape feature check
+
+Each terrain picture now checks that its named landscape point projects inside the camera view. The mesa-top view checks a point on the top, and the other views check their chosen landscape target. This checks a point, not whether the feature is unobscured or visually recognizable. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run; Claude must judge the chosen points and pictures. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; this is a new scenario check. Codex decided: no new design choice. Removed: none.
+
+Still needed: the dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: height lookup index
+
+The existing frozen hill table now has a 500 m cell index built once. Height queries examine only hills whose bounds overlap the queried cell, retaining table order for overlapping flat tops and ramps. Other tables still use the full scan, including the empty-table comparison. This prepares for the larger hill country; it does not add the new hills yet. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 30 of 30. A new check compares indexed and full-table heights across the land. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the index comparison is new. Codex decided: no new design choice. Removed: full-table scans for the normal hill table.
+
+Still needed: part C's seeded hill country, clearance and route checks, dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: seeded shoulders
+
+The existing Breaks hills, dunes and foothills now have three to five seeded shoulders. Their outer radius stays within the former footprint, preserving the existing road clearances. The Lookout, Ridge top and mesas keep their existing shapes. This is one step toward the larger hill country; the requested counts, placement and route checks remain unfinished. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 31 of 31. The new check samples each hill for uneven shape, repeatability and slopes under 30 degrees. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the shoulder check is new. Codex decided: use the existing default game seed, 1989, for this fixed land table and keep each shoulder inside its former radius. Removed: round profiles for the existing Breaks hills, dunes and foothills.
+
+Still needed: the full seeded hill country, clearance and route checks, the dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: dune field
+
+The Ships now have 14 seeded dunes in staggered rows. They keep clear of the Ships' flat ground and the existing roads. Their sizes and heights preserve the existing gentle slope check. Their new shapes also advance the seeded shoulder sequence for other hills. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the dune count, dimensions, road clearance and sight over one crest. It does not yet prove clearance for every job route or the visual quality of the field. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the count, dimensions, flat-ground clearance and sight checks are new. Codex decided: stagger the rows with a second seeded generator and keep dune heights within the existing slope limit. Removed: the four larger, widely spaced dunes.
+
+Still needed: the Breaks, mesas and foothills; all corridor and route checks; the dune picture and final checks. Claude must run the picture scenario and judge the views.
+
+### Hill country: Ridge foothills
+
+Four seeded outer foothills bring the Ridge to six. Their centres follow the Ridge, and the higher foothills stand nearer it. Their selected footprints clear the named places and roads; the existing Ridge road and fifth flag stay in place. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the count, heights, ordering, road clearance, Ridge approach and shoulder slopes. The first run failed because the new check lacked an import; it passed after the import was added. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: the foothill count changed from at least 2 to exactly 6 to match the new design. It is stricter, not loosened. Codex decided: seeded outer foothills stand north of the Ridge, continuing the existing arrangement. Removed: none.
+
+Still needed: the Breaks and six mesas, all job and other protected corridors, route checks, dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: more Breaks hills
+
+The Breaks now have 16 hills. A seeded placement grows the existing group inside or near the triangle between the yard, the Everburn and the Dead Mall, while keeping the new hills clear of roads and named places. The new hills follow the Dead Mall when it moves. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. A new check covers the count, sizes and nearest-neighbour spacing. The first placement failed the existing ordered-spacing check; the next failed its location check. Both passed after placement was corrected. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the new count and spacing check adds coverage. Codex decided: grow the new hills from the previous hill, with seeded candidates, so the existing ordered-spacing claim remains true. Removed: none.
+
+Still needed: verify all 16 against the full placement and protected-corridor rules, build and prove all three road passes, finish the six mesas, route checks, dune picture and final checks. Claude must run and judge the picture scenario.

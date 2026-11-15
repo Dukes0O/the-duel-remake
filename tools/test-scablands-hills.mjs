@@ -3,17 +3,19 @@ import assert from 'node:assert/strict';
 import {HILLS, hillsFor, hillHeightAt, scablandsTerrainHeightAt, scablandsHeightAt} from '../src/world/scablands-height.js';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
-import {ROAD_NET} from '../src/world/scablands-road.js';
+import {ROAD_NET, distanceToRoad} from '../src/world/scablands-road.js';
 import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
 import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scarps.js';
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {sees} from '../src/world/scablands-ways.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot, targetFor, stepRaiderSearch, campSightChange} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 
 test('the Ridge lookout sees only within range and over clear ground', () => {
@@ -73,6 +75,33 @@ test('the furnace warning needs more than six continuous seconds and sounds once
   assert.equal(skylineWarningDue(sight, true), false);
 });
 
+test('long sight checks keep their last answer between scheduled traces', () => {
+  let samples = 0;
+  const flat = () => { samples++; return 0; };
+  const car = {x: FURNACE_SKYLINE.x + 100, z: FURNACE_SKYLINE.z};
+  let sight = stepSkylineSight({}, car, 1 / 120, flat);
+  const traced = samples;
+  for (let i = 0; i < 29; i++) sight = stepSkylineSight(sight, car, 1 / 120, flat, null, false);
+  assert.equal(samples, traced);
+  assert.equal(sight.visible, true);
+  assert.ok(Math.abs(sight.seconds - .25) < 1e-9);
+  sight = stepSkylineSight(sight, null, 1 / 120, flat, null, true);
+  assert.equal(sight.change, 'lost');
+});
+
+test('the Ridge lookout also keeps its answer between scheduled traces', () => {
+  let samples = 0;
+  const flat = () => { samples++; return 0; };
+  const ridge = LAND.at('ridge'), car = {x: ridge.x + 3000, z: ridge.z};
+  let sight = stepRidgeSight({}, car, flat);
+  const traced = samples;
+  assert.equal(sight.visible, true);
+  assert.equal(traced, 601, 'a full-range trace samples the ground at 5 metre intervals');
+  for (let i = 0; i < 29; i++) sight = stepRidgeSight(sight, car, flat, null, false);
+  assert.equal(samples, traced, 'cached steps do not sample the ground');
+  assert.equal(sight.visible, true);
+});
+
 test('a raider follows a car it can see and keeps room to fire', () => {
   const raider = {x: 0, z: 0};
   const car = {x: 30, z: 0};
@@ -105,6 +134,20 @@ test('a raider searches the last visible place and returns to its post', () => {
   assert.equal(raider.x, home.x);
   stepRaiderSearch(raider, visible, 1, move);
   assert.equal(raider.search.phase, 'seen', 'the car can be seen again');
+});
+
+test('a raider walks for a second in sight, then searches and returns', () => {
+  const raider = {x: 0, z: 0}, car = {x: 30, z: 0}, move = (_from, to) => to;
+  stepRaiderSearch(raider, car, 1, move);
+  assert.equal(raider.x, 3);
+  assert.equal(raider.search.phase, 'seen');
+  for (let i = 0; i < 20 && raider.search.phase !== 'searching'; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'searching');
+  for (let i = 0; i < 5; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'returning');
+  for (let i = 0; i < 20 && raider.search.phase !== 'post'; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'post');
+  assert.equal(raider.x, 0);
 });
 
 test('a searching raider walks around blocked ground and returns', () => {
@@ -149,6 +192,53 @@ test('raiders select a visible car within their own range', () => {
   assert.equal(targetFor(duel, zone), null);
   places.set(2, {x: raider.x - 40, z: raider.z, y: 0});
   assert.equal(targetFor(duel, zone, {actor: visible, pose: hidden}), null);
+});
+
+test('a stopped car needs continuous sight on the Scablands but is ignored in races', () => {
+  const yard = LAND.at('yard');
+  const car = {s: 0, lateral: 0, speedMph: 0, opponents: [], currentLap: 1};
+  const raider = {x: yard.x, z: yard.z, y: scablandsSurfaceHeightAt(yard.x, yard.z)};
+  let position = {x: yard.x + 10, z: yard.z, y: raider.y};
+  const duel = {state: car, course: {def: {scablands: true}, groundAt: () => position}, relativeS: () => 0};
+  const zone = {s: 0, raiders: [raider]};
+  assert.equal(targetFor(duel, zone)?.actor, car);
+  stepRaiderAim(duel, zone, 1);
+  assert.equal(targetFor(duel, zone, null, 0, true), null);
+  position = {...position, x: yard.x + 100};
+  stepRaiderAim(duel, zone, .1);
+  position = {...position, x: yard.x + 10};
+  stepRaiderAim(duel, zone, 1);
+  assert.equal(targetFor(duel, zone, null, 0, true), null, 'lost sight resets the clock');
+  stepRaiderAim(duel, zone, .2);
+  assert.equal(targetFor(duel, zone, null, 0, true)?.actor, car);
+  for (const status of ['finished', 'crushed', 'combatWrecking']) {
+    car[status] = true;
+    assert.equal(targetFor(duel, zone), null);
+    car[status] = false;
+  }
+  duel.course.def.scablands = false;
+  assert.equal(targetFor(duel, zone), null);
+  car.speedMph = 8;
+  assert.equal(targetFor(duel, zone)?.actor, car);
+});
+
+test('a raider fires at a stopped car after continuous sight', () => {
+  const yard = LAND.at('yard'), y = scablandsSurfaceHeightAt(yard.x, yard.z);
+  const raider = {id: 'test', x: yard.x, z: yard.z, y, groundY: y};
+  const zone = {id: 'test', s: 0, raiders: [raider], nextShotAt: 0, shotCount: 0};
+  const state = {s: 0, lateral: 0, speedMph: 0, groundHeight: y, opponents: [], currentLap: 1,
+    status: 'racing', stageTimeSec: 0, cpuDifficulty: 'medium', combat: {projectiles: [], serial: 0},
+    raids: {zones: [zone], shots: 0}};
+  const events = [];
+  const duel = {state, course: {def: {scablands: true}, seed: 1,
+    groundAt: () => ({x: yard.x + 10, z: yard.z, y, heading: 0}), at: () => ({curvature: 0})},
+    relativeS: () => 0, _callout: () => {}, emit: event => events.push(event)};
+  stepRaiders(duel, 1);
+  assert.equal(state.combat.projectiles.length, 0);
+  stepRaiders(duel, .2);
+  assert.equal(state.combat.projectiles.length, 1);
+  assert.equal(state.combat.projectiles[0].targetIndex, -1);
+  assert.ok(events.some(event => event.raiderShot));
 });
 
 test('each distant scarp face has fine cells at the land height', () => {
@@ -228,11 +318,14 @@ test('ground and range hide a car until it breaks cover', () => {
 
 test('the dunes follow the Ships, have soft crests, and leave every road clear', () => {
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ships-in-sand', 100, 200)));
+  assert.equal(HILLS.filter(hill => hill.kind === 'dune').length, 14);
   for (const [index, hill] of HILLS.filter(hill => hill.kind === 'dune').entries()) {
     assert.equal(moved[index].x - hill.x, 100);
     assert.equal(moved[index].z - hill.z, 200);
     assert.ok(Math.hypot(hill.x - LAND.place('ships-in-sand').x, hill.z - LAND.place('ships-in-sand').z) < 1500);
     assert.ok(hill.height >= 8 && hill.height <= 15);
+    assert.ok(hill.radius >= 70 && hill.radius <= 130);
+    assert.ok(Math.hypot(hill.x - LAND.place('ships-in-sand').x, hill.z - LAND.place('ships-in-sand').z) > hill.radius + LAND.place('ships-in-sand').flatRadius);
     assert.equal(hillHeightAt(hill.x, hill.z), hill.height);
     assert.ok(hill.height * 1.5 / hill.radius < .12);
     for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
@@ -241,6 +334,13 @@ test('the dunes follow the Ships, have soft crests, and leave every road clear',
       assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears a dune`);
     }
   }
+});
+
+test('a dune crest hides a car from the far side', () => {
+  const dune = HILLS.filter(hill => hill.kind === 'dune')[1];
+  const watcher = {x: dune.x - dune.radius - 10, z: dune.z};
+  const car = {x: dune.x + dune.radius + 10, z: dune.z};
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, eye: 3, target: 1.5, step: 5, range: 500}), false);
 });
 
 test('the Breaks have spaced hills and leave the road passes open', () => {
@@ -261,6 +361,18 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
       const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
       assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears the Breaks`);
     }
+  }
+});
+
+test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
+  const hills = HILLS.filter(hill => hill.kind === 'breaks');
+  assert.equal(hills.length, 16);
+  for (const hill of hills) {
+    const nearest = Math.min(...hills.filter(other => other !== hill)
+      .map(other => Math.hypot(hill.x - other.x, hill.z - other.z)));
+    assert.ok(nearest >= 400 && nearest <= 900);
+    assert.ok(hill.radius >= 260 && hill.radius <= 460);
+    assert.ok(hill.height >= 40 && hill.height <= 90);
   }
 });
 
@@ -329,7 +441,7 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   const ridge = LAND.place('ridge');
   const top = HILLS.find(hill => hill.kind === 'ridge-top');
   const foothills = HILLS.filter(hill => hill.kind === 'foothill');
-  assert.ok(foothills.length >= 2);
+  assert.equal(foothills.length, 6);
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)));
   for (const hill of [top, ...foothills]) {
     const match = moved.find(item => item.kind === hill.kind && item.x === hill.x + 100 && item.z === hill.z + 200);
@@ -341,6 +453,15 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   for (const hill of foothills) {
     assert.ok(hill.z < ridge.z, 'the foothills stand north of the Ridge');
     assert.ok(hillHeightAt(hill.x, hill.z) >= hill.height);
+    assert.ok(hill.height >= 18 && hill.height <= 40);
+    for (const other of foothills) {
+      const distance = Math.hypot(hill.x - ridge.x, hill.z - ridge.z);
+      const otherDistance = Math.hypot(other.x - ridge.x, other.z - ridge.z);
+      if (distance < otherDistance) assert.ok(hill.height >= other.height, 'higher foothills are nearer the Ridge');
+    }
+    for (const road of ROAD_NET.roads) {
+      assert.ok(distanceToRoad(hill.x, hill.z, road.points) > hill.radius + road.halfWidth, `${road.id} clears the foothill`);
+    }
   }
   for (const road of ROAD_NET.roads.filter(road => road.id === 'ridge-spur' || road.id === 'ridge-road')) {
     for (let i = 1; i < road.points.length; i++) {
@@ -353,6 +474,38 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
         previous = height;
       }
     }
+  }
+});
+
+test('hill shoulders are seeded, uneven and gentle', () => {
+  assert.deepEqual(hillsFor(LAND, 1989), HILLS);
+  assert.notDeepEqual(hillsFor(LAND, 1990), HILLS);
+  for (const hill of HILLS.filter(item => ['breaks', 'dune', 'foothill'].includes(item.kind))) {
+    assert.ok(hill.spurs >= 3 && hill.spurs <= 5);
+    const heights = [];
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 90) {
+      const x = hill.x + Math.cos(angle) * hill.radius * .7;
+      const z = hill.z + Math.sin(angle) * hill.radius * .7;
+      const height = hillHeightAt(x, z, [hill]);
+      heights.push(height);
+      for (let fraction = .1; fraction <= 1; fraction += .1) {
+        const px = hill.x + Math.cos(angle) * hill.radius * fraction;
+        const pz = hill.z + Math.sin(angle) * hill.radius * fraction;
+        const base = hillHeightAt(px, pz, [hill]);
+        const dx = hillHeightAt(px + 1, pz, [hill]) - base;
+        const dz = hillHeightAt(px, pz + 1, [hill]) - base;
+        assert.ok(Math.hypot(dx, dz) <= Math.tan(Math.PI / 6), 'the shoulder is drivable');
+      }
+    }
+    assert.ok(Math.max(...heights) - Math.min(...heights) > 1, 'the shoulder is not round');
+  }
+});
+
+test('the hill index gives the same heights as the whole table', () => {
+  const unindexed = [...HILLS];
+  for (let x = -7000; x <= 7000; x += 113) for (let z = -5000; z <= 5000; z += 127) {
+    assert.equal(hillHeightAt(x, z), hillHeightAt(x, z, unindexed));
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, unindexed));
   }
 });
 
@@ -379,4 +532,53 @@ test('the salt pan and plates have uneven outlines in the shared land data', () 
       assert.ok(Math.abs(polygonMargin(area.points, bend.x, bend.z)) < 1e-8);
     }
   }
+});
+
+
+test('sight follows the river bed beneath a deck and through open bed', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const bed = scablandsActorHeightAt(bridge.x, bridge.z, -100);
+  const deck = scablandsActorHeightAt(bridge.x, bridge.z);
+  const car = {x: bridge.x, z: bridge.z, y: bed};
+  const watcher = {x: bridge.x, z: bridge.z, y: deck};
+  const options = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, eye: 1.5, target: 1.5, step: 1};
+  assert.equal(sees(watcher, car, options), false, 'deck blocks sight from above');
+  const other = {x: bridge.x + 3, z: bridge.z, y: bed};
+  assert.equal(sees(other, car, options), true, 'the bed is open beneath the deck');
+});
+
+test('a watcher sees a car in the open bed approaching the bridge', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line;
+  const index = along.findIndex(distance => distance > bridge.along + 80);
+  const a = points[index], b = points[index + 1];
+  const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+  const car = {x: a.x, z: a.z, y: scablandsActorHeightAt(a.x, a.z, -100)};
+  const x = a.x + 20 * dx / length, z = a.z + 20 * dz / length;
+  const watcher = {x, z, y: scablandsActorHeightAt(x, z, -100)};
+  assert.ok(riverGorgeDepthAt(car.x, car.z) > 7, 'car is in the river bed');
+  assert.ok(Math.abs(scablandsActorHeightAt(car.x, car.z) - car.y) < .1, 'car is beyond the deck');
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+    eye: 1.5, target: 1.5, step: 1}), true);
+});
+
+test('the tunnel roof hides a car from a watcher above', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  const tunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
+  const {start, end, radius} = trial.segment;
+  const t = .3, x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
+  const car = {x, z, y: start.y + (end.y - start.y) * t - radius * .55};
+  const watcher = {x, z, y: scablandsSurfaceHeightAt(x, z)};
+  assert.ok(watcher.y > car.y + radius * 2, 'trial has rock above the car');
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels, step: .5}), false);
+});
+
+test('actors can see along the trial tunnel bore', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  const tunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
+  const {start, end, radius} = trial.segment;
+  const at = t => ({x: start.x + (end.x - start.x) * t,
+    z: start.z + (end.z - start.z) * t, y: start.y + (end.y - start.y) * t - radius * .55});
+  assert.equal(sees(at(.3), at(.7), {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+    tunnels, eye: 1.5, target: 1.5, step: 1}), true);
 });

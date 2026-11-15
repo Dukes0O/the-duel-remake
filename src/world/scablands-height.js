@@ -2,17 +2,29 @@ import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
 import {riseHeightAt,riverDepthAt} from './scablands-regions.js';
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
+import {makeRng} from '../rng.js';
+import {ROAD_NET, distanceToRoad} from './scablands-road.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 
 // Hill centres follow named places. Their shoulders stand clear of the existing roads.
-export function hillsFor(land=LAND){
-  return Object.freeze([
-    Object.freeze({...land.at('ships-in-sand',-600,-600),kind:'dune',height:12,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',600,-600),kind:'dune',height:14,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',-600,600),kind:'dune',height:10,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',0,900),kind:'dune',height:13,radius:220}),
+export function hillsFor(land=LAND,seed=1989){
+  const rng=makeRng(seed);
+  // Rows run east to west, with a seeded stagger across the Ships' open sand.
+  // Select against the fixed land's roads so moving a named place moves its field together.
+  const duneRng=makeRng(seed ^ 0x53414e44), dunes=[];
+  for(let row=-3;row<=3 && dunes.length<14;row++) for(let column=-3;column<=3 && dunes.length<14;column++){
+    const dx=column*260+(row%2)*100+duneRng.range(-22,22), dz=row*260+duneRng.range(-22,22);
+    const radius=duneRng.range(105,130), height=duneRng.range(8,Math.min(15,radius*.079));
+    const reference=LAND.at('ships-in-sand',dx,dz);
+    if(Math.hypot(dx,dz)<radius+LAND.place('ships-in-sand').flatRadius+18) continue;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(reference.x,reference.z,road.points)<=radius+road.halfWidth+10)) continue;
+    if(dunes.some(hill=>Math.hypot(hill.dx-dx,hill.dz-dz)<hill.radius+radius+10)) continue;
+    dunes.push({dx,dz,radius,height});
+  }
+  const hills=[
+    ...dunes.map(({dx,dz,radius,height})=>Object.freeze({...land.at('ships-in-sand',dx,dz),kind:'dune',height,radius})),
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
@@ -22,15 +34,89 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
-  ]);
+  ];
+  // Grow the Breaks from the existing hills, using offsets from the Mall so
+  // that the whole group follows that named place when the land is moved.
+  const breaksRng=makeRng(seed ^ 0x42524541), mall=LAND.place('dead-mall');
+  const breaks=hills.filter(hill=>hill.kind==='breaks').map(hill=>({x:hill.x,z:hill.z,radius:hill.radius}));
+  const yard=LAND.yard, burn=LAND.place('everburn');
+  const side=(a,b,p)=>(b.x-a.x)*(p.z-a.z)-(b.z-a.z)*(p.x-a.x);
+  const triangle=[yard,burn,mall];
+  const withinCountry=(x,z)=>{
+    const point={x,z}, signs=triangle.map((a,i)=>side(a,triangle[(i+1)%3],point));
+    if(signs.every(value=>value>=0)||signs.every(value=>value<=0)) return true;
+    return triangle.some((a,i)=>distanceToRoad(x,z,[a,triangle[(i+1)%3]])<=600);
+  };
+  for(let attempt=0;attempt<12000 && breaks.length<16;attempt++){
+    const anchor=breaks[breaks.length-1];
+    const angle=breaksRng.range(0,Math.PI*2), distance=breaksRng.range(500,850);
+    const x=anchor.x+Math.cos(angle)*distance, z=anchor.z+Math.sin(angle)*distance;
+    const radius=breaksRng.range(300,400), height=breaksRng.range(40,Math.min(70,radius*.17));
+    if(x>=0||z<=0||z>=mall.z||!withinCountry(x,z)||Math.hypot(x-yard.x,z-yard.z)<radius+500) continue;
+    if([burn,mall].some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+350)) continue;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+10)) continue;
+    if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;
+    if(breaks.some(hill=>Math.hypot(x-hill.x,z-hill.z)<400)) continue;
+    breaks.push({x,z,radius});
+    hills.push(Object.freeze({...land.at('dead-mall',x-mall.x,z-mall.z),kind:'breaks',height,radius}));
+  }
+  // The outer foothills are lower than the two near the Ridge. Select their
+  // offsets against the fixed land so they follow the Ridge when it moves.
+  const foothillRng=makeRng(seed ^ 0x52494447), outer=[];
+  const ridge=LAND.place('ridge');
+  for(let attempt=0;attempt<1000 && outer.length<4;attempt++){
+    const angle=foothillRng.range(Math.PI,2*Math.PI), distance=foothillRng.range(1050,2000);
+    const radius=foothillRng.range(230,280), dx=Math.cos(angle)*distance, dz=Math.sin(angle)*distance;
+    const x=ridge.x+dx, z=ridge.z+dz;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+30)) continue;
+    if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;
+    if(hills.some(hill=>Math.hypot(x-hill.x,z-hill.z)<radius+hill.radius+30)) continue;
+    if(outer.some(hill=>Math.hypot(dx-hill.dx,dz-hill.dz)<radius+hill.radius+30)) continue;
+    outer.push({dx,dz,radius,distance});
+  }
+  for(const {dx,dz,radius,distance} of outer){
+    const height=18+4*(2000-distance)/950;
+    hills.push(Object.freeze({...land.at('ridge',dx,dz),kind:'foothill',height,radius}));
+  }
+  return Object.freeze(hills.map(hill=>{
+    if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa') return hill;
+    return Object.freeze({...hill,spurs:rng.int(3,5),spurAngle:rng.range(0,Math.PI*2)});
+  }));
 }
 export const HILLS=hillsFor();
+// Build once. Keep table order inside each cell because mesas and flat tops blend in order.
+const HILL_CELL_SIZE=500;
+function indexHills(hills){
+  const columns=new Map();
+  for(const hill of hills){
+    const reach=hill.radius+(hill.kind==='mesa'?hill.ramp:0);
+    for(let x=Math.floor((hill.x-reach)/HILL_CELL_SIZE);x<=Math.floor((hill.x+reach)/HILL_CELL_SIZE);x++){
+      let column=columns.get(x);
+      if(!column) columns.set(x,column=new Map());
+      for(let z=Math.floor((hill.z-reach)/HILL_CELL_SIZE);z<=Math.floor((hill.z+reach)/HILL_CELL_SIZE);z++){
+        let cell=column.get(z);
+        if(!cell) column.set(z,cell=[]);
+        cell.push(hill);
+      }
+    }
+  }
+  return columns;
+}
+const HILL_INDEX=indexHills(HILLS), NO_HILLS=Object.freeze([]);
+function nearbyHills(x,z,hills){
+  if(hills!==HILLS) return hills;
+  return HILL_INDEX.get(Math.floor(x/HILL_CELL_SIZE))?.get(Math.floor(z/HILL_CELL_SIZE))??NO_HILLS;
+}
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
-  for(const hill of hills){
+  for(const hill of nearbyHills(x,z,hills)){
     if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
-    if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
+    if(distance>=hill.radius) continue;
+    // The nominal radius is the outer bound, so shoulders cannot spill onto a cleared road.
+    const angle=Math.atan2(z-hill.z,x-hill.x);
+    const radius=hill.spurs ? hill.radius*(.875+.125*Math.sin(hill.spurs*angle+hill.spurAngle)) : hill.radius;
+    if(distance<radius) height=Math.max(height,hill.height*(1-smooth(distance/radius)));
   }
   return height;
 }
@@ -50,7 +136,7 @@ function oldTerrainHeightAt(x,z){
 
 export function scablandsTerrainHeightAt(x,z,hills=HILLS){
   let height=oldTerrainHeightAt(x,z)+hillHeightAt(x,z,hills);
-  for(const hill of hills){
+  for(const hill of nearbyHills(x,z,hills)){
     if(hill.kind==='mesa'){
       const dx=x-hill.x,dz=z-hill.z,distance=Math.hypot(dx,dz);
       if(distance>=hill.radius+hill.ramp) continue;

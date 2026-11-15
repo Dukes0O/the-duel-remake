@@ -6,7 +6,7 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
 import {sees} from './world/scablands-ways.js';
-import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {stepMover, FOOT_GRADE} from './world/scablands-movers.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
@@ -17,20 +17,21 @@ const FIRE_METERS = 82;
 const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
+const raiderSightOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: 1.48, target: 1.5, step: 2};
 
 // Only Scablands camps use its land for cover. Other venues keep their shot rules.
 export function raiderHasClearShot(course, raider, target) {
-  return !course.def.scablands || sees(raider, target, {
-    heightAt: scablandsSurfaceHeightAt, eye: 1.48, target: 1.5, step: 5,
-  });
+  if (!course.def.scablands) return true;
+  raiderSightOptions.tunnels = course.groundTunnels;
+  return sees(raider, target, raiderSightOptions);
 }
 
 // A camp raider remembers only the last place it could see. It searches there
 // for five seconds, then returns to its post; seeing the car starts this over.
-export function stepRaiderSearch(raider, target, dt, move = stepMover) {
+export function stepRaiderSearch(raider, target, dt, move = stepMover, course = {def: {scablands: true}}) {
   const memory = raider.search ??= {home: {x: raider.x, z: raider.z}, last: null, phase: 'post', seconds: 0};
   const visible = target && Math.hypot(target.x - raider.x, target.z - raider.z) <= FIRE_METERS &&
-    raiderHasClearShot({def: {scablands: true}}, raider, target);
+    raiderHasClearShot(course, raider, target);
   if (visible) {
     memory.last = {x: target.x, z: target.z};
     memory.phase = 'seen'; memory.seconds = 0;
@@ -49,7 +50,7 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   const travel = Math.min(Math.max(0, distance - (memory.phase === 'seen' ? 12 : 0)), 3 * dt);
   if (distance > 1e-6 && travel > 0) {
     const heading = Math.atan2(dx, dz);
-    const options = {radius: .4, grade: FOOT_GRADE};
+    const options = {radius: .4, grade: FOOT_GRADE, height: scablandsActorFeet(raider, raider.groundY)};
     const tryHeading = (angle, length) => move(raider,
       {x: raider.x + Math.sin(angle) * length, z: raider.z + Math.cos(angle) * length}, options);
     const clear = (next, length) => !next.blocked && Math.hypot(next.x - raider.x, next.z - raider.z) >= length * .9;
@@ -81,7 +82,7 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
     }
     if (!next) return;
     raider.x = next.x; raider.z = next.z; raider.yaw = usedHeading;
-    raider.y = raider.groundY = scablandsSurfaceHeightAt(raider.x, raider.z);
+    raider.y = raider.groundY = scablandsActorHeightAt(raider.x, raider.z, options.height);
   }
   if (memory.phase !== 'seen' && Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
     if (memory.phase === 'returning') { memory.phase = 'post'; memory.last = null; }
@@ -252,28 +253,49 @@ function collectSalvage(duel, zone) {
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }
 
-export function targetFor(duel, zone, preview = null, seconds = 0) {
+export function targetFor(duel, zone, preview = null, seconds = 0, ready = false) {
   const state = duel.state;
-  const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
-  for (let index = 0; index < available.length; index++) {
-    const original = available[index];
+  for (let index = 0; index <= state.opponents.length; index++) {
+    const original = index === 0 ? state : state.opponents[index - 1];
     const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
-        Math.abs(actor.speedMph || 0) < 8) continue;
+        (!duel.course.def.scablands && Math.abs(actor.speedMph || 0) < 8)) continue;
     let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
     if (duel.course.def.scablands) {
       const at = point(duel, actor);
-      const distances = zone.raiders.filter(member =>
-        (!member.knockedDown || member.knockdownRemaining <= seconds) &&
-        member.firedLap !== state.currentLap && raiderHasClearShot(duel.course, member, at))
-        .map(member => Math.hypot(member.x - at.x, member.z - at.z));
-      gap = distances.length ? Math.min(...distances) : Infinity;
+      at.y = scablandsActorFeet(actor, undefined);
+      gap = Infinity;
+      for (const member of zone.raiders) {
+        if ((member.knockedDown && !(member.knockdownRemaining <= seconds)) || member.firedLap === state.currentLap ||
+            (ready && (member.sightTime?.get(original) || 0) < 1.2)) continue;
+        const memberGap = Math.hypot(member.x - at.x, member.z - at.z);
+        if (memberGap <= FIRE_METERS && memberGap < gap && raiderHasClearShot(duel.course, member, at)) gap = memberGap;
+      }
     }
     if (gap > FIRE_METERS) continue;
     if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
   }
   return best;
+}
+
+// Sight time belongs to each watcher and car. Losing sight resets the clock.
+export function stepRaiderAim(duel, zone, dt) {
+  const state = duel.state;
+  for (const member of zone.raiders) {
+    const times = member.sightTime ??= new Map();
+    for (let index = -1; index < state.opponents.length; index++) {
+      const actor = index < 0 ? state : state.opponents[index];
+      let visible = !member.knockedDown && !actor.finished && !actor.crushed && !actor.combatWrecking;
+      if (visible) {
+        const at = point(duel, actor);
+        at.y = scablandsActorFeet(actor, undefined);
+        visible = Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS &&
+          raiderHasClearShot(duel.course, member, at);
+      }
+      times.set(actor, visible ? (times.get(actor) || 0) + dt : 0);
+    }
+  }
 }
 
 // Read-only stop admission: reuse the current native camp target and shot rules.
@@ -404,8 +426,10 @@ export function stepRaiders(duel, dt = 0) {
     collectSalvage(duel, zone);
     if (duel.course.def.scablands && dt > 0 && !zone.ambushWave && !zone.raiders.some(raider => raider.ambushKey)) {
       const car = !state.finished && !state.crushed && !state.combatWrecking ? point(duel, state) : null;
-      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt);
+      if (car) car.y = scablandsActorFeet(state, undefined);
+      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt, stepMover, duel.course);
     }
+    if (duel.course.def.scablands && dt > 0) stepRaiderAim(duel, zone, dt);
     const ahead = duel.relativeS(zone.s, state.s) - state.s;
     if (ahead > 0 && ahead < WARNING_METERS && zone.warnedLap !== state.currentLap) {
       zone.warnedLap = state.currentLap;
@@ -413,11 +437,13 @@ export function stepRaiders(duel, dt = 0) {
       duel.emit({raiderWarning: true, zone: zone.id});
     }
     if (state.stageTimeSec < zone.nextShotAt) continue;
-    const target = targetFor(duel, zone);
+    const target = targetFor(duel, zone, null, 0, !!duel.course.def.scablands);
     if (!target) continue;
     const targetPoint = point(duel, target.actor);
+    if (duel.course.def.scablands) targetPoint.y = scablandsActorFeet(target.actor, undefined);
     const raider = zone.raiders.find(member =>
       !member.knockedDown && member.firedLap !== state.currentLap &&
+      (!duel.course.def.scablands || (member.sightTime?.get(target.actor) || 0) >= 1.2) &&
       (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&
       raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);

@@ -8,6 +8,18 @@ import {sweepObstacle} from '../src/collision.js';
 import {HARBOUR_LIGHTS} from '../src/circuits/harbour-lights.js';
 import {TREMBLANT_SNOW} from '../src/circuits/tremblant-snow.js';
 import {SUMMIT_RUN} from '../src/circuits/summit-run.js';
+import {nearGroundHeightAt} from '../src/world/near-ground.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {LAND} from '../src/world/scablands-names.js';
+{
+ const place=LAND.place('ridge'), position={x:place.x,y:-100,z:place.z};
+ const drawn=(x,z)=>nearGroundHeightAt(x,z,scablandsSurfaceHeightAt);
+ const before=drawn(position.x,position.z);
+ assert.ok(clearance.raiseScablandsCamera({def:{scablands:true}},position,position,before,drawn));
+ assert.ok(Math.abs(position.y-before-1.2)<1e-8,'chase camera clears the drawn hill');
+ const ordinary={x:0,y:-100,z:0};
+ assert.equal(clearance.raiseScablandsCamera({def:{}},ordinary,ordinary,0,()=>20),false);
+}
 let checks=0;
 for(const def of COURSE)for(const seed of[1989,42]){
  const course=new Course(def,seed);

@@ -43,7 +43,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, constrainScablandsCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
+import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend } from './world-job-camera.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
@@ -955,6 +955,10 @@ export function attachRenderer(host, app) {
       firstPersonView=false;
     }
     if(!menu&&app.inspectionCamera){firstPersonView=false;camTarget.fromArray(app.inspectionCamera.position);lookTarget.fromArray(app.inspectionCamera.target);camera.fov=48;}
+    const groundChase=!menu&&!st.onFoot&&['chase','wide'].includes(app.cameraMode||'chase')&&
+      !deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera;
+    const cameraFeet=scablandsActorFeet(st,pp.y), drawnGround=world?.userData?.drawnGroundHeightAt;
+    if(groundChase)raiseScablandsCamera(course,camTarget,player.position,cameraFeet,drawnGround);
     camera.position.y-=machineLiftApplied;machineLiftApplied=0; // the height a big machine gave the camera last frame is not part of where it stands
     if (!ready || menu || st.onFoot || journeyView.camera || spurCamera || yardHomePose || deepPose || heliPose || rampCamera) camera.position.copy(camTarget);
     else {
@@ -984,6 +988,7 @@ export function attachRenderer(host, app) {
     }
     if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       constrainScablandsCamera(course,camera.position,player.position,scablandsActorFeet(st, pp.y));
+    if(groundChase)raiseScablandsCamera(course,camera.position,player.position,cameraFeet,drawnGround);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
