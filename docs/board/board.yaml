@@ -527,6 +527,15 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-EVIDENCE-MIDNIGHT.md"
 
+  - id: QA-ROUND-SOLID-HEADING
+    title: "A car passing a round solid thing is slowed when the thing's heading differs from the car's"
+    owner: "codex"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-ROUND-SOLID-HEADING.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
