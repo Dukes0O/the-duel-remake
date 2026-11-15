@@ -1354,3 +1354,11 @@ The placement suite passed 15 tests, including tower height, sag and broken span
 Changed assertions: none. Codex decided: no new design choice. Removed: nothing; this adds drawing batches to the unconnected trial.
 
 For Claude to run: rerun `test-full-check` at merge and run the browser scenario once it is written. Chrome cannot start in this job. The scene connection, job starts, solids, signs, track drawing, map, scenario and remaining acceptance checks still need work.
+
+### Realism trial, step 3: final checks
+
+The scene now draws seeded small things, road lines, fences, pylons, boulders and fork signs behind the realism switch. The same placement data supplies solids and map lines; tracks draw on the ground. The picture scenario covers six views. No game event or sound cue was added. Removed: nothing; the existing land remains with the switch off.
+
+Integration was already current. All eight Scablands suites passed, including 22 placement checks. Both replay suites passed unchanged: 297 checks across 33 cases and 12 across four encounters. The scenario passed `node --check`; it was not run. The lane tier passed 45 of 46 suites: `test-review-evidence` could not start `ffmpeg` (EPERM). The build passed with bundle-size warnings. Changed assertions: none. Codex decisions are recorded on the card.
+
+For Claude to run: rerun `test-review-evidence` where `ffmpeg` can start, and run the memory-only Performance picture scenario to check all six views and the 40 draw-call and 150,000 triangle limits. The graphics budget and visual result remain unverified.
