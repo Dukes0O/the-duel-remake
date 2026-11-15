@@ -9,7 +9,7 @@ import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
-import {createFixedThingsView, createSmallThingsView, createThingsLinesView} from '../src/world/scablands-things-view.js';
+import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
 test('fixed drawing uses every collision footprint once', () => {
@@ -280,4 +280,43 @@ test('line drawing makes towers and sagging spans without crossing missing suppo
   assert.ok(points.getY(7) < points.getY(15));
   view.dispose();
   assert.equal(view.group.children.length, 0);
+});
+
+test('the scene trial keeps its batches until disposal and creates nothing when off', () => {
+  const options = {seed: 1989, jobStarts: [], halfWidth: 240, halfDepth: 240};
+  assert.equal(createRealismThingsView({...options, enabled: false}), null);
+  const view = createRealismThingsView({...options, enabled: true});
+  const batches = [...view.group.children[0].children];
+  view.update(0, 0);
+  assert.ok(batches.some(mesh => mesh.count > 0));
+  view.update(50, 50);
+  assert.deepEqual(view.group.children[0].children, batches);
+  assert.ok(view.group.getObjectByName('Scablands towers'));
+  assert.ok(view.group.getObjectByName('Scablands wires'));
+  view.dispose();
+  assert.equal(view.group.children.length, 0);
+});
+
+test('the scene loads the trial only with its switch on', async () => {
+  const {featureFlags} = await import('../src/feature-flags.js');
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {createScablandsScene} = await import('../src/world/scablands-scene.js');
+  const enabled = featureFlags.enabled;
+  featureFlags.enabled = name => name === 'scablands-realism' || enabled(name);
+  let scene;
+  try {
+    scene = createScablandsScene(new Course(SCABLANDS_VENUE, 1989), {groundPhotos: false, loadAsset: async () => {
+      const root = new THREE.Group();
+      for (const name of ['Big Bess gas truck', "Old Smoke's rolling furnace"]) {
+        const model = new THREE.Group(); model.name = name; root.add(model);
+      }
+      return {scene: root};
+    }});
+    assert.equal(await scene.ready, true);
+    assert.ok(scene.group.getObjectByName('Scablands realism things'));
+  } finally {
+    scene?.dispose();
+    featureFlags.enabled = enabled;
+  }
 });
