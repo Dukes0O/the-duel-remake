@@ -18,8 +18,8 @@ import {placeActor} from '../src/arena/arena-event.js';
 import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, EAST_ROAD, ROAD_HALF_WIDTH, roadPointFrom} from '../src/world/scablands-road.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {RIVER, RIVER_LAND, riverDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
 import {GROUND, fallHit, dropFor, climbLimit} from '../src/world/scablands-ground-rules.js';
@@ -481,6 +481,55 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     rows.push(`${label}: ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
   }
   console.log('the four ways: ' + rows.join('; '));
+});
+
+// A job raider follows a driven car from the road, down the Wash and under
+// the bridge. Both heights are checked throughout the bed, with town off.
+test('a job raider follows a car down the Wash and under the bridge', () => {
+  const wash = RIVER_LAND.crossings.find(c => c.kind === 'wash');
+  const bridge = RIVER_LAND.crossings.find(c => c.kind === 'bridge');
+  const steps = RIVER_LAND.crossings.find(c => c.kind === 'steps');
+  const before = roadPointFrom(ROAD_NET.road('boneyard-road'), wash.x, wash.z, -220);
+  const bed = riverPoints.filter((point, index) => RIVER_LAND.line.along[index] > steps.along - 50 &&
+    RIVER_LAND.line.along[index] < wash.along + 50).reverse();
+  const offset = bed.map((point, index) => {
+    const a = bed[Math.max(0, index - 1)], b = bed[Math.min(bed.length - 1, index + 1)];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    return {x: point.x + (b.z - a.z) / length * 27, z: point.z - (b.x - a.x) / length * 27};
+  });
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, arsenal: true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    seed: 1989, opponents: [], job: {...EVERBURN_JOBS[0], seed: 1989}}), true);
+  duel.state.countdown = 0;
+  put(duel, before.x, before.z, Math.atan2(wash.x - before.x, wash.z - before.z));
+  const raider = {id: 'wash-pursuit', x: before.x, z: before.z,
+    y: scablandsSurfaceHeightAt(before.x, before.z), health: 70, approachSpeed: 7,
+    approachTarget: {x: before.x, z: before.z}};
+  duel.state.arena.worldJob.actors.push(raider);
+  let carCrossed = false, raiderCrossed = false, carBed = 0, raiderBed = 0;
+  const check = d => {
+    const car = where(d);
+    raider.approachTarget.x = car.x; raider.approachTarget.z = car.z;
+    const carDepth = riverGorgeDepthAt(car.x, car.z);
+    const raiderDepth = riverGorgeDepthAt(raider.x, raider.z);
+    if (carDepth > 4) {
+      carBed++;
+      assert.ok(Math.abs((d.state._jumpY ?? d.state.groundHeight) - scablandsActorHeightAt(car.x, car.z, -100)) < 1,
+        'the car stays on the bed');
+      if (Math.hypot(car.x - bridge.x, car.z - bridge.z) < 45) carCrossed = true;
+    }
+    if (raiderDepth > 4) {
+      raiderBed++;
+      assert.ok(Math.abs(raider.y - scablandsActorHeightAt(raider.x, raider.z, -100)) < 1e-6,
+        'the raider stays on the bed');
+      if (Math.hypot(raider.x - bridge.x, raider.z - bridge.z) < 45) raiderCrossed = true;
+    }
+  };
+  const run = follow(duel, [before, {x: wash.x, z: wash.z}, ...offset],
+    {speed: 12, stopWithin: 25, seconds: 1200, ahead: 40, onTick: check});
+  assert.ok(run.arrived && carCrossed && raiderCrossed && carBed > 0 && raiderBed > 0,
+    `both pass beneath the bridge: arrived ${run.arrived}, car ${carCrossed}, raider ${raiderCrossed}`);
 });
 
 // ---- 5. Scarps ------------------------------------------------------------------------------------------------------------------------------------

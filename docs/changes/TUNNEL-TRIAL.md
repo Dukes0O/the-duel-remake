@@ -2,6 +2,8 @@
 
 ## Current round
 
+A scripted driver now takes a car from the road down the Wash and under the Girder Bridge while a job raider follows its moving position. Both remain on the bed where it is deep; `test-scablands-solid` passed all 20 checks. The test supplies the pursuit target; it does not prove a separate autonomous chase system. The tunnel enclosure and drawing work still remain.
+
 A car now has a real input-driven check from the bank beside the Girder Bridge. It leaves the ground and lands in the bed within 100 m of the bridge, with the town switch off. `test-tunnels` and `test-scablands-solid` passed. The complete chase and the remaining tunnel and drawing work still need to be done. No game event or sound cue was added.
 
 A real world job now walks a raider across the bed under each deck with the town switch off. The check follows its one stored height for the whole crossing and confirms it reaches the far side. `node tools/test-tunnels.mjs` passed. Big Bess now crosses each deck directly above a stationary raider in the real job update, with both actors staying on their floors. A car chase from the plain and the drive off the bank remain to be proved. No game event or sound cue was added.
