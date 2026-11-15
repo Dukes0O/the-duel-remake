@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 
@@ -51,6 +51,10 @@ assert.equal(stopped.heading, running.heading);
 assert.equal(stopped.slope, running.slope);
 const initial = createBorerState();
 const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80).state;
+assert.equal(borerMuckPile([]), null);
+assert.deepEqual(borerMuckPile(forty.segments), {x:10,z:0,radius:0.75});
+assert.deepEqual(borerMuckPile([{start:{x:2,z:3},end:{x:7,z:3}}]), {x:2,z:-7,radius:0.75});
+assert.throws(() => borerMuckPile([{start:{x:0,z:0},end:{x:0,z:0}}]), RangeError);
 assert.deepEqual(initial.segments, [], 'Cutting does not alter the prior state.');
 assert.equal(forty.segments.length, 1, 'A straight cut stays one segment.');
 const bore = createGroundTunnels(forty.segments, {heightAt:(x,z)=>hill.heightAt(x,z)});

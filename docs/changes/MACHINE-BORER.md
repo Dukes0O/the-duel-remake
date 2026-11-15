@@ -8,6 +8,8 @@ Step 2 has begun: cutting records centre-line segments, coalesces straight runs,
 
 Mabel can now reverse along her recorded tunnel at 1.4 m per second with her head stopped, and return to the cutting face without cutting the same ground again. The path follows bends and slopes; steering does not move her off it. These rules are not connected to the game controls yet.
 
+The conveyor's pile position can now be found from the first tunnel segment, ten metres to the right of its mouth. This does not move material yet. The ground layer's existing cut lowers the surface, so underground material removal still needs a way to take the bore's volume without removing the mountain above it.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -20,6 +22,7 @@ Mabel can now reverse along her recorded tunnel at 1.4 m per second with her hea
 - `node tools/test-machine-borer.mjs`: passed with a moving bore stopped outside a reserved place, retaining its own sentence and emitting one refusal.
 - `node tools/test-tunnels.mjs`: passed after the protected-edge change.
 - `node tools/test-machine-borer.mjs`: passed with reverse travel, a bent and sloping return to the mouth, and forward travel back to the face without changing the tunnel.
+- `node tools/test-machine-borer.mjs`: passed with pile positions for two headings, an empty tunnel and an invalid mouth direction.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -34,6 +37,8 @@ None.
 ## Codex decided
 
 For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and rock one third. This is a starting scale within the card's soft and hard endpoints. The ground stores only one fill material per cell, so the face query uses that material for fill above the natural surface. Walking pace is 1.4 m per second; forward travel in a cut uses the maximum cutting speed.
+
+The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on the one-metre grid at any position. The pile has no volume limit. Underground cutting and the pile's material transfer remain to be built.
 
 ## Sound cues
 

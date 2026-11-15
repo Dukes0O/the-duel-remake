@@ -27,6 +27,20 @@ export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabe
     stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
 }
 
+/** The conveyor discharges ten metres to the right of the first mouth. */
+export function borerMuckPile(segments) {
+  if (!Array.isArray(segments)) throw new TypeError('The borer needs a list of tunnel segments.');
+  if (!segments.length) return null;
+  const {start, end} = segments[0];
+  if (![start?.x, start?.z, end?.x, end?.z].every(Number.isFinite))
+    throw new TypeError('The tunnel mouth needs finite coordinates.');
+  const dx = end.x - start.x, dz = end.z - start.z;
+  const length = Math.hypot(dx, dz);
+  if (length < 1e-9) throw new RangeError('The tunnel mouth needs a direction.');
+  // A radius of 0.75 m covers a sample on the one-metre ground grid.
+  return {x:start.x + 10 * dz / length, z:start.z - 10 * dx / length, radius:0.75};
+}
+
 // Follow the recorded centre line, including bends and slopes, without
 // changing the cut or letting steering move the machine into the rock.
 function placeOnCut(state, distance, radius) {
