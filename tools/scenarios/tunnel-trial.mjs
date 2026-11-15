@@ -82,7 +82,7 @@ export async function run(context) {
     const picture = async (name, x, z, y, target) => {
       await context.evaluate(`(() => {const t=window.__tunnelTrial; t.a.inspectionCamera={position:[${x},${y},${z}],target:${JSON.stringify(target)}}; t.frame();})()`);
       const file=await context.screenshot(`tunnel-${name}`);
-      const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render;return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals};})()`);
+      const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{window.__tunnelTrial.frame();if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render;return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals};})()`);
       report.views.push({name,file,...stats});
     };
     await picture('low-mouth',start.x-dx*16,start.z-dz*16,start.y+3,[start.x+dx*8,start.y,start.z+dz*8]);
@@ -107,6 +107,10 @@ export async function run(context) {
       for(let i=0;i<900 && progress<0;i++){d.setInput({throttle:1,steer:0}); d.step(1/60);const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};} t.frame();return {progress,height:s.groundHeight??s._jumpY};})()`);
     report.bridgeDrive=bridgeDrive; assert.ok(bridgeDrive.progress>=0 && bridgeDrive.height<scablandsSurfaceHeightAt(x,z)-4,'Car reaches the bridge from the bed');
     await picture('bridge-bed',x-bx*18,z-bz*18,bed+4,[x,bed+1,z]);
+    const bridgeExit=await context.evaluate(`(() => {const t=window.__tunnelTrial,d=t.d,s=d.state;let progress=0;
+      for(let i=0;i<900 && progress<30;i++){d.setInput({throttle:1,steer:0});d.step(1/60);const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};}
+      t.frame();return {progress,height:s.groundHeight??s._jumpY};})()`);
+    report.bridgeExit=bridgeExit; assert.ok(bridgeExit.progress>=30, 'Car drives out from under the bridge');
     await persist();
   } catch (error) { report.failure=error.message; await persist(); throw error; }
 }
