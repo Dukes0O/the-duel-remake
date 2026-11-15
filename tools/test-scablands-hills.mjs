@@ -29,6 +29,15 @@ test('mesas leave the furnace descent clear', () => {
   }
 });
 
+test('mesas leave the Soup and Mall return corridor clear', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const points = [step.safePoints.at(-1).position, step.destination.position];
+  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+    assert.ok(distanceToRoad(mesa.x, mesa.z, points) >= mesa.radius + mesa.ramp + 60,
+      'the mesa and its ramp clear the shared return corridor');
+  }
+});
+
 test('mesas leave the chasing car an open approach to the furnace', () => {
   const a = LAND.at('ridge', -1350, 726);
   const b = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path[6].position;

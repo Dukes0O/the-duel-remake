@@ -2127,3 +2127,9 @@ The hills suite now checks the first 900 m of the shared Hot Soup final leg and 
 Not right yet: the rest of those legs is not clear. A 100 m diagnostic found raised ground on the shared leg from about 1,000 to 5,700 m from the safe road, and on the third flag leg from about 200 to 3,100 m from its start. Several Breaks hills, a mesa and a Mall Road pass shoulder are nearby. Their positions need to be resolved while keeping the passes and spacing intact. These samples are not a complete clearance proof.
 
 Changed assertions: none; the two checks are new. Codex decided: check the portions already clear while identifying the remaining obstructions. Removed: none. No event or sound was added. Race fingerprints and the browser were not checked in this step.
+
+### Hill country: clear mesas from the shared return
+
+Seeded mesa placement now keeps the full 60 m corridor from the safe road to the Everburn clear, including each ramp. The mesa at about (909, 1394) moved to (2214, -518); another moved from about (3750, -979) to (3755, -992) as the seeded search continued. Mesa heights retain their seeded values to floating-point precision, expressed as the actual difference from their ground level. The hills suite passed 53 of 53, including a new check of every mesa against the shared return. An initial run failed an exact height comparison by rounding; the recorded height now matches the actual crest difference. No assertion was changed or loosened.
+
+Not right yet: Breaks hills still cross the rest of the return and the third Survey Flags leg. The Mall Road pass shoulder also crosses the flag leg. These corridors still need the full proof. The aim-allocation fix, Easy chase driver and final checks remain. No new event or sound was added. Codex decided: use the job's named safe road and Everburn places for the mesa clearance. Removed: the two former seeded mesa sites. Race fingerprints and the browser were not checked in this step.

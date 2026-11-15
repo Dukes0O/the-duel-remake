@@ -60,6 +60,7 @@ export function hillsFor(land=LAND,seed=1989){
   // endpoints use the same named places as the job's third and fourth flags.
   const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
     LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
+  const soupReturn=[LAND.at('safe-road'),LAND.at('everburn')];
   // Keep the furnace's descent from the Ridge to the Boneyard open.
   const furnaceDescent=[LAND.at('ridge',-74,104),LAND.between('ridge','boneyard',.599,-74,0)];
   // The chasing car cuts across the plates toward the descending furnace.
@@ -78,10 +79,12 @@ export function hillsFor(land=LAND,seed=1989){
   for(let attempt=0;attempt<120000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
     const dx=mesaRng.range(-3300,1300),dz=mesaRng.range(-1200,1400);
     const x=mesaBase.x+dx,z=mesaBase.z+dz;
-    const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
+    const radius=mesaRng.range(120,180),requestedHeight=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
+    const base=oldTerrainHeightAt(x,z),height=(base+requestedHeight)-base;
     if(polygonMargin(plates.points,x,z)<=reach) continue;
     if(distanceToRoad(x,z,platesWay)<radius+200) continue;
     if(distanceToRoad(x,z,surveyLeg)<reach+60) continue;
+    if(distanceToRoad(x,z,soupReturn)<reach+60) continue;
     if(distanceToRoad(x,z,furnaceDescent)<reach+60) continue;
     if(distanceToRoad(x,z,furnaceApproach)<radius+110) continue;
     if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
