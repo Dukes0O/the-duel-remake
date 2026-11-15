@@ -1666,3 +1666,8 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 - 6 Nov: TOWN-ART-SERVICES merged; verdict on its card.
 - 6 Nov: TOWN-ART-MACHINES-2 merged; verdict on its card.
 - 9 Nov: TOWN-ART-SERVICES done (toll bank, school, radio mast, helipad, notice board in the new services-2.glb) and TOWN-ART-MACHINES-2 done (mixer truck, crane truck, pipe truck, roller, loader, paver, drill rig, carved from photos; the paver faces backwards, left for the wiring card). Lanes and branches removed.
+- 14 Nov: Hill-country lane sweep: repository audit ran; its candidates are advisory and no other lane's files or branches were removed.
+- 15 Nov: Hill-country lane sweep: the repository audit ran; its candidates need review, so none were removed.
+
+- 15 November: Janitor checked the repository audit for the hills lane. No uncertain candidates were removed.
+- 15 November: Hill-country lane sweep: the repository audit ran; its candidates need review, so none were removed.

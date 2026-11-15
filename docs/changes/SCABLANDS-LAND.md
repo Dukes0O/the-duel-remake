@@ -1200,6 +1200,351 @@ Codex decided: no new design choice.
 
 Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.
 
+### Round 4, slice 2c: dunes in progress
+
+Four soft dunes now rise 10 to 14 m around the Ships. Their centres follow the Ships when that place moves. They clear all the roads, and an empty hill table leaves the previous terrain height exact. The existing sand driving rules supply the ground cue `world.ground.sand`; no new event or cue was added. The Scablands switches stay off.
+
+The hills are not finished. The Breaks, mesas, Ridge foothills and way up, Lookout, drawn detail, sight and search, uneven outlines and the requested picture scenario remain. Survey Flags' fifth flag has not moved.
+
+Checks: `test-scablands-hills`, `test-scablands-size` and `test-scablands-solid` passed. The course-kit world-signature check passed; race replays passed 297 checks and combat replays passed 12. The Easy driver finished all nine jobs and both gas roads at all four feud levels on all ten seeds; the battle was won on all ten. The lane check passed 33 of 34 suites. `test-full-check` failed in the known temporary-copy setup: its PowerShell process was denied (`spawnSync pwsh EACCES`). The build passed with bundle warnings.
+
+For Claude to run: `test-full-check` in the laptop environment. The requested memory-only hills picture scenario still needs to be written after the remaining terrain is built, then run and judged by Claude.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none in this partial step; the old ground remains outside the dunes.
+
+### Round 4, slice 2c: the Breaks in progress
+
+Three rolling hills rise 48 to 72 m in the south-west between the yard and the Dead Mall. Their crests are about 707 m apart, with a narrow valley between the shoulders. Each hill follows the Mall if it moves. The hill shoulders clear every road, so they do not change the existing road slopes. Survey Flags' fifth flag has not moved. The Scablands switches remain off. No new game event or sound cue was added.
+
+The Breaks are only a start: the other hill areas, full route and Easy driver checks, ground drawing, sight and search, natural outlines and the picture scenario remain to be built and checked.
+
+Checks: `test-scablands-hills` passed 3 tests, `test-scablands-size` passed 9, and `test-scablands-solid` passed 18. Race replays passed 297 checks across 33 cases, combat replays passed 12 checks across four encounters, and `test-course-kit` passed 8 tests. The recorded race fingerprints and world signatures are unchanged. Integration was already included.
+
+The lane tier passed 32 of 34 suites. `test-everburn-easy` failed: Survey Flags finished 0 of 10 runs, against its unchanged requirement of at least 8 of 10. The sample car was stuck near the river while seeking the fourth flag. The cause is not yet established, and the remaining Easy-driver jobs and gas roads have not been checked by that run. `test-full-check` failed in the known temporary-copy setup when `pwsh` was denied (`EACCES`). The build passed with bundle size warnings.
+
+For Claude to run: `test-full-check` on the laptop. The hills picture scenario still needs to be written and then run and judged by Claude. The next builder must investigate Survey Flags and rerun the Easy-driver check; this partial step is not ready to merge.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice.
+
+Removed: none in this partial step; the old ground remains outside the hills.
+
+### Round 4, slice 2c: distant ground in progress
+
+The distant ground now has 70 by 62.5 m cells instead of 140 by 125 m cells. Its one mesh keeps the existing ground material and calculated vertex normals. Its draw call count stays at one; its triangles rise from 16,000 to 64,000. These are mesh counts, not a measured whole-scene performance result. The scarps, Steps and river banks still need their own detailed drawing. The switches remain off. Survey Flags' fifth flag has not moved. No new game event or sound cue was added.
+
+Checks: `test-scablands-scene`, `test-scablands-hills` (3), `test-scablands-size` (9) and `test-scablands-solid` (18) passed. `test-replays` passed 297 checks over 33 cases, `test-combat-replays` passed 12 checks over four encounters, and `test-course-kit` passed 8 tests. Race fingerprints and world signatures remain unchanged. The build passed with bundle size warnings. Integration was already included.
+
+Changed assertions, for Claude to review: none. The scene test's yard vertex index moved from 4,090 to 16,180 to address the same yard point in the finer grid; its claims are unchanged. New checks require the finer grid, its triangle count and normals. Codex decided: no new design choice.
+
+Removed: the former 100 by 80 cell distant ground is replaced by the finer grid.
+
+Still needed: investigate the Easy driver's Survey Flags failure; finish the other hill areas, roads and driver checks, detailed faces, sight and search, natural map outlines and the requested picture scenario. Claude must run and judge the picture scenario when it is written. The card is not ready to merge.
+
+Lane tier: 39 of 41 suites passed. `test-everburn-easy` again failed Survey Flags, 0 of 10 against the unchanged minimum of 8; the other eight jobs each finished 10 of 10 before the test stopped. The sample car stopped near the river while seeking the fourth flag, at approximately (1879, -1525); the cause remains unknown. Gas roads were not reached. `test-full-check` failed in the known fixture setup because `pwsh` was denied (`EACCES`). Claude should rerun that suite on the laptop. The build passed before the lane tier on the same code.
+
+Cockpit sync could not open its protected credential in this session. The repository audit ran; its candidates are advisory and none were removed.
+
+### Round 4, slice 2c: the Lookout in progress
+
+The Lookout rises 45 m above the former ground south-west of the Ridge. Its 60 m radius top is level, its view towards the yard is clear, and its shoulder leaves every road clear. It follows the Ridge if that place moves. Survey Flags' fifth flag has not moved. The switches remain off. No game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed 4 tests, `test-scablands-size` passed 9, and `test-scablands-solid` passed 18. Race replays passed 297 checks across 33 cases, combat replays passed 12 across four encounters, and `test-course-kit` passed 8. Race fingerprints and the checked world signatures remain unchanged. Integration was already included. The build passed with bundle size warnings.
+
+The lane tier passed 39 of 41 suites. Survey Flags again finished 0 of 10, against the unchanged minimum of 8; the car stopped at the same river position near (1879, -1525), while the other eight jobs finished 10 of 10. Gas roads were not reached. `test-full-check` again failed when its temporary-copy setup could not start `pwsh` (`EACCES`).
+
+For Claude to run: `test-full-check` on the laptop, and the requested memory-only hills picture scenario after it is written. The Lookout and all other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the Lookout's position and dimensions are recorded in the card for Claude to review.
+
+Removed: none in this partial step. The former terrain remains outside the Lookout's shoulder.
+
+Still needed: fix the Easy driver's Survey Flags route; finish the mesas, Ridge foothills and way up, detailed faces, sight and search, natural outlines, route checks and picture scenario. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.
+
+
+### Round 4, slice 2c: natural region outlines in progress
+
+The salt pan and scab plates now have bends in their outlines, made from the named corner points in the land's shared data. Driving, ground and map read that same data. The smaller edge waves remain. The switches stay off. Survey Flags' fifth flag has not moved. No new game event or sound cue was added.
+
+Checks: `test-scablands-regions` passed 12 tests, including every road with two cars; `test-scablands-hills` passed 5, `test-scablands-size` passed 9, the scene check passed, and `test-scablands-map` passed 1,798 checks. Race replays passed 297 checks and combat replays passed 12; `test-course-kit` passed 8. Race fingerprints and checked world signatures are unchanged. Integration was already included.
+
+Changed assertions, for Claude to review: none. A new test checks the shared outlines and their bends. Codex decided: the card records the alternating bends and their size for Claude to review.
+
+Removed: the long straight sides of the former region outlines, replaced by bent sides.
+
+Still needed: investigate the Easy driver's Survey Flags failure; finish the mesas, Ridge foothills and way up, detailed faces, sight and search, route checks and the hills picture scenario. The scratch trace stopped at the first flag, so it did not establish the earlier fourth-flag failure's cause. The card is not ready to merge.
+
+Lane tier: 41 of 43 suites passed. `test-everburn-easy` again failed Survey Flags, 0 of 10 against the unchanged minimum of 8; all eight other jobs finished 10 of 10. The sample stopped on the way to the fourth flag near (2083, -1413), and gas roads were not reached. `test-full-check` failed in the known temporary-copy setup because starting `pwsh` was denied (`EACCES`). The build passed with bundle warnings.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written, including draw calls and triangles. The new outlines need visual judgment.
+
+Cockpit sync could not open its protected credential. The repository audit ran; its candidates are advisory and none were removed.
+
+### Round 4, slice 2c: sight range in progress
+
+The land's existing sight calculation now accepts a maximum range, including its edge. The route map uses that same check. A new test uses the actual ground height and a Breaks hill to check that the hill hides a car, that it is visible again after leaving cover, and that range is respected. This is groundwork: raiders, the furnace and lookouts do not yet use it to pursue or search, and no captions or new sound cues were added. The switches remain off and Survey Flags' fifth flag has not moved.
+
+The Survey Flags trace showed the Easy driver in the river bed, repeatedly aiming at a short detour, with no road route available. It did not establish a safe fix. Mesas, Ridge foothills and way up, detailed faces, sight and search, route checks and the hills picture scenario remain. The card is not ready to merge.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the separate range comparison in the route map is replaced by the same comparison in its sight calculation.
+
+Checks: `test-scablands-hills` passed 6 tests and `test-scablands-map` passed 1,798 checks. The lane tier passed 42 of 45 suites: `test-everburn-easy` still failed Survey Flags at 0 of 10, `test-full-check` could not start `pwsh` in its temporary-copy setup (`EACCES`), and `test-town-core` missed its 10 ms timing limit with 11.65 ms under load. The town check passed on its one rerun, with a slowest tick of 5.56 ms; the existing QA-TIMING-UNDER-LOAD card covers timing under load. The other eight Easy jobs finished 10 of 10 before the failed assertion stopped the gas-road checks. The build passed with bundle size warnings.
+
+Race replays passed 297 checks and combat replays passed 12. The course-kit world-signature check passed. The checked race fingerprints and world signatures are unchanged. Integration was already included. For Claude to run: `test-full-check` on the laptop and, once written, the memory-only Performance hills picture scenario with draw calls and triangles. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.
+
+### Round 4, slice 2c: Survey Flags route repair
+
+The third flag is 300 m farther west, still placed from the Dead Mall and Everburn. The fifth flag stays where it is. The Breaks changed the driver's approach from the third flag; it entered the river bed on the way to the fourth and could not get out. The same seed finished with the dunes-only height from commit `681df7201` and failed with the Breaks height from `a050e5773`, with the earlier regions and ways held fixed. Moving the third flag lets the driver reach the crossing. No game event or sound cue was added.
+
+Checks: the existing Easy driver's Survey Flags helper finished 10 of 10 seeds with the moved flag. Seed 1 also finished using the actual job definition, in 790.1 seconds. `test-scablands-hills` passed 6 tests. The full Easy suite, gas roads, lane tier, replay and world-signature checks, and build remain for the final run after integration. Race fingerprints were not checked in this run.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written. The hills need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the third flag's former position, replaced by a named-place offset 300 m west.
+
+Still needed: mesas, the Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: mesas in progress
+
+Two mesas stand on the scab plates between the yard and Tin Town. Their level tops rise 20 m and 18 m above the former ground at their centres. Each has a broken steep rim and a broad ramp. Both follow the named places and leave the roads clear. Survey Flags' fifth flag stays where it is. The switches remain off. No game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed all 7 tests, including the mesa tops, steep sides, ramp slopes, road clearance and movement with Tin Town. `test-scablands-size` passed all 9 tests. Race fingerprints and world signatures were not checked in this run. The complete job routes, including Survey Flags and both gas roads, still need checking after the remaining land changes.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario after it is written. The mesas and other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the two mesas have 200 m top radii, 40 m steep rims and 150 m ramps; their centres follow the yard to Tin Town line at 40 and 70 percent, offset north and south respectively. Removed: none; the former ground remains outside the mesas.
+
+Still needed: Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: Ridge foothills and top
+
+The Ridge has two northern foothills and a level top at 45 m. Its broad shoulder joins the existing land, and the fifth Survey Flags flag stays at its existing position on the top. The Ridge place's level ground rises with the top. Both existing Ridge roads provide ways up. The land's switches stay off. No new game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed 8 tests, including the fifth flag's height, moving the Ridge, and both Ridge roads sampled at no more than 2 m with a maximum slope of .12. `test-scablands-size` passed 9 tests. Race fingerprints and world signatures were not checked in this run. The actual job routes and both gas roads still need their final checks.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario once it is written. The Ridge and other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the Ridge top is at 45 m, with a 160 m level radius and an 850 m shoulder; its two foothills are north of it. The card records this choice.
+
+Removed: the Ridge place's former 18 m level ground is replaced by the 45 m top while the new land is active.
+
+Still needed: detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: river bank faces
+
+The river mesh now samples each bank every 2 m across the steep section, so the Steps' ledges and the river banks follow their ground height more closely. It keeps the existing ground material and computes normals from the mesh. No game event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `test-scablands-hills` passed 9 tests, including the drawn bank heights, two-metre cells and unit normals. Race fingerprints and world signatures were not checked in this run. The full job routes and both gas roads still need their final checks.
+
+Draw cost: the river still uses one draw call per visible piece. A full 64-section piece has 4,864 triangles, up from 2,560. Actual on-screen draw calls and triangle counts still need the browser scenario.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario after it is written. The land and its faces need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the coarser bank cells were replaced by two-metre cells.
+
+Still needed: detailed cells for all four scarps, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: distant scarp faces in progress
+
+The distant ground now divides cells that touch the four scarp faces into eight pieces in each direction. Interior vertices sample the shared ground height. The edges follow the former cell edges so the finer cells meet their neighbours without gaps. The existing ground material and calculated mesh normals are unchanged. The nearby moving ground still needs finer scarp cells, so this is not yet the finished face work. The land's switches stay off. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+The far ground remains one draw call. Its mesh has 76,852 triangles, up from 64,000. These are mesh counts; actual on-screen draw calls and triangles need the picture scenario. The joins and the faces need visual review.
+
+Checks: `test-scablands-hills` passed all 10 tests, including a fine sample and normal for each scarp. `test-scablands-scene` passed, including ground-edit refresh. Race fingerprints and world signatures were not checked in this run. The final route checks, lane tier, replay and world-signature checks and build remain for the final run after integration.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written.
+
+Changed assertions, for Claude to review: the scene check's far-ground vertex count changed from 32,361 to 40,623, and triangle count from 64,000 to 76,852, because scarp cells now have finer triangles. The checks remain exact. Codex decided: no new design choice. Removed: the former coarse triangles at the four scarp faces are replaced by finer triangles.
+
+Still needed: refine the nearby scarp faces, then complete sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: nearby ground sampling in progress
+
+The nearby ground now has 120 by 120 cells across the same window, instead of 60 by 60. Its cells are about 11.7 by 8.3 m instead of 23.3 by 16.7 m, giving each scarp face more samples. The existing material and height remain shared. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+This is an interim improvement, not the finished face work: the extra cells cover the whole window rather than the scarps alone. The nearby ground still takes one draw call, but its triangles rose from 7,200 to 28,800 and its vertices from 3,721 to 14,641. The extra work has not been timed. Replace this broad increase with face-specific cells and check the joins and performance before the card is finished.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 11 tests; `node tools/test-scablands-scene.mjs` passed. Race fingerprints and world signatures were not checked in this run. The final route checks, lane tier, replay and world-signature checks and build remain for the final run after integration.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario once written. The faces and their performance need judgment.
+
+Changed assertions, for Claude to review: the scene check's near-ground vertex count changed from 3,721 to 14,641 because the window has twice as many cells in each direction. The exact check remains. Codex decided: no new design choice. Removed: the former 60 by 60 near-ground grid was replaced by a finer grid.
+
+Still needed: face-specific nearby scarp cells and performance checks, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: nearby scarp faces
+
+The nearby ground is back to its 60 by 60 cell window. Cells along the four scarps are replaced by a separate eight-way mesh that uses the same ground material and samples the land height. Its edges meet the original grid. The existing river mesh provides the detailed banks and Steps. No game event or sound cue was added. Survey Flags' fifth flag remains in place.
+
+The nearby window has 7,200 triangles before face detail. At the middle of each scarp, the replacement mesh adds a net 15,120 triangles at the west scarp, 22,680 at the east scarp, and 18,144 at each of the camp and Ridge scarps. A visible face adds one draw call. These are mesh counts; on-screen counts and appearance still need the picture scenario.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 11 tests. The scene suite, race fingerprints and world signatures were not run in this round. The remaining route checks, integration and final checks are still needed.
+
+For Claude to run: the memory-only Performance picture scenario once written, with draw calls and triangles, and `test-full-check` on the laptop. Judge the faces and their joins.
+
+Changed assertions, for Claude to review: the scene check's nearby ground count returns from 14,641 to 3,721 vertices, as Claude directed. The temporary hills test for the finer whole-window lattice was replaced with a check for the restored grid and separate scarp meshes. Codex decided: no new design choice.
+
+Removed: the temporary 120 by 120 nearby grid and the triangles beneath the scarp face meshes.
+
+Still needed: item 2, sight and search; item 3, route checks; item 4, the picture scenario; and item 5, integration and final checks.
+
+### Round 4, slice 2c: raider shot sight in progress
+
+Scablands camp raiders now check the land between themselves and their chosen target before firing. A mesa can block a shot, and a clear line permits it. Other venues keep their existing shot rules. This is only part of item 2: target selection still happens before the sight check, and pursuit, the five-second search, the furnace, lookouts and seen/lost captions remain to be completed. No new game event or sound cue was added. Survey Flags' fifth flag remains in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 12 tests, including mesa cover, a clear line and unchanged sight handling for other venues. Race fingerprints and world signatures were not checked in this round. The remaining route checks, integration and final checks are still needed.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the Scablands camp raiders' ability to fire through intervening ground.
+
+### Round 4, slice 2c: raider target selection
+
+Scablands camp raiders now choose only cars they can see within 82 m of a raider able to fire. A hidden nearer car no longer prevents a raider from choosing a visible car. The stop preview uses the same sight and range rules. Other venues retain their former selection. No new game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 13 tests, including cover, range and the stop preview. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario after it is written, and `test-full-check` on the laptop.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: selection of hidden or out-of-range cars by Scablands camp raiders.
+
+Still needed: item 2, pursuit and the five-second search, furnace and lookout sight, seen and lost captions and cues; then route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: camp raider search in progress
+
+Scablands camp raiders remember the last place they saw the player's car. When it leaves sight or range, they walk to that place, search for five seconds, and return to their post. Seeing the car again refreshes the remembered place. Their steps use the existing ground and solid checks. The search does not read the hidden car's position. Other venues retain their former behaviour. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 14 tests, including the last seen place, search, return and seeing the car again. The search test uses a clear path; it does not prove that a raider can find a way around a steep face or solid. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: camp raiders walk at 3 m/s, the existing job-raider walking pace. Removed: none.
+
+Still needed: item 2, path finding around blocked ground, furnace and lookout sight, and seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: raider detours in progress
+
+A searching camp raider tries a consistent side around blocked ground, then returns to its direct path when the next six metres are clear. Each short step still uses the ground and solid checks. This is local obstacle avoidance, not a complete route finder: enclosed or complicated obstacles can still stop a raider. No game event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 15 tests, including a blocked route to the last seen place and back. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the search's direct-only movement when a step is blocked.
+
+Still needed: item 2, complete navigation for difficult obstacles, furnace and lookout sight, seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: skyline furnace sight in progress
+
+During Hot Delivery the skyline furnace now checks the ground and its range before it sees the car. It counts uninterrupted time in sight and resets the count when the car reaches cover. Captions say when the furnace sees or loses the car. The seen cue is `arena.tell`; the lost cue is `gate.latch`. The car remains the target when the player is on foot. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 16 tests, including clear ground, cover, renewed sight and range. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: the furnace uses its existing map sight range and eye height, with ground sampled every 5 m. Removed: none.
+
+Still needed: item 2, connect six seconds in sight to the horn and riders, complete pursuit and lookout sight and captions, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The sight clock alone does not yet call riders. The card is not ready to merge.
+
+### Round 4, slice 2c: camp sight notices
+
+Camp raiders now tell the player when any active camp raider sees the car, and when the last one loses sight. Passing between two raiders' views does not produce a false lost notice. The seen cue is `arena.tell`; the lost cue is `gate.latch`. Escort ambushes keep their existing rules. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 17 tests, including combined sight, loss and renewed sight. Race fingerprints and world signatures were not checked in this round. The final checks remain after integration.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and lookout sight, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. This card is not ready to merge.
+
+### Round 4, slice 2c: Ridge lookout sight
+
+During Hot Delivery the Ridge lookout checks its existing map range and eye height against the ground before seeing the car. The player is told when the car is seen or lost. The seen cue is `arena.tell`; the lost cue is `gate.latch`. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 18 tests, including clear ground, cover, renewed sight and range for the lookout. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: the lookout uses the Ridge's named place and its existing map range and eye height. Removed: none.
+
+Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: furnace warning
+
+During Hot Delivery the furnace sounds its horn once after it sees the car for more than six continuous seconds. Cover resets the clock. The cue is `arena.toll-gate`. Survey Flags' fifth flag remains in place. The warning does not yet bring the two riders, so this part is not finished.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 19 tests, including the warning threshold, cover and one warning per job. Race fingerprints and world signatures were not checked in this round. Integration and the final checks remain.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 2, send the two riders after the horn, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+
+### Round 4, slice 2c: visible pursuit
+
+Camp raiders now follow a car while they can see it. They use the existing walking pace and obstacle checks, and stop 12 m away to leave room to fire. Once sight is lost, they still go to the last seen place, search, and return. No event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 20 tests. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop.
+
+Changed assertions, for Claude to review: no assertion values changed. The search test's first sight step uses 0 seconds instead of 1, so it still starts its loss-of-sight check at the original post now that raiders move during sight. Codex decided: raiders stop 12 m from a visible car and walk at the existing 3 m/s. Removed: the rule that kept a raider standing still while the car was visible.
+
+Still needed: item 2, send the furnace's two riders and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: route checks
+
+The solid-ground driver now drives to the level tops of the Ridge and the Lookout. The river-bed route check now starts at the yard and continues from the Boneyard to Tin Town. It still turns back at the bridge because the deck blocks the bed; the separate ground-height lane owns that limit. Survey Flags' fifth flag stays where it was. No game event or sound cue was added.
+
+Checks: the two selected solid-ground route tests passed. The hills suite passed 20 of 20 tests. Survey Flags finished 10 of 10 seeds using the Easy suite's unchanged driver and its existing 8 of 10 pass mark. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario after it is written. Changed assertions, for Claude to review: the river route's arrival check now requires Tin Town instead of the Boneyard Road, because it now drives the whole route. No pass mark was lowered. Codex decided: no new design choice. Removed: the incomplete endpoint in the river route check.
+
+Still needed: item 4, the picture scenario, then item 5, integration and final checks.
+
+### Round 4, slice 2c: hill-country pictures
+
+The memory-only Performance scenario takes the nine requested pictures and records draw calls and triangles for each. It uses the land's hill, road, scarp and river data to choose the views. Survey Flags' fifth flag remains in place. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, as directed. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: `tools/scenarios/scablands-hills.mjs` and judge the pictures. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 5, integrate and run the final checks.
+
+### Round 4, slice 2c: furnace road clearance and final-check findings
+
+The eastern mesa now stands 500 m farther east, measured from the same named places. Both furnace roads clear climbable ground again. The hill tests still place the mesa on the scab plates and keep its ramp and roads clear. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+Checks after this change: `node tools/test-scablands-hills.mjs` passed 20 of 20 tests, and `node tools/test-scablands-solid.mjs` passed 19 of 19, including both furnace roads, both hill tops and all four routes to Tin Town. Earlier on 65e4ee51a, integration/wasteland was already included and the status page matched it. The build passed. The ground, hills, job map, map and scene suites passed; regions, size and solid failed. The solid failure was the furnace road fixed here. Both replay suites passed: 297 race fingerprint comparisons and 12 combat comparisons. World composition passed 63 checks across 20 events. These checks and the build predate the mesa move and must be repeated on the final code.
+
+The lane gate was stopped at 30 minutes: 87 of 89 suites had reported, with six failures. The Easy jobs and Medium gas runs had not finished. `test-old-smoke` failed the careful Medium driver; `test-scablands-regions` still expects the Ridge at its old height; `test-scablands-size` finds the moving ground replaces its index array; `test-scablands-solid` found the furnace road fixed above. `test-review-evidence` and `test-warlord-tollkeeper` could not start ffmpeg (EPERM). The failed size test also revealed that simply retaining the index array makes its 200-move timing fail and conflicts with the hills test's index-count check, so that attempted change was discarded. Survey Flags previously finished 10 of 10 seeds in the route-check round; the full Easy suite remains unfinished here.
+
+For Claude to run: the memory-only Performance picture scenario, its visual judgment, and the two ffmpeg-dependent tests on the laptop. The full Easy and Medium driving checks and final gate still need a completed run after the remaining fixes.
+
+Changed assertions, for Claude to review: the far scene gained exact checks of 40,623 corners and 76,852 triangles, replacing the earlier 32,361 corners and 64,000 triangles because of detailed scarp faces; the near scene remains 3,721 corners as on integration. The river route now requires arrival at Tin Town instead of returning only to the Boneyard Road. The raider search test starts sight at 0 seconds instead of 1 because visible raiders now move. The old regions assertion requiring the Ridge at its old height remains unchanged and fails against the designed 45 m summit; it needs Claude's review. No assertion was weakened in this run. Codex decided: move the mesa 500 m east, within the same scab plate, to clear the furnace road. Removed: the mesa's overlap with that road. The seen cue is `arena.tell`, the lost cue is `gate.latch`, and the furnace warning cue is `arena.toll-gate`.
+
+Still needed: fix moving-ground allocation and speed, resolve the Ridge assertion, investigate the Old Smoke Medium failure, repeat the final checks on the resulting code, and obtain Claude's picture verdict.
+
+### Round 4, slice 2c: moving scarp ground
+
+The moving ground keeps its index array and reuses the fine scarp heights already in view. It discards samples as they leave the window and clears them when the land is refreshed. The old ground cells still give way to the scarp faces. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-size.mjs` passed 9 of 9, including its unchanged 200-move time limit and array identity check. `node tools/test-scablands-hills.mjs` passed 20 of 20. `node tools/test-scablands-scene.mjs` passed. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario and its visual judgment. Changed assertions: none. Codex decided: no new design choice. Removed: repeated calculation of retained fine scarp heights and replacement of the ground index array.
+
+Still needed: resolve the Ridge height assertion and Old Smoke Medium failure, then repeat the final checks after integration. The card is not ready to merge.
+
+### Round 4, slice 2c: Ridge summit check
+
+The existing place-flatness check now expects the Ridge's designed summit height. It still checks all three points within 0.01 m. No game event or sound cue was added; Survey Flags' fifth flag remains in place.
+
+Checks: `node tools/test-scablands-regions.mjs` passed 12 of 12; `node tools/test-scablands-hills.mjs` passed 20 of 20. A fresh `test-old-smoke` run was stopped before completion; it reported the Easy driver won 10 of 10 chases, but did not reach the Medium result. The final replay and world-signature checks remain to be run on the final code.
+
+Changed assertions, for Claude to review: the Ridge's expected flat ground changed from 18 m to 45 m, as required by the new summit; its 0.01 m tolerance is unchanged. For Claude to run: the memory-only picture scenario and visual judgment, and the ffmpeg-dependent checks noted above. Codex decided: no new design choice. Removed: the old 18 m expectation for the Ridge.
+
+Still needed: investigate the Old Smoke Medium result and finish the final checks after integration.
+
+### Round 4, slice 2c: final checks in progress
+
+Integration was already included, and the status page matches it. The isolated Medium Old Smoke chase now wins in 1,521.95 seconds, within the unchanged 1,753-second limit. The full Old Smoke suite passed. The earlier failure preceded the mesa move that cleared the furnace road. Survey Flags' fifth flag remains in place. No game event or sound cue was added in this round. The seen cue remains `arena.tell`, the lost cue `gate.latch`, and the furnace warning `arena.toll-gate`.
+
+Checks: all eight Scablands suites passed alone, including the four routes and both hilltops. Race replays passed 297 comparisons; combat replays passed 12; world composition passed 63 checks across 20 events. The scenario passed `node --check`. The build passed with `npm.cmd run build`. The lane tier started 89 suites and was stopped at 30 minutes: 83 passed, four failed, and Easy jobs and Medium gas were unfinished. Review evidence and Warlord tollkeeper could not start ffmpeg (EPERM). Scablands size exceeded its 200-move timing limit under load (538 ms) but passed all nine tests alone before and after the lane. Town core took 31.66 ms against its 30 ms limit under load and passed all 641 checks alone afterwards, with 9.47 ms for the day step. No assertion was changed.
+
+For Claude to run: the full Easy jobs and Medium gas checks, the lane tier to completion, both ffmpeg-dependent suites, and the memory-only Performance picture scenario with its visual and draw-count judgment.
+
+Changed assertions, for Claude to review: the far scene changed from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed scarp faces. Near ground remains 3,721 corners, as on integration. The river route now requires Tin Town instead of the Boneyard Road. The search test's initial sight step changed from one second to zero because the raider moves while seeing the car. The Ridge flat-ground expectation changed from 18 m to its designed 45 m summit, keeping the 0.01 m tolerance. No pass mark was lowered. Codex decided: no new design choice. Removed: none in this round.
+
+Still needed: the unfinished driving checks and a complete lane result, plus Claude's picture verdict. The card is not ready to hand over as complete.
 ### Realism trial, step 3
 
 The switch adds seeded things, shared collision records, signs, tracks and map lines. A fast fence impact brings down its post and wire for the visit, without damage. Its sound cue is `world.fence.snap`.
@@ -1242,3 +1587,15 @@ a pole stops (24.7 to 2.0 mph and 24.6 to 2.0 mph).
 **Lane tier and build at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
 
 **Removed:** the plain shapes Codex placed first (boxes, cones and line towers) are replaced by the drawn ones in the same files.
+
+### Round 4, slice 2c: final merged checks
+
+The hill country, natural edges, ground faces and sight rules are complete behind the land's switches. The tunnel trial now lets the river route run from the yard, under the bridge and onward to Tin Town. The combined check keeps the yard approach and verifies the crossing. Survey Flags' fifth flag stays in place. The seen cue is `arena.tell`, the lost cue is `gate.latch`, and the furnace warning cue is `arena.toll-gate`.
+
+Checks on merge `61fc76f92`: all nine Scablands suites and the tunnel suite passed; both replay suites passed 297 race and 12 combat fingerprint comparisons; world composition passed 63 checks across 20 events. The picture scenario passed `node --check`. The lane tier finished 94 of 96: Easy jobs, Survey Flags, both gas roads and Medium gas passed. `test-review-evidence` and `test-warlord-tollkeeper` could not start ffmpeg (`EPERM`). The build passed. The status page matches integration.
+
+For Claude to run: `test-review-evidence`, `test-warlord-tollkeeper`, and the memory-only Performance `scablands-hills` picture scenario; judge its pictures, draw calls and triangles.
+
+Changed assertions, for Claude to review: the far scene changes from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed faces; near ground stays at 3,721 corners. The Ridge flat-ground expectation changes from 18 m to the designed 45 m summit, with the 0.01 m tolerance unchanged. The search test's initial sight step changes from one second to zero because the raider now moves while it sees the car. The river check now drives from the yard to Tin Town and passes beneath the bridge, replacing the former Boneyard endpoint and the former blocked-deck assertion because the tunnel work opened that route. No pass mark was lowered.
+
+Codex decided: no further design choice. Removed: the blocked-deck route and its assertion, replaced by the through-route check.

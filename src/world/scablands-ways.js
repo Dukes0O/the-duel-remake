@@ -78,9 +78,10 @@ export function groundAlong(points, {driveAt = scablandsDriveAt, step = 25} = {}
 
 // ---- Sight ---------------------------------------------------------------------------------------------------------------------------
 // A watcher at `eye` metres above the ground sees a point `target` metres above its ground when no ground between them stands higher
-// than the line of sight (the highest angle the ground has taken so far from the watcher's eye). Heights are the land's own.
-export function sees(from, point, {heightAt = scablandsHeightAt, eye = 5, target = 1.5, step = 40} = {}) {
+// than the line of sight (the highest angle the ground has taken so far from the watcher's eye) and it is within range. Heights are the land's own.
+export function sees(from, point, {heightAt = scablandsHeightAt, eye = 5, target = 1.5, step = 40, range = Infinity} = {}) {
   const eyeY = heightAt(from.x, from.z) + eye, distance = gap(from, point);
+  if (distance > range) return false;
   if (distance < 1) return true;
   const count = Math.max(1, Math.ceil(distance / step));
   let highest = -Infinity;
@@ -117,7 +118,7 @@ export function metresSeen(points, from, {range = 1400, step = 25, ...options} =
   let seen = 0;
   for (let i = 0; i + 1 < samples.length; i++) {
     const mid = {x: (samples[i].x + samples[i + 1].x) / 2, z: (samples[i].z + samples[i + 1].z) / 2};
-    if (gap(from, mid) <= range && sees(from, mid, options)) seen += samples[i + 1].along - samples[i].along;
+    if (sees(from, mid, {range, ...options})) seen += samples[i + 1].along - samples[i].along;
   }
   return seen;
 }

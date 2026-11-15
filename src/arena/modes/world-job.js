@@ -5,7 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -610,6 +610,28 @@ export function stepWorldJob(duel, dt) {
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
+    const car = position(duel, state);
+    const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt);
+    worldJob.skylineSight = sight;
+    if (skylineWarningDue(sight, worldJob.skylineWarned)) {
+      worldJob.skylineWarned = true;
+      duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
+        cue: 'arena.toll-gate', position: car}});
+    }
+    if (sight.change) {
+      duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'furnace-sight', targetId: 'player', seconds: 0,
+        cue: sight.visible ? 'arena.tell' : 'gate.latch', position: car}});
+    }
+    const lookout = stepRidgeSight(worldJob.ridgeSight ?? {}, car);
+    worldJob.ridgeSight = lookout;
+    if (lookout.change) {
+      duel._storyCallout(lookout.visible ? 'The lookout can see your car.' : 'The lookout has lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'lookout-sight', targetId: 'player', seconds: 0,
+        cue: lookout.visible ? 'arena.tell' : 'gate.latch', position: car}});
+    }
+  }
   // Exploration finds use heights above the local ground, not world altitudes.
   const jobPoint = currentStep?.kind === 'explore' && duel.course.def.scablands
     ? {...point, y: point.y - scablandsActorHeightAt(point.x, point.z, point.y)} : point;
