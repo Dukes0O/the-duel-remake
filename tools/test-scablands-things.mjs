@@ -9,7 +9,7 @@ import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
-import {createFixedThingsView, createSmallThingsView} from '../src/world/scablands-things-view.js';
+import {createFixedThingsView, createSmallThingsView, createThingsLinesView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
 test('fixed drawing uses every collision footprint once', () => {
@@ -263,4 +263,21 @@ test('whole footprints clear roads, existing solids and job starts', async () =>
   assert.equal(thingFootprintClear(start.x, start.z, 2, [start]), false);
   assert.throws(() => thingFootprintClear(x, z, 2), RangeError);
   assert.throws(() => thingFootprintClear(x, z, 29, []), RangeError);
+});
+
+test('line drawing makes towers and sagging spans without crossing missing supports', () => {
+  const p = (x, y = 0) => ({x, y, z: 0, heading: 0, state: 'upright'});
+  const fixed = {pylons: [p(0), p(350), null, p(1050)],
+    telegraphs: [{poles: [p(0), p(60), null, p(180), {...p(240), state: 'down'}]}],
+    fences: [{posts: [p(0), p(8), null, p(24)]}]};
+  const view = createThingsLinesView(fixed);
+  const tower = view.group.getObjectByName('Scablands towers');
+  const wire = view.group.getObjectByName('Scablands wires');
+  assert.equal(tower.geometry.getAttribute('position').count, 3 * 7 * 2);
+  assert.equal(wire.geometry.getAttribute('position').count, 3 * 8 * 2);
+  const points = wire.geometry.getAttribute('position');
+  assert.ok(points.getY(7) < points.getY(0));
+  assert.ok(points.getY(7) < points.getY(15));
+  view.dispose();
+  assert.equal(view.group.children.length, 0);
 });

@@ -1344,3 +1344,13 @@ For Claude to run: the browser scenario once it is written. Chrome cannot start 
 After integration was confirmed current, all eight Scablands suites and both replay suites passed. Race fingerprints stayed unchanged: 297 race checks across 33 cases and 12 combat checks across four encounters. No separate world-signature test file matched the requested name. The lane tier passed 26 of 28 suites: `test-full-check` could not start `pwsh` for its temporary copy (EACCES); `test-town-core` reached 10.03 ms against its 10 ms limit under load, and passed alone on its one rerun at 6.65 ms. The build passed with bundle-size warnings. The matching drawing test also checks the heading and passed all 14 tests.
 
 For Claude to run: rerun `test-full-check` at merge and run the scenario after it is written. Cockpit sync could not unlock its protected credential, so it did not update Cockpit.
+
+### Realism trial, step 3: tower and wire batches, in progress
+
+Added plain 40 m pylon frames and sagging spans for pylons, telegraph poles and fences in two drawing batches. Rejected supports, fence gaps and down poles break their spans. Some pylon cables sag close to the ground. The drawing is not connected to the game, and leaning poles still need their visual lean. No game event or sound cue was added.
+
+The placement suite passed 15 tests, including tower height, sag and broken spans. All eight Scablands suites and both replay suites passed. Race fingerprints were unchanged: 297 checks across 33 cases and 12 combat checks across four encounters. No separate world-signature test files matched the requested name. Integration was already current. The lane tier passed 27 of 28 suites; `test-full-check` could not start `pwsh` for its temporary Git copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings. Cockpit sync could not unlock its protected credential.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: nothing; this adds drawing batches to the unconnected trial.
+
+For Claude to run: rerun `test-full-check` at merge and run the browser scenario once it is written. Chrome cannot start in this job. The scene connection, job starts, solids, signs, track drawing, map, scenario and remaining acceptance checks still need work.

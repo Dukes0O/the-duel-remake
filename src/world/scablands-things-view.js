@@ -115,3 +115,56 @@ export function createFixedThingsView(fixed, loneBoulders = []) {
   }
   return {group, dispose};
 }
+
+// A separate batch for the parts above the collision footprints. Missing
+// supports deliberately break a span rather than drawing wire across a gap.
+export function createThingsLinesView(fixed) {
+  const towers = [], wires = [];
+  const segment = (out, a, b) => out.push(...a, ...b);
+  const span = (a, b, height, sag) => {
+    const start = [a.x, a.y + height, a.z], end = [b.x, b.y + height, b.z];
+    let previous = start;
+    for (let i = 1; i <= 8; i++) {
+      const t = i / 8;
+      const y = start[1] * (1 - t) + end[1] * t - 4 * t * (1 - t) * sag;
+      const point = [a.x * (1 - t) + b.x * t, y, a.z * (1 - t) + b.z * t];
+      segment(wires, previous, point);
+      previous = point;
+    }
+  };
+  for (const pylon of fixed.pylons.filter(Boolean)) {
+    const c = Math.cos(pylon.heading), s = Math.sin(pylon.heading);
+    const point = (x, y, z) => [pylon.x + x * c + z * s, pylon.y + y, pylon.z - x * s + z * c];
+    const top = point(0, 40, 0);
+    for (const x of [-3, 3]) for (const z of [-3, 3]) segment(towers, point(x, 3, z), top);
+    for (const y of [15, 27, 36]) {
+      const width = 3 * (1 - y / 45);
+      segment(towers, point(-width, y, 0), point(width, y, 0));
+    }
+  }
+  for (let i = 1; i < fixed.pylons.length; i++) {
+    const a = fixed.pylons[i - 1], b = fixed.pylons[i];
+    if (a && b) span(a, b, 36, a.cableDown ? 34 : 9);
+  }
+  for (const line of fixed.telegraphs) for (let i = 1; i < line.poles.length; i++) {
+    const a = line.poles[i - 1], b = line.poles[i];
+    if (a && b && a.state !== 'down' && b.state !== 'down') span(a, b, 7, 1.2);
+  }
+  for (const run of fixed.fences) for (let i = 1; i < run.posts.length; i++) {
+    const a = run.posts[i - 1], b = run.posts[i];
+    if (a && b) span(a, b, 1.2, .2);
+  }
+  const group = new THREE.Group();
+  for (const [name, points, color] of [['towers', towers, 0x675e54], ['wires', wires, 0x514b42]]) {
+    if (!points.length) continue;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    const lines = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({color}));
+    lines.name = `Scablands ${name}`;
+    group.add(lines);
+  }
+  return {group, dispose() {
+    for (const lines of group.children) { lines.geometry.dispose(); lines.material.dispose(); }
+    group.clear();
+  }};
+}
