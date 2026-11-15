@@ -134,7 +134,7 @@ Rules: `docs/story/the-long-dry.md` section 9. Ids go in `src/story/far-lines.js
 | `far.4.daylight` | Odessa | Break-through within half a metre of level | DAYLIGHT! And dead level, look at that. You could roll a marble through. |
 | `far.4.offlevel` | Odessa | Break-through by an exit cutting | Daylight, and a bit of a climb to reach it. She's through. We'll call the ramp a feature. |
 | `far.4.trench` | Odessa | The exit cutting runs past 60 m | That's a trench, not a tunnel. Lift her head and bring her up to the ground. |
-| `far.4.lip` | Odessa | She comes out more than a metre up the face | You've come out of the side of the hill like a cork, driver. Back her up and turn her down. |
+| `far.4.lip` | Odessa | She comes out more than a metre up the face | You've come out of the side of the hill like a cork, driver. Don't you dare drive her off that. Get the truck and tip me a ramp. |
 | `far.4.first` | Odessa | First metre | LISTEN to that. Look at the dirt come off the back! That's rock. A metre of that's seventy-four tonnes. |
 | `far.4.fans` | Odessa | Ten metres in | Air gets bad in a tunnel. There's fans behind you and a long bag blowing air up to the face. And we set a ring of steel every metre so it doesn't come down on your head. |
 | `far.4.pile` | Odessa | Spoil pile | That heap out the back is near ninety thousand tonnes by the time we're through. Somebody will find a use for it. Somebody always wants a road. |
