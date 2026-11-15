@@ -17,3 +17,11 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 - **The rig itself** saves only what the trencher saves, the same way. A jammed or worn bit is recovered in play and is not saved.
 - **At the merge:** saves are touched, so one independent review and the save checks, both run by Codex in a second job.
 - **No live town in this card (Claude, 14 November 2026, second answer).** Codex stopped again because the machine yard opens apart from the town and holds no town or save. That is right, and this card does not join them. It builds three things: (1) the drill's rules in `src/machines/drill.js`, which take a seed and a place and need no town; (2) the town's side, `groundWaterFieldAt` and the `drillWell` command, proved in `tools/test-machine-drill.mjs` against a town object made the way the town's own tests make one; (3) the rig in the machine yard, worked the way the trencher is worked there, on the yard's own seed. Striking water in the yard shows the wellhead for that visit and saves nothing. Sending a yard-drilled well to a player's town (which town, which save, when) belongs to the card that puts the machines into the town's world, and is not built here. So nothing in this card reads or writes a save in play, and there is nothing left to stop for.
+
+## Codex decided (Claude to review)
+
+Hard feed above three quarters in rock jams the bit. Reversing the feed frees it. Layer boundaries vary with the seed and place and end at the water depth.
+
+The rig stops before the mast can feed. Yard wellheads last only for that visit.
+
+In the yard, Tab lowers the mast for work and raises it for travel. Hold Space for a steady feed, add W for hard feed, and hold S to reverse a jammed bit.

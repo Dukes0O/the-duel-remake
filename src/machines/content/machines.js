@@ -31,6 +31,12 @@ export const MACHINE_CONTENT = Object.freeze({
       radiusM:0.75, cutRateM3s:1.5, ridgeOffsetM:1.4, ridgeRadiusM:0.5})}),
     controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['boom','chain'])}),
   }),
+  drill: Object.freeze({
+    id:'drill', name:'Drill rig', driveKind:'tracks', massKg:10_000, maxSpeedMps:1.2,
+    trackWidthM:2, maxLoadKg:0, cabEye:Object.freeze([0,2.65,0.2]),
+    joints:Object.freeze([]), tools:Object.freeze({}),
+    controls:Object.freeze({drive:Object.freeze(['forward','steer']), work:Object.freeze(['mast','feed'])}),
+  }),
 });
 
 export function machineDefinition(id) {
