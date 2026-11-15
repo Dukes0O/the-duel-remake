@@ -164,7 +164,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     // A support sample can move slightly uphill since the previous step.
     // Accept a small step below the new floor, without pulling an actor down
     // from the surface above the ceiling.
-    const inside = tubeAt(position, actorHeight, 0.5);
+    const inside = tubeAt(position, actorHeight, 0.6);
     if (!inside) return terrainHeight;
     // The surface is another floor. Keep an actor on it when it is within
     // step height, even if the bore's crown is just below the surface.

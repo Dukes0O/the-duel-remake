@@ -1,5 +1,13 @@
 # TUNNEL-TRIAL
 
+The tunnel floor now uses the same 0.6 m step as the deck floor. Car support,
+wall contact and the crown check use the selected floor, so thin covered ground
+does not acquire the bore's walls or roof. The focused tunnel and Scablands
+solid checks pass. Floor-selected enclosure still needs the bent drives and
+scarp lip proof; drawing and the browser scenario remain unfinished. No game
+event or sound was added. The crown test's starting height was corrected from
+0 m to the actual 1.8 m bore floor; its roof assertions are unchanged.
+
 The tunnel support query now chooses covered surface ground when it is within 0.6 m above the actor's feet. A focused test checks both sides of that threshold, and `node tools/test-tunnels.mjs` passed. Floor-based wall selection, the remaining enclosure driving tests and drawing still need work. No game event or sound was added.
 
 Tunnel walls now also constrain a move ending inside a bore when its start was outside, after checking closed faces. `node tools/test-tunnels.mjs` passed. This is not yet the required floor-based enclosure. The current surface-versus-tunnel selection and scarp-mouth test need to be reconciled with the highest-floor rule; the bent driving, lip-fall and remaining enclosure checks are still needed. No game event or sound was added.

@@ -273,9 +273,10 @@ export function _supportAt(distance, lateral, actor = this.state) {
   if (!capability) return ground;
   // Surface obstacles must not lift an underground car back onto the hill.
   const tunnels = this.course.groundTunnels;
-  if (tunnels && Number.isFinite(actor?.groundHeight) &&
-      (tunnels.tubeAt(ground, actor.groundHeight) ||
-       tunnels.tubeAt(ground, actor.groundHeight + 0.5))) return ground;
+  if (tunnels && Number.isFinite(height)) {
+    const tube = tunnels.tubeAt(ground, height, 0.6);
+    if (tube && Math.abs(ground.y - tube.floor) < 1e-6) return ground;
+  }
   const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
   if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
@@ -307,10 +308,19 @@ export function _staticContacts(car, player, journeyColliders = null) {
     // airborne vehicles need extra terrain samples and vertical clearance.
     start.y = end.y = undefined;
   }
-  // The experimental tubes only affect cars that start inside one. Keep the
-  // ordinary contact path identical when no tubes are installed on the course.
+  // A surface above a bore is a separate floor, even when feet overlap the
+  // crown. Only apply bore walls when one end selects the tunnel floor.
   if (this.course.groundTunnels && Number.isFinite(start.y) && Number.isFinite(end.y)) {
-    const constrained = this.course.groundTunnels.constrainMotion(start, end, this._vehicleSpec(car).halfWidth);
+    const tunnels = this.course.groundTunnels;
+    const startTube = tunnels.tubeAt(start, start.y, 0.6);
+    const startFloor = startTube?.floor;
+    const endTube = tunnels.tubeAt(end, end.y, 0.6);
+    const endFloor = endTube?.floor;
+    const selectedStart = startTube && Math.abs(this.course.groundAt(oldS, oldLateral, start.y).y - startFloor) < 1e-6;
+    const selectedEnd = endTube && Math.abs(this.course.groundAt(car.s, car.lateral, end.y).y - endFloor) < 1e-6;
+    const constrained = selectedStart || selectedEnd || (!startTube && !endTube)
+      ? tunnels.constrainMotion(start, end, this._vehicleSpec(car).halfWidth)
+      : {hit: false};
     if (constrained.hit) {
       end = constrained.position;
       const road = this._roadPosition(end, car.s);

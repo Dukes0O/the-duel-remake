@@ -90,13 +90,26 @@ for (const id of ['girder-bridge', 'the-pipe']) {
 {
   const tubes = createGroundTunnels([{start: {x: 0, y: 4, z: 0},
     end: {x: 100, y: 4, z: 0}, radius: 4}]);
-  const actor = {s: 50, lateral: 0, speedMph: 0, airborne: true, _jumpY: 0,
-    groundHeight: 0, airHeight: 0, _verticalSpeed: 20, stageTimeSec: 0};
+  const actor = {s: 50, lateral: 0, speedMph: 0, airborne: true, _jumpY: 1.8,
+    groundHeight: 1.8, airHeight: 0, _verticalSpeed: 20, stageTimeSec: 0};
   const game = {state: actor, car: {}, course: {def: {scablands: true}, groundTunnels: tubes, phase: () => 0},
-    _vehicleSpec: () => ({height: 2}), _supportAt: () => ({x: 50, y: 0, z: 0})};
+    _vehicleSpec: () => ({height: 2}), _supportAt: () => ({x: 50, y: 1.8, z: 0})};
   for (let step = 0; step < 100 && actor._verticalSpeed > 0; step++) _jump.call(game, actor, .02, step * .02);
   assert.ok(actor._jumpY + 2 <= 8 + 1e-9, 'the car stays below the crown');
   assert.ok(actor._verticalSpeed < 0, 'the car falls after meeting the crown');
+}
+
+// A thin cover remains the selected floor, even if feet overlap the bore.
+// Its crown must not act as a roof when the car jumps from the surface.
+{
+  const tubes = createGroundTunnels([{start: {x: 0, y: 4, z: 0},
+    end: {x: 100, y: 4, z: 0}, radius: 4}]);
+  const actor = {s: 50, lateral: 0, speedMph: 0, airborne: true, _jumpY: 8,
+    groundHeight: 8.5, airHeight: 0, _verticalSpeed: 10, stageTimeSec: 0};
+  const game = {state: actor, car: {}, course: {def: {scablands: true}, groundTunnels: tubes, phase: () => 0},
+    _vehicleSpec: () => ({height: 2}), _supportAt: () => ({x: 50, y: 8.5, z: 0})};
+  _jump.call(game, actor, .1, 0);
+  assert.ok(actor._verticalSpeed > 0, 'a car on covered ground can rise above the tunnel');
 }
 
 // A person placed below a deck keeps that floor when walking. An omitted
@@ -439,6 +452,8 @@ assert.equal(slope.groundAt({x: 50, y: 30, z: 0}, 30, 30), 30);
 // that surface is within its step height, even below the bore's crown.
 assert.equal(slope.groundAt({x: 50, y: 13.9, z: 0}, 13.9, 14.5), 14.5);
 assert.equal(slope.groundAt({x: 50, y: 13.8, z: 0}, 13.8, 14.5), 7.8);
+// The same 0.6 m step rule applies when the bore floor rises.
+assert.equal(slope.groundAt({x: 50, y: 7.21, z: 0}, 7.21, 30), 7.8);
 // Carry the last support height forward as the car climbs in either direction.
 for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
   let height = start * 0.2 - 2.2;
@@ -474,9 +489,15 @@ assert.equal(obstacleChecks, 0, 'surface obstacles do not lift an underground ca
 undergroundCar.groundHeight = 30;
 assert.equal(_supportAt.call(supportDuel, 50, 0).y, 30);
 assert.equal(obstacleChecks, 1, 'surface support still checks obstacles');
+undergroundCar.groundHeight = 13.9;
+supportDuel.course.groundAt = (s, lateral, height) =>
+  ({x: s, z: lateral, y: slope.groundAt({x: s, y: height, z: lateral}, height, 14.5)});
+assert.equal(_supportAt.call(supportDuel, 50, 0).y, 14.5);
+assert.equal(obstacleChecks, 2, 'a selected surface still checks obstacles when feet overlap the bore');
 // Exercise the real contact hook with a straight course and no other obstacles.
 const straight = {def: {}, groundTunnels: slope, worldAt: (s, lateral) => ({x: s, z: lateral}),
-  at: () => ({heading: 0}), groundAt: () => ({y: 30})};
+  at: () => ({heading: 0}), groundAt: (s, lateral, height) =>
+    ({y: slope.groundAt({x: s, y: height, z: lateral}, height, 30)})};
 const car = {prevS: 50, s: 51, prevLateral: 0, lateral: 5, groundHeight: 10,
   prevGroundHeight: 10, speedMph: 10};
 const duel = {course: straight, _vehicleSpec: () => ({halfWidth: 1}),
@@ -487,6 +508,11 @@ assert.ok(Math.abs(car.lateral - wallLimit) < 1e-9, 'car contact stops at the fl
 car.prevLateral = 0; car.lateral = 5; car.groundHeight = car.prevGroundHeight = 30;
 _staticContacts.call(duel, car, false);
 assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
+straight.groundAt = (s, lateral, height) =>
+  ({y: slope.groundAt({x: s, y: height, z: lateral}, height, 14.5)});
+car.prevLateral = 0; car.lateral = 5; car.groundHeight = car.prevGroundHeight = 13.9;
+_staticContacts.call(duel, car, false);
+assert.equal(car.lateral, 5, 'a car on selected covered ground is not held by bore walls');
 
 
 // Drive the actual simulation through a level tube with gentle ground at both mouths.
