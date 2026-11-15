@@ -446,6 +446,14 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   }
 });
 
+test('the hill index gives the same heights as the whole table', () => {
+  const unindexed = [...HILLS];
+  for (let x = -7000; x <= 7000; x += 113) for (let z = -5000; z <= 5000; z += 127) {
+    assert.equal(hillHeightAt(x, z), hillHeightAt(x, z, unindexed));
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, unindexed));
+  }
+});
+
 test('an empty hill table leaves the former terrain height exact', () => {
   const smooth = value => { value = Math.max(0, Math.min(1, value)); return value * value * (3 - 2 * value); };
   for (let x = -7000; x <= 7000; x += 437) for (let z = -5000; z <= 5000; z += 419) {

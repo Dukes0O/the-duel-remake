@@ -1764,3 +1764,11 @@ Each terrain picture now checks that its named landscape point projects inside t
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run; Claude must judge the chosen points and pictures. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; this is a new scenario check. Codex decided: no new design choice. Removed: none.
 
 Still needed: the dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: height lookup index
+
+The existing frozen hill table now has a 500 m cell index built once. Height queries examine only hills whose bounds overlap the queried cell, retaining table order for overlapping flat tops and ramps. Other tables still use the full scan, including the empty-table comparison. This prepares for the larger hill country; it does not add the new hills yet. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 30 of 30. A new check compares indexed and full-table heights across the land. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the index comparison is new. Codex decided: no new design choice. Removed: full-table scans for the normal hill table.
+
+Still needed: part C's seeded hill country, clearance and route checks, dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

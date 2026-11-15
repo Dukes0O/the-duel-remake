@@ -25,9 +25,32 @@ export function hillsFor(land=LAND){
   ]);
 }
 export const HILLS=hillsFor();
+// Build once. Keep table order inside each cell because mesas and flat tops blend in order.
+const HILL_CELL_SIZE=500;
+function indexHills(hills){
+  const columns=new Map();
+  for(const hill of hills){
+    const reach=hill.radius+(hill.kind==='mesa'?hill.ramp:0);
+    for(let x=Math.floor((hill.x-reach)/HILL_CELL_SIZE);x<=Math.floor((hill.x+reach)/HILL_CELL_SIZE);x++){
+      let column=columns.get(x);
+      if(!column) columns.set(x,column=new Map());
+      for(let z=Math.floor((hill.z-reach)/HILL_CELL_SIZE);z<=Math.floor((hill.z+reach)/HILL_CELL_SIZE);z++){
+        let cell=column.get(z);
+        if(!cell) column.set(z,cell=[]);
+        cell.push(hill);
+      }
+    }
+  }
+  return columns;
+}
+const HILL_INDEX=indexHills(HILLS), NO_HILLS=Object.freeze([]);
+function nearbyHills(x,z,hills){
+  if(hills!==HILLS) return hills;
+  return HILL_INDEX.get(Math.floor(x/HILL_CELL_SIZE))?.get(Math.floor(z/HILL_CELL_SIZE))??NO_HILLS;
+}
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
-  for(const hill of hills){
+  for(const hill of nearbyHills(x,z,hills)){
     if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
@@ -50,7 +73,7 @@ function oldTerrainHeightAt(x,z){
 
 export function scablandsTerrainHeightAt(x,z,hills=HILLS){
   let height=oldTerrainHeightAt(x,z)+hillHeightAt(x,z,hills);
-  for(const hill of hills){
+  for(const hill of nearbyHills(x,z,hills)){
     if(hill.kind==='mesa'){
       const dx=x-hill.x,dz=z-hill.z,distance=Math.hypot(dx,dz);
       if(distance>=hill.radius+hill.ramp) continue;
