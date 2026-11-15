@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
+import {createFighter, stepFighter} from '../src/onfoot.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
@@ -33,6 +34,23 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: car support uses the bed`);
   duel.featureFlags.enabled = () => false;
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: deck floor works with the switch off`);
+}
+
+// A person placed below a deck keeps that floor when walking. An omitted
+// placement height still chooses the top floor.
+for (const id of ['girder-bridge', 'the-pipe']) {
+  const crossing = RIVER_LAND.crossings.find(item => item.id === id);
+  const {x, z} = crossing;
+  const bed = scablandsActorHeightAt(x, z, -100);
+  const course = {def: {scablands: {halfWidth: 10000, halfDepth: 10000}},
+    groundAt: (s, lateral, height) => ({x: s, z: lateral, y: scablandsActorHeightAt(s, lateral, height), heading: 0}),
+    nearest: (x, z) => ({s: x, lateral: z}), obstaclesNear: () => []};
+  const car = {s: x, lateral: z, groundHeight: bed, arena: {worldJob: {solidGrid: {near: () => []}}}};
+  const below = createFighter(course, car, {s: x, lateral: z, height: bed});
+  const above = createFighter(course, car, {s: x, lateral: z});
+  assert.ok(above.y - below.y > 6, `${id}: placement selects the requested floor`);
+  for (let i = 0; i < 30; i++) stepFighter(course, car, below, {forward: true});
+  assert.ok(Math.abs(below.y - bed) < .2, `${id}: walking stays on the bed`);
 }
 
 // A mover below a deck reads the bed and still meets a pier.
