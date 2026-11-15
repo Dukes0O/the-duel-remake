@@ -874,3 +874,5 @@ The round tube road. The noise-texture colours in four recipes.
 ### Codex decided (Claude to review): small-thing placement
 
 The design names which ground holds each thing but gives no counts. The first placing rules use the relative chances in `SMALL_DENSITY`, with more stones on the plates and river bed than the flats. These are a starting choice for Claude to judge in the trial. Salt lumps are limited to 90 m from the pan edge. The scene must pass every job start to the placer before the placing is used in the game.
+
+The first candidate line for pylons runs 100 m east of the Dry Dam, yard and Dead Mall. Spacing continues across the bend at the yard. The candidates still need clearance from roads, buildings and job starts before they can be drawn or made solid.

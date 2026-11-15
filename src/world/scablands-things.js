@@ -6,9 +6,33 @@ import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {SOLID_GRID} from './scablands-solids.js';
 import {RIVER_LAND} from './scablands-regions.js';
 import {sampleLine} from './scablands-ways.js';
+import {LAND} from './scablands-names.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// Candidate centres along a continuous line, spaced in metres along the line
+// rather than independently on each leg. The renderer and map can share the
+// returned records once the candidates have passed the solid clearance rules.
+export function pylonCandidates(seed, land = LAND) {
+  const points = [land.at('dry-dam', 100, 0), land.at('yard', 100, 0), land.at('dead-mall', 100, 0)];
+  const rng = makeRng(seed), result = [];
+  let travelled = 0, next = 0;
+  for (let leg = 0; leg + 1 < points.length; leg++) {
+    const a = points[leg], b = points[leg + 1], dx = b.x - a.x, dz = b.z - a.z;
+    const length = Math.hypot(dx, dz);
+    if (!length) continue;
+    while (next <= travelled + length) {
+      const t = (next - travelled) / length;
+      const x = a.x + dx * t, z = a.z + dz * t;
+      result.push({id: `pylon:${result.length}`, x, z, y: scablandsSurfaceHeightAt(x, z),
+        heading: Math.atan2(dx, dz), along: next, height: 40, cableDown: rng.chance(.2)});
+      next += 350;
+    }
+    travelled += length;
+  }
+  return result;
+}
 
 // A ground renderer can read these short paired segments without knowing how a
 // map route was made. Pass it the very same points the map uses. Road pieces

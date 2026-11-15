@@ -1235,3 +1235,13 @@ The lane tier passed 27 of 28 suites. `test-full-check` could not set up its tem
 Changed assertions: none. Codex decided: no new design choice. Removed: nothing; the ground still uses its existing drawing.
 
 For Claude to run: the scenario once it is written. Chrome cannot start in this job. Cockpit sync again could not open its protected credential and did not update Cockpit.
+
+### Realism trial, step 3: pylon candidates, in progress
+
+The placing rules now give repeatable candidate centres for a 40 m pylon line from the Dry Dam, past the yard, to the Dead Mall. The 350 m spacing continues across the bend, and the seed selects which cables are down. The route uses named places. The candidates are not connected to the scene, map or solids: they still need clearance checks and the corresponding drawing and collision records. No event or sound cue was added.
+
+Checks: `test-scablands-things` passed all 5 tests. All eight Scablands suites passed. Both replay suites passed, 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. Integration was already current. The lane tier passed 26 of 28 suites: `test-full-check` could not start `pwsh` for its temporary copy (EACCES), and `test-town-core` missed its 10 ms timing limit at 11.07 ms under load. The latter passed alone on one rerun, with a 6.56 ms slowest tick. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: the candidate line passes 100 m east of each named place, as recorded on the card. Removed: nothing. The existing land is unchanged.
+
+For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it has been written. The scenario, clearance and solid index, small-object drawing, roadside lines and signs, boulders, tracks drawing and map still need to be built. The timing test's intermittent failure should be tracked as a small follow-up card.

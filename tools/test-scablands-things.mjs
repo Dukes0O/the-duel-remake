@@ -1,12 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {LAND} from '../src/world/scablands-names.js';
+import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
+import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 
 const cell = point => [Math.floor(point.x / THINGS_CELL), Math.floor(point.z / THINGS_CELL)];
+test('pylon candidates follow named places at a continuous 350 metre spacing', () => {
+  const line = pylonCandidates(1989);
+  assert.ok(line.length > 20);
+  assert.deepEqual(line, pylonCandidates(1989));
+  assert.notDeepEqual(line.map(p => p.cableDown), pylonCandidates(1990).map(p => p.cableDown));
+  assert.deepEqual({x: line[0].x, z: line[0].z}, LAND.at('dry-dam', 100, 0));
+  for (const [i, p] of line.entries()) {
+    assert.equal(p.along, i * 350);
+    assert.equal(p.height, 40);
+    assert.ok(Number.isFinite(p.y));
+  }
+  const moved = createLand(movedTable(SCABLANDS_PLACES, 'dry-dam', 200, 100));
+  assert.deepEqual({x: pylonCandidates(1989, moved)[0].x, z: pylonCandidates(1989, moved)[0].z}, moved.at('dry-dam', 100, 0));
+});
 test('small things are stable by seed and cell and avoid roads and job starts', () => {
   const [i, j] = cell(LAND.between('yard', 'tin-town', .4));
   const starts = [LAND.between('yard', 'tin-town', .4)];
