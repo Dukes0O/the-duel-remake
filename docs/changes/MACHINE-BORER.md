@@ -1,5 +1,17 @@
 # MACHINE-BORER
 
+## Final check and blocker
+
+Integration was already merged at d0567797e. The requested browser scenario is not written: the Dig exposes its simulation and view through `window.__theDig`, while the job permits a scenario to use only `window.__qaApp` and `window.__render`. The Dig also has no car and does not share its new tunnel with the car course. Claude must decide how to expose the Dig for the scenario and whether the car view is deferred or the two worlds should be connected. No browser appearance or first-second camera claim is made.
+
+The existing road-machine check fails because its four Q presses now select the drill instead of the dozer. Its assertion was not changed. Claude must decide how to update the check or machine selection.
+
+## Not built by this card
+
+- Joining a restored separate passage to a new Dig cut is not built.
+- Roads and pipes through a finished tunnel are not built.
+- The apprentice is not built.
+
 ## Built so far
 
 Step 1 adds Mabel's machine data and pure rules for a face, thrust, head speed, stall recovery, protection and slow steering. The face reads edited ground, so a dug cutting can expose it. The rules are not connected to the game yet. The head can query the ground's seeded material layers at the face; a caller may still supply a material explicitly. Filled ground above the natural surface uses the cell's stored fill material.
@@ -90,7 +102,9 @@ Releasing thrust clears a refusal. A later attempt can show and sound the same r
 
 ## For Claude to run
 
-The browser scenario has not been written yet. The later card that connects the Dig to the town store will need the save checker and an independent save review.
+Run the lane tier at merge. Once the scenario gap is resolved, run the browser scenario and inspect the camera, lining, portal, effects and sound. The later card that connects the Dig to the town store will need the save checker and an independent save review.
+
+For a hands-on try, enter the Wasteland yard and open The Dig. Press Q once to select Mabel, hold W to drive toward the scarp, and press Tab to start work at the face. Hold Shift and W to cut gently. Hold A or D with Shift and W to turn back toward the face over roughly 400 m; use the up or down arrow with thrust to adjust slope. Release W for a second if the head stalls, then resume. Watch for breakthrough and daylight; this has not been verified by hand. Press S to reverse, C to change view and Escape to leave.
 
 ## Save bridge decision
 
@@ -116,8 +130,16 @@ Shift and W gives one-third thrust in work mode, matching the hardest rock. This
 
 ## Sound cues
 
-The rules emit `borer.stall`, `borer.refuse`, and `borer.breakthrough` events. `borer.head` follows head speed, and `borer.muck` runs while cutting moves material. Playback is connected in the Dig; selection is still to be built.
+The rules emit `borer.stall`, `borer.refuse`, and `borer.breakthrough` events. `borer.head` follows head speed, and `borer.muck` runs while cutting moves material. Playback and selection are connected in the Dig; the cues need a hands-on check.
 
 ## Removed
 
-Nothing yet. The trial's plain tube will be replaced by the borer's lining and portals in the drawing step.
+The Dig's initial plain trial tube is replaced by the shared tunnel lining and the surface portals. No existing race assets were removed.
+
+## Final checks on d0567797e
+
+- `test-machine-borer`, `test-tunnels`, and the drill, haul, input, trencher and view machine suites passed. `test-machine-roads` failed at its four-switch assumption, described above.
+- `test-combat-replays`: 12 fingerprint checks passed across four encounters. `test-replays`: 297 fingerprint checks passed across 33 cases.
+- `test-world-composition`: 63 checks passed across 20 events. `test-course-kit`: eight checks passed. No test filename contains `world-sign`.
+- `npm.cmd run build` passed. PowerShell blocked `npm.ps1` under its execution policy, so the Windows command shim was used.
+- The lane tier was not run, as Claude requested. The browser scenario was neither written nor run, for the reasons above.
