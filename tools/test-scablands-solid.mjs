@@ -19,6 +19,7 @@ import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, EAST_ROAD, ROAD_HALF_WIDTH, roadPointFrom} from '../src/world/scablands-road.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {HILLS} from '../src/world/scablands-height.js';
 import {RIVER, RIVER_LAND, riverDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
@@ -405,6 +406,19 @@ test('every crossing is driven by its road at the road\'s top speed: no hit, no 
 });
 
 // ---- 4. The four ways from the yard to Tin Town, end to end -----------------------------------------------------------------------------------
+test('a car drives up the Ridge and the Lookout to their tops', () => {
+  for (const kind of ['ridge-top', 'lookout']) {
+    const hill = HILLS.find(item => item.kind === kind);
+    const start = {x: hill.x, z: hill.z - hill.radius - 80};
+    const end = {x: hill.x, z: hill.z};
+    const duel = newDuel();
+    put(duel, start.x, start.z, Math.atan2(end.x - start.x, end.z - start.z));
+    const result = follow(duel, [start, end], {speed: 45, stopWithin: 30, seconds: 180, ahead: 45});
+    assert.ok(result.arrived, `${kind}: the car reaches the top`);
+    assert.ok(Math.hypot(where(duel).x - hill.x, where(duel).z - hill.z) < hill.topRadius, `${kind}: the car is on the level top`);
+  }
+});
+
 test('each of the four ways from the yard to Tin Town is driven end to end by a scripted driver', () => {
   const town = LAND.at('tin-town', -25, 112), way = stepsWayFor();
   const at = (id, dx = 0, dz = 0) => LAND.at(id, dx, dz);
@@ -434,7 +448,12 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
       // Wash's ramp, along the bed 27 m off its middle (the bridge's three piers stand across it at the middle and 55 m either side), to the bridge, where the
       // deck stops the car; and back down the bed and up the Wash's ramp, to the Boneyard Road and the East Road to Tin Town.
       const onRoad = ROAD_NET.road('boneyard-road'), before = roadPointFrom(onRoad, wash.x, wash.z, -220), bridge = RIVER_LAND.crossings.find(crossing => crossing.kind === 'bridge');
-      put(duel, before.x, before.z, Math.atan2(wash.x - before.x, wash.z - before.z), 0);
+      const camp = LAND.place('safe-road');
+      const campIndex = EAST_ROAD.points.reduce((best, point, index, points) => Math.hypot(point.x - camp.x, point.z - camp.z) < Math.hypot(points[best].x - camp.x, points[best].z - camp.z) ? index : best, 0);
+      const first = EAST_ROAD.points[0], next = EAST_ROAD.points[1];
+      put(duel, first.x, first.z, Math.atan2(next.x - first.x, next.z - first.z), 0);
+      const lead = follow(duel, [...EAST_ROAD.points.slice(0, campIndex + 1), ...onRoad.points.filter(point => Math.hypot(point.x - before.x, point.z - before.z) < 30).slice(0, 1), before], {speed: 80, stopWithin: 30, seconds: 400, ahead: 40});
+      assert.ok(lead.arrived, `${label}: from the yard to the Wash`);
       const upstream = bed.filter(point => Math.hypot(point.x - bridge.x, point.z - bridge.z) > 160 && RIVER_LAND.line.along[riverPoints.indexOf(point)] > bridge.along);
       const offset = upstream.map((point, index) => {
         const a = upstream[Math.max(0, index - 1)], b = upstream[Math.min(upstream.length - 1, index + 1)], l = Math.hypot(b.x - a.x, b.z - a.z);
@@ -449,8 +468,9 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
       assert.ok(duel.hits.some(hit => hit.kind === 'climb') && Math.hypot(where(duel).x - bridge.x, where(duel).z - bridge.z) > 8, `${label}: the deck of the bridge holds the car back (a dead end)`);
       // Out again: back down the bed to the Wash and up its ramp, then along the Boneyard Road to the East Road's end by the road.
       const back = follow(duel, [where(duel), ...offset.slice().reverse(), {x: wash.x, z: wash.z}, onRoad.points[onRoad.points.length - 1]], {speed: 60, stopWithin: 40, seconds: 400, ahead: 40});
-      driven = {arrived: back.arrived, seconds: run.seconds + back.seconds, worst: back.worst};
-      driven.arrived = back.arrived;
+      assert.ok(back.arrived, `${label}: back to the Boneyard`);
+      const finish = follow(duel, [where(duel), ...ROAD_NET.road('tin-road').points, town], {speed: 80, stopWithin: 30, seconds: 400, ahead: 40});
+      driven = {arrived: finish.arrived, seconds: lead.seconds + run.seconds + back.seconds + finish.seconds, worst: Math.max(lead.worst, run.worst, back.worst, finish.worst)};
       for (const hit of duel.hits) void hit;
       duel.hits = duel.hits.filter(hit => hit.kind !== 'climb');
     } else {
@@ -464,7 +484,7 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
         driven = {arrived: rest.arrived, seconds: lead.seconds + rest.seconds, worst: rest.worst};
       } else driven = follow(duel, line, {speed: null, stopWithin: 30, seconds, ahead: 90});
     }
-    assert.ok(driven.arrived, `${label}: the scripted driver arrives${label.startsWith('the river bed') ? ' back at the Boneyard Road' : ' at Tin Town'}`);
+    assert.ok(driven.arrived, `${label}: the scripted driver arrives at Tin Town`);
     assert.ok(!duel.state.combatWrecking, `${label}: not wrecked`);
     const rough = duel.hits.filter(hit => hit.kind === 'fall' && hit.kmh > 0);
     assert.equal(rough.length, 0, `${label}: no fall on the way (${rough.map(hit => hit.drop.toFixed(2) + ' m at ' + hit.t.toFixed(0) + ' s, ' + hit.x.toFixed(0) + ',' + hit.z.toFixed(0) + ' ' + hit.kmh0.toFixed(0) + ' km/h').join(', ')})`);

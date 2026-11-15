@@ -1479,3 +1479,13 @@ For Claude to run: the memory-only Performance picture scenario once written, an
 Changed assertions, for Claude to review: no assertion values changed. The search test's first sight step uses 0 seconds instead of 1, so it still starts its loss-of-sight check at the original post now that raiders move during sight. Codex decided: raiders stop 12 m from a visible car and walk at the existing 3 m/s. Removed: the rule that kept a raider standing still while the car was visible.
 
 Still needed: item 2, send the furnace's two riders and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: route checks
+
+The solid-ground driver now drives to the level tops of the Ridge and the Lookout. The river-bed route check now starts at the yard and continues from the Boneyard to Tin Town. It still turns back at the bridge because the deck blocks the bed; the separate ground-height lane owns that limit. Survey Flags' fifth flag stays where it was. No game event or sound cue was added.
+
+Checks: the two selected solid-ground route tests passed. The hills suite passed 20 of 20 tests. Survey Flags finished 10 of 10 seeds using the Easy suite's unchanged driver and its existing 8 of 10 pass mark. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario after it is written. Changed assertions, for Claude to review: the river route's arrival check now requires Tin Town instead of the Boneyard Road, because it now drives the whole route. No pass mark was lowered. Codex decided: no new design choice. Removed: the incomplete endpoint in the river route check.
+
+Still needed: item 4, the picture scenario, then item 5, integration and final checks.
