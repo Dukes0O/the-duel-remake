@@ -116,6 +116,7 @@ export async function run(context) {
         s.speedMph=12;for(let i=0;i<1200&&progress<35;i++){
           const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-(${x}))*(${bx})+(p.z-(${z}))*(${bz});
           const feet=s.airborne&&Number.isFinite(s._jumpY)?s._jumpY:s.groundHeight, floor=d.course.groundAt(s.s,s.lateral,-1e9).y, surface=d.course.groundAt(s.s,s.lateral).y;
+          if(!Number.isFinite(feet)||!Number.isFinite(floor))throw Error('Car or bed height is missing');
           maxFloorError=Math.max(maxFloorError,Math.abs(feet-floor));
           const cover=surface-feet;maxCover=Math.max(maxCover,cover);if(cover>4)coveredSamples++;
           const turn=Math.atan2(Math.sin(${heading}-d.course.at(s.s).heading-s.headingError),Math.cos(${heading}-d.course.at(s.s).heading-s.headingError));

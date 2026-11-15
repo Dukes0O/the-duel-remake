@@ -12,13 +12,13 @@ The scenario passes `node --check`. A Node-only stub ran the scenario through bo
 
 `test-tunnels`, `test-scablands-solid` (20 checks), `test-scablands-size`, `test-scablands-scene`, `test-old-smoke`, `test-everburn-play-start`, `test-ember-pot`, `test-replays`, `test-combat-replays`, `test-shortcut-presets`, and `node --check tools/scenarios/tunnel-trial.mjs` passed. The replay checks retained 297 race fingerprints in 33 cases and 12 combat fingerprints in four encounters. A 100 m tube takes 131 bytes in the simple JSON check, below the 2 MB ground budget; a tunnel save is not implemented.
 
-The selected lane checks passed in two parts: 61 suites passed before the run was stopped to exclude an additional FFmpeg-dependent suite; the remaining 192 passed. The long Everburn suite and the FFmpeg-dependent suites were excluded as directed. `npm run build` passed, with Vite reporting its existing large-chunk and mixed-import warnings.
+On commit 87f779b79, the lane tier ran 258 suites: 253 passed and five failed. Eifel, review evidence, Blackiron and Tollkeeper failed because FFmpeg could not start. The long Everburn Easy suite was accidentally included despite the instruction to leave it for Claude: Survey Flags finished 0 of 10, below its required 8 of 10. Its cause and whether integration already has the failure are unverified. `npm.cmd run build` passed with the existing Vite large-chunk and mixed-import warnings.
 
-Integration c88f83669 is an ancestor of this branch, and its status page is unchanged. The lane check found a non-Scablands contact regression; restricting the new calculation to the Scablands fixed it, and the core, tunnel and solid checks passed again. The final lane check and build still need results.
+Integration c88f83669 is an ancestor of this branch, and its status page is unchanged. The lane check found a non-Scablands contact regression; restricting the new calculation to the Scablands fixed it, and the core, tunnel and solid checks passed again. The final lane and build results are above.
 
 ## For Claude to run
 
-Run the revised browser scenario and judge the pictures and frame times. Run the long Everburn suite and FFmpeg-dependent suites at merge. The visible appearance is not yet proven, and no boring machine is built.
+Run the revised browser scenario and judge the pictures and frame times. Investigate the Survey Flags failure and run the four FFmpeg-dependent suites at merge. Do not treat the lane as fully green until the Survey Flags failure is understood. The visible appearance is not yet proven, and no boring machine is built.
 
 The Node reproduction of the scenario drive printed feet and bed heights at every step for both decks. Both cars stayed on the bed within 3e-12 m. The scenario measured cover at the named crossing centre, although the line passed beneath the bridge earlier; it now checks the actual selected bed and requires covered samples along the drive. The Pipe drive also reached the far side. Big Bess now starts on the top floor plus the job offset; flight support, slope and camera use the same feet height. The 21 solid-ground checks and tunnel checks passed. The revised scenario and all 67 evaluated scripts parse in Node; the browser was not run.
 
@@ -27,6 +27,8 @@ The Node reproduction of the scenario drive printed feet and bed heights at ever
 The four-ways test formerly required the bridge deck to stop a car in the river bed and return it to the Boneyard Road. It now requires the car to pass below the bridge, reach the Steps and reach Tin Town. This follows the agreed route and does not loosen the requirement.
 
 The shortcut source fingerprint moved from `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3df718f9c4264fe` to `a23244774fb2baa6f021808d03f2272538612161df05e00bb0a81d18dc3a798d` when `Course.groundAt` changed. All 15 saved records remained unchanged when regenerated and compared with the solver.
+
+The Big Bess crossing fixture now gives `y: 0` as the job offset instead of an absolute surface height; the same deck and raider assertions remain. The scenario formerly required `minCover > 1` within 5 m of the named crossing; it now requires over 10 samples with more than 4 m of cover anywhere along the crossing, and compares each step with the bed at that location. The old check measured the wrong part of the crossing.
 
 The new tunnel tests were adjusted to the prescribed flat floor at 0.55 radius below the centre, with walls where that floor meets the bore, and to the 0.6 m floor-selection rule. They require the specified behaviour.
 
