@@ -89,6 +89,19 @@ test('long sight checks keep their last answer between scheduled traces', () => 
   assert.equal(sight.change, 'lost');
 });
 
+test('the Ridge lookout also keeps its answer between scheduled traces', () => {
+  let samples = 0;
+  const flat = () => { samples++; return 0; };
+  const ridge = LAND.at('ridge'), car = {x: ridge.x + 3000, z: ridge.z};
+  let sight = stepRidgeSight({}, car, flat);
+  const traced = samples;
+  assert.equal(sight.visible, true);
+  assert.equal(traced, 601, 'a full-range trace samples the ground at 5 metre intervals');
+  for (let i = 0; i < 29; i++) sight = stepRidgeSight(sight, car, flat, null, false);
+  assert.equal(samples, traced, 'cached steps do not sample the ground');
+  assert.equal(sight.visible, true);
+});
+
 test('a raider follows a car it can see and keeps room to fire', () => {
   const raider = {x: 0, z: 0};
   const car = {x: 30, z: 0};

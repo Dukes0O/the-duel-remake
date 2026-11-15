@@ -1646,3 +1646,11 @@ A new check places both actors in the open river bed beyond the Girder Bridge de
 Check: `node tools/test-scablands-hills.mjs` passed 28 of 28. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: measure the worst-step Hot Delivery sight sample count, then complete parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight sampling measurement
+
+The existing Easy driver completed Hot Delivery on seed 1 in 362.24 seconds. Temporary counters around every sight trace measured a maximum of 600 sampled positions in one simulation step, including camp raiders and the furnace and lookout. This is an observed maximum for that run, not a bound for every seed or player route. The counters were removed after the measurement. The hill suite now checks that the Ridge lookout also reuses its answer for 29 steps and that a full-range flat-ground trace takes 601 height samples.
+
+Check: `node tools/test-scablands-hills.mjs` passed 29 of 29. The measured Hot Delivery run finished. Race fingerprints and world signatures were not rerun in this step. Changed assertions: one new caching and sampling check; no existing assertion changed or loosened. Codex decided: no new design choice. Sound cues: no new event. Removed: temporary measurement counters.
+
+Still needed: parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
