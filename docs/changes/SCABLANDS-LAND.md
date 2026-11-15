@@ -1722,3 +1722,11 @@ The scarp picture now starts 80 m from the foot on its low side. The Lookout pic
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the old scarp and Lookout picture positions.
 
 Still needed: the mesa view from the plates' way, the scenario's visibility and placement checks, the dune picture after part C, all of part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: mesa picture from the plates
+
+The picture scenario now includes a view 250 m beyond the mesa face, looking toward it from the direction of the plates shortcut. The present mesa is too far from the shortcut for that position to be on the way itself. Recheck the position when part C places the six mesas. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: the scenario visibility and placement checks, the dune picture, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

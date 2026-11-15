@@ -6,6 +6,7 @@ import {LAND} from '../../src/world/scablands-names.js';
 import {HILLS} from '../../src/world/scablands-height.js';
 import {SCARPS} from '../../src/world/scablands-scarps.js';
 import {ROAD_NET} from '../../src/world/scablands-road.js';
+import {stepsWayFor} from '../../src/world/scablands-regions.js';
 
 const offset = (p, x, z) => ({x: p.x + x, z: p.z + z});
 const hill = kind => HILLS.find(item => item.kind === kind);
@@ -21,6 +22,13 @@ export function views() {
     Math.hypot(point.x - breaks.x, point.z - breaks.z) < Math.hypot(best.x - breaks.x, best.z - breaks.z) ? point : best);
   const angle = mesa.rampAngle + Math.PI;
   const side = distance => offset(mesa, Math.cos(angle) * distance, Math.sin(angle) * distance);
+  // Face the mesa from the direction of the short cut across the plates.
+  const steps = stepsWayFor(), dx = steps.x - LAND.yard.x, dz = steps.z - LAND.yard.z;
+  const along = ((mesa.x - LAND.yard.x) * dx + (mesa.z - LAND.yard.z) * dz) / (dx * dx + dz * dz);
+  const onWay = {x: LAND.yard.x + along * dx, z: LAND.yard.z + along * dz};
+  const wayDistance = Math.hypot(onWay.x - mesa.x, onWay.z - mesa.z);
+  const mesaFromWay = offset(mesa, (onWay.x - mesa.x) * (mesa.radius + mesa.face + 250) / wayDistance,
+    (onWay.z - mesa.z) * (mesa.radius + mesa.face + 250) / wayDistance);
   const {a, b} = SCARPS[0].stretches[0];
   const length = Math.hypot(b.x - a.x, b.z - a.z), foot = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
   const bankA = LAND.at('river-3'), bankB = LAND.at('river-4');
@@ -32,6 +40,7 @@ export function views() {
       x: (breaks.x + nextBreaks.x) / 2, z: (breaks.z + nextBreaks.z) / 2,
     }},
     {name: 'mesa-foot', from: side(mesa.radius + mesa.face + 60), to: mesa},
+    {name: 'mesa-from-plates-way', from: mesaFromWay, to: mesa},
     {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120)},
     {name: 'ridge-way-up', from: offset(ridge, 0, -ridge.radius - 80), to: ridge},
     {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard},
