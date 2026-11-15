@@ -1199,3 +1199,17 @@ Checks: `test-everburn-play-start` passed 982 checks; `test-run-gas` passed 8,50
 Codex decided: no new design choice.
 
 Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.
+
+### Realism trial, step 3: first placement rules, in progress
+
+Added repeatable small-thing candidates in 16 m cells, with ground-dependent choices, three stone shapes, ground height, and checks against roads, existing solids and supplied job starts. Nothing calls these rules from the game yet. The rules must receive every job start before the scene uses them. Their distance-to-road search also needs checking for frame cost when the scene is connected. No event or sound cue was added.
+
+Checks so far: `test-scablands-things` passed 2 tests; `test-scablands-size` passed 9 tests; the build passed with bundle-size warnings. Integration was already up to date. Both replay suites passed: 297 checks over 33 cases and 12 checks over four encounters. The lane tier passed 25 suites. All eight Scablands suites passed. The browser scenario has not been written or run.
+
+Changed assertions: none. Race fingerprints: both recorded replay suites passed unchanged. Codex decided: the starting ground densities and 90 m salt edge are recorded in the card for Claude to review.
+
+For Claude to run: the eventual `scablands-things` browser scenario, with memory-only saves, after it is written. Browser checks cannot run in this job.
+
+Removed: nothing. The old land remains in use. The placing is not yet connected.
+
+Still to do: connect and draw the small things with distance fading and job-start clearance; finish the road lines, signs, pylons, boulders, solids, ruts, map, scenario and all acceptance checks.
