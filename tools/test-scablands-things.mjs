@@ -12,37 +12,53 @@ import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, rea
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
-test('fixed drawing uses every collision footprint once', () => {
+test('every collision footprint belongs to one batch, and is drawn at its own place and size when the player is near', () => {
   const fixed = clearedFixedThings(1989, []);
   const rock = clearedLoneBoulder(1989, 0, 0, []);
   const solids = thingSolids(fixed, [rock]);
   const view = createFixedThingsView(fixed, [rock]);
   const drawn = view.group.children.flatMap(mesh => mesh.userData.solidIds);
   assert.deepEqual([...drawn].sort(), solids.map(part => part.id).sort());
+  // Standing things are drawn by distance (Claude's drawing): nothing before the first update, and after it each thing
+  // well inside its range stands exactly on its footprint.
+  assert.ok(view.group.children.every(mesh => mesh.count === 0));
+  const centre = solids.find(part => part.kind === 'telegraph');
+  view.update(centre.x, centre.z);
+  const checked = [];
   for (const mesh of view.group.children) {
     const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), scale = new THREE.Vector3();
-    for (const [index, id] of mesh.userData.solidIds.entries()) {
-      const solid = solids.find(part => part.id === id);
+    const mine = new Set(mesh.userData.solidIds);
+    assert.ok(mesh.count <= mine.size);
+    for (let index = 0; index < mesh.count; index++) {
       mesh.getMatrixAt(index, matrix);
       matrix.decompose(position, rotation, scale);
+      const solid = solids.find(part => mine.has(part.id) && Math.hypot(part.x - position.x, part.z - position.z) < .001);
+      assert.ok(solid, `${mesh.name} draws a thing where a footprint is`);
+      if (Math.hypot(solid.x - centre.x, solid.z - centre.z) > 300) continue;
       assert.ok(position.distanceTo(new THREE.Vector3(...solid.center)) < .001);
       assert.ok(scale.distanceTo(new THREE.Vector3(...solid.size)) < .001);
       const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), solid.heading);
       assert.ok(rotation.angleTo(expected) < .001);
+      checked.push(solid.id);
     }
   }
+  assert.ok(checked.length > 3, 'things near the player were checked');
+  const near = solids.filter(part => Math.hypot(part.x - centre.x, part.z - centre.z) <= 300).map(part => part.id);
+  assert.deepEqual(checked.sort(), near.sort(), 'every footprint within 300 m is drawn once');
   view.dispose();
   assert.equal(view.group.children.length, 0);
 });
 
-test('small things use one batch per kind and follow the player without shadows', () => {
+test('small things use one batch per kind and follow the player; only the kinds that stand up cast a shadow', () => {
   assert.throws(() => createSmallThingsView({seed: 1989}), TypeError);
   const view = createSmallThingsView({seed: 1989, jobStarts: []});
   const p = LAND.between('yard', 'tin-town', .4);
   view.update(p.x, p.z);
   assert.equal(view.group.children.length, 8);
   assert.ok(view.group.children.some(mesh => mesh.count > 0));
-  assert.ok(view.group.children.every(mesh => !mesh.castShadow && mesh.isInstancedMesh));
+  assert.ok(view.group.children.every(mesh => mesh.isInstancedMesh));
+  assert.deepEqual(view.group.children.filter(mesh => mesh.castShadow).map(mesh => mesh.name).sort(),
+    ['Scablands brush', 'Scablands scrub', 'Scablands stump']);
   const first = view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16)));
   view.update(p.x, p.z);
   assert.deepEqual(view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16))), first);
@@ -265,15 +281,16 @@ test('whole footprints clear roads, existing solids and job starts', async () =>
   assert.throws(() => thingFootprintClear(x, z, 29, []), RangeError);
 });
 
-test('line drawing makes towers and sagging spans without crossing missing supports', () => {
+test('a tower is drawn at each standing pylon, and spans sag without crossing missing supports', () => {
   const p = (x, y = 0) => ({x, y, z: 0, heading: 0, state: 'upright'});
   const fixed = {pylons: [p(0), p(350), null, p(1050)],
     telegraphs: [{poles: [p(0), p(60), null, p(180), {...p(240), state: 'down'}]}],
     fences: [{posts: [p(0), p(8), null, p(24)]}]};
   const view = createThingsLinesView(fixed);
-  const tower = view.group.getObjectByName('Scablands towers');
+  const tower = view.group.getObjectByName('Scablands pylons');
   const wire = view.group.getObjectByName('Scablands wires');
-  assert.equal(tower.geometry.getAttribute('position').count, 3 * 7 * 2);
+  assert.ok(tower.isInstancedMesh);
+  assert.equal(tower.count, 3);
   assert.equal(wire.geometry.getAttribute('position').count, 3 * 8 * 2);
   const points = wire.geometry.getAttribute('position');
   assert.ok(points.getY(7) < points.getY(0));
@@ -291,7 +308,7 @@ test('the scene trial keeps its batches until disposal and creates nothing when 
   assert.ok(batches.some(mesh => mesh.count > 0));
   view.update(50, 50);
   assert.deepEqual(view.group.children[0].children, batches);
-  assert.ok(view.group.getObjectByName('Scablands towers'));
+  assert.ok(view.group.getObjectByName('Scablands pylons'));
   assert.ok(view.group.getObjectByName('Scablands wires'));
   view.dispose();
   assert.equal(view.group.children.length, 0);
@@ -354,14 +371,16 @@ test('fork signs use road destinations and share their posts with the solid inde
   assert.ok(Math.hypot(blocked[0].x - signs[0].x, blocked[0].z - signs[0].z) >= 6.25);
   const written = [];
   const original = globalThis.document;
-  globalThis.document = {createElement: () => ({getContext: () => ({fillRect() {}, fillText(text) { written.push(text); }})})};
+  // A stand-in canvas: every drawing call does nothing, and the words painted are kept.
+  const pen = new Proxy({}, {get: (target, name) => name === 'fillText' ? text => { written.push(text); } : name in target ? target[name] : () => {}, set: (target, name, value) => { target[name] = value; return true; }});
+  globalThis.document = {createElement: () => ({getContext: () => pen})};
   let view;
   try {
     view = createForkSignsView(signs);
     assert.equal(view.group.children.length, 1);
     assert.ok(view.group.children[0].material.map.isCanvasTexture);
     assert.equal(written.length, signs.reduce((sum, sign) => sum + Math.min(sign.destinations.length, 4), 0));
-    assert.ok(written.every(text => /[??].+\d+ km$/.test(text)));
+    assert.ok(written.every(text => /^[A-Z' ]+  \d+ km$/.test(text)), 'each line is a place and its distance; the arrow is painted, not written');
   } finally {
     view?.dispose();
     if (original === undefined) delete globalThis.document; else globalThis.document = original;

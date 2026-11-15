@@ -632,7 +632,7 @@ export function createScablandsScene(course,options={}){
       const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
       const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
       things=createRealismThingsView({enabled:true,seed:course.seed,jobStarts,
-        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt});
+        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,photos:groundPhotos});
       group.add(things.group);things.update(here.x,here.z);
     }
     group.userData.assetStatus='ready';return true;
