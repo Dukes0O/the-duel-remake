@@ -422,14 +422,35 @@ test('near scarp cells use a separate fine mesh and meet the old grid', () => {
     near.follow(x, z);
     const positions = near.faceMesh.geometry.getAttribute('position');
     const normals = near.faceMesh.geometry.getAttribute('normal');
+    assert.equal(normals.count, positions.count);
+    const faceIndex = near.faceMesh.geometry.index;
+    for (let i = 0; i < faceIndex.count; i++) assert.ok(faceIndex.getX(i) < positions.count);
     let closest = Infinity, index = -1;
     for (let i = 0; i < positions.count; i++) {
+      assert.ok(Number.isFinite(positions.getX(i)) && Number.isFinite(positions.getY(i)) && Number.isFinite(positions.getZ(i)));
+      const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i);
+      assert.ok(Number.isFinite(nx) && Number.isFinite(ny) && Number.isFinite(nz));
+      assert.ok(Math.abs(Math.hypot(nx, ny, nz) - 1) < .01 && ny > .2, `${face.scarp.id} normal ${i}`);
       const distance = Math.hypot(positions.getX(i) + near.centreX - x, positions.getZ(i) + near.centreZ - z);
       if (distance < closest) { closest = distance; index = i; }
     }
     assert.ok(closest < 4, `${face.scarp.id} has a fine nearby sample`);
     assert.ok(Math.abs(Math.hypot(normals.getX(index), normals.getY(index), normals.getZ(index)) - 1) < .001);
     assert.ok(near.geometry.index.count < 60 * 60 * 6, 'face cells replace the old triangles');
+    const faceCells = new Set();
+    for (let i = 0; i < positions.count; i += 81) {
+      faceCells.add(`${Math.round((positions.getX(i) + near.centreX) / NEAR_GROUND.cellX)},${Math.round((positions.getZ(i) + near.centreZ) / NEAR_GROUND.cellZ)}`);
+    }
+    const coarse = near.geometry.getAttribute('position'), coarseIndex = near.geometry.index;
+    for (let i = 0; i < coarseIndex.count; i += 3) {
+      let minX = Infinity, minZ = Infinity;
+      for (let j = 0; j < 3; j++) {
+        const vertex = coarseIndex.getX(i + j);
+        minX = Math.min(minX, coarse.getX(vertex) + near.centreX);
+        minZ = Math.min(minZ, coarse.getZ(vertex) + near.centreZ);
+      }
+      assert.ok(!faceCells.has(`${Math.round(minX / NEAR_GROUND.cellX)},${Math.round(minZ / NEAR_GROUND.cellZ)}`), 'coarse triangle overlaps a face cell');
+    }
   }
   near.dispose();
 });

@@ -2113,3 +2113,9 @@ Integration remained up to date at c3cb1943b. The hills suite passed 50 of 50, s
 Not right yet: the seed 5 Easy chase stalls at the existing river bank as described above; the exact physics cause is not proved. The remaining job corridors and both gas-road drives are not fully proved. Claude must decide the chase and run and judge the pictures. Furnace cover on the plates' way belongs to EVERBURN-REMAKE job 1.
 
 Changed assertions: none in this check; the complete list for review is in the final integration note above. Codex decided: no new design decision. Removed: the generated build output. No new event or sound cue was added.
+
+### Hill country: near scarp normals
+
+The near scarp mesh now replaces its normal buffer whenever its changing face geometry is rebuilt. Three.js had reused the previous buffer even when the new geometry had a different vertex count, leaving invalid normals on later updates. The hills suite passed 50 of 50. It now checks every face position and normal beside each scarp, all face indices, and that no coarse triangle remains in a face cell. The picture needs Claude's visual judgment.
+
+Changed assertions: the existing near-scarp test checks every vertex and triangle instead of only one normal and the coarse index count. No assertion was loosened. Codex decided: no new design decision. Removed: the stale normal buffer on each rebuild. No event or sound cue was added. Race fingerprints were not checked in this step.

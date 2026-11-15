@@ -126,6 +126,9 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     }
     indexAttribute.count = baseCount; indexAttribute.needsUpdate = true;
     faceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(facePositions, 3));
+    // The number of face vertices changes as the window moves. Three.js otherwise
+    // reuses the previous normal buffer, even when it has a different length.
+    faceGeometry.deleteAttribute('normal');
     faceGeometry.setIndex(faceIndices); faceGeometry.computeVertexNormals();
   }
 
