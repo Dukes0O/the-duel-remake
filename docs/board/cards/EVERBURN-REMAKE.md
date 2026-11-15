@@ -323,6 +323,10 @@ These settle findings 1, 2, 5, 6 and 7 of the drive, and are built with slices 2
 - **The job's own screen.** No clock, no style points, no jump readout, and no weapons but the
   lent flamethrower. The pause screen says "Hot Delivery, the Scablands".
 
+**Added 15 November 2026 (from hill country):** job 1's builder stands the cover mesas for the plates' way. Along that way a
+car is hidden from the furnace's standing place on at least three separate stretches of 150 m or more, with open ground
+between them, so that the short cut is a run from cover to cover. Mesas are 30 to 55 m high (SCABLANDS-LAND, slice 2c).
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

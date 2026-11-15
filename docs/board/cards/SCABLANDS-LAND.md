@@ -694,8 +694,8 @@ list above where they differ:
   Burn Road, the Mall Road and the road from the Mall to the Everburn go through; each has a pass with a hill within 150 m on
   both sides.
 - **Six mesas, 30 to 55 m high** (15 to 25 m read as a sliver on the horizon), radius 120 to 260 m, sides 30 m wide and too
-  steep to climb, one ramp each, 220 m long. Along the plates' way a car is hidden from the furnace on at least three
-  stretches of 150 m or more.
+  steep to climb, one ramp each, 220 m long. Cover from the furnace on the plates' way (three hidden
+  stretches of 150 m or more) is built with EVERBURN-REMAKE job 1, whose design fixes where the furnace stands.
 - **Six foothills** round the Ridge, 18 to 40 m. **A dune field of 14** round the Ships, 8 to 15 m high and 70 to 130 m in
   radius, so that a crest hides a car.
 - **The Lookout: 60 m,** with one ramp of 300 m on the side nearest the Ridge Road. The Ridge's top stays level and low: it is
