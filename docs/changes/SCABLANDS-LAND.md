@@ -2068,3 +2068,12 @@ The final leg from the safe road to the Everburn is not clear: a diagnostic foun
 The seeded mesa on the furnace's descent from the Ridge has moved from about (4388, -859) to (4988, -657). Mesa selection now keeps the descent and its 60 m corridor clear. The hills suite passed 49 of 49, including a new clearance check. The solid suite passed 25 of 25, including all four ways with realism on and off and the Ridge and Lookout climbs. No assertion was changed or loosened. No event or sound was added. Removed: the former mesa site.
 
 The other job corridors and the Everburn Easy drive still need proof. Both gas roads need their full driver run. The final integration merge, replay and world-composition checks, and build remain. Claude must run and judge the picture scenario. Race fingerprints were not checked in this step.
+### The Girder Bridge and the Pipe redrawn (Claude, 15 November 2026)
+
+From Claude's drive of job 1: the bridge's trusses were the colour of new timber. `girderBridgeGeometry` in
+`src/world/scablands-draw.js` now draws old riveted steel: each member its own shade of rust, a gusset plate at every joint, crossed
+wind bracing overhead, a portal with knee braces at each end, a plank deck with timber kerbs and a floor beam under every bay, and
+piers with caps and a dark band where floods stood. 3,264 triangles (about 960 before). The Pipe's pipeline and flanges are a darker
+rust. The solid shapes a car meets are unchanged. Seen in the game in a visible window from the road, the deck, beside and the bed.
+Checks: `test-scablands-scene`, `test-scablands-size`, `test-scablands-solid` (24), `test-tunnels`, and the build, all pass.
+**Removed:** the plain one-colour boxes of the trusses and the single deck slab.

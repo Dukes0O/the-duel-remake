@@ -14,6 +14,7 @@
 // grid a few hundred metres ahead. Roads (createRoadLook) are graded dirt with ruts and a berm.
 import * as THREE from 'three';
 import {scrapNoise} from './scrap-look.js';
+import {createTunnelLook} from './tunnel-look.js';
 
 // The ground's own noise-free hash and cell pattern. `gVoronoi` returns the distance to the nearest cell centre, the gap between the
 // nearest and second nearest (small along a cell's edge), and a number for the cell.
@@ -440,9 +441,13 @@ export function createTunnelMesh(tunnels, previous = null) {
     group.children[0].geometry.dispose();
     group.children[0].geometry = geometry;
   } else {
-    const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.DoubleSide});
-    group.add(new THREE.Mesh(geometry, material));
+    // The lining makes its own light (src/world/tunnel-look.js): the sun does not reach inside a hill. The scene tells it where the
+    // player's car and the open mouths are (`group.userData.look.update`).
+    const look = createTunnelLook({radius: segments[0].radius});
+    group.userData.look = look;
+    group.add(new THREE.Mesh(geometry, look.material));
   }
+  group.userData.look?.setRadius(segments[0].radius);
   group.userData.tunnelSegments = segments.map(s => ({start: {...s.start}, end: {...s.end}, radius: s.radius}));
   return group;
 }
