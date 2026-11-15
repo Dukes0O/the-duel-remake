@@ -438,11 +438,11 @@ export function pylonPicture(documentLike = typeof document === 'undefined' ? nu
   const canvas = documentLike.createElement('canvas'); canvas.width = 256; canvas.height = 1024;
   const pen = canvas.getContext('2d'), rng = makeRng(77);
   pen.clearRect(0, 0, 256, 1024); pen.lineCap = 'square';
-  const steel = () => `rgb(${[118, 116, 110].map(v => Math.round(v * rng.range(.8, 1.08))).join(',')})`;
+  const steel = () => `rgb(${[110, 117, 124].map(v => Math.round(v * rng.range(.8, 1.08))).join(',')})`;
   const bar = (x0, y0, x1, y1, wide) => {
     pen.strokeStyle = steel(); pen.lineWidth = wide; pen.beginPath(); pen.moveTo(x0, y0); pen.lineTo(x1, y1); pen.stroke();
     // Rust below the bar's lower end.
-    pen.strokeStyle = `rgba(104,62,38,${rng.range(.35, .7)})`; pen.lineWidth = wide * .6; pen.beginPath(); pen.moveTo(x1, y1); pen.lineTo(x1, Math.min(1023, y1 + rng.range(6, 22))); pen.stroke();
+    pen.strokeStyle = `rgba(104,62,38,${rng.range(.22, .5)})`; pen.lineWidth = wide * .6; pen.beginPath(); pen.moveTo(x1, y1); pen.lineTo(x1, Math.min(1023, y1 + rng.range(6, 22))); pen.stroke();
   };
   // Tower face: the picture's bottom is the foot. Panels are tall at the foot and short at the top.
   bar(5, 1023, 5, 0, 9); bar(123, 1023, 123, 0, 9);
@@ -464,6 +464,7 @@ export function pylonPicture(documentLike = typeof document === 'undefined' ? nu
 }
 
 export function pylonSurface(picture = pylonPicture()) {
-  // Old galvanised steel is dull: no shine, and taken down so that the land's strong light does not draw it white.
-  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0x8f8b82 : 0x6f6c66, alphaTest: .45, side: THREE.DoubleSide, roughness: 1, metalness: 0});
+  // Old galvanised steel is dull: no shine, taken down so that the land's strong light does not draw it white, and a little blue so
+  // that the same warm light draws it grey and not olive.
+  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0x868a8f : 0x6a6d70, alphaTest: .45, side: THREE.DoubleSide, roughness: 1, metalness: 0});
 }
