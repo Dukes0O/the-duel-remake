@@ -345,3 +345,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked in this round.
 - For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including the two long drivers, remain for the last round.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+## Larger land, forge catch cue (15 November 2026)
+
+- On delivery, Hot Delivery records the ember and its grade for the forge and plays `world.forge.catch` at the bay. This is part of step 5c; the pot transfer and visible forge fire still need to be built.
+- `node tools/test-everburn-job1.mjs`: passed. The real world-job update checks bright and weak deliveries, the recorded fire and one cue at the bay. `git diff --check`: passed.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

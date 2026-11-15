@@ -631,6 +631,8 @@ export const SOUND_BANK = {
     layers: [tone(110, 1.4, .35, 'sawtooth', 0, 105), tone(165, 1.4, .2, 'triangle', 0, 158)]}),
   'world.tintown.gate': cue('impacts', {priority: 70, limit: 1, volume: .5,
     layers: [{...noise(400, 1, .3, 'lowpass'), endFrequency:180}, tone(90, 1, .15, 'triangle', 0, 55)]}),
+  'world.forge.catch': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency:1800, attack:.25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
   'arena.toll-gate': cue('impacts', {
     priority: 85,
     limit: 1,

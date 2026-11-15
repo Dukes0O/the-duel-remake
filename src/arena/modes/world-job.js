@@ -900,8 +900,15 @@ export function stepWorldJob(duel, dt) {
     // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
     // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
     if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
-    if (event.type === 'emberArrived') worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
-      sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
+    if (event.type === 'emberArrived') {
+      worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
+        sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
+      if (worldJob.definition.id === 'everburn-hot-delivery') {
+        worldJob.forgeFire = {ember:event.ember, grade:event.grade};
+        duel.emit({arenaTell:{id:'forge-catch', targetId:'player', seconds:0,
+          cue:'world.forge.catch', position:{...currentStep.destination.position}}});
+      }
+    }
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};

@@ -144,6 +144,27 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
 }
+// The real job records the delivered fire and sounds the forge once on arrival.
+{
+  assert.ok(SOUND_BANK['world.forge.catch']?.layers.length);
+  for (const [ember, grade] of [[70, 'bright'], [1, 'barely']]) {
+    const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+    const state = duel.state, world = state.arena.worldJob, bay = step.destination.position;
+    const at = duel.course.nearest(bay.x, bay.z);
+    placeActor(duel, state, {s:at.s, lateral:at.lateral, headingError:0}, 0);
+    world.job.stepState = {loaded:true, ember, triggeredLines:step.sayNear.map(cue => `near:${cue.lineId}`)};
+    const events = [], emit = duel.emit.bind(duel);
+    duel.emit = event => {events.push(event); emit(event);};
+    stepWorldJob(duel, 0);
+    assert.deepEqual(world.forgeFire, {ember, grade});
+    const catches = events.filter(event => event.arenaTell?.cue === 'world.forge.catch');
+    assert.equal(catches.length, 1);
+    assert.deepEqual(catches[0].arenaTell.position, bay);
+  }
+}
 // The bed route reaches the Wash scoop, then passes beneath the bridge on the lower floor.
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
