@@ -475,7 +475,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
       actor._jumpOrigin = index >= 0 ? { s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
     } else {
       actor._verticalSpeed = groundVelocity;
-      actor._jumpY = ground; actor.airHeight = 0; return;
+      actor._jumpY = ground; actor.airHeight = 0;
+      if (scablands) actor.groundHeight = ground;
+      return;
     }
   }
   // A reef lip must stay a small hop even when the seabed drops away below it.
@@ -510,6 +512,7 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   // it is not added (against a wall of ground it would be hundreds of metres a second).
   if (scablands) actor._scablandsLanding = Math.max(0, -actor._verticalSpeed);
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
+  if (scablands) actor.groundHeight = ground;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });

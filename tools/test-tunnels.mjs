@@ -441,6 +441,47 @@ for (const speed of [40, 80]) {
   assert.ok(flew && landed, 'car drives off the scarp and lands');
 }
 
+// Match the browser's story job and placement. Regular cars do not run the
+// all-terrain pose update, so their stored floor must follow the flight step.
+{
+  const {Duel} = await import('../src/game.js');
+  const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {scablandsActorFeet} = await import('../src/world/scablands-ground.js');
+  for (const id of ['girder-bridge', 'the-pipe']) {
+    const crossing = RIVER_LAND.crossings.find(c => c.id === id);
+    const {points, along} = RIVER_LAND.line, i = along.findIndex(v => v >= crossing.along);
+    const p = points[i-1], q = points[i+1], length = Math.hypot(q.x-p.x, q.z-p.z);
+    const dx = (q.x-p.x)/length, dz = (q.z-p.z)/length;
+    const x = crossing.x+dz*27, z = crossing.z-dx*27, heading = Math.atan2(dx,dz);
+    for (const car of ['falcone_f42', 'titan_monster']) {
+      const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
+      duel.state.wastelandGateDiscovered = true;
+      assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car, seed:1989,
+        opponents:[], job:{...EVERBURN_JOBS[0], seed:1989}}));
+      const s = duel.state, from = {x:x-dx*35, z:z-dz*35}, at = duel.course.nearest(from.x,from.z);
+      const bed = scablandsActorHeightAt(from.x,from.z,scablandsSurfaceHeightAt(from.x,from.z)-20);
+      placeActor(duel,s,{...at,height:bed,headingError:Math.atan2(Math.sin(heading-duel.course.at(at.s).heading),Math.cos(heading-duel.course.at(at.s).heading))},12);
+      s.countdown=0; s.arena.timeLimitSec=Infinity;
+      let progress=-35, worst=0, maxCover=0, coveredSamples=0;
+      for (let step=0; step<1200 && progress<35; step++) {
+        const point=duel.course.worldAt(s.s,s.lateral);
+        progress=(point.x-x)*dx+(point.z-z)*dz;
+        const feet=scablandsActorFeet(s), floor=duel.course.groundAt(s.s,s.lateral,feet).y;
+        const lower=duel.course.groundAt(s.s,s.lateral,-1e9).y;
+        assert.ok(Math.abs(floor-lower)<1e-6, `${id} ${car}: selects the bed`);
+        worst=Math.max(worst,Math.abs(feet-floor));
+        const cover=duel.course.groundAt(s.s,s.lateral).y-feet;
+        maxCover=Math.max(maxCover,cover); if(cover>4)coveredSamples++;
+        const turn=Math.atan2(Math.sin(heading-duel.course.at(s.s).heading-s.headingError),Math.cos(heading-duel.course.at(s.s).heading-s.headingError));
+        duel.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))}); duel.step(1/60);
+      }
+      assert.ok(progress>=35 && worst<.05, `${id} ${car}: reaches the far side on the bed, error ${worst}`);
+      console.log(`${id} ${car}: maximum floor error ${worst} m, maximum cover ${maxCover} m, covered samples ${coveredSamples}`);
+    }
+  }
+}
+
 // Drive the bed under each deck, away from the central pier, in both directions.
 {
   const {Duel} = await import('../src/game.js');

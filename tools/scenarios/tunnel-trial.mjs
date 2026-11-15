@@ -111,19 +111,26 @@ export async function run(context) {
       await picture(`${id}-chase`,null,null);
       const from={x:x-bx*35,z:z-bz*35};
       const fromBed=scablandsActorHeightAt(from.x,from.z,scablandsSurfaceHeightAt(from.x,from.z)-20);
+      // The narrower Pipe covers fewer fixed steps than the bridge.
+      const minimumCoveredSamples=Math.max(2,Math.floor(10*crossing.deckHalfWidth/7));
       const result=await context.evaluate(`(() => {${place(from.x,from.z,heading,fromBed)}
-        const d=window.__qaApp.duel,s=d.state;let progress=-35,maxFloorError=0,maxCover=0,coveredSamples=0;
+        const a=window.__qaApp,d=a.duel,s=d.state,steps=[];let progress=-35,maxFloorError=0,maxSelectionError=0,maxCover=0,coveredSamples=0;
+        if(a.running)throw Error('The game loop must remain stopped throughout the drive');
         s.speedMph=12;for(let i=0;i<1200&&progress<35;i++){
           const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-(${x}))*(${bx})+(p.z-(${z}))*(${bz});
-          const feet=s.airborne&&Number.isFinite(s._jumpY)?s._jumpY:s.groundHeight, floor=d.course.groundAt(s.s,s.lateral,-1e9).y, surface=d.course.groundAt(s.s,s.lateral).y;
+          // Same arithmetic as scablandsActorFeet, which _supportAt uses.
+          const feet=s.airborne&&Number.isFinite(s._jumpY)?s._jumpY:Number.isFinite(s.groundHeight)?s.groundHeight+(s.airHeight||0):s._jumpY;
+          const floor=d.course.groundAt(s.s,s.lateral,feet).y, bed=d.course.groundAt(s.s,s.lateral,-1e9).y, surface=d.course.groundAt(s.s,s.lateral).y;
           if(!Number.isFinite(feet)||!Number.isFinite(floor))throw Error('Car or bed height is missing');
-          maxFloorError=Math.max(maxFloorError,Math.abs(feet-floor));
+          const error=Math.abs(feet-floor);maxFloorError=Math.max(maxFloorError,error);
+          steps.push({step:i,progress,feet,floor,bed,error,airborne:s.airborne,feetFrom:'scablandsActorFeet',floorFrom:'course.groundAt with feet',bedFrom:'course.groundAt below both floors'});
+          maxSelectionError=Math.max(maxSelectionError,Math.abs(floor-bed));
           const cover=surface-feet;maxCover=Math.max(maxCover,cover);if(cover>4)coveredSamples++;
           const turn=Math.atan2(Math.sin(${heading}-d.course.at(s.s).heading-s.headingError),Math.cos(${heading}-d.course.at(s.s).heading-s.headingError));
           d.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))});d.step(1/60);
-        }return {id:${JSON.stringify(id)},progress,maxFloorError,maxCover,coveredSamples};})()`);
+        }return {id:${JSON.stringify(id)},progress,maxFloorError,maxSelectionError,maxCover,coveredSamples,minimumCoveredSamples:${minimumCoveredSamples},worstSteps:[...steps].sort((a,b)=>b.error-a.error).slice(0,3),steps};})()`);
       report.drives.push(result);
-      assert.ok(result.progress>=35 && result.maxFloorError<1 && result.maxCover>4 && result.coveredSamples>10, `${id} drive must stay in the bed: ${JSON.stringify(result)}`);
+      assert.ok(result.progress>=35 && result.maxFloorError<1 && result.maxSelectionError<1e-6 && result.maxCover>4 && result.coveredSamples>=minimumCoveredSamples, `${id} drive must stay in the bed: ${JSON.stringify({...result,steps:undefined})}`);
     }
     await persist();
   } catch(error) {report.failure=error.message;await persist();throw error;}

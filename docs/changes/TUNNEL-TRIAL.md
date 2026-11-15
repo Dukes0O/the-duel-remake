@@ -20,7 +20,9 @@ Integration c88f83669 is an ancestor of this branch, and its status page is unch
 
 Run the revised browser scenario and judge the pictures and frame times. Investigate the Survey Flags failure and run the four FFmpeg-dependent suites at merge. Do not treat the lane as fully green until the Survey Flags failure is understood. The visible appearance is not yet proven, and no boring machine is built.
 
-The Node reproduction of the scenario drive printed feet and bed heights at every step for both decks. Both cars stayed on the bed within 3e-12 m. The scenario measured cover at the named crossing centre, although the line passed beneath the bridge earlier; it now checks the actual selected bed and requires covered samples along the drive. The Pipe drive also reached the far side. Big Bess now starts on the top floor plus the job offset; flight support, slope and camera use the same feet height. The 21 solid-ground checks and tunnel checks passed. The revised scenario and all 67 evaluated scripts parse in Node; the browser was not run.
+The earlier Node reproduction used a Titan and missed a regular-car fault. A story-job reproduction with the scenario's exact line and a Falcone reproduced the browser's 0.87 m and 1.80 m errors: its stored ground height stayed at the starting height while `_jumpY` followed the bed. Grounded Scablands cars now update their stored height on each flight-rule support step and on landing. The Node test now drives both a Falcone and a Titan on both lines, comparing `scablandsActorFeet` with `course.groundAt` using those feet, and also verifies the selected floor is the bed. The scenario records every step and reports the worst three with the height sources. `a.stop()` cancels the game loop before the pictures and drives; the drive checks it remains stopped, and its synchronous loop advances only with its own `duel.step` calls. Placement gives the bed height directly, so no settling interval is needed. The browser has not yet verified the fix.
+
+Expected Falcone results for Claude's same setup: at the bridge, maximum floor error approximately 0 m, maximum cover 8 m, and 30 covered samples; at the Pipe, approximately 0 m, 8 m, and 11 samples. The Titan's largest measured floor difference is 0.0085 m. The Pipe's minimum covered samples is five, scaled from its 3.6 m half-width against the bridge's 7 m half-width. `node tools/test-tunnels.mjs` and `node --check tools/scenarios/tunnel-trial.mjs` passed for this fix.
 
 ## Changed assertions, for Claude to review
 
@@ -28,7 +30,9 @@ The four-ways test formerly required the bridge deck to stop a car in the river 
 
 The shortcut source fingerprint moved from `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3df718f9c4264fe` to `a23244774fb2baa6f021808d03f2272538612161df05e00bb0a81d18dc3a798d` when `Course.groundAt` changed. All 15 saved records remained unchanged when regenerated and compared with the solver.
 
-The Big Bess crossing fixture now gives `y: 0` as the job offset instead of an absolute surface height; the same deck and raider assertions remain. The scenario formerly required `minCover > 1` within 5 m of the named crossing; it now requires over 10 samples with more than 4 m of cover anywhere along the crossing, and compares each step with the bed at that location. The old check measured the wrong part of the crossing.
+The Big Bess crossing fixture now gives `y: 0` as the job offset instead of an absolute surface height; the same deck and raider assertions remain. The scenario formerly required `minCover > 1` within 5 m of the named crossing; it now counts samples with more than 4 m of cover anywhere along the crossing, and compares each step with the bed at that location. The old check measured the wrong part of the crossing.
+
+The scenario's covered-sample requirement changed from more than 10 for both decks to at least 10 for the 7 m half-width bridge and at least 5 for the 3.6 m half-width Pipe. The narrower Pipe produces fewer samples at the same driving speed. The drive must still cross the full 70 m, select the bed at every step and meet the same floor-error and cover limits.
 
 The new tunnel tests were adjusted to the prescribed flat floor at 0.55 radius below the centre, with walls where that floor meets the bore, and to the 0.6 m floor-selection rule. They require the specified behaviour.
 
