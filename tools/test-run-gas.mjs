@@ -385,12 +385,12 @@ function runUntil(duel, condition, seconds = 400) {
   const pairs = list => list.map(item => [item.x, item.z]);
   const longPlaces = [LAND.at('everburn'), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
     LAND.at('ships-in-sand', -60, 50), LAND.between('ships-in-sand', 'ridge', .426, -10.78, 36.28), LAND.at('ridge', -74, 104),
-    LAND.at('tin-town', -120, -90), LAND.at('tin-town')];
+    LAND.at('tin-town', -120, -90), LAND.at('tin-town', -18, -13.5)];
   same(at(GAS_RUN_PATHS.long), pairs(longPlaces),
     'the long road is the card\'s eight places, well to Tin Town');
   const boneyardPlaces = [LAND.at('everburn'), LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('dead-mall', 0, -60),
     LAND.between('dead-mall', 'boneyard', .551, 16.19, 54.48), LAND.at('boneyard', 23, 4), LAND.at('tin-town', -25, 112), LAND.at('tin-town', -25, 62),
-    LAND.at('tin-town')];
+    LAND.at('tin-town', -10, 25)];
   same(at(GAS_RUN_PATHS.boneyard), pairs(boneyardPlaces),
     'the Boneyard road goes from the Boneyard to a place 50 m south of Tin Town\'s gate, straight north through it, and on to the town');
   check(!at(GAS_RUN_PATHS.boneyard).some(([x, z]) => x === LAND.at('safe-road').x && z === LAND.at('safe-road').z), 'and never doubles back to the safe road');
@@ -402,11 +402,11 @@ function runUntil(duel, condition, seconds = 400) {
   // adding up the pieces between the places above (they were 1,259 m and 1,640 m); the same 5 m tolerance as before.
   const walk = list => list.slice(1).reduce((sum, item, index) => sum + Math.hypot(item.x - list[index].x, item.z - list[index].z), 0);
   near(gasRunLength('boneyard'), walk(boneyardPlaces), 5, 'the Boneyard road is about 12.35 km (the road no longer doubles back)');
-  near(gasRunLength('boneyard'), 12349, 5, 'and its figure on the larger land is 12,349 m');
+  near(gasRunLength('boneyard'), 12322, 5, 'and its figure on the larger land is 12,322 m');
   // SCABLANDS-LAND round 4: 300 m of 1.64 km (about 18%) is 3,000 m of the 18.6 km road; the roads are 6.3 km apart.
   check(gasRunLength('boneyard') < gasRunLength('long') - 3000, 'and 3 km or more shorter than the long road: short and dangerous, or long and safe');
   near(gasRunLength('long'), walk(longPlaces), 5, 'the long road, as the places lie, is 18.63 km (the card says about 1.9 km on the first, small land)');
-  near(gasRunLength('long'), 18626, 5, 'and its figure is 18,626 m on the larger land');
+  near(gasRunLength('long'), 18604, 5, 'and its figure is 18,604 m on the larger land');
   for (const road of GAS_RUN_ROADS) {
     const route = GAS_RUN_PATHS[road];
     check(route[0].id === 'everburn' && route.at(-1).id === 'tin-town', `${road}: from the well to Tin Town`);
@@ -483,6 +483,16 @@ function runUntil(duel, condition, seconds = 400) {
     const c = Math.cos(solid.heading), n = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z, lx = dx * c - dz * n, lz = dx * n + dz * c;
     return Math.hypot(Math.max(Math.abs(lx) - solid.halfX, 0), Math.max(Math.abs(lz) - solid.halfZ, 0));
   };
+  // Every place where Bess may stop or restart has room for her 1.3 m half width and a 0.5 m margin.
+  for (const [name, step] of [...GAS_RUN_ROADS.map(road => [road, gasRunJob({road}).steps[0]]), ['Slow Ride', EVERBURN_JOBS[3].steps[0]]]) {
+    const starts = [step.actor.start?.position ?? step.actor.start ?? step.path[0].position, ...step.path.slice(1).map(place => place.position)];
+    for (const [index, point] of starts.entries()) {
+      for (const solid of SCABLANDS_SOLIDS) {
+        const clearance = distanceToBox(point.x, point.z, solid);
+        check(clearance >= 1.8, `${name}: stop ${index} clears ${solid.id} by 1.8 m (got ${clearance.toFixed(2)})`);
+      }
+    }
+  }
   for (const road of GAS_RUN_ROADS) {
     const points = GAS_RUN_PATHS[road].map(item => item.position);
     let tightest = Infinity;

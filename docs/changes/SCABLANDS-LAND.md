@@ -1111,6 +1111,16 @@ Changed assertions: none. A new isolation test was added.
 
 The shared grid's mutable extra-solids list was removed.
 
+### Big Bess's stopping places
+
+The truck now obeys solids all the way to her destination and does not mark a blocked step as arrived. Both gas roads and Slow Ride stop clear of Tin Town's buildings. Slow Ride's bridge waypoint moves 10 m along the road, clear of the pier. The gas jobs use the destination of their own road. All stopping and restart points, including each truck's actual start, are checked against every solid with 1.8 m clearance. No new game event or sound cue was added.
+
+Checks: `test-run-gas` passes 8,504 checks, `test-field-battle` passes 4,639, `test-world-job-mode` passes, and `test-scablands-solid` passes 17 tests. The remaining card checks, replay fingerprints, lane tier, build and browser scenario remain for the completed card.
+
+Changed assertions, for Claude to review: the two gas-road end coordinates changed from Tin Town's centre to offsets (-18, -13.5) and (-10, 25) m. Their pinned lengths changed from 18,626 to 18,604 m and 12,349 to 12,322 m. The battle's appearance and start distances changed from 5,494 to 5,482 m and 5,414 to 5,402 m because they follow the shortened road. Its turn-around test starts 15 m from the end instead of 30 m and runs for 1 second instead of 3, so it checks the same turn before reaching the preceding bend. Its heading tolerance is unchanged.
+
+Removed: the exemption that let the truck pass through solids near the last stop.
+
 ### Still to do
 
-Big Bess's stopping places, the furnace paths, the three refused assertions and per-step allocations remain.
+The furnace paths, the three refused assertions and per-step allocations remain. Merge integration into this lane and run the complete card checks before handover.
