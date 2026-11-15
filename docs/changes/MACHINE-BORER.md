@@ -6,15 +6,15 @@ Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to
 
 The keyboard now moves a persistent thrust lever; the head dial has a working band and a lever display. The borer has dedicated following and mouth cameras. Deep rock has deterministic 8 to 30 m seams seeded by the land and the mouth. The ground layer already samples materials by depth, but its one-metre variation is too short for these seams, so the borer uses alternating hard rock and softer gravel seams under more than 3 m of cover. The scenario now drives to the face by machine state, sets the lever, and checks centre pixels after drawing.
 
-The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check. Parts B and C remain.
+The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check.
 
-## Part B in progress
+## Part B
 
-The Dig now supplies the current tunnel to the cutter. It ignores the recent passage behind the head and opens the face on reaching an older stretch. `node tools/test-machine-borer.mjs` passed, including a returning curved passage, no early breakthrough and travel both ways at the junction. A longer simulated return exhausted Node's memory while the tunnel was rebuilt at every step; the separate indexing fix in Part B remains necessary.
+The Dig now supplies the current tunnel to the cutter. It ignores the recent passage behind the head and opens the face on reaching an older stretch. `node tools/test-machine-borer.mjs` passed, including a returning curved passage, no early breakthrough and travel both ways at the junction. A longer simulated return exhausted Node's memory before the indexing fix described below.
 
 Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore, lever and camera checks, and a camera transition around a bend. Scenario expressions parsed in Node. The browser scenario was not run.
 
-The Dig now checks the land's own solid footprints, bridge and pipe decks, and public road net before Mabel cuts. Existing reserved-place sentences take precedence, including Tin Town's sentence. `node tools/test-machine-borer.mjs` passed with building, deck and road refusals through the Dig. The conveyor now spreads the bulked cut into a spoil bank starting 12 m to the right of the mouth. It fills the lowest available sample within 6 m of the bank end, caps it at 5 m above its starting ground and skips protected ground, including roads. The focused borer test passed for straight and bent cuts, volume, height, road avoidance and a blocked discharge. The Dig now extends the last indexed tunnel segment or indexes a new one without rebuilding earlier segments. At 400 m and 60 segments, 10,000 tail extensions averaged 0.0025 ms per index update on this laptop; this measures the index update, not the full cutting step. The focused borer and tunnel tests passed, including comparisons against a freshly rebuilt bent index. The face check now samples the centre and both sides, the control mapping is cached and refreshed on change, and a bent tunnel passes the plain-data round trip. `node tools/test-machine-borer.mjs` passed after these fixes. Part C remains.
+The Dig now checks the land's own solid footprints, bridge and pipe decks, and public road net before Mabel cuts. Existing reserved-place sentences take precedence, including Tin Town's sentence. `node tools/test-machine-borer.mjs` passed with building, deck and road refusals through the Dig. The conveyor now spreads the bulked cut into a spoil bank starting 12 m to the right of the mouth. It fills the lowest available sample within 6 m of the bank end, caps it at 5 m above its starting ground and skips protected ground, including roads. The focused borer test passed for straight and bent cuts, volume, height, road avoidance and a blocked discharge. The Dig now extends the last indexed tunnel segment or indexes a new one without rebuilding earlier segments. At 400 m and 60 segments, 10,000 tail extensions averaged 0.0025 ms per index update on this laptop; this measures the index update, not the full cutting step. The focused borer and tunnel tests passed, including comparisons against a freshly rebuilt bent index. The face check now samples the centre and both sides, the control mapping is cached and refreshed on change, and a bent tunnel passes the plain-data round trip. `node tools/test-machine-borer.mjs` passed after these fixes. A separate timing of 300 complete Dig simulation steps at 400 m and 60 straight segments averaged 0.086 ms per step on this laptop, with synthetic ground and an initially empty spoil bank. It advanced 0.83 m without a refusal; a developed bank or real terrain may cost more.
 
 ## Not built by this card
 
@@ -25,18 +25,18 @@ The Dig now checks the land's own solid footprints, bridge and pipe decks, and p
 
 ## For Claude to run
 
-Run the lane tier at merge, and run `tools/scenarios/machine-borer.mjs` in the browser harness. The scenario uses memory-only storage, drives from the parked position, cuts 50 m, and records the mouth, face and inside views. Its automated view check tests whether machine and tunnel geometry project into the camera view; it does not prove that pixels are unobscured. Inspect all three pictures for Mabel, lining, lamps and the face. Check the first second at the mouth, effects, camera and sounds. The browser was not available in this lane.
+Run the lane tier at merge, and run `tools/scenarios/machine-borer.mjs` in the browser harness. The scenario uses memory-only storage, drives from the parked position, cuts 50 m, and records the mouth, face and inside views. Its automated view check tests whether machine and tunnel geometry project into the camera view and whether five centre pixels vary; it does not prove that the geometry is unobscured. Inspect all three pictures for Mabel, lining, lamps and the face. Check the first second at the mouth, effects, camera and sounds. The browser was not available in this lane.
 
 To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times to select Mabel. Hold W to drive toward the scarp. Press Tab near the face for work mode. Hold W to move the thrust lever forward, then release W to hold it. Hold S to pull it back, and use A or D to curve gradually back toward the scarp face. Use the up and down arrows with thrust to adjust slope. A full return to the face takes roughly 400 m. Pull the lever back to zero for at least one second if the head stalls, then push it forward again. Watch for breakthrough and daylight. Hold S to reverse. C changes camera and Escape leaves. The route and breakthrough have not been tried by hand.
 
 ## Checks
 
-- `test-machine-borer`: passed after updating the selection-order check.
-- `test-tunnels`, `test-machine-drill`, `test-machine-haul`, `test-machine-input`, `test-machine-trencher` and `test-machine-view`: passed.
+- After merging `integration/wasteland`, `test-machine-borer` passed, including the face, seams, tunnel joining, spoil bank, input and bent data checks.
+- After the merge, `test-tunnels` and all seven `test-machine-*` suites passed, including `test-machine-roads`.
 - `test-machine-roads`: the selection sequence now includes Mabel before wrapping to the excavator, as Claude reviewed and directed.
 - Scenario page expressions parse with `new Function`; the scenario was not run. The geometry check does not establish whether the objects are hidden by other surfaces.
-- `npm.cmd run build`: passed. Vite reported its existing large-chunk and mixed import warnings.
-- `test-combat-replays`: 12 fingerprint checks passed across four encounters. `test-replays`: 297 fingerprint checks passed across 33 cases.
+- After the merge, `npm.cmd run build` passed. Vite reported its existing large-chunk and mixed import warnings.
+- After the merge, `test-combat-replays`: 12 fingerprint checks passed across four encounters. `test-replays`: 297 fingerprint checks passed across 33 cases.
 - No suite filename contains `world-sign`. `test-world-composition` passed 63 checks and `test-course-kit` passed eight.
 - The lane tier was not run, as Claude directed.
 
