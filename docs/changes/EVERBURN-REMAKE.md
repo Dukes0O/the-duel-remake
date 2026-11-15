@@ -103,3 +103,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers.
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, brazier scoops (15 November 2026)
+
+- Each named brazier gives up to 25 ember after the car stops within 8 m for three continuous seconds. Moving or leaving resets the wait. Each brazier can be used once, including to relight an out pot. Relighting still counts toward the existing pay cap. The scoop uses `world.ember.scoop`.
+- `node tools/test-everburn-job1.mjs`: passed using the real job step at all three braziers, including an interrupted stop, the distance limit, relighting and one use each. `git diff --check`: passed.
+- The marker for an out pot still uses the old locations; discovery and the nearest known brazier are later steps. Smoke and the Wash brazier drawing are also still to come.
+- For Claude to run: the requested scenario, final checks and the two long drivers remain for the last round.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: the old immediate full refill at the origin or passed safe point for this job; other ember carries retain their existing rule.

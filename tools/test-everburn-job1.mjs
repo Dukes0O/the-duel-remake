@@ -57,4 +57,25 @@ worldJob.job = job;
 assert.equal(frame().actors.length, 1);
 assert.ok(hud().ember.value > 99);
 assert.equal(hud().target.id, 'tin-town');
+// Exercise the real job step with each brazier, including interrupted stops and an out ember.
+job.stepState = {...job.stepState, ember: 0, out: true};
+for (const brazier of step.braziers) {
+  const {x, z} = brazier.position;
+  job = stepJob(job, view(x + 8.1, z), 3);
+  assert.ok(!job.events.some(event => event.type === 'emberRelit'));
+  job = stepJob(job, view(x, z), 2);
+  job = stepJob(job, view(x, z, -2), 1);
+  job = stepJob(job, view(x, z), 2);
+  assert.ok(!job.events.some(event => event.type === 'emberRelit'));
+  const before = job.stepState.ember;
+  const wasOut = job.stepState.out;
+  job = stepJob(job, view(x, z), 1);
+  assert.ok(Math.abs(job.stepState.ember - Math.min(100, before - (wasOut ? 0 : step.ember.coldPerSecond) + 25)) < 1e-9);
+  assert.equal(job.stepState.out, false);
+  assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
+  job = stepJob(job, view(x, z), 4);
+  assert.ok(!job.events.some(event => event.type === 'emberRelit'));
+}
+assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
+assert.equal(job.stepState.relights, 1);
 console.log('Hot Delivery pickup: start, stop, three lines and ember passed.');

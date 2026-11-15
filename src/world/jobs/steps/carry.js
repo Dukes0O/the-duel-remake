@@ -4,7 +4,7 @@ const spot = value => value?.position ?? value ?? {};
 const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
 
 // A carry that holds a live ember (step.ember, src/world/jobs/ember-rule.js). Driving takes ember; at 0 the pot is out and the
-// marker moves to the nearest brazier (the origin, or the safe point once it has been passed), where a stop gives a fresh scoop.
+// marker moves to a brazier, where the player can stop for a scoop.
 // The job does not end and the car is not moved. It completes at the destination only with the pot alight.
 function stepEmberCarry(step, state, view, dt) {
   const rule = step.ember, here = view.player?.position ?? {};
@@ -41,12 +41,30 @@ function stepEmberCarry(step, state, view, dt) {
       requests.push({type: 'say', lineId: step.spillLineId});
     }
   }
+  if (step.braziers) {
+    const used = state.scoopedBraziers ?? [];
+    const brazier = step.braziers.find(place => !used.includes(place.id) && gap(here, place) <= 8);
+    const stopping = brazier && Math.abs(view.speedKmh ?? 0) < 1;
+    const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
+    next.scoopBrazier = stopping ? brazier.id : null;
+    next.scoopTime = scoopTime;
+    if (stopping && scoopTime >= 3) {
+      const wasOut = next.out;
+      next.ember = Math.min(rule.start, next.ember + 25);
+      next.out = false;
+      next.relights = relights + (wasOut ? 1 : 0);
+      next.scoopedBraziers = [...used, brazier.id];
+      next.scoopBrazier = null;
+      next.scoopTime = 0;
+      events.push({type: 'emberRelit', place: brazier.id});
+    }
+  }
   if (next.out) {
     // The nearest place a fresh scoop can be taken: the yard gate always, the halfway camp once passed.
     const scoops = [step.origin, ...(step.safePoints ?? []).slice(0, safeIndex)].filter(Boolean);
     const nearest = scoops.reduce((best, place) => gap(here, place) < gap(here, best) ? place : best, scoops[0]);
     requests.push({type: 'marker', place: nearest});
-    if (out && nearest && gap(here, nearest) <= (spot(nearest).radius ?? 5) && (view.speedKmh ?? 0) < rule.scoopKmh) {
+    if (!step.braziers && out && nearest && gap(here, nearest) <= (spot(nearest).radius ?? 5) && (view.speedKmh ?? 0) < rule.scoopKmh) {
       next.ember = rule.start; next.out = false; next.relights = relights + 1;
       events.push({type: 'emberRelit', place: nearest.id ?? null});
       requests[requests.length - 1] = {type: 'marker', place: step.destination};
