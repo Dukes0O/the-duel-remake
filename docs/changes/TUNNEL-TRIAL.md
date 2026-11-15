@@ -65,6 +65,8 @@ Job raiders and Big Bess now pass their stored height and update it with the tow
 
 The bore now has a flat support floor 0.55 radius below its centre. Its walls stop cars at that floor edge, including angled moves and segment joints. `node tools/test-tunnels.mjs` passed with the new floor and the scarp drives. Floor selection through bends and the remaining enclosure proofs are not complete. No new sound cue was added.
 
+The lining now uses one mesh for joined segments, with a flat floor, metre-based texture coordinates and a rock face at closed ends. `node tools/test-tunnels.mjs` passed. The game still needs revision-driven drawing, mouth-only shader cuts, camera limits and the rewritten browser scenario. No sound cue changed.
+
 ## Incomplete
 
 At an overlapping bend, the tunnel query now chooses the highest reachable floor. A sloped joint test, `test-tunnels` and all 20 `test-scablands-solid` checks pass. The slow fall below and the remaining drawing and scenario work are still open. No sound cue changed.

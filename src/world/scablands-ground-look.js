@@ -320,17 +320,59 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
 // The trial's lining is separate from simulation and may be disposed with the scene.
 export function createTunnelMesh(tunnels) {
   const group = new THREE.Group();
-  const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.BackSide});
-  for (const segment of tunnels.segments) {
-    const start = new THREE.Vector3(segment.start.x, segment.start.y, segment.start.z);
-    const end = new THREE.Vector3(segment.end.x, segment.end.y, segment.end.z);
-    const axis = end.clone().sub(start);
-    if (axis.lengthSq() === 0) continue;
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(segment.radius, segment.radius, axis.length(), 32, 1, true), material);
-    mesh.position.copy(start).add(end).multiplyScalar(0.5);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis.normalize());
-    group.add(mesh);
+  const segments = tunnels.segments;
+  if (!segments.length) return group;
+  const positions = [], uvs = [], indices = [];
+  const sides = 32, floorAngle = Math.asin(0.55);
+  let distance = 0;
+  // The long arc goes from one edge of the floor over the crown to the other.
+  // The final edge closes across the flat road.
+  for (let i = 0; i <= segments.length; i++) {
+    const segment = segments[Math.min(i, segments.length - 1)];
+    const point = i === segments.length ? segment.end : segment.start;
+    const previous = segments[Math.max(0, i - 1)];
+    const next = segments[Math.min(i, segments.length - 1)];
+    const unit = s => {
+      const dx = s.end.x - s.start.x, dz = s.end.z - s.start.z, length = Math.hypot(dx, dz);
+      return {x: dx / length, z: dz / length};
+    };
+    const before = unit(previous), after = unit(next);
+    let tx = before.x + after.x, tz = before.z + after.z;
+    const length = Math.hypot(tx, tz);
+    tx /= length; tz /= length;
+    if (i) distance += Math.hypot(previous.end.x - previous.start.x,
+      previous.end.y - previous.start.y, previous.end.z - previous.start.z);
+    for (let j = 0; j <= sides; j++) {
+      const angle = -floorAngle + (Math.PI + 2 * floorAngle) * j / sides;
+      const across = Math.cos(angle) * segment.radius;
+      positions.push(point.x - tz * across, point.y + Math.sin(angle) * segment.radius, point.z + tx * across);
+      uvs.push(distance, (angle + floorAngle) * segment.radius);
+    }
+    if (i) for (let j = 0; j <= sides; j++) {
+      const k = (j + 1) % (sides + 1), a = (i - 1) * (sides + 1), b = i * (sides + 1);
+      indices.push(a + j, b + j, a + k, a + k, b + j, b + k);
+    }
   }
+  // Close a cutting face with a fan using the same ring as the lining.
+  for (const [closed, ring, point, reverse] of [
+    [!tunnels.startOpen, 0, segments[0].start, true],
+    [!tunnels.endOpen, segments.length, segments.at(-1).end, false],
+  ]) {
+    if (!closed) continue;
+    const center = positions.length / 3;
+    positions.push(point.x, point.y, point.z); uvs.push(distance, 0);
+    const base = ring * (sides + 1);
+    for (let j = 0; j <= sides; j++) {
+      const next = (j + 1) % (sides + 1);
+      indices.push(center, base + (reverse ? next : j), base + (reverse ? j : next));
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.DoubleSide});
+  group.add(new THREE.Mesh(geometry, material));
   return group;
 }
 

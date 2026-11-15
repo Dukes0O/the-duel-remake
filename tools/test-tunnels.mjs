@@ -780,10 +780,22 @@ console.log('Tunnel support, joined segments, wall contact and simulated driving
   assert.equal(cut.shader.uniforms.uTunnelRadius0.value, 4);
   const lining = createTunnelMesh(tunnel);
   assert.equal(lining.children.length, 1);
-  assert.equal(lining.children[0].material.side, THREE.BackSide);
-  assert.equal(lining.children[0].geometry.parameters.height, 100);
+  assert.equal(lining.children[0].material.side, THREE.DoubleSide);
+  const geometry = lining.children[0].geometry;
+  assert.equal(geometry.getAttribute('uv').getX(33), 100, 'lining texture coordinates use metres');
+  assert.equal(geometry.getAttribute('position').getY(0), geometry.getAttribute('position').getY(32), 'lining has a flat floor');
   lining.children[0].geometry.dispose();
   lining.children[0].material.dispose();
+  const cutting = createGroundTunnels([
+    {start: {x: 0, y: 2.2, z: 0}, end: {x: 20, y: 2.2, z: 0}, radius: 4},
+    {start: {x: 20, y: 2.2, z: 0}, end: {x: 40, y: 2.2, z: 0}, radius: 4},
+  ], {heightAt: x => x === 0 ? 0 : 20});
+  const cuttingMesh = createTunnelMesh(cutting);
+  assert.equal(cuttingMesh.children.length, 1, 'joined segments share one lining mesh');
+  assert.equal(cuttingMesh.children[0].geometry.getAttribute('position').count, 100,
+    'the closed cutting face adds a centre to the three lining rings');
+  cuttingMesh.children[0].geometry.dispose();
+  cuttingMesh.children[0].material.dispose();
 }
 
 // The road surface must not hang down across the river bed at either deck.
