@@ -48,15 +48,6 @@ Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven
 
 - `crashLimit` from job 1's data (both the step and its `easy` note) and the crash-size spill for job 1. The generic carry rule stays because Hot Soup uses it.
 
-## Changed at the merge (Claude, 14 November 2026)
-
-- **Rock costs ember by the metre, not by the second.** Claude drove the build flat out across the rock on Easy with one key held and the pot arrived (barely alive, 50 scrap, 20 seconds): a loss by the second lets a fast car cross the ground before the pot dies. `roughPerKmh: 0.12` (a second) became `roughPerMetre: 0.003` (for each km/h over 50, for each metre driven). At 120 km/h that is 7 a second where it was 8.4; at 206 km/h it is 27 a second where it was 18.7.
-- **Changed assertion** in `tools/test-ember-pot.mjs`, reviewed by Claude: the pinned rock loss at 120 km/h for one second is `0.003 × 70 × (120 / 3.6)` where it was `0.12 × 70`. The number moved because the rule changed; the check is as strict as before. Two checks added: flat out on Easy puts the pot out before the town, and 200 km/h gets less far over rock than 100 km/h. 42 checks.
-- Claude's verdict and what the slice still lacks are on the card, section "Slice 1 result".
-- **The results sentence names no number.** It said "the most it pays is 80 scrap" beside "+96" on Medium, because the pay is multiplied by the difficulty. It now says "You had to relight it, so it pays less." Changed assertion, reviewed by Claude: the sentence check asks for "relight", "pays less" and no digit, where it asked for "80 scrap"; the cap of 80 itself is still checked on the line above it.
-- Review note for the sheet: `docs/board/looks/everburn-remake/round-1-review.md` (Claude).
-- **Changed assertion in `tools/scenarios/everburn-play.mjs`,** reviewed by Claude: the scenario held the accelerator alone and required job 1 to finish. That is the fault Kyle found. It now requires the opposite: the job does not finish that way, the pot goes out, and the gauge says OUT. It is stricter than before.
-
 ### The yard's drawing (Claude, 15 November 2026, night)
 
 `src/world/scablands-yard-look.js` (new): `yardPlan()` (plain data: where each piece stands and the solid shapes), `yardShape`,
@@ -65,4 +56,13 @@ Run once in Node: 92 sheets, 3 containers, 10 posts, 109 solid shapes, 10,220 tr
 visible window with the yard put into the scene by hand (not committed): look round 2. No test added (Codex's placing step
 brings its own); no assertion changed. Sound: none, nothing here is an event.
 
-**Removed:** nothing.
+**Removed (the yard's drawing):** nothing.
+
+## Changed at the merge (Claude, 14 November 2026)
+
+- **Rock costs ember by the metre, not by the second.** Claude drove the build flat out across the rock on Easy with one key held and the pot arrived (barely alive, 50 scrap, 20 seconds): a loss by the second lets a fast car cross the ground before the pot dies. `roughPerKmh: 0.12` (a second) became `roughPerMetre: 0.003` (for each km/h over 50, for each metre driven). At 120 km/h that is 7 a second where it was 8.4; at 206 km/h it is 27 a second where it was 18.7.
+- **Changed assertion** in `tools/test-ember-pot.mjs`, reviewed by Claude: the pinned rock loss at 120 km/h for one second is `0.003 × 70 × (120 / 3.6)` where it was `0.12 × 70`. The number moved because the rule changed; the check is as strict as before. Two checks added: flat out on Easy puts the pot out before the town, and 200 km/h gets less far over rock than 100 km/h. 42 checks.
+- Claude's verdict and what the slice still lacks are on the card, section "Slice 1 result".
+- **The results sentence names no number.** It said "the most it pays is 80 scrap" beside "+96" on Medium, because the pay is multiplied by the difficulty. It now says "You had to relight it, so it pays less." Changed assertion, reviewed by Claude: the sentence check asks for "relight", "pays less" and no digit, where it asked for "80 scrap"; the cap of 80 itself is still checked on the line above it.
+- Review note for the sheet: `docs/board/looks/everburn-remake/round-1-review.md` (Claude).
+- **Changed assertion in `tools/scenarios/everburn-play.mjs`,** reviewed by Claude: the scenario held the accelerator alone and required job 1 to finish. That is the fault Kyle found. It now requires the opposite: the job does not finish that way, the pot goes out, and the gauge says OUT. It is stricter than before.
