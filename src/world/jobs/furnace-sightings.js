@@ -19,6 +19,11 @@ export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeig
   return {visible, seconds, change};
 }
 
+// Sound the warning once, after more than six uninterrupted seconds in view.
+export function skylineWarningDue(sight, warned) {
+  return !warned && sight.visible && sight.seconds > 6;
+}
+
 // The Ridge lookout uses the same view as the route map, with closer samples
 // so narrow banks and scarps can also hide a car.
 export function stepRidgeSight(state, car, heightAt = scablandsSurfaceHeightAt) {

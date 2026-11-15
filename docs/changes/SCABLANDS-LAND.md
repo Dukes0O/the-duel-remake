@@ -1456,3 +1456,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 18 tests, including cle
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: the lookout uses the Ridge's named place and its existing map range and eye height. Removed: none.
 
 Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: furnace warning
+
+During Hot Delivery the furnace sounds its horn once after it sees the car for more than six continuous seconds. Cover resets the clock. The cue is `arena.toll-gate`. Survey Flags' fifth flag remains in place. The warning does not yet bring the two riders, so this part is not finished.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 19 tests, including the warning threshold, cover and one warning per job. Race fingerprints and world signatures were not checked in this round. Integration and the final checks remain.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 2, send the two riders after the horn, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.

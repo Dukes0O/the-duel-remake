@@ -5,7 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight, stepRidgeSight} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -602,6 +602,11 @@ export function stepWorldJob(duel, dt) {
     const car = position(duel, state);
     const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt);
     worldJob.skylineSight = sight;
+    if (skylineWarningDue(sight, worldJob.skylineWarned)) {
+      worldJob.skylineWarned = true;
+      duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
+        cue: 'arena.toll-gate', position: car}});
+    }
     if (sight.change) {
       duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);
       duel.emit({arenaTell: {id: 'furnace-sight', targetId: 'player', seconds: 0,
