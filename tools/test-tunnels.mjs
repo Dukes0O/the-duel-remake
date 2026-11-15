@@ -538,6 +538,12 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   for (let x = -499; x < 500; x += 3)
     assert.equal(chain.groundAt({x, y: 0, z: -33}, 0, 20), 0, `chain support at ${x}`);
   assert.equal(chain.groundAt({x: 0, y: 20, z: -33}, 20, 20), 20);
+  for (let joint = -490; joint < 500; joint += 10) for (const direction of [-1, 1]) {
+    const move = chain.constrainMotion({x: joint - direction, y: 4, z: -33},
+      {x: joint + direction, y: 4, z: -28}, 1);
+    assert.equal(move.hit, true, `wall holds at joint ${joint}, direction ${direction}`);
+    assert.equal(move.position.z, -30);
+  }
 }
 
 // A chain must hand support to the next segment as the car crosses a joint.

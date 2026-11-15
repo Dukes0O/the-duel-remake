@@ -99,6 +99,7 @@ export function createGroundTunnels(segments = []) {
   // Each tube is entered in the cells touched by its plan-view bounds. A
   // query visits only its own cell, even when the bore has many segments.
   const cellSize = 32, grid = new Map(), noTubes = [];
+  const indices = new Map(tubes.map((tube, index) => [tube, index]));
   for (const tube of tubes) {
     const minX = Math.floor((Math.min(tube.start.x, tube.end.x) - tube.radius) / cellSize);
     const maxX = Math.floor((Math.max(tube.start.x, tube.end.x) + tube.radius) / cellSize);
@@ -173,18 +174,23 @@ export function createGroundTunnels(segments = []) {
       // A joint is not a mouth: use the adjoining segment's walls when the
       // move crosses it. Only exact joins are considered, leaving mouths open.
       const joint = along < 0 ? tube.start : tube.end;
-      const next = tubes.find(candidate => {
-        if (candidate === tube) return false;
-        const joined = [candidate.start, candidate.end].some(p =>
-          Math.hypot(p.x - joint.x, p.y - joint.y, p.z - joint.z) < 1e-7);
-        if (!joined) return false;
+      let next = null;
+      const currentIndex = indices.get(tube);
+      for (let index = Math.max(0, currentIndex - 1); index <= Math.min(tubes.length - 1, currentIndex + 1); index++) {
+        const candidate = tubes[index];
+        if (candidate === tube) continue;
+        const joined = Math.hypot(candidate.start.x - joint.x, candidate.start.y - joint.y, candidate.start.z - joint.z) < 1e-7 ||
+          Math.hypot(candidate.end.x - joint.x, candidate.end.y - joint.y, candidate.end.z - joint.z) < 1e-7;
+        if (!joined) continue;
         const cx = candidate.end.x - candidate.start.x, cz = candidate.end.z - candidate.start.z;
         const squared = cx * cx + cz * cz;
-        if (!squared) return false;
         const t = ((end.x - candidate.start.x) * cx + (end.z - candidate.start.z) * cz) / squared;
         const centerY = candidate.start.y + (candidate.end.y - candidate.start.y) * t;
-        return t >= 0 && t <= 1 && end.y >= centerY - candidate.radius - 0.5 && end.y <= centerY + candidate.radius;
-      });
+        if (t >= 0 && t <= 1 && end.y >= centerY - candidate.radius - 0.5 && end.y <= centerY + candidate.radius) {
+          next = candidate;
+          break;
+        }
+      }
       if (!next) return {position: {...end}, hit: false};
       tube = next;
       dx = tube.end.x - tube.start.x; dz = tube.end.z - tube.start.z;

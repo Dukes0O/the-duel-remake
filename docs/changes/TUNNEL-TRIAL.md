@@ -4,7 +4,7 @@
 
 A car rising inside a tunnel now meets the current bore crown and falls back. The real flight step is covered by `node tools/test-tunnels.mjs`, which passed. The new flat floor and floor-based bore selection still need to replace the trial geometry before the enclosure is complete.
 
-Tunnel support now looks up nearby segments in a grid and reuses its projection and result objects. A 100-segment chain is checked across cell boundaries; `node tools/test-tunnels.mjs` passed. The wall handoff still searches the chain at a joint and needs the rest of item 3.
+Tunnel support now looks up nearby segments in a grid and reuses its projection and result objects. A 100-segment chain is checked across cell boundaries; `node tools/test-tunnels.mjs` passed. The wall handoff checks only adjacent segments, and the test exercises both directions at 99 joints. The rest of item 3 remains.
 
 Tunnel creation now rejects a gap or height step at a joint, a radius step, and a segment with no horizontal length. `node tools/test-tunnels.mjs` passed. The flat floor, roof, closed face, grid, drawing and scenario remain to be built.
 
