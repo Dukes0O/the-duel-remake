@@ -1906,3 +1906,11 @@ Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry ch
 Changed assertion, for Claude to review: the checked river-bank landmark moved from 100 m along the chord between the named points to the actual 78 m bank lip, measured from the curved river. This checks the requested feature and is not loosened. Codex decided: use the nearest river segment to the former midpoint and its direction. Removed: the chord-based bed and target positions.
 
 Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+### Hill country: deck clearance
+
+The hills suite checks the full 176 m length of both river decks against every hill footprint, including mesa ramps. Both decks are clear. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 38 of 38. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the deck check is new. Codex decided: use the deck direction and length used by the land's crossing solids, and include each deck's half-width. Removed: none.
+
+Still needed: build and prove all three Breaks road passes, prove the three mesa cover stretches and job corridors, drive the routes and jobs, and run final checks. Claude must run and judge the pictures.

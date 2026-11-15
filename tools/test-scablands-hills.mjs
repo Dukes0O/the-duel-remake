@@ -428,6 +428,21 @@ test('hill footprints leave the trial tunnel mouths clear', () => {
   }
 });
 
+test('hill footprints leave both river decks clear from end to end', () => {
+  for (const crossing of RIVER_LAND.crossings.filter(item => item.kind === 'bridge' || item.kind === 'pipe')) {
+    const hit = ROAD_NET.nearest(crossing.x, crossing.z);
+    const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    const dx = (b.x - a.x) / length * 88, dz = (b.z - a.z) / length * 88;
+    const deck = [{x: crossing.x - dx, z: crossing.z - dz}, {x: crossing.x + dx, z: crossing.z + dz}];
+    for (const hill of HILLS) {
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      assert.ok(distanceToRoad(hill.x, hill.z, deck) >= reach + crossing.deckHalfWidth,
+        `${hill.kind} leaves the ${crossing.id} deck clear`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
