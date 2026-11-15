@@ -270,6 +270,19 @@ const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
 const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};
 // Use the same editable ground object as the live Dig, not a height-only stand-in.
 const realGround = createDigSandbox().ground;
+const mesaFoot = {x:parked.x + 30 * Math.sin(parked.heading), z:parked.z + 30 * Math.cos(parked.heading)};
+mesaFoot.y = realGround.heightAt(mesaFoot.x, mesaFoot.z);
+assert.equal(borerHasFace(realGround, mesaFoot, parked.heading), true, 'The mesa side is a face at the foot.');
+const mesaStart = stepBorer(createBorerState({...mesaFoot, heading:parked.heading}), {thrust:1}, realGround, 'topsoil', 1);
+assert.equal(mesaStart.state.started, true, 'Mabel starts cutting at the mesa side.');
+const rampDistance = mesa.radius + 100;
+const rampFoot = {x:mesa.x + Math.cos(mesa.rampAngle) * rampDistance,
+  z:mesa.z + Math.sin(mesa.rampAngle) * rampDistance};
+rampFoot.y = realGround.heightAt(rampFoot.x, rampFoot.z);
+const rampHeading = Math.atan2(mesa.x - rampFoot.x, mesa.z - rampFoot.z);
+assert.equal(borerHasFace(realGround, rampFoot, rampHeading), false, 'The mesa ramp is not a face.');
+assert.equal(stepBorer(createBorerState({...rampFoot, heading:rampHeading}), {thrust:1}, realGround, 'topsoil', 1).state.message,
+  BORER_NO_FACE, 'Mabel refuses to start on the mesa ramp.');
 const scarpLength = Math.hypot(scarp.b.x-scarp.a.x, scarp.b.z-scarp.a.z);
 const scarpDx = -(scarp.b.z-scarp.a.z)/scarpLength, scarpDz = (scarp.b.x-scarp.a.x)/scarpLength;
 const realParked = {x:middle.x-30*scarpDx,z:middle.z-30*scarpDz,heading:Math.atan2(scarpDx,scarpDz)};
