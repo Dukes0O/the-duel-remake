@@ -1,6 +1,6 @@
 // Plain, batched small things for the realism trial. The scene owns the switch.
 import * as THREE from 'three';
-import {smallThingsInCell, thingSolids, clearedFixedThings, clearedLoneBoulder, BOULDER_CELL, THINGS_CELL, THINGS_RANGE} from './scablands-things.js';
+import {smallThingsInCell, thingSolids, realismThingsData, THINGS_CELL, THINGS_RANGE} from './scablands-things.js';
 import {nearGroundHeightAt} from './near-ground.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 
@@ -172,13 +172,7 @@ export function createThingsLinesView(fixed) {
 // Create the trial once, and keep its batches for the lifetime of the scene.
 export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt}) {
   if (!enabled) return null;
-  const fixed = clearedFixedThings(seed, jobStarts), loneBoulders = [];
-  for (let i = Math.floor(-halfWidth / BOULDER_CELL); i <= Math.floor(halfWidth / BOULDER_CELL); i++) {
-    for (let j = Math.floor(-halfDepth / BOULDER_CELL); j <= Math.floor(halfDepth / BOULDER_CELL); j++) {
-      const rock = clearedLoneBoulder(seed, i, j, jobStarts);
-      if (rock && Math.abs(rock.x) <= halfWidth && Math.abs(rock.z) <= halfDepth) loneBoulders.push(rock);
-    }
-  }
+  const {fixed, loneBoulders} = realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth});
   const small = createSmallThingsView({seed, jobStarts, heightAt});
   const large = createFixedThingsView(fixed, loneBoulders);
   const lines = createThingsLinesView(fixed);

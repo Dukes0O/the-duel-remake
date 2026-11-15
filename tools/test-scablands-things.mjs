@@ -8,7 +8,7 @@ import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
+import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData} from '../src/world/scablands-things.js';
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
@@ -295,6 +295,19 @@ test('the scene trial keeps its batches until disposal and creates nothing when 
   assert.ok(view.group.getObjectByName('Scablands wires'));
   view.dispose();
   assert.equal(view.group.children.length, 0);
+});
+
+test('the scene and a separate solid index use the same seeded land', () => {
+  const options = {seed: 1989, jobStarts: [], halfWidth: 240, halfDepth: 240};
+  assert.equal(realismThingsData({...options, enabled: false}), null);
+  const data = realismThingsData({...options, enabled: true});
+  const view = createRealismThingsView({...options, enabled: true});
+  const grid = thingSolidGrid(data.fixed, data.loneBoulders);
+  assert.deepEqual(data.fixed, view.fixed);
+  assert.deepEqual(data.loneBoulders, view.loneBoulders);
+  const drawn = view.group.children[1].children.flatMap(mesh => mesh.userData.solidIds);
+  assert.deepEqual(drawn.sort(), grid.solids.map(solid => solid.id).sort());
+  view.dispose();
 });
 
 test('the scene loads the trial only with its switch on', async () => {

@@ -1,4 +1,4 @@
-// Seeded candidates for the realism trial. This module is not connected to the scene yet.
+// Seeded placement for the realism trial.
 import {makeRng} from '../rng.js';
 import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
 import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionAt} from './scablands-regions.js';
@@ -279,6 +279,20 @@ export function thingSolids(fixed, loneBoulders = []) {
 
 export function thingSolidGrid(fixed, loneBoulders = []) {
   return createSolidGrid(thingSolids(fixed, loneBoulders));
+}
+
+// Both the scene and the simulation can make the same cleared land without
+// either depending on the other. Nothing is created when the trial is off.
+export function realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth}) {
+  if (!enabled) return null;
+  const fixed = clearedFixedThings(seed, jobStarts), loneBoulders = [];
+  for (let i = Math.floor(-halfWidth / BOULDER_CELL); i <= Math.floor(halfWidth / BOULDER_CELL); i++) {
+    for (let j = Math.floor(-halfDepth / BOULDER_CELL); j <= Math.floor(halfDepth / BOULDER_CELL); j++) {
+      const rock = clearedLoneBoulder(seed, i, j, jobStarts);
+      if (rock && Math.abs(rock.x) <= halfWidth && Math.abs(rock.z) <= halfDepth) loneBoulders.push(rock);
+    }
+  }
+  return {fixed, loneBoulders};
 }
 
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.
