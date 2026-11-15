@@ -2,6 +2,8 @@
 
 ## Current round
 
+A car now has a real input-driven check from the bank beside the Girder Bridge. It leaves the ground and lands in the bed within 100 m of the bridge, with the town switch off. `test-tunnels` and `test-scablands-solid` passed. The complete chase and the remaining tunnel and drawing work still need to be done. No game event or sound cue was added.
+
 A real world job now walks a raider across the bed under each deck with the town switch off. The check follows its one stored height for the whole crossing and confirms it reaches the far side. `node tools/test-tunnels.mjs` passed. Big Bess now crosses each deck directly above a stationary raider in the real job update, with both actors staying on their floors. A car chase from the plain and the drive off the bank remain to be proved. No game event or sound cue was added.
 
 The flight check now also starts a falling car below each deck while its stored support is still at bank height. The real flight step keeps it below the deck and lands it on the bed. `node tools/test-tunnels.mjs` passed. This checks the fall after leaving the bank; the drive off the bank and the complete chase and crossing proofs still remain.

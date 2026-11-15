@@ -124,7 +124,7 @@ function straight(duel, from, heading, kmh, seconds) {
     const here = where(duel), ahead = {x: here.x + Math.sin(heading) * 100, z: here.z + Math.cos(heading) * 100};
     drive(duel, ahead, kmh);
     duel.step(DT);
-    track.push({...where(duel), kmh: kmhOf(duel), air: duel.state.airHeight, armor: duel.state.armor, airborne: duel.state.airborne});
+    track.push({...where(duel), kmh: kmhOf(duel), air: duel.state.airHeight, armor: duel.state.armor, airborne: duel.state.airborne, feet: duel.state._jumpY ?? duel.state.groundHeight});
   }
   return track;
 }
@@ -186,6 +186,26 @@ test('off a lip: a car that drives off a lip is in the air and its landing is a 
   const flown = straight(fast, start, heading, 200, 8);
   assert.ok(flown.some(row => row.air > 1.5) && fast.hits.some(hit => hit.kind === 'fall'), 'a car at 200 km/h leaves the bank, flies and lands with a hit');
   console.log('lips: ' + results.join('; '));
+});
+
+test('a car driven off the bank beside the bridge lands in the bed', () => {
+  const bridge = RIVER_LAND.crossings.find(crossing => crossing.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line;
+  const index = along.findIndex(value => value >= bridge.along);
+  const a = points[index - 1], b = points[index + 1];
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+  const centre = {x: bridge.x + dx * 35, z: bridge.z + dz * 35};
+  const normal = {x: dz, z: -dx};
+  const start = {x: centre.x + normal.x * 260, z: centre.z + normal.z * 260};
+  const duel = newDuel();
+  const track = straight(duel, start, Math.atan2(-normal.x, -normal.z), 200, 8);
+  const landing = track.find((row, i) => i > 0 && track[i - 1].airborne && !row.airborne && riverDepthAt(row.x, row.z) > 4);
+  assert.ok(track.some(row => row.airborne), 'the car leaves the bank');
+  assert.ok(landing, 'the car lands in the bed');
+  assert.ok(Math.hypot(landing.x - bridge.x, landing.z - bridge.z) < 100, 'the landing is beside the bridge');
+  assert.ok(Math.abs(landing.feet - scablandsSurfaceHeightAt(landing.x, landing.z)) < .1,
+    `landing: ${JSON.stringify(landing)} surface ${scablandsSurfaceHeightAt(landing.x, landing.z)}`);
 });
 
 test('the Steps: a car under 25 km/h climbs the ledges, a car at 60 is thrown back; the ember is safe there only under 20', () => {
