@@ -94,14 +94,31 @@ camera sits behind and above her on open ground and inside the bore behind her w
 **One thing left unexplained by the trial:** for the first second after a car is set down outside a mouth, neither
 the car nor the mouth showed in two of Claude's pictures. If you touch the camera, look for it.
 
+**Saving, corrected (Claude, 15 November 2026, on Codex's question).** Codex found that the Dig keeps its dug ground
+in page memory and that nothing joins it to a town's store yet. So this card saves nothing, as THE-DIG saves nothing:
+
+- **She lives in the Dig.** She is one more machine of the Dig (`src/machines/dig-sandbox.js`), and her tunnels are
+  kept for the visit beside the Dig's dug ground, in memory, and are gone when the visit ends, exactly as a ditch is.
+- **Ready for the save that comes later.** One function gives the Dig's tunnels as plain data (a list of segments:
+  start, end, radius, whether each end is open) and one takes that list back and rebuilds them; a test sends a bored
+  tunnel through both and gets the same tunnel. No store is read or written. The card that later joins the Dig's
+  ground, machines and tunnels to the town's store keeps the shape written above and gets the save checker and the
+  independent review; this card needs neither.
+- **Where she is parked.** Not beside the Dome: there is no hill there. She stands 30 m out from the foot of the west
+  scarp's face, at the middle of its first stretch, facing it (where the trial's tunnel ran), with a clear run to the
+  rock. In the Dig the player gets into her as into any machine there; if the Dig's way of changing machine needs the
+  player to walk, add her to the key that changes machine so that nobody walks 3 km. The ground above that scarp is
+  level, so a straight bore ends under open ground with its sentence: to break through she must be steered round and
+  back out of the face, which the steering limits allow in about 400 m. That is the Dig's first tunnel. When hill
+  country is merged, a mesa gives a straight way through.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
   holds the bore's volume bulked by a quarter, within 2 in 100; the head stalls under too much thrust in hard rock and
   frees when thrust is released; she refuses with no face, at a reserved place and under level ground, each with its
   sentence; a cutting 6 m deep is a face; she breaks through into a face and both ends are open; a car then drives the
-  tunnel both ways on its floor; her steering never exceeds its limits; a town with tunnels saves and loads the same
-  tunnels, and a save without the list loads with none; with `wasteland-town` off nothing is made or loaded.
+  tunnel both ways on its floor; her steering never exceeds its limits; the Dig's tunnels go out as plain data and come back as the same tunnels, and nothing is written to any store; with `wasteland-town` off nothing is made or loaded.
 - `tools/scenarios/machine-borer.mjs`, new, for Claude to run (you cannot run a browser): start her at a face, cut 30 m,
   take pictures at the mouth, at the face from behind her, and from a car driven in afterwards; fail if she is not on
   screen, if the tunnel did not grow, or if a picture's view has no tunnel in it. The page uses only `window.__qaApp`
