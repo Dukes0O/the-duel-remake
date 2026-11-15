@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+Tunnel walls now also constrain a move ending inside a bore when its start was outside, after checking closed faces. `node tools/test-tunnels.mjs` passed. This is not yet the required floor-based enclosure. The current surface-versus-tunnel selection and scarp-mouth test need to be reconciled with the highest-floor rule; the bent driving, lip-fall and remaining enclosure checks are still needed. No game event or sound was added.
+
 A closed cutting face now stops a crossing from outside as well as inside, without blocking a car above it. `node tools/test-tunnels.mjs` passed. The floor shape, wall selection, full enclosure tests and game drawing remain unfinished. No event or sound was added.
 
 The tunnel rules can now check each end against a supplied surface height. An end whose floor is more than 0.3 m from that surface stops a crossing move; a matching end stays open. `node tools/test-tunnels.mjs` passed, including both cases and invalid surface data. This is only part of enclosure: callers do not yet supply the surface, and the check still uses the old round-bottom floor. The flat floor, floor-selected walls and remaining driving tests are next. No event or sound was added.

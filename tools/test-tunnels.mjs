@@ -454,6 +454,9 @@ for (const dx of [-5, 0, 5]) for (const side of [-1, 1]) {
   assert.ok(Math.abs(strike.position.z - side * wallLimit) < 1e-9);
 }
 assert.ok(Math.abs(motion.position.z - wallLimit) < 1e-9);
+const enteringWall = slope.constrainMotion({x: 50, y: 10, z: 4.1}, {x: 51, y: 10, z: 3.8}, 1);
+assert.equal(enteringWall.hit, true, 'a move ending inside the bore is held even if it started outside');
+assert.ok(Math.abs(enteringWall.position.z - wallLimit) < 1e-9);
 assert.equal(slope.constrainMotion({x: 99, y: 19, z: 0}, {x: 102, y: 19, z: 0}, 1).hit, false);
 assert.equal(slope.constrainMotion({x: 50, y: 30, z: 0}, {x: 51, y: 30, z: 5}, 1).hit, false);
 const undergroundCar = {groundHeight: 7.8};

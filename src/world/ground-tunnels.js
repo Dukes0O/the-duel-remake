@@ -173,13 +173,14 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     return inside ? {limit: inside.tube.radius * wallRadius, radial: inside.radial, center: inside.center} : null;
   }
 
-  // Constrain a move that starts inside one segment. Its ends remain open.
+  // Constrain a move starting or ending inside a segment. Actual mouths
+  // remain open, while unfinished faces are checked from either side.
   // The caller supplies the vehicle's horizontal clearance from the wall.
   function constrainMotion(start, end, clearance = 0) {
     checkPoint(start, 'Move start');
     checkPoint(end, 'Move end');
     if (!finite(clearance) || clearance < 0) throw new TypeError('Clearance must be non-negative.');
-    const inside = tubeAt(start, start.y);
+    let inside = tubeAt(start, start.y);
     if (!inside) {
       // A cutting face also stops an actor approaching from the rock side.
       // Check just the two ends, not every segment in the chain.
@@ -199,7 +200,8 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
         if (sideways > tube.radius + clearance || y < face.y - tube.radius * 0.55 || y > face.y + tube.radius) continue;
         return {position: {x, y, z}, hit: true};
       }
-      return {position: {...end}, hit: false};
+      inside = tubeAt(end, end.y);
+      if (!inside) return {position: {...end}, hit: false};
     }
     let tube = inside.tube;
     let dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
