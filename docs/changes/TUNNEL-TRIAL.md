@@ -22,6 +22,9 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 
 - `node tools/test-tunnels.mjs`: passed after the deck changes. It checks the scarp in both directions, both decks in both directions, the height switch, and a pier.
 - `node tools/test-tunnels.mjs`: passed with the segment-joint wall fix, including both directions and open mouths. `npm.cmd run build` also passed after that fix.
+- On the joint-fix commit, both replay suites passed again: 297 race fingerprints across 33 cases and 12 combat fingerprints across four encounters. The lane's world-composition check passed, as did its tunnel and drive-through checks.
+- A new lane run on the joint-fix commit reached all 227 suites before it was stopped at the 30-minute limit: 220 passed, five failed, and two were unfinished. `test-everburn-easy.mjs` and `test-track-kits.mjs` were unfinished. The failures were shortcut freshness, the three FFmpeg-dependent suites listed below, and the town-core timing check. Town core passed its one separate rerun with a 5.28 ms slowest tick after 14.60 ms under load. The build passed again after the lane run.
+- A separate Everburn repeat was stopped at the 30-minute limit. All nine story jobs and all four long-road gas cases passed 10 of 10, but the remaining cases did not finish.
 - A later run of `node tools/test-tunnels.mjs` also passed with job movers stepping under both decks in both directions, carrying their ground height between steps and checking for solid obstructions. This does not replace a full chase or visual check.
 - `node tools/test-everburn-easy.mjs`: all nine story jobs passed 10 of 10 on a repeat. The run was stopped during the gas routes, so the suite remains incomplete.
 - A further isolated repeat again passed all nine story jobs 10 of 10; it was stopped during the first gas route. The complete suite remains unverified.

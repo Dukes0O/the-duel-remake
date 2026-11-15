@@ -316,6 +316,13 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
     assert.equal(move.hit, true, 'the wall remains solid across a segment joint');
     assert.equal(move.position.z, 3);
   }
+  const corner = createGroundTunnels([
+    {start: {x: 0, y: 4, z: 0}, end: {x: 50, y: 4, z: 0}, radius: 4},
+    {start: {x: 50, y: 4, z: 0}, end: {x: 50, y: 4, z: 50}, radius: 4},
+  ]);
+  const turn = corner.constrainMotion({x: 49, y: 4, z: 0}, {x: 55, y: 4, z: 1}, 1);
+  assert.equal(turn.hit, true, 'the next wall also holds at a bend');
+  assert.equal(turn.position.x, 53);
 }
 
 console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');
