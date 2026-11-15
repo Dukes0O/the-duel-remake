@@ -7,7 +7,8 @@ import {LAND} from '../../src/world/scablands-names.js';
 import {HILLS} from '../../src/world/scablands-height.js';
 import {SCARP, SCARPS} from '../../src/world/scablands-scarps.js';
 import {ROAD_NET} from '../../src/world/scablands-road.js';
-import {stepsWayFor} from '../../src/world/scablands-regions.js';
+import {RIVER, RIVER_LAND, stepsWayFor} from '../../src/world/scablands-regions.js';
+import {nearestOnLine} from '../../src/world/scablands-ways.js';
 
 const offset = (p, x, z) => ({x: p.x + x, z: p.z + z});
 const hill = kind => HILLS.find(item => item.kind === kind);
@@ -43,8 +44,10 @@ export function views() {
   const scarpTop = offset(foot, -SCARPS[0].height * SCARP.faceRatio * (b.z - a.z) / length,
     SCARPS[0].height * SCARP.faceRatio * (b.x - a.x) / length);
   const bankA = LAND.at('river-3'), bankB = LAND.at('river-4');
-  const bankLength = Math.hypot(bankB.x - bankA.x, bankB.z - bankA.z);
-  const bed = {x: (bankA.x + bankB.x) / 2, z: (bankA.z + bankB.z) / 2};
+  const hit = nearestOnLine(RIVER_LAND.line.points, (bankA.x + bankB.x) / 2, (bankA.z + bankB.z) / 2);
+  const bed = {x: hit.x, z: hit.z};
+  const riverA = RIVER_LAND.line.points[hit.index], riverB = RIVER_LAND.line.points[hit.index + 1];
+  const bankLength = Math.hypot(riverB.x - riverA.x, riverB.z - riverA.z);
   return [
     {name: 'breaks-from-burn-road', from: burn, to: breaks},
     {name: 'breaks-valley-from-crest', from: breaks, to: {
@@ -57,7 +60,8 @@ export function views() {
     {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard, landmark: towardYard(600)},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
     {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: scarpTop, landmark: scarpTop},
-    {name: 'river-bank', from: bed, to: offset(bed, -(bankB.z - bankA.z) / bankLength * 100, (bankB.x - bankA.x) / bankLength * 100)},
+    {name: 'river-bank', from: bed, to: offset(bed, -(riverB.z - riverA.z) / bankLength * RIVER.lipHalfWidth,
+      (riverB.x - riverA.x) / bankLength * RIVER.lipHalfWidth)},
   ];
 }
 

@@ -1896,3 +1896,13 @@ The hills suite now checks both ends of the trial tunnel against every hill foot
 Check: `node tools/test-scablands-hills.mjs` passed 37 of 37. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the tunnel-mouth check is new. Codex decided: measure 30 m of clearance around each mouth, using the full mesa ramp footprint. Removed: none.
 
 Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+### Hill country: river-bank picture
+
+The river-bank view now starts on the river's curved centre line and aims at the bank's lip. The old position used the midpoint of two named river points, which need not lie in the bed, and aimed beyond the lip. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry check found the start on the centre line with an 8 m bed depth, and the target 78 m from the line at the lip. The browser scenario, replay checks and world signatures were not run.
+
+Changed assertion, for Claude to review: the checked river-bank landmark moved from 100 m along the chord between the named points to the actual 78 m bank lip, measured from the curved river. This checks the requested feature and is not loosened. Codex decided: use the nearest river segment to the former midpoint and its direction. Removed: the chord-based bed and target positions.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
