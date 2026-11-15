@@ -9,6 +9,7 @@ import {borerYardControls,closeDigSandbox,createDigSandbox, createPendingDigActi
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
+import {createGroundLook, createTunnelMesh} from '../world/scablands-ground-look.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
@@ -107,7 +108,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   const world=new THREE.Group();scene.add(world);
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
-  const groundMaterial=new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1});
+  const groundLook=createGroundLook();
+  const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}));
   const yardFloor=staticYard(world,groundMaterial);
   scarpGround(world,groundMaterial,sim.borer);
   const editedGroup=new THREE.Group();world.add(editedGroup);
@@ -121,6 +123,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null;
+  let drawnTunnels=sim.tunnels, tunnelLining=null, tunnelUpdateAfter=0;
   const sound=(cue,data)=>{
     const now=performance.now();if(now<soundAfter)return;
     if(cue===MACHINE_SOUND_CUES.engine||cue===MACHINE_SOUND_CUES.hydraulic)soundAfter=now+700;
@@ -225,6 +228,19 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     }
     borerSounds.update(borerActive?sim.borer.headSpeed:0,borerActive && now<muckUntil);
     for(const event of frameEvents)if(event.cue?.startsWith('borer.'))borerSounds.play(event.cue);
+    // The simulation can add several cuts per frame. Redraw the lining at most
+    // four times a second, and catch the last cut after the machine stops.
+    if(sim.tunnels!==drawnTunnels && now>=tunnelUpdateAfter){
+      drawnTunnels=sim.tunnels;
+      groundLook.setTunnelMouths(drawnTunnels.mouths);
+      if(drawnTunnels.segments.length){
+        if(tunnelLining)createTunnelMesh(drawnTunnels,tunnelLining);
+        else {tunnelLining=createTunnelMesh(drawnTunnels);world.add(tunnelLining);}
+      } else if(tunnelLining){
+        world.remove(tunnelLining);disposeScene(tunnelLining);tunnelLining=null;
+      }
+      tunnelUpdateAfter=now+250;
+    }
     roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
     wellheadView.update(sim.drill.wellheads);
     cuttingsView.update(sim.drill.hole);

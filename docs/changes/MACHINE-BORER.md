@@ -28,6 +28,8 @@ Mabel is now reached with Q from the excavator. Her model loads from the borer a
 
 The head now turns with its simulated speed, and the existing rock effect appears at the face while she cuts. The rest of the lining and conveyor drawing is still to come.
 
+The Dig now draws the trial's continuous rock lining and closed cutting face as the bore grows. The same ground shader opens the mouth in the scarp. Drawing catches up after cutting stops and is limited to four updates a second. Rings, portals and conveyor dirt still need drawing; Claude must check the view in a browser.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -58,6 +60,7 @@ The head now turns with its simulated speed, and the existing rock effect appear
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the scarp ground. The view and load time have not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed with selection, model loading code and camera positioning. The model and camera have not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the head movement and face effect. Their appearance still needs a browser check.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the trial lining and ground openings. The drawing has not been checked in a browser.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
