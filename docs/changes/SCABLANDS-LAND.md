@@ -2229,3 +2229,9 @@ Seen in the game in a visible window at two places on the river, from 200 m, 100
 other side. No assertion changed. No sound.
 
 **Removed:** nothing.
+
+The same night, the hills' rock: each bed is mottled at two sizes and the dark grey bed is browner, which cures the smooth grey
+band seen from a crest in round 11; and wide gullies are drawn down every slope. Seen before and after from four places in the
+Breaks. Honest result: the grey band is gone, but from a kilometre a hill of the Breaks still reads as a smooth rise the colour
+of the plain; the gullies do not show at that distance. That needs the far ground's own shape or stronger light on slopes, not
+more paint, and stays under "Short of right" in round 11's review. `test-scablands-ground` and `test-scablands-scene` pass.

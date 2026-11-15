@@ -385,14 +385,18 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           if(gUp>.004){
             float gBedAt=vGroundPos.y*.105+gBig.r*.45+gMid.g*.18;
             float gBedPick=fract(sin(floor(gBedAt)*12.9898)*43758.5453),gBedIn=fract(gBedAt);
-            vec3 gBed=gBedPick<.3?vec3(.15,.07,.042):gBedPick<.55?vec3(.25,.165,.09):gBedPick<.8?vec3(.085,.076,.07):vec3(.38,.3,.2);
-            gBed*=.78+.44*gFine.g;
+            vec3 gBed=gBedPick<.3?vec3(.15,.07,.042):gBedPick<.55?vec3(.25,.165,.09):gBedPick<.8?vec3(.118,.098,.082):vec3(.38,.3,.2);
+            // Each bed is mottled at two sizes, so that from far off, where the fine grain is lost, a bed is still broken rock and not paint.
+            gBed*=(.78+.44*gFine.g)*(.76+.48*gMid.b)*(.88+.24*gBig.g);
             // A harder ledge at the foot of each bed, in shadow.
             gBed*=1.0-.3*smoothstep(.0,.07,gBedIn)*(1.0-smoothstep(.1,.2,gBedIn));
             vec2 gFall=normalize(vGroundNormal.xz+vec2(1e-4,0.0));
             float gRill=smoothstep(.5,.85,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gFall.y,gFall.x))*.05,dot(gq,gFall)*.004)).g);
             float gTilt=smoothstep(.003,.022,gSlope);
             gBed*=1.0-.34*gRill*gTilt;
+            // Gullies: every 80 m or so the rills have joined and cut a dark channel down the whole slope, which is what gives a far hill its ribs.
+            float gGully=smoothstep(.56,.8,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gFall.y,gFall.x))*.0115+.3,dot(gq,gFall)*.0017)).r);
+            gBed*=1.0-.42*gGully*gTilt;
             // Salt lies only where the ground is level: a hill in the pan shows its rock from the first of its slope.
             gc=mix(gc,gBed*mix(1.0,.55,wPlates),gUp*mix(.18*(1.0-wPan),.96,gTilt));
             // The rim. Along a cliff's edge the cap rock is swept bare and pale and is broken by cracks that open toward the drop. From a
