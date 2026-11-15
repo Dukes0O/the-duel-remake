@@ -109,6 +109,16 @@ test('a course with the trial off builds no placement indexes', async () => {
   assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
 });
 
+test('fixed trees pass footprint clearance and leave room at job starts', () => {
+  const candidates = deadTreeCandidates(1989);
+  const fixed = clearedFixedThings(1989, []);
+  assert.deepEqual(fixed.trees, candidates.filter(tree => thingFootprintClear(tree.x, tree.z, 1.2, [])));
+  assert.ok(fixed.trees.length > 0);
+  const start = fixed.trees[0];
+  const withStart = clearedFixedThings(1989, [start]);
+  assert.ok(!withStart.trees.some(tree => Math.hypot(tree.x - start.x, tree.z - start.z) < 7.2));
+});
+
 test('a job queries its supplied land grid as well as its temporary braziers', () => {
   const fixed = clearedFixedThings(1989, []);
   const things = thingSolidGrid(fixed);

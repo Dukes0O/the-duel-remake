@@ -456,6 +456,7 @@ export function clearedFixedThings(seed, jobStarts) {
     fences: fenceCandidates(seed).map(run => ({...run,
       posts: run.posts.map(post => !post.gap && clear(post, .25) ? post : null)})),
     boulders: scarpBoulderCandidates(seed).filter(rock => clear(rock, rock.size / 2)),
+    trees: deadTreeCandidates(seed).filter(tree => clear(tree, 1.2)),
   };
 }
 
