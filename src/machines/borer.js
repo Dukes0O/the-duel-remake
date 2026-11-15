@@ -5,6 +5,7 @@ export const BORER_NO_FACE = 'There is not enough hill over her here. Dig her a 
 export const BORER_OBSTRUCTION = 'She will not cut there. Something stands in the way.';
 export const BORER_STALL = 'The head has stalled. Ease off, then push again.';
 export const BORER_OPEN_GROUND = 'She is coming up under open ground. Turn her down, or stop here.';
+export const BORER_TRENCH = 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const radians = degrees => degrees * Math.PI / 180;
 const hardness = Object.freeze({topsoil:1, clay:0.8, gravel:0.55, rock:1 / 3});
@@ -113,15 +114,28 @@ function placeOnCut(state, distance, radius) {
   }
 }
 
-// Look for the matching wall from the other side of the approaching surface.
-function exitFace(ground, position, heading, radius) {
-  for (let distance = radius; distance <= 12; distance += 0.5) {
-    const x = position.x + Math.sin(heading) * distance;
-    const z = position.z + Math.cos(heading) * distance;
-    if (Math.abs(ground.heightAt(x, z) - position.y) <= 0.3 &&
-        borerHasFace(ground, {x, z}, heading + Math.PI, radius)) return {x, z};
-  }
-  return null;
+// The far mouth must have rock behind it across the full width.
+function behindIsFace(ground, state, radius) {
+  if (state.distanceM < 12) return false;
+  const behind = {...state};
+  placeOnCut(behind, state.distanceM - 12, radius);
+  const side = radius - 0.5;
+  return [-side, 0, side].every(offset =>
+    ground.heightAt(behind.x + Math.cos(behind.heading) * offset,
+      behind.z - Math.sin(behind.heading) * offset) >= state.y + 2 * radius);
+}
+
+function atCrown(ground, state, radius) {
+  const side = radius - 0.5;
+  return [-side, 0, side].every(offset =>
+    ground.heightAt(state.x + Math.cos(state.heading) * offset, state.z - Math.sin(state.heading) * offset) < state.y + 2 * radius - 1e-6);
+}
+
+function daylight(state, events, offLevelM) {
+  state.offLevelM = Math.abs(offLevelM);
+  state.finished = true;
+  state.message = `Daylight. She is through, ${state.offLevelM.toFixed(1)} m off level.`;
+  events.push({type:'daylight', cue:'borer.daylight', message:state.message});
 }
 
 // Keep straight cuts as one segment; a change in direction starts a new one.
@@ -215,17 +229,45 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     const distance = 0.5 * Math.min(thrust, capacity) * step;
     if (ground.heightAt(next.x, next.z) >= next.y + 2 * radius) next.covered = true;
-    if (next.covered) {
-      const aheadX = next.x + Math.sin(next.heading) * radius;
-      const aheadZ = next.z + Math.cos(next.heading) * radius;
-      const aheadY = next.y + Math.tan(next.slope) * radius;
-      if (ground.heightAt(aheadX, aheadZ) < aheadY + radius) {
-        if (!exitFace(ground, next, next.heading, radius)) {
-          if (next.message !== BORER_OPEN_GROUND)
-            events.push({type:'refuse', cue:'borer.refuse', message:BORER_OPEN_GROUND});
-          next.message = BORER_OPEN_GROUND;
-          continue;
-        }
+    if (next.covered && !next.exitCutting && atCrown(ground, next, radius)) {
+      if (!behindIsFace(ground, next, radius)) {
+        if (next.message !== BORER_OPEN_GROUND)
+          events.push({type:'refuse', cue:'borer.refuse', message:BORER_OPEN_GROUND});
+        next.message = BORER_OPEN_GROUND;
+        continue;
+      }
+      const farX = next.x + Math.sin(next.heading) * 12;
+      const farZ = next.z + Math.cos(next.heading) * 12;
+      const difference = ground.heightAt(farX, farZ) - next.y;
+      if (difference < -1) {
+        const message = `She has come out ${(-difference).toFixed(1)} m up the face. Back her up and turn her down.`;
+        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+        next.message = message;
+        continue;
+      }
+      // Open the last covered segment once. The cutting beyond it is not lining.
+      if (!controls.mutableSegments && next.segments === state.segments) {
+        next.segments = next.segments.slice();
+        if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
+      }
+      next.segments.at(-1).endOpen = true;
+      events.push({type:'breakthrough', cue:'borer.breakthrough'});
+      next.exitCutting = {distanceM:0, floor:next.y};
+      if (difference <= 0.5) {
+        daylight(next, events, difference);
+        continue;
+      }
+    }
+    if (next.exitCutting) {
+      const difference = ground.heightAt(next.x, next.z) - next.y;
+      if (Math.abs(difference) <= 0.5) {
+        daylight(next, events, next.y - next.exitCutting.floor);
+        continue;
+      }
+      if (next.exitCutting.distanceM >= 60) {
+        if (next.message !== BORER_TRENCH) events.push({type:'refuse', cue:'borer.refuse', message:BORER_TRENCH});
+        next.message = BORER_TRENCH;
+        continue;
       }
     }
     const heading = next.heading + steer * radians(0.5) * distance;
@@ -272,15 +314,18 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       next.segments = next.segments.slice();
       if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
     }
-    addCut(next.segments, start, end, radius);
-    next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
+    if (next.exitCutting) {
+      next.exitCutting = {...next.exitCutting, distanceM:next.exitCutting.distanceM + distance};
+    } else {
+      addCut(next.segments, start, end, radius);
+      next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
+    }
     // An existing passage can open the face underground as well as daylight.
     // Ignore the recent cut behind the head, but allow older stretches to join.
     const passage = controls.tunnels?.tubeAt({x:next.x, y:next.y, z:next.z}, next.y, 0.6,
       controls.tunnelsIncludeCurrent ? Math.max(0, next.distanceM - 2 * radius - 1) : Infinity);
     const joinedPassage = passage && Math.abs(passage.floor - next.y) <= 0.6;
-    if (joinedPassage || (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
-        borerHasFace(ground, next, next.heading + Math.PI, radius))) {
+    if (!next.exitCutting && joinedPassage) {
       next.segments.at(-1).endOpen = true;
       next.finished = true;
       events.push({type:'breakthrough', cue:'borer.breakthrough'});

@@ -63,8 +63,8 @@ assert.equal(soundVoices[0].pitch, 160);
 borerSounds.update(0.4, false);
 assert.equal(soundVoices[0].pitch, 97, 'The head pitch follows its speed.');
 assert.equal(soundVoices[1].stopped, true, 'The conveyor stops when no muck moves.');
-for (const cue of ['borer.stall','borer.refuse','borer.breakthrough']) borerSounds.play(cue);
-assert.equal(soundVoices.length, 5, 'Each borer event has a sound.');
+for (const cue of ['borer.stall','borer.refuse','borer.breakthrough','borer.daylight']) borerSounds.play(cue);
+assert.equal(soundVoices.length, 6, 'Each borer event has a sound.');
 mixer.muted = true;
 borerSounds.update(1, true);
 assert.equal(soundVoices[0].stopped, true, 'Muting stops the head loop.');
@@ -470,10 +470,25 @@ const noJunction = stepBorer(createBorerState(), {thrust:1, tunnels:highPassage}
   createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 8 : 0}), 'topsoil', 60);
 assert.equal(noJunction.state.finished, false, 'A passage on another level does not open the face.');
 const shallow = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 2});
-const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100);
+const exitCut = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100);
+assert.ok(exitCut.state.exitCutting, 'A far face above the floor starts an exit cutting.');
+assert.equal(exitCut.state.segments.at(-1).endOpen, true);
+assert.equal(exitCut.state.finished, false);
+const climbingExit = stepBorer(exitCut.state, {thrust:1, slope:1}, shallow, 'topsoil', 120);
+assert.equal(climbingExit.state.finished, true, 'Tilting up brings the exit cutting to the surface.');
+assert.ok(climbingExit.state.exitCutting.distanceM < 60);
+assert.ok(climbingExit.state.offLevelM > 0);
+assert.equal(climbingExit.events.filter(event => event.cue === 'borer.daylight').length, 1);
+const trench = stepBorer(exitCut.state, {thrust:1}, shallow, 'topsoil', 130);
+assert.equal(trench.state.message, 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.');
+const lipGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : -2});
+const lip = stepBorer(createBorerState(), {thrust:1}, lipGround, 'topsoil', 100);
+assert.equal(lip.state.message, 'She has come out 2.0 m up the face. Back her up and turn her down.');
+assert.equal(lip.state.segments.at(-1).endOpen, false);
+const shortHill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 12 ? 8 : 2});
+const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shortHill, 'topsoil', 60);
 assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);
 assert.equal(stoppedUnderGround.state.segments.at(-1).endOpen, false);
-assert.ok(stoppedUnderGround.state.z <= 27.01);
 assert.equal(stoppedUnderGround.events.filter(event => event.message === BORER_OPEN_GROUND).length, 1);
 // A self-crossing cut can be driven between its two passages. A crossing
 // on another level remains rock, and a car cannot leave either bore's floor.

@@ -3,6 +3,7 @@ const TONES = Object.freeze({
   'borer.stall':[85, 'square', 0.4],
   'borer.refuse':[180, 'triangle', 0.25],
   'borer.breakthrough':[460, 'triangle', 0.45],
+  'borer.daylight':[360, 'triangle', 0.8],
 });
 
 export function createBorerSounds(audio) {

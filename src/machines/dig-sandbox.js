@@ -227,7 +227,8 @@ function fixedStep(sim,input) {
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
-      if(result.state.distanceM!==sim.borer.distanceM){
+      if(result.state.distanceM!==sim.borer.distanceM ||
+          result.events.some(event=>event.type==='breakthrough')){
         const segments=result.state.segments;
         if (!sim.borer.started) next.tunnels=createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)});
         if (oldCount) next.tunnels.extendLast(segments[oldCount-1]);
