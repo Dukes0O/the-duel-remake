@@ -5,6 +5,37 @@
 // changes a race; the scene reads `furnaceSighting` and the job engine reads `pathShare`.
 import {OLD_SMOKE} from './old-smoke.js';
 import {LAND} from '../scablands-names.js';
+import {sees, WATCH} from '../scablands-ways.js';
+import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+
+// The skyline furnace watches the car, not the driver on foot. Cover resets
+// the uninterrupted time in view. The caller owns the state and the effects.
+const skylineOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: WATCH.furnace.eye, range: WATCH.furnace.range, step: 5};
+const ridgeOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: WATCH.lookout.eye, range: WATCH.lookout.range, step: 5};
+export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeightAt, tunnels = null, refresh = true) {
+  skylineOptions.heightAt = heightAt; skylineOptions.actorFloors = heightAt === scablandsSurfaceHeightAt; skylineOptions.tunnels = tunnels;
+  const visible = refresh ? !!car && sees(FURNACE_SKYLINE, car, skylineOptions) : !!state.visible;
+  state.change = visible === !!state.visible ? null : visible ? 'seen' : 'lost';
+  state.seconds = visible ? (state.seconds ?? 0) + Math.max(0, dt) : 0;
+  state.visible = visible;
+  return state;
+}
+
+// Sound the warning once, after more than six uninterrupted seconds in view.
+export function skylineWarningDue(sight, warned) {
+  return !warned && sight.visible && sight.seconds > 6;
+}
+
+// The Ridge lookout uses the same view as the route map, with closer samples
+// so narrow banks and scarps can also hide a car.
+const RIDGE_WATCH = LAND.at('ridge');
+export function stepRidgeSight(state, car, heightAt = scablandsSurfaceHeightAt, tunnels = null, refresh = true) {
+  ridgeOptions.heightAt = heightAt; ridgeOptions.actorFloors = heightAt === scablandsSurfaceHeightAt; ridgeOptions.tunnels = tunnels;
+  const visible = refresh ? !!car && sees(RIDGE_WATCH, car, ridgeOptions) : !!state.visible;
+  state.change = visible === !!state.visible ? null : visible ? 'seen' : 'lost';
+  state.visible = visible;
+  return state;
+}
 
 // Where the furnace is seen in jobs 1 and 3, from a land (src/world/scablands-names.js), so that the marks move with the places they stand by.
 // Job 1: standing on the skyline north of the road, half way along the road's second leg (between the halfway camp and the second barricade) and 233 m north of it (smaller z is

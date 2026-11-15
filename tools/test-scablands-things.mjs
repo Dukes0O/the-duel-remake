@@ -5,7 +5,8 @@ import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
 import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
-import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
+import {RIVER_LAND, riverDepthAt, stepsWayFor} from '../src/world/scablands-regions.js';
+import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
@@ -14,6 +15,73 @@ import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, rea
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
+import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
+import {preparedScarps} from '../src/world/scablands-scarps.js';
+import {HILLS} from '../src/world/scablands-height.js';
+
+test('the height used for things follows the drawn hills and mesa faces', () => {
+  const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  for (const kind of ['breaks', 'mesa']) {
+    const hill = HILLS.find(item => item.kind === kind);
+    ground.follow(hill.x, hill.z);
+    ground.mesh.updateMatrixWorld(true);
+    let checked = 0;
+    for (let dx = -hill.radius; dx <= hill.radius; dx += 23) for (let dz = -hill.radius; dz <= hill.radius; dz += 29) {
+      if (Math.hypot(dx, dz) > hill.radius) continue;
+      const x = hill.x + dx, z = hill.z + dz;
+      ray.set(new THREE.Vector3(x, 1000, z), down);
+      const hits = ray.intersectObject(ground.mesh, true);
+      assert.ok(hits.length, `${kind} ground covers the point`);
+      assert.ok(Math.abs(nearGroundHeightAt(x, z, scablandsSurfaceHeightAt) - hits[0].point.y) < .001, `${kind} placement follows the mesh`);
+      checked++;
+    }
+    assert.ok(checked > 100, `${kind} has enough samples`);
+  }
+  ground.dispose();
+});
+
+test('the river height for things follows the drawn bed and bank triangles', () => {
+  const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
+  const gorge = createRiverDraw({plainAt, material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide})});
+  const point = RIVER_LAND.line.points[Math.floor(RIVER_LAND.line.points.length / 2)];
+  const unbuiltHeight = gorge.heightAtDrawn(point.x, point.z);
+  assert.notEqual(unbuiltHeight, null);
+  assert.equal(gorge.pieces.filter(piece => piece.mesh).length, 0, 'a height query does not build distant river pieces');
+  gorge.update(point.x, point.z, {all: true});
+  gorge.group.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  let checked = 0;
+  for (let dx = -75; dx <= 75; dx += 15) for (let dz = -75; dz <= 75; dz += 15) {
+    const x = point.x + dx, z = point.z + dz;
+    ray.set(new THREE.Vector3(x, 10000, z), down);
+    const hits = ray.intersectObject(gorge.group, true);
+    if (!hits.length) continue;
+    assert.ok(Math.abs(gorge.heightAtDrawn(x, z) - hits[0].point.y) < .001);
+    checked++;
+  }
+  assert.ok(checked > 40);
+  gorge.dispose();
+});
+
+test('the height used for things follows the drawn scarp triangles', () => {
+  const face = preparedScarps(SCARPS)[0];
+  const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
+  const middle = {x: face.a.x + face.tx * face.length / 2, z: face.a.z + face.tz * face.length / 2};
+  ground.follow(middle.x, middle.z);
+  ground.mesh.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster();
+  for (let along = -30; along <= 30; along += 10) for (let across = 2; across < face.width; across += 3) {
+    const x = middle.x + face.tx * along - face.tz * across;
+    const z = middle.z + face.tz * along + face.tx * across;
+    ray.set(new THREE.Vector3(x, 500, z), new THREE.Vector3(0, -1, 0));
+    const hits = ray.intersectObject(ground.mesh, true);
+    assert.ok(hits.length, 'the drawn ground covers the point');
+    assert.ok(Math.abs(nearGroundHeightAt(x, z, scablandsSurfaceHeightAt) - hits[0].point.y) < .001);
+    assert.ok(Math.abs(ground.heightAtDrawn(x, z) - hits[0].point.y) < .001);
+  }
+  ground.dispose();
+});
 
 test('a course with the trial off builds no placement indexes', async () => {
   const {Course} = await import('../src/course.js');
@@ -75,6 +143,36 @@ test('every collision footprint belongs to one batch, and is drawn at its own pl
   assert.equal(view.group.children.length, 0);
 });
 
+test('standing things and their lines follow the drawn ground', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const solids = thingSolids(fixed, []);
+  const groundAt = (x, z) => scablandsSurfaceHeightAt(x, z) + 3;
+  const view = createFixedThingsView(fixed, [], null, groundAt);
+  const centre = solids.find(part => part.kind === 'telegraph');
+  view.update(centre.x, centre.z);
+  let checked = 0;
+  for (const mesh of view.group.children) {
+    const matrix = new THREE.Matrix4(), position = new THREE.Vector3();
+    const ids = new Set(mesh.userData.solidIds);
+    for (let index = 0; index < mesh.count; index++) {
+      mesh.getMatrixAt(index, matrix); position.setFromMatrixPosition(matrix);
+      const solid = solids.find(part => ids.has(part.id) && Math.hypot(part.x - position.x, part.z - position.z) < .001);
+      if (!solid || Math.hypot(solid.x - centre.x, solid.z - centre.z) > 300) continue;
+      assert.ok(Math.abs(position.y - solid.center[1] - 3) < .001, mesh.name);
+      checked++;
+    }
+  }
+  assert.ok(checked > 3);
+  const normalLines = createThingsLinesView(fixed);
+  const raisedLines = createThingsLinesView(fixed, (x, z) => scablandsSurfaceHeightAt(x, z) + 3);
+  const originalTower = normalLines.group.getObjectByName('Scablands pylons');
+  const raisedTower = raisedLines.group.getObjectByName('Scablands pylons');
+  const before = new THREE.Matrix4(), after = new THREE.Matrix4();
+  originalTower.getMatrixAt(0, before); raisedTower.getMatrixAt(0, after);
+  assert.ok(Math.abs(after.elements[13] - before.elements[13] - 3) < .001);
+  view.dispose(); normalLines.dispose(); raisedLines.dispose();
+});
+
 test('small things use one batch per kind and follow the player; only the kinds that stand up cast a shadow', () => {
   assert.throws(() => createSmallThingsView({seed: 1989}), TypeError);
   const view = createSmallThingsView({seed: 1989, jobStarts: []});
@@ -92,6 +190,37 @@ test('small things use one batch per kind and follow the player; only the kinds 
   assert.notDeepEqual(view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16))), first);
   view.dispose();
   assert.equal(view.group.children.length, 0);
+});
+
+test('drawn instance anchors identify their ground contact', () => {
+  const groundAt = () => 17;
+  const small = createSmallThingsView({seed: 1989, jobStarts: [], drawnHeightAt: groundAt});
+  const p = LAND.between('yard', 'tin-town', .4);
+  small.update(p.x, p.z);
+  let count = 0;
+  for (const mesh of small.group.children) {
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, matrix);
+      assert.ok(Math.abs(matrix.elements[13] - mesh.userData.groundAnchorOffsets[i] - 17) < .001, mesh.name);
+      count++;
+    }
+  }
+  assert.ok(count > 0);
+  const fixed = clearedFixedThings(1989, []);
+  const standing = createFixedThingsView(fixed, [], null, groundAt);
+  standing.update(p.x, p.z);
+  count = 0;
+  for (const mesh of standing.group.children) {
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, matrix);
+      assert.ok(Math.abs(matrix.elements[13] - mesh.userData.groundAnchorOffsets[i] - 17) < .001, mesh.name);
+      count++;
+    }
+  }
+  assert.ok(count > 0);
+  small.dispose(); standing.dispose();
 });
 
 test('cleared things produce collision records in the spatial index', () => {

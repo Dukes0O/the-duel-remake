@@ -29,7 +29,15 @@ export function createRiverField({halfWidth, halfDepth, river = RIVER_LAND, dist
   const texture = new THREE.DataTexture(data, width, depth, THREE.RedFormat, THREE.UnsignedByteType);
   texture.minFilter = texture.magFilter = THREE.LinearFilter; texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.generateMipmaps = false; texture.unpackAlignment = 1; texture.needsUpdate = true;
-  return {texture, box: {x0, z0, width: width * FIELD_CELL, depth: depth * FIELD_CELL}};
+  const distanceAt = (x, z) => {
+    const fx = (x - x0) / FIELD_CELL - .5, fz = (z - z0) / FIELD_CELL - .5;
+    if (fx < -.5 || fz < -.5 || fx > width - .5 || fz > depth - .5) return 128;
+    const i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const value = (a, b) => data[Math.max(0, Math.min(depth - 1, b)) * width + Math.max(0, Math.min(width - 1, a))] * 128 / 255;
+    return (value(i, j) * (1 - u) + value(i + 1, j) * u) * (1 - v) +
+      (value(i, j + 1) * (1 - u) + value(i + 1, j + 1) * u) * v;
+  };
+  return {texture, box: {x0, z0, width: width * FIELD_CELL, depth: depth * FIELD_CELL}, distanceAt};
 }
 
 // ---- Heights laid on the drawn ground -------------------------------------------------------------------------------------------------
@@ -139,7 +147,10 @@ export function createRoadsDraw({net = ROAD_NET, river = RIVER_LAND, plainAt, ma
 
 // ---- The gorge ----------------------------------------------------------------------------------------------------------------------------
 const GORGE_STEP = 16, GORGE_SECTIONS = 64;
-const GORGE_ACROSS = Object.freeze([-92, -84, -78, -72, -66, -60, -56, -52, -40, -20, 0, 20, 40, 52, 56, 60, 66, 72, 78, 84, 92]);
+// Two-metre cells on each bank preserve the Steps' ledges as well as the steep river face.
+// The broad bed and the outer shoulders need fewer samples.
+const GORGE_ACROSS = Object.freeze([-92, -84, -80, -78, -76, -74, -72, -70, -68, -66, -64, -62, -60, -58, -56, -54, -52, -40, -20, 0,
+  20, 40, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 84, 92]);
 // The river's ends are rounded (the ground is cut by distance from the river's line), so the gorge's ribbon closes with a half circle.
 const CAPS = 8;
 
@@ -183,8 +194,40 @@ export function createRiverDraw({river = RIVER_LAND, plainAt, material, range = 
     group.add(mesh); piece.mesh = mesh;
   }
   const limit = range * range;
+  // The ribbon is fixed in world coordinates. Cache its horizontal corners so
+  // a height query need not build distant meshes or raycast every triangle.
+  const corners = frames.map(frame => GORGE_ACROSS.map(offset => {
+    const sourceX = frame.x + Math.cos(frame.heading) * offset * frame.scale;
+    const sourceZ = frame.z - Math.sin(frame.heading) * offset * frame.scale;
+    return {x: Math.fround(sourceX), z: Math.fround(sourceZ), sourceX, sourceZ};
+  }));
+  function triangleHeight(x, z, a, b, c) {
+    const det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(det) < 1e-9) return null;
+    const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / det;
+    const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / det;
+    const w = 1 - u - v;
+    if (u < -1e-7 || v < -1e-7 || w < -1e-7) return null;
+    const height = p => Math.fround(plainAt(p.sourceX, p.sourceZ) - riverGorgeDepthAt(p.sourceX, p.sourceZ));
+    return u * height(a) + v * height(b) + w * height(c);
+  }
   return {
     group, pieces,
+    // Read the actual ribbon triangles, including their interpolation along the river.
+    heightAtDrawn(x, z) {
+      let height = null;
+      for (let i = 0; i + 1 < frames.length; i++) {
+        const a = frames[i], b = frames[i + 1];
+        if (x < Math.min(a.x, b.x) - 93 || x > Math.max(a.x, b.x) + 93 ||
+            z < Math.min(a.z, b.z) - 93 || z > Math.max(a.z, b.z) + 93) continue;
+        for (let j = 0; j + 1 < GORGE_ACROSS.length; j++) {
+          const p = corners[i][j], q = corners[i][j + 1], r = corners[i + 1][j], s = corners[i + 1][j + 1];
+          const hit = triangleHeight(x, z, p, r, q) ?? triangleHeight(x, z, q, r, s);
+          if (hit !== null && (height === null || hit > height)) height = hit;
+        }
+      }
+      return height;
+    },
     update(x, z, {all = false} = {}) {
       let built = 0;
       for (const piece of pieces) {

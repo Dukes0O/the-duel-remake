@@ -226,6 +226,20 @@ export const REGION_ORDER = Object.freeze(['road', 'river-bed', 'wreck-fields', 
 export const edgeWarp = (x, z, phase = 0) =>
   58 * Math.sin(x * .0031 + z * .0023 + phase) + 31 * Math.sin(x * .0083 - z * .0057 + 1.9 + phase * 2) + 17 * Math.sin(x * .0191 + z * .0231 + 4.1 - phase);
 
+// Bend each long edge in alternating directions. These points are part of the shared
+// outline, so the map, driving and ground material all use the same shape.
+function naturalOutline(corners) {
+  const points = [];
+  for (let i = 0; i < corners.length; i++) {
+    const a = corners[i], b = corners[(i + 1) % corners.length];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz) || 1;
+    const offset = Math.min(180, length * .09) * (i % 2 ? -1 : 1);
+    points.push(a, {x: (a.x + b.x) / 2 - dz / length * offset,
+      z: (a.z + b.z) / 2 + dx / length * offset});
+  }
+  return points;
+}
+
 // The areas of the other regions, from the land's names. A disc is centred on a place; a polygon is a list of points.
 export function groundAreas(land) {
   const at = (id, dx = 0, dz = 0) => land.at(id, dx, dz), between = (...args) => land.between(...args);
@@ -238,13 +252,13 @@ export function groundAreas(land) {
     ]),
     polygons: Object.freeze([
       // The salt pan: the north-east, between the river and the north edge, from the Pipe to the Ridge's foot.
-      Object.freeze({id: 'salt-pan', phase: 1.1, points: Object.freeze([
+      Object.freeze({id: 'salt-pan', phase: 1.1, points: Object.freeze(naturalOutline([
         between('ridge', 'iron-line', 0.33, 40, 135), between('tin-town', 'dry-dam', 0.312, 45, -150), between('tin-town', 'ships-in-sand', 0.23, 80, -110),
-        between('tin-town', 'ridge', 0.652, 550, -320), at('ridge', 1160, -1260), between('ships-in-sand', 'ridge', 0.195, 75, -245)].map(plain))}),
+        between('tin-town', 'ridge', 0.652, 550, -320), at('ridge', 1160, -1260), between('ships-in-sand', 'ridge', 0.195, 75, -245)]).map(plain))}),
       // The scab plates: both banks of the river from the yard's east side to Tin Town, between the pan and the wreck fields.
-      Object.freeze({id: 'scab-plates', phase: 3.2, points: Object.freeze([
+      Object.freeze({id: 'scab-plates', phase: 3.2, points: Object.freeze(naturalOutline([
         between('dry-dam', 'tin-town', 0.466, -30, 125), between('tin-town', 'ridge', 0.398, 500, -290), between('tin-town', 'boneyard', 0.472, 630, 365),
-        between('iron-line', 'boneyard', 0.631, 40, -120)].map(plain))}),
+        between('iron-line', 'boneyard', 0.631, 40, -120)]).map(plain))}),
     ]),
   });
 }

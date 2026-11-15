@@ -4,22 +4,16 @@ import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {getScablandsOpenMarks,resetScablandsGroundEdit,scablandsGroundEdit,scablandsNaturalHeightAt,
   scablandsSurfaceAt,scablandsSurfaceHeightAt,setScablandsOpenMarks} from '../src/world/scablands-ground.js';
 import {CUTS,REGIONS,WHITES_BASE,regionAt,regionNaturalHeightAt,placeToWorld} from '../src/world/regions.js';
-import {riseHeightAt,riverDepthAt} from '../src/world/scablands-regions.js';
-import {scarpHeightAt} from '../src/world/scablands-scarps.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {scablandsTerrainHeightAt} from '../src/world/scablands-height.js';
 import {Duel} from '../src/game.js';
 import {applySaltStormFog,saltStormActive,THE_WHITES_NODES,createTheWhitesScene} from '../src/world/the-whites-scene.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 function originalScablandsHeightAt(x,z){
-  // SCABLANDS-LAND round 4: the ridge and wall keep their old size in metres at the new edge (edgeScale).
-  const nx=x/SCABLANDS_LAYOUT.halfWidth,nz=z/SCABLANDS_LAYOUT.halfDepth,edge=1+(Math.hypot(nx,nz)-1)*SCABLANDS_LAYOUT.edgeScale;
-  const rolling=2.1*Math.sin(x*.007+z*.002)*Math.cos(z*.009-x*.003);
-  const ridge=smooth((edge-SCABLANDS_LAYOUT.ridgeStart)/.1)*
-    (1-smooth((edge-SCABLANDS_LAYOUT.ridgeCrest)/.16))*108;
-  const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
-  // SCABLANDS-LAND round 4, slice 2a: the rises stand under every place's flat ground, and the dry river is cut into the plain; slice 2b adds the four scarps.
-  let height=rolling+ridge+wall+riseHeightAt(x,z)+scarpHeightAt(x,z);
+  // The closed region retains the land's terrain, including hills and mesa ramps.
+  let height=scablandsTerrainHeightAt(x,z);
   for(const place of SCABLANDS_PLACES){
     const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
     height+=(place.height-height)*weight;

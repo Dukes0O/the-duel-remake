@@ -94,6 +94,27 @@ const PHOTO_FUNCTIONS = `
     return mix(a,b,far);
   }`;
 
+// How far each place stands above the land's old ground because of a hill, as a picture the ground's drawing reads: one sample every
+// 16 m, 0 to 100 m. `raised(x, z)` gives that height in metres (src/world/scablands-height.js: the land with its hills less the land
+// without them).
+// `spots` are the hills themselves ({x, z, reach} in metres): only the ground within a hill's reach is asked about, which keeps the
+// scene's build short.
+export function createHillField({halfWidth, halfDepth, raised, spots}) {
+  const cell = 16, margin = 200, width = Math.ceil((halfWidth * 2 + margin * 2) / cell), depth = Math.ceil((halfDepth * 2 + margin * 2) / cell);
+  const x0 = -halfWidth - margin, z0 = -halfDepth - margin, data = new Uint8Array(width * depth);
+  const clamp = (value, max) => Math.max(0, Math.min(max, value));
+  for (const spot of spots) {
+    const c0 = clamp(Math.floor((spot.x - spot.reach - x0) / cell), width - 1), c1 = clamp(Math.ceil((spot.x + spot.reach - x0) / cell), width - 1);
+    const r0 = clamp(Math.floor((spot.z - spot.reach - z0) / cell), depth - 1), r1 = clamp(Math.ceil((spot.z + spot.reach - z0) / cell), depth - 1);
+    for (let row = r0; row <= r1; row++) for (let column = c0; column <= c1; column++)
+      data[row * width + column] = clamp(Math.round(raised(x0 + (column + .5) * cell, z0 + (row + .5) * cell) / 100 * 255), 255);
+  }
+  const texture = new THREE.DataTexture(data, width, depth, THREE.RedFormat, THREE.UnsignedByteType);
+  texture.minFilter = texture.magFilter = THREE.LinearFilter; texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.generateMipmaps = false; texture.unpackAlignment = 1; texture.needsUpdate = true;
+  return {texture, box: {x0, z0, width: width * cell, depth: depth * cell}};
+}
+
 export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null, photos = null, tunnels = null} = {}) {
   const colour = hex => new THREE.Color(hex);
   const uniforms = {uGroundNoise: {value: scrapNoise()}, uGroundRock: {value: colour(rock)}, uGroundStone: {value: colour(stone)},
@@ -112,7 +133,12 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
     uniforms.uPan = {value: pan.points.map(point => new THREE.Vector2(point.x, point.z))}; uniforms.uPanPhase = {value: pan.phase};
     uniforms.uPlates = {value: plates.points.map(point => new THREE.Vector2(point.x, point.z))}; uniforms.uPlatesPhase = {value: plates.phase};
     areaFunctions = polygonFunction('gPolyPan', 'uPan', pan.points.length) + polygonFunction('gPolyPlates', 'uPlates', plates.points.length);
-    areaCode = `
+    if (regions.hills) {
+      const hillBox = regions.hills.box;
+      uniforms.uHillField = {value: regions.hills.texture};
+      uniforms.uHillBox = {value: new THREE.Vector4(hillBox.x0, hillBox.z0, 1 / hillBox.width, 1 / hillBox.depth)};
+    }
+    areaCode = `${regions.hills ? 'uniform sampler2D uHillField;uniform vec4 uHillBox;' : ''}
       uniform sampler2D uRiverField;uniform vec4 uRiverBox;uniform vec4 uWreck;uniform vec4 uSand;uniform vec4 uBurn;uniform float uBurnWobble;uniform vec2 uBurnCentre;
       uniform vec2 uPan[${pan.points.length}];uniform float uPanPhase;uniform vec2 uPlates[${plates.points.length}];uniform float uPlatesPhase;`;
   }
@@ -321,6 +347,26 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float layer=vGroundPos.y*.55+gBig.b*3.0+gMid.r*2.2;
             vec3 kc=uColBank*(.78+.34*gFine.g)*(.93+.12*smoothstep(.3,.7,abs(fract(layer)-.5)*2.0));
             ${photo('plates', 'kc', 'gBank*.85', 1, true)}gc=mix(gc,kc,gBank*.85);
+          }` : ''}
+          ${regionsOn && regions.hills ? `
+          // ---- Hill country (slice 2c). A hill is worn rock, not a heap of the plain's dust: beds of buff, red, grey and pale stone lie
+          // level through it, each a few metres thick, and show as bands round its sides; rain has cut rills straight down every slope.
+          // Dunes are sand and the river's banks are their own, so neither is banded.
+          float gHill=texture2D(uHillField,(gq-uHillBox.xy)*uHillBox.zw).r*100.0;
+          float gUp=smoothstep(4.0,16.0,gHill)*(1.0-wSand)*(1.0-wBed);
+          if(gUp>.004){
+            float gBedAt=vGroundPos.y*.105+gBig.r*.45+gMid.g*.18;
+            float gBedPick=fract(sin(floor(gBedAt)*12.9898)*43758.5453),gBedIn=fract(gBedAt);
+            vec3 gBed=gBedPick<.3?vec3(.15,.07,.042):gBedPick<.55?vec3(.25,.165,.09):gBedPick<.8?vec3(.085,.076,.07):vec3(.38,.3,.2);
+            gBed*=.78+.44*gFine.g;
+            // A harder ledge at the foot of each bed, in shadow.
+            gBed*=1.0-.3*smoothstep(.0,.07,gBedIn)*(1.0-smoothstep(.1,.2,gBedIn));
+            vec2 gFall=normalize(vGroundNormal.xz+vec2(1e-4,0.0));
+            float gRill=smoothstep(.5,.85,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gFall.y,gFall.x))*.05,dot(gq,gFall)*.004)).g);
+            float gTilt=smoothstep(.003,.022,gSlope);
+            gBed*=1.0-.34*gRill*gTilt;
+            // Salt lies only where the ground is level: a hill in the pan shows its rock from the first of its slope.
+            gc=mix(gc,gBed*mix(1.0,.55,wPlates),gUp*mix(.18*(1.0-wPan),.96,gTilt));
           }` : ''}
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);

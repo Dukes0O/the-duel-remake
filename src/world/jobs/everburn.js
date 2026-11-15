@@ -178,7 +178,8 @@ export function buildEverburn(land) {
     Object.freeze({id:'everburn-survey-flags', name:'Survey Flags', kind:'explore',
       unlockAfter:'everburn-get-out-and-walk', easy:Object.freeze({findCount:5, markerRadius:8}),
       steps:[step('explore',{what:'Find and raise all five survey flags.', finds:[survey1, place('survey-flag-2', at('dead-mall', 150, -40)),
-        place('survey-flag-3', between('dead-mall', 'everburn', .413, 35.06, -117.98)), place('survey-flag-4', between('ships-in-sand', 'ridge', .723, -26.43, 88.94)),
+        // The Breaks turn the approach toward the river; keep this flag west enough for the next leg to reach a crossing.
+        place('survey-flag-3', between('dead-mall', 'everburn', .413, -264.94, -117.98)), place('survey-flag-4', between('ships-in-sand', 'ridge', .723, -26.43, 88.94)),
         place('survey-flag-5', at('ridge', -74, 104))]
         .map(flag=>Object.freeze({...flag})), carStart:carStart(at('boneyard', 119, -112), survey1), reward:'scrap'})]}),
     Object.freeze({id:'everburn-hot-soup', name:'Hot Soup', kind:'delivery',
