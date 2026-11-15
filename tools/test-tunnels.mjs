@@ -71,6 +71,16 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   actor._jumpY = top + 1; actor._verticalSpeed = -5; actor.airborne = true;
   for (let step = 0; step < 40 && actor.airborne; step++) _jump.call(game, actor, .02, step * .02);
   assert.equal(actor._jumpY, top, `${id}: a car falling from above lands on the deck`);
+  // Feet already below the deck belong to the bed, even when the stored
+  // support is still the bank the car just left.
+  actor.groundHeight = top; actor._jumpY = top - 1.5;
+  actor._verticalSpeed = -5; actor.airborne = true;
+  for (let step = 0; step < 100 && actor.airborne; step++) {
+    _jump.call(game, actor, .02, step * .02);
+    assert.ok(actor._jumpY < top, `${id}: falling feet do not snap onto the deck`);
+  }
+  assert.ok(!actor.airborne && Math.abs(actor._jumpY - bed) < 1e-9,
+    `${id}: a fall below the deck lands on the bed`);
 }
 
 // A person placed below a deck keeps that floor when walking. An omitted
