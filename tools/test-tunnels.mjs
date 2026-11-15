@@ -10,6 +10,7 @@ import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 import {_jump} from '../src/sim-driving.js';
 import {makeRng} from '../src/rng.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
+import {LAND} from '../src/world/scablands-names.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsFloorsAt, selectScablandsFloor, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
@@ -517,6 +518,66 @@ for (const speed of [40, 80]) {
       assert.ok(below && furthest > 35, `${id}, direction ${direction}: crossed beneath the deck (${furthest.toFixed(1)} m)`);
     }
   }
+}
+
+// Survey Flags are placed at ground-relative height. A raised flag must be
+// reached at the same horizontal radius even on a high piece of land.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {EVERBURN_SIDE_JOBS} = await import('../src/world/jobs/everburn.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  const definition = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags');
+  const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    seed: 1, cpuDifficulty: 'easy', opponents: [], job: {...definition, seed: 1}}));
+  duel.state.countdown = 0;
+  const job = duel.state.arena.worldJob.job;
+  job.stepState.index = 2;
+  const flag = job.steps[0].finds[2].position;
+  const origin = duel.course.nearest(flag.x + 20, flag.z);
+  const heading = -Math.PI / 2;
+  placeActor(duel, duel.state, {s: origin.s, lateral: origin.lateral,
+    headingError: wrapHeading(heading - duel.course.at(origin.s).heading)}, 10);
+  let distance = Infinity;
+  for (let tick = 0; tick < 600 && duel.state.arena.worldJob.job.stepState.index === 2; tick++) {
+    duel.setInput({throttle: 1}); duel.step(1 / 120);
+    const point = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    distance = Math.hypot(point.x - flag.x, point.z - flag.z);
+  }
+  assert.equal(duel.state.arena.worldJob.job.stepState.index, 3, 'the car raises the third flag on high ground');
+  assert.ok(distance > 8, `the flag uses its full horizontal reach (${distance} m)`);
+}
+
+// The Survey Flags route crosses the river south-east of the Pipe. Drive the
+// stretch the Easy driver uses after raising the third flag.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling',
+    car: 'falcone_f42', seed: 1, opponents: [{car: 'dusthawk_rally'}]}));
+  duel.state.countdown = 0; duel.state.arena.timeLimitSec = Infinity; duel.state.opponents[0].finished = true;
+  const start = LAND.at('the-pipe', 788, 213), turn = LAND.at('the-pipe', 785, 166),
+    finish = LAND.at('the-pipe', 646, -16);
+  const heading = Math.atan2(turn.x - start.x, turn.z - start.z);
+  const origin = duel.course.nearest(start.x, start.z);
+  placeActor(duel, duel.state, {s: origin.s, lateral: origin.lateral,
+    headingError: wrapHeading(heading - duel.course.at(origin.s).heading)}, 33);
+  let target = turn, reached = false;
+  for (let tick = 0; tick < 60 * 35; tick++) {
+    const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    if (target === turn && Math.hypot(car.x - turn.x, car.z - turn.z) < 16) target = finish;
+    if (target === finish && Math.hypot(car.x - finish.x, car.z - finish.z) < 20) { reached = true; break; }
+    const angle = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + (duel.state.headingError || 0)));
+    duel.setInput({throttle: Math.abs(duel.state.speedMph) < 52 ? 1 : 0,
+      brake: Math.abs(duel.state.speedMph) > 54 ? 1 : 0, steer: Math.max(-1, Math.min(1, -angle * 2))});
+    duel.step(1 / 60);
+  }
+  assert.ok(reached, 'the Survey Flags river crossing reaches the far bank');
 }
 
 // A car explicitly placed in the bed keeps that floor. An ordinary placement
