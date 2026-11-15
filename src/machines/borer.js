@@ -195,8 +195,12 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     next.y += Math.sin(slope) * distance;
     addCut(next.segments, start, end, radius);
     next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
-    if (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
-        borerHasFace(ground, next, next.heading + Math.PI, radius)) {
+    // An existing passage can open the face underground as well as daylight.
+    // The caller supplies other passages, excluding the cut being made.
+    const passage = controls.tunnels?.tubeAt({x:next.x, y:next.y, z:next.z}, next.y, 0.6);
+    const joinedPassage = passage && Math.abs(passage.floor - next.y) <= 0.6;
+    if (joinedPassage || (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
+        borerHasFace(ground, next, next.heading + Math.PI, radius))) {
       next.segments.at(-1).endOpen = true;
       next.finished = true;
       events.push({type:'breakthrough', cue:'borer.breakthrough'});

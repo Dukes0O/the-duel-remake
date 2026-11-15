@@ -109,6 +109,18 @@ assert.equal(breakthrough.events.filter(event => event.cue === 'borer.breakthrou
 const openBore = createGroundTunnels(breakthrough.state.segments, {heightAt:(x,z)=>farFace.heightAt(x,z)});
 assert.equal(openBore.constrainMotion({x:0,y:0,z:29}, {x:0,y:0,z:31}).hit, false);
 assert.equal(openBore.constrainMotion({x:0,y:0,z:31}, {x:0,y:0,z:29}).hit, false);
+const otherPassage = createGroundTunnels([{start:{x:-20,y:1.65,z:25}, end:{x:20,y:1.65,z:25}, radius:3}]);
+const junctionGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 8 : 0});
+const junction = stepBorer(createBorerState(), {thrust:1, tunnels:otherPassage}, junctionGround, 'topsoil', 80);
+assert.equal(junction.state.finished, true, 'The head breaks into an existing passage.');
+assert.equal(junction.state.segments.at(-1).endOpen, true);
+assert.equal(junction.events.filter(event => event.cue === 'borer.breakthrough').length, 1);
+const joinedCut = createGroundTunnels(junction.state.segments, {heightAt:(x,z)=>junctionGround.heightAt(x,z)});
+assert.equal(joinedCut.mouths.length, 1, 'An underground junction does not make a surface mouth.');
+const highPassage = createGroundTunnels([{start:{x:-20,y:11.65,z:25}, end:{x:20,y:11.65,z:25}, radius:3}]);
+const noJunction = stepBorer(createBorerState(), {thrust:1, tunnels:highPassage},
+  createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 8 : 0}), 'topsoil', 60);
+assert.equal(noJunction.state.finished, false, 'A passage on another level does not open the face.');
 const shallow = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 2});
 const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100);
 assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);

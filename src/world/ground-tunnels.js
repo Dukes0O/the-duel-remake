@@ -116,9 +116,11 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     }
     return {start: {...mouth}, end: inner, radius: first.radius};
   }
+  // An open end can join another bore underground. It is passable, but it
+  // must not cut a portal-shaped hole in the ground above the junction.
   const mouths = heightAt && tubes.length ? [
-    ...(startOpen ? [mouthCapsule(false)] : []),
-    ...(endOpen ? [mouthCapsule(true)] : []),
+    ...(startOpen && openEnd(tubes[0], tubes[0].start) ? [mouthCapsule(false)] : []),
+    ...(endOpen && openEnd(lastTube, lastTube.end) ? [mouthCapsule(true)] : []),
   ] : [];
 
   // Each tube is entered in the cells touched by its plan-view bounds. A

@@ -4,7 +4,7 @@
 
 Step 1 adds Mabel's machine data and pure rules for a face, thrust, head speed, stall recovery, protection and slow steering. The face reads edited ground, so a dug cutting can expose it. The rules are not connected to the game yet. The head can query the ground's seeded material layers at the face; a caller may still supply a material explicitly. Filled ground above the natural surface uses the cell's stored fill material.
 
-Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Cars can transfer between overlapping passages of a self-crossing tunnel when the floors meet. Crossings on different levels stay closed. Detecting a breakthrough and joining separate tunnels remain to be built, so this is not a finished cutting step. The machine now checks the full bore at its proposed position before advancing, so it stops at the edge of a protected place and keeps its own sentence.
+Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Cars can transfer between overlapping passages of a self-crossing tunnel when the floors meet. Crossings on different levels stay closed. The cutting rules also detect breakthrough into another supplied passage at the same floor height, without creating a surface portal over the underground junction. The game must still supply those passages, and travel between separate tunnels remains to be built, so this is not a finished cutting step. The machine now checks the full bore at its proposed position before advancing, so it stops at the edge of a protected place and keeps its own sentence.
 
 Mabel can now reverse along her recorded tunnel at 1.4 m per second with her head stopped, and return to the cutting face without cutting the same ground again. The path follows bends and slopes; steering does not move her off it. These rules are not connected to the game controls yet.
 
@@ -29,6 +29,8 @@ The conveyor's pile is ten metres to the right of the first tunnel mouth. Each n
 - `node tools/test-ground-edit.mjs`: passed after connecting the conveyor.
 - `node tools/test-machine-borer.mjs`: passed with vehicle turns at a self-crossing and a separate-height crossing that stays closed.
 - `node tools/test-tunnels.mjs`: passed after adding crossing passage support.
+- `node tools/test-machine-borer.mjs`: passed with breakthrough into a supplied passage, no false surface portal, and a separate-height passage that does not open the face.
+- `node tools/test-tunnels.mjs`: passed after the underground junction change.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
