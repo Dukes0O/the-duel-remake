@@ -463,7 +463,9 @@ export function createScablandsScene(course,options={}){
       rig.rotation.y=(SCABLANDS_PLACES.indexOf(rest)%4)*Math.PI/2;return;
     }
     const at=actor.position,x=at?.x??rest.x,z=at?.z??rest.z;
-    rig.position.set(x,(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
+    // Layered job movers carry their actual support height, including beneath a deck.
+    const layered=onGround&&featureFlags.enabled('wasteland-town')&&Number.isFinite(at?.y);
+    rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
