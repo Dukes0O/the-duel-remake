@@ -1696,3 +1696,11 @@ The things suite now compares the height used for placement with the actual near
 Check: `node tools/test-scablands-things.mjs` passed 36 of 36. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the mesh comparison is a new check. Codex decided: no new design choice. Removed: none.
 
 Still needed: camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture car placement
+
+Each picture now clears the car's stored floor and flight height before placing it at the next view. The game can then choose the top floor at the new position. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the previous view's stored height from the next view's placement.
+
+Still needed: chase camera ground clearance and the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

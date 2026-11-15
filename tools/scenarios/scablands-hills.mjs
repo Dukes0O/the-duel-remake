@@ -76,6 +76,9 @@ export async function run(context) {
         const a = window.__qaApp, d = a.duel, s = d.state, from = ${JSON.stringify(view.from)}, to = ${JSON.stringify(view.to)};
         const pose = d.course.nearest(from.x, from.z), wrap = v => Math.atan2(Math.sin(v), Math.cos(v));
         s.s = s.prevS = pose.s; s.lateral = s.prevLateral = pose.lateral; s.speedMph = 0; s.yawVelocity = 0; s.pushVelocity = 0;
+        // A new view starts on the top floor, just like an actor without stored feet.
+        s.groundHeight = s.prevGroundHeight = undefined; s._jumpY = null; s._verticalSpeed = 0;
+        s.airborne = false; s.airHeight = s.prevAirHeight = 0;
         s.headingError = wrap(Math.atan2(to.x - from.x, to.z - from.z) - d.course.at(pose.s).heading);
         s.arena.worldJob.job.stepState.ember = 100; a.inspectionCamera = null;
       })()`);
