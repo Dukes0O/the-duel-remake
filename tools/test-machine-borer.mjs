@@ -7,7 +7,7 @@ import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, di
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {followBorerSlope, poseBorerSlope} from '../src/machines/dig-game.js';
+import {followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
 import * as THREE from 'three';
 
 const modelView = {body:new THREE.Group()};
@@ -71,21 +71,21 @@ assert.equal(pile.materialAt(0, 1, 0), 'gravel');
 assert.throws(() => pile.materialAt(NaN, 0, 0), TypeError);
 assert.equal(machineDefinition('borer').name, 'Mabel');
 assert.equal(machineDefinition('borer').boreRadiusM, 3);
-assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward:1,steer:-1,slope:1});
-assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,steer:1,slope:-1});
+assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward:1,keyboardLever:true,padLever:false,steer:-1,slope:1});
+assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,keyboardLever:true,padLever:false,steer:1,slope:-1});
 const gentleKeyboard = borerYardControls({KeyW:true,ShiftLeft:true});
-assert.equal(gentleKeyboard.forward, 1 / 3, 'The keyboard can use gentle thrust.');
+assert.equal(gentleKeyboard.forward, 1, 'Shift does not change the lever input.');
 assert.equal(borerYardControls({KeyW:true,ShiftLeft:true}, null, null, 'drive').forward, 1,
   'Gentle thrust does not slow open-ground driving.');
-const gentleRock = stepBorer(createBorerState(), {thrust:gentleKeyboard.forward}, hill, 'rock', 10).state;
+const gentleRock = stepBorer(createBorerState(), {thrust:1 / 3}, hill, 'rock', 10).state;
 assert.equal(gentleRock.stalled, false, 'Gentle keyboard thrust keeps the head turning in hard rock.');
 assert.ok(gentleRock.distanceM > 1, 'Gentle keyboard thrust advances through hard rock.');
 assert.deepEqual(borerYardControls({}, {axes:[0.4,-0.6]}, {drive:{steer:0,forward:1}}),
-  {forward:0.6,steer:0.4,slope:0}, 'The borer uses the existing mapped machine axes.');
+  {forward:0.6,keyboardLever:false,padLever:true,steer:0.4,slope:0}, 'The borer uses the existing mapped machine axes.');
 assert.deepEqual(borerYardControls({KeyW:true,ArrowUp:true}, {axes:[0,0,0,0]}, {drive:{steer:0,forward:1},slope:3}),
-  {forward:1,steer:0,slope:1}, 'A connected idle controller does not disable the keyboard.');
+  {forward:1,keyboardLever:true,padLever:true,steer:0,slope:1}, 'A connected idle controller does not disable the keyboard.');
 assert.deepEqual(borerYardControls({}, {axes:[0.2,-0.4,0,-0.5]}, {drive:{steer:0,forward:1},slope:3}),
-  {forward:0.4,steer:0.2,slope:0.5}, 'The mapped stick can change slope.');
+  {forward:0.4,keyboardLever:false,padLever:true,steer:0.2,slope:0.5}, 'The mapped stick can change slope.');
 assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);
@@ -138,13 +138,44 @@ const cutDistance = digBorer.borer.distanceM;
 const driveInBore = stepDigSandbox({...digBorer, mode:'drive'}, {controls:{forward:1}}, 1);
 assert.equal(driveInBore.borer.distanceM, cutDistance, 'Drive mode cannot cut after entering a bore.');
 assert.equal(driveInBore.borer.headSpeed, 0, 'The head stops in drive mode.');
+digBorer = stepDigSandbox(digBorer, {controls:{forward:-1}}, 1);
+const beforeDigReverse = digBorer.borer.distanceM;
 digBorer = stepDigSandbox(digBorer, {controls:{forward:-1}}, 0.1);
-assert.ok(digBorer.borer.travelM < cutDistance, 'Reverse follows the cut.');
-assert.equal(digBorer.borer.distanceM, cutDistance);
+assert.ok(digBorer.borer.travelM < beforeDigReverse, 'Reverse follows the cut.');
+assert.equal(digBorer.borer.distanceM, beforeDigReverse);
 let driving = {...sandbox, activeMachine:'borer', mode:'drive', borer:createBorerState()};
 driving = stepDigSandbox(driving, {controls:{forward:1}}, 1);
 assert.ok(Math.abs(driving.borer.z - 4 / 3.6) < 1e-8, 'Open ground speed is four kilometres per hour.');
 assert.equal(driving.borer.segments.length, 0, 'Driving does not cut.');
+
+// Seams remain stable for metres, vary along a long bore, and hard rock stalls at full thrust.
+const seamGround = {seed:19, heightAt:()=>30, materialAt:()=> 'rock', refusal:()=>null,
+  cut:()=>({ok:true,volumes:{rock:0}}), fill:()=>({ok:true})};
+let seamBorer = {...createBorerState(), started:true}, seamKinds = [], seamEnds = [];
+while(seamBorer.distanceM < 100) {
+  seamBorer = stepBorer(seamBorer, {thrust:1/3}, seamGround, null, 5).state;
+  if(seamEnds.at(-1) !== seamBorer.rockSeam.end) {
+    seamEnds.push(seamBorer.rockSeam.end); seamKinds.push(seamBorer.rockSeam.material);
+    if(seamBorer.rockSeam.material === 'rock')
+      assert.equal(stepBorer(seamBorer, {thrust:1}, seamGround, null, 2).state.stalled, true);
+  }
+}
+assert.ok(seamEnds.length >= 4, 'A 100 m bore meets at least three seam changes.');
+assert.ok(seamKinds.includes('rock') && seamKinds.includes('gravel'));
+let leverTest = {...sandbox, activeMachine:'borer', mode:'work', borer:createBorerState()};
+leverTest = stepDigSandbox(leverTest, {controls:{forward:1}}, 1);
+assert.ok(Math.abs(leverTest.borer.lever-.25)<1e-8, 'W raises the lever by a quarter per second.');
+leverTest = stepDigSandbox(leverTest, {controls:{}}, 1);
+assert.ok(Math.abs(leverTest.borer.lever-.25)<1e-8, 'The lever stays put when released.');
+leverTest = stepDigSandbox(leverTest, {controls:{forward:-1}}, .5);
+assert.ok(leverTest.borer.lever<1e-8, 'S lowers the lever by half per second.');
+const boreCamera = new THREE.PerspectiveCamera();
+updateBorerCamera(boreCamera, createBorerState(), 0, flat, 1, true);
+assert.ok(Math.abs(boreCamera.position.z + 44)<1e-8, 'The open view sits behind the tail.');
+updateBorerCamera(boreCamera, forty, 0, hill, 1, true);
+assert.ok(Math.abs(boreCamera.position.z - 6)<1e-6, 'The bore view follows the centre line behind the tail.');
+updateBorerCamera(boreCamera, forty, 1, hill, 1, true);
+assert.ok(Math.abs(boreCamera.position.z + 22)<1e-6, 'The mouth view stands outside the mouth.');
 const parked = createDigBorer(hill);
 const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
 const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};

@@ -1,4 +1,5 @@
 import {machineDefinition} from './content/machines.js';
+import {makeRng} from '../rng.js';
 
 export const BORER_NO_FACE = 'There is not enough hill over her here. Dig her a cutting first.';
 export const BORER_OBSTRUCTION = 'She will not cut there. Something stands in the way.';
@@ -24,7 +25,7 @@ export function borerHasFace(ground, position, heading, radius = 3) {
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, travelM:0, headSpeed:0,
-    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
+    lever:0, stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
 }
 
 /** The conveyor discharges ten metres to the right of the first mouth. */
@@ -137,7 +138,20 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
       next.message = message; next.headSpeed = 1; next.overloadSeconds = 0; continue;
     }
-    const faceMaterial = material ?? ground.materialAt(next.x, next.y + radius * 0.55, next.z);
+    const faceY = next.y + radius * 0.55;
+    let faceMaterial = material ?? ground.materialAt(next.x, faceY, next.z);
+    if (material === null && ground.heightAt(next.x, next.z) - (next.y + 2 * radius) > 3) {
+      // The land's depth layers are sampled at the face. Rock has seeded, longer seams.
+      if (!next.rockSeam || next.distanceM >= next.rockSeam.end) {
+        const mouth = next.segments[0]?.start ?? {x:next.x,z:next.z};
+        const index = (next.rockSeam?.index ?? -1) + 1;
+        const seed = (ground.seed ?? 1) ^ Math.imul(Math.floor(mouth.x), 73856093) ^
+          Math.imul(Math.floor(mouth.z), 19349663) ^ Math.imul(index + 1, 83492791);
+        const random = makeRng(seed);
+        next.rockSeam = {index, end:next.distanceM + random.range(8, 30), material:index % 2 ? 'gravel' : 'rock'};
+      }
+      faceMaterial = next.rockSeam.material;
+    }
     const capacity = hardness[faceMaterial];
     if (capacity === undefined) throw new TypeError('The ground returned an unknown face material.');
     const overloaded = thrust > capacity + 1e-9;

@@ -35,8 +35,7 @@ export function borerYardControls(keys = {}, pad = null, mapping = null, mode = 
   const keyboardSlope = Number(!!keys.ArrowUp) - Number(!!keys.ArrowDown);
   const axis = mapping?.slope;
   const value = Number.isInteger(axis) && axis >= 0 ? -(pad?.axes?.[axis] || 0) : 0;
-  const gentle = mode === 'work' && (keys.ShiftLeft || keys.ShiftRight) && keyboard.forward > 0;
-  return {forward:gentle ? 1 / 3 : keyboard.forward || drive.forward, steer:keyboard.steer || drive.steer,
+  return {forward:keyboard.forward || drive.forward, keyboardLever:!!keyboard.forward, padLever:mode === 'work' && !!pad, steer:keyboard.steer || drive.steer,
     slope:keyboardSlope || (Math.abs(value) < .12 ? 0 : Math.max(-1, Math.min(1, value)))};
 }
 
@@ -140,7 +139,7 @@ export function switchDigMachine(sim) {
   return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
 }
 
-export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%3}; }
+export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%(sim.activeMachine==='borer'?2:3)}; }
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
@@ -160,7 +159,13 @@ function fixedStep(sim,input) {
       // Once inside the bore, cutting and tunnel travel belong to work mode.
       next={...next,borer:{...sim.borer,headSpeed:0}};
     } else {
-      const result=stepBorer(sim.borer,{thrust:controls.forward,steer:controls.steer,slope:controls.slope},sim.ground,null,STEP);
+      const oldLever=sim.borer.lever || 0;
+      const input=Math.max(-1,Math.min(1,controls.forward || 0));
+      const leverSource=controls.keyboardLever ? 'keyboard' : controls.padLever && Math.abs(input) > .12 ? 'pad' : sim.borer.leverSource;
+      const direct=controls.directLever || (controls.padLever && leverSource === 'pad' && !controls.keyboardLever);
+      const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
+      const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
+      const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope},sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM){

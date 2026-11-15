@@ -12,12 +12,15 @@ const page = {
   open: `(() => { document.querySelector('[data-action=yard-the-dig]').click(); return true; })()`,
   loaded: `(() => !!window.__theDig?.host?.isConnected && (!!window.__theDig.failed || window.__theDig.simulation?.activeMachine === 'excavator'))()`,
   selected: `(() => window.__theDig.simulation.activeMachine === 'borer')()`,
+  atFace: `(() => window.__theDig.viewForCheck.readyToWork)()`,
+  leverReady: `(() => window.__theDig.simulation.borer.lever >= 0.30)()`,
+  leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
   cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
   inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
-  driveWait: `(() => new Promise(resolve => setTimeout(resolve, 20000)))()`,
+  sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
   view: `(() => { const dig = window.__theDig, view = dig.viewForCheck, camera = view.camera;
     const inView = root => { let found = false; root?.traverse(node => {
       if (!node.isMesh || !node.visible || !node.geometry?.attributes?.position) return;
@@ -30,7 +33,7 @@ const page = {
     }); return found; };
     return {failed:dig.failed, machine:inView(view.machine), tunnel:inView(view.lining) || inView(view.portals),
       distance:dig.simulation.borer.distanceM, segments:dig.simulation.tunnels.segments.length,
-      headSpeed:dig.simulation.borer.headSpeed}; })()`,
+      headSpeed:dig.simulation.borer.headSpeed, pixels:view.pixels}; })()`,
 };
 for (const expression of Object.values(page)) new Function(`return ${expression};`);
 
@@ -50,12 +53,13 @@ async function holdUntil(context, code, expression, label, timeout) {
   finally { await key(context, code, 'keyup'); }
 }
 async function picture(context, name) {
-  await context.evaluate(page.frame);
+  await context.evaluate(page.sample);
   const view = await context.evaluate(page.view);
   assert.equal(view.failed, false, 'Mabel and the yard models loaded');
   assert.ok(view.distance >= 30 && view.segments > 0, 'the tunnel grew by 30 m');
   assert.ok(view.machine, `${name}: Mabel is in the camera view`);
   assert.ok(view.tunnel, `${name}: tunnel lining or portal is in the camera view`);
+  assert.ok(view.pixels?.length === 5 && view.pixels.some(pixel => pixel.some((value, i) => i < 3 && Math.abs(value - view.pixels[0][i]) > 2)), `${name}: picture centre is not a flat colour`);
   await context.screenshot(name);
   return view;
 }
@@ -68,17 +72,14 @@ export async function run(context) {
   await context.waitFor(page.loaded, 'The Dig loaded', 60000);
   for (let i = 0; i < 7; i++) await press(context, 'KeyQ');
   await context.waitFor(page.selected, 'Mabel selected', 10000);
-  // Drive to the rock, then use gentle thrust through the hardest material.
-  await key(context, 'KeyW', 'keydown');
-  await context.evaluate(page.driveWait);
-  await key(context, 'KeyW', 'keyup');
+  await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
   await press(context, 'Tab');
-  await key(context, 'ShiftLeft', 'keydown');
-  try { await holdUntil(context, 'KeyW', page.cut, '30 m bored', 300000); }
-  finally { await key(context, 'ShiftLeft', 'keyup'); }
-  await holdUntil(context, 'KeyS', page.mouth, 'back at the mouth', 60000);
+  await holdUntil(context, 'KeyW', page.leverReady, 'set gentle thrust', 10000);
+  await context.waitFor(page.cut, '30 m bored', 300000);
+  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
+  await press(context, 'KeyC');
   await picture(context, 'machine-borer-mouth');
-  await holdUntil(context, 'KeyW', page.face, 'back at the face', 120000);
+  await press(context, 'KeyC');
   await picture(context, 'machine-borer-face');
   await key(context, 'KeyS', 'keydown');
   try {

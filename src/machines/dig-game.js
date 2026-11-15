@@ -6,7 +6,8 @@ import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput} from '../input-setup.js';
-import {borerYardControls,closeDigSandbox,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {borerHasFace} from './borer.js';
+import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
@@ -40,7 +41,41 @@ export function followBorerSlope(camera, target, state, distance = 8, ahead = -3
   camera.lookAt(target.x, target.y, target.z);
   camera.updateMatrixWorld();
 }
-const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font-size:13px}.the-dig-head[hidden]{display:none}.the-dig-head svg{width:76px;height:44px}.the-dig-head path{fill:none;stroke:#d0aa69;stroke-width:5}.the-dig-head line{stroke:#fff1d8;stroke-width:3}`;
+// The head is the simulation origin; the model's tail is about 18 m behind it.
+export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false) {
+  const segments=state.segments || [], sin=Math.sin(state.heading), cos=Math.cos(state.heading);
+  const pointAt = distance => {
+    let left=Math.max(0,distance);
+    for(const segment of segments) {
+      const dx=segment.end.x-segment.start.x, dy=segment.end.y-segment.start.y, dz=segment.end.z-segment.start.z;
+      const length=Math.hypot(dx,dy,dz);
+      if(left<=length) {const t=left/length; return {x:segment.start.x+dx*t,y:segment.start.y+dy*t-1.65,z:segment.start.z+dz*t};}
+      left-=length;
+    }
+    return {x:state.x,y:state.y,z:state.z};
+  };
+  const mouth=segments[0]?.start, first=segments[0];
+  let position, target;
+  if(cameraIndex===1 && mouth) {
+    const dx=first.end.x-mouth.x,dz=first.end.z-mouth.z,length=Math.hypot(dx,dz);
+    position=new THREE.Vector3(mouth.x-22*dx/length,mouth.y-1.65+4,mouth.z-22*dz/length);
+    target=new THREE.Vector3(mouth.x+dx/length*8,mouth.y,mouth.z+dz/length*8);
+  } else if(state.started && state.travelM>=24) {
+    const behind=pointAt(state.travelM-34), tail=pointAt(state.travelM-18);
+    position=new THREE.Vector3(behind.x,behind.y+2.2,behind.z);
+    target=new THREE.Vector3(tail.x,tail.y+2.2,tail.z);
+  } else if(state.started || borerHasFace(ground,state,state.heading)) {
+    position=new THREE.Vector3(state.x-24*sin+14*cos,state.y+8,state.z-24*cos-14*sin);
+    target=new THREE.Vector3(state.x,state.y+2,state.z);
+  } else {
+    position=new THREE.Vector3(state.x-44*sin,state.y+11,state.z-44*cos);
+    target=new THREE.Vector3(state.x+10*sin,state.y+2,state.z+10*cos);
+  }
+  if(reset || !camera.userData.borerTarget) {camera.position.copy(position);camera.userData.borerTarget=target.clone();}
+  else {const blend=1-Math.exp(-dt*4); camera.position.lerp(position,blend);camera.userData.borerTarget.lerp(target,blend);}
+  camera.lookAt(camera.userData.borerTarget);camera.updateMatrixWorld();
+}
+const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font-size:13px}.the-dig-head[hidden]{display:none}.the-dig-head svg{width:76px;height:44px}.the-dig-head path{fill:none;stroke:#d0aa69;stroke-width:5}.the-dig-head line{stroke:#fff1d8;stroke-width:3}.the-dig-head .good{stroke:#69c988;stroke-width:7}.the-dig-head meter{width:65px}`;
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
@@ -111,12 +146,12 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   const dialStyle=document.createElement('style');dialStyle.textContent=BORER_DIAL_CSS;host.append(dialStyle);
   const dial=document.createElement('div');dial.className='the-dig-head';dial.hidden=true;
-  dial.innerHTML='<span>Head speed</span><svg viewBox="0 0 80 46" role="img"><path d="M 6 40 A 34 34 0 0 1 74 40"/><line x1="40" y1="40" x2="10" y2="40"/></svg>';
+  dial.innerHTML='<span>Head speed</span><svg viewBox="0 0 80 46" role="img"><path d="M 6 40 A 34 34 0 0 1 74 40"/><path class="good" d="M 57 11 A 34 34 0 0 1 74 40"/><line x1="40" y1="40" x2="10" y2="40"/></svg><label>Thrust <meter min="0" max="1" value="0"></meter></label>';
   host.querySelector('.the-dig-load').after(dial);
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
-  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0;
+  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
   const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -315,7 +350,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       controlsPanel.querySelector('.the-dig-control-content').innerHTML=controlsMachine==='drill'
         ? '<h2>DRILL RIG CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to lower or raise the mast.</p><p>Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.</p>'
         : controlsMachine==='borer'
-          ? '<h2>MABEL CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to start work.</p><p>Hold W to cut and S to reverse. Hold Shift with W to push gently through hard rock. Use A and D to turn, and the up and down arrows to change slope.</p><p>Keep the head turning. Ease off if it slows.</p>'
+          ? '<h2>MABEL CONTROLS</h2><p>Hold W to push the thrust lever forward and S to pull it back; keep the head turning, and hold S at zero to reverse.</p><p>Use A and D to turn, the up and down arrows to change slope, Tab to change mode and C to change view.</p>'
         : sim.roadMachines[controlsMachine]
           ? `<h2>${LABELS[controlsMachine].toUpperCase()} CONTROLS</h2><p>Drive with W, A, S and D. Hold Space while driving to work the ground.</p>${controlsMachine==='paver'?'<p>Hold Shift to pave slowly and smoothly.</p>':''}<p>Press Q to choose another machine. Press C to change the view.</p>`
           : originalControls;
@@ -331,8 +366,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const isBorer=sim.activeMachine==='borer';
       const y=isBorer?active.y:sim.ground.heightAt(active.x,active.z),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
-      const cameraView=updateMachineCamera(camera,definition,{...active,y},mode,{distance:isBorer?(active.started?8:20):wide?17:13,height:isBorer?(active.started?4:10):wide?9:6,ahead:isBorer?-3:wide?4:1,target});
-      if(isBorer && active.started && mode==='chase')followBorerSlope(camera,cameraView.target,active);
+      if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
+      else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});
+      previousCameraMachine=sim.activeMachine;
       sun.position.set(active.x-30,y+55,active.z-20);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
     }
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
@@ -346,6 +382,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     host.querySelector('.the-dig-load').textContent=load;
     dial.hidden=sim.activeMachine!=='borer';
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
+    dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
     dial.querySelector('svg').setAttribute('aria-label',`Head speed ${Math.round(headSpeed*100)} percent.`);
     if(sim.lastMessage&&sim.lastMessage!==lastMachineMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
@@ -355,7 +392,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
       message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
-    } else if(!failed && sim.activeMachine==='borer')message.textContent=sim.mode==='drive'?'Drive to the rock. Press Tab to start work.':'Hold W to cut. Ease off if the head slows.';
+    } else if(!failed && sim.activeMachine==='borer')message.textContent=sim.mode==='drive'?'Drive to the rock. Press Tab to start work.':'Hold W to push the lever forward and S to pull it back. Keep the head turning.';
     else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Raise the mast before driving on.':'Drive to a spot. Press Tab to lower the mast. Hold Space to drill. Add W for harder feed. Hold S to reverse.';
     else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=sim.activeMachine==='dozer'
       ? 'Hold Space while driving to gather ground. Let go of Space and drive to spread it.'
@@ -363,9 +400,20 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       : 'Hold Space and Shift while driving over firm ground to lay a smooth surface.';
     else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
-    renderer.render(scene,camera);requestAnimationFrame(frame);
+    renderer.render(scene,camera);
+    // Read immediately after drawing, before the browser clears the drawing buffer.
+    if(sampleCentre) {
+    const gl=renderer.getContext(), pixels=new Uint8Array(4), samples=[];
+    for(const [dx,dy] of [[0,0],[-.08,0],[.08,0],[0,-.08],[0,.08]]) {
+      gl.readPixels(Math.floor(gl.drawingBufferWidth*(.5+dx)),Math.floor(gl.drawingBufferHeight*(.5+dy)),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      samples.push(Array.from(pixels));
+    }
+    camera.userData.centrePixels=samples; sampleCentre=false;
+    }
+    requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
   return {stop,get simulation(){return sim;},get failed(){return failed;},host,
-    get viewForCheck(){return {camera,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
+    requestCentreSample(){sampleCentre=true;},
+    get viewForCheck(){return {camera,readyToWork:Math.hypot(sim.borer.x-createDigBorer(sim.ground).x,sim.borer.z-createDigBorer(sim.ground).z)>=31 && borerHasFace(sim.ground,sim.borer,sim.borer.heading),pixels:camera.userData.centrePixels,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
 }
