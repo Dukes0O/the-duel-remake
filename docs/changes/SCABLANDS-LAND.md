@@ -1162,3 +1162,13 @@ Checks: `test-scablands-solid` passed 18 tests, `test-run-gas` passed 8,504 chec
 Changed assertions, for Claude to review: the Boneyard road starts at offset (12, 3.5) m instead of the well centre, and its length pin moves from 12,322 to 12,310 m. The battle furnace's appearance and start distances move from 5,482 to 5,477 m and 5,402 to 5,397 m because they follow that road. The tolerances are unchanged.
 
 Removed: the Boneyard road's start through the well post.
+
+### Restored checks after review
+
+The scene check again requires a solid for each place that draws one, and checks that every solid is within 100 m of its own place or crossing. The moving-place check now checks the bridge trusses and piers, the Pipe, the Steps' posts, the ring fence, the bridge-side job places and the second ambush against their own placement rules, within 1 m.
+
+Changed assertions, for Claude to review: the Old Smoke chase limit was 4,000 seconds and is now 1,753 seconds. The slowest measured run was the Medium driver at 1,523.5084 seconds; 15 percent headroom, rounded up, gives 1,753 seconds. The Easy driver took 1,129.025 seconds on each of ten seeds. The restored placement checks add requirements and do not loosen the other assertions.
+
+Checks: `test-scablands-scene` passed; `test-scablands-size` passed all 9 tests. `test-old-smoke` passed all 4,097 checks with the new limit, including 10 of 10 Easy chases. The other requested checks remain to be recorded. No game event or sound cue was added.
+
+Removed: the missing placement checks and the 4,000-second chase limit are replaced by the checks above.

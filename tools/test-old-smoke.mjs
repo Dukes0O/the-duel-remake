@@ -582,12 +582,8 @@ function youngDriver(duel) {
   return {throttle: speed < cap ? 1 : 0, brake: speed > cap + 3 ? 1 : 0, steer: clamp(-turn * 2, -1, 1), boost: false, interact: false};
 }
 
-// SCABLANDS-LAND round 4: the limit was 700 s, about three times the 231 s path; the young driver's Easy chase now takes 1,042 s
-// (two bolts of about 21 km and 13 km at 36 m/s, then the doors), so the limit is 1,500 s.
-// SCABLANDS-LAND round 4, slice 2b: 4,000 s. A slope pulls a car down it and holds it back going up (the courses' rule), the car cannot take any speed back from the
-// limit going down, and the furnace's bolts (36 m/s) are quicker than the car's flats speed, so the chase takes longer: the young driver's Easy chase takes about
-// 1,300 s (1,042 s before) and the careful Medium driver's 1,527 s (1,204 s without the slope). A limit on the driver, not a claim about the game.
-function playChase(seed, difficulty, maxSec = 4000, driver = youngDriver) {
+// The slowest measured driver is the Medium chase at 1,523.5084 s. Its limit includes 15 percent headroom.
+function playChase(seed, difficulty, maxSec = 1753, driver = youngDriver) {
   const duel = startDuel(seed, difficulty);
   const cues = new Set(), callouts = [];
   duel.onChange((_state, event) => {
