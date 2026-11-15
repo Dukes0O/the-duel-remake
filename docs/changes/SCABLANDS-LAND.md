@@ -1936,3 +1936,11 @@ Changed assertions, for Claude to review: the Breaks total changed from 16 to 22
 Codex decided: place shoulders 280 m from each road centre with a 260 m radius, using 30%, 30% and 66% of the respective road lengths. Removed: the old assumption that all Breaks centres must lie west of x = 0.
 
 Still needed: prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: first furnace-cover mesa
+
+Placed one mesa between the furnace and the plates' way, using the yard and Tin Town as its anchors. The hill suite samples the way within the furnace's 1,400 m range and checks for a hidden stretch of at least 150 m and open ground. It passes 40 of 40. Sampling at 5 m found one long hidden stretch of about 745 m, a short one of about 60 m, and open ground between. This does not meet the three-stretch requirement yet. No game event or sound cue was added.
+
+Changed assertions: none. The cover check is new; it proves only the first required stretch, not all three. Codex decided: place the mesa 1,650 m west and 125 m south of the point 70% from the yard to Tin Town, with its ramp pointing west. Removed: one previously seeded mesa position, replaced by this mesa. Race fingerprints and pictures were not checked in this step.
+
+Still needed: provide and prove three separate 150 m furnace-cover stretches, prove the job corridors and drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.

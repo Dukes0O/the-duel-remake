@@ -9,7 +9,7 @@ import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scar
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
-import {sampleLine, sees} from '../src/world/scablands-ways.js';
+import {HOT_DELIVERY_WAYS, routeFor, sampleLine, sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
@@ -17,6 +17,25 @@ import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+
+test('the plates way has a long stretch hidden from the furnace within range', () => {
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const samples = sampleLine(points, 5).filter(point => Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= 1400);
+  let start = null, longest = 0, open = false;
+  for (const point of samples) {
+    const visible = sees(FURNACE_SKYLINE, point, {heightAt: scablandsSurfaceHeightAt, eye: 5, range: 1400, step: 5});
+    if (!visible) {
+      start ??= point.along;
+      longest = Math.max(longest, point.along - start);
+    } else {
+      start = null;
+      open = true;
+    }
+  }
+  assert.ok(longest >= 150, `longest hidden stretch is ${longest} m`);
+  assert.ok(open, 'the way also has open ground within range');
+});
 
 test('the Ridge lookout sees only within range and over clear ground', () => {
   const ridge = LAND.at('ridge'), car = {x: ridge.x + 100, z: ridge.z};

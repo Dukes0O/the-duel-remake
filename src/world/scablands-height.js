@@ -34,6 +34,8 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
     Object.freeze({...land.between('yard','tin-town',.4,-600,-200),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,100,800),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
+    // A mesa between the furnace and the plates' way gives the shortcut cover.
+    Object.freeze({...land.between('yard','tin-town',.7,-1650,125),kind:'mesa',height:35,radius:120,face:30,ramp:220,rampAngle:Math.PI}),
   ];
   // Select the additional plates from the fixed land, then express their
   // centres through the same named-place pair as the original eastern mesa.
@@ -42,7 +44,7 @@ export function hillsFor(land=LAND,seed=1989){
   const mesaBase=LAND.between('yard','tin-town',.7);
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
-    const share=index===hills.length-2 ? .4 : .7;
+    const share=index===hills.length-3 ? .4 : .7;
     const moved=hill.kind==='mesa'?land.between('yard','tin-town',share):land.at(anchor);
     const fixed=hill.kind==='mesa'?LAND.between('yard','tin-town',share):LAND.at(anchor);
     return {x:hill.x-moved.x+fixed.x,z:hill.z-moved.z+fixed.z,radius:hill.radius,ramp:hill.ramp??0};
