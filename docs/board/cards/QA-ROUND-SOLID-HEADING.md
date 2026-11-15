@@ -10,6 +10,12 @@ touch every round solid that carries a seeded heading (boulders, posts, poles).
 
 The trees avoid it for now by giving their trunks' solid shapes a heading of 0. That is a way round, not the cure.
 
+Added the same night, from Codex's distance search: with the trunk's solid heading at 0 the fault is smaller but not gone. A
+car whose own heading is 45 degrees to its travel line past the trunk is still slowed at up to 2.75 m from the trunk's centre,
+where its body is at most about 1.5 m from its own centre line. So the sweep's envelope for the car is wider than the car at
+some headings, whatever the solid's heading. The trees' passing test uses 3 m at three headings until this card is done; the
+cure brings it back to 2 m.
+
 ## What done looks like
 
 - For an ellipse whose two half-widths are equal, the sweep gives the same answer at every heading of the solid thing. For an
