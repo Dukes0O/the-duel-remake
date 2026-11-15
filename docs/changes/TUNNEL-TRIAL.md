@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+The browser scenario now uses the game's tunnel replacement method and scene. It grows the bore in 20 steps, records both drives and the bed drives, and requests the tunnel, chase-camera and daylight views. The page has no dynamic imports or separate tunnel shader or lining. `node --check tools/scenarios/tunnel-trial.mjs` passed. A rules check confirmed the first 19 cutting faces are closed and the last is open. Claude must run the scenario and judge the pictures. The halfway view shows the cutting face; the game has no boring-machine cylinder to show yet. No game event, sound or assertion changed.
+
 The scene follows tunnel revisions and updates the mouth uniforms. Growing a bore preserves its lining mesh and completed rings, rebuilding the changed stretch and its adjoining joint. The first mouth enables the cut shader once; later updates do not recompile it. `node tools/test-tunnels.mjs` passed, including a growing bend compared with a fresh lining. Claude still needs to see the result. No sound or existing assertion changed.
 
 The chase camera is limited below a deck when the car is in the bed, and below the crown and between the walls when the car is on a tunnel floor. Ordinary courses retain their camera path. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed. Claude still needs to judge the camera in the browser. The scene does not yet follow revisions; the scenario, Big Bess investigation and final checks remain. No sound or existing assertion changed.

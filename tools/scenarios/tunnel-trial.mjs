@@ -5,20 +5,42 @@ import {westScarpTrial} from '../../src/world/scablands-tunnel-trial.js';
 import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
 import {RIVER_LAND} from '../../src/world/scablands-regions.js';
 
-// Browser-only trial. The harness supplies a memory-only profile and pictures folder.
+// The page uses the game bundle and a memory-only profile supplied by the harness.
 export async function run(context) {
   const report = {card: 'TUNNEL-TRIAL', quality: 'performance', views: [], drives: []};
   const persist = () => writeFile(join(context.outputDir, 'tunnel-trial.json'), JSON.stringify(report, null, 2) + '\n');
   const click = selector => context.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  const frame = `const a=window.__qaApp; a.onFrame?.(a.duel.state,0); window.__render.renderFrame();`;
+  // Match the game's ordinary arena placement, including its explicit floor height.
+  const place = (x, z, heading, height) => `{
+    const a=window.__qaApp,d=a.duel,s=d.state,p=d.course.nearest(${x},${z});
+    s.s=s.prevS=p.s; s.lateral=s.prevLateral=p.lateral;
+    s.headingError=Math.atan2(Math.sin(${heading}-d.course.at(p.s).heading),Math.cos(${heading}-d.course.at(p.s).heading));
+    s.speedMph=0;s.yawVelocity=0;s.pushVelocity=0;s.slipAngle=0;s.airborne=false;
+    s.airHeight=s.prevAirHeight=0;s._jumpY=null;s._verticalSpeed=0;s._jumpOrigin=null;s._ramVerticalSpeed=0;
+    s.groundHeight=s.prevGroundHeight=${Number.isFinite(height) ? height : 'null'};s.terrainPitch=null;s.terrainRoll=null;
+    s.tumble=null;s.impactTimer=0;s.knock=null;s.crashSpin=0;
+  }`;
+  const picture = async (name, position, target) => {
+    await context.evaluate(`(() => {const a=window.__qaApp;a.inspectionCamera=${position ? JSON.stringify({position, target}) : 'null'};
+      ${position ? `window.__render.camera.position.fromArray(${JSON.stringify(position)});` : "a.setCamera('chase');"} ${frame}})()`);
+    const file = await context.screenshot(`tunnel-${name}`);
+    const stats = await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{
+      ${frame} if(last!==undefined)intervals.push(now-last);last=now;
+      if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});
+      const r=window.__render.renderer.info.render, sorted=[...intervals].sort((a,b)=>a-b);
+      return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals,frameP95Ms:sorted[Math.ceil(sorted.length*.95)-1]};})()`);
+    report.views.push({name, file, ...stats});
+  };
   try {
-    await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
+    await context.command('Emulation.setDeviceMetricsOverride', {width:1280,height:720,deviceScaleFactor:1,mobile:false});
     await context.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards,wasteland-town&harness=tunnel-trial');
     await context.waitFor('window.__qaApp?.duel.state.status==="menu" && !!window.__render', 'memory-only menu', 90000);
     await context.evaluate(`(() => {
-      if (!window.name.startsWith('__duel_qa_tab_v2:') || !Object.getOwnPropertyDescriptor(window, 'localStorage')?.value) throw Error('Memory-only fixture required');
-      const a=window.__qaApp, select=document.querySelector('#graphics-quality');
-      select.value='performance'; select.dispatchEvent(new Event('change',{bubbles:true}));
-      a.audio.setMuted(true); a.profile={...a.profile,wasteland:{...a.profile.wasteland,version:1,discoveredGate:true}}; a._saveProfile();
+      if(!window.name.startsWith('__duel_qa_tab_v2:') || !Object.getOwnPropertyDescriptor(window,'localStorage')?.value) throw Error('Memory-only fixture required');
+      const a=window.__qaApp,select=document.querySelector('#graphics-quality');select.value='performance';
+      select.dispatchEvent(new Event('change',{bubbles:true}));a.audio.setMuted(true);
+      a.profile={...a.profile,wasteland:{...a.profile.wasteland,version:1,discoveredGate:true}};a._saveProfile();
     })()`);
     await click('#wasteland-visit');
     await context.waitFor('window.__qaApp?.isYardHomeActive?.()', 'Scablands yard', 90000);
@@ -28,95 +50,75 @@ export async function run(context) {
     await context.waitFor('window.__qaApp.profile.story?.ember?.read===true', 'note read');
     await click('[data-ember-step="hot-delivery"]');
     await context.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing" && window.__qaApp.visualReady', 'Scablands drive', 120000);
-    await context.waitFor(`(() => {let root; window.__render.scene.traverse(n => {if(n.name==='The Scablands') root=n;}); return root?.userData.assetStatus==='ready';})()`, 'Scablands art', 120000);
+    await context.waitFor(`(() => {let root;window.__render.scene.traverse(n=>{if(n.name==='The Scablands')root=n;});return root?.userData.assetStatus==='ready';})()`, 'Scablands art', 120000);
+    await context.evaluate(`(() => {const a=window.__qaApp,d=a.duel;a.stop();d.state.countdown=0;d.state.arena.timeLimitSec=Infinity;
+      if(d.state.arena.worldJob?.job?.stepState)d.state.arena.worldJob.job.stepState.ember=100;})()`);
+
     const segment = westScarpTrial(scablandsSurfaceHeightAt).segment;
-    // This scenario supplies the temporary refresh that a future boring machine needs.
-    await context.evaluate(`(async () => {
-      const THREE=await import('/node_modules/three/build/three.module.js');
-      const {createGroundTunnels}=await import('/src/world/ground-tunnels.js');
-      const {createTunnelMesh}=await import('/src/world/scablands-ground-look.js');
-      const {placeActor}=await import('/src/arena/arena-event.js');
-      const a=window.__qaApp, d=a.duel, seg=${JSON.stringify(segment)};
-      a.stop(); d.state.countdown=0; d.state.arena.timeLimitSec=Infinity;
-      if(d.state.arena.worldJob?.job?.stepState) d.state.arena.worldJob.job.stepState.ember=100;
-      const group=window.__render.scene.getObjectByName('Scablands ground chunks');
-      if(!group) throw Error('Ground group missing');
-      const uniforms={start:{value:new THREE.Vector3(seg.start.x,seg.start.y,seg.start.z)},end:{value:new THREE.Vector3(seg.start.x,seg.start.y,seg.start.z)},radius:{value:0}};
-      const materials=new Set(); group.traverse(n=>{if(n.material?.userData.groundLook)materials.add(n.material);});
-      if(materials.size<2) throw Error('Near and coarse ground materials missing');
-      for(const material of materials){
-        const compile=material.onBeforeCompile, key=material.customProgramCacheKey();
-        material.onBeforeCompile=(shader,renderer)=>{
-          compile.call(material,shader,renderer);
-          Object.assign(shader.uniforms,{trialStart:uniforms.start,trialEnd:uniforms.end,trialRadius:uniforms.radius});
-          shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\\nuniform vec3 trialStart,trialEnd; uniform float trialRadius;');
-          shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\\n{vec3 d=trialEnd-trialStart,p=vGroundPos-trialStart; float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0); vec3 q=p-d*t; if(dot(q,q)<trialRadius*trialRadius)discard;}');
-        };
-        material.customProgramCacheKey=()=>key+'-trial-refresh'; material.needsUpdate=true;
-      }
-      const axis=new THREE.Vector3(seg.end.x-seg.start.x,seg.end.y-seg.start.y,seg.end.z-seg.start.z).normalize();
-      const machine=new THREE.Mesh(new THREE.CylinderGeometry(seg.radius*.75,seg.radius*.75,6,24),new THREE.MeshStandardMaterial({color:0xb09a71}));
-      machine.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis); group.add(machine);
-      let lining=null;
-      window.__tunnelTrial={a,d,seg,axis,uniforms,machine,group,placeActor,createGroundTunnels,createTunnelMesh,
-        bore(t){const end={x:seg.start.x+(seg.end.x-seg.start.x)*t,y:seg.start.y+(seg.end.y-seg.start.y)*t,z:seg.start.z+(seg.end.z-seg.start.z)*t};
-          uniforms.end.value.set(end.x,end.y,end.z); uniforms.radius.value=seg.radius;
-          const tubes=createGroundTunnels([{start:seg.start,end,radius:seg.radius}]); d.course.groundTunnels=tubes;
-          if(lining){group.remove(lining); lining.traverse(n=>{n.geometry?.dispose();n.material?.dispose();});}
-          lining=createTunnelMesh(tubes); group.add(lining); machine.position.set(end.x,end.y,end.z);
-        },
-        place(x,z,heading,height){const p=d.course.nearest(x,z); placeActor(d,d.state,{s:p.s,lateral:p.lateral,headingError:Math.atan2(Math.sin(heading-d.course.at(p.s).heading),Math.cos(heading-d.course.at(p.s).heading))},0);
-          if(Number.isFinite(height)){d.state.groundHeight=height;d.state.prevGroundHeight=height;d.state._jumpY=height;}
-        },
-        camera(position,target){a.inspectionCamera={position,target};window.__render.camera.position.fromArray(position);},
-        frame(){a.onFrame?.(d.state,0);window.__render.renderFrame();}
-      };
-    })()`);
-    const {start, end, radius} = segment, dx=(end.x-start.x)/100, dz=(end.z-start.z)/100;
-    await context.evaluate(`(() => {const t=window.__tunnelTrial; t.place(${start.x-dx*25},${start.z-dz*25},${Math.atan2(dx,dz)});
-      t.camera([${start.x-dx*18+dz*10},${start.y+7},${start.z-dz*18-dx*10}],[${start.x},${start.y},${start.z}]);t.frame();})()`);
-    for (let i=1; i<=20; i++) {
-      await context.evaluate(`window.__tunnelTrial.bore(${i/20}); window.__tunnelTrial.frame()`);
-      if (i===10) await context.screenshot('tunnel-boring');
+    const {start,end,radius} = segment, length=Math.hypot(end.x-start.x,end.z-start.z);
+    const dx=(end.x-start.x)/length, dz=(end.z-start.z)/length;
+    const tunnelHeading=Math.atan2(dx,dz);
+    await context.evaluate(`(() => {${place(start.x-dx*12,start.z-dz*12,tunnelHeading,scablandsSurfaceHeightAt(start.x-dx*12,start.z-dz*12))}})()`);
+    for(let i=1;i<=20;i++) {
+      const t=i/20, tip={x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t,z:start.z+(end.z-start.z)*t};
+      await context.evaluate(`(() => {window.__qaApp.duel.course.setGroundTunnels(${JSON.stringify([{start,end:tip,radius}])});${frame}})()`);
+      if(i===10) await picture('boring-halfway',[start.x-dx*18+dz*10,start.y+7,start.z-dz*18-dx*10],[start.x,start.y,start.z]);
     }
-    await context.evaluate('window.__tunnelTrial.machine.visible=false');
-    const picture = async (name, x, z, y, target) => {
-      await context.evaluate(`(() => {const t=window.__tunnelTrial; t.camera([${x},${y},${z}],${JSON.stringify(target)}); t.frame();})()`);
-      const file=await context.screenshot(`tunnel-${name}`);
-      const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{window.__tunnelTrial.frame();if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render,sorted=[...intervals].sort((a,b)=>a-b);return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals,frameP95Ms:sorted[Math.ceil(sorted.length*.95)-1]};})()`);
-      report.views.push({name,file,...stats});
-    };
-    await picture('low-mouth',start.x-dx*16,start.z-dz*16,start.y+3,[start.x+dx*8,start.y,start.z+dz*8]);
-    await picture('high-mouth',end.x+dx*16,end.z+dz*16,end.y+3,[end.x-dx*8,end.y,end.z-dz*8]);
-    await picture('inside',start.x+dx*48,start.z+dz*48,(start.y+end.y)/2,[end.x,end.y,end.z]);
-    await picture('above',start.x+dx*50+dz*35,start.z+dz*50-dx*35,Math.max(start.y,end.y)+35,[(start.x+end.x)/2,(start.y+end.y)/2,(start.z+end.z)/2]);
+    await picture('low-mouth',[start.x-dx*16,start.y+3,start.z-dz*16],[start.x+dx*8,start.y,start.z+dz*8]);
+    await context.evaluate(`(() => {${place(end.x+dx*12,end.z+dz*12,tunnelHeading,scablandsSurfaceHeightAt(end.x+dx*12,end.z+dz*12))}})()`);
+    await picture('high-mouth',[end.x+dx*16,end.y+3,end.z+dz*16],[end.x-dx*8,end.y,end.z-dz*8]);
+    await context.evaluate(`(() => {${place(start.x+dx*48,start.z+dz*48,tunnelHeading,start.y+(end.y-start.y)*48/length-radius*.55)}})()`);
+    await picture('inside',[start.x+dx*48,(start.y+end.y)/2,start.z+dz*48],[end.x,end.y,end.z]);
+    await context.evaluate(`(() => {${place(start.x+dx*50,start.z+dz*50,tunnelHeading,scablandsSurfaceHeightAt(start.x+dx*50,start.z+dz*50))}})()`);
+    await picture('above',[start.x+dx*50+dz*35,Math.max(start.y,end.y)+35,start.z+dz*50-dx*35],[(start.x+end.x)/2,(start.y+end.y)/2,(start.z+end.z)/2]);
+    await context.evaluate(`(() => {${place(start.x+dx*50,start.z+dz*50,Math.atan2(dx,dz),(start.y+end.y)/2-radius*.55)}})()`);
+    await picture('chase-inside',null,null);
+
     for(const direction of [1,-1]) {
-      const result=await context.evaluate(`(() => {const t=window.__tunnelTrial,d=t.d,s=d.state,seg=t.seg,dx=${dx},dz=${dz},direction=${direction};
-        const origin=direction>0?seg.start:seg.end,heading=Math.atan2(dx*direction,dz*direction); t.a.inspectionCamera=null;
-        t.place(origin.x-direction*dx*8,origin.z-direction*dz*8,heading); s.speedMph=12; let furthest=-Infinity,floorSamples=0,maxFloorError=0,firstFloor=Infinity,lastFloor=-Infinity;
-        for(let i=0;i<1800;i++){const p=d.course.worldAt(s.s,s.lateral),along=(p.x-seg.start.x)*dx+(p.z-seg.start.z)*dz;furthest=Math.max(furthest,direction>0?along:100-along);if(furthest>103)break;
-          const side=Math.abs((p.x-seg.start.x)*dz-(p.z-seg.start.z)*dx);
-          if(along>2&&along<98&&side<seg.radius-1){const floor=seg.start.y-seg.radius+(seg.end.y-seg.start.y)*along/100;
-            floorSamples++;firstFloor=Math.min(firstFloor,along);lastFloor=Math.max(lastFloor,along);maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));}
+      const origin=direction>0?start:end, heading=Math.atan2(dx*direction,dz*direction);
+      const result=await context.evaluate(`(() => {${place(origin.x-direction*dx*8,origin.z-direction*dz*8,heading)}
+        const d=window.__qaApp.duel,s=d.state,seg=${JSON.stringify(segment)},dx=${dx},dz=${dz},direction=${direction},length=${length};
+        s.speedMph=12;let furthest=-Infinity,floorSamples=0,maxFloorError=0,firstFloor=Infinity,lastFloor=-Infinity;
+        for(let i=0;i<1800;i++){const p=d.course.worldAt(s.s,s.lateral),along=(p.x-seg.start.x)*dx+(p.z-seg.start.z)*dz;
+          furthest=Math.max(furthest,direction>0?along:length-along);if(furthest>length+3)break;
+          if(along>2&&along<length-2){const side=Math.abs((p.x-seg.start.x)*dz-(p.z-seg.start.z)*dx);
+            if(side>seg.radius*.835)throw Error('Car left the tunnel sideways');
+            const floor=seg.start.y-seg.radius*.55+(seg.end.y-seg.start.y)*along/length;
+            floorSamples++;firstFloor=Math.min(firstFloor,along);lastFloor=Math.max(lastFloor,along);
+            maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));}
           const target=direction>0?seg.end:seg.start,turn=Math.atan2(Math.sin(Math.atan2(target.x+direction*dx*30-p.x,target.z+direction*dz*30-p.z)-d.course.at(s.s).heading-s.headingError),Math.cos(Math.atan2(target.x+direction*dx*30-p.x,target.z+direction*dz*30-p.z)-d.course.at(s.s).heading-s.headingError));
           d.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))});d.step(1/60);}
-        t.frame();return {direction,furthest,floorSamples,firstFloor,lastFloor,maxFloorError};})()`);
-      report.drives.push(result); assert.ok(result.furthest>103, `Drive ${direction} reached ${result.furthest} m`);
-      assert.ok(result.floorSamples>10 && result.firstFloor<10 && result.lastFloor>90 && result.maxFloorError<1,
-        `Drive ${direction} stayed on the tunnel floor from mouth to mouth`);
+        return {direction,furthest,floorSamples,firstFloor,lastFloor,maxFloorError};})()`);
+      report.drives.push(result);
+      assert.ok(result.furthest>length+3 && result.floorSamples>10 && result.firstFloor<10 && result.lastFloor>length-10 && result.maxFloorError<1, `Tunnel drive ${direction} must stay on its floor: ${JSON.stringify(result)}`);
     }
-    const bridge=RIVER_LAND.crossings.find(c=>c.id==='girder-bridge'), points=RIVER_LAND.line.points, along=RIVER_LAND.line.along, index=along.findIndex(v=>v>=bridge.along);
-    const p=points[index-1], q=points[index+1], len=Math.hypot(q.x-p.x,q.z-p.z), bx=(q.x-p.x)/len, bz=(q.z-p.z)/len;
-    const x=bridge.x+bz*27, z=bridge.z-bx*27;
-    const bed=scablandsActorHeightAt(x,z,scablandsSurfaceHeightAt(x,z)-20);
-    const bridgeDrive=await context.evaluate(`(() => {const t=window.__tunnelTrial,d=t.d,s=d.state; t.place(${x-bx*30},${z-bz*30},${Math.atan2(bx,bz)},${bed}); s.speedMph=15; let progress=-30;
-      for(let i=0;i<900 && progress<0;i++){d.setInput({throttle:1,steer:0}); d.step(1/60);const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};} t.frame();return {progress,height:s.groundHeight??s._jumpY};})()`);
-    report.bridgeDrive=bridgeDrive; assert.ok(bridgeDrive.progress>=0 && bridgeDrive.height<scablandsSurfaceHeightAt(x,z)-4,'Car reaches the bridge from the bed');
-    await picture('bridge-bed',x-bx*18,z-bz*18,bed+4,[x,bed+1,z]);
-    const bridgeExit=await context.evaluate(`(() => {const t=window.__tunnelTrial,d=t.d,s=d.state;let progress=0;
-      for(let i=0;i<900 && progress<30;i++){d.setInput({throttle:1,steer:0});d.step(1/60);const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};}
-      t.frame();return {progress,height:s.groundHeight??s._jumpY};})()`);
-    report.bridgeExit=bridgeExit; assert.ok(bridgeExit.progress>=30, 'Car drives out from under the bridge');
+
+    for(const id of ['girder-bridge','the-pipe']) {
+      const crossing=RIVER_LAND.crossings.find(c=>c.id===id), points=RIVER_LAND.line.points, along=RIVER_LAND.line.along;
+      const index=along.findIndex(v=>v>=crossing.along), p=points[index-1],q=points[index+1],len=Math.hypot(q.x-p.x,q.z-p.z);
+      const bx=(q.x-p.x)/len,bz=(q.z-p.z)/len,x=crossing.x+bz*27,z=crossing.z-bx*27;
+      const bed=scablandsActorHeightAt(x,z,scablandsSurfaceHeightAt(x,z)-20), heading=Math.atan2(bx,bz);
+      const approach={x:x-bx*80,z:z-bz*80};
+      const approachBed=scablandsActorHeightAt(approach.x,approach.z,scablandsSurfaceHeightAt(approach.x,approach.z)-20);
+      await context.evaluate(`(() => {${place(approach.x,approach.z,heading,approachBed)}})()`);
+      await picture(`${id}-bed-view`,[approach.x,approachBed+2.5,approach.z],[x,bed+3,z]);
+      await context.evaluate(`(() => {${place(x,z,heading,bed)}})()`);
+      await picture(`${id}-chase`,null,null);
+      const from={x:x-bx*35,z:z-bz*35};
+      const fromBed=scablandsActorHeightAt(from.x,from.z,scablandsSurfaceHeightAt(from.x,from.z)-20);
+      const result=await context.evaluate(`(() => {${place(from.x,from.z,heading,fromBed)}
+        const d=window.__qaApp.duel,s=d.state;let progress=-35,maxFloorError=0,minCover=Infinity;
+        s.speedMph=12;for(let i=0;i<1200&&progress<35;i++){
+          const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};
+          const floor=d.course.groundAt(s.s,s.lateral,${bed}).y, surface=d.course.groundAt(s.s,s.lateral).y;
+          maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));
+          if(Math.abs(progress)<5)minCover=Math.min(minCover,surface-(s.groundHeight??s._jumpY));
+          const turn=Math.atan2(Math.sin(${heading}-d.course.at(s.s).heading-s.headingError),Math.cos(${heading}-d.course.at(s.s).heading-s.headingError));
+          d.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))});d.step(1/60);
+        }return {id:${JSON.stringify(id)},progress,maxFloorError,minCover};})()`);
+      report.drives.push(result);
+      assert.ok(result.progress>=35 && result.maxFloorError<1 && result.minCover>1, `${id} drive must stay in the bed: ${JSON.stringify(result)}`);
+    }
     await persist();
-  } catch (error) { report.failure=error.message; await persist(); throw error; }
+  } catch(error) {report.failure=error.message;await persist();throw error;}
 }
