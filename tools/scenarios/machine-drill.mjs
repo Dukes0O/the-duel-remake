@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 
 const key = (context, code, type) => context.evaluate(`document.dispatchEvent(new KeyboardEvent('${type}',{code:'${code}',bubbles:true,cancelable:true}))`);
 async function press(context, code) {
@@ -50,4 +50,9 @@ export async function run(context) {
   assert.match(await context.evaluate('document.querySelector(".the-dig-load").textContent'), /wet/i);
   await press(context, 'Escape');
   await context.waitFor('!document.querySelector(".the-dig")&&window.__qaApp.isYardHomeActive()', 'return to yard', 10000);
+  await context.evaluate('document.querySelector("[data-action=yard-the-dig]").click()');
+  await context.waitFor('window.__theDig?.host?.isConnected&&window.__theDig.simulation?.activeMachine==="excavator"', 'new yard visit', 60000);
+  assert.equal(await context.evaluate('window.__theDig.simulation.drill.wellheads.length'), 0, 'yard wellheads last only for the visit');
+  await press(context, 'Escape');
+  await context.waitFor('!document.querySelector(".the-dig")&&window.__qaApp.isYardHomeActive()', 'return after second visit', 10000);
 }

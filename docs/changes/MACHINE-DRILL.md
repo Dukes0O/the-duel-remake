@@ -1,14 +1,14 @@
-# MACHINE-DRILL
+﻿# MACHINE-DRILL
 
-The card adds repeatable water and ground layers, drill feed and recoverable jams, and the town command that records a drilled well. The yard simulation has a driveable rig, a stopped-before-drilling check, and visible visit-only wellheads. The rig has a mast, drill, keyboard controls and distinct sounds. A yard well is for the visit only; the town handoff is a later card.
+The card adds repeatable water and ground layers, drill feed and recoverable jams, and a town command that records a drilled well. The yard has a driveable rig, a mast, controls, sounds, and visible wellheads that last for the visit. Connecting a yard well to a player's town is a later card.
 
-Checks: `node tools/test-machine-drill.mjs` passed, including sound playback, mute, wellhead drawing and cleanup. `node tools/test-town-ground.mjs` passed in the earlier round. The card test also covers driving, stopping before feed, and a visit-only wellhead. `npm.cmd run build` passed. The lane tier, replay and world-signature checks have not run yet. No race fingerprint was recorded.
+Checks on lane commit `faa8783bc`: `node tools/test-machine-drill.mjs` and `node tools/test-town-ground.mjs` passed. The lane tier passed 36 of 37 suites; `test-review-evidence.mjs` failed because starting ffmpeg returned `EPERM`. One standalone retry had the same result. Replay fingerprints passed 297 checks across 33 cases, including three frame rates and three runs. Combat replays and world composition passed. `npm.cmd run build` passed. The browser scenario was written and syntax checked, but was not run. The added second-visit check was syntax checked after the build; it changes no game code.
 
 Sound cues: `drill-engine`, `drill-feed`, `drill-clay`, `drill-gravel`, `drill-rock`, `drill-jam`, `drill-reverse`, and `drill-water`.
 
 ## For Claude to run
 
-The browser scenario remains to be built. An independent save review and save checks are required at merge.
+Bring this branch up to `integration/wasteland` and rerun the card checks, lane tier and build. This job forbids merging. Rerun `test-review-evidence.mjs` where ffmpeg can start. Run `tools/scenarios/machine-drill.mjs` with an isolated memory-only profile: drive, lower the mast, drill through the layers, jam and reverse the bit, reach water, inspect the wellhead, and revisit the yard to confirm it is gone. The normal feed can take several minutes. Check the look and sounds. An independent save review and save checks are required in a second job.
 
 ## Changed assertions, for Claude to review
 
@@ -20,4 +20,4 @@ Hard feed above three quarters in rock jams the bit. Reversing the feed frees it
 
 ## Removed
 
-The earlier stop note was replaced by this progress note. No game feature was removed.
+The earlier stop note was replaced. No game feature was removed.
