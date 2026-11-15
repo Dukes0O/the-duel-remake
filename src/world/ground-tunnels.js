@@ -81,8 +81,10 @@ function horizontalProjection(position, segment, result) {
 }
 
 /** Immutable tunnel tubes with height-aware ground lookup and shader hole tests. */
-export function createGroundTunnels(segments = []) {
+export function createGroundTunnels(segments = [], {heightAt} = {}) {
   if (!Array.isArray(segments)) throw new TypeError('Tunnel segments must be a list.');
+  if (heightAt !== undefined && typeof heightAt !== 'function')
+    throw new TypeError('Tunnel surface height must be a function.');
   const tubes = segments.map(validSegment);
   for (let i = 0; i < tubes.length; i++) {
     const tube = tubes[i];
@@ -95,6 +97,18 @@ export function createGroundTunnels(segments = []) {
         throw new RangeError('Tunnel segments must join without a gap or a step.');
     }
   }
+
+  // A cutting face is solid until the bore reaches the open surface.
+  // Without a surface query, preserve the existing trial's open ends.
+  function openEnd(tube, end) {
+    if (!heightAt) return true;
+    const surface = heightAt(end.x, end.z);
+    if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
+    return Math.abs(surface - (end.y - tube.radius)) <= 0.3;
+  }
+  const startOpen = !tubes.length || openEnd(tubes[0], tubes[0].start);
+  const lastTube = tubes[tubes.length - 1];
+  const endOpen = !lastTube || openEnd(lastTube, lastTube.end);
 
   // Each tube is entered in the cells touched by its plan-view bounds. A
   // query visits only its own cell, even when the bore has many segments.
@@ -196,7 +210,8 @@ export function createGroundTunnels(segments = []) {
       if (!next) {
         // A move that misses the neighbouring bore must not escape into
         // solid rock through the seam. Hold it at the joint instead.
-        if (hasJoint) {
+        const closedFace = !hasJoint && (along < 0 ? !startOpen : !endOpen);
+        if (hasJoint || closedFace) {
           const correction = along < 0 ? along : along - length;
           const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
           const limit = Math.max(0, tube.radius - clearance);

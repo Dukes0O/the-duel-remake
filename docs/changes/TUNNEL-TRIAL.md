@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+The tunnel rules can now check each end against a supplied surface height. An end whose floor is more than 0.3 m from that surface stops a crossing move; a matching end stays open. `node tools/test-tunnels.mjs` passed, including both cases and invalid surface data. This is only part of enclosure: callers do not yet supply the surface, and the check still uses the old round-bottom floor. The flat floor, floor-selected walls and remaining driving tests are next. No event or sound was added.
+
 ## Current round
 
 The shortcut presets were regenerated twice and all 15 saved records are unchanged. `node tools/test-shortcut-presets.mjs` passed 241 checks. The generator does not recognize `--verify-solvers` separately; it ran the same full generation again.

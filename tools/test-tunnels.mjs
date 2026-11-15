@@ -531,6 +531,21 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   assert.throws(() => createGroundTunnels([{...first, end: first.start}]), RangeError);
 }
 
+// A face opens only when its floor meets the supplied surface.
+{
+  const segment = {start: {x: 0, y: 4, z: 0}, end: {x: 20, y: 4, z: 0}, radius: 4};
+  const cutting = createGroundTunnels([segment], {heightAt: x => x === 0 ? 0 : 10});
+  const closed = cutting.constrainMotion({x: 19, y: 0, z: 0}, {x: 22, y: 0, z: 0}, 1);
+  assert.equal(closed.hit, true, 'the unfinished face stops a car');
+  assert.equal(closed.position.x, 20);
+  assert.equal(cutting.constrainMotion({x: 1, y: 0, z: 0}, {x: -2, y: 0, z: 0}, 1).hit,
+    false, 'the mouth stays open');
+  const complete = createGroundTunnels([segment], {heightAt: () => 0});
+  assert.equal(complete.constrainMotion({x: 19, y: 0, z: 0}, {x: 22, y: 0, z: 0}, 1).hit,
+    false, 'the face opens when it reaches the surface');
+  assert.throws(() => createGroundTunnels([segment], {heightAt: () => NaN}), TypeError);
+}
+
 // Find support on every part of a long chain, including negative grid cells.
 {
   const segments = Array.from({length: 100}, (_, i) => ({
