@@ -75,7 +75,10 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
   }
   const blend=1-Math.exp(-dt*4);
   const route=camera.userData.borerRoute;
-  if(reset || !camera.userData.borerTarget || !mouth) {
+  // As the tail reaches the mouth, there is no room for the camera to wait
+  // inside it. Move to the outside quarter before the machine reaches it.
+  const clearingMouth=route?.inside && state.travelM<20 && cameraIndex===0;
+  if(reset || !camera.userData.borerTarget || !mouth || clearingMouth) {
     camera.position.copy(position);camera.userData.borerTarget=target.clone();
     camera.userData.borerRoute={inside, distance:Math.max(0,state.travelM-34)};
   } else {
@@ -88,7 +91,7 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     const outside=new THREE.Vector3(mouth.x-5*mouthDx/mouthLength,mouthPosition.y,mouth.z-5*mouthDz/mouthLength);
     outside.y=Math.max(outside.y,ground.heightAt(outside.x,outside.z)+0.5);
     if(current.inside && !inside) {
-      current.distance += (0-current.distance)*blend;
+      current.distance = Math.min(Math.max(0,state.travelM-20), current.distance + (0-current.distance)*blend);
       const p=pointAt(current.distance);
       camera.position.set(p.x,p.y+2.2,p.z);
       if(current.distance<0.05) {camera.position.copy(mouthPosition);current.inside=false;current.portal='leaving';}
@@ -102,7 +105,7 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
         if(camera.position.distanceTo(mouthPosition)<0.1) {current.inside=true;current.distance=0;current.portal=null;}
       }
     } else if(inside) {
-      current.distance += (Math.max(0,state.travelM-34)-current.distance)*blend;
+      current.distance = Math.min(Math.max(0,state.travelM-20), current.distance + (Math.max(0,state.travelM-34)-current.distance)*blend);
       const p=pointAt(current.distance);
       camera.position.set(p.x,p.y+2.2,p.z);
     } else {
@@ -116,6 +119,19 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     }
     camera.userData.borerRoute=current;
     camera.userData.borerTarget.lerp(target,blend);
+  }
+  const dx=camera.position.x-state.x, dz=camera.position.z-state.z;
+  const along=dx*sin+dz*cos, side=dx*cos-dz*sin;
+  if (along > -19 && along < 1 && Math.abs(side)<3.5 && camera.position.y<state.y+6) {
+    if (state.travelM>=21 && mouth) {
+      const safe=pointAt(state.travelM-21);
+      camera.position.set(safe.x,safe.y+2.2,safe.z);
+      camera.userData.borerRoute={inside:true,distance:state.travelM-21};
+    } else {
+      camera.position.set(state.x-24*sin+14*cos,state.y+8,state.z-24*cos-14*sin);
+      camera.position.y=Math.max(camera.position.y,ground.heightAt(camera.position.x,camera.position.z)+0.5);
+      camera.userData.borerRoute={inside:false,distance:0};
+    }
   }
   camera.lookAt(camera.userData.borerTarget);camera.updateMatrixWorld();
 }
@@ -217,7 +233,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null, borerDirt=null, beltTime=0;
   const borerSparks=createSparks(24);borerSparks.name='Borer face sparks';borerSparks.visible=false;world.add(borerSparks);
-  let drawnTunnels=sim.tunnels, tunnelLining=null, tunnelUpdateAfter=0;
+  let drawnTunnels=sim.tunnels, drawnTunnelRevision=sim.tunnels.revision, tunnelLining=null, tunnelUpdateAfter=0;
   const portals=new THREE.Group();world.add(portals);let portalKey='';
   const sound=(cue,data)=>{
     const now=performance.now();if(now<soundAfter)return;
@@ -348,8 +364,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     for(const event of frameEvents)if(event.cue?.startsWith('borer.'))borerSounds.play(event.cue);
     // The simulation can add several cuts per frame. Redraw the lining at most
     // four times a second, and catch the last cut after the machine stops.
-    if(sim.tunnels!==drawnTunnels && now>=tunnelUpdateAfter){
+    if((sim.tunnels!==drawnTunnels || sim.tunnels.revision!==drawnTunnelRevision) && now>=tunnelUpdateAfter){
       drawnTunnels=sim.tunnels;
+      drawnTunnelRevision=sim.tunnels.revision;
       const mouths=drawnTunnels.mouths;
       groundLook.setTunnelMouths(mouths);
       const nextPortalKey=mouths.map(mouth=>[mouth.start.x,mouth.start.y,mouth.start.z,mouth.radius,

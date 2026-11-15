@@ -3,7 +3,7 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
-import {borerLandRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
+import {borerLandRefusal, borerSpoilRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
@@ -233,6 +233,17 @@ for (let i=0;i<120;i++) {
 assert.equal(boreCamera.userData.borerRoute.inside, false, 'The camera leaves through the mouth.');
 for (let i=0;i<120;i++) updateBorerCamera(boreCamera, bentCameraState, 0, flat, 1/60);
 assert.equal(boreCamera.userData.borerRoute.inside, true, 'The camera enters through the mouth.');
+for (let distance=80; distance>=0; distance-=0.5) {
+  const x=distance>50?distance-50:0, z=Math.min(distance,50);
+  const heading=distance>50?Math.PI/2:0;
+  updateBorerCamera(boreCamera, {...bentCameraState, travelM:distance,x,z,heading}, 0, flat, 1/60);
+  const dx=boreCamera.position.x-x, dz=boreCamera.position.z-z;
+  const along=dx*Math.sin(heading)+dz*Math.cos(heading), side=dx*Math.cos(heading)-dz*Math.sin(heading);
+  assert.ok(!(along > -18 && along < 1 && Math.abs(side)<3 && boreCamera.position.y<6),
+    `The camera clears Mabel while reversing at ${distance} m.`);
+}
+const riverPoint=RIVER_LAND.line.points[0];
+assert.ok(borerSpoilRefusal({...riverPoint,radius:.49}, {refusal:()=>null}), 'The river bed is closed to spoil.');
 const parked = createDigBorer(hill);
 const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
 const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};
@@ -432,6 +443,7 @@ console.log('Borer: machine data, controls and a 40 m closed cut passed.');
 
 // Growing the live index must match rebuilding it, including bends and open ends.
 const indexed = createGroundTunnels([], {heightAt:()=>20});
+assert.equal(indexed.revision, 0);
 const indexedSegments = [];
 for (let i = 0; i < 60; i++) {
   const start = i ? indexedSegments.at(-1).end : {x:0,y:1.65,z:0};
@@ -439,12 +451,14 @@ for (let i = 0; i < 60; i++) {
   const segment = {start, end, radius:3, startOpen:i === 0, endOpen:false};
   indexedSegments.push(segment);
   indexed.extendLast(segment, true);
+  assert.equal(indexed.revision, i + 1, 'Each appended segment changes the view revision.');
 }
 let tail = indexedSegments.at(-1);
 for (let i = 0; i < 20; i++) {
   tail = {...tail, end:{...tail.end, z:tail.end.z + .1}, endOpen:i === 19};
   indexedSegments[indexedSegments.length - 1] = tail;
   indexed.extendLast(tail);
+  assert.equal(indexed.revision, 61 + i, 'Each tail extension changes the view revision.');
   const rebuilt = createGroundTunnels(indexedSegments, {heightAt:()=>20});
   assert.deepEqual(indexed.segments, rebuilt.segments);
   assert.equal(indexed.endOpen, rebuilt.endOpen);

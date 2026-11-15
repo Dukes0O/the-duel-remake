@@ -10,7 +10,7 @@ import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEd
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {solidsNear} from '../world/scablands-solids.js';
 import {ROAD_NET} from '../world/scablands-road.js';
-import {RIVER_LAND} from '../world/scablands-regions.js';
+import {RIVER, RIVER_LAND, riverDistanceAt} from '../world/scablands-regions.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
@@ -113,6 +113,13 @@ export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_N
   return null;
 }
 
+/** Spoil must also stay out of the river bed and its banks. */
+export function borerSpoilRefusal(shape, ground) {
+  if (riverDistanceAt(shape.x, shape.z) <= RIVER.rampLipHalfWidth + shape.radius)
+    return 'She will not cut there. Something stands in the way.';
+  return borerLandRefusal(shape, ground);
+}
+
 function roadGround(edit) {
   return {
     refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
@@ -209,7 +216,8 @@ function fixedStep(sim,input) {
       const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
       const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope,
         tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started},
-        sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground)} : sim.ground,null,STEP);
+        sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
+          spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM){

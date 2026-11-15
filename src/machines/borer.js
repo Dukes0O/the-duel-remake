@@ -70,7 +70,7 @@ function planSpoil(ground, segments, bank, amount) {
         const z = Math.round(start.z + rightZ * (12 + along));
         if (cells.some(cell => cell.x === x && cell.z === z)) continue;
         const shape = {x, z, radius:0.49};
-        const reason = ground.refusal(shape);
+        const reason = (ground.spoilRefusal || ground.refusal)(shape);
         if (reason) { lastReason = reason; continue; }
         const cell = {x, z, along, base:ground.heightAt(x, z)};
         cells.push(cell); added = true; break;
@@ -145,8 +145,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
   const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, -1, 1);
   const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
   const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
-  let next = {...state, segments:(state.segments || []).map(segment => ({...segment,
-    start:{...segment.start}, end:{...segment.end}})), spoilBank:state.spoilBank ?
+  let next = {...state, segments:state.segments || [], spoilBank:state.spoilBank ?
     {far:state.spoilBank.far, cells:state.spoilBank.cells.map(cell => ({...cell}))} : {far:-1.5, cells:[]}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
@@ -263,6 +262,10 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;
+    if (next.segments === state.segments) {
+      next.segments = next.segments.slice();
+      if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
+    }
     addCut(next.segments, start, end, radius);
     next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     // An existing passage can open the face underground as well as daylight.

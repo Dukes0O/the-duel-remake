@@ -4,6 +4,8 @@ Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to
 
 ## Late drive follow-up
 
+The tunnel index now has a revision that makes the Dig redraw the lining as the cut grows. The following camera keeps clear of Mabel while she reverses, including at the mouth. Borer steps share unchanged segment objects instead of copying every segment; they copy the segment list and its last segment only when a cut advances. Spoil avoids the river bed and banks using the land's river index. `node tools/test-machine-borer.mjs` passed, including index revisions, a reverse around a bend and a river-bed refusal. The camera and redraw still need Claude's browser check.
+
 The Dig now uses the Scablands moving near-ground window at two-metre spacing, following the active machine and sampling the Dig surface. The focused test checks the drawn scarp every five metres for 60 metres from Mabel?s parking place, within 0.3 m. The browser scenario takes a mouth view at 20 m and checks the drawn surface 15 m beyond the mouth covers the bore by at least 4 m. `node tools/test-machine-borer.mjs` passed; the browser scenario still needs Claude to run it.
 
 The scenario now reads the lever and stall state while cutting, resets a stalled head, reports progress every 30 seconds, and stops at 30 m. Its page expressions parse in Node. Claude must run it in the browser.

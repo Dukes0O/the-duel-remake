@@ -70,6 +70,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   if (heightAt !== undefined && typeof heightAt !== 'function')
     throw new TypeError('Tunnel surface height must be a function.');
   const tubes = segments.map(validSegment);
+  let revision = 0;
   for (let i = 0; i < tubes.length; i++) {
     const tube = tubes[i];
     if (Math.hypot(tube.end.x - tube.start.x, tube.end.z - tube.start.z) < 1e-7)
@@ -194,6 +195,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
       mouths = [ ...(startMouth ? [startMouth] : []),
         ...(endOpen && openEnd(lastTube, lastTube.end) ? [mouthCapsule(true)] : []) ];
     }
+    revision++;
   }
   const projected = {x: 0, y: 0, z: 0};
   const nearestResult = {tube: null, center: {x: 0, y: 0, z: 0}, floor: 0, ceiling: 0, radial: 0};
@@ -378,6 +380,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   }
 
   return Object.freeze({
+    get revision() { return revision; },
     get segments() { return tubes.map(tube => ({...tube, start: {...tube.start}, end: {...tube.end}})); },
     get mouths() { return mouths.map(mouth => ({start: {...mouth.start}, end: {...mouth.end}, radius: mouth.radius})); },
     get startOpen() { return startOpen; },
