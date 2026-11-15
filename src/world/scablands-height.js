@@ -32,7 +32,7 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
-    Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
+    Object.freeze({...land.between('yard','tin-town',.4,-600,-200),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,100,800),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
   ];
   // Select the additional plates from the fixed land, then express their

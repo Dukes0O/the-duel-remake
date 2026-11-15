@@ -1840,3 +1840,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. Its first run expo
 Changed assertion, for Claude to review: added mesas' height range changed from 15–25 m to 30–55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30–36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
 
 Still needed: prove the three separate furnace-cover stretches and all protected corridors; verify the Breaks and all three road passes; drive the routes and jobs; complete the remaining hill-country requirements and final checks.
+
+### Hill country: mesa clearance at the river
+
+Moved the first mesa to clear the river bank, including its ramp footprint. The seeded placement of the other mesas is recalculated around it. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. An initial position failed the ramp and tunnel checks and was replaced. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: the mesa size, river and road clearance checks now cover all six mesas instead of only the four added mesas. The requirements are unchanged and the check is stricter, not loosened. Codex decided: move the first mesa within the plates to keep its complete ramp footprint clear of the river. Removed: the former mesa position overlapping the river corridor.
+
+Still needed: prove the three separate furnace-cover stretches and all protected corridors; build and prove the Burn Road and Mall Road passes (a preliminary terrain sample found no hills rising on both sides within 150 m); verify the Mall to Everburn pass; drive the routes and jobs; complete the remaining hill-country requirements and final checks. Claude must run and judge the picture scenario, including the moved mesa.

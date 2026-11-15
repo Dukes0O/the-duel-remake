@@ -430,7 +430,7 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
       assert.ok(Math.hypot(mesa.x - a.x - t * dx, mesa.z - a.z - t * dz) > mesa.radius + mesa.ramp + road.halfWidth, `${road.id} clears the mesa`);
     }
   }
-  for (const mesa of mesas.slice(2)) {
+  for (const mesa of mesas) {
     const reach = mesa.radius + mesa.ramp;
     assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.radius >= 120 && mesa.radius <= 260);
     assert.ok(distanceToRoad(mesa.x, mesa.z, RIVER_LAND.line.points) > reach + 78 + 150);
