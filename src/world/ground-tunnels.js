@@ -41,7 +41,13 @@ function validSegment(segment) {
   if (!segment || !finite(segment.radius) || segment.radius <= 0) {
     throw new TypeError('Tunnel segments need a positive radius.');
   }
-  return {start: point(segment.start, 'Tunnel start'), end: point(segment.end, 'Tunnel end'), radius: segment.radius};
+  for (const key of ['startOpen', 'endOpen']) {
+    if (segment[key] !== undefined && typeof segment[key] !== 'boolean')
+      throw new TypeError('Tunnel end states must be true or false.');
+  }
+  return {start: point(segment.start, 'Tunnel start'), end: point(segment.end, 'Tunnel end'), radius: segment.radius,
+    ...(segment.startOpen === undefined ? {} : {startOpen: segment.startOpen}),
+    ...(segment.endOpen === undefined ? {} : {endOpen: segment.endOpen})};
 }
 
 // The floor and side walls are sampled in plan view. Using the actor's Y
@@ -84,9 +90,9 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
     return Math.abs(surface - (end.y - tube.radius * 0.55)) <= 0.3;
   }
-  const startOpen = !tubes.length || openEnd(tubes[0], tubes[0].start);
+  const startOpen = !tubes.length || (tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start));
   const lastTube = tubes[tubes.length - 1];
-  const endOpen = !lastTube || openEnd(lastTube, lastTube.end);
+  const endOpen = !lastTube || (lastTube.endOpen ?? openEnd(lastTube, lastTube.end));
 
   // Only open mouths cut the ground. Walk inward until the crown has a
   // metre of cover. The cut remains bounded to one capsule per mouth.
@@ -291,7 +297,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   }
 
   return Object.freeze({
-    get segments() { return tubes.map(tube => ({start: {...tube.start}, end: {...tube.end}, radius: tube.radius})); },
+    get segments() { return tubes.map(tube => ({...tube, start: {...tube.start}, end: {...tube.end}})); },
     get mouths() { return mouths.map(mouth => ({start: {...mouth.start}, end: {...mouth.end}, radius: mouth.radius})); },
     get startOpen() { return startOpen; },
     get endOpen() { return endOpen; },
