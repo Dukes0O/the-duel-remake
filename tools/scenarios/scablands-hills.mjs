@@ -13,12 +13,20 @@ const offset = (p, x, z) => ({x: p.x + x, z: p.z + z});
 const hill = kind => HILLS.find(item => item.kind === kind);
 
 export function views() {
-  const breaks = hill('breaks'), mesa = hill('mesa'), ridge = hill('ridge-top');
+  const breaks = hill('breaks'), mesa = hill('mesa');
   const lookout = hill('lookout'), dune = hill('dune');
   const nextBreaks = HILLS.find(item => item.kind === 'breaks' && item !== breaks);
   const yardDistance = Math.hypot(LAND.yard.x - lookout.x, LAND.yard.z - lookout.z);
   const lookoutEdge = offset(lookout, (LAND.yard.x - lookout.x) * lookout.topRadius * .9 / yardDistance,
     (LAND.yard.z - lookout.z) * lookout.topRadius * .9 / yardDistance);
+  const towardYard = distance => offset(lookoutEdge, (LAND.yard.x - lookout.x) * distance / yardDistance,
+    (LAND.yard.z - lookout.z) * distance / yardDistance);
+  // The spur is straight here. Use its actual approach, looking uphill along it.
+  const ridgeRoad = ROAD_NET.road('ridge-spur').points;
+  const ridgeEnd = ridgeRoad.at(-1), ridgeStart = ridgeRoad[0];
+  const ridgeLength = Math.hypot(ridgeStart.x - ridgeEnd.x, ridgeStart.z - ridgeEnd.z);
+  const upRidge = distance => ({x: ridgeEnd.x + (ridgeStart.x - ridgeEnd.x) * distance / ridgeLength,
+    z: ridgeEnd.z + (ridgeStart.z - ridgeEnd.z) * distance / ridgeLength});
   const burn = ROAD_NET.road('burn-road').points.reduce((best, point) =>
     Math.hypot(point.x - breaks.x, point.z - breaks.z) < Math.hypot(best.x - breaks.x, best.z - breaks.z) ? point : best);
   const angle = mesa.rampAngle + Math.PI;
@@ -43,8 +51,8 @@ export function views() {
     {name: 'mesa-foot', from: side(mesa.radius + mesa.face + 60), to: mesa},
     {name: 'mesa-from-plates-way', from: mesaFromWay, to: mesa},
     {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120), landmark: side(mesa.radius * .8)},
-    {name: 'ridge-way-up', from: offset(ridge, 0, -ridge.radius - 80), to: ridge},
-    {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard},
+    {name: 'ridge-way-up', from: upRidge(600), to: upRidge(450)},
+    {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard, landmark: towardYard(600)},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
     {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: foot},
     {name: 'river-bank', from: bed, to: offset(bed, -(bankB.z - bankA.z) / bankLength * 100, (bankB.x - bankA.x) / bankLength * 100)},

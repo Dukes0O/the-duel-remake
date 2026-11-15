@@ -1822,3 +1822,11 @@ Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. The first run foun
 Changed assertion, for Claude to review: mesa count changed from at least 2 to exactly 6 to match the design. It is stricter, not loosened. New checks cover the added mesas' dimensions and clearance from roads and the river. Codex decided: select the four new mesas from seeded candidates on the fixed plates, then tie them to the yard and Tin Town. Removed: none.
 
 Still needed: prove and adjust the mesas for three separate furnace-cover stretches and all protected corridors; verify the Breaks and road passes; drive the routes and jobs; finish the dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: picture viewpoints after review
+
+The Ridge picture now starts on the actual Ridge spur and looks uphill at a nearer point on that road. The previous view started off the road and checked the distant Ridge centre, so it did not establish that the way up appeared in the picture. The Lookout still faces the yard, but checks a point on the flats in that direction: the yard itself is about 3.7 km away, beyond the camera's 2.4 km far plane. The other later views have targets within that range. These distance checks do not prove that the targets are visible or unobscured in the browser. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A position check passed for the Ridge road, its uphill direction and all landmark distances. The browser scenario was not run. Race fingerprints and world signatures were not rerun. Changed assertions: none. Codex decided: check the nearby Ridge road and the flats toward the yard as the named features. Removed: the off-road Ridge position and the unreachable yard landmark check.
+
+Still needed: Claude must run and judge every picture, including the views after the Ridge. Raise and reshape the mesas to the new dimensions, prove the cover and protected routes, finish the remaining hill-country requirements and run the final checks.
