@@ -1,4 +1,6 @@
-﻿import {groundWaterFieldAt} from '../town/town-ground.js';
+import {groundWaterFieldAt} from '../town/town-ground.js';
+import {createMachineState, stepMachine} from './machine.js';
+import {machineDefinition} from './content/machines.js';
 
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const hash = value => {
@@ -55,4 +57,30 @@ export function stepDrill(state, controls = {}, dtSeconds = 0) {
     }
   }
   return {state:{...state, depth, mastDown, jammed, struckWater}, events};
+}
+
+/** The yard rig keeps its holes for this visit only. */
+export function createDrillRigState(seed, position = {}) {
+  return {seed, machine:createMachineState(machineDefinition('drill'), position), hole:null, wellheads:[]};
+}
+
+export function stepDrillRig(state, controls = {}, dtSeconds = 0) {
+  const mastDown = controls.mastDown === true;
+  const machine = stepMachine(machineDefinition('drill'), state.machine,
+    mastDown ? {forward:0, steer:0} : controls, dtSeconds);
+  const x = Math.round(machine.x), z = Math.round(machine.z);
+  let hole = state.hole;
+  const events = [];
+  let wellheads = state.wellheads;
+  if (mastDown && Math.abs(machine.speedMps) < 0.01) {
+    if (!hole || hole.site.x !== x || hole.site.z !== z) hole = createDrillState(state.seed, x, z);
+    const result = stepDrill(hole, controls, dtSeconds);
+    hole = result.state;
+    events.push(...result.events.map(event => ({...event, x, z})));
+    if (events.some(event => event.type === 'water-struck') && !wellheads.some(well => well.x === x && well.z === z))
+      wellheads = [...wellheads, {x, z}];
+  } else if (hole && !mastDown) {
+    hole = {...hole, mastDown:false};
+  }
+  return {state:{...state, machine, hole, wellheads}, events};
 }

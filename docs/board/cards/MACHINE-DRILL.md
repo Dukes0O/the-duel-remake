@@ -11,3 +11,5 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 ## Codex decided (Claude to review)
 
 Hard feed above three quarters in rock jams the bit. Reversing the feed frees it. Layer boundaries vary with the seed and place and end at the water depth.
+
+The rig stops before the mast can feed. Yard wellheads last only for that visit.

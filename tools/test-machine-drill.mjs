@@ -1,5 +1,5 @@
-﻿import assert from 'node:assert/strict';
-import {createDrillState, drillMaterialAt, drillSite, stepDrill} from '../src/machines/drill.js';
+import assert from 'node:assert/strict';
+import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, stepDrill, stepDrillRig} from '../src/machines/drill.js';
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 
@@ -30,4 +30,15 @@ assert.equal(dispatchTownCommand(town,{type:'drillWell',x:4,z:7}).ok,false);
 assert.deepEqual(deserializeTown(serializeTown(town)).regions.scablands.groundWater.wells['4:7'],well);
 const old=createTown(4312,'Old Town');
 assert.deepEqual(deserializeTown(serializeTown(old)).regions.scablands.groundWater?.wells ?? {},{});
+let rig=createDrillRigState(4312,{x:4,z:7});
+rig=stepDrillRig(rig,{forward:1},1).state;
+assert.ok(rig.machine.z>7, 'The rig can drive.');
+rig=stepDrillRig(rig,{mastDown:true,feed:0.5},0.01).state;
+assert.equal(rig.hole,null, 'The rig must stop before it can drill.');
+rig=stepDrillRig(rig,{mastDown:true,feed:0.5},1).state;
+assert.ok(rig.hole.depth>0, 'The lowered mast can feed the bit.');
+rig={...rig,hole:{...rig.hole,depth:rig.hole.site.depth-0.001}};
+rig=stepDrillRig(rig,{mastDown:true,feed:0.5},1).state;
+assert.equal(rig.wellheads.length,1, 'Striking water leaves a wellhead for the visit.');
+assert.deepEqual(createDrillRigState(4312).wellheads,[], 'A new visit starts without yard wellheads.');
 console.log('Drill: repeatable layers and water, jam recovery and town well save passed.');

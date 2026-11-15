@@ -6,6 +6,7 @@ import {createGroundEdit} from '../world/ground-edit.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
+import {createDrillRigState, stepDrillRig} from './drill.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -49,7 +50,8 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
-  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),activeMachine:'excavator',
+  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
+    drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
@@ -68,7 +70,10 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
-  if(sim.activeMachine==='trencher'){
+  if(sim.activeMachine==='drill'){
+    const result=stepDrillRig(sim.drill,input.controls,STEP);
+    next={...next,drill:result.state}; events.push(...result.events);
+  } else if(sim.activeMachine==='trencher'){
     const result=stepTrencher(sim.trencher,{...input.controls,chainDown:input.action==='trench'},STEP,sim.ground);
     next={...next,trencher:result.state}; events.push(...result.events);
   } else {
@@ -124,5 +129,5 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
-  return id==='trencher'?sim.trencher.machine:sim.haul.machines[id];
+  return id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id];
 }
