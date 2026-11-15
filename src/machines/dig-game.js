@@ -132,7 +132,9 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
       if(current.portal!=='entering') {
         camera.position.lerp(outside,blend);
         camera.position.y=Math.max(camera.position.y,ground.heightAt(camera.position.x,camera.position.z)+0.5);
-        if(camera.position.distanceTo(outside)<0.1) current.portal='entering';
+        // Uneven ground can hold the camera above the waypoint. Waiting for
+        // its height to match leaves it stuck outside the mouth forever.
+        if(Math.hypot(camera.position.x-outside.x,camera.position.z-outside.z)<0.1) current.portal='entering';
       } else {
         camera.position.lerp(mouthPosition,blend);
         if(camera.position.distanceTo(mouthPosition)<0.1) {current.inside=true;current.distance=0;current.portal=null;}

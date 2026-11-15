@@ -302,6 +302,12 @@ for (let i=0;i<120;i++) {
 assert.equal(boreCamera.userData.borerRoute.inside, false, 'The camera leaves through the mouth.');
 for (let i=0;i<120;i++) updateBorerCamera(boreCamera, bentCameraState, 0, flat, 1/60);
 assert.equal(boreCamera.userData.borerRoute.inside, true, 'The camera enters through the mouth.');
+const unevenCamera = new THREE.PerspectiveCamera();
+const unevenGround = {heightAt:(_x,z)=>z < -5 ? 4 : 0};
+updateBorerCamera(unevenCamera, forty, 1, unevenGround, 1, true);
+for (let i=0; i<900; i++) updateBorerCamera(unevenCamera, forty, 0, unevenGround, 1/60);
+assert.equal(unevenCamera.userData.borerRoute.inside, true,
+  'The following camera enters even when uneven ground holds it above the outside waypoint.');
 for (let distance=80; distance>=0; distance-=0.5) {
   const x=distance>50?distance-50:0, z=Math.min(distance,50);
   const heading=distance>50?Math.PI/2:0;

@@ -174,3 +174,7 @@ The browser scenario now records the head's position relative to the model and s
 The survey keeps its last displayed floor, grade, distance and remaining rise. It rebuilds the words and redraws the strip only when a displayed value or survey line changes. The focused test checks unchanged values, a distance change and a grade change. No existing assertions changed.
 
 `node tools/test-machine-borer.mjs` passed in 197.9 seconds. No browser, replay, lane tier or build was run for this item. The test runtime remains above 120 seconds and must be shortened in the pace item. No race fingerprints were recorded.
+
+## Following camera entry
+
+Uneven ground can hold the following camera above its outside waypoint, so a three-dimensional distance check can keep it waiting there forever. The camera now starts through the mouth when it reaches the waypoint in plan. The borer test covers a raised patch beside that waypoint and passed in 224.9 seconds. No existing assertions changed. The scenario's following-camera check still needs Claude's browser run; this test does not prove that the raised patch was the cause of the reported timeout. H3 to H6 and the final checks remain.
