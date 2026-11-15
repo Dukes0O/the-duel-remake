@@ -9,7 +9,7 @@ import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scar
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
-import {sees} from '../src/world/scablands-ways.js';
+import {sampleLine, sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
@@ -376,6 +376,73 @@ test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
   }
 });
 
+test('the Breaks raise each pass road centre by at most half a metre', () => {
+  const hills = HILLS.filter(hill => hill.kind === 'breaks');
+  for (const id of ['burn-road', 'mall-road', 'mall-burn-road']) {
+    for (const point of sampleLine(ROAD_NET.road(id).points, 5)) {
+      assert.ok(hillHeightAt(point.x, point.z, hills) <= .5, `${id} centre stays clear`);
+    }
+  }
+});
+
+test('every Breaks hill stays in its country and clear of the three places', () => {
+  const yard = LAND.yard, burn = LAND.place('everburn'), mall = LAND.place('dead-mall');
+  const triangle = [yard, burn, mall];
+  for (const hill of HILLS.filter(item => item.kind === 'breaks')) {
+    const sides = triangle.map((a, i) => {
+      const b = triangle[(i + 1) % triangle.length];
+      return (b.x - a.x) * (hill.z - a.z) - (b.z - a.z) * (hill.x - a.x);
+    });
+    const inside = sides.every(side => side >= 0) || sides.every(side => side <= 0);
+    const nearEdge = triangle.some((a, i) =>
+      distanceToRoad(hill.x, hill.z, [a, triangle[(i + 1) % triangle.length]]) <= 600);
+    assert.ok(inside || nearEdge, 'the centre is in or within 600 m of the country');
+    assert.ok(Math.hypot(hill.x - yard.x, hill.z - yard.z) - hill.radius >= 500, 'the yard has 500 m clear');
+    for (const place of [burn, mall]) {
+      assert.ok(Math.hypot(hill.x - place.x, hill.z - place.z) - hill.radius - place.flatRadius >= 350,
+        `${place.id} has 350 m clear beyond its flat ground`);
+    }
+  }
+});
+
+test('hill footprints leave named places and their surrounding ground clear', () => {
+  for (const hill of HILLS) {
+    for (const place of LAND.table) {
+      // The Ridge top is itself the named place, including the fifth flag.
+      if (hill.kind === 'ridge-top' && place.id === 'ridge') continue;
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      const clearance = Math.hypot(hill.x - place.x, hill.z - place.z) - reach - place.flatRadius;
+      assert.ok(clearance >= 30, `${hill.kind} leaves 30 m clear around ${place.id}`);
+    }
+  }
+});
+
+test('hill footprints leave the trial tunnel mouths clear', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  for (const mouth of [trial.segment.start, trial.segment.end]) {
+    for (const hill of HILLS) {
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      const clearance = Math.hypot(hill.x - mouth.x, hill.z - mouth.z) - reach;
+      assert.ok(clearance >= 30, `${hill.kind} leaves 30 m clear around a tunnel mouth`);
+    }
+  }
+});
+
+test('hill footprints leave both river decks clear from end to end', () => {
+  for (const crossing of RIVER_LAND.crossings.filter(item => item.kind === 'bridge' || item.kind === 'pipe')) {
+    const hit = ROAD_NET.nearest(crossing.x, crossing.z);
+    const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    const dx = (b.x - a.x) / length * 88, dz = (b.z - a.z) / length * 88;
+    const deck = [{x: crossing.x - dx, z: crossing.z - dz}, {x: crossing.x + dx, z: crossing.z + dz}];
+    for (const hill of HILLS) {
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      assert.ok(distanceToRoad(hill.x, hill.z, deck) >= reach + crossing.deckHalfWidth,
+        `${hill.kind} leaves the ${crossing.id} deck clear`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
@@ -403,9 +470,10 @@ test('the Lookout has a level top, follows the Ridge, and leaves roads clear', (
 
 test('the scab plates have level mesas with steep sides and a drivable ramp', () => {
   const mesas = HILLS.filter(hill => hill.kind === 'mesa');
-  assert.ok(mesas.length >= 2);
+  assert.equal(mesas.length, 6);
   const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
   for (const mesa of mesas) {
+    assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.face === 30 && mesa.ramp === 220);
     assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
     const top = scablandsTerrainHeightAt(mesa.x, mesa.z);
     assert.equal(top - scablandsTerrainHeightAt(mesa.x, mesa.z, []), mesa.height);
@@ -427,6 +495,14 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
       const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((mesa.x - a.x) * dx + (mesa.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
       assert.ok(Math.hypot(mesa.x - a.x - t * dx, mesa.z - a.z - t * dz) > mesa.radius + mesa.ramp + road.halfWidth, `${road.id} clears the mesa`);
+    }
+  }
+  for (const mesa of mesas) {
+    const reach = mesa.radius + mesa.ramp;
+    assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.radius >= 120 && mesa.radius <= 260);
+    assert.ok(distanceToRoad(mesa.x, mesa.z, RIVER_LAND.line.points) > reach + 78 + 150);
+    for (const road of ROAD_NET.roads) {
+      assert.ok(distanceToRoad(mesa.x, mesa.z, road.points) > reach + road.halfWidth + 200);
     }
   }
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', 100, 200))).filter(hill => hill.kind === 'mesa');

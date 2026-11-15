@@ -1,5 +1,5 @@
 import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
-import {riseHeightAt,riverDepthAt} from './scablands-regions.js';
+import {riseHeightAt,riverDepthAt,GROUND_AREAS,polygonMargin,RIVER_LAND,RIVER} from './scablands-regions.js';
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
 import {makeRng} from '../rng.js';
@@ -32,9 +32,33 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
-    Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
-    Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
+    Object.freeze({...land.between('yard','tin-town',.4,-600,-200),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
+    Object.freeze({...land.between('yard','tin-town',.7,100,800),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
   ];
+  // Select the additional plates from the fixed land, then express their
+  // centres through the same named-place pair as the original eastern mesa.
+  const mesaRng=makeRng(seed ^ 0x4d455341);
+  const plates=GROUND_AREAS.polygons.find(area=>area.id==='scab-plates');
+  const mesaBase=LAND.between('yard','tin-town',.7);
+  const referenceHills=hills.map((hill,index)=>{
+    const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
+    const share=index===hills.length-2 ? .4 : .7;
+    const moved=hill.kind==='mesa'?land.between('yard','tin-town',share):land.at(anchor);
+    const fixed=hill.kind==='mesa'?LAND.between('yard','tin-town',share):LAND.at(anchor);
+    return {x:hill.x-moved.x+fixed.x,z:hill.z-moved.z+fixed.z,radius:hill.radius,ramp:hill.ramp??0};
+  });
+  for(let attempt=0;attempt<12000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
+    const dx=mesaRng.range(-3300,1300),dz=mesaRng.range(-1200,1400);
+    const x=mesaBase.x+dx,z=mesaBase.z+dz;
+    const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
+    if(polygonMargin(plates.points,x,z)<=reach) continue;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
+    if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;
+    if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<reach+place.flatRadius+200)) continue;
+    if(referenceHills.some(hill=>Math.hypot(x-hill.x,z-hill.z)<reach+hill.radius+hill.ramp+30)) continue;
+    referenceHills.push({x,z,radius,ramp});
+    hills.push(Object.freeze({...land.between('yard','tin-town',.7,dx,dz),kind:'mesa',height,radius,face:30,ramp,rampAngle:mesaRng.range(0,Math.PI*2)}));
+  }
   // Grow the Breaks from the existing hills, using offsets from the Mall so
   // that the whole group follows that named place when the land is moved.
   const breaksRng=makeRng(seed ^ 0x42524541), mall=LAND.place('dead-mall');

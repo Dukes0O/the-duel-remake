@@ -5,20 +5,29 @@ import {join} from 'node:path';
 import {Script} from 'node:vm';
 import {LAND} from '../../src/world/scablands-names.js';
 import {HILLS} from '../../src/world/scablands-height.js';
-import {SCARPS} from '../../src/world/scablands-scarps.js';
+import {SCARP, SCARPS} from '../../src/world/scablands-scarps.js';
 import {ROAD_NET} from '../../src/world/scablands-road.js';
-import {stepsWayFor} from '../../src/world/scablands-regions.js';
+import {RIVER, RIVER_LAND, stepsWayFor} from '../../src/world/scablands-regions.js';
+import {nearestOnLine} from '../../src/world/scablands-ways.js';
 
 const offset = (p, x, z) => ({x: p.x + x, z: p.z + z});
 const hill = kind => HILLS.find(item => item.kind === kind);
 
 export function views() {
-  const breaks = hill('breaks'), mesa = hill('mesa'), ridge = hill('ridge-top');
+  const breaks = hill('breaks'), mesa = hill('mesa');
   const lookout = hill('lookout'), dune = hill('dune');
   const nextBreaks = HILLS.find(item => item.kind === 'breaks' && item !== breaks);
   const yardDistance = Math.hypot(LAND.yard.x - lookout.x, LAND.yard.z - lookout.z);
   const lookoutEdge = offset(lookout, (LAND.yard.x - lookout.x) * lookout.topRadius * .9 / yardDistance,
     (LAND.yard.z - lookout.z) * lookout.topRadius * .9 / yardDistance);
+  const towardYard = distance => offset(lookoutEdge, (LAND.yard.x - lookout.x) * distance / yardDistance,
+    (LAND.yard.z - lookout.z) * distance / yardDistance);
+  // The spur is straight here. Use its actual approach, looking uphill along it.
+  const ridgeRoad = ROAD_NET.road('ridge-spur').points;
+  const ridgeEnd = ridgeRoad.at(-1), ridgeStart = ridgeRoad[0];
+  const ridgeLength = Math.hypot(ridgeStart.x - ridgeEnd.x, ridgeStart.z - ridgeEnd.z);
+  const upRidge = distance => ({x: ridgeEnd.x + (ridgeStart.x - ridgeEnd.x) * distance / ridgeLength,
+    z: ridgeEnd.z + (ridgeStart.z - ridgeEnd.z) * distance / ridgeLength});
   const burn = ROAD_NET.road('burn-road').points.reduce((best, point) =>
     Math.hypot(point.x - breaks.x, point.z - breaks.z) < Math.hypot(best.x - breaks.x, best.z - breaks.z) ? point : best);
   const angle = mesa.rampAngle + Math.PI;
@@ -32,9 +41,13 @@ export function views() {
     (onWay.z - mesa.z) * (mesa.radius + mesa.face + 250) / wayDistance);
   const {a, b} = SCARPS[0].stretches[0];
   const length = Math.hypot(b.x - a.x, b.z - a.z), foot = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
+  const scarpTop = offset(foot, -SCARPS[0].height * SCARP.faceRatio * (b.z - a.z) / length,
+    SCARPS[0].height * SCARP.faceRatio * (b.x - a.x) / length);
   const bankA = LAND.at('river-3'), bankB = LAND.at('river-4');
-  const bankLength = Math.hypot(bankB.x - bankA.x, bankB.z - bankA.z);
-  const bed = {x: (bankA.x + bankB.x) / 2, z: (bankA.z + bankB.z) / 2};
+  const hit = nearestOnLine(RIVER_LAND.line.points, (bankA.x + bankB.x) / 2, (bankA.z + bankB.z) / 2);
+  const bed = {x: hit.x, z: hit.z};
+  const riverA = RIVER_LAND.line.points[hit.index], riverB = RIVER_LAND.line.points[hit.index + 1];
+  const bankLength = Math.hypot(riverB.x - riverA.x, riverB.z - riverA.z);
   return [
     {name: 'breaks-from-burn-road', from: burn, to: breaks},
     {name: 'breaks-valley-from-crest', from: breaks, to: {
@@ -43,11 +56,12 @@ export function views() {
     {name: 'mesa-foot', from: side(mesa.radius + mesa.face + 60), to: mesa},
     {name: 'mesa-from-plates-way', from: mesaFromWay, to: mesa},
     {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120), landmark: side(mesa.radius * .8)},
-    {name: 'ridge-way-up', from: offset(ridge, 0, -ridge.radius - 80), to: ridge},
-    {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard},
+    {name: 'ridge-way-up', from: upRidge(600), to: upRidge(450)},
+    {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard, landmark: towardYard(600)},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
-    {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: foot},
-    {name: 'river-bank', from: bed, to: offset(bed, -(bankB.z - bankA.z) / bankLength * 100, (bankB.x - bankA.x) / bankLength * 100)},
+    {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: scarpTop, landmark: scarpTop},
+    {name: 'river-bank', from: bed, to: offset(bed, -(riverB.z - riverA.z) / bankLength * RIVER.lipHalfWidth,
+      (riverB.x - riverA.x) / bankLength * RIVER.lipHalfWidth)},
   ];
 }
 

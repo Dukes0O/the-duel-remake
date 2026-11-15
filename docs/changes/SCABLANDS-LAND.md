@@ -1812,3 +1812,105 @@ Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. A new check covers
 Changed assertions: none; the new count and spacing check adds coverage. Codex decided: grow the new hills from the previous hill, with seeded candidates, so the existing ordered-spacing claim remains true. Removed: none.
 
 Still needed: verify all 16 against the full placement and protected-corridor rules, build and prove all three road passes, finish the six mesas, route checks, dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: four more mesas
+
+Four seeded mesas bring the plates to six. The new mesas have ramps and clear the road network, river and named places. Their centres follow the yard and Tin Town. Their placement has not yet been proved against job corridors, the plates' way or the required three stretches of furnace cover. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. The first run found that moving Tin Town changed the selection; it passed after selection was made against the fixed land. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: mesa count changed from at least 2 to exactly 6 to match the design. It is stricter, not loosened. New checks cover the added mesas' dimensions and clearance from roads and the river. Codex decided: select the four new mesas from seeded candidates on the fixed plates, then tie them to the yard and Tin Town. Removed: none.
+
+Still needed: prove and adjust the mesas for three separate furnace-cover stretches and all protected corridors; verify the Breaks and road passes; drive the routes and jobs; finish the dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: picture viewpoints after review
+
+The Ridge picture now starts on the actual Ridge spur and looks uphill at a nearer point on that road. The previous view started off the road and checked the distant Ridge centre, so it did not establish that the way up appeared in the picture. The Lookout still faces the yard, but checks a point on the flats in that direction: the yard itself is about 3.7 km away, beyond the camera's 2.4 km far plane. The other later views have targets within that range. These distance checks do not prove that the targets are visible or unobscured in the browser. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A position check passed for the Ridge road, its uphill direction and all landmark distances. The browser scenario was not run. Race fingerprints and world signatures were not rerun. Changed assertions: none. Codex decided: check the nearby Ridge road and the flats toward the yard as the named features. Removed: the off-road Ridge position and the unreachable yard landmark check.
+
+Still needed: Claude must run and judge every picture, including the views after the Ridge. Raise and reshape the mesas to the new dimensions, prove the cover and protected routes, finish the remaining hill-country requirements and run the final checks.
+
+### Hill country: taller mesas
+
+All six mesas now rise 30 to 36 m, with 30 m sides and 220 m ramps. The eastern original mesa moved 400 m west to clear the East Road, and seeded mesas were selected again for their larger footprints. The existing Ridge picture correction is in commit 13b5b1086. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. Its first run exposed the East Road overlap; the rerun passed after moving the mesa. Race fingerprints and world signatures were not rerun. Claude must run and judge all picture views, including those after the Ridge.
+
+Changed assertion, for Claude to review: added mesas' height range changed from 15–25 m to 30–55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30–36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
+
+Still needed: prove the three separate furnace-cover stretches and all protected corridors; verify the Breaks and all three road passes; drive the routes and jobs; complete the remaining hill-country requirements and final checks.
+
+### Hill country: mesa clearance at the river
+
+Moved the first mesa to clear the river bank, including its ramp footprint. The seeded placement of the other mesas is recalculated around it. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. An initial position failed the ramp and tunnel checks and was replaced. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: the mesa size, river and road clearance checks now cover all six mesas instead of only the four added mesas. The requirements are unchanged and the check is stricter, not loosened. Codex decided: move the first mesa within the plates to keep its complete ramp footprint clear of the river. Removed: the former mesa position overlapping the river corridor.
+
+Still needed: prove the three separate furnace-cover stretches and all protected corridors; build and prove the Burn Road and Mall Road passes (a preliminary terrain sample found no hills rising on both sides within 150 m); verify the Mall to Everburn pass; drive the routes and jobs; complete the remaining hill-country requirements and final checks. Claude must run and judge the picture scenario, including the moved mesa.
+### Hill country: Breaks placement check
+
+The hills suite now checks every Breaks hill against the widened yard, Everburn and Dead Mall triangle and the clear ground around those places. All 16 satisfy those placement limits. This does not establish the required road passes; the current placement keeps every hill clear of every road, so those passes still need to be built. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 34 of 34. Race fingerprints and world signatures were not rerun. The picture scenario was not run.
+
+Changed assertions: none. The placement check is new. Codex decided: no new design choice. The check measures clearance from the full outer radius. Removed: none.
+
+Still needed: build the three Breaks road passes, prove mesa cover and the protected corridors, drive the routes and jobs, complete the remaining hill-country requirements and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: pass road centre check
+
+The hills suite now samples the Burn Road, Mall Road and Mall to Everburn road every 5 m and checks that Breaks hills raise each centre line by no more than 0.5 m. This protects the road-centre requirement while the passes are designed. It does not show that any pass exists. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 35 of 35. Race fingerprints and world signatures were not rerun. The picture scenario was not run.
+
+Changed assertions: none; the road-centre check is new. The older assertion that every Breaks hill clears every road remains in place and conflicts with building the required passes. A deliberate change to that assertion will need Claude's review. Codex decided: sample at intervals of at most 5 m. Removed: none.
+
+Still needed: build and prove all three Breaks passes, prove mesa cover and protected corridors, drive routes and jobs, and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: scarp picture target
+
+The scarp picture still starts 80 m from the foot on the low side, but now points to and checks the rim at the top of the face. The old landmark was the foot, where the scarp adds no height, so its projection did not establish that the face's top was in view. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry check confirmed zero scarp height at the camera position and 14 m at the rim. The browser scenario was not run. Race fingerprints and world signatures were not rerun.
+
+Changed assertions: the scarp landmark changed from the foot to the rim, so the check now covers the top of the named face. Claude must review it; it is not loosened. Codex decided: use the face's own width to locate its rim. Removed: the foot as the scarp picture's landmark.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+
+### Hill country: named-place clearance
+
+The hills suite now checks every hill footprint, including each mesa ramp, against the flat ground and 30 m around every named place. The Ridge top is the named Ridge itself, so it is the one exception. The current land passes. This does not prove the job-leg corridors or the tunnel mouths. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 36 of 36. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the clearance check is new. Codex decided: use each named place's full flat radius and the whole mesa ramp footprint. Removed: none.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: tunnel mouth clearance
+
+The hills suite now checks both ends of the trial tunnel against every hill footprint, including each mesa ramp. Both ends have at least 30 m clear. This covers the current land and does not establish clearance along job legs or at decks. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 37 of 37. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the tunnel-mouth check is new. Codex decided: measure 30 m of clearance around each mouth, using the full mesa ramp footprint. Removed: none.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+### Hill country: river-bank picture
+
+The river-bank view now starts on the river's curved centre line and aims at the bank's lip. The old position used the midpoint of two named river points, which need not lie in the bed, and aimed beyond the lip. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry check found the start on the centre line with an 8 m bed depth, and the target 78 m from the line at the lip. The browser scenario, replay checks and world signatures were not run.
+
+Changed assertion, for Claude to review: the checked river-bank landmark moved from 100 m along the chord between the named points to the actual 78 m bank lip, measured from the curved river. This checks the requested feature and is not loosened. Codex decided: use the nearest river segment to the former midpoint and its direction. Removed: the chord-based bed and target positions.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+### Hill country: deck clearance
+
+The hills suite checks the full 176 m length of both river decks against every hill footprint, including mesa ramps. Both decks are clear. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 38 of 38. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the deck check is new. Codex decided: use the deck direction and length used by the land's crossing solids, and include each deck's half-width. Removed: none.
+
+Still needed: build and prove all three Breaks road passes, prove the three mesa cover stretches and job corridors, drive the routes and jobs, and run final checks. Claude must run and judge the pictures.
