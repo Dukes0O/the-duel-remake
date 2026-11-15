@@ -63,6 +63,8 @@ The bore now has a flat support floor 0.55 radius below its centre. Its walls st
 
 ## Incomplete
 
+Tunnel wall and motion queries now reuse result objects instead of allocating on each call. Callers must consume each result before the next query. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed (20 checks). This does not fix the slow fall below. No assertions or sound cues changed.
+
 A Titan driven off the west scarp at 80 mph lands on the surface in front of the low mouth. `node tools/test-tunnels.mjs` passed with this new drive. At 40 mph, the same car lands at about 6.4 m inside the mouth on the tube floor, about 0.69 m above the natural surface; without a tube it lands on the surface at about 5.3 m. The enclosure is not finished: preserve the surface floor during a fall from above, including after landing, and add a regression for this slower case. No game event or sound cue was added.
 
 

@@ -172,14 +172,25 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     return inside.floor;
   }
 
+  const wallResult = {limit: 0, radial: 0, center: nearestResult.center};
   function wallAt(position, actorHeight) {
     const inside = tubeAt(position, actorHeight);
-    return inside ? {limit: inside.tube.radius * wallRadius, radial: inside.radial, center: inside.center} : null;
+    if (!inside) return null;
+    wallResult.limit = inside.tube.radius * wallRadius;
+    wallResult.radial = inside.radial;
+    return wallResult;
   }
 
   // Constrain a move starting or ending inside a segment. Actual mouths
   // remain open, while unfinished faces are checked from either side.
   // The caller supplies the vehicle's horizontal clearance from the wall.
+  // Results are scratch values, like tubeAt: callers consume them before the next query.
+  const motionResult = {position: {x: 0, y: 0, z: 0}, hit: false};
+  function motion(x, y, z, hit) {
+    motionResult.position.x = x; motionResult.position.y = y; motionResult.position.z = z;
+    motionResult.hit = hit;
+    return motionResult;
+  }
   function constrainMotion(start, end, clearance = 0) {
     checkPoint(start, 'Move start');
     checkPoint(end, 'Move end');
@@ -202,15 +213,15 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
         const y = start.y + (end.y - start.y) * t;
         const sideways = Math.abs((x - face.x) * -dz + (z - face.z) * dx) / length;
         if (sideways > tube.radius + clearance || y < face.y - tube.radius * 0.55 || y > face.y + tube.radius) continue;
-        return {position: {x, y, z}, hit: true};
+        return motion(x, y, z, true);
       }
       inside = tubeAt(end, end.y);
-      if (!inside) return {position: {...end}, hit: false};
+      if (!inside) return motion(end.x, end.y, end.z, false);
     }
     let tube = inside.tube;
     let dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
     let length = Math.hypot(dx, dz);
-    if (!length) return {position: {...end}, hit: false};
+    if (!length) return motion(end.x, end.y, end.z, false);
     const along = ((end.x - tube.start.x) * dx + (end.z - tube.start.z) * dz) / length;
     if (along < 0 || along > length) {
       // A joint is not a mouth: use the adjoining segment's walls when the
@@ -244,10 +255,10 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
           const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
           const limit = Math.max(0, tube.radius * wallRadius - clearance);
           const sideways = side - Math.max(-limit, Math.min(limit, side));
-          return {position: {x: end.x - correction * dx / length + sideways * dz / length, y: end.y,
-            z: end.z - correction * dz / length - sideways * dx / length}, hit: true};
+          return motion(end.x - correction * dx / length + sideways * dz / length, end.y,
+            end.z - correction * dz / length - sideways * dx / length, true);
         }
-        return {position: {...end}, hit: false};
+        return motion(end.x, end.y, end.z, false);
       }
       tube = next;
       dx = tube.end.x - tube.start.x; dz = tube.end.z - tube.start.z;
@@ -255,10 +266,10 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     }
     const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
     const limit = Math.max(0, tube.radius * wallRadius - clearance);
-    if (Math.abs(side) <= limit) return {position: {...end}, hit: false};
+    if (Math.abs(side) <= limit) return motion(end.x, end.y, end.z, false);
     const correction = side - Math.sign(side) * limit;
-    return {position: {x: end.x + correction * dz / length, y: end.y,
-      z: end.z - correction * dx / length}, hit: true};
+    return motion(end.x + correction * dz / length, end.y,
+      end.z - correction * dx / length, true);
   }
 
   function clips(position, margin = 0) {
