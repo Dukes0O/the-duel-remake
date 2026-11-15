@@ -13,6 +13,22 @@ import {SCARPS} from './scablands-scarps.js';
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
 
+// Single boulders use their own larger cells, so they remain stable as the
+// player moves. Like rock falls, these candidates need footprint clearance.
+export const BOULDER_CELL = 120;
+export function loneBoulderInCell(seed, i, j) {
+  const rng = makeRng(seedCell(seed ^ 0xb01d3, i, j));
+  const present = rng.float();
+  const x = (i + rng.float()) * BOULDER_CELL;
+  const z = (j + rng.float()) * BOULDER_CELL;
+  const size = 1 + rng.float() * 3, heading = rng.float() * Math.PI * 2;
+  const ground = scablandsRegionAt(x, z);
+  const chance = ground === 'scab-plates' || ground === 'river-bed' ? .45 : .12;
+  if (ground === 'salt-pan' || present >= chance) return null;
+  return {id: `boulder:single:${i}:${j}`, x, z,
+    y: scablandsSurfaceHeightAt(x, z), size, heading};
+}
+
 // Rock falls sit on the foot side of each named scarp. These are candidates:
 // their full footprints still need clearance before drawing or making solids.
 export function scarpBoulderCandidates(seed, scarps = SCARPS) {

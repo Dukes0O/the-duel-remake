@@ -1274,3 +1274,13 @@ Added seeded groups of 1 to 4 m boulders on the foot side of each scarp. They fo
 The placement suite passed all eight tests, and all Scablands suites passed. Both replay suites passed, with 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. Integration was already current. The lane tier passed 26 of 28: `test-full-check` could not start `pwsh` for its temporary copy (EACCES); `test-town-core` missed its 10 ms limit at 11.23 ms under load and passed once alone at 8.98 ms. The build passed with bundle-size warnings. Changed assertions: none. Codex decided: the sizes, group sizes and distance from the scarp foot are recorded on the card. Removed: nothing; the existing land is unchanged.
 
 For Claude to run: `test-full-check` at merge, and the browser scenario once it is written; Chrome cannot start in this job. The scene, clearance and solids, wires, signs, remaining boulders, track drawing, map and scenario still need work. Cockpit sync could not open its protected credential and did not update Cockpit.
+
+### Realism trial, step 3: single boulder candidates, in progress
+
+Added repeatable single-boulder candidates in 120 m cells. They are 1 to 4 m across, follow the ground height, favour plates and the river bed, and do not appear on salt. They are not yet drawn or solid. Their footprints still need clearance from roads, buildings, river decks and job starts. No game event or sound cue was added.
+
+Checks: all eight Scablands suites passed, including nine placement tests. Both replay suites passed, with 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. No separate world-signature test files matched the requested name. Integration was already current. The lane tier passed 27 of 28 suites; `test-full-check` could not start `pwsh` for its temporary copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: the candidate cell size and ground chances are recorded on the card. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: rerun `test-full-check` at merge and run the browser scenario once it is written; Chrome cannot start in this job. The scene, clearance and solids, wires, signs, track drawing, map and scenario still need work. Cockpit sync could not open its protected credential and did not update Cockpit.

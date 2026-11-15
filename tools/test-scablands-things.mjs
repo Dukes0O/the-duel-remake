@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 test('seeded rock falls follow the foot of each scarp', () => {
   const rocks = scarpBoulderCandidates(1989);
@@ -83,6 +84,26 @@ test('ground preferences keep scrub off salt and put more stones on plates', () 
   assert.ok(SMALL_DENSITY['scab-plates'].stone > SMALL_DENSITY.flats.stone);
   assert.ok(SMALL_DENSITY['wreck-fields'].scrap > 0);
   assert.ok(SMALL_DENSITY.burn.stump > 0);
+});
+
+test('single boulders are stable within their cells and follow ground height', () => {
+  const origin = LAND.at('yard');
+  const i = Math.floor(origin.x / BOULDER_CELL), j = Math.floor(origin.z / BOULDER_CELL);
+  let count = 0, changed = false;
+  for (let dx = -8; dx <= 8; dx++) for (let dz = -8; dz <= 8; dz++) {
+    const xCell = i + dx, zCell = j + dz;
+    const rock = loneBoulderInCell(1989, xCell, zCell);
+    assert.deepEqual(rock, loneBoulderInCell(1989, xCell, zCell));
+    if (JSON.stringify(rock) !== JSON.stringify(loneBoulderInCell(1990, xCell, zCell))) changed = true;
+    if (!rock) continue;
+    assert.equal(Math.floor(rock.x / BOULDER_CELL), xCell);
+    assert.equal(Math.floor(rock.z / BOULDER_CELL), zCell);
+    assert.ok(rock.size >= 1 && rock.size < 4);
+    assert.equal(rock.y, scablandsSurfaceHeightAt(rock.x, rock.z));
+    count++;
+  }
+  assert.ok(count > 0);
+  assert.ok(changed);
 });
 
 test('the local roadside search agrees with the complete road net', () => {
