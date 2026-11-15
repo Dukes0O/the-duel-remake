@@ -82,8 +82,8 @@ const battle = difficulty => fieldBattleJob({runs: 0, difficulty}).steps[0];
   // longer comes out 130 m past the Dead Mall's place; the claim is now its share of the road, and the road's third place is still the one 60 m north of the Dead Mall.
   near(FIELD_BATTLE.comesOutAtMetres, .4449 * gasRunLength('boneyard'), .5, 'it comes out at .4449 of the way along the Boneyard road');
   same([ROAD[2].position.x, ROAD[2].position.z], [LAND.at('dead-mall', 0, -60).x, LAND.at('dead-mall', 0, -60).z], 'the road\'s third place is the one 60 m north of the Dead Mall');
-  near(FIELD_BATTLE.comesOutAtMetres, 5482, 1e-9, '5,482 m into the road (560 m on the first, small land)');
-  near(FIELD_BATTLE.furnace.startMetres, 5402, 1e-9, 'and it starts 5,402 m in');
+  near(FIELD_BATTLE.comesOutAtMetres, 5477, 1e-9, '5,477 m into the road (560 m on the first, small land)');
+  near(FIELD_BATTLE.furnace.startMetres, 5397, 1e-9, 'and it starts 5,397 m in');
   near(FIELD_BATTLE.furnace.comesOutAtMetres - FIELD_BATTLE.furnace.startMetres, 80, 1e-9, 'it comes out 80 m behind her');
   {
     const f = fresh('medium'), start = alongAt(f.metres);
@@ -460,11 +460,11 @@ const hitDoor = duel => {
 // A battle with no ambushes, so that only the furnace can hurt Big Bess.
 const noRaiders = difficulty => { const job = fieldBattleJob({runs: 0, difficulty}); return {...job, steps: [{...job.steps[0], ambushes: []}]}; };
 {
-  // The furnace does not exist until Big Bess is 5,482 m along the road (560 m on the first, small land); then it comes out behind her and Clinker speaks.
+  // The furnace does not exist until Big Bess is 5,477 m along the road (560 m on the first, small land); then it comes out behind her and Clinker speaks.
   const duel = startBattle('medium', {job: noRaiders('medium')});
   // SCABLANDS-LAND round 4: every wait here that comes before the furnace is out is its old time plus the drive to where it comes out (COMES_OUT_SECONDS, above).
   check(runUntil(duel, () => bessOf(duel)?.pathIndex >= 2, 60 + COMES_OUT_SECONDS), 'Big Bess drives on');
-  check(!furnaceOf(duel), 'the furnace is not out when she is past the first place of the road: it comes out much later (SCABLANDS-LAND round 4: at 5,482 m)');
+  check(!furnaceOf(duel), 'the furnace is not out when she is past the first place of the road: it comes out much later (SCABLANDS-LAND round 4: at 5,477 m)');
   // Moss names the furnace when it comes out, not at the start (the first play found him naming a furnace nobody could see).
   same(duel.lines.filter(text => text.startsWith('Moss: That is his furnace')), [], 'Moss does not name the furnace before it is out');
   same(duel.lines.filter(text => text.startsWith('Moss: Through the Boneyard')).length, 1, 'the battle opened on Moss\'s Boneyard line, once');

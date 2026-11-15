@@ -1151,4 +1151,14 @@ Changed assertions, for Claude to review: the chase used to start and end at the
 
 Removed: the chase path through the well post.
 
-Still needed: the fall now happens 12.5 m from the well's centre and must be made visually convincing while keeping the path clear. The battle furnace's reachable road clips a gate post. Test both furnace roads in 2 m steps, including the actual reachable portions and ground grade, then fix any remaining unsafe pieces. The three refused assertions and per-step allocations remain.
+Still needed: the fall now happens 12.5 m from the well's centre and must be made visually convincing while keeping the path clear. The three refused assertions and per-step allocations remain.
+
+### Furnace roads, in progress
+
+The battle furnace can return all the way to the beginning of the Boneyard road. Its old starting point crossed the well post. The road now starts 12 m east and 3.5 m south of the well, clear of the post. Both complete furnace roads are checked at intervals of at most 2 m, with 2.62 m clearance and the land's climbing limit. The check accounts for the height of bridge piers under the deck. It found no gate-post collision on the current road. No new event or sound cue was added.
+
+Checks: `test-scablands-solid` passed 18 tests, `test-run-gas` passed 8,504 checks, and `test-field-battle` passed 4,639 checks. Race fingerprints, the other card checks, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions, for Claude to review: the Boneyard road starts at offset (12, 3.5) m instead of the well centre, and its length pin moves from 12,322 to 12,310 m. The battle furnace's appearance and start distances move from 5,482 to 5,477 m and 5,402 to 5,397 m because they follow that road. The tolerances are unchanged.
+
+Removed: the Boneyard road's start through the well post.

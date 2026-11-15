@@ -28,10 +28,37 @@ import {EVERBURN_PROP_FORM, createEverburnProps, EVERBURN_PROPS} from '../src/wo
 import {girderBridgeGeometry, pipeGeometry} from '../src/world/scablands-draw.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
 
 const venue = ARENA_VENUES.scablands, course = new Course(venue, 1989), DT = 1 / 60, MPH = 1.609344;
 const wrap = wrapHeading;
+
+test('both furnace roads clear solids and climbable ground, including the return to the well', () => {
+  const paths = [EVERBURN_JOBS[5].steps[1].actor.path, fieldBattleJob().steps[0].furnaceActor.path];
+  const radius = 2.12 + .5, height = 5.06;
+  for (const [road, path] of paths.entries()) {
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1].position, b = path[i].position;
+      const length = Math.hypot(b.x - a.x, b.z - a.z), steps = Math.ceil(length / 2);
+      let previous = null;
+      for (let j = 0; j <= steps; j++) {
+        const t = j / steps, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+        const y = scablandsSurfaceHeightAt(x, z);
+        if (previous) assert.ok(Math.abs(y - previous.y) / Math.hypot(x - previous.x, z - previous.z) <= GROUND.gripGrade,
+          `furnace road ${road + 1}, piece ${i}: ground is too steep at ${x}, ${z}`);
+        previous = {x, y, z};
+        for (const solid of solidsNear(x, z, x, z, radius)) {
+          if (solid.verticalClearance && (y > solid.maxY || y + height < solid.minY)) continue;
+          const c = Math.cos(solid.heading), s = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
+          const distance = Math.hypot(Math.max(Math.abs(dx * c - dz * s) - solid.halfX, 0),
+            Math.max(Math.abs(dx * s + dz * c) - solid.halfZ, 0));
+          assert.ok(distance >= radius, `furnace road ${road + 1}, piece ${i}: ${solid.id} is ${distance.toFixed(2)} m away`);
+        }
+      }
+    }
+  }
+});
 
 // ---- A real Duel on the Scablands, driven through its own inputs -----------------------------------------------------------------------------
 function newDuel(car = 'falcone_f42') {

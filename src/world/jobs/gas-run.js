@@ -23,7 +23,7 @@ export function gasRunPaths(land) {
     long: path(well, at3('long-road-1', between('everburn', 'iron-line', .688, 95, -55)), at3('long-road-2', at('dry-dam', 124, 74)),
       at3('long-road-3', at('ships-in-sand', -60, 50)), at3('long-road-4', between('ships-in-sand', 'ridge', .426, -10.78, 36.28)),
       at3('long-road-5', at('ridge', -74, 104)), at3('long-road-6', at('tin-town', -120, -90)), longStop),
-    boneyard: path(well, at3('boneyard-road-1', between('dead-mall', 'everburn', .485, 5.62, -18.9)),
+    boneyard: path(at3('everburn', at('everburn', 12, 3.5), 18), at3('boneyard-road-1', between('dead-mall', 'everburn', .485, 5.62, -18.9)),
       at3('boneyard-road-2', at('dead-mall', 0, -60)), at3('boneyard-road-3', between('dead-mall', 'boneyard', .551, 16.19, 54.48)),
       at3('boneyard-road-4', at('boneyard', 23, 4)), at3('tin-town-gate-approach', at('tin-town', -25, 112)),
       at3('tin-town-gate', at('tin-town', -25, 62)), boneyardStop),
@@ -94,7 +94,7 @@ function drawPlaces(road, count, runs, marks = GAS_RUN_AMBUSH_METRES[road], salt
   return chosen;
 }
 
-// Both roads begin at the well, whose derrick box (18 m square) the truck's first place stands in. Since the fourth round of
+// Both roads begin by the well. The Boneyard road starts clear of the post because the battle furnace can return to its first point. Since the fourth round of
 // EVERBURN-PLAY-FIXES she starts ESCORT_TRUCK_START_ALONG_METRES down her first piece, clear of every solid (src/world/jobs/steps/escort.js),
 // and the car starts 13 m behind her there (the usual 10 from round 2 left the camera too near the derrick), 6 m to her right.
 export const GAS_RUN_START_BEHIND_METRES = 13;

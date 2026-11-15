@@ -388,7 +388,7 @@ function runUntil(duel, condition, seconds = 400) {
     LAND.at('tin-town', -120, -90), LAND.at('tin-town', -18, -13.5)];
   same(at(GAS_RUN_PATHS.long), pairs(longPlaces),
     'the long road is the card\'s eight places, well to Tin Town');
-  const boneyardPlaces = [LAND.at('everburn'), LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('dead-mall', 0, -60),
+  const boneyardPlaces = [LAND.at('everburn', 12, 3.5), LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('dead-mall', 0, -60),
     LAND.between('dead-mall', 'boneyard', .551, 16.19, 54.48), LAND.at('boneyard', 23, 4), LAND.at('tin-town', -25, 112), LAND.at('tin-town', -25, 62),
     LAND.at('tin-town', -10, 25)];
   same(at(GAS_RUN_PATHS.boneyard), pairs(boneyardPlaces),
@@ -402,7 +402,7 @@ function runUntil(duel, condition, seconds = 400) {
   // adding up the pieces between the places above (they were 1,259 m and 1,640 m); the same 5 m tolerance as before.
   const walk = list => list.slice(1).reduce((sum, item, index) => sum + Math.hypot(item.x - list[index].x, item.z - list[index].z), 0);
   near(gasRunLength('boneyard'), walk(boneyardPlaces), 5, 'the Boneyard road is about 12.35 km (the road no longer doubles back)');
-  near(gasRunLength('boneyard'), 12322, 5, 'and its figure on the larger land is 12,322 m');
+  near(gasRunLength('boneyard'), 12310, 5, 'and its figure on the larger land is 12,310 m');
   // SCABLANDS-LAND round 4: 300 m of 1.64 km (about 18%) is 3,000 m of the 18.6 km road; the roads are 6.3 km apart.
   check(gasRunLength('boneyard') < gasRunLength('long') - 3000, 'and 3 km or more shorter than the long road: short and dangerous, or long and safe');
   near(gasRunLength('long'), walk(longPlaces), 5, 'the long road, as the places lie, is 18.63 km (the card says about 1.9 km on the first, small land)');
