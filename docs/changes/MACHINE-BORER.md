@@ -26,6 +26,8 @@ The Dig scene now includes natural ground around Mabel's west scarp. It uses the
 
 Mabel is now reached with Q from the excavator. Her model loads from the borer asset, and her chase camera follows her own height underground. The model and camera still need the tunnel drawing and Claude's browser check; the scarp surface has not yet been cut away for the view. Controller input still needs connecting.
 
+The head now turns with its simulated speed, and the existing rock effect appears at the face while she cuts. The rest of the lining and conveyor drawing is still to come.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -55,6 +57,7 @@ Mabel is now reached with Q from the excavator. Her model loads from the borer a
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the borer display. The display needs Claude's browser check.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the scarp ground. The view and load time have not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed with selection, model loading code and camera positioning. The model and camera have not been checked in a browser.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the head movement and face effect. Their appearance still needs a browser check.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 

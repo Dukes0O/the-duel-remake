@@ -98,7 +98,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
-  let shownMessage='',messageUntil=0, muckUntil=0;
+  let shownMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
   const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -120,7 +120,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor,true);
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
-  const machineViews=new Map();let modelAsset=null, drillView=null;
+  const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null;
   const sound=(cue,data)=>{
     const now=performance.now();if(now<soundAfter)return;
     if(cue===MACHINE_SOUND_CUES.engine||cue===MACHINE_SOUND_CUES.hydraulic)soundAfter=now+700;
@@ -178,6 +178,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(!root)throw new Error(`The machine model is missing ${id}.`);
       const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:id==='drill'?null:sound});
       machineViews.set(id,view);
+      if(id==='borer')borerHead=view.body.getObjectByName('borerhead');
     }
   }catch(error){
     failed=true;message.textContent='The yard model could not be loaded. Check the machine and Dome models.';
@@ -213,7 +214,15 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     }
     for(const event of frameEvents)if(event.cue)roadSounds.play(event.cue);
     const borerActive=sim.activeMachine==='borer' && sim.mode==='work';
-    if(sim.borer.distanceM>previousBoreDistance)muckUntil=now+100;
+    if(borerHead)borerHead.rotateZ(elapsed * sim.borer.headSpeed * 2);
+    if(sim.borer.distanceM>previousBoreDistance){
+      muckUntil=now+100;
+      if(now>=borerFxAfter){
+        effects.burst({x:sim.borer.x,y:sim.borer.y+2,z:sim.borer.z,
+          direction:{x:-Math.sin(sim.borer.heading),z:-Math.cos(sim.borer.heading)},strength:1.2,material:'rock'});
+        borerFxAfter=now+300;
+      }
+    }
     borerSounds.update(borerActive?sim.borer.headSpeed:0,borerActive && now<muckUntil);
     for(const event of frameEvents)if(event.cue?.startsWith('borer.'))borerSounds.play(event.cue);
     roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
