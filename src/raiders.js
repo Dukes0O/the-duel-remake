@@ -47,9 +47,39 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   const dx = destination.x - raider.x, dz = destination.z - raider.z;
   const distance = Math.hypot(dx, dz), travel = Math.min(distance, 3 * dt);
   if (distance > 1e-6 && travel > 0) {
-    const next = move(raider, {x: raider.x + dx / distance * travel, z: raider.z + dz / distance * travel},
-      {radius: .4, grade: FOOT_GRADE});
-    raider.x = next.x; raider.z = next.z; raider.yaw = Math.atan2(dx, dz);
+    const heading = Math.atan2(dx, dz);
+    const options = {radius: .4, grade: FOOT_GRADE};
+    const tryHeading = (angle, length) => move(raider,
+      {x: raider.x + Math.sin(angle) * length, z: raider.z + Math.cos(angle) * length}, options);
+    const clear = (next, length) => !next.blocked && Math.hypot(next.x - raider.x, next.z - raider.z) >= length * .9;
+    // Keep the chosen side until there is room ahead. This prevents alternating
+    // around the same corner when a solid or a steep bank blocks the direct way.
+    const pathClear = length => {
+      let from = {x: raider.x, z: raider.z};
+      const steps = Math.ceil(length / .75), stride = length / steps;
+      for (let i = 0; i < steps; i++) {
+        const next = move(from, {x: from.x + Math.sin(heading) * stride, z: from.z + Math.cos(heading) * stride}, options);
+        if (next.blocked || Math.hypot(next.x - from.x, next.z - from.z) < stride * .9) return false;
+        from = next;
+      }
+      return true;
+    };
+    if (memory.detour && pathClear(Math.min(distance, 6))) memory.detour = 0;
+    const side = memory.detour || 1;
+    const turns = memory.detour ? [side, -side] : [0, side, -side];
+    let next = null, usedHeading = heading;
+    for (const turn of turns) {
+      for (const angle of turn === 0 ? [0] : [Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4]) {
+        const candidateHeading = heading + turn * angle;
+        const candidate = tryHeading(candidateHeading, travel);
+        if (!clear(candidate, travel)) continue;
+        next = candidate; usedHeading = candidateHeading; memory.detour = turn;
+        break;
+      }
+      if (next) break;
+    }
+    if (!next) return;
+    raider.x = next.x; raider.z = next.z; raider.yaw = usedHeading;
     raider.y = raider.groundY = scablandsSurfaceHeightAt(raider.x, raider.z);
   }
   if (Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {

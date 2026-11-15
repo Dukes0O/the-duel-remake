@@ -38,6 +38,23 @@ test('a raider searches the last visible place and returns to its post', () => {
   assert.equal(raider.search.phase, 'seen', 'the car can be seen again');
 });
 
+test('a searching raider walks around blocked ground and returns', () => {
+  const raider = {x: 0, z: 0, search: {home: {x: 0, z: 0}, last: {x: 10, z: 0}, phase: 'going', seconds: 0}};
+  const move = (from, to) => {
+    for (let i = 1; i <= 20; i++) {
+      const x = from.x + (to.x - from.x) * i / 20, z = from.z + (to.z - from.z) * i / 20;
+      if (x >= 3 && x <= 6 && Math.abs(z) <= 2) return {x: from.x, z: from.z, blocked: 'solid'};
+    }
+    return {...to, blocked: false};
+  };
+  for (let i = 0; i < 200 && raider.search.phase !== 'searching'; i++) stepRaiderSearch(raider, null, .25, move);
+  assert.equal(raider.search.phase, 'searching');
+  assert.ok(Math.hypot(raider.x - 10, raider.z) < .1);
+  for (let i = 0; i < 220 && raider.search.phase !== 'post'; i++) stepRaiderSearch(raider, null, .25, move);
+  assert.equal(raider.search.phase, 'post');
+  assert.ok(Math.hypot(raider.x, raider.z) < .1);
+});
+
 test('Scablands raiders cannot shoot through a mesa', () => {
   const mesa = HILLS.find(hill => hill.kind === 'mesa');
   const raider = {x: mesa.x - mesa.radius - 100, z: mesa.z};

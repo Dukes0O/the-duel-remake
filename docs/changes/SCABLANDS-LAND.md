@@ -1416,3 +1416,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 14 tests, including the
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: camp raiders walk at 3 m/s, the existing job-raider walking pace. Removed: none.
 
 Still needed: item 2, path finding around blocked ground, furnace and lookout sight, and seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: raider detours in progress
+
+A searching camp raider tries a consistent side around blocked ground, then returns to its direct path when the next six metres are clear. Each short step still uses the ground and solid checks. This is local obstacle avoidance, not a complete route finder: enclosed or complicated obstacles can still stop a raider. No game event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 15 tests, including a blocked route to the last seen place and back. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the search's direct-only movement when a step is blocked.
+
+Still needed: item 2, complete navigation for difficult obstacles, furnace and lookout sight, seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
