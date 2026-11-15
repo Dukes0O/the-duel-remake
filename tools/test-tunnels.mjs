@@ -16,6 +16,32 @@ import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scabland
 import {stepMover} from '../src/world/scablands-movers.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {constrainScablandsCamera} from '../src/camera-clearance.js';
+
+// The chase camera stays below each deck and leaves ordinary ground alone.
+for (const id of ['girder-bridge', 'the-pipe']) {
+  const {x,z} = RIVER_LAND.crossings.find(crossing => crossing.id === id);
+  const floors = [];
+  scablandsFloorsAt(x,z,floors);
+  const camera = {x,y:floors[0]+3,z}, car = {x,y:floors[1],z};
+  assert.equal(constrainScablandsCamera({def:{scablands:true}},camera,car,floors[1]),true);
+  assert.ok(camera.y < floors[0]-1.2);
+  const above = {x,y:floors[0]+3,z};
+  assert.equal(constrainScablandsCamera({def:{scablands:true}},above,car,floors[0]),false);
+}
+{
+  const segment = {start:{x:0,y:2.2,z:0},end:{x:100,y:2.2,z:0},radius:4};
+  const tunnels = createGroundTunnels([segment]);
+  const course = {def:{scablands:true},groundTunnels:tunnels};
+  // This fixture lies well below the real surface and has room for a bore.
+  const car = {x:50,y:0,z:0}, camera = {x:50,y:12,z:10};
+  assert.equal(constrainScablandsCamera(course,camera,car,0),true);
+  assert.ok(Math.abs(camera.z) < 4 * Math.sqrt(1-.55**2));
+  assert.ok(camera.y < 6.2);
+  const ordinary = {x:50,y:12,z:10};
+  assert.equal(constrainScablandsCamera({def:{}},ordinary,car,0),false);
+  assert.deepEqual(ordinary,{x:50,y:12,z:10});
+}
 
 // Replacing a bore is gated and invalid replacements leave the current bore intact.
 {
