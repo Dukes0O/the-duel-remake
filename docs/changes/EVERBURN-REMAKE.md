@@ -1,5 +1,15 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## River bed at the bridge (15 November 2026)
+
+- The bed way reaches the Wash brazier and bends around the Girder Bridge's centre pier. The car can pass below the deck. No new sound event was added; the scoop uses `world.ember.scoop`.
+- `node tools/test-everburn-job1.mjs`: passed. A real car drives to the Wash brazier and scoops, and drives beneath the bridge on the lower floor. The test also checks the route's order. `git diff --check`: passed.
+- Codex decided: the bed way passes 20 m from the bridge centre to clear its pier. Claude should review the route during the drive.
+- Changed assertions: none. Race fingerprints were not checked in this round.
+- For Claude to run: the browser scenario, final checks and both long drivers remain for the last round. For Claude to draw: the final barricades, smoke and Cinder figure.
+- Removed: the bed route's line through the bridge's centre pier. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the gate, forge and remaining steps, including complete drives along the ways.
+
 Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven decides whether the ember arrives. Everything stays behind `story-everburn` (still `dev`).
 
 ## Changed

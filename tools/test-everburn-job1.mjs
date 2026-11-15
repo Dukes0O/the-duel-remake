@@ -7,7 +7,7 @@ import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
-import {sees} from '../src/world/scablands-ways.js';
+import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
@@ -102,6 +102,52 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The bed route reaches the Wash scoop, then passes beneath the bridge on the lower floor.
+{
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const wash = step.braziers.find(item => item.id === 'wash-brazier').position;
+  const bridge = LAND.at('girder-bridge');
+  const washHit = nearestOnLine(route, wash.x, wash.z), passage = LAND.at('girder-bed-passage');
+  const bridgeHit = nearestOnLine(route, passage.x, passage.z);
+  assert.ok(washHit.distance < 1 && bridgeHit.distance < 1 && washHit.along < bridgeHit.along);
+  const a = LAND.at('girder-bed-approach');
+  const heading = Math.atan2(passage.x - a.x, passage.z - a.z);
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  const state = duel.state, world = state.arena.worldJob;
+  const washStart = {x:wash.x - 15 * Math.sin(heading), z:wash.z - 15 * Math.cos(heading)};
+  const washAt = duel.course.nearest(washStart.x, washStart.z);
+  placeActor(duel, state, {s:washAt.s, lateral:washAt.lateral,
+    headingError:wrapHeading(heading - duel.course.at(washAt.s).heading)}, 10 / 1.609344);
+  state.countdown = 0;
+  world.job.stepState = {loaded:true, ember:30};
+  for (let i = 0; i < 900 && !world.job.stepState.scoopedBraziers?.includes('wash-brazier'); i++) {
+    const point = duel.course.worldAt(state.s, state.lateral);
+    const distance = Math.hypot(point.x - wash.x, point.z - wash.z);
+    duel.setInput(distance > 7 ? {throttle:0.2, brake:0} : {throttle:0, brake:1});
+    duel.step(1 / 60);
+  }
+  assert.ok(world.job.stepState.scoopedBraziers?.includes('wash-brazier'), 'the car reaches and scoops at the Wash');
+  const start = {x:passage.x - Math.sin(heading) * 35, z:passage.z - Math.cos(heading) * 35};
+  const at = duel.course.nearest(start.x, start.z);
+  placeActor(duel, state, {s:at.s, lateral:at.lateral,
+    headingError:wrapHeading(heading - duel.course.at(at.s).heading)}, 25 / 1.609344);
+  state.countdown = 0;
+  world.job.stepState = {loaded:true, ember:100};
+  let passed = false, closest = Infinity, last;
+  for (let i = 0; i < 900; i++) {
+    duel.setInput({throttle:0.4, brake:0}); duel.step(1 / 60);
+    const point = duel.course.worldAt(state.s, state.lateral), floors = [];
+    const along = (point.x - passage.x) * Math.sin(heading) + (point.z - passage.z) * Math.cos(heading);
+    closest = Math.min(closest, Math.hypot(point.x - bridge.x, point.z - bridge.z));
+    last = {point, along, height:state.groundHeight, floors};
+    if (scablandsFloorsAt(point.x, point.z, floors) === 2 && along > 5 && state.groundHeight < floors[0] - 2) passed = true;
+  }
+  assert.ok(passed, `the car drives under the bridge on the river floor: ${JSON.stringify({closest,last})}`);
+}
 // The actual job update measures speed on the Pipe's deck, not the bed below.
 {
   const world = createWorldJob(definition);

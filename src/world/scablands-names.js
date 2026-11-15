@@ -34,6 +34,10 @@ const NAMED_POINTS = Object.freeze([
   named('river-10', 'The river mouth', 'boneyard', 'dead-mall', 0.601, 240, 805),
   // The five crossings, each a share of the way along one stretch of the river.
   named('girder-bridge', 'The Girder Bridge', 'river-5', 'river-6', .818),
+  // The bed way bends around the bridge's centre pier.
+  named('girder-bed-approach', 'Bridge bed approach', 'river-5', 'river-6', .918),
+  named('girder-bed-passage', 'Bridge bed passage', 'girder-bridge', null, 0, 15, -13),
+  named('girder-bed-exit', 'Bridge bed exit', 'river-5', 'river-6', .718),
   named('the-steps', 'The Steps', 'river-5', 'river-6', .318),
   // A mesa west and north of the crossing, overlooking the plates.
   named('furnace-watch', 'The furnace watch', 'the-steps', null, 0, -812, -266),
