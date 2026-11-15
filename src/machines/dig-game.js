@@ -18,6 +18,7 @@ import {createDrillSounds, createDrillView, createYardWellheadView, createDrillC
 import {createRoadSounds, createRoadWorkView} from './roads-view.js';
 import {roadYardControls} from './roads.js';
 import {createBorerSounds} from './borer-sounds.js';
+import {createSparks} from '../world/scrap-look.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -124,7 +125,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor,true);
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
-  const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null;
+  const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null, borerDirt=null, beltTime=0;
+  const borerSparks=createSparks(24);borerSparks.name='Borer face sparks';borerSparks.visible=false;world.add(borerSparks);
   let drawnTunnels=sim.tunnels, tunnelLining=null, tunnelUpdateAfter=0;
   const portals=new THREE.Group();world.add(portals);let portalKey='';
   const sound=(cue,data)=>{
@@ -184,7 +186,17 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(!root)throw new Error(`The machine model is missing ${id}.`);
       const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:id==='drill'?null:sound});
       machineViews.set(id,view);
-      if(id==='borer')borerHead=view.body.getObjectByName('borerhead');
+      if(id==='borer'){
+        borerHead=view.body.getObjectByName('borerhead');
+        const belt=view.body.getObjectByName('borerbelt');
+        if(belt){
+          borerDirt=new THREE.Group();borerDirt.name='Muck on the conveyor';belt.add(borerDirt);
+          const geometry=new THREE.IcosahedronGeometry(.38,0),dirt=material(0x77624b);
+          for(let i=0;i<12;i++){
+            const clod=new THREE.Mesh(geometry,dirt);clod.scale.set(1+i%3*.18,.45,1.1);borerDirt.add(clod);
+          }
+        }
+      }
     }
   }catch(error){
     failed=true;message.textContent='The yard model could not be loaded. Check the machine and Dome models.';
@@ -234,6 +246,15 @@ export async function startTheDig({app,onExit=()=>{}}={}){
         borerFxAfter=now+300;
       }
     }
+    const conveying=borerActive && now<muckUntil;
+    if(borerDirt){
+      borerDirt.visible=conveying;
+      if(conveying)beltTime+=elapsed*2;
+      borerDirt.children.forEach((clod,i)=>clod.position.set((i%3-1)*.62,.4,((i*1.07+beltTime)%12)-6));
+    }
+    borerSparks.visible=conveying;
+    if(conveying)borerSparks.userData.place(now/1000,{x:sim.borer.x,y:sim.borer.y+2,z:sim.borer.z},
+      {x:-Math.sin(sim.borer.heading),z:-Math.cos(sim.borer.heading)},0);
     borerSounds.update(borerActive?sim.borer.headSpeed:0,borerActive && now<muckUntil);
     for(const event of frameEvents)if(event.cue?.startsWith('borer.'))borerSounds.play(event.cue);
     // The simulation can add several cuts per frame. Redraw the lining at most

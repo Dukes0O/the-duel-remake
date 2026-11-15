@@ -34,6 +34,8 @@ Claude's updated tunnel lining now receives the active machine position, heading
 
 Mabel now accepts a connected controller in the Dig. The existing machine axis settings select steering, thrust and slope, with standard stick axes as a fallback. Keyboard input takes priority when both are used. Controller behaviour still needs a hands-on check.
 
+The conveyor now carries moving clods while fresh ground is cut, and the existing spark effect appears with the rock at the face. Both stop when cutting stops. Their appearance and placement need Claude's browser check.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -67,6 +69,7 @@ Mabel now accepts a connected controller in the Dig. The existing machine axis s
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the trial lining and ground openings. The drawing has not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the updated lining and portals. Browser appearance remains unchecked.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed for controller axes, slope and keyboard priority.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding conveyor dirt and face sparks. Browser appearance is not yet checked.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
