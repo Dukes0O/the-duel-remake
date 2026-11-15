@@ -68,3 +68,17 @@ Hollow pits.
 ## Dig particles
 
 dig-dirt.png is dirt_01.png from **Kenney Particle Pack** by Kenney Vleugels, [Particle Pack](https://kenney.nl/assets/particle-pack), CC0 1.0. The transparent source sprite is used for Wasteland digging effects. The original pack and license are in the local art library.
+
+## Scablands ground (realism trial)
+
+Six surfaces from [Poly Haven](https://polyhaven.com), each released under [CC0 1.0](https://polyhaven.com/license). Downloaded
+14 November 2026 from the provider's file manifest (1K colour and OpenGL normal maps) and re-encoded by
+`tools/art/scablands-ground-photos.py`; checksums of the source maps are in `tools/art/catalog.json`. The game lays each as the
+grain and relief of one ground of the Scablands, behind the switch `scablands-realism`.
+
+- `scablands-hardpan-colour.jpg`, `scablands-hardpan-relief.jpg`: **Dry Ground Rocks** by **Rob Tuytel**, [Poly Haven](https://polyhaven.com/a/dry_ground_rocks); the flats, the wreck fields and the burn.
+- `scablands-scab-rock-colour.jpg`, `scablands-scab-rock-relief.jpg`: **Dark Rock 02** by **Amal Kumar**, [Poly Haven](https://polyhaven.com/a/dark_rock_02); the scab plates, the river banks and steep rock.
+- `scablands-salt-crust-colour.jpg`, `scablands-salt-crust-relief.jpg`: **Mud Cracked Dry 03** by **Dario Barresi and Dimitrios Savva**, [Poly Haven](https://polyhaven.com/a/mud_cracked_dry_03); the salt pan.
+- `scablands-sand-ripples-colour.jpg`, `scablands-sand-ripples-relief.jpg`: **Sand 03** by **Charlotte Baglioni**, [Poly Haven](https://polyhaven.com/a/sand_03); the sand.
+- `scablands-river-pebbles-colour.jpg`, `scablands-river-pebbles-relief.jpg`: **Ganges River Pebbles** by **Amal Kumar**, [Poly Haven](https://polyhaven.com/a/ganges_river_pebbles); the dry river bed.
+- `scablands-gravel-road-colour.jpg`, `scablands-gravel-road-relief.jpg`: **Gravel Road** by **Amal Kumar**, [Poly Haven](https://polyhaven.com/a/gravel_road); the roads.

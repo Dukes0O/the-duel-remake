@@ -3695,6 +3695,204 @@
         }
       ],
       "changes": "Approved 1.10 m metric fit with minimum-paw pivot, natural 1K coat, weighted armature and looping Idle/Walk."
+    },
+    {
+      "id": "polyhaven-dry-ground-rocks",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/dry_ground_rocks",
+      "author": "Rob Tuytel",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the flats, the wreck fields and the burn in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-dry-ground-rocks",
+      "files": [
+        {
+          "path": "1k/dry_ground_rocks_diff_1k.jpg",
+          "sha256": "491ac5be54859171730c620ad768a615f600b81ce00d83bbeab8a7aed7b199d8"
+        },
+        {
+          "path": "1k/dry_ground_rocks_nor_gl_1k.jpg",
+          "sha256": "0bba49a710d0d1f7497ac7c72db2f0ed622ed07397539ce2d5ba756bf5fb3051"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/dry_ground_rocks (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-hardpan-colour.jpg",
+        "public/assets/textures/scablands-hardpan-relief.jpg"
+      ]
+    },
+    {
+      "id": "polyhaven-dark-rock-02",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/dark_rock_02",
+      "author": "Amal Kumar",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the scab plates, the river banks and steep rock in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-dark-rock-02",
+      "files": [
+        {
+          "path": "1k/dark_rock_02_diff_1k.jpg",
+          "sha256": "09cf66947bfe49fa1278ff341159063a43d96aae0bdf9f21536ff94feddef322"
+        },
+        {
+          "path": "1k/dark_rock_02_nor_gl_1k.jpg",
+          "sha256": "011bec5690fa6bba771e745603cbd400d4cbe21ae254af0330680b3a1a7d9a92"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/dark_rock_02 (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-scab-rock-colour.jpg",
+        "public/assets/textures/scablands-scab-rock-relief.jpg"
+      ]
+    },
+    {
+      "id": "polyhaven-mud-cracked-dry-03",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/mud_cracked_dry_03",
+      "author": "Dario Barresi and Dimitrios Savva",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the salt pan in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-mud-cracked-dry-03",
+      "files": [
+        {
+          "path": "1k/mud_cracked_dry_03_diff_1k.jpg",
+          "sha256": "b49e3d76bbb142c30ce938327f42ffdfd465429dd694fb5c2b731de08d7f6310"
+        },
+        {
+          "path": "1k/mud_cracked_dry_03_nor_gl_1k.jpg",
+          "sha256": "f9fc5aa9b9e9c5d67cc77f9f6e95bdddcc6abe97400300603721f1dff4171e69"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/mud_cracked_dry_03 (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-salt-crust-colour.jpg",
+        "public/assets/textures/scablands-salt-crust-relief.jpg"
+      ]
+    },
+    {
+      "id": "polyhaven-sand-03",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/sand_03",
+      "author": "Charlotte Baglioni",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the sand in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-sand-03",
+      "files": [
+        {
+          "path": "1k/sand_03_diff_1k.jpg",
+          "sha256": "e72144f9d7b81bdb7bbdb34222b53431738dcef79346dd89412d2abd541e4d30"
+        },
+        {
+          "path": "1k/sand_03_nor_gl_1k.jpg",
+          "sha256": "1bde5f49ea78f94bcad73592696bf3949711c4ac197133b710c0c8521b6e996b"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/sand_03 (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-sand-ripples-colour.jpg",
+        "public/assets/textures/scablands-sand-ripples-relief.jpg"
+      ]
+    },
+    {
+      "id": "polyhaven-ganges-river-pebbles",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/ganges_river_pebbles",
+      "author": "Amal Kumar",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the dry river bed in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-ganges-river-pebbles",
+      "files": [
+        {
+          "path": "1k/ganges_river_pebbles_diff_1k.jpg",
+          "sha256": "8a52d8712e8fc184eee1f8fd4598f051c9d82dfa00371b1b88e1d2c7518faa56"
+        },
+        {
+          "path": "1k/ganges_river_pebbles_nor_gl_1k.jpg",
+          "sha256": "80ea9d0cf01402632e1161def4d4f4efc99df21c5382de90c8c16ee827ea7735"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/ganges_river_pebbles (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-river-pebbles-colour.jpg",
+        "public/assets/textures/scablands-river-pebbles-relief.jpg"
+      ]
+    },
+    {
+      "id": "polyhaven-gravel-road",
+      "card": "SCABLANDS-LAND",
+      "family": "surface",
+      "sourcePage": "https://polyhaven.com/a/gravel_road",
+      "author": "Amal Kumar",
+      "license": "CC0-1.0",
+      "licenseEvidence": "Every Poly Haven asset is released under CC0 (https://polyhaven.com/license).",
+      "status": "selected",
+      "downloaded": true,
+      "sha256": null,
+      "fit": "Grain and relief for the roads in the Scablands realism trial; the code still decides where each ground lies and its broad colour.",
+      "risk": "Laid at two sizes so that its repeat does not show; only the 1K colour and relief maps are used.",
+      "checked": "2026-11-14",
+      "decision": "Kyle agreed to the download on 14 November 2026; Claude picked the surface from Poly Haven previews.",
+      "library": "C:\\Users\\kyleb\\dev\\art-library\\polyhaven-gravel-road",
+      "files": [
+        {
+          "path": "1k/gravel_road_diff_1k.jpg",
+          "sha256": "bccbb077a825bdd0eb6f607939578a6ee549822824278fb3a828f6eed3d05d45"
+        },
+        {
+          "path": "1k/gravel_road_nor_gl_1k.jpg",
+          "sha256": "0920996cab9f2d62a2eb73a3589804527aa0273c4ca61b9f526ce4cba37edebc"
+        }
+      ],
+      "downloadedFrom": "https://api.polyhaven.com/files/gravel_road (1K JPG colour and OpenGL normal maps)",
+      "recipe": "tools/art/scablands-ground-photos.py",
+      "runtime": [
+        "public/assets/textures/scablands-gravel-road-colour.jpg",
+        "public/assets/textures/scablands-gravel-road-relief.jpg"
+      ]
     }
   ]
 }

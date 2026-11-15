@@ -834,6 +834,51 @@ No game event is added, so no sound cue.
 
 Nothing. The old light stays for players until the trial's three steps are judged; the card says what is removed when the switch goes on.
 
+## Realism trial, step 2: photographed surfaces (Claude, 14 November 2026)
+
+Card section "Realism trial, step 2 result". Behind the switch `scablands-realism` (`dev`, off for players).
+
+### What was built
+
+- `public/assets/textures/scablands-*-colour.jpg` and `-relief.jpg`: twelve pictures, 4.9 MB, made by `tools/art/scablands-ground-photos.py`
+  from six Poly Haven surfaces (CC0) kept in the art library. Credits in `public/assets/textures/CREDITS.md`; sources and checksums in
+  `tools/art/catalog.json`.
+- `src/world/scablands-ground-look.js`: `GROUND_PHOTOS` (file, true size and average colour of each), `loadGroundPhotos`, and in the
+  ground's and the road's shaders the photograph's grain (multiplied into the colour drawn in code) and relief (added to the ground's
+  own direction). Each photograph is read at two sizes, the larger turned, blended by how much ground a pixel covers. With no
+  photographs the shaders and their cache keys are the ones from before.
+- `src/world/scablands-scene.js`: loads the photographs when the switch is on and there is a screen, hands them to the ground and the
+  road, and disposes of them with the scene.
+- `tools/scenarios/scablands-realism.mjs`: unchanged; its sheet for this step is round 9.
+
+No game event is added, so no sound cue. No rule of a race is touched.
+
+### Checks
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, from PowerShell): 80 of 82. The two that failed (`test-p4-kits`, `test-tanker-valve-source`) pin the art catalogue's
+  earlier rows; the six new rows are left out of each pin as the wildlife rows are, and both pass. Replays unchanged.
+- `npm run build`: passes.
+- Browser, visible window, memory-only saves: `scablands-realism` passes, 16 pictures; draw calls and triangles as in step 1; the time
+  between frames is the screen's 16.7 ms before and after. Not a frame check (rule 9).
+- One independent review of the code (a Sonnet reviewer, read only): three points, all put right and confirmed by a comparison in Node and by retaken pictures.
+  (1) With the switch off the ground's shader text was not byte for byte the old one (three unused lines). It is now: the text, cache
+  key, defines and uniforms of the ground with regions, the plain ground and the road are identical to the commit before. (2) The road's
+  relief tilted a level plane, not the road's own slope; it tilts the road's slope now. (3) The scene and the renderer read the switch
+  from two names: they are the same catalogue (`app._switches()` returns the base of the race's switches, which is the shared one).
+  Also on its notes: only the size of a photograph that shows is read, and a bank or steep rock takes the other grounds' place in the
+  relief.
+
+### Changed assertions, for the card (rule 18)
+
+- `tools/test-p4-kits.mjs` and `tools/test-tanker-valve-source.mjs`: each pins a checksum of the art catalogue's earlier rows. Rows of
+  card SCABLANDS-LAND are left out of the pinned set, as rows of WILD-ART-SRC already are. The checksums are unchanged, so every
+  earlier row is still protected.
+
+### Removed
+
+Nothing. The ground drawn wholly in code stays for players until the trial is judged; when the switch goes on, the code's own fine
+grain that a photograph replaces is removed in that change.
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
