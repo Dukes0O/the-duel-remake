@@ -17,7 +17,16 @@ import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+
+test('mesas leave the long Survey Flags leg clear', () => {
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const leg = flags.slice(2, 4).map(flag => flag.position);
+  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+    assert.ok(distanceToRoad(mesa.x, mesa.z, leg) >= mesa.radius + mesa.ramp + 60,
+      'the mesa and its ramp clear the flag route and its 60 m corridor');
+  }
+});
 
 test('the thief and Big Bess have clear hill corridors', () => {
   for (const id of ['everburn-run-him-down', 'everburn-slow-ride']) {

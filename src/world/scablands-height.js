@@ -56,6 +56,10 @@ export function hillsFor(land=LAND,seed=1989){
   const plates=GROUND_AREAS.polygons.find(area=>area.id==='scab-plates');
   const mesaBase=LAND.between('yard','tin-town',.7);
   const platesWay=[LAND.yard,LAND.at('the-steps'),LAND.at('tin-town')];
+  // Keep the long Survey Flags leg open as well as the marked roads. Its
+  // endpoints use the same named places as the job's third and fourth flags.
+  const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
+    LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
   const tunnel=westScarpTrial(()=>0).segment;
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
@@ -73,13 +77,24 @@ export function hillsFor(land=LAND,seed=1989){
     const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
     if(polygonMargin(plates.points,x,z)<=reach) continue;
     if(distanceToRoad(x,z,platesWay)<radius+200) continue;
+    if(distanceToRoad(x,z,surveyLeg)<reach+60) continue;
     if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
     if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;
     if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<reach+place.flatRadius+200)) continue;
     if(referenceHills.some(hill=>Math.hypot(x-hill.x,z-hill.z)<reach+hill.radius+hill.ramp+30)) continue;
+    const rampAngle=mesaRng.range(0,Math.PI*2), top=oldTerrainHeightAt(x,z)+height;
+    const rampHeight=d=>{
+      const ground=oldTerrainHeightAt(x+Math.cos(rampAngle)*d,z+Math.sin(rampAngle)*d);
+      return ground+(top-ground)*(1-smooth((d-radius)/ramp));
+    };
+    let driveable=true;
+    for(let d=radius;d<reach;d+=2){
+      if(Math.abs(rampHeight(d+2)-rampHeight(d))/2>.3){driveable=false;break;}
+    }
+    if(!driveable) continue;
     referenceHills.push({x,z,radius,ramp});
-    hills.push(Object.freeze({...land.between('yard','tin-town',.7,dx,dz),kind:'mesa',height,radius,face:30,ramp,rampAngle:mesaRng.range(0,Math.PI*2)}));
+    hills.push(Object.freeze({...land.between('yard','tin-town',.7,dx,dz),kind:'mesa',height,radius,face:30,ramp,rampAngle}));
   }
   // Grow the Breaks from the existing hills, using offsets from the Mall so
   // that the whole group follows that named place when the land is moved.

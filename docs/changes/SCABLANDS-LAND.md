@@ -2004,3 +2004,13 @@ The hills suite now samples the thief's and Big Bess's job paths at 20 m interva
 Check: `node tools/test-scablands-hills.mjs` passed 44 of 44. The new corridor check replaces no assertion and loosens none. Codex decided: sample five lines across each corridor. Removed: none. Race fingerprints and world signatures were not checked in this step.
 
 Still needed: three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive, then integration and the final checks. Claude must run and judge the pictures.
+
+### Hill country: clear the Survey Flags leg
+
+One seeded mesa stood across the long leg between flags three and four, near the place where the Easy driver stopped. Mesa selection now keeps the leg and a 60 m corridor clear. It also rejects a new mesa if its ramp would be too steep on the existing ground. The mesa formerly centred near (1082, -525) is replaced by one near (915, 1377); the other five centres stay in place. The fifth flag stays where it is. No game event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 45 of 45. This includes a new clearance check and the existing mesa ramp checks. The Survey Flags drive has not yet been rerun, so the cause of its failure and the effect of this change are not confirmed. Race fingerprints, world signatures, the build and pictures were not checked in this step.
+
+Changed assertions: none. The corridor check is new and loosens no assertion. Codex decided: use the job's named third and fourth flag positions to select clear mesa sites, and check each candidate ramp at 2 m intervals. Removed: the mesa site across the flag route.
+
+Still needed: prove three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive; then merge integration and run the final checks. Claude must run and judge the pictures.
