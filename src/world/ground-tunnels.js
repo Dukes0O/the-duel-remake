@@ -1,3 +1,5 @@
+import {SCARPS} from './scablands-scarps.js';
+
 ﻿const finite = Number.isFinite;
 
 /** Lay a straight trial tube between surface points and measure its cover. */
@@ -22,6 +24,17 @@ export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
     maximumCover = Math.max(maximumCover, terrain - roof);
   }
   return {segment, minimumCover, maximumCover};
+}
+
+// A 100 m trial from the west scarp foot to its high ground.
+// The scarp endpoints already come from the land's named places.
+export function westScarpTrial(heightAt) {
+  const {a, b} = SCARPS.find(scarp => scarp.id === 'scab-west').stretches[0];
+  const mid = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const across = {x: -(b.z - a.z) / length, z: (b.x - a.x) / length};
+  const at = distance => ({x: mid.x + across.x * distance, z: mid.z + across.z * distance});
+  return trialTubeBetween(at(-5), at(95), 4, heightAt);
 }
 
 function point(value, label) {

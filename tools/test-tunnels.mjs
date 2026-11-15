@@ -1,29 +1,31 @@
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
-import {createGroundTunnels, trialTubeBetween} from '../src/world/ground-tunnels.js';
+import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
-import {LAND} from '../src/world/scablands-names.js';
-import {RISES} from '../src/world/scablands-regions.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 
-// Measure the nearest real rise instead of inventing a hill.
+// Use the real west scarp, with both ends joined to the ground.
 {
-  const ridge = LAND.at('ridge');
-  const rise = [...RISES].sort((a, b) => Math.hypot(a.x - ridge.x, a.z - ridge.z) -
-    Math.hypot(b.x - ridge.x, b.z - ridge.z))[0];
-  const direction = {x: Math.sin(rise.heading), z: Math.cos(rise.heading)};
-  const start = {x: rise.x - 50 * direction.x, z: rise.z - 50 * direction.z};
-  const end = {x: rise.x + 50 * direction.x, z: rise.z + 50 * direction.z};
-  assert.throws(() => trialTubeBetween(start, start, 4, scablandsHeightAt), RangeError);
-  const trial = trialTubeBetween(start, end, 4, scablandsHeightAt);
+  const trial = westScarpTrial(scablandsHeightAt);
+  const {start, end, radius} = trial.segment;
   const tube = createGroundTunnels([trial.segment]);
-  for (const mouth of [trial.segment.start, trial.segment.end]) {
-    const surface = scablandsHeightAt(mouth.x, mouth.z);
-    assert.ok(Math.abs(tube.groundAt(mouth, surface, surface) - surface) < 1e-9);
-  }
-  assert.ok(trial.maximumCover < 0, 'this measured site has no fully buried roof');
+  assert.ok(Math.abs(end.y - start.y) / 100 <= .15, 'the climb is no steeper than .15');
   assert.ok(Math.abs(Math.hypot(end.x - start.x, end.z - start.z) - 100) < 1e-9);
+  assert.throws(() => trialTubeBetween(start, start, radius, scablandsHeightAt), RangeError);
+  for (const direction of [1, -1]) {
+    let height = (direction > 0 ? start.y : end.y) - radius;
+    for (let i = 0; i <= 100; i++) {
+      const t = direction > 0 ? i / 100 : 1 - i / 100;
+      const x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
+      const floor = start.y + (end.y - start.y) * t - radius;
+      const surface = scablandsHeightAt(x, z);
+      height = tube.groundAt({x, y: height, z}, height, surface);
+      assert.ok(Math.abs(height - floor) < 1e-7, `floor at ${t}: ${height} rather than ${floor}`);
+      if (surface > floor + 2 * radius)
+        assert.equal(tube.groundAt({x, y: surface, z}, surface, surface), surface);
+    }
+  }
 }
 
 const course = new Course(SCABLANDS_VENUE, 20261114);
@@ -78,7 +80,7 @@ undergroundCar.groundHeight = 30;
 assert.equal(_supportAt.call(supportDuel, 50, 0).y, 30);
 assert.equal(obstacleChecks, 1, 'surface support still checks obstacles');
 // Exercise the real contact hook with a straight course and no other obstacles.
-const straight = {groundTunnels: slope, worldAt: (s, lateral) => ({x: s, z: lateral}),
+const straight = {def: {}, groundTunnels: slope, worldAt: (s, lateral) => ({x: s, z: lateral}),
   at: () => ({heading: 0}), groundAt: () => ({y: 30})};
 const car = {prevS: 50, s: 51, prevLateral: 0, lateral: 5, groundHeight: 10,
   prevGroundHeight: 10, speedMph: 10};

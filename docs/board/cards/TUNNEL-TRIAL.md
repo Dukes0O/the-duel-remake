@@ -11,3 +11,5 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 ## Codex decided (Claude to review)
 
 The scene reads the trial tubes already attached to the course when it is built, only while `wasteland-town` is on. A later machine needs to refresh the ground material as it bores; this trial does not yet do that.
+
+The trial line crosses the middle of the west scab scarp, from 5 m before its foot to 95 m beyond it. Both mouths meet the surface; its grade is below .15.

@@ -2,6 +2,8 @@
 
 ## Incomplete
 
+Integration was merged at b23714b22. Conflicts in the status page, ground look and scene were resolved, keeping the integration status and both the photo and tunnel rendering paths. The west scab scarp now has a 100 m trial line with a grade below .15 and both mouths on the surface. Its height-query test passes in both directions, but an actual car journey at this site and the under-deck work remain. The previous rise measurements below are historical, not the chosen site.
+
 This is unfinished work, not a passing trial. The lane contains the earlier tube query adapted to an explicit car-height argument in `course.groundAt`. Only `_supportAt` passes the car's `groundHeight`. Other calls retain the surface. There is no installed tunnel, switch-controlled scenario, visible opening, mesh, save, or driving proof on the real Ridge. A car placed inside without an initialized height is still unresolved. Do not merge this work as a finished trial.
 
 The tube wall calculation now runs in car contacts when a tunnel is installed and the car starts inside it. A focused contact test checks the side limit and a car above the tube. A controlled straight-course test now drives a real simulated car through a level 100 m tube in both directions. This does not prove the mouths or a complete journey through the tube.
