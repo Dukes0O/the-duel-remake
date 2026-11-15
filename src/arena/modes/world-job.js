@@ -5,7 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -606,6 +606,13 @@ export function stepWorldJob(duel, dt) {
       duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);
       duel.emit({arenaTell: {id: 'furnace-sight', targetId: 'player', seconds: 0,
         cue: sight.visible ? 'arena.tell' : 'gate.latch', position: car}});
+    }
+    const lookout = stepRidgeSight(worldJob.ridgeSight ?? {}, car);
+    worldJob.ridgeSight = lookout;
+    if (lookout.change) {
+      duel._storyCallout(lookout.visible ? 'The lookout can see your car.' : 'The lookout has lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'lookout-sight', targetId: 'player', seconds: 0,
+        cue: lookout.visible ? 'arena.tell' : 'gate.latch', position: car}});
     }
   }
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).

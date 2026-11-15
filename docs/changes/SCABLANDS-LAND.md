@@ -1446,3 +1446,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 17 tests, including com
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and lookout sight, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. This card is not ready to merge.
+
+### Round 4, slice 2c: Ridge lookout sight
+
+During Hot Delivery the Ridge lookout checks its existing map range and eye height against the ground before seeing the car. The player is told when the car is seen or lost. The seen cue is `arena.tell`; the lost cue is `gate.latch`. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 18 tests, including clear ground, cover, renewed sight and range for the lookout. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions: none. Codex decided: the lookout uses the Ridge's named place and its existing map range and eye height. Removed: none.
+
+Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.

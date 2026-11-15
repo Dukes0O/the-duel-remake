@@ -14,7 +14,20 @@ import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, campSightChange} from '../src/raiders.js';
-import {stepSkylineSight, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+import {stepSkylineSight, stepRidgeSight, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+
+test('the Ridge lookout sees only within range and over clear ground', () => {
+  const ridge = LAND.at('ridge'), car = {x: ridge.x + 100, z: ridge.z};
+  const flat = () => 0;
+  const wall = x => x > ridge.x + 40 && x < ridge.x + 60 ? 30 : 0;
+  let sight = stepRidgeSight({}, car, flat);
+  assert.deepEqual(sight, {visible: true, change: 'seen'});
+  sight = stepRidgeSight(sight, car, wall);
+  assert.deepEqual(sight, {visible: false, change: 'lost'});
+  sight = stepRidgeSight(sight, car, flat);
+  assert.deepEqual(sight, {visible: true, change: 'seen'});
+  assert.equal(stepRidgeSight(sight, {x: ridge.x + 3001, z: ridge.z}, flat).visible, false);
+});
 
 test('camp sight notices follow the combined view of active raiders', () => {
   const first = {search: {phase: 'seen'}}, second = {search: {phase: 'post'}};

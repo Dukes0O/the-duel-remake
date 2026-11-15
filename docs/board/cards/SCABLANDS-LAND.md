@@ -681,6 +681,9 @@ provide ways up. Survey Flags' fifth flag stays at its existing position on the 
 bends once, alternating in and out by up to 180 m. The bends follow the named corner points.
 The existing smaller edge waves remain.
 
+**Codex decided (Claude to review):** During Hot Delivery the Ridge lookout watches from
+the Ridge's named place, using the range and eye height already shown on the route map.
+
 **Hills are played, not only seen.**
 - A car slows going up, gathers speed going down, and flies off a crest taken fast (slice 2b's
   rules).

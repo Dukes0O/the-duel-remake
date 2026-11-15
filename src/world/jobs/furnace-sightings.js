@@ -19,6 +19,15 @@ export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeig
   return {visible, seconds, change};
 }
 
+// The Ridge lookout uses the same view as the route map, with closer samples
+// so narrow banks and scarps can also hide a car.
+export function stepRidgeSight(state, car, heightAt = scablandsSurfaceHeightAt) {
+  const visible = !!car && sees(LAND.at('ridge'), car, {
+    heightAt, eye: WATCH.lookout.eye, range: WATCH.lookout.range, step: 5,
+  });
+  return {visible, change: visible === !!state.visible ? null : visible ? 'seen' : 'lost'};
+}
+
 // Where the furnace is seen in jobs 1 and 3, from a land (src/world/scablands-names.js), so that the marks move with the places they stand by.
 // Job 1: standing on the skyline north of the road, half way along the road's second leg (between the halfway camp and the second barricade) and 233 m north of it (smaller z is
 // north in the Scablands; nearer the player's road than it first stood; RUN-GAS), until the pot is delivered.
