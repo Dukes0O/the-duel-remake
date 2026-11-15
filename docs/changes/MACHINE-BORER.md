@@ -18,6 +18,8 @@ The Dig simulation now holds Mabel and advances her in drive and work modes. Ope
 
 The Dig page now maps Mabel's W and S to thrust, A and D to steering, and the up and down arrows to slope. The control function also accepts the existing mapped machine axes. Mabel is not yet in the selection list; her view and the page's controller connection still need work.
 
+The Dig now has synthesised borer sounds: a head loop whose pitch follows head speed, a conveyor loop while fresh muck moves, and distinct stall, refusal and breakthrough cues. The loops stop when Mabel stops working, the sound is muted, or the Dig closes. These are connected for the borer but cannot be heard until she is selectable.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -43,6 +45,7 @@ The Dig page now maps Mabel's W and S to thrust, A and D to steering, and the up
 - `node tools/test-machine-borer.mjs`: passed with the west scarp parking position, heading, ground height and real approach face.
 - `node tools/test-machine-borer.mjs`: passed with Dig simulation driving, cutting, tunnel updates and reverse travel.
 - `node tools/test-machine-borer.mjs`: passed with keyboard thrust, steering and slope and mapped machine axes.
+- `node tools/test-machine-borer.mjs`: passed with head pitch, conveyor, event cues and mute checks using a fake mixer.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -66,7 +69,7 @@ The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on th
 
 ## Sound cues
 
-The rules emit `borer.stall`, `borer.refuse`, and `borer.breakthrough` events. The remaining cues are `borer.head` and `borer.muck`. Sound playback remains to be built.
+The rules emit `borer.stall`, `borer.refuse`, and `borer.breakthrough` events. `borer.head` follows head speed, and `borer.muck` runs while cutting moves material. Playback is connected in the Dig; selection is still to be built.
 
 ## Removed
 

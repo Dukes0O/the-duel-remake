@@ -6,6 +6,31 @@ import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
+import {createBorerSounds} from '../src/machines/borer-sounds.js';
+
+const soundVoices = [];
+const soundContext = {state:'running', currentTime:0,
+  createOscillator() {
+    const voice = {frequency:{setValueAtTime(value) { voice.pitch = value; }},
+      connect() {}, disconnect() {}, start() { voice.started = true; }, stop() { voice.stopped = true; }};
+    soundVoices.push(voice); return voice;
+  },
+  createGain() { return {gain:{setValueAtTime() {}, exponentialRampToValueAtTime() {}}, connect() {}, disconnect() {}}; },
+};
+const mixer = {context:soundContext, master:{}, muted:false, paused:false};
+const borerSounds = createBorerSounds(mixer);
+borerSounds.update(1, true);
+assert.equal(soundVoices.length, 2, 'The head and conveyor each have a loop.');
+assert.equal(soundVoices[0].pitch, 160);
+borerSounds.update(0.4, false);
+assert.equal(soundVoices[0].pitch, 97, 'The head pitch follows its speed.');
+assert.equal(soundVoices[1].stopped, true, 'The conveyor stops when no muck moves.');
+for (const cue of ['borer.stall','borer.refuse','borer.breakthrough']) borerSounds.play(cue);
+assert.equal(soundVoices.length, 5, 'Each borer event has a sound.');
+mixer.muted = true;
+borerSounds.update(1, true);
+assert.equal(soundVoices[0].stopped, true, 'Muting stops the head loop.');
+borerSounds.dispose();
 
 const flat = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
 const hill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});

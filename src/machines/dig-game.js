@@ -14,6 +14,7 @@ import {drillYardControls, drillMaterialAt} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
 import {createRoadSounds, createRoadWorkView} from './roads-view.js';
 import {roadYardControls} from './roads.js';
+import {createBorerSounds} from './borer-sounds.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -76,7 +77,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
-  let shownMessage='',messageUntil=0;
+  let shownMessage='',messageUntil=0, muckUntil=0;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
   const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -93,6 +94,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const cuttingsView=createDrillCuttingsView(world,(x,z)=>sim.ground.heightAt(x,z));
   const drillSounds=createDrillSounds(app?.audio);
   const roadSounds=createRoadSounds(app?.audio);
+  const borerSounds=createBorerSounds(app?.audio);
   const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor,true);
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
@@ -155,14 +157,14 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
-    roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
+    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
     const elapsed=Math.min(.1,(now-lastTime)/1000);lastTime=now;accumulator+=elapsed;
     const padKeys={...keys};
     // Material loading is one clear action. It transfers real bucket contents to the truck.
-    const frameEvents=[];
+    const frameEvents=[], previousBoreDistance=sim.borer.distanceM;
     while(accumulator>=1/60){
       if(pending.consume('mode'))sim={...sim,mode:sim.mode==='drive'?'work':'drive'};
       if(pending.consume('machine'))sim=switchDigMachine(sim);
@@ -180,6 +182,10 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       for(const event of frameEvents)if(event.cue)drillSounds.play(event.cue);
     }
     for(const event of frameEvents)if(event.cue)roadSounds.play(event.cue);
+    const borerActive=sim.activeMachine==='borer' && sim.mode==='work';
+    if(sim.borer.distanceM>previousBoreDistance)muckUntil=now+100;
+    borerSounds.update(borerActive?sim.borer.headSpeed:0,borerActive && now<muckUntil);
+    for(const event of frameEvents)if(event.cue?.startsWith('borer.'))borerSounds.play(event.cue);
     roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
     wellheadView.update(sim.drill.wellheads);
     cuttingsView.update(sim.drill.hole);
