@@ -1199,3 +1199,15 @@ Checks: `test-everburn-play-start` passed 982 checks; `test-run-gas` passed 8,50
 Codex decided: no new design choice.
 
 Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.
+
+### Round 4, slice 2c: dunes in progress
+
+Four soft dunes now rise 10 to 14 m around the Ships. Their centres follow the Ships when that place moves. They clear all the roads, and an empty hill table leaves the previous terrain height exact. The existing sand driving rules supply the ground cue `world.ground.sand`; no new event or cue was added. The Scablands switches stay off.
+
+The hills are not finished. The Breaks, mesas, Ridge foothills and way up, Lookout, drawn detail, sight and search, uneven outlines and the requested picture scenario remain. Survey Flags' fifth flag has not moved.
+
+Checks: `test-scablands-hills`, `test-scablands-size` and `test-scablands-solid` passed. The course-kit world-signature check passed; race replays passed 297 checks and combat replays passed 12. The Easy driver finished all nine jobs and both gas roads at all four feud levels on all ten seeds; the battle was won on all ten. The lane check passed 33 of 34 suites. `test-full-check` failed in the known temporary-copy setup: its PowerShell process was denied (`spawnSync pwsh EACCES`). The build passed with bundle warnings.
+
+For Claude to run: `test-full-check` in the laptop environment. The requested memory-only hills picture scenario still needs to be written after the remaining terrain is built, then run and judged by Claude.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none in this partial step; the old ground remains outside the dunes.
