@@ -54,16 +54,16 @@ function findPart(root,name){
   return found;
 }
 // The land is 14 km by 10 km (SCABLANDS-LAND round 4). Two grounds are drawn: the detailed ground, a window of 1,400 by 1,000 m
-// that follows the player (src/world/near-ground.js), and the coarse ground, one mesh of 140 by 125 m cells over the whole
+// that follows the player (src/world/near-ground.js), and the coarse ground, one mesh of 70 by 62.5 m cells over the whole
 // land. The coarse ground has a hole where the detailed one lies (a fragment inside the window is not drawn), so the two never
 // fight, and it stands a little below the land's own height so that nothing of it shows through at the window's edge.
-const COARSE_CELLS=Object.freeze({x:100,z:80});
+const COARSE_CELLS=Object.freeze({x:200,z:160});
 const COARSE_LOWER=.35;
 // Nothing a place carries is drawn, animated or looked at further from the player than this: it is beyond the horizon (the camera
 // sees 2,400 m and the fog is thick from 1,650 m).
 const DRAW_RANGE=1800;
 
-// The coarse ground: 100 by 80 cells over the whole land. `hole` is a vec4 uniform (middle x, middle z, half width, half depth)
+// The coarse ground: 200 by 160 cells over the whole land. `hole` is a vec4 uniform (middle x, middle z, half width, half depth)
 // of the area not drawn, where the detailed ground is; the material is the ground's own with that hole cut out of it.
 function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
   const width=SCABLANDS_LAYOUT.halfWidth*2,depth=SCABLANDS_LAYOUT.halfDepth*2,cellsX=COARSE_CELLS.x,cellsZ=COARSE_CELLS.z;

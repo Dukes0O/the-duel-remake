@@ -1227,3 +1227,19 @@ For Claude to run: `test-full-check` on the laptop. The hills picture scenario s
 Changed assertions, for Claude to review: none. Codex decided: no new design choice.
 
 Removed: none in this partial step; the old ground remains outside the hills.
+
+### Round 4, slice 2c: distant ground in progress
+
+The distant ground now has 70 by 62.5 m cells instead of 140 by 125 m cells. Its one mesh keeps the existing ground material and calculated vertex normals. Its draw call count stays at one; its triangles rise from 16,000 to 64,000. These are mesh counts, not a measured whole-scene performance result. The scarps, Steps and river banks still need their own detailed drawing. The switches remain off. Survey Flags' fifth flag has not moved. No new game event or sound cue was added.
+
+Checks: `test-scablands-scene`, `test-scablands-hills` (3), `test-scablands-size` (9) and `test-scablands-solid` (18) passed. `test-replays` passed 297 checks over 33 cases, `test-combat-replays` passed 12 checks over four encounters, and `test-course-kit` passed 8 tests. Race fingerprints and world signatures remain unchanged. The build passed with bundle size warnings. Integration was already included.
+
+Changed assertions, for Claude to review: none. The scene test's yard vertex index moved from 4,090 to 16,180 to address the same yard point in the finer grid; its claims are unchanged. New checks require the finer grid, its triangle count and normals. Codex decided: no new design choice.
+
+Removed: the former 100 by 80 cell distant ground is replaced by the finer grid.
+
+Still needed: investigate the Easy driver's Survey Flags failure; finish the other hill areas, roads and driver checks, detailed faces, sight and search, natural map outlines and the requested picture scenario. Claude must run and judge the picture scenario when it is written. The card is not ready to merge.
+
+Lane tier: 39 of 41 suites passed. `test-everburn-easy` again failed Survey Flags, 0 of 10 against the unchanged minimum of 8; the other eight jobs each finished 10 of 10 before the test stopped. The sample car stopped near the river while seeking the fourth flag, at approximately (1879, -1525); the cause remains unknown. Gas roads were not reached. `test-full-check` failed in the known fixture setup because `pwsh` was denied (`EACCES`). Claude should rerun that suite on the laptop. The build passed before the lane tier on the same code.
+
+Cockpit sync could not open its protected credential in this session. The repository audit ran; its candidates are advisory and none were removed.

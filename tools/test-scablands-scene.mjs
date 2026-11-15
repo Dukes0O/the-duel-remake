@@ -76,6 +76,9 @@ const far=ground.children.find(mesh=>mesh.name==='Scablands far ground');
 assert.equal(nearGroundMeshes.length,1,'the detailed ground is one window that follows the player');
 const nearWindow=nearGroundMeshes[0],near=[nearWindow];
 assert.ok(far,'a coarse horizon ground is present');
+assert.equal(far.geometry.attributes.position.count,201*161,'the horizon samples the land in 70 by 62.5 m cells');
+assert.equal(far.geometry.index.count/3,64000,'the horizon uses two triangles per cell');
+assert.equal(far.geometry.attributes.normal.count,far.geometry.attributes.position.count,'the horizon has a normal at every corner');
 assert.equal(nearWindow.geometry.attributes.position.count,61*61,'the window is 60 by 60 cells, 1,400 m by 1,000 m');
 assert.ok(nearWindow.geometry.attributes.position.count<far.geometry.attributes.position.count,'the coarse ground has more corners than the window: it covers ten times the land at coarser cells');
 far.geometry.computeBoundingBox();
@@ -84,8 +87,8 @@ assert.deepEqual([far.geometry.boundingBox.min.x,far.geometry.boundingBox.max.x,
 const nearVertex=nearWindow.geometry.attributes.position;
 const x=nearWindow.position.x+nearVertex.getX(0),z=nearWindow.position.z+nearVertex.getZ(0);
 assert.ok(Math.abs(nearWindow.position.y+nearVertex.getY(0)-scablandsSurfaceHeightAt(x,z)-.025)<.001,'rendered terrain samples the shared physics height');
-// The coarse vertex at the yard (the 51st of the 41st row of 101): cutting the land there changes it, and the first corner stays as it was.
-const yardCorner=40*101+50;
+// The coarse vertex at the yard: cutting the land there changes it, and the first corner stays as it was.
+const yardCorner=80*201+100;
 assert.deepEqual([far.geometry.attributes.position.getX(yardCorner),far.geometry.attributes.position.getZ(yardCorner)],[0,0],'the coarse ground has a corner at the yard');
 const untouchedY=far.geometry.attributes.position.getY(0),yardBefore=far.geometry.attributes.position.getY(yardCorner);
 scablandsGroundEdit.cut({x:0,z:0,radius:1},scablandsGroundEdit.heightAt(0,0)-3);
@@ -613,8 +616,8 @@ assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.user
   const chunk=ground.children.find(mesh=>/^Scablands edited ground/.test(mesh.name));
   assert.ok(chunk&&chunk.material.userData.groundLook,'an edited chunk carries the ground look');
   assert.ok(ground.children.includes(roadsDraw.group)&&roadsDraw.group.name==='Scablands roads','the road net keeps its place after an edit (its pieces are laid again when the player is near)');
-  // The coarse ground stays below the land after a rebuild (the corner at the yard is the 4,091st).
-  const lowered=far.geometry.attributes.position.getY(40*101+50);
+  // The coarse ground stays below the land after a rebuild.
+  const lowered=far.geometry.attributes.position.getY(yardCorner);
   assert.ok(lowered<=scablandsSurfaceHeightAt(0,0)-.3,'the coarse ground stays under the land after an edit');
   resetScablandsGroundEdit();scene.group.userData.updateGroundView();
 }
