@@ -235,6 +235,7 @@ function moveTowardMarker(duel, target) {
 // Old Smoke's furnace ends only on three door hits, so contact with it no longer finishes the
 // chase. The Easy driver waits behind and beside the furnace on the side of the next door (the
 // arrow), outside its cinders, and rams the door while it glows. It also fires the loaned weapon.
+const chaseCrossings = new WeakMap();
 function driveFurnace(duel, actor) {
   const state = duel.state, f = actor.furnace, car = duel.course.groundAt(state.s, state.lateral);
   const forward = {x: Math.sin(f.heading), z: Math.cos(f.heading)}, right = {x: -Math.cos(f.heading), z: Math.sin(f.heading)};
@@ -248,6 +249,28 @@ function driveFurnace(duel, actor) {
   } else {
     const wait = door === 'rear' ? right : out;
     target = {x: f.x - forward.x * 14 + wait.x * 6, z: f.z - forward.z * 14 + wait.z * 6};
+  }
+  // When the chase is separated by the river, follow a crossing before closing on the door.
+  if (!f.battle) {
+    let route = chaseCrossings.get(duel);
+    if (route?.points.length && Math.hypot(route.points[0].x - car.x, route.points[0].z - car.z) < 20) route.points.shift();
+    if (!route?.points.length && state.stageTimeSec >= (route?.nextCheck ?? 0)) {
+      const inBed = riverGorgeDepthAt(car.x, car.z) > .5;
+      const needsCrossing = crossesRiver(car, target) || inBed && blockedAt(car, target);
+      let points = [];
+      if (needsCrossing) {
+        const crossings = RIVER_LAND.crossings.filter(c => ['the-wash', 'south-ford'].includes(c.id));
+        crossings.sort ( (a, b) => (Math.hypot(car.x - a.x, car.z - a.z) + Math.hypot(target.x - a.x, target.z - a.z)) -
+          (Math.hypot(car.x - b.x, car.z - b.z) + Math.hypot(target.x - b.x, target.z - b.z)) );
+        const c = crossings[0], n = riverNormal(c), side = Math.sign((target.x - c.x) * n.x + (target.z - c.z) * n.z) || 1;
+        const entry = {x: c.x - n.x * side * (GORGE + 18), z: c.z - n.z * side * (GORGE + 18)};
+        const exit = {x: c.x + n.x * side * (GORGE + 18), z: c.z + n.z * side * (GORGE + 18)};
+        points = [...(inBed ? [] : [entry]), {x: c.x, z: c.z}, exit];
+      }
+      route = {points, nextCheck: state.stageTimeSec + 2};
+      chaseCrossings.set(duel, route);
+    }
+    if (route?.points.length) target = route.points[0];
   }
   const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
   const turn = wrap(Math.atan2(dx, dz) - (car.heading + (state.headingError || 0)));

@@ -2159,3 +2159,11 @@ Changed assertions, for Claude to review: at (1470, 247), the expected height ch
 Scablands raider target selection and sight timing now reuse one point object instead of making a second point object for each candidate. The course's existing ground lookup still makes its own result. Hot Delivery also reuses the current car position for furnace and lookout sight when the player is driving. Race and arena calls retain their existing behavior. The hills suite passed 54 of 54.
 
 Changed assertions: none. Codex decided: no new design decision. Removed: the extra point allocation in these Scablands aim updates and the duplicate driving position lookup. No event or sound cue was added. Race fingerprints were not checked in this step. The Easy chase driver and final checks remain.
+
+### Hill country: Easy chase crossing, first attempt
+
+The Easy chase driver now chooses the Wash or South Ford when a river crossing or a steep bank blocks its way to the furnace. It follows the crossing before aiming at the furnace again. The battle driver keeps its former steering. This is an unverified first attempt: the suite did not reach a chase result in more than ten minutes and was stopped, so the chase and the gas roads have not passed this check. Hot Delivery, Get Out and Walk, Run Him Down, Slow Ride and The Key Under the Mall each finished 10 of 10 seeds. The file passed `node --check`. The remaining jobs and gas roads were not checked. No game event or sound cue was added. Race fingerprints were not checked.
+
+Changed assertions, for Claude to review: none. Lines 238 and 253 to 275 of `tools/test-everburn-easy.mjs` add a stored crossing route and change only chase steering. No assertion, pass mark, count, time limit or seed list changed. Codex decided: choose the shorter route through the Wash or South Ford, the crossings already used by this driver. Removed: direct steering toward the furnace while following that route.
+
+Not right yet: prove that this route completes the Easy chase and the rest of the suite. Then merge integration and run the final checks directed on the card. Claude must judge the updated pictures.
