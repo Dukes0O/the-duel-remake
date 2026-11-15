@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/town-state.js';
+import {findHaulRoute, createHauler} from '../src/town/town-haulers.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 
 function buildRoad() {
@@ -37,6 +38,32 @@ workTownRoadCell(loadedOldTown, {kind:'paver', x:0, z:1, speedMps:0.5, edgeOffse
 const loadedRoadTown = deserializeTown(serializeTown(loadedOldTown));
 assert.equal(roadCondition(roadCell(loadedRoadTown.machineRoadWork, 0, 1)), 'good', 'A saved road remains a road.');
 assert.equal(serializeTown(deserializeTown(oldSave)), oldSave, 'Road work does not alter the older save.');
+// Two adjacent town cells give a truck a route. Every metre must be firm and
+// smoothly paved before the whole route receives the highest grade.
+const haulTown = createTown(42, 'Haul road');
+haulTown.machineRoadWork = createRoadWork();
+for (let x=0; x<16; x++) for (let z=0; z<8; z++) {
+  haulTown.machineRoadWork.cells[`${x}:${z}`] = {...roadCell(haulTown.machineRoadWork, x, z), spread:1};
+  workTownRoadCell(haulTown, {kind:'roller', x, z});
+}
+const from = {x:0,z:0}, to = {x:1,z:0};
+const dirtHours = findHaulRoute(haulTown.machineRoads, from, to).hours;
+for (let x=0; x<16; x++) for (let z=0; z<8; z++) {
+  for (let pass=0; pass<2; pass++) workTownRoadCell(haulTown, {kind:'roller', x, z});
+}
+const firmHours = findHaulRoute(haulTown.machineRoads, from, to).hours;
+assert.ok(firmHours < dirtHours, 'A firm road gives trucks a faster route.');
+for (let x=0; x<16; x++) for (let z=0; z<8; z++)
+  workTownRoadCell(haulTown, {kind:'paver', x, z, speedMps:0.5, edgeOffsetM:0});
+const savedHaulTown = deserializeTown(serializeTown(haulTown));
+assert.deepEqual(savedHaulTown.machineRoads.map(road => road.roadClass), ['paved', 'paved']);
+const truck = createHauler({id:'road-truck', from, to, roads:savedHaulTown.machineRoads, vehicle:'truck', fuelLitres:1});
+assert.ok(truck.ok && truck.agent.hoursToDestination < firmHours, 'A saved paved road makes a truck faster.');
+workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:2, edgeOffsetM:0});
+assert.equal(haulTown.machineRoads[0].roadClass, 'plank', 'A rough patch lowers the road grade.');
+workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:0.5, edgeOffsetM:0});
+assert.equal(haulTown.machineRoads[0].roadClass, 'paved', 'Paving the patch again restores the grade.');
+
 const slowControls = roadYardControls('paver', {forward:1, steer:0}, {Space:true, ShiftLeft:true});
 assert.equal(slowControls.forward, 0.5);
 assert.equal(roadYardControls('roller', {forward:1}, {ShiftLeft:true}).forward, 1);

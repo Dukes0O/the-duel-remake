@@ -66,6 +66,22 @@ export function workTownRoadCell(town, action) {
     throw new TypeError('Road work needs a town.');
   const result = workRoadCell(town.machineRoadWork ?? createRoadWork(), action);
   town.machineRoadWork = result.work;
+  // Town routes use eight-metre cells. A grade covers the whole cell, so a
+  // single good strip cannot make a truck treat the surrounding ground as paved.
+  const x = Math.floor(action.x / 8), z = Math.floor(action.z / 8);
+  let grade = 2;
+  for (let dx = 0; dx < 8; dx++) for (let dz = 0; dz < 8; dz++) {
+    const cell = roadCell(result.work, x * 8 + dx, z * 8 + dz);
+    const cellGrade = roadCondition(cell) === 'good' ? 2 : cell.spread > 0 && cell.compaction >= 0.9 ? 1 : 0;
+    grade = Math.min(grade, cellGrade);
+  }
+  const roads = town.machineRoads ?? (town.machineRoads = []);
+  let road = roads.find(item => item.regionId === 'scablands' && item.x === x && item.z === z);
+  if (!road) {
+    road = {regionId:'scablands', x, z, state:'built'};
+    roads.push(road);
+  }
+  road.roadClass = ['dirt', 'plank', 'paved'][grade];
   return result.events;
 }
 
