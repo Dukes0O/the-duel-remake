@@ -2105,3 +2105,11 @@ Codex decided: no new design choice in this check. Sound cues remain arena.tell 
 The seed 5 Everburn drive was repeated with the existing Easy driver and realism on. It timed out at the 3,000-second limit in chase step 1. From about 1,497 seconds onward the car was near (3203, 902), in the river bed, while the furnace continued away. The car kept applying throttle toward the furnace. Along its heading the existing river bank rises roughly 3.6 m in 10 m; the hill table adds no height at those samples. The evidence points to the chase driver attempting the bank rather than using a crossing, although it does not prove the precise physics cause of the stall. No hill was moved and the driver and pass marks were unchanged. Claude must decide how to handle the chase. Seeds 6 to 10 and the gas-road proof remain unverified.
 
 Integration was already up to date at c3cb1943b. The final checks and the size timing failure are recorded immediately above; no code changed during this diagnosis. Changed assertions: none. Codex decided: no new design decision. Removed: none. No new event or sound cue was added.
+
+### Hill country: final check after chase diagnosis
+
+Integration remained up to date at c3cb1943b. The hills suite passed 50 of 50, solid 25 of 25, scene, size 9 of 9, things 37 of 37, ground 5 of 5, regions 12 of 12, map and job map. Both replay suites passed: 297 checks across 33 cases and 12 across four encounters. World composition passed 63 checks across 20 events. The picture scenario passed Node syntax checking and the build passed. The earlier size timing failure did not recur. The lane tier was not run, as directed.
+
+Not right yet: the seed 5 Easy chase stalls at the existing river bank as described above; the exact physics cause is not proved. The remaining job corridors and both gas-road drives are not fully proved. Claude must decide the chase and run and judge the pictures. Furnace cover on the plates' way belongs to EVERBURN-REMAKE job 1.
+
+Changed assertions: none in this check; the complete list for review is in the final integration note above. Codex decided: no new design decision. Removed: the generated build output. No new event or sound cue was added.
