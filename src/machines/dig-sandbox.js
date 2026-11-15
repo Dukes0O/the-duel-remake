@@ -47,7 +47,7 @@ function newGround(seed) {
     reservedShapes:RESERVATIONS});
 }
 
-function roadGround(edit, roadChanges) {
+function roadGround(edit) {
   return {
     refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
     height(x,z) { return edit.heightAt(x,z) - scablandsNaturalHeightAt(x,z); },
@@ -58,22 +58,11 @@ function roadGround(edit, roadChanges) {
       const difference = target - before;
       if (difference > 0) edit.fill(shape, 'topsoil', difference * 1.25);
       else if (difference < 0) edit.cut(shape, target);
-      const key = `${x}:${z}`;
-      roadChanges.set(key, (roadChanges.get(key) || 0) + edit.heightAt(x,z) - before);
     },
   };
 }
 
-function digGroundSave(edit, roadChanges) {
-  const save = edit.toSave();
-  for (const [key, change] of roadChanges) {
-    const [x,z] = key.split(':').map(Number);
-    const cx = Math.floor(x / 32), cz = Math.floor(z / 32);
-    const chunk = save.chunks.find(row => row.x === cx && row.z === cz);
-    if (chunk) chunk.delta[(z - cz * 32) * 32 + x - cx * 32] -= change;
-  }
-  return save;
-}
+const suppliedGroundWork = new WeakMap();
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
 export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} = {}) {
@@ -91,10 +80,17 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   }
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
-  const roadChanges = new Map();
-  return {ground:edit,roadChanges,playerId,haul,trencher:createTrencherState(YARD.trencher),
+  const roadMemory = globalThis.__theDigRoadMemory ??= {};
+  const priorRoad = ground ? suppliedGroundWork.get(edit) : roadMemory[playerId];
+  const roadWork = priorRoad ?? (loaded ? createRoadWork() : yardRoadWork(roadGround(edit)));
+  if (ground) suppliedGroundWork.set(edit, roadWork);
+  else {
+    roadMemory[playerId] = roadWork;
+    memory[playerId] = edit.toSave();
+  }
+  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
-    roadWork:yardRoadWork(roadGround(edit, roadChanges)), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
+    roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
@@ -115,7 +111,7 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
   if(sim.roadMachines[sim.activeMachine]){
-    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground, sim.roadChanges));
+    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
   } else if(sim.activeMachine==='drill'){
@@ -172,7 +168,12 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   let carry=sim.fixedCarry+dtSeconds,next={...sim,events:[]};
   while(carry+1e-10>=STEP){next=fixedStep(next,input);carry-=STEP;}
   next.fixedCarry=carry;next.elapsed=sim.elapsed+dtSeconds;
-  if(next.dirty){(globalThis.__theDigGroundMemory??={})[next.playerId]=digGroundSave(next.ground, next.roadChanges);next.dirty=false;}
+  if (next.roadWork !== sim.roadWork) {
+    suppliedGroundWork.set(next.ground, next.roadWork);
+    (globalThis.__theDigRoadMemory??={})[next.playerId]=next.roadWork;
+    next.dirty=true;
+  }
+  if(next.dirty){(globalThis.__theDigGroundMemory??={})[next.playerId]=next.ground.toSave();next.dirty=false;}
   return next;
 }
 

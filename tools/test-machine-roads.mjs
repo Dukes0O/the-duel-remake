@@ -246,9 +246,10 @@ Object.assign(sharedYard.trencher.machine, {x:70,z:10,heading:0,speedMps:0});
 sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1},action:'trench'}, 12);
 closeDigSandbox();
 const sharedNextVisit = createDigSandbox({playerId:'shared-road-ground-test'});
-assert.ok(sharedNextVisit.ground.heightAt(60,15)<originalHeight-1, 'The filled ditch remains dug when the temporary road work is removed.');
+assert.ok(sharedNextVisit.ground.heightAt(60,15)>originalHeight-0.11, 'The filled ditch remains filled on the next visit.');
+assert.equal(roadCondition(roadCell(sharedNextVisit.roadWork,60,15)), 'good', 'The road remains on the next visit.');
 closeDigSandbox();
-// Digging persists during the page session, but road work belongs to one visit.
+// Digging and road work persist together during the page session.
 let visit = createDigSandbox({playerId:'road-visit-reset-test'});
 const untouchedHeight = visit.ground.heightAt(60, 15);
 visit.activeMachine = 'dozer';
@@ -262,7 +263,7 @@ visit = stepDigSandbox(visit, {controls:{forward:1},action:'trench'}, 12);
 assert.ok(visit.ground.heightAt(70,15) < digHeight - 1, 'The trencher digs before leaving.');
 closeDigSandbox();
 const nextVisit = createDigSandbox({playerId:'road-visit-reset-test'});
-assert.ok(Math.abs(nextVisit.ground.heightAt(60,15) - untouchedHeight) < 1e-5, 'Road work does not persist into the next visit.');
+assert.ok(nextVisit.ground.heightAt(60,15) < untouchedHeight - 0.05, 'Road work persists into the next visit.');
 assert.ok(nextVisit.ground.heightAt(70,15) < digHeight - 1, 'The existing digging memory still persists.');
 closeDigSandbox();
 // Send the same held keys and machine positions as the browser scenario.
@@ -302,7 +303,7 @@ for (const kind of ['dozer', 'roller', 'paver']) {
   assert.ok(digSandboxMachineState(yard).z > before.z, `${kind} drives in the yard simulation.`);
 }
 assert.ok(Object.keys(yard.roadWork.cells).length > 0, 'Road work remains in the yard when machines change.');
-const freshYard = createDigSandbox({playerId:'road-test'});
+const freshYard = createDigSandbox({playerId:'fresh-road-practice-test'});
 const expectedPractice = {cells:{}, bladeLoad:0};
 for (let z=12; z<=19; z++) expectedPractice.cells[`40:${z}`] =
   {height:z<16 ? 1 : -1, spread:0, compaction:0, surface:0, roughness:0};
@@ -312,6 +313,16 @@ assert.equal(roadCell(freshYard.roadWork, 40, 16).height, -1, 'The yard has a lo
 let practice = {...freshYard, activeMachine:'dozer'};
 practice = stepDigSandbox(practice, {controls:{forward:1, working:true}}, 12);
 assert.ok(roadCell(practice.roadWork, 40, 16).spread > 0, 'Driving the blade carries yard material into the low ground.');
+closeDigSandbox();
+let revisitedPractice = createDigSandbox({playerId:'practice-revisit-test'});
+revisitedPractice.activeMachine = 'trencher';
+Object.assign(revisitedPractice.trencher.machine, {x:40,z:10,heading:0,speedMps:0});
+revisitedPractice = stepDigSandbox(revisitedPractice, {controls:{forward:1},action:'trench'}, 12);
+const dugPracticeHeight = revisitedPractice.ground.heightAt(40,15);
+closeDigSandbox();
+revisitedPractice = createDigSandbox({playerId:'practice-revisit-test'});
+assert.ok(Math.abs(revisitedPractice.ground.heightAt(40,15) - dugPracticeHeight) < 1e-5,
+  'Reopening the yard does not lay practice ground over a dug cell.');
 closeDigSandbox();
 console.log('Road work rules pass.');
 import * as THREE from 'three';

@@ -20,7 +20,7 @@ Fifth review: a new paving pass starts its own line. The trencher and road machi
 - Lane tier: 54 of 56 passed. Town people exceeded its 30 ms timing limit under load at 34.07 ms, then passed alone at 19.90 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it (9 of 9).
 - `npm.cmd run build`: passed. Vite reported its existing chunk-size and dynamic-import warnings.
 
-Road changes are excluded from the digging machines' page-lifetime ground memory. A test cuts ground with the dozer, digs elsewhere, and confirms that the next visit keeps the digging but starts without the road work.
+Sixth review: loose material covers pavement until it is rolled and paved again. Paving compares all four neighbouring heights, including unworked ground. The practice patch is laid only when the yard ground is new. Digging and road work remain together in page-lifetime memory between visits. This memory does not write a player save.
 
 ## For Claude to run
 
@@ -32,7 +32,7 @@ Blade work: `dozer-blade`. Rolling: `roller-ground`. Paving: `paver-surface`.
 
 ## Changed assertions, for Claude to review
 
-The fresh-yard assertion originally changed from `deepEqual(freshYard.roadWork, createRoadWork())` to `notDeepEqual(freshYard.roadWork, yard.roadWork)` because the yard gained practice ground. The review found that too weak. It now checks exact equality with the eight defined practice cells and an empty blade, so any leftover work fails. The view test replaced the old box-height assertion of 4.05 m with ground-height assertions of 4.5 m while raised and 4 m after repair, because the ground mesh itself now changes. Claude should review these changes.
+The fresh-yard assertion originally changed from `deepEqual(freshYard.roadWork, createRoadWork())` to `notDeepEqual(freshYard.roadWork, yard.roadWork)` because the yard gained practice ground. The review found that too weak. It now checks exact equality with the eight defined practice cells and an empty blade, so any leftover work fails. The view test replaced the old box-height assertion of 4.05 m with ground-height assertions of 4.5 m while raised and 4 m after repair, because the ground mesh itself now changes. The sixth review reverses two visit assertions: a filled ditch remains filled, and a dozer cut remains cut, instead of reverting on return. The fresh-yard check uses a new player rather than a returning player. These changes follow the new requirement to keep the yard's ground across visits. The keyboard drive now fills the whole practice ditch and the ditch-crossing test fills its sides, because unworked neighbouring heights now count as bumps. Claude should review these changes.
 
 ## Codex decided (Claude to review)
 
