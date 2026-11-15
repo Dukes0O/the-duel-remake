@@ -2,7 +2,7 @@
 
 A Titan and a Falcone now drive a four-segment tube with 10, 20 and 30 degree bends in both directions in the real simulation. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed. No game event or sound was added.
 
-The scarp-lip drive is still failing: a Titan starting 40 m inside the low mouth and driving out at 40 mph lands 6.21 m inside the mouth on the tube floor, which there is 0.69 m above the open surface. Simply choosing the lower surface there breaks the existing drive into the mouth. The next round must resolve the exposed floor and falling-car selection without weakening either drive. The rest of enclosure, drawing, scenario and final checks remain open.
+The low mouth moved 7 m uphill: the old bore floor rose 0.69 m above the natural ground just inside the mouth. A Titan now drives off the lip and lands in front of the mouth on open ground at both 40 and 80 mph. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed, including the drives through the tunnel both ways. Drawing, the scenario and final checks remain open. No game event or sound was added.
 
 The tunnel floor now uses the same 0.6 m step as the deck floor. Car support,
 wall contact and the crown check use the selected floor, so thin covered ground
@@ -67,8 +67,6 @@ At an overlapping bend, the tunnel query now chooses the highest reachable floor
 
 Tunnel wall and motion queries now reuse result objects instead of allocating on each call. Callers must consume each result before the next query. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed (20 checks). This does not fix the slow fall below. No assertions or sound cues changed.
 
-A Titan driven off the west scarp at 80 mph lands on the surface in front of the low mouth. `node tools/test-tunnels.mjs` passed with this new drive. At 40 mph, the same car lands at about 6.4 m inside the mouth on the tube floor, about 0.69 m above the natural surface; without a tube it lands on the surface at about 5.3 m. The enclosure is not finished: preserve the surface floor during a fall from above, including after landing, and add a regression for this slower case. No game event or sound cue was added.
-
 
 Integration was merged at b23714b22 (current integration was c88f8366974e060acaed379a3f153e395c76edec). Conflicts in the status page, ground look and scene were resolved, keeping integration's status and both the photo and tunnel rendering paths. The 100 m trial crosses the west scab scarp at a grade under .15. Both mouths meet the surface. A Titan and a Falcone drive it in both directions in the focused test.
 
@@ -132,7 +130,7 @@ Shortcut source fingerprint: `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3
 
 ## Codex decided (Claude to review)
 
-The trial line crosses the middle of the west scab scarp, from 5 m before its foot to 95 m beyond it. The deck underside is 1.2 m below the plain-level deck. Both heights share the existing ground edit.
+The trial line crosses the middle of the west scab scarp, from 2 m beyond its foot to 102 m beyond it. The deck underside is 1.2 m below the plain-level deck. Both heights share the existing ground edit.
 
 ## Removed
 

@@ -348,7 +348,7 @@ for (const id of ['girder-bridge', 'the-pipe']) {
 }
 
 // Drive off the scarp above the low mouth and land on the open ground.
-{
+for (const speed of [40, 80]) {
   const {Duel} = await import('../src/game.js');
   const {placeActor} = await import('../src/arena/arena-event.js');
   const {wrapHeading} = await import('../src/offroad-physics.js');
@@ -362,7 +362,7 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   d.course.groundTunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
   const origin = d.course.nearest(start.x + dx * 38, start.z + dz * 38);
   placeActor(d, d.state, {s: origin.s, lateral: origin.lateral,
-    headingError: wrapHeading(Math.atan2(-dx, -dz) - d.course.at(origin.s).heading)}, 80);
+    headingError: wrapHeading(Math.atan2(-dx, -dz) - d.course.at(origin.s).heading)}, speed);
   d.state.countdown = 0;
   d.setInput({throttle: 1});
   let flew = false, landed = false;

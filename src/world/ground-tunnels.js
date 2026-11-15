@@ -28,7 +28,8 @@ export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
   return {segment, minimumCover, maximumCover};
 }
 
-// A 100 m trial from the west scarp foot to its high ground.
+// A 100 m trial from the west scarp foot to its high ground. Starting just
+// inside the foot keeps the bore floor below the open ground at the mouth.
 // The scarp endpoints already come from the land's named places.
 export function westScarpTrial(heightAt) {
   const {a, b} = SCARPS.find(scarp => scarp.id === 'scab-west').stretches[0];
@@ -36,7 +37,7 @@ export function westScarpTrial(heightAt) {
   const length = Math.hypot(b.x - a.x, b.z - a.z);
   const across = {x: -(b.z - a.z) / length, z: (b.x - a.x) / length};
   const at = distance => ({x: mid.x + across.x * distance, z: mid.z + across.z * distance});
-  return trialTubeBetween(at(-5), at(95), 4, heightAt);
+  return trialTubeBetween(at(2), at(102), 4, heightAt);
 }
 
 function checkPoint(value, label) {
