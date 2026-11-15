@@ -619,3 +619,33 @@ test('job braziers belong only to their own game', () => {
   startJob();
   assert.deepEqual(trace(newDuel()), first, 'the same seed and inputs do not depend on earlier jobs');
 });
+
+test('trial boulders, poles and pylon feet stop and damage a car; the same ground is open when off', () => {
+  const trial = newDuel('banshee_muscle', true);
+  for (const kind of ['boulder', 'telegraph', 'pylon-foot']) {
+    let proved = false;
+    for (const solid of trial.course.solidGrid.solids.filter(row => row.kind === kind && row.height > 1)) {
+      for (const face of faces(solid)) {
+        const from = {x: face.x + face.nx * 18, z: face.z + face.nz * 18};
+        const heading = Math.atan2(-face.nx, -face.nz);
+        if (Math.abs(scablandsSurfaceHeightAt(from.x, from.z) - scablandsSurfaceHeightAt(solid.x, solid.z)) > .5) continue;
+        if (solidsNear(from.x, from.z, solid.x, solid.z, 4).length) continue;
+        const on = newDuel('banshee_muscle', true), off = newDuel('banshee_muscle', false);
+        let impact = 0;
+        const scrape = on._scrape.bind(on);
+        on._scrape = (zone, mph) => { impact = Math.max(impact, mph); return scrape(zone, mph); };
+        const enabled = straight(on, from, heading, 70, 2), disabled = straight(off, from, heading, 70, 2);
+        const along = row => (row.x - face.x) * face.nx + (row.z - face.z) * face.nz;
+        if (impact > 4 && enabled.at(-1).kmh < 12 && Math.min(...disabled.map(along)) < -5) {
+          assert.ok(!enabled.some(row => inside(solid, row.x, row.z)), `${kind}: the car stays outside`);
+          assert.ok(impact * MPH > 15, `${kind}: the hit reflects the car's speed`);
+          assert.ok(Object.values(on.state.damageZones).some(value => value > 0) || enabled.at(-1).armor < enabled[0].armor, `${kind}: the hit damages the car`);
+          proved = true;
+          break;
+        }
+      }
+      if (proved) break;
+    }
+    assert.ok(proved, `${kind}: a car hits the thing with the switch on and crosses its place with it off`);
+  }
+});
