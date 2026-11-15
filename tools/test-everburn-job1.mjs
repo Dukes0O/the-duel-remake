@@ -48,6 +48,25 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   assert.ok(rider.speed > 0);
   assert.deepEqual(distant.position, otherStart);
 }
+// Drive the actual rider into a stationary car, then process the impact through the job.
+{
+  const rider = waitingWorld.actors[0];
+  const car = {x:rider.position.x + 5, y:rider.position.y, z:rider.position.z};
+  const cues = [];
+  waitingDuel.course.worldAt = () => car;
+  waitingDuel.emit = event => cues.push(event);
+  waitingWorld.job.stepState = {loaded:true, ember:100};
+  waitingState.speedMph = 0;
+  stepWorldJob(waitingDuel, 0.2);
+  assert.ok(waitingState.knock, 'the ram shoves the car');
+  assert.ok(waitingWorld.riderHitKmh > step.ember.hitFreeKmh);
+  stepWorldJob(waitingDuel, 0.01);
+  assert.equal(waitingWorld.job.stepState.joltCount, 1);
+  assert.ok(waitingWorld.job.stepState.ember < 100);
+  assert.ok(cues.some(event => event.arenaTell?.cue === 'world.ember.spark'));
+  stepWorldJob(waitingDuel, 0.01);
+  assert.equal(waitingWorld.job.stepState.joltCount, 1, 'continued contact is one ram');
+}
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
 // The actual job grid holds both barricades on their named floor, including the bridge deck.
 const barricadeGrid = createJobSolidGrid(createSolidGrid([]));

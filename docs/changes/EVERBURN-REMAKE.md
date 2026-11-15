@@ -174,3 +174,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked this round.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: rider rams and jolts, the scoop ambush, and the remaining steps.
+
+## Larger land, rider rams (15 November 2026)
+
+- A pursuing rider that reaches the car on the same floor shoves it and jolts the ember. The impact goes through the existing ember rule, including Easy scaling and the `world.ember.spark` cue. The rider must separate from the car before another ram.
+- `node tools/test-everburn-job1.mjs`: passed. The real world-job step checks the shove, ember loss, cue and one jolt for continued contact. `git diff --check`: passed.
+- Codex decided: the ember impact is half the rider's measured approach speed, and contact resets after 8 m of separation. Claude should review this tuning during the scripted drives.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario, final checks and both long drivers remain for the last round.
+- Changed assertions: none. Race fingerprints: not checked this round. Removed: nothing.
+- Still to build: the scoop ambush, burning, turn-back, yard placement and the remaining steps.

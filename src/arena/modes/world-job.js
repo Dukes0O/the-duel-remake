@@ -192,7 +192,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const distance = Math.hypot(dx, dz);
   if (!rider.pursuing && distance > 120) return;
   rider.pursuing = true;
-  if (distance < 3 || dt <= 0) { rider.speed = 0; return; }
+  if (distance > 8) rider.ramContact = false;
+  if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }
   rider.heading = Math.atan2(dx, dz);
   const travel = Math.min(distance - 3, 18 * dt);
   const before = rider.position;
@@ -200,6 +201,14 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     {radius: 1.3, grid: worldJob.solidGrid, height: before.y});
   rider.position = {x: moved.x, y: moved.y, z: moved.z};
   rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+  const remaining = Math.hypot(car.x - moved.x, car.z - moved.z);
+  if (!rider.ramContact && remaining <= 3.001 && rider.speed > 0 && Math.abs(car.y - moved.y) < 3) {
+    rider.ramContact = true;
+    // The next job step treats the impact as a speed loss, using the same
+    // ember rule and sound as other hits. Contact must break before another ram.
+    worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, rider.speed * 3.6 * 0.5);
+    shoveCar(duel, {x: dx / distance, z: dz / distance, metresPerSecond: 3});
+  }
 }
 
 function updateJobActor(duel, worldJob, actorDef, dt) {
@@ -724,8 +733,9 @@ export function stepWorldJob(duel, dt) {
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
-  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0);
+  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0, worldJob.riderHitKmh || 0);
   state.scablandsHitKmh = 0;
+  worldJob.riderHitKmh = 0;
   worldJob.lastKmh = kmh;
   const view = {player: playerView, onFoot: !!state.onFoot,
     speedKmh: kmh, hitKmh, safeKmh: scablandsDriveAt(point.x, point.z).safeKmh,
