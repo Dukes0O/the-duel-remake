@@ -112,6 +112,10 @@ const STEEL = (a, b, dark = 1) => {
   return new THREE.Color().setRGB((.27 + .1 * t) * dark, (.16 + .05 * t + .025 * u) * dark, (.115 + .04 * u) * dark, THREE.SRGBColorSpace).getHex();
 };
 
+// The same pieces serve other scrap-built things (src/world/ash-men-look.js).
+export function scrapBuilder(heightAt = () => 0) { return builder(heightAt); }
+export const scrapSheetColours = () => SHEET.slice(), scrapSteel = (a, b, dark = 1) => STEEL(a, b, dark);
+
 function builder(heightAt) {
   const parts = [];
   // A frame at (x, z) turned to `heading`: its x runs along the wall there, its z points out of the yard, its y is up from the ground.
@@ -132,6 +136,11 @@ function builder(heightAt) {
         geometry.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), along.normalize()));
         geometry.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
         parts.push(paint(geometry, hex).applyMatrix4(matrix).toNonIndexed());
+      },
+      // Any other shape (a drum, a tyre), built about the frame's origin, painted one colour and given the picture's flat place.
+      add(geometry, hex, foot = 0) {
+        const piece = plain(geometry.index ? geometry.toNonIndexed() : geometry);
+        parts.push(paint(piece, hex, foot).applyMatrix4(matrix));
       },
       skin(corners, hex) {
         // A four-cornered panel of sheet, flat-shaded, seen from both sides.

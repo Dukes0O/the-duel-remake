@@ -56,6 +56,11 @@ Run once in Node: 92 sheets, 3 containers, 10 posts, 109 solid shapes, 10,220 tr
 visible window with the yard put into the scene by hand (not committed): look round 2. No test added (Codex's placing step
 brings its own); no assertion changed. Sound: none, nothing here is an event.
 
+Added the same night: `src/world/ash-men-look.js` (`barricadeShape`, standing and burnt, 1,536 and 936 triangles, wearing the
+yard's corrugated picture) and `src/world/smoke-column.js` (`createSmokeColumn`, one sheet drawn by its own shader, 40 m tall).
+The yard's file now shares its building pieces (`scrapBuilder`). Nothing calls either yet; Codex places them. Seen on a test
+page only. No test added, no assertion changed, no sound.
+
 **Removed (the yard's drawing):** nothing.
 
 ## Changed at the merge (Claude, 14 November 2026)
