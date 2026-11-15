@@ -20,10 +20,14 @@ import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.j
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 
-const position = (duel, actor) => {
+export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
-  return {x: at.x, y: at.y, z: at.z};
+  const feet = actor.airborne && Number.isFinite(actor._jumpY)
+    ? actor._jumpY : Number.isFinite(actor.groundHeight)
+      ? actor.groundHeight + (actor.airHeight || 0) : at.y;
+  return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
+const position = worldJobPosition;
 const EMPTY_HIT_TARGETS = [];
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.

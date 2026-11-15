@@ -10,6 +10,7 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsFloorsAt, selectScablandsFloor, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
 import {stepMover} from '../src/world/scablands-movers.js';
+import {worldJobPosition} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
 
 // Away from the two decks, all three foot heights must take the exact old
@@ -269,6 +270,9 @@ for (const id of ['girder-bridge', 'the-pipe']) {
     assert.equal(actor.prevGroundHeight, bed, `${id}: placement retains the previous height`);
     assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01,
       `${id}: explicit placement selects the bed`);
+    assert.equal(worldJobPosition(duel, actor).y, bed, `${id}: the job sees the car in the bed`);
+    actor.airborne = true; actor._jumpY = bed + 2;
+    assert.equal(worldJobPosition(duel, actor).y, bed + 2, `${id}: the job sees the car in the air`);
     placeActor(duel, actor, at);
     assert.equal(actor.groundHeight, null, `${id}: ordinary placement clears the old height`);
     assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - top) < .01,
