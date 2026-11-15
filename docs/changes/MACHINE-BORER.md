@@ -8,6 +8,8 @@ After checking integration was already merged, all seven machine suites, the tun
 
 The Dig's near-ground triangles were drawn only from above. From inside the scarp their back faces disappeared, leaving sky around the bore. The Dig now draws both faces of that same ground mesh. An actual triangle ray from beneath the ground passes in the focused test. The mouth shader still cuts only the mouth capsule; the scenario's ground rays account for that cut.
 
+The scenario waits for the ground window to follow Mabel before sampling, and prints all 18 ground measurements before checking them. Its expressions parse in Node. The browser measurements remain for Claude to collect.
+
 At the parked position the rules give x 1720.20, z -650.00 and floor -0.03 m. At the expected 31 m approach the floor is -0.17 m; 20 m farther ahead the surface is 11.46 m and the bore crown is 4.48 m, leaving 6.98 m cover. These are rule heights, not browser picture measurements. The revised browser scenario prints the ground mesh and rule heights at the requested 18 positions, checks cover after 20 m, and casts from the inside camera toward the roof. Claude must run it and record the picture measurements: this lane cannot run Chrome.
 
 ## Late drive follow-up

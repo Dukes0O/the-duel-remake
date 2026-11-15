@@ -116,9 +116,12 @@ export async function run(context) {
   await context.waitFor(page.loaded, 'The Dig loaded', 60000);
   for (let i = 0; i < 7; i++) await press(context, 'KeyQ');
   await context.waitFor(page.selected, 'Mabel selected', 10000);
+  await context.evaluate(page.frame);
   const samples = await context.evaluate(page.groundSamples);
   for (const sample of samples) {
     console.log(`Ground ${sample.distance} m ahead, ${sample.side} m right: rules ${sample.rules.toFixed(2)}, mesh ${sample.hit?.y?.toFixed(2) ?? 'no hit'}`);
+  }
+  for (const sample of samples) {
     assert.ok(sample.hit && Math.abs(sample.rules - sample.hit.y) <= 0.5, 'drawn ground matches the rules');
   }
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
