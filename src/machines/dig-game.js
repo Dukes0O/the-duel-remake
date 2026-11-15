@@ -26,6 +26,11 @@ const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
 const MACHINE_IDS=['excavator','borer','dumpTruck','trencher','drill','dozer','roller','paver'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
+
+/** Pitch the model around its cutting head as it follows the bore. */
+export function poseBorerSlope(view, state) {
+  view.body.rotation.x = state.slope ? -state.slope : 0;
+}
 const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font-size:13px}.the-dig-head[hidden]{display:none}.the-dig-head svg{width:76px;height:44px}.the-dig-head path{fill:none;stroke:#d0aa69;stroke-width:5}.the-dig-head line{stroke:#fff1d8;stroke-width:3}`;
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
@@ -309,7 +314,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
-      if(view){view.update({...state,y:id==='borer'?state.y:sim.ground.heightAt(state.x,state.z)},elapsed,id===sim.activeMachine?frameEvents:[]);view.root.visible=true;}
+      if(view){view.update({...state,y:id==='borer'?state.y:sim.ground.heightAt(state.x,state.z)},elapsed,id===sim.activeMachine?frameEvents:[]);
+        if(id==='borer')poseBorerSlope(view,state);
+        view.root.visible=true;}
     }
     if(modelAsset){
       const isBorer=sim.activeMachine==='borer';

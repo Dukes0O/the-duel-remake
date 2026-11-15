@@ -7,6 +7,18 @@ import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, di
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
+import {poseBorerSlope} from '../src/machines/dig-game.js';
+import * as THREE from 'three';
+
+const modelView = {body:new THREE.Group()};
+poseBorerSlope(modelView, {slope:Math.PI / 30});
+const forward = new THREE.Vector3(0, 0, 1).applyEuler(modelView.body.rotation);
+assert.ok(forward.y > 0, 'The model points upward when the bore rises.');
+poseBorerSlope(modelView, {slope:-Math.PI / 30});
+assert.ok(new THREE.Vector3(0, 0, 1).applyEuler(modelView.body.rotation).y < 0,
+  'The model points downward when the bore descends.');
+poseBorerSlope(modelView, {slope:0});
+assert.equal(modelView.body.rotation.x, 0, 'The model returns to level.');
 
 const soundVoices = [];
 const soundContext = {state:'running', currentTime:0,
