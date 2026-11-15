@@ -943,6 +943,56 @@ drawing and the merge".
 
 **Checks at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
 
+### Slice 2c result (Codex built it in rounds; two Codex reviews; Claude set the numbers, drew the hills and judged, 15 November 2026): merged, switches off
+
+Sheet `docs/board/looks/scablands-land/round-11.jpg` with Claude's review beside it. Full notes:
+`docs/changes/SCABLANDS-LAND.md`, every section headed "Round 4, slice 2c".
+
+- **Built:** hill country, fifty hills from the land's seed: 22 in the Breaks (40 to 72 m high, 260 to
+  360 m in radius), six mesas (31 to 35 m; the numbers above allowed up to 55 m, and a 220 m ramp
+  that a car climbs allows 36), six foothills (18 to 26 m), 14 dunes (8 to 9 m, lower than the 8 to
+  15 m asked for, see the review), the Lookout (60 m) and the Ridge's top (45 m); sight traced from each actor's own floor, with decks
+  and tunnel rock blocking it; raiders that lose a car search where it was last seen and return;
+  a raider fires on a car it sees, moving or stopped (the Scablands only); the screen says when the
+  car is seen and lost (`arena.tell`, `gate.latch`) and when the furnace is on the skyline
+  (`arena.toll-gate`); a chase camera that keeps above the ground; natural bent edges to the salt
+  pan and the scab plates; the hills shaded on both maps.
+- **Kept clear, by test:** every road, way and ramp, the four ways to Tin Town, Big Bess's and the
+  furnace's roads, every job place and every job's corridor, the trial tunnel's mouths, both decks.
+- **Two independent reviews by Codex.** The first found sight ignoring decks and tunnels, a
+  stopped car followed but never fired on, sight traced before range, and a picture check that
+  could not fail. The second confirmed the cures and found three unproved job corridors and a
+  small cost in aiming, since done.
+- **Changed assertions, reviewed by Claude (rule 18).** None is loosened.
+  - `test-scablands-regions`: the Ridge's level ground is 45 m (it was the place's old height,
+    18 m), because the Ridge has a top now; the 0.01 m tolerance is unchanged.
+  - `test-scablands-scene`: the far ground has more corners and triangles for the hills' shape,
+    and the yard's corner is found on the finer lattice.
+  - `test-scablands-solid`, "the four ways": the bed's way is driven from the yard under the bridge
+    to Tin Town, which is longer and stricter than before.
+  - `test-rail-region`: its reference for the closed Scablands' height takes the land's shape from
+    the land's own function, where it used to repeat the formula line by line (and had to be
+    rewritten at every slice); it still lays the places and the river itself. What it proves, that
+    closing the rail region changes no height at any of 3,500 places, is unchanged. The shape of the
+    land has its own suites (`test-scablands-hills`, `-regions`, `-solid`).
+  - `test-scablands-scene` also pins the far ground's count of corners and triangles, and
+    `test-tunnels` and `test-camera-clearance` gain checks for the camera. Those are additions.
+  - `test-everburn-easy`: the scripted driver of the furnace chase takes the land's crossings, as
+    the drivers of the other legs do; it used to steer straight at the furnace into a river bank.
+    Every pass mark, count, time limit and seed is unchanged. A driver's route is not a pass mark.
+- **Ruled by Claude at the merge: the furnace's way home crosses the Breaks.** Its road climbs 33 m
+  over the shoulder of the first hill of the Breaks (near -750, 2800), at 9 degrees along the road
+  at most and with the ground falling away to one side at up to 17 degrees. Hills placed from the
+  seed keep 60 m clear of that road, by test; the three hills placed by hand do not, and stay: a
+  furnace hauling itself over a pass is what the land is for. The solid suite drives both furnace
+  roads for slope and solid things and passes. When the last job is remade (EVERBURN-REMAKE) its
+  road is laid on this land afresh, and the sideways slope is judged then with the furnace on it.
+- **Not built here:** cover from the furnace on the plates' way (with EVERBURN-REMAKE job 1).
+- **Open:** see the review's "Short of right". No drive in real time over the hills yet and no
+  frame check; `src/render3d.js` changed (the camera), so a release needs one.
+
+**Checks at the merge (Claude):** lane tier 118 of 118 on the merged code (66 minutes; `test-everburn-easy` passes with The Everburn finished 9 of 10 and every other job 10 of 10; `test-run-gas-medium` passes); `npm run build` passes; browser scenario `scablands-hills` passes in a visible window, eleven views.
+
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.
@@ -967,8 +1017,8 @@ For the first collision records, each pylon has four feet, 6 m apart, and each f
 
 ### Codex decided (Claude to review): taller mesas
 
-The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the existing .30 slope check. The eastern original mesa moves 400 m west to keep its longer ramp clear of the East Road. The additional mesas are selected again from the same seed with the larger ramp footprint.
+The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the existing .30 slope check. The eastern original mesa moves 400 m west to keep its longer ramp clear of the East Road. The additional mesas are selected again from the same seed with the larger ramp footprint. **Claude, 15 November: confirmed.** 30 to 36 m is inside the 30 to 55 m of the numbers above, and a mesa of 35 m reads as a table mountain from two kilometres (round 11).
 
 ### Codex decided (Claude to review): Mall Road pass
 
-Move the Mall Road pass to 85.5 percent along the road so its shoulders clear the shared return and the third Survey Flags leg. Both shoulders remain beside the road.
+Move the Mall Road pass to 85.5 percent along the road so its shoulders clear the shared return and the third Survey Flags leg. Both shoulders remain beside the road. **Claude, 15 November: confirmed.**

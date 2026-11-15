@@ -2189,3 +2189,16 @@ The new seeded-hill corridor check passed as part of 55 hills checks. The origin
 On the updated land, the complete Easy suite passed: The Everburn finished 9 of 10, all eight other jobs 10 of 10, both gas roads at all four feud levels 10 of 10, and the battle home and won 10 of 10. With the realism switch on, Hot Delivery and Survey Flags each finished 10 of 10. The Scablands hills, solid, scene, size, things, ground, regions, map and job-map suites passed, as did rail-region and tunnels. Replays passed 297 checks across 33 cases and combat replays passed 12 across four encounters. World composition passed 63 checks across 20 events. The scenario passed Node syntax checking, and the build passed. The lane tier was not repeated, as directed.
 
 Changed assertions: none. The corridor test is new. Codex decided: test the seeded hill clearance separately from the existing furnace-road driveability check. Removed: none. No event or sound cue was added. Claude should judge the changed hill view and decide whether the original hill's partial corridor overlap needs further work.
+
+### Claude's drawing and the merge of slice 2c (15 November 2026)
+
+**Drawing.** `createHillField` in `src/world/scablands-ground-look.js` makes a picture of how far each place stands above the land's
+old ground because of a hill (one sample every 16 m, asked only near a hill, about 120 ms once); the ground's drawing reads it and
+draws a hill as beds of rock in bands with rills down the slopes. `src/world/scablands-scene.js` builds the field. A bush's picture
+is kept inside a rounded outline (`src/world/scablands-things-look.js`).
+
+**Browser scenario** `scablands-hills` (Claude, visible window): passes, eleven views.
+
+**Lane tier and build at the merge (Claude):** lane tier 118 of 118 on the merged code (66 minutes; `test-everburn-easy` passes with The Everburn finished 9 of 10 and every other job 10 of 10; `test-run-gas-medium` passes); `npm run build` passes; browser scenario `scablands-hills` passes in a visible window, eleven views.
+
+**Removed:** the thirteen-dome hill table of the first build, replaced by the seeded table in the same file.
