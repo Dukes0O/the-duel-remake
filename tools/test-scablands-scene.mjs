@@ -70,7 +70,7 @@ for(const solid of SCABLANDS_SOLIDS){
 for(const id of ['boneyard','dead-mall','everburn','ridge','tin-town','iron-line'])assert.ok(SCABLANDS_SOLIDS.some(solid=>solid.placeId===id),`${id} has a solid`);
 for(const id of ['dry-dam','ships-in-sand'])assert.ok(!SCABLANDS_SOLIDS.some(solid=>solid.placeId===id),`${id} draws nothing and has no solid`);
 const ground=scene.group.getObjectByName('Scablands ground chunks');
-// SCABLANDS-LAND round 4: one detailed window (121 by 121 corners) follows the player; the coarse ground covers the whole land.
+// SCABLANDS-LAND round 4: one detailed window (61 by 61 corners) follows the player; the coarse ground covers the whole land.
 const nearGroundMeshes=ground.children.filter(mesh=>mesh.name==='Scablands near ground');
 const far=ground.children.find(mesh=>mesh.name==='Scablands far ground');
 assert.equal(nearGroundMeshes.length,1,'the detailed ground is one window that follows the player');
