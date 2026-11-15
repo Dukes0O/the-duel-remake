@@ -471,6 +471,21 @@ test('sight follows the river bed beneath a deck and through open bed', () => {
   assert.equal(sees(other, car, options), true, 'the bed is open beneath the deck');
 });
 
+test('a watcher sees a car in the open bed approaching the bridge', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line;
+  const index = along.findIndex(distance => distance > bridge.along + 80);
+  const a = points[index], b = points[index + 1];
+  const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+  const car = {x: a.x, z: a.z, y: scablandsActorHeightAt(a.x, a.z, -100)};
+  const x = a.x + 20 * dx / length, z = a.z + 20 * dz / length;
+  const watcher = {x, z, y: scablandsActorHeightAt(x, z, -100)};
+  assert.ok(riverGorgeDepthAt(car.x, car.z) > 7, 'car is in the river bed');
+  assert.ok(Math.abs(scablandsActorHeightAt(car.x, car.z) - car.y) < .1, 'car is beyond the deck');
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+    eye: 1.5, target: 1.5, step: 1}), true);
+});
+
 test('the tunnel roof hides a car from a watcher above', () => {
   const trial = westScarpTrial(scablandsSurfaceHeightAt);
   const tunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});

@@ -1638,3 +1638,11 @@ The hill suite now checks that a raider actually fires at a stopped car after 1.
 Check: `node tools/test-scablands-hills.mjs` passed 27 of 27. Race fingerprints and world signatures were not checked in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: a separate open-bed approach check and the worst-step Hot Delivery sight sample count, then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: open river bed sight
+
+A new check places both actors in the open river bed beyond the Girder Bridge deck and confirms that they can see each other. It also checks that the car is in the bed and beyond the deck. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 28 of 28. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: measure the worst-step Hot Delivery sight sample count, then complete parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
