@@ -28,6 +28,8 @@ const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landma
 const EMBER_CUES = new Set(['world.ember.spark', 'world.ember.out', 'world.ember.scoop']);
 // SCABLANDS-LAND round 4, slice 2a: one cue for each ground of the Scablands, new cues left out of the old pin as the ember's three were.
 const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'scab-plates', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));
+// SCABLANDS-LAND realism step 3: a fence post knocked down by a car. One new cue, left out of the old pin as the ember's three were.
+const FENCE_CUES = new Set(['world.fence.snap']);
 
 const CUES = [
   'race.start.light', 'race.start.go', 'race.position.gain', 'race.lap.final',
@@ -48,7 +50,7 @@ const hashObject = value => hash(JSON.stringify(value));
 const catalog = JSON.parse(readFileSync(new URL('./audio/catalog.json', import.meta.url)));
 // Full pre-P4 objects are pinned; no old record or credit can silently change.
 assert.equal(hashObject(Object.fromEntries(Object.entries(SOUND_BANK).filter(([id]) => !added.has(id) && !SKI_BANK_CUES.has(id) && !DEEP_CUES.includes(id) && !HELI_BANK_CUES.has(id) && !DRIVE_BANK_CUES.has(id) && !id.startsWith('deep.ana.') && !LAB_BANK_CUES.has(id) &&
-  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id) && !GROUND_CUES.has(id)))),
+  id !== 'vehicle.rival-engine' && id !== 'vehicle.traffic-engine' && !SKYLINE_CUES.has(id) && !KOGANE_CUES.has(id) && !EMBER_CUES.has(id) && !GROUND_CUES.has(id) && !FENCE_CUES.has(id)))),
   'df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba', 'pre-P4 sound bank changed');
 assert.equal(hashObject({...catalog, sounds: catalog.sounds.filter(row => !added.has(row.cue) && !SKI_BANK_CUES.has(row.cue) && !DEEP_CUES.includes(row.cue) && !String(row.cue).startsWith('heli.') && !String(row.cue).startsWith('deep.ana.') && !String(row.cue).startsWith('lab.brian.') && !DRIVE_BANK_CUES.has(row.cue) && !SKYLINE_CUES.has(row.cue) && !KOGANE_CUES.has(row.cue))}),
   '772989c2d66e55d6c7c6f795b85cbf3395c30abe4edc8a6cc3a526421a06e8f0', 'pre-P4 catalog changed');
