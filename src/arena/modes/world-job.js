@@ -2,7 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
+import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
 import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
@@ -20,10 +20,12 @@ import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.j
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 
-const position = (duel, actor) => {
+export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
-  return {x: at.x, y: at.y, z: at.z};
+  const feet = scablandsActorFeet(actor, at.y);
+  return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
+const position = worldJobPosition;
 const EMPTY_HIT_TARGETS = [];
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.
@@ -188,6 +190,10 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
       pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null, stretchHealth: actorDef.health ?? 100,
       ...(named && (actorDef.path?.length ?? 0) > 1 ? {pathIndex: 1, pathProgress: 1 / (actorDef.path.length - 1)} : {}),
       ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
+    if (duel.course.def.scablands) {
+      actor.position.y = scablandsActorHeightAt(start.x, start.z) + (start.y || 0);
+      actor.hasFloorHeight = true;
+    }
     if (actorDef.id === FURNACE_ID && actorDef.legs) {
       actor.furnace = createFurnace(actorDef, duel.state.cpuDifficulty);
       syncFurnaceActor(actor);
@@ -204,7 +210,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   const index = Math.min(actor.pathIndex ?? 0, path.length - 1);
   const target = path[index];
   const dx = target.x - actor.position.x, dz = target.z - actor.position.z;
-  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, z: actor.position.z};
+  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, y: actor.position.y, z: actor.position.z};
   let arrived = gap <= travel || gap < .01;
   if (arrived) actor.position = {...target};
   else {
@@ -214,8 +220,9 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
   // pushed out of a building. Every stopping place must be clear of solids.
   if (duel.course.def.scablands && actor.position && !actor.train) {
-    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid});
-    actor.position.x = at.x; actor.position.z = at.z;
+    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid, height: before.y});
+    actor.position.x = at.x; actor.position.z = at.z; actor.position.y = at.y;
+    actor.hasFloorHeight = true;
     if (at.blocked) arrived = false;
   }
   if (arrived) {
@@ -407,11 +414,14 @@ function spawnWave(duel, worldJob, request, key) {
       const x = center.x + sideX * offset, z = center.z + sideZ * offset;
       const ground = duel.course.nearest(x, z, zone.s);
       Object.assign(raider, {s: ground.s, lateral: ground.lateral, x, y: ground.y,
-        z, groundY: ground.y, approachTarget, approachSpeed: request.approachSpeed || 0});
+        z, approachTarget, approachSpeed: request.approachSpeed || 0});
     });
   }
   const count = Math.max(1, Math.min(zone.raiders.length, Math.floor(request.n) || 1));
   zone.raiders = zone.raiders.slice(0, count);
+  // Job raiders move by their world y. The ordinary raid factory also makes a
+  // fighter groundY, which is not used by the job mover and would go stale.
+  for (const raider of zone.raiders) delete raider.groundY;
   duel.state.raids ??= {zones: [], shots: 0};
   duel.state.raids.zones.push(zone);
   worldJob.actors.push(...zone.raiders);
@@ -446,8 +456,9 @@ function spawnAmbush(duel, worldJob, request) {
     const side = index % 2 === 0 ? 1 : -1, across = side * (6 + 2.5 * Math.floor(index / 2)), along = (index - (count - 1) / 2) * 2;
     const x = place.x + sideX * across + way.x * along, z = place.z + sideZ * across + way.z * along;
     const ground = duel.course.nearest(x, z, zone.s);
-    Object.assign(raider, {id: `${key}:${index}`, s: ground.s, lateral: ground.lateral, x, y: ground.y, z, groundY: ground.y,
+    Object.assign(raider, {id: `${key}:${index}`, s: ground.s, lateral: ground.lateral, x, y: ground.y, z,
       yaw: Math.atan2(place.x - x, place.z - z), knockedDown: false, knockdownRemaining: 0, ambushKey: key});
+    delete raider.groundY;
   });
   zone.s = duel.course.nearest(place.x, place.z, zone.s).s;
   zone.id = key; zone.warnedLap = duel.state.currentLap; zone.nextShotAt = duel.state.stageTimeSec + 1.5;
@@ -569,7 +580,10 @@ function moveJobRaiders(duel, worldJob, dt) {
     }
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
-    if (scablands) { const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid}); actor.x = at.x; actor.z = at.z; }
+    if (scablands) {
+      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid, height: actor.y});
+      actor.x = at.x; actor.z = at.z; actor.y = at.y;
+    }
   }
 }
 
@@ -595,8 +609,6 @@ export function stepWorldJob(duel, dt) {
       !worldJob.clearedWaves.includes(waveNumber)) worldJob.clearedWaves.push(waveNumber);
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
-  const playerView = {position: point, s: player.s, lateral: player.lateral,
-    speed: player.speedMph ?? 0};
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = position(duel, state);
@@ -620,6 +632,11 @@ export function stepWorldJob(duel, dt) {
         cue: lookout.visible ? 'arena.tell' : 'gate.latch', position: car}});
     }
   }
+  // Exploration finds use heights above the local ground, not world altitudes.
+  const jobPoint = currentStep?.kind === 'explore' && duel.course.def.scablands
+    ? {...point, y: point.y - scablandsActorHeightAt(point.x, point.z, point.y)} : point;
+  const playerView = {position: jobPoint, s: player.s, lateral: player.lateral,
+    speed: player.speedMph ?? 0};
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
   if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }

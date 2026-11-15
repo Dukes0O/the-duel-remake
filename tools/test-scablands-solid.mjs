@@ -18,11 +18,12 @@ import {placeActor} from '../src/arena/arena-event.js';
 import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, EAST_ROAD, ROAD_HALF_WIDTH, roadPointFrom} from '../src/world/scablands-road.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../src/world/scablands-ground.js';
 import {HILLS} from '../src/world/scablands-height.js';
-import {RIVER, RIVER_LAND, riverDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
+import {RIVER, RIVER_LAND, riverDepthAt, riverGorgeDepthAt, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpHeightAt} from '../src/world/scablands-scarps.js';
-import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
+import {SCABLANDS_SOLIDS, solidsNear, pushOutOfSolids, createSolidGrid, createJobSolidGrid, WHEEL_HEIGHT} from '../src/world/scablands-solids.js';
+import {thingSolids} from '../src/world/scablands-things.js';
 import {GROUND, fallHit, dropFor, climbLimit} from '../src/world/scablands-ground-rules.js';
 import {stepMover, FOOT_GRADE} from '../src/world/scablands-movers.js';
 import {EVERBURN_PROP_FORM, createEverburnProps, EVERBURN_PROPS} from '../src/world/everburn-props.js';
@@ -125,7 +126,7 @@ function straight(duel, from, heading, kmh, seconds) {
     const here = where(duel), ahead = {x: here.x + Math.sin(heading) * 100, z: here.z + Math.cos(heading) * 100};
     drive(duel, ahead, kmh);
     duel.step(DT);
-    track.push({...where(duel), kmh: kmhOf(duel), air: duel.state.airHeight, armor: duel.state.armor, airborne: duel.state.airborne});
+    track.push({...where(duel), kmh: kmhOf(duel), air: duel.state.airHeight, armor: duel.state.armor, airborne: duel.state.airborne, feet: duel.state._jumpY ?? duel.state.groundHeight});
   }
   return track;
 }
@@ -187,6 +188,52 @@ test('off a lip: a car that drives off a lip is in the air and its landing is a 
   const flown = straight(fast, start, heading, 200, 8);
   assert.ok(flown.some(row => row.air > 1.5) && fast.hits.some(hit => hit.kind === 'fall'), 'a car at 200 km/h leaves the bank, flies and lands with a hit');
   console.log('lips: ' + results.join('; '));
+});
+
+test('a car driven off the bank beside the bridge lands in the bed', () => {
+  const bridge = RIVER_LAND.crossings.find(crossing => crossing.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line;
+  const index = along.findIndex(value => value >= bridge.along);
+  const a = points[index - 1], b = points[index + 1];
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+  const centre = {x: bridge.x + dx * 35, z: bridge.z + dz * 35};
+  const normal = {x: dz, z: -dx};
+  const start = {x: centre.x + normal.x * 260, z: centre.z + normal.z * 260};
+  const duel = newDuel();
+  const track = straight(duel, start, Math.atan2(-normal.x, -normal.z), 200, 8);
+  const landing = track.find((row, i) => i > 0 && track[i - 1].airborne && !row.airborne && riverDepthAt(row.x, row.z) > 4);
+  assert.ok(track.some(row => row.airborne), 'the car leaves the bank');
+  assert.ok(landing, 'the car lands in the bed');
+  assert.ok(Math.hypot(landing.x - bridge.x, landing.z - bridge.z) < 100, 'the landing is beside the bridge');
+  assert.ok(Math.abs(landing.feet - scablandsSurfaceHeightAt(landing.x, landing.z)) < .1,
+    `landing: ${JSON.stringify(landing)} surface ${scablandsSurfaceHeightAt(landing.x, landing.z)}`);
+});
+
+test('the same feet select support throughout flight beside the bridge at 80 km/h', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const {points, along} = RIVER_LAND.line, index = along.findIndex(v => v >= bridge.along);
+  const a = points[index - 1], b = points[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+  const centre = {x: bridge.x + dx * 35, z: bridge.z + dz * 35};
+  const normal = {x: dz, z: -dx}, start = {x: centre.x + normal.x * 260, z: centre.z + normal.z * 260};
+  const duel = newDuel(), heading = Math.atan2(-normal.x, -normal.z);
+  put(duel, start.x, start.z, heading, 80);
+  let flight = 0;
+  for (let i = 0; i < 1200; i++) {
+    const here = where(duel);
+    drive(duel, {x: here.x + Math.sin(heading) * 100, z: here.z + Math.cos(heading) * 100}, 80);
+    duel.step(DT);
+    const actor = duel.state;
+    if (actor.airborne) {
+      flight++;
+      const feet = scablandsActorFeet(actor);
+      assert.equal(feet, actor._jumpY);
+      assert.equal(duel._supportAt(actor.s, actor.lateral, actor).y,
+        duel.course.groundAt(actor.s, actor.lateral, feet).y);
+    }
+  }
+  assert.ok(flight > 0, 'the car leaves the bank');
 });
 
 test('the Steps: a car under 25 km/h climbs the ledges, a car at 60 is thrown back; the ember is safe there only under 20', () => {
@@ -431,48 +478,38 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     ...ROAD_NET.road('ridge-spur').points, ...ROAD_NET.road('ridge-road').points, town];
   const wash = RIVER_LAND.crossings.find(crossing => crossing.kind === 'wash'), steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');
   const bed = riverPoints.filter((point, index) => RIVER_LAND.line.along[index] > steps.along - 50 && RIVER_LAND.line.along[index] < wash.along + 50).reverse();
-  const bedLine = [...ROAD_NET.road('boneyard-road').points.filter(point => Math.hypot(point.x - wash.x, point.z - wash.z) > 150 && point.x < wash.x + 10 || false).slice(0, 0), ...bed.filter((_, index) => index % 2 === 0)];
   const ways = [
     ['the East Road', [...EAST_ROAD.points, town], 190, 220],
     ['the scab short cut', [onWay(-150), onWay(-92), onWay(92), onWay(150), town], 60, 200],
     ['the salt pan', ridgeLine, 190, 220],
-    ['the river bed (as far as the bridge, and out by the Wash)', null, 80, 300],
+    ['the river bed under the bridge', null, 80, 300],
   ];
   const rows = [];
   for (const realism of [false, true]) for (const [label, line, kmh, seconds] of ways) {
     const duel = newDuel('falcone_f42', realism);
     let driven;
     if (label.startsWith('the river bed')) {
-      // KNOWN LIMIT (slice 2b, reported to Claude): a deck is level with the plain in the land's one height, so the Girder Bridge and the Pipe stand across the bed as
-      // a wall 8 m high, and the bed cannot be driven under them. The way from the Wash up the bed to the Steps is therefore only as far as the bridge: down the
-      // Wash's ramp, along the bed 27 m off its middle (the bridge's three piers stand across it at the middle and 55 m either side), to the bridge, where the
-      // deck stops the car; and back down the bed and up the Wash's ramp, to the Boneyard Road and the East Road to Tin Town.
-      const onRoad = ROAD_NET.road('boneyard-road'), before = roadPointFrom(onRoad, wash.x, wash.z, -220), bridge = RIVER_LAND.crossings.find(crossing => crossing.kind === 'bridge');
+      // Take the Wash into the bed, pass between the bridge piers, then climb the Steps to town.
+      const onRoad = ROAD_NET.road('boneyard-road'), before = roadPointFrom(onRoad, wash.x, wash.z, -220);
+      const bridge = RIVER_LAND.crossings.find(crossing => crossing.kind === 'bridge');
       const camp = LAND.place('safe-road');
       const campIndex = EAST_ROAD.points.reduce((best, point, index, points) => Math.hypot(point.x - camp.x, point.z - camp.z) < Math.hypot(points[best].x - camp.x, points[best].z - camp.z) ? index : best, 0);
       const first = EAST_ROAD.points[0], next = EAST_ROAD.points[1];
       put(duel, first.x, first.z, Math.atan2(next.x - first.x, next.z - first.z), 0);
       const lead = follow(duel, [...EAST_ROAD.points.slice(0, campIndex + 1), ...onRoad.points.filter(point => Math.hypot(point.x - before.x, point.z - before.z) < 30).slice(0, 1), before], {speed: 80, stopWithin: 30, seconds: 400, ahead: 40});
       assert.ok(lead.arrived, `${label}: from the yard to the Wash`);
-      const upstream = bed.filter(point => Math.hypot(point.x - bridge.x, point.z - bridge.z) > 160 && RIVER_LAND.line.along[riverPoints.indexOf(point)] > bridge.along);
-      const offset = upstream.map((point, index) => {
-        const a = upstream[Math.max(0, index - 1)], b = upstream[Math.min(upstream.length - 1, index + 1)], l = Math.hypot(b.x - a.x, b.z - a.z);
+      const offset = bed.map((point, index) => {
+        const a = bed[Math.max(0, index - 1)], b = bed[Math.min(bed.length - 1, index + 1)], l = Math.hypot(b.x - a.x, b.z - a.z);
         return {x: point.x + (b.z - a.z) / l * 27, z: point.z - (b.x - a.x) / l * 27};
       });
-      const run = follow(duel, [before, {x: wash.x, z: wash.z}, ...offset], {speed: 60, stopWithin: 25, seconds: 400, ahead: 40});
-      assert.ok(run.arrived, `${label}: along the bed to the bridge`);
-      assert.ok(riverDepthAt(where(duel).x, where(duel).z) > 6, `${label}: the car is down in the bed`);
-      // On to the bridge itself: the deck is a wall across the bed.
-      const wall = {x: bridge.x, z: bridge.z};
-      for (let step = 0; step < 60 * 40; step++) { drive(duel, wall, 40); duel.step(DT); }
-      assert.ok(duel.hits.some(hit => hit.kind === 'climb') && Math.hypot(where(duel).x - bridge.x, where(duel).z - bridge.z) > 8, `${label}: the deck of the bridge holds the car back (a dead end)`);
-      // Out again: back down the bed to the Wash and up its ramp, then along the Boneyard Road to the East Road's end by the road.
-      const back = follow(duel, [where(duel), ...offset.slice().reverse(), {x: wash.x, z: wash.z}, onRoad.points[onRoad.points.length - 1]], {speed: 60, stopWithin: 40, seconds: 400, ahead: 40});
-      assert.ok(back.arrived, `${label}: back to the Boneyard`);
-      const finish = follow(duel, [where(duel), ...ROAD_NET.road('tin-road').points, town], {speed: 80, stopWithin: 30, seconds: 400, ahead: 40});
-      driven = {arrived: finish.arrived, seconds: lead.seconds + run.seconds + back.seconds + finish.seconds, worst: Math.max(lead.worst, run.worst, back.worst, finish.worst)};
-      for (const hit of duel.hits) void hit;
-      duel.hits = duel.hits.filter(hit => hit.kind !== 'climb');
+      let crossed = false;
+      const run = follow(duel, [before, {x: wash.x, z: wash.z}, ...offset], {speed: 60, stopWithin: 25, seconds: 400, ahead: 40,
+        onTick: d => { const here = where(d); if (Math.hypot(here.x - bridge.x, here.z - bridge.z) < 45 && scablandsSurfaceHeightAt(here.x, here.z) - (d.state.groundHeight ?? d.state._jumpY) > 4) crossed = true; }});
+      assert.ok(run.arrived && crossed, `${label}: reaches the Steps after passing beneath the bridge (arrived ${run.arrived}, crossed ${crossed})`);
+      const exits = [onWay(-150), onWay(150)].sort((a, b) => Math.hypot(a.x - town.x, a.z - town.z) - Math.hypot(b.x - town.x, b.z - town.z));
+      const rest = follow(duel, [where(duel), onWay(0), exits[0], town], {speed: (d, here) => nearSteps(d, here) ?? 150, stopWithin: 30, seconds: 400, ahead: 40});
+      driven = {arrived: rest.arrived, seconds: lead.seconds + run.seconds + rest.seconds, worst: Math.max(lead.worst, run.worst, rest.worst)};
+
     } else {
       const first = line[0], next = line[1];
       put(duel, first.x, first.z, Math.atan2(next.x - first.x, next.z - first.z), 0);
@@ -491,6 +528,55 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     rows.push(`${label} (realism ${realism ? 'on' : 'off'}): ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
   }
   console.log('the four ways: ' + rows.join('; '));
+});
+
+// A job raider follows a driven car from the road, down the Wash and under
+// the bridge. Both heights are checked throughout the bed, with town off.
+test('a job raider follows a car down the Wash and under the bridge', () => {
+  const wash = RIVER_LAND.crossings.find(c => c.kind === 'wash');
+  const bridge = RIVER_LAND.crossings.find(c => c.kind === 'bridge');
+  const steps = RIVER_LAND.crossings.find(c => c.kind === 'steps');
+  const before = roadPointFrom(ROAD_NET.road('boneyard-road'), wash.x, wash.z, -220);
+  const bed = riverPoints.filter((point, index) => RIVER_LAND.line.along[index] > steps.along - 50 &&
+    RIVER_LAND.line.along[index] < wash.along + 50).reverse();
+  const offset = bed.map((point, index) => {
+    const a = bed[Math.max(0, index - 1)], b = bed[Math.min(bed.length - 1, index + 1)];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    return {x: point.x + (b.z - a.z) / length * 27, z: point.z - (b.x - a.x) / length * 27};
+  });
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, arsenal: true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    seed: 1989, opponents: [], job: {...EVERBURN_JOBS[0], seed: 1989}}), true);
+  duel.state.countdown = 0;
+  put(duel, before.x, before.z, Math.atan2(wash.x - before.x, wash.z - before.z));
+  const raider = {id: 'wash-pursuit', x: before.x, z: before.z,
+    y: scablandsSurfaceHeightAt(before.x, before.z), health: 70, approachSpeed: 7,
+    approachTarget: {x: before.x, z: before.z}};
+  duel.state.arena.worldJob.actors.push(raider);
+  let carCrossed = false, raiderCrossed = false, carBed = 0, raiderBed = 0;
+  const check = d => {
+    const car = where(d);
+    raider.approachTarget.x = car.x; raider.approachTarget.z = car.z;
+    const carDepth = riverGorgeDepthAt(car.x, car.z);
+    const raiderDepth = riverGorgeDepthAt(raider.x, raider.z);
+    if (carDepth > 4) {
+      carBed++;
+      assert.ok(Math.abs((d.state._jumpY ?? d.state.groundHeight) - scablandsActorHeightAt(car.x, car.z, -100)) < 1,
+        'the car stays on the bed');
+      if (Math.hypot(car.x - bridge.x, car.z - bridge.z) < 45) carCrossed = true;
+    }
+    if (raiderDepth > 4) {
+      raiderBed++;
+      assert.ok(Math.abs(raider.y - scablandsActorHeightAt(raider.x, raider.z, -100)) < 1e-6,
+        'the raider stays on the bed');
+      if (Math.hypot(raider.x - bridge.x, raider.z - bridge.z) < 45) raiderCrossed = true;
+    }
+  };
+  const run = follow(duel, [before, {x: wash.x, z: wash.z}, ...offset],
+    {speed: 12, stopWithin: 25, seconds: 1200, ahead: 40, onTick: check});
+  assert.ok(run.arrived && carCrossed && raiderCrossed && carBed > 0 && raiderBed > 0,
+    `both pass beneath the bridge: arrived ${run.arrived}, car ${carCrossed}, raider ${raiderCrossed}`);
 });
 
 // ---- 5. Scarps ------------------------------------------------------------------------------------------------------------------------------------
@@ -574,6 +660,19 @@ test('a raider meeting a building is stopped by it; a truck is held by ground to
   worldJob.actors.push(raider);
   for (let step = 0; step < 60 * 14; step++) duel.step(DT);
   assert.ok(!inside(block, raider.x, raider.z) && raider.x > block.x - block.halfX - 1.5, `a raider of a real job walks at the building and stays outside it (${(block.x - block.halfX - raider.x).toFixed(2)} m from its face)`);
+  // A job wave comes from the common raid factory but moves by its own y.
+  worldJob.job.stepIndex = 0;
+  worldJob.job.stepState = {};
+  worldJob.job.steps[0] = {kind: 'defend', placeId: 'height-check',
+    place: {x: block.x - 45, z: block.z}, raiderEntry: {x: block.x - 60, z: block.z},
+    approachSpeed: 4.5, waveCount: 1};
+  duel.step(DT);
+  const wave = worldJob.waveZones?.['0:0'];
+  assert.ok(wave?.raiders.length, 'the job spawns its defence wave');
+  for (const member of wave.raiders) {
+    assert.ok(Number.isFinite(member.y), 'the raider has one world height');
+    assert.equal(Object.hasOwn(member, 'groundY'), false, 'the job does not keep a stale second height');
+  }
 });
 
 test('a job raider walks around a trial boulder', () => {
@@ -707,5 +806,19 @@ test('trial boulders, poles and pylon feet stop and damage a car; the same groun
       if (proved) break;
     }
     assert.ok(proved, `${kind}: a car hits the thing with the switch on and crosses its place with it off`);
+  }
+});
+
+
+test('realism objects respect the actor floor in both course and job grids', () => {
+  const crossing = LAND.place('girder-bridge');
+  const x = crossing.x, z = crossing.z, deck = scablandsSurfaceHeightAt(x, z), bed = deck - 8;
+  const fixed = {signs: [{id: 'pole', x, z, heading: 0}], pylons: [], telegraphs: [], fences: [], boulders: []};
+  const [pole] = thingSolids(fixed);
+  const rock = {...pole, id: 'bed-rock', kind: 'boulder', y: bed, minY: bed, maxY: bed + 2,
+    center: [x, bed + 1, z], size: [1, 2, 1], collision: {center: [x, bed + 1, z], halfExtents: [.5, 1, .5], heading: 0}};
+  for (const grid of [createSolidGrid([pole, rock]), createJobSolidGrid(createSolidGrid([pole, rock]))]) {
+    assert.equal(pushOutOfSolids(x, z, .4, grid, bed).hit?.id, 'bed-rock');
+    assert.equal(pushOutOfSolids(x, z, .4, grid, deck).hit?.id, 'pole');
   }
 });

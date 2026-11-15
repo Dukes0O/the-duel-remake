@@ -1,4 +1,4 @@
-import {isSummitAttack} from './summit-attack.js';
+﻿import {isSummitAttack} from './summit-attack.js';
 import {installDeepCourse} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
@@ -19,8 +19,9 @@ import { expansionPoint, expansionHeight } from './expansion-courses.js';
 import { buildCourseSetPieces } from './course-set-pieces.js';
 import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } from './freestyle-course.js';
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
-import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {buildBowlFeatures} from './bowl/bowl-course.js';
+import {createGroundTunnels} from './world/ground-tunnels.js';
 import {featureFlags} from './feature-flags.js';
 import {SCABLANDS_LAYOUT} from './world/scablands.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './world/jobs/everburn.js';
@@ -79,8 +80,10 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,scablandsRealism}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,tunnelsEnabled=false,scablandsRealism}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
+    this._groundTunnelsEnabled=Boolean(def.scablands) && tunnelsEnabled===true;
+    this.groundTunnels=null;this.groundTunnelsRevision=0;
     if(def.scablands && (scablandsRealism ?? featureFlags.enabled('scablands-realism'))){
       const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
       const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
@@ -246,6 +249,14 @@ export class Course {
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
+  // Replace the trial bore atomically; the scene follows the revision.
+  setGroundTunnels(segments){
+    if(!Array.isArray(segments))throw new TypeError('Tunnel segments must be a list.');
+    if(segments.length&&!this._groundTunnelsEnabled)throw new Error('Tunnel trial is not enabled.');
+    const next=segments.length?createGroundTunnels(segments,{heightAt:scablandsSurfaceHeightAt}):null;
+    this.groundTunnels=next;this.groundTunnelsRevision++;
+    return next;
+  }
   tunnelAt(s,lateral=0){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end&&(t.roofWidth==null||Math.abs(lateral)<=t.roofWidth))||null;}
   jumpAt(s){if(this.def.pit)return pitRampHeight(this,s);
     if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}
@@ -304,8 +315,11 @@ export class Course {
       p.y=lerp(p.y,hidden.y,blend);
     }
     return p;}
-  groundAt(s,off=0){const p=this._baseGroundAt(s,off);
+  groundAt(s,off=0,actorHeight){const p=this._baseGroundAt(s,off);
     if(this.muddyHollow && !this.surfaceAt(s,off).road && this.muddyHollow.contains(p.x,p.z))p.y=this.muddyHollow.heightAt(p.x,p.z);
+    if(this.def.scablands && Number.isFinite(actorHeight))p.y=scablandsActorHeightAt(p.x,p.z,actorHeight);
+    if(this.def.scablands && Number.isFinite(actorHeight) && this.groundTunnels)
+      p.y=this.groundTunnels.groundAt({x:p.x,y:actorHeight,z:p.z},actorHeight,p.y);
     return p;}
   _solidScenery(){
     const f=this.features,rng=this.rng;

@@ -533,7 +533,8 @@ the review". Sheet `docs/board/looks/scablands-land/round-6.jpg` with Claude's r
   (the braziers) now belong to that game and go when it ends; Big Bess stops clear of every
   solid and both furnace roads are proved clear of solids and of ground too steep, every 2 m.
   The third is open, below.
-- **Open fault: the river bed is a dead end under the Girder Bridge and the Pipe**, because the
+- **Cured 15 November 2026 (TUNNEL-TRIAL, the rule of floors): the bed is open under both decks, in the rules and in the
+  drawing, and the fourth way is driven to Tin Town.** As first recorded: the river bed was a dead end under the Girder Bridge and the Pipe, because the
   land holds one height at each place and a deck is level with the plain. It cuts the fourth
   way to Tin Town (the bed from the Wash). The cure is a ground that an actor reads at its own
   height, which the tunnel lane has begun (TUNNEL-TRIAL); decks become its second use. The test

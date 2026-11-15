@@ -62,7 +62,8 @@ function narrowing(x, z, river) {
   let narrow = 1;
   for (const crossing of decks(river)) {
     if (Math.abs(here.along - crossing.along) > crossing.reach + 70) continue;
-    const share = (crossing.deckHalfWidth + 1.4) / (ROAD_HALF_WIDTH * ROAD_REACH);
+    const slabHalfWidth = crossing.kind === 'bridge' ? 7.5 : 4.2;
+    const share = slabHalfWidth / (ROAD_HALF_WIDTH * ROAD_REACH);
     // Narrow where the gorge is, widening over the 40 m before its lip.
     const wide = Math.min(1, Math.max(0, (here.distance - RIVER.lipHalfWidth - 8) / 40));
     narrow = Math.min(narrow, share + (1 - share) * wide * wide * (3 - 2 * wide));
@@ -73,6 +74,7 @@ function narrowing(x, z, river) {
 // `material` carries the road's look (createRoadLook). Returns {group, update, refresh, dispose, pieces}.
 export function createRoadsDraw({net = ROAD_NET, river = RIVER_LAND, plainAt, material, range = 3000}) {
   const ground = createDrawnGround(plainAt), group = new THREE.Group();
+  const deckRoads = decks(river).map(crossing => ({crossing, road: net.nearest(crossing.x, crossing.z)?.road}));
   group.name = 'Scablands roads';
   const pieces = [];
   for (const road of net.roads) {
@@ -88,11 +90,13 @@ export function createRoadsDraw({net = ROAD_NET, river = RIVER_LAND, plainAt, ma
     for (let index = first; index <= last; index++) {
       const section = sections[index], nx = Math.cos(section.heading), nz = -Math.sin(section.heading);
       const squeeze = narrowing(section.x, section.z, river);
+      const onDeck = deckRoads.some(item => item.road?.id === road.id &&
+        Math.hypot(section.x - item.crossing.x, section.z - item.crossing.z) < 88);
       for (let point = 0; point < across; point++) {
         const u = ROAD_ACROSS[point], reach = u * ROAD_HALF_WIDTH * squeeze;
         const x = section.x + nx * reach, z = section.z + nz * reach;
         // The ground the ribbon lies on: the drawn plain with the river's cut (a ford or a wash goes down into the gorge, a deck does not).
-        positions.push(x, ground.at(x, z) - riverDepthAt(x, z) + ROAD_LIFT, z);
+        positions.push(x, ground.at(x, z) - (onDeck ? 0 : riverDepthAt(x, z)) + ROAD_LIFT, z);
         roads.push(u, section.along);
       }
       if (index < last) {
@@ -217,7 +221,7 @@ const colour = (geometry, hex) => {
 // top and three piers down to the bed. `length` is the span along the road. Returns one geometry.
 export function girderBridgeGeometry({length = 176, deckWidth = 15, bay = 11, depthBelow = 9} = {}) {
   const parts = [], steel = 0x5a4a3c, dark = 0x3b322b, concrete = 0x6b6358, half = length / 2, rail = deckWidth / 2 + .3, top = 5.4;
-  parts.push(colour(box(deckWidth, .9, length, 0, -.55, 0), 0x4b4137));
+  parts.push(colour(box(deckWidth, 1.2, length, 0, -.6, 0), 0x4b4137));
   const bays = Math.round(length / bay), step = length / bays;
   for (const side of [-1, 1]) {
     const x = side * rail;
@@ -240,7 +244,7 @@ export function girderBridgeGeometry({length = 176, deckWidth = 15, bay = 11, de
 // The Pipe: a narrow deck one car wide with an old pipeline on piers beside it, flanged every few metres.
 export function pipeGeometry({length = 176, deckWidth = 8.4, depthBelow = 9} = {}) {
   const parts = [], half = length / 2, rust = 0x5c3f2b, pipeRadius = 1.15, pipeX = deckWidth / 2 + 2.2;
-  parts.push(colour(box(deckWidth, .8, length, 0, -.5, 0), 0x4b4137));
+  parts.push(colour(box(deckWidth, 1.2, length, 0, -.6, 0), 0x4b4137));
   const pipe = new THREE.CylinderGeometry(pipeRadius, pipeRadius, length, 14, 1, false);
   pipe.rotateX(Math.PI / 2); pipe.translate(pipeX, 1.5, 0); parts.push(colour(pipe, rust));
   for (let z = -half + 6; z < half; z += 11) {

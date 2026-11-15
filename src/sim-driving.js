@@ -7,6 +7,7 @@ import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { scablandsDriveAt } from './world/scablands-regions.js';
+import { scablandsDeckRoofAt } from './world/scablands-ground.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
@@ -474,7 +475,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
       actor._jumpOrigin = index >= 0 ? { s: actor.s, world: this.course.worldAt(actor.s, actor.lateral), rampId: `ramp-${index}`, lap: Math.floor(actor.s / this.course.length) + 1 } : null;
     } else {
       actor._verticalSpeed = groundVelocity;
-      actor._jumpY = ground; actor.airHeight = 0; return;
+      actor._jumpY = ground; actor.airHeight = 0;
+      if (scablands) actor.groundHeight = ground;
+      return;
     }
   }
   // A reef lip must stay a small hop even when the seabed drops away below it.
@@ -482,6 +485,18 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (diveHop && predicted > ground + 1.5) {
     predicted = ground + 1.5;
     actor._verticalSpeed = Math.min(0, actor._verticalSpeed);
+  }
+  if (scablands && actor._verticalSpeed > 0) {
+    const tube = this.course.groundTunnels?.tubeAt(groundPoint, actor._jumpY);
+    // A covered surface can be selected even while the feet overlap the
+    // bore. Its floor has no tunnel roof above it.
+    const tunnelRoof = tube && Math.abs(ground - tube.floor) < 1e-6 ? tube.ceiling : Infinity;
+    const roof = Math.min(scablandsDeckRoofAt(groundPoint.x, groundPoint.z, actor._jumpY), tunnelRoof);
+    const highestFeet = Math.max(ground, roof - this._vehicleSpec(actor).height);
+    if (predicted > highestFeet) {
+      predicted = highestFeet;
+      actor._verticalSpeed = 0;
+    }
   }
   actor._jumpY = predicted;
   actor._verticalSpeed -= gravity * dt;
@@ -497,6 +512,7 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   // it is not added (against a wall of ground it would be hundreds of metres a second).
   if (scablands) actor._scablandsLanding = Math.max(0, -actor._verticalSpeed);
   actor._jumpY = ground; actor._verticalSpeed = arena ? 0 : groundVelocity; actor.airborne = false; actor.airHeight = 0;
+  if (scablands) actor.groundHeight = ground;
   const origin = actor._jumpOrigin; actor._jumpOrigin = null;
   if (seaFloor) {
     this.emit({ deepLanded: { speed: Math.abs(actor.speedMph), cue: road.landingCue } });

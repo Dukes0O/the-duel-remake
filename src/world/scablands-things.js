@@ -447,7 +447,7 @@ export function thingSolids(fixed, loneBoulders = []) {
     const y = scablandsSurfaceHeightAt(x, z);
     const center = [x, y + height / 2, z], size = [halfX * 2, height, halfZ * 2];
     solids.push({id, thingId: item.id, placeId: null, kind, shape: 'ellipse', x, z, y,
-      halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size,
+      halfX, halfZ, heading, height, minY: y, maxY: y + height, verticalClearance: true, center, size,
       collision: {center, halfExtents: [halfX, height / 2, halfZ], heading}, ...extra});
   };
   for (const sign of fixed.signs ?? []) add(sign, sign.id, 'sign-post', sign.x, sign.z, .15, .15, 2.4, sign.heading);

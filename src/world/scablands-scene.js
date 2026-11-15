@@ -5,7 +5,8 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
-import {createGroundLook,createRoadLook,loadGroundPhotos} from './scablands-ground-look.js';
+import {createGroundLook,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
+import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
@@ -494,20 +495,39 @@ export function createScablandsScene(course,options={}){
       rig.rotation.y=(SCABLANDS_PLACES.indexOf(rest)%4)*Math.PI/2;return;
     }
     const at=actor.position,x=at?.x??rest.x,z=at?.z??rest.z;
-    rig.position.set(x,(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
+    // Layered job movers carry their actual support height, including beneath a deck.
+    const layered=onGround&&actor.hasFloorHeight&&Number.isFinite(at?.y);
+    rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };
   // The ground, the road and the edited chunks share one look, drawn in code over their plain colours (SCABLANDS-LAND).
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
-  // The realism trial's photographed surfaces (switch `scablands-realism`), only where there is a screen to draw on.
+  const tunnels=featureFlags.enabled('wasteland-town')?course.groundTunnels:null;
   const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&!!course.realismThings))?loadGroundPhotos():null;
-  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
+  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
+  let tunnelLining=tunnels?.segments.length?createTunnelMesh(tunnels):null;
+  if(tunnelLining)ground.add(tunnelLining);
+  let tunnelRevision=course.groundTunnelsRevision;
+  const syncTunnels=()=>{
+    if(!featureFlags.enabled('wasteland-town')||tunnelRevision===course.groundTunnelsRevision)return;
+    tunnelRevision=course.groundTunnelsRevision;
+    const current=course.groundTunnels;
+    groundLook.setTunnelMouths(current?.mouths??[]);
+    if(current?.segments.length){
+      if(tunnelLining)createTunnelMesh(current,tunnelLining);
+      else {tunnelLining=createTunnelMesh(current);ground.add(tunnelLining);}
+    }else if(tunnelLining){
+      ground.remove(tunnelLining);
+      tunnelLining.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
+      tunnelLining=null;
+    }
+  };
   const realismEnabled=!!course.realismThings;
   let things=null,tracks=null;
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
@@ -720,6 +740,7 @@ export function createScablandsScene(course,options={}){
       }
     },
     sync(state){
+      syncTunnels();
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
       if(things)things.setFallen(course.fallenFenceIds);
       if(locate(state)){

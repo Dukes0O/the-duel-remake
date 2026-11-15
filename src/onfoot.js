@@ -29,7 +29,7 @@ const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, v
 function carPoint(course, car) {
   if (!car || !Number.isFinite(car.s) || !Number.isFinite(car.lateral))
     throw new Error('Fighter needs a car with finite course coordinates.');
-  return course.groundAt(car.s, car.lateral);
+  return course.groundAt(car.s, car.lateral, course.def?.scablands ? car.groundHeight : undefined);
 }
 
 function nearbyObstacles(course, car, fromS, toS, from, to) {
@@ -41,7 +41,9 @@ function nearbyObstacles(course, car, fromS, toS, from, to) {
 function blockedByScenery(course, car, from, to, fromS, toS) {
   let earliest = null;
   for (const obstacle of nearbyObstacles(course, car, fromS, toS, from, to)) {
-    const hit = sweepObstacle(from, to, obstacle, 0, BODY);
+    const body = course.def?.scablands && obstacle.verticalClearance
+      ? {...BODY, height: 2.5} : BODY;
+    const hit = sweepObstacle(from, to, obstacle, 0, body);
     if (hit && (!earliest || hit.t < earliest.t)) earliest = hit;
   }
   return earliest;
@@ -68,7 +70,7 @@ function besideCar(course, car) {
   for (const [ds, dl] of [[0, 3], [0, -3], [-3, 0], [3, 0],
     [-2.2, 2.2], [-2.2, -2.2], [2.2, 2.2], [2.2, -2.2]]) {
     const s = car.s + ds, lateral = car.lateral + dl;
-    const point = course.groundAt(s, lateral);
+    const point = course.groundAt(s, lateral, course.def?.scablands ? car.groundHeight : undefined);
     const projected = {...point, s, lateral};
     if (!allowedGround(course, projected, car)) continue;
     if (!blockedByScenery(course, car, point, point, s, s)) return projected;
@@ -81,7 +83,7 @@ function besideCar(course, car) {
 
 export function createFighter(course, car, options = {}) {
   const initial = Number.isFinite(options.s) && Number.isFinite(options.lateral)
-    ? {...course.groundAt(options.s, options.lateral),
+    ? {...course.groundAt(options.s, options.lateral, options.height),
       s: options.s, lateral: options.lateral}
     : besideCar(course, car);
   if (!allowedGround(course, initial, car))
@@ -143,7 +145,8 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
   if (!dx && !dz) return {moved: false};
   const x = fighter.x + dx, z = fighter.z + dz;
   const nearest = course.nearest(x, z, fighter.s);
-  const ground = course.groundAt(nearest.s, nearest.lateral);
+  const ground = course.groundAt(nearest.s, nearest.lateral,
+    course.def?.scablands || course.groundTunnels ? feetY : undefined);
   const candidate = {...ground, s: nearest.s, lateral: nearest.lateral};
   if (!allowedGround(course, candidate, car)) {
     fighter.boundaryStops++;

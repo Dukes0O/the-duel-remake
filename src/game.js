@@ -330,6 +330,7 @@ export class Duel {
     const definition = laps === original.laps ? original : {...original, laps};
     this.course = new Course(definition, this.seed, {
       hiddenRoad: hiddenRoadInRace(this.featureFlags, s),
+      tunnelsEnabled: this.featureFlags.enabled('wasteland-town'),
       muddyHollow: s.wastelandGateDiscovered === true,
       ...(this.deepProviders.length ? {deep:{providers:this.deepProviders,enabled:this.featureFlags.enabled('the-deep'),kit:this._deepKit,mode:s.mode,found:this._deepFound,qualifying:!!s.qualifying&&s.qualifying.phase!=='complete'}} : {}),
     });
@@ -595,7 +596,7 @@ export class Duel {
     // Keep a valid index for code that reads the course list; the arena
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
-    this.course = new Course(venue, this.seed, {scablandsRealism: this.featureFlags.enabled('scablands-realism')});
+    this.course = new Course(venue, this.seed, {tunnelsEnabled: this.featureFlags.enabled('wasteland-town'), scablandsRealism: this.featureFlags.enabled('scablands-realism')});
     delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
     delete s.tune; delete s.fuel; // LAB-TUNE: an arena event is never tuned, and never inherits a tank
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;

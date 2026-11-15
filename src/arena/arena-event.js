@@ -93,7 +93,10 @@ export function placeActor(duel, actor, pose, speedMph = 0) {
   actor.steerVisual = 0; actor.drifting = false; actor.boosting = false;
   actor.airborne = false; actor.airHeight = 0; actor.prevAirHeight = 0; actor._jumpY = null;
   actor._verticalSpeed = 0; actor._jumpOrigin = null; actor._ramVerticalSpeed = 0;
-  actor.groundHeight = null; actor.prevGroundHeight = null; actor.terrainPitch = null;
+  // A caller placing a car on a lower floor supplies its height. Without one,
+  // support chooses the upper floor on the next step as before.
+  actor.groundHeight = Number.isFinite(pose.height) ? pose.height : null;
+  actor.prevGroundHeight = actor.groundHeight; actor.terrainPitch = null;
   actor.terrainRoll = null; actor.tumble = null; actor.impactTimer = 0;
   actor._arenaWatch = null; actor._arenaReverseSec = 0; actor._arenaGraceSec = 0; actor._arenaUTurn = 0;
   actor.knock = null;

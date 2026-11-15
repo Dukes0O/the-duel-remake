@@ -93,7 +93,7 @@ const PHOTO_FUNCTIONS = `
     return mix(a,b,far);
   }`;
 
-export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null, photos = null} = {}) {
+export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, regions = null, photos = null, tunnels = null} = {}) {
   const colour = hex => new THREE.Color(hex);
   const uniforms = {uGroundNoise: {value: scrapNoise()}, uGroundRock: {value: colour(rock)}, uGroundStone: {value: colour(stone)},
     uColPlate: {value: colour(GROUND_COLOURS['scab-plates'])}, uColSalt: {value: colour(GROUND_COLOURS['salt-pan'])}, uColBed: {value: colour(GROUND_COLOURS['river-bed'])},
@@ -115,6 +115,44 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       uniform sampler2D uRiverField;uniform vec4 uRiverBox;uniform vec4 uWreck;uniform vec4 uSand;uniform vec4 uBurn;uniform float uBurnWobble;uniform vec2 uBurnCentre;
       uniform vec2 uPan[${pan.points.length}];uniform float uPanPhase;uniform vec2 uPlates[${plates.points.length}];uniform float uPlatesPhase;`;
   }
+  // A tunnel-capable material reserves eight mouth cuts once. Updating the
+  // values does not change the shader or require a program rebuild.
+  let tunnelCapable = (tunnels?.segments.length ?? 0) > 0;
+  const tunnelMaterials = new Set();
+  function setTunnelMouths(mouths) {
+    if (mouths.length > 8) throw new RangeError('The ground can draw at most eight tunnel mouths.');
+    if (!tunnelCapable && mouths.length) {
+      tunnelCapable = true;
+      uniforms.uTunnelCount = {value: 0};
+      uniforms.uTunnelStart = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+      uniforms.uTunnelEnd = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+      uniforms.uTunnelRadius = {value: new Float32Array(8)};
+      for (const material of tunnelMaterials) material.needsUpdate = true;
+    }
+    if (!tunnelCapable) return;
+    uniforms.uTunnelCount.value = mouths.length;
+    mouths.forEach((mouth, i) => {
+      uniforms.uTunnelStart.value[i].set(mouth.start.x, mouth.start.y, mouth.start.z);
+      uniforms.uTunnelEnd.value[i].set(mouth.end.x, mouth.end.y, mouth.end.z);
+      uniforms.uTunnelRadius.value[i] = mouth.radius;
+    });
+  }
+  if (tunnelCapable) {
+    uniforms.uTunnelCount = {value: 0};
+    uniforms.uTunnelStart = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+    uniforms.uTunnelEnd = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+    uniforms.uTunnelRadius = {value: new Float32Array(8)};
+    setTunnelMouths(tunnels.mouths);
+  }
+  const tunnelDeclarations =
+    'uniform int uTunnelCount;uniform vec3 uTunnelStart[8];uniform vec3 uTunnelEnd[8];uniform float uTunnelRadius[8];';
+  const tunnelClips = `
+    for(int i=0;i<8;i++){
+      if(i>=uTunnelCount)break;
+      vec3 a=uTunnelStart[i],d=uTunnelEnd[i]-a,p=vGroundPos-a;
+      float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0);
+      vec3 q=p-d*t;if(dot(q,q)<uTunnelRadius[i]*uTunnelRadius[i])discard;
+    }`;
   const regionsOn = regions !== null;
   const photosOn = regionsOn && photos !== null;
   if (photosOn) for (const [key, name] of PHOTO_UNIFORMS) {
@@ -150,6 +188,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
   function apply(material, {riverHole = true} = {}) {
     if (!material?.isMeshStandardMaterial || material.userData.groundLook) return material;
     material.userData.groundLook = true;
+    tunnelMaterials.add(material);
     groundMaterials.add(material);
     material.defines = {...material.defines, ...(riverHole && regionsOn ? {GROUND_RIVER_HOLE: ''} : {})};
     material.onBeforeCompile = shader => {
@@ -164,13 +203,13 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
         .replace('#include <common>', `#include <common>
           uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
           uniform vec3 uColPlate;uniform vec3 uColSalt;uniform vec3 uColBed;uniform vec3 uColWreck;uniform vec3 uColSand;uniform vec3 uColBurn;uniform vec3 uColBank;
-          ${areaCode}
+          ${areaCode}${tunnelCapable ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
           vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
           ${areaFunctions}${photoCode}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
-          vec2 gq=vGroundPos.xz;
+          ${tunnelCapable ? `${tunnelClips}\n          ` : ''}vec2 gq=vGroundPos.xz;
           ${riverDistance}
           float gSlope=1.0-normalize(vGroundNormal).y;
           // The noise picture is read at sizes that never line up with each other, and nothing that must not repeat is read from it
@@ -311,11 +350,101 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tracks ? '-tracks' : ''}`;
+    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
     material.needsUpdate = true;
     return material;
   }
-  return {apply, uniforms, setTracks};
+  return {apply, uniforms, setTunnelMouths, setTracks};
+}
+
+
+// The trial's lining is separate from simulation and may be disposed with the scene.
+export function createTunnelMesh(tunnels, previous = null) {
+  const group = previous ?? new THREE.Group();
+  group.name = 'Tunnel lining';
+  const segments = tunnels.segments;
+  if (!segments.length) return group;
+  const positions = [], uvs = [], indices = [];
+  const sides = 32, floorAngle = Math.asin(0.55);
+  let distance = 0;
+  // A growing bore keeps the completed rings. The joint before the changed
+  // stretch is rebuilt because its direction can change when a bend is added.
+  const oldSegments = group.userData.tunnelSegments ?? [];
+  let unchanged = 0;
+  const samePoint = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;
+  while (unchanged < oldSegments.length && unchanged < segments.length) {
+    const a = oldSegments[unchanged], b = segments[unchanged];
+    if (a.radius !== b.radius || !samePoint(a.start, b.start) || !samePoint(a.end, b.end)) break;
+    unchanged++;
+  }
+  const firstRing = Math.max(0, Math.min(unchanged, segments.length - 1));
+  const oldGeometry = group.children[0]?.geometry;
+  if (oldGeometry && firstRing) {
+    const count = firstRing * (sides + 1);
+    positions.push(...oldGeometry.getAttribute('position').array.slice(0, count * 3));
+    uvs.push(...oldGeometry.getAttribute('uv').array.slice(0, count * 2));
+    for (let i = 0; i < firstRing; i++) {
+      const s = segments[i];
+      distance += Math.hypot(s.end.x - s.start.x, s.end.y - s.start.y, s.end.z - s.start.z);
+    }
+  }
+  // The long arc goes from one edge of the floor over the crown to the other.
+  // The final edge closes across the flat road.
+  for (let i = firstRing; i <= segments.length; i++) {
+    const segment = segments[Math.min(i, segments.length - 1)];
+    const point = i === segments.length ? segment.end : segment.start;
+    const previous = segments[Math.max(0, i - 1)];
+    const next = segments[Math.min(i, segments.length - 1)];
+    const unit = s => {
+      const dx = s.end.x - s.start.x, dz = s.end.z - s.start.z, length = Math.hypot(dx, dz);
+      return {x: dx / length, z: dz / length};
+    };
+    const before = unit(previous), after = unit(next);
+    let tx = before.x + after.x, tz = before.z + after.z;
+    const length = Math.hypot(tx, tz);
+    tx /= length; tz /= length;
+    if (i > firstRing) distance += Math.hypot(previous.end.x - previous.start.x,
+      previous.end.y - previous.start.y, previous.end.z - previous.start.z);
+    for (let j = 0; j <= sides; j++) {
+      const angle = -floorAngle + (Math.PI + 2 * floorAngle) * j / sides;
+      const across = Math.cos(angle) * segment.radius;
+      positions.push(point.x - tz * across, point.y + Math.sin(angle) * segment.radius, point.z + tx * across);
+      uvs.push(distance, (angle + floorAngle) * segment.radius);
+    }
+  }
+  for (let i = 1; i <= segments.length; i++) {
+    for (let j = 0; j <= sides; j++) {
+      const k = (j + 1) % (sides + 1), a = (i - 1) * (sides + 1), b = i * (sides + 1);
+      indices.push(a + j, b + j, a + k, a + k, b + j, b + k);
+    }
+  }
+  // Close a cutting face with a fan using the same ring as the lining.
+  for (const [closed, ring, point, reverse] of [
+    [!tunnels.startOpen, 0, segments[0].start, true],
+    [!tunnels.endOpen, segments.length, segments.at(-1).end, false],
+  ]) {
+    if (!closed) continue;
+    const center = positions.length / 3;
+    positions.push(point.x, point.y, point.z); uvs.push(distance, 0);
+    const base = ring * (sides + 1);
+    for (let j = 0; j <= sides; j++) {
+      const next = (j + 1) % (sides + 1);
+      indices.push(center, base + (reverse ? next : j), base + (reverse ? j : next));
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  if (group.children.length) {
+    group.children[0].geometry.dispose();
+    group.children[0].geometry = geometry;
+  } else {
+    const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.DoubleSide});
+    group.add(new THREE.Mesh(geometry, material));
+  }
+  group.userData.tunnelSegments = segments.map(s => ({start: {...s.start}, end: {...s.end}, radius: s.radius}));
+  return group;
 }
 
 // A graded dirt road: a flat ribbon whose vertices carry (across, along): `across` is metres from the middle over the road's half

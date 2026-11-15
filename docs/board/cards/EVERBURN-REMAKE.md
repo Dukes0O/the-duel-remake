@@ -247,7 +247,7 @@ the player has driven them or seen who is there. A player who reads the ground f
 band the table gives. The salt wind's factor and the brazier's 25 are set by those drives and
 written in the change note. A fifth drive takes the bed without scooping and arrives out.
 
-**Waits on the land:** the bed's way passes under the Girder Bridge, which is a wall from the bed
+**No longer waits (15 November 2026): the bed is open under both decks (TUNNEL-TRIAL).** As first written: the bed's way passes under the Girder Bridge, which is a wall from the bed
 until the land holds two heights at a deck (the tunnel lane's rule). Until then the bed's drive
 is proved from the Wash to the bridge and marked as owed.
 

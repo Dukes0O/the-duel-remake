@@ -1,3 +1,4 @@
+import {scablandsActorFeet} from './world/scablands-ground.js';
 // RFX-02: extracted from Duel without changing fixed-step race rules.
 import { CARS, DRIVE, TRAFFIC, SCORING, BOOST } from './config.js';
 import {hitSnowman} from './snowmen.js';
@@ -266,9 +267,17 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const ground = this.course.groundAt(distance, lateral);
+  const height = this.course.def?.scablands || this.course.groundTunnels
+    ? scablandsActorFeet(actor) : undefined;
+  const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
+  // Surface obstacles must not lift an underground car back onto the hill.
+  const tunnels = this.course.groundTunnels;
+  if (tunnels && Number.isFinite(height)) {
+    const tube = tunnels.tubeAt(ground, height, 0.6);
+    if (tube && Math.abs(ground.y - tube.floor) < 1e-6) return ground;
+  }
   const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
   if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
@@ -290,13 +299,41 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
-  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null) {
-    start.y = (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
-    end.y = (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+  const layeredGround = this.course.def?.scablands;
+  if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
+      ((this.course.groundTunnels || layeredGround) && Number.isFinite(car._jumpY))) {
+    start.y = (car.prevGroundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
+    if (this.course.def?.scablands) {
+      end.y = scablandsActorFeet(car);
+      if (!Number.isFinite(end.y)) end.y = this.course.groundAt(car.s, car.lateral).y;
+    } else {
+      end.y = (car.groundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+    }
   } else {
     // Grounded cars keep the established horizontal contact rules; only
     // airborne vehicles need extra terrain samples and vertical clearance.
     start.y = end.y = undefined;
+  }
+  // A surface above a bore is a separate floor, even when feet overlap the
+  // crown. Only apply bore walls when one end selects the tunnel floor.
+  if (this.course.groundTunnels && Number.isFinite(start.y) && Number.isFinite(end.y)) {
+    const tunnels = this.course.groundTunnels;
+    const startTube = tunnels.tubeAt(start, start.y, 0.6);
+    const startFloor = startTube?.floor;
+    const endTube = tunnels.tubeAt(end, end.y, 0.6);
+    const endFloor = endTube?.floor;
+    const selectedStart = startTube && Math.abs(this.course.groundAt(oldS, oldLateral, start.y).y - startFloor) < 1e-6;
+    const selectedEnd = endTube && Math.abs(this.course.groundAt(car.s, car.lateral, end.y).y - endFloor) < 1e-6;
+    const constrained = selectedStart || selectedEnd || (!startTube && !endTube)
+      ? tunnels.constrainMotion(start, end, this._vehicleSpec(car).halfWidth)
+      : {hit: false};
+    if (constrained.hit) {
+      end = constrained.position;
+      const road = this._roadPosition(end, car.s);
+      if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) {
+        car.s = road.s; car.lateral = road.lateral;
+      }
+    }
   }
   const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
   const heading = travelHeading + (car.slipAngle || 0);
@@ -322,13 +359,17 @@ export function _staticContacts(car, player, journeyColliders = null) {
       // Authored overhead roofs need height even when a grounded car has none.
       // Local copies leave every unflagged obstacle's historical sweep exact.
       let hit;
+      // Scablands bridge and pipe solids use the same 2.5 m actor height
+      // as job movers. Other solids keep their established contact envelope.
+      const contactDimensions = this.course.def.scablands && obstacle.verticalClearance
+        ? {...dimensions, height: 2.5} : dimensions;
       if (obstacle.verticalClearance && (!Number.isFinite(start.y) || !Number.isFinite(end.y))) {
         verticalStart ??= {...start, y: Number.isFinite(start.y) ? start.y :
           (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0)};
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
-        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, dimensions);
-      } else hit = sweepObstacle(start, end, collider, heading, dimensions);
+        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;

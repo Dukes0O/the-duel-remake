@@ -1,3 +1,26 @@
+import {scablandsDeckRoofAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+
+// Keep the chase view on the car's floor. Ordinary ground keeps its old path.
+export function constrainScablandsCamera(course, position, car, feet) {
+  if (!course.def?.scablands || !Number.isFinite(feet)) return false;
+  let changed = false;
+  const tunnels = course.groundTunnels;
+  const bore = tunnels?.tubeAt(car, feet, .6);
+  if (bore && Math.abs(tunnels.groundAt(car, feet, scablandsSurfaceHeightAt(car.x, car.z)) - bore.floor) < 1e-6) {
+    const start = {x: car.x, y: feet, z: car.z};
+    const end = {x: position.x, y: feet, z: position.z};
+    const limited = tunnels.constrainMotion(start, end, .3);
+    if (limited.hit) { position.x = limited.position.x; position.z = limited.position.z; changed = true; }
+    const atCamera = tunnels.tubeAt(position, feet, .6);
+    if (atCamera && position.y > atCamera.ceiling - .3) {
+      position.y = atCamera.ceiling - .3; changed = true;
+    }
+  }
+  const roof = scablandsDeckRoofAt(position.x, position.z, feet);
+  if (position.y > roof - .3) { position.y = roof - .3; changed = true; }
+  return changed;
+}
+
 // The tunnel roof is an elliptical arch above 3.6 m vertical side walls.
 // Apply this after camera damping as well as to its target: otherwise a tall
 // camera can interpolate through the roof on the first frame inside a portal.

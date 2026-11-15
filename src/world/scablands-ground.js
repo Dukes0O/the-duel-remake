@@ -2,6 +2,7 @@ import {SCABLANDS_PLACES} from './scablands.js';
 import {ROAD_HALF_WIDTH,ROAD_NET,distanceToNet} from './scablands-road.js';
 import {createGroundEdit} from './ground-edit.js';
 import {cutAt,regionAt,regionNaturalHeightAt} from './regions.js';
+import {riverDepthAt,riverGorgeDepthAt} from './scablands-regions.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 let scablandsOpenMarks=new Set();
@@ -68,6 +69,53 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit,open
   const previousNatural=scablandsNaturalHeightAt(x,z,scablandsOpenMarks);
   const requestedNatural=scablandsNaturalHeightAt(x,z,openMarks);
   return edited-previousNatural+requestedNatural;
+}
+
+// Fill caller-owned storage in descending order, without making a list per step.
+// The bed is a second floor only where the terrain has been lifted for a deck.
+export function scablandsFloorsAt(x,z,floors){
+  const surface=scablandsSurfaceHeightAt(x,z);
+  const depth=riverDepthAt(x,z), deckLift=riverGorgeDepthAt(x,z)-depth;
+  floors[0]=surface;
+  if(deckLift>0){
+    // The old terrain blends the deck edge down into the bed. The actual
+    // deck stays level: do not mistake that blend for a third ramp floor.
+    floors[0]=surface+depth;
+    floors[1]=surface-deckLift;
+    return 2;
+  }
+  return 1;
+}
+
+// Flight stores the absolute height in _jumpY. On the ground, groundHeight is the last support.
+export function scablandsActorFeet(actor, fallback) {
+  if (actor?.airborne && Number.isFinite(actor._jumpY)) return actor._jumpY;
+  if (Number.isFinite(actor?.groundHeight)) return actor.groundHeight + (actor.airHeight || 0);
+  return Number.isFinite(actor?._jumpY) ? actor._jumpY : fallback;
+}
+
+// An actor without a stored height starts on the top floor. If its feet are
+// below all floors, the lowest floor is its support rather than the deck.
+export function selectScablandsFloor(floors,count,feet){
+  if(!Number.isFinite(feet))return floors[0];
+  for(let i=0;i<count;i++)if(floors[i]<=feet+.6)return floors[i];
+  return floors[count-1];
+}
+
+// Reuse storage for the common height query; no list is allocated per step.
+const floorScratch=[];
+export function scablandsActorHeightAt(x,z,actorHeight){
+  const count=scablandsFloorsAt(x,z,floorScratch);
+  return selectScablandsFloor(floorScratch,count,actorHeight);
+}
+
+// Only an actor already below the underside meets it from below. An actor
+// falling onto the deck must remain free to land on its upper surface.
+export function scablandsDeckRoofAt(x,z,feet){
+  const count=scablandsFloorsAt(x,z,floorScratch);
+  if(count<2||!Number.isFinite(feet))return Infinity;
+  const underside=floorScratch[0]-1.2;
+  return feet<=underside?underside:Infinity;
 }
 
 export function scablandsSurfaceAt(x,z){

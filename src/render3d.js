@@ -1,3 +1,4 @@
+import {scablandsActorFeet} from './world/scablands-ground.js';
 import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
@@ -42,7 +43,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
+import { constrainTunnelCamera, constrainScablandsCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend } from './world-job-camera.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
@@ -981,6 +982,8 @@ export function attachRenderer(host, app) {
         lookTarget.lerp(cameraBodyTarget.set(carAt.x,carAt.y+(tall?1.65:1.05),carAt.z),blend);
       }
     }
+    if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
+      constrainScablandsCamera(course,camera.position,player.position,scablandsActorFeet(st, pp.y));
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
         !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
