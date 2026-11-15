@@ -347,6 +347,41 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   }
 }
 
+// Drive off the scarp above the low mouth and land on the open ground.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  const trial = westScarpTrial(scablandsSurfaceHeightAt), {start, end} = trial.segment;
+  const dx = (end.x - start.x) / 100, dz = (end.z - start.z) / 100;
+  const d = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
+  d.state.wastelandGateDiscovered = true;
+  assert.equal(d.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'titan_monster', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+  d.state.arena.timeLimitSec = Infinity;
+  d.state.opponents[0].finished = true;
+  d.course.groundTunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
+  const origin = d.course.nearest(start.x + dx * 38, start.z + dz * 38);
+  placeActor(d, d.state, {s: origin.s, lateral: origin.lateral,
+    headingError: wrapHeading(Math.atan2(-dx, -dz) - d.course.at(origin.s).heading)}, 80);
+  d.state.countdown = 0;
+  d.setInput({throttle: 1});
+  let flew = false, landed = false;
+  for (let i = 0; i < 60 * 15; i++) {
+    d.step(1 / 60);
+    const state = d.state, here = d.course.worldAt(state.s, state.lateral);
+    const along = (here.x - start.x) * dx + (here.z - start.z) * dz;
+    if (state.airborne) flew = true;
+    if (flew && !state.airborne) {
+      assert.ok(along < 0, `car lands in front of the low mouth, at ${along.toFixed(1)} m`);
+      assert.ok(Math.abs(state.groundHeight - scablandsSurfaceHeightAt(here.x, here.z)) < 1,
+        'car lands on open ground, not the tunnel floor');
+      landed = true;
+      break;
+    }
+  }
+  assert.ok(flew && landed, 'car drives off the scarp and lands');
+}
+
 // Drive the bed under each deck, away from the central pier, in both directions.
 {
   const {Duel} = await import('../src/game.js');

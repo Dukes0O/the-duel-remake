@@ -63,6 +63,9 @@ The bore now has a flat support floor 0.55 radius below its centre. Its walls st
 
 ## Incomplete
 
+A Titan driven off the west scarp at 80 mph lands on the surface in front of the low mouth. `node tools/test-tunnels.mjs` passed with this new drive. At 40 mph, the same car lands at about 6.4 m inside the mouth on the tube floor, about 0.69 m above the natural surface; without a tube it lands on the surface at about 5.3 m. The enclosure is not finished: preserve the surface floor during a fall from above, including after landing, and add a regression for this slower case. No game event or sound cue was added.
+
+
 Integration was merged at b23714b22 (current integration was c88f8366974e060acaed379a3f153e395c76edec). Conflicts in the status page, ground look and scene were resolved, keeping integration's status and both the photo and tunnel rendering paths. The 100 m trial crosses the west scab scarp at a grade under .15. Both mouths meet the surface. A Titan and a Falcone drive it in both directions in the focused test.
 
 This round added a height-aware river-bed query, car support and slope checks, height-aware collision against deck trusses and piers, and the height read for job raiders and Big Bess. With the trial switch on, a car drives under the Girder Bridge and the Pipe in both directions. The four-way drive now travels from the Wash under the bridge, up the Steps and to Tin Town. The switch is off for players. The tests check the piers stay solid below the bridge and do not block the deck.
