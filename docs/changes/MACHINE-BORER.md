@@ -6,11 +6,13 @@ Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to
 
 The Dig now uses the Scablands moving near-ground window at two-metre spacing, following the active machine and sampling the Dig surface. The focused test checks the drawn scarp every five metres for 60 metres from Mabel?s parking place, within 0.3 m. The browser scenario takes a mouth view at 20 m and checks the drawn surface 15 m beyond the mouth covers the bore by at least 4 m. `node tools/test-machine-borer.mjs` passed; the browser scenario still needs Claude to run it.
 
+The scenario now reads the lever and stall state while cutting, resets a stalled head, reports progress every 30 seconds, and stops at 30 m. Its page expressions parse in Node. Claude must run it in the browser.
+
 ## Part A
 
 The keyboard now moves a persistent thrust lever; the head dial has a working band and a lever display. The borer has dedicated following and mouth cameras. Deep rock has deterministic 8 to 30 m seams seeded by the land and the mouth. The ground layer already samples materials by depth, but its one-metre variation is too short for these seams, so the borer uses alternating hard rock and softer gravel seams under more than 3 m of cover. The scenario now drives to the face by machine state, sets the lever, and checks centre pixels after drawing.
 
-The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check.
+The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 30 m before reversing 20 m. It reads the lever and stall state, resets a stalled head and reports its progress every 30 seconds. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check.
 
 ## Part B
 
@@ -29,7 +31,7 @@ The Dig now checks the land's own solid footprints, bridge and pipe decks, and p
 
 ## For Claude to run
 
-Run the lane tier at merge, and run `tools/scenarios/machine-borer.mjs` in the browser harness. The scenario uses memory-only storage, drives from the parked position, cuts 50 m, and records the mouth, face and inside views. Its automated view check tests whether machine and tunnel geometry project into the camera view and whether five centre pixels vary; it does not prove that the geometry is unobscured. Inspect all three pictures for Mabel, lining, lamps and the face. Check the first second at the mouth, effects, camera and sounds. The browser was not available in this lane.
+Run the lane tier at merge, and run `tools/scenarios/machine-borer.mjs` in the browser harness. The scenario uses memory-only storage, drives from the parked position, cuts 30 m, and records the mouth, face and inside views. Its automated view check tests whether machine and tunnel geometry project into the camera view and whether five centre pixels vary; it does not prove that the geometry is unobscured. Inspect all three pictures for Mabel, lining, lamps and the face. Check the first second at the mouth, effects, camera and sounds. The browser was not available in this lane.
 
 To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times to select Mabel. Hold W to drive toward the scarp. Press Tab near the face for work mode. Hold W to move the thrust lever forward, then release W to hold it. Hold S to pull it back, and use A or D to curve gradually back toward the scarp face. Use the up and down arrows with thrust to adjust slope. A full return to the face takes roughly 400 m. Pull the lever back to zero for at least one second if the head stalls, then push it forward again. Watch for breakthrough and daylight. Hold S to reverse. C changes camera and Escape leaves. The route and breakthrough have not been tried by hand.
 

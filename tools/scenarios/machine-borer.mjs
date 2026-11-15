@@ -15,15 +15,17 @@ const page = {
   atFace: `(() => window.__theDig.viewForCheck.readyToWork)()`,
   leverReady: `(() => window.__theDig.simulation.borer.lever >= 0.30)()`,
   leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
-  cut: `(() => window.__theDig.simulation.borer.distanceM >= 50)()`,
+  cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
   cut20: `(() => window.__theDig.simulation.borer.distanceM >= 20)()`,
   rock: `(() => { const dig = window.__theDig, segment = dig.simulation.tunnels.segments[0];
     const dx = segment.end.x - segment.start.x, dz = segment.end.z - segment.start.z, length = Math.hypot(dx,dz);
     const x = segment.start.x + 15 * dx / length, z = segment.start.z + 15 * dz / length;
     return {height:dig.viewForCheck.ground.heightAtDrawn(x,z), floor:segment.start.y - 1.65}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
-  face: `(() => window.__theDig.simulation.borer.travelM >= 49.9)()`,
-  inside: `(() => window.__theDig.simulation.borer.travelM <= 30)()`,
+  face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
+  inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
+  status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
+  pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
   sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
   view: `(() => { const dig = window.__theDig, view = dig.viewForCheck, camera = view.camera;
@@ -57,7 +59,33 @@ async function holdUntil(context, code, expression, label, timeout) {
   try { await context.waitFor(expression, label, timeout); }
   finally { await key(context, code, 'keyup'); }
 }
-async function picture(context, name, minimum = 50) {
+async function cutUntil(context, metres) {
+  const deadline = Date.now() + 450000;
+  let nextReport = Date.now() + 30000, held = null, recovering = false;
+  try {
+    while (Date.now() < deadline) {
+      const state = await context.evaluate(page.status);
+      if (Date.now() >= nextReport) {
+        console.log(`Mabel: ${state.distance.toFixed(1)} m, lever ${state.lever.toFixed(2)}, stalled ${state.stalled}`);
+        nextReport += 30000;
+      }
+      if (state.distance >= metres) return;
+      if (state.stalled) recovering = true;
+      if (recovering && !state.stalled && state.lever <= 0) recovering = false;
+      const wanted = recovering ? (state.lever > 0 ? 'KeyS' : null) :
+        state.lever < 0.30 ? 'KeyW' : state.lever > 0.32 ? 'KeyS' : null;
+      if (wanted !== held) {
+        if (held) await key(context, held, 'keyup');
+        held = wanted;
+        if (held) await key(context, held, 'keydown');
+      }
+      await context.evaluate(page.pause);
+    }
+    const state = await context.evaluate(page.status);
+    throw Error(`Cut timed out at ${state.distance.toFixed(1)} m, lever ${state.lever.toFixed(2)}, stalled ${state.stalled}`);
+  } finally { if (held) await key(context, held, 'keyup'); }
+}
+async function picture(context, name, minimum = 30) {
   await context.evaluate(page.sample);
   const view = await context.evaluate(page.view);
   assert.equal(view.failed, false, 'Mabel and the yard models loaded');
@@ -79,14 +107,14 @@ export async function run(context) {
   await context.waitFor(page.selected, 'Mabel selected', 10000);
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
   await press(context, 'Tab');
-  await holdUntil(context, 'KeyW', page.leverReady, 'set gentle thrust', 10000);
-  await context.waitFor(page.cut20, '20 m bored', 200000);
+  await cutUntil(context, 20);
+  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
   const rock = await context.evaluate(page.rock);
   assert.ok(rock.height !== null && rock.height >= rock.floor + 4, 'drawn rock covers the bore 15 m beyond the mouth');
   await picture(context, 'machine-borer-mouth-20m', 20);
   await press(context, 'KeyC');
-  await context.waitFor(page.cut, '50 m bored', 450000);
+  await cutUntil(context, 30);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
   await picture(context, 'machine-borer-mouth');
