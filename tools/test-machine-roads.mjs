@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/town-state.js';
 import {stepTown} from '../src/town/index.js';
+import {machineControlInput} from '../src/input-contexts.js';
 import {findHaulRoute, createHauler} from '../src/town/town-haulers.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 
@@ -152,6 +153,31 @@ assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'rough', 'A heap creates
 for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
 bumpGround = drivePass('paver', bumpGround);
 assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
+// Send the same held keys and machine positions as the browser scenario.
+let keyboardYard = createDigSandbox({playerId:'keyboard-road-test'});
+for (let i=0; i<4; i++) keyboardYard=switchDigMachine(keyboardYard);
+function driveKeys(until, slow=false) {
+  const keys={KeyW:true, Space:true, ShiftLeft:slow};
+  for (let i=0; i<1800 && !until(); i++) {
+    const controls=roadYardControls(keyboardYard.activeMachine, machineControlInput(keys), keys);
+    keyboardYard=stepDigSandbox(keyboardYard, {controls}, 1/60);
+  }
+  assert.ok(until(), `Keyboard work finished for ${keyboardYard.activeMachine}.`);
+}
+driveKeys(() => keyboardYard.roadWork.bladeLoad>0);
+driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).spread>0);
+keyboardYard=switchDigMachine(keyboardYard);
+for (let pass=1; pass<=3; pass++) {
+  Object.assign(keyboardYard.roadMachines.roller.machine, {x:40,z:15,heading:0,speedMps:0});
+  driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).compaction>=Math.min(1, pass*0.35)-0.01);
+}
+keyboardYard=switchDigMachine(keyboardYard);
+Object.assign(keyboardYard.roadMachines.paver.machine, {x:40,z:15,heading:0,speedMps:0});
+driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).surface===1);
+assert.equal(roadCondition(roadCell(keyboardYard.roadWork,40,17)), 'rough');
+Object.assign(keyboardYard.roadMachines.paver.machine, {x:40,z:15,heading:0,speedMps:0});
+driveKeys(() => roadCondition(roadCell(keyboardYard.roadWork,40,17))==='good', true);
+closeDigSandbox();
 let yard = createDigSandbox({playerId:'road-test'});
 for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'excavator']) {
   yard = switchDigMachine(yard);
