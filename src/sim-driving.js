@@ -7,6 +7,7 @@ import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
 import { scablandsDriveAt } from './world/scablands-regions.js';
+import { scablandsDeckRoofAt } from './world/scablands-ground.js';
 import { stepKnock } from './vehicle-knock.js';
 import {arsenalEnabled,hazardsActive} from './combat-weapons.js';
 import { gripFor, normalizeTyre } from './race-surfaces.js';
@@ -482,6 +483,14 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
   if (diveHop && predicted > ground + 1.5) {
     predicted = ground + 1.5;
     actor._verticalSpeed = Math.min(0, actor._verticalSpeed);
+  }
+  if (scablands && actor._verticalSpeed > 0) {
+    const roof = scablandsDeckRoofAt(groundPoint.x, groundPoint.z, actor._jumpY);
+    const highestFeet = Math.max(ground, roof - this._vehicleSpec(actor).height);
+    if (predicted > highestFeet) {
+      predicted = highestFeet;
+      actor._verticalSpeed = 0;
+    }
   }
   actor._jumpY = predicted;
   actor._verticalSpeed -= gravity * dt;

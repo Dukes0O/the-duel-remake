@@ -102,6 +102,15 @@ export function scablandsActorHeightAt(x,z,actorHeight){
   return selectScablandsFloor(floorScratch,count,actorHeight);
 }
 
+// Only an actor already below the underside meets it from below. An actor
+// falling onto the deck must remain free to land on its upper surface.
+export function scablandsDeckRoofAt(x,z,feet){
+  const count=scablandsFloorsAt(x,z,floorScratch);
+  if(count<2||!Number.isFinite(feet))return Infinity;
+  const underside=floorScratch[0]-1.2;
+  return feet<=underside?underside:Infinity;
+}
+
 export function scablandsSurfaceAt(x,z){
   if(!Number.isFinite(x)||!Number.isFinite(z))throw new TypeError('Scablands surface coordinates must be finite.');
   let townRoad=false;

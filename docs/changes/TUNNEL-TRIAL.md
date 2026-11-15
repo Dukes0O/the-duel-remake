@@ -2,6 +2,8 @@
 
 ## Current round
 
+Cars rising under the Girder Bridge or the Pipe now meet the deck underside using their collision height, and a car falling from above still lands on the deck. The focused flight checks and `test-scablands-solid` pass. This covers the deck roof only: tunnel roofs, floor integration and the remaining proofs are still to do. No game event or sound cue was added.
+
 People on foot now select the floor using their feet when walking and can be placed at a supplied height. Leaving a car uses its stored ground height. Bridge and Pipe solids use the 2.5 m contact height for people too. `test-tunnels` and `test-scablands-solid` pass. Roofs and the rest of the floor rule remain unfinished. No game event or sound cue was added.
 
 The shared floor selector now serves car support, slope checks and job movers with the town switch off. At the blended edge of a deck, the top floor is the level deck and the lower floor is the river bed; this prevents the terrain blend from trapping a mover. Airborne car support uses its stored flight height. `test-tunnels` and `test-scablands-solid` passed. This is part of item 1, not its completion: roofs, tunnel floor selection, on-foot actors and the requested flight and chase proofs remain. No game event or sound cue was added.

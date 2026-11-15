@@ -4,6 +4,7 @@ import {createFighter, stepFighter} from '../src/onfoot.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
+import {_jump} from '../src/sim-driving.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsFloorsAt, selectScablandsFloor, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
@@ -34,6 +35,24 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: car support uses the bed`);
   duel.featureFlags.enabled = () => false;
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: deck floor works with the switch off`);
+}
+
+// Flight meets the underside of either deck, while a fall from above still
+// lands on the upper floor. Use the real flight step with fixed world support.
+for (const id of ['girder-bridge', 'the-pipe']) {
+  const {x, z} = RIVER_LAND.crossings.find(crossing => crossing.id === id);
+  const top = scablandsActorHeightAt(x, z), bed = scablandsActorHeightAt(x, z, -100);
+  const actor = {s: 0, lateral: 0, speedMph: 0, airborne: true, _jumpY: bed,
+    groundHeight: bed, airHeight: 0, _verticalSpeed: 18, stageTimeSec: 0};
+  const game = {state: actor, car: {}, course: {def: {scablands: true}, phase: () => 0},
+    _vehicleSpec: () => ({height: 1.5}),
+    _supportAt: () => ({x, z, y: scablandsActorHeightAt(x, z, actor._jumpY)})};
+  for (let step = 0; step < 60 && actor._verticalSpeed > 0; step++) _jump.call(game, actor, .02, step * .02);
+  assert.ok(actor._jumpY + 1.5 <= top - 1.2 + 1e-9, `${id}: a jumping car stays below the underside`);
+  assert.ok(actor._verticalSpeed < 0, `${id}: the car falls after meeting the roof`);
+  actor._jumpY = top + 1; actor._verticalSpeed = -5; actor.airborne = true;
+  for (let step = 0; step < 40 && actor.airborne; step++) _jump.call(game, actor, .02, step * .02);
+  assert.equal(actor._jumpY, top, `${id}: a car falling from above lands on the deck`);
 }
 
 // A person placed below a deck keeps that floor when walking. An omitted
