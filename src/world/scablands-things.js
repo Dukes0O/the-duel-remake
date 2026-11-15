@@ -1,11 +1,12 @@
 // Seeded placement for the realism trial.
 import {makeRng} from '../rng.js';
-import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
+import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from './scablands-road.js';
 import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionAt} from './scablands-regions.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {SOLID_GRID, createSolidGrid} from './scablands-solids.js';
 import {RIVER_LAND} from './scablands-regions.js';
-import {sampleLine, HOT_DELIVERY_WAYS, routeFor} from './scablands-ways.js';
+import {sampleLine, nearestOnLine, HOT_DELIVERY_WAYS, routeFor} from './scablands-ways.js';
+import {SCABLANDS_PLACES} from './scablands.js';
 import {stepsWayFor, RIVER} from './scablands-regions.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './jobs/everburn.js';
 import {GAS_RUN_PATHS} from './jobs/gas-run.js';
@@ -15,6 +16,48 @@ import {SCARPS} from './scablands-scarps.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// Trees grow back from the bank lip, in small, irregular groups.
+export function deadTreeCandidates(seed) {
+  const rng = makeRng(seed ^ 0xdead7ee), result = [];
+  const lastStand = new Map();
+  const line = RIVER_LAND.line;
+  const ways = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
+  const pointAt = along => {
+    let i = 1;
+    while (i < line.along.length - 1 && line.along[i] < along) i++;
+    const a = line.points[i - 1], b = line.points[i], span = line.along[i] - line.along[i - 1];
+    const t = (along - line.along[i - 1]) / span;
+    return {x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t,
+      nx: (b.z - a.z) / span, nz: -(b.x - a.x) / span};
+  };
+  const add = (x, z, id) => {
+    const hit = RIVER_LAND.nearest(x, z);
+    if (!hit || hit.distance < RIVER.lipHalfWidth + 6 || hit.distance > RIVER.lipHalfWidth + 30) return;
+    if (RIVER_LAND.crossings.some(p => Math.hypot(x - p.x, z - p.z) < 120)) return;
+    if (distanceToNet(x, z) < 60 || ways.some(points => nearestOnLine(points, x, z).distance < 60)) return;
+    if (SCABLANDS_PLACES.some(p => Math.hypot(x - p.x, z - p.z) < p.flatRadius + 150)) return;
+    const heights = [[0, 0], [1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]].map(([dx, dz]) => scablandsSurfaceHeightAt(x + dx, z + dz));
+    if (Math.max(...heights) - Math.min(...heights) > 1) return;
+    const kind = rng.chance(.25) ? 'snag' : 'dead-tree';
+    const height = kind === 'snag' ? 4 + rng.float() * 3 : 8 + rng.float() * 6;
+    result.push({id, kind, x, z, y: heights[0], height, heading: rng.float() * Math.PI * 2});
+  };
+  for (let along = 0; along < line.length; along += 40) for (const side of [-1, 1]) {
+    if (!rng.chance(.35)) continue;
+    if (along - (lastStand.get(side) ?? -Infinity) < 160) continue;
+    const p = pointAt(along), back = RIVER.lipHalfWidth + 6 + rng.float() * 24;
+    const x = p.x + p.nx * side * back, z = p.z + p.nz * side * back;
+    const before = result.length;
+    add(x, z, `tree:${along}:${side}:0`);
+    if (result.length > before) lastStand.set(side, along);
+    if (result.length > before && rng.chance(.4)) {
+      const angle = rng.float() * Math.PI * 2, distance = 9 + rng.float() * 11;
+      add(x + Math.cos(angle) * distance, z + Math.sin(angle) * distance, `tree:${along}:${side}:1`);
+    }
+  }
+  return result;
+}
 
 // Single boulders use their own larger cells, so they remain stable as the
 // player moves. Like rock falls, these candidates need footprint clearance.
@@ -413,6 +456,7 @@ export function clearedFixedThings(seed, jobStarts) {
     fences: fenceCandidates(seed).map(run => ({...run,
       posts: run.posts.map(post => !post.gap && clear(post, .25) ? post : null)})),
     boulders: scarpBoulderCandidates(seed).filter(rock => clear(rock, rock.size / 2)),
+    trees: deadTreeCandidates(seed).filter(tree => clear(tree, 1.2)),
   };
 }
 
@@ -468,6 +512,10 @@ export function thingSolids(fixed, loneBoulders = []) {
   }
   for (const run of fixed.fences) for (const post of run.posts.filter(Boolean))
     add(post, post.id, 'fence-post', post.x, post.z, .15, .15, 1.4, post.heading, {canFall: true});
+  for (const tree of fixed.trees ?? []) {
+    const radius = tree.kind === 'snag' ? .35 : .45;
+    add(tree, tree.id, tree.kind, tree.x, tree.z, radius, radius, tree.height, 0, {drawHeading: tree.heading});
+  }
   for (const rock of [...fixed.boulders, ...loneBoulders].filter(Boolean))
     add(rock, rock.id, 'boulder', rock.x, rock.z, rock.size / 2, rock.size / 2, rock.size, rock.heading);
   return solids;
