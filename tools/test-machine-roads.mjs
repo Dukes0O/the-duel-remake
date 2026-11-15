@@ -105,6 +105,40 @@ for (let z=2; z<=41; z++) {
   longGround = workRoadCell(longGround, {kind:'paver', x:0, z, speedMps:0.5, edgeOffsetM:0}).work;
   assert.equal(roadCondition(roadCell(longGround, 0, z)), 'good');
 }
+// Drive a weaving pass, then return along the original line to repair it.
+let drivenGround = createRoadWork();
+for (let x=-5; x<=5; x++) for (let z=0; z<20; z++)
+  drivenGround.cells[`${x}:${z}`] = {height:0, spread:1, compaction:1, surface:0, roughness:0};
+let drivenPaver = createRoadMachineState('paver');
+for (let i=0; i<600; i++) {
+  const next = stepRoadMachine(drivenPaver, drivenGround,
+    {forward:0.5, working:true, steer:i>150 && i<240 ? 0.2 : 0}, 1/60);
+  drivenPaver=next.state; drivenGround=next.work;
+}
+assert.equal(roadCondition(roadCell(drivenGround, 0, 3)), 'rough', 'Steering away from the line leaves a ragged edge.');
+drivenPaver = createRoadMachineState('paver');
+for (let i=0; i<600; i++) {
+  const next = stepRoadMachine(drivenPaver, drivenGround, {forward:0.5, working:true}, 1/60);
+  drivenPaver=next.state; drivenGround=next.work;
+}
+assert.equal(roadCondition(roadCell(drivenGround, 0, 3)), 'good', 'A straight pass repairs the edge.');
+// A heap between worked metres leaves a bump until the drum presses it level.
+let bumpGround = createRoadWork();
+for (let z=0; z<10; z++) bumpGround.cells[`0:${z}`] =
+  {height:z===3 ? 1 : 0, spread:1, compaction:1, surface:0, roughness:0};
+function drivePass(kind, ground) {
+  let machine = createRoadMachineState(kind);
+  for (let i=0; i<600; i++) {
+    const next = stepRoadMachine(machine, ground, {forward:0.5, working:true}, 1/60);
+    machine=next.state; ground=next.work;
+  }
+  return ground;
+}
+bumpGround = drivePass('paver', bumpGround);
+assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'rough', 'A heap creates a visible bump.');
+for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
+bumpGround = drivePass('paver', bumpGround);
+assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
 let yard = createDigSandbox({playerId:'road-test'});
 for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'excavator']) {
   yard = switchDigMachine(yard);

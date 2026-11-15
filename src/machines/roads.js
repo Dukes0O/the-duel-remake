@@ -42,15 +42,27 @@ export function workRoadCell(work, action) {
     cell.roughness = Math.abs(cell.height - action.bladeHeight);
     events.push({type:'blade-work', cue:'dozer-blade'});
   } else if (kind === 'roller') {
-    if (cell.spread > 0) cell.compaction = clamp(cell.compaction + 0.35, 0, 1);
+    if (cell.spread > 0) {
+      cell.compaction = clamp(cell.compaction + 0.35, 0, 1);
+      // A drum presses an isolated heap towards the height of the worked ground beside it.
+      const neighbours = [[x-1,z], [x+1,z], [x,z-1], [x,z+1]]
+        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0);
+      if (neighbours.length) {
+        const level = neighbours.reduce((sum, other) => sum + other.height, 0) / neighbours.length;
+        if (cell.height > level) cell.height = Math.max(level, cell.height - 0.25);
+      }
+    }
     events.push({type:'rolling', cue:'roller-ground'});
   } else if (kind === 'paver') {
     if (!Number.isFinite(action.speedMps) || !Number.isFinite(action.edgeOffsetM))
       throw new TypeError('Paving needs a speed and edge position.');
     if (cell.spread > 0) {
       cell.surface = 1;
+      const neighbours = [[x-1,z], [x+1,z], [x,z-1], [x,z+1]]
+        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0);
+      const bump = neighbours.reduce((worst, other) => Math.max(worst, Math.abs(cell.height - other.height)), 0);
       cell.roughness = Math.max(1 - cell.compaction, clamp(Math.abs(action.speedMps - 0.5), 0, 1),
-        clamp(Math.abs(action.edgeOffsetM), 0, 1));
+        clamp(Math.abs(action.edgeOffsetM), 0, 1), clamp(bump, 0, 1));
     }
     events.push({type:'paving', cue:'paver-surface'});
   } else {
@@ -113,6 +125,10 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
   const active = controls.working === true || spreading;
   let carry = active ? state.distanceCarryM : 0;
   let nextWork = work;
+  // The first working pass establishes the straight line the driver is extending.
+  let roadLine = state.roadLine;
+  if (active && distance > 0 && !roadLine)
+    roadLine = {x:before.x, z:before.z, heading:before.heading};
   const events = [];
   if (active && distance > 0) {
     const steps = Math.floor(carry + distance);
@@ -122,11 +138,11 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
       const z = Math.round(before.z + (machine.z - before.z) * fraction);
       const result = workRoadCell(nextWork, {kind:state.kind, x, z,
         bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : -0.1, spreading,
-        speedMps:Math.abs(machine.speedMps), edgeOffsetM:Number.isFinite(controls.edgeOffsetM) ? controls.edgeOffsetM : 0});
+        speedMps:Math.abs(machine.speedMps), edgeOffsetM:(before.x + (machine.x-before.x)*fraction-roadLine.x)*Math.cos(roadLine.heading) - (before.z + (machine.z-before.z)*fraction-roadLine.z)*Math.sin(roadLine.heading)});
       nextWork = result.work;
       events.push(...result.events.map(event => ({...event, x, z})));
     }
     carry = (carry + distance) % 1;
   }
-  return {state:{...state, machine, distanceCarryM:carry}, work:nextWork, events};
+  return {state:{...state, machine, distanceCarryM:carry, roadLine}, work:nextWork, events};
 }
