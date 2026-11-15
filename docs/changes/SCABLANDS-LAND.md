@@ -1528,8 +1528,20 @@ Still needed: resolve the Ridge height assertion and Old Smoke Medium failure, t
 
 The existing place-flatness check now expects the Ridge's designed summit height. It still checks all three points within 0.01 m. No game event or sound cue was added; Survey Flags' fifth flag remains in place.
 
-Checks: `node tools/test-scablands-regions.mjs` passed 12 of 12; `node tools/test-scablands-hills.mjs` passed 20 of 20. The final replay and world-signature checks remain to be run on the final code.
+Checks: `node tools/test-scablands-regions.mjs` passed 12 of 12; `node tools/test-scablands-hills.mjs` passed 20 of 20. A fresh `test-old-smoke` run was stopped before completion; it reported the Easy driver won 10 of 10 chases, but did not reach the Medium result. The final replay and world-signature checks remain to be run on the final code.
 
 Changed assertions, for Claude to review: the Ridge's expected flat ground changed from 18 m to 45 m, as required by the new summit; its 0.01 m tolerance is unchanged. For Claude to run: the memory-only picture scenario and visual judgment, and the ffmpeg-dependent checks noted above. Codex decided: no new design choice. Removed: the old 18 m expectation for the Ridge.
 
 Still needed: investigate the Old Smoke Medium result and finish the final checks after integration.
+
+### Round 4, slice 2c: final checks in progress
+
+Integration was already included, and the status page matches it. The isolated Medium Old Smoke chase now wins in 1,521.95 seconds, within the unchanged 1,753-second limit. The full Old Smoke suite passed. The earlier failure preceded the mesa move that cleared the furnace road. Survey Flags' fifth flag remains in place. No game event or sound cue was added in this round. The seen cue remains `arena.tell`, the lost cue `gate.latch`, and the furnace warning `arena.toll-gate`.
+
+Checks: all eight Scablands suites passed alone, including the four routes and both hilltops. Race replays passed 297 comparisons; combat replays passed 12; world composition passed 63 checks across 20 events. The scenario passed `node --check`. The build passed with `npm.cmd run build`. The lane tier started 89 suites and was stopped at 30 minutes: 83 passed, four failed, and Easy jobs and Medium gas were unfinished. Review evidence and Warlord tollkeeper could not start ffmpeg (EPERM). Scablands size exceeded its 200-move timing limit under load (538 ms) but passed all nine tests alone before and after the lane. Town core took 31.66 ms against its 30 ms limit under load and passed all 641 checks alone afterwards, with 9.47 ms for the day step. No assertion was changed.
+
+For Claude to run: the full Easy jobs and Medium gas checks, the lane tier to completion, both ffmpeg-dependent suites, and the memory-only Performance picture scenario with its visual and draw-count judgment.
+
+Changed assertions, for Claude to review: the far scene changed from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed scarp faces. Near ground remains 3,721 corners, as on integration. The river route now requires Tin Town instead of the Boneyard Road. The search test's initial sight step changed from one second to zero because the raider moves while seeing the car. The Ridge flat-ground expectation changed from 18 m to its designed 45 m summit, keeping the 0.01 m tolerance. No pass mark was lowered. Codex decided: no new design choice. Removed: none in this round.
+
+Still needed: the unfinished driving checks and a complete lane result, plus Claude's picture verdict. The card is not ready to hand over as complete.
