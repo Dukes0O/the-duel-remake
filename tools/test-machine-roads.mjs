@@ -184,6 +184,25 @@ assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'rough', 'A heap creates
 for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
 bumpGround = drivePass('paver', bumpGround);
 assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
+// Height plus carried and packed material stays constant across each action.
+let material = createRoadWork();
+material.cells['0:0']={height:1,spread:1,compaction:0,surface:0,roughness:0};
+const totalMaterial = work => Object.values(work.cells).reduce((sum,cell)=>sum+cell.height,0)
+  + work.bladeLoad + (work.packedVolume ?? 0);
+for (const action of [
+  {kind:'roller',x:0,z:0},
+  {kind:'dozer',x:0,z:0,bladeHeight:0},
+  {kind:'dozer',x:0,z:1,bladeHeight:0,spreading:true},
+  {kind:'paver',x:0,z:1,speedMps:0.5,edgeOffsetM:0},
+]) {
+  const before=totalMaterial(material), packed=material.packedVolume ?? 0;
+  material=workRoadCell(material,action).work;
+  assert.ok(Math.abs(totalMaterial(material)-before)<1e-9, `${action.kind} conserves material including packing.`);
+  if (action.kind==='roller') {
+    assert.ok(material.packedVolume-packed<=0.025+1e-9, 'Rolling packs at most one tenth of the moved depth.');
+    assert.ok(roadCell(material,1,0).height>0, 'The roller pushes the rest onto neighbouring ground.');
+  }
+}
 // The trencher and road machines all alter the same yard ground.
 let sharedYard = createDigSandbox({playerId:'shared-road-ground-test'});
 sharedYard.activeMachine='trencher';

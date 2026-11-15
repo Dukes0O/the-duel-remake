@@ -20,6 +20,8 @@ export function workRoadCell(work, action) {
   const cell = {...roadCell(work, x, z)};
   let bladeLoad = work.bladeLoad;
   const events = [];
+  let cells = {...work.cells};
+  let packedVolume = work.packedVolume ?? 0;
   if (kind === 'dozer') {
     if (!Number.isFinite(action.bladeHeight)) throw new TypeError('The blade needs a height.');
     if (action.spreading === true) {
@@ -44,12 +46,22 @@ export function workRoadCell(work, action) {
   } else if (kind === 'roller') {
     if (cell.spread > 0) {
       cell.compaction = clamp(cell.compaction + 0.35, 0, 1);
-      // A drum presses an isolated heap towards the height of the worked ground beside it.
+      // One tenth of displaced loose material is packed; the rest moves sideways.
       const neighbours = [[x-1,z], [x+1,z], [x,z-1], [x,z+1]]
-        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0);
+        .filter(([nx,nz]) => !action.blockedNeighbours?.includes(key(nx,nz)))
+        .map(([nx,nz]) => ({x:nx,z:nz,cell:roadCell(work,nx,nz)}));
       if (neighbours.length) {
-        const level = neighbours.reduce((sum, other) => sum + other.height, 0) / neighbours.length;
-        if (cell.height > level) cell.height = Math.max(level, cell.height - 0.25);
+        const level = neighbours.reduce((sum, other) => sum + other.cell.height, 0) / neighbours.length;
+        const moved = Math.min(0.25, cell.spread, Math.max(0, cell.height-level));
+        const packed = moved * 0.1;
+        cell.height -= moved;
+        cell.spread -= moved;
+        packedVolume += packed;
+        for (const other of moved ? neighbours : []) {
+          const addition = (moved-packed) / neighbours.length;
+          cells[key(other.x,other.z)] = {...other.cell, height:other.cell.height+addition,
+            spread:other.cell.spread+addition};
+        }
       }
     }
     events.push({type:'rolling', cue:'roller-ground'});
@@ -59,7 +71,7 @@ export function workRoadCell(work, action) {
     if (cell.spread > 0) {
       cell.surface = 1;
       const neighbours = [[x-1,z], [x+1,z], [x,z-1], [x,z+1]]
-        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0);
+        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0 && other.compaction >= 0.9);
       const bump = neighbours.reduce((worst, other) => Math.max(worst, Math.abs(cell.height - other.height)), 0);
       cell.roughness = Math.max(1 - cell.compaction, clamp(Math.abs(action.speedMps - 0.5), 0, 1),
         clamp(Math.abs(action.edgeOffsetM), 0, 1), clamp(bump, 0, 1));
@@ -68,7 +80,8 @@ export function workRoadCell(work, action) {
   } else {
     throw new RangeError('Unknown road machine.');
   }
-  return {work:{...work, bladeLoad, cells:{...work.cells, [key(x, z)]:cell}}, events};
+  cells[key(x,z)] = cell;
+  return {work:{...work, bladeLoad, ...(packedVolume ? {packedVolume} : {}), cells}, events};
 }
 
 export function roadCondition(cell) {
@@ -143,15 +156,27 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0, groun
         continue;
       }
       if (ground) {
-        const cell = roadCell(nextWork, x, z);
-        nextWork = {...nextWork, cells:{...nextWork.cells, [key(x,z)]:{...cell, height:ground.height(x,z)}}};
+        const cells = {...nextWork.cells};
+        const places = state.kind === 'roller' ? [[x,z],[x-1,z],[x+1,z],[x,z-1],[x,z+1]] : [[x,z]];
+        for (const [cx,cz] of places) {
+          const cell = roadCell(nextWork, cx, cz);
+          cells[key(cx,cz)] = {...cell, height:ground.height(cx,cz)};
+        }
+        nextWork = {...nextWork, cells};
       }
       if (state.kind === 'paver' && roadCell(nextWork, x, z).spread <= 0) roadLine = null;
       else if (!roadLine) roadLine = {x:before.x, z:before.z, heading:before.heading};
       const result = workRoadCell(nextWork, {kind:state.kind, x, z,
         bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : -0.1, spreading,
+        blockedNeighbours:ground ? [[x-1,z],[x+1,z],[x,z-1],[x,z+1]].filter(([nx,nz]) => ground.refusal(nx,nz)).map(([nx,nz]) => key(nx,nz)) : [],
         speedMps:Math.abs(machine.speedMps), edgeOffsetM:!roadLine ? 0 : (before.x + (machine.x-before.x)*fraction-roadLine.x)*Math.cos(roadLine.heading) - (before.z + (machine.z-before.z)*fraction-roadLine.z)*Math.sin(roadLine.heading)});
-      if (ground) ground.setHeight(x, z, roadCell(result.work, x, z).height);
+      if (ground) {
+        for (const [cellKey, cell] of Object.entries(result.work.cells)) {
+          if (cell === nextWork.cells[cellKey]) continue;
+          const [cx,cz] = cellKey.split(':').map(Number);
+          ground.setHeight(cx, cz, cell.height);
+        }
+      }
       nextWork = result.work;
       events.push(...result.events.map(event => ({...event, x, z})));
     }

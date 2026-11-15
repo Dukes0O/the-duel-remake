@@ -8,6 +8,8 @@ A town can record individual machine actions without changing an old save. Town 
 
 The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard test now checks the exact eight practice cells and nothing else. The scenario had an impossible third roller wait above the maximum compaction; it now caps the target and reports the yard state on every timeout. A keyboard-driven yard test reaches the paver and repairs the surface. The worked strip now reshapes and colours the yard floor across the width of the drum and screed, with no raised tiles. The checks below cover these fixes.
 
+Fifth review: a new paving pass starts its own line. The trencher and road machines now work the same yard ground, and a driven test fills and paves a trench. Rolling moves material into neighbouring metres and packs one tenth of the displaced depth. The material check counts that packed share. Paving compares bumps with firm neighbouring ground.
+
 ## Checks
 
 - Fourth round: road rules passed, including the machine-text encoding check and separate loose, firm and paved colours. The build passed with the existing Vite warnings. The yard screen is UTF-8 without a byte-order mark and uses LF line endings. All files changed on this branch were checked for the same broken character.
