@@ -67,6 +67,8 @@ The bore now has a flat support floor 0.55 radius below its centre. Its walls st
 
 The lining now uses one mesh for joined segments, with a flat floor, metre-based texture coordinates and a rock face at closed ends. `node tools/test-tunnels.mjs` passed. The game still needs revision-driven drawing, mouth-only shader cuts, camera limits and the rewritten browser scenario. No sound cue changed.
 
+The tunnel ground material now uses a fixed array for up to eight mouth capsules. Updating the array does not change its shader text. The ordinary ground shader is unchanged. `node tools/test-tunnels.mjs` passed. The scene does not yet follow tunnel revisions.
+
 ## Incomplete
 
 At an overlapping bend, the tunnel query now chooses the highest reachable floor. A sloped joint test, `test-tunnels` and all 20 `test-scablands-solid` checks pass. The slow fall below and the remaining drawing and scenario work are still open. No sound cue changed.

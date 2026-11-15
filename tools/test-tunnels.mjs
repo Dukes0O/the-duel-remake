@@ -765,19 +765,26 @@ console.log('Tunnel support, joined segments, wall contact and simulated driving
   const THREE = await import('three');
   const {createGroundLook, createTunnelMesh} = await import('../src/world/scablands-ground-look.js');
   const compile = tunnels => {
-    const material = createGroundLook({tunnels}).apply(new THREE.MeshStandardMaterial());
+    const look = createGroundLook({tunnels});
+    const material = look.apply(new THREE.MeshStandardMaterial());
     const shader = {uniforms: {}, vertexShader: '#include <common>\n#include <project_vertex>',
       fragmentShader: '#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};
     material.onBeforeCompile(shader);
-    return {material, shader};
+    return {material, shader, look};
   };
   const ordinary = compile(null), emptyLook = compile(empty), cut = compile(tunnel);
   assert.equal(emptyLook.shader.vertexShader, ordinary.shader.vertexShader);
   assert.equal(emptyLook.shader.fragmentShader, ordinary.shader.fragmentShader);
   assert.equal(emptyLook.material.customProgramCacheKey(), ordinary.material.customProgramCacheKey());
-  assert.match(cut.shader.fragmentShader, /uTunnelRadius0/);
-  assert.match(cut.shader.fragmentShader, /if\(dot\(q,q\)<uTunnelRadius0\*uTunnelRadius0\)discard/);
-  assert.equal(cut.shader.uniforms.uTunnelRadius0.value, 4);
+  assert.match(cut.shader.fragmentShader, /uTunnelRadius\[8\]/);
+  assert.match(cut.shader.fragmentShader, /i<uTunnelCount|i>=uTunnelCount/);
+  const mouth = {start: {x: 1, y: 2, z: 3}, end: {x: 4, y: 5, z: 6}, radius: 4};
+  cut.look.setTunnelMouths([mouth]);
+  assert.equal(cut.shader.uniforms.uTunnelCount.value, 1);
+  assert.equal(cut.shader.uniforms.uTunnelRadius.value[0], 4);
+  cut.look.setTunnelMouths([mouth, mouth]);
+  assert.equal(cut.shader.uniforms.uTunnelCount.value, 2);
+  assert.throws(() => cut.look.setTunnelMouths(Array(9).fill(mouth)), RangeError);
   const lining = createTunnelMesh(tunnel);
   assert.equal(lining.children.length, 1);
   assert.equal(lining.children[0].material.side, THREE.DoubleSide);

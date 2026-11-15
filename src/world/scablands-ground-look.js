@@ -115,19 +115,36 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       uniform sampler2D uRiverField;uniform vec4 uRiverBox;uniform vec4 uWreck;uniform vec4 uSand;uniform vec4 uBurn;uniform float uBurnWobble;uniform vec2 uBurnCentre;
       uniform vec2 uPan[${pan.points.length}];uniform float uPanPhase;uniform vec2 uPlates[${plates.points.length}];uniform float uPlatesPhase;`;
   }
-  // Generate only the capsules supplied to this material. An ordinary material
-  // receives exactly the same shader text as before.
-  const segments = tunnels?.segments ?? [];
-  const tunnelDeclarations = segments.map((segment, i) => {
-    uniforms[`uTunnelStart${i}`] = {value: new THREE.Vector3(segment.start.x, segment.start.y, segment.start.z)};
-    uniforms[`uTunnelEnd${i}`] = {value: new THREE.Vector3(segment.end.x, segment.end.y, segment.end.z)};
-    uniforms[`uTunnelRadius${i}`] = {value: segment.radius};
-    return `uniform vec3 uTunnelStart${i};uniform vec3 uTunnelEnd${i};uniform float uTunnelRadius${i};`;
-  }).join('\n');
-  const tunnelClips = segments.map((segment, i) => `
-    {vec3 a=uTunnelStart${i},d=uTunnelEnd${i}-a,p=vGroundPos-a;
-    float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0);
-    vec3 q=p-d*t;if(dot(q,q)<uTunnelRadius${i}*uTunnelRadius${i})discard;}`).join('');
+  // A tunnel-capable material reserves eight mouth cuts once. Updating the
+  // values does not change the shader or require a program rebuild.
+  const tunnelCapable = (tunnels?.segments.length ?? 0) > 0;
+  function setTunnelMouths(mouths) {
+    if (mouths.length > 8) throw new RangeError('The ground can draw at most eight tunnel mouths.');
+    if (!tunnelCapable && mouths.length) throw new Error('This ground material has no tunnel cuts.');
+    if (!tunnelCapable) return;
+    uniforms.uTunnelCount.value = mouths.length;
+    mouths.forEach((mouth, i) => {
+      uniforms.uTunnelStart.value[i].set(mouth.start.x, mouth.start.y, mouth.start.z);
+      uniforms.uTunnelEnd.value[i].set(mouth.end.x, mouth.end.y, mouth.end.z);
+      uniforms.uTunnelRadius.value[i] = mouth.radius;
+    });
+  }
+  if (tunnelCapable) {
+    uniforms.uTunnelCount = {value: 0};
+    uniforms.uTunnelStart = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+    uniforms.uTunnelEnd = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+    uniforms.uTunnelRadius = {value: new Float32Array(8)};
+    setTunnelMouths(tunnels.mouths);
+  }
+  const tunnelDeclarations = tunnelCapable ?
+    'uniform int uTunnelCount;uniform vec3 uTunnelStart[8];uniform vec3 uTunnelEnd[8];uniform float uTunnelRadius[8];' : '';
+  const tunnelClips = tunnelCapable ? `
+    for(int i=0;i<8;i++){
+      if(i>=uTunnelCount)break;
+      vec3 a=uTunnelStart[i],d=uTunnelEnd[i]-a,p=vGroundPos-a;
+      float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0);
+      vec3 q=p-d*t;if(dot(q,q)<uTunnelRadius[i]*uTunnelRadius[i])discard;
+    }` : '';
   const regionsOn = regions !== null;
   const photosOn = regionsOn && photos !== null;
   if (photosOn) for (const [key, name] of PHOTO_UNIFORMS) {
@@ -309,11 +326,11 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${segments.length ? `-tunnels-${segments.length}` : ''}`;
+    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}`;
     material.needsUpdate = true;
     return material;
   }
-  return {apply, uniforms};
+  return {apply, uniforms, setTunnelMouths};
 }
 
 
