@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drillYardControls, stepDrill, stepDrillRig} from '../src/machines/drill.js';
-import {createTown, deserializeTown, dispatchTownCommand, serializeTown} from '../src/town/index.js';
+import {createTown, deserializeTown, dispatchTownCommand, serializeTown, stepTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 import * as THREE from 'three';
 import {createDrillSounds, createYardWellheadView} from '../src/machines/drill-view.js';
@@ -24,14 +24,53 @@ assert.equal(result.state.jammed,false);
 result=stepDrill(result.state,{mastDown:true,feed:0.5},1000);
 assert.equal(result.state.struckWater,true);
 assert.equal(result.state.depth,site.depth);
+function drillFromStart(x,z) {
+  let hole=createDrillState(4312,x,z);
+  const layers=[];
+  while (!hole.struckWater) {
+    const material=drillMaterialAt(hole.site,hole.depth);
+    if (layers.at(-1)!==material) layers.push(material);
+    hole=stepDrill(hole,{mastDown:true,feed:0.5},1).state;
+  }
+  layers.push(drillMaterialAt(hole.site,hole.depth));
+  const drilledTown=createTown(4312,'Repeat Town');
+  assert.equal(dispatchTownCommand(drilledTown,{type:'drillWell',x,z}).ok,true);
+  return {layers,depth:hole.depth,well:drilledTown.regions.scablands.groundWater.wells[`${x}:${z}`]};
+}
+const firstHole=drillFromStart(4,7);
+assert.deepEqual(firstHole,drillFromStart(4,7),'Drilling the same place repeats the whole result.');
+assert.deepEqual(firstHole.layers,['clay','gravel','rock','wet']);
+assert.notEqual(firstHole.depth,drillFromStart(5,7).depth,'A second place has a different water depth.');
+assert.notDeepEqual(firstHole.well,drillFromStart(5,7).well);
+const workingTown=createTown(4312,'Working Pit');
+assert.equal(dispatchTownCommand(workingTown,{type:'digTestPit',x:4,z:7}).ok,true);
+const workingPit=structuredClone(workingTown.regions.scablands.groundWater.pits['4:7']);
+assert.equal(dispatchTownCommand(workingTown,{type:'drillWell',x:4,z:7}).ok,true);
+assert.deepEqual(workingTown.regions.scablands.groundWater.pits['4:7'],workingPit,'Drilling preserves a working pit and its start time.');
+
 const town=createTown(4312,'Drill Town');
 assert.equal(dispatchTownCommand(town,{type:'drillWell',x:4,z:7}).ok,true);
 const well=town.regions.scablands.groundWater.wells['4:7'];
 assert.deepEqual(well,{x:4,z:7,...groundWaterFieldAt(4312,4,7),waterLitres:site.yieldLitresPerDay,drawdownLitres:0,drilled:true});
 assert.equal(dispatchTownCommand(town,{type:'drillWell',x:4,z:7}).ok,false);
 assert.deepEqual(deserializeTown(serializeTown(town)).regions.scablands.groundWater.wells['4:7'],well);
-const old=createTown(4312,'Old Town');
-assert.deepEqual(deserializeTown(serializeTown(old)).regions.scablands.groundWater?.wells ?? {},{});
+const loadedDrilled=deserializeTown(serializeTown(town));
+assert.equal(dispatchTownCommand(loadedDrilled,{type:'drawWellWater',x:4,z:7,litres:well.waterLitres}).ok,true);
+for(let i=0;i<24;i++) stepTown(loadedDrilled);
+assert.equal(loadedDrilled.regions.scablands.groundWater.wells['4:7'].drilled,true);
+assert.ok(loadedDrilled.regions.scablands.groundWater.wells['4:7'].waterLitres>0,'A saved drilled well still gives water.');
+const oldData={version:1,id:'town-4312',name:'Old Town',seed:4312,rngState:4312,tick:0,
+  founders:[],people:[],buildings:[],nextBuildingNumber:1,homePlots:[],campPlaces:12,
+  regions:{scablands:{chunks:{},groundWater:{droughtDays:0,
+    pits:{'4:7':{x:4,z:7,state:'found',startedAt:0,finishedAt:72,depth:10,yieldLitresPerDay:100}},
+    wells:{'4:7':{x:4,z:7,depth:10,yieldLitresPerDay:100,waterLitres:200,drawdownLitres:0}}}}}};
+const old=deserializeTown(oldData);
+const oldGround=structuredClone(old.regions.scablands.groundWater);
+assert.deepEqual(oldGround,oldData.regions.scablands.groundWater,'The old ground data loads unchanged.');
+for(let i=0;i<24;i++) stepTown(old);
+assert.deepEqual(old.regions.scablands.groundWater.pits,oldGround.pits);
+assert.deepEqual(old.regions.scablands.groundWater.wells,oldGround.wells);
+assert.ok(Object.values(old.regions.scablands.groundWater.wells).every(item=>!item.drilled));
 let rig=createDrillRigState(4312,{x:4,z:7});
 rig=stepDrillRig(rig,{forward:1},1).state;
 assert.ok(rig.machine.z>7, 'The rig can drive.');

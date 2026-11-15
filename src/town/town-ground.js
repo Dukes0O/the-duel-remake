@@ -70,7 +70,7 @@ registerTownCommand('drillWell', (town, command) => {
   const {x,z}=command, key=siteKey(x,z);
   if (state.wells[key] || state.wellJobs?.[key]) return reply(false,'There is already a well here.');
   const field=groundWaterFieldAt(town.seed,x,z);
-  if (state.pits[key]?.state!=='found') {
+  if (!state.pits[key]) {
     state.pits[key]={x,z,state:'found',startedAt:BigInt(town.tick),...field,finishedAt:BigInt(town.tick)};
   }
   state.wells[key]={x,z,...field,waterLitres:field.yieldLitresPerDay,drawdownLitres:0,drilled:true};
