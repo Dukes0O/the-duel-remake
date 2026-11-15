@@ -2056,3 +2056,9 @@ The Everburn's Easy driver still failed seed 1 with realism on. It reached the c
 The hills suite now samples every Slow Ride path leg every 10 m and at five offsets across its 60 m corridor. All samples remain at the former ground height. The hills suite passed 47 of 47. This new check does not change or loosen an assertion. No event or sound was added. Removed: none.
 
 A diagnostic identified one seeded mesa on the furnace's sixth leg, four Breaks hills on its nineteenth leg, and five Breaks hills on the third Survey Flags leg. One of the latter is a Mall Road pass shoulder. These routes still need clearance, and the failed Everburn drive still needs investigation. The other Easy jobs, both gas roads, final integration, replay and world checks, and build remain outstanding. Claude must run the picture scenario. Codex decided: use the existing Slow Ride path and sample spacing already used for gas roads.
+
+### Hill country: Hot Soup corridor
+
+The hills suite now checks the first three Hot Soup legs at 10 m intervals and five offsets across the 60 m corridor. All samples retain their former ground height. The hills suite passed 48 of 48. This is a new assertion and loosens none. No event or sound was added. Removed: none.
+
+The final leg from the safe road to the Everburn is not clear: a diagnostic found added hill height at 1,559 sampled points, with a maximum rise of about 66 m. The Mall return's second leg also crosses six Breaks hills and one mesa. These findings are samples, not proof of the complete corridors. The other corridor findings and the failed Everburn drive above remain unresolved. The four ways, Easy jobs and gas roads need their final proof, followed by the integration merge and final checks. Claude must run and judge the picture scenario. Codex decided: use Hot Soup's own safe points and the existing gas-road sampling intervals.

@@ -20,6 +20,22 @@ import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} fr
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 
+test('the first three Hot Soup legs have clear hill corridors', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const points = [step.origin, ...step.safePoints].map(place => place.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Hot Soup leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
 test('Slow Ride has a clear hill corridor', () => {
   const points = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride').steps[0].path.map(point => point.position);
   for (let i = 1; i < points.length; i++) {
