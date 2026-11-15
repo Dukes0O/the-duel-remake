@@ -152,6 +152,15 @@ Codex now:
   order; `borer` is added before the last `excavator`. Nothing is loosened: the list is longer and still proves the wrap.
 - Not heard: her sounds (the window was muted). Not seen: the bank, a bend, a break-through.
 
+**Claude's second hand drive (15 November 2026, late).** Her two views show her whole; the lever works and full lever
+stalls her with its sentence; a second Codex review confirmed the refusals, the face rule, the seams and the road test.
+**The large fault: she bores into nothing.** The Dig draws the ground at the west scarp flat, so after 14 m of cutting she
+stands in the open with the portal's boards round her head. The Dig must draw the land's real ground wherever the active
+machine is, with the mouth cut out of it. Also back with Codex: the picture check still times out; the tunnel may stop
+being redrawn; the camera can sit inside her while she reverses; the spoil bank draws as separate spikes and may run into
+the river. **Her parking place moves to the foot of the mesa nearest the yard once hill country is merged:** a mesa is a
+wall of rock 30 to 55 m high, and the west scarp is only a step.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
