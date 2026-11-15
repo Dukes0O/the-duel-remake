@@ -2,7 +2,7 @@
 
 The Scablands now has floor selection for the river beds under both decks. Cars, people, job raiders and Big Bess use their feet to select a floor, and deck roofs and height-limited solids keep actors on their own level. The drawn bed is open under the bridge and Pipe. The `wasteland-town` switch still controls the trial bore. The 100 m west-scarp trial has a flat floor, side walls, crown, closed cutting faces and checked joints; a grid limits segment lookup. Nothing is saved by the trial. The scene follows tunnel revisions, cuts only the mouths and grows the lining. The camera is constrained to the car's floor. No new game event or sound cue was added.
 
-The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude ran the previous version, which stopped before the pictures with a script syntax error. That error is fixed; the look, camera, drive and frame results remain unverified.
+The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude drove both tunnel directions successfully and measured 18.1 to 18.5 ms p95. The pictures were obscured by the interface. The revised scenario hides it and moves the inspection cameras; Claude must judge the new pictures.
 
 Big Bess's position check failed because the trial treated every actor height as an absolute floor. Integration uses an offset for actors without a selected floor. The scene now uses the selected height after a mover marks it, and otherwise retains the previous offset. The existing assertion is unchanged and a new check covers a selected floor.
 
@@ -14,11 +14,13 @@ The scenario passes `node --check`. A Node-only stub ran the scenario through bo
 
 The selected lane checks passed in two parts: 61 suites passed before the run was stopped to exclude an additional FFmpeg-dependent suite; the remaining 192 passed. The long Everburn suite and the FFmpeg-dependent suites were excluded as directed. `npm run build` passed, with Vite reporting its existing large-chunk and mixed-import warnings.
 
-Integration `c88f83669` is already an ancestor of this branch. The status page matches integration, with no new conflicts.
+The latest floor and scenario changes still need the final lane checks and integration update.
 
 ## For Claude to run
 
-Run the browser scenario and judge the pictures and frame times. Run the long Everburn suite and FFmpeg-dependent suites at merge. The visible appearance is not yet proven, and no boring machine is built.
+Run the revised browser scenario and judge the pictures and frame times. Run the long Everburn suite and FFmpeg-dependent suites at merge. The visible appearance is not yet proven, and no boring machine is built.
+
+The Node reproduction of the scenario drive printed feet and bed heights at every step for both decks. Both cars stayed on the bed within 3e-12 m. The scenario measured cover at the named crossing centre, although the line passed beneath the bridge earlier; it now checks the actual selected bed and requires covered samples along the drive. The Pipe drive also reached the far side. Big Bess now starts on the top floor plus the job offset; flight support, slope and camera use the same feet height. The 21 solid-ground checks and tunnel checks passed. The revised scenario and all 67 evaluated scripts parse in Node; the browser was not run.
 
 ## Changed assertions, for Claude to review
 
@@ -33,6 +35,8 @@ The new tunnel tests were adjusted to the prescribed flat floor at 0.55 radius b
 The trial crosses the west scab scarp from just inside its foot to the high ground, with a mouth moved uphill to meet the floor cleanly. The deck underside is 1.2 m below the deck.
 
 ## Cost, limits and verdict
+
+The trial has one segment, so each occupied 32 m grid cell holds one candidate. Support and wall queries scan that cell; motion also checks at most two neighbours and the two end faces. The separate clipping utility scans all segments without allocating. The slope query reuses its point and makes no closure per step.
 
 The ground shader holds eight mouth capsules, each with a capsule-distance test per fragment. The cost is bounded by the number of mouths, not by the length or segment count of the bore. This has not been timed. The lining is plain rock, the cutting face and openings have not been judged in the browser, and a machine, its sound and persistent tunnels remain to be built. My view is no-go for a finished boring machine on this evidence; first drive and time this trial, then decide how the machine grows, saves and decorates the bore. Claude makes the verdict after seeing it.
 

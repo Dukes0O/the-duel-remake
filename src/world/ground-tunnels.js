@@ -44,17 +44,6 @@ function validSegment(segment) {
   return {start: point(segment.start, 'Tunnel start'), end: point(segment.end, 'Tunnel end'), radius: segment.radius};
 }
 
-function closestOnSegment(position, segment) {
-  const dx = segment.end.x - segment.start.x;
-  const dy = segment.end.y - segment.start.y;
-  const dz = segment.end.z - segment.start.z;
-  const lengthSquared = dx * dx + dy * dy + dz * dz;
-  const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1,
-    ((position.x - segment.start.x) * dx + (position.y - segment.start.y) * dy +
-      (position.z - segment.start.z) * dz) / lengthSquared));
-  return {x: segment.start.x + dx * t, y: segment.start.y + dy * t, z: segment.start.z + dz * t};
-}
-
 // The floor and side walls are sampled in plan view. Using the actor's Y
 // in the projection moves the centre along a sloping tube as the car bounces.
 function horizontalProjection(position, segment, result) {
@@ -288,13 +277,17 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   }
 
   function clips(position, margin = 0) {
-    point(position, 'Surface position');
+    checkPoint(position, 'Surface position');
     if (!finite(margin) || margin < 0) throw new TypeError('Clip margin must be non-negative.');
-    return tubes.some(tube => {
-      const center = closestOnSegment(position, tube);
-      const dx = position.x - center.x, dy = position.y - center.y, dz = position.z - center.z;
-      return dx * dx + dy * dy + dz * dz < (tube.radius + margin) ** 2;
-    });
+    for (const tube of tubes) {
+      const dx = tube.end.x - tube.start.x, dy = tube.end.y - tube.start.y, dz = tube.end.z - tube.start.z;
+      const squared = dx * dx + dy * dy + dz * dz;
+      const t = squared === 0 ? 0 : Math.max(0, Math.min(1,
+        ((position.x - tube.start.x) * dx + (position.y - tube.start.y) * dy + (position.z - tube.start.z) * dz) / squared));
+      const x = position.x - tube.start.x - dx * t, y = position.y - tube.start.y - dy * t, z = position.z - tube.start.z - dz * t;
+      if (x * x + y * y + z * z < (tube.radius + margin) ** 2) return true;
+    }
+    return false;
   }
 
   return Object.freeze({

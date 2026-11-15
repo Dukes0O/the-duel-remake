@@ -49,6 +49,15 @@ function groundPoint(course, s, lateral, out) {
   return out;
 }
 
+// The query uses caller-owned storage and does not create a function or point each step.
+function slopeHeight(course, x, z, feet, point) {
+  if (!Number.isFinite(feet)) return scablandsSurfaceHeightAt(x, z);
+  const surface = scablandsActorHeightAt(x, z, feet);
+  if (!course.groundTunnels) return surface;
+  point.x = x; point.y = feet; point.z = z;
+  return course.groundTunnels.groundAt(point, feet, surface);
+}
+
 // After a step's move and before its flight: the slope's pull on the car's speed, and the refusal of a step up ground too steep to grip.
 export function scablandsGround(duel, actor, dt) {
   if (actor.airborne || actor.tumble || actor.crushed || actor.combatWrecking || actor.knock) return;
@@ -60,17 +69,13 @@ export function scablandsGround(duel, actor, dt) {
   if (distance < 1e-4) return;
   // Use the same floor as vehicle support when this course has a trial tube.
   const actorHeight = scablandsActorFeet(actor);
-  const height = Number.isFinite(actorHeight)
-    ? (x, z) => {
-      const surface = scablandsActorHeightAt(x, z, actorHeight);
-      return course.groundTunnels ? course.groundTunnels.groundAt({x, y: actorHeight, z}, actorHeight, surface) : surface;
-    } : scablandsSurfaceHeightAt;
-  const gain = height(to.x, to.z) - height(from.x, from.z);
+  const gain = slopeHeight(course, to.x, to.z, actorHeight, scratch.point) -
+    slopeHeight(course, from.x, from.z, actorHeight, scratch.point);
   const kmh = Math.abs(actor.speedMph || 0) * MPH_TO_KMH, ledges = ledgeAt(to.x, to.z);
   const limit = climbLimit(kmh, ledges);
   if (gain > 0 && gain / distance > limit) {
     // Ground too steep to grip: the car is stopped at its foot and pushed back down it. The face's own normal is the way the ground falls.
-    const e = 1.5, gx = (height(to.x + e, to.z) - height(to.x - e, to.z)) / (2 * e), gz = (height(to.x, to.z + e) - height(to.x, to.z - e)) / (2 * e);
+    const e = 1.5, gx = (slopeHeight(course, to.x + e, to.z, actorHeight, scratch.point) - slopeHeight(course, to.x - e, to.z, actorHeight, scratch.point)) / (2 * e), gz = (slopeHeight(course, to.x, to.z + e, actorHeight, scratch.point) - slopeHeight(course, to.x, to.z - e, actorHeight, scratch.point)) / (2 * e);
     const length = Math.hypot(gx, gz) || 1, nx = -gx / length, nz = -gz / length;
     const dirX = dx / distance, dirZ = dz / distance, incoming = Math.max(0, -(dirX * nx + dirZ * nz));
     const impactMph = Math.abs(actor.speedMph || 0) * incoming;
@@ -83,7 +88,7 @@ export function scablandsGround(duel, actor, dt) {
     // The car stands on the ground where it was put, with none of the upward speed it had: the flight rules (`_jump`) must not read the move back down the face
     // as the ground falling away from a car still rising.
     const put = groundPoint(course, actor.s, actor.lateral, scratch.put);
-    actor._jumpY = height(put.x, put.z); actor._verticalSpeed = 0;
+    actor._jumpY = slopeHeight(course, put.x, put.z, actorHeight, scratch.point); actor._verticalSpeed = 0;
     actor.pushVelocity = (actor.pushVelocity || 0) * .25;
     actor.speedMph *= Math.max(.08, 1 - incoming * .94);
     if (impactMph > 3) hitGround(duel, actor, impactMph, nx, nz);

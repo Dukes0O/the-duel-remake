@@ -23,6 +23,7 @@ export async function run(context) {
   }`;
   const picture = async (name, position, target) => {
     await context.evaluate(`(() => {const a=window.__qaApp;a.inspectionCamera=${position ? JSON.stringify({position, target}) : 'null'};
+      ${position ? `const p=a.duel.course.nearest(${position[0]},${position[2]});const floor=a.duel.course.groundAt(p.s,p.lateral,${position[1]}).y;if(${position[1]}<=floor)throw Error('Inspection camera is below its floor');` : ''}
       ${position ? `window.__render.camera.position.fromArray(${JSON.stringify(position)});` : "a.setCamera('chase');"} ${frame}})()`);
     if (!position) await context.evaluate(`(async()=>{for(let i=0;i<60;i++)await new Promise(done=>requestAnimationFrame(()=>{${frame} done();}));})()`);
     const file = await context.screenshot(`tunnel-${name}`);
@@ -52,6 +53,7 @@ export async function run(context) {
     await click('[data-ember-step="hot-delivery"]');
     await context.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing" && window.__qaApp.visualReady', 'Scablands drive', 120000);
     await context.waitFor(`(() => {let root;window.__render.scene.traverse(n=>{if(n.name==='The Scablands')root=n;});return root?.userData.assetStatus==='ready';})()`, 'Scablands art', 120000);
+    await context.evaluate(`(() => {const style=document.createElement('style');style.textContent='body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important}';document.head.appendChild(style);document.querySelectorAll('details').forEach(el=>el.remove());})()`);
     await context.evaluate(`(() => {const a=window.__qaApp,d=a.duel;a.stop();d.state.countdown=0;d.state.arena.timeLimitSec=Infinity;
       if(d.state.arena.worldJob?.job?.stepState)d.state.arena.worldJob.job.stepState.ember=100;})()`);
 
@@ -63,13 +65,13 @@ export async function run(context) {
     for(let i=1;i<=20;i++) {
       const t=i/20, tip={x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t,z:start.z+(end.z-start.z)*t};
       await context.evaluate(`(() => {window.__qaApp.duel.course.setGroundTunnels(${JSON.stringify([{start,end:tip,radius}])});${frame}})()`);
-      if(i===10) await picture('boring-halfway',[start.x-dx*18+dz*10,start.y+7,start.z-dz*18-dx*10],[start.x,start.y,start.z]);
+      if(i===10) { const x=start.x-dx*25,z=start.z-dz*25; await picture('boring-halfway',[x,scablandsSurfaceHeightAt(x,z)+1.7,z],[start.x+dx*8,start.y,start.z+dz*8]); }
     }
-    await picture('low-mouth',[start.x-dx*16,start.y+3,start.z-dz*16],[start.x+dx*8,start.y,start.z+dz*8]);
+    { const x=start.x-dx*25,z=start.z-dz*25; await picture('low-mouth',[x,scablandsSurfaceHeightAt(x,z)+1.7,z],[start.x+dx*8,start.y,start.z+dz*8]); }
     await context.evaluate(`(() => {${place(end.x+dx*12,end.z+dz*12,tunnelHeading,scablandsSurfaceHeightAt(end.x+dx*12,end.z+dz*12))}})()`);
-    await picture('high-mouth',[end.x+dx*16,end.y+3,end.z+dz*16],[end.x-dx*8,end.y,end.z-dz*8]);
+    { const x=end.x+dx*25,z=end.z+dz*25; await picture('high-mouth',[x,scablandsSurfaceHeightAt(x,z)+1.7,z],[end.x-dx*8,end.y,end.z-dz*8]); }
     await context.evaluate(`(() => {${place(start.x+dx*48,start.z+dz*48,tunnelHeading,start.y+(end.y-start.y)*48/length-radius*.55)}})()`);
-    await picture('inside',[start.x+dx*48,(start.y+end.y)/2,start.z+dz*48],[end.x,end.y,end.z]);
+    await picture('inside',[start.x+dx*20,start.y+(end.y-start.y)*20/length-radius*.55+1.7,start.z+dz*20],[end.x,end.y,end.z]);
     await context.evaluate(`(() => {${place(start.x+dx*50,start.z+dz*50,tunnelHeading,scablandsSurfaceHeightAt(start.x+dx*50,start.z+dz*50))}})()`);
     await picture('above',[start.x+dx*50+dz*35,Math.max(start.y,end.y)+35,start.z+dz*50-dx*35],[(start.x+end.x)/2,(start.y+end.y)/2,(start.z+end.z)/2]);
     await context.evaluate(`(() => {${place(start.x+dx*50,start.z+dz*50,Math.atan2(dx,dz),(start.y+end.y)/2-radius*.55)}})()`);
@@ -102,23 +104,25 @@ export async function run(context) {
       const approach={x:x-bx*80,z:z-bz*80};
       const approachBed=scablandsActorHeightAt(approach.x,approach.z,scablandsSurfaceHeightAt(approach.x,approach.z)-20);
       await context.evaluate(`(() => {${place(approach.x,approach.z,heading,approachBed)}})()`);
-      await picture(`${id}-bed-view`,[approach.x,approachBed+2.5,approach.z],[x,bed+3,z]);
+      await picture(`${id}-bed-view`,[approach.x,approachBed+1.7,approach.z],[x,bed+3,z]);
+      const near={x:x-bx*45,z:z-bz*45},nearBed=scablandsActorHeightAt(near.x,near.z,scablandsSurfaceHeightAt(near.x,near.z)-20);
+      await picture(`${id}-bed-near`,[near.x,nearBed+1.7,near.z],[x,bed+3,z]);
       await context.evaluate(`(() => {${place(x,z,heading,bed)}})()`);
       await picture(`${id}-chase`,null,null);
       const from={x:x-bx*35,z:z-bz*35};
       const fromBed=scablandsActorHeightAt(from.x,from.z,scablandsSurfaceHeightAt(from.x,from.z)-20);
       const result=await context.evaluate(`(() => {${place(from.x,from.z,heading,fromBed)}
-        const d=window.__qaApp.duel,s=d.state;let progress=-35,maxFloorError=0,minCover=Infinity;
+        const d=window.__qaApp.duel,s=d.state;let progress=-35,maxFloorError=0,maxCover=0,coveredSamples=0;
         s.speedMph=12;for(let i=0;i<1200&&progress<35;i++){
-          const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-${x})*${bx}+(p.z-${z})*${bz};
-          const floor=d.course.groundAt(s.s,s.lateral,${bed}).y, surface=d.course.groundAt(s.s,s.lateral).y;
-          maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));
-          if(Math.abs(progress)<5)minCover=Math.min(minCover,surface-(s.groundHeight??s._jumpY));
+          const p=d.course.worldAt(s.s,s.lateral);progress=(p.x-(${x}))*(${bx})+(p.z-(${z}))*(${bz});
+          const feet=s.airborne&&Number.isFinite(s._jumpY)?s._jumpY:s.groundHeight, floor=d.course.groundAt(s.s,s.lateral,-1e9).y, surface=d.course.groundAt(s.s,s.lateral).y;
+          maxFloorError=Math.max(maxFloorError,Math.abs(feet-floor));
+          const cover=surface-feet;maxCover=Math.max(maxCover,cover);if(cover>4)coveredSamples++;
           const turn=Math.atan2(Math.sin(${heading}-d.course.at(s.s).heading-s.headingError),Math.cos(${heading}-d.course.at(s.s).heading-s.headingError));
           d.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))});d.step(1/60);
-        }return {id:${JSON.stringify(id)},progress,maxFloorError,minCover};})()`);
+        }return {id:${JSON.stringify(id)},progress,maxFloorError,maxCover,coveredSamples};})()`);
       report.drives.push(result);
-      assert.ok(result.progress>=35 && result.maxFloorError<1 && result.minCover>1, `${id} drive must stay in the bed: ${JSON.stringify(result)}`);
+      assert.ok(result.progress>=35 && result.maxFloorError<1 && result.maxCover>4 && result.coveredSamples>10, `${id} drive must stay in the bed: ${JSON.stringify(result)}`);
     }
     await persist();
   } catch(error) {report.failure=error.message;await persist();throw error;}
