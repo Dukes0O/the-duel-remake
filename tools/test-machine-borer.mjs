@@ -8,9 +8,9 @@ import {SCARPS} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
-import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
+import {createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
 
@@ -242,6 +242,15 @@ assert.ok(Math.hypot(parked.x + 30 * Math.sin(parked.heading) - middle.x,
 assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
 const realGround = {heightAt:scablandsNaturalHeightAt};
 const realParked = createDigBorer(realGround);
+const drawnGround = createDigNearGround(new THREE.MeshBasicMaterial(), realGround);
+drawnGround.follow(realParked.x, realParked.z);
+for (let distance = 0; distance <= 60; distance += 5) {
+  const x = realParked.x + Math.sin(realParked.heading) * distance;
+  const z = realParked.z + Math.cos(realParked.heading) * distance;
+  assert.ok(Math.abs(drawnGround.heightAtDrawn(x,z) - scablandsSurfaceHeightAt(x,z,realGround)) < .3,
+    `Drawn ground matches the scarp ${distance} m ahead.`);
+}
+drawnGround.dispose();
 const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
 assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');
 

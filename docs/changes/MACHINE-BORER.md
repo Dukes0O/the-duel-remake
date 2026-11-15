@@ -2,6 +2,10 @@
 
 Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to the west scarp, cuts and lines a tunnel, makes a muck pile through the ground system, and reverses along her cut. The head, stall, steering, protected places and face rules are in the machine rules. The Dig has a dial, messages, camera, controls, plain machine model, face effects and conveyor. Claude's shared lining and portals draw the tunnel. Tunnels export to and restore from plain data for the current visit; no town store is read or written.
 
+## Late drive follow-up
+
+The Dig now uses the Scablands moving near-ground window at two-metre spacing, following the active machine and sampling the Dig surface. The focused test checks the drawn scarp every five metres for 60 metres from Mabel?s parking place, within 0.3 m. The browser scenario takes a mouth view at 20 m and checks the drawn surface 15 m beyond the mouth covers the bore by at least 4 m. `node tools/test-machine-borer.mjs` passed; the browser scenario still needs Claude to run it.
+
 ## Part A
 
 The keyboard now moves a persistent thrust lever; the head dial has a working band and a lever display. The borer has dedicated following and mouth cameras. Deep rock has deterministic 8 to 30 m seams seeded by the land and the mouth. The ground layer already samples materials by depth, but its one-metre variation is too short for these seams, so the borer uses alternating hard rock and softer gravel seams under more than 3 m of cover. The scenario now drives to the face by machine state, sets the lever, and checks centre pixels after drawing.

@@ -27,7 +27,9 @@ export function nearGroundHeightAt(x, z, heightAt) {
   return d + (corner(0, 1) - d) * (1 - u) + (corner(1, 0) - d) * (1 - v);
 }
 
-export function createNearGround({material, heightAt, name = 'Scablands near ground'}) {
+export function createNearGround({material, heightAt, name = 'Scablands near ground', grid = NEAR_GROUND}) {
+  const {cellX, cellZ, cellsX, cellsZ, lift} = grid;
+  const across = cellsX + 1, down = cellsZ + 1, corners = across * down;
   const positions = new Float32Array(corners * 3), normals = new Float32Array(corners * 3);
   let heights = new Float32Array(corners), spare = new Float32Array(corners);
   const indices = new Uint32Array(cellsX * cellsZ * 6);

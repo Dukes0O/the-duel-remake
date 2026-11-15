@@ -10,7 +10,8 @@ import {borerHasFace} from './borer.js';
 import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
-import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
+import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
+import {createNearGround} from '../world/near-ground.js';
 import {createGroundLook, createTunnelMesh} from '../world/scablands-ground-look.js';
 import {tunnelPortalShape, tunnelPortalSurface} from '../world/tunnel-look.js';
 import {machineToolPosition} from './machine.js';
@@ -122,20 +123,10 @@ const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
-// The yard floor does not reach the west scarp, where Mabel is parked.
-function scarpGround(scene, groundMaterial, centre) {
-  const size=1024, divisions=512, geometry=new THREE.PlaneGeometry(size,size,divisions,divisions);
-  geometry.rotateX(-Math.PI/2);
-  const position=geometry.attributes.position, uv=geometry.attributes.uv;
-  geometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
-  for(let i=0;i<position.count;i++){
-    const x=position.getX(i)+centre.x,z=position.getZ(i)+centre.z;
-    position.setXYZ(i,x,scablandsNaturalHeightAt(x,z),z);uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
-    const color=groundColour(x,z,0);geometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
-  }
-  geometry.computeVertexNormals();
-  const floor=new THREE.Mesh(geometry,groundMaterial);floor.name='West scarp ground';floor.receiveShadow=true;scene.add(floor);
-  return floor;
+// A finer window keeps steep faces faithful to the surface used by the Dig.
+export function createDigNearGround(material, ground) {
+  return createNearGround({material, heightAt:(x,z)=>scablandsSurfaceHeightAt(x,z,ground),
+    name:'Dig near ground', grid:{cellX:2,cellZ:2,cellsX:192,cellsZ:192,lift:.025}});
 }
 function staticYard(scene,groundMaterial){
   const floorGeometry=new THREE.PlaneGeometry(800,800,800,800);floorGeometry.rotateX(-Math.PI/2);
@@ -211,7 +202,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const groundLook=createGroundLook();
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}));
   const yardFloor=staticYard(world,groundMaterial);
-  scarpGround(world,groundMaterial,sim.borer);
+  const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x9c8b72,roughness:1}));
+  const nearGround=createDigNearGround(nearMaterial,sim.ground);
+  nearGround.follow(0,18);world.add(nearGround.mesh);
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));
@@ -421,7 +414,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
-    groundView.update();effects.update(elapsed);
+    nearGround.follow(active.x,active.z);
+    if(groundView.update())nearGround.refresh();
+    effects.update(elapsed);
     const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
       `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`;
@@ -462,5 +457,5 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   requestAnimationFrame(frame);
   return {stop,get simulation(){return sim;},get failed(){return failed;},host,
     requestCentreSample(){sampleCentre=true;},
-    get viewForCheck(){return {camera,readyToWork:Math.hypot(sim.borer.x-createDigBorer(sim.ground).x,sim.borer.z-createDigBorer(sim.ground).z)>=31 && borerHasFace(sim.ground,sim.borer,sim.borer.heading),pixels:camera.userData.centrePixels,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
+    get viewForCheck(){return {camera,readyToWork:Math.hypot(sim.borer.x-createDigBorer(sim.ground).x,sim.borer.z-createDigBorer(sim.ground).z)>=31 && borerHasFace(sim.ground,sim.borer,sim.borer.heading),pixels:camera.userData.centrePixels,ground:nearGround,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
 }
