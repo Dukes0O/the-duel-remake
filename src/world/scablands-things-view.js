@@ -100,14 +100,15 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
 
 // Draw exactly the footprints supplied to the collision index. The caller
 // owns the trial switch and supplies the same cleared records to both users.
-export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
+export function createFixedThingsView(fixed, loneBoulders = [], photos = null, groundAt = null) {
   const solids = thingSolids(fixed, loneBoulders);
   const group = new THREE.Group();
   const object = new THREE.Object3D();
   const drawnAs = part => part.kind === 'telegraph' && part.size[1] < 1 ? 'telegraph-down' : part.kind;
   const batches = [];
+  const groundOffset = part => groundAt ? groundAt(part.x, part.z) - scablandsSurfaceHeightAt(part.x, part.z) : 0;
   for (const kind of ['pylon-foot', 'telegraph', 'telegraph-down', 'fence-post', 'sign-post', 'boulder']) {
-    const parts = solids.filter(part => drawnAs(part) === kind);
+    const parts = solids.filter(part => drawnAs(part) === kind).map(part => ({...part, drawOffset: groundOffset(part)}));
     if (!parts.length) continue;
     const range = DRAWN_WITHIN[kind];
     const mesh = new THREE.InstancedMesh(standingThingShape(kind, parts[0].size), thingSurface(kind, photos), Math.min(parts.length, STANDING_AT_ONCE));
@@ -131,10 +132,10 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
         const away = Math.hypot(part.x - x, part.z - z);
         if (away > range || count >= mesh.instanceMatrix.count) continue;
         const grown = Math.min(1, (range - away) / (range * .1) + .35);
-        object.position.set(part.center[0], part.center[1] - part.size[1] * (1 - grown) / 2, part.center[2]);
+        object.position.set(part.center[0], part.center[1] + part.drawOffset - part.size[1] * (1 - grown) / 2, part.center[2]);
         object.rotation.set(0, part.heading, 0);
         if (part.kind === 'fence-post' && fallen.has(part.id)) {
-          object.position.y = part.center[1] - part.size[1] / 2 + part.size[0] / 2;
+          object.position.y = part.center[1] + part.drawOffset - part.size[1] / 2 + part.size[0] / 2;
           object.rotation.z = Math.PI / 2;
         }
         object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
@@ -159,11 +160,12 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
 
 // A separate batch for the parts above the collision footprints. Missing
 // supports deliberately break a span rather than drawing wire across a gap.
-export function createThingsLinesView(fixed) {
+export function createThingsLinesView(fixed, groundAt = null) {
+  const drawnY = item => groundAt ? groundAt(item.x, item.z) : item.y;
   const wires = [], fenceSpans = [];
   const segment = (out, a, b) => out.push(...a, ...b);
   const span = (a, b, height, sag) => {
-    const start = [a.x, a.y + height, a.z], end = [b.x, b.y + height, b.z];
+    const start = [a.x, drawnY(a) + height, a.z], end = [b.x, drawnY(b) + height, b.z];
     let previous = start;
     for (let i = 1; i <= 8; i++) {
       const t = i / 8;
@@ -194,7 +196,7 @@ export function createThingsLinesView(fixed) {
     const towers = new THREE.InstancedMesh(pylonShape(), pylonSurface(), standing.length), object = new THREE.Object3D();
     towers.name = 'Scablands pylons'; towers.castShadow = true;
     for (const [index, pylon] of standing.entries()) {
-      object.position.set(pylon.x, pylon.y, pylon.z); object.rotation.set(0, pylon.heading, 0); object.updateMatrix();
+      object.position.set(pylon.x, drawnY(pylon), pylon.z); object.rotation.set(0, pylon.heading, 0); object.updateMatrix();
       towers.setMatrixAt(index, object.matrix);
     }
     towers.computeBoundingSphere();
@@ -228,7 +230,7 @@ export function createThingsLinesView(fixed) {
 
 // One texture and one mesh for all the hand-painted boards. In a headless
 // test there is no canvas, but the same boards and post records still exist.
-export function createForkSignsView(signs) {
+export function createForkSignsView(signs, groundAt = null) {
   const group = new THREE.Group();
   if (!signs.length) return {group, dispose() {}};
   let texture = null;
@@ -278,7 +280,7 @@ export function createForkSignsView(signs) {
     const heading = Math.atan2(sign.junction.x - sign.x, sign.junction.z - sign.z);
     const c = Math.cos(heading), s = Math.sin(heading), halfWidth = 1.2;
     for (const [across, height] of [[-halfWidth, 1.65], [halfWidth, 1.65], [halfWidth, 2.35], [-halfWidth, 2.35]])
-      positions.push(sign.x + across * c, sign.y + height, sign.z - across * s);
+      positions.push(sign.x + across * c, (groundAt ? groundAt(sign.x, sign.z) : sign.y) + height, sign.z - across * s);
     const bottom = 1 - (index + 1) / signs.length, top = 1 - index / signs.length;
     uvs.push(0, bottom, 1, bottom, 1, top, 0, top);
     const base = index * 4; indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
@@ -298,9 +300,10 @@ export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, ha
   if (!enabled) return null;
   const {fixed, loneBoulders} = data ?? realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth});
   const small = createSmallThingsView({seed, jobStarts, heightAt, drawnHeightAt, photos});
-  const large = createFixedThingsView(fixed, loneBoulders, photos);
-  const lines = createThingsLinesView(fixed);
-  const signs = createForkSignsView(fixed.signs);
+  const groundAt = (x, z) => drawnHeightAt?.(x, z) ?? nearGroundHeightAt(x, z, heightAt ?? scablandsSurfaceHeightAt);
+  const large = createFixedThingsView(fixed, loneBoulders, photos, groundAt);
+  const lines = createThingsLinesView(fixed, groundAt);
+  const signs = createForkSignsView(fixed.signs, groundAt);
   const group = new THREE.Group();
   group.name = 'Scablands realism things';
   group.add(small.group, large.group, lines.group, signs.group);

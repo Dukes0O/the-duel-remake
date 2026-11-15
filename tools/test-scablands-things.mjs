@@ -117,6 +117,36 @@ test('every collision footprint belongs to one batch, and is drawn at its own pl
   assert.equal(view.group.children.length, 0);
 });
 
+test('standing things and their lines follow the drawn ground', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const solids = thingSolids(fixed, []);
+  const groundAt = (x, z) => scablandsSurfaceHeightAt(x, z) + 3;
+  const view = createFixedThingsView(fixed, [], null, groundAt);
+  const centre = solids.find(part => part.kind === 'telegraph');
+  view.update(centre.x, centre.z);
+  let checked = 0;
+  for (const mesh of view.group.children) {
+    const matrix = new THREE.Matrix4(), position = new THREE.Vector3();
+    const ids = new Set(mesh.userData.solidIds);
+    for (let index = 0; index < mesh.count; index++) {
+      mesh.getMatrixAt(index, matrix); position.setFromMatrixPosition(matrix);
+      const solid = solids.find(part => ids.has(part.id) && Math.hypot(part.x - position.x, part.z - position.z) < .001);
+      if (!solid || Math.hypot(solid.x - centre.x, solid.z - centre.z) > 300) continue;
+      assert.ok(Math.abs(position.y - solid.center[1] - 3) < .001, mesh.name);
+      checked++;
+    }
+  }
+  assert.ok(checked > 3);
+  const normalLines = createThingsLinesView(fixed);
+  const raisedLines = createThingsLinesView(fixed, (x, z) => scablandsSurfaceHeightAt(x, z) + 3);
+  const originalTower = normalLines.group.getObjectByName('Scablands pylons');
+  const raisedTower = raisedLines.group.getObjectByName('Scablands pylons');
+  const before = new THREE.Matrix4(), after = new THREE.Matrix4();
+  originalTower.getMatrixAt(0, before); raisedTower.getMatrixAt(0, after);
+  assert.ok(Math.abs(after.elements[13] - before.elements[13] - 3) < .001);
+  view.dispose(); normalLines.dispose(); raisedLines.dispose();
+});
+
 test('small things use one batch per kind and follow the player; only the kinds that stand up cast a shadow', () => {
   assert.throws(() => createSmallThingsView({seed: 1989}), TypeError);
   const view = createSmallThingsView({seed: 1989, jobStarts: []});

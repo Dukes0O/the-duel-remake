@@ -1670,3 +1670,11 @@ Small things in the river opening now take their height from the drawn bed and b
 Check: `node tools/test-scablands-things.mjs` passed 34 of 34. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the river mesh check is new. Codex decided: no new design choice. Removed: the filled-in plain as the height source for small things inside the river opening.
 
 Still needed: check standing things on all drawn terrain and the cost of river height lookup; finish the camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: standing things on drawn ground
+
+Standing footprints, pylons, wires and sign boards now use the drawn ground height as small things do. Collision positions remain unchanged. Heights for standing batches and lines are calculated when the view is created; small things retain their cell cache. No new game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The new check verifies standing batches and pylons follow a changed drawn height. It does not yet prove all terrain types or measure river lookup cost. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the placement check is new. Codex decided: no new design choice. Removed: using physical ground height alone for standing artwork.
+
+Still needed: verify standing objects against the actual hill, mesa, river and scarp meshes and assess river lookup cost; finish the camera and scenario fixes, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
