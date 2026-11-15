@@ -566,6 +566,10 @@ export function createScablandsScene(course,options={}){
   roads.update(0,0);gorge.update(0,0);crossings.update(0,0);stepsWay.update(0,0);
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
+  const townDoor=new THREE.Mesh(new THREE.BoxGeometry(TIN_TOWN_GATE.opening,3,.5),
+    new THREE.MeshStandardMaterial({color:0x66584b,roughness:1}));
+  townDoor.name='Hot Delivery town gate door';
+  townDoor.position.y=1.5;tinTownGate.add(townDoor);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
   const tinTownShacks=createTinTownShacks();group.add(tinTownShacks);
   // Smoke from three of the shacks' stovepipes, placed from the clock in animate.
@@ -811,6 +815,10 @@ export function createScablandsScene(course,options={}){
       }
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
+      const doorOpen=worldJob?.tinTownGateRequested===true;
+      townDoor.rotation.y=doorOpen?Math.PI/2:0;
+      townDoor.position.set(doorOpen?TIN_TOWN_GATE.opening/2:0,1.5,doorOpen?TIN_TOWN_GATE.opening/2:0);
       braziers.group.visible=Boolean(emberStep);
       barricades.forEach((mesh,index)=>{
         const barrier=emberStep?.barriers?.[index];mesh.visible=Boolean(barrier)&&!worldJob?.job?.stepState?.burntBarricades?.includes(barrier.id);

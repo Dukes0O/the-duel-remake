@@ -105,13 +105,21 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
 // The real job requests the gate only for a car approaching slowly.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
-  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+  const state = {arena:{mode:'world-job', worldJob:world}, weaponLoadout:[], s:0, lateral:0,
     opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   let car = {x:gate.x, z:gate.z + 30};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => ({...car, y:scablandsSurfaceHeightAt(car.x, car.z)})},
     emit:event => events.push(event), _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
+  const door = world.solidGrid.townGate[0];
+  assert.equal(door.id, 'hot-delivery-town-door');
+  assert.equal(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id,
+    'the closed door blocks the opening');
+  const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19), {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+  const drawnDoor = scene.group.getObjectByName('Hot Delivery town gate door');
+  syncScene(scene.group, state);
+  assert.equal(drawnDoor.visible, true, 'the closed door is drawn');
   world.job.stepState = {loaded:true, ember:100};
   const tick = () => stepWorldJob(duel, 0.01);
   tick();
@@ -127,6 +135,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   state.onFoot = false;
   tick(); tick();
   assert.equal(world.tinTownGateRequested, true);
+  assert.equal(world.solidGrid.townGate.length, 0, 'opening the door clears the job solid');
+  assert.notEqual(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
+  syncScene(scene.group, state);
+  assert.equal(drawnDoor.visible, true);
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the door swings clear');
+  scene.dispose();
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
 }

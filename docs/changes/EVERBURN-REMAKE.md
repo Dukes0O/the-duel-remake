@@ -1,5 +1,14 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Tin Town gate door (15 November 2026)
+
+- Hot Delivery has a plain solid door across Tin Town's entrance. A car approaching below 30 km/h swings it aside and clears its job-only solid. The opening uses `world.tintown.gate` once. Other jobs retain their open entrance.
+- `node tools/test-everburn-job1.mjs`: passed. The real job update checks the speed boundary and cue; the scene and solid grid show the closed and open door. `git diff --check`: passed.
+- For Claude to draw: the final Tin Town gate door, barricades, smoke and Cinder. For Claude to run: the browser scenario, final checks and both long drivers remain for the last round.
+- Changed assertions: none. Race fingerprints were not checked in this round. Codex decided: the plain door swings aside immediately when requested; Claude should review its appearance and timing.
+- Removed: Hot Delivery's permanently open entrance. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the forge bay and remaining steps.
+
 ## Tin Town gate approach (15 November 2026)
 
 - Hot Delivery requests the gate when the player is in the car within 20 m and travelling below 30 km/h. The request sounds `world.tintown.gate` once. This is the first part of step 5a: the entrance has no gate door yet, so nothing opens or blocks the car.

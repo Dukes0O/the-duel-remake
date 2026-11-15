@@ -115,6 +115,9 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setYard(yardPlan().solids);
   }
+  if (definition.id === 'everburn-hot-delivery') {
+    worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
+  }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
@@ -707,6 +710,7 @@ export function stepWorldJob(duel, dt) {
     if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
         Math.hypot(car.x - gate.x, car.z - gate.z) <= 20 && Math.abs(state.speedMph || 0) * MPH_TO_KMH < 30) {
       worldJob.tinTownGateRequested = true;
+      worldJob.solidGrid.setTownGate(null);
       duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
         cue:'world.tintown.gate', position:car}});
     }

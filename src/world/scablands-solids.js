@@ -203,15 +203,21 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
     braziers: [],
     barricades: [],
     yard: [],
+    townGate: [],
     near(ax, az, bx, bz, pad) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.yard) found.push(solid);
+      for (const solid of this.townGate) found.push(solid);
       return found;
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
+    setTownGate(gate) {
+      this.townGate = gate ? [make({id:'hot-delivery-town-door', kind:'wall', x:gate.x, z:gate.z,
+        halfX:gate.opening / 2, halfZ:.25, height:3})] : [];
+    },
     setBraziers(spots) { this.braziers = spots.map(brazierSolid); },
     setBarricades(barriers) {
       this.barricades = barriers.map(({id, position, heading}) => make({id, kind:'barricade',
