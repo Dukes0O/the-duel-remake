@@ -10,6 +10,8 @@ The browser scenario is written and syntax checked but has not run. It now draws
 
 The scenario now places the camera at the requested height before each picture. The renderer normally eases the camera vertically, so a picture taken after one frame could otherwise show the wrong view. This correction still needs Claude's browser check.
 
+The browser scenario now also records floor samples and the greatest height error on each drive. It fails if the car crosses over the scarp instead of staying on the tube floor. This check has not been run in a browser.
+
 Ordinary races and released courses keep the surface-only path with the trial switch off; the replay and world-composition guards passed. The terrain shader adds two vector uniforms, one radius uniform and one capsule-distance test per segment per ground fragment. There is no chunk selection or measured practical limit. The tube is an untextured cylinder; its entrances and joins have not been judged in a browser. No new game event or sound cue was added. My view remains no-go for a finished boring machine until dynamic rebuilding, a real play test and frame measurements are done. Compare a real cut with this shader before choosing.
 
 [three-bvh-csg](https://github.com/gkjohnson/three-bvh-csg) is MIT licensed. Its brushes and evaluator can subtract closed geometry. A second trial needs an isolated install, closed terrain and cutter geometry, collision and terrain updates, and rebuild and frame measurements. Cost is not measured.
@@ -23,6 +25,7 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 - `node tools/test-track-kits.mjs`: passed on an isolated repeat, including every circuit with kit placements.
 - `node --check tools/scenarios/tunnel-trial.mjs`: passed after the frame sampling and bridge exit changes. The browser scenario was not run.
 - After the camera placement correction, `node --check tools/scenarios/tunnel-trial.mjs` and `node tools/test-tunnels.mjs` passed. The browser scenario was not run.
+- After adding the browser drive's floor check, `node --check tools/scenarios/tunnel-trial.mjs` and `node tools/test-tunnels.mjs` passed. The browser scenario was not run.
 - `node tools/test-scablands-solid.mjs`: passed 18 checks. The four-way route reached town with no hits.
 - `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.
 - `node tools/test-combat-replays.mjs`: passed 12 fingerprints across four encounters.
