@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+The course now replaces or clears a trial bore through `setGroundTunnels`, increments a revision, and rejects a non-empty bore unless the town switch is enabled for the Scablands. Invalid segments leave the existing bore and revision unchanged. `node tools/test-tunnels.mjs` passed. The scene still does not follow the revision, and the chase camera, scenario, Big Bess check and final checks remain. No sound or existing assertion changed.
+
 The tunnel rules now calculate one ground-cut capsule for each open mouth, ending where the crown has one metre of cover. Closed faces do not produce a mouth cut. `node tools/test-tunnels.mjs` passed. The game renderer does not yet use these capsules; the dynamic scene, lining, camera and rewritten scenario remain to be built. No sound cue or existing assertion changed.
 
 The tunnel rules no longer import Scablands data or read a clock. The Scablands trial site has its own file. The rules file is UTF-8 with LF line endings and no byte-order mark. `node tools/test-tunnels.mjs` and the scenario syntax check passed.

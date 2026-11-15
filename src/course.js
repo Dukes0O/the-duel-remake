@@ -1,4 +1,4 @@
-import {isSummitAttack} from './summit-attack.js';
+﻿import {isSummitAttack} from './summit-attack.js';
 import {installDeepCourse} from './deep/deep-journey.js';
 // Closed, arc-length sampled circuits. The same surface and obstacle data drive
 // the renderer, player, CPU and checkpoint validation.
@@ -21,6 +21,7 @@ import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } fro
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsActorHeightAt,scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {buildBowlFeatures} from './bowl/bowl-course.js';
+import {createGroundTunnels} from './world/ground-tunnels.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -73,8 +74,10 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,tunnelsEnabled=false}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
+    this._groundTunnelsEnabled=Boolean(def.scablands) && tunnelsEnabled===true;
+    this.groundTunnels=null;this.groundTunnelsRevision=0;
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
     this._solveShortcuts=solveShortcuts===true;
@@ -233,6 +236,14 @@ export class Course {
     const surface={road:Math.abs(lateral)<=roadHalfWidth||!!cut,mainRoad:!this.def.offroad&&(Math.abs(lateral)<=roadHalfWidth||cut?.surface==='paved'),shortcutId:cut?.id||null,roadHalfWidth};
     if(this.muddyHollow&&!surface.road){const world=this.worldAt(s,lateral);if(this.muddyHollow.contains(world.x,world.z))return {...surface,...this.muddyHollow.surfaceAt(world.x,world.z)};}
     return surface;}
+  // Replace the trial bore atomically; the scene follows the revision.
+  setGroundTunnels(segments){
+    if(!Array.isArray(segments))throw new TypeError('Tunnel segments must be a list.');
+    if(segments.length&&!this._groundTunnelsEnabled)throw new Error('Tunnel trial is not enabled.');
+    const next=segments.length?createGroundTunnels(segments,{heightAt:scablandsSurfaceHeightAt}):null;
+    this.groundTunnels=next;this.groundTunnelsRevision++;
+    return next;
+  }
   tunnelAt(s,lateral=0){const p=this.phase(s);return this.features.tunnels.find(t=>p>=t.start&&p<=t.end&&(t.roofWidth==null||Math.abs(lateral)<=t.roofWidth))||null;}
   jumpAt(s){if(this.def.pit)return pitRampHeight(this,s);
     if(this.def.saltFlats){const at=this.worldAt(s);return saltFlatsRampHeight(this.features.ramps,at.x,at.z);}

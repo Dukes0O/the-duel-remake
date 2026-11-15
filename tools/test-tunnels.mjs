@@ -17,6 +17,24 @@ import {stepMover} from '../src/world/scablands-movers.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
 
+// Replacing a bore is gated and invalid replacements leave the current bore intact.
+{
+  const disabled = new Course(SCABLANDS_VENUE, 1989);
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  assert.throws(() => disabled.setGroundTunnels([trial.segment]), /not enabled/);
+  assert.equal(disabled.groundTunnelsRevision, 0);
+  const enabled = new Course(SCABLANDS_VENUE, 1989, {tunnelsEnabled: true});
+  const bore = enabled.setGroundTunnels([trial.segment]);
+  assert.equal(enabled.groundTunnels, bore);
+  assert.equal(enabled.groundTunnelsRevision, 1);
+  assert.throws(() => enabled.setGroundTunnels([trial.segment, trial.segment]), RangeError);
+  assert.equal(enabled.groundTunnels, bore);
+  assert.equal(enabled.groundTunnelsRevision, 1);
+  enabled.setGroundTunnels([]);
+  assert.equal(enabled.groundTunnels, null);
+  assert.equal(enabled.groundTunnelsRevision, 2);
+}
+
 // An open mouth cuts only as far as the crown has a metre of cover.
 {
   const segment = {start: {x: 0, y: 2.2, z: 0}, end: {x: 100, y: 2.2, z: 0}, radius: 4};
