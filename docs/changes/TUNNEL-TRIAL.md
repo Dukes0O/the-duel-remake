@@ -2,11 +2,13 @@
 
 The Scablands now has floor selection for the river beds under both decks. Cars, people, job raiders and Big Bess use their feet to select a floor, and deck roofs and height-limited solids keep actors on their own level. The drawn bed is open under the bridge and Pipe. The `wasteland-town` switch still controls the trial bore. The 100 m west-scarp trial has a flat floor, side walls, crown, closed cutting faces and checked joints; a grid limits segment lookup. Nothing is saved by the trial. The scene follows tunnel revisions, cuts only the mouths and grows the lining. The camera is constrained to the car's floor. No new game event or sound cue was added.
 
-The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude has not run this version, so the look, camera, drive and frame results are unverified.
+The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude ran the previous version, which stopped before the pictures with a script syntax error. That error is fixed; the look, camera, drive and frame results remain unverified.
 
 Big Bess's position check failed because the trial treated every actor height as an absolute floor. Integration uses an offset for actors without a selected floor. The scene now uses the selected height after a mover marks it, and otherwise retains the previous offset. The existing assertion is unchanged and a new check covers a selected floor.
 
 ## Checks
+
+The scenario passes `node --check`. A Node-only stub ran the scenario through both tunnel drives and both deck crossings and parsed all 62 evaluated scripts; all passed. It did not run the browser.
 
 `test-tunnels`, `test-scablands-solid` (20 checks), `test-scablands-size`, `test-scablands-scene`, `test-old-smoke`, `test-everburn-play-start`, `test-ember-pot`, `test-replays`, `test-combat-replays`, `test-shortcut-presets`, and `node --check tools/scenarios/tunnel-trial.mjs` passed. The replay checks retained 297 race fingerprints in 33 cases and 12 combat fingerprints in four encounters. A 100 m tube takes 131 bytes in the simple JSON check, below the 2 MB ground budget; a tunnel save is not implemented.
 

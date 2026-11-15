@@ -9,8 +9,8 @@ import {RIVER_LAND} from '../../src/world/scablands-regions.js';
 export async function run(context) {
   const report = {card: 'TUNNEL-TRIAL', quality: 'performance', views: [], drives: []};
   const persist = () => writeFile(join(context.outputDir, 'tunnel-trial.json'), JSON.stringify(report, null, 2) + '\n');
-  const click = selector => context.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
-  const frame = `const a=window.__qaApp; a.onFrame?.(a.duel.state,0); window.__render.renderFrame();`;
+  const click = selector => context.evaluate(`(() => {document.querySelector(${JSON.stringify(selector)}).click();})()`);
+  const frame = `window.__qaApp.onFrame?.(window.__qaApp.duel.state,0); window.__render.renderFrame();`;
   // Match the game's ordinary arena placement, including its explicit floor height.
   const place = (x, z, heading, height) => `{
     const a=window.__qaApp,d=a.duel,s=d.state,p=d.course.nearest(${x},${z});
