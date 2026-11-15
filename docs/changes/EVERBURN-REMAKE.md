@@ -212,3 +212,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked in this round.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: yard placement and the remaining steps.
+
+## Larger land, yard drawing (15 November 2026)
+
+- Hot Delivery requests the Scrapdome yard. The scene draws it on the land's ground and releases its meshes and textures with the scene. Other jobs do not show it. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test checks the real scene for one yard with two meshes, its position, absence in another job and disposal after switching jobs.
+- For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers. Race fingerprints were not checked this round.
+- For Claude to draw: final barricades, smoke and Cinder figure. Changed assertions: none. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: yard solids, the gate start and the remaining steps.

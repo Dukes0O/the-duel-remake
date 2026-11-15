@@ -100,7 +100,7 @@ export function buildEverburn(land) {
   const valveRoom = place('mall-valve-room', at('dead-mall', -12, 0), 7);
 
   const EVERBURN_JOBS = Object.freeze([
-    Object.freeze({id:'everburn-hot-delivery', storyId:'everburn', number:1, name:'Hot Delivery', kind:'delivery',
+    Object.freeze({id:'everburn-hot-delivery', storyId:'everburn', number:1, name:'Hot Delivery', kind:'delivery', yard:true,
       resultLineId:'story.ember.auntie-solder.2',
       easy:Object.freeze({markerRadius:18}), lineId:'story.ember.cinder.1',
       // The pot holds a live ember (src/world/jobs/ember-rule.js): driving takes it, and at 0 Cinder's spill line is said and the marker

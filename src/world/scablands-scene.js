@@ -22,6 +22,7 @@ import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.j
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
+import {createYard} from './scablands-yard-look.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -450,6 +451,7 @@ export function createScablandsScene(course,options={}){
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
   let openMarks=options.openMarks??getScablandsOpenMarks();
   const group=new THREE.Group();group.name='The Scablands';
+  let yard=null;
   let retired=false;
   let townDraw=null;
   let whites=createTheWhitesScene({openMarks,loadAsset});
@@ -773,6 +775,13 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      if(worldJob?.definition?.yard){
+        if(!yard){
+          yard=createYard({heightAt:(x,z)=>scablandsSurfaceHeightAt(LAND.yard.x+x,LAND.yard.z+z)});
+          yard.position.set(LAND.yard.x,0,LAND.yard.z);
+        }
+        if(!yard.parent)group.add(yard);
+      }else if(yard?.parent)group.remove(yard);
       const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
       // The furnace follows its actor in Old Smoke's chase and in the battle on the Boneyard road (FIELD-BATTLE-ASH), where it stays
       // where it stopped or turned away when the job is over.
@@ -875,6 +884,10 @@ export function createScablandsScene(course,options={}){
   });
   function dispose(){
     if(retired)return;retired=true;
+    if(yard){
+      if(!yard.parent)group.add(yard);
+      yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
+    }
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

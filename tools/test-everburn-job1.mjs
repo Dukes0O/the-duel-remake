@@ -12,9 +12,35 @@ import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world
 import {riverDepthAt} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
+import {Course} from '../src/course.js';
+import {SCABLANDS_VENUE} from '../src/world/scablands.js';
+import {createScablandsScene} from '../src/world/scablands-scene.js';
+import {syncScene} from '../src/scene-systems.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The yard belongs only to jobs that request it, and its scene owns its meshes.
+{
+  const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19), {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+  const stateFor = jobDefinition => ({arena:{mode:'world-job', worldJob:{definition:jobDefinition, job:{steps:[],stepIndex:0}, actors:[]}}});
+  syncScene(scene.group, stateFor(EVERBURN_JOBS[1]));
+  assert.equal(scene.group.getObjectByName('Scrapdome yard on the land'), undefined);
+  syncScene(scene.group, stateFor(definition));
+  const yards = [];
+  scene.group.traverse(node => {if (node.name === 'Scrapdome yard on the land') yards.push(node);});
+  assert.equal(yards.length, 1);
+  const yard = yards[0], meshes = [];
+  yard.traverse(node => {if (node.isMesh) meshes.push(node);});
+  assert.equal(meshes.length, 2);
+  assert.equal(yard.position.x, LAND.yard.x);
+  assert.equal(yard.position.z, LAND.yard.z);
+  let disposed = false;
+  meshes[0].geometry.addEventListener('dispose', () => {disposed = true;});
+  syncScene(scene.group, stateFor(EVERBURN_JOBS[1]));
+  assert.equal(scene.group.getObjectByName('Scrapdome yard on the land'), undefined);
+  scene.dispose();
+  assert.equal(disposed, true, 'the detached yard is disposed with the scene');
+}
 const step = definition.steps[0], pickup = step.pickup.place.position;
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
 const waitingWorld = createWorldJob(definition);
