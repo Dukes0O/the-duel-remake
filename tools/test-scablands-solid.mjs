@@ -556,6 +556,46 @@ test('a raider meeting a building is stopped by it; a truck is held by ground to
   assert.ok(!inside(block, raider.x, raider.z) && raider.x > block.x - block.halfX - 1.5, `a raider of a real job walks at the building and stays outside it (${(block.x - block.halfX - raider.x).toFixed(2)} m from its face)`);
 });
 
+test('a job raider walks around a trial boulder', () => {
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, arsenal: true, 'scablands-realism': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    seed: 1989, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1989}}), true);
+  duel.state.countdown = 0;
+  const worldJob = duel.state.arena.worldJob;
+  const rocks = duel.course.solidGrid.solids.filter(s => s.kind === 'boulder');
+  // Find an open approach that grazes the rock. A direct centre hit correctly stops a mover.
+  let route;
+  for (const rock of rocks) {
+    const start = {x: rock.x - 8, z: rock.z + rock.halfZ * .7};
+    const target = {x: rock.x + 8, z: start.z};
+    let at = {...start}, touched = false;
+    for (let i = 0; i < 60 * 10; i++) {
+      const dx = target.x - at.x, dz = target.z - at.z, gap = Math.hypot(dx, dz);
+      if (gap < .08) break;
+      const result = stepMover(at, {x: at.x + dx / gap * .075, z: at.z + dz / gap * .075},
+        {radius: .4, grade: FOOT_GRADE, grid: duel.course.solidGrid});
+      touched ||= result.blocked === 'solid' && Math.hypot(at.x - rock.x, at.z - rock.z) < rock.halfX + 1;
+      at = result;
+    }
+    if (touched && at.x > rock.x + rock.halfX + 1) { route = {rock, start, target}; break; }
+  }
+  assert.ok(route, 'a boulder has an open grazing approach');
+  const raider = {id: 'trial-boulder-raider', ...route.start, y: 0, health: 70, knockedDown: false,
+    approachSpeed: 4.5, approachTarget: route.target};
+  worldJob.actors.push(raider);
+  let closest = Infinity, greatestSideStep = 0;
+  for (let step = 0; step < 60 * 10; step++) {
+    duel.step(DT);
+    closest = Math.min(closest, Math.hypot(raider.x - route.rock.x, raider.z - route.rock.z));
+    greatestSideStep = Math.max(greatestSideStep, Math.abs(raider.z - route.start.z));
+    assert.ok(Math.hypot(raider.x - route.rock.x, raider.z - route.rock.z) >= route.rock.halfX - .01,
+      'the raider stays outside the boulder');
+  }
+  assert.ok(closest < route.rock.halfX + .6 && greatestSideStep > .1, 'the boulder changes the raider?s path');
+  assert.ok(raider.x > route.rock.x + route.rock.halfX + 1, 'the raider gets past the boulder');
+});
+
 test('a person on foot cannot walk through a building', () => {
   const duel = newDuel(), block = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-block-9');
   const start = {x: block.x - block.halfX - 6, z: block.z}, at = course.nearest(start.x, start.z);
