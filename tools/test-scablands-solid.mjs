@@ -61,8 +61,8 @@ test('both furnace roads clear solids and climbable ground, including the return
 });
 
 // ---- A real Duel on the Scablands, driven through its own inputs -----------------------------------------------------------------------------
-function newDuel(car = 'falcone_f42') {
-  const duel = new Duel({seed: 1989, car, featureFlags: {'hidden-road': true}});
+function newDuel(car = 'falcone_f42', realism = false) {
+  const duel = new Duel({seed: 1989, car, featureFlags: {'hidden-road': true, 'scablands-realism': realism}});
   duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car, seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
   const player = duel.state, opponent = player.opponents[0];
@@ -425,8 +425,8 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     ['the river bed (as far as the bridge, and out by the Wash)', null, 80, 300],
   ];
   const rows = [];
-  for (const [label, line, kmh, seconds] of ways) {
-    const duel = newDuel('falcone_f42');
+  for (const realism of [false, true]) for (const [label, line, kmh, seconds] of ways) {
+    const duel = newDuel('falcone_f42', realism);
     let driven;
     if (label.startsWith('the river bed')) {
       // KNOWN LIMIT (slice 2b, reported to Claude): a deck is level with the plain in the land's one height, so the Girder Bridge and the Pipe stand across the bed as
@@ -468,7 +468,7 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     assert.ok(!duel.state.combatWrecking, `${label}: not wrecked`);
     const rough = duel.hits.filter(hit => hit.kind === 'fall' && hit.kmh > 0);
     assert.equal(rough.length, 0, `${label}: no fall on the way (${rough.map(hit => hit.drop.toFixed(2) + ' m at ' + hit.t.toFixed(0) + ' s, ' + hit.x.toFixed(0) + ',' + hit.z.toFixed(0) + ' ' + hit.kmh0.toFixed(0) + ' km/h').join(', ')})`);
-    rows.push(`${label}: ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
+    rows.push(`${label} (realism ${realism ? 'on' : 'off'}): ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
   }
   console.log('the four ways: ' + rows.join('; '));
 });
