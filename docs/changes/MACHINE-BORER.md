@@ -6,6 +6,8 @@ Step 1 adds Mabel's machine data and pure rules for a face, thrust, head speed, 
 
 Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Joining another tunnel remains to be built. This is not a finished cutting step. The machine now checks the full bore at its proposed position before advancing, so it stops at the edge of a protected place and keeps its own sentence.
 
+Mabel can now reverse along her recorded tunnel at 1.4 m per second with her head stopped, and return to the cutting face without cutting the same ground again. The path follows bends and slopes; steering does not move her off it. These rules are not connected to the game controls yet.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -17,6 +19,7 @@ Step 2 has begun: cutting records centre-line segments, coalesces straight runs,
 - `node tools/test-ground-edit.mjs`: passed after adding the material query.
 - `node tools/test-machine-borer.mjs`: passed with a moving bore stopped outside a reserved place, retaining its own sentence and emitting one refusal.
 - `node tools/test-tunnels.mjs`: passed after the protected-edge change.
+- `node tools/test-machine-borer.mjs`: passed with reverse travel, a bent and sloping return to the mouth, and forward travel back to the face without changing the tunnel.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -30,7 +33,7 @@ None.
 
 ## Codex decided
 
-For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and rock one third. This is a starting scale within the card's soft and hard endpoints. The ground stores only one fill material per cell, so the face query uses that material for fill above the natural surface.
+For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and rock one third. This is a starting scale within the card's soft and hard endpoints. The ground stores only one fill material per cell, so the face query uses that material for fill above the natural surface. Walking pace is 1.4 m per second; forward travel in a cut uses the maximum cutting speed.
 
 ## Sound cues
 

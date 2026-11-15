@@ -23,8 +23,28 @@ export function borerHasFace(ground, position, heading, radius = 3) {
 
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
-  return {x, y, z, heading, slope:0, name, started:false, distanceM:0, headSpeed:0,
+  return {x, y, z, heading, slope:0, name, started:false, distanceM:0, travelM:0, headSpeed:0,
     stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
+}
+
+// Follow the recorded centre line, including bends and slopes, without
+// changing the cut or letting steering move the machine into the rock.
+function placeOnCut(state, distance, radius) {
+  let left = distance;
+  for (const segment of state.segments) {
+    const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y;
+    const dz = segment.end.z - segment.start.z, length = Math.hypot(dx, dy, dz);
+    if (left <= length + 1e-8) {
+      const t = clamp(left / length, 0, 1);
+      state.x = segment.start.x + dx * t;
+      state.y = segment.start.y + dy * t - radius * 0.55;
+      state.z = segment.start.z + dz * t;
+      state.heading = Math.atan2(dx, dz);
+      state.slope = Math.atan2(dy, Math.hypot(dx, dz));
+      return;
+    }
+    left -= length;
+  }
 }
 
 // Look for the matching wall from the other side of the approaching surface.
@@ -61,7 +81,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       (material === null ? typeof ground.materialAt !== 'function' : !Object.hasOwn(hardness, material)))
     throw new TypeError('The borer needs ground, material and non-negative time.');
   const radius = machineDefinition('borer').boreRadiusM;
-  const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, 0, 1);
+  const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, -1, 1);
   const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
   const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
   let next = {...state, segments:(state.segments || []).map(segment => ({...segment,
@@ -69,12 +89,26 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
     carry -= step;
+    // Old states have no separate travel position and start at the face.
+    if (!Number.isFinite(next.travelM)) next.travelM = next.distanceM;
     if (next.stalled) {
       next.headSpeed = 0;
-      next.releaseSeconds = thrust === 0 ? next.releaseSeconds + step : 0;
+      next.releaseSeconds = thrust <= 0 ? next.releaseSeconds + step : 0;
       if (next.releaseSeconds >= 1 - 1e-9) {
         next.stalled = false; next.releaseSeconds = 0; next.overloadSeconds = 0; next.message = null;
       }
+      continue;
+    }
+    if (thrust < 0) {
+      next.headSpeed = 0; next.overloadSeconds = 0; next.message = null;
+      next.travelM = Math.max(0, next.travelM + thrust * 1.4 * step);
+      if (next.segments.length) placeOnCut(next, next.travelM, radius);
+      continue;
+    }
+    if (thrust > 0 && next.travelM < next.distanceM - 1e-8) {
+      next.headSpeed = 1; next.overloadSeconds = 0; next.message = null;
+      next.travelM = Math.min(next.distanceM, next.travelM + thrust * 0.5 * step);
+      placeOnCut(next, next.travelM, radius);
       continue;
     }
     if (!thrust || next.finished) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
@@ -126,7 +160,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;
     addCut(next.segments, start, {x:next.x, y:next.y + radius * 0.55, z:next.z}, radius);
-    next.distanceM += distance; next.started = true;
+    next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     if (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
         borerHasFace(ground, next, next.heading + Math.PI, radius)) {
       next.segments.at(-1).endOpen = true;
