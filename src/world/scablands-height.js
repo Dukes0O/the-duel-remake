@@ -62,6 +62,8 @@ export function hillsFor(land=LAND,seed=1989){
     LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
   // Keep the furnace's descent from the Ridge to the Boneyard open.
   const furnaceDescent=[LAND.at('ridge',-74,104),LAND.between('ridge','boneyard',.599,-74,0)];
+  // The chasing car cuts across the plates toward the descending furnace.
+  const furnaceApproach=[LAND.at('ridge',-1350,726),furnaceDescent[1]];
   const tunnel=westScarpTrial(()=>0).segment;
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
@@ -73,7 +75,7 @@ export function hillsFor(land=LAND,seed=1989){
     const movedMesa=hill.kind==='mesa' && index===hills.length-2;
     return {x:hill.x-(movedMesa?300:0)-moved.x+fixed.x,z:hill.z-(movedMesa?300:0)-moved.z+fixed.z,radius:hill.radius,ramp:hill.ramp??0};
   });
-  for(let attempt=0;attempt<12000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
+  for(let attempt=0;attempt<120000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
     const dx=mesaRng.range(-3300,1300),dz=mesaRng.range(-1200,1400);
     const x=mesaBase.x+dx,z=mesaBase.z+dz;
     const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
@@ -81,6 +83,7 @@ export function hillsFor(land=LAND,seed=1989){
     if(distanceToRoad(x,z,platesWay)<radius+200) continue;
     if(distanceToRoad(x,z,surveyLeg)<reach+60) continue;
     if(distanceToRoad(x,z,furnaceDescent)<reach+60) continue;
+    if(distanceToRoad(x,z,furnaceApproach)<radius+110) continue;
     if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
     if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;

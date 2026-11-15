@@ -2077,3 +2077,9 @@ piers with caps and a dark band where floods stood. 3,264 triangles (about 960 b
 rust. The solid shapes a car meets are unchanged. Seen in the game in a visible window from the road, the deck, beside and the bed.
 Checks: `test-scablands-scene`, `test-scablands-size`, `test-scablands-solid` (24), `test-tunnels`, and the build, all pass.
 **Removed:** the plain one-colour boxes of the trusses and the single deck slab.
+
+### Hill country: clear the furnace chase approach
+
+The seed 1 Easy chase slowed beside a mesa at about (3503, -1008), where its north face rises immediately ahead. The car was still on the chase step when the 3,000-second limit ended. Mesa selection now keeps the car's approach to the furnace clear. The obstructing seeded mesa moved from about (3449, -860) to (3750, -979); another seeded mesa moved from about (915, 1377) to (909, 1394) because selection continues through the same seed. All six remain. The search limit rose from 12,000 to 120,000 candidates to find the sixth clear site. A new test samples the approach every 10 m and five lines across its 60 m corridor. The existing driver and pass marks did not change. The same seed finished in 2,752 seconds with realism on. No event or sound cue was added.
+
+Changed assertions: none in this step; the corridor assertion is new. Codex decided: use the observed approach from the Ridge to the furnace's existing descent, expressed from the Ridge and the chase path. Removed: the two former seeded mesa sites. The integration merge kept both sides of this change note; the card merged without conflict.
