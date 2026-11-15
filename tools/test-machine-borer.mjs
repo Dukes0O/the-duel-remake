@@ -268,18 +268,34 @@ const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
 const expectedMuck = Math.PI * 3 ** 2 * 40 * 1.25;
 assert.ok(Math.abs(pileVolume() / expectedMuck - 1) < 0.02, 'The pile contains the bulked bore volume.');
+assert.ok(muckCut.spoilBank.far > 6, 'The bank extends as the cut grows.');
+for (const cell of muckCut.spoilBank.cells) {
+  assert.ok(muckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001, 'The bank stays at most five metres high.');
+  assert.ok(cell.x >= 12 && cell.z === 0, 'The bank stays beside the mouth and away from the track.');
+}
+const bentMuckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
+  reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
+const bentMuck = stepBorer(createBorerState(), {thrust:1,steer:1}, bentMuckGround, 'topsoil', 80).state;
+const bentVolume = bentMuckGround.toSave().chunks.reduce((sum, chunk) =>
+  sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
+assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) < 0.02,
+  'A bent cut keeps its bulked volume in the bank.');
+assert.ok(bentMuck.spoilBank.cells.every(cell => !bentMuckGround.refusal({...cell, radius:0.49})),
+  'The bank skips protected road ground.');
+assert.ok(bentMuck.spoilBank.cells.every(cell => bentMuckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001),
+  'A bent cut keeps the bank below five metres.');
 const beforeReverse = pileVolume();
 stepBorer(muckCut, {thrust:-1}, muckGround, 'topsoil', 5);
 assert.equal(pileVolume(), beforeReverse, 'Returning through the tunnel creates no muck.');
-const blockedPile = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
-  reservedShapes:[{x:10,z:0,radius:1,sentence:'This place is protected.'}]});
+const blockedPileBase = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
+const blockedPile = {...blockedPileBase, refusal:shape => shape.x >= 11 ? 'This place is protected.' : null};
 const pileStop = stepBorer(createBorerState(), {thrust:1}, blockedPile, 'topsoil', 2);
 assert.equal(pileStop.state.distanceM, 0);
 assert.equal(pileStop.state.message, 'This place is protected.');
-assert.equal(blockedPile.chunkCount, 0, 'A protected pile cannot lose the cut material.');
+assert.equal(blockedPileBase.chunkCount, 0, 'A protected pile cannot lose the cut material.');
 assert.equal(borerMuckPile([]), null);
-assert.deepEqual(borerMuckPile(forty.segments), {x:10,z:0,radius:0.75});
-assert.deepEqual(borerMuckPile([{start:{x:2,z:3},end:{x:7,z:3}}]), {x:2,z:-7,radius:0.75});
+assert.deepEqual(borerMuckPile(forty.segments), {x:12,z:0,radius:0.75});
+assert.deepEqual(borerMuckPile([{start:{x:2,z:3},end:{x:7,z:3}}]), {x:2,z:-9,radius:0.75});
 assert.throws(() => borerMuckPile([{start:{x:0,z:0},end:{x:0,z:0}}]), RangeError);
 assert.deepEqual(initial.segments, [], 'Cutting does not alter the prior state.');
 assert.equal(forty.segments.length, 1, 'A straight cut stays one segment.');

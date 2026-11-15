@@ -28,7 +28,7 @@ export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabe
     lever:0, stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
 }
 
-/** The conveyor discharges ten metres to the right of the first mouth. */
+/** The conveyor starts its bank twelve metres to the right of the first mouth. */
 export function borerMuckPile(segments) {
   if (!Array.isArray(segments)) throw new TypeError('The borer needs a list of tunnel segments.');
   if (!segments.length) return null;
@@ -39,7 +39,50 @@ export function borerMuckPile(segments) {
   const length = Math.hypot(dx, dz);
   if (length < 1e-9) throw new RangeError('The tunnel mouth needs a direction.');
   // A radius of 0.75 m covers a sample on the one-metre ground grid.
-  return {x:start.x + 10 * dz / length, z:start.z - 10 * dx / length, radius:0.75};
+  return {x:start.x + 12 * dz / length, z:start.z - 12 * dx / length, radius:0.75};
+}
+
+
+// Plan deposits before cutting so protected ground can never swallow material.
+// One-metre ground samples are filled individually and capped against their
+// height before the bank reached them. Removed material makes room again.
+function planSpoil(ground, segments, bank, amount) {
+  const {start, end} = segments[0];
+  const dx = end.x - start.x, dz = end.z - start.z, length = Math.hypot(dx, dz);
+  const rightX = dz / length, rightZ = -dx / length;
+  const cells = bank.cells, allocations = [];
+  let remaining = amount, lastReason = null;
+  while (remaining > 1e-9) {
+    const nearEnd = cells.filter(cell => cell.along >= bank.far - 6 - 1e-9);
+    let best = null;
+    for (const cell of nearEnd) {
+      const height = ground.heightAt(cell.x, cell.z) - cell.base + (cell.planned || 0);
+      if (height < 5 - 1e-8 && (!best || height < best.height)) best = {cell, height};
+    }
+    if (!best) {
+      let added = false;
+      for (let tries = 0; tries < 128; tries++) {
+        const along = bank.far + 1.5;
+        bank.far = along;
+        const x = Math.round(start.x + rightX * (12 + along));
+        const z = Math.round(start.z + rightZ * (12 + along));
+        if (cells.some(cell => cell.x === x && cell.z === z)) continue;
+        const shape = {x, z, radius:0.49};
+        const reason = ground.refusal(shape);
+        if (reason) { lastReason = reason; continue; }
+        const cell = {x, z, along, base:ground.heightAt(x, z)};
+        cells.push(cell); added = true; break;
+      }
+      if (!added) return {reason:lastReason || BORER_OBSTRUCTION};
+      continue;
+    }
+    const volume = Math.min(remaining, 5 - best.height);
+    best.cell.planned = (best.cell.planned || 0) + volume;
+    allocations.push({cell:best.cell, volume});
+    remaining -= volume;
+  }
+  for (const cell of cells) delete cell.planned;
+  return {allocations};
 }
 
 // Follow the recorded centre line, including bends and slopes, without
@@ -101,7 +144,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
   const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
   const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
   let next = {...state, segments:(state.segments || []).map(segment => ({...segment,
-    start:{...segment.start}, end:{...segment.end}}))}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
+    start:{...segment.start}, end:{...segment.end}})), spoilBank:state.spoilBank ?
+    {far:state.spoilBank.far, cells:state.spoilBank.cells.map(cell => ({...cell}))} : {far:-1.5, cells:[]}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
     carry -= step;
@@ -190,10 +234,11 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
     const end = {x, y:next.y + Math.sin(slope) * distance + radius * 0.55, z};
-    const pile = borerMuckPile(next.segments.length ? next.segments : [{start, end}]);
-    const pileObstruction = ground.refusal(pile);
-    if (pileObstruction) {
-      const message = refusalMessage(pileObstruction);
+    const bank = {far:next.spoilBank.far, cells:next.spoilBank.cells.map(cell => ({...cell}))};
+    const deposit = planSpoil(ground, next.segments.length ? next.segments : [{start, end}],
+      bank, Math.PI * radius ** 2 * distance);
+    if (deposit.reason) {
+      const message = refusalMessage(deposit.reason);
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
       next.message = message;
       continue;
@@ -206,8 +251,13 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       next.message = message;
       continue;
     }
-    for (const [kind, volume] of Object.entries(cut.volumes))
-      if (volume > 0) ground.fill(pile, kind, volume * 1.25);
+    for (const {cell, volume} of deposit.allocations) {
+      for (const [kind, cutVolume] of Object.entries(cut.volumes)) {
+        if (cutVolume > 0) ground.fill({x:cell.x, z:cell.z, radius:0.49}, kind,
+          volume * cutVolume / cut.volume * 1.25);
+      }
+    }
+    next.spoilBank = bank;
     next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;

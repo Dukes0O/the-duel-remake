@@ -14,7 +14,7 @@ The Dig now supplies the current tunnel to the cutter. It ignores the recent pas
 
 Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore, lever and camera checks, and a camera transition around a bend. Scenario expressions parsed in Node. The browser scenario was not run.
 
-The Dig now checks the land's own solid footprints, bridge and pipe decks, and public road net before Mabel cuts. Existing reserved-place sentences take precedence, including Tin Town's sentence. `node tools/test-machine-borer.mjs` passed with building, deck and road refusals through the Dig. The spoil bank, incremental indexing and remaining smaller Part B fixes still need work.
+The Dig now checks the land's own solid footprints, bridge and pipe decks, and public road net before Mabel cuts. Existing reserved-place sentences take precedence, including Tin Town's sentence. `node tools/test-machine-borer.mjs` passed with building, deck and road refusals through the Dig. The conveyor now spreads the bulked cut into a spoil bank starting 12 m to the right of the mouth. It fills the lowest available sample within 6 m of the bank end, caps it at 5 m above its starting ground and skips protected ground, including roads. The focused borer test passed for straight and bent cuts, volume, height, road avoidance and a blocked discharge. Incremental indexing and the remaining smaller Part B fixes still need work.
 
 ## Not built by this card
 
@@ -46,7 +46,7 @@ Part A updates the old Shift-thrust assertion to expect full lever input, and ch
 
 ## Codex decided
 
-The head uses full thrust in topsoil, 80% in clay, 55% in gravel and one third in rock. W and S move the thrust lever; the lever stays in place when released. Reverse walking speed is 1.4 m/s. The pile is ten metres to the right of the first mouth; its ground cells retain the latest deposited material, as the existing ground grid does.
+The head uses full thrust in topsoil, 80% in clay, 55% in gravel and one third in rock. W and S move the thrust lever; the lever stays in place when released. Reverse walking speed is 1.4 m/s. The spoil bank uses one-metre ground samples, spaced about 1.5 m along the line away from the track. Its ground cells retain the latest deposited material, as the existing ground grid does.
 
 The route planner needs a bridge from the Dig, centre-line links and changes to earthwork orders. The apprentice system has no Dig connection or line-cut teaching rule. Separate restored passages need a multiple-chain tunnel representation. These are deferred as Claude directed.
 
