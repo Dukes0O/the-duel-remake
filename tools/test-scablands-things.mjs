@@ -7,7 +7,7 @@ import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracks
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData, thingLandmarkLines} from '../src/world/scablands-things.js';
@@ -537,6 +537,28 @@ test('the new solid index leaves the named driving corridors clear', async () =>
         assert.ok(gap >= width - .5, `${solid.id} intrudes into a driving corridor`);
       }
     }
+  }
+});
+
+test('job destinations have 30 metres clear of new solid footprints', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  const grid = thingSolidGrid(course.realismThings.fixed, course.realismThings.loneBoulders);
+  const points = [];
+  for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+    for (const key of ['origin', 'destination', 'place', 'zone', 'carPlace', 'escapePlace', 'home', 'returnToCar'])
+      if (step[key]?.position) points.push(step[key].position);
+    for (const key of ['places', 'finds', 'people', 'safePoints', 'path', 'returnPath'])
+      for (const place of step[key] ?? []) if (place?.position) points.push(place.position);
+  }
+  for (const path of Object.values(GAS_RUN_PATHS)) for (const place of path) points.push(place.position);
+  assert.ok(points.length > 0);
+  for (const point of points) for (const solid of grid.near(point.x, point.z, point.x, point.z, 34)) {
+    const dx = point.x - solid.x, dz = point.z - solid.z, c = Math.cos(solid.heading), s = Math.sin(solid.heading);
+    const gap = Math.hypot(Math.max(0, Math.abs(dx * c - dz * s) - solid.halfX),
+      Math.max(0, Math.abs(dx * s + dz * c) - solid.halfZ));
+    assert.ok(gap >= 30, `${solid.id} is too close to a job destination`);
   }
 });
 

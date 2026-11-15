@@ -209,6 +209,20 @@ export const nearRoadForLitter = (x, z) => roadWithin(x, z, LITTER_REACH);
 // Protect the named ways and the routes used by the moving trucks. Index the
 // segments so that placing small things does not scan every route per cell.
 const routeCells = new Map();
+// Job markers are destinations, not decoration: leave room to reach each one.
+const jobPlaces = [];
+for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+  for (const key of ['origin', 'destination', 'place', 'zone', 'carPlace', 'escapePlace', 'home', 'returnToCar']) {
+    const point = step[key]?.position;
+    if (point) jobPlaces.push(point);
+  }
+  for (const key of ['places', 'finds', 'people', 'safePoints', 'path', 'returnPath']) {
+    for (const place of step[key] ?? []) if (place?.position) jobPlaces.push(place.position);
+  }
+}
+for (const path of Object.values(GAS_RUN_PATHS)) for (const place of path) {
+  if (place.position) jobPlaces.push(place.position);
+}
 const routeLines = HOT_DELIVERY_WAYS.map(way => ({points: routeFor(way.legs, {
   start: LAND.yard, destination: LAND.at('tin-town'),
 }), width: 7}));
@@ -258,6 +272,7 @@ export function thingFootprintClear(x, z, radius, jobStarts) {
     return false;
   })) return false;
   if (jobStarts.some(p => Math.hypot(x - p.x, z - p.z) < 6 + radius)) return false;
+  if (jobPlaces.some(p => Math.hypot(x - p.x, z - p.z) < 30 + radius)) return false;
   for (const solid of SOLID_GRID.near(x, z, x, z, radius)) {
     const dx = x - solid.x, dz = z - solid.z;
     const c = Math.cos(solid.heading), s = Math.sin(solid.heading);
