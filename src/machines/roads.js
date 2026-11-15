@@ -60,6 +60,15 @@ export function roadCondition(cell) {
   return cell.roughness > 0.2 ? 'rough' : 'good';
 }
 
+/** Apply one machine action to a town's separate road-work layer. */
+export function workTownRoadCell(town, action) {
+  if (!town || typeof town !== 'object' || Array.isArray(town))
+    throw new TypeError('Road work needs a town.');
+  const result = workRoadCell(town.machineRoadWork ?? createRoadWork(), action);
+  town.machineRoadWork = result.work;
+  return result.events;
+}
+
 /** Shift gives the paver a steady working pace with a keyboard. */
 export function roadYardControls(kind, controls, keys = {}) {
   const slow = kind === 'paver' && (keys.ShiftLeft || keys.ShiftRight);
