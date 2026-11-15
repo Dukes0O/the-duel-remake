@@ -1952,3 +1952,13 @@ Moved the first mesa off the plates' way. Seeded mesas now keep their nominal to
 Check: `node tools/test-scablands-hills.mjs` passed 40 of 40. An intermediate placement failed the tunnel-mouth, ramp and tunnel-roof checks and was replaced. The browser scenario, route drives, replay checks and world signatures were not run. Changed assertions: none; the clearance assertion is new. Codex decided: measure 200 m from the nominal mesa top radius for this check. This does not yet prove clearance of the whole face and ramp. Removed: the former mesa position across the way.
 
 Still needed: prove the complete mesa footprints clear the plates' way and provide three separate 150 m furnace-cover stretches. A coarse placement search did not find three stretches under the current road and river clearance checks; it is not an exhaustive proof. Check job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.
+
+### Hill country: measure mesa cover
+
+The hills suite now checks that the furnace-cover mesa itself adds at least 150 m of hidden ground on the plates' way. At 5 m intervals it adds about 590 m; without it the existing long hidden stretch falls from about 750 m to 160 m. The current land still has only two hidden stretches, about 750 m and 65 m, within the furnace's range, not the required three of 150 m. A coarse 20 m grid search of 120 m radius mesa centres, using the current road, river, place and plates clearance checks, found candidate shadows only at the same end of the way. This is not an exhaustive search and does not prove the design impossible. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 41 of 41. Race fingerprints, world signatures, route drives, build and browser pictures were not run in this step.
+
+Changed assertions: none. The mesa contribution check is new and does not weaken the existing cover assertion. Codex decided: compare the current surface to the same terrain without that mesa, sampling at 5 m. Removed: none.
+
+Still needed: provide and prove three separate 150 m mesa-cover stretches, prove job corridors, drive the routes and jobs, merge integration and run final checks. Claude must run and judge the picture scenario.

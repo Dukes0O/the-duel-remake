@@ -37,6 +37,20 @@ test('the plates way has a long stretch hidden from the furnace within range', (
   assert.ok(open, 'the way also has open ground within range');
 });
 
+test('the furnace-cover mesa adds cover on the plates way', () => {
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const samples = sampleLine(points, 5).filter(point => Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= 1400);
+  const mesa = HILLS.filter(hill => hill.kind === 'mesa')[2];
+  const withoutMesa = HILLS.filter(hill => hill !== mesa);
+  const uncoveredHeight = (x, z) => scablandsSurfaceHeightAt(x, z)
+    - scablandsTerrainHeightAt(x, z) + scablandsTerrainHeightAt(x, z, withoutMesa);
+  const hiddenCount = heightAt => samples.filter(point => !sees(FURNACE_SKYLINE, point,
+    {heightAt, eye: 5, range: 1400, step: 5})).length;
+  const addedMetres = (hiddenCount(scablandsSurfaceHeightAt) - hiddenCount(uncoveredHeight)) * 5;
+  assert.ok(addedMetres >= 150, `the mesa adds about ${addedMetres} m of cover`);
+});
+
 test('the Ridge lookout sees only within range and over clear ground', () => {
   const ridge = LAND.at('ridge'), car = {x: ridge.x + 100, z: ridge.z};
   const flat = () => 0;
