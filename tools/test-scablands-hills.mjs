@@ -376,6 +376,26 @@ test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
   }
 });
 
+test('every Breaks hill stays in its country and clear of the three places', () => {
+  const yard = LAND.yard, burn = LAND.place('everburn'), mall = LAND.place('dead-mall');
+  const triangle = [yard, burn, mall];
+  for (const hill of HILLS.filter(item => item.kind === 'breaks')) {
+    const sides = triangle.map((a, i) => {
+      const b = triangle[(i + 1) % triangle.length];
+      return (b.x - a.x) * (hill.z - a.z) - (b.z - a.z) * (hill.x - a.x);
+    });
+    const inside = sides.every(side => side >= 0) || sides.every(side => side <= 0);
+    const nearEdge = triangle.some((a, i) =>
+      distanceToRoad(hill.x, hill.z, [a, triangle[(i + 1) % triangle.length]]) <= 600);
+    assert.ok(inside || nearEdge, 'the centre is in or within 600 m of the country');
+    assert.ok(Math.hypot(hill.x - yard.x, hill.z - yard.z) - hill.radius >= 500, 'the yard has 500 m clear');
+    for (const place of [burn, mall]) {
+      assert.ok(Math.hypot(hill.x - place.x, hill.z - place.z) - hill.radius - place.flatRadius >= 350,
+        `${place.id} has 350 m clear beyond its flat ground`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))

@@ -1850,3 +1850,12 @@ Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. An initial positio
 Changed assertion, for Claude to review: the mesa size, river and road clearance checks now cover all six mesas instead of only the four added mesas. The requirements are unchanged and the check is stricter, not loosened. Codex decided: move the first mesa within the plates to keep its complete ramp footprint clear of the river. Removed: the former mesa position overlapping the river corridor.
 
 Still needed: prove the three separate furnace-cover stretches and all protected corridors; build and prove the Burn Road and Mall Road passes (a preliminary terrain sample found no hills rising on both sides within 150 m); verify the Mall to Everburn pass; drive the routes and jobs; complete the remaining hill-country requirements and final checks. Claude must run and judge the picture scenario, including the moved mesa.
+### Hill country: Breaks placement check
+
+The hills suite now checks every Breaks hill against the widened yard, Everburn and Dead Mall triangle and the clear ground around those places. All 16 satisfy those placement limits. This does not establish the required road passes; the current placement keeps every hill clear of every road, so those passes still need to be built. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 34 of 34. Race fingerprints and world signatures were not rerun. The picture scenario was not run.
+
+Changed assertions: none. The placement check is new. Codex decided: no new design choice. The check measures clearance from the full outer radius. Removed: none.
+
+Still needed: build the three Breaks road passes, prove mesa cover and the protected corridors, drive the routes and jobs, complete the remaining hill-country requirements and run final checks. Claude must run and judge the picture scenario.
