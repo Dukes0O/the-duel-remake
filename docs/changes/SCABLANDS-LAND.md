@@ -2119,3 +2119,11 @@ Changed assertions: none in this check; the complete list for review is in the f
 The near scarp mesh now replaces its normal buffer whenever its changing face geometry is rebuilt. Three.js had reused the previous buffer even when the new geometry had a different vertex count, leaving invalid normals on later updates. The hills suite passed 50 of 50. It now checks every face position and normal beside each scarp, all face indices, and that no coarse triangle remains in a face cell. The picture needs Claude's visual judgment.
 
 Changed assertions: the existing near-scarp test checks every vertex and triangle instead of only one normal and the coarse index count. No assertion was loosened. Codex decided: no new design decision. Removed: the stale normal buffer on each rebuild. No event or sound cue was added. Race fingerprints were not checked in this step.
+
+### Hill country: remaining corridor proof started
+
+The hills suite now checks the first 900 m of the shared Hot Soup final leg and Mall return, and the final 5 km of the third Survey Flags leg. It confirms the first two routes share their final leg. Samples are 10 m apart with five lines across the 60 m corridor. All 52 hills checks passed.
+
+Not right yet: the rest of those legs is not clear. A 100 m diagnostic found raised ground on the shared leg from about 1,000 to 5,700 m from the safe road, and on the third flag leg from about 200 to 3,100 m from its start. Several Breaks hills, a mesa and a Mall Road pass shoulder are nearby. Their positions need to be resolved while keeping the passes and spacing intact. These samples are not a complete clearance proof.
+
+Changed assertions: none; the two checks are new. Codex decided: check the portions already clear while identifying the remaining obstructions. Removed: none. No event or sound was added. Race fingerprints and the browser were not checked in this step.

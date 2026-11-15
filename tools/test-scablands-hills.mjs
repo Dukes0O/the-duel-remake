@@ -57,6 +57,32 @@ test('the first three Hot Soup legs have clear hill corridors', () => {
   }
 });
 
+test('the first 900 m of the shared Soup and Mall return leg is clear', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const a = step.safePoints.at(-1).position, destination = step.destination.position;
+  const dx = destination.x - a.x, dz = destination.z - a.z, length = Math.hypot(dx, dz);
+  const b = {x: a.x + dx * 900 / length, z: a.z + dz * 900 / length};
+  const mall = EVERBURN_JOBS.find(job => job.id === 'everburn-key-under-mall').steps[0].returnPath;
+  assert.deepEqual(mall.slice(1).map(place => place.position), [a, destination]);
+  for (const point of sampleLine([a, b], 10)) for (const offset of [-60, -30, 0, 30, 60]) {
+    const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+      `the shared return corridor has a hill at ${Math.round(x)}, ${Math.round(z)}`);
+  }
+});
+
+test('the final 5 km of the third Survey Flags leg is clear', () => {
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const start = flags[2].position, b = flags[3].position;
+  const dx = b.x - start.x, dz = b.z - start.z, length = Math.hypot(dx, dz);
+  const a = {x: b.x - dx * 5000 / length, z: b.z - dz * 5000 / length};
+  for (const point of sampleLine([a, b], 10)) for (const offset of [-60, -30, 0, 30, 60]) {
+    const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+      `the third flag corridor has a hill at ${Math.round(x)}, ${Math.round(z)}`);
+  }
+});
+
 test('Slow Ride has a clear hill corridor', () => {
   const points = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride').steps[0].path.map(point => point.position);
   for (let i = 1; i < points.length; i++) {
