@@ -1513,3 +1513,13 @@ For Claude to run: the memory-only Performance picture scenario, its visual judg
 Changed assertions, for Claude to review: the far scene gained exact checks of 40,623 corners and 76,852 triangles, replacing the earlier 32,361 corners and 64,000 triangles because of detailed scarp faces; the near scene remains 3,721 corners as on integration. The river route now requires arrival at Tin Town instead of returning only to the Boneyard Road. The raider search test starts sight at 0 seconds instead of 1 because visible raiders now move. The old regions assertion requiring the Ridge at its old height remains unchanged and fails against the designed 45 m summit; it needs Claude's review. No assertion was weakened in this run. Codex decided: move the mesa 500 m east, within the same scab plate, to clear the furnace road. Removed: the mesa's overlap with that road. The seen cue is `arena.tell`, the lost cue is `gate.latch`, and the furnace warning cue is `arena.toll-gate`.
 
 Still needed: fix moving-ground allocation and speed, resolve the Ridge assertion, investigate the Old Smoke Medium failure, repeat the final checks on the resulting code, and obtain Claude's picture verdict.
+
+### Round 4, slice 2c: moving scarp ground
+
+The moving ground keeps its index array and reuses the fine scarp heights already in view. It discards samples as they leave the window and clears them when the land is refreshed. The old ground cells still give way to the scarp faces. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-size.mjs` passed 9 of 9, including its unchanged 200-move time limit and array identity check. `node tools/test-scablands-hills.mjs` passed 20 of 20. `node tools/test-scablands-scene.mjs` passed. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario and its visual judgment. Changed assertions: none. Codex decided: no new design choice. Removed: repeated calculation of retained fine scarp heights and replacement of the ground index array.
+
+Still needed: resolve the Ridge height assertion and Old Smoke Medium failure, then repeat the final checks after integration. The card is not ready to merge.

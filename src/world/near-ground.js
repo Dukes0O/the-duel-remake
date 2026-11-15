@@ -45,7 +45,9 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   const positionAttribute = new THREE.BufferAttribute(positions, 3), normalAttribute = new THREE.BufferAttribute(normals, 3);
   positionAttribute.setUsage(THREE.DynamicDrawUsage); normalAttribute.setUsage(THREE.DynamicDrawUsage);
   geometry.setAttribute('position', positionAttribute); geometry.setAttribute('normal', normalAttribute);
-  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+  const indexAttribute = new THREE.BufferAttribute(indices, 1);
+  indexAttribute.setUsage(THREE.DynamicDrawUsage);
+  geometry.setIndex(indexAttribute);
   // The window always lies under the player, and its heights change as it moves: it is never culled.
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name; mesh.receiveShadow = true; mesh.frustumCulled = false;
@@ -64,15 +66,22 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   faceMesh.name = 'Scablands near scarp faces'; faceMesh.receiveShadow = true; faceMesh.frustumCulled = false;
   mesh.add(faceMesh);
 
+  const faceHeights = new Map();
   function updateFaces() {
-    const facePositions = [], faceIndices = [], baseIndices = [];
+    const facePositions = [], faceIndices = [];
+    let baseCount = 0;
     const divisions = 8;
     for (let iz = 0; iz < cellsZ; iz++) for (let ix = 0; ix < cellsX; ix++) {
       const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
       const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
       if (!faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z <= f.z1 && z + cellZ >= f.z0)) {
-        baseIndices.push(a, c, b, b, c, d); continue;
+        indices[baseCount++] = a; indices[baseCount++] = c; indices[baseCount++] = b;
+        indices[baseCount++] = b; indices[baseCount++] = c; indices[baseCount++] = d;
+        continue;
       }
+      const key = `${centreI + ix - cellsX / 2},${centreJ + iz - cellsZ / 2}`;
+      let samples = faceHeights.get(key);
+      if (!samples) { samples = new Float64Array((divisions - 1) ** 2); faceHeights.set(key, samples); }
       const start = facePositions.length / 3;
       for (let j = 0; j <= divisions; j++) for (let i = 0; i <= divisions; i++) {
         const u = i / divisions, v = j / divisions, px = x + u * cellX, pz = z + v * cellZ;
@@ -81,7 +90,12 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
         else if (j === divisions) y = heights[c] * (1 - u) + heights[d] * u;
         else if (i === 0) y = heights[a] * (1 - v) + heights[c] * v;
         else if (i === divisions) y = heights[b] * (1 - v) + heights[d] * v;
-        else y = heightAt(px, pz) + lift;
+        else {
+          const sample = (j - 1) * (divisions - 1) + i - 1;
+          y = samples[sample];
+          if (!y) { y = heightAt(px, pz) + lift; samples[sample] = y || Number.MIN_VALUE; }
+          else if (y === Number.MIN_VALUE) y = 0;
+        }
         facePositions.push(px - centreI * cellX, y, pz - centreJ * cellZ);
       }
       for (let j = 0; j < divisions; j++) for (let i = 0; i < divisions; i++) {
@@ -89,7 +103,11 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
         faceIndices.push(q, q + divisions + 1, q + 1, q + 1, q + divisions + 1, q + divisions + 2);
       }
     }
-    geometry.setIndex(baseIndices);
+    for (const key of faceHeights.keys()) {
+      const [i, j] = key.split(',').map(Number);
+      if (i < centreI - cellsX / 2 || i >= centreI + cellsX / 2 || j < centreJ - cellsZ / 2 || j >= centreJ + cellsZ / 2) faceHeights.delete(key);
+    }
+    indexAttribute.count = baseCount; indexAttribute.needsUpdate = true;
     faceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(facePositions, 3));
     faceGeometry.setIndex(faceIndices); faceGeometry.computeVertexNormals();
   }
@@ -143,6 +161,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     refresh() {
       if (Number.isNaN(centreI)) return;
       const i = centreI, j = centreJ;
+      faceHeights.clear();
       centreI = NaN; centreJ = NaN; place(i, j);
     },
     // The drawn height at (x, z), read from this window's own corners, for a point inside it; null outside.
