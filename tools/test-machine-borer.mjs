@@ -7,7 +7,7 @@ import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, di
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {poseBorerSlope} from '../src/machines/dig-game.js';
+import {followBorerSlope, poseBorerSlope} from '../src/machines/dig-game.js';
 import * as THREE from 'three';
 
 const modelView = {body:new THREE.Group()};
@@ -19,6 +19,17 @@ assert.ok(new THREE.Vector3(0, 0, 1).applyEuler(modelView.body.rotation).y < 0,
   'The model points downward when the bore descends.');
 poseBorerSlope(modelView, {slope:0});
 assert.equal(modelView.body.rotation.x, 0, 'The model returns to level.');
+
+for (const slope of [-Math.PI / 30, 0, Math.PI / 30]) {
+  const camera = new THREE.PerspectiveCamera();
+  camera.position.set(0, 4, -8);
+  const target = {x:0, y:1.6, z:-3};
+  followBorerSlope(camera, target, {slope});
+  assert.ok(Math.abs(camera.position.y - (-8 * Math.tan(slope) + 4)) < 1e-9,
+    'The chase camera stays above the sloping floor behind Mabel.');
+  assert.ok(Math.abs(target.y - (-3 * Math.tan(slope) + 1.6)) < 1e-9,
+    'The chase view follows the sloping bore.');
+}
 
 const soundVoices = [];
 const soundContext = {state:'running', currentTime:0,

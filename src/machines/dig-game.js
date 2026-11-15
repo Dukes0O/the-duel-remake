@@ -31,6 +31,15 @@ const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',d
 export function poseBorerSlope(view, state) {
   view.body.rotation.x = state.slope ? -state.slope : 0;
 }
+
+/** Keep the chase view at the same height above the sloping tunnel floor. */
+export function followBorerSlope(camera, target, state, distance = 8, ahead = -3) {
+  const rise = Math.tan(state.slope || 0);
+  camera.position.y -= distance * rise;
+  target.y += ahead * rise;
+  camera.lookAt(target.x, target.y, target.z);
+  camera.updateMatrixWorld();
+}
 const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font-size:13px}.the-dig-head[hidden]{display:none}.the-dig-head svg{width:76px;height:44px}.the-dig-head path{fill:none;stroke:#d0aa69;stroke-width:5}.the-dig-head line{stroke:#fff1d8;stroke-width:3}`;
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
@@ -322,7 +331,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const isBorer=sim.activeMachine==='borer';
       const y=isBorer?active.y:sim.ground.heightAt(active.x,active.z),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
-      updateMachineCamera(camera,definition,{...active,y},mode,{distance:isBorer?(active.started?8:20):wide?17:13,height:isBorer?(active.started?4:10):wide?9:6,ahead:isBorer?-3:wide?4:1,target});
+      const cameraView=updateMachineCamera(camera,definition,{...active,y},mode,{distance:isBorer?(active.started?8:20):wide?17:13,height:isBorer?(active.started?4:10):wide?9:6,ahead:isBorer?-3:wide?4:1,target});
+      if(isBorer && active.started && mode==='chase')followBorerSlope(camera,cameraView.target,active);
       sun.position.set(active.x-30,y+55,active.z-20);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
     }
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}

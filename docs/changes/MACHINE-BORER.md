@@ -42,6 +42,8 @@ In work mode, holding Shift with W gives gentle thrust. This lets keyboard playe
 
 Mabel's model now pitches with the bore's slope, around her cutting head. Claude still needs to check the view in the browser.
 
+The chase camera now follows the slope of the bore behind Mabel, keeping the same height above its floor on uphill and downhill cuts. The camera and mouth still need a browser check, including the trial's first-second disappearance.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -79,6 +81,7 @@ Mabel's model now pitches with the bore's slope, around her cutting head. Claude
 - `node tools/test-machine-borer.mjs`: passed with drive mode stopped inside a bore and no additional cutting.
 - `node tools/test-machine-borer.mjs` and `node --check src/machines/dig-game.js`: passed with gentle keyboard thrust advancing through hard rock without a stall, and ordinary drive speed unchanged.
 - `node tools/test-machine-borer.mjs`: passed with the model pointing up, down and level with the bore.
+- `node tools/test-machine-borer.mjs`: passed with the chase camera following level, uphill and downhill bores.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
