@@ -297,6 +297,18 @@ export function _staticContacts(car, player, journeyColliders = null) {
     // airborne vehicles need extra terrain samples and vertical clearance.
     start.y = end.y = undefined;
   }
+  // The experimental tubes only affect cars that start inside one. Keep the
+  // ordinary contact path identical when no tubes are installed on the course.
+  if (this.course.groundTunnels && Number.isFinite(start.y) && Number.isFinite(end.y)) {
+    const constrained = this.course.groundTunnels.constrainMotion(start, end, this._vehicleSpec(car).halfWidth);
+    if (constrained.hit) {
+      end = constrained.position;
+      const road = this._roadPosition(end, car.s);
+      if (Number.isFinite(road.s) && Number.isFinite(road.lateral)) {
+        car.s = road.s; car.lateral = road.lateral;
+      }
+    }
+  }
   const travelHeading = this.course.at(car.s).heading + (car.headingError || 0) + (car.dir < 0 ? Math.PI : 0);
   const heading = travelHeading + (car.slipAngle || 0);
   const obstacles = this._obstacles(oldS, car.s);
