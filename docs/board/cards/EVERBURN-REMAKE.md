@@ -343,6 +343,27 @@ run each (2a to 10 in the lane's task). And the yard is Claude's drawing, since 
   with Cinder and her brazier at the gate's inner side, clear of the roadway.
 - **Other jobs** keep the bare yard until each is remade. That is on purpose, not forgotten: every one of them is hidden.
 
+## Claude's first drive of the remade job, part built (15 November 2026, small hours)
+
+Lane `everburn-job1` at 7f92b7456 (the start, the braziers, the barricades and riders, the furnace's watch, the end and the
+screen are built; the proof drives, the camera in the air, the cover mesas and the picture check are not). In a visible window
+with real keys, memory-only saves. Codex builds it in steps of one run each, a commit a run.
+
+- **The start is a start.** The car stands inside the yard's wall facing the gate with the yard's name over it; a fire burns
+  by the gate; the screen says "Drive to Cinder and stop." and shows no clock, no ember gauge, and one weapon, the lent
+  flamethrower. Stopped by her, Cinder says "This is the last fire we have. Old Smoke says all fire belongs to his furnace."
+  and "Take the East Road. The Ash Men hold the Girder Bridge. Burn their barricades." The pot is then on the car, glowing,
+  the gauge appears at 100 and the screen says "Carry Cinder's ember pot to Tin Town." That answers Kyle's "no start point",
+  "nothing shows that it carries anything" and "no lead-up".
+- **The Halfway Camp is found by its smoke** from 330 m, the barricade stands across the road and stops the car, the caption
+  says to get close and burn it, and a rider's car arrives and rams: the ember went from 76 to 59 in one hit.
+- **Three stand-ins, to be replaced before anyone sees it.** Cinder is a peg, though her own model is in the game's files
+  (`public/assets/models/wasteland/crew/cinder.glb`): Codex places it. The smoke was five dark balls and the barricade a brown
+  slab: Claude has drawn both (`src/world/smoke-column.js`, `src/world/ash-men-look.js`, seen on a test page; to be judged in
+  the game once Codex has put them in).
+- **Not driven yet:** burning a barricade, the bridge, the plates under the furnace's eye, the pan, the Pipe, the bed, Tin
+  Town's gate and the forge. Those wait for the finished job.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
