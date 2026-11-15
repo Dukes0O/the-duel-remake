@@ -1370,3 +1370,19 @@ For Claude to run: `test-full-check` on the laptop and the memory-only Performan
 Changed assertions, for Claude to review: the scene check's near-ground vertex count changed from 3,721 to 14,641 because the window has twice as many cells in each direction. The exact check remains. Codex decided: no new design choice. Removed: the former 60 by 60 near-ground grid was replaced by a finer grid.
 
 Still needed: face-specific nearby scarp cells and performance checks, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: nearby scarp faces
+
+The nearby ground is back to its 60 by 60 cell window. Cells along the four scarps are replaced by a separate eight-way mesh that uses the same ground material and samples the land height. Its edges meet the original grid. The existing river mesh provides the detailed banks and Steps. No game event or sound cue was added. Survey Flags' fifth flag remains in place.
+
+The nearby window has 7,200 triangles before face detail. At the middle of each scarp, the replacement mesh adds a net 15,120 triangles at the west scarp, 22,680 at the east scarp, and 18,144 at each of the camp and Ridge scarps. A visible face adds one draw call. These are mesh counts; on-screen counts and appearance still need the picture scenario.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 11 tests. The scene suite, race fingerprints and world signatures were not run in this round. The remaining route checks, integration and final checks are still needed.
+
+For Claude to run: the memory-only Performance picture scenario once written, with draw calls and triangles, and `test-full-check` on the laptop. Judge the faces and their joins.
+
+Changed assertions, for Claude to review: the scene check's nearby ground count returns from 14,641 to 3,721 vertices, as Claude directed. The temporary hills test for the finer whole-window lattice was replaced with a check for the restored grid and separate scarp meshes. Codex decided: no new design choice.
+
+Removed: the temporary 120 by 120 nearby grid and the triangles beneath the scarp face meshes.
+
+Still needed: item 2, sight and search; item 3, route checks; item 4, the picture scenario; and item 5, integration and final checks.

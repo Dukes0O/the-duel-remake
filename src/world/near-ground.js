@@ -1,15 +1,16 @@
 // The detailed ground of the Scablands (SCABLANDS-LAND round 4, slice 1). The land is 14 km by 10 km, so the fine ground is
-// not drawn everywhere: one window of 120 by 120 cells (1,400 m by 1,000 m, cells 11.7 m by 8.3 m) follows the player.
+// not drawn everywhere: one window of 60 by 60 cells (1,400 m by 1,000 m) follows the player.
 // Its corners always lie on one fixed lattice of the whole land, and it moves
 // only in whole cells, so a given corner has the same height whichever way the window is standing and nothing swims.
 //
 // Moving the window by a cell keeps the heights of the corners it still holds (they are copied across) and works out the new
-// strip only, about 120 to 240 heights. Nothing is allocated after
-// the window is built. `refresh` works out every corner again (about 14,600 heights), for when the land's own height changes.
+// strip only, about 60 to 120 heights. The face mesh is rebuilt when
+// the window moves. `refresh` works out every corner again when the land changes.
 import * as THREE from 'three';
+import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
 
 export const NEAR_GROUND = Object.freeze({
-  cellX: 700 / 60, cellZ: 500 / 60, cellsX: 120, cellsZ: 120,
+  cellX: 1400 / 60, cellZ: 1000 / 60, cellsX: 60, cellsZ: 60,
   // The drawn ground rides this far above the land's own height, so that nothing laid on the land sinks into it.
   lift: .025,
 });
@@ -49,6 +50,50 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name; mesh.receiveShadow = true; mesh.frustumCulled = false;
 
+  // Replace only cells touching a scarp with a separate finer mesh. Its borders follow
+  // the original cell edges, so the two meshes meet without cracks or overlap.
+  const faces = preparedScarps(SCARPS).map(s => {
+    const points = [];
+    for (const along of [-SCARP.taper, s.length + SCARP.taper]) for (const across of [0, s.width])
+      points.push({x: s.a.x + s.tx * along - s.tz * across, z: s.a.z + s.tz * along + s.tx * across});
+    return {x0: Math.min(...points.map(p => p.x)), x1: Math.max(...points.map(p => p.x)),
+      z0: Math.min(...points.map(p => p.z)), z1: Math.max(...points.map(p => p.z))};
+  });
+  const faceGeometry = new THREE.BufferGeometry();
+  const faceMesh = new THREE.Mesh(faceGeometry, material);
+  faceMesh.name = 'Scablands near scarp faces'; faceMesh.receiveShadow = true; faceMesh.frustumCulled = false;
+  mesh.add(faceMesh);
+
+  function updateFaces() {
+    const facePositions = [], faceIndices = [], baseIndices = [];
+    const divisions = 8;
+    for (let iz = 0; iz < cellsZ; iz++) for (let ix = 0; ix < cellsX; ix++) {
+      const a = iz * across + ix, b = a + 1, c = a + across, d = c + 1;
+      const x = (centreI + ix - cellsX / 2) * cellX, z = (centreJ + iz - cellsZ / 2) * cellZ;
+      if (!faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z <= f.z1 && z + cellZ >= f.z0)) {
+        baseIndices.push(a, c, b, b, c, d); continue;
+      }
+      const start = facePositions.length / 3;
+      for (let j = 0; j <= divisions; j++) for (let i = 0; i <= divisions; i++) {
+        const u = i / divisions, v = j / divisions, px = x + u * cellX, pz = z + v * cellZ;
+        let y;
+        if (j === 0) y = heights[a] * (1 - u) + heights[b] * u;
+        else if (j === divisions) y = heights[c] * (1 - u) + heights[d] * u;
+        else if (i === 0) y = heights[a] * (1 - v) + heights[c] * v;
+        else if (i === divisions) y = heights[b] * (1 - v) + heights[d] * v;
+        else y = heightAt(px, pz) + lift;
+        facePositions.push(px - centreI * cellX, y, pz - centreJ * cellZ);
+      }
+      for (let j = 0; j < divisions; j++) for (let i = 0; i < divisions; i++) {
+        const q = start + j * (divisions + 1) + i;
+        faceIndices.push(q, q + divisions + 1, q + 1, q + 1, q + divisions + 1, q + divisions + 2);
+      }
+    }
+    geometry.setIndex(baseIndices);
+    faceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(facePositions, 3));
+    faceGeometry.setIndex(faceIndices); faceGeometry.computeVertexNormals();
+  }
+
   // The lattice corner (in whole cells) at the window's middle. Not yet placed.
   let centreI = NaN, centreJ = NaN;
   const cornerHeight = (i, j) => heightAt(i * cellX, j * cellZ) + lift;
@@ -80,10 +125,11 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
     centreI = i; centreJ = j;
     mesh.position.set(i * cellX, 0, j * cellZ);
     shade();
+    updateFaces();
   }
 
   return {
-    mesh, geometry,
+    mesh, geometry, faceMesh,
     // The window's middle, in metres, once it has been placed.
     get centreX() { return centreI * cellX; },
     get centreZ() { return centreJ * cellZ; },
@@ -108,6 +154,6 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :
         heights[at + across + 1] + (heights[at + across] - heights[at + across + 1]) * (1 - u) + (heights[at + 1] - heights[at + across + 1]) * (1 - v);
     },
-    dispose() { geometry.dispose(); },
+    dispose() { geometry.dispose(); faceGeometry.dispose(); },
   };
 }

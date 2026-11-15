@@ -79,7 +79,7 @@ assert.ok(far,'a coarse horizon ground is present');
 assert.equal(far.geometry.attributes.position.count,40623,'the horizon has finer samples at the scarps');
 assert.equal(far.geometry.index.count/3,76852,'the horizon includes the finer scarp triangles');
 assert.equal(far.geometry.attributes.normal.count,far.geometry.attributes.position.count,'the horizon has a normal at every corner');
-assert.equal(nearWindow.geometry.attributes.position.count,121*121,'the window is 120 by 120 cells, 1,400 m by 1,000 m');
+assert.equal(nearWindow.geometry.attributes.position.count,61*61,'the window is 60 by 60 cells, 1,400 m by 1,000 m');
 assert.ok(nearWindow.geometry.attributes.position.count<far.geometry.attributes.position.count,'the coarse ground has more corners than the window: it covers ten times the land at coarser cells');
 far.geometry.computeBoundingBox();
 assert.deepEqual([far.geometry.boundingBox.min.x,far.geometry.boundingBox.max.x,far.geometry.boundingBox.min.z,far.geometry.boundingBox.max.z],
