@@ -31,8 +31,8 @@ function horizontalProjection(position, segment) {
   const dx = segment.end.x - segment.start.x;
   const dz = segment.end.z - segment.start.z;
   const lengthSquared = dx * dx + dz * dz;
-  const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1,
-    ((position.x - segment.start.x) * dx + (position.z - segment.start.z) * dz) / lengthSquared));
+  const t = lengthSquared === 0 ? 0 :
+    ((position.x - segment.start.x) * dx + (position.z - segment.start.z) * dz) / lengthSquared;
   return {x: segment.start.x + dx * t, y: segment.start.y + (segment.end.y - segment.start.y) * t,
     z: segment.start.z + dz * t};
 }
@@ -48,6 +48,11 @@ export function createGroundTunnels(segments = []) {
     let nearest = null;
     for (const tube of tubes) {
       const center = horizontalProjection(position, tube);
+      // A tube's support ends at its mouths, rather than extending forever
+      // along the approach on either side.
+      const dxAxis = tube.end.x - tube.start.x, dzAxis = tube.end.z - tube.start.z;
+      const along = (position.x - tube.start.x) * dxAxis + (position.z - tube.start.z) * dzAxis;
+      if (along < 0 || along > dxAxis * dxAxis + dzAxis * dzAxis) continue;
       const dx = position.x - center.x, dz = position.z - center.z;
       const radial = Math.hypot(dx, dz);
       const floor = center.y - tube.radius;

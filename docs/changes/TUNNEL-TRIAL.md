@@ -8,6 +8,8 @@ The tube wall calculation now runs in car contacts when a tunnel is installed an
 
 The support query now tolerates a rise of up to half a metre between samples, and an underground car's support skips surface obstacles and mountain support. A focused test carries the previous floor height along a sloping tube in both directions and checks that surface obstacles still apply above it. The level tube now has a driven-car test, but the half-metre slope allowance still needs testing at real driving speeds. The driving code also samples support for the player's default actor and needs a full journey check.
 
+The support query now ends at each mouth. Previously it could return the tunnel floor indefinitely beyond either end. The focused test checks that both approaches return the surface height; the controlled driving test still passes in both directions. This does not establish that the real site's floor meets the surface at the mouths.
+
 A grid scan around the rise nearest the Ridge, using 25 m position steps and 16 directions, found a maximum midpoint rise of about 1.03 m above the straight line between points 100 m apart. This is a sample, not a proof about every possible line. It suggests a car-sized tube with rock overhead needs approach cuts or different terrain. That choice has not been made.
 
 `course.groundAt` is used by driving and collision, rivals, people on foot, combat, camera, scenery, course construction and effects. Only car support was changed. Every other caller remains unreviewed for underground use, including people and other vehicles. Surface drawing and scenery should normally keep the surface height. The source inventory is `rg -n '\.groundAt\(' src` and `rg -n 'scablands(Surface|Natural|Terrain|Plain)?HeightAt\(' src`; these include unrelated methods with the same name. No race or released course was intentionally changed; replay and world signature guards were not completed, so that is not verified. No fingerprint was recorded.
@@ -38,4 +40,4 @@ For the isolated driving check, the ground rises gently above a level tube on a 
 
 ## Removed
 
-The previous first-match selection at overlapping tube joints was replaced by the nearest eligible segment. The ordinary ground shader is unchanged when no tunnel is supplied. Nothing else was removed.
+The previous first-match selection at overlapping tube joints was replaced by the nearest eligible segment. Tunnel floor support no longer extends beyond the mouths. The ordinary ground shader is unchanged when no tunnel is supplied. Nothing else was removed.

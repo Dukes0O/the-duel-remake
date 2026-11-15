@@ -20,6 +20,9 @@ assert.equal(course.groundAt(0, 0).y, p.y);
 assert.equal(course.groundAt(0, 0, p.y + 2).y, p.y);
 assert.equal(course.groundAt(0, 0, p.y - 3).y, p.y - 7);
 assert.equal(tunnel.length, 100);
+// Outside either mouth, the surface supports the car again.
+assert.equal(tunnel.groundAt({x: p.x - 51, y: p.y - 3, z: p.z}, p.y - 3, p.y), p.y);
+assert.equal(tunnel.groundAt({x: p.x + 51, y: p.y - 3, z: p.z}, p.y - 3, p.y), p.y);
 // A height hint must not slide a support sample along a sloping centre line.
 const slope = createGroundTunnels([{start: {x: 0, y: 0, z: 0},
   end: {x: 100, y: 20, z: 0}, radius: 4}]);
