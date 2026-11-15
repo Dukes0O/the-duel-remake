@@ -2235,3 +2235,19 @@ band seen from a crest in round 11; and wide gullies are drawn down every slope.
 Breaks. Honest result: the grey band is gone, but from a kilometre a hill of the Breaks still reads as a smooth rise the colour
 of the plain; the gullies do not show at that distance. That needs the far ground's own shape or stronger light on slopes, not
 more paint, and stays under "Short of right" in round 11's review. `test-scablands-ground` and `test-scablands-scene` pass.
+
+### Dead trees along the river
+
+The realism switch places seeded dead trees and snags on the river banks, clears their footprints, draws them on the ground and adds solid trunks. Seed 1989 gives 118 candidates and 115 after clearance without job starts. Two picture views are ready for Claude. Trees do not appear on either map. No new event or sound cue was added.
+
+Checks on this lane after integration was already up to date: things 42 of 42, solid 25 of 25, scene passed, hills 55 of 55, build passed. Replay fingerprints: 297 checks across 33 cases; combat replay fingerprints: 12 checks across four encounters. Sixteen scenario page expressions parsed with Node. Browser pictures were not run. The lane tier, test-everburn-easy and gas-road suites were not run, as directed.
+
+**Not right yet:** A car passing two metres from a trunk can falsely hit it when its heading differs from the tree heading. With seed 1989, tree `tree:0:-1:0`, a car moving north from five metres south to five metres north, two metres east of its centre, slowed from 10 mph to 4.6975 mph in the contact check. The shared collision sweep rotates the car envelope into the trunk's seeded heading; a circular trunk's contact area should not change with that heading. The passing aligned-heading check does not cover this fault. The collision file is outside this card's owned files. Claude must re-slice the card to allow a correction and its tests. The all-tree ground-contact check and final browser judgment also remain.
+
+**For Claude to run:** the two tree views in `scablands-things` and judge their appearance and ground contact. Run the lane tier if required at merge.
+
+**Changed assertions, for Claude to review:** none. New checks cover the named-way clearance and aligned trunk contacts.
+
+**Codex decided:** none in this round.
+
+**Removed:** nothing.

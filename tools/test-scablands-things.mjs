@@ -4,7 +4,7 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
 import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, deadTreeCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
-import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
+import {HOT_DELIVERY_WAYS, routeFor, nearestOnLine} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, riverDepthAt, stepsWayFor} from '../src/world/scablands-regions.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
@@ -24,11 +24,13 @@ test('dead tree candidates repeat and grow on the bank tops', () => {
   assert.deepEqual(trees, deadTreeCandidates(1989));
   assert.ok(trees.length >= 80 && trees.length <= 160, `${trees.length} trees`);
   assert.ok(trees.some(tree => tree.kind === 'snag'));
+  const ways = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
   for (const tree of trees) {
     const river = RIVER_LAND.nearest(tree.x, tree.z);
     assert.ok(river && river.distance >= 84 && river.distance <= 108);
     assert.ok(RIVER_LAND.crossings.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= 120));
     assert.ok(distanceToNet(tree.x, tree.z) >= 60);
+    assert.ok(ways.every(points => nearestOnLine(points, tree.x, tree.z).distance >= 60));
     assert.ok(SCABLANDS_PLACES.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= p.flatRadius + 150));
     const heights = [[0, 0], [1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]].map(([x, z]) => scablandsSurfaceHeightAt(tree.x + x, tree.z + z));
     assert.ok(Math.max(...heights) - Math.min(...heights) <= 1);
@@ -107,6 +109,32 @@ test('a course with the trial off builds no placement indexes', async () => {
   const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: false});
   assert.equal(course.realismThings, undefined);
   assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
+});
+
+test('a car aligned with a trunk meets it but clears it two metres to the side', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {_staticContacts} = await import('../src/sim-contacts.js');
+  const {createSolidGrid} = await import('../src/world/scablands-solids.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  for (const kind of ['dead-tree', 'snag']) {
+    const trunk = course.solidGrid.solids.find(solid => solid.kind === kind);
+    assert.ok(trunk);
+    course.solidGrid = createSolidGrid([trunk]);
+    for (const offset of [0, 2]) {
+      const c = Math.cos(trunk.heading), sn = Math.sin(trunk.heading);
+      course.worldAt = s => ({x: trunk.x + c * offset + sn * s, z: trunk.z - sn * offset + c * s});
+      course.at = () => ({heading: trunk.heading});
+      const car = {prevS: -5, s: 5, prevLateral: 0, lateral: 0, speedMph: 10};
+      const duel = {course, state: {opponents: []}, car: {}, _obstacles: () => [], _vehicleSpec: () => ({}),
+        roadsideKnockAwayEnabled: () => false, destructionEnabled: () => false,
+        _roadPosition: p => ({s: p.z - trunk.z, lateral: 0}), _surface: () => ({mainRoad: false}), emit() {}};
+      _staticContacts.call(duel, car, false);
+      if (offset === 0) assert.ok(car.speedMph < 10, `${kind} slows the car`);
+      else assert.equal(car.speedMph, 10, `${kind} leaves the passing car alone`);
+    }
+    course.solidGrid = thingSolidGrid(course.realismThings.fixed, course.realismThings.loneBoulders);
+  }
 });
 
 test('fixed trees pass footprint clearance and leave room at job starts', () => {
