@@ -60,7 +60,9 @@ export function workRoadCell(work, action) {
         for (const other of moved ? neighbours : []) {
           const addition = (moved-packed) / neighbours.length;
           cells[key(other.x,other.z)] = {...other.cell, height:other.cell.height+addition,
-            spread:other.cell.spread+addition};
+            spread:other.cell.spread+addition,
+            compaction:other.cell.compaction * other.cell.spread / (other.cell.spread+addition),
+            surface:0, roughness:0};
         }
       }
     }

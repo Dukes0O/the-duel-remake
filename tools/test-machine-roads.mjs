@@ -185,6 +185,15 @@ for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
 bumpGround = drivePass('paver', bumpGround);
 assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
 // Height plus carried and packed material stays constant across each action.
+let coveredRoad = createRoadWork();
+coveredRoad.cells['0:0'] = {height:1,spread:1,compaction:1,surface:0,roughness:0};
+coveredRoad.cells['1:0'] = {height:0,spread:1,compaction:1,surface:1,roughness:0};
+coveredRoad = workRoadCell(coveredRoad, {kind:'roller',x:0,z:0}).work;
+assert.equal(roadCondition(roadCell(coveredRoad,1,0)), 'unfinished', 'Loose material covers the paved neighbour.');
+for (let pass=0; pass<4; pass++) coveredRoad = workRoadCell(coveredRoad, {kind:'roller',x:0,z:0}).work;
+for (let pass=0; pass<3; pass++) coveredRoad = workRoadCell(coveredRoad, {kind:'roller',x:1,z:0}).work;
+coveredRoad = workRoadCell(coveredRoad, {kind:'paver',x:1,z:0,speedMps:0.5,edgeOffsetM:0}).work;
+assert.equal(roadCondition(roadCell(coveredRoad,1,0)), 'good', 'Rolling and paving repair the covered road.');
 let material = createRoadWork();
 material.cells['0:0']={height:1,spread:1,compaction:0,surface:0,roughness:0};
 const totalMaterial = work => Object.values(work.cells).reduce((sum,cell)=>sum+cell.height,0)
