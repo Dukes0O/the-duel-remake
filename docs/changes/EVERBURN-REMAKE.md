@@ -418,3 +418,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked this round.
 - For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: map dangers and captions, the six drives, camera, cover and scenario.
+
+## Larger land, dangers on the map (15 November 2026)
+
+- Hot Delivery's map lists barricades and the furnace after the job's map knowledge records them. Unknown dangers stay off the list. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test uses the job's real barricade and furnace facts and the map's knowledge and markup. `git diff --check`: passed.
+- Changed assertions: none. Codex decided: none. Race fingerprints were not checked in this round.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: other dangers, map captions, the six drives, camera, cover and scenario.

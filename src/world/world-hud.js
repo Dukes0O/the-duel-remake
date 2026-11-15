@@ -238,7 +238,10 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
       const detail = way === east ? '<ul><li>The Ash Men hold the Girder Bridge.</li></ul>' : ` <em>${wayKm(way.length)}</em>`;
       return `<li class="world-hud-way" style="--way:${wayColour(index)}"><b>${String.fromCharCode(65 + index)}</b><div><strong>${escapeText(way.name)}</strong>${detail}</div></li>`;
     }).join('');
-    return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>`;
+    const dangers = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}.`);
+    if (knowledge.sights.size) dangers.push('The furnace watches the land.');
+    const learnt = dangers.length ? `<ul class="world-hud-learnt">${dangers.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '';
+    return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>${learnt}`;
   }
   const heading = `<h3>WAYS TO ${escapeText((targetName ?? 'THE MARKED PLACE').toUpperCase())}</h3>`;
   const items = result.ways.map((way, index) => {

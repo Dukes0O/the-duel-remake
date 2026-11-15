@@ -41,6 +41,23 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   for (const way of result.ways.slice(1)) assert.ok(!markup.includes(way.name));
   assert.doesNotMatch(markup, /barricade|furnace|Pipe|salt pan/i);
 }
+// The map lists dangers only after the job's knowledge has recorded them.
+{
+  const worldJob = {definition, job:createJob(definition), actors:[]};
+  const result = worldMapWays({worldJob, car:LAND.yard, target:LAND.at('tin-town')});
+  const facts = jobFacts(worldJob), knowledge = createKnowledge();
+  const barricade = facts.barricades[0], furnace = facts.furnaces.find(item => !item.hidden);
+  assert.ok(barricade && furnace);
+  let markup = waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true});
+  assert.doesNotMatch(markup, /A barricade of|furnace watches/i);
+  learn(knowledge, {car:barricade, barricades:[barricade]});
+  markup = waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true});
+  assert.match(markup, /A barricade of the Ash Men\./);
+  assert.doesNotMatch(markup, /furnace watches/i);
+  learn(knowledge, {car:furnace, furnaces:[furnace]});
+  markup = waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true});
+  assert.match(markup, /The furnace watches the land\./);
+}
 // Drive distinct parts of an actual way, without seeing a crossing.
 {
   const worldJob = {definition, job:createJob(definition), actors:[]};
