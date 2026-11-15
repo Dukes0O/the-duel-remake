@@ -14,14 +14,14 @@ export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
   if (start.x === end.x && start.z === end.z) throw new RangeError('Trial mouths must be apart.');
   const startHeight = heightAt(start.x, start.z), endHeight = heightAt(end.x, end.z);
   if (!finite(startHeight) || !finite(endHeight)) throw new TypeError('Surface heights must be finite.');
-  const segment = {start: {x: start.x, y: startHeight + radius, z: start.z},
-    end: {x: end.x, y: endHeight + radius, z: end.z}, radius};
+  const segment = {start: {x: start.x, y: startHeight + radius * 0.55, z: start.z},
+    end: {x: end.x, y: endHeight + radius * 0.55, z: end.z}, radius};
   let minimumCover = Infinity, maximumCover = -Infinity;
   for (let i = 0; i <= samples; i++) {
     const t = i / samples, x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
     const terrain = heightAt(x, z);
     if (!finite(terrain)) throw new TypeError('Surface heights must be finite.');
-    const roof = startHeight + (endHeight - startHeight) * t + radius * 2;
+    const roof = startHeight + (endHeight - startHeight) * t + radius * 1.55;
     minimumCover = Math.min(minimumCover, terrain - roof);
     maximumCover = Math.max(maximumCover, terrain - roof);
   }
@@ -106,7 +106,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     if (!heightAt) return true;
     const surface = heightAt(end.x, end.z);
     if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
-    return Math.abs(surface - (end.y - tube.radius)) <= 0.3;
+    return Math.abs(surface - (end.y - tube.radius * 0.55)) <= 0.3;
   }
   const startOpen = !tubes.length || openEnd(tubes[0], tubes[0].start);
   const lastTube = tubes[tubes.length - 1];
@@ -145,7 +145,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
       if (along < 0 || along > dxAxis * dxAxis + dzAxis * dzAxis) continue;
       const dx = position.x - center.x, dz = position.z - center.z;
       const radial = Math.hypot(dx, dz);
-      const floor = center.y - tube.radius;
+      const floor = center.y - tube.radius * 0.55;
       const ceiling = center.y + tube.radius;
       if (radial < tube.radius && actorHeight <= ceiling && actorHeight >= floor - floorTolerance &&
           (!found || radial < nearestResult.radial)) {
@@ -196,7 +196,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
         const x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
         const y = start.y + (end.y - start.y) * t;
         const sideways = Math.abs((x - face.x) * -dz + (z - face.z) * dx) / length;
-        if (sideways > tube.radius + clearance || y < face.y - tube.radius || y > face.y + tube.radius) continue;
+        if (sideways > tube.radius + clearance || y < face.y - tube.radius * 0.55 || y > face.y + tube.radius) continue;
         return {position: {x, y, z}, hit: true};
       }
       return {position: {...end}, hit: false};
@@ -224,7 +224,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
         const squared = cx * cx + cz * cz;
         const t = ((end.x - candidate.start.x) * cx + (end.z - candidate.start.z) * cz) / squared;
         const centerY = candidate.start.y + (candidate.end.y - candidate.start.y) * t;
-        if (t >= 0 && t <= 1 && end.y >= centerY - candidate.radius - 0.5 && end.y <= centerY + candidate.radius) {
+        if (t >= 0 && t <= 1 && end.y >= centerY - candidate.radius * 0.55 - 0.5 && end.y <= centerY + candidate.radius) {
           next = candidate;
           break;
         }

@@ -276,11 +276,11 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.ok(Math.abs(Math.hypot(end.x - start.x, end.z - start.z) - 100) < 1e-9);
   assert.throws(() => trialTubeBetween(start, start, radius, scablandsHeightAt), RangeError);
   for (const direction of [1, -1]) {
-    let height = (direction > 0 ? start.y : end.y) - radius;
+    let height = (direction > 0 ? start.y : end.y) - radius * .55;
     for (let i = 0; i <= 100; i++) {
       const t = direction > 0 ? i / 100 : 1 - i / 100;
       const x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
-      const floor = start.y + (end.y - start.y) * t - radius;
+      const floor = start.y + (end.y - start.y) * t - radius * .55;
       const surface = scablandsHeightAt(x, z);
       height = tube.groundAt({x, y: height, z}, height, surface);
       assert.ok(Math.abs(height - floor) < 1e-7, `floor at ${t}: ${height} rather than ${floor}`);
@@ -320,7 +320,7 @@ for (const id of ['girder-bridge', 'the-pipe']) {
       furthest = Math.max(furthest, direction > 0 ? along : 100 - along);
       if (along > 2 && along < 98 && side < radius - 1) {
         floorSamples++;
-        const floor = start.y - radius + (end.y - start.y) * along / 100;
+        const floor = start.y - radius * .55 + (end.y - start.y) * along / 100;
         assert.ok(Math.abs((d.state.groundHeight ?? d.state._jumpY) - floor) < 1, `scarp floor ${car} direction ${direction}, at ${along.toFixed(1)}: ${d.state.groundHeight ?? d.state._jumpY} vs ${floor}`);
       }
       if (furthest > 103) break;
@@ -402,7 +402,7 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   const {start, end} = trial.segment;
   const at = s => ({x: start.x + (end.x - start.x) * s / 100, z: start.z + (end.z - start.z) * s / 100});
   const actor = {prevS: 13, s: 14, prevLateral: 0, lateral: 0, speedMph: 20,
-    groundHeight: start.y - 4 + (end.y - start.y) * .13};
+    groundHeight: start.y - 2.2 + (end.y - start.y) * .13};
   const duel = {state: actor, course: {def: {scablands: true}, groundTunnels: tubes, worldAt: at},
     _roadPosition: point => ({s: point.x, lateral: 0}), emit: () => { throw new Error('The tube floor is not a cliff.'); }};
   scablandsGround(duel, actor, 1 / 120);
@@ -423,7 +423,7 @@ const tunnel = createGroundTunnels([{start: {x: p.x - 50, y: p.y - 3, z: p.z},
 course.groundTunnels = tunnel;
 assert.equal(course.groundAt(0, 0).y, p.y);
 assert.equal(course.groundAt(0, 0, p.y + 2).y, p.y);
-assert.equal(course.groundAt(0, 0, p.y - 3).y, p.y - 7);
+assert.equal(course.groundAt(0, 0, p.y - 3).y, p.y - 5.2);
 assert.equal(tunnel.length, 100);
 // Outside either mouth, the surface supports the car again.
 assert.equal(tunnel.groundAt({x: p.x - 51, y: p.y - 3, z: p.z}, p.y - 3, p.y), p.y);
@@ -432,15 +432,15 @@ assert.equal(tunnel.groundAt({x: p.x + 51, y: p.y - 3, z: p.z}, p.y - 3, p.y), p
 const slope = createGroundTunnels([{start: {x: 0, y: 0, z: 0},
   end: {x: 100, y: 20, z: 0}, radius: 4}]);
 for (const height of [8, 10, 12]) {
-  assert.equal(slope.groundAt({x: 50, y: height, z: 0}, height, 30), 6);
+  assert.equal(slope.groundAt({x: 50, y: height, z: 0}, height, 30), 7.8);
 }
 assert.equal(slope.groundAt({x: 50, y: 30, z: 0}, 30, 30), 30);
 // Carry the last support height forward as the car climbs in either direction.
 for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
-  let height = start * 0.2 - 4;
+  let height = start * 0.2 - 2.2;
   for (let x = start; step > 0 ? x <= end : x >= end; x += step) {
     height = slope.groundAt({x, y: height, z: 0}, height, 30);
-    assert.ok(Math.abs(height - (x * 0.2 - 4)) < 1e-9, `floor stays under the car at ${x}`);
+    assert.ok(Math.abs(height - (x * 0.2 - 2.2)) < 1e-9, `floor stays under the car at ${x}`);
   }
 }
 assert.equal(slope.wallAt({x: 50, y: 10, z: 3}, 10).radial, 3);
@@ -456,13 +456,13 @@ for (const dx of [-5, 0, 5]) for (const side of [-1, 1]) {
 assert.ok(Math.abs(motion.position.z - wallLimit) < 1e-9);
 assert.equal(slope.constrainMotion({x: 99, y: 19, z: 0}, {x: 102, y: 19, z: 0}, 1).hit, false);
 assert.equal(slope.constrainMotion({x: 50, y: 30, z: 0}, {x: 51, y: 30, z: 5}, 1).hit, false);
-const undergroundCar = {groundHeight: 6};
+const undergroundCar = {groundHeight: 7.8};
 let obstacleChecks = 0;
 const supportDuel = {state: undergroundCar, car: {kind: 'rally'},
   course: {groundTunnels: slope, features: {}, groundAt: (s, lateral, height) =>
     ({x: s, z: lateral, y: slope.groundAt({x: s, y: height, z: lateral}, height, 30)})},
   _obstacles: () => { obstacleChecks++; return []; }};
-assert.equal(_supportAt.call(supportDuel, 50, 0).y, 6);
+assert.equal(_supportAt.call(supportDuel, 50, 0).y, 7.8);
 assert.equal(obstacleChecks, 0, 'surface obstacles do not lift an underground car');
 undergroundCar.groundHeight = 30;
 assert.equal(_supportAt.call(supportDuel, 50, 0).y, 30);
@@ -495,8 +495,8 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
       difficulty: 'casual', mode: 'timetrial'});
     d.state.status = 'racing';
     const at = (s, lateral = 0) => ({x: lateral, y: surface(s), z: s, heading: 0, curvature: 0});
-    const actualTubes = createGroundTunnels([{start: {x: 0, y: 4, z: 30},
-      end: {x: 0, y: 4, z: 130}, radius: 4}]);
+    const actualTubes = createGroundTunnels([{start: {x: 0, y: 2.2, z: 30},
+      end: {x: 0, y: 2.2, z: 130}, radius: 4}]);
     d.course = {def: {id: 'tunnel-test', practice: true, kind: 'arena', theme: 'desert'},
       groundTunnels: actualTubes, closed: false, length: 10000, raceLength: 20000,
       features: {obstacles: [], mountains: [], ramps: [], crushables: [], shortcuts: [], flocks: []},
@@ -540,7 +540,7 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
 
 // A face opens only when its floor meets the supplied surface.
 {
-  const segment = {start: {x: 0, y: 4, z: 0}, end: {x: 20, y: 4, z: 0}, radius: 4};
+  const segment = {start: {x: 0, y: 2.2, z: 0}, end: {x: 20, y: 2.2, z: 0}, radius: 4};
   const cutting = createGroundTunnels([segment], {heightAt: x => x === 0 ? 0 : 10});
   const closed = cutting.constrainMotion({x: 19, y: 0, z: 0}, {x: 22, y: 0, z: 0}, 1);
   assert.equal(closed.hit, true, 'the unfinished face stops a car');
@@ -561,8 +561,8 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
 // Find support on every part of a long chain, including negative grid cells.
 {
   const segments = Array.from({length: 100}, (_, i) => ({
-    start: {x: (i - 50) * 10, y: 4, z: -33},
-    end: {x: (i - 49) * 10, y: 4, z: -33}, radius: 4}));
+    start: {x: (i - 50) * 10, y: 2.2, z: -33},
+    end: {x: (i - 49) * 10, y: 2.2, z: -33}, radius: 4}));
   const chain = createGroundTunnels(segments);
   for (let x = -499; x < 500; x += 3)
     assert.equal(chain.groundAt({x, y: 0, z: -33}, 0, 20), 0, `chain support at ${x}`);
@@ -578,8 +578,8 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
 // A chain must hand support to the next segment as the car crosses a joint.
 {
   const joined = createGroundTunnels([
-    {start: {x: 0, y: 4, z: 0}, end: {x: 50, y: 4, z: 0}, radius: 4},
-    {start: {x: 50, y: 4, z: 0}, end: {x: 100, y: 14, z: 0}, radius: 4},
+    {start: {x: 0, y: 2.2, z: 0}, end: {x: 50, y: 2.2, z: 0}, radius: 4},
+    {start: {x: 50, y: 2.2, z: 0}, end: {x: 100, y: 12.2, z: 0}, radius: 4},
   ]);
   for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
     let height = Math.max(0, start - 50) * .2;
