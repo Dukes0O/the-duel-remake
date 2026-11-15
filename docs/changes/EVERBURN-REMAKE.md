@@ -193,3 +193,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: burning, turn-back, yard placement and the remaining steps.
+
+## Larger land, burning barricades (15 November 2026)
+
+- The lent flamethrower burns each named barricade. A burnt barricade disappears, stops blocking the car and cannot be hit again. Ordinary projectile hits do not burn it. The flame uses the existing `weapon.flame.start` and `weapon.flame.loop` cues; no new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test fires the real flamethrower at both barricades and checks the job state, solid grid and hit targets. It also checks that an ordinary hit does not burn one. `git diff --check`: passed.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the requested browser scenario and final checks, including the two long drivers, remain for the last round.
+- Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
+- Removed: burnt barricades are removed from the job's drawing, solid grid and hit targets. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the turn-back at Tin Town, yard placement and the remaining steps.

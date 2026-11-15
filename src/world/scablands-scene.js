@@ -804,7 +804,7 @@ export function createScablandsScene(course,options={}){
       const emberStep=stepNow?.ember?stepNow:null;
       braziers.group.visible=Boolean(emberStep);
       barricades.forEach((mesh,index)=>{
-        const barrier=emberStep?.barriers?.[index];mesh.visible=Boolean(barrier);
+        const barrier=emberStep?.barriers?.[index];mesh.visible=Boolean(barrier)&&!worldJob?.job?.stepState?.burntBarricades?.includes(barrier.id);
         if(barrier){const at=barrier.position;mesh.position.set(at.x,at.y+1,at.z);mesh.rotation.y=barrier.heading;}
       });
       cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);

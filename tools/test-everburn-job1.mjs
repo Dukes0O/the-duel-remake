@@ -10,7 +10,8 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
-import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
+import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
@@ -101,6 +102,38 @@ for (const [index, barrier] of step.barriers.entries()) {
   if (index === 1) {
     assert.equal(floors.length, 2);
     assert.equal(pushOutOfSolids(named.x, named.z, 1, barricadeGrid, floors[1]).hit, null);
+  }
+}
+// Fire the real car flamethrower at each named barricade and step the job.
+{
+  const world = createWorldJob(definition);
+  const state = {arena:{mode:'world-job', worldJob:world, participants:[]}, weaponLoadout:[],
+    s:0, lateral:0, opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium',
+    combat:{serial:0, flameBursts:[], flameBurns:{}}};
+  let car;
+  const duel = {state, seed:19, course:{def:{scablands:true}, solidGrid:createSolidGrid([]),
+    nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}),
+    worldAt:() => car, groundAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  state.worldJobThingsHit = [{id:step.barriers[0].id, kind:'barricade', burnable:true}];
+  car = {...step.barriers[0].position, heading:0};
+  stepWorldJob(duel, 0.01);
+  assert.ok(!world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'a projectile does not burn a barricade');
+  for (const barrier of step.barriers) {
+    const p = barrier.position;
+    car = {x:p.x, y:p.y, z:p.z - 6, heading:0};
+    state.headingError = 0;
+    stepWorldJob(duel, 0.01);
+    assert.equal(pushOutOfSolids(p.x, p.z, 1, world.solidGrid, p.y).hit?.id, barrier.id);
+    assert.ok(startFlamethrower(duel, state));
+    stepFlamethrowers(duel, 0.1);
+    assert.ok(state.worldJobThingsHit.some(hit => hit.id === barrier.id && hit.flame));
+    stepWorldJob(duel, 0.01);
+    assert.ok(world.job.stepState.burntBarricades.includes(barrier.id));
+    assert.equal(pushOutOfSolids(p.x, p.z, 1, world.solidGrid, p.y).hit, null);
+    assert.ok(!worldJobHitTargets(duel).some(target => target.id === barrier.id));
+    state.combat.flameBursts = [];
   }
 }
 

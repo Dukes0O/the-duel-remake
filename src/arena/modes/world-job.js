@@ -753,6 +753,10 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  if (next.events.some(event => event.type === 'burn') && currentStep?.ember) {
+    const burnt = next.stepState.burntBarricades ?? [];
+    worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));
+  }
   // The moment a step began its closing lines: the scene times the furnace's sighting after Job 3's catch from it.
   if (next.stepState.linesClosing && !Number.isFinite(worldJob.wonAtSec)) worldJob.wonAtSec = worldJob.clockSec;
   // FIELD-BATTLE-ASH: how the battle ended, fixed by the escort step the moment Big Bess arrived ('won' or 'arrived').
@@ -887,6 +891,7 @@ export function worldJobHitTargets(duel) {
     }
   }
   for (const barrier of step?.barriers ?? []) {
+    if (worldJob.job.stepState.burntBarricades?.includes(barrier.id)) continue;
     const at = barrier.position ?? barrier;
     targets.push({id: barrier.id, kind: 'barricade', position: at,
       radius: 2, burnable: true});
