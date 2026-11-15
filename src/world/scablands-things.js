@@ -1,12 +1,40 @@
 // Seeded candidates for the realism trial. This module is not connected to the scene yet.
 import {makeRng} from '../rng.js';
-import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from './scablands-road.js';
+import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
 import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionAt} from './scablands-regions.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {SOLID_GRID} from './scablands-solids.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// Index only the road segments that can affect roadside litter. The full road
+// distance search is meant for checks and is too expensive for every cell.
+const LITTER_REACH = ROAD_HALF_WIDTH + 28, ROAD_CELL = 256;
+const roadCells = new Map();
+const roadKey = (i, j) => `${i}:${j}`;
+for (const road of ROAD_NET.roads) for (let n = 0; n + 1 < road.points.length; n++) {
+  const a = road.points[n], b = road.points[n + 1];
+  const i0 = Math.floor((Math.min(a.x, b.x) - LITTER_REACH) / ROAD_CELL);
+  const i1 = Math.floor((Math.max(a.x, b.x) + LITTER_REACH) / ROAD_CELL);
+  const j0 = Math.floor((Math.min(a.z, b.z) - LITTER_REACH) / ROAD_CELL);
+  const j1 = Math.floor((Math.max(a.z, b.z) + LITTER_REACH) / ROAD_CELL);
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+    const key = roadKey(i, j);
+    if (!roadCells.has(key)) roadCells.set(key, []);
+    roadCells.get(key).push({a, b});
+  }
+}
+
+export function nearRoadForLitter(x, z) {
+  const segments = roadCells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? [];
+  for (const {a, b} of segments) {
+    const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
+    if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) < LITTER_REACH) return true;
+  }
+  return false;
+}
 
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.
 export const SMALL_DENSITY = Object.freeze({
@@ -46,7 +74,7 @@ export function smallThingsInCell(seed, i, j, jobStarts = []) {
     const weights = {...SMALL_DENSITY[ground]};
     if (ground === 'salt-pan' && Math.abs(polygonMargin(pan.points, x, z) + edgeWarp(x, z, pan.phase)) > 90) delete weights.salt;
     if (ground !== 'salt-pan' && riverDistanceAt(x, z) < 110) weights.stone = Math.max(weights.stone || 0, .42);
-    if (ground !== 'salt-pan' && ground !== 'wreck-fields' && distanceToNet(x, z) < ROAD_HALF_WIDTH + 28) {
+    if (ground !== 'salt-pan' && ground !== 'wreck-fields' && nearRoadForLitter(x, z)) {
       weights.bone = .02; weights.can = .025; weights.scrap = .03;
     }
     let sum = 0, kind = null;

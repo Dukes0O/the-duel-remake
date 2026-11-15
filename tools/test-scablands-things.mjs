@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LAND} from '../src/world/scablands-names.js';
-import {ROAD_NET} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL} from '../src/world/scablands-things.js';
+import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter} from '../src/world/scablands-things.js';
 
 const cell = point => [Math.floor(point.x / THINGS_CELL), Math.floor(point.z / THINGS_CELL)];
 test('small things are stable by seed and cell and avoid roads and job starts', () => {
@@ -28,4 +28,18 @@ test('ground preferences keep scrub off salt and put more stones on plates', () 
   assert.ok(SMALL_DENSITY['scab-plates'].stone > SMALL_DENSITY.flats.stone);
   assert.ok(SMALL_DENSITY['wreck-fields'].scrap > 0);
   assert.ok(SMALL_DENSITY.burn.stump > 0);
+});
+
+test('the local roadside search agrees with the complete road net', () => {
+  for (const road of ROAD_NET.roads) {
+    for (let i = 0; i + 1 < road.points.length; i += 3) {
+      const a = road.points[i], b = road.points[i + 1], dx = b.x - a.x, dz = b.z - a.z;
+      const length = Math.hypot(dx, dz) || 1;
+      for (const offset of [-65, -42.1, -41.9, 0, 41.9, 42.1, 65]) {
+        const x = (a.x + b.x) / 2 + dz / length * offset;
+        const z = (a.z + b.z) / 2 - dx / length * offset;
+        assert.equal(nearRoadForLitter(x, z), distanceToNet(x, z) < ROAD_HALF_WIDTH + 28, `${road.id} at ${offset} m`);
+      }
+    }
+  }
 });

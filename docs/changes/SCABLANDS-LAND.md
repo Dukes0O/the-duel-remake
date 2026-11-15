@@ -1213,3 +1213,11 @@ For Claude to run: the eventual `scablands-things` browser scenario, with memory
 Removed: nothing. The old land remains in use. The placing is not yet connected.
 
 Still to do: connect and draw the small things with distance fading and job-start clearance; finish the road lines, signs, pylons, boulders, solids, ruts, map, scenario and all acceptance checks.
+
+### Realism trial, step 3: local roadside search, in progress
+
+The small-thing rules now index nearby road segments before placing roadside litter. The index gives the same answer as the full road search at sampled points on both sides of every road, including both sides of the 42 m boundary. It avoids searching the entire road net for each candidate. The placing is still not connected to the game. No game event or sound cue was added.
+
+Check: `test-scablands-things` passed all 3 tests. Further card checks, replay fingerprints, lane tier, build and browser scenario remain for the completed card.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: the full road-net distance search from each small-thing candidate, replaced by the local index.
