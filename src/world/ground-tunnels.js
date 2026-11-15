@@ -99,6 +99,33 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   const lastTube = tubes[tubes.length - 1];
   const endOpen = !lastTube || openEnd(lastTube, lastTube.end);
 
+  // Only open mouths cut the ground. Walk inward until the crown has a
+  // metre of cover. The cut remains bounded to one capsule per mouth.
+  function mouthCapsule(reverse) {
+    const ordered = reverse ? [...tubes].reverse() : tubes;
+    const first = ordered[0];
+    const mouth = reverse ? first.end : first.start;
+    let inner = mouth;
+    for (const tube of ordered) {
+      const from = reverse ? tube.end : tube.start;
+      const to = reverse ? tube.start : tube.end;
+      const length = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z);
+      const steps = Math.max(1, Math.ceil(length));
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        inner = {x: from.x + (to.x - from.x) * t,
+          y: from.y + (to.y - from.y) * t, z: from.z + (to.z - from.z) * t};
+        if (heightAt(inner.x, inner.z) >= inner.y + tube.radius + 1)
+          return {start: {...mouth}, end: inner, radius: first.radius};
+      }
+    }
+    return {start: {...mouth}, end: inner, radius: first.radius};
+  }
+  const mouths = heightAt && tubes.length ? [
+    ...(startOpen ? [mouthCapsule(false)] : []),
+    ...(endOpen ? [mouthCapsule(true)] : []),
+  ] : [];
+
   // Each tube is entered in the cells touched by its plan-view bounds. A
   // query visits only its own cell, even when the bore has many segments.
   const cellSize = 32, grid = new Map(), noTubes = [];
@@ -272,6 +299,9 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
 
   return Object.freeze({
     get segments() { return tubes.map(tube => ({start: {...tube.start}, end: {...tube.end}, radius: tube.radius})); },
+    get mouths() { return mouths.map(mouth => ({start: {...mouth.start}, end: {...mouth.end}, radius: mouth.radius})); },
+    get startOpen() { return startOpen; },
+    get endOpen() { return endOpen; },
     tubeAt,
     groundAt,
     wallAt,

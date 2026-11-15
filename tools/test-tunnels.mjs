@@ -17,6 +17,20 @@ import {stepMover} from '../src/world/scablands-movers.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
 
+// An open mouth cuts only as far as the crown has a metre of cover.
+{
+  const segment = {start: {x: 0, y: 2.2, z: 0}, end: {x: 100, y: 2.2, z: 0}, radius: 4};
+  const surface = x => x < 10 || x > 90 ? 0 : 8;
+  const bore = createGroundTunnels([segment], {heightAt: surface});
+  assert.equal(bore.mouths.length, 2);
+  assert.equal(bore.mouths[0].end.x, 10);
+  assert.equal(bore.mouths[1].end.x, 90);
+  const cutting = createGroundTunnels([{...segment, end: {x: 50, y: 2.2, z: 0}}], {heightAt: surface});
+  assert.equal(cutting.startOpen, true);
+  assert.equal(cutting.endOpen, false);
+  assert.equal(cutting.mouths.length, 1);
+}
+
 // Away from the two decks, all three foot heights must take the exact old
 // surface arithmetic. The seed makes this sample repeatable.
 {

@@ -8,6 +8,20 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 
 ## Claude answers
 
+**How a tunnel is drawn (Claude, 15 November 2026).** The ground's skin is cut only at a mouth, never along the
+ tunnel. Inside, the camera is within the lining, which is a closed tube seen from inside, and the ground above is
+ only ever seen from above; so nothing else needs cutting, and a tunnel costs the same to draw however long it
+ grows. A mouth's cut is one capsule: from the mouth inward along the centre line as far as the place where the
+ ground stands 1 m above the crown (worked out when the tunnel is made), with the bore's radius. The ground shader
+ holds room for 8 such capsules as one array with a count, so its text never changes as tunnels are added and it is
+ never recompiled while boring. With no tunnel the shader's text is the old text, byte for byte. This is the method;
+ a real cut of the ground mesh is not needed and is not built.
+ The lining is one mesh for each tunnel, made from its segments, with a flat floor, and with texture coordinates in
+ metres along and around so that Claude can draw rock, rings and lamps on it afterwards. When the face moves on, only
+ the newest stretch is rebuilt. A closed face is drawn as a wall of rock.
+ The chase camera stays on the car's floor: inside the bore it is held under the crown and between the walls, and
+ under a deck it stays under the deck. Where a place has one floor the camera's arithmetic is untouched.
+
 **The rule of floors (Claude, 15 November 2026).**
 1. A place on the land has one floor or more: the open ground, and under it the river bed beneath a deck, or the floor
    of a tunnel. One function lists them for a place, highest first. Almost everywhere the list holds one floor.
