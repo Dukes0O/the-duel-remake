@@ -55,12 +55,13 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     return {x:state.x,y:state.y,z:state.z};
   };
   const mouth=segments[0]?.start, first=segments[0];
-  let position, target;
+  let position, target, inside=false;
   if(cameraIndex===1 && mouth) {
     const dx=first.end.x-mouth.x,dz=first.end.z-mouth.z,length=Math.hypot(dx,dz);
     position=new THREE.Vector3(mouth.x-22*dx/length,mouth.y-1.65+4,mouth.z-22*dz/length);
     target=new THREE.Vector3(mouth.x+dx/length*8,mouth.y,mouth.z+dz/length*8);
   } else if(state.started && state.travelM>=24) {
+    inside=true;
     const behind=pointAt(state.travelM-34), tail=pointAt(state.travelM-18);
     position=new THREE.Vector3(behind.x,behind.y+2.2,behind.z);
     target=new THREE.Vector3(tail.x,tail.y+2.2,tail.z);
@@ -71,8 +72,50 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     position=new THREE.Vector3(state.x-44*sin,state.y+11,state.z-44*cos);
     target=new THREE.Vector3(state.x+10*sin,state.y+2,state.z+10*cos);
   }
-  if(reset || !camera.userData.borerTarget) {camera.position.copy(position);camera.userData.borerTarget=target.clone();}
-  else {const blend=1-Math.exp(-dt*4); camera.position.lerp(position,blend);camera.userData.borerTarget.lerp(target,blend);}
+  const blend=1-Math.exp(-dt*4);
+  const route=camera.userData.borerRoute;
+  if(reset || !camera.userData.borerTarget || !mouth) {
+    camera.position.copy(position);camera.userData.borerTarget=target.clone();
+    camera.userData.borerRoute={inside, distance:Math.max(0,state.travelM-34)};
+  } else {
+    // Enter and leave along the centre line, via the mouth. Interpolating the
+    // world positions directly would cut through the rock on a bend.
+    const current=route || {inside:false,distance:0};
+    const mouthPosition=new THREE.Vector3(mouth.x,mouth.y+0.55,mouth.z);
+    const mouthDx=first.end.x-mouth.x, mouthDz=first.end.z-mouth.z;
+    const mouthLength=Math.hypot(mouthDx,mouthDz);
+    const outside=new THREE.Vector3(mouth.x-5*mouthDx/mouthLength,mouthPosition.y,mouth.z-5*mouthDz/mouthLength);
+    outside.y=Math.max(outside.y,ground.heightAt(outside.x,outside.z)+0.5);
+    if(current.inside && !inside) {
+      current.distance += (0-current.distance)*blend;
+      const p=pointAt(current.distance);
+      camera.position.set(p.x,p.y+2.2,p.z);
+      if(current.distance<0.05) {camera.position.copy(mouthPosition);current.inside=false;current.portal='leaving';}
+    } else if(inside && !current.inside) {
+      if(current.portal!=='entering') {
+        camera.position.lerp(outside,blend);
+        camera.position.y=Math.max(camera.position.y,ground.heightAt(camera.position.x,camera.position.z)+0.5);
+        if(camera.position.distanceTo(outside)<0.1) current.portal='entering';
+      } else {
+        camera.position.lerp(mouthPosition,blend);
+        if(camera.position.distanceTo(mouthPosition)<0.1) {current.inside=true;current.distance=0;current.portal=null;}
+      }
+    } else if(inside) {
+      current.distance += (Math.max(0,state.travelM-34)-current.distance)*blend;
+      const p=pointAt(current.distance);
+      camera.position.set(p.x,p.y+2.2,p.z);
+    } else {
+      if(current.portal==='leaving') {
+        camera.position.lerp(outside,blend);
+        if(camera.position.distanceTo(outside)<0.1) current.portal=null;
+      } else {
+        camera.position.lerp(position,blend);
+        camera.position.y=Math.max(camera.position.y,ground.heightAt(camera.position.x,camera.position.z)+0.5);
+      }
+    }
+    camera.userData.borerRoute=current;
+    camera.userData.borerTarget.lerp(target,blend);
+  }
   camera.lookAt(camera.userData.borerTarget);camera.updateMatrixWorld();
 }
 const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font-size:13px}.the-dig-head[hidden]{display:none}.the-dig-head svg{width:76px;height:44px}.the-dig-head path{fill:none;stroke:#d0aa69;stroke-width:5}.the-dig-head line{stroke:#fff1d8;stroke-width:3}.the-dig-head .good{stroke:#69c988;stroke-width:7}.the-dig-head meter{width:65px}`;

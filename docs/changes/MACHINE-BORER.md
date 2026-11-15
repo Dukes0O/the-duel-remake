@@ -2,13 +2,13 @@
 
 Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to the west scarp, cuts and lines a tunnel, makes a muck pile through the ground system, and reverses along her cut. The head, stall, steering, protected places and face rules are in the machine rules. The Dig has a dial, messages, camera, controls, plain machine model, face effects and conveyor. Claude's shared lining and portals draw the tunnel. Tunnels export to and restore from plain data for the current visit; no town store is read or written.
 
-## Part A in progress
+## Part A
 
 The keyboard now moves a persistent thrust lever; the head dial has a working band and a lever display. The borer has dedicated following and mouth cameras. Deep rock has deterministic 8 to 30 m seams seeded by the land and the mouth. The ground layer already samples materials by depth, but its one-metre variation is too short for these seams, so the borer uses alternating hard rock and softer gravel seams under more than 3 m of cover. The scenario now drives to the face by machine state, sets the lever, and checks centre pixels after drawing.
 
-The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. Part A still needs verification and correction of camera transitions that may cross rock, plus a hands-on camera and scenario check. Parts B and C remain.
+The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check. Parts B and C remain.
 
-Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore and lever and camera position checks. Scenario expressions parsed in Node. The browser scenario was not run.
+Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore, lever and camera checks, and a camera transition around a bend. Scenario expressions parsed in Node. The browser scenario was not run.
 
 ## Not built by this card
 

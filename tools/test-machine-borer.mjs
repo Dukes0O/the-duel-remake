@@ -176,6 +176,19 @@ updateBorerCamera(boreCamera, forty, 0, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z - 6)<1e-6, 'The bore view follows the centre line behind the tail.');
 updateBorerCamera(boreCamera, forty, 1, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z + 22)<1e-6, 'The mouth view stands outside the mouth.');
+const bentCameraState = {...forty, travelM:80, x:30, z:50, heading:Math.PI/2,
+  segments:[{start:{x:0,y:1.65,z:0},end:{x:0,y:1.65,z:50}},
+    {start:{x:0,y:1.65,z:50},end:{x:30,y:1.65,z:50}}]};
+updateBorerCamera(boreCamera, bentCameraState, 0, flat, 1, true);
+for (let i=0;i<120;i++) {
+  updateBorerCamera(boreCamera, bentCameraState, 1, flat, 1/60);
+  if (boreCamera.userData.borerRoute.inside)
+    assert.ok(Math.abs(boreCamera.position.x)<1e-6 || Math.abs(boreCamera.position.z-50)<1e-6,
+      'The camera follows the bend back to the mouth rather than crossing rock.');
+}
+assert.equal(boreCamera.userData.borerRoute.inside, false, 'The camera leaves through the mouth.');
+for (let i=0;i<120;i++) updateBorerCamera(boreCamera, bentCameraState, 0, flat, 1/60);
+assert.equal(boreCamera.userData.borerRoute.inside, true, 'The camera enters through the mouth.');
 const parked = createDigBorer(hill);
 const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
 const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};
