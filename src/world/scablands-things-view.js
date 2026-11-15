@@ -113,15 +113,16 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
     mesh.name = `Scablands ${kind}`;
     mesh.count = 0; mesh.frustumCulled = false;
     mesh.userData.solidIds = parts.map(part => part.id);
-    group.add(mesh); batches.push({mesh, parts, range});
+    group.add(mesh); batches.push({mesh, parts, range, tinted: kind === 'boulder'});
   }
   // A thing is drawn within its range of the player, growing from nothing over the range's last tenth so that it does
   // not appear all at once. The batches are filled again after 60 m of travel.
   let filledX = NaN, filledZ = NaN;
+  const tint = new THREE.Color();
   function update(x, z) {
     if (Math.hypot(x - filledX, z - filledZ) < 60) return;
     filledX = x; filledZ = z;
-    for (const {mesh, parts, range} of batches) {
+    for (const {mesh, parts, range, tinted} of batches) {
       let count = 0;
       for (const part of parts) {
         const away = Math.hypot(part.x - x, part.z - z);
@@ -131,9 +132,11 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
         object.rotation.set(0, part.heading, 0);
         object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
         object.updateMatrix();
+        if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? 1));
         mesh.setMatrixAt(count++, object.matrix);
       }
       mesh.count = count; mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     }
   }
   function dispose() {
