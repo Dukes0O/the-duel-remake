@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T07:36:50.017Z
+Observed at: 2026-11-15T07:55:45.820Z
 
-Observation commit: b5cb97b8551fa58eecdf3dfe6d54c01c4dc0d841
+Observation commit: 5586f4460c3ba7895d9fa9e3da7b5dbf40664f78
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: b5cb97b8551fa58eecdf3dfe6d54c01c4dc0d841
+Integration HEAD: 5586f4460c3ba7895d9fa9e3da7b5dbf40664f78
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -76,7 +76,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 9 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
 | lane/hills | unknown | 2026-11-15T00:31:26-07:00 | 0 | last commit 2026-11-15T00:31:26-07:00 | docs/board/STATUS.md, docs/board/cards/SCABLANDS-LAND.md, docs/board/run-log.md, docs/changes/SCABLANDS-LAND.md, src/world/scablands-height.js |
-| lane/tunnel-trial | unknown | 2026-11-15T00:36:48-07:00 | 0 | last commit 2026-11-15T00:36:48-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/arena/modes/world-job.js, src/course.js, src/sim-contacts.js |
+| lane/tunnel-trial | unknown | 2026-11-15T00:42:11-07:00 | 0 | last commit 2026-11-15T00:42:11-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/arena/modes/world-job.js, src/course.js, src/sim-contacts.js |
 
 ## Size targets
 
@@ -92,7 +92,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 84,687,451 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 882,366 B | +0 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,426,866,176 B | +282,624 B | unavailable |
+| Git objects | 1,427,170,304 B | +304,128 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups

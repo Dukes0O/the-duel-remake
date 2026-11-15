@@ -1297,6 +1297,18 @@ For Claude to run: `test-full-check` at merge and the browser scenario once writ
 
 Cockpit sync could not unlock its saved credential in this session and did not update Cockpit.
 
+### Realism trial, step 3: small-thing batches, in progress
+
+Added a separate drawing for small things, with one batch per kind, three stone proportions, ground-following heights, no shadows, and a gradual reduction to zero at 120 m. Nearby cells are kept as the player moves. The drawing requires the caller to supply job starts and is not connected to the game. It still needs a frame-cost check and a way to refresh its cached heights if the ground changes. No game event or sound cue was added.
+
+Checks: all eight Scablands suites passed, including 13 placement tests. Both replay suites passed: 297 checks across 33 cases and 12 across four encounters. Race fingerprints are unchanged. No separate world-signature test files matched the requested name. Integration was already current. The lane tier passed 27 of 28 suites; `test-full-check` could not start `pwsh` for its temporary copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: `test-full-check` at merge and the browser scenario once it is written. Chrome cannot start in this job. The drawing and job starts still need connection, and the remaining solids, wires, signs, track drawing, map and scenario still need work.
+
+Cockpit sync could not unlock its saved credential and did not update Cockpit.
+
 ### Realism trial, step 3: collision records, in progress
 
 Added collision records and a spatial grid for cleared pylon feet, telegraph poles, fence posts and boulders. Fence posts carry the marker for a later falling-fence slice. These records are not connected to the game: the eventual drawing must use the same dimensions, and the switch, job starts and simulation still need connecting. No game event or sound cue was added.

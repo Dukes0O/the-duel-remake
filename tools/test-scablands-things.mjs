@@ -9,6 +9,24 @@ import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
+import {createSmallThingsView} from '../src/world/scablands-things-view.js';
+
+test('small things use one batch per kind and follow the player without shadows', () => {
+  assert.throws(() => createSmallThingsView({seed: 1989}), TypeError);
+  const view = createSmallThingsView({seed: 1989, jobStarts: []});
+  const p = LAND.between('yard', 'tin-town', .4);
+  view.update(p.x, p.z);
+  assert.equal(view.group.children.length, 8);
+  assert.ok(view.group.children.some(mesh => mesh.count > 0));
+  assert.ok(view.group.children.every(mesh => !mesh.castShadow && mesh.isInstancedMesh));
+  const first = view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16)));
+  view.update(p.x, p.z);
+  assert.deepEqual(view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16))), first);
+  view.update(p.x + 200, p.z);
+  assert.notDeepEqual(view.group.children.map(mesh => Array.from(mesh.instanceMatrix.array.slice(0, mesh.count * 16))), first);
+  view.dispose();
+  assert.equal(view.group.children.length, 0);
+});
 
 test('cleared things produce collision records in the spatial index', () => {
   const fixed = clearedFixedThings(1989, []);
