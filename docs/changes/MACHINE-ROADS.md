@@ -20,7 +20,8 @@ The paver now has a slow pace on Shift, so keyboard players can repair rough pav
 - `node tools/test-machine-roads.mjs`: passed after adding the town road-work command and save round-trip checks.
 - `npm.cmd run build`: passed after adding the town command.
 - Machine, dig, town, replay, world-signature and lane checks: still to run after the remaining work.
-- Browser scenario: still to write; Claude must run it. The lane tier also remains to run.
+- Browser scenario: `tools/scenarios/machine-roads.mjs` is written but has not been run. Claude should check the three machines and their controls, the rough stretch, and the repaired stretch. The lane tier also remains to run.
+- This round: `node --check tools/scenarios/machine-roads.mjs`, `node tools/test-machine-roads.mjs`, and `npm.cmd run build` passed. The scenario places machines at the start of the practice strip; keyboard driving does the work.
 - Integration branch: already an ancestor of this lane before this round.
 - Race fingerprints: not checked yet.
 

@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T02:52:39.097Z
+Observed at: 2026-11-15T02:54:58.894Z
 
-Observation commit: e84efb828398cd41a76bb63bdd35ce07b8682b72
+Observation commit: 16c9f23de6fdad853f447e4f512031a9fe80e274
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: e84efb828398cd41a76bb63bdd35ce07b8682b72
+Integration HEAD: 16c9f23de6fdad853f447e4f512031a9fe80e274
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -75,7 +75,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 8 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/solid-fixes | unknown | 2026-11-14T19:50:15-07:00 | 0 | last commit 2026-11-14T19:50:15-07:00 | docs/board/looks/scablands-land/round-6-review.md, docs/board/looks/scablands-land/round-6.jpg, docs/changes/SCABLANDS-LAND.md, src/arena/arena-event.js, src/arena/modes/world-job.js |
+| lane/solid-fixes | unknown | 2026-11-14T19:53:24-07:00 | 0 | last commit 2026-11-14T19:53:24-07:00 | docs/board/STATUS.md, docs/board/looks/scablands-land/round-6-review.md, docs/board/looks/scablands-land/round-6.jpg, docs/changes/SCABLANDS-LAND.md, src/arena/arena-event.js |
 | lane/tunnel-trial | unknown | 2026-11-14T18:29:57-07:00 | 0 | last commit 2026-11-14T18:29:57-07:00 | docs/board/STATUS.md, docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/course.js, src/sim-contacts.js |
 
 ## Size targets
@@ -84,7 +84,7 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 717,100,565 B | +338 B | 250,000,000 B |
+| Build `dist/` | 717,100,565 B | +0 B | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
@@ -92,7 +92,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 84,313,868 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 5,945,814 B | +0 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,733,422,080 B | +81,920 B | unavailable |
+| Git objects | 1,733,634,048 B | +211,968 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
