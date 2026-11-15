@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {westScarpTrial} from '../../src/world/ground-tunnels.js';
+import {westScarpTrial} from '../../src/world/scablands-tunnel-trial.js';
 import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../../src/world/scablands-ground.js';
 import {RIVER_LAND} from '../../src/world/scablands-regions.js';
 

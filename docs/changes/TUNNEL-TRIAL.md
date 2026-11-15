@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+The tunnel rules no longer import Scablands data or read a clock. The Scablands trial site has its own file. The rules file is UTF-8 with LF line endings and no byte-order mark. `node tools/test-tunnels.mjs` and the scenario syntax check passed.
+
 A Titan and a Falcone now drive a four-segment tube with 10, 20 and 30 degree bends in both directions in the real simulation. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed. No game event or sound was added.
 
 The low mouth moved 7 m uphill: the old bore floor rose 0.69 m above the natural ground just inside the mouth. A Titan now drives off the lip and lands in front of the mouth on open ground at both 40 and 80 mph. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed, including the drives through the tunnel both ways. Drawing, the scenario and final checks remain open. No game event or sound was added.

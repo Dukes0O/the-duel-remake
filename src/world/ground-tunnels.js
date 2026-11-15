@@ -1,6 +1,4 @@
-import {SCARPS} from './scablands-scarps.js';
-
-﻿const finite = Number.isFinite;
+const finite = Number.isFinite;
 // Where the flat road at 0.55 radius below the centre meets the bore.
 const wallRadius = Math.sqrt(1 - 0.55 ** 2);
 
@@ -26,18 +24,6 @@ export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
     maximumCover = Math.max(maximumCover, terrain - roof);
   }
   return {segment, minimumCover, maximumCover};
-}
-
-// A 100 m trial from the west scarp foot to its high ground. Starting just
-// inside the foot keeps the bore floor below the open ground at the mouth.
-// The scarp endpoints already come from the land's named places.
-export function westScarpTrial(heightAt) {
-  const {a, b} = SCARPS.find(scarp => scarp.id === 'scab-west').stretches[0];
-  const mid = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
-  const length = Math.hypot(b.x - a.x, b.z - a.z);
-  const across = {x: -(b.z - a.z) / length, z: (b.x - a.x) / length};
-  const at = distance => ({x: mid.x + across.x * distance, z: mid.z + across.z * distance});
-  return trialTubeBetween(at(2), at(102), 4, heightAt);
 }
 
 function checkPoint(value, label) {
@@ -294,21 +280,4 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     get length() { return tubes.reduce((sum, tube) => sum + Math.hypot(tube.end.x - tube.start.x,
       tube.end.y - tube.start.y, tube.end.z - tube.start.z), 0); },
   });
-}
-
-/** Compare a terrain mesh candidate without coupling pure simulation code to Three.js. */
-export function compareTunnelHoleCandidates({samples, clips, csgCut} = {}) {
-  if (!Array.isArray(samples) || typeof clips !== 'function') {
-    throw new TypeError('Hole comparison needs surface samples and a clip test.');
-  }
-  const started = performance.now();
-  const kept = samples.filter(sample => !clips(sample));
-  const shaderMs = performance.now() - started;
-  if (typeof csgCut !== 'function') {
-    return {shader: {kept, elapsedMs: shaderMs}, csg: {available: false, elapsedMs: null}};
-  }
-  const csgStarted = performance.now();
-  const mesh = csgCut(samples);
-  return {shader: {kept, elapsedMs: shaderMs},
-    csg: {available: true, mesh, elapsedMs: performance.now() - csgStarted}};
 }
