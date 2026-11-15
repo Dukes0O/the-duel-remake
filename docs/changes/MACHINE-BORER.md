@@ -8,7 +8,7 @@ Step 2 has begun: cutting records centre-line segments, coalesces straight runs,
 
 Mabel can now reverse along her recorded tunnel at 1.4 m per second with her head stopped, and return to the cutting face without cutting the same ground again. The path follows bends and slopes; steering does not move her off it. These rules are not connected to the game controls yet.
 
-The conveyor's pile position can now be found from the first tunnel segment, ten metres to the right of its mouth. This does not move material yet. Ground cut now accepts an underground length and samples the material layers across the circular face without lowering the surface. The tunnel segments represent the resulting void. The borer does not yet call this operation or place the muck.
+The conveyor's pile is ten metres to the right of the first tunnel mouth. Each new cut samples the ground's material layers through the underground cut and places the bulked material in that pile through fill. The tunnel segments represent the void without lowering the surface. Reverse travel does not cut or add muck. The machine stops if the pile would be in a protected place.
 
 ## Checks
 
@@ -25,6 +25,8 @@ The conveyor's pile position can now be found from the first tunnel segment, ten
 - `node tools/test-machine-borer.mjs`: passed with pile positions for two headings, an empty tunnel and an invalid mouth direction.
 - `node tools/test-ground-edit.mjs`: passed with underground volume, bulking, material layers, protected ground and unchanged surface checks.
 - `node tools/test-machine-borer.mjs`: passed after the ground cut change.
+- `node tools/test-machine-borer.mjs`: passed with a 40 m bulked muck pile, no muck during reverse, and a protected pile refusing before a cut.
+- `node tools/test-ground-edit.mjs`: passed after connecting the conveyor.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -40,7 +42,7 @@ None.
 
 For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and rock one third. This is a starting scale within the card's soft and hard endpoints. The ground stores only one fill material per cell, so the face query uses that material for fill above the natural surface. Walking pace is 1.4 m per second; forward travel in a cut uses the maximum cutting speed.
 
-The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on the one-metre grid at any position. The pile has no volume limit. An underground cut samples 32 weighted strips across its face at the supplied ground position. Its caller must pass only newly cut lengths; tunnel segments record the void. The borer's material transfer remains to be built.
+The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on the one-metre grid at any position. The pile has no volume limit. An underground cut samples 32 weighted strips across its face at the supplied ground position. Only newly cut lengths go through the conveyor. If the pile is protected, the machine stops before cutting and gives the place's sentence. The existing ground grid keeps only one material per cell, so mixed material in one pile cell is represented by its most recently deposited material.
 
 ## Sound cues
 

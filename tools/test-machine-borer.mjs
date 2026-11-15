@@ -51,6 +51,21 @@ assert.equal(stopped.heading, running.heading);
 assert.equal(stopped.slope, running.slope);
 const initial = createBorerState();
 const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80).state;
+const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
+const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80).state;
+const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
+  sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
+const expectedMuck = Math.PI * 3 ** 2 * 40 * 1.25;
+assert.ok(Math.abs(pileVolume() / expectedMuck - 1) < 0.02, 'The pile contains the bulked bore volume.');
+const beforeReverse = pileVolume();
+stepBorer(muckCut, {thrust:-1}, muckGround, 'topsoil', 5);
+assert.equal(pileVolume(), beforeReverse, 'Returning through the tunnel creates no muck.');
+const blockedPile = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
+  reservedShapes:[{x:10,z:0,radius:1,sentence:'This place is protected.'}]});
+const pileStop = stepBorer(createBorerState(), {thrust:1}, blockedPile, 'topsoil', 2);
+assert.equal(pileStop.state.distanceM, 0);
+assert.equal(pileStop.state.message, 'This place is protected.');
+assert.equal(blockedPile.chunkCount, 0, 'A protected pile cannot lose the cut material.');
 assert.equal(borerMuckPile([]), null);
 assert.deepEqual(borerMuckPile(forty.segments), {x:10,z:0,radius:0.75});
 assert.deepEqual(borerMuckPile([{start:{x:2,z:3},end:{x:7,z:3}}]), {x:2,z:-7,radius:0.75});

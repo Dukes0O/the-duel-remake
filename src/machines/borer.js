@@ -91,6 +91,7 @@ function addCut(segments, start, end, radius) {
 /** Work is deterministic in fixed steps. A supplied material overrides the face query. */
 export function stepBorer(state, controls = {}, ground, material = null, dtSeconds = 0) {
   if (!state || !ground || typeof ground.heightAt !== 'function' || typeof ground.refusal !== 'function' ||
+      typeof ground.cut !== 'function' || typeof ground.fill !== 'function' ||
       !Number.isFinite(dtSeconds) || dtSeconds < 0 ||
       (material === null ? typeof ground.materialAt !== 'function' : !Object.hasOwn(hardness, material)))
     throw new TypeError('The borer needs ground, material and non-negative time.');
@@ -169,11 +170,30 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       next.message = message;
       continue;
     }
-    next.message = null;
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
+    const end = {x, y:next.y + Math.sin(slope) * distance + radius * 0.55, z};
+    const pile = borerMuckPile(next.segments.length ? next.segments : [{start, end}]);
+    const pileObstruction = ground.refusal(pile);
+    if (pileObstruction) {
+      const message = refusalMessage(pileObstruction);
+      if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+      next.message = message;
+      continue;
+    }
+    const cut = ground.cut({x:(start.x + end.x) / 2, z:(start.z + end.z) / 2, radius},
+      (start.y + end.y) / 2, Infinity, {length:distance});
+    if (!cut.ok) {
+      const message = refusalMessage(cut.reason);
+      if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+      next.message = message;
+      continue;
+    }
+    for (const [kind, volume] of Object.entries(cut.volumes))
+      if (volume > 0) ground.fill(pile, kind, volume * 1.25);
+    next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;
-    addCut(next.segments, start, {x:next.x, y:next.y + radius * 0.55, z:next.z}, radius);
+    addCut(next.segments, start, end, radius);
     next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     if (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
         borerHasFace(ground, next, next.heading + Math.PI, radius)) {
