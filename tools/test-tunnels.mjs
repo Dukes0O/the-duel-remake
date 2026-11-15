@@ -104,6 +104,43 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   }
 }
 
+// Drive the bed under each deck, away from the central pier, in both directions.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  for (const id of ['girder-bridge', 'the-pipe']) {
+    const crossing = RIVER_LAND.crossings.find(item => item.id === id);
+    const points = RIVER_LAND.line.points, along = RIVER_LAND.line.along;
+    const index = along.findIndex(value => value >= crossing.along);
+    const a = points[index - 1], b = points[index + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+    const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+    const centre = {x: crossing.x + dz * 27, z: crossing.z - dx * 27};
+    for (const direction of [-1, 1]) {
+      const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
+      duel.state.wastelandGateDiscovered = true;
+      assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'falcone_f42', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+      duel.state.countdown = 0; duel.state.arena.timeLimitSec = Infinity; duel.state.opponents[0].finished = true;
+      const origin = {x: centre.x - dx * direction * 45, z: centre.z - dz * direction * 45};
+      const position = duel.course.nearest(origin.x, origin.z), heading = Math.atan2(dx * direction, dz * direction);
+      placeActor(duel, duel.state, {s: position.s, lateral: position.lateral, headingError: wrapHeading(heading - duel.course.at(position.s).heading)}, 15);
+      let furthest = -Infinity, below = false;
+      for (let i = 0; i < 60 * 20; i++) {
+        const here = duel.course.worldAt(duel.state.s, duel.state.lateral);
+        const progress = ((here.x - centre.x) * dx + (here.z - centre.z) * dz) * direction;
+        furthest = Math.max(furthest, progress);
+        if (Math.abs(progress) < 25) {
+          const surface = scablandsSurfaceHeightAt(here.x, here.z);
+          if (surface - (duel.state.groundHeight ?? duel.state._jumpY) > 4) below = true;
+        }
+        if (progress > 35) break;
+        duel.setInput({throttle: 1}); duel.step(1 / 60);
+      }
+      assert.ok(below && furthest > 35, `${id}, direction ${direction}: crossed beneath the deck (${furthest.toFixed(1)} m)`);
+    }
+  }
+}
+
 // The steep-ground rule must see the same floor as support, not the scarp above it.
 {
   const {scablandsGround} = await import('../src/sim-scablands.js');
