@@ -61,6 +61,8 @@ export function hillsFor(land=LAND,seed=1989){
   const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
     LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
   const soupReturn=[LAND.at('safe-road'),LAND.at('everburn')];
+  const furnaceReturn=[LAND.at('safe-road'),LAND.between('yard','dead-mall',.535),
+    LAND.between('dead-mall','everburn',.485,5.62,-18.9),LAND.at('everburn',12,3.5)];
   const boneyardGas=[LAND.at('everburn',12,3.5),LAND.between('dead-mall','everburn',.485,5.62,-18.9),
     LAND.at('dead-mall',0,-60),LAND.between('dead-mall','boneyard',.551,16.19,54.48),LAND.at('boneyard',23,4)];
   // Keep the furnace's descent from the Ridge to the Boneyard open.
@@ -135,7 +137,7 @@ export function hillsFor(land=LAND,seed=1989){
     const radius=breaksRng.range(260,320), height=breaksRng.range(40,Math.min(70,radius*.17));
     if(z<=0||z>=mall.z||!withinCountry(x,z)||Math.hypot(x-yard.x,z-yard.z)<radius+500) continue;
     if([burn,mall].some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+350)) continue;
-    if([surveyLeg,soupReturn,boneyardGas].some(leg=>distanceToRoad(x,z,leg)<radius+60)) continue;
+    if([surveyLeg,soupReturn,boneyardGas,furnaceReturn].some(leg=>distanceToRoad(x,z,leg)<radius+60)) continue;
     if(passSites.some(site=>Math.hypot(x-site.x,z-site.z)<400)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+10)) continue;
     if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;

@@ -2167,3 +2167,17 @@ The Easy chase driver now chooses the Wash or South Ford when a river crossing o
 Changed assertions, for Claude to review: none. Lines 238 and 253 to 275 of `tools/test-everburn-easy.mjs` add a stored crossing route and change only chase steering. No assertion, pass mark, count, time limit or seed list changed. Codex decided: choose the shorter route through the Wash or South Ford, the crossings already used by this driver. Removed: direct steering toward the furnace while following that route.
 
 Not right yet: prove that this route completes the Easy chase and the rest of the suite. Then merge integration and run the final checks directed on the card. Claude must judge the updated pictures.
+
+### Hill country: furnace return and final proof
+
+A seeded Breaks hill at approximately (-1240, 3142) made the furnace's return route too steep. Seeded hill selection now keeps the entire named furnace return route clear, including the leg from the yard-to-Mall point to the furnace's return point. The hill was replaced by the next suitable seeded site. The existing solid suite checks both furnace roads and passed after this change, as did the hills (54 of 54), size and rail-region suites. The hills suite also checks the remaining job corridors. The four ways to Tin Town and the Ridge and Lookout climbs passed in the solid suite.
+
+Before that hill moved, the Easy suite passed all nine jobs: The Everburn finished 9 of 10 and each other job 10 of 10. Both gas roads passed 10 of 10 at each of four feud levels; the battle brought Big Bess home and was won 10 of 10. That run did not enable the realism switch. The changed ground needs a fresh drive check. Integration was merged at f70f09da5, bringing in a scenery change; there were no conflicts. The replay checks before this final hill move passed 297 checks across 33 cases and 12 checks across four encounters. World composition passed 63 checks across 20 events. The scenario passed syntax checking; Claude has already judged the eleven pictures, but the moved hills need a fresh look.
+
+Changed assertions, for Claude to review: no assertions changed in this step. The earlier rail reference moved from 1.1866134534972772 m to 2.1196134024079134 m due to the mesa ramp, with the same exact equality and no loosened tolerance. The chase driver changes only steering in `tools/test-everburn-easy.mjs` lines 238 and 253 to 275; no assertion, pass mark, count, time limit or seed list changed. Other changes are listed in the earlier final integration and near-scarp notes above.
+
+Codex decided: keep the furnace return clear using its existing named route points and the same 60 m clearance used for other jobs. No new game event or sound was added. Seen, lost and furnace warning cues remain `arena.tell`, `gate.latch` and `arena.toll-gate`.
+
+Not built by this slice: Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1.
+
+Removed: the former obstructing seeded hill site. No player saves were read or written.
