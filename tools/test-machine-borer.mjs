@@ -535,8 +535,17 @@ assert.ok(longerTrench.state.exitCutting.distanceM > 90);
 assert.equal(longerTrench.events.filter(event => event.message === BORER_TRENCH).length, 1, 'The warning repeats at 90 m.');
 const lipGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : -2});
 const lip = stepBorer(createBorerState(), {thrust:1}, lipGround, 'topsoil', 100);
-assert.equal(lip.state.message, 'She has come out 2.0 m up the face. Back her up and turn her down.');
+assert.equal(lip.state.message, 'She has come out 2.0 m up the face. Tip spoil below the mouth until she can drive out.');
 assert.equal(lip.state.segments.at(-1).endOpen, false);
+const lipFar = {x:Math.round(lip.state.x + Math.sin(lip.state.heading) * 12),
+  z:Math.round(lip.state.z + Math.cos(lip.state.heading) * 12), radius:3};
+assert.ok(lipGround.fill(lipFar, 'rock', 29 * 2 * 1.25).ok, 'Real ground fill raises the landing.');
+assert.ok(Math.abs(lipGround.heightAt(lip.state.x + Math.sin(lip.state.heading) * 12,
+  lip.state.z + Math.cos(lip.state.heading) * 12) - lip.state.y) <= 0.5);
+const filledLip = stepBorer(lip.state, {thrust:1}, lipGround, 'topsoil', 1 / 120);
+assert.equal(filledLip.state.finished, true, 'The next step reaches daylight after filling the lip.');
+assert.equal(filledLip.state.segments.at(-1).endOpen, true);
+assert.equal(filledLip.events.filter(event => event.cue === 'borer.daylight').length, 1);
 const shortHill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 12 ? 8 : 2});
 const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shortHill, 'topsoil', 60);
 assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);

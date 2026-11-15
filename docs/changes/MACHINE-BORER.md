@@ -144,3 +144,7 @@ Merged `integration/wasteland` at `28d5544af` without conflicts. `test-machine-b
 Merged `integration/wasteland` at the start of this run without conflicts. The 60 m exit-cutting sentence now warns without stopping Mabel, and repeats every 30 m with `borer.refuse`. The focused test drives 70 m into an exit cutting before tilting up, and checks the repeat warning. The former assertion that the warning stops her is replaced by checks that she keeps moving, as Claude directed.
 
 `node tools/test-machine-borer.mjs` passed in 217.6 seconds. The first run failed because its new test expected one warning even though the drive passed both 60 m and 90 m; the corrected test counts each threshold. The suite exceeds 120 seconds because `stepBorer` uses fixed 1/120-second internal steps; reducing its runtime remains for the pace item. No browser, replay, lane tier or build was run for this item.
+
+## Lip recovery
+
+The lip refusal now tells the player to tip spoil below the mouth. The borer test fills the landing 12 m ahead using the ground layer, then proves the next step opens the mouth and reports daylight. The refusal sentence assertion changed to match Claude's ruling; the closed-mouth assertion remains. `node tools/test-machine-borer.mjs` passed in 283.0 seconds. The test still needs the speed work in the later pace item. No browser, replay, lane tier or build was run for this item.
