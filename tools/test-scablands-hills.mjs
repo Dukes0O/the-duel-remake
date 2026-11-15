@@ -5,12 +5,33 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
-import {scarpHeightAt} from '../src/world/scablands-scarps.js';
+import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scarps.js';
+import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
+
+test('each distant scarp face has fine cells at the land height', () => {
+  const geometry = makeCoarseGround(null).geometry;
+  const positions = geometry.getAttribute('position'), normals = geometry.getAttribute('normal');
+  for (const face of preparedScarps(SCARPS)) {
+    const x = face.a.x + face.tx * face.length / 2 - face.tz * face.width / 2;
+    const z = face.a.z + face.tz * face.length / 2 + face.tx * face.width / 2;
+    let closest = Infinity, found = -1;
+    for (let i = 201 * 161; i < positions.count; i++) {
+      const distance = Math.hypot(positions.getX(i) - x, positions.getZ(i) - z);
+      if (distance < closest) { closest = distance; found = i; }
+    }
+    assert.ok(closest < 7, `${face.scarp.id} has a nearby fine sample`);
+    const px = positions.getX(found), pz = positions.getZ(found);
+    assert.ok(Math.abs(positions.getY(found) - (scablandsSurfaceHeightAt(px, pz) + riverGorgeDepthAt(px, pz) - .35)) < .01,
+      `${face.scarp.id} follows the shared height`);
+    assert.ok(Math.abs(Math.hypot(normals.getX(found), normals.getY(found), normals.getZ(found)) - 1) < .001);
+  }
+  geometry.dispose();
+});
 
 test('the drawn Steps and river banks follow the ledges with fine cells', () => {
   const steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');

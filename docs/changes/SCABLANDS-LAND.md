@@ -1342,3 +1342,17 @@ For Claude to run: `test-full-check` on the laptop and the memory-only Performan
 Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the coarser bank cells were replaced by two-metre cells.
 
 Still needed: detailed cells for all four scarps, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: distant scarp faces in progress
+
+The distant ground now divides cells that touch the four scarp faces into eight pieces in each direction. Interior vertices sample the shared ground height. The edges follow the former cell edges so the finer cells meet their neighbours without gaps. The existing ground material and calculated mesh normals are unchanged. The nearby moving ground still needs finer scarp cells, so this is not yet the finished face work. The land's switches stay off. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+The far ground remains one draw call. Its mesh has 76,852 triangles, up from 64,000. These are mesh counts; actual on-screen draw calls and triangles need the picture scenario. The joins and the faces need visual review.
+
+Checks: `test-scablands-hills` passed all 10 tests, including a fine sample and normal for each scarp. `test-scablands-scene` passed, including ground-edit refresh. Race fingerprints and world signatures were not checked in this run. The final route checks, lane tier, replay and world-signature checks and build remain for the final run after integration.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written.
+
+Changed assertions, for Claude to review: the scene check's far-ground vertex count changed from 32,361 to 40,623, and triangle count from 64,000 to 76,852, because scarp cells now have finer triangles. The checks remain exact. Codex decided: no new design choice. Removed: the former coarse triangles at the four scarp faces are replaced by finer triangles.
+
+Still needed: refine the nearby scarp faces, then complete sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.

@@ -24,6 +24,7 @@ import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
+import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
 
 export const SCABLANDS_ASSETS = Object.freeze({
   tintown: '/assets/models/wasteland/scablands/tintown.glb',
@@ -65,16 +66,47 @@ const DRAW_RANGE=1800;
 
 // The coarse ground: 200 by 160 cells over the whole land. `hole` is a vec4 uniform (middle x, middle z, half width, half depth)
 // of the area not drawn, where the detailed ground is; the material is the ground's own with that hole cut out of it.
-function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
+export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
   const width=SCABLANDS_LAYOUT.halfWidth*2,depth=SCABLANDS_LAYOUT.halfDepth*2,cellsX=COARSE_CELLS.x,cellsZ=COARSE_CELLS.z;
-  const positions=new Float32Array((cellsX+1)*(cellsZ+1)*3),indices=[];
+  const positions=[],indices=[], cellWidth=width/cellsX,cellDepth=depth/cellsZ;
   for(let iz=0;iz<=cellsZ;iz++)for(let ix=0;ix<=cellsX;ix++){
-    const x=-width/2+width*ix/cellsX,z=-depth/2+depth*iz/cellsZ,at=(iz*(cellsX+1)+ix)*3;
-    positions[at]=x;positions[at+1]=plainHeightAt(x,z,groundEdit)-COARSE_LOWER;positions[at+2]=z;
-    if(ix<cellsX&&iz<cellsZ){const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;indices.push(a,c,b,b,c,d);}
+    const x=-width/2+cellWidth*ix,z=-depth/2+cellDepth*iz;
+    positions.push(x,plainHeightAt(x,z,groundEdit)-COARSE_LOWER,z);
+  }
+  // Only cells touching a scarp face need smaller triangles. Their borders stay on the original
+  // straight edges, so they join neighbouring cells without cracks or overlapping ground.
+  const faces=preparedScarps(SCARPS).map(s=>{
+    const points=[];
+    for(const along of [-SCARP.taper,s.length+SCARP.taper])for(const across of [0,s.width])
+      points.push({x:s.a.x+s.tx*along-s.tz*across,z:s.a.z+s.tz*along+s.tx*across});
+    return {x0:Math.min(...points.map(p=>p.x)),x1:Math.max(...points.map(p=>p.x)),
+      z0:Math.min(...points.map(p=>p.z)),z1:Math.max(...points.map(p=>p.z))};
+  });
+  const subdivisions=8;
+  for(let iz=0;iz<cellsZ;iz++)for(let ix=0;ix<cellsX;ix++){
+    const a=iz*(cellsX+1)+ix,b=a+1,c=a+cellsX+1,d=c+1;
+    const x=-width/2+ix*cellWidth,z=-depth/2+iz*cellDepth;
+    if(!faces.some(f=>x<=f.x1&&x+cellWidth>=f.x0&&z<=f.z1&&z+cellDepth>=f.z0)){
+      indices.push(a,c,b,b,c,d);continue;
+    }
+    const grid=[];
+    for(let j=0;j<=subdivisions;j++)for(let i=0;i<=subdivisions;i++){
+      const u=i/subdivisions,v=j/subdivisions,px=x+u*cellWidth,pz=z+v*cellDepth;
+      let y;
+      if(j===0)y=positions[a*3+1]*(1-u)+positions[b*3+1]*u;
+      else if(j===subdivisions)y=positions[c*3+1]*(1-u)+positions[d*3+1]*u;
+      else if(i===0)y=positions[a*3+1]*(1-v)+positions[c*3+1]*v;
+      else if(i===subdivisions)y=positions[b*3+1]*(1-v)+positions[d*3+1]*v;
+      else y=plainHeightAt(px,pz,groundEdit)-COARSE_LOWER;
+      grid.push(positions.length/3);positions.push(px,y,pz);
+    }
+    for(let j=0;j<subdivisions;j++)for(let i=0;i<subdivisions;i++){
+      const q=j*(subdivisions+1)+i,aa=grid[q],bb=grid[q+1],cc=grid[q+subdivisions+1],dd=grid[q+subdivisions+2];
+      indices.push(aa,cc,bb,bb,cc,dd);
+    }
   }
   const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();
   const mesh=new THREE.Mesh(geometry,material);mesh.name='Scablands far ground';mesh.receiveShadow=true;
   return mesh;
 }
