@@ -74,7 +74,10 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
     'the whole path takes about 43 minutes at the base pace');
   const well = def.path[0].position;
   const last = def.path.at(-1).position;
-  near(Math.hypot(last.x - well.x, last.z - well.z), 0, 1e-9, 'the path ends at the well it starts from');
+  same([well.x, well.z], [LAND.at('everburn', -5, -10).x, LAND.at('everburn', -5, -10).z],
+    'the path starts on the outgoing side of the well');
+  same([last.x, last.z], [LAND.at('everburn', 12, 3.5).x, LAND.at('everburn', 12, 3.5).z],
+    'the path ends on the returning side of the well');
   // SCABLANDS-LAND round 4: the planes stand where they stood from the Boneyard (18 m east, 26 m north of its point), so they
   // are named from the place, not typed as a point of the old land (it was (412, 278)).
   const planes = LAND.at('boneyard', 18, -26);
@@ -89,14 +92,14 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   const f = fresh('medium'), placeAt = index => [f.path.points[index].x, f.path.points[index].z];
   // SCABLANDS-LAND round 4: the same 18 places (21 with the bridge, below), restated as places of the land (a place plus an offset, or a share of the way
   // between two places plus an offset) in place of 18 typed points of the old land, so the check is on names, not numbers.
-  const listed = [LAND.at('everburn'), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
+  const listed = [LAND.at('everburn', -5, -10), LAND.between('everburn', 'iron-line', .688, 95, -55), LAND.at('dry-dam', 124, 74),
     LAND.at('ships-in-sand', -60, 50), LAND.between('ships-in-sand', 'ridge', .426, -10.78, 36.28), LAND.at('ridge', -74, 104),
     LAND.between('ridge', 'boneyard', .599, -74, 0), LAND.at('boneyard', -89, -134), LAND.at('boneyard', -79, -58),
     LAND.at('boneyard', 16, -56), LAND.at('boneyard', 121, -52), LAND.at('tin-town', 10, 170), LAND.at('tin-town', -25, 82),
     // Slice 2b: the way home crosses the dry river by the Girder Bridge, lined up on the East Road 150 m before and after it (three more places).
     LAND.between('yard', 'tin-town', .717, 0, 70), roadPointFrom(EAST_ROAD, LAND.at('girder-bridge').x, LAND.at('girder-bridge').z, 150), LAND.at('girder-bridge'),
     roadPointFrom(EAST_ROAD, LAND.at('girder-bridge').x, LAND.at('girder-bridge').z, -150), LAND.at('safe-road'), LAND.between('yard', 'dead-mall', .535),
-    LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('everburn')];
+    LAND.between('dead-mall', 'everburn', .485, 5.62, -18.9), LAND.at('everburn', 12, 3.5)];
   same(def.path.map(place => [place.position.x, place.position.z]), listed.map(spot => [spot.x, spot.z]),
     'the path is the card\'s list of places');
   same(def.legs.map(leg => [leg.id, leg.fromWaypoint]), [['open-flats', 0], ['boneyard', 7], ['run-back', 19]],
@@ -121,8 +124,7 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   check(!def.path.some(place => /^furnace-(turn|run)-[12]$/.test(place.id)), 'the loop back to the well is gone');
 }
 
-// Every straight piece of the path clears every solid in the Scablands by 8 m. The furnace begins at the well and
-// rolls into it, so the first and last pieces are allowed to touch the Everburn well's own box and no other.
+// Every straight piece of the path clears the solids in the Scablands. The start and finish are beside the well's post.
 {
   // Slice 2b: a solid is turned (its heading), so the distance is measured in its own frame; the Girder Bridge's trusses stand 7.35 m either side of the middle of
   // a deck the way home crosses, so a path on the bridge keeps 4 m from them and 8 m from everything else.
@@ -135,7 +137,6 @@ same(def.legs.map(leg => leg.door), ['left', 'right', 'rear'], 'three legs, one 
   for (let piece = 0; piece < points.length - 1; piece++) {
     const a = points[piece], b = points[piece + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
     for (const solid of SCABLANDS_SOLIDS) {
-      if (solid.id === 'everburn-well' && (piece === 0 || piece === points.length - 2)) continue;
       // The bridge's piers and the pipe's posts stand on the bed under the deck: a path over the deck passes over them.
       if (solid.verticalClearance && /pier|-post-/.test(solid.id)) continue;
       let closest = Infinity;

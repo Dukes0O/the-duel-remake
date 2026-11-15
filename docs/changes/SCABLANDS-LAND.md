@@ -1140,3 +1140,15 @@ Removed: the straight return from the well to the start of the leg.
 ### Still to do
 
 Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.
+
+### Furnace well clearance, in progress
+
+The chase starts and ends on the two sides of the well's solid post, clear of it. The old clearance test now includes the post on both pieces. No new game event or sound cue was added.
+
+`test-old-smoke` passed 4,097 checks and 10 of 10 Easy chases. `test-scablands-size` passed 9 tests and `test-scablands-solid` passed 17. The path's closest clearance in the existing test was 7.4 m. Race fingerprints, the build and the lane tier remain to be checked after the other fixes.
+
+Changed assertions, for Claude to review: the chase used to start and end at the well's centre. It now starts at offset (-5, -10) m and ends at (12, 3.5) m, so neither path crosses the post. The endpoint test now pins both positions. The former exception for the well post was removed from the clearance test.
+
+Removed: the chase path through the well post.
+
+Still needed: the fall now happens 12.5 m from the well's centre and must be made visually convincing while keeping the path clear. The battle furnace's reachable road clips a gate post. Test both furnace roads in 2 m steps, including the actual reachable portions and ground grade, then fix any remaining unsafe pieces. The three refused assertions and per-step allocations remain.
