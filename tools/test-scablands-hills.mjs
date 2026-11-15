@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {HILLS, hillsFor, hillHeightAt, scablandsTerrainHeightAt, scablandsHeightAt} from '../src/world/scablands-height.js';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
-import {ROAD_NET} from '../src/world/scablands-road.js';
+import {ROAD_NET, distanceToRoad} from '../src/world/scablands-road.js';
 import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
 import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scarps.js';
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
@@ -429,7 +429,7 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   const ridge = LAND.place('ridge');
   const top = HILLS.find(hill => hill.kind === 'ridge-top');
   const foothills = HILLS.filter(hill => hill.kind === 'foothill');
-  assert.ok(foothills.length >= 2);
+  assert.equal(foothills.length, 6);
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)));
   for (const hill of [top, ...foothills]) {
     const match = moved.find(item => item.kind === hill.kind && item.x === hill.x + 100 && item.z === hill.z + 200);
@@ -441,6 +441,15 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   for (const hill of foothills) {
     assert.ok(hill.z < ridge.z, 'the foothills stand north of the Ridge');
     assert.ok(hillHeightAt(hill.x, hill.z) >= hill.height);
+    assert.ok(hill.height >= 18 && hill.height <= 40);
+    for (const other of foothills) {
+      const distance = Math.hypot(hill.x - ridge.x, hill.z - ridge.z);
+      const otherDistance = Math.hypot(other.x - ridge.x, other.z - ridge.z);
+      if (distance < otherDistance) assert.ok(hill.height >= other.height, 'higher foothills are nearer the Ridge');
+    }
+    for (const road of ROAD_NET.roads) {
+      assert.ok(distanceToRoad(hill.x, hill.z, road.points) > hill.radius + road.halfWidth, `${road.id} clears the foothill`);
+    }
   }
   for (const road of ROAD_NET.roads.filter(road => road.id === 'ridge-spur' || road.id === 'ridge-road')) {
     for (let i = 1; i < road.points.length; i++) {

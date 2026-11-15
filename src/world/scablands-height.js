@@ -35,6 +35,24 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
   ];
+  // The outer foothills are lower than the two near the Ridge. Select their
+  // offsets against the fixed land so they follow the Ridge when it moves.
+  const foothillRng=makeRng(seed ^ 0x52494447), outer=[];
+  const ridge=LAND.place('ridge');
+  for(let attempt=0;attempt<1000 && outer.length<4;attempt++){
+    const angle=foothillRng.range(Math.PI,2*Math.PI), distance=foothillRng.range(1050,2000);
+    const radius=foothillRng.range(230,280), dx=Math.cos(angle)*distance, dz=Math.sin(angle)*distance;
+    const x=ridge.x+dx, z=ridge.z+dz;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+30)) continue;
+    if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;
+    if(hills.some(hill=>Math.hypot(x-hill.x,z-hill.z)<radius+hill.radius+30)) continue;
+    if(outer.some(hill=>Math.hypot(dx-hill.dx,dz-hill.dz)<radius+hill.radius+30)) continue;
+    outer.push({dx,dz,radius,distance});
+  }
+  for(const {dx,dz,radius,distance} of outer){
+    const height=18+4*(2000-distance)/950;
+    hills.push(Object.freeze({...land.at('ridge',dx,dz),kind:'foothill',height,radius}));
+  }
   return Object.freeze(hills.map(hill=>{
     if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa') return hill;
     return Object.freeze({...hill,spurs:rng.int(3,5),spurAngle:rng.range(0,Math.PI*2)});

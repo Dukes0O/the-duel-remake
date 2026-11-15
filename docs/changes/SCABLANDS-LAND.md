@@ -1792,3 +1792,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the dune
 Changed assertions: none; the count, dimensions, flat-ground clearance and sight checks are new. Codex decided: stagger the rows with a second seeded generator and keep dune heights within the existing slope limit. Removed: the four larger, widely spaced dunes.
 
 Still needed: the Breaks, mesas and foothills; all corridor and route checks; the dune picture and final checks. Claude must run the picture scenario and judge the views.
+
+### Hill country: Ridge foothills
+
+Four seeded outer foothills bring the Ridge to six. Their centres follow the Ridge, and the higher foothills stand nearer it. Their selected footprints clear the named places and roads; the existing Ridge road and fifth flag stay in place. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the count, heights, ordering, road clearance, Ridge approach and shoulder slopes. The first run failed because the new check lacked an import; it passed after the import was added. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: the foothill count changed from at least 2 to exactly 6 to match the new design. It is stricter, not loosened. Codex decided: seeded outer foothills stand north of the Ridge, continuing the existing arrangement. Removed: none.
+
+Still needed: the Breaks and six mesas, all job and other protected corridors, route checks, dune picture and final checks. Claude must run and judge the picture scenario.
