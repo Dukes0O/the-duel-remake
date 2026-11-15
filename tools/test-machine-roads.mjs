@@ -220,6 +220,12 @@ for (const kind of ['roller','roller','roller','paver']) {
   sharedYard=stepDigSandbox(sharedYard, {controls:{forward:kind==='paver'?0.5:1,working:true}}, 5);
 }
 assert.equal(roadCondition(roadCell(sharedYard.roadWork,60,15)), 'good', 'The road crosses the filled ditch.');
+sharedYard.activeMachine='trencher';
+Object.assign(sharedYard.trencher.machine, {x:70,z:10,heading:0,speedMps:0});
+sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1},action:'trench'}, 12);
+closeDigSandbox();
+const sharedNextVisit = createDigSandbox({playerId:'shared-road-ground-test'});
+assert.ok(sharedNextVisit.ground.heightAt(60,15)<originalHeight-1, 'The filled ditch remains dug when the temporary road work is removed.');
 closeDigSandbox();
 // Digging persists during the page session, but road work belongs to one visit.
 let visit = createDigSandbox({playerId:'road-visit-reset-test'});
