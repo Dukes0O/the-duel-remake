@@ -4,9 +4,36 @@ import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
 import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionAt} from './scablands-regions.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {SOLID_GRID} from './scablands-solids.js';
+import {RIVER_LAND} from './scablands-regions.js';
+import {sampleLine} from './scablands-ways.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// A ground renderer can read these short paired segments without knowing how a
+// map route was made. Pass it the very same points the map uses. Road pieces
+// are left to the road renderer, including where a route meets another road.
+export function tracksForWay(points, {net = ROAD_NET, crossings = RIVER_LAND.crossings} = {}) {
+  if (points.length < 2) return [];
+  const samples = sampleLine(points, 4), tracks = [];
+  for (let i = 0; i + 1 < samples.length; i++) {
+    const a = samples[i], b = samples[i + 1], dx = b.x - a.x, dz = b.z - a.z;
+    const length = Math.hypot(dx, dz);
+    if (!length) continue;
+    const nx = -dz / length * .8, nz = dx / length * .8;
+    // Check both ends and the middle so a short segment cannot bridge a road.
+    if ([a, b, {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2}].some(p =>
+      net.nearest(p.x, p.z) || net.nearest(p.x + nx, p.z + nz) || net.nearest(p.x - nx, p.z - nz))) continue;
+    const middle = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
+    const crossing = crossings.some(p => Math.hypot(middle.x - p.x, middle.z - p.z) < p.reach);
+    for (const side of [-1, 1]) tracks.push({
+      x1: a.x + side * nx, z1: a.z + side * nz,
+      x2: b.x + side * nx, z2: b.z + side * nz,
+      strength: crossing ? 1 : .5,
+    });
+  }
+  return tracks;
+}
 
 // Index only the road segments that can affect roadside litter. The full road
 // distance search is meant for checks and is too expensive for every cell.

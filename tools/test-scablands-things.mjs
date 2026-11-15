@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay} from '../src/world/scablands-things.js';
+import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
+import {RIVER_LAND} from '../src/world/scablands-regions.js';
 
 const cell = point => [Math.floor(point.x / THINGS_CELL), Math.floor(point.z / THINGS_CELL)];
 test('small things are stable by seed and cell and avoid roads and job starts', () => {
@@ -42,4 +44,25 @@ test('the local roadside search agrees with the complete road net', () => {
       }
     }
   }
+});
+
+test('track data follows map routes in pairs and is stronger at crossings', () => {
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const tracks = tracksForWay(points);
+  assert.ok(tracks.length > 0);
+  assert.deepEqual(tracks, tracksForWay(points));
+  assert.equal(tracks.length % 2, 0);
+  assert.ok(tracks.some(track => track.strength === 1));
+  assert.ok(tracks.some(track => track.strength === .5));
+  for (let i = 0; i < tracks.length; i += 2) {
+    const a = tracks[i], b = tracks[i + 1];
+    assert.ok(Math.abs(Math.hypot(a.x1 - b.x1, a.z1 - b.z1) - 1.6) < 1e-7);
+    assert.equal(a.strength, b.strength);
+    assert.equal(ROAD_NET.nearest(a.x1, a.z1), null);
+    assert.equal(ROAD_NET.nearest(b.x2, b.z2), null);
+    const x = (a.x1 + a.x2 + b.x1 + b.x2) / 4, z = (a.z1 + a.z2 + b.z1 + b.z2) / 4;
+    assert.equal(a.strength === 1, RIVER_LAND.crossings.some(p => Math.hypot(x - p.x, z - p.z) < p.reach));
+  }
+  assert.deepEqual(tracksForWay([]), []);
 });

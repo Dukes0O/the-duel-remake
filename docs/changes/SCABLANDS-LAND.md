@@ -1218,6 +1218,20 @@ Still to do: connect and draw the small things with distance fading and job-star
 
 The small-thing rules now index nearby road segments before placing roadside litter. The index gives the same answer as the full road search at sampled points on both sides of every road, including both sides of the 42 m boundary. It avoids searching the entire road net for each candidate. The placing is still not connected to the game. No game event or sound cue was added.
 
-Check: `test-scablands-things` passed all 3 tests. Further card checks, replay fingerprints, lane tier, build and browser scenario remain for the completed card.
+Checks: all eight Scablands suites passed. Both replay suites passed, with 297 checks across 33 cases and 12 checks across four encounters; fingerprints are unchanged. The lane tier passed 27 of 28 suites. `test-full-check` could not set up its temporary Git copy because `pwsh` returned EACCES; this is the known lane environment failure for Claude to rerun. The build passed with bundle-size warnings. Integration was already up to date. The browser scenario is not yet written.
+
+Session-end Cockpit sync could not open its protected credential in this session (`Key not valid for use in specified state`); it did not update Cockpit.
 
 Changed assertions: none. Codex decided: no new design choice. Removed: the full road-net distance search from each small-thing candidate, replaced by the local index.
+
+### Realism trial, step 3: track data, in progress
+
+The placement rules can now turn the map's route points into paired rut segments, leaving out road stretches and marking the segments near crossings for a deeper drawing. The game does not draw or load this data yet. The ground hook, all other placing and the scenario remain to be built. No game event or sound cue was added.
+
+Checks: `test-scablands-things` passed 4 tests, including a map route, paired ruts, road clearance and crossing strength. All Scablands suites passed. Both replay suites passed, with 297 checks across 33 cases and 12 checks across four encounters; fingerprints are unchanged. The build passed with bundle-size warnings. Integration was already up to date.
+
+The lane tier passed 27 of 28 suites. `test-full-check` could not set up its temporary Git copy because `pwsh` returned EACCES. This is the known lane environment failure for Claude to rerun.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: nothing; the ground still uses its existing drawing.
+
+For Claude to run: the scenario once it is written. Chrome cannot start in this job. Cockpit sync again could not open its protected credential and did not update Cockpit.
