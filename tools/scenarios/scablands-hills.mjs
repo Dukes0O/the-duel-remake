@@ -100,6 +100,27 @@ export async function run(context) {
         const cameraGround = drawnHeight(cameraPosition.x, cameraPosition.z);
         if (!Number.isFinite(cameraGround) || cameraPosition.y < cameraGround)
           throw Error('Camera is under the drawn ground in ' + ${JSON.stringify(name)});
+        const things = land.getObjectByName('Scablands realism things');
+        if (!things) throw Error('Drawn things are unavailable in ' + ${JSON.stringify(name)});
+        things.updateWorldMatrix(true, true);
+        let checked = 0;
+        things.traverse(mesh => {
+          const offsets = mesh.userData?.groundAnchorOffsets;
+          if (!mesh.isInstancedMesh || !offsets) return;
+          const matrix = mesh.matrixWorld.clone(), point = cameraPosition.clone();
+          for (let i = 0; i < mesh.count; i++) {
+            mesh.getMatrixAt(i, matrix);
+            point.setFromMatrixPosition(matrix).applyMatrix4(mesh.matrixWorld);
+            if (Math.hypot(point.x - cameraPosition.x, point.z - cameraPosition.z) > 300) continue;
+            // Offsets describe the contact point in the batch's local vertical axis.
+            const anchor = point.y - offsets[i] * mesh.matrixWorld.elements[5];
+            const height = drawnHeight(point.x, point.z);
+            if (!Number.isFinite(height) || Math.abs(anchor - height) > .5)
+              throw Error(mesh.name + ' is away from the drawn ground in ' + ${JSON.stringify(name)});
+            checked++;
+          }
+        });
+        if (!checked) throw Error('No nearby drawn things checked in ' + ${JSON.stringify(name)});
         const ground = a.duel.course.groundAt(s.s, s.lateral);
         const cars = r.scene.children.filter(node => node.visible && node.userData?.vehicleKey === s.car &&
           Math.hypot(node.position.x - ground.x, node.position.z - ground.z) < 1);

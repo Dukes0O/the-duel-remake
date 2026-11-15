@@ -192,6 +192,37 @@ test('small things use one batch per kind and follow the player; only the kinds 
   assert.equal(view.group.children.length, 0);
 });
 
+test('drawn instance anchors identify their ground contact', () => {
+  const groundAt = () => 17;
+  const small = createSmallThingsView({seed: 1989, jobStarts: [], drawnHeightAt: groundAt});
+  const p = LAND.between('yard', 'tin-town', .4);
+  small.update(p.x, p.z);
+  let count = 0;
+  for (const mesh of small.group.children) {
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, matrix);
+      assert.ok(Math.abs(matrix.elements[13] - mesh.userData.groundAnchorOffsets[i] - 17) < .001, mesh.name);
+      count++;
+    }
+  }
+  assert.ok(count > 0);
+  const fixed = clearedFixedThings(1989, []);
+  const standing = createFixedThingsView(fixed, [], null, groundAt);
+  standing.update(p.x, p.z);
+  count = 0;
+  for (const mesh of standing.group.children) {
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.getMatrixAt(i, matrix);
+      assert.ok(Math.abs(matrix.elements[13] - mesh.userData.groundAnchorOffsets[i] - 17) < .001, mesh.name);
+      count++;
+    }
+  }
+  assert.ok(count > 0);
+  small.dispose(); standing.dispose();
+});
+
 test('cleared things produce collision records in the spatial index', () => {
   const fixed = clearedFixedThings(1989, []);
   const rock = clearedLoneBoulder(1989, 0, 0, []);

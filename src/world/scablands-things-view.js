@@ -35,6 +35,7 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
     mesh.name = `Scablands ${kind}`;
     mesh.castShadow = SHADOWED.has(kind); mesh.receiveShadow = true;
     mesh.count = 0;
+    mesh.userData.groundAnchorOffsets = new Float64Array(CAPACITY);
     mesh.frustumCulled = false;
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     group.add(mesh);
@@ -83,6 +84,7 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
         object.scale.set(size * wide, size * high, size);
         object.updateMatrix();
         if (kind === 'stone') mesh.setColorAt(count, tint.setScalar(item.tint));
+        mesh.userData.groundAnchorOffsets[count] = size * high * .35;
         mesh.setMatrixAt(count++, object.matrix);
       }
       mesh.count = count;
@@ -116,6 +118,7 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
     mesh.name = `Scablands ${kind}`;
     mesh.count = 0; mesh.frustumCulled = false;
     mesh.userData.solidIds = parts.map(part => part.id);
+    mesh.userData.groundAnchorOffsets = new Float64Array(mesh.instanceMatrix.count);
     group.add(mesh); batches.push({mesh, parts, range, tinted: kind === 'boulder'});
   }
   // A thing is drawn within its range of the player, growing from nothing over the range's last tenth so that it does
@@ -141,6 +144,8 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
         object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
         object.updateMatrix();
         if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? STONE_PLAIN));
+        mesh.userData.groundAnchorOffsets[count] = part.kind === 'fence-post' && fallen.has(part.id)
+          ? part.size[0] / 2 : part.size[1] * grown / 2;
         mesh.setMatrixAt(count++, object.matrix);
       }
       mesh.count = count; mesh.instanceMatrix.needsUpdate = true;
@@ -195,6 +200,7 @@ export function createThingsLinesView(fixed, groundAt = null) {
   if (standing.length) {
     const towers = new THREE.InstancedMesh(pylonShape(), pylonSurface(), standing.length), object = new THREE.Object3D();
     towers.name = 'Scablands pylons'; towers.castShadow = true;
+    towers.userData.groundAnchorOffsets = new Float64Array(standing.length);
     for (const [index, pylon] of standing.entries()) {
       object.position.set(pylon.x, drawnY(pylon), pylon.z); object.rotation.set(0, pylon.heading, 0); object.updateMatrix();
       towers.setMatrixAt(index, object.matrix);

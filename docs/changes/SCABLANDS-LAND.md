@@ -1746,3 +1746,13 @@ The picture scenario now checks the camera's world position against the drawn gr
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so Claude still needs to check the new guard in the browser. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the camera check is new. Codex decided: no new design choice. Removed: none.
 
 Still needed: scenario checks for nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture ground contact check
+
+The picture scenario now checks the ground contact points of nearby instanced small things, standing footprints and pylons against the drawn ground within 300 m of the camera. The drawing supplies contact offsets so that intentional sinking and scaled objects are judged at their placement point. Sign boards and wires are not checked separately. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. `node tools/test-scablands-things.mjs` passed 37 of 37, including a new contact-point check. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the contact-point test is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: the scenario's named-landmark check and dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
