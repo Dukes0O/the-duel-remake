@@ -491,3 +491,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road camp proof (15 November 2026)
+
+- The Medium proof driver uses the loaned flamethrower against a barricade ahead. It burns the Halfway Camp barricade and continues to 2.5 km. No new sound event was added; the existing `weapon.flame.start` cue plays.
+- `node tools/test-everburn-job1.mjs`: passed. The real car drove 499.25 m in 32.20 seconds, stayed within 1.25 m of the road and reached 2,500.25 m with 58.40 ember. `git diff --check`: passed. Race fingerprints were not checked in this round.
+- Codex decided: the proof driver fires when an unburnt barricade is within 18 m and within the flamethrower's 15-degree half cone. This uses the real weapon and job state. Claude should review the drive.
+- Changed assertions: none. For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the rest of the East Road arrival proof, the other five drives, camera, cover and scenario.

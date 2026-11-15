@@ -322,6 +322,11 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(fourth.along >= 2000, `the car follows the East Road for 2 km: ${JSON.stringify(fourth)}`);
   assert.ok(fourth.driven >= 490 && fourth.maxDistance < 20, `the car drives the fourth stretch close to the road: ${JSON.stringify(fourth)}`);
   assert.ok(fourth.lowestEmber > 0 && fourth.lowestEmber <= fourth.ember, `the ember stays alight throughout the fourth stretch: ${JSON.stringify(fourth)}`);
+  const fifth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2500);
+  assert.ok(fifth.along >= 2500, `the car passes the camp: ${JSON.stringify(fifth)}`);
+  assert.ok(world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'the car burns the camp barricade with its loaned flamethrower');
+  assert.ok(fifth.lowestEmber > 0, `the ember stays alight past the camp: ${JSON.stringify(fifth)}`);
+  console.log('East Road camp drive:', JSON.stringify(fifth));
 
 }
 // The real job requests the gate only for a car approaching slowly.

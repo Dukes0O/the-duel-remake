@@ -56,6 +56,16 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
     if (hit.along >= endAlong) break;
     const target = sliceLine(points, hit.along, hit.along + 45).at(-1);
     const turn = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + state.headingError));
+    // The East Road is blocked at the camp and bridge. Use the loaned weapon
+    // when a live barricade is in front of the car and within flame range.
+    const step = state.arena.worldJob.definition.steps[0];
+    const burnt = state.arena.worldJob.job.stepState.burntBarricades || [];
+    for (const barrier of step.barriers || []) {
+      if (burnt.includes(barrier.id)) continue;
+      const dx = barrier.position.x - car.x, dz = barrier.position.z - car.z;
+      const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
+      if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
+    }
     duel.setInput({throttle:Math.abs(state.speedMph) < 35 ? 0.8 : 0,
       brake:Math.abs(state.speedMph) > 38 ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
