@@ -101,15 +101,29 @@ const PHOTO_FUNCTIONS = `
 // scene's build short.
 export function createHillField({halfWidth, halfDepth, raised, spots}) {
   const cell = 16, margin = 200, width = Math.ceil((halfWidth * 2 + margin * 2) / cell), depth = Math.ceil((halfDepth * 2 + margin * 2) / cell);
-  const x0 = -halfWidth - margin, z0 = -halfDepth - margin, data = new Uint8Array(width * depth);
+  const x0 = -halfWidth - margin, z0 = -halfDepth - margin, data = new Uint8Array(width * depth * 2);
   const clamp = (value, max) => Math.max(0, Math.min(max, value));
-  for (const spot of spots) {
-    const c0 = clamp(Math.floor((spot.x - spot.reach - x0) / cell), width - 1), c1 = clamp(Math.ceil((spot.x + spot.reach - x0) / cell), width - 1);
-    const r0 = clamp(Math.floor((spot.z - spot.reach - z0) / cell), depth - 1), r1 = clamp(Math.ceil((spot.z + spot.reach - z0) / cell), depth - 1);
-    for (let row = r0; row <= r1; row++) for (let column = c0; column <= c1; column++)
-      data[row * width + column] = clamp(Math.round(raised(x0 + (column + .5) * cell, z0 + (row + .5) * cell) / 100 * 255), 255);
+  const boxes = spots.map(spot => ({
+    c0: clamp(Math.floor((spot.x - spot.reach - x0) / cell), width - 1), c1: clamp(Math.ceil((spot.x + spot.reach - x0) / cell), width - 1),
+    r0: clamp(Math.floor((spot.z - spot.reach - z0) / cell), depth - 1), r1: clamp(Math.ceil((spot.z + spot.reach - z0) / cell), depth - 1)}));
+  for (const {c0, c1, r0, r1} of boxes) for (let row = r0; row <= r1; row++) for (let column = c0; column <= c1; column++)
+    data[(row * width + column) * 2] = clamp(Math.round(raised(x0 + (column + .5) * cell, z0 + (row + .5) * cell) / 100 * 255), 255);
+  // The second number is the rim: how near a place is to a cliff's edge, read from the heights just written. Ground that falls
+  // 10 m or more within 16 m is a cliff (a mesa's side falls 17 m; no hill's slope falls more than 9 m), and the ground within 50 m
+  // of one counts a little. The ground's drawing shows it only where the ground is level, so it marks a mesa's top along its edge.
+  const metres = (row, column) => row < 0 || column < 0 || row >= depth || column >= width ? 0 : data[(row * width + column) * 2] / 255 * 100;
+  const fall = (row, column, reach) => {
+    const here = metres(row, column);
+    let most = 0;
+    for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) most = Math.max(most, here - metres(row + dr * reach, column + dc * reach));
+    return most;
+  };
+  for (const {c0, c1, r0, r1} of boxes) for (let row = r0; row <= r1; row++) for (let column = c0; column <= c1; column++) {
+    if (metres(row, column) < 8) continue;
+    const near = clamp((fall(row, column, 1) - 9) / 5, 1), far = clamp((fall(row, column, 3) - 26) / 5, 1) * .45;
+    data[(row * width + column) * 2 + 1] = Math.round(Math.max(near, far) * 255);
   }
-  const texture = new THREE.DataTexture(data, width, depth, THREE.RedFormat, THREE.UnsignedByteType);
+  const texture = new THREE.DataTexture(data, width, depth, THREE.RGFormat, THREE.UnsignedByteType);
   texture.minFilter = texture.magFilter = THREE.LinearFilter; texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.generateMipmaps = false; texture.unpackAlignment = 1; texture.needsUpdate = true;
   return {texture, box: {x0, z0, width: width * cell, depth: depth * cell}};
@@ -352,7 +366,8 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           // ---- Hill country (slice 2c). A hill is worn rock, not a heap of the plain's dust: beds of buff, red, grey and pale stone lie
           // level through it, each a few metres thick, and show as bands round its sides; rain has cut rills straight down every slope.
           // Dunes are sand and the river's banks are their own, so neither is banded.
-          float gHill=texture2D(uHillField,(gq-uHillBox.xy)*uHillBox.zw).r*100.0;
+          vec2 gHillRead=texture2D(uHillField,(gq-uHillBox.xy)*uHillBox.zw).rg;
+          float gHill=gHillRead.r*100.0;
           float gUp=smoothstep(4.0,16.0,gHill)*(1.0-wSand)*(1.0-wBed);
           if(gUp>.004){
             float gBedAt=vGroundPos.y*.105+gBig.r*.45+gMid.g*.18;
@@ -367,6 +382,16 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             gBed*=1.0-.34*gRill*gTilt;
             // Salt lies only where the ground is level: a hill in the pan shows its rock from the first of its slope.
             gc=mix(gc,gBed*mix(1.0,.55,wPlates),gUp*mix(.18*(1.0-wPan),.96,gTilt));
+            // The rim. Along a cliff's edge the cap rock is swept bare and pale and is broken by cracks that open toward the drop. From a
+            // mesa's top the plain below is the same ground as the top, so without this a driver cannot see where the top ends.
+            float gRim=gHillRead.g*(1.0-gTilt)*(1.0-wSand);
+            if(gRim>.01){
+              vec3 gCap=vec3(.47,.41,.32)*(.74+.5*gFine.g)*(.86+.3*gMid.r);
+              float gBlock=texture2D(uGroundNoise,gq*.031+.41).r,gSplit=texture2D(uGroundNoise,gq*.0093+.13).g;
+              float gCrack=(1.0-smoothstep(.0,.05,abs(gBlock-.5)))*.75+(1.0-smoothstep(.0,.03,abs(gSplit-.5)));
+              gc=mix(gc,gCap,smoothstep(.0,.5,gRim)*.82);
+              gc*=1.0-min(1.0,gCrack)*.7*smoothstep(.1,.6,gRim);
+            }
           }` : ''}
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);

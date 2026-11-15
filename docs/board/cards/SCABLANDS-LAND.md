@@ -993,6 +993,36 @@ Sheet `docs/board/looks/scablands-land/round-11.jpg` with Claude's review beside
 
 **Checks at the merge (Claude):** lane tier 118 of 118 on the merged code (66 minutes; `test-everburn-easy` passes with The Everburn finished 9 of 10 and every other job 10 of 10; `test-run-gas-medium` passes); `npm run build` passes; browser scenario `scablands-hills` passes in a visible window, eleven views.
 
+### Claude's drive over the hills, in real time (15 November 2026, night)
+
+Driven by Claude's own key presses in a visible window at full frame rate, in bursts, with `tools/hand-drive.mjs`, on the
+merged land with `scablands-realism` on, inside job 1 (memory-only saves, a private address). The owed drive of slice 2c.
+
+- **A hill of the Breaks, flat out.** From the Burn Road over a 28 m hill at 150 km/h. The car holds its speed up the slope
+  and down it. The pot does not: the ember went from 100 to nothing in 30 seconds. A hill costs fire, not speed, which is what
+  job 1 wants. The camera rides above the car and never enters the ground.
+- **A mesa's wall.** At 96 km/h into the steep side: the car stops dead at the foot. The wall is solid and cannot be climbed.
+- **A mesa's ramp.** The car climbs it at 95 km/h, and a boulder standing on the ramp stops it dead. Solid things hold.
+- **Off the edge.** Driving off the top at 96 km/h: 28.5 m of air, a hard landing, armour from 121 to 61, speed halved. A fall
+  is a real cost and is fun; it stays.
+- **Sight in play.** On the top the screen said "The furnace can see your car", and behind the mesa "The furnace has lost
+  sight of your car". The sight rule works where a player meets it.
+
+**Faults found, and what was done.**
+
+1. **The edge of a mesa's top could not be seen.** The top and the plain below are the same dark ground, so the top looked
+   endless until the car was over the drop. **Drawn by Claude:** a rim. The hills' field carries a second number, how near a
+   place is to a cliff's edge (ground that falls 10 m or more within 16 m), and the ground's drawing shows it on level ground
+   as pale, swept cap rock with cracks. From 80 m (three seconds at that speed) the edge is plain; from below, the mesa has a
+   pale cap line. `createHillField` and the hill block in `src/world/scablands-ground-look.js`.
+2. **In the air the camera loses the car's landing.** Over the edge the chase camera looks up at the car from below against
+   the sky; the ground the car will land on is out of view until it lands. Sent to Codex with job 1 (the camera is
+   `src/render3d.js`): in the air the camera stays behind and above the car's own height and keeps the ground ahead of the
+   car in view.
+3. **Still on the screen in a world job:** the clock, the four arena weapons and the jump readout. Already in job 1's list.
+
+Not driven: the dunes, the Lookout and a raiders' search. The frame check is still owed before any switch goes on.
+
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.

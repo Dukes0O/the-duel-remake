@@ -2202,3 +2202,16 @@ is kept inside a rounded outline (`src/world/scablands-things-look.js`).
 **Lane tier and build at the merge (Claude):** lane tier 118 of 118 on the merged code (66 minutes; `test-everburn-easy` passes with The Everburn finished 9 of 10 and every other job 10 of 10; `test-run-gas-medium` passes); `npm run build` passes; browser scenario `scablands-hills` passes in a visible window, eleven views.
 
 **Removed:** the thirteen-dome hill table of the first build, replaced by the seeded table in the same file.
+
+### The rim of a mesa (Claude, 15 November 2026, night)
+
+From Claude's drive over the hills (the card, "Claude's drive over the hills"): the edge of a mesa's top could not be seen
+from the top. `createHillField` now writes two numbers for each place (the picture is two bytes a sample, where it was one):
+the height above the old ground, as before, and the rim, read from the heights already written (no more questions asked of the
+land, so the scene's build is no longer). The ground's drawing shows the rim on level ground as pale cap rock with cracks.
+
+Checks: `test-scablands-ground` 5 of 5, `test-scablands-scene` passes, `test-scablands-hills` 55 of 55, `test-scablands-map`,
+`test-scablands-things` 37 of 37 and `test-tunnels` pass. Seen in the game in a visible window from 150 m, 80 m and 35 m
+short of the edge, from the top's centre and from below. No assertion changed. No sound: nothing here is an event.
+
+**Removed:** nothing.
