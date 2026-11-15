@@ -218,7 +218,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
     } else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Raise the mast before driving on.':'Drive to a spot. Press Tab to lower the mast. Hold Space to drill. Add W for harder feed. Hold S to reverse.';
     else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=sim.activeMachine==='dozer'
-      ? 'Hold Space and drive through the raised ground to push it into the ditch.'
+      ? 'Hold Space while driving to gather ground. Let go of Space and drive to spread it.'
       : sim.activeMachine==='roller' ? 'Hold Space and drive over the spread ground until it is firm.'
       : 'Hold Space and Shift while driving over firm ground to lay a smooth surface.';
     else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';

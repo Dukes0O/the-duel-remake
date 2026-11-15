@@ -88,6 +88,23 @@ for (const kind of ['dozer', 'roller', 'paver']) {
   const raised = stepRoadMachine(initial, ground, {forward:1}, 4);
   assert.deepEqual(raised.work, ground, 'Driving with the tool raised leaves the ground alone.');
 }
+// Cut ordinary flat ground, then drive back with the blade raised to spread it.
+let longGround = createRoadWork();
+let longDozer = createRoadMachineState('dozer');
+for (let i=0; i<45; i++) {
+  const next = stepRoadMachine(longDozer, longGround, {forward:1, working:true}, 1);
+  longDozer = next.state; longGround = next.work;
+}
+for (let i=0; i<50; i++) {
+  const next = stepRoadMachine(longDozer, longGround, {forward:-1}, 1);
+  longDozer = next.state; longGround = next.work;
+}
+for (let z=2; z<=41; z++) {
+  assert.ok(roadCell(longGround, 0, z).spread > 0, `The blade spreads ordinary ground at ${z} m.`);
+  for (let pass=0; pass<3; pass++) longGround = workRoadCell(longGround, {kind:'roller', x:0, z}).work;
+  longGround = workRoadCell(longGround, {kind:'paver', x:0, z, speedMps:0.5, edgeOffsetM:0}).work;
+  assert.equal(roadCondition(roadCell(longGround, 0, z)), 'good');
+}
 let yard = createDigSandbox({playerId:'road-test'});
 for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'excavator']) {
   yard = switchDigMachine(yard);

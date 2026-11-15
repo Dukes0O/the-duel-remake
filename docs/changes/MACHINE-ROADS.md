@@ -4,6 +4,10 @@ The dozer cuts and carries material into low ground. The roller firms the fill, 
 
 A town can record individual machine actions without changing an old save. Town roads use eight-metre cells. Their weakest metre sets the grade, and the existing haul route uses that grade to set truck speed. A rough patch can lower the grade and another pass can restore it. The yard does not write to a town or a save.
 
+## Review fixes in progress
+
+The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The other five review fixes and their checks are still outstanding. The earlier results below precede this fix and do not cover it.
+
 ## Checks
 
 - Road rules, all machine, dig and town suites: passed, including older and new town save round trips, road grades, truck travel and repair.

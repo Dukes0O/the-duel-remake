@@ -22,7 +22,12 @@ export function workRoadCell(work, action) {
   const events = [];
   if (kind === 'dozer') {
     if (!Number.isFinite(action.bladeHeight)) throw new TypeError('The blade needs a height.');
-    if (cell.height > action.bladeHeight) {
+    if (action.spreading === true) {
+      const fill = Math.min(bladeLoad, 0.1);
+      cell.height += fill;
+      cell.spread += fill;
+      bladeLoad -= fill;
+    } else if (cell.height > action.bladeHeight) {
       const cut = cell.height - action.bladeHeight;
       cell.height -= cut;
       bladeLoad += cut;
@@ -104,17 +109,19 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
   const before = state.machine;
   const machine = stepMachine(machineDefinition(state.kind), before, controls, dtSeconds);
   const distance = Math.hypot(machine.x - before.x, machine.z - before.z);
-  let carry = controls.working === true ? state.distanceCarryM : 0;
+  const spreading = state.kind === 'dozer' && controls.working !== true && work.bladeLoad > 0;
+  const active = controls.working === true || spreading;
+  let carry = active ? state.distanceCarryM : 0;
   let nextWork = work;
   const events = [];
-  if (controls.working === true && distance > 0) {
+  if (active && distance > 0) {
     const steps = Math.floor(carry + distance);
     for (let i = 0; i < steps; i++) {
       const fraction = (1 - carry + i) / distance;
       const x = Math.round(before.x + (machine.x - before.x) * fraction);
       const z = Math.round(before.z + (machine.z - before.z) * fraction);
       const result = workRoadCell(nextWork, {kind:state.kind, x, z,
-        bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : 0,
+        bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : -0.1, spreading,
         speedMps:Math.abs(machine.speedMps), edgeOffsetM:Number.isFinite(controls.edgeOffsetM) ? controls.edgeOffsetM : 0});
       nextWork = result.work;
       events.push(...result.events.map(event => ({...event, x, z})));
