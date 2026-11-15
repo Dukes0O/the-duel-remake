@@ -202,6 +202,55 @@ arrives bright; the scab short cut held at 50 km/h arrives alive and not bright;
 passes 30 km/h goes out before Tin Town). The lengths in "The road and who is on it" above are
 rewritten after slice 2b, when the river and its crossings are solid.
 
+## Job 1 on the larger land (Claude, 14 November 2026): four ways, each with its own price
+
+This replaces the lengths and places in "The road and who is on it" and "How it starts and ends"
+above. The ember's rule, the pay and the screen stand as written. Places are the land's names
+(SCABLANDS-LAND round 4); nothing here is a typed position.
+
+**Why the job is driven.** Tin Town's forge has gone cold, and a town without a forge cannot
+mend its pump. Cinder keeps the last fire the yard has. The Ash Men hold that all fire belongs
+to Old Smoke's furnace, and they take any they find on the road. The player hears this from
+Cinder at the yard's east gate before the pot goes on the car, in three short lines, and sees
+the furnace's smoke on the skyline as she says it.
+
+**What the player is told, and what is found.** Cinder names one way, the East Road, and one
+danger, that the Ash Men hold the Girder Bridge. The map lists that way with what she said. The
+other three ways are on the map as ground and crossings, with nothing written about them until
+the player has driven them or seen who is there. A player who reads the ground finds them.
+
+| Way | Length | What it asks | What it costs | A clean run arrives |
+| --- | --- | --- | --- | --- |
+| The East Road, over the Girder Bridge | 7.8 km | Speed, and two fights | A barricade with riders at the Halfway Camp and another on the bridge; every ram is a jolt | Bright (70 or more) |
+| Across the scab plates, by the Steps | 6.0 km | A slow, careful hand | Rock that jolts over 50 km/h, the Steps at walking pace, and the furnace's sight the whole way | Alive (30 to 55) |
+| By the salt pan, over the Pipe | 8.9 km | Nerve | No one holds it, but the wind on the open pan cools the pot half as fast again, and the Pipe is one car wide over an 8 m drop | Alive (55 to 69) |
+| Down the river bed, from the Wash | 9.4 km | Patience | Out of everyone's sight, soft ground, the longest way; the pot dies without the brazier at the Wash camp | Alive (30 to 55), or out |
+
+- **Fire on the way.** A brazier stands at the yard's gate (the start), at the Halfway Camp on
+  the East Road and at the Wash camp in the bed. Stopping at one for three seconds puts 25 back
+  in the pot, once each. There is none on the plates or the salt. At the Halfway Camp the
+  riders arrive while the player scoops.
+- **The East Road's two barricades** each have Ash Men waiting. Cinder lends the flamethrower to
+  burn a barricade. The riders ram; the player may burn them, outrun them or turn off the road.
+- **The furnace stands on the high ground north of the Steps** and watches the plates. More than
+  six seconds in the open in its sight and its horn sounds and two riders come down. The scarps
+  give cover now and the mesas will give more (SCABLANDS-LAND slice 2c). From the East Road it
+  is seen on the skyline for two kilometres: Old Smoke is seen long before he is fought.
+- **The Pipe** is crossed at 40 km/h or less. Faster, and the car is off it; the fall is a hit
+  that can put the ember out.
+- **Within 400 m of Tin Town's wall the Ash Men turn back.** Auntie Solder says why.
+- **Start.** The car stands 40 m inside the yard's east gate. Cinder and her brazier are at the
+  gate. **End.** Tin Town's gate, the bay by the cold forge, stopped, as written above.
+- **How long.** Three and a half minutes by the road at speed; eight by the bed.
+
+**Proved by four scripted drives** (one each way, on Medium, from seed): each arrives in the
+band the table gives. The salt wind's factor and the brazier's 25 are set by those drives and
+written in the change note. A fifth drive takes the bed without scooping and arrives out.
+
+**Waits on the land:** the bed's way passes under the Girder Bridge, which is a wall from the bed
+until the land holds two heights at a deck (the tunnel lane's rule). Until then the bed's drive
+is proved from the Wash to the bridge and marked as owed.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
