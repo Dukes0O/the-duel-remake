@@ -126,7 +126,9 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
   let carry = active ? state.distanceCarryM : 0;
   let nextWork = work;
   // The first working pass establishes the straight line the driver is extending.
-  let roadLine = state.roadLine;
+  let roadLine = active && state.roadLine && state.lastWorkPosition &&
+    Math.hypot(before.x - state.lastWorkPosition.x, before.z - state.lastWorkPosition.z) < 2
+    ? state.roadLine : null;
   if (active && distance > 0 && !roadLine)
     roadLine = {x:before.x, z:before.z, heading:before.heading};
   const events = [];
@@ -136,13 +138,15 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0) {
       const fraction = (1 - carry + i) / distance;
       const x = Math.round(before.x + (machine.x - before.x) * fraction);
       const z = Math.round(before.z + (machine.z - before.z) * fraction);
+      if (state.kind === 'paver' && roadCell(nextWork, x, z).spread <= 0) roadLine = null;
+      else if (!roadLine) roadLine = {x:before.x, z:before.z, heading:before.heading};
       const result = workRoadCell(nextWork, {kind:state.kind, x, z,
         bladeHeight:Number.isFinite(controls.bladeHeight) ? controls.bladeHeight : -0.1, spreading,
-        speedMps:Math.abs(machine.speedMps), edgeOffsetM:(before.x + (machine.x-before.x)*fraction-roadLine.x)*Math.cos(roadLine.heading) - (before.z + (machine.z-before.z)*fraction-roadLine.z)*Math.sin(roadLine.heading)});
+        speedMps:Math.abs(machine.speedMps), edgeOffsetM:!roadLine ? 0 : (before.x + (machine.x-before.x)*fraction-roadLine.x)*Math.cos(roadLine.heading) - (before.z + (machine.z-before.z)*fraction-roadLine.z)*Math.sin(roadLine.heading)});
       nextWork = result.work;
       events.push(...result.events.map(event => ({...event, x, z})));
     }
     carry = (carry + distance) % 1;
   }
-  return {state:{...state, machine, distanceCarryM:carry, roadLine}, work:nextWork, events};
+  return {state:{...state, machine, distanceCarryM:carry, roadLine, lastWorkPosition:active ? {x:machine.x, z:machine.z} : null}, work:nextWork, events};
 }

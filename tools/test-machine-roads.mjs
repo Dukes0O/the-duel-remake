@@ -151,6 +151,22 @@ for (let i=0; i<600; i++) {
   drivenPaver=next.state; drivenGround=next.work;
 }
 assert.equal(roadCondition(roadCell(drivenGround, 0, 3)), 'good', 'A straight pass repairs the edge.');
+// A new working pass establishes its own line, including alongside a prior strip.
+let sideGround = createRoadWork();
+for (let x=0; x<=1; x++) for (let z=0; z<12; z++)
+  sideGround.cells[`${x}:${z}`] = {height:0, spread:1, compaction:1, surface:0, roughness:0};
+let sidePaver = createRoadMachineState('paver');
+for (let i=0; i<600; i++) {
+  const next = stepRoadMachine(sidePaver, sideGround, {forward:0.5, working:true}, 1/60);
+  sidePaver=next.state; sideGround=next.work;
+}
+sidePaver = stepRoadMachine(sidePaver, sideGround, {}, 1/60).state;
+Object.assign(sidePaver.machine, {x:1,z:0,heading:0,speedMps:0});
+for (let i=0; i<600; i++) {
+  const next = stepRoadMachine(sidePaver, sideGround, {forward:0.5, working:true}, 1/60);
+  sidePaver=next.state; sideGround=next.work;
+}
+assert.equal(roadCondition(roadCell(sideGround,1,3)), 'good', 'A straight second strip has its own line.');
 // A heap between worked metres leaves a bump until the drum presses it level.
 let bumpGround = createRoadWork();
 for (let z=0; z<10; z++) bumpGround.cells[`0:${z}`] =
