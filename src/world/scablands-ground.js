@@ -2,6 +2,7 @@ import {SCABLANDS_PLACES} from './scablands.js';
 import {ROAD_HALF_WIDTH,ROAD_NET,distanceToNet} from './scablands-road.js';
 import {createGroundEdit} from './ground-edit.js';
 import {cutAt,regionAt,regionNaturalHeightAt} from './regions.js';
+import {riverDepthAt,riverGorgeDepthAt} from './scablands-regions.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 let scablandsOpenMarks=new Set();
@@ -68,6 +69,15 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit,open
   const previousNatural=scablandsNaturalHeightAt(x,z,scablandsOpenMarks);
   const requestedNatural=scablandsNaturalHeightAt(x,z,openMarks);
   return edited-previousNatural+requestedNatural;
+}
+
+// With an actor below a bridge deck, return the continuous bed instead of the deck.
+// The edit applies to both levels. With no height hint, preserve the surface exactly.
+export function scablandsActorHeightAt(x,z,actorHeight){
+  const surface=scablandsSurfaceHeightAt(x,z);
+  if(!Number.isFinite(actorHeight))return surface;
+  const deckLift=riverGorgeDepthAt(x,z)-riverDepthAt(x,z);
+  return deckLift>1.2 && actorHeight<surface-1.2 ? surface-deckLift : surface;
 }
 
 export function scablandsSurfaceAt(x,z){

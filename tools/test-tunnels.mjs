@@ -4,6 +4,20 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
+import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
+
+// The same position has a bed below each deck and a surface above it.
+for (const id of ['girder-bridge', 'the-pipe']) {
+  const {x, z} = RIVER_LAND.crossings.find(crossing => crossing.id === id);
+  const surface = scablandsSurfaceHeightAt(x, z);
+  const bed = surface - (riverGorgeDepthAt(x, z) - riverDepthAt(x, z));
+  assert.ok(surface - bed > 6, `${id} has room under its deck`);
+  assert.equal(scablandsActorHeightAt(x, z, bed), bed);
+  assert.equal(scablandsActorHeightAt(x, z, surface), surface);
+  assert.equal(scablandsActorHeightAt(x, z), surface);
+  assert.equal(scablandsActorHeightAt(x, z, surface - 1.2), surface);
+}
 
 // Use the real west scarp, with both ends joined to the ground.
 {
