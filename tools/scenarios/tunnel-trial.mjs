@@ -68,19 +68,20 @@ export async function run(context) {
         place(x,z,heading,height){const p=d.course.nearest(x,z); placeActor(d,d.state,{s:p.s,lateral:p.lateral,headingError:Math.atan2(Math.sin(heading-d.course.at(p.s).heading),Math.cos(heading-d.course.at(p.s).heading))},0);
           if(Number.isFinite(height)){d.state.groundHeight=height;d.state.prevGroundHeight=height;d.state._jumpY=height;}
         },
+        camera(position,target){a.inspectionCamera={position,target};window.__render.camera.position.fromArray(position);},
         frame(){a.onFrame?.(d.state,0);window.__render.renderFrame();}
       };
     })()`);
     const {start, end, radius} = segment, dx=(end.x-start.x)/100, dz=(end.z-start.z)/100;
     await context.evaluate(`(() => {const t=window.__tunnelTrial; t.place(${start.x-dx*25},${start.z-dz*25},${Math.atan2(dx,dz)});
-      t.a.inspectionCamera={position:[${start.x-dx*18+dz*10},${start.y+7},${start.z-dz*18-dx*10}],target:[${start.x},${start.y},${start.z}]};t.frame();})()`);
+      t.camera([${start.x-dx*18+dz*10},${start.y+7},${start.z-dz*18-dx*10}],[${start.x},${start.y},${start.z}]);t.frame();})()`);
     for (let i=1; i<=20; i++) {
       await context.evaluate(`window.__tunnelTrial.bore(${i/20}); window.__tunnelTrial.frame()`);
       if (i===10) await context.screenshot('tunnel-boring');
     }
     await context.evaluate('window.__tunnelTrial.machine.visible=false');
     const picture = async (name, x, z, y, target) => {
-      await context.evaluate(`(() => {const t=window.__tunnelTrial; t.a.inspectionCamera={position:[${x},${y},${z}],target:${JSON.stringify(target)}}; t.frame();})()`);
+      await context.evaluate(`(() => {const t=window.__tunnelTrial; t.camera([${x},${y},${z}],${JSON.stringify(target)}); t.frame();})()`);
       const file=await context.screenshot(`tunnel-${name}`);
       const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{window.__tunnelTrial.frame();if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render,sorted=[...intervals].sort((a,b)=>a-b);return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals,frameP95Ms:sorted[Math.ceil(sorted.length*.95)-1]};})()`);
       report.views.push({name,file,...stats});

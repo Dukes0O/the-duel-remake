@@ -8,6 +8,8 @@ This round added a height-aware river-bed query, car support and slope checks, h
 
 The browser scenario is written and syntax checked but has not run. It now draws each sampled frame and requires the bridge-bed drive to leave the far side after the picture. Big Bess is drawn at her stored support height with the switch on, so she can be shown beneath a deck. It supplies a temporary refresh of both ground materials and the lining as the cylinder advances. The game scene itself still reads tubes only when it is built. Do not claim a visual, frame, save-budget, or boring-machine pass. A mover's height selection has a focused check but a complete raider or Big Bess chase under the deck has not been driven. Other actor and effect callers still need review before this can support a complete underground game.
 
+The scenario now places the camera at the requested height before each picture. The renderer normally eases the camera vertically, so a picture taken after one frame could otherwise show the wrong view. This correction still needs Claude's browser check.
+
 Ordinary races and released courses keep the surface-only path with the trial switch off; the replay and world-composition guards passed. The terrain shader adds two vector uniforms, one radius uniform and one capsule-distance test per segment per ground fragment. There is no chunk selection or measured practical limit. The tube is an untextured cylinder; its entrances and joins have not been judged in a browser. No new game event or sound cue was added. My view remains no-go for a finished boring machine until dynamic rebuilding, a real play test and frame measurements are done. Compare a real cut with this shader before choosing.
 
 [three-bvh-csg](https://github.com/gkjohnson/three-bvh-csg) is MIT licensed. Its brushes and evaluator can subtract closed geometry. A second trial needs an isolated install, closed terrain and cutter geometry, collision and terrain updates, and rebuild and frame measurements. Cost is not measured.
@@ -17,7 +19,10 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 - `node tools/test-tunnels.mjs`: passed after the deck changes. It checks the scarp in both directions, both decks in both directions, the height switch, and a pier.
 - A later run of `node tools/test-tunnels.mjs` also passed with job movers stepping under both decks in both directions, carrying their ground height between steps and checking for solid obstructions. This does not replace a full chase or visual check.
 - `node tools/test-everburn-easy.mjs`: all nine story jobs passed 10 of 10 on a repeat. The run was stopped during the gas routes, so the suite remains incomplete.
+- A further isolated repeat again passed all nine story jobs 10 of 10; it was stopped during the first gas route. The complete suite remains unverified.
+- `node tools/test-track-kits.mjs`: passed on an isolated repeat, including every circuit with kit placements.
 - `node --check tools/scenarios/tunnel-trial.mjs`: passed after the frame sampling and bridge exit changes. The browser scenario was not run.
+- After the camera placement correction, `node --check tools/scenarios/tunnel-trial.mjs` and `node tools/test-tunnels.mjs` passed. The browser scenario was not run.
 - `node tools/test-scablands-solid.mjs`: passed 18 checks. The four-way route reached town with no hits.
 - `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.
 - `node tools/test-combat-replays.mjs`: passed 12 fingerprints across four encounters.
@@ -32,7 +37,7 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 
 ## For Claude to run
 
-Resolve the shortcut freshness failure and rerun the two incomplete lane suites and the three FFmpeg-dependent checks. Run `tools/scenarios/tunnel-trial.mjs` with the browser harness. Check the 100 m bore, both drives, both mouths, the inside, the ground above and the bridge bed. The scenario records draw calls, triangles and frame intervals with memory-only storage on Performance. Check that Big Bess and raiders visibly chase under the deck as well. Judge the look and measure frame time.
+Resolve the shortcut freshness failure and rerun the incomplete Everburn Easy suite and the three FFmpeg-dependent checks. Run `tools/scenarios/tunnel-trial.mjs` with the browser harness. Check the 100 m bore, both drives, both mouths, the inside, the ground above and the bridge bed. The scenario records draw calls, triangles and frame intervals with memory-only storage on Performance. Check that Big Bess and raiders visibly chase under the deck as well. Judge the look and measure frame time.
 
 ## Changed assertions, for Claude to review
 
