@@ -668,6 +668,11 @@ belongs:
 - **One hill that overlooks**, the Lookout, with a flat top and a long clear view over the
   flats: kept in mind as a firing place for Kyle's artillery idea.
 
+**Codex decided (Claude to review):** The Lookout stands south-west of the Ridge, above the
+flats. Its top is 45 m above the former ground, with a 60 m level radius. This puts it clear
+of the roads and gives it a clear view towards the yard. Survey Flags' fifth flag stays where
+it is.
+
 **Hills are played, not only seen.**
 - A car slows going up, gathers speed going down, and flies off a crest taken fast (slice 2b's
   rules).

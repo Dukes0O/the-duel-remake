@@ -1243,3 +1243,19 @@ Still needed: investigate the Easy driver's Survey Flags failure; finish the oth
 Lane tier: 39 of 41 suites passed. `test-everburn-easy` again failed Survey Flags, 0 of 10 against the unchanged minimum of 8; the other eight jobs each finished 10 of 10 before the test stopped. The sample car stopped near the river while seeking the fourth flag, at approximately (1879, -1525); the cause remains unknown. Gas roads were not reached. `test-full-check` failed in the known fixture setup because `pwsh` was denied (`EACCES`). Claude should rerun that suite on the laptop. The build passed before the lane tier on the same code.
 
 Cockpit sync could not open its protected credential in this session. The repository audit ran; its candidates are advisory and none were removed.
+
+### Round 4, slice 2c: the Lookout in progress
+
+The Lookout rises 45 m above the former ground south-west of the Ridge. Its 60 m radius top is level, its view towards the yard is clear, and its shoulder leaves every road clear. It follows the Ridge if that place moves. Survey Flags' fifth flag has not moved. The switches remain off. No game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed 4 tests, `test-scablands-size` passed 9, and `test-scablands-solid` passed 18. Race replays passed 297 checks across 33 cases, combat replays passed 12 across four encounters, and `test-course-kit` passed 8. Race fingerprints and the checked world signatures remain unchanged. Integration was already included. The build passed with bundle size warnings.
+
+The lane tier passed 39 of 41 suites. Survey Flags again finished 0 of 10, against the unchanged minimum of 8; the car stopped at the same river position near (1879, -1525), while the other eight jobs finished 10 of 10. Gas roads were not reached. `test-full-check` again failed when its temporary-copy setup could not start `pwsh` (`EACCES`).
+
+For Claude to run: `test-full-check` on the laptop, and the requested memory-only hills picture scenario after it is written. The Lookout and all other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the Lookout's position and dimensions are recorded in the card for Claude to review.
+
+Removed: none in this partial step. The former terrain remains outside the Lookout's shoulder.
+
+Still needed: fix the Easy driver's Survey Flags route; finish the mesas, Ridge foothills and way up, detailed faces, sight and search, natural outlines, route checks and picture scenario. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.

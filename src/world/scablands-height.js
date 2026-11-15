@@ -16,19 +16,21 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
+    Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:45,radius:320,topRadius:60}),
   ]);
 }
 export const HILLS=hillsFor();
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
   for(const hill of hills){
+    if(hill.kind==='lookout') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
   }
   return height;
 }
 
-export function scablandsTerrainHeightAt(x,z,hills=HILLS){
+function oldTerrainHeightAt(x,z){
   const nx=x/SCABLANDS_LAYOUT.halfWidth,nz=z/SCABLANDS_LAYOUT.halfDepth;
   // 1 is the edge of the land. The ridge and the wall are the same size in metres as on the old, small land (see SCABLANDS_LAYOUT).
   const edge=1+(Math.hypot(nx,nz)-1)*SCABLANDS_LAYOUT.edgeScale;
@@ -38,7 +40,20 @@ export function scablandsTerrainHeightAt(x,z,hills=HILLS){
   const wall=smooth((edge-SCABLANDS_LAYOUT.wallStart)/.035)*175;
   // The rises that hide each place from the last (src/world/scablands-regions.js): height only, gentle enough to drive over.
   // The four scarps (src/world/scablands-scarps.js): steep faces of broken rock on the scab plates, near the camp and by the Ridge.
-  return rolling+ridge+wall+riseHeightAt(x,z)+scarpHeightAt(x,z)+hillHeightAt(x,z,hills);
+  return rolling+ridge+wall+riseHeightAt(x,z)+scarpHeightAt(x,z);
+}
+
+export function scablandsTerrainHeightAt(x,z,hills=HILLS){
+  let height=oldTerrainHeightAt(x,z)+hillHeightAt(x,z,hills);
+  for(const hill of hills){
+    if(hill.kind!=='lookout') continue;
+    const distance=Math.hypot(x-hill.x,z-hill.z);
+    if(distance>=hill.radius) continue;
+    const weight=1-smooth((distance-hill.topRadius)/(hill.radius-hill.topRadius));
+    const top=oldTerrainHeightAt(hill.x,hill.z)+hill.height;
+    height+=(top-height)*weight;
+  }
+  return height;
 }
 
 // The land with its rises and with every place's own flat ground, before the dry river is cut: the plain.

@@ -46,6 +46,31 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
   }
 });
 
+test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
+  const hill = HILLS.find(item => item.kind === 'lookout');
+  const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
+    .find(item => item.kind === 'lookout');
+  assert.equal(moved.x - hill.x, 100);
+  assert.equal(moved.z - hill.z, 200);
+  const top = scablandsTerrainHeightAt(hill.x, hill.z);
+  assert.ok(top - scablandsTerrainHeightAt(hill.x, hill.z, []) >= 40);
+  for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+    const x = hill.x + Math.cos(angle) * hill.topRadius;
+    const z = hill.z + Math.sin(angle) * hill.topRadius;
+    assert.ok(Math.abs(scablandsTerrainHeightAt(x, z) - top) < 1e-9);
+  }
+  for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
+    const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
+    const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+    assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears the Lookout`);
+  }
+  const end = LAND.between('yard', 'ridge', .3), endHeight = scablandsTerrainHeightAt(end.x, end.z);
+  for (let t = .02; t < 1; t += .02) {
+    const x = hill.x + (end.x - hill.x) * t, z = hill.z + (end.z - hill.z) * t;
+    assert.ok(scablandsTerrainHeightAt(x, z) < top + 2 + (endHeight - top) * t, 'the view across the flats is clear');
+  }
+});
+
 test('an empty hill table leaves the former terrain height exact', () => {
   const smooth = value => { value = Math.max(0, Math.min(1, value)); return value * value * (3 - 2 * value); };
   for (let x = -7000; x <= 7000; x += 437) for (let z = -5000; z <= 5000; z += 419) {
