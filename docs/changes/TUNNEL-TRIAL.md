@@ -16,6 +16,8 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 
 - `node tools/test-tunnels.mjs`: passed after the deck changes. It checks the scarp in both directions, both decks in both directions, the height switch, and a pier.
 - A later run of `node tools/test-tunnels.mjs` also passed with job movers stepping under both decks in both directions, carrying their ground height between steps and checking for solid obstructions. This does not replace a full chase or visual check.
+- `node tools/test-everburn-easy.mjs`: all nine story jobs passed 10 of 10 on a repeat. The run was stopped during the gas routes, so the suite remains incomplete.
+- `node --check tools/scenarios/tunnel-trial.mjs`: passed after the frame sampling and bridge exit changes. The browser scenario was not run.
 - `node tools/test-scablands-solid.mjs`: passed 18 checks. The four-way route reached town with no hits.
 - `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.
 - `node tools/test-combat-replays.mjs`: passed 12 fingerprints across four encounters.

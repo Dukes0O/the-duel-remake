@@ -82,7 +82,7 @@ export async function run(context) {
     const picture = async (name, x, z, y, target) => {
       await context.evaluate(`(() => {const t=window.__tunnelTrial; t.a.inspectionCamera={position:[${x},${y},${z}],target:${JSON.stringify(target)}}; t.frame();})()`);
       const file=await context.screenshot(`tunnel-${name}`);
-      const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{window.__tunnelTrial.frame();if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render;return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals};})()`);
+      const stats=await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{window.__tunnelTrial.frame();if(last!==undefined)intervals.push(now-last);last=now;if(intervals.length===30)done();else requestAnimationFrame(tick);};requestAnimationFrame(tick);});const r=window.__render.renderer.info.render,sorted=[...intervals].sort((a,b)=>a-b);return {drawCalls:r.calls,triangles:r.triangles,frameIntervalsMs:intervals,frameP95Ms:sorted[Math.ceil(sorted.length*.95)-1]};})()`);
       report.views.push({name,file,...stats});
     };
     await picture('low-mouth',start.x-dx*16,start.z-dz*16,start.y+3,[start.x+dx*8,start.y,start.z+dz*8]);
