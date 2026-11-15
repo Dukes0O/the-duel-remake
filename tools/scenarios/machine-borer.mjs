@@ -17,7 +17,7 @@ const page = {
   atFace: `(() => window.__theDig.viewForCheck.readyToWork)()`,
   leverReady: `(() => window.__theDig.simulation.borer.lever >= 0.30)()`,
   leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
-  cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
+  cut: `(() => window.__theDig.simulation.borer.distanceM >= 50)()`,
   cut20: `(() => window.__theDig.simulation.borer.distanceM >= 20)()`,
   followingInside: `(() => window.__theDig.viewForCheck.camera.userData.borerRoute?.inside === true)()`,
   groundSamples: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
@@ -53,7 +53,18 @@ const page = {
       mouths:dig.simulation.tunnels.mouths,hit:v.groundRay(origin,direction,distance)}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
-  inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
+  inside: `(() => window.__theDig.simulation.borer.travelM <= 30)()`,
+  overviewOn: `(() => { window.__theDig.setCheckOverview(true); return true; })()`,
+  overviewOff: `(() => { window.__theDig.setCheckOverview(false); return true; })()`,
+  overview: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck;
+    const x=b.x+150*Math.sin(b.heading), z=b.z+150*Math.cos(b.heading);
+    const hit=v.groundRay({x,y:200,z},{x:0,y:-1,z:0});
+    return {floor:b.y,x,z,drawn:hit?.y ?? null,heightAboveFloor:hit ? hit.y-b.y : null}; })()`,
+  survey: `(() => { const p=window.__theDig.host.querySelector('.the-dig-survey');
+    return {visible:!!p && !p.hidden, text:p?.querySelector('p')?.textContent,
+      strip:!!p?.querySelector('canvas') && p.querySelector('canvas').getBoundingClientRect().width>0}; })()`,
+  spoil: `(() => { const b=window.__theDig.simulation.borer.spoilBank;
+    return {far:b.far, cells:b.cells.length}; })()`,
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
@@ -127,7 +138,7 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null};
+  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null};
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
@@ -151,6 +162,18 @@ export async function run(context) {
     assert.ok(sample.hit && Math.abs(sample.rules - sample.hit.y) <= 0.5, 'drawn ground matches the rules');
   }
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
+  await context.evaluate(page.overviewOn);
+  await context.evaluate(page.frame);
+  measurements.overview = await context.evaluate(page.overview);
+  measurements.survey = await context.evaluate(page.survey);
+  await persist();
+  assert.ok(measurements.overview.heightAboveFloor > 6, 'the overview shows the mesa above Mabel');
+  assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('Far side'), 'the survey and strip are shown at the face');
+  const overviewView = await context.evaluate(page.view);
+  assert.ok(overviewView.machine, 'Mabel is in the mesa overview');
+  await context.screenshot('machine-borer-mesa-overview');
+  await context.evaluate(page.overviewOff);
+  await context.evaluate(page.frame);
   await press(context, 'Tab');
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
@@ -169,16 +192,21 @@ export async function run(context) {
   await press(context, 'KeyC');
   await picture(context, 'machine-borer-mouth-20m', 20);
   await press(context, 'KeyC');
-  await cutUntil(context, 30);
+  await cutUntil(context, 50);
+  measurements.spoil = await context.evaluate(page.spoil);
+  measurements.survey = await context.evaluate(page.survey);
+  await persist();
+  assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
+  assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('to go'), 'the running survey and strip are shown');
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-mouth');
+  await picture(context, 'machine-borer-mouth', 50);
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-face');
+  await picture(context, 'machine-borer-face', 50);
   await key(context, 'KeyS', 'keydown');
   try {
     await context.waitFor(page.inside, '20 m back from the face', 60000);
-    const inside = await picture(context, 'machine-borer-inside');
+    const inside = await picture(context, 'machine-borer-inside', 50);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
 }
