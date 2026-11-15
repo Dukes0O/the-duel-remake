@@ -112,6 +112,20 @@ in page memory and that nothing joins it to a town's store yet. So this card sav
   back out of the face, which the steering limits allow in about 400 m. That is the Dig's first tunnel. When hill
   country is merged, a mesa gives a straight way through.
 
+**Claude's drawing, first part (15 November 2026): the inside and the portal.** `src/world/tunnel-look.js`, new, all in code.
+- **The lining makes its own light.** The sun does not reach inside. A lamp at the crown every 14 m with dark between, the grey
+  of day for a few lengths in from an open mouth, and the beam of the player's headlights. It wears steel liner plates bolted
+  ring by ring, rust run down from the joints, dust up the lower walls, an air duct and the lamps' cable along the crown, a
+  water pipe on one wall, a floor of packed muck with two ruts, and fresh scored rock on a closed face.
+  `createTunnelMesh` uses it for every tunnel, and the scene tells it each frame where the car and the open mouths are.
+- **The portal** (`tunnelPortalShape`, `tunnelPortalSurface`): three steel arch ribs, timber lagging with boards missing, a sill
+  under each rib, faded warning stripes on the outer rib and a board over the crown for her name. Drawn and looked at on a test
+  page; **not yet stood at a mouth in the game**: Codex places one at each open mouth (its own frame is the bore's centre line
+  at the origin, y up, z pointing out of the hill), in place of the model file's `portal`.
+- Seen in the game with scenario `tunnel-trial` (passes, twelve views): inside it reads as a plated bore with lamps, a pipe and
+  the car's own pool of light, and the far mouth as a disc of day. Still to draw: the machine herself, sparks and dirt at the
+  face, the rings as she sets them.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
