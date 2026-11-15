@@ -1394,3 +1394,15 @@ Scablands camp raiders now check the land between themselves and their chosen ta
 Checks: `node tools/test-scablands-hills.mjs` passed all 12 tests, including mesa cover, a clear line and unchanged sight handling for other venues. Race fingerprints and world signatures were not checked in this round. The remaining route checks, integration and final checks are still needed.
 
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the Scablands camp raiders' ability to fire through intervening ground.
+
+### Round 4, slice 2c: raider target selection
+
+Scablands camp raiders now choose only cars they can see within 82 m of a raider able to fire. A hidden nearer car no longer prevents a raider from choosing a visible car. The stop preview uses the same sight and range rules. Other venues retain their former selection. No new game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 13 tests, including cover, range and the stop preview. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario after it is written, and `test-full-check` on the laptop.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: selection of hidden or out-of-range cars by Scablands camp raiders.
+
+Still needed: item 2, pursuit and the five-second search, furnace and lookout sight, seen and lost captions and cues; then route checks, the picture scenario, integration and final checks. The card is not ready to merge.

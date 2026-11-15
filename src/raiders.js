@@ -179,7 +179,7 @@ function collectSalvage(duel, zone) {
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }
 
-function targetFor(duel, zone, preview = null) {
+export function targetFor(duel, zone, preview = null, seconds = 0) {
   const state = duel.state;
   const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
@@ -188,7 +188,15 @@ function targetFor(duel, zone, preview = null) {
     const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
         Math.abs(actor.speedMph || 0) < 8) continue;
-    const gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
+    let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
+    if (duel.course.def.scablands) {
+      const at = point(duel, actor);
+      const distances = zone.raiders.filter(member =>
+        (!member.knockedDown || member.knockdownRemaining <= seconds) &&
+        member.firedLap !== state.currentLap && raiderHasClearShot(duel.course, member, at))
+        .map(member => Math.hypot(member.x - at.x, member.z - at.z));
+      gap = distances.length ? Math.min(...distances) : Infinity;
+    }
     if (gap > FIRE_METERS) continue;
     if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
   }
@@ -204,7 +212,7 @@ export function raiderShotScheduled(duel, actor, seconds, pose = actor) {
     zone.nextShotAt <= state.stageTimeSec + seconds &&
     zone.raiders.some(member => (!member.knockedDown || member.knockdownRemaining <= seconds) &&
       member.firedLap !== state.currentLap) &&
-    targetFor(duel, zone, {actor, pose})?.actor === actor);
+    targetFor(duel, zone, {actor, pose}, seconds)?.actor === actor);
 }
 
 function fire(duel, zone, raider, target) {
@@ -333,6 +341,7 @@ export function stepRaiders(duel, dt = 0) {
     const targetPoint = point(duel, target.actor);
     const raider = zone.raiders.find(member =>
       !member.knockedDown && member.firedLap !== state.currentLap &&
+      (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&
       raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);
   }

@@ -13,7 +13,7 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor} from '../src/raiders.js';
 
 test('Scablands raiders cannot shoot through a mesa', () => {
   const mesa = HILLS.find(hill => hill.kind === 'mesa');
@@ -23,6 +23,23 @@ test('Scablands raiders cannot shoot through a mesa', () => {
   assert.equal(raiderHasClearShot({def: {scablands: true}}, raider, hidden), false);
   assert.equal(raiderHasClearShot({def: {scablands: true}}, raider, visible), true);
   assert.equal(raiderHasClearShot({def: {}}, raider, hidden), true);
+});
+
+test('raiders select a visible car within their own range', () => {
+  const mesa = HILLS.find(hill => hill.kind === 'mesa');
+  const raider = {x: mesa.x - mesa.radius - 30, z: mesa.z};
+  const hidden = {s: 1, lateral: 0, speedMph: 20};
+  const visible = {s: 2, lateral: 0, speedMph: 20};
+  const places = new Map([[1, {x: mesa.x + mesa.radius + 30, z: mesa.z, y: 0}],
+    [2, {x: raider.x - 40, z: raider.z, y: 0}]]);
+  const duel = {course: {def: {scablands: true}, groundAt: s => places.get(s)},
+    state: {...hidden, opponents: [visible], currentLap: 1}, relativeS: () => 0};
+  const zone = {s: 0, raiders: [raider]};
+  assert.equal(targetFor(duel, zone)?.actor, visible);
+  places.set(2, {x: raider.x - 83, z: raider.z, y: 0});
+  assert.equal(targetFor(duel, zone), null);
+  places.set(2, {x: raider.x - 40, z: raider.z, y: 0});
+  assert.equal(targetFor(duel, zone, {actor: visible, pose: hidden}), null);
 });
 
 test('each distant scarp face has fine cells at the land height', () => {
