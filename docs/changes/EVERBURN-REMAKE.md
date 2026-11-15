@@ -368,3 +368,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Changed assertions: none. Codex decided: the plain transfer takes two seconds, pending Claude's drive.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the screen, drives, camera, cover and scenario steps.
+
+## Larger land, race readouts (15 November 2026)
+
+- World jobs hide the race clock, style points and jump readout. These return outside a world job. This is part of step 6a; the weapon bar still needs to show only the lent flamethrower. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real screen checks the three readouts in a job and their return afterwards. `git diff --check`: passed.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: the race clock, style points and jump readout from world-job screens. The old `everburn-play` scenario still needs replacement or removal.

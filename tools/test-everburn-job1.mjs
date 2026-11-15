@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame, brazierArrow} from '../src/world/world-hud.js';
+import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
@@ -26,6 +27,36 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The real screen hides race-only readouts during a world job and restores them afterwards.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:definition}));
+  const node = () => ({hidden:false, textContent:'', dataset:{}, style:{}, firstChild:{textContent:''},
+    lastChild:{textContent:''}, classList:{toggle(){}}, setAttribute(){}});
+  const ui = new Proxy({}, {get:(target, key) => target[key] ??= node()});
+  const clock = {hidden:false};
+  ui['race-time'].closest = () => clock;
+  ui['race-position'].closest = () => ({hidden:false});
+  ui['route-section'].closest = () => ({querySelector:() => ({textContent:''})});
+  const text = (id, value) => {ui[id].textContent = String(value);};
+  const update = createHudScreen({app:{duel, player:{name:'Test'}}, ui, text, time:String, credits:String,
+    clamp:value => Math.max(0, Math.min(1, value)), routeMap:{update(){}}});
+  duel.state.status = 'racing';
+  update(duel.state);
+  assert.equal(clock.hidden, true, 'world jobs hide the race clock');
+  assert.equal(ui['style-score-panel'].hidden, true, 'world jobs hide style points');
+  const readout = {update:() => ({phase:'airborne', heightMeters:25, peakMeters:25, distanceMeters:10, durationSeconds:1})};
+  presentJumpHeight(readout, duel.state, {duel}, ui, text);
+  assert.equal(ui['jump-height-panel'].hidden, true, 'world jobs hide the jump readout in the air');
+  const race = {...duel.state, arena:null};
+  update(race);
+  presentJumpHeight(readout, race, {duel}, ui, text);
+  assert.equal(clock.hidden, false, 'the race clock returns outside a world job');
+  assert.equal(ui['style-score-panel'].hidden, false, 'style points return outside a world job');
+  assert.equal(ui['jump-height-panel'].hidden, false, 'the jump readout returns outside a world job');
+}
 // The drawn furnace and its sight share the named high ground north of the Steps.
 {
   const crossing = LAND.at('the-steps'), watch = LAND.at('furnace-watch');

@@ -114,7 +114,7 @@ export function speedGearPresentation(s) {
 }
 export function presentJumpHeight(readout, s, app, ui, text) {
   const jumpHeight=readout.update(s,app.duel.course);
-  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden';
+  ui['jump-height-panel'].hidden=jumpHeight.phase==='hidden'||s.arena?.mode==='world-job';
   ui['jump-height-panel'].dataset.phase=jumpHeight.phase;
   text('jump-height-label',jumpHeight.phase==='landed'?'JUMP PEAK':'HEIGHT ABOVE GROUND');
   text('jump-height-value',(jumpHeight.phase==='landed'?jumpHeight.peakMeters:jumpHeight.heightMeters).toFixed(1));
@@ -126,6 +126,7 @@ export function presentJumpHeight(readout, s, app, ui, text) {
 const jobCrashShown = s => (s.crashFlash > 0 || s.impactTimer > 0) && (s.combatWrecking === true || s.catastrophic === true);
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
   const positionPanel=ui['race-position'].closest?.('.race-position');
+  const clockPanel=ui['race-time'].closest?.('.race-clock');
   const mapHeading=ui['route-section'].closest?.('.route-hud')?.querySelector('.route-hud-top .field-label');
   let lastWorldJob=false, lastJobHeading='CIRCUIT / LIVE';
   const captions = createCaptionQueue();
@@ -138,6 +139,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
   };
   function updateHud(s) {
     const worldJob=s.arena?.mode==='world-job';
+    if (clockPanel) clockPanel.hidden=worldJob;
     const jobRoad=worldJob ? worldJobMapRoad(s) : null;
     if (!worldJob || s.arena.worldJob.job?.done || !['countdown', 'racing'].includes(s.status)) { captions.clear(s.stageTimeSec); captionJob = null; }
     const storyCaption = worldJob ? captions.advance(s.stageTimeSec, jobCrashShown(s)) : '';
@@ -190,7 +192,7 @@ export function createHudScreen({app, ui, text, time, clamp, credits, routeMap})
     const drift=s.objective?.kind==='driftTrial',rush=s.objective?.kind==='checkpointRush';
     ui['drift-panel'].hidden=!drift;
     ui['checkpoint-panel'].hidden=!rush;
-    ui['style-score-panel'].hidden=drift||rush;
+    ui['style-score-panel'].hidden=worldJob||drift||rush;
     if(rush){
       const gates=s.checkpointRush,notice=app.checkpointNotice,left=Math.max(0,s.timeLimitSec-s.stageTimeSec-(s.racePenaltySec||0));
       text('checkpoint-passed',`${gates.passed} / ${gates.total}`);
