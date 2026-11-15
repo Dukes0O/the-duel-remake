@@ -1242,3 +1242,13 @@ a pole stops (24.7 to 2.0 mph and 24.6 to 2.0 mph).
 **Lane tier and build at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
 
 **Removed:** the plain shapes Codex placed first (boxes, cones and line towers) are replaced by the drawn ones in the same files.
+
+### The Girder Bridge and the Pipe redrawn (Claude, 15 November 2026)
+
+From Claude's drive of job 1: the bridge's trusses were the colour of new timber. `girderBridgeGeometry` in
+`src/world/scablands-draw.js` now draws old riveted steel: each member its own shade of rust, a gusset plate at every joint, crossed
+wind bracing overhead, a portal with knee braces at each end, a plank deck with timber kerbs and a floor beam under every bay, and
+piers with caps and a dark band where floods stood. 3,264 triangles (about 960 before). The Pipe's pipeline and flanges are a darker
+rust. The solid shapes a car meets are unchanged. Seen in the game in a visible window from the road, the deck, beside and the bed.
+Checks: `test-scablands-scene`, `test-scablands-size`, `test-scablands-solid` (24), `test-tunnels`, and the build, all pass.
+**Removed:** the plain one-colour boxes of the trusses and the single deck slab.
