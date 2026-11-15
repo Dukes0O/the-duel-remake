@@ -22,7 +22,23 @@ export function borerHasFace(ground, position, heading, radius = 3) {
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, headSpeed:0,
-    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null};
+    stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[]};
+}
+
+// Keep straight cuts as one segment; a change in direction starts a new one.
+function addCut(segments, start, end, radius) {
+  const last = segments.at(-1);
+  if (last) {
+    const a = {x:last.end.x - last.start.x, y:last.end.y - last.start.y, z:last.end.z - last.start.z};
+    const b = {x:end.x - start.x, y:end.y - start.y, z:end.z - start.z};
+    const cross = Math.hypot(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+    const lengths = Math.hypot(a.x, a.y, a.z) * Math.hypot(b.x, b.y, b.z);
+    if (cross <= lengths * 1e-9 && a.x * b.x + a.y * b.y + a.z * b.z > 0) {
+      last.end = end;
+      return;
+    }
+  }
+  segments.push({start, end, radius, startOpen:segments.length === 0, endOpen:false});
 }
 
 /** Work is deterministic in fixed steps. The caller supplies the face material and ground layer. */
@@ -34,7 +50,8 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
   const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, 0, 1);
   const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
   const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
-  let next = {...state}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
+  let next = {...state, segments:(state.segments || []).map(segment => ({...segment,
+    start:{...segment.start}, end:{...segment.end}}))}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
     carry -= step;
@@ -64,11 +81,13 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
       continue;
     }
     const distance = 0.5 * Math.min(thrust, capacity) * step;
+    const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
     next.heading += steer * radians(0.5) * distance;
     next.slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
     next.x += Math.sin(next.heading) * Math.cos(next.slope) * distance;
     next.z += Math.cos(next.heading) * Math.cos(next.slope) * distance;
     next.y += Math.sin(next.slope) * distance;
+    addCut(next.segments, start, {x:next.x, y:next.y + radius * 0.55, z:next.z}, radius);
     next.distanceM += distance; next.started = true;
   }
   next.stepCarrySeconds = Math.max(0, carry);
