@@ -1888,3 +1888,11 @@ The hills suite now checks every hill footprint, including each mesa ramp, again
 Check: `node tools/test-scablands-hills.mjs` passed 36 of 36. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the clearance check is new. Codex decided: use each named place's full flat radius and the whole mesa ramp footprint. Removed: none.
 
 Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: tunnel mouth clearance
+
+The hills suite now checks both ends of the trial tunnel against every hill footprint, including each mesa ramp. Both ends have at least 30 m clear. This covers the current land and does not establish clearance along job legs or at decks. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 37 of 37. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the tunnel-mouth check is new. Codex decided: measure 30 m of clearance around each mouth, using the full mesa ramp footprint. Removed: none.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.

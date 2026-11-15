@@ -417,6 +417,17 @@ test('hill footprints leave named places and their surrounding ground clear', ()
   }
 });
 
+test('hill footprints leave the trial tunnel mouths clear', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  for (const mouth of [trial.segment.start, trial.segment.end]) {
+    for (const hill of HILLS) {
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      const clearance = Math.hypot(hill.x - mouth.x, hill.z - mouth.z) - reach;
+      assert.ok(clearance >= 30, `${hill.kind} leaves 30 m clear around a tunnel mouth`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
