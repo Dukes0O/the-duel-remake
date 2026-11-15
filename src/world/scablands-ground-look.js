@@ -352,7 +352,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           // level through it, each a few metres thick, and show as bands round its sides; rain has cut rills straight down every slope.
           // Dunes are sand and the river's banks are their own, so neither is banded.
           float gHill=texture2D(uHillField,(gq-uHillBox.xy)*uHillBox.zw).r*100.0;
-          float gUp=smoothstep(4.0,16.0,gHill)*(1.0-wSand)*(1.0-wBed)*(1.0-wPan*.6);
+          float gUp=smoothstep(4.0,16.0,gHill)*(1.0-wSand)*(1.0-wBed);
           if(gUp>.004){
             float gBedAt=vGroundPos.y*.105+gBig.r*.45+gMid.g*.18;
             float gBedPick=fract(sin(floor(gBedAt)*12.9898)*43758.5453),gBedIn=fract(gBedAt);
@@ -364,7 +364,8 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float gRill=smoothstep(.5,.85,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gFall.y,gFall.x))*.05,dot(gq,gFall)*.004)).g);
             float gTilt=smoothstep(.003,.022,gSlope);
             gBed*=1.0-.34*gRill*gTilt;
-            gc=mix(gc,gBed*mix(1.0,.55,wPlates),gUp*mix(.18,.96,gTilt));
+            // Salt lies only where the ground is level: a hill in the pan shows its rock from the first of its slope.
+            gc=mix(gc,gBed*mix(1.0,.55,wPlates),gUp*mix(.18*(1.0-wPan),.96,gTilt));
           }` : ''}
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
