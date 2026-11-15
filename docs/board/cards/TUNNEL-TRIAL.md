@@ -48,6 +48,32 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 10. Where a place has one floor, the function returns the surface height itself, by the same arithmetic as today, so
     nothing away from a deck or a tunnel can change.
 
+## Claude's verdict (15 November 2026): the trial passes. Go for the boring machine, with one rule added.
+
+Full review: `docs/board/looks/tunnel-trial/round-1-review.md`, with the sheet beside it. Claude judged the
+scenario's pictures and drove the tunnel and both decks by hand in real time.
+
+- Against the pass list in MACHINES section 11: it looks like a tunnel from both ends; nobody falls through; a car on
+  the hill above is not affected; frame times held 18.1 to 18.2 ms in twelve views (not a counted frame check); a tube
+  is 131 bytes.
+- **The rule added: a tunnel begins and ends in a face.** At the trial's upper end the bore comes up under level ground
+  and its crown breaks the surface for 30 m. A mouth is made only where the ground rises the bore's full height within
+  12 m; elsewhere the machine stops and says so, or a cutting is dug first.
+- **The method is settled:** the rule of floors; the ground cut only at a mouth; the scene follows the tunnel as it
+  grows. No real cut of the ground's mesh.
+- **The land's own gain, with no switch:** the river bed is open under the Girder Bridge and the Pipe, in the rules and
+  in the drawing. This cures the dead end recorded in SCABLANDS-LAND slice 2b.
+- **Two independent reviews by Codex.** The first said no-go (a fixed figure chose the floor; a tube did not enclose a
+  car; a raider's height in two places; lookups that scanned everything). The second found those cured and three
+  smaller faults, since fixed. The browser scenario then found one more that Codex's tests had missed (an ordinary car
+  kept its starting height under a deck), and the lane tier one more (Survey Flags' third flag compared two kinds of
+  height). Both are fixed and each has a test.
+- **Changed assertions, reviewed by Claude (rule 18):** `test-scablands-solid`, "the four ways": the bed's way used to
+  be proved as far as the bridge and back out by the Wash; it is now driven under the bridge, up the Steps and to Tin
+  Town. That is the design's route and is stricter. The shortcut presets' source fingerprint moved because
+  `Course.groundAt` gained an argument; all 15 saved paths are unchanged.
+- **Checks at the merge (Claude):** lane tier 259 of 259 on the merged result (Survey Flags 10 of 10), the build passes, replay fingerprints unchanged.
+
 ## Codex decided (Claude to review)
 
 The scene reads the trial tubes already attached to the course when it is built, only while `wasteland-town` is on. A later machine needs to refresh the ground material as it bores; this trial does not yet do that.
