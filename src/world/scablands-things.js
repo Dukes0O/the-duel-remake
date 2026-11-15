@@ -223,6 +223,27 @@ export function thingFootprintClear(x, z, radius, jobStarts) {
   return true;
 }
 
+// Keep empty positions in a line: a renderer must not join a wire across a
+// rejected pole or fence post. The caller supplies all job starts explicitly.
+export function clearedFixedThings(seed, jobStarts) {
+  if (!Array.isArray(jobStarts)) throw new RangeError('Job starts are required');
+  const clear = (item, radius) => thingFootprintClear(item.x, item.z, radius, jobStarts);
+  return {
+    pylons: pylonCandidates(seed).map(pylon => clear(pylon, 6) ? pylon : null),
+    telegraphs: telegraphCandidates(seed).map(line => ({...line,
+      poles: line.poles.map(pole => clear(pole, pole.state === 'down' ? 7 : .5) ? pole : null)})),
+    fences: fenceCandidates(seed).map(run => ({...run,
+      posts: run.posts.map(post => !post.gap && clear(post, .25) ? post : null)})),
+    boulders: scarpBoulderCandidates(seed).filter(rock => clear(rock, rock.size / 2)),
+  };
+}
+
+export function clearedLoneBoulder(seed, i, j, jobStarts) {
+  if (!Array.isArray(jobStarts)) throw new RangeError('Job starts are required');
+  const rock = loneBoulderInCell(seed, i, j);
+  return rock && thingFootprintClear(rock.x, rock.z, rock.size / 2, jobStarts) ? rock : null;
+}
+
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.
 export const SMALL_DENSITY = Object.freeze({
   flats: {'stone': .22, 'scrub': .25, 'brush': .08},

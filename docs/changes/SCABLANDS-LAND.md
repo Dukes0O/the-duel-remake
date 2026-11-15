@@ -1296,3 +1296,15 @@ Changed assertions: none. Codex decided: no new design choice. Removed: the cent
 For Claude to run: `test-full-check` at merge and the browser scenario once written; Chrome cannot start in this job. The scene connection, remaining clearance and solids, wires, signs, track drawing, map and scenario remain to be built.
 
 Cockpit sync could not unlock its saved credential in this session and did not update Cockpit.
+
+### Realism trial, step 3: clear fixed candidates, in progress
+
+The shared footprint check now filters the pylon, telegraph, fence and boulder candidates. Empty line positions stay in place so a later drawing can leave the wire broken at a rejected pole or post. Callers must supply the job starts. These records are not yet drawn or added to the solid index. No game event or sound cue was added.
+
+The placement suite passed all 11 tests. All eight Scablands suites passed. Both replay suites passed: 297 checks across 33 cases and 12 checks across four encounters. Race fingerprints are unchanged. No separate world-signature test files matched the requested name. Integration was already current.
+
+The lane tier passed 26 of 28 suites. `test-full-check` could not launch `pwsh` to prepare its temporary copy (EACCES), the known lane environment failure. `test-town-core` missed its 10 ms limit at 10.10 ms under load and passed alone on one rerun at 4.98 ms. The build passed with bundle-size warnings. Cockpit sync could not unlock its saved credential and did not update Cockpit.
+
+Changed assertions: none. Codex decided: the first clearance radii are recorded on the card; the eventual drawings and solids must fit them. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: `test-full-check` at merge, and the browser scenario once it is written. Chrome cannot start in this job. Scene connection, job starts, solids, wires, signs, track drawing, map and scenario remain to be built.

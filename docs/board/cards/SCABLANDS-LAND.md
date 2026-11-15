@@ -884,3 +884,5 @@ Fence candidates use one run on each road arriving within 200 m of Tin Town, sta
 Rock-fall candidates form seeded groups of two to five, 3 to 27 m from the foot of each scarp. They are 1 to 4 m across. Their footprints still need clearance checks before drawing or making them solid.
 
 Single-boulder candidates use 120 m cells, with at most one candidate per cell. The chance is 45 percent on plates and river bed, 12 percent on other ground, and zero on salt. Their full footprints still need clearance checks before drawing or making them solid.
+
+For the first clearance pass, allow a 6 m radius around a pylon, 0.5 m around a standing pole, 7 m around a down pole, and 0.25 m around a fence post. A boulder's radius is half its stated size. The later drawing and solid footprints must fit within these allowances or the clearance must be revised. Rejected line positions stay as gaps so wires do not cross them.

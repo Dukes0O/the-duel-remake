@@ -8,6 +8,33 @@ import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {clearedFixedThings, clearedLoneBoulder} from '../src/world/scablands-things.js';
+
+test('fixed candidates retain line gaps and clear full footprints and job starts', () => {
+  const original = clearedFixedThings(1989, []);
+  assert.deepEqual(original, clearedFixedThings(1989, []));
+  const first = original.telegraphs[0].poles.find(Boolean);
+  const starts = [{x: first.x, z: first.z}];
+  const cleared = clearedFixedThings(1989, starts);
+  assert.equal(cleared.telegraphs[0].poles.find(p => p?.id === first.id), undefined);
+  assert.equal(cleared.telegraphs[0].poles.length, telegraphCandidates(1989)[0].poles.length);
+  for (const p of cleared.pylons.filter(Boolean)) assert.ok(thingFootprintClear(p.x, p.z, 6, starts));
+  for (const line of cleared.telegraphs) for (const p of line.poles.filter(Boolean))
+    assert.ok(thingFootprintClear(p.x, p.z, p.state === 'down' ? 7 : .5, starts));
+  for (const run of cleared.fences) for (const p of run.posts.filter(Boolean)) {
+    assert.ok(!p.gap && p.canFall);
+    assert.ok(thingFootprintClear(p.x, p.z, .25, starts));
+  }
+  for (const rock of cleared.boulders) assert.ok(thingFootprintClear(rock.x, rock.z, rock.size / 2, starts));
+  const yard = LAND.at('yard');
+  for (let i = Math.floor(yard.x / BOULDER_CELL) - 3; i <= Math.floor(yard.x / BOULDER_CELL) + 3; i++)
+    for (let j = Math.floor(yard.z / BOULDER_CELL) - 3; j <= Math.floor(yard.z / BOULDER_CELL) + 3; j++) {
+      const rock = clearedLoneBoulder(1989, i, j, starts);
+      if (rock) assert.ok(thingFootprintClear(rock.x, rock.z, rock.size / 2, starts));
+    }
+  assert.throws(() => clearedFixedThings(1989), RangeError);
+  assert.throws(() => clearedLoneBoulder(1989, 0, 0), RangeError);
+});
 
 test('seeded rock falls follow the foot of each scarp', () => {
   const rocks = scarpBoulderCandidates(1989);
