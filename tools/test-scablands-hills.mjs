@@ -35,12 +35,14 @@ test('the first two Survey Flags legs have clear hill corridors', () => {
   }
 });
 
-test('mesas leave the long Survey Flags leg clear', () => {
+test('mesas leave every Survey Flags leg clear', () => {
   const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
-  const leg = flags.slice(2, 4).map(flag => flag.position);
-  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
-    assert.ok(distanceToRoad(mesa.x, mesa.z, leg) >= mesa.radius + mesa.ramp + 60,
-      'the mesa and its ramp clear the flag route and its 60 m corridor');
+  for (let i = 1; i < flags.length; i++) {
+    const leg = [flags[i - 1].position, flags[i].position];
+    for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+      assert.ok(distanceToRoad(mesa.x, mesa.z, leg) >= mesa.radius + mesa.ramp + 60,
+        `the mesa and its ramp clear flag leg ${i} and its 60 m corridor`);
+    }
   }
 });
 

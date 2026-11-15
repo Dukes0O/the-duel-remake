@@ -2017,8 +2017,8 @@ Still needed: prove three separate mesa cover stretches, the remaining job corri
 
 ### Hill country: Survey Flags corridor proof
 
-The first two legs between Survey Flags now have a hill-clearance check across 60 m on either side. The hills suite passed 46 of 46. The Easy driver's Survey Flags run finished for seed 1 after the mesa moved; the ten-seed run is not yet complete. The fifth flag stays in place. No event or sound was added.
+The first two legs between Survey Flags now have a hill-clearance check across 60 m on either side. The mesa clearance check now covers all four legs. The hills suite passed 46 of 46. The Easy driver finished Survey Flags 10 of 10 times after the mesa moved, using the suite's driver and pass mark. The fifth flag stays in place. No event or sound was added.
 
-Changed assertions: none. The corridor check is new and does not replace or loosen an assertion. Codex decided: sample the corridor every 20 m along each leg and at five offsets across it. Removed: none. Race fingerprints and world signatures were not checked in this step.
+Changed assertions: the mesa-clearance assertion now checks all four legs instead of only the third; it is stricter. The hill corridor check is new. Codex decided: sample the corridor every 20 m along each leg and at five offsets across it. Removed: none. Race fingerprints and world signatures were not checked in this step.
 
-Still needed: three separate mesa-cover stretches, the rest of the job-corridor proof and the full Survey Flags result, then integration and final checks. A diagnostic found new hill height on the third and fourth flag legs; the fourth ends on the intended Ridge top, so the clearance requirement and the approach need careful reconciliation. Claude must run and judge the pictures.
+Still needed: three separate mesa-cover stretches and the rest of the job-corridor proof, then integration and final checks. A diagnostic found new hill height on the third and fourth flag legs; the fourth ends on the intended Ridge top, so the clearance requirement and the approach need careful reconciliation. Claude must run and judge the pictures.
