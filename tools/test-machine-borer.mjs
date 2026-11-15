@@ -259,6 +259,22 @@ const realGround = {heightAt:scablandsNaturalHeightAt};
 const realParked = createDigBorer(realGround);
 const drawnGround = createDigNearGround(new THREE.MeshBasicMaterial(), realGround);
 drawnGround.follow(realParked.x, realParked.z);
+// Use the same untransformed world group as the Dig and inspect actual vertices,
+// rather than asking the height array what it intended to draw.
+const digWorld = new THREE.Group();
+digWorld.add(drawnGround.mesh);
+digWorld.updateMatrixWorld(true);
+const groundPositions = drawnGround.geometry.getAttribute('position');
+for (const z of [-700, -650, -600]) for (const x of [1770, 1780]) {
+  let corner = null;
+  for (let i = 0; i < groundPositions.count; i++) {
+    const point = new THREE.Vector3().fromBufferAttribute(groundPositions, i).applyMatrix4(drawnGround.mesh.matrixWorld);
+    if (point.x === x && point.z === z) { corner = point; break; }
+  }
+  assert.ok(corner, `The Dig has a ground corner at ${x}, ${z}.`);
+  assert.ok(Math.abs(corner.y - scablandsSurfaceHeightAt(x,z,realGround)) < .5,
+    `The Dig's world-space ground corner matches the scarp at ${x}, ${z}.`);
+}
 for (let distance = 0; distance <= 60; distance += 5) {
   const x = realParked.x + Math.sin(realParked.heading) * distance;
   const z = realParked.z + Math.cos(realParked.heading) * distance;

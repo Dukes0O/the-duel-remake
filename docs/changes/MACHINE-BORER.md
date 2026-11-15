@@ -2,6 +2,12 @@
 
 Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to the west scarp, cuts and lines a tunnel, makes a muck pile through the ground system, and reverses along her cut. The head, stall, steering, protected places and face rules are in the machine rules. The Dig has a dial, messages, camera, controls, plain machine model, face effects and conveyor. Claude's shared lining and portals draw the tunnel. Tunnels export to and restore from plain data for the current visit; no town store is read or written.
 
+## World-space ground investigation
+
+The Dig's actual ground vertices were checked after placing the mesh in the same untransformed group used by the view. At x 1770 and 1780 the world-space heights are 9.92 and 12.76 m at z -700, 10.78 and 13.62 m at z -650, and 11.71 and 14.54 m at z -600. Each is within 0.03 m of the land's rule height. This rules out an axis swap or group transform for these vertices; it does not establish why the pictures show open sky. The earlier claim that drawing both faces fixed the picture is not established: Claude's browser still fails the roof ray.
+
+The scenario now writes `machine-borer-measurements.json` in its output folder before assertions, and updates it with the ground samples, cover and roof ray as each becomes available. `node tools/test-machine-borer.mjs` passed with the world-space checks. The scenario expressions parse in Node. The browser was not run here, so its measurements and the visual fault remain to be checked. No existing assertions changed in this investigation.
+
 ## Scarp cover follow-up
 
 After checking integration was already merged, all seven machine suites, the tunnel suite, both replay suites (297 race and 12 combat fingerprints), and the build passed. No test suite filename contains `world-sign`. The browser scenario expressions parse in Node; the browser scenario and lane tier remain for Claude. The build reported its chunk-size and mixed-import warnings. No existing assertions changed in this follow-up.

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 
 // Every expression is a function call, so each can be parsed independently.
 const page = {
@@ -108,6 +110,9 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
+  const measurements = {groundSamples:null, cover:null, roofRay:null};
+  const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
+  await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
   await context.waitFor(page.ready, 'isolated test game', 60000);
   await context.evaluate(page.enter);
@@ -118,6 +123,8 @@ export async function run(context) {
   await context.waitFor(page.selected, 'Mabel selected', 10000);
   await context.evaluate(page.frame);
   const samples = await context.evaluate(page.groundSamples);
+  measurements.groundSamples = samples;
+  await persist();
   for (const sample of samples) {
     console.log(`Ground ${sample.distance} m ahead, ${sample.side} m right: rules ${sample.rules.toFixed(2)}, mesh ${sample.hit?.y?.toFixed(2) ?? 'no hit'}`);
   }
@@ -130,6 +137,8 @@ export async function run(context) {
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
   const cover = await context.evaluate(page.cover);
+  measurements.cover = cover;
+  await persist();
   console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
   assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
   await picture(context, 'machine-borer-mouth-20m', 20);
@@ -144,6 +153,8 @@ export async function run(context) {
   try {
     await context.waitFor(page.inside, '20 m back from the face', 60000);
     const roof = await context.evaluate(page.roofRay);
+    measurements.roofRay = roof;
+    await persist();
     console.log(`Ground above the bore: ${JSON.stringify(roof)}`);
     assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
     const inside = await picture(context, 'machine-borer-inside');
