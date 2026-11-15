@@ -15,10 +15,10 @@ const page = {
   atFace: `(() => window.__theDig.viewForCheck.readyToWork)()`,
   leverReady: `(() => window.__theDig.simulation.borer.lever >= 0.30)()`,
   leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
-  cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
+  cut: `(() => window.__theDig.simulation.borer.distanceM >= 50)()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
-  face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
-  inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
+  face: `(() => window.__theDig.simulation.borer.travelM >= 49.9)()`,
+  inside: `(() => window.__theDig.simulation.borer.travelM <= 30)()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
   sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
   view: `(() => { const dig = window.__theDig, view = dig.viewForCheck, camera = view.camera;
@@ -56,7 +56,7 @@ async function picture(context, name) {
   await context.evaluate(page.sample);
   const view = await context.evaluate(page.view);
   assert.equal(view.failed, false, 'Mabel and the yard models loaded');
-  assert.ok(view.distance >= 30 && view.segments > 0, 'the tunnel grew by 30 m');
+  assert.ok(view.distance >= 50 && view.segments > 0, 'the tunnel grew by 50 m');
   assert.ok(view.machine, `${name}: Mabel is in the camera view`);
   assert.ok(view.tunnel, `${name}: tunnel lining or portal is in the camera view`);
   assert.ok(view.pixels?.length === 5 && view.pixels.some(pixel => pixel.some((value, i) => i < 3 && Math.abs(value - view.pixels[0][i]) > 2)), `${name}: picture centre is not a flat colour`);
@@ -75,7 +75,7 @@ export async function run(context) {
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
   await press(context, 'Tab');
   await holdUntil(context, 'KeyW', page.leverReady, 'set gentle thrust', 10000);
-  await context.waitFor(page.cut, '30 m bored', 300000);
+  await context.waitFor(page.cut, '50 m bored', 450000);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
   await picture(context, 'machine-borer-mouth');

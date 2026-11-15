@@ -187,6 +187,26 @@ const realGround = {heightAt:scablandsNaturalHeightAt};
 const realParked = createDigBorer(realGround);
 const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
 assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');
+
+// Follow the actual scarp height profile at a safe depth for 100 m.
+const realDeep = {...realGround, seed:19, materialAt:()=> 'rock', refusal:()=>null,
+  cut:()=>({ok:true,volumes:{}}), fill:()=>({ok:true})};
+const deepStart = {x:realParked.x + 50 * Math.sin(realParked.heading),
+  z:realParked.z + 50 * Math.cos(realParked.heading), y:realParked.y - 4, heading:realParked.heading};
+let realBore = {...createBorerState(deepStart), started:true, covered:true};
+const realSeams = new Set();
+while (realBore.distanceM < 100 && !realBore.finished && !realBore.message) {
+  realBore = stepBorer(realBore, {thrust:1/3}, realDeep, null, 5).state;
+  if (realBore.rockSeam) {
+    realSeams.add(realBore.rockSeam.index);
+    if (realBore.rockSeam.material === 'rock')
+      assert.equal(stepBorer(realBore, {thrust:1}, realDeep, null, 2).state.stalled, true,
+        'Full thrust stalls in the scarp hard seams.');
+  }
+}
+assert.ok(realBore.distanceM >= 100, `The scarp bore stopped at ${realBore.distanceM}: ${realBore.message}`);
+assert.ok(realSeams.size >= 4, 'The real scarp profile has at least three hardness changes in 100 m.');
+
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 Object.defineProperty(globalThis, 'localStorage', {configurable:true, get() { throw new Error('Tunnel exchange must not access storage.'); }});
 const restored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(forty.segments)));
