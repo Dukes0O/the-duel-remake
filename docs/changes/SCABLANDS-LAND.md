@@ -2034,3 +2034,13 @@ Still needed: three separate 150 m mesa-cover stretches, the other job corridors
 ### Not built by this slice
 
 Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1. The partial cover tests were removed under Claude's direction; every placed mesa remains.
+
+### Hill country: route proof continued
+
+Claude deferred furnace cover on the plates' way to EVERBURN-REMAKE job 1. The two partial cover tests were removed; all mesas remain. The hills suite passed 45 of 45, and the solid suite passed 25 of 25, including all four ways and both climbs. With realism on, Hot Delivery and Survey Flags each finished 10 of 10 using the Easy driver. A separate Easy run with realism on finished Hot Delivery, Get Out and Walk, Run Him Down, Slow Ride and The Key Under the Mall 10 of 10 each. The Everburn failed seed 1; that run was stopped before the other seeds finished.
+
+A diagnostic sampling each route every 40 m at the centre and 60 m either side found added hill height on the furnace route (legs 6 and 19), the Mall return (leg 2), and Survey Flags (leg 3). It also found the intended Ridge top on the furnace and long gas routes and the last flag leg. These samples do not prove the required clear corridors. The furnace and Mall routes include mesa or Breaks height outside the intended Ridge climb. Investigate and fix the clearances and the failed Everburn drive before claiming the proof.
+
+Changed assertions: removed the two partial furnace-cover assertions because Claude moved that requirement to job 1; no remaining assertion was loosened. Codex decided: run the existing Easy driver with realism enabled for this proof. Removed: the two deferred cover checks. No game event or sound was added. Race fingerprints, world signatures, final integration and the build remain to be checked. Claude must run and judge the pictures.
+
+The separate gas-road driver with realism on brought Big Bess home 10 of 10 on the long road at Watching. It was stopped before the remaining feud levels or the Boneyard road completed, so the gas-road suite has not passed. The final merge and checks were not started.
