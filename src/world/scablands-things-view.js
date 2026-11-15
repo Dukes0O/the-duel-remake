@@ -27,7 +27,7 @@ const CELL_RADIUS = Math.ceil(THINGS_RANGE / THINGS_CELL) + 1;
 const CAPACITY = (CELL_RADIUS * 2 + 1) ** 2 * 12;
 
 // The caller must supply every job start and create this only with the switch on.
-export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurfaceHeightAt, photos = null}) {
+export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurfaceHeightAt, drawnHeightAt = null, photos = null}) {
   if (!Array.isArray(jobStarts)) throw new TypeError('Job starts are required');
   const group = new THREE.Group(), batches = new Map();
   for (const kind of SMALL_THING_KINDS) {
@@ -55,7 +55,7 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
         if (!items) {
           items = smallThingsInCell(seed, a, b, jobStarts);
           for (const item of items) {
-            item.drawY = nearGroundHeightAt(item.x, item.z, heightAt);
+            item.drawY = drawnHeightAt?.(item.x, item.z) ?? nearGroundHeightAt(item.x, item.z, heightAt);
             item.tint = item.kind === 'stone' ? STONE_TINT[scablandsRegionAt(item.x, item.z)] ?? STONE_PLAIN : 1;
           }
         }
@@ -294,10 +294,10 @@ export function createForkSignsView(signs) {
 }
 
 // Create the trial once, and keep its batches for the lifetime of the scene.
-export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt, photos = null, data = null}) {
+export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt, drawnHeightAt, photos = null, data = null}) {
   if (!enabled) return null;
   const {fixed, loneBoulders} = data ?? realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth});
-  const small = createSmallThingsView({seed, jobStarts, heightAt, photos});
+  const small = createSmallThingsView({seed, jobStarts, heightAt, drawnHeightAt, photos});
   const large = createFixedThingsView(fixed, loneBoulders, photos);
   const lines = createThingsLinesView(fixed);
   const signs = createForkSignsView(fixed.signs);

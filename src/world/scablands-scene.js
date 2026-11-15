@@ -680,7 +680,8 @@ export function createScablandsScene(course,options={}){
       if(tracks){tracks.update(here.x,here.z);groundLook.setTracks(tracks);}
       const {jobStarts}=course.realismThings;
       things=createRealismThingsView({enabled:true,seed:course.seed,jobStarts,
-        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,photos:groundPhotos,data:course.realismThings});
+        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,
+        drawnHeightAt:(x,z)=>riverField.distanceAt(x,z)<80?gorge.heightAtDrawn(x,z):null,photos:groundPhotos,data:course.realismThings});
       group.add(things.group);things.update(here.x,here.z);
     }
     group.userData.assetStatus='ready';return true;

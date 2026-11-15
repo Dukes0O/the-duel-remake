@@ -29,7 +29,15 @@ export function createRiverField({halfWidth, halfDepth, river = RIVER_LAND, dist
   const texture = new THREE.DataTexture(data, width, depth, THREE.RedFormat, THREE.UnsignedByteType);
   texture.minFilter = texture.magFilter = THREE.LinearFilter; texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.generateMipmaps = false; texture.unpackAlignment = 1; texture.needsUpdate = true;
-  return {texture, box: {x0, z0, width: width * FIELD_CELL, depth: depth * FIELD_CELL}};
+  const distanceAt = (x, z) => {
+    const fx = (x - x0) / FIELD_CELL - .5, fz = (z - z0) / FIELD_CELL - .5;
+    if (fx < -.5 || fz < -.5 || fx > width - .5 || fz > depth - .5) return 128;
+    const i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const value = (a, b) => data[Math.max(0, Math.min(depth - 1, b)) * width + Math.max(0, Math.min(width - 1, a))] * 128 / 255;
+    return (value(i, j) * (1 - u) + value(i + 1, j) * u) * (1 - v) +
+      (value(i, j + 1) * (1 - u) + value(i + 1, j + 1) * u) * v;
+  };
+  return {texture, box: {x0, z0, width: width * FIELD_CELL, depth: depth * FIELD_CELL}, distanceAt};
 }
 
 // ---- Heights laid on the drawn ground -------------------------------------------------------------------------------------------------
@@ -186,8 +194,22 @@ export function createRiverDraw({river = RIVER_LAND, plainAt, material, range = 
     group.add(mesh); piece.mesh = mesh;
   }
   const limit = range * range;
+  const ray = new THREE.Raycaster(), origin = new THREE.Vector3(), down = new THREE.Vector3(0, -1, 0);
   return {
     group, pieces,
+    // Read the actual ribbon triangles, including their interpolation along the river.
+    heightAtDrawn(x, z) {
+      origin.set(x, 10000, z); ray.set(origin, down);
+      let height = null;
+      for (const piece of pieces) {
+        if ((piece.centre.x - x) ** 2 + (piece.centre.z - z) ** 2 > 1200 ** 2) continue;
+        if (!piece.mesh) build(piece);
+        piece.mesh.updateMatrixWorld(true);
+        const hit = ray.intersectObject(piece.mesh, false)[0];
+        if (hit && (height === null || hit.point.y > height)) height = hit.point.y;
+      }
+      return height;
+    },
     update(x, z, {all = false} = {}) {
       let built = 0;
       for (const piece of pieces) {

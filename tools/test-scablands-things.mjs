@@ -5,7 +5,8 @@ import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
 import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
-import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
+import {RIVER_LAND, riverDepthAt, stepsWayFor} from '../src/world/scablands-regions.js';
+import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
@@ -16,6 +17,26 @@ import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
 import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
 import {preparedScarps} from '../src/world/scablands-scarps.js';
+
+test('the river height for things follows the drawn bed and bank triangles', () => {
+  const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
+  const gorge = createRiverDraw({plainAt, material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide})});
+  const point = RIVER_LAND.line.points[Math.floor(RIVER_LAND.line.points.length / 2)];
+  gorge.update(point.x, point.z, {all: true});
+  gorge.group.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  let checked = 0;
+  for (let dx = -75; dx <= 75; dx += 15) for (let dz = -75; dz <= 75; dz += 15) {
+    const x = point.x + dx, z = point.z + dz;
+    ray.set(new THREE.Vector3(x, 10000, z), down);
+    const hits = ray.intersectObject(gorge.group, true);
+    if (!hits.length) continue;
+    assert.ok(Math.abs(gorge.heightAtDrawn(x, z) - hits[0].point.y) < .001);
+    checked++;
+  }
+  assert.ok(checked > 40);
+  gorge.dispose();
+});
 
 test('the height used for things follows the drawn scarp triangles', () => {
   const face = preparedScarps(SCARPS)[0];
