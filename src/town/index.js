@@ -6,6 +6,7 @@ import './town-ground.js';
 import './town-events.js';
 import './town-book.js';
 import './town-health.js';
+import './town-haulers.js';
 export {bucketWaterCost, checkTownLatrine, completeTownUtilityRoute, ensureUtilityState, solveTownSewers, solveTownWater, treatTownWater, MIN_PERSON_WATER_LITRES_DAY, PIPE_SIZES, PERSON_WATER_LITRES_DAY, TAP_LITRES_MINUTE} from './town-pipes.js';
 export {solveTownPower} from './town-power.js';
 export {runTownTreatment} from './town-treatment.js';

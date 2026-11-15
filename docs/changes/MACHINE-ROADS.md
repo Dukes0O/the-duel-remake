@@ -6,7 +6,7 @@ A town can record individual machine actions without changing an old save. Town 
 
 ## Review fixes in progress
 
-The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The other five review fixes and their checks are still outstanding. The earlier results below precede this fix and do not cover it.
+The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard check, browser scenario failure, and ground view still need work. The earlier full results below precede these fixes and do not cover them.
 
 ## Checks
 

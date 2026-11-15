@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/town-state.js';
+import {stepTown} from '../src/town/index.js';
 import {findHaulRoute, createHauler} from '../src/town/town-haulers.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 
@@ -59,6 +60,18 @@ const savedHaulTown = deserializeTown(serializeTown(haulTown));
 assert.deepEqual(savedHaulTown.machineRoads.map(road => road.roadClass), ['paved', 'paved']);
 const truck = createHauler({id:'road-truck', from, to, roads:savedHaulTown.machineRoads, vehicle:'truck', fuelLitres:1});
 assert.ok(truck.ok && truck.agent.hoursToDestination < firmHours, 'A saved paved road makes a truck faster.');
+// The town itself advances its own hauler on saved road grades each hour.
+const slowTown = deserializeTown(serializeTown(savedHaulTown));
+const fastTown = deserializeTown(serializeTown(savedHaulTown));
+slowTown.machineRoads.forEach(road => {road.roadClass='dirt';});
+for (const town of [slowTown, fastTown]) {
+  const trip = createHauler({id:'day-truck', from, to, roads:town.machineRoads, vehicle:'truck', fuelLitres:1});
+  trip.agent.speedFactor=0.000001;
+  town.haulers=[trip.agent];
+  for (let hour=0; hour<24; hour++) stepTown(town);
+}
+assert.ok(fastTown.haulers[0].progress > slowTown.haulers[0].progress,
+  'A paved road moves the town truck farther through one day of town ticks.');
 workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:2, edgeOffsetM:0});
 assert.equal(haulTown.machineRoads[0].roadClass, 'plank', 'A rough patch lowers the road grade.');
 workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:0.5, edgeOffsetM:0});
