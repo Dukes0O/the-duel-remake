@@ -367,3 +367,39 @@ test('fork signs use road destinations and share their posts with the solid inde
     if (original === undefined) delete globalThis.document; else globalThis.document = original;
   }
 });
+
+test('ground track hook preserves the original shader when tracks are absent', async () => {
+  const {createGroundLook} = await import('../src/world/scablands-ground-look.js');
+  const compile = look => {
+    const material = look.apply(new THREE.MeshStandardMaterial());
+    const shader = {uniforms: {}, vertexShader: '#include <common>\n#include <project_vertex>',
+      fragmentShader: '#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>\n#include <normal_fragment_maps>'};
+    material.onBeforeCompile(shader);
+    return shader;
+  };
+  const original = compile(createGroundLook());
+  const disabled = createGroundLook();
+  disabled.setTracks(null);
+  assert.deepEqual(compile(disabled), original);
+  const enabled = createGroundLook();
+  enabled.setTracks({texture: {value: null}, box: {value: new THREE.Vector4()}});
+  assert.match(compile(enabled).fragmentShader, /texture2D\(uTracks,trackUV\)/);
+});
+
+test('track drawing uses the named ways and refreshes as the player moves', async () => {
+  const {scablandsTracks, createScablandsTracks} = await import('../src/world/scablands-tracks.js');
+  const segments = scablandsTracks();
+  assert.ok(segments.some(item => item.strength === .5));
+  assert.ok(segments.some(item => item.strength === 1));
+  let clears = 0, strokes = 0;
+  const context = {fillRect() { clears++; }, beginPath() {}, moveTo() {}, lineTo() {}, stroke() { strokes++; }};
+  const view = createScablandsTracks({getContext: () => context});
+  const point = segments[0];
+  view.update(point.x1, point.z1);
+  assert.ok(strokes > 0);
+  view.update(point.x1, point.z1);
+  assert.equal(clears, 1);
+  view.update(point.x1 + 512, point.z1);
+  assert.equal(clears, 2);
+  view.dispose();
+});
