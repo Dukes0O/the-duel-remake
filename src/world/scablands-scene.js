@@ -5,7 +5,9 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
-import {createGroundLook,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
+import {createGroundLook,createHillField,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
+import {HILLS,scablandsTerrainHeightAt} from './scablands-height.js';
+const NO_HILLS=Object.freeze([]);
 import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
@@ -505,7 +507,10 @@ export function createScablandsScene(course,options={}){
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   const tunnels=featureFlags.enabled('wasteland-town')?course.groundTunnels:null;
   const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&!!course.realismThings))?loadGroundPhotos():null;
-  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
+  // Hill country's own surface (beds of rock, rills) is drawn where the land stands above its old ground.
+  const hillField=createHillField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,raised:(x,z)=>scablandsTerrainHeightAt(x,z)-scablandsTerrainHeightAt(x,z,NO_HILLS),
+    spots:HILLS.map(hill=>({x:hill.x,z:hill.z,reach:(hill.radius+(hill.ramp??0))*1.3+40}))});
+  const groundLook=createGroundLook({tunnels,regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn'),hills:hillField},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
