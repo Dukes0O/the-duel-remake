@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, stepRoadMachine, workRoadCell} from '../src/machines/roads.js';
-import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox} from '../src/machines/dig-sandbox.js';
+import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 
 function buildRoad() {
   let work = createRoadWork();
@@ -35,6 +35,10 @@ for (const kind of ['dozer', 'roller', 'paver']) {
   assert.deepEqual(raised.work, ground, 'Driving with the tool raised leaves the ground alone.');
 }
 let yard = createDigSandbox({playerId:'road-test'});
+for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'excavator']) {
+  yard = switchDigMachine(yard);
+  assert.equal(yard.activeMachine, expected, 'Every machine can be selected in the yard.');
+}
 for (const kind of ['dozer', 'roller', 'paver']) {
   yard = {...yard, activeMachine:kind};
   const before = digSandboxMachineState(yard);

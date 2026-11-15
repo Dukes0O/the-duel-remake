@@ -10,4 +10,4 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 
 ## Codex decided (Claude to review)
 
-- Road work uses whole-metre cells. A blade carries material from a cut into a fill; rolling firms the fill and paving records its condition. The yard and town connections still need to be built.
+- Road work uses whole-metre cells. A blade carries material from a cut into a fill; rolling firms the fill and paving records its condition. The yard uses Space while driving to operate each road machine. The town connection still needs to be built.
