@@ -37,10 +37,14 @@ export function westScarpTrial(heightAt) {
   return trialTubeBetween(at(-5), at(95), 4, heightAt);
 }
 
-function point(value, label) {
+function checkPoint(value, label) {
   if (!value || !finite(value.x) || !finite(value.y) || !finite(value.z)) {
     throw new TypeError(`${label} needs finite x, y and z coordinates.`);
   }
+}
+
+function point(value, label) {
+  checkPoint(value, label);
   return {x: value.x, y: value.y, z: value.z};
 }
 
@@ -64,14 +68,16 @@ function closestOnSegment(position, segment) {
 
 // The floor and side walls are sampled in plan view. Using the actor's Y
 // in the projection moves the centre along a sloping tube as the car bounces.
-function horizontalProjection(position, segment) {
+function horizontalProjection(position, segment, result) {
   const dx = segment.end.x - segment.start.x;
   const dz = segment.end.z - segment.start.z;
   const lengthSquared = dx * dx + dz * dz;
   const t = lengthSquared === 0 ? 0 :
     ((position.x - segment.start.x) * dx + (position.z - segment.start.z) * dz) / lengthSquared;
-  return {x: segment.start.x + dx * t, y: segment.start.y + (segment.end.y - segment.start.y) * t,
-    z: segment.start.z + dz * t};
+  result.x = segment.start.x + dx * t;
+  result.y = segment.start.y + (segment.end.y - segment.start.y) * t;
+  result.z = segment.start.z + dz * t;
+  return result;
 }
 
 /** Immutable tunnel tubes with height-aware ground lookup and shader hole tests. */
@@ -90,12 +96,31 @@ export function createGroundTunnels(segments = []) {
     }
   }
 
+  // Each tube is entered in the cells touched by its plan-view bounds. A
+  // query visits only its own cell, even when the bore has many segments.
+  const cellSize = 32, grid = new Map(), noTubes = [];
+  for (const tube of tubes) {
+    const minX = Math.floor((Math.min(tube.start.x, tube.end.x) - tube.radius) / cellSize);
+    const maxX = Math.floor((Math.max(tube.start.x, tube.end.x) + tube.radius) / cellSize);
+    const minZ = Math.floor((Math.min(tube.start.z, tube.end.z) - tube.radius) / cellSize);
+    const maxZ = Math.floor((Math.max(tube.start.z, tube.end.z) + tube.radius) / cellSize);
+    for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) {
+      if (!grid.has(x)) grid.set(x, new Map());
+      const column = grid.get(x);
+      if (!column.has(z)) column.set(z, []);
+      column.get(z).push(tube);
+    }
+  }
+  const projected = {x: 0, y: 0, z: 0};
+  const nearestResult = {tube: null, center: {x: 0, y: 0, z: 0}, floor: 0, ceiling: 0, radial: 0};
+
   function tubeAt(position, actorHeight = position?.y, floorTolerance = 0) {
-    point(position, 'Actor position');
+    checkPoint(position, 'Actor position');
     if (!finite(actorHeight)) throw new TypeError('Actor height must be finite.');
-    let nearest = null;
-    for (const tube of tubes) {
-      const center = horizontalProjection(position, tube);
+    let found = false;
+    const candidates = grid.get(Math.floor(position.x / cellSize))?.get(Math.floor(position.z / cellSize)) ?? noTubes;
+    for (const tube of candidates) {
+      const center = horizontalProjection(position, tube, projected);
       // A tube's support ends at its mouths, rather than extending forever
       // along the approach on either side.
       const dxAxis = tube.end.x - tube.start.x, dzAxis = tube.end.z - tube.start.z;
@@ -106,11 +131,14 @@ export function createGroundTunnels(segments = []) {
       const floor = center.y - tube.radius;
       const ceiling = center.y + tube.radius;
       if (radial < tube.radius && actorHeight <= ceiling && actorHeight >= floor - floorTolerance &&
-          (!nearest || radial < nearest.radial)) {
-        nearest = {tube, center, floor, ceiling, radial};
+          (!found || radial < nearestResult.radial)) {
+        found = true;
+        nearestResult.tube = tube;
+        nearestResult.center.x = center.x; nearestResult.center.y = center.y; nearestResult.center.z = center.z;
+        nearestResult.floor = floor; nearestResult.ceiling = ceiling; nearestResult.radial = radial;
       }
     }
-    return nearest;
+    return found ? nearestResult : null;
   }
 
   function groundAt(position, actorHeight, terrainHeight) {

@@ -516,6 +516,17 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   assert.throws(() => createGroundTunnels([{...first, end: first.start}]), RangeError);
 }
 
+// Find support on every part of a long chain, including negative grid cells.
+{
+  const segments = Array.from({length: 100}, (_, i) => ({
+    start: {x: (i - 50) * 10, y: 4, z: -33},
+    end: {x: (i - 49) * 10, y: 4, z: -33}, radius: 4}));
+  const chain = createGroundTunnels(segments);
+  for (let x = -499; x < 500; x += 3)
+    assert.equal(chain.groundAt({x, y: 0, z: -33}, 0, 20), 0, `chain support at ${x}`);
+  assert.equal(chain.groundAt({x: 0, y: 20, z: -33}, 20, 20), 20);
+}
+
 // A chain must hand support to the next segment as the car crosses a joint.
 {
   const joined = createGroundTunnels([

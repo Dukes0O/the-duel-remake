@@ -2,6 +2,8 @@
 
 ## Current round
 
+Tunnel support now looks up nearby segments in a grid and reuses its projection and result objects. A 100-segment chain is checked across cell boundaries; `node tools/test-tunnels.mjs` passed. The wall handoff still searches the chain at a joint and needs the rest of item 3.
+
 Tunnel creation now rejects a gap or height step at a joint, a radius step, and a segment with no horizontal length. `node tools/test-tunnels.mjs` passed. The flat floor, roof, closed face, grid, drawing and scenario remain to be built.
 
 A scripted driver now takes a car from the road down the Wash and under the Girder Bridge while a job raider follows its moving position. Both remain on the bed where it is deep; `test-scablands-solid` passed all 20 checks. The test supplies the pursuit target; it does not prove a separate autonomous chase system. The tunnel enclosure and drawing work still remain.
