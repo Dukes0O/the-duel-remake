@@ -154,3 +154,9 @@ The lip refusal now tells the player to tip spoil below the mouth. The borer tes
 Merged `integration/wasteland` without conflicts. A bore that rises under open ground, or reaches a far face with ground more than 3 m above its floor beyond it, now stops with the instruction to back out. The focused test checks both refusals within 2 m of the crown crossing and proves reverse works from each. The open-ground sentence assertion changed to Claude's new wording; the new high-ground refusal replaces the former exit-cutting behavior for that case. The cue remains `borer.refuse`.
 
 `node tools/test-machine-borer.mjs` passed in 198.3 seconds. The suite still exceeds 120 seconds; the later pace item must address that. No browser, replay, lane tier or build was run for this item. No race fingerprints were recorded.
+
+## Steep drive refusal
+
+The real mesa test now requires the six-degree climb to stop with `BORER_OPEN_GROUND` within 5 m of 277.86 m. The rising bore loses the full face behind its crown. This replaces the earlier assertion that accepted either the open-ground or lip sentence, as Claude directed. The browser scenario and final checks remain for later items.
+
+`node tools/test-machine-borer.mjs` passed in 201.2 seconds. The later pace item must bring it below 120 seconds. No browser, replay, lane tier or build was run for this item. No race fingerprints were recorded.

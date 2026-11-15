@@ -246,8 +246,9 @@ assert.equal(trenchDrive.trenchWarnings, 1 + Math.floor((trenchDrive.machine.exi
 assert.equal(trenchDrive.machine.finished, true, 'She can climb out after 70 m of exit cutting.');
 assert.ok(trenchDrive.machine.exitCutting.distanceM >= 70);
 const steepDrive = driveMesa('steep').machine;
-assert.ok(steepDrive.message === BORER_OPEN_GROUND || /^She has come out .* up the face\./.test(steepDrive.message),
-  `A steep drive stops at open ground or a lip: ${steepDrive.message}`);
+assert.equal(steepDrive.message, BORER_OPEN_GROUND, 'The steep drive stops under open ground.');
+assert.ok(Math.abs(steepDrive.distanceM - 277.86) <= 5,
+  `The steep drive stops near 277.86 m, not ${steepDrive.distanceM} m.`);
 assert.ok(seamEnds.length >= 4, 'A 100 m bore meets at least three seam changes.');
 assert.ok(seamKinds.includes('rock') && seamKinds.includes('gravel'));
 let leverTest = {...sandbox, activeMachine:'borer', mode:'work', borer:createBorerState()};
