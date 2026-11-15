@@ -2,6 +2,9 @@
 
 ## Current round
 
+The shortcut presets were regenerated twice and all 15 saved records are unchanged. `node tools/test-shortcut-presets.mjs` passed 241 checks. The generator does not recognize `--verify-solvers` separately; it ran the same full generation again.
+
+
 The road ribbons now stay flat across the Girder Bridge and the Pipe instead of hanging down into the bed. Both slabs are 1.2 m thick and cast shadows. The existing gorge ribbon draws the bed beneath both crossings; the near and far ground shaders cut out the river there. `node tools/test-tunnels.mjs` passed, including clear-air checks at three positions under each deck. The view still needs Claude's browser check. No game event or sound was added.
 
 
@@ -83,9 +86,11 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 
 ## For Claude to run
 
-Resolve the shortcut freshness failure and rerun the incomplete Everburn Easy suite and the three FFmpeg-dependent checks. Run `tools/scenarios/tunnel-trial.mjs` with the browser harness. Check the 100 m bore, both drives, both mouths, the inside, the ground above and the bridge bed. The scenario records draw calls, triangles and frame intervals with memory-only storage on Performance. Check that Big Bess and raiders visibly chase under the deck as well. Judge the look and measure frame time.
+Rerun the incomplete Everburn Easy suite and the three FFmpeg-dependent checks. Run `tools/scenarios/tunnel-trial.mjs` with the browser harness. Check the 100 m bore, both drives, both mouths, the inside, the ground above and the bridge bed. The scenario records draw calls, triangles and frame intervals with memory-only storage on Performance. Check that Big Bess and raiders visibly chase under the deck as well. Judge the look and measure frame time.
 
 ## Changed assertions, for Claude to review
+
+Shortcut source fingerprint: `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3df718f9c4264fe` to `a23244774fb2baa6f021808d03f2272538612161df05e00bb0a81d18dc3a798d`, because `Course.groundAt` changed; all 15 saved records are unchanged.
 
 `test-tunnels.mjs`: at 1.2 m below the deck, the expected floor changes from deck to bed; the 0.6 m rule requires it. With the town switch off, car support changes from the deck to the bed when the car is placed in the bed; decks no longer depend on that switch. Both assertions require the specified behaviour.
 
