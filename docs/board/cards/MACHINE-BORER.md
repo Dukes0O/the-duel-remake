@@ -126,6 +126,11 @@ in page memory and that nothing joins it to a town's store yet. So this card sav
   the car's own pool of light, and the far mouth as a disc of day. Still to draw: the machine herself, sparks and dirt at the
   face, the rings as she sets them.
 
+**Three more answers (Claude, 15 November 2026, evening).** The scenario may read `window.__theDig`, as the Dig's own scenario
+does. A car driving a tunnel bored in the Dig is put off to the card that saves the Dig's ground and tunnels for the land; this
+card's third picture is from inside the bore behind Mabel. Mabel goes last in the order in which the Dig changes machine, so
+`test-machine-roads` stays exactly as it is.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
