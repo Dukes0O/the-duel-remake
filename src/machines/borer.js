@@ -52,10 +52,11 @@ function addCut(segments, start, end, radius) {
   segments.push({start, end, radius, startOpen:segments.length === 0, endOpen:false});
 }
 
-/** Work is deterministic in fixed steps. The caller supplies the face material and ground layer. */
-export function stepBorer(state, controls = {}, ground, material = 'rock', dtSeconds = 0) {
+/** Work is deterministic in fixed steps. A supplied material overrides the face query. */
+export function stepBorer(state, controls = {}, ground, material = null, dtSeconds = 0) {
   if (!state || !ground || typeof ground.heightAt !== 'function' || typeof ground.refusal !== 'function' ||
-      !Number.isFinite(dtSeconds) || dtSeconds < 0 || !Object.hasOwn(hardness, material))
+      !Number.isFinite(dtSeconds) || dtSeconds < 0 ||
+      (material === null ? typeof ground.materialAt !== 'function' : !Object.hasOwn(hardness, material)))
     throw new TypeError('The borer needs ground, material and non-negative time.');
   const radius = machineDefinition('borer').boreRadiusM;
   const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, 0, 1);
@@ -81,7 +82,9 @@ export function stepBorer(state, controls = {}, ground, material = 'rock', dtSec
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
       next.message = message; next.headSpeed = 1; next.overloadSeconds = 0; continue;
     }
-    const capacity = hardness[material];
+    const faceMaterial = material ?? ground.materialAt(next.x, next.y + radius * 0.55, next.z);
+    const capacity = hardness[faceMaterial];
+    if (capacity === undefined) throw new TypeError('The ground returned an unknown face material.');
     const overloaded = thrust > capacity + 1e-9;
     next.headSpeed = overloaded ? capacity / thrust : 1;
     next.overloadSeconds = overloaded ? next.overloadSeconds + step : 0;

@@ -69,6 +69,22 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     return naturalHeight(x, z) + north * (1 - tz) + south * tz;
   }
 
+  // Use the same seeded layers as cut(), including material placed above
+  // the natural surface. Coordinates select the same one-metre ground cell.
+  function materialAt(x, y, z) {
+    if (![x, y, z].every(finite)) throw new TypeError('Material coordinates must be finite.');
+    const sx = Math.floor(x), sz = Math.floor(z);
+    const natural = naturalHeight(sx, sz);
+    const sample = sampleAt(sx, sz);
+    if (sample && y > natural && sample.chunk.delta[sample.index] > 0)
+      return GROUND_MATERIALS[sample.chunk.material[sample.index]];
+    const depth = Math.max(0, natural - y), roll = hash(numericSeed, sx, sz);
+    const topsoilEnd = 1 + roll, clayEnd = topsoilEnd + 2 + roll * 2;
+    const gravelEnd = clayEnd + 4 + roll * 3;
+    return depth < topsoilEnd ? 'topsoil' : depth < clayEnd ? 'clay' :
+      depth < gravelEnd ? 'gravel' : 'rock';
+  }
+
   function cut(shape, target, maxVolume = Infinity) {
     validShape(shape);
     if (!finite(target)) throw new TypeError('Cut target must be a finite height.');
@@ -158,6 +174,6 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
     chunks = nextChunks;
   }
 
-  return Object.freeze({heightAt, cut, fill, refusal, toSave, loadSave, get chunkCount() { return chunks.size; },
+  return Object.freeze({heightAt, materialAt, cut, fill, refusal, toSave, loadSave, get chunkCount() { return chunks.size; },
     get saveByteLength() { return chunks.size * SAMPLE_COUNT * 5 + chunks.size * 8 + 16; }});
 }
