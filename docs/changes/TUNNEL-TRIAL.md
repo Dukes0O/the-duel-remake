@@ -23,9 +23,10 @@ A repeatable trial placement now joins the tube floor to the surface at both end
 ## Checks
 
 - `node tools/test-tunnels.mjs`: passed material generation and lining checks, plus ground-query, joined-slope continuity, surface-obstacle, wall-calculation, contact-hook and real simulated driving checks in both directions on a controlled level tube. The real Ridge mouths and save are not tested.
-- Replay guard: interrupted in this round before completion. No pass is claimed.
+- `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.
+- `node tools/test-combat-replays.mjs`: passed 12 fingerprints across four encounters.
 - Lane tier: interrupted in an earlier round before completion. No pass is claimed.
-- `npm.cmd run build`: passed after the scene connection. PowerShell blocked `npm` itself under its script policy.
+- `npm.cmd run build`: passed after adding the real-site measurement. PowerShell blocked `npm` itself under its script policy.
 - Browser: not run. The requested scenario does not exist yet.
 
 ## For Claude to run

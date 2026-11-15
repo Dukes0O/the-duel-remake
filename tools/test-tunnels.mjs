@@ -15,6 +15,7 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
   const direction = {x: Math.sin(rise.heading), z: Math.cos(rise.heading)};
   const start = {x: rise.x - 50 * direction.x, z: rise.z - 50 * direction.z};
   const end = {x: rise.x + 50 * direction.x, z: rise.z + 50 * direction.z};
+  assert.throws(() => trialTubeBetween(start, start, 4, scablandsHeightAt), RangeError);
   const trial = trialTubeBetween(start, end, 4, scablandsHeightAt);
   const tube = createGroundTunnels([trial.segment]);
   for (const mouth of [trial.segment.start, trial.segment.end]) {

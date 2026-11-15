@@ -7,6 +7,7 @@ export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
       typeof heightAt !== 'function' || !Number.isInteger(samples) || samples < 1) {
     throw new TypeError('A trial tube needs two surface points, a radius and a height query.');
   }
+  if (start.x === end.x && start.z === end.z) throw new RangeError('Trial mouths must be apart.');
   const startHeight = heightAt(start.x, start.z), endHeight = heightAt(end.x, end.z);
   if (!finite(startHeight) || !finite(endHeight)) throw new TypeError('Surface heights must be finite.');
   const segment = {start: {x: start.x, y: startHeight + radius, z: start.z},
