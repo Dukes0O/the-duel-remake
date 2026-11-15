@@ -117,10 +117,18 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
   }
   // A tunnel-capable material reserves eight mouth cuts once. Updating the
   // values does not change the shader or require a program rebuild.
-  const tunnelCapable = (tunnels?.segments.length ?? 0) > 0;
+  let tunnelCapable = (tunnels?.segments.length ?? 0) > 0;
+  const tunnelMaterials = new Set();
   function setTunnelMouths(mouths) {
     if (mouths.length > 8) throw new RangeError('The ground can draw at most eight tunnel mouths.');
-    if (!tunnelCapable && mouths.length) throw new Error('This ground material has no tunnel cuts.');
+    if (!tunnelCapable && mouths.length) {
+      tunnelCapable = true;
+      uniforms.uTunnelCount = {value: 0};
+      uniforms.uTunnelStart = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+      uniforms.uTunnelEnd = {value: Array.from({length: 8}, () => new THREE.Vector3())};
+      uniforms.uTunnelRadius = {value: new Float32Array(8)};
+      for (const material of tunnelMaterials) material.needsUpdate = true;
+    }
     if (!tunnelCapable) return;
     uniforms.uTunnelCount.value = mouths.length;
     mouths.forEach((mouth, i) => {
@@ -136,15 +144,15 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
     uniforms.uTunnelRadius = {value: new Float32Array(8)};
     setTunnelMouths(tunnels.mouths);
   }
-  const tunnelDeclarations = tunnelCapable ?
-    'uniform int uTunnelCount;uniform vec3 uTunnelStart[8];uniform vec3 uTunnelEnd[8];uniform float uTunnelRadius[8];' : '';
-  const tunnelClips = tunnelCapable ? `
+  const tunnelDeclarations =
+    'uniform int uTunnelCount;uniform vec3 uTunnelStart[8];uniform vec3 uTunnelEnd[8];uniform float uTunnelRadius[8];';
+  const tunnelClips = `
     for(int i=0;i<8;i++){
       if(i>=uTunnelCount)break;
       vec3 a=uTunnelStart[i],d=uTunnelEnd[i]-a,p=vGroundPos-a;
       float t=clamp(dot(p,d)/max(dot(d,d),1e-8),0.0,1.0);
       vec3 q=p-d*t;if(dot(q,q)<uTunnelRadius[i]*uTunnelRadius[i])discard;
-    }` : '';
+    }`;
   const regionsOn = regions !== null;
   const photosOn = regionsOn && photos !== null;
   if (photosOn) for (const [key, name] of PHOTO_UNIFORMS) {
@@ -173,6 +181,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
   function apply(material, {riverHole = true} = {}) {
     if (!material?.isMeshStandardMaterial || material.userData.groundLook) return material;
     material.userData.groundLook = true;
+    tunnelMaterials.add(material);
     material.defines = {...material.defines, ...(riverHole && regionsOn ? {GROUND_RIVER_HOLE: ''} : {})};
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
@@ -185,13 +194,13 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
         .replace('#include <common>', `#include <common>
           uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
           uniform vec3 uColPlate;uniform vec3 uColSalt;uniform vec3 uColBed;uniform vec3 uColWreck;uniform vec3 uColSand;uniform vec3 uColBurn;uniform vec3 uColBank;
-          ${areaCode}${tunnelDeclarations ? `\n          ${tunnelDeclarations}` : ''}
+          ${areaCode}${tunnelCapable ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
           vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
           ${areaFunctions}${photoCode}`)
         .replace('#include <color_fragment>', `#include <color_fragment>
-          ${tunnelClips ? `${tunnelClips}\n          ` : ''}vec2 gq=vGroundPos.xz;
+          ${tunnelCapable ? `${tunnelClips}\n          ` : ''}vec2 gq=vGroundPos.xz;
           ${riverDistance}
           float gSlope=1.0-normalize(vGroundNormal).y;
           // The noise picture is read at sizes that never line up with each other, and nothing that must not repeat is read from it
@@ -337,6 +346,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
 // The trial's lining is separate from simulation and may be disposed with the scene.
 export function createTunnelMesh(tunnels) {
   const group = new THREE.Group();
+  group.name = 'Tunnel lining';
   const segments = tunnels.segments;
   if (!segments.length) return group;
   const positions = [], uvs = [], indices = [];

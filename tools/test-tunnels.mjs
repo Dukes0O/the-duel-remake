@@ -803,6 +803,33 @@ assert.equal(car.lateral, 5, 'a car on selected covered ground is not held by bo
 
 console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');
 
+// The game scene follows replacements and clears, without writing to the course.
+{
+  const {featureFlags} = await import('../src/feature-flags.js');
+  const {createScablandsScene} = await import('../src/world/scablands-scene.js');
+  const {syncScene} = await import('../src/scene-systems.js');
+  const enabledBefore = featureFlags.enabled;
+  featureFlags.enabled = name => name === 'wasteland-town';
+  const course = new Course(SCABLANDS_VENUE, 1989, {tunnelsEnabled: true});
+  const scene = createScablandsScene(course, {openMarks: [], loadAsset: async () => ({scene: new THREE.Group()})});
+  try {
+    const trial = westScarpTrial(scablandsSurfaceHeightAt);
+    assert.equal(scene.group.getObjectByName('Tunnel lining'), undefined);
+    course.setGroundTunnels([trial.segment]);
+    syncScene(scene.group, {});
+    assert.ok(scene.group.getObjectByName('Tunnel lining'));
+    const revision = course.groundTunnelsRevision;
+    syncScene(scene.group, {});
+    assert.equal(course.groundTunnelsRevision, revision);
+    course.setGroundTunnels([]);
+    syncScene(scene.group, {});
+    assert.equal(scene.group.getObjectByName('Tunnel lining'), undefined);
+  } finally {
+    scene.dispose();
+    featureFlags.enabled = enabledBefore;
+  }
+}
+
 // Both ground materials can use the same capsule test; the empty case keeps
 // the original shader and cache key, while a tube adds uniforms and a lining.
 {
@@ -823,6 +850,18 @@ console.log('Tunnel support, joined segments, wall contact and simulated driving
   assert.match(cut.shader.fragmentShader, /uTunnelRadius\[8\]/);
   assert.match(cut.shader.fragmentShader, /i<uTunnelCount|i>=uTunnelCount/);
   const mouth = {start: {x: 1, y: 2, z: 3}, end: {x: 4, y: 5, z: 6}, radius: 4};
+  const version = ordinary.material.version;
+  ordinary.look.setTunnelMouths([mouth]);
+  assert.equal(ordinary.material.version, version + 1, 'the first mouth enables the shader once');
+  const activated = {uniforms: {}, vertexShader: '#include <common>\n#include <project_vertex>',
+    fragmentShader: '#include <common>\n#include <color_fragment>\n#include <emissivemap_fragment>'};
+  ordinary.material.onBeforeCompile(activated);
+  assert.match(activated.fragmentShader, /uTunnelRadius\[8\]/);
+  ordinary.look.setTunnelMouths([mouth, mouth]);
+  assert.equal(ordinary.material.version, version + 1, 'later mouth changes do not recompile');
+  assert.equal(activated.uniforms.uTunnelCount.value, 2);
+  ordinary.look.setTunnelMouths([]);
+  assert.equal(activated.uniforms.uTunnelCount.value, 0);
   cut.look.setTunnelMouths([mouth]);
   assert.equal(cut.shader.uniforms.uTunnelCount.value, 1);
   assert.equal(cut.shader.uniforms.uTunnelRadius.value[0], 4);

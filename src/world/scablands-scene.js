@@ -479,7 +479,21 @@ export function createScablandsScene(course,options={}){
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
-  if(tunnels?.segments.length)ground.add(createTunnelMesh(tunnels));
+  let tunnelLining=tunnels?.segments.length?createTunnelMesh(tunnels):null;
+  if(tunnelLining)ground.add(tunnelLining);
+  let tunnelRevision=course.groundTunnelsRevision;
+  const syncTunnels=()=>{
+    if(!featureFlags.enabled('wasteland-town')||tunnelRevision===course.groundTunnelsRevision)return;
+    tunnelRevision=course.groundTunnelsRevision;
+    const current=course.groundTunnels;
+    groundLook.setTunnelMouths(current?.mouths??[]);
+    if(tunnelLining){
+      ground.remove(tunnelLining);
+      tunnelLining.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
+    }
+    tunnelLining=current?.segments.length?createTunnelMesh(current):null;
+    if(tunnelLining)ground.add(tunnelLining);
+  };
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
   const nearHole={value:new THREE.Vector4(0,0,0,0)};
@@ -678,6 +692,7 @@ export function createScablandsScene(course,options={}){
       }
     },
     sync(state){
+      syncTunnels();
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
       if(locate(state)){
         placeNearGround(here.x,here.z);
