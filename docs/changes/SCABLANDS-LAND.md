@@ -2251,3 +2251,16 @@ At 45 degrees the shared collision sweep still reports a hit at 2, 2.25, 2.5 and
 **Codex decided:** none. Claude directed the zero solid heading and the distance search.
 
 **Removed:** the trunk solid's seeded heading. The drawn tree keeps its seeded heading.
+
+
+### Dead trees: seeded drawing rotation
+
+The tree drawing now uses each tree's seeded heading while its round trunk keeps a collision heading of zero. A new test checks two trees have different drawing rotations, each matching its own heading, and zero-heading trunks. The things suite passed 43 of 43, the scene suite passed, and the build passed. The build ran with `npm.cmd` because PowerShell blocks `npm.ps1`. Integration was already up to date. Claude has approved the two tree views and the 160 m group spacing.
+
+**For Claude to run:** the lane tier at merge. The browser was not run in this lane. The earlier checks and replay fingerprints are recorded above; they were not repeated for this drawing correction.
+
+**Changed assertions:** none in this correction. The new rotation test adds coverage. The earlier passing-distance change remains listed above for Claude's review.
+
+**Codex decided:** none. No game event or sound cue was added.
+
+**Removed:** the use of the collision heading for drawing trees. The shared collision sweep still has the 45-degree clearance fault recorded as QA-ROUND-SOLID-HEADING.

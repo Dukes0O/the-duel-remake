@@ -514,7 +514,7 @@ export function thingSolids(fixed, loneBoulders = []) {
     add(post, post.id, 'fence-post', post.x, post.z, .15, .15, 1.4, post.heading, {canFall: true});
   for (const tree of fixed.trees ?? []) {
     const radius = tree.kind === 'snag' ? .35 : .45;
-    add(tree, tree.id, tree.kind, tree.x, tree.z, radius, radius, tree.height, 0);
+    add(tree, tree.id, tree.kind, tree.x, tree.z, radius, radius, tree.height, 0, {drawHeading: tree.heading});
   }
   for (const rock of [...fixed.boulders, ...loneBoulders].filter(Boolean))
     add(rock, rock.id, 'boulder', rock.x, rock.z, rock.size / 2, rock.size / 2, rock.size, rock.heading);

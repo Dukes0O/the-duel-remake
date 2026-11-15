@@ -166,6 +166,37 @@ test('cleared trees have solid trunks at their full height', () => {
   }
 });
 
+test('tree drawings retain distinct seeded headings while trunks stay unturned', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const first = fixed.trees[0];
+  const second = fixed.trees.find(tree => tree.heading !== first.heading);
+  assert.ok(second);
+  const solids = thingSolids(fixed, []);
+  const view = createFixedThingsView(fixed, []);
+  const rotations = [];
+  for (const tree of [first, second]) {
+    const trunk = solids.find(solid => solid.id === tree.id);
+    assert.equal(trunk.heading, 0);
+    assert.equal(trunk.collision.heading, 0);
+    assert.equal(trunk.drawHeading, tree.heading);
+    view.update(tree.x, tree.z);
+    const mesh = view.group.getObjectByName(`Scablands ${tree.kind}`);
+    let rotation;
+    for (let index = 0; index < mesh.count; index++) {
+      const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), quaternion = new THREE.Quaternion();
+      mesh.getMatrixAt(index, matrix);
+      matrix.decompose(position, quaternion, new THREE.Vector3());
+      if (Math.hypot(position.x - tree.x, position.z - tree.z) < .001) rotation = quaternion;
+    }
+    assert.ok(rotation, `${tree.id} is drawn`);
+    const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), tree.heading);
+    assert.ok(rotation.angleTo(expected) < .001);
+    rotations.push(rotation);
+  }
+  assert.ok(rotations[0].angleTo(rotations[1]) > .001);
+  view.dispose();
+});
+
 test('all trees stand on the drawn ground and cast shadows', () => {
   const fixed = clearedFixedThings(1989, []);
   const groundAt = (x, z) => scablandsSurfaceHeightAt(x, z) + 3;
