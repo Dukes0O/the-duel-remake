@@ -518,6 +518,52 @@ every crossing by its road at the road's top speed; and each of the four ways fr
 Tin Town driven end to end by a scripted driver as a builder's check. Race replays and the
 Scrapdome's fights must not move.
 
+### Slice 2b result (a Sonnet helper built it; Codex reviewed and fixed it; Claude judged the look, 14 November 2026): merged, switches off
+
+Full notes: `docs/changes/SCABLANDS-LAND.md`, "Round 4 slice 2b" and "Round 4 slice 2b: fixes after
+the review". Sheet `docs/board/looks/scablands-land/round-6.jpg` with Claude's review beside it.
+
+- **Built:** slopes pull a car by the courses' own rule; ground steeper than a tyre grips stops
+  it and counts as a hit; an edge is a fall that hurts by the drop. The Wash and the South Ford
+  are long ramps, the Steps are ledges with a marked way, the Girder Bridge and the Pipe have
+  solid decks, frames and piers. About 200 things are solid, found by a grid; raiders, Big Bess
+  and people on foot obey them. Four scarps, 12 to 20 m high. The old oval's ramps and junk cars
+  are gone.
+- **Codex's independent review found three real faults.** Two are put right: a job's own solids
+  (the braziers) now belong to that game and go when it ends; Big Bess stops clear of every
+  solid and both furnace roads are proved clear of solids and of ground too steep, every 2 m.
+  The third is open, below.
+- **Open fault: the river bed is a dead end under the Girder Bridge and the Pipe**, because the
+  land holds one height at each place and a deck is level with the plain. It cuts the fourth
+  way to Tin Town (the bed from the Wash). The cure is a ground that an actor reads at its own
+  height, which the tunnel lane has begun (TUNNEL-TRIAL); decks become its second use. The test
+  that records the dead end stays until then.
+- **Also open:** the Ridge's top cannot be reached by a car (Survey Flags' fifth flag stands at
+  its foot until slice 2c gives the Ridge a way up); the furnace and Big Bess are not solid to a
+  car (EVERBURN-REMAKE); Tin Town's gate leaves a car nowhere to go but to stop; chases take
+  about a quarter longer because of the slopes (each job's numbers are set when it is remade).
+
+**Changed assertions, reviewed by Claude (rule 18).** The helper's list is in the change note.
+Codex's review marked three as loosened, and Claude refused all three; they are restored:
+- `test-old-smoke`: the chase limit had gone from 1,500 to 4,000 s. It is 1,753 s: the suite's
+  own driver takes 1,524 s on the new ground, plus 15 per cent.
+- `test-scablands-scene`: the checks that each place exists and that its solids lie within 100 m
+  of it had been removed. They are back in the new form (every place that draws a thing taller
+  than a wheel has a solid; every solid lies within 100 m of what it belongs to).
+- `test-scablands-size`: the moving-a-place check had left out the bridge's frames and piers, the
+  Pipe's posts, the Steps' posts, the ring fence and the bridge-side job places. Each is checked
+  again, against the rule that places it.
+- Accepted as given: the gate fence's 3.4 m, the bridge's 4 m, the ambush moved to the Wash.
+- One changed by Claude's ruling: `test-everburn-play-start` measured the long gas road against
+  a rectangle round Tin Town with 8 m to spare. It now measures Big Bess's body against every
+  one of the town's solids. That is the stricter truth.
+
+**Checks.** By Codex: every changed suite, the long Easy suite, both replay suites (fingerprints
+unchanged) and the build. By Claude at the merge: the lane tier on the merged result, 275 of 275 (it includes the suites Codex's sandbox cannot run), and the browser scenarios `scablands-solid`, `scablands-size` and `everburn-ember` in a visible window, all passing.
+
+**Not driven by Claude in real time.** Owed still, with the frame check, before any of this land
+is shown.
+
 ### More direction from Kyle (14 November 2026, on seeing the regions being built)
 
 "I like what you're working on." Then, in his words:

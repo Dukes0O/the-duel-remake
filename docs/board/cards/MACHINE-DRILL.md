@@ -25,3 +25,5 @@ Hard feed above three quarters in rock jams the bit. Reversing the feed frees it
 The rig stops before the mast can feed. Yard wellheads last only for that visit.
 
 In the yard, Tab lowers the mast for work and raises it for travel. Hold Space for a steady feed, add W for hard feed, and hold S to reverse a jammed bit.
+
+**Built and merged behind `wasteland-town` (Claude, 14 November 2026).** Codex built it in rounds: the drill's rules, the rig in the machine yard with its own controls panel, a heap of cuttings in the colour of each layer, the wellhead, the sounds, and the town's `drillWell` command. Codex's independent review found one real fault (drilling where a test pit was still being dug replaced that pit in the save); it is put right and tested, with an older save and a save round trip. The browser scenario passes in a visible window. **Not done:** the rig is a ladder on a cart, the cuttings and the wellhead are plain shapes that hardly show, and the caption reads "in wet." where it means wet ground. Claude draws them and plays the rig by hand before the card is called done.

@@ -18,3 +18,9 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 - Town road work uses the Scablands and groups whole-metre work into eight-metre town cells. The weakest part sets the grade: dirt until all parts are firm, the existing middle road speed when firm, and paved when all parts are smooth. A rough patch lowers the grade until repaired.
 
 - The dozer cuts ten centimetres below ordinary ground while Space is held. Releasing Space spreads the carried material while driving.
+
+**Built and merged behind `wasteland-town` (Claude, 14 November 2026).** Codex built it in rounds: the dozer cuts and gathers ordinary ground and spreads it, the roller packs it (material is kept, less a stated packing), the paver lays a surface at a steady pace on its own working line, bad work (soft, ragged, bumped) is found from where the machine really drove and can be put right, all on the yard's one shared ground, so the dozer fills a ditch the trencher dug. A town's truck routing reads a saved road's grade. Four independent reviews by Codex; the last found no fault a player would meet in ordinary use.
+- **Settled by Claude:** the machine yard holds no town and no save. Sending a yard road to a player's town is a later card.
+- **Left for that later card (the fourth review's rare case):** loose material rolled across the edge of an eight-metre town cell leaves the neighbouring cell's saved grade as paved. No player path writes a town's road yet.
+- **Not done:** a finished road does not show in the yard's ground, and the machines share one plain shape. Claude draws the machines and the three states of worked ground and plays them by hand before the card is called done.
+- Known and carded already (QA-TIMING-UNDER-LOAD): `test-town-people`'s timing check fails when other jobs run beside it.
