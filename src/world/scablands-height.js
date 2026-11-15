@@ -3,7 +3,7 @@ import {riseHeightAt,riverDepthAt,GROUND_AREAS,polygonMargin,RIVER_LAND,RIVER} f
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
 import {makeRng} from '../rng.js';
-import {ROAD_NET, distanceToRoad} from './scablands-road.js';
+import {ROAD_NET, roadNet, roadPointFrom, distanceToRoad} from './scablands-road.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -83,6 +83,19 @@ export function hillsFor(land=LAND,seed=1989){
     if(breaks.some(hill=>Math.hypot(x-hill.x,z-hill.z)<400)) continue;
     breaks.push({x,z,radius});
     hills.push(Object.freeze({...land.at('dead-mall',x-mall.x,z-mall.z),kind:'breaks',height,radius}));
+  }
+  // A pair of shoulders makes a pass on each road, while leaving its centre
+  // outside both hill footprints. Derive the positions from the road itself.
+  const roads=land===LAND?ROAD_NET:roadNet(land);
+  for(const [id,share] of [['burn-road',.3],['mall-road',.3],['mall-burn-road',.66]]){
+    const road=roads.road(id), start=road.points[0];
+    const centre=roadPointFrom(road,start.x,start.z,road.length*share);
+    const before=roadPointFrom(road,centre.x,centre.z,-5), after=roadPointFrom(road,centre.x,centre.z,5);
+    const dx=after.x-before.x,dz=after.z-before.z,length=Math.hypot(dx,dz);
+    for(const side of [-1,1]) hills.push(Object.freeze({
+      x:centre.x-side*280*dz/length,z:centre.z+side*280*dx/length,
+      kind:'breaks',height:40,radius:260,passRoad:id,
+    }));
   }
   // The outer foothills are lower than the two near the Ridge. Select their
   // offsets against the fixed land so they follow the Ridge when it moves.

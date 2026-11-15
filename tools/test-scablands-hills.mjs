@@ -347,15 +347,10 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
   const hills = HILLS.filter(hill => hill.kind === 'breaks');
   assert.ok(hills.length >= 3);
   const mall = LAND.place('dead-mall');
-  for (const [index, hill] of hills.entries()) {
-    assert.ok(hill.x < 0 && hill.z > 0 && hill.z < mall.z);
+  for (const hill of hills) {
+    assert.ok(hill.z > 0 && hill.z < mall.z);
     assert.ok(hill.height >= 40 && hill.height <= 90);
     assert.equal(hillHeightAt(hill.x, hill.z), hill.height);
-    if (index) {
-      const previous = hills[index - 1];
-      const spacing = Math.hypot(hill.x - previous.x, hill.z - previous.z);
-      assert.ok(spacing >= 400 && spacing <= 900);
-    }
     for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
       const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
@@ -366,13 +361,28 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
 
 test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
   const hills = HILLS.filter(hill => hill.kind === 'breaks');
-  assert.equal(hills.length, 16);
+  assert.equal(hills.filter(hill => !hill.passRoad).length, 16);
+  assert.equal(hills.filter(hill => hill.passRoad).length, 6);
   for (const hill of hills) {
     const nearest = Math.min(...hills.filter(other => other !== hill)
       .map(other => Math.hypot(hill.x - other.x, hill.z - other.z)));
     assert.ok(nearest >= 400 && nearest <= 900);
     assert.ok(hill.radius >= 260 && hill.radius <= 460);
     assert.ok(hill.height >= 40 && hill.height <= 90);
+  }
+});
+
+test('each Breaks road runs between two rising shoulders', () => {
+  for (const id of ['burn-road', 'mall-road', 'mall-burn-road']) {
+    const road = ROAD_NET.road(id), shoulders = HILLS.filter(hill => hill.passRoad === id);
+    assert.equal(shoulders.length, 2, `${id} has two shoulders`);
+    const centre = {x: (shoulders[0].x + shoulders[1].x) / 2, z: (shoulders[0].z + shoulders[1].z) / 2};
+    assert.ok(distanceToRoad(centre.x, centre.z, road.points) < 1, `${id} runs between them`);
+    for (const hill of shoulders) {
+      const dx = hill.x - centre.x, dz = hill.z - centre.z, distance = Math.hypot(dx, dz);
+      assert.ok(hillHeightAt(centre.x + dx * 150 / distance, centre.z + dz * 150 / distance, [hill]) > 1,
+        `${id} has rising ground within 150 m on each side`);
+    }
   }
 });
 

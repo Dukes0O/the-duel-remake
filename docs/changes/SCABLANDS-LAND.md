@@ -1924,3 +1924,15 @@ Checks: `node tools/test-scablands-hills.mjs` passed 38 of 38; `node --check too
 Changed assertions: added an exact 60 m Lookout height check, replacing no assertion. The old 45 m height was raised to 60 m at Claude's direction. The dune landmark is unchanged; its camera start moved 250 m farther away. Codex decided: use the greater distance to fit the crest in the picture. Removed: the former 45 m height and closer dune camera position.
 
 Still needed: prove and build the three road passes, prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks.
+
+### Hill country: three road passes
+
+Added a pair of 40 m shoulders at each of the Burn Road, Mall Road and Mall to Everburn Road. Their positions follow the roads' named points, and their feet stay clear of the road centres. The 16 seeded Breaks hills remain. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 39 of 39, including new checks for rising ground within 150 m on both sides of each road and the existing centre-line clearance check. The browser pictures, route drives, replay checks and world signatures were not run in this step.
+
+Changed assertions, for Claude to review: the Breaks total changed from 16 to 22, comprising the original 16 and six pass shoulders, as directed. The former `x < 0` restriction was removed because the Mall Road follows x = 0 and its eastern shoulder must lie east of it; the existing widened-country check still applies. The consecutive table-order spacing check was removed because appended pass pairs have no geographic table order; the existing 400-900 m nearest-neighbour check applies to every hill. These changes relax the old table-order and west-only assertions, but preserve the specified geographic and nearest-neighbour requirements. No other assertion was loosened.
+
+Codex decided: place shoulders 280 m from each road centre with a 260 m radius, using 30%, 30% and 66% of the respective road lengths. Removed: the old assumption that all Breaks centres must lie west of x = 0.
+
+Still needed: prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the pictures.
