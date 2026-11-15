@@ -30,6 +30,8 @@ The head now turns with its simulated speed, and the existing rock effect appear
 
 The Dig now draws the trial's continuous rock lining and closed cutting face as the bore grows. The same ground shader opens the mouth in the scarp. Drawing catches up after cutting stops and is limited to four updates a second. Rings, portals and conveyor dirt still need drawing; Claude must check the view in a browser.
 
+Claude's updated tunnel lining now receives the active machine position, heading and open mouths each frame. A portal stands at each surface mouth, facing out of the hill. The browser appearance still needs Claude's check.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -61,6 +63,7 @@ The Dig now draws the trial's continuous rock lining and closed cutting face as 
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed with selection, model loading code and camera positioning. The model and camera have not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the head movement and face effect. Their appearance still needs a browser check.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the trial lining and ground openings. The drawing has not been checked in a browser.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the updated lining and portals. Browser appearance remains unchecked.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 

@@ -10,6 +10,7 @@ import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {createGroundLook, createTunnelMesh} from '../world/scablands-ground-look.js';
+import {tunnelPortalShape, tunnelPortalSurface} from '../world/tunnel-look.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
@@ -124,6 +125,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null;
   let drawnTunnels=sim.tunnels, tunnelLining=null, tunnelUpdateAfter=0;
+  const portals=new THREE.Group();world.add(portals);let portalKey='';
   const sound=(cue,data)=>{
     const now=performance.now();if(now<soundAfter)return;
     if(cue===MACHINE_SOUND_CUES.engine||cue===MACHINE_SOUND_CUES.hydraulic)soundAfter=now+700;
@@ -232,7 +234,22 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     // four times a second, and catch the last cut after the machine stops.
     if(sim.tunnels!==drawnTunnels && now>=tunnelUpdateAfter){
       drawnTunnels=sim.tunnels;
-      groundLook.setTunnelMouths(drawnTunnels.mouths);
+      const mouths=drawnTunnels.mouths;
+      groundLook.setTunnelMouths(mouths);
+      const nextPortalKey=mouths.map(mouth=>[mouth.start.x,mouth.start.y,mouth.start.z,mouth.radius,
+        Math.atan2(mouth.start.x-mouth.end.x,mouth.start.z-mouth.end.z)].map(value=>value.toFixed(3)).join(',')).join(';');
+      if(nextPortalKey!==portalKey){
+        portalKey=nextPortalKey;
+        for(const portal of [...portals.children]){portals.remove(portal);disposeScene(portal);}
+        for(const mouth of mouths){
+          const portal=new THREE.Mesh(tunnelPortalShape(mouth.radius),tunnelPortalSurface());
+          portal.name='Tunnel portal';
+          portal.position.set(mouth.start.x,mouth.start.y,mouth.start.z);
+          // The portal's positive Z points outward, away from the bore.
+          portal.rotation.y=Math.atan2(mouth.start.x-mouth.end.x,mouth.start.z-mouth.end.z);
+          portal.castShadow=true;portal.receiveShadow=true;portals.add(portal);
+        }
+      }
       if(drawnTunnels.segments.length){
         if(tunnelLining)createTunnelMesh(drawnTunnels,tunnelLining);
         else {tunnelLining=createTunnelMesh(drawnTunnels);world.add(tunnelLining);}
@@ -240,6 +257,14 @@ export async function startTheDig({app,onExit=()=>{}}={}){
         world.remove(tunnelLining);disposeScene(tunnelLining);tunnelLining=null;
       }
       tunnelUpdateAfter=now+250;
+    }
+    if(tunnelLining?.userData.look){
+      const actor=digSandboxMachineState(sim);
+      const y=sim.activeMachine==='borer'?actor.y:sim.ground.heightAt(actor.x,actor.z);
+      const mouths=drawnTunnels.mouths.map(mouth=>mouth.start)
+        .sort((a,b)=>(a.x-actor.x)**2+(a.z-actor.z)**2-(b.x-actor.x)**2-(b.z-actor.z)**2);
+      tunnelLining.userData.look.update({car:{x:actor.x,y:y+1,z:actor.z},
+        forward:{x:Math.sin(actor.heading||0),z:Math.cos(actor.heading||0)},mouths,headlights:1});
     }
     roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
     wellheadView.update(sim.drill.wellheads);
