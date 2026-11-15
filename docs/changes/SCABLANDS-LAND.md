@@ -2235,3 +2235,32 @@ band seen from a crest in round 11; and wide gullies are drawn down every slope.
 Breaks. Honest result: the grey band is gone, but from a kilometre a hill of the Breaks still reads as a smooth rise the colour
 of the plain; the gullies do not show at that distance. That needs the far ground's own shape or stronger light on slopes, not
 more paint, and stays under "Short of right" in round 11's review. `test-scablands-ground` and `test-scablands-scene` pass.
+
+### Dead trees along the river
+
+The realism switch places seeded dead trees and snags on the river banks, clears their footprints, draws them on the ground and adds solid trunks. Seed 1989 gives 118 candidates and 115 after clearance without job starts. Trees do not appear on either map. No new event or sound cue was added.
+
+Integration was merged into this lane without conflicts. The things suite passed 42 of 42, including ground contact for every cleared tree, and a trunk hit and passing test at 0, 45 and 90 degrees. The solid suite passed 25 of 25, the scene suite passed, and the hills suite passed 55 of 55. The build passed. Replay fingerprints passed 297 checks across 33 cases; combat replay fingerprints passed 12 checks across four encounters. Two picture views are ready for Claude; their 16 page expressions passed Node parsing in the earlier round. The browser was not run. The lane tier, test-everburn-easy and gas-road suites were not run, as directed.
+
+At 45 degrees the shared collision sweep still reports a hit at 2, 2.25, 2.5 and 2.75 m from a dead tree. It clears at 3 m for both trunk types at all three headings. The physical clearance is the car's 1.02 m half-width plus the tree's 0.45 m radius, or 1.47 m. The collision sweep enlarges that area at an angle using the car's length as well; QA-ROUND-SOLID-HEADING owns that fault. The test confirms that a head-on car is held before the trunk and slowed; it does not claim its speed becomes zero in one contact.
+
+**For Claude to run:** the two tree views in `scablands-things` and judge their appearance, spacing and ground contact. Run the lane tier at merge.
+
+**Changed assertions, for Claude to review:** the passing distance changed from 2 m at the trunk's aligned heading to 3 m at 0, 45 and 90 degrees, because the shared sweep reports false hits closer than 3 m at 45 degrees. This relaxes the prior passing distance and expands the tested directions. The drawing rotation assertion now uses the tree's seeded heading instead of the trunk's solid heading, which is zero. All-tree ground contact and the head-on stopping position are new checks.
+
+**Codex decided:** none. Claude directed the zero solid heading and the distance search.
+
+**Removed:** the trunk solid's seeded heading. The drawn tree keeps its seeded heading.
+
+
+### Dead trees: seeded drawing rotation
+
+The tree drawing now uses each tree's seeded heading while its round trunk keeps a collision heading of zero. A new test checks two trees have different drawing rotations, each matching its own heading, and zero-heading trunks. The things suite passed 43 of 43, the scene suite passed, and the build passed. The build ran with `npm.cmd` because PowerShell blocks `npm.ps1`. Integration was already up to date. Claude has approved the two tree views and the 160 m group spacing.
+
+**For Claude to run:** the lane tier at merge. The browser was not run in this lane. The earlier checks and replay fingerprints are recorded above; they were not repeated for this drawing correction.
+
+**Changed assertions:** none in this correction. The new rotation test adds coverage. The earlier passing-distance change remains listed above for Claude's review.
+
+**Codex decided:** none. No game event or sound cue was added.
+
+**Removed:** the use of the collision heading for drawing trees. The shared collision sweep still has the 45-degree clearance fault recorded as QA-ROUND-SOLID-HEADING.
