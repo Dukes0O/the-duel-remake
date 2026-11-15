@@ -194,19 +194,37 @@ export function createRiverDraw({river = RIVER_LAND, plainAt, material, range = 
     group.add(mesh); piece.mesh = mesh;
   }
   const limit = range * range;
-  const ray = new THREE.Raycaster(), origin = new THREE.Vector3(), down = new THREE.Vector3(0, -1, 0);
+  // The ribbon is fixed in world coordinates. Cache its horizontal corners so
+  // a height query need not build distant meshes or raycast every triangle.
+  const corners = frames.map(frame => GORGE_ACROSS.map(offset => {
+    const sourceX = frame.x + Math.cos(frame.heading) * offset * frame.scale;
+    const sourceZ = frame.z - Math.sin(frame.heading) * offset * frame.scale;
+    return {x: Math.fround(sourceX), z: Math.fround(sourceZ), sourceX, sourceZ};
+  }));
+  function triangleHeight(x, z, a, b, c) {
+    const det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    if (Math.abs(det) < 1e-9) return null;
+    const u = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (z - c.z)) / det;
+    const v = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (z - c.z)) / det;
+    const w = 1 - u - v;
+    if (u < -1e-7 || v < -1e-7 || w < -1e-7) return null;
+    const height = p => Math.fround(plainAt(p.sourceX, p.sourceZ) - riverGorgeDepthAt(p.sourceX, p.sourceZ));
+    return u * height(a) + v * height(b) + w * height(c);
+  }
   return {
     group, pieces,
     // Read the actual ribbon triangles, including their interpolation along the river.
     heightAtDrawn(x, z) {
-      origin.set(x, 10000, z); ray.set(origin, down);
       let height = null;
-      for (const piece of pieces) {
-        if ((piece.centre.x - x) ** 2 + (piece.centre.z - z) ** 2 > 1200 ** 2) continue;
-        if (!piece.mesh) build(piece);
-        piece.mesh.updateMatrixWorld(true);
-        const hit = ray.intersectObject(piece.mesh, false)[0];
-        if (hit && (height === null || hit.point.y > height)) height = hit.point.y;
+      for (let i = 0; i + 1 < frames.length; i++) {
+        const a = frames[i], b = frames[i + 1];
+        if (x < Math.min(a.x, b.x) - 93 || x > Math.max(a.x, b.x) + 93 ||
+            z < Math.min(a.z, b.z) - 93 || z > Math.max(a.z, b.z) + 93) continue;
+        for (let j = 0; j + 1 < GORGE_ACROSS.length; j++) {
+          const p = corners[i][j], q = corners[i][j + 1], r = corners[i + 1][j], s = corners[i + 1][j + 1];
+          const hit = triangleHeight(x, z, p, r, q) ?? triangleHeight(x, z, q, r, s);
+          if (hit !== null && (height === null || hit > height)) height = hit;
+        }
       }
       return height;
     },

@@ -22,6 +22,9 @@ test('the river height for things follows the drawn bed and bank triangles', () 
   const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
   const gorge = createRiverDraw({plainAt, material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide})});
   const point = RIVER_LAND.line.points[Math.floor(RIVER_LAND.line.points.length / 2)];
+  const unbuiltHeight = gorge.heightAtDrawn(point.x, point.z);
+  assert.notEqual(unbuiltHeight, null);
+  assert.equal(gorge.pieces.filter(piece => piece.mesh).length, 0, 'a height query does not build distant river pieces');
   gorge.update(point.x, point.z, {all: true});
   gorge.group.updateMatrixWorld(true);
   const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);

@@ -1678,3 +1678,13 @@ Standing footprints, pylons, wires and sign boards now use the drawn ground heig
 Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The new check verifies standing batches and pylons follow a changed drawn height. It does not yet prove all terrain types or measure river lookup cost. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the placement check is new. Codex decided: no new design choice. Removed: using physical ground height alone for standing artwork.
 
 Still needed: verify standing objects against the actual hill, mesa, river and scarp meshes and assess river lookup cost; finish the camera and scenario fixes, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: river height lookup cost
+
+River height queries now interpolate the ribbon's own triangles without building distant river meshes or raycasting their geometry. They use the same corner coordinates and heights as the drawing. Standing objects and small things still use the same lookup. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The river check compares heights against the mesh and now also verifies that a lookup does not build a mesh. This removes the unbounded mesh construction from each lookup; frame timing has not been measured. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the no-build check is new. Codex decided: no new design choice. Removed: raycasting and building river meshes solely to place objects.
+
+Still needed: verify standing objects against all terrain meshes; finish the camera and scenario fixes, part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
