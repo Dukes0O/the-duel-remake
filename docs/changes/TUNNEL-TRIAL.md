@@ -18,6 +18,8 @@ The scene now passes the course's tubes to the near and coarse ground materials 
 
 [three-bvh-csg](https://github.com/gkjohnson/three-bvh-csg) is MIT licensed. It uses brushes and an evaluator for subtraction; the source warns about geometry and precision faults. A second trial needs an isolated installation, suitable closed cutting geometry, integration with terrain and collision, and measurements of rebuild and frame time. Cost is not measured.
 
+A repeatable trial placement now joins the tube floor to the surface at both ends and measures the roof against the land. On the rise nearest the Ridge, a 100 m line along its road has no cover over an 8 m diameter roof at any of the 101 sampled points. This is a measurement of that line, not proof for every possible line. The real-site test checks both mouth heights; it does not yet drive a car there or show a tunnel with rock overhead. The placement is available for the unfinished scenario and is not installed in the game.
+
 ## Checks
 
 - `node tools/test-tunnels.mjs`: passed material generation and lining checks, plus ground-query, joined-slope continuity, surface-obstacle, wall-calculation, contact-hook and real simulated driving checks in both directions on a controlled level tube. The real Ridge mouths and save are not tested.

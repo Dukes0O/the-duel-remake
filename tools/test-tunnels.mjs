@@ -1,8 +1,29 @@
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
-import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {createGroundTunnels, trialTubeBetween} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {RISES} from '../src/world/scablands-regions.js';
+import {scablandsHeightAt} from '../src/world/scablands-height.js';
+
+// Measure the nearest real rise instead of inventing a hill.
+{
+  const ridge = LAND.at('ridge');
+  const rise = [...RISES].sort((a, b) => Math.hypot(a.x - ridge.x, a.z - ridge.z) -
+    Math.hypot(b.x - ridge.x, b.z - ridge.z))[0];
+  const direction = {x: Math.sin(rise.heading), z: Math.cos(rise.heading)};
+  const start = {x: rise.x - 50 * direction.x, z: rise.z - 50 * direction.z};
+  const end = {x: rise.x + 50 * direction.x, z: rise.z + 50 * direction.z};
+  const trial = trialTubeBetween(start, end, 4, scablandsHeightAt);
+  const tube = createGroundTunnels([trial.segment]);
+  for (const mouth of [trial.segment.start, trial.segment.end]) {
+    const surface = scablandsHeightAt(mouth.x, mouth.z);
+    assert.ok(Math.abs(tube.groundAt(mouth, surface, surface) - surface) < 1e-9);
+  }
+  assert.ok(trial.maximumCover < 0, 'this measured site has no fully buried roof');
+  assert.ok(Math.abs(Math.hypot(end.x - start.x, end.z - start.z) - 100) < 1e-9);
+}
 
 const course = new Course(SCABLANDS_VENUE, 20261114);
 const empty = createGroundTunnels();

@@ -1,5 +1,28 @@
 ﻿const finite = Number.isFinite;
 
+/** Lay a straight trial tube between surface points and measure its cover. */
+export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
+  if (!start || !end || !finite(start.x) || !finite(start.z) ||
+      !finite(end.x) || !finite(end.z) || !finite(radius) || radius <= 0 ||
+      typeof heightAt !== 'function' || !Number.isInteger(samples) || samples < 1) {
+    throw new TypeError('A trial tube needs two surface points, a radius and a height query.');
+  }
+  const startHeight = heightAt(start.x, start.z), endHeight = heightAt(end.x, end.z);
+  if (!finite(startHeight) || !finite(endHeight)) throw new TypeError('Surface heights must be finite.');
+  const segment = {start: {x: start.x, y: startHeight + radius, z: start.z},
+    end: {x: end.x, y: endHeight + radius, z: end.z}, radius};
+  let minimumCover = Infinity, maximumCover = -Infinity;
+  for (let i = 0; i <= samples; i++) {
+    const t = i / samples, x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
+    const terrain = heightAt(x, z);
+    if (!finite(terrain)) throw new TypeError('Surface heights must be finite.');
+    const roof = startHeight + (endHeight - startHeight) * t + radius * 2;
+    minimumCover = Math.min(minimumCover, terrain - roof);
+    maximumCover = Math.max(maximumCover, terrain - roof);
+  }
+  return {segment, minimumCover, maximumCover};
+}
+
 function point(value, label) {
   if (!value || !finite(value.x) || !finite(value.y) || !finite(value.z)) {
     throw new TypeError(`${label} needs finite x, y and z coordinates.`);
