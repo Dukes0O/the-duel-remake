@@ -131,6 +131,27 @@ does. A car driving a tunnel bored in the Dig is put off to the card that saves 
 card's third picture is from inside the bore behind Mabel. Mabel goes last in the order in which the Dig changes machine, so
 `test-machine-roads` stays exactly as it is.
 
+**Claude's hand drive (15 November 2026, night, in real time with `tools/hand-drive.mjs`) and the rulings from it.**
+She is a real machine to look at: a rusted shell 6 m across with her cutter head, in the Dig, chosen with Q. She drove 31 m to
+the west scarp at 4 km/h, cut 12.5 m and backed out; the dial, the mode and the words on screen are right. Not right, and with
+Codex now:
+- **Camera.** Every view was the small machines': on her back, inside her shell, or against her side. She gets two of her own.
+  Following: 26 m behind and 11 m up on open ground; off her right rear quarter at the face; on the bore's centre line 16 m
+  behind her tail once she is inside, never through rock. From the mouth: 22 m out, looking in. Never inside her body.
+- **Thrust is a lever.** On the keyboard W pushes it forward, S pulls it back, and it stays where it is left. Her advance is
+  the lever times 0.5 m a second while the head can cut that fast; past that the head slows and in 2 seconds stalls; the lever
+  at nothing for 1 second frees it. The screen draws the lever beside the dial, with a marked band where the head works well.
+- **The rock must test the player.** Full thrust never stalled her at the scarp. Under more than 3 m of cover the face is rock
+  with softer seams, changing every 8 to 30 m, seeded.
+- **The muck is a spoil bank,** not a spike in one spot: laid along a line that starts 12 m right of the first mouth and runs
+  away from her track, never higher than 5 m, growing longer as she cuts.
+- **From the independent review (Codex):** the Dig did not pass the tunnels to her rules, so she could cut through her own
+  tunnel; buildings, decks and roads were not refused; every cutting step rebuilt the whole tunnel; the face rule read one
+  line. All with Codex.
+- **Changed assertion, reviewed by Claude (rule 18):** `tools/test-machine-roads.mjs` lists the machines that Q reaches in
+  order; `borer` is added before the last `excavator`. Nothing is loosened: the list is longer and still proves the wrap.
+- Not heard: her sounds (the window was muted). Not seen: the bank, a bend, a break-through.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
