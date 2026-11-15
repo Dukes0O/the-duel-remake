@@ -2215,3 +2215,17 @@ Checks: `test-scablands-ground` 5 of 5, `test-scablands-scene` passes, `test-sca
 short of the edge, from the top's centre and from below. No assertion changed. No sound: nothing here is an event.
 
 **Removed:** nothing.
+
+### The lip of the river's bank (Claude, 15 November 2026, night)
+
+Finding 3 of Claude's first drive of job 1 (EVERBURN-REMAKE): from the plain the river's bank could not be seen, so the first
+fall came with no warning. The ground's drawing now sweeps the dust off the rock for 40 m back from the drop, runs cracks along
+the edge and darkens the last metres, on level ground only (a ramp down to a crossing keeps its own look). It reads from 50 m
+on the plates and the flats and from further on the salt, where the band is darker than the pan. In
+`src/world/scablands-ground-look.js`, after the bank's own drawing; it reads the river's field that was already there.
+
+Checks: `test-scablands-ground`, `test-scablands-scene`, `test-scablands-map`, `test-scablands-things` and `test-tunnels` pass.
+Seen in the game in a visible window at two places on the river, from 200 m, 100 m, 50 m and 20 m, along the bank and from the
+other side. No assertion changed. No sound.
+
+**Removed:** nothing.
