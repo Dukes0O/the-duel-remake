@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+The tunnel support query now chooses covered surface ground when it is within 0.6 m above the actor's feet. A focused test checks both sides of that threshold, and `node tools/test-tunnels.mjs` passed. Floor-based wall selection, the remaining enclosure driving tests and drawing still need work. No game event or sound was added.
+
 Tunnel walls now also constrain a move ending inside a bore when its start was outside, after checking closed faces. `node tools/test-tunnels.mjs` passed. This is not yet the required floor-based enclosure. The current surface-versus-tunnel selection and scarp-mouth test need to be reconciled with the highest-floor rule; the bent driving, lip-fall and remaining enclosure checks are still needed. No game event or sound was added.
 
 A closed cutting face now stops a crossing from outside as well as inside, without blocking a car above it. `node tools/test-tunnels.mjs` passed. The floor shape, wall selection, full enclosure tests and game drawing remain unfinished. No event or sound was added.

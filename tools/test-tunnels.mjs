@@ -435,6 +435,10 @@ for (const height of [8, 10, 12]) {
   assert.equal(slope.groundAt({x: 50, y: height, z: 0}, height, 30), 7.8);
 }
 assert.equal(slope.groundAt({x: 50, y: 30, z: 0}, 30, 30), 30);
+// A falling actor just above a covered bore still lands on the surface when
+// that surface is within its step height, even below the bore's crown.
+assert.equal(slope.groundAt({x: 50, y: 13.9, z: 0}, 13.9, 14.5), 14.5);
+assert.equal(slope.groundAt({x: 50, y: 13.8, z: 0}, 13.8, 14.5), 7.8);
 // Carry the last support height forward as the car climbs in either direction.
 for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
   let height = start * 0.2 - 2.2;
