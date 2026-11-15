@@ -2014,3 +2014,11 @@ Check: `node tools/test-scablands-hills.mjs` passed 45 of 45. This includes a ne
 Changed assertions: none. The corridor check is new and loosens no assertion. Codex decided: use the job's named third and fourth flag positions to select clear mesa sites, and check each candidate ramp at 2 m intervals. Removed: the mesa site across the flag route.
 
 Still needed: prove three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive; then merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: Survey Flags corridor proof
+
+The first two legs between Survey Flags now have a hill-clearance check across 60 m on either side. The hills suite passed 46 of 46. The Easy driver's Survey Flags run finished for seed 1 after the mesa moved; the ten-seed run is not yet complete. The fifth flag stays in place. No event or sound was added.
+
+Changed assertions: none. The corridor check is new and does not replace or loosen an assertion. Codex decided: sample the corridor every 20 m along each leg and at five offsets across it. Removed: none. Race fingerprints and world signatures were not checked in this step.
+
+Still needed: three separate mesa-cover stretches, the rest of the job-corridor proof and the full Survey Flags result, then integration and final checks. A diagnostic found new hill height on the third and fourth flag legs; the fourth ends on the intended Ridge top, so the clearance requirement and the approach need careful reconciliation. Claude must run and judge the pictures.
