@@ -4,7 +4,7 @@
 
 Step 1 adds Mabel's machine data and pure rules for a face, thrust, head speed, stall recovery, protection and slow steering. The face reads edited ground, so a dug cutting can expose it. The rules are not connected to the game yet. The head can query the ground's seeded material layers at the face; a caller may still supply a material explicitly. Filled ground above the natural surface uses the cell's stored fill material.
 
-Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Joining another tunnel remains to be built. This is not a finished cutting step.
+Step 2 has begun: cutting records centre-line segments, coalesces straight runs, and leaves the far end closed. The trial's ground rules preserve explicit end states. Once covered, the machine opens the far end at a matching face and stops short of shallow open ground with the requested sentence. Joining another tunnel remains to be built. This is not a finished cutting step. The machine now checks the full bore at its proposed position before advancing, so it stops at the edge of a protected place and keeps its own sentence.
 
 ## Checks
 
@@ -15,6 +15,8 @@ Step 2 has begun: cutting records centre-line segments, coalesces straight runs,
 - `node tools/test-tunnels.mjs`: passed again after the breakthrough change.
 - `node tools/test-machine-borer.mjs`: passed with the material query and a head stalled by rock sampled at the face.
 - `node tools/test-ground-edit.mjs`: passed after adding the material query.
+- `node tools/test-machine-borer.mjs`: passed with a moving bore stopped outside a reserved place, retaining its own sentence and emitting one refusal.
+- `node tools/test-tunnels.mjs`: passed after the protected-edge change.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 

@@ -24,6 +24,12 @@ assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, blocked, 'clay', 1).state.message, BORER_OBSTRUCTION);
+const protectedEdge = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
+  reservedShapes:[{x:0,z:20,radius:1,sentence:"That's Tin Town. Auntie Solder would have words."}]});
+const edgeStop = stepBorer(createBorerState(), {thrust:1}, protectedEdge, 'topsoil', 50);
+assert.ok(edgeStop.state.z <= 16, 'The cutting radius stays outside the protected place.');
+assert.equal(edgeStop.state.message, "That's Tin Town. Auntie Solder would have words.");
+assert.equal(edgeStop.events.filter(event => event.cue === 'borer.refuse').length, 1);
 const cutting = createGroundEdit({region:{editable:true}, naturalHeight:()=>6});
 cutting.cut({x:0,z:0,radius:2}, 0);
 assert.equal(borerHasFace(cutting, {x:0,z:0}, 0), true, 'A dug cutting exposes a face.');

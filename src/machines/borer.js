@@ -7,6 +7,8 @@ export const BORER_OPEN_GROUND = 'She is coming up under open ground. Turn her d
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const radians = degrees => degrees * Math.PI / 180;
 const hardness = Object.freeze({topsoil:1, clay:0.8, gravel:0.55, rock:1 / 3});
+const refusalMessage = refusal => (refusal === 'A building or protected place is in the way.' ||
+  refusal === 'This region is protected ground.') ? BORER_OBSTRUCTION : refusal;
 
 /** Ground height includes any cutting already dug by another machine. */
 export function borerHasFace(ground, position, heading, radius = 3) {
@@ -78,7 +80,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     if (!thrust || next.finished) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
     const refusal = ground.refusal({x:next.x, z:next.z, radius});
     if (refusal || (!next.started && !borerHasFace(ground, next, next.heading, radius))) {
-      const message = refusal ? ((refusal === 'A building or protected place is in the way.' || refusal === 'This region is protected ground.') ? BORER_OBSTRUCTION : refusal) : BORER_NO_FACE;
+      const message = refusal ? refusalMessage(refusal) : BORER_NO_FACE;
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
       next.message = message; next.headSpeed = 1; next.overloadSeconds = 0; continue;
     }
@@ -108,13 +110,21 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
         }
       }
     }
+    const heading = next.heading + steer * radians(0.5) * distance;
+    const slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
+    const x = next.x + Math.sin(heading) * Math.cos(slope) * distance;
+    const z = next.z + Math.cos(heading) * Math.cos(slope) * distance;
+    const obstruction = ground.refusal({x, z, radius});
+    if (obstruction) {
+      const message = refusalMessage(obstruction);
+      if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+      next.message = message;
+      continue;
+    }
     next.message = null;
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
-    next.heading += steer * radians(0.5) * distance;
-    next.slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
-    next.x += Math.sin(next.heading) * Math.cos(next.slope) * distance;
-    next.z += Math.cos(next.heading) * Math.cos(next.slope) * distance;
-    next.y += Math.sin(next.slope) * distance;
+    next.heading = heading; next.slope = slope; next.x = x; next.z = z;
+    next.y += Math.sin(slope) * distance;
     addCut(next.segments, start, {x:next.x, y:next.y + radius * 0.55, z:next.z}, radius);
     next.distanceM += distance; next.started = true;
     if (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
