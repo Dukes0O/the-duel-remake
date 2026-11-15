@@ -120,3 +120,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the final brazier smoke. For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers.
 - Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, brazier map discovery (15 November 2026)
+
+- Both maps mark the yard brazier from the start. The Halfway Camp and Wash braziers appear after the car comes within 400 m and has a clear view over the ground. Known braziers remain on the maps for the job. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It checks the range, a real blocked view, discovery and the marks drawn on both maps. `git diff --check`: passed.
+- For Claude to draw: the final smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

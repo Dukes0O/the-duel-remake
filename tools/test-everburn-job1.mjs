@@ -1,10 +1,12 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
+import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
@@ -92,6 +94,49 @@ for (const brazier of step.braziers) {
   assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
   job = stepJob(job, view(x, z), 4);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
+}
+// Map knowledge starts with the yard, then keeps each brazier seen within 400 m.
+const knowledge = createKnowledge(), facts = jobFacts({job, definition});
+const yard = step.braziers[0].position;
+learn(knowledge, {car: {x: yard.x, z: yard.z}, ...facts});
+assert.deepEqual([...knowledge.braziers.keys()], ['yard-brazier']);
+for (const brazier of step.braziers.slice(1)) {
+  const p = brazier.position;
+  const far = {x: p.x + 401, z: p.z};
+  learn(knowledge, {car: far, braziers: [step.braziers[0], brazier]});
+  assert.equal(knowledge.braziers.has(brazier.id), false);
+  const near = {x: p.x + 10, z: p.z};
+  assert.ok(sees(near, p, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, eye: 1.5, target: 2, step: 5, range: 400}));
+  learn(knowledge, {car: near, braziers: [step.braziers[0], brazier]});
+  assert.equal(knowledge.braziers.has(brazier.id), true);
+}
+// Find a real blocked sight line within range, and show that it does not reveal the brazier.
+const hidden = step.braziers[1].position;
+let blocked = null;
+for (let dx = -390; dx <= 390 && !blocked; dx += 20) for (let dz = -390; dz <= 390; dz += 20) {
+  const car = {x: hidden.x + dx, z: hidden.z + dz};
+  if (Math.hypot(dx, dz) <= 400 && !sees(car, hidden, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, eye: 1.5, target: 2, step: 5, range: 400})) { blocked = car; break; }
+}
+assert.ok(blocked, 'the real land has a blocked view near the camp');
+const obscured = createKnowledge();
+learn(obscured, {car: blocked, braziers: step.braziers.slice(0, 2)});
+assert.equal(obscured.braziers.has('halfway-brazier'), false);
+// Record the actual flame marks painted by both maps.
+const picture = getLandPicture(), translations = [], marks = [];
+let current = null;
+const context = new Proxy({measureText: value => ({width: String(value).length * 8}), save() {}, restore() {},
+  translate(x, y) { current = {x, y}; translations.push(current); },
+  fill() { if (this.fillStyle === '#ff8a4c' && current) marks.push(current); }},
+  {get(target, key) { return key in target ? target[key] : () => {}; }, set(target, key, value) { target[key] = value; return true; }});
+const car = {x: yard.x, z: yard.z, heading: 0};
+const mapFrame = {picture, canvas: null, car, target: null, knowledge, actors: []};
+for (const [draw, size, view] of [[drawSmallMap, {width: 400, height: 280}, smallView(car)],
+  [drawBigMap, {width: 1400, height: 1000}, wholeView(picture, {width: 1400, height: 1000})]]) {
+  marks.length = 0;
+  draw(context, mapFrame, size);
+  const visible = [...knowledge.braziers.values()].map(p => toScreen(view, p.x, p.z)).filter(p => p.x >= 0 && p.y >= 0 && p.x <= size.width && p.y <= size.height);
+  for (const p of visible) assert.ok(marks.some(m => Math.abs(m.x - p.x) < 1e-7 && Math.abs(m.y - p.y) < 1e-7));
+  assert.equal(marks.length, visible.length);
 }
 assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
 assert.equal(job.stepState.relights, 1);

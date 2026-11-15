@@ -131,7 +131,7 @@ const SMALL_MAP_EVERY_MS = 33;
 export function worldMapCar(state, course) {
   if (state.onFoot && state.fighter) return {x: state.fighter.x, z: state.fighter.z, heading: state.fighter.yaw ?? 0};
   const at = course.worldAt(state.s, state.lateral || 0);
-  return {x: at.x, z: at.z, heading: (at.heading ?? 0) + (state.headingError || 0)};
+  return {x: at.x, y: at.y, z: at.z, heading: (at.heading ?? 0) + (state.headingError || 0)};
 }
 
 // What both maps are drawn from at this moment: only reads the game.
@@ -294,7 +294,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       if (!knowledge) knowledgeOf.set(worldJob, knowledge = createKnowledge());
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
       frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
-      learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings});
+      learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings, tunnels: duel.course.groundTunnels});
       lastFrame = frame;
       if (mapOpen) { stats.updates++; stats.updateMs += clock() - began; return; }
       const now = clock();
