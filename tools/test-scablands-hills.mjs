@@ -502,9 +502,11 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
   const mesas = HILLS.filter(hill => hill.kind === 'mesa');
   assert.equal(mesas.length, 6);
   const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
+  const way = routeFor(HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates').legs, {start: LAND.yard, destination: LAND.at('tin-town')});
   for (const mesa of mesas) {
     assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.face === 30 && mesa.ramp === 220);
     assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
+    assert.ok(distanceToRoad(mesa.x, mesa.z, way) >= mesa.radius + 200, 'the mesa clears the plates way by 200 m');
     const top = scablandsTerrainHeightAt(mesa.x, mesa.z);
     assert.equal(top - scablandsTerrainHeightAt(mesa.x, mesa.z, []), mesa.height);
     for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {

@@ -4,6 +4,7 @@ import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
 import {makeRng} from '../rng.js';
 import {ROAD_NET, roadNet, roadPointFrom, distanceToRoad} from './scablands-road.js';
+import {westScarpTrial} from './scablands-tunnel-trial.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -32,7 +33,7 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
-    Object.freeze({...land.between('yard','tin-town',.4,-600,-200),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
+    Object.freeze({...land.between('yard','tin-town',.4,-600,350),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,100,800),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
     // A mesa between the furnace and the plates' way gives the shortcut cover.
     Object.freeze({...land.between('yard','tin-town',.7,-1650,125),kind:'mesa',height:35,radius:120,face:30,ramp:220,rampAngle:Math.PI}),
@@ -42,6 +43,8 @@ export function hillsFor(land=LAND,seed=1989){
   const mesaRng=makeRng(seed ^ 0x4d455341);
   const plates=GROUND_AREAS.polygons.find(area=>area.id==='scab-plates');
   const mesaBase=LAND.between('yard','tin-town',.7);
+  const platesWay=[LAND.yard,LAND.at('the-steps'),LAND.at('tin-town')];
+  const tunnel=westScarpTrial(()=>0).segment;
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
     const share=index===hills.length-3 ? .4 : .7;
@@ -54,6 +57,8 @@ export function hillsFor(land=LAND,seed=1989){
     const x=mesaBase.x+dx,z=mesaBase.z+dz;
     const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
     if(polygonMargin(plates.points,x,z)<=reach) continue;
+    if(distanceToRoad(x,z,platesWay)<radius+200) continue;
+    if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
     if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;
     if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<reach+place.flatRadius+200)) continue;

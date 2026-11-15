@@ -1944,3 +1944,11 @@ Placed one mesa between the furnace and the plates' way, using the yard and Tin 
 Changed assertions: none. The cover check is new; it proves only the first required stretch, not all three. Codex decided: place the mesa 1,650 m west and 125 m south of the point 70% from the yard to Tin Town, with its ramp pointing west. Removed: one previously seeded mesa position, replaced by this mesa. Race fingerprints and pictures were not checked in this step.
 
 Still needed: provide and prove three separate 150 m furnace-cover stretches, prove the job corridors and drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.
+
+### Hill country: plates-way clearance
+
+Moved the first mesa off the plates' way. Seeded mesas now keep their nominal top radii at least 200 m from that way and their full ramp footprints clear of the trial tunnel mouths. A new assertion checks the nominal top clearance for all six mesas. The first mesa's centre moved from 550 m south to 350 m north of its named anchor; the later seeded positions changed as a result. No event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 40 of 40. An intermediate placement failed the tunnel-mouth, ramp and tunnel-roof checks and was replaced. The browser scenario, route drives, replay checks and world signatures were not run. Changed assertions: none; the clearance assertion is new. Codex decided: measure 200 m from the nominal mesa top radius for this check. This does not yet prove clearance of the whole face and ramp. Removed: the former mesa position across the way.
+
+Still needed: prove the complete mesa footprints clear the plates' way and provide three separate 150 m furnace-cover stretches. A coarse placement search did not find three stretches under the current road and river clearance checks; it is not an exhaustive proof. Check job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.
