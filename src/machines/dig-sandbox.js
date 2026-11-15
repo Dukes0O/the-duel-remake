@@ -7,6 +7,7 @@ import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEd
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
+import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -51,7 +52,9 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
   setScablandsGroundEdit(edit);
   const haul = createMachineHaul({ground:edit,excavator:YARD.excavator,truck:YARD.dumpTruck});
   return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
-    drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),activeMachine:'excavator',
+    drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
+    roadWork:createRoadWork(), roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
+      [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
@@ -70,7 +73,11 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
-  if(sim.activeMachine==='drill'){
+  if(sim.roadMachines[sim.activeMachine]){
+    const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP);
+    next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
+    events.push(...result.events);
+  } else if(sim.activeMachine==='drill'){
     const result=stepDrillRig(sim.drill,input.controls,STEP);
     next={...next,drill:result.state}; events.push(...result.events);
   } else if(sim.activeMachine==='trencher'){
@@ -129,5 +136,5 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
-  return id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id];
+  return sim.roadMachines[id]?.machine??(id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
 }

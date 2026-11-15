@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, stepRoadMachine, workRoadCell} from '../src/machines/roads.js';
+import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox} from '../src/machines/dig-sandbox.js';
 
 function buildRoad() {
   let work = createRoadWork();
@@ -33,4 +34,15 @@ for (const kind of ['dozer', 'roller', 'paver']) {
   const raised = stepRoadMachine(initial, ground, {forward:1}, 4);
   assert.deepEqual(raised.work, ground, 'Driving with the tool raised leaves the ground alone.');
 }
+let yard = createDigSandbox({playerId:'road-test'});
+for (const kind of ['dozer', 'roller', 'paver']) {
+  yard = {...yard, activeMachine:kind};
+  const before = digSandboxMachineState(yard);
+  yard = stepDigSandbox(yard, {controls:{forward:1, working:true}}, 4);
+  assert.ok(digSandboxMachineState(yard).z > before.z, `${kind} drives in the yard simulation.`);
+}
+assert.ok(Object.keys(yard.roadWork.cells).length > 0, 'Road work remains in the yard when machines change.');
+const freshYard = createDigSandbox({playerId:'road-test'});
+assert.deepEqual(freshYard.roadWork, createRoadWork(), 'Road work lasts for the visit only.');
+closeDigSandbox();
 console.log('Road work rules pass.');
