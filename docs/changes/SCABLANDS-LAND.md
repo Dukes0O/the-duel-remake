@@ -1812,3 +1812,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. A new check covers
 Changed assertions: none; the new count and spacing check adds coverage. Codex decided: grow the new hills from the previous hill, with seeded candidates, so the existing ordered-spacing claim remains true. Removed: none.
 
 Still needed: verify all 16 against the full placement and protected-corridor rules, build and prove all three road passes, finish the six mesas, route checks, dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: four more mesas
+
+Four seeded mesas bring the plates to six. The new mesas have ramps and clear the road network, river and named places. Their centres follow the yard and Tin Town. Their placement has not yet been proved against job corridors, the plates' way or the required three stretches of furnace cover. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. The first run found that moving Tin Town changed the selection; it passed after selection was made against the fixed land. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertion, for Claude to review: mesa count changed from at least 2 to exactly 6 to match the design. It is stricter, not loosened. New checks cover the added mesas' dimensions and clearance from roads and the river. Codex decided: select the four new mesas from seeded candidates on the fixed plates, then tie them to the yard and Tin Town. Removed: none.
+
+Still needed: prove and adjust the mesas for three separate furnace-cover stretches and all protected corridors; verify the Breaks and road passes; drive the routes and jobs; finish the dune picture and final checks. Claude must run and judge the picture scenario.

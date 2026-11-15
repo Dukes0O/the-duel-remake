@@ -403,7 +403,7 @@ test('the Lookout has a level top, follows the Ridge, and leaves roads clear', (
 
 test('the scab plates have level mesas with steep sides and a drivable ramp', () => {
   const mesas = HILLS.filter(hill => hill.kind === 'mesa');
-  assert.ok(mesas.length >= 2);
+  assert.equal(mesas.length, 6);
   const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
   for (const mesa of mesas) {
     assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
@@ -427,6 +427,14 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
       const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((mesa.x - a.x) * dx + (mesa.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
       assert.ok(Math.hypot(mesa.x - a.x - t * dx, mesa.z - a.z - t * dz) > mesa.radius + mesa.ramp + road.halfWidth, `${road.id} clears the mesa`);
+    }
+  }
+  for (const mesa of mesas.slice(2)) {
+    const reach = mesa.radius + mesa.ramp;
+    assert.ok(mesa.height >= 15 && mesa.height <= 25 && mesa.radius >= 120 && mesa.radius <= 260);
+    assert.ok(distanceToRoad(mesa.x, mesa.z, RIVER_LAND.line.points) > reach + 78 + 150);
+    for (const road of ROAD_NET.roads) {
+      assert.ok(distanceToRoad(mesa.x, mesa.z, road.points) > reach + road.halfWidth + 200);
     }
   }
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', 100, 200))).filter(hill => hill.kind === 'mesa');
