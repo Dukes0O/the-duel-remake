@@ -268,9 +268,9 @@ export function createForkSignsView(signs) {
 }
 
 // Create the trial once, and keep its batches for the lifetime of the scene.
-export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt, photos = null}) {
+export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt, photos = null, data = null}) {
   if (!enabled) return null;
-  const {fixed, loneBoulders} = realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth});
+  const {fixed, loneBoulders} = data ?? realismThingsData({enabled, seed, jobStarts, halfWidth, halfDepth});
   const small = createSmallThingsView({seed, jobStarts, heightAt, photos});
   const large = createFixedThingsView(fixed, loneBoulders, photos);
   const lines = createThingsLinesView(fixed);

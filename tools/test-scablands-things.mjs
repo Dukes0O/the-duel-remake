@@ -342,6 +342,34 @@ test('the scene and a separate solid index use the same seeded land', () => {
   view.dispose();
 });
 
+test('the course owns the trial solids used by the car and job grids', async () => {
+  const {featureFlags} = await import('../src/feature-flags.js');
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {scablandsContactObstacles} = await import('../src/sim-scablands.js');
+  const enabled = featureFlags.enabled;
+  try {
+    featureFlags.enabled = name => name === 'scablands-realism';
+    const course = new Course(SCABLANDS_VENUE, 1989);
+    const rock = course.solidGrid.solids.find(solid => solid.kind === 'boulder');
+    assert.ok(rock);
+    const duel = {course, state: {}};
+    assert.ok(scablandsContactObstacles(duel, null, rock, rock, []).includes(rock));
+    const job = createJobSolidGrid(course.solidGrid);
+    duel.state.arena = {worldJob: {solidGrid: job}};
+    assert.ok(scablandsContactObstacles(duel, null, rock, rock, []).includes(rock));
+    const view = createRealismThingsView({enabled: true, seed: course.seed, ...SCABLANDS_VENUE.scablands,
+      jobStarts: course.realismThings.jobStarts, data: course.realismThings});
+    assert.equal(view.fixed, course.realismThings.fixed);
+    view.dispose();
+    featureFlags.enabled = () => false;
+    const plain = new Course(SCABLANDS_VENUE, 1989);
+    assert.equal(plain.realismThings, undefined);
+    assert.equal(plain.solidGrid, undefined);
+    assert.ok(!scablandsContactObstacles({course: plain, state: {}}, null, rock, rock, []).includes(rock));
+  } finally { featureFlags.enabled = enabled; }
+});
+
 test('the scene loads the trial only with its switch on', async () => {
   const {featureFlags} = await import('../src/feature-flags.js');
   const {Course} = await import('../src/course.js');

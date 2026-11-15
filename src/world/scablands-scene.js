@@ -6,9 +6,6 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
 import {createGroundLook,createRoadLook,loadGroundPhotos} from './scablands-ground-look.js';
-import {featureFlags} from '../feature-flags.js';
-import {EVERBURN_JOBS,EVERBURN_SIDE_JOBS} from './jobs/everburn.js';
-import {gasRunJob,GAS_RUN_ROADS,fieldBattleJob} from './jobs/gas-run.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
@@ -472,14 +469,14 @@ export function createScablandsScene(course,options={}){
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   // The realism trial's photographed surfaces (switch `scablands-realism`), only where there is a screen to draw on.
-  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&featureFlags.enabled('scablands-realism')))?loadGroundPhotos():null;
+  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&!!course.realismThings))?loadGroundPhotos():null;
   const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
-  const realismEnabled=featureFlags.enabled('scablands-realism');
+  const realismEnabled=!!course.realismThings;
   let things=null,tracks=null;
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
@@ -629,10 +626,9 @@ export function createScablandsScene(course,options={}){
       if(retired)return false;
       tracks=createScablandsTracks();
       if(tracks){tracks.update(here.x,here.z);groundLook.setTracks(tracks);}
-      const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
-      const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
+      const {jobStarts}=course.realismThings;
       things=createRealismThingsView({enabled:true,seed:course.seed,jobStarts,
-        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,photos:groundPhotos});
+        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,photos:groundPhotos,data:course.realismThings});
       group.add(things.group);things.update(here.x,here.z);
     }
     group.userData.assetStatus='ready';return true;
