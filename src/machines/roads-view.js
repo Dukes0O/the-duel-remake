@@ -16,8 +16,21 @@ export function createRoadWorkView(parent, heightAt) {
     good:new THREE.MeshStandardMaterial({color:0x464746, roughness:1}),
   };
   const meshes = new Map();
+  const heap = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), materials.spread);
+  heap.name = 'dozer-blade-heap';
+  heap.visible = false;
+  group.add(heap);
   return {
-    update(work) {
+    update(work, dozer = null) {
+      const load = Math.max(0, work.bladeLoad || 0);
+      heap.visible = !!dozer && load > 0;
+      if (heap.visible) {
+        const x = dozer.x + Math.sin(dozer.heading) * 2;
+        const z = dozer.z + Math.cos(dozer.heading) * 2;
+        const size = Math.cbrt(load);
+        heap.scale.set(size, size * 0.45, size * 0.65);
+        heap.position.set(x, heightAt(x, z) + size * 0.3, z);
+      }
       for (const [key, cell] of Object.entries(work.cells)) {
         let mesh = meshes.get(key);
         if (!mesh) {
@@ -38,6 +51,7 @@ export function createRoadWorkView(parent, heightAt) {
     dispose() {
       group.removeFromParent();
       geometry.dispose();
+      heap.geometry.dispose();
       for (const material of Object.values(materials)) material.dispose();
     },
   };

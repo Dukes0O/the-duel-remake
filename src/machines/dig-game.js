@@ -179,7 +179,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       for(const event of frameEvents)if(event.cue)drillSounds.play(event.cue);
     }
     for(const event of frameEvents)if(event.cue)roadSounds.play(event.cue);
-    roadView.update(sim.roadWork);
+    roadView.update(sim.roadWork, sim.roadMachines.dozer.machine);
     wellheadView.update(sim.drill.wellheads);
     cuttingsView.update(sim.drill.hole);
     if(controlsMachine!==sim.activeMachine){

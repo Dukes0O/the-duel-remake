@@ -96,5 +96,13 @@ visibleWork.cells['2:3'] = {height:0, spread:1, compaction:1, surface:1, roughne
 roadView.update(visibleWork);
 assert.notEqual(patch.material.color.getHex(), softColor, 'A repaired road looks different.');
 assert.equal(patch.position.y, 4.05);
+visibleWork.bladeLoad = 2;
+roadView.update(visibleWork, {x:10, z:20, heading:0});
+const heap = scene.getObjectByName('dozer-blade-heap');
+assert.equal(heap.visible, true, 'The material carried by the blade is visible.');
+assert.equal(heap.position.z, 22, 'The heap travels ahead of the dozer.');
+visibleWork.bladeLoad = 0;
+roadView.update(visibleWork, {x:10, z:20, heading:0});
+assert.equal(heap.visible, false, 'The heap disappears when the blade has emptied.');
 roadView.dispose();
 assert.equal(scene.children.length, 0, 'The yard removes its road view on exit.');

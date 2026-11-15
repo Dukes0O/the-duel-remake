@@ -6,6 +6,7 @@ The paver now has a slow pace on Shift, so keyboard players can repair rough pav
 
 ## Checks
 
+- The dozer now shows its carried material as a heap ahead of the blade, and the heap disappears when it is deposited. `node tools/test-machine-roads.mjs` and `npm.cmd run build` passed for this change.
 - `node tools/test-machine-roads.mjs`: passed for the rules built so far, including movement, raised tools, yard simulation and visit lifetime.
 - `node tools/test-the-dig.mjs`: passed after adding the yard simulation state and machine selection.
 - `node tools/test-machine-roads.mjs`: passed after adding machine selection and controls.
