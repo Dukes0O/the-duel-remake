@@ -1023,6 +1023,23 @@ merged land with `scablands-realism` on, inside job 1 (memory-only saves, a priv
 
 Not driven: the dunes, the Lookout and a raiders' search. The frame check is still owed before any switch goes on.
 
+### Dead trees along the river: result (Codex placed and made solid; Claude drew and judged, 15 November 2026): merged, switch off
+
+Sheet `docs/board/looks/scablands-land/round-12.jpg` with Claude's review. Behind `scablands-realism`, as the poles are.
+
+- **Built:** 118 candidates from the land's seed (115 after clearing), in ones and twos, 6 to 30 m back from the bank's lip,
+  at least 160 m between groups on a bank; none within 120 m of a crossing, 60 m of a road or a way, or 150 m of a place; one
+  in four a snag. Trunks are solid (0.9 m and 0.7 m across); limbs are not. Drawn to 1,500 m. On neither map.
+- **Reviewed by Claude (rule 17), from the code:** one fault, every tree drawn facing the same way; cured by Codex and
+  confirmed in the diff. "Codex decided: dead tree spacing" (160 m between groups) is confirmed.
+- **Changed assertions, reviewed by Claude (rule 18):** in `test-scablands-things`, the check that a drawn thing's size and
+  turn equal its solid shape's now expects, for a tree, a width equal to its height and its own seeded heading (a tree is drawn
+  whole, while its solid shape is the trunk alone with no heading). Nothing is loosened for any
+  other kind. The new passing test uses 3 m at three headings, not the 2 m first asked for: the shared collision code slows a
+  car that passes within 2.75 m at some headings (card QA-ROUND-SOLID-HEADING, which brings it back to 2 m).
+
+**Checks at the merge (Claude):** Lane tier 32 of 32 on the merged code (the suites that read the changed files, five and a half minutes); `npm run build` passes.
+
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.
@@ -1052,6 +1069,7 @@ The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the e
 ### Codex decided (Claude to review): Mall Road pass
 
 Move the Mall Road pass to 85.5 percent along the road so its shoulders clear the shared return and the third Survey Flags leg. Both shoulders remain beside the road. **Claude, 15 November: confirmed.**
+
 ### Codex decided (Claude to review): dead tree spacing
 
-Keep at least 160 m along each bank between the starts of tree groups. The 35 percent seeded chance is still tried at each 40 m step; a group is placed only when that bank has room. This produces long gaps and 118 candidates for seed 1989, within the requested range. A companion can stand 9 to 20 m from its first tree.
+Keep at least 160 m along each bank between the starts of tree groups. The 35 percent seeded chance is still tried at each 40 m step; a group is placed only when that bank has room. This produces long gaps and 118 candidates for seed 1989, within the requested range. A companion can stand 9 to 20 m from its first tree. **Claude, 15 November: confirmed.**

@@ -2264,3 +2264,10 @@ The tree drawing now uses each tree's seeded heading while its round trunk keeps
 **Codex decided:** none. No game event or sound cue was added.
 
 **Removed:** the use of the collision heading for drawing trees. The shared collision sweep still has the 45-degree clearance fault recorded as QA-ROUND-SOLID-HEADING.
+
+### Dead trees: the merge (Claude, 15 November 2026, late night)
+
+Browser scenario `scablands-things` (Claude, visible window): passes, 20 pictures; the two tree views judged in round 12.
+Lane tier 32 of 32 on the merged code (the suites that read the changed files, five and a half minutes); `npm run build` passes.
+
+**Removed:** nothing.
