@@ -229,6 +229,26 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
       if (!inside) return motion(end.x, end.y, end.z, false);
     }
     let tube = inside.tube;
+    // At a crossing, the clear floor of either bore is usable. Transfer to
+    // the other bore before applying this one's wall, but only at the same
+    // reachable floor height. This also opens a face meeting another bore.
+    const candidates = grid.get(Math.floor(end.x / cellSize))?.get(Math.floor(end.z / cellSize)) ?? noTubes;
+    for (const candidate of candidates) {
+      if (candidate === tube) continue;
+      const cx = candidate.end.x - candidate.start.x, cz = candidate.end.z - candidate.start.z;
+      const squared = cx * cx + cz * cz;
+      const t = ((end.x - candidate.start.x) * cx + (end.z - candidate.start.z) * cz) / squared;
+      if (t < 0 || t > 1) continue;
+      const centerY = candidate.start.y + (candidate.end.y - candidate.start.y) * t;
+      const floor = centerY - candidate.radius * 0.55;
+      const side = Math.abs((end.x - candidate.start.x) * -cz + (end.z - candidate.start.z) * cx) / Math.sqrt(squared);
+      const limit = Math.max(0, candidate.radius * wallRadius - clearance);
+      if (Math.abs(floor - inside.floor) <= 0.6 && end.y >= floor - 0.6 &&
+          end.y <= centerY + candidate.radius && side <= limit) {
+        tube = candidate;
+        break;
+      }
+    }
     let dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
     let length = Math.hypot(dx, dz);
     if (!length) return motion(end.x, end.y, end.z, false);

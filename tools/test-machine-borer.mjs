@@ -115,4 +115,24 @@ assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);
 assert.equal(stoppedUnderGround.state.segments.at(-1).endOpen, false);
 assert.ok(stoppedUnderGround.state.z <= 27.01);
 assert.equal(stoppedUnderGround.events.filter(event => event.message === BORER_OPEN_GROUND).length, 1);
+// A self-crossing cut can be driven between its two passages. A crossing
+// on another level remains rock, and a car cannot leave either bore's floor.
+const crossingSegments = [
+  {start:{x:-20,y:1.65,z:0}, end:{x:20,y:1.65,z:0}, radius:3},
+  {start:{x:20,y:1.65,z:0}, end:{x:20,y:1.65,z:-20}, radius:3},
+  {start:{x:20,y:1.65,z:-20}, end:{x:0,y:1.65,z:-20}, radius:3},
+  {start:{x:0,y:1.65,z:-20}, end:{x:0,y:1.65,z:20}, radius:3},
+];
+const crossing = createGroundTunnels(crossingSegments);
+for (const [start, end] of [
+  [{x:-1,y:0,z:0},{x:0,y:0,z:2}],
+  [{x:0,y:0,z:2},{x:-1,y:0,z:0}],
+]) assert.equal(crossing.constrainMotion(start, end, 0.5).hit, false, 'Cars can turn through a junction.');
+assert.equal(crossing.constrainMotion({x:-1,y:0,z:0},{x:0,y:0,z:4},0.5).hit, false,
+  'Cars can continue along the crossing passage.');
+const separated = createGroundTunnels(crossingSegments.map((segment, index) => index === 3
+  ? {...segment, start:{...segment.start,y:11.65}, end:{...segment.end,y:11.65}}
+  : index === 2 ? {...segment,end:{...segment.end,y:11.65}} : segment));
+assert.equal(separated.constrainMotion({x:-1,y:0,z:0},{x:0,y:0,z:4},0.5).hit, true,
+  'A crossing high above does not open the wall.');
 console.log('Borer: machine data, controls and a 40 m closed cut passed.');
