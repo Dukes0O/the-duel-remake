@@ -213,7 +213,11 @@ function fixedStep(sim,input) {
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM){
-        next.tunnels=createGroundTunnels(result.state.segments,{heightAt:(x,z)=>sim.ground.heightAt(x,z)});
+        const segments=result.state.segments;
+        if (!sim.borer.started) next.tunnels=createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)});
+        const oldCount=sim.borer.segments.length;
+        if (oldCount) next.tunnels.extendLast(segments[oldCount-1]);
+        for (let i=oldCount;i<segments.length;i++) next.tunnels.extendLast(segments[i],true);
         next.dirty=true;
       }
     }

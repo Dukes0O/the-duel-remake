@@ -64,7 +64,7 @@ function horizontalProjection(position, segment, result) {
   return result;
 }
 
-/** Immutable tunnel tubes with height-aware ground lookup and shader hole tests. */
+/** Tunnel tubes with height-aware ground lookup and shader hole tests. */
 export function createGroundTunnels(segments = [], {heightAt} = {}) {
   if (!Array.isArray(segments)) throw new TypeError('Tunnel segments must be a list.');
   if (heightAt !== undefined && typeof heightAt !== 'function')
@@ -90,9 +90,9 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
     return Math.abs(surface - (end.y - tube.radius * 0.55)) <= 0.3;
   }
-  const startOpen = !tubes.length || (tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start));
-  const lastTube = tubes[tubes.length - 1];
-  const endOpen = !lastTube || (lastTube.endOpen ?? openEnd(lastTube, lastTube.end));
+  let startOpen = !tubes.length || (tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start));
+  let lastTube = tubes[tubes.length - 1];
+  let endOpen = !lastTube || (lastTube.endOpen ?? openEnd(lastTube, lastTube.end));
 
   // Only open mouths cut the ground. Walk inward until the crown has a
   // metre of cover. The cut remains bounded to one capsule per mouth.
@@ -118,7 +118,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   }
   // An open end can join another bore underground. It is passable, but it
   // must not cut a portal-shaped hole in the ground above the junction.
-  const mouths = heightAt && tubes.length ? [
+  let mouths = heightAt && tubes.length ? [
     ...(startOpen && openEnd(tubes[0], tubes[0].start) ? [mouthCapsule(false)] : []),
     ...(endOpen && openEnd(lastTube, lastTube.end) ? [mouthCapsule(true)] : []),
   ] : [];
@@ -133,16 +133,66 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     pathLength += Math.hypot(tube.end.x - tube.start.x, tube.end.y - tube.start.y, tube.end.z - tube.start.z);
     return [tube, start];
   }));
-  for (const tube of tubes) {
+  function cellsFor(tube) {
+    const cells = [];
     const minX = Math.floor((Math.min(tube.start.x, tube.end.x) - tube.radius) / cellSize);
     const maxX = Math.floor((Math.max(tube.start.x, tube.end.x) + tube.radius) / cellSize);
     const minZ = Math.floor((Math.min(tube.start.z, tube.end.z) - tube.radius) / cellSize);
     const maxZ = Math.floor((Math.max(tube.start.z, tube.end.z) + tube.radius) / cellSize);
-    for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) {
-      if (!grid.has(x)) grid.set(x, new Map());
-      const column = grid.get(x);
-      if (!column.has(z)) column.set(z, []);
-      column.get(z).push(tube);
+    for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) cells.push([x, z]);
+    return cells;
+  }
+  function addToCell(tube, x, z) {
+    if (!grid.has(x)) grid.set(x, new Map());
+    const column = grid.get(x);
+    if (!column.has(z)) column.set(z, []);
+    column.get(z).push(tube);
+  }
+  for (const tube of tubes) for (const [x, z] of cellsFor(tube)) addToCell(tube, x, z);
+
+  // The Dig owns this index for a visit. Only its last segment may grow,
+  // or one new segment may be appended; earlier indexed tubes stay untouched.
+  function extendLast(segment, append = false) {
+    const changed = validSegment(segment);
+    if (Math.hypot(changed.end.x - changed.start.x, changed.end.z - changed.start.z) < 1e-7)
+      throw new RangeError('A tunnel segment needs a horizontal length.');
+    const previous = append ? lastTube : tubes[tubes.length - 2];
+    if (previous && (Math.hypot(changed.start.x - previous.end.x, changed.start.y - previous.end.y,
+      changed.start.z - previous.end.z) > 1e-7 || Math.abs(changed.radius - previous.radius) > 1e-7))
+      throw new RangeError('Tunnel segments must join without a gap or a step.');
+    if (!append && lastTube && (Math.hypot(changed.start.x - lastTube.start.x,
+      changed.start.y - lastTube.start.y, changed.start.z - lastTube.start.z) > 1e-7 || changed.radius !== lastTube.radius))
+      throw new RangeError('Only the end of the last tunnel segment may change.');
+    if (append || !lastTube) {
+      indices.set(changed, tubes.length);
+      pathStarts.set(changed, pathLength);
+      tubes.push(changed);
+      lastTube = changed;
+      for (const [x, z] of cellsFor(changed)) addToCell(changed, x, z);
+    } else {
+      const oldCells = new Set(cellsFor(lastTube).map(([x, z]) => `${x},${z}`));
+      const newCells = cellsFor(changed);
+      const newKeys = new Set(newCells.map(([x, z]) => `${x},${z}`));
+      for (const key of oldCells) if (!newKeys.has(key)) {
+        const [x, z] = key.split(',').map(Number);
+        const cell = grid.get(x).get(z);
+        cell.splice(cell.indexOf(lastTube), 1);
+      }
+      Object.assign(lastTube, changed);
+      for (const [x, z] of newCells) if (!oldCells.has(`${x},${z}`)) addToCell(lastTube, x, z);
+    }
+    pathLength = pathStarts.get(lastTube) + Math.hypot(lastTube.end.x - lastTube.start.x,
+      lastTube.end.y - lastTube.start.y, lastTube.end.z - lastTube.start.z);
+    startOpen = tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start);
+    endOpen = lastTube.endOpen ?? openEnd(lastTube, lastTube.end);
+    if (heightAt) {
+      // Revisit the first mouth only until its capsule reaches covered ground.
+      const first = mouths[0];
+      const firstCovered = first && heightAt(first.end.x, first.end.z) >= first.end.y + first.radius + 1;
+      const startMouth = startOpen && openEnd(tubes[0], tubes[0].start)
+        ? (firstCovered ? first : mouthCapsule(false)) : null;
+      mouths = [ ...(startMouth ? [startMouth] : []),
+        ...(endOpen && openEnd(lastTube, lastTube.end) ? [mouthCapsule(true)] : []) ];
     }
   }
   const projected = {x: 0, y: 0, z: 0};
@@ -332,12 +382,12 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     get mouths() { return mouths.map(mouth => ({start: {...mouth.start}, end: {...mouth.end}, radius: mouth.radius})); },
     get startOpen() { return startOpen; },
     get endOpen() { return endOpen; },
+    extendLast,
     tubeAt,
     groundAt,
     wallAt,
     constrainMotion,
     clips,
-    get length() { return tubes.reduce((sum, tube) => sum + Math.hypot(tube.end.x - tube.start.x,
-      tube.end.y - tube.start.y, tube.end.z - tube.start.z), 0); },
+    get length() { return pathLength; },
   });
 }

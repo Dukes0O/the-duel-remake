@@ -405,3 +405,29 @@ const separated = createGroundTunnels(crossingSegments.map((segment, index) => i
 assert.equal(separated.constrainMotion({x:-1,y:0,z:0},{x:0,y:0,z:4},0.5).hit, true,
   'A crossing high above does not open the wall.');
 console.log('Borer: machine data, controls and a 40 m closed cut passed.');
+
+// Growing the live index must match rebuilding it, including bends and open ends.
+const indexed = createGroundTunnels([], {heightAt:()=>20});
+const indexedSegments = [];
+for (let i = 0; i < 60; i++) {
+  const start = i ? indexedSegments.at(-1).end : {x:0,y:1.65,z:0};
+  const end = {x:start.x + (i % 2 ? 2 : 1), y:1.65, z:start.z + 6};
+  const segment = {start, end, radius:3, startOpen:i === 0, endOpen:false};
+  indexedSegments.push(segment);
+  indexed.extendLast(segment, true);
+}
+let tail = indexedSegments.at(-1);
+for (let i = 0; i < 20; i++) {
+  tail = {...tail, end:{...tail.end, z:tail.end.z + .1}, endOpen:i === 19};
+  indexedSegments[indexedSegments.length - 1] = tail;
+  indexed.extendLast(tail);
+  const rebuilt = createGroundTunnels(indexedSegments, {heightAt:()=>20});
+  assert.deepEqual(indexed.segments, rebuilt.segments);
+  assert.equal(indexed.endOpen, rebuilt.endOpen);
+  assert.ok(Math.abs(indexed.length - rebuilt.length) < 1e-9);
+  for (const segment of indexedSegments) {
+    const position = {x:(segment.start.x + segment.end.x)/2,y:1.65,z:(segment.start.z + segment.end.z)/2};
+    assert.equal(Boolean(indexed.tubeAt(position)), Boolean(rebuilt.tubeAt(position)));
+    assert.equal(indexed.groundAt(position, 1.65, 20), rebuilt.groundAt(position, 1.65, 20));
+  }
+}
