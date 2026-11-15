@@ -24,6 +24,7 @@ export async function run(context) {
   const picture = async (name, position, target) => {
     await context.evaluate(`(() => {const a=window.__qaApp;a.inspectionCamera=${position ? JSON.stringify({position, target}) : 'null'};
       ${position ? `window.__render.camera.position.fromArray(${JSON.stringify(position)});` : "a.setCamera('chase');"} ${frame}})()`);
+    if (!position) await context.evaluate(`(async()=>{for(let i=0;i<60;i++)await new Promise(done=>requestAnimationFrame(()=>{${frame} done();}));})()`);
     const file = await context.screenshot(`tunnel-${name}`);
     const stats = await context.evaluate(`(async()=>{const intervals=[];await new Promise(done=>{let last;const tick=now=>{
       ${frame} if(last!==undefined)intervals.push(now-last);last=now;
