@@ -314,8 +314,9 @@ export function arenaPauseScreen(state, {metric, action, time, escapeHTML = Stri
   if (state.arena?.mode === 'world-job') {
     const worldJob = state.arena.worldJob, step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
     const name = worldJob?.definition?.name ?? 'The job';
+    const place = worldJob?.definition?.id === 'everburn-hot-delivery' ? ', the Scablands' : '';
     return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
-      description: escapeHTML(step?.what ? `${name}. ${step.what}` : `${name}.`),
+      description: escapeHTML(step?.what ? `${name}${place}. ${step.what}` : `${name}${place}.`),
       metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
       extra: '', actions: action('BACK TO THE JOB', 'resume', true) + action('START AGAIN', 'world-job-retry') + action('BACK TO THE YARD', 'arena-yard')};
   }

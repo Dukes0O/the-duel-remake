@@ -5,6 +5,7 @@ import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame, brazierArrow} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
+import {arenaPauseScreen} from '../src/screen-arena.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
@@ -29,6 +30,17 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The actual pause screen names the job and the land, including between steps.
+{
+  const views = {metric: () => '', action: () => '', time: () => '0:00', escapeHTML: String};
+  const worldJob = {definition, job:{steps:[{what:'Carry the fire.'}], stepIndex:0}};
+  const state = {arena:{mode:'world-job', worldJob}};
+  assert.equal(arenaPauseScreen(state, views).description, 'Hot Delivery, the Scablands. Carry the fire.');
+  worldJob.job.stepIndex = 1;
+  assert.equal(arenaPauseScreen(state, views).description, 'Hot Delivery, the Scablands.');
+  worldJob.definition = EVERBURN_JOBS[1];
+  assert.equal(arenaPauseScreen(state, views).description, `${EVERBURN_JOBS[1].name}.`);
+}
 // Inspect the actual weapon bar as the loan changes and the job ends.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});

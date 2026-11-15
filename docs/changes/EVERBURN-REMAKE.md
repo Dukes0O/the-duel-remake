@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, pause screen (15 November 2026)
+
+- The Hot Delivery pause screen names the job and the Scablands, both during and between steps. Other jobs keep their existing description. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real pause screen checks both descriptions and another job; the existing Pipe landing and river-bed checks also pass. `git diff --check`: passed.
+- Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the map, scripted drives, camera, cover and scenario.
+
 ## Forge bay stop (15 November 2026)
 
 - Hot Delivery now ends with the loaded car stopped within 6 m of the existing cold-forge place, rather than on reaching the town centre. The ember must be alight. The arrival event carries the grade and pay, including the relight cap. No new sound event was added; the forge's `world.forge.catch` belongs to step 5c.
