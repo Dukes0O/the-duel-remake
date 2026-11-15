@@ -94,3 +94,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the requested browser scenario remains unwritten. The lane tier, replay and world-signature checks, build, and long drivers remain for the final round.
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, brazier locations (15 November 2026)
+
+- Added three named brazier positions to Hot Delivery: beside the yard and Halfway Camp, and at the Wash in the river bed. The first two match the existing brazier positions. The positions use the land's names and record the ground height.
+- `node tools/test-everburn-job1.mjs`: passed. It checks all three positions against their named places, the real ground and solid grid, and checks that the Wash point is in the river bed. `git diff --check`: passed.
+- The new list is job data only. The third brazier, scoop, smoke and map discovery are still to be connected in the following steps. No sound event was added.
+- For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

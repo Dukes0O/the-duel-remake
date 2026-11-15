@@ -9,6 +9,7 @@ import {escortCarStart} from './steps/escort.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {LAND} from '../scablands-names.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
+import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -25,6 +26,16 @@ export function buildEverburn(land) {
   const well = place('everburn', at('everburn'), 18), safeRoad = place('safe-road', at('safe-road'), 16);
   const yardToCamp = Math.hypot(safeRoad.position.x - yard.position.x, safeRoad.position.z - yard.position.z) || 1;
   const cinderAt = at('yard', (safeRoad.position.z - yard.position.z) / yardToCamp * 9, -(safeRoad.position.x - yard.position.x) / yardToCamp * 9 + 2);
+  const beside = (from, toward) => {
+    const dx = toward.x - from.x, dz = toward.z - from.z, length = Math.hypot(dx, dz) || 1;
+    return {x:from.x + dz / length * 9, z:from.z - dx / length * 9};
+  };
+  const brazier = (id, point) => Object.freeze({id, position:Object.freeze({
+    x:point.x, y:scablandsSurfaceHeightAt(point.x, point.z), z:point.z,
+  })});
+  const braziers = path(brazier('yard-brazier', beside(yard.position, safeRoad.position)),
+    brazier('halfway-brazier', beside(safeRoad.position, tinTown.position)),
+    brazier('wash-brazier', at('the-wash')));
   const wellRaidersHold = place('everburn-well-raiders-hold', at('everburn', -2, -1), 8);
   const wellRaiderEntries = Object.freeze([[0, 64], [64, 0], [0, -64], [-64, 0]]
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));
@@ -84,7 +95,7 @@ export function buildEverburn(land) {
       steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
         carStart:carStart(at('yard', -40, 0), yard),
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
-        safePoints:path(safeRoad), ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
+        safePoints:path(safeRoad), braziers, ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},

@@ -3,9 +3,24 @@ import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
 import {brazierSpotsFor, createCinderFigure} from '../src/world/ember-pot.js';
+import {LAND} from '../src/world/scablands-names.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
+assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
+for (const [index, brazier] of step.braziers.entries()) {
+  const p = brazier.position, named = LAND.at(['yard', 'safe-road', 'the-wash'][index]);
+  assert.ok(Math.hypot(p.x - named.x, p.z - named.z) <= 9.000001);
+  assert.equal(p.y, scablandsSurfaceHeightAt(p.x, p.z));
+  assert.equal(pushOutOfSolids(p.x, p.z, 1, undefined, p.y).hit, null);
+}
+assert.ok(riverDepthAt(step.braziers[2].position.x, step.braziers[2].position.z) > 0);
+for (let i = 0; i < 2; i++) {
+  assert.deepEqual({x:step.braziers[i].position.x, z:step.braziers[i].position.z}, brazierSpotsFor(step)[i]);
+}
 const figure = createCinderFigure();
 assert.equal(figure.name, 'Cinder at the yard gate');
 assert.ok(figure.children.some(child => child.isMesh));
