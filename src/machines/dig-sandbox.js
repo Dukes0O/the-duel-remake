@@ -5,7 +5,7 @@ import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
 import {SCARPS} from '../world/scablands-scarps.js';
-import {createBorerState} from './borer.js';
+import {createBorerState, stepBorer} from './borer.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
@@ -100,7 +100,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -132,7 +132,27 @@ export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraInde
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
-  if(sim.roadMachines[sim.activeMachine]){
+  if(sim.activeMachine==='borer'){
+    const controls=input.controls ?? {};
+    if(sim.mode==='drive' && !sim.borer.started){
+      const forward=Math.max(-1,Math.min(1,controls.forward || 0));
+      const steer=Math.max(-1,Math.min(1,controls.steer || 0));
+      const heading=sim.borer.heading-steer*0.25*STEP*Math.abs(forward);
+      const x=sim.borer.x+Math.sin(heading)*forward*(4/3.6)*STEP;
+      const z=sim.borer.z+Math.cos(heading)*forward*(4/3.6)*STEP;
+      const refusal=sim.ground.refusal({x,z,radius:3});
+      if(!refusal) next={...next,borer:{...sim.borer,x,z,heading,y:sim.ground.heightAt(x,z),headSpeed:0}};
+      else next={...next,lastMessage:refusal};
+    } else {
+      const result=stepBorer(sim.borer,{thrust:controls.forward,steer:controls.steer,slope:controls.slope},sim.ground,null,STEP);
+      next={...next,borer:result.state,lastMessage:result.state.message || ''};
+      events.push(...result.events);
+      if(result.state.distanceM!==sim.borer.distanceM){
+        next.tunnels=createGroundTunnels(result.state.segments,{heightAt:(x,z)=>sim.ground.heightAt(x,z)});
+        next.dirty=true;
+      }
+    }
+  } else if(sim.roadMachines[sim.activeMachine]){
     const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
@@ -200,5 +220,5 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
-  return sim.roadMachines[id]?.machine??(id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
+  return sim.roadMachines[id]?.machine??(id==='borer'?sim.borer:id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
 }
