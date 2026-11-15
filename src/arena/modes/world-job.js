@@ -94,6 +94,7 @@ export function initializeWorldJob(duel, definition) {
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
+  for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
   state.worldJobThingsHit = [];
   if (definition.steps[0]?.faceOriginToPlace && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
     const target = definition.steps[0].place.position;
@@ -173,6 +174,7 @@ export function prepareWorldJobControls(duel) {
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   updateJobActor(duel, worldJob, step?.actor, dt);
+  for (const actor of step?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, dt);
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
 }

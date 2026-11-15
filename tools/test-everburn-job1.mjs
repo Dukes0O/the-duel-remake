@@ -10,9 +10,27 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {createWorldJob, initializeWorldJob} from '../src/arena/modes/world-job.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
+const waitingWorld = createWorldJob(definition);
+const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, lateral:0};
+const waitingDuel = {state:waitingState, seed:19, course:{def:{scablands:true},
+  nearest:() => ({s:0, lateral:0}), at:() => ({heading:0})}};
+initializeWorldJob(waitingDuel, definition);
+assert.equal(waitingWorld.actors.length, 2);
+for (const [index, actor] of waitingWorld.actors.entries()) {
+  const barrier = step.barriers[index], floors = [];
+  assert.equal(actor.id, step.waitingActors[index].id);
+  assert.equal(actor.renderCar, 'dusthawk_rally');
+  assert.equal(actor.speed, 0);
+  assert.ok(Math.hypot(actor.position.x - barrier.position.x, actor.position.z - barrier.position.z) <= 21);
+  scablandsFloorsAt(actor.position.x, actor.position.z, floors);
+  assert.equal(actor.position.y, floors[0]);
+  assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
+}
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
 // The actual job grid holds both barricades on their named floor, including the bridge deck.
 const barricadeGrid = createJobSolidGrid(createSolidGrid([]));

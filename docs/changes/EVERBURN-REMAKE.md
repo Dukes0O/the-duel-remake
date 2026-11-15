@@ -146,3 +146,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: the former barricade positions between the camp and town. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: riders, burning and the remaining numbered steps. The plain barricades do not yet disappear when burned; that belongs to step 3d.
+
+## Larger land, waiting vehicles (15 November 2026)
+
+- One Ash Men vehicle now waits near each barricade, on the ground or bridge deck. This is the first part of step 3b: the vehicles do not yet pursue or ram the player.
+- `node tools/test-everburn-job1.mjs`: passed. It initializes the real job mode and checks both vehicles, their distance from the barricades, floor height and clearance from existing solids. No sound event was added.
+- For Claude to draw: the final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
