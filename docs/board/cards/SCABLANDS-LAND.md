@@ -870,3 +870,21 @@ frame check under rule 8 comes before the switch goes on.
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.
+
+### Codex decided (Claude to review): small-thing placement
+
+The design names which ground holds each thing but gives no counts. The first placing rules use the relative chances in `SMALL_DENSITY`, with more stones on the plates and river bed than the flats. These are a starting choice for Claude to judge in the trial. Salt lumps are limited to 90 m from the pan edge. The scene must pass every job start to the placer before the placing is used in the game.
+
+The first candidate line for pylons runs 100 m east of the Dry Dam, yard and Dead Mall. Spacing continues across the bend at the yard. The candidates still need clearance from roads, buildings and job starts before they can be drawn or made solid.
+
+Telegraph candidates stand 22 m from the East Road centre and 12 m from the Iron Line. The seed chooses 4 percent down and 12 percent leaning. These are starting choices for Claude to review. The candidates still need clearance before they are drawn or made solid.
+
+Fence candidates use one run on each road arriving within 200 m of Tin Town, starting 200 m from the road end. Runs are 200 to 600 m long, with posts 8 m apart and seeded gaps. They still need clearance checks before drawing or making them solid.
+
+Rock-fall candidates form seeded groups of two to five, 3 to 27 m from the foot of each scarp. They are 1 to 4 m across. Their footprints still need clearance checks before drawing or making them solid.
+
+Single-boulder candidates use 120 m cells, with at most one candidate per cell. The chance is 45 percent on plates and river bed, 12 percent on other ground, and zero on salt. Their full footprints still need clearance checks before drawing or making them solid.
+
+For the first clearance pass, allow a 6 m radius around a pylon, 0.5 m around a standing pole, 7 m around a down pole, and 0.25 m around a fence post. A boulder's radius is half its stated size. The later drawing and solid footprints must fit within these allowances or the clearance must be revised. Rejected line positions stay as gaps so wires do not cross them.
+
+For the first collision records, each pylon has four feet, 6 m apart, and each foot is 0.8 m across. Standing poles are 0.5 m across and 7 m tall; down poles are 6.8 m long. Fence posts are 0.3 m across and 1.4 m tall. A boulder's collision footprint and height use its stated size. The plain drawing must match these records before they are connected to the game.

@@ -162,6 +162,14 @@ function drawRiver(ctx, view, marks) {
   strokeLine(ctx, view, marks.river.points, INK.bank, marks.river.lipWidth * view.scale * .98);
   strokeLine(ctx, view, marks.river.points, INK.bed, Math.max(3, marks.river.bedWidth * view.scale * .9));
 }
+function drawLandmarks(ctx, view, lines = []) {
+  for (const landmark of lines) {
+    const colour = landmark.kind === 'pylon' ? '#e0a76b' : '#b3d1c2';
+    strokeLine(ctx, view, landmark.points, INK.paper, 4, [5, 5]);
+    strokeLine(ctx, view, landmark.points, colour, 2, [5, 5]);
+  }
+}
+
 function drawRoads(ctx, view, marks, {casing, line}) {
   for (const road of marks.roads) strokeLine(ctx, view, road.points, INK.roadEdge, casing);
   for (const road of marks.roads) strokeLine(ctx, view, road.points, INK.road, line);
@@ -273,6 +281,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   drawRiver(ctx, view, marks);
   drawSights(ctx, view, knowledge);
   drawRoads(ctx, view, marks, {casing: 8.5, line: 4.6});
+  drawLandmarks(ctx, view, frame.landmarkLines);
   const margin = 40, visible = (x, z) => { const at = toScreen(view, x, z); return at.x > -margin && at.y > -margin && at.x < width + margin && at.y < height + margin; };
   // What is written on the map is written where there is room: not over the scale bar, the compass, the car or another name.
   const boxes = [{left: 0, right: 150, top: height - 30, bottom: height}, {left: width - 44, right: width, top: 0, bottom: 46}, {left: width / 2 - 26, right: width / 2 + 26, top: height / 2 - 26, bottom: height / 2 + 26}];
@@ -390,6 +399,7 @@ export function drawBigMap(ctx, frame, {width, height}) {
   drawRiver(ctx, view, marks);
   drawSights(ctx, view, knowledge);
   drawRoads(ctx, view, marks, {casing: 6, line: 3});
+  drawLandmarks(ctx, view, frame.landmarkLines);
   // The ways to the job's place, thin and coloured, each with its letter.
   ways.forEach((way, index) => {
     strokeLine(ctx, view, way.points, INK.paper, 7, [14, 8]); strokeLine(ctx, view, way.points, wayColour(index), 3.6, [14, 8]);
