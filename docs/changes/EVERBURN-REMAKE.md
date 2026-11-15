@@ -360,3 +360,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the final forge fire, barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Changed assertions: none. Codex decided: the bright flame grows over two seconds and the weak flame over eight seconds, pending Claude's drive.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: a visible pot transfer, the remaining screen, drive, camera, cover and scenario steps.
+
+## Larger land, pot transfer (15 November 2026)
+
+- At delivery a plain pot lifts from behind the stopped car and moves to the forge over two seconds. The existing forge fire and `world.forge.catch` cue remain. The carried pot is removed when the carry step ends.
+- `node tools/test-everburn-job1.mjs`: passed. The real job and scene check the pot's movement, lift and arrival for bright and weak embers. `git diff --check`: passed.
+- For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: the plain transfer takes two seconds, pending Claude's drive.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the screen, drives, camera, cover and scenario steps.

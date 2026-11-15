@@ -590,6 +590,11 @@ export function createScablandsScene(course,options={}){
   const forgeAt=LAND.at('tin-town',25,10);
   forgeFlame.position.set(forgeAt.x,scablandsSurfaceHeightAt(forgeAt.x,forgeAt.z),forgeAt.z);
   group.add(forgeFlame);let forgeStart=null,forgeGrade=null;
+  // A plain pot carries the fire from the stopped car to the forge.
+  const transferPot=new THREE.Mesh(new THREE.CylinderGeometry(.35,.25,.4,14),
+    new THREE.MeshStandardMaterial({color:0x24201c,roughness:.88,metalness:.45}));
+  transferPot.name='Hot Delivery pot transfer';transferPot.visible=false;group.add(transferPot);
+  const transferFrom=new THREE.Vector3(),transferTo=new THREE.Vector3(forgeAt.x,forgeFlame.position.y+.2,forgeAt.z);
   // Plain barricades use the same dimensions and positions as the job solids.
   const barricadeGeometry=new THREE.BoxGeometry(12,2,1.4),barricadeMaterial=new THREE.MeshStandardMaterial({color:0x584438,roughness:1});
   const barricades=[0,1].map(()=>{const mesh=new THREE.Mesh(barricadeGeometry,barricadeMaterial);mesh.name='Ash Men barricade';group.add(mesh);return mesh;});
@@ -750,6 +755,11 @@ export function createScablandsScene(course,options={}){
         const bright=forgeGrade==='bright',growth=Math.min(1,Math.max(0,seconds-forgeStart)/(bright?2:8));
         forgeFlame.scale.set(bright?2.4:1.5,(bright?4:2)*growth,1);
         forgeFlameMaterial.uniforms.uTime.value=seconds;
+        const travel=Math.min(1,Math.max(0,(seconds-forgeStart)/2));
+        transferPot.visible=travel<1;
+        transferPot.position.lerpVectors(transferFrom,transferTo,travel);
+        transferPot.position.y+=Math.sin(Math.PI*travel);
+
       }
       if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
         furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
@@ -793,7 +803,13 @@ export function createScablandsScene(course,options={}){
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
-      if(delivered&&!forgeFlame.visible){forgeStart=clock;forgeGrade=delivered.grade;}
+      if(delivered&&!forgeFlame.visible){
+        forgeStart=clock;forgeGrade=delivered.grade;
+        const heading=course.at(state.s).heading+(state.headingError??0);
+        transferFrom.set(here.x-Math.sin(heading)*2,scablandsSurfaceHeightAt(here.x,here.z)+1.2,here.z-Math.cos(heading)*2);
+        transferPot.position.copy(transferFrom);transferPot.visible=true;
+      }
+      if(!delivered)transferPot.visible=false;
       forgeFlame.visible=!!delivered;
       if(worldJob?.definition?.yard){
         if(!yard){
