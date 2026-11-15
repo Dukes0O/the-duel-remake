@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
@@ -14,6 +14,15 @@ import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, rea
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
+
+test('a course with the trial off builds no placement indexes', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: false});
+  assert.equal(course.realismThings, undefined);
+  assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
+});
 
 test('a job queries its supplied land grid as well as its temporary braziers', () => {
   const fixed = clearedFixedThings(1989, []);
@@ -528,6 +537,10 @@ test('the new solid index leaves the named driving corridors clear', async () =>
   assert.ok(jobLegs.some(points => points.length === survey.finds.length + 1 &&
     points[0] === survey.carStart && survey.finds.every((place, i) => points[i + 1] === place.position)),
   'all survey legs must follow the flags in order');
+  const defend = EVERBURN_JOBS.flatMap(job => job.steps).find(step => step.raiderEntries?.length);
+  for (const entry of defend.raiderEntries) {
+    assert.ok(jobLegs.some(points => points.length === 2 && points[0] === entry.position && points[1] === defend.raiderHold.position));
+  }
   routes.push(...jobLegs.map(points => ({width: 7, points})));
   const steps = stepsWayFor();
   routes.push({width: 7, points: [-1, 1].map(side =>
@@ -622,4 +635,21 @@ test('a slow fence hit leaves the post standing', async () => {
   assert.ok(course.solidGrid.near(post.x, post.z, post.x, post.z).includes(post));
   assert.ok(car.speedMph < 10);
   assert.equal(events.length, 0);
+});
+
+test('small things remain on ways away from roads', () => {
+  const ways = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
+  let found = false;
+  for (const points of ways) for (let n = 1; n < points.length && !found; n++) {
+    const a = points[n - 1], b = points[n], length = Math.hypot(b.x - a.x, b.z - a.z);
+    for (let d = 0; d < length && !found; d += 16) {
+      const x = a.x + (b.x - a.x) * d / length, z = a.z + (b.z - a.z) * d / length;
+      const i = Math.floor(x / THINGS_CELL), j = Math.floor(z / THINGS_CELL);
+      for (const thing of smallThingsInCell(1989, i, j, [])) {
+        const t = Math.max(0, Math.min(1, ((thing.x - a.x) * (b.x - a.x) + (thing.z - a.z) * (b.z - a.z)) / (length * length)));
+        if (Math.hypot(thing.x - a.x - t * (b.x - a.x), thing.z - a.z - t * (b.z - a.z)) < 7) found = true;
+      }
+    }
+  }
+  assert.ok(found, 'a named way retains small things');
 });

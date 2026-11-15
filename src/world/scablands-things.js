@@ -179,23 +179,31 @@ export function tracksForWay(points, {net = ROAD_NET, crossings = RIVER_LAND.cro
 // Index only the road segments that can affect roadside litter. The full road
 // distance search is meant for checks and is too expensive for every cell.
 const LITTER_REACH = ROAD_HALF_WIDTH + 28, ROAD_CELL = 256;
-const roadCells = new Map();
+let roadCells;
 const roadKey = (i, j) => `${i}:${j}`;
-for (const road of ROAD_NET.roads) for (let n = 0; n + 1 < road.points.length; n++) {
-  const a = road.points[n], b = road.points[n + 1];
-  const i0 = Math.floor((Math.min(a.x, b.x) - LITTER_REACH) / ROAD_CELL);
-  const i1 = Math.floor((Math.max(a.x, b.x) + LITTER_REACH) / ROAD_CELL);
-  const j0 = Math.floor((Math.min(a.z, b.z) - LITTER_REACH) / ROAD_CELL);
-  const j1 = Math.floor((Math.max(a.z, b.z) + LITTER_REACH) / ROAD_CELL);
-  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
-    const key = roadKey(i, j);
-    if (!roadCells.has(key)) roadCells.set(key, []);
-    roadCells.get(key).push({a, b});
+function getRoadCells() {
+  if (roadCells) return roadCells;
+  roadCells = new Map();
+  for (const road of ROAD_NET.roads) for (let n = 0; n + 1 < road.points.length; n++) {
+    const a = road.points[n], b = road.points[n + 1];
+    const i0 = Math.floor((Math.min(a.x, b.x) - LITTER_REACH) / ROAD_CELL);
+    const i1 = Math.floor((Math.max(a.x, b.x) + LITTER_REACH) / ROAD_CELL);
+    const j0 = Math.floor((Math.min(a.z, b.z) - LITTER_REACH) / ROAD_CELL);
+    const j1 = Math.floor((Math.max(a.z, b.z) + LITTER_REACH) / ROAD_CELL);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const key = roadKey(i, j);
+      if (!roadCells.has(key)) roadCells.set(key, []);
+      roadCells.get(key).push({a, b});
+    }
   }
+
+  return roadCells;
 }
 
+export function thingIndexStatus() { return {road: !!roadCells, routes: !!routeCells}; }
+
 function roadWithin(x, z, reach) {
-  const segments = roadCells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? [];
+  const segments = getRoadCells().get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? [];
   for (const {a, b} of segments) {
     const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
     const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
@@ -208,21 +216,58 @@ export const nearRoadForLitter = (x, z) => roadWithin(x, z, LITTER_REACH);
 
 // Protect the named ways and the routes used by the moving trucks. Index the
 // segments so that placing small things does not scan every route per cell.
-const routeCells = new Map();
-// Job markers are destinations, not decoration: leave room to reach each one.
-const jobPlaces = [];
-for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
-  for (const key of ['origin', 'destination', 'place', 'zone', 'carPlace', 'escapePlace', 'home', 'returnToCar']) {
-    const point = step[key]?.position;
-    if (point) jobPlaces.push(point);
+let routeCells, jobLegCells, jobPlaces;
+function getRouteCells() {
+  if (routeCells) return;
+  routeCells = new Map();
+  jobLegCells = new Map();
+  // Job markers are destinations, not decoration: leave room to reach each one.
+  jobPlaces = [];
+  for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+    for (const key of ['origin', 'destination', 'place', 'zone', 'carPlace', 'escapePlace', 'home', 'returnToCar']) {
+      const point = step[key]?.position;
+      if (point) jobPlaces.push(point);
+    }
+    for (const key of ['places', 'finds', 'people', 'safePoints', 'path', 'returnPath']) {
+      for (const place of step[key] ?? []) if (place?.position) jobPlaces.push(place.position);
+    }
   }
-  for (const key of ['places', 'finds', 'people', 'safePoints', 'path', 'returnPath']) {
-    for (const place of step[key] ?? []) if (place?.position) jobPlaces.push(place.position);
+  for (const path of Object.values(GAS_RUN_PATHS)) for (const place of path) {
+    if (place.position) jobPlaces.push(place.position);
+  }
+  for (const points of jobDrivingLegs()) for (let n = 1; n < points.length; n++) {
+    const a = points[n - 1], b = points[n], reach = 7 + 28;
+    for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
+      for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
+        const key = roadKey(i, j);
+        if (!jobLegCells.has(key)) jobLegCells.set(key, []);
+        jobLegCells.get(key).push({a, b, width: 7});
+      }
+  }
+  const routeLines = HOT_DELIVERY_WAYS.map(way => ({points: routeFor(way.legs, {
+    start: LAND.yard, destination: LAND.at('tin-town'),
+  }), width: 7}));
+  for (const path of Object.values(GAS_RUN_PATHS)) routeLines.push({points: path.map(place => place.position), width: 8});
+  for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+    if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace'))
+      routeLines.push({points: step.path.map(place => place.position), width: 8});
+  }
+  const stepsWay = stepsWayFor();
+  if (stepsWay) routeLines.push({width: 7, points: [-1, 1].map(side => ({
+    x: stepsWay.x + side * stepsWay.nx * stepsWay.reach,
+    z: stepsWay.z + side * stepsWay.nz * stepsWay.reach,
+  }))});
+  for (const {points, width} of routeLines) for (let n = 1; n < points.length; n++) {
+    const a = points[n - 1], b = points[n], reach = width + 28;
+    for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
+      for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
+        const key = roadKey(i, j);
+        if (!routeCells.has(key)) routeCells.set(key, []);
+        routeCells.get(key).push({a, b, width});
+      }
   }
 }
-for (const path of Object.values(GAS_RUN_PATHS)) for (const place of path) {
-  if (place.position) jobPlaces.push(place.position);
-}
+
 // The places are ordered as the job presents them to the driver. Keep these
 // corridors separate so small, non-solid decoration can remain on the legs.
 export function jobDrivingLegs() {
@@ -244,41 +289,15 @@ export function jobDrivingLegs() {
     }
   }
   for (const path of Object.values(GAS_RUN_PATHS)) routes.push(path.map(place => place.position));
+  for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+    for (const entry of step.raiderEntries ?? []) if (step.raiderHold) routes.push([entry.position, step.raiderHold.position]);
+    for (const path of [step.path, step.actor?.path]) if (path?.length > 1) routes.push(path.map(place => place.position ?? place));
+  }
   return routes;
 }
-const jobLegCells = new Map();
-for (const points of jobDrivingLegs()) for (let n = 1; n < points.length; n++) {
-  const a = points[n - 1], b = points[n], reach = 7 + 28;
-  for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
-    for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
-      const key = roadKey(i, j);
-      if (!jobLegCells.has(key)) jobLegCells.set(key, []);
-      jobLegCells.get(key).push({a, b, width: 7});
-    }
-}
-const routeLines = HOT_DELIVERY_WAYS.map(way => ({points: routeFor(way.legs, {
-  start: LAND.yard, destination: LAND.at('tin-town'),
-}), width: 7}));
-for (const path of Object.values(GAS_RUN_PATHS)) routeLines.push({points: path.map(place => place.position), width: 8});
-for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
-  if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace'))
-    routeLines.push({points: step.path.map(place => place.position), width: 8});
-}
-const stepsWay = stepsWayFor();
-if (stepsWay) routeLines.push({width: 7, points: [-1, 1].map(side => ({
-  x: stepsWay.x + side * stepsWay.nx * stepsWay.reach,
-  z: stepsWay.z + side * stepsWay.nz * stepsWay.reach,
-}))});
-for (const {points, width} of routeLines) for (let n = 1; n < points.length; n++) {
-  const a = points[n - 1], b = points[n], reach = width + 28;
-  for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
-    for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
-      const key = roadKey(i, j);
-      if (!routeCells.has(key)) routeCells.set(key, []);
-      routeCells.get(key).push({a, b, width});
-    }
-}
-function routeWithin(x, z, radius, cells = routeCells) {
+function routeWithin(x, z, radius, cells = null) {
+  getRouteCells();
+  cells ??= routeCells;
   for (const {a, b, width} of cells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? []) {
     const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
     const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
@@ -294,8 +313,8 @@ export function thingFootprintClear(x, z, radius, jobStarts, {jobLegs = true} = 
   if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(radius) || radius < 0 || radius > 28 || !Array.isArray(jobStarts)) {
     throw new RangeError('A finite footprint and job starts are required');
   }
-  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius) || routeWithin(x, z, radius) ||
-      (jobLegs && routeWithin(x, z, radius, jobLegCells))) return false;
+  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius) ||
+      (jobLegs && (routeWithin(x, z, radius) || routeWithin(x, z, radius, jobLegCells)))) return false;
   const river = RIVER_LAND.nearest(x, z);
   if (river && RIVER_LAND.crossings.some(crossing => {
     const along = Math.abs(river.along - crossing.along);
@@ -306,6 +325,7 @@ export function thingFootprintClear(x, z, radius, jobStarts, {jobLegs = true} = 
     return false;
   })) return false;
   if (jobStarts.some(p => Math.hypot(x - p.x, z - p.z) < 6 + radius)) return false;
+  getRouteCells();
   if (jobPlaces.some(p => Math.hypot(x - p.x, z - p.z) < 30 + radius)) return false;
   for (const solid of SOLID_GRID.near(x, z, x, z, radius)) {
     const dx = x - solid.x, dz = z - solid.z;
@@ -468,7 +488,7 @@ export function realismThingsData({enabled, seed, jobStarts, halfWidth, halfDept
       if (rock && Math.abs(rock.x) <= halfWidth && Math.abs(rock.z) <= halfDepth) loneBoulders.push(rock);
     }
   }
-  return {fixed, loneBoulders};
+  return {fixed, loneBoulders, landmarkLines: thingLandmarkLines(fixed)};
 }
 
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.

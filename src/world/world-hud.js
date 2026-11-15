@@ -1,4 +1,3 @@
-import {featureFlags} from '../feature-flags.js';
 import {worldJobMapData} from '../route-map.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 import {getLandPicture, createPictureCanvas, createKnowledge, learn, jobFacts, drawSmallMap, drawBigMap, wayColour, wayLines, groundWords, wayKm, SMALL_MAP} from './scablands-map.js';
@@ -209,24 +208,6 @@ export function createWorldHud({host, app = null, picture = null}) {
   const land = picture ?? getLandPicture();
   let landCanvas = null, lastSmall = -Infinity, lastKnowledgeVersion = -1, lastFrame = null;
   const knowledgeOf = new WeakMap();
-  let landmarkCourse = null, landmarkLines = [], landmarkRequest = 0;
-  const updateLandmarks = course => {
-    const enabled = featureFlags.enabled('scablands-realism');
-    if (!enabled) { landmarkCourse = null; landmarkLines = []; landmarkRequest++; return; }
-    if (landmarkCourse === course) return;
-    landmarkCourse = course;
-    landmarkLines = [];
-    const request = ++landmarkRequest;
-    Promise.all([import('./scablands-things.js'), import('./jobs/everburn.js'), import('./jobs/gas-run.js')]).then(([things, everburn, gas]) => {
-      if (disposed || request !== landmarkRequest || !featureFlags.enabled('scablands-realism')) return;
-      const jobs = [...everburn.EVERBURN_JOBS, ...everburn.EVERBURN_SIDE_JOBS,
-        ...gas.GAS_RUN_ROADS.map(road => gas.gasRunJob({road})), gas.fieldBattleJob()];
-      const starts = jobs.map(job => job.steps[0]?.carStart).filter(Boolean);
-      landmarkLines = things.thingLandmarkLines(things.clearedFixedThings(course.seed, starts));
-      lastSmall = -Infinity;
-      if (lastFrame && mapOpen) { lastFrame.landmarkLines = landmarkLines; drawBig(lastFrame); }
-    }).catch(error => console.error('Could not draw the Scablands landmark lines:', error));
-  };
   // What the maps cost, kept where a check can read it: draws, milliseconds drawing, the slowest draw, and the milliseconds that
   // making the picture of the land took.
   const stats = root.worldMapStats = {smallDraws: 0, smallMs: 0, smallMaxMs: 0, bigDraws: 0, bigMs: 0, waysMs: 0, pictureMs: 0, updateMs: 0, updates: 0};
@@ -309,9 +290,8 @@ export function createWorldHud({host, app = null, picture = null}) {
       const worldJob = state.arena.worldJob;
       let knowledge = knowledgeOf.get(worldJob);
       if (!knowledge) knowledgeOf.set(worldJob, knowledge = createKnowledge());
-      updateLandmarks(duel.course);
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
-      frame.landmarkLines = landmarkLines;
+      frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
       learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings});
       lastFrame = frame;
       if (mapOpen) { stats.updates++; stats.updateMs += clock() - began; return; }
