@@ -92,6 +92,14 @@ export async function run(context) {
       await evaluate(context, `(() => {
         const a = window.__qaApp, r = window.__render, s = a.duel.state;
         r.renderFrame();
+        let land = null;
+        r.scene.traverse(node => { if (node.name === 'The Scablands') land = node; });
+        const drawnHeight = land?.userData?.drawnGroundHeightAt;
+        if (typeof drawnHeight !== 'function') throw Error('Drawn ground is unavailable in ' + ${JSON.stringify(name)});
+        const cameraPosition = r.camera.getWorldPosition(r.camera.position.clone());
+        const cameraGround = drawnHeight(cameraPosition.x, cameraPosition.z);
+        if (!Number.isFinite(cameraGround) || cameraPosition.y < cameraGround)
+          throw Error('Camera is under the drawn ground in ' + ${JSON.stringify(name)});
         const ground = a.duel.course.groundAt(s.s, s.lateral);
         const cars = r.scene.children.filter(node => node.visible && node.userData?.vehicleKey === s.car &&
           Math.hypot(node.position.x - ground.x, node.position.z - ground.z) < 1);

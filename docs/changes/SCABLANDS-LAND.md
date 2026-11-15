@@ -1738,3 +1738,11 @@ The picture scenario now checks the rendered player car before each terrain pict
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so the new check and its viewpoint thresholds need Claude's browser run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the visibility check is new. Codex decided: no new design choice. Removed: none.
 
 Still needed: scenario checks for ground clearance, nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture camera clearance check
+
+The picture scenario now checks the camera's world position against the drawn ground before each terrain picture. It fails if the ground lookup is unavailable, invalid, or above the camera. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, so Claude still needs to check the new guard in the browser. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the camera check is new. Codex decided: no new design choice. Removed: none.
+
+Still needed: scenario checks for nearby things and named landmarks; the dune picture; part C; and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
