@@ -464,7 +464,7 @@ export function createScablandsScene(course,options={}){
     }
     const at=actor.position,x=at?.x??rest.x,z=at?.z??rest.z;
     // Layered job movers carry their actual support height, including beneath a deck.
-    const layered=onGround&&Number.isFinite(at?.y);
+    const layered=onGround&&actor.hasFloorHeight&&Number.isFinite(at?.y);
     rig.position.set(x,layered?at.y:(onGround?scablandsSurfaceHeightAt(x,z):0)+(at?.y??0),z);
     rig.rotation.y=Number.isFinite(actor.heading)?actor.heading:headingToward(actor,path,aim,rig.rotation.y);
   };

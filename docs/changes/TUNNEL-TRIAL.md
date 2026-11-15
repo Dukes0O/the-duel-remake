@@ -1,5 +1,7 @@
 # TUNNEL-TRIAL
 
+Big Bess's scene failure was introduced by this branch: integration adds the actor's height offset to the surface, while the trial treated every height as an absolute floor. A mover now marks its height after selecting a floor; the scene uses that absolute height only for a marked mover and preserves the old offset for other callers. `test-scablands-scene` and `test-tunnels` passed. The existing position assertion is unchanged; a new check covers the selected floor.
+
 The browser scenario now uses the game's tunnel replacement method and scene. It grows the bore in 20 steps, records both drives and the bed drives, and requests the tunnel, chase-camera and daylight views. The page has no dynamic imports or separate tunnel shader or lining. `node --check tools/scenarios/tunnel-trial.mjs` passed. A rules check confirmed the first 19 cutting faces are closed and the last is open. Claude must run the scenario and judge the pictures. The halfway view shows the cutting face; the game has no boring-machine cylinder to show yet. No game event, sound or assertion changed.
 
 The scene follows tunnel revisions and updates the mouth uniforms. Growing a bore preserves its lining mesh and completed rings, rebuilding the changed stretch and its adjoining joint. The first mouth enables the cut shader once; later updates do not recompile it. `node tools/test-tunnels.mjs` passed, including a growing bend compared with a fresh lining. Claude still needs to see the result. No sound or existing assertion changed.

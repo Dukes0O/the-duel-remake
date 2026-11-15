@@ -220,6 +220,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   if (duel.course.def.scablands && actor.position && !actor.train) {
     const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid, height: before.y});
     actor.position.x = at.x; actor.position.z = at.z; actor.position.y = at.y;
+    actor.hasFloorHeight = true;
     if (at.blocked) arrived = false;
   }
   if (arrived) {

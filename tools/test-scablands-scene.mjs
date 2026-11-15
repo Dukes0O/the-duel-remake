@@ -119,6 +119,11 @@ const bessActor={id:'big-bess',position:{x:boneyard.x+100,y:0,z:boneyard.z},head
 syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
 assert.ok(bessAt().distanceTo(new THREE.Vector3(boneyard.x+100,scablandsSurfaceHeightAt(boneyard.x+100,boneyard.z),boneyard.z))<.001,
   'in the escort, Big Bess takes the position of her actor, on the ground');
+// A mover that has selected a floor carries an absolute height, including below a deck.
+bessActor.hasFloorHeight=true;bessActor.position.y=-12;
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path:[]}]},actors:[bessActor]}}});
+assert.equal(bessRig.position.y,-12,'Big Bess is drawn at her selected floor');
+delete bessActor.hasFloorHeight;bessActor.position.y=0;
 assert.ok(Math.abs(bessRig.rotation.y-1.2)<.001,'in the escort, Big Bess takes the heading of her actor');
 bessActor.heading=undefined;bessActor.position={x:0,y:0,z:0};bessActor.pathIndex=1;
 const escortAt=(actors,path=[])=>({arena:{mode:'world-job',worldJob:{definition:{storyId:'everburn'},clockSec:0,job:{stepIndex:0,steps:[{kind:'escort',path}]},actors}}});
