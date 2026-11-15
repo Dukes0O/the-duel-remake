@@ -164,7 +164,7 @@ const key = (i, j) => i * 100003 + j;
 export function createSolidGrid(solids) {
   const cells = new Map(), stamp = new Uint32Array(solids.length);
   let query = 0;
-  const found = [], extras = new Map();
+  const found = [];
   solids.forEach((solid, index) => {
     const cos = Math.abs(Math.cos(solid.heading)), sin = Math.abs(Math.sin(solid.heading));
     const reachX = solid.halfX * cos + solid.halfZ * sin, reachZ = solid.halfX * sin + solid.halfZ * cos;
@@ -184,11 +184,8 @@ export function createSolidGrid(solids) {
         if (!list) continue;
         for (const index of list) if (stamp[index] !== query) { stamp[index] = query; found.push(solids[index]); }
       }
-      for (const list of extras.values()) for (const solid of list) found.push(solid);
       return found;
     },
-    // A few solids that stand only while something is on (the braziers of Hot Delivery): kept apart from the grid, in a short list by name.
-    setExtra(name, list) { if (list && list.length) extras.set(name, list); else extras.delete(name); },
     get cells() { return cells.size; },
   };
 }
@@ -199,7 +196,20 @@ export const solidsNear = (ax, az, bx, bz, pad) => SOLID_GRID.near(ax, az, bx, b
 export function brazierSolid(spot, index) {
   return make({id: `brazier-${index + 1}`, placeId: null, kind: 'prop', shape: 'ellipse', x: spot.x, z: spot.z, halfX: .65, halfZ: .65, height: 1.15});
 }
-export function setBraziers(spots) { SOLID_GRID.setExtra('braziers', spots.map(brazierSolid)); }
+// Each job owns its temporary solids and its query result. The fixed grid never changes.
+export function createJobSolidGrid() {
+  const found = [];
+  return {
+    braziers: [],
+    near(ax, az, bx, bz, pad) {
+      found.length = 0;
+      for (const solid of SOLID_GRID.near(ax, az, bx, bz, pad)) found.push(solid);
+      for (const solid of this.braziers) found.push(solid);
+      return found;
+    },
+    setBraziers(spots) { this.braziers = spots.map(brazierSolid); },
+  };
+}
 
 // ---- A round thing against the solids ----------------------------------------------------------------------------------------------------------
 // Moves a point out of every solid it overlaps by a circle of `radius`, along the nearest face, as a raider on foot or a truck steps. Returns

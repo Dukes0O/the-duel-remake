@@ -1095,3 +1095,107 @@ grain that a photograph replaces is removed in that change.
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
 far ground's 40 m drop, `detailCounts`, and every typed coordinate of the land in the jobs, solids, wrecks, gate, shacks and rail (replaced by
 `scablands-names.js`). The Whites' absolute positions. Nothing a player can reach.
+
+
+## Round 4 slice 2b: fixes after the review
+
+### Job solids
+
+Braziers now belong to the current job. Cars, people on foot and job actors use that job's list, while the fixed land grid stays shared. Ending a job leaves no braziers in another event. No new game event or sound cue was added.
+
+Checks: `test-scablands-solid` passes all 17 tests, including two jobs at once, a later event and repeat inputs after a job; `test-onfoot` passes 9 tests; `test-world-job-mode` passes. The other card checks, replay fingerprints, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions: none. A new isolation test was added.
+
+### Removed
+
+The shared grid's mutable extra-solids list was removed.
+
+### Big Bess's stopping places
+
+The truck now obeys solids all the way to her destination and does not mark a blocked step as arrived. Both gas roads and Slow Ride stop clear of Tin Town's buildings. Slow Ride's bridge waypoint moves 10 m along the road, clear of the pier. The gas jobs use the destination of their own road. All stopping and restart points, including each truck's actual start, are checked against every solid with 1.8 m clearance. No new game event or sound cue was added.
+
+Checks: `test-run-gas` passes 8,504 checks, `test-field-battle` passes 4,639, `test-world-job-mode` passes, and `test-scablands-solid` passes 17 tests. The remaining card checks, replay fingerprints, lane tier, build and browser scenario remain for the completed card.
+
+Changed assertions, for Claude to review: the two gas-road end coordinates changed from Tin Town's centre to offsets (-18, -13.5) and (-10, 25) m. Their pinned lengths changed from 18,626 to 18,604 m and 12,349 to 12,322 m. The battle's appearance and start distances changed from 5,494 to 5,482 m and 5,414 to 5,402 m because they follow the shortened road. Its turn-around test starts 15 m from the end instead of 30 m and runs for 1 second instead of 3, so it checks the same turn before reaching the preceding bend. Its heading tolerance is unchanged.
+
+Removed: the exemption that let the truck pass through solids near the last stop.
+
+### Furnace roll, in progress
+
+After the third door is hit, the furnace follows the remaining bends of its path to the well. Its roll still takes at least five seconds and respects its speed limit. The test now checks a bent path and places a forced rear-door hit on the last leg. No new game event or sound cue was added.
+
+Check: `test-old-smoke` passes 4,092 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change. Changed assertions: none. The forced-hit setup was moved onto the last leg; its checks are unchanged.
+
+Removed: the straight line from the last hit to the well.
+
+### Furnace return, in progress
+
+After a missed chase, the furnace follows its path backwards to the start of the current leg. A bent-path check covers the turn. No new game event or sound cue was added. The three-lap test drives for five path lengths instead of three so that it includes the two longer returns; its assertions are unchanged.
+
+Check: `test-old-smoke` passes 4,094 checks, including 10 of 10 Easy chases. Race fingerprints have not yet been checked after this change.
+
+Removed: the straight return from the well to the start of the leg.
+
+### Still to do
+
+Check every furnace path for solids and steep ground, and move any unsafe paths. The three refused assertions and per-step allocations also remain. Merge integration into this lane and run the complete card checks before handover.
+
+### Furnace well clearance, in progress
+
+The chase starts and ends on the two sides of the well's solid post, clear of it. The old clearance test now includes the post on both pieces. No new game event or sound cue was added.
+
+`test-old-smoke` passed 4,097 checks and 10 of 10 Easy chases. `test-scablands-size` passed 9 tests and `test-scablands-solid` passed 17. The path's closest clearance in the existing test was 7.4 m. Race fingerprints, the build and the lane tier remain to be checked after the other fixes.
+
+Changed assertions, for Claude to review: the chase used to start and end at the well's centre. It now starts at offset (-5, -10) m and ends at (12, 3.5) m, so neither path crosses the post. The endpoint test now pins both positions. The former exception for the well post was removed from the clearance test.
+
+Removed: the chase path through the well post.
+
+Still needed: the fall now happens 12.5 m from the well's centre and must be made visually convincing while keeping the path clear. The three refused assertions and per-step allocations remain.
+
+### Furnace roads, in progress
+
+The battle furnace can return all the way to the beginning of the Boneyard road. Its old starting point crossed the well post. The road now starts 12 m east and 3.5 m south of the well, clear of the post. Both complete furnace roads are checked at intervals of at most 2 m, with 2.62 m clearance and the land's climbing limit. The check accounts for the height of bridge piers under the deck. It found no gate-post collision on the current road. No new event or sound cue was added.
+
+Checks: `test-scablands-solid` passed 18 tests, `test-run-gas` passed 8,504 checks, and `test-field-battle` passed 4,639 checks. Race fingerprints, the other card checks, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions, for Claude to review: the Boneyard road starts at offset (12, 3.5) m instead of the well centre, and its length pin moves from 12,322 to 12,310 m. The battle furnace's appearance and start distances move from 5,482 to 5,477 m and 5,402 to 5,397 m because they follow that road. The tolerances are unchanged.
+
+Removed: the Boneyard road's start through the well post.
+
+### Restored checks after review
+
+The scene check again requires a solid for each place that draws one, and checks that every solid is within 100 m of its own place or crossing. The moving-place check now checks the bridge trusses and piers, the Pipe, the Steps' posts, the ring fence, the bridge-side job places and the second ambush against their own placement rules, within 1 m.
+
+Changed assertions, for Claude to review: the Old Smoke chase limit was 1,500 seconds before slice 2b, was raised to 4,000 seconds, and is now 1,753 seconds. The slowest measured run was the Medium driver at 1,523.5084 seconds; 15 percent headroom, rounded up, gives 1,753 seconds. The Easy driver took 1,129.025 seconds on each of ten seeds. The restored placement checks add requirements and do not loosen the other assertions.
+
+Checks: `test-scablands-scene` passed; `test-scablands-size` passed all 9 tests. `test-old-smoke` passed all 4,097 checks with the new limit, including 10 of 10 Easy chases. The other requested checks remain to be recorded. No game event or sound cue was added.
+
+Removed: the missing placement checks and the 4,000-second chase limit are replaced by the checks above.
+
+### Car-step allocations
+
+The Scablands car step reuses its world positions, slope input and collision point per game, and calls the existing height function directly. The step reads the course sampled positions directly using the same calculation as the course. Other callers are unchanged. No game event or sound cue was added.
+
+Removed: the car step's repeated temporary position and slope objects and its new height function.
+
+Checks after the review fixes: `test-scablands-solid` passed 18 tests; `test-scablands-scene`, `test-scablands-size`, `test-old-smoke`, `test-run-gas`, and `test-field-battle` passed. `test-everburn-easy` passed: all nine jobs and both roads at all four feud levels finished 10 of 10, and the battle was won 10 of 10. `test-replays` passed 297 checks over 33 cases; `test-combat-replays` passed 12 checks over four encounters. The recorded race fingerprints are unchanged.
+
+For Claude to run: the `scablands-solid` browser scenario, with memory-only saves, and the card's drive checks in a visible window: bank and lip, Steps, bridge, shack, wreck, gate post and girder, crossings and all four routes. Chrome cannot start in this job.
+
+Changed assertions, for Claude to review: the car-step allocation fix changed none. The earlier fixes and restored checks are recorded above, including the old and new values. Codex decided: no new design choice. The switches remain off.
+
+Lane tier: 258 of 274 suites passed. `test-run-gas-medium` passed all targets. `test-everburn-play-start` failed because the last segment of the long gas road comes within 8 m of the old single Tin Town bounding box. The revised stopping place is clear of the actual solids, as `test-run-gas` and `test-scablands-solid` check. The old assertion was not changed; Claude must decide how to reconcile the box check with the new stops.
+
+The known job-environment failures were `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave3-audio`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-warlord-blackiron`, and `test-warlord-tollkeeper` (recordings or ffmpeg), `test-full-check` (fixture cleanup), and `test-review-evidence` (audio analysis). Claude should rerun them at merge. The build passed with `npm.cmd run build`.
+
+
+### Long gas road assertion after Claude's ruling
+
+Claude ruled that the Tin Town bounding rectangle was an approximation of its solids. The old check required each long gas road piece to stay 8 m from that rectangle unless it ended at the town centre, and required an end inside the rectangle to be at the centre. The new check requires every point of every long gas road piece, including its stopping place, to clear every Tin Town solid by Big Bess's 1.3 m half width plus 0.5 m. Each solid is measured in its own frame, and the minimum distance covers the whole segment. The other jobs keep their existing checks.
+
+Checks: `test-everburn-play-start` passed 982 checks; `test-run-gas` passed 8,504 checks; `test-scablands-solid` passed 18 tests; `npm.cmd run build` passed with bundle size warnings. The earlier lane-tier failure in `test-everburn-play-start` is resolved by Claude's ruling and this passing check. The known environment failures and the browser checks for Claude remain as listed above. Race fingerprints are unchanged from the replay checks recorded above; this change affects only a test. No new event or sound cue was added.
+
+Codex decided: no new design choice.
+
+Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.

@@ -17,7 +17,7 @@ import {wrapHeading} from '../../offroad-physics.js';
 import {scablandsDriveAt} from '../../world/scablands-regions.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
-import {setBraziers} from '../../world/scablands-solids.js';
+import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 
 const position = (duel, actor) => {
@@ -212,11 +212,11 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
     actor.position.z += dz / gap * travel;
   }
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
-  // pushed out of a building. The last place of her road may stand in a town's alley, where a truck cannot go: within that place's own radius she is let into it.
+  // pushed out of a building. Every stopping place must be clear of solids.
   if (duel.course.def.scablands && actor.position && !actor.train) {
-    const last = index >= path.length - 1 && Math.hypot(target.x - actor.position.x, target.z - actor.position.z) <= (actorDef.path[index].radius ?? 12);
-    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, solids: !last});
+    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid});
     actor.position.x = at.x; actor.position.z = at.z;
+    if (at.blocked) arrived = false;
   }
   if (arrived) {
     actor.pathIndex = Math.min(index + 1, path.length - 1);
@@ -569,7 +569,7 @@ function moveJobRaiders(duel, worldJob, dt) {
     }
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
-    if (scablands) { const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE}); actor.x = at.x; actor.z = at.z; }
+    if (scablands) { const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid}); actor.x = at.x; actor.z = at.z; }
   }
 }
 
@@ -600,7 +600,7 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
-  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
+  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid()).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
   const trainMetresBefore=worldJob.job.stepState.trainMetres??0;

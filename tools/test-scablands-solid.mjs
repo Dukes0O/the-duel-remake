@@ -9,6 +9,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Duel} from '../src/game.js';
+import {scablandsContactObstacles} from '../src/sim-scablands.js';
 import {Course} from '../src/course.js';
 import {DRIVE} from '../src/config.js';
 import {wrapHeading} from '../src/offroad-physics.js';
@@ -27,10 +28,37 @@ import {EVERBURN_PROP_FORM, createEverburnProps, EVERBURN_PROPS} from '../src/wo
 import {girderBridgeGeometry, pipeGeometry} from '../src/world/scablands-draw.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
 
 const venue = ARENA_VENUES.scablands, course = new Course(venue, 1989), DT = 1 / 60, MPH = 1.609344;
 const wrap = wrapHeading;
+
+test('both furnace roads clear solids and climbable ground, including the return to the well', () => {
+  const paths = [EVERBURN_JOBS[5].steps[1].actor.path, fieldBattleJob().steps[0].furnaceActor.path];
+  const radius = 2.12 + .5, height = 5.06;
+  for (const [road, path] of paths.entries()) {
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1].position, b = path[i].position;
+      const length = Math.hypot(b.x - a.x, b.z - a.z), steps = Math.ceil(length / 2);
+      let previous = null;
+      for (let j = 0; j <= steps; j++) {
+        const t = j / steps, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+        const y = scablandsSurfaceHeightAt(x, z);
+        if (previous) assert.ok(Math.abs(y - previous.y) / Math.hypot(x - previous.x, z - previous.z) <= GROUND.gripGrade,
+          `furnace road ${road + 1}, piece ${i}: ground is too steep at ${x}, ${z}`);
+        previous = {x, y, z};
+        for (const solid of solidsNear(x, z, x, z, radius)) {
+          if (solid.verticalClearance && (y > solid.maxY || y + height < solid.minY)) continue;
+          const c = Math.cos(solid.heading), s = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
+          const distance = Math.hypot(Math.max(Math.abs(dx * c - dz * s) - solid.halfX, 0),
+            Math.max(Math.abs(dx * s + dz * c) - solid.halfZ, 0));
+          assert.ok(distance >= radius, `furnace road ${road + 1}, piece ${i}: ${solid.id} is ${distance.toFixed(2)} m away`);
+        }
+      }
+    }
+  }
+});
 
 // ---- A real Duel on the Scablands, driven through its own inputs -----------------------------------------------------------------------------
 function newDuel(car = 'falcone_f42') {
@@ -559,4 +587,35 @@ test('ground rules: pure, and the same twice', () => {
   assert.ok(grid.every((row, i) => i === 0 || row.kmh >= grid[i - 1].kmh && row.armorShare >= grid[i - 1].armorShare), 'a longer fall is never a lighter hit');
   const pushed = pushOutOfSolids(SCABLANDS_SOLIDS[0].x, SCABLANDS_SOLIDS[0].z, .4);
   assert.ok(!inside(SCABLANDS_SOLIDS[0], pushed.x, pushed.z, .001), 'a point put in a solid is pushed out of it');
+});
+
+
+test('job braziers belong only to their own game', () => {
+  const startJob = () => {
+    const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed: 1, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1}}), true);
+    duel.state.countdown = 0;
+    for (let i = 0; i < 10; i++) duel.step(DT);
+    return duel;
+  };
+  const a = startJob(), b = startJob();
+  const gridA = a.state.arena.worldJob.solidGrid, gridB = b.state.arena.worldJob.solidGrid;
+  assert.ok(gridA.braziers.length > 0);
+  const spot = gridA.braziers[0];
+  const seesBrazier = duel => scablandsContactObstacles(duel, duel.state, spot, spot, []).some(solid => solid.id === spot.id);
+  assert.ok(seesBrazier(a) && seesBrazier(b));
+  gridA.setBraziers([]);
+  assert.ok(!seesBrazier(a) && seesBrazier(b), 'clearing one job does not change the other');
+  const fresh = newDuel();
+  assert.ok(!seesBrazier(fresh), 'a later event has no job solids');
+  const trace = duel => {
+    put(duel, spot.x - 8, spot.z, Math.PI / 2, 30);
+    duel.state.countdown = 0;
+    for (let i = 0; i < 120; i++) { duel.setInput({throttle: 1}); duel.step(DT); }
+    return [duel.state.s, duel.state.lateral, duel.state.speedMph];
+  };
+  const first = trace(fresh);
+  startJob();
+  assert.deepEqual(trace(newDuel()), first, 'the same seed and inputs do not depend on earlier jobs');
 });

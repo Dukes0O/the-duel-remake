@@ -56,6 +56,11 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
 assert.ok(SCABLANDS_SOLIDS.length>100,`the solids list is every drawn thing taller than a wheel (${SCABLANDS_SOLIDS.length} of them)`);
 assert.equal(new Set(SCABLANDS_SOLIDS.map(solid=>solid.id)).size,SCABLANDS_SOLIDS.length,'every solid has its own name');
 for(const solid of SCABLANDS_SOLIDS){
+  const owner = solid.placeId ?? (solid.id.startsWith('girder-bridge-') ? 'girder-bridge' :
+    solid.id.startsWith('the-pipe-') ? 'the-pipe' : solid.id.startsWith('the-steps-marker-') ? 'the-steps' : null);
+  assert.ok(owner, `${solid.id} has a named place or crossing`);
+  const anchor = LAND.at(owner);
+  assert.ok(anchor && Math.hypot(solid.x-anchor.x,solid.z-anchor.z)<=100, `${solid.id} is within 100 m of ${owner}`);
   assert.ok(solid.collision,`${solid.id} has collision`);
   assert.deepEqual(solid.collision.center,solid.center,`${solid.id} collision center matches its placement`);
   assert.deepEqual(solid.collision.halfExtents,[solid.halfX,solid.height/2,solid.halfZ],`${solid.id} collision covers its declared solid dimensions`);

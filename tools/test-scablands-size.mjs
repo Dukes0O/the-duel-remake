@@ -18,7 +18,8 @@ import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {buildEverburn} from '../src/world/jobs/everburn.js';
 import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
 import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
-import {roadNet, EAST_ROAD} from '../src/world/scablands-road.js';
+import {roadNet, EAST_ROAD, roadPointFrom} from '../src/world/scablands-road.js';
+import {riverFor, stepsWayFor} from '../src/world/scablands-regions.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -200,7 +201,42 @@ const everything = land => {
 test('moving a place in a copy of the table moves everything that belongs to it, and nothing else', () => {
   const delta = [123, -77];
   for (const moved of ['tin-town', 'boneyard', 'everburn', 'dead-mall', 'ridge', 'dry-dam', 'ships-in-sand', 'iron-line']) {
-    const before = everything(LAND), after = everything(createLand(movedTable(SCABLANDS_PLACES, moved, ...delta)));
+    const movedLand = createLand(movedTable(SCABLANDS_PLACES, moved, ...delta));
+    const before = everything(LAND), after = everything(movedLand);
+    const solids = scablandsSolids(movedLand), net = roadNet(movedLand), river = riverFor(movedLand);
+    const near = (actual, expected, label) => assert.ok(Math.hypot(actual.x - expected.x, actual.z - expected.z) < 1, `${moved}: ${label} is in its expected place`);
+    for (const crossing of river.crossings.filter(row => row.kind === 'bridge' || row.kind === 'pipe')) {
+      const hit = net.nearest(crossing.x, crossing.z), a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+      const heading = Math.atan2(b.x - a.x, b.z - a.z);
+      const at = (across, along) => ({x: crossing.x + across * Math.cos(heading) + along * Math.sin(heading), z: crossing.z - across * Math.sin(heading) + along * Math.cos(heading)});
+      const find = id => { const solid = solids.find(row => row.id === id); assert.ok(solid, `${moved}: ${id} exists`); return solid; };
+      if (crossing.kind === 'bridge') {
+        near(find('girder-bridge-truss-left'), at(-7.8, 0), 'left truss');
+        near(find('girder-bridge-truss-right'), at(7.8, 0), 'right truss');
+        [-.62, 0, .62].forEach((share, i) => near(find(`girder-bridge-pier-${i + 1}`), at(0, share * 88), `bridge pier ${i + 1}`));
+      } else {
+        near(find('the-pipe-pipeline'), at(6.4, 0), 'pipeline');
+        [-.6, 0, .6].forEach((share, i) => near(find(`the-pipe-pier-${i + 1}`), at(0, share * 88), `pipe pier ${i + 1}`));
+        for (let along = -79, i = 1; along < 88; along += 22, i++) near(find(`the-pipe-post-${i}`), at(6.4, along), `pipe post ${i}`);
+      }
+    }
+    const way = stepsWayFor(river);
+    for (const across of [-1, 1]) for (const lane of [-1, 1]) {
+      const id = `the-steps-marker-${across < 0 ? 'near' : 'far'}-${lane < 0 ? 'left' : 'right'}`;
+      const marker = solids.find(row => row.id === id); assert.ok(marker, `${moved}: ${id} exists`);
+      near(marker, {x: way.x + way.nx * across * 88 + way.tx * lane * 3.5, z: way.z + way.nz * across * 88 + way.tz * lane * 3.5}, id);
+    }
+    const town = movedLand.at('tin-town'), fence = solids.filter(row => /^tin-town-fence-/.test(row.id));
+    assert.ok(fence.length > 0, `${moved}: the ring fence exists`);
+    for (const solid of fence) assert.ok(Math.abs(Math.hypot(solid.x - town.x, solid.z - town.z) - 88) < 1, `${moved}: ${solid.id} follows the ring`);
+    const positions = positionsOf(after), bridge = movedLand.at('girder-bridge'), east = net.road('east-road');
+    for (const [id, offset] of [['bridge-in', -150], ['bridge-out', 150], ['furnace-bridge-in', 150], ['furnace-bridge-out', -150]]) {
+      const pos = positions.get(id); assert.ok(pos, `${moved}: ${id} exists`);
+      near({x: pos[0], z: pos[1]}, roadPointFrom(east, bridge.x, bridge.z, offset), id);
+    }
+    const raid = positions.get('ash-men-raid-2'), out = positions.get('bridge-out');
+    assert.ok(raid && out, `${moved}: the second ambush exists`);
+    near({x: raid[0], z: raid[1]}, {x: (out[0] + town.x) / 2, z: (out[1] + town.z) / 2}, 'second ambush');
     const a = positionsOf(before), b = positionsOf(after);
     assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), `${moved}: the same things exist`);
     let withIt = 0, shares = 0;
