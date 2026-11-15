@@ -129,6 +129,12 @@ Rules: `docs/story/the-long-dry.md` section 9. Ids go in `src/story/far-lines.js
 | `far.4.start` | Odessa | Job starts | There's your hill. W pushes her forward, A and D steer her a little, and you won't feel it for a while. {machine} doesn't do fast. Hold the head on the rock and don't let go. |
 | `far.4.cutting` | Odessa | If the slope is too gentle to start | She needs a wall of rock to bite, driver, as tall as she is. Six metres. Take the digger and cut into the hill till you've got one. |
 | `far.4.stall` | Odessa | First time the head stalls | You've stalled her. That's hard rock, and you pushed. Ease off, let the head spin up, and lean on her gently. |
+| `far.4.survey` | Odessa | At the face, before the first push | I've shot the line. The far side's {distance} metres on and {rise} metres {higher}. Tip her head {up} a hair with the arrows and hold a grade of one in {grade}. Watch the numbers, not the rock. |
+| `far.4.drift` | Odessa | Her floor is more than a metre off the line | You're drifting off the line, driver. A tunnel that misses the far side is a cave. Bring her head back. |
+| `far.4.daylight` | Odessa | Break-through within half a metre of level | DAYLIGHT! And dead level, look at that. You could roll a marble through. |
+| `far.4.offlevel` | Odessa | Break-through by an exit cutting | Daylight, and a bit of a climb to reach it. She's through. We'll call the ramp a feature. |
+| `far.4.trench` | Odessa | The exit cutting runs past 60 m | That's a trench, not a tunnel. Lift her head and bring her up to the ground. |
+| `far.4.lip` | Odessa | She comes out more than a metre up the face | You've come out of the side of the hill like a cork, driver. Don't you dare drive her off that. Get the truck and tip me a ramp. |
 | `far.4.first` | Odessa | First metre | LISTEN to that. Look at the dirt come off the back! That's rock. A metre of that's seventy-four tonnes. |
 | `far.4.fans` | Odessa | Ten metres in | Air gets bad in a tunnel. There's fans behind you and a long bag blowing air up to the face. And we set a ring of steel every metre so it doesn't come down on your head. |
 | `far.4.pile` | Odessa | Spoil pile | That heap out the back is near ninety thousand tonnes by the time we're through. Somebody will find a use for it. Somebody always wants a road. |
