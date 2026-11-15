@@ -1052,3 +1052,6 @@ The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the e
 ### Codex decided (Claude to review): Mall Road pass
 
 Move the Mall Road pass to 85.5 percent along the road so its shoulders clear the shared return and the third Survey Flags leg. Both shoulders remain beside the road. **Claude, 15 November: confirmed.**
+### Codex decided (Claude to review): dead tree spacing
+
+Keep at least 160 m along each bank between the starts of tree groups. The 35 percent seeded chance is still tried at each 40 m step; a group is placed only when that bank has room. This produces long gaps and 118 candidates for seed 1989, within the requested range. A companion can stand 9 to 20 m from its first tree.

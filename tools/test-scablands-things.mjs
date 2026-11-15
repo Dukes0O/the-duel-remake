@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, deadTreeCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, riverDepthAt, stepsWayFor} from '../src/world/scablands-regions.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
@@ -18,6 +18,23 @@ import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
 import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
 import {preparedScarps} from '../src/world/scablands-scarps.js';
 import {HILLS} from '../src/world/scablands-height.js';
+
+test('dead tree candidates repeat and grow on the bank tops', () => {
+  const trees = deadTreeCandidates(1989);
+  assert.deepEqual(trees, deadTreeCandidates(1989));
+  assert.ok(trees.length >= 80 && trees.length <= 160, `${trees.length} trees`);
+  assert.ok(trees.some(tree => tree.kind === 'snag'));
+  for (const tree of trees) {
+    const river = RIVER_LAND.nearest(tree.x, tree.z);
+    assert.ok(river && river.distance >= 84 && river.distance <= 108);
+    assert.ok(RIVER_LAND.crossings.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= 120));
+    assert.ok(distanceToNet(tree.x, tree.z) >= 60);
+    assert.ok(SCABLANDS_PLACES.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= p.flatRadius + 150));
+    const heights = [[0, 0], [1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]].map(([x, z]) => scablandsSurfaceHeightAt(tree.x + x, tree.z + z));
+    assert.ok(Math.max(...heights) - Math.min(...heights) <= 1);
+    assert.ok(tree.kind === 'snag' ? tree.height >= 4 && tree.height <= 7 : tree.height >= 8 && tree.height <= 14);
+  }
+});
 
 test('the height used for things follows the drawn hills and mesa faces', () => {
   const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
