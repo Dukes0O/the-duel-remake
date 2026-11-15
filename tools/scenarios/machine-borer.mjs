@@ -25,6 +25,11 @@ const page = {
       const x=b.x+distance*forward.x+side*right.x, z=b.z+distance*forward.z+side*right.z;
       return {side,distance,rules:v.surfaceHeight(x,z),hit:v.groundRay({x,y:200,z},{x:0,y:-1,z:0})};
     })); })()`,
+  groundView: `(() => { const g=window.__theDig.viewForCheck.ground, m=g.mesh;
+    m.updateWorldMatrix(true,false);
+    return {visible:m.visible, parentVisible:m.parent?.visible, centreX:g.centreX, centreZ:g.centreZ,
+      worldMatrix:m.matrixWorld.toArray(), materialVisible:m.material.visible,
+      materialSide:m.material.side, positionVersion:m.geometry.attributes.position.version}; })()`,
   cover: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
     const crown=b.y+1.65+3, hit=v.groundRay({x:b.x,y:200,z:b.z},{x:0,y:-1,z:0});
     return {crown,rules:v.surfaceHeight(b.x,b.z),drawn:hit?.y ?? null}; })()`,
@@ -114,7 +119,7 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, cover:null, roofRay:null};
+  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null};
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
@@ -128,6 +133,7 @@ export async function run(context) {
   await context.evaluate(page.frame);
   const samples = await context.evaluate(page.groundSamples);
   measurements.groundSamples = samples;
+  measurements.groundView = await context.evaluate(page.groundView);
   await persist();
   for (const sample of samples) {
     console.log(`Ground ${sample.distance} m ahead, ${sample.side} m right: rules ${sample.rules.toFixed(2)}, mesh ${sample.hit?.y?.toFixed(2) ?? 'no hit'}`);

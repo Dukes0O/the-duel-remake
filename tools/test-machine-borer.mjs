@@ -255,7 +255,8 @@ assert.ok(Math.abs(Math.hypot(parked.x - middle.x, parked.z - middle.z) - 30) < 
 assert.ok(Math.hypot(parked.x + 30 * Math.sin(parked.heading) - middle.x,
   parked.z + 30 * Math.cos(parked.heading) - middle.z) < 1e-8, 'Mabel faces the scarp from its open side.');
 assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
-const realGround = {heightAt:scablandsNaturalHeightAt};
+// Use the same editable ground object as the live Dig, not a height-only stand-in.
+const realGround = createDigSandbox().ground;
 const realParked = createDigBorer(realGround);
 const drawnGround = createDigNearGround(new THREE.MeshBasicMaterial(), realGround);
 // The view first draws at the yard, then jumps to Mabel and follows her.
@@ -279,6 +280,8 @@ for (const z of [-700, -650, -600]) for (const x of [1770, 1780]) {
   assert.ok(corner, `The Dig has a ground corner at ${x}, ${z}.`);
   assert.ok(Math.abs(corner.y - scablandsSurfaceHeightAt(x,z,realGround)) < .5,
     `The Dig's world-space ground corner matches the scarp at ${x}, ${z}.`);
+  if (z === -650) assert.ok(Math.abs(corner.y - (x === 1770 ? 10.8 : 13.6)) < .5,
+    `The Dig draws the expected scarp height at ${x}, ${z}.`);
 }
 for (let distance = 0; distance <= 60; distance += 5) {
   const x = realParked.x + Math.sin(realParked.heading) * distance;
