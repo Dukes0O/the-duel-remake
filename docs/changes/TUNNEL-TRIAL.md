@@ -1,6 +1,6 @@
 # TUNNEL-TRIAL
 
-The scene now follows the course tunnel revision, updates mouth uniforms, and replaces or removes the lining. The first visible mouth enables the cut shader once; later changes only update uniforms. The lining is still rebuilt in full on each revision, so the incremental lining requirement remains open. `node tools/test-tunnels.mjs` passed. No sound or existing assertion changed.
+The scene follows tunnel revisions and updates the mouth uniforms. Growing a bore preserves its lining mesh and completed rings, rebuilding the changed stretch and its adjoining joint. The first mouth enables the cut shader once; later updates do not recompile it. `node tools/test-tunnels.mjs` passed, including a growing bend compared with a fresh lining. Claude still needs to see the result. No sound or existing assertion changed.
 
 The chase camera is limited below a deck when the car is in the bed, and below the crown and between the walls when the car is on a tunnel floor. Ordinary courses retain their camera path. `node tools/test-tunnels.mjs` and `node tools/test-scablands-solid.mjs` passed. Claude still needs to judge the camera in the browser. The scene does not yet follow revisions; the scenario, Big Bess investigation and final checks remain. No sound or existing assertion changed.
 

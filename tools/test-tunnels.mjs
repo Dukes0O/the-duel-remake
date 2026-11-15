@@ -880,6 +880,24 @@ console.log('Tunnel support, joined segments, wall contact and simulated driving
     {start: {x: 0, y: 2.2, z: 0}, end: {x: 20, y: 2.2, z: 0}, radius: 4},
     {start: {x: 20, y: 2.2, z: 0}, end: {x: 40, y: 2.2, z: 0}, radius: 4},
   ], {heightAt: x => x === 0 ? 0 : 20});
+  // Growing the bore preserves the lining object and the completed rings,
+  // including the joint when the next stretch changes direction.
+  const growing = createTunnelMesh(cutting);
+  const firstRings = Array.from(growing.children[0].geometry.getAttribute('position').array.slice(0, 33 * 3));
+  const extended = createGroundTunnels([
+    ...cutting.segments,
+    {start: {x: 40, y: 2.2, z: 0}, end: {x: 60, y: 2.2, z: 5}, radius: 4},
+  ], {heightAt: x => x === 0 ? 0 : 20});
+  assert.equal(createTunnelMesh(extended, growing), growing);
+  assert.deepEqual(Array.from(growing.children[0].geometry.getAttribute('position').array.slice(0, 33 * 3)), firstRings);
+  const fresh = createTunnelMesh(extended);
+  for (const name of ['position', 'uv']) {
+    assert.deepEqual(Array.from(growing.children[0].geometry.getAttribute(name).array),
+      Array.from(fresh.children[0].geometry.getAttribute(name).array), `growing ${name} matches a fresh lining`);
+  }
+  for (const mesh of [growing, fresh]) {
+    mesh.children[0].geometry.dispose(); mesh.children[0].material.dispose();
+  }
   const cuttingMesh = createTunnelMesh(cutting);
   assert.equal(cuttingMesh.children.length, 1, 'joined segments share one lining mesh');
   assert.equal(cuttingMesh.children[0].geometry.getAttribute('position').count, 100,

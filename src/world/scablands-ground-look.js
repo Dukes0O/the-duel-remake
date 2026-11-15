@@ -344,17 +344,38 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
 
 
 // The trial's lining is separate from simulation and may be disposed with the scene.
-export function createTunnelMesh(tunnels) {
-  const group = new THREE.Group();
+export function createTunnelMesh(tunnels, previous = null) {
+  const group = previous ?? new THREE.Group();
   group.name = 'Tunnel lining';
   const segments = tunnels.segments;
   if (!segments.length) return group;
   const positions = [], uvs = [], indices = [];
   const sides = 32, floorAngle = Math.asin(0.55);
   let distance = 0;
+  // A growing bore keeps the completed rings. The joint before the changed
+  // stretch is rebuilt because its direction can change when a bend is added.
+  const oldSegments = group.userData.tunnelSegments ?? [];
+  let unchanged = 0;
+  const samePoint = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z;
+  while (unchanged < oldSegments.length && unchanged < segments.length) {
+    const a = oldSegments[unchanged], b = segments[unchanged];
+    if (a.radius !== b.radius || !samePoint(a.start, b.start) || !samePoint(a.end, b.end)) break;
+    unchanged++;
+  }
+  const firstRing = Math.max(0, Math.min(unchanged, segments.length - 1));
+  const oldGeometry = group.children[0]?.geometry;
+  if (oldGeometry && firstRing) {
+    const count = firstRing * (sides + 1);
+    positions.push(...oldGeometry.getAttribute('position').array.slice(0, count * 3));
+    uvs.push(...oldGeometry.getAttribute('uv').array.slice(0, count * 2));
+    for (let i = 0; i < firstRing; i++) {
+      const s = segments[i];
+      distance += Math.hypot(s.end.x - s.start.x, s.end.y - s.start.y, s.end.z - s.start.z);
+    }
+  }
   // The long arc goes from one edge of the floor over the crown to the other.
   // The final edge closes across the flat road.
-  for (let i = 0; i <= segments.length; i++) {
+  for (let i = firstRing; i <= segments.length; i++) {
     const segment = segments[Math.min(i, segments.length - 1)];
     const point = i === segments.length ? segment.end : segment.start;
     const previous = segments[Math.max(0, i - 1)];
@@ -367,7 +388,7 @@ export function createTunnelMesh(tunnels) {
     let tx = before.x + after.x, tz = before.z + after.z;
     const length = Math.hypot(tx, tz);
     tx /= length; tz /= length;
-    if (i) distance += Math.hypot(previous.end.x - previous.start.x,
+    if (i > firstRing) distance += Math.hypot(previous.end.x - previous.start.x,
       previous.end.y - previous.start.y, previous.end.z - previous.start.z);
     for (let j = 0; j <= sides; j++) {
       const angle = -floorAngle + (Math.PI + 2 * floorAngle) * j / sides;
@@ -375,7 +396,9 @@ export function createTunnelMesh(tunnels) {
       positions.push(point.x - tz * across, point.y + Math.sin(angle) * segment.radius, point.z + tx * across);
       uvs.push(distance, (angle + floorAngle) * segment.radius);
     }
-    if (i) for (let j = 0; j <= sides; j++) {
+  }
+  for (let i = 1; i <= segments.length; i++) {
+    for (let j = 0; j <= sides; j++) {
       const k = (j + 1) % (sides + 1), a = (i - 1) * (sides + 1), b = i * (sides + 1);
       indices.push(a + j, b + j, a + k, a + k, b + j, b + k);
     }
@@ -398,8 +421,14 @@ export function createTunnelMesh(tunnels) {
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setIndex(indices); geometry.computeVertexNormals();
-  const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.DoubleSide});
-  group.add(new THREE.Mesh(geometry, material));
+  if (group.children.length) {
+    group.children[0].geometry.dispose();
+    group.children[0].geometry = geometry;
+  } else {
+    const material = new THREE.MeshStandardMaterial({color: GROUND_COLOURS.rock, roughness: 1, side: THREE.DoubleSide});
+    group.add(new THREE.Mesh(geometry, material));
+  }
+  group.userData.tunnelSegments = segments.map(s => ({start: {...s.start}, end: {...s.end}, radius: s.radius}));
   return group;
 }
 

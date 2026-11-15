@@ -487,12 +487,14 @@ export function createScablandsScene(course,options={}){
     tunnelRevision=course.groundTunnelsRevision;
     const current=course.groundTunnels;
     groundLook.setTunnelMouths(current?.mouths??[]);
-    if(tunnelLining){
+    if(current?.segments.length){
+      if(tunnelLining)createTunnelMesh(current,tunnelLining);
+      else {tunnelLining=createTunnelMesh(current);ground.add(tunnelLining);}
+    }else if(tunnelLining){
       ground.remove(tunnelLining);
       tunnelLining.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
+      tunnelLining=null;
     }
-    tunnelLining=current?.segments.length?createTunnelMesh(current):null;
-    if(tunnelLining)ground.add(tunnelLining);
   };
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
