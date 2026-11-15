@@ -12,6 +12,43 @@ import {IRON_LINE, ironLineLength, sampleIronLine} from './iron-line.js';
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
 
+// Fence candidates follow each road arriving at Tin Town. They are not yet
+// drawn or solid; the later connection must apply all clearance rules first.
+export function fenceCandidates(seed, {net = ROAD_NET, land = LAND} = {}) {
+  const town = land.at('tin-town'), rng = makeRng(seed), runs = [];
+  for (const road of net.roads) {
+    const ends = [road.points[0], road.points[road.points.length - 1]];
+    const nearStart = Math.hypot(ends[0].x - town.x, ends[0].z - town.z) < Math.hypot(ends[1].x - town.x, ends[1].z - town.z);
+    const end = nearStart ? ends[0] : ends[1];
+    if (Math.hypot(end.x - town.x, end.z - town.z) > 200 || road.length < 650) continue;
+    const length = 200 + Math.floor(rng.float() * 21) * 20;
+    const side = rng.chance(.5) ? 1 : -1;
+    const posts = [];
+    for (let distance = 0; distance <= length; distance += 8) {
+      const along = nearStart ? 200 + distance : road.length - 200 - distance;
+      let left = along, point;
+      for (let i = 0; i + 1 < road.points.length; i++) {
+        const a = road.points[i], b = road.points[i + 1];
+        const dx = b.x - a.x, dz = b.z - a.z, segment = Math.hypot(dx, dz);
+        if (!segment) continue;
+        if (left <= segment || i + 2 === road.points.length) {
+          const t = Math.min(1, left / segment), heading = Math.atan2(dx, dz);
+          point = {x: a.x + dx * t + Math.cos(heading) * side * 22,
+            z: a.z + dz * t - Math.sin(heading) * side * 22, heading};
+          break;
+        }
+        left -= segment;
+      }
+      if (!point) continue;
+      const gap = rng.chance(.08);
+      posts.push({id: `fence:${road.id}:${posts.length}`, ...point,
+        y: scablandsSurfaceHeightAt(point.x, point.z), along, gap, canFall: true});
+    }
+    runs.push({id: `fence:${road.id}`, town: 'tin-town', road: road.id, length, posts});
+  }
+  return runs;
+}
+
 // Candidate poles follow the actual road and rail lines. Clearance and solid
 // records must be added before these candidates are used by the scene.
 export function telegraphCandidates(seed, {road = ROAD_NET.road('east-road'), rail = IRON_LINE} = {}) {

@@ -1255,3 +1255,14 @@ Checks: all eight Scablands suites passed, including six placement tests. Both r
 Changed assertions: none. Codex decided: the pole offsets and state proportions are recorded on the card for Claude to review. Removed: nothing. The existing land is unchanged.
 
 For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it is written. Clearance and the solid index, small-object drawing, roadside lines and signs, boulders, tracks drawing, the map and the scenario remain. Cockpit sync could not open its protected credential and did not update Cockpit.
+
+
+### Realism trial, step 3: fence candidates, in progress
+
+Added repeatable fence-run candidates beside roads approaching Tin Town. Each run is 200 to 600 m, with posts 8 m apart, seeded gaps and a marker for a later falling-fence slice. These are placement data only: they are not drawn or solid and still need clearance against roads, buildings, river decks and job starts before use. No game event or sound cue was added.
+
+Checks: all eight Scablands suites passed, including seven placement tests. Both replay suites passed: 297 checks across 33 cases and 12 across four encounters. Race fingerprints remain unchanged. There are no separate world-signature files matching the requested name. Integration was already current. The lane tier passed 27 of 28 suites; `test-full-check` could not start `pwsh` for its temporary copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: fence lengths, post spacing, gaps and approach selection are recorded on the card for Claude to review. Removed: nothing. The existing land is unchanged.
+
+For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it is written. The scenario, clearance and solid index, drawings, wires, signs, boulders, track drawing and map remain to be built. Cockpit sync could not open its protected credential and did not update Cockpit.

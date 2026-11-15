@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 
@@ -95,4 +95,23 @@ test('track data follows map routes in pairs and is stronger at crossings', () =
     assert.equal(a.strength === 1, RIVER_LAND.crossings.some(p => Math.hypot(x - p.x, z - p.z) < p.reach));
   }
   assert.deepEqual(tracksForWay([]), []);
+});
+
+
+test('fence candidates follow town approaches with seeded gaps and fall markers', () => {
+  const runs = fenceCandidates(1989);
+  assert.ok(runs.length > 0);
+  assert.deepEqual(runs, fenceCandidates(1989));
+  assert.notDeepEqual(runs, fenceCandidates(1990));
+  assert.ok(runs.some(run => run.posts.some(post => post.gap)));
+  for (const run of runs) {
+    assert.equal(run.town, 'tin-town');
+    assert.ok(run.length >= 200 && run.length <= 600);
+    assert.ok(run.posts.length > 20);
+    for (const post of run.posts) {
+      assert.equal(post.canFall, true);
+      assert.ok(Number.isFinite(post.y));
+      assert.ok(Math.hypot(post.x - LAND.at('tin-town').x, post.z - LAND.at('tin-town').z) < 1000);
+    }
+  }
 });

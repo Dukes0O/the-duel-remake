@@ -878,3 +878,5 @@ The design names which ground holds each thing but gives no counts. The first pl
 The first candidate line for pylons runs 100 m east of the Dry Dam, yard and Dead Mall. Spacing continues across the bend at the yard. The candidates still need clearance from roads, buildings and job starts before they can be drawn or made solid.
 
 Telegraph candidates stand 22 m from the East Road centre and 12 m from the Iron Line. The seed chooses 4 percent down and 12 percent leaning. These are starting choices for Claude to review. The candidates still need clearance before they are drawn or made solid.
+
+Fence candidates use one run on each road arriving within 200 m of Tin Town, starting 200 m from the road end. Runs are 200 to 600 m long, with posts 8 m apart and seeded gaps. They still need clearance checks before drawing or making them solid.
