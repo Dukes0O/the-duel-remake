@@ -573,8 +573,8 @@ export function createScablandsScene(course,options={}){
   const mast=radioMast(group);
   // The Everburn's fire and its column of smoke, drawn in code and always burning (src/world/everburn-fire.js).
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
-  // The two braziers where a fresh scoop is taken in Hot Delivery (src/world/ember-pot.js): shown only while that job's carry step is on.
-  const braziers=createBraziers(2);group.add(braziers.group);let brazierKey='';
+  // The braziers and their smoke are shown while the ember carry step is on.
+  const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
@@ -797,7 +797,7 @@ export function createScablandsScene(course,options={}){
         placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace,BESS_REST);
         bessWear.follow(bessRig);
       }
-      // The braziers stand beside the yard gate and the halfway camp, on the side of the road away from the line of the way.
+      // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
       braziers.group.visible=Boolean(emberStep);
       cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);

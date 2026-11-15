@@ -112,3 +112,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the requested scenario, final checks and the two long drivers remain for the last round.
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: the old immediate full refill at the origin or passed safe point for this job; other ember carries retain their existing rule.
+
+## Larger land, brazier smoke (15 November 2026)
+
+- The scene draws all three named braziers, including the Wash camp, with a plain 40 m smoke column over each. The smoke uses the existing smoke material. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It measures the actual columns and positions from the drawn objects. `git diff --check`: passed.
+- For Claude to draw: the final brazier smoke. For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

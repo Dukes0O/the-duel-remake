@@ -1,8 +1,9 @@
 ﻿import assert from 'node:assert/strict';
+import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame} from '../src/world/world-hud.js';
-import {brazierSpotsFor, createCinderFigure} from '../src/world/ember-pot.js';
+import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids} from '../src/world/scablands-solids.js';
@@ -18,9 +19,25 @@ for (const [index, brazier] of step.braziers.entries()) {
   assert.equal(pushOutOfSolids(p.x, p.z, 1, undefined, p.y).hit, null);
 }
 assert.ok(riverDepthAt(step.braziers[2].position.x, step.braziers[2].position.z) > 0);
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < 3; i++) {
   assert.deepEqual({x:step.braziers[i].position.x, z:step.braziers[i].position.z}, brazierSpotsFor(step)[i]);
 }
+const braziers = createBraziers(3);
+braziers.place(step.braziers.map(b => b.position));
+braziers.group.updateMatrixWorld(true);
+assert.equal(braziers.group.children.length, 3);
+for (const [index, stand] of braziers.group.children.entries()) {
+  const position = step.braziers[index].position;
+  assert.deepEqual(stand.position.toArray(), [position.x, position.y, position.z]);
+  const smoke = stand.getObjectByName('Brazier smoke column');
+  assert.ok(smoke);
+  const bounds = new THREE.Box3().setFromObject(smoke);
+  assert.ok(Math.abs(bounds.min.y - position.y) < 1e-9);
+  assert.ok(Math.abs(bounds.max.y - position.y - 40) < 1e-9);
+  assert.ok(Math.abs((bounds.min.x + bounds.max.x) / 2 - position.x) < 1e-9);
+  assert.ok(Math.abs((bounds.min.z + bounds.max.z) / 2 - position.z) < 1e-9);
+}
+braziers.dispose();
 const figure = createCinderFigure();
 assert.equal(figure.name, 'Cinder at the yard gate');
 assert.ok(figure.children.some(child => child.isMesh));
