@@ -3,7 +3,7 @@ import {makeRng} from '../rng.js';
 import {ROAD_NET, ROAD_HALF_WIDTH} from './scablands-road.js';
 import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionAt} from './scablands-regions.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
-import {SOLID_GRID} from './scablands-solids.js';
+import {SOLID_GRID, createSolidGrid} from './scablands-solids.js';
 import {RIVER_LAND} from './scablands-regions.js';
 import {sampleLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
@@ -242,6 +242,43 @@ export function clearedLoneBoulder(seed, i, j, jobStarts) {
   if (!Array.isArray(jobStarts)) throw new RangeError('Job starts are required');
   const rock = loneBoulderInCell(seed, i, j);
   return rock && thingFootprintClear(rock.x, rock.z, rock.size / 2, jobStarts) ? rock : null;
+}
+
+// Collision records and the view must be made from the same cleared things.
+// The index is deliberately created only by a caller using the trial switch.
+export function thingSolids(fixed, loneBoulders = []) {
+  const solids = [];
+  const add = (item, id, kind, x, z, halfX, halfZ, height, heading = 0, extra = {}) => {
+    const y = scablandsSurfaceHeightAt(x, z);
+    const center = [x, y + height / 2, z], size = [halfX * 2, height, halfZ * 2];
+    solids.push({id, thingId: item.id, placeId: null, kind, shape: 'ellipse', x, z, y,
+      halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size,
+      collision: {center, halfExtents: [halfX, height / 2, halfZ], heading}, ...extra});
+  };
+  for (const pylon of fixed.pylons.filter(Boolean)) {
+    for (const side of [-1, 1]) for (const end of [-1, 1]) {
+      const c = Math.cos(pylon.heading), s = Math.sin(pylon.heading);
+      const x = pylon.x + 3 * (side * c + end * s);
+      const z = pylon.z + 3 * (-side * s + end * c);
+      add(pylon, `${pylon.id}:foot:${side}:${end}`, 'pylon-foot', x, z, .4, .4, 3);
+    }
+  }
+  for (const line of fixed.telegraphs) for (const pole of line.poles.filter(Boolean)) {
+    if (pole.state === 'down') {
+      // The centre moves half the length from the original foot.
+      const x = pole.x + Math.sin(pole.heading) * 3.4, z = pole.z + Math.cos(pole.heading) * 3.4;
+      add(pole, pole.id, 'telegraph', x, z, .25, 3.4, .5, pole.heading, {shape: 'box'});
+    } else add(pole, pole.id, 'telegraph', pole.x, pole.z, .25, .25, 7, pole.heading);
+  }
+  for (const run of fixed.fences) for (const post of run.posts.filter(Boolean))
+    add(post, post.id, 'fence-post', post.x, post.z, .15, .15, 1.4, post.heading, {canFall: true});
+  for (const rock of [...fixed.boulders, ...loneBoulders].filter(Boolean))
+    add(rock, rock.id, 'boulder', rock.x, rock.z, rock.size / 2, rock.size / 2, rock.size, rock.heading);
+  return solids;
+}
+
+export function thingSolidGrid(fixed, loneBoulders = []) {
+  return createSolidGrid(thingSolids(fixed, loneBoulders));
 }
 
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.

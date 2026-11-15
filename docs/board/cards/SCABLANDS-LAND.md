@@ -886,3 +886,5 @@ Rock-fall candidates form seeded groups of two to five, 3 to 27 m from the foot 
 Single-boulder candidates use 120 m cells, with at most one candidate per cell. The chance is 45 percent on plates and river bed, 12 percent on other ground, and zero on salt. Their full footprints still need clearance checks before drawing or making them solid.
 
 For the first clearance pass, allow a 6 m radius around a pylon, 0.5 m around a standing pole, 7 m around a down pole, and 0.25 m around a fence post. A boulder's radius is half its stated size. The later drawing and solid footprints must fit within these allowances or the clearance must be revised. Rejected line positions stay as gaps so wires do not cross them.
+
+For the first collision records, each pylon has four feet, 6 m apart, and each foot is 0.8 m across. Standing poles are 0.5 m across and 7 m tall; down poles are 6.8 m long. Fence posts are 0.3 m across and 1.4 m tall. A boulder's collision footprint and height use its stated size. The plain drawing must match these records before they are connected to the game.

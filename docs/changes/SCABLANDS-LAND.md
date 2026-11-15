@@ -1297,6 +1297,18 @@ For Claude to run: `test-full-check` at merge and the browser scenario once writ
 
 Cockpit sync could not unlock its saved credential in this session and did not update Cockpit.
 
+### Realism trial, step 3: collision records, in progress
+
+Added collision records and a spatial grid for cleared pylon feet, telegraph poles, fence posts and boulders. Fence posts carry the marker for a later falling-fence slice. These records are not connected to the game: the eventual drawing must use the same dimensions, and the switch, job starts and simulation still need connecting. No game event or sound cue was added.
+
+Checks: the placement suite passed 12 tests. All Scablands suites and both replay suites passed: 297 race checks across 33 cases and 12 combat checks across four encounters. Race fingerprints are unchanged. No separate world-signature test file matched the requested name. Integration was already current. The lane tier passed 26 of 28 suites. `test-full-check` could not start `pwsh` for its temporary copy (EACCES). `test-town-core` exceeded its 10 ms timing limit at 12.18 ms under load and at 12.96 ms on its one standalone rerun. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: the first solid dimensions are recorded on the card. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: `test-full-check` and investigate or rerun `test-town-core` on the laptop, and run the browser scenario once written. Chrome cannot start in this job. The scene, switch, job starts, solid-grid connection, wires, signs, track drawing, map and scenario remain to be built.
+
+Cockpit sync could not unlock its saved credential in this session and did not update Cockpit.
+
 ### Realism trial, step 3: clear fixed candidates, in progress
 
 The shared footprint check now filters the pylon, telegraph, fence and boulder candidates. Empty line positions stay in place so a later drawing can leave the wire broken at a rejected pole or post. Callers must supply the job starts. These records are not yet drawn or added to the solid index. No game event or sound cue was added.

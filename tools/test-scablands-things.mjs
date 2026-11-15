@@ -8,7 +8,27 @@ import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {clearedFixedThings, clearedLoneBoulder} from '../src/world/scablands-things.js';
+import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
+
+test('cleared things produce collision records in the spatial index', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const rock = clearedLoneBoulder(1989, 0, 0, []);
+  const solids = thingSolids(fixed, [rock]);
+  const grid = thingSolidGrid(fixed, [rock]);
+  assert.deepEqual(grid.solids, solids);
+  const things = [...fixed.pylons.filter(Boolean), ...fixed.telegraphs.flatMap(line => line.poles.filter(Boolean)),
+    ...fixed.fences.flatMap(run => run.posts.filter(Boolean)), ...fixed.boulders, ...[rock].filter(Boolean)];
+  for (const thing of things) {
+    const parts = solids.filter(solid => solid.thingId === thing.id);
+    assert.equal(parts.length, thing.id.startsWith('pylon:') ? 4 : 1);
+    for (const part of parts) {
+      assert.ok(grid.near(part.x, part.z, part.x, part.z, 0).includes(grid.solids.find(s => s.id === part.id)));
+      assert.deepEqual(part.collision.center, part.center);
+      if (part.kind === 'fence-post') assert.equal(part.canFall, true);
+    }
+  }
+  assert.equal(new Set(solids.map(solid => solid.id)).size, solids.length);
+});
 
 test('fixed candidates retain line gaps and clear full footprints and job starts', () => {
   const original = clearedFixedThings(1989, []);
