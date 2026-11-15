@@ -5,6 +5,7 @@ import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {worldHudModel, worldMapFrame, brazierArrow} from '../src/world/world-hud.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
@@ -113,12 +114,46 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const tick = kmh => {state.speedMph = kmh / 1.609344; stepWorldJob(duel, 1 / 120); return world.pipeDeck;};
   assert.deepEqual(tick(40), {onDeck:true, tooFast:false});
   assert.deepEqual(tick(41), {onDeck:true, tooFast:true});
+  assert.ok(state.knock, 'speeding starts a sideways slide');
+  state.knock = null;
   const floors = [];
   assert.equal(scablandsFloorsAt(pipe.x, pipe.z, floors), 2);
   car = {...car, y:floors[1]};
   assert.deepEqual(tick(60), {onDeck:false, tooFast:false}, 'the bed is not the deck');
   car = {x:step.carStart.x, z:step.carStart.z, y:scablandsSurfaceHeightAt(step.carStart.x, step.carStart.z)};
   assert.deepEqual(tick(60), {onDeck:false, tooFast:false}, 'other roads are not the Pipe');
+}
+// Drive the real car along the Pipe with the pot loaded at each speed.
+{
+  const pipe = LAND.at('the-pipe');
+  const road = ROAD_NET.nearest(pipe.x, pipe.z);
+  const points = road.road.points, a = points[road.index], b = points[road.index + 1];
+  const heading = Math.atan2(b.x - a.x, b.z - a.z);
+  const drive = kmh => {
+    const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+    const state = duel.state, world = state.arena.worldJob;
+    const at = duel.course.nearest(pipe.x, pipe.z);
+    placeActor(duel, state, {s:at.s, lateral:at.lateral,
+      headingError:wrapHeading(heading - duel.course.at(at.s).heading)}, kmh / 1.609344);
+    state.countdown = 0;
+    world.job.stepState = {loaded:true, ember:100};
+    let maxAcross = 0, highestAir = 0;
+    for (let i = 0; i < (kmh === 50 ? 600 : 150); i++) {
+      duel.setInput({throttle:0});
+      duel.step(1 / 60);
+      const point = duel.course.worldAt(state.s, state.lateral);
+      highestAir = Math.max(highestAir, state.airHeight || 0);
+      maxAcross = Math.max(maxAcross, Math.abs((point.x - pipe.x) * Math.cos(heading) - (point.z - pipe.z) * Math.sin(heading)));
+    }
+    return {maxAcross, highestAir};
+  };
+  const slow = drive(35), fast = drive(50);
+  assert.ok(slow.maxAcross < 3.6, 'a car below 40 km/h stays on the Pipe');
+  assert.ok(fast.maxAcross > 3.6, 'a faster car slides off the Pipe');
+  assert.ok(fast.highestAir > 3, 'the fast car leaves the deck above the bed');
 }
 // The actual world-job update applies the salt wind only on the pan.
 {

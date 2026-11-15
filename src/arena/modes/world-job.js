@@ -704,6 +704,14 @@ export function stepWorldJob(duel, dt) {
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
+    if (worldJob.pipeDeck.tooFast && !worldJob.pipeSlip && !state.knock) {
+      // Slide toward the nearer edge; free-body motion and the land handle the fall.
+      const across = (car.x - PIPE_CROSSING.x) * pipeDirection.z - (car.z - PIPE_CROSSING.z) * pipeDirection.x;
+      const side = across < 0 ? -1 : 1;
+      shoveCar(duel, {x:side * pipeDirection.z, z:-side * pipeDirection.x, metresPerSecond:18});
+      worldJob.pipeSlip = true;
+    }
+    if (!worldJob.pipeDeck.onDeck) worldJob.pipeSlip = false;
     // The simulation runs at 120 steps per second. Stagger the two long
     // traces, keeping each result for 30 steps between checks.
     const sightStep = worldJob.sightStep ?? 0;

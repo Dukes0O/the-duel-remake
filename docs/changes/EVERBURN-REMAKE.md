@@ -287,3 +287,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: make the fast car leave the Pipe and take the fall as a hit, with a scripted drive at each speed, then the remaining steps.
+
+## Larger land, Pipe slide (15 November 2026)
+
+- A car going over 40 km/h on the Pipe starts sliding toward its nearer edge using the existing car shove. It is not pushed again until it has left the deck. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real car stayed within 3.6 m of the centre at 35 km/h; at 50 km/h it moved over 12 m sideways and more than 3 m above the ground. The job update also checks the 40 and 41 km/h boundary. `git diff --check`: passed.
+- Still to build: the fall must produce a landing hit. In this drive the car left the deck but no `scablandsHit` landing event was observed. Then finish the bed route and remaining steps.
+- Codex decided: the slide starts at 18 m/s sideways toward the nearer edge. Claude should review how it feels.
+- Changed assertions: none. Race fingerprints: not checked in this round.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including the two long drivers, remain for the last round.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
