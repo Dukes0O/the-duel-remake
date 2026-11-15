@@ -73,7 +73,7 @@ export function workRoadCell(work, action) {
     if (cell.spread > 0) {
       cell.surface = 1;
       const neighbours = [[x-1,z], [x+1,z], [x,z-1], [x,z+1]]
-        .map(([nx,nz]) => work.cells[key(nx,nz)]).filter(other => other?.spread > 0 && other.compaction >= 0.9);
+        .map(([nx,nz]) => roadCell(work,nx,nz));
       const bump = neighbours.reduce((worst, other) => Math.max(worst, Math.abs(cell.height - other.height)), 0);
       cell.roughness = Math.max(1 - cell.compaction, clamp(Math.abs(action.speedMps - 0.5), 0, 1),
         clamp(Math.abs(action.edgeOffsetM), 0, 1), clamp(bump, 0, 1));
@@ -159,7 +159,7 @@ export function stepRoadMachine(state, work, controls = {}, dtSeconds = 0, groun
       }
       if (ground) {
         const cells = {...nextWork.cells};
-        const places = state.kind === 'roller' ? [[x,z],[x-1,z],[x+1,z],[x,z-1],[x,z+1]] : [[x,z]];
+        const places = state.kind === 'roller' || state.kind === 'paver' ? [[x,z],[x-1,z],[x+1,z],[x,z-1],[x,z+1]] : [[x,z]];
         for (const [cx,cz] of places) {
           const cell = roadCell(nextWork, cx, cz);
           cells[key(cx,cz)] = {...cell, height:ground.height(cx,cz)};

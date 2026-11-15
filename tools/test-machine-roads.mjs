@@ -184,6 +184,14 @@ assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'rough', 'A heap creates
 for (let pass=0; pass<4; pass++) bumpGround = drivePass('roller', bumpGround);
 bumpGround = drivePass('paver', bumpGround);
 assert.equal(roadCondition(roadCell(bumpGround, 0, 3)), 'good', 'Rolling and paving again repairs the bump.');
+let unworkedBump = createRoadWork();
+unworkedBump.cells['0:3'] = {height:0,spread:1,compaction:1,surface:0,roughness:0};
+unworkedBump.cells['1:3'] = {...roadCell(unworkedBump,1,3), height:1};
+unworkedBump = drivePass('paver', unworkedBump);
+assert.equal(roadCondition(roadCell(unworkedBump,0,3)), 'rough', 'A higher unworked neighbour leaves a bump.');
+unworkedBump.cells['1:3'].height = 0;
+unworkedBump = drivePass('paver', unworkedBump);
+assert.equal(roadCondition(roadCell(unworkedBump,0,3)), 'good', 'Paving again repairs the levelled bump.');
 // Height plus carried and packed material stays constant across each action.
 let coveredRoad = createRoadWork();
 coveredRoad.cells['0:0'] = {height:1,spread:1,compaction:1,surface:0,roughness:0};
@@ -223,6 +231,10 @@ sharedYard.activeMachine='dozer';
 Object.assign(sharedYard.roadMachines.dozer.machine, {x:60,z:-120,heading:0,speedMps:0});
 sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1,working:true}}, 100);
 assert.ok(sharedYard.ground.heightAt(60,15)>originalHeight-0.11, 'The dozer fills the trencher ditch in the same ground.');
+for (const x of [59,61]) {
+  Object.assign(sharedYard.roadMachines.dozer.machine, {x,z:-120,heading:0,speedMps:0});
+  sharedYard=stepDigSandbox(sharedYard, {controls:{forward:1,working:true}}, 100);
+}
 for (const kind of ['roller','roller','roller','paver']) {
   sharedYard.activeMachine=kind;
   Object.assign(sharedYard.roadMachines[kind].machine, {x:60,z:13,heading:0,speedMps:0});
@@ -265,7 +277,7 @@ function driveKeys(until, slow=false) {
   assert.ok(until(), `Keyboard work finished for ${keyboardYard.activeMachine}.`);
 }
 driveKeys(() => keyboardYard.roadWork.bladeLoad>0);
-driveKeys(() => roadCell(keyboardYard.roadWork, 40, 17).spread>0);
+driveKeys(() => roadCell(keyboardYard.roadWork, 40, 19).spread>0);
 keyboardYard=switchDigMachine(keyboardYard);
 for (let pass=1; pass<=3; pass++) {
   Object.assign(keyboardYard.roadMachines.roller.machine, {x:40,z:15,heading:0,speedMps:0});

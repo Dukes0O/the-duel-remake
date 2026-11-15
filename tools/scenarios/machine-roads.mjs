@@ -66,7 +66,7 @@ export async function run(context) {
   await waitFor(context, '/DOZER CONTROLS/.test(document.querySelector(".the-dig-controls").textContent)', 'dozer controls', 10000);
   assert.doesNotMatch(await context.evaluate('document.querySelector(".the-dig-controls").textContent'), /bucket|mast|Shift/i);
   await drive(context, {picture:'machine-roads-dozer', until:'window.__theDig.simulation.roadWork.bladeLoad>0'});
-  await drive(context, {until:'window.__theDig.simulation.roadWork.cells["40:17"]?.spread>0'});
+  await drive(context, {until:'window.__theDig.simulation.roadWork.cells["40:19"]?.spread>0'});
   await select(context, 'roller');
   for (let pass=0; pass<3; pass++) {
     await position(context, 'roller', 15);
