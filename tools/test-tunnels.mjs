@@ -5,11 +5,28 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createGroundTunnels, trialTubeBetween, westScarpTrial} from '../src/world/ground-tunnels.js';
 import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 import {_jump} from '../src/sim-driving.js';
+import {makeRng} from '../src/rng.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsFloorsAt, selectScablandsFloor, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
 import {stepMover} from '../src/world/scablands-movers.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
+
+// Away from the two decks, all three foot heights must take the exact old
+// surface arithmetic. The seed makes this sample repeatable.
+{
+  const random = makeRng(1989), crossings = RIVER_LAND.crossings.filter(c =>
+    c.id === 'girder-bridge' || c.id === 'the-pipe');
+  let checked = 0;
+  while (checked < 2000) {
+    const x = random.range(-7000, 7000), z = random.range(-5000, 5000);
+    if (crossings.some(c => Math.hypot(x - c.x, z - c.z) <= 200)) continue;
+    const surface = scablandsSurfaceHeightAt(x, z);
+    for (const feet of [surface - 5, surface, surface + 5])
+      assert.equal(scablandsActorHeightAt(x, z, feet), surface, `surface at ${x}, ${z}`);
+    checked++;
+  }
+}
 
 // The same position has a bed below each deck and a surface above it.
 for (const id of ['girder-bridge', 'the-pipe']) {

@@ -2,7 +2,7 @@
 
 ## Current round
 
-Cars rising under the Girder Bridge or the Pipe now meet the deck underside using their collision height, and a car falling from above still lands on the deck. The focused flight checks and `test-scablands-solid` pass. This covers the deck roof only: tunnel roofs, floor integration and the remaining proofs are still to do. No game event or sound cue was added.
+Cars rising under the Girder Bridge or the Pipe now meet the deck underside using their collision height, and a car falling from above still lands on the deck. The focused flight checks and `test-scablands-solid` pass. The four routes pass with the town switch off, and 2,000 seeded places away from the decks return the exact surface height. This covers the deck roof only: tunnel roofs, floor integration and the remaining proofs are still to do. No game event or sound cue was added.
 
 People on foot now select the floor using their feet when walking and can be placed at a supplied height. Leaving a car uses its stored ground height. Bridge and Pipe solids use the 2.5 m contact height for people too. `test-tunnels` and `test-scablands-solid` pass. Roofs and the rest of the floor rule remain unfinished. No game event or sound cue was added.
 

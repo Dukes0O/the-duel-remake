@@ -425,7 +425,7 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
   ];
   const rows = [];
   for (const [label, line, kmh, seconds] of ways) {
-    const duel = newDuel('falcone_f42', label.startsWith('the river bed'));
+    const duel = newDuel('falcone_f42');
     let driven;
     if (label.startsWith('the river bed')) {
       // Take the Wash into the bed, pass between the bridge piers, then climb the Steps to town.
