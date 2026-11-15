@@ -116,7 +116,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
-  let shownMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0;
+  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
   const sun=new THREE.DirectionalLight(0xffe7c2,2.4);sun.position.set(-30,55,-20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -348,7 +348,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
     dial.querySelector('svg').setAttribute('aria-label',`Head speed ${Math.round(headSpeed*100)} percent.`);
-    if(sim.lastMessage&&sim.lastMessage!==shownMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
+    if(sim.lastMessage&&sim.lastMessage!==lastMachineMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
+    lastMachineMessage=sim.lastMessage;
     if(now<messageUntil)message.textContent=shownMessage;
     else if(!failed&&sim.activeMachine==='excavator'){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');

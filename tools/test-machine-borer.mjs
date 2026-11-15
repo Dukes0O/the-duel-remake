@@ -89,6 +89,13 @@ assert.deepEqual(borerYardControls({}, {axes:[0.2,-0.4,0,-0.5]}, {drive:{steer:0
 assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);
+const refusedOnce = stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1);
+const released = stepBorer(refusedOnce.state, {thrust:0}, flat, 'clay', 1);
+assert.equal(released.state.message, null, 'Releasing thrust clears the refusal for the next attempt.');
+const refusedAgain = stepBorer(released.state, {thrust:1}, flat, 'clay', 1);
+assert.equal(refusedAgain.state.message, BORER_NO_FACE);
+assert.equal(refusedAgain.events.filter(event => event.cue === 'borer.refuse').length, 1,
+  'A new refused attempt sounds the refusal again.');
 assert.equal(stepBorer(createBorerState(), {thrust:1}, blocked, 'clay', 1).state.message, BORER_OBSTRUCTION);
 const protectedEdge = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
   reservedShapes:[{x:0,z:20,radius:1,sentence:"That's Tin Town. Auntie Solder would have words."}]});

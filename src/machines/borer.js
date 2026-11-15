@@ -126,7 +126,11 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       placeOnCut(next, next.travelM, radius);
       continue;
     }
-    if (!thrust || next.finished) { next.headSpeed = 1; next.overloadSeconds = 0; continue; }
+    if (!thrust || next.finished) {
+      next.headSpeed = 1; next.overloadSeconds = 0;
+      if (!thrust) next.message = null;
+      continue;
+    }
     const refusal = ground.refusal({x:next.x, z:next.z, radius});
     if (refusal || (!next.started && !borerHasFace(ground, next, next.heading, radius))) {
       const message = refusal ? refusalMessage(refusal) : BORER_NO_FACE;
