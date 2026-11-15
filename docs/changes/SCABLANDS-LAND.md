@@ -1209,3 +1209,5 @@ The review fixes build placement indexes only when needed, take map lines from t
 Checks for these fixes: `test-scablands-things` passed 32 tests and `test-world-hud` passed. The previous checks and replay fingerprints on `3a9178542` passed as recorded before this review; the final checks must run again on the finished branch. The browser scenario is for Claude to run. The earlier lane run had FFmpeg and fixture-cleanup environment failures; Claude's branch fixed the P4 audio pin.
 
 Changed assertions: none in this review. Codex decided: no new design choice. Removed: the HUD's separate switch reading and landmark generation. The original land remains when the switch is off.
+
+The scenario now includes salt and Burn views, a real rock fall seen from 40 m, and reports picture and impact failures together. `node --check tools/scenarios/scablands-things.mjs` passed; `test-scablands-things` passed 32 tests after Claude?s latest drawing was merged. Claude must run the browser scenario.

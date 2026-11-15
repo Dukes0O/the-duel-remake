@@ -1,9 +1,10 @@
-// SCABLANDS-LAND: compare six views on Performance with the trial off and on.
+// SCABLANDS-LAND: compare eight views on Performance with the trial off and on.
 // The browser uses memory-only storage. This is a visual guide, not a frame check.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {LAND} from '../../src/world/scablands-names.js';
 import {ROAD_NET} from '../../src/world/scablands-road.js';
+import {GROUND_AREAS} from '../../src/world/scablands-regions.js';
 import {pointAlong} from '../../src/world/scablands-road-geometry.js';
 import {clearedFixedThings, smallThingsInCell, THINGS_CELL} from '../../src/world/scablands-things.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../../src/world/jobs/everburn.js';
@@ -18,7 +19,7 @@ export function views(seed) {
   const poleIndex = poleLine.findIndex((pole, i) => pole && pole.state !== 'down' && poleLine[i + 1] && poleLine[i + 1].state !== 'down');
   const pole = poleLine[poleIndex], nextPole = poleLine[poleIndex + 1];
   const sign = fixed.signs.find(item => item.destinations.length);
-  const rock = fixed.boulders[0];
+  const rock = fixed.boulders.find(item => item.scarp && fixed.boulders.some(other => other !== item && other.scarp === item.scarp && Math.hypot(other.x - item.x, other.z - item.z) < 30));
   const pylon = fixed.pylons.find(Boolean);
   const fence = fixed.fences.flatMap(run => run.posts).find(post => post && !post.gap);
   if (!pole || !nextPole || !sign || !rock || !pylon || !fence) throw Error('A landmark needed for the pictures is missing');
@@ -34,12 +35,27 @@ export function views(seed) {
     }
   }
   if (!small) throw Error('Could not find scrub and stones together');
+  const findSmall = (kind, center) => {
+    const x = Math.floor(center.x / THINGS_CELL), z = Math.floor(center.z / THINGS_CELL);
+    for (let radius = 0; radius <= 100; radius++) {
+      for (let i = x - radius; i <= x + radius; i++) for (let j = z - radius; j <= z + radius; j++) {
+        if (Math.max(Math.abs(i - x), Math.abs(j - z)) !== radius) continue;
+        const item = smallThingsInCell(seed, i, j, starts).find(thing => thing.kind === kind);
+        if (item) return item;
+      }
+    }
+    throw Error('Could not find ' + kind);
+  };
+  const salt = findSmall('salt', GROUND_AREAS.polygons.find(area => area.id === 'salt-pan').points[0]);
+  const stump = findSmall('stump', LAND.at('everburn'));
   const offset = (point, x, z) => ({x: point.x + x, z: point.z + z});
   return [
     {name: 'east-road-poles', from: roadView, to: nextPole},
     {name: 'fork-sign', from: offset(sign, -16, -16), to: sign},
     {name: 'flats', from: offset(small, -12, -12), to: small},
-    {name: 'scarp-boulders', from: offset(rock, -22, -22), to: rock},
+    {name: 'scarp-boulders', from: offset(rock, -Math.SQRT1_2 * 40, -Math.SQRT1_2 * 40), to: rock},
+    {name: 'salt-pan', from: offset(salt, -12, -12), to: salt},
+    {name: 'burn', from: offset(stump, -12, -12), to: stump},
     {name: 'pylon-line', from: offset(pylon, 14, 14), to: pylon},
     {name: 'tin-town-fence', from: offset(fence, -12, -12), to: fence},
   ];
@@ -141,7 +157,7 @@ const driveAtSolid = (context, kind) => context.evaluate(`(() => {
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'SCABLANDS-LAND', quality: 'performance', measurement: 'main scene render with shadows off', views: []};
+  const report = {card: 'SCABLANDS-LAND', quality: 'performance', measurement: 'main scene render with shadows off', views: [], failures: []};
   const persist = () => writeFile(join(context.outputDir, 'scablands-things.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     let positions;
@@ -163,7 +179,7 @@ export async function run(context) {
         if (row.off && row.on) {
           row.extra = {draws: row.on.draws - row.off.draws, triangles: row.on.triangles - row.off.triangles};
           row.withinLimits = row.extra.draws <= 40 && row.extra.triangles <= 150000;
-          if (!row.withinLimits) throw Error(view.name + ' exceeds the graphics limits: ' + JSON.stringify(row.extra));
+          if (!row.withinLimits) report.failures.push(view.name + ' exceeds the graphics limits: ' + JSON.stringify(row.extra));
         }
         console.log(JSON.stringify({pass: pass.name, view: view.name, ...measured, extra: row.extra}));
       }
@@ -172,12 +188,16 @@ export async function run(context) {
         const required = ['stone', 'scrub', 'brush', 'bone', 'can', 'scrap', 'salt', 'stump',
           'pylon-foot', 'telegraph', 'telegraph-down', 'fence-post', 'sign-post', 'boulder', 'pylons'];
         const missing = required.filter(kind => !seen.has('Scablands ' + kind));
-        if (missing.length) throw Error('No batch drawn for: ' + missing.join(', '));
+        if (missing.length) report.failures.push('No batch drawn for: ' + missing.join(', '));
         report.collisions = {};
-        for (const kind of ['boulder', 'telegraph']) report.collisions[kind] = await driveAtSolid(context, kind);
+        for (const kind of ['boulder', 'telegraph']) {
+          try { report.collisions[kind] = await driveAtSolid(context, kind); }
+          catch (error) { report.failures.push(kind + ' impact: ' + error.message); }
+        }
       }
     }
     await persist();
+    if (report.failures.length) throw Error(report.failures.join('; '));
   } catch (error) {
     report.failure = error.message; await persist(); throw error;
   }
