@@ -68,6 +68,27 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   assert.equal(waitingWorld.job.stepState.joltCount, 1, 'continued contact is one ram');
 }
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
+// The camp scoop calls its rider even when that rider is outside the usual pursuit range.
+{
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {...step.braziers[0].position};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:80};
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoopBrazier, 'yard-brazier');
+  assert.notEqual(world.actors[0].pursuing, true);
+  car = {...step.braziers[1].position};
+  world.actors[0].position = {...world.actors[0].position, x:car.x + 200, z:car.z};
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoopBrazier, 'halfway-brazier');
+  assert.ok(world.job.stepState.scoopTime < 3, 'the ambush begins during the scoop');
+  assert.equal(world.actors[0].pursuing, true);
+  assert.notEqual(world.actors[1].pursuing, true);
+}
 // The actual job grid holds both barricades on their named floor, including the bridge deck.
 const barricadeGrid = createJobSolidGrid(createSolidGrid([]));
 barricadeGrid.setBarricades(step.barriers);

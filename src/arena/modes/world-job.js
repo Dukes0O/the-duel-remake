@@ -190,7 +190,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const car = position(duel, duel.state);
   const dx = car.x - rider.position.x, dz = car.z - rider.position.z;
   const distance = Math.hypot(dx, dz);
-  if (!rider.pursuing && distance > 120) return;
+  const scoopAmbush = actorDef.scoopAmbush && worldJob.job.stepState.scoopBrazier === actorDef.scoopAmbush;
+  if (!rider.pursuing && distance > 120 && !scoopAmbush) return;
   rider.pursuing = true;
   if (distance > 8) rider.ramContact = false;
   if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }

@@ -87,6 +87,7 @@ export function buildEverburn(land) {
   const ashBarricade1 = barricade('ash-men-barricade-1', 'ash-barricade-1'), ashBarricade2 = barricade('ash-men-barricade-2', 'ash-barricade-2');
   const ashRiders = path(...[ashBarricade1, ashBarricade2].map((barrier, index) => Object.freeze({
     id:`ash-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
+    ...(index === 0 ? {scoopAmbush:'halfway-brazier'} : {}),
     start:place(`ash-rider-start-${index + 1}`,
       roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 20)),
   })));

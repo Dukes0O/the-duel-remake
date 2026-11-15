@@ -183,3 +183,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario, final checks and both long drivers remain for the last round.
 - Changed assertions: none. Race fingerprints: not checked this round. Removed: nothing.
 - Still to build: the scoop ambush, burning, turn-back, yard placement and the remaining steps.
+
+## Larger land, camp scoop ambush (15 November 2026)
+
+- Beginning a scoop at Halfway Camp sends its waiting rider toward the car, even outside the normal pursuit range. The yard scoop does not call that rider. The existing nearby pursuit remains in place. No new sound event was added; rams use `world.ember.spark`.
+- `node tools/test-everburn-job1.mjs`: passed. The real job update checks the trigger before the three-second scoop finishes, the yard scoop and the other rider. `git diff --check`: passed.
+- For Claude to run: the scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: burning, turn-back, yard placement and the remaining steps.
