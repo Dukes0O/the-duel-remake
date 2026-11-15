@@ -139,6 +139,18 @@ export function plantPicture(kind, documentLike = typeof document === 'undefined
     const turn = (stem / (stems - 1) - .5) * (dead ? 2.1 : 2.5) + rng.range(-.08, .08);
     twig(root.x + rng.range(-6, 6), root.y, turn, size * rng.range(.3, .44) * (1 - Math.abs(turn) * (dead ? .12 : .2)), dead ? 4.2 : 3.4, 0);
   }
+  // The picture is kept inside a rounded outline with a ragged rim. Twigs that ran to the picture's edges gave every far
+  // bush the outline of its square card.
+  pen.globalCompositeOperation = 'destination-in';
+  pen.beginPath(); pen.ellipse(size / 2, size * .63, size * (dead ? .4 : .44), size * (dead ? .5 : .54), 0, 0, Math.PI * 2); pen.fill();
+  pen.globalCompositeOperation = 'destination-out';
+  for (let notch = 0; notch < 46; notch++) {
+    const turn = rng.range(-Math.PI * .98, Math.PI * .02), reach = rng.range(.93, 1.06);
+    pen.beginPath();
+    pen.arc(size / 2 + Math.cos(turn) * size * (dead ? .4 : .44) * reach, size * .63 + Math.sin(turn) * size * (dead ? .5 : .54) * reach, rng.range(5, 15), 0, Math.PI * 2);
+    pen.fill();
+  }
+  pen.globalCompositeOperation = 'source-over';
   const texture = new THREE.CanvasTexture(canvas);
   // No smaller copies of the picture: their averaged gaps would turn a far bush into a pale square.
   texture.colorSpace = THREE.SRGBColorSpace; texture.generateMipmaps = false; texture.minFilter = THREE.LinearFilter;
