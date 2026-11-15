@@ -336,7 +336,7 @@ export function thingSurface(kind, photos = null) {
   if (family === 'plant') {
     const picture = plantPicture(kind);
     // In the land's own light a bush draws paler than its picture, so the picture is taken down and warmed a little.
-    const plant = new THREE.MeshStandardMaterial({map: picture, color: picture ? 0xd6cdb8 : (kind === 'scrub' ? 0x5c6148 : 0x6f6455), alphaTest: .38, side: THREE.FrontSide, roughness: 1, metalness: 0});
+    const plant = new THREE.MeshStandardMaterial({map: picture, color: picture ? 0xa89f8c : (kind === 'scrub' ? 0x5c6148 : 0x6f6455), alphaTest: .38, side: THREE.FrontSide, roughness: 1, metalness: 0});
     plant.userData.thingFamily = family;
     return plant;
   }
@@ -414,5 +414,6 @@ export function pylonPicture(documentLike = typeof document === 'undefined' ? nu
 }
 
 export function pylonSurface(picture = pylonPicture()) {
-  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0xffffff : 0x6f6c66, alphaTest: .45, side: THREE.DoubleSide, roughness: .85, metalness: .2});
+  // Old galvanised steel is dull: no shine, and taken down so that the land's strong light does not draw it white.
+  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0x8f8b82 : 0x6f6c66, alphaTest: .45, side: THREE.DoubleSide, roughness: 1, metalness: 0});
 }
