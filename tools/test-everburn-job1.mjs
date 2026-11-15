@@ -101,6 +101,25 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The actual job update measures speed on the Pipe's deck, not the bed below.
+{
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const pipe = LAND.at('the-pipe');
+  let car = {x:pipe.x, z:pipe.z, y:scablandsSurfaceHeightAt(pipe.x, pipe.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const tick = kmh => {state.speedMph = kmh / 1.609344; stepWorldJob(duel, 1 / 120); return world.pipeDeck;};
+  assert.deepEqual(tick(40), {onDeck:true, tooFast:false});
+  assert.deepEqual(tick(41), {onDeck:true, tooFast:true});
+  const floors = [];
+  assert.equal(scablandsFloorsAt(pipe.x, pipe.z, floors), 2);
+  car = {...car, y:floors[1]};
+  assert.deepEqual(tick(60), {onDeck:false, tooFast:false}, 'the bed is not the deck');
+  car = {x:step.carStart.x, z:step.carStart.z, y:scablandsSurfaceHeightAt(step.carStart.x, step.carStart.z)};
+  assert.deepEqual(tick(60), {onDeck:false, tooFast:false}, 'other roads are not the Pipe');
+}
 // The actual world-job update applies the salt wind only on the pan.
 {
   const polygon = GROUND_AREAS.polygons.find(area => area.id === 'salt-pan');

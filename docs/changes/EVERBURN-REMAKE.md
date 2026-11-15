@@ -278,3 +278,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Changed assertions: none. Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the Pipe, river bed and remaining steps.
+
+## Larger land, Pipe speed detection (15 November 2026)
+
+- Hot Delivery now detects when the car is on the Pipe's deck and travelling faster than 40 km/h. It uses the named crossing, the Salt Road's direction, the deck's width and the car's own floor. This is part of step 4c: the car does not yet leave the deck when it goes too fast. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real world-job update checks 40 and 41 km/h, the river bed below the deck and another road. `git diff --check`: passed.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: make the fast car leave the Pipe and take the fall as a hit, with a scripted drive at each speed, then the remaining steps.

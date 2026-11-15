@@ -14,7 +14,8 @@ import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
-import {scablandsDriveAt} from '../../world/scablands-regions.js';
+import {scablandsDriveAt, RIVER_LAND} from '../../world/scablands-regions.js';
+import {ROAD_NET} from '../../world/scablands-road.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
@@ -28,6 +29,23 @@ export const worldJobPosition = (duel, actor) => {
 };
 const position = worldJobPosition;
 const EMPTY_HIT_TARGETS = [];
+// The drawn Pipe is 176 m long and follows the Salt Road at the named crossing.
+// Keep the car's floor in the question: the river bed below is not the deck.
+const PIPE_CROSSING = RIVER_LAND.crossings.find(crossing => crossing.id === 'the-pipe');
+const PIPE_ROAD_HIT = ROAD_NET.nearest(PIPE_CROSSING.x, PIPE_CROSSING.z);
+const pipePoints = PIPE_ROAD_HIT.road.points;
+const pipeA = pipePoints[PIPE_ROAD_HIT.index], pipeB = pipePoints[PIPE_ROAD_HIT.index + 1];
+const pipeLength = Math.hypot(pipeB.x - pipeA.x, pipeB.z - pipeA.z);
+const pipeDirection = {x:(pipeB.x - pipeA.x) / pipeLength, z:(pipeB.z - pipeA.z) / pipeLength};
+export function pipeDeckSpeed(point, speedKmh) {
+  const dx = point.x - PIPE_CROSSING.x, dz = point.z - PIPE_CROSSING.z;
+  const along = dx * pipeDirection.x + dz * pipeDirection.z;
+  const across = dx * pipeDirection.z - dz * pipeDirection.x;
+  const floor = scablandsSurfaceHeightAt(point.x, point.z);
+  const onDeck = Math.abs(along) <= 88 && Math.abs(across) <= PIPE_CROSSING.deckHalfWidth &&
+    Number.isFinite(point.y) && Math.abs(point.y - floor) <= 2;
+  return {onDeck, tooFast:onDeck && speedKmh > 40};
+}
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.
 // townReached is the horn (the one that warns of the shove) and gateBurnt is the flamethrower's flame catching.
@@ -685,6 +703,7 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
+    worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
     // The simulation runs at 120 steps per second. Stagger the two long
     // traces, keeping each result for 30 steps between checks.
     const sightStep = worldJob.sightStep ?? 0;
