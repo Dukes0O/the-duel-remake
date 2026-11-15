@@ -7,13 +7,28 @@ import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/
 import {LAND} from '../src/world/scablands-names.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees} from '../src/world/scablands-ways.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
+import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
+// The actual job grid holds both barricades on their named floor, including the bridge deck.
+const barricadeGrid = createJobSolidGrid(createSolidGrid([]));
+barricadeGrid.setBarricades(step.barriers);
+for (const [index, barrier] of step.barriers.entries()) {
+  const named = LAND.at(['safe-road', 'girder-bridge'][index]), floors = [];
+  assert.deepEqual({x:barrier.position.x, z:barrier.position.z}, named);
+  scablandsFloorsAt(named.x, named.z, floors);
+  assert.equal(barrier.position.y, floors[0]);
+  assert.equal(pushOutOfSolids(named.x, named.z, 1, barricadeGrid, floors[0]).hit?.id, barrier.id);
+  if (index === 1) {
+    assert.equal(floors.length, 2);
+    assert.equal(pushOutOfSolids(named.x, named.z, 1, barricadeGrid, floors[1]).hit, null);
+  }
+}
+
 for (const [index, brazier] of step.braziers.entries()) {
   const p = brazier.position, named = LAND.at(['yard', 'safe-road', 'the-wash'][index]);
   assert.ok(Math.hypot(p.x - named.x, p.z - named.z) <= 9.000001);

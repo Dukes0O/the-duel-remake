@@ -576,6 +576,9 @@ export function createScablandsScene(course,options={}){
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
+  // Plain barricades use the same dimensions and positions as the job solids.
+  const barricadeGeometry=new THREE.BoxGeometry(12,2,1.4),barricadeMaterial=new THREE.MeshStandardMaterial({color:0x584438,roughness:1});
+  const barricades=[0,1].map(()=>{const mesh=new THREE.Mesh(barricadeGeometry,barricadeMaterial);mesh.name='Ash Men barricade';group.add(mesh);return mesh;});
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
@@ -800,6 +803,10 @@ export function createScablandsScene(course,options={}){
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
       braziers.group.visible=Boolean(emberStep);
+      barricades.forEach((mesh,index)=>{
+        const barrier=emberStep?.barriers?.[index];mesh.visible=Boolean(barrier);
+        if(barrier){const at=barrier.position;mesh.position.set(at.x,at.y+1,at.z);mesh.rotation.y=barrier.heading;}
+      });
       cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);
       if(cinder.visible){
         const at=emberStep.pickup.place.position;

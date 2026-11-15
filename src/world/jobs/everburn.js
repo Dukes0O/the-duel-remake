@@ -9,7 +9,7 @@ import {escortCarStart} from './steps/escort.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {LAND} from '../scablands-names.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
-import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -78,7 +78,13 @@ export function buildEverburn(land) {
     Object.freeze({id:'boneyard', door:'right', fromWaypoint:7}),
     Object.freeze({id:'run-back', door:'rear', fromWaypoint:furnacePath.indexOf(furnaceRunBack)}),
   ]);
-  const ashBarricade1 = place('ash-men-barricade-1', at('ash-barricade-1'), 12), ashBarricade2 = place('ash-men-barricade-2', at('ash-barricade-2'), 12);
+  const barricade = (id, name) => {
+    const point = at(name), before = roadPointFrom(eastRoad, point.x, point.z, -10), after = roadPointFrom(eastRoad, point.x, point.z, 10);
+    const floors = []; scablandsFloorsAt(point.x, point.z, floors);
+    return Object.freeze({id, position:Object.freeze({...point, y:floors[0]}), radius:12,
+      heading:Math.atan2(after.x - before.x, after.z - before.z)});
+  };
+  const ashBarricade1 = barricade('ash-men-barricade-1', 'ash-barricade-1'), ashBarricade2 = barricade('ash-men-barricade-2', 'ash-barricade-2');
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
   // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
   const thiefPath = path(boneyard, planeRow, wingGap);

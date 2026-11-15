@@ -136,3 +136,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the final smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+
+## Larger land, barricade positions (15 November 2026)
+
+- The two Ash Men barricades stand at the Halfway Camp and on the Girder Bridge deck. Plain boxes mark them, and the job's own solid grid stops a car at each. The bridge barricade leaves the river bed clear beneath it. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It reads the job positions and actual job solids, checks both named places and their floors, and checks the bridge bed is clear. `git diff --check`: passed.
+- For Claude to draw: the final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: the former barricade positions between the camp and town. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: riders, burning and the remaining numbered steps. The plain barricades do not yet disappear when burned; that belongs to step 3d.
