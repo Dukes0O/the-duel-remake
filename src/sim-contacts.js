@@ -303,8 +303,12 @@ export function _staticContacts(car, player, journeyColliders = null) {
   if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
       ((this.course.groundTunnels || layeredGround) && Number.isFinite(car._jumpY))) {
     start.y = (car.prevGroundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);
-    end.y = scablandsActorFeet(car);
-    if (!Number.isFinite(end.y)) end.y = this.course.groundAt(car.s, car.lateral).y;
+    if (this.course.def?.scablands) {
+      end.y = scablandsActorFeet(car);
+      if (!Number.isFinite(end.y)) end.y = this.course.groundAt(car.s, car.lateral).y;
+    } else {
+      end.y = (car.groundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0);
+    }
   } else {
     // Grounded cars keep the established horizontal contact rules; only
     // airborne vehicles need extra terrain samples and vertical clearance.

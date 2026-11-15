@@ -14,7 +14,7 @@ The scenario passes `node --check`. A Node-only stub ran the scenario through bo
 
 The selected lane checks passed in two parts: 61 suites passed before the run was stopped to exclude an additional FFmpeg-dependent suite; the remaining 192 passed. The long Everburn suite and the FFmpeg-dependent suites were excluded as directed. `npm run build` passed, with Vite reporting its existing large-chunk and mixed-import warnings.
 
-The latest floor and scenario changes still need the final lane checks and integration update.
+Integration c88f83669 is an ancestor of this branch, and its status page is unchanged. The lane check found a non-Scablands contact regression; restricting the new calculation to the Scablands fixed it, and the core, tunnel and solid checks passed again. The final lane check and build still need results.
 
 ## For Claude to run
 
