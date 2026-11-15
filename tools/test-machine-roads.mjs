@@ -1,10 +1,24 @@
 import assert from 'node:assert/strict';
+import {readdir, readFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell, workTownRoadCell} from '../src/machines/roads.js';
 import {createTown, deserializeTown, serializeTown} from '../src/town/town-state.js';
 import {stepTown} from '../src/town/index.js';
 import {machineControlInput} from '../src/input-contexts.js';
 import {findHaulRoute, createHauler} from '../src/town/town-haulers.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
+
+async function checkMachineText(directory) {
+  for (const entry of await readdir(directory, {withFileTypes:true})) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) await checkMachineText(path);
+    else if (entry.isFile()) {
+      const text = await readFile(path, 'utf8');
+      assert.ok(!text.includes('\u00c2'), `${path} contains a broken character.`);
+    }
+  }
+}
+await checkMachineText('src/machines');
 
 function buildRoad() {
   let work = createRoadWork();
@@ -226,6 +240,15 @@ const softColor = floorGeometry.attributes.color.getX(middle);
 visibleWork.cells['2:3'] = {height:0, spread:1, compaction:1, surface:1, roughness:0};
 roadView.update(visibleWork);
 assert.notEqual(floorGeometry.attributes.color.getX(middle), softColor, 'A repaired road looks different.');
+const pavedColor = floorGeometry.attributes.color.getX(middle);
+assert.equal(floorGeometry.attributes.color.getX(edge), pavedColor, 'A paved road has a clean edge across the screed.');
+visibleWork.cells['2:3'] = {height:0, spread:1, compaction:1, surface:0, roughness:0};
+roadView.update(visibleWork);
+const firmColor = floorGeometry.attributes.color.getX(middle);
+visibleWork.cells['2:3'] = {height:0, spread:1, compaction:0, surface:0, roughness:0};
+roadView.update(visibleWork);
+const looseColor = floorGeometry.attributes.color.getX(middle);
+assert.ok(looseColor > firmColor && firmColor > pavedColor, 'Loose, firm and paved ground have distinct lightness.');
 assert.equal(floorPositions.getY(middle), 4, 'Repair restores the ground height.');
 delete visibleWork.cells['2:3'];
 roadView.update(visibleWork);

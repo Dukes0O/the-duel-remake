@@ -7,9 +7,9 @@ export function createRoadWorkView(parent, heightAt, floor) {
   group.name = 'yard-road-work';
   parent.add(group);
   const colours = {
-    cut:new THREE.Color(0x8c694d), spread:new THREE.Color(0xb29871),
-    firm:new THREE.Color(0x8e806a), soft:new THREE.Color(0x665b50),
-    rough:new THREE.Color(0x756b60), good:new THREE.Color(0x464746),
+    cut:new THREE.Color(0x8c694d), spread:new THREE.Color(0xf3d9a6),
+    firm:new THREE.Color(0x89745b), soft:new THREE.Color(0x665b50),
+    rough:new THREE.Color(0x756b60), good:new THREE.Color(0x181c1e),
   };
   const heapMaterial = new THREE.MeshStandardMaterial({color:0xb29871, roughness:1});
   const heap = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), heapMaterial);
@@ -65,7 +65,9 @@ export function createRoadWorkView(parent, heightAt, floor) {
         if (chosen) {
           const condition = roadCondition(chosen);
           const appearance = condition !== 'unfinished' ? condition : chosen.compaction >= 0.9 ? 'firm' : chosen.spread > 0 ? 'spread' : 'cut';
-          mixed.lerp(colours[appearance], strength);
+          // A finished screed leaves a clear edge, while loose ground blends out.
+          const colourStrength = condition === 'good' && strength > 0.6 ? 1 : strength;
+          mixed.lerp(colours[appearance], colourStrength);
         }
         color.setXYZ(index, mixed.r, mixed.g, mixed.b);
       }

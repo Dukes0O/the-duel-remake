@@ -10,6 +10,7 @@ The dozer can now cut ordinary ground and spread its load with the blade raised.
 
 ## Checks
 
+- Fourth round: road rules passed, including the machine-text encoding check and separate loose, firm and paved colours. The build passed with the existing Vite warnings. The yard screen is UTF-8 without a byte-order mark and uses LF line endings. All files changed on this branch were checked for the same broken character.
 - Road rules, all machine, dig and town suites: passed, including older and new town save round trips, road grades, truck travel, repair and the yard ground view.
 - `test-replays.mjs`: passed 297 fingerprint checks across 33 cases. `test-combat-replays.mjs`: passed 12 fingerprint checks across four encounters. No fingerprints changed.
 - Lane tier: 54 of 56 passed. Town people exceeded its 30 ms timing limit under load at 34.07 ms, then passed alone at 19.90 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it (9 of 9).
@@ -17,7 +18,7 @@ The dozer can now cut ordinary ground and spread its load with the blade raised.
 
 ## For Claude to run
 
-Run `tools/scenarios/machine-roads.mjs` with memory-only saves. Check one picture of each machine working with only its own controls, a finished stretch, and a bad stretch. Browser checks cannot run in this lane. Review the code and the changed assertion before merging.
+Run `tools/scenarios/machine-roads.mjs` with memory-only saves. Check one picture of each machine working with only its own controls, a finished stretch, and a bad stretch. The scenario passed before the fourth-round visual changes; check the new surface colours and screen text. Browser checks cannot run in this lane. Review the code and the changed assertion before merging.
 
 ## Sound cues
 
