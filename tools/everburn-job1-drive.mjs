@@ -16,3 +16,24 @@ export function driveToCinder(duel, cinder, maxTicks = 1800) {
   }
   return {distance, ticks, loaded:world.job.stepState.loaded === true};
 }
+
+// Leave along the gate's centre line after picking up the pot.
+export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
+  const state = duel.state;
+  const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const target = {x:gate.x + forward.x * 45, z:gate.z + forward.z * 45};
+  let along = -Infinity, gateOffset = null, ticks = 0;
+  for (; ticks < maxTicks && along < 20; ticks++) {
+    const car = duel.course.worldAt(state.s, state.lateral);
+    along = (car.x - gate.x) * forward.x + (car.z - gate.z) * forward.z;
+    if (along >= 0 && gateOffset === null) {
+      gateOffset = (car.x - gate.x) * forward.z - (car.z - gate.z) * forward.x;
+    }
+    const turn = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + state.headingError));
+    duel.setInput({throttle:Math.abs(state.speedMph) < 12 ? 0.55 : 0,
+      brake:Math.abs(state.speedMph) > 14 ? 1 : 0,
+      steer:Math.max(-1, Math.min(1, -turn * 2))});
+    duel.step(1 / 60);
+  }
+  return {along, gateOffset, ticks};
+}

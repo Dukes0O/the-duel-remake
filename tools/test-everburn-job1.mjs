@@ -25,7 +25,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
-import {driveToCinder} from './everburn-job1-drive.mjs';
+import {driveToCinder, driveThroughYardGate} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -296,6 +296,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const result = driveToCinder(duel, pickup);
   assert.equal(world.job.stepState.loaded, true, `the real car collects the pot from Cinder; distance ${result.distance.toFixed(1)} m`);
   assert.ok(world.job.stepState.ember > 99, 'the pickup begins with a bright ember');
+  const exit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(exit.along >= 20, `the loaded car drives through the gate: ${JSON.stringify(exit)}`);
+  assert.ok(Math.abs(exit.gateOffset) < 6, `the car crosses within the 12 m gate: ${JSON.stringify(exit)}`);
+  assert.ok(world.job.stepState.ember > 0, 'the ember stays alight through the gate');
 }
 // The real job requests the gate only for a car approaching slowly.
 {

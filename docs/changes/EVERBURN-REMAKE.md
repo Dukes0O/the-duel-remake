@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, proof drive through the yard gate (15 November 2026)
+
+- The seeded Medium proof drive now continues from Cinder through the actual east gate with the ember alight. This is part of step 7a; the East Road arrival and its ember band still need proof. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real car crosses within the 12 m opening and travels at least 20 m beyond it. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: the proof driver aims 45 m beyond the gate and keeps below 14 mph while leaving, pending the full route drive.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival and the other proof drives, camera, cover and scenario.
+
 ## Larger land, pause screen (15 November 2026)
 
 - The Hot Delivery pause screen names the job and the Scablands, both during and between steps. Other jobs keep their existing description. No sound event was added.
