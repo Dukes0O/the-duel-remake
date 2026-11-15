@@ -364,6 +364,18 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
   }
 });
 
+test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
+  const hills = HILLS.filter(hill => hill.kind === 'breaks');
+  assert.equal(hills.length, 16);
+  for (const hill of hills) {
+    const nearest = Math.min(...hills.filter(other => other !== hill)
+      .map(other => Math.hypot(hill.x - other.x, hill.z - other.z)));
+    assert.ok(nearest >= 400 && nearest <= 900);
+    assert.ok(hill.radius >= 260 && hill.radius <= 460);
+    assert.ok(hill.height >= 40 && hill.height <= 90);
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))

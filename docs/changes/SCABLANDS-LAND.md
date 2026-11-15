@@ -1802,3 +1802,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the coun
 Changed assertion, for Claude to review: the foothill count changed from at least 2 to exactly 6 to match the new design. It is stricter, not loosened. Codex decided: seeded outer foothills stand north of the Ridge, continuing the existing arrangement. Removed: none.
 
 Still needed: the Breaks and six mesas, all job and other protected corridors, route checks, dune picture and final checks. Claude must run and judge the picture scenario.
+
+### Hill country: more Breaks hills
+
+The Breaks now have 16 hills. A seeded placement grows the existing group inside or near the triangle between the yard, the Everburn and the Dead Mall, while keeping the new hills clear of roads and named places. The new hills follow the Dead Mall when it moves. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. A new check covers the count, sizes and nearest-neighbour spacing. The first placement failed the existing ordered-spacing check; the next failed its location check. Both passed after placement was corrected. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the new count and spacing check adds coverage. Codex decided: grow the new hills from the previous hill, with seeded candidates, so the existing ordered-spacing claim remains true. Removed: none.
+
+Still needed: verify all 16 against the full placement and protected-corridor rules, build and prove all three road passes, finish the six mesas, route checks, dune picture and final checks. Claude must run and judge the picture scenario.

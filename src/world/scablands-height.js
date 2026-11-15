@@ -35,6 +35,31 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
   ];
+  // Grow the Breaks from the existing hills, using offsets from the Mall so
+  // that the whole group follows that named place when the land is moved.
+  const breaksRng=makeRng(seed ^ 0x42524541), mall=LAND.place('dead-mall');
+  const breaks=hills.filter(hill=>hill.kind==='breaks').map(hill=>({x:hill.x,z:hill.z,radius:hill.radius}));
+  const yard=LAND.yard, burn=LAND.place('everburn');
+  const side=(a,b,p)=>(b.x-a.x)*(p.z-a.z)-(b.z-a.z)*(p.x-a.x);
+  const triangle=[yard,burn,mall];
+  const withinCountry=(x,z)=>{
+    const point={x,z}, signs=triangle.map((a,i)=>side(a,triangle[(i+1)%3],point));
+    if(signs.every(value=>value>=0)||signs.every(value=>value<=0)) return true;
+    return triangle.some((a,i)=>distanceToRoad(x,z,[a,triangle[(i+1)%3]])<=600);
+  };
+  for(let attempt=0;attempt<12000 && breaks.length<16;attempt++){
+    const anchor=breaks[breaks.length-1];
+    const angle=breaksRng.range(0,Math.PI*2), distance=breaksRng.range(500,850);
+    const x=anchor.x+Math.cos(angle)*distance, z=anchor.z+Math.sin(angle)*distance;
+    const radius=breaksRng.range(300,400), height=breaksRng.range(40,Math.min(70,radius*.17));
+    if(x>=0||z<=0||z>=mall.z||!withinCountry(x,z)||Math.hypot(x-yard.x,z-yard.z)<radius+500) continue;
+    if([burn,mall].some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+350)) continue;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+10)) continue;
+    if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;
+    if(breaks.some(hill=>Math.hypot(x-hill.x,z-hill.z)<400)) continue;
+    breaks.push({x,z,radius});
+    hills.push(Object.freeze({...land.at('dead-mall',x-mall.x,z-mall.z),kind:'breaks',height,radius}));
+  }
   // The outer foothills are lower than the two near the Ridge. Select their
   // offsets against the fixed land so they follow the Ridge when it moves.
   const foothillRng=makeRng(seed ^ 0x52494447), outer=[];
