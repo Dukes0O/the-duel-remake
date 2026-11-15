@@ -6,7 +6,7 @@ A town can record individual machine actions without changing an old save. Town 
 
 ## Review fixes in progress
 
-The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard check, browser scenario failure, and ground view still need work. The earlier full results below precede these fixes and do not cover them.
+The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard test now checks the exact eight practice cells and nothing else. The scenario had an impossible third roller wait above the maximum compaction; it now caps the target and reports the yard state on every timeout. A keyboard-driven yard test reaches the paver and repairs the surface. The ground view still needs work: it draws narrow boxes above the terrain. The earlier full results below precede these fixes and do not cover them.
 
 ## Checks
 
@@ -25,7 +25,7 @@ Blade work: `dozer-blade`. Rolling: `roller-ground`. Paving: `paver-surface`.
 
 ## Changed assertions, for Claude to review
 
-The fresh-yard assertion changed from `deepEqual(freshYard.roadWork, createRoadWork())` to `notDeepEqual(freshYard.roadWork, yard.roadWork)`. A fresh yard now contains the practice ground rather than empty ground. Added assertions check the starting raised patch and ditch and that the dozer fills the ditch. Claude should review the changed assertion.
+The fresh-yard assertion originally changed from `deepEqual(freshYard.roadWork, createRoadWork())` to `notDeepEqual(freshYard.roadWork, yard.roadWork)` because the yard gained practice ground. The review found that too weak. It now checks exact equality with the eight defined practice cells and an empty blade, so any leftover work fails. Claude should review this change.
 
 ## Codex decided (Claude to review)
 

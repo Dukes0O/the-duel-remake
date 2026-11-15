@@ -73,6 +73,7 @@ for (const town of [slowTown, fastTown]) {
 }
 assert.ok(fastTown.haulers[0].progress > slowTown.haulers[0].progress,
   'A paved road moves the town truck farther through one day of town ticks.');
+assert.ok(fastTown.haulers[0].progress > 0.1, 'Partial travel accumulates across hourly ticks.');
 workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:2, edgeOffsetM:0});
 assert.equal(haulTown.machineRoads[0].roadClass, 'plank', 'A rough patch lowers the road grade.');
 workTownRoadCell(haulTown, {kind:'paver', x:0, z:0, speedMps:0.5, edgeOffsetM:0});
