@@ -434,3 +434,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
 - For Claude to run: the requested browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: map captions, six drives, camera, cover and scenario.
+
+## Larger land, captions on the map (15 November 2026)
+
+- A job caption stays visible when the map pauses the game and sits at the map's lower edge. It returns to its original place when the map closes. Ordinary pause still hides it. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real screen checks the caption during map pause and ordinary pause; the map caption's move and return are checked. `git diff --check`: passed.
+- For Claude to run: check the caption's placement in the browser scenario, then run the final checks and both long drivers. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: the caption's position across the middle of the open map. The old `everburn-play` scenario still needs replacement or removal. Still to build: the six drives, camera, cover and scenario.

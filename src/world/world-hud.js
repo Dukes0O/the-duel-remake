@@ -266,6 +266,17 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
     (learnt.length ? `<ul class="world-hud-learnt">${learnt.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '<p class="world-hud-none">Nothing yet. Drive, and look.</p>');
 }
 
+export function moveMapCaption(caption, map, original = null) {
+  if (!caption) return null;
+  if (original) {
+    original.parent.insertBefore(caption, original.next);
+    return null;
+  }
+  const place = {parent: caption.parentNode, next: caption.nextSibling};
+  map.append(caption);
+  return place;
+}
+
 export function createWorldHud({host, app = null, picture = null}) {
   const doc = host.ownerDocument;
   if (doc?.head && !doc.getElementById(STYLE_ID)) {
@@ -292,7 +303,8 @@ export function createWorldHud({host, app = null, picture = null}) {
   const canvas = root.querySelector('.world-hud-map-canvas'), context = canvas?.getContext?.('2d');
   const smallCanvas = root.querySelector('.world-hud-minimap-canvas'), smallContext = smallCanvas?.getContext?.('2d');
   const ways = root.querySelector('.world-hud-ways');
-  let active = false, mapOpen = false, disposed = false, pausedByMap = false;
+  let active = false, mapOpen = false, disposed = false, pausedByMap = false, captionPlace = null;
+  const caption = host.querySelector('#race-callout');
   const land = picture ?? getLandPicture();
   let landCanvas = null, lastSmall = -Infinity, lastKnowledgeVersion = -1, lastFrame = null;
   const knowledgeOf = new WeakMap(), hotWaysOf = new WeakMap();
@@ -310,8 +322,7 @@ export function createWorldHud({host, app = null, picture = null}) {
     if (context) drawBigMap(context, {...frame, ways: hotDelivery ? result.ways.filter(way => way.id === 'east-road' || frame.knowledge.ways.has(way.id)) : result.ways}, BIG_MAP);
     stats.bigDraws++; stats.bigMs = clock() - began;
   };
-  // While the big map is open the stage carries `world-map-open`, which lifts the story caption above the map (world-hud.css). The game
-  // stands still while the map is open, and the pause screen is not shown over it.
+  // The caption sits on the map's lower edge while the game is paused for the map.
   const setMapOpen = value => {
     if (value === mapOpen) return;
     if (value && app) {
@@ -319,6 +330,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       app.worldMapOpen = true; app.togglePause(); pausedByMap = true;
     }
     mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); host.classList?.toggle('world-map-open', mapOpen);
+    captionPlace = moveMapCaption(caption, map, captionPlace);
     if (!value && app) { app.worldMapOpen = false; if (pausedByMap && app.duel.state.paused) app.togglePause(); pausedByMap = false; }
     if (mapOpen && lastFrame) drawBig(lastFrame);
   };
@@ -418,6 +430,7 @@ export function createWorldHud({host, app = null, picture = null}) {
     },
     dispose() {
       if (disposed) return;
+      if (captionPlace) captionPlace = moveMapCaption(caption, map, captionPlace);
       disposed = true; root.removeEventListener('click', click); doc.removeEventListener('keydown', keydown); host.classList?.remove('world-map-open'); host.classList?.remove('world-minimap-on'); root.remove();
     },
   };

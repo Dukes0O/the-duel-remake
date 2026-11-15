@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays, learnHotDeliveryDangers} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -170,10 +170,21 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   ui['race-position'].closest = () => ({hidden:false});
   ui['route-section'].closest = () => ({querySelector:() => ({textContent:''})});
   const text = (id, value) => {ui[id].textContent = String(value);};
-  const update = createHudScreen({app:{duel, player:{name:'Test'}}, ui, text, time:String, credits:String,
+  const app = {duel, player:{name:'Test'}};
+  const update = createHudScreen({app, ui, text, time:String, credits:String,
     clamp:value => Math.max(0, Math.min(1, value)), routeMap:{update(){}}});
   duel.state.status = 'racing';
   update(duel.state);
+  duel.onStoryCaption('Cinder has a line.', false, duel.state, 5);
+  duel.state.paused = true;
+  app.worldMapOpen = true;
+  update(duel.state);
+  assert.equal(ui['race-callout'].hidden, false, 'the caption remains visible while the map pauses the job');
+  assert.equal(ui['callout-text'].textContent, 'Cinder has a line.');
+  app.worldMapOpen = false;
+  update(duel.state);
+  assert.equal(ui['race-callout'].hidden, true, 'the ordinary pause screen hides the caption');
+  duel.state.paused = false;
   assert.equal(clock.hidden, true, 'world jobs hide the race clock');
   assert.equal(ui['style-score-panel'].hidden, true, 'world jobs hide style points');
   const readout = {update:() => ({phase:'airborne', heightMeters:25, peakMeters:25, distanceMeters:10, durationSeconds:1})};
@@ -185,6 +196,17 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.equal(clock.hidden, false, 'the race clock returns outside a world job');
   assert.equal(ui['style-score-panel'].hidden, false, 'style points return outside a world job');
   assert.equal(ui['jump-height-panel'].hidden, false, 'the jump readout returns outside a world job');
+}
+// The same live caption moves onto the map and returns to its original place.
+{
+  const next = {}, caption = {nextSibling:next};
+  const parent = {insertBefore(node, sibling) {assert.equal(node, caption); assert.equal(sibling, next); node.parentNode = this;}};
+  const map = {append(node) {assert.equal(node, caption); node.parentNode = this;}};
+  caption.parentNode = parent;
+  const original = moveMapCaption(caption, map);
+  assert.equal(caption.parentNode, map);
+  assert.equal(moveMapCaption(caption, map, original), null);
+  assert.equal(caption.parentNode, parent);
 }
 // The drawn furnace and its sight share the named high ground north of the Steps.
 {
