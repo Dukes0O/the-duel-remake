@@ -311,6 +311,13 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(next.peakSpeedMph < 40, `the car keeps a steady road speed: ${JSON.stringify(next)}`);
   assert.ok(next.maxDistance < 20, `the car stays close to the road on the next stretch: ${JSON.stringify(next)}`);
   assert.ok(world.job.stepState.ember > 0, `the ember stays alight after 1 km: ${world.job.stepState.ember}; ${JSON.stringify(next)}`);
+  const further = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 1500);
+  assert.ok(further.along >= 1500, `the car follows the East Road for 1.5 km: ${JSON.stringify(further)}`);
+  assert.ok(further.driven >= 490, `the real car travels the third stretch: ${JSON.stringify(further)}`);
+  assert.ok(further.maxDistance < 20, `the car stays close to the road on the third stretch: ${JSON.stringify(further)}`);
+  assert.equal(further.ember, world.job.stepState.ember, 'the drive records the real ember at the end of the stretch');
+  assert.ok(further.ember > 0, `the ember stays alight after 1.5 km: ${JSON.stringify(further)}`);
+  assert.ok(further.elapsedSeconds > 0, 'the drive records its elapsed time');
 }
 // The real job requests the gate only for a car approaching slowly.
 {

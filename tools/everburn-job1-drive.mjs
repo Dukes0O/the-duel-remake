@@ -59,5 +59,6 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
   }
-  return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, ticks};
+  return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph,
+    ember:state.arena.worldJob.job.stepState.ember, elapsedSeconds:ticks / 60, ticks};
 }
