@@ -20,6 +20,8 @@ The Dig page now maps Mabel's W and S to thrust, A and D to steering, and the up
 
 The Dig now has synthesised borer sounds: a head loop whose pitch follows head speed, a conveyor loop while fresh muck moves, and distinct stall, refusal and breakthrough cues. The loops stop when Mabel stops working, the sound is muted, or the Dig closes. These are connected for the borer but cannot be heard until she is selectable.
 
+The Dig page has Mabel's head-speed dial, distance cut, control instructions and operating guidance. The dial follows the simulated head and is hidden for other machines. These controls remain unreachable until selection and the scarp scene are connected.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -46,6 +48,7 @@ The Dig now has synthesised borer sounds: a head loop whose pitch follows head s
 - `node tools/test-machine-borer.mjs`: passed with Dig simulation driving, cutting, tunnel updates and reverse travel.
 - `node tools/test-machine-borer.mjs`: passed with keyboard thrust, steering and slope and mapped machine axes.
 - `node tools/test-machine-borer.mjs`: passed with head pitch, conveyor, event cues and mute checks using a fake mixer.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the borer display. The display needs Claude's browser check.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
