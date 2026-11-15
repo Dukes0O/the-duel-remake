@@ -134,6 +134,20 @@ export function worldMapCar(state, course) {
   return {x: at.x, y: at.y, z: at.z, heading: (at.heading ?? 0) + (state.headingError || 0)};
 }
 
+// Direction on screen is relative to the car, with zero pointing towards the top.
+export function brazierArrow(ember, car, knowledge) {
+  if (!ember?.out || !car || !knowledge?.braziers?.size) return null;
+  let nearest = null, distance = Infinity;
+  for (const brazier of knowledge.braziers.values()) {
+    const gap = Math.hypot(brazier.x - car.x, brazier.z - car.z);
+    if (gap < distance) { nearest = brazier; distance = gap; }
+  }
+  const angle = Math.atan2(nearest.x - car.x, nearest.z - car.z) - (car.heading ?? 0);
+  const x = Math.sin(angle), y = -Math.cos(angle);
+  const scale = 1 / Math.max(Math.abs(x), Math.abs(y));
+  return {id: nearest.id, distance, angle: angle * 180 / Math.PI, x: 50 + x * scale * 46, y: 50 + y * scale * 44};
+}
+
 // What both maps are drawn from at this moment: only reads the game.
 export function worldMapFrame({state, course, model, knowledge, picture, canvas}) {
   const worldJob = state.arena.worldJob, car = worldMapCar(state, course);
@@ -189,7 +203,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   }
   const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
   root.setAttribute('aria-label', 'Scablands job guidance');
-  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-ember" hidden><b>EMBER</b><span class="world-hud-ember-bar"><i></i></span><em></em></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-ember" hidden><b>EMBER</b><span class="world-hud-ember-bar"><i></i></span><em></em></div><div class="world-hud-brazier-arrow" role="status" hidden><i>▲</i><span></span></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
     <section class="world-hud-minimap" aria-label="Map of the land round your car"><canvas class="world-hud-minimap-canvas" width="${SMALL_MAP.width}" height="${SMALL_MAP.height}" role="img" aria-label="Map of the land round your car"></canvas></section>
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>THE SCABLANDS</b><span class="world-hud-map-sub">The whole land, north at the top. The game stands still while this is open.</span><button type="button" data-world-map-close>CLOSE</button></header>
@@ -201,6 +215,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
   const emberGauge = root.querySelector('.world-hud-ember'), emberBar = emberGauge.querySelector('i'), emberNote = emberGauge.querySelector('em'), emberLabel = emberGauge.querySelector('b');
+  const brazierPointer = root.querySelector('.world-hud-brazier-arrow'), brazierDirection = brazierPointer.querySelector('i'), brazierDistance = brazierPointer.querySelector('span');
   let lastJolts = 0;
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('.world-hud-map-canvas'), context = canvas?.getContext?.('2d');
@@ -295,6 +310,15 @@ export function createWorldHud({host, app = null, picture = null}) {
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
       frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
       learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings, tunnels: duel.course.groundTunnels});
+      const pointer = brazierArrow(model.ember, frame.car, knowledge);
+      brazierPointer.hidden = !pointer;
+      if (pointer) {
+        brazierPointer.style.left = `${pointer.x}%`;
+        brazierPointer.style.top = `${pointer.y}%`;
+        brazierDirection.style.transform = `rotate(${pointer.angle}deg)`;
+        brazierDistance.textContent = `${Math.round(pointer.distance)} m`;
+        brazierPointer.setAttribute('aria-label', `Nearest known brazier, ${Math.round(pointer.distance)} metres away`);
+      }
       lastFrame = frame;
       if (mapOpen) { stats.updates++; stats.updateMs += clock() - began; return; }
       const now = clock();

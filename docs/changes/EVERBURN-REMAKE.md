@@ -128,3 +128,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the final smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
 - Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, out-pot direction (15 November 2026)
+
+- When the ember is out, an arrow at the screen edge points toward the nearest known brazier and shows its distance in metres. It turns with the car and uses the same knowledge as the maps. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It checks the nearest known place, distance, direction, screen edge and a turn of the car. `git diff --check`: passed.
+- For Claude to draw: the final smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked in this round. Codex decided: none.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
