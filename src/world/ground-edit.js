@@ -85,13 +85,34 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       depth < gravelEnd ? 'gravel' : 'rock';
   }
 
-  function cut(shape, target, maxVolume = Infinity) {
+  function cut(shape, target, maxVolume = Infinity, bore = null) {
     validShape(shape);
     if (!finite(target)) throw new TypeError('Cut target must be a finite height.');
     if (!(maxVolume >= 0)) throw new TypeError('Cut volume limit must be non-negative.');
+    if (bore !== null && (!bore || !finite(bore.length) || bore.length < 0))
+      throw new TypeError('An underground cut needs a non-negative length.');
     const reason = refusal(shape);
     if (reason) return emptyResult(reason);
     const result = emptyResult();
+    if (bore !== null) {
+      // The tunnel segments own the void. Do not lower the surface above it.
+      // Sample equal-area strips across the circular face for the land's layers.
+      const volume = Math.min(Math.PI * shape.radius ** 2 * bore.length, maxVolume);
+      const strips = 32;
+      let weightSum = 0;
+      const weights = [];
+      for (let i = 0; i < strips; i++) {
+        const offset = (2 * (i + 0.5) / strips - 1) * shape.radius;
+        const weight = Math.sqrt(shape.radius ** 2 - offset ** 2);
+        weights.push({offset, weight});
+        weightSum += weight;
+      }
+      for (const {offset, weight} of weights)
+        result.volumes[materialAt(shape.x, target + offset, shape.z)] += volume * weight / weightSum;
+      result.volume = volume;
+      result.looseVolume = volume * BULKING;
+      return result;
+    }
     const minX = Math.ceil(shape.x - shape.radius), maxX = Math.floor(shape.x + shape.radius);
     const minZ = Math.ceil(shape.z - shape.radius), maxZ = Math.floor(shape.z + shape.radius);
     for (let z = minZ; z <= maxZ; z++) for (let x = minX; x <= maxX; x++) {
