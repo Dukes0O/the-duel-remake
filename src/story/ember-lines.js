@@ -19,6 +19,7 @@ export const EMBER_CAPTIONS = Object.freeze({
   'story.ember.cinder.3': line('Cinder', 'First barricade', 'Ash Men\'s fence. Get close, and burn it.'),
   'story.ember.cinder.4': line('Cinder', 'Crash, pot spills', 'You dropped my fire! Go back, I\'ve got more. Slower this time.'),
   'story.ember.cinder.24': line('Cinder', 'Job 1 sighting', 'See the smoke with wheels under it? That is Old Smoke\'s furnace. Keep the pot out of its sight.'),
+  'story.ember.auntie-solder.retreat': line('Auntie Solder', 'Ash Men turn back', 'Our guns cover the road. The Ash Men will not come any closer.'),
   'story.ember.auntie-solder.1': line('Auntie Solder', 'Tin Town in sight', 'Is that smoke coming from your roof, or are you just pleased to see us?'),
   'story.ember.auntie-solder.2': line('Auntie Solder', 'Job 1 won', 'A live ember. I haven\'t seen one in a year. Bring it in.'),
   'story.ember.auntie-solder.3': line('Auntie Solder', 'Job 2 start', 'You can\'t get that car down my alleys. You\'ve legs, haven\'t you?'),

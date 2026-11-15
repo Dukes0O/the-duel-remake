@@ -202,3 +202,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
 - Removed: burnt barricades are removed from the job's drawing, solid grid and hit targets. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the turn-back at Tin Town, yard placement and the remaining steps.
+
+## Larger land, Tin Town's safe approach (15 November 2026)
+
+- A loaded car within 400 m of Tin Town's gate and its fence sends both Ash Men riders back to their posts. They do not resume pursuit if the car leaves. Auntie Solder explains why once. Her caption uses the existing radio click; no new sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real job step checks the 400 m boundary, both riders moving toward their posts, the one-time line and no resumed pursuit. `git diff --check`: passed.
+- Codex decided: the gate and its two fence sections are the wall used for the distance, including the gate opening. Claude should review the line and measurement.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks, including the two long drivers, remain for the last round.
+- Changed assertions: none. Race fingerprints: not checked in this round.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: yard placement and the remaining steps.

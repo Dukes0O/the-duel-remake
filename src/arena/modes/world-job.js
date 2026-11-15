@@ -174,6 +174,19 @@ export function prepareWorldJobControls(duel) {
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   updateJobActor(duel, worldJob, step?.actor, dt);
+  const wall = step?.riderSafeWall;
+  if (wall && worldJob.job.stepState.loaded && !worldJob.ridersRetreating) {
+    const car = position(duel, duel.state);
+    const yaw = Math.atan2(wall.through.x, wall.through.z);
+    const along = (car.x - wall.x) * Math.cos(yaw) - (car.z - wall.z) * Math.sin(yaw);
+    const half = wall.opening / 2 + 2.1 + wall.fenceLength;
+    const nearest = Math.max(-half, Math.min(half, along));
+    const x = wall.x + nearest * Math.cos(yaw), z = wall.z - nearest * Math.sin(yaw);
+    if (Math.hypot(car.x - x, car.z - z) <= wall.radius) {
+      worldJob.ridersRetreating = true;
+      sayLine(duel, worldJob, wall.lineId);
+    }
+  }
   for (const actor of step?.waitingActors ?? []) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
@@ -188,6 +201,22 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
   if (!rider || rider.health <= 0 || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
   const car = position(duel, duel.state);
+  if (worldJob.ridersRetreating) {
+    rider.pursuing = false;
+    const home = actorDef.start.position;
+    const dx = home.x - rider.position.x, dz = home.z - rider.position.z;
+    const distance = Math.hypot(dx, dz);
+    rider.speed = 0;
+    if (distance > 1 && dt > 0) {
+      rider.heading = Math.atan2(dx, dz);
+      const travel = Math.min(distance, 18 * dt), before = rider.position;
+      const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
+        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+      rider.position = {x:moved.x, y:moved.y, z:moved.z};
+      rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+    }
+    return;
+  }
   const dx = car.x - rider.position.x, dz = car.z - rider.position.z;
   const distance = Math.hypot(dx, dz);
   const scoopAmbush = actorDef.scoopAmbush && worldJob.job.stepState.scoopBrazier === actorDef.scoopAmbush;

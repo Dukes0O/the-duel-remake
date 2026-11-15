@@ -12,6 +12,7 @@ import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world
 import {riverDepthAt} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
+import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
@@ -89,6 +90,38 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   assert.ok(world.job.stepState.scoopTime < 3, 'the ambush begins during the scoop');
   assert.equal(world.actors[0].pursuing, true);
   assert.notEqual(world.actors[1].pursuing, true);
+}
+// A loaded car crossing the 400 m line at the gate sends both riders home once.
+{
+  const world = createWorldJob(definition), wall = step.riderSafeWall, captions = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {x:wall.x, z:wall.z + wall.radius + 1};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  for (const rider of world.actors) rider.pursuing = true;
+  stepWorldJob(duel, 0);
+  assert.notEqual(world.ridersRetreating, true, 'outside 400 m the pursuit continues');
+  car = {...car, z:wall.z + wall.radius - 1};
+  for (const rider of world.actors) rider.position.x += 30;
+  const before = world.actors.map(rider => ({...rider.position}));
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.ridersRetreating, true);
+  for (const [index, rider] of world.actors.entries()) {
+    const home = step.waitingActors[index].start.position;
+    assert.equal(rider.pursuing, false);
+    assert.ok(Math.hypot(rider.position.x-home.x, rider.position.z-home.z) <
+      Math.hypot(before[index].x-home.x, before[index].z-home.z));
+  }
+  const line = captions.filter(text => text.includes('Our guns cover the road.'));
+  assert.equal(line.length, 1);
+  car = {...car, z:wall.z + wall.radius + 100};
+  stepWorldJob(duel, 0.1);
+  assert.equal(captions.filter(text => text.includes('Our guns cover the road.')).length, 1);
+  assert.ok(world.actors.every(rider => !rider.pursuing), 'the riders do not resume pursuit');
 }
 // The actual job grid holds both barricades on their named floor, including the bridge deck.
 const barricadeGrid = createJobSolidGrid(createSolidGrid([]));

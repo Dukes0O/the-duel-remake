@@ -8,6 +8,7 @@ import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
 import {EMBER_RULE} from './ember-rule.js';
 import {LAND} from '../scablands-names.js';
+import {tinTownGateFor} from '../tin-town-gate.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.js';
 
@@ -109,6 +110,7 @@ export function buildEverburn(land) {
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders,
+        riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},
           {place:ashBarricade1, radius:60, lineId:'story.ember.cinder.3'},
