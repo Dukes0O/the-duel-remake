@@ -511,6 +511,35 @@ test('named ways, truck routes and crossing ramps reject new footprints', () => 
     assert.equal(thingFootprintClear(crossing.x, crossing.z, 0, []), false, crossing.id);
 });
 
+test('the new solid index leaves the named driving corridors clear', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  const {fixed, loneBoulders} = course.realismThings;
+  const grid = thingSolidGrid(fixed, loneBoulders);
+  const routes = HOT_DELIVERY_WAYS.map(way => ({width: 7, points: routeFor(way.legs,
+    {start: LAND.yard, destination: LAND.at('tin-town')})}));
+  routes.push(...Object.values(GAS_RUN_PATHS).map(path => ({width: 8, points: path.map(place => place.position)})));
+  for (const job of EVERBURN_JOBS) for (const step of job.steps)
+    if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace'))
+      routes.push({width: 8, points: step.path.map(place => place.position)});
+  const steps = stepsWayFor();
+  routes.push({width: 7, points: [-1, 1].map(side =>
+    ({x: steps.x + side * steps.nx * steps.reach, z: steps.z + side * steps.nz * steps.reach}))});
+  for (const {points, width} of routes) for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], count = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z)));
+    for (let n = 0; n <= count; n++) {
+      const x = a.x + (b.x - a.x) * n / count, z = a.z + (b.z - a.z) * n / count;
+      for (const solid of grid.near(x, z, x, z, width + 4)) {
+        const dx = x - solid.x, dz = z - solid.z, c = Math.cos(solid.heading), s = Math.sin(solid.heading);
+        const localX = dx * c - dz * s, localZ = dx * s + dz * c;
+        const gap = Math.hypot(Math.max(0, Math.abs(localX) - solid.halfX), Math.max(0, Math.abs(localZ) - solid.halfZ));
+        assert.ok(gap >= width - .5, `${solid.id} intrudes into a driving corridor`);
+      }
+    }
+  }
+});
+
 test('a fast fence hit removes only that visit post, lowers the wire and does no damage', async () => {
   const {Course} = await import('../src/course.js');
   const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
