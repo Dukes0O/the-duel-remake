@@ -1837,7 +1837,7 @@ All six mesas now rise 30 to 36 m, with 30 m sides and 220 m ramps. The eastern 
 
 Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. Its first run exposed the East Road overlap; the rerun passed after moving the mesa. Race fingerprints and world signatures were not rerun. Claude must run and judge all picture views, including those after the Ridge.
 
-Changed assertion, for Claude to review: added mesas' height range changed from 15–25 m to 30–55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30–36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
+Changed assertion, for Claude to review: added mesas' height range changed from 15ï¿½25 m to 30ï¿½55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30ï¿½36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
 
 Still needed: prove the three separate furnace-cover stretches and all protected corridors; verify the Breaks and all three road passes; drive the routes and jobs; complete the remaining hill-country requirements and final checks.
 
@@ -1947,7 +1947,7 @@ Still needed: provide and prove three separate 150 m furnace-cover stretches, pr
 
 ### Hill country: plates-way clearance
 
-Moved the first mesa off the plates' way. Seeded mesas now keep their nominal top radii at least 200 m from that way and their full ramp footprints clear of the trial tunnel mouths. A new assertion checks the nominal top clearance for all six mesas. The first mesa's centre moved from 550 m south to 350 m north of its named anchor; the later seeded positions changed as a result. No event or sound was added.
+Moved the first mesa off the plates' way. Seeded mesas now keep their nominal top radii at least 200 m from that way and their full ramp footprints clear of the trial tunnel mouths. A new assertion checks the nominal top clearance for all six mesas. The first mesa's centre moved from 200 m south to 350 m north of its named anchor; the later seeded positions changed as a result. No event or sound was added.
 
 Check: `node tools/test-scablands-hills.mjs` passed 40 of 40. An intermediate placement failed the tunnel-mouth, ramp and tunnel-roof checks and was replaced. The browser scenario, route drives, replay checks and world signatures were not run. Changed assertions: none; the clearance assertion is new. Codex decided: measure 200 m from the nominal mesa top radius for this check. This does not yet prove clearance of the whole face and ramp. Removed: the former mesa position across the way.
 
