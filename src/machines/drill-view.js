@@ -1,5 +1,40 @@
 import * as THREE from 'three';
 
+/** Show each completed yard well at the ground height for this visit. */
+export function createYardWellheadView(parent, heightAt) {
+  const group = new THREE.Group();
+  group.name = 'yard-wellheads';
+  parent.add(group);
+  const steel = new THREE.MeshStandardMaterial({color:0x6c6557, roughness:0.8, metalness:0.2});
+  const baseGeometry = new THREE.CylinderGeometry(0.48, 0.52, 0.12, 12);
+  const pipeGeometry = new THREE.CylinderGeometry(0.14, 0.14, 0.7, 12);
+  const capGeometry = new THREE.CylinderGeometry(0.21, 0.21, 0.1, 12);
+  const shown = new Set();
+  return {
+    update(wellheads) {
+      for (const {x, z} of wellheads) {
+        const key = `${x}:${z}`;
+        if (shown.has(key)) continue;
+        shown.add(key);
+        const well = new THREE.Group();
+        well.name = `wellhead-${key}`;
+        well.position.set(x, heightAt(x, z), z);
+        for (const [geometry, y] of [[baseGeometry, 0.06], [pipeGeometry, 0.4], [capGeometry, 0.8]]) {
+          const mesh = new THREE.Mesh(geometry, steel);
+          mesh.position.y = y;
+          mesh.castShadow = true;
+          well.add(mesh);
+        }
+        group.add(well);
+      }
+    },
+    dispose() {
+      group.removeFromParent();
+      baseGeometry.dispose(); pipeGeometry.dispose(); capGeometry.dispose(); steel.dispose();
+    },
+  };
+}
+
 /** Add the mast and drill to the tracked machine used in the yard. */
 export function createDrillView(model) {
   const root = model.clone(true);

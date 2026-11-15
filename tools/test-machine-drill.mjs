@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drillYardControls, stepDrill, stepDrillRig} from '../src/machines/drill.js';
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
+import * as THREE from 'three';
+import {createYardWellheadView} from '../src/machines/drill-view.js';
 
 const site=drillSite(4312,4,7);
 assert.deepEqual(site,drillSite(4312,4,7));
@@ -41,6 +43,14 @@ rig={...rig,hole:{...rig.hole,depth:rig.hole.site.depth-0.001}};
 rig=stepDrillRig(rig,{mastDown:true,feed:0.5},1).state;
 assert.equal(rig.wellheads.length,1, 'Striking water leaves a wellhead for the visit.');
 assert.deepEqual(createDrillRigState(4312).wellheads,[], 'A new visit starts without yard wellheads.');
+const scene=new THREE.Group();
+const wellheadView=createYardWellheadView(scene,()=>3);
+wellheadView.update(rig.wellheads);
+wellheadView.update(rig.wellheads);
+assert.equal(scene.children[0].children.length,1, 'A completed well is drawn once.');
+assert.equal(scene.children[0].children[0].position.y,3, 'The well sits on the ground.');
+wellheadView.dispose();
+assert.equal(scene.children.length,0, 'Leaving the yard removes its wellheads.');
 console.log('Drill: repeatable layers and water, jam recovery and town well save passed.');
 
 assert.deepEqual(drillYardControls({KeyW:true},'drive'),{forward:1,steer:0,mastDown:false,feed:0});
