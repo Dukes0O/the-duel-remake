@@ -161,6 +161,14 @@ being redrawn; the camera can sit inside her while she reverses; the spoil bank 
 the river. **Her parking place moves to the foot of the mesa nearest the yard once hill country is merged:** a mesa is a
 wall of rock 30 to 55 m high, and the west scarp is only a step.
 
+**Corrected (Claude, 15 November 2026, late).** After Codex made the Dig follow the land's ground, I still read the pictures as
+level ground and told Codex the scarp was drawn in the wrong place. That was my mistake. Measured in the browser, the Dig's
+drawn ground agrees with the rules everywhere (13.62 m drawn against 13.60 m, 60 m ahead of her). The slope is drawn in the
+plain's flat colour with no rock and no shading, so head-on it looks like level ground. What is left: the Dig's ground wears
+the land's own look; the scenario's roof ray is taken from inside the bore; and the face rule, which let her start in a slope
+that rises only about 5 m within 12 m, is made what this card says (6 m, from her floor, across her width). At the west scarp
+she will then refuse, rightly, and she is finished at a mesa once hill country is merged.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
