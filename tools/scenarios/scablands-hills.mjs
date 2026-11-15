@@ -42,7 +42,7 @@ export function views() {
     }},
     {name: 'mesa-foot', from: side(mesa.radius + mesa.face + 60), to: mesa},
     {name: 'mesa-from-plates-way', from: mesaFromWay, to: mesa},
-    {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120)},
+    {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120), landmark: side(mesa.radius * .8)},
     {name: 'ridge-way-up', from: offset(ridge, 0, -ridge.radius - 80), to: ridge},
     {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
@@ -86,7 +86,7 @@ export async function run(context) {
     await context.waitFor('window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing" && window.__qaApp.visualReady', 'Hot Delivery racing', 120000);
     await context.waitFor(`(() => { let root = null; window.__render.scene.traverse(n => { if (n.name === 'The Scablands') root = n; }); return root?.userData.assetStatus === 'ready'; })()`, 'Scablands art', 120000);
     await evaluate(context, `(() => { const style = document.createElement('style'); style.id = 'hills-picture-style'; style.textContent = 'body *{visibility:hidden !important} canvas{visibility:visible !important} canvas.world-hud-minimap,.world-hud-minimap canvas{visibility:hidden !important}'; document.head.appendChild(style); })()`);
-    const capture = async name => {
+    const capture = async (name, landmark = null) => {
       await pause(2600);
       if (name !== 'large-map') {
       await evaluate(context, `(() => {
@@ -131,6 +131,14 @@ export async function run(context) {
         const point = car.localToWorld(car.position.clone().set(0, 1, 0)).project(r.camera);
         if (Math.abs(point.x) > 1 || Math.abs(point.y) > 1 || point.z < -1 || point.z > 1)
           throw Error('Player car is outside the picture in ' + ${JSON.stringify(name)});
+        const landmark = ${JSON.stringify(landmark)};
+        if (landmark) {
+          const height = drawnHeight(landmark.x, landmark.z);
+          if (!Number.isFinite(height)) throw Error('Landmark ground is unavailable in ' + ${JSON.stringify(name)});
+          const target = cameraPosition.clone().set(landmark.x, height, landmark.z).project(r.camera);
+          if (Math.abs(target.x) > 1 || Math.abs(target.y) > 1 || target.z < -1 || target.z > 1)
+            throw Error('Landscape feature is outside the picture in ' + ${JSON.stringify(name)});
+        }
       })()`);
       }
       const picture = await context.screenshot('scablands-hills-' + name);
@@ -150,7 +158,7 @@ export async function run(context) {
         s.arena.worldJob.job.stepState.ember = 100; a.inspectionCamera = null;
       })()`);
       await evaluate(context, '(() => window.__qaApp.advance(1.5))()');
-      await capture(view.name);
+      await capture(view.name, view.landmark || view.to);
     }
     await evaluate(context, `(() => { document.querySelector('#hills-picture-style').remove(); document.querySelectorAll('body > details').forEach(panel => { panel.style.display = 'none'; }); document.dispatchEvent(new KeyboardEvent('keydown', {code: 'KeyM', bubbles: true, cancelable: true})); })()`);
     await context.waitFor('document.querySelector(".world-hud-map") && !document.querySelector(".world-hud-map").hidden', 'large map', 30000);

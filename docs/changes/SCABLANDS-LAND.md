@@ -1756,3 +1756,11 @@ Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. `node tools/t
 Changed assertions: none; the contact-point test is new. Codex decided: no new design choice. Removed: none.
 
 Still needed: the scenario's named-landmark check and dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: picture landscape feature check
+
+Each terrain picture now checks that its named landscape point projects inside the camera view. The mesa-top view checks a point on the top, and the other views check their chosen landscape target. This checks a point, not whether the feature is unobscured or visually recognizable. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run; Claude must judge the chosen points and pictures. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; this is a new scenario check. Codex decided: no new design choice. Removed: none.
+
+Still needed: the dune picture, part C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
