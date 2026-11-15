@@ -17,6 +17,26 @@ import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+
+test('the thief and Big Bess have clear hill corridors', () => {
+  for (const id of ['everburn-run-him-down', 'everburn-slow-ride']) {
+    const job = EVERBURN_JOBS.find(item => item.id === id);
+    const points = job.steps[0].path.map(point => point.position ?? point);
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+      if (!length) continue;
+      for (const point of sampleLine([a, b], 20)) {
+        for (const offset of [-60, -30, 0, 30, 60]) {
+          const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+          assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+            `${job.name} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+        }
+      }
+    }
+  }
+});
 
 test('the plates way has a long stretch hidden from the furnace within range', () => {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');

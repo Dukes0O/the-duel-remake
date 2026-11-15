@@ -1990,3 +1990,17 @@ Checks: `node tools/test-scablands-hills.mjs` passed 43 of 43, including a new s
 Changed assertions: none. The slope check is new. Codex decided: centre the approach between the nearest point of the Ridge Road and the existing northern drive, and extend the approach beyond the 300 m ramp to meet the ten-degree limit. Removed: the impassable northern side of the Lookout.
 
 Still needed: three separate mesa-cover stretches, job-corridor proof and Easy job drives, integration and final checks. Claude must run and judge the pictures.
+
+### Hill country: route proof in progress
+
+The solid suite passed all 25 checks, including the four ways to Tin Town with realism on and off, both furnace roads, and the drives to the Ridge and Lookout tops. The Easy driver finished Hot Delivery 10 of 10 times. Survey Flags failed seed 1; the full run was stopped after that failure, so the other seeds were not checked. A separate one-seed diagnostic reached flag index 3 and ran out of time at x 981, z -386, heading toward x 3039, z -3300. The cause is not yet known.
+
+Three separate 150 m cover stretches are still missing. No land or assertions changed in this step. No new event or sound was added. The browser pictures, integration merge, replay and world-signature suites, and build remain to be checked. Removed: none.
+
+### Hill country: two job corridors
+
+The hills suite now samples the thief's and Big Bess's job paths at 20 m intervals and across 60 m on each side. Both paths are clear of the new hills at those samples. This does not prove the other job corridors. A separate sample of the furnace path found raised ground, including near the Ridge, so that route still needs review against its intended climb. No game event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 44 of 44. The new corridor check replaces no assertion and loosens none. Codex decided: sample five lines across each corridor. Removed: none. Race fingerprints and world signatures were not checked in this step.
+
+Still needed: three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive, then integration and the final checks. Claude must run and judge the pictures.
