@@ -8,9 +8,34 @@ import {RIVER_LAND} from './scablands-regions.js';
 import {sampleLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
 import {IRON_LINE, ironLineLength, sampleIronLine} from './iron-line.js';
+import {SCARPS} from './scablands-scarps.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// Rock falls sit on the foot side of each named scarp. These are candidates:
+// their full footprints still need clearance before drawing or making solids.
+export function scarpBoulderCandidates(seed, scarps = SCARPS) {
+  const rng = makeRng(seed), result = [];
+  for (const scarp of scarps) for (const [stretchIndex, {a, b}] of scarp.stretches.entries()) {
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    if (!length) continue;
+    const tx = dx / length, tz = dz / length;
+    for (let along = 20; along < length - 20; along += 45) {
+      if (!rng.chance(.65)) continue;
+      const count = 2 + Math.floor(rng.float() * 4);
+      for (let index = 0; index < count; index++) {
+        const offsetAlong = (rng.float() - .5) * 28, foot = 3 + rng.float() * 24;
+        const x = a.x + tx * (along + offsetAlong) + tz * foot;
+        const z = a.z + tz * (along + offsetAlong) - tx * foot;
+        result.push({id: `boulder:${scarp.id}:${stretchIndex}:${along}:${index}`,
+          scarp: scarp.id, x, z, y: scablandsSurfaceHeightAt(x, z),
+          size: 1 + rng.float() * 3, heading: rng.float() * Math.PI * 2});
+      }
+    }
+  }
+  return result;
+}
 
 // Fence candidates follow each road arriving at Tin Town. They are not yet
 // drawn or solid; the later connection must apply all clearance rules first.

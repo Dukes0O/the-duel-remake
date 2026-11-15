@@ -3,9 +3,32 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
+import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
+
+test('seeded rock falls follow the foot of each scarp', () => {
+  const rocks = scarpBoulderCandidates(1989);
+  assert.deepEqual(rocks, scarpBoulderCandidates(1989));
+  assert.notDeepEqual(rocks, scarpBoulderCandidates(1990));
+  for (const scarp of SCARPS) {
+    const group = rocks.filter(rock => rock.scarp === scarp.id);
+    assert.ok(group.length > 2);
+    const {a, b} = scarp.stretches[0], dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const rock of group) {
+      const foot = ((rock.x - a.x) * dz - (rock.z - a.z) * dx) / length;
+      assert.ok(foot >= 3 && foot <= 27);
+      assert.ok(rock.size >= 1 && rock.size < 4);
+      assert.ok(Number.isFinite(rock.y));
+    }
+  }
+  const moved = createLand(movedTable(SCABLANDS_PLACES, 'ridge', 200, 100));
+  const old = rocks.find(rock => rock.scarp === 'ridge-south');
+  const next = scarpBoulderCandidates(1989, scarpsFor(moved)).find(rock => rock.id === old.id);
+  assert.ok(Math.abs(next.x - old.x - 200) < 1e-8);
+  assert.ok(Math.abs(next.z - old.z - 100) < 1e-8);
+});
 
 const cell = point => [Math.floor(point.x / THINGS_CELL), Math.floor(point.z / THINGS_CELL)];
 test('telegraph candidates follow both lines at 60 metre intervals', () => {

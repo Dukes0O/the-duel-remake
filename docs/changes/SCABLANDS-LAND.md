@@ -1266,3 +1266,11 @@ Checks: all eight Scablands suites passed, including seven placement tests. Both
 Changed assertions: none. Codex decided: fence lengths, post spacing, gaps and approach selection are recorded on the card for Claude to review. Removed: nothing. The existing land is unchanged.
 
 For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it is written. The scenario, clearance and solid index, drawings, wires, signs, boulders, track drawing and map remain to be built. Cockpit sync could not open its protected credential and did not update Cockpit.
+
+### Realism trial, step 3: rock-fall candidates, in progress
+
+Added seeded groups of 1 to 4 m boulders on the foot side of each scarp. They follow the named scarps when a place moves and read the existing ground height. They are candidates only, not drawn or solid: their full footprints still need clearance from roads, buildings, river decks and job starts. Single boulders remain to be placed. No game event or sound cue was added.
+
+The placement suite passed all eight tests, and all Scablands suites passed. Both replay suites passed, with 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. Integration was already current. The lane tier passed 26 of 28: `test-full-check` could not start `pwsh` for its temporary copy (EACCES); `test-town-core` missed its 10 ms limit at 11.23 ms under load and passed once alone at 8.98 ms. The build passed with bundle-size warnings. Changed assertions: none. Codex decided: the sizes, group sizes and distance from the scarp foot are recorded on the card. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: `test-full-check` at merge, and the browser scenario once it is written; Chrome cannot start in this job. The scene, clearance and solids, wires, signs, remaining boulders, track drawing, map and scenario still need work. Cockpit sync could not open its protected credential and did not update Cockpit.
