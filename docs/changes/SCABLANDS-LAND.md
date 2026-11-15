@@ -1620,3 +1620,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed 23 of 23, including stopped
 Changed assertions: none. Codex decided: no new design choice. Removed: the Scablands-only speed restriction on camp targets.
 
 Still needed: prove an actual shot follows the sight delay; reduce and measure sight cost, restore the one-second walking search test, finish parts B and C, and run the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: sight cost and walking search
+
+Camp target selection checks distance before tracing and no longer makes filtered lists. The furnace and Ridge lookout keep their last answers and take turns tracing every 30 simulation steps, four times a second each. The first lookout check is delayed by 15 steps. The sight options and results are reused. The walking search now has a separate test starting with one full second of pursuit. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 25 of 25; `node tools/test-raiders.mjs` passed 7 of 7. Race fingerprints and world signatures were not checked in this step. The long traces are staggered: a lookout trace can take up to 601 ground samples on its step, and a furnace trace up to 281 on another. The total worst Hot Delivery step, including camp raiders, has not yet been measured.
+
+Changed assertions: none. Codex decided: stagger the two checks by 15 steps to avoid their long traces landing together. Removed: per-target filtered distance lists and repeated long traces on every step.
+
+Still needed: measure the full Hot Delivery worst step, prove an actual shot after the sight delay, add open-bed and along-bore coverage, and finish parts B and C before the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

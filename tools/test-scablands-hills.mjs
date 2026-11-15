@@ -75,6 +75,20 @@ test('the furnace warning needs more than six continuous seconds and sounds once
   assert.equal(skylineWarningDue(sight, true), false);
 });
 
+test('long sight checks keep their last answer between scheduled traces', () => {
+  let samples = 0;
+  const flat = () => { samples++; return 0; };
+  const car = {x: FURNACE_SKYLINE.x + 100, z: FURNACE_SKYLINE.z};
+  let sight = stepSkylineSight({}, car, 1 / 120, flat);
+  const traced = samples;
+  for (let i = 0; i < 29; i++) sight = stepSkylineSight(sight, car, 1 / 120, flat, null, false);
+  assert.equal(samples, traced);
+  assert.equal(sight.visible, true);
+  assert.ok(Math.abs(sight.seconds - .25) < 1e-9);
+  sight = stepSkylineSight(sight, null, 1 / 120, flat, null, true);
+  assert.equal(sight.change, 'lost');
+});
+
 test('a raider follows a car it can see and keeps room to fire', () => {
   const raider = {x: 0, z: 0};
   const car = {x: 30, z: 0};
@@ -107,6 +121,20 @@ test('a raider searches the last visible place and returns to its post', () => {
   assert.equal(raider.x, home.x);
   stepRaiderSearch(raider, visible, 1, move);
   assert.equal(raider.search.phase, 'seen', 'the car can be seen again');
+});
+
+test('a raider walks for a second in sight, then searches and returns', () => {
+  const raider = {x: 0, z: 0}, car = {x: 30, z: 0}, move = (_from, to) => to;
+  stepRaiderSearch(raider, car, 1, move);
+  assert.equal(raider.x, 3);
+  assert.equal(raider.search.phase, 'seen');
+  for (let i = 0; i < 20 && raider.search.phase !== 'searching'; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'searching');
+  for (let i = 0; i < 5; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'returning');
+  for (let i = 0; i < 20 && raider.search.phase !== 'post'; i++) stepRaiderSearch(raider, null, 1, move);
+  assert.equal(raider.search.phase, 'post');
+  assert.equal(raider.x, 0);
 });
 
 test('a searching raider walks around blocked ground and returns', () => {

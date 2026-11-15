@@ -17,12 +17,13 @@ const FIRE_METERS = 82;
 const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
+const raiderSightOptions = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: null, eye: 1.48, target: 1.5, step: 2};
 
 // Only Scablands camps use its land for cover. Other venues keep their shot rules.
 export function raiderHasClearShot(course, raider, target) {
-  return !course.def.scablands || sees(raider, target, {
-    heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: course.groundTunnels, eye: 1.48, target: 1.5, step: 2,
-  });
+  if (!course.def.scablands) return true;
+  raiderSightOptions.tunnels = course.groundTunnels;
+  return sees(raider, target, raiderSightOptions);
 }
 
 // A camp raider remembers only the last place it could see. It searches there
@@ -254,10 +255,9 @@ function collectSalvage(duel, zone) {
 
 export function targetFor(duel, zone, preview = null, seconds = 0, ready = false) {
   const state = duel.state;
-  const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
-  for (let index = 0; index < available.length; index++) {
-    const original = available[index];
+  for (let index = 0; index <= state.opponents.length; index++) {
+    const original = index === 0 ? state : state.opponents[index - 1];
     const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
         (!duel.course.def.scablands && Math.abs(actor.speedMph || 0) < 8)) continue;
@@ -265,12 +265,13 @@ export function targetFor(duel, zone, preview = null, seconds = 0, ready = false
     if (duel.course.def.scablands) {
       const at = point(duel, actor);
       at.y = scablandsActorFeet(actor, undefined);
-      const distances = zone.raiders.filter(member =>
-        (!member.knockedDown || member.knockdownRemaining <= seconds) &&
-        member.firedLap !== state.currentLap && (!ready || (member.sightTime?.get(original) || 0) >= 1.2) &&
-        Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS && raiderHasClearShot(duel.course, member, at))
-        .map(member => Math.hypot(member.x - at.x, member.z - at.z));
-      gap = distances.length ? Math.min(...distances) : Infinity;
+      gap = Infinity;
+      for (const member of zone.raiders) {
+        if ((member.knockedDown && !(member.knockdownRemaining <= seconds)) || member.firedLap === state.currentLap ||
+            (ready && (member.sightTime?.get(original) || 0) < 1.2)) continue;
+        const memberGap = Math.hypot(member.x - at.x, member.z - at.z);
+        if (memberGap <= FIRE_METERS && memberGap < gap && raiderHasClearShot(duel.course, member, at)) gap = memberGap;
+      }
     }
     if (gap > FIRE_METERS) continue;
     if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
