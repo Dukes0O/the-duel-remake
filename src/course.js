@@ -79,9 +79,9 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,scablandsRealism}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
-    if(def.scablands && featureFlags.enabled('scablands-realism')){
+    if(def.scablands && (scablandsRealism ?? featureFlags.enabled('scablands-realism'))){
       const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
       const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
       this.realismThings={jobStarts,...realismThingsData({enabled:true,seed:this.seed,jobStarts,...SCABLANDS_LAYOUT})};

@@ -595,7 +595,7 @@ export class Duel {
     // Keep a valid index for code that reads the course list; the arena
     // itself always reads `this.course` and `state.arena`.
     s.stageIndex = Math.max(0, COURSE.findIndex(course => course.id === 'titan-arena'));
-    this.course = new Course(venue, this.seed);
+    this.course = new Course(venue, this.seed, {scablandsRealism: this.featureFlags.enabled('scablands-realism')});
     delete s.tyreSlipRules; delete s.tyreSlip; delete s.engineCurve;
     delete s.tune; delete s.fuel; // LAB-TUNE: an arena event is never tuned, and never inherits a tank
     this._obstacleQueryCache = new Map(); this._obstacleArray = this.course.features.obstacles;

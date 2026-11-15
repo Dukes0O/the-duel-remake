@@ -370,6 +370,17 @@ test('the course owns the trial solids used by the car and job grids', async () 
   } finally { featureFlags.enabled = enabled; }
 });
 
+test('an arena uses its own realism switch when it creates the course', async () => {
+  const {Duel} = await import('../src/game.js');
+  for (const enabled of [false, true]) {
+    const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'scablands-realism': enabled}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'falcone_f42', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+    assert.equal(Boolean(duel.course.realismThings), enabled);
+    assert.equal(Boolean(duel.course.solidGrid), enabled);
+  }
+});
+
 test('the scene loads the trial only with its switch on', async () => {
   const {featureFlags} = await import('../src/feature-flags.js');
   const {Course} = await import('../src/course.js');
