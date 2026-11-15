@@ -2,6 +2,9 @@
 
 ## Current round
 
+The road ribbons now stay flat across the Girder Bridge and the Pipe instead of hanging down into the bed. Both slabs are 1.2 m thick and cast shadows. The existing gorge ribbon draws the bed beneath both crossings; the near and far ground shaders cut out the river there. `node tools/test-tunnels.mjs` passed, including clear-air checks at three positions under each deck. The view still needs Claude's browser check. No game event or sound was added.
+
+
 A move that crosses a joint but misses the adjoining segment's height range now stops at the joint and stays inside the side walls. `node tools/test-tunnels.mjs` passed, including the new check in both directions. The rest of the tunnel enclosure remains unfinished.
 
 A car rising inside a tunnel now meets the current bore crown and falls back. The real flight step is covered by `node tools/test-tunnels.mjs`, which passed. The new flat floor and floor-based bore selection still need to replace the trial geometry before the enclosure is complete.

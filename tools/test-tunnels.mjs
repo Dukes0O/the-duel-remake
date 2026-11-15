@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import {createRoadsDraw} from '../src/world/scablands-draw.js';
 import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {createFighter, stepFighter} from '../src/onfoot.js';
@@ -610,3 +612,27 @@ console.log('Tunnel support, joined segments, wall contact and simulated driving
   lining.children[0].geometry.dispose();
   lining.children[0].material.dispose();
 }
+
+// The road surface must not hang down across the river bed at either deck.
+const deckRoads=createRoadsDraw({plainAt:(x,z)=>scablandsSurfaceHeightAt(x,z)+riverDepthAt(x,z),
+  material:new THREE.MeshBasicMaterial({side:THREE.DoubleSide})});
+deckRoads.update(0,0,{all:true});
+deckRoads.group.updateMatrixWorld(true);
+for(const crossing of RIVER_LAND.crossings.filter(item=>item.deckHalfWidth)){
+  let closest=Infinity, tangent;
+  const points=RIVER_LAND.line.points;
+  for(let i=0;i+1<points.length;i++){
+    const a=points[i],b=points[i+1],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz);
+    const t=Math.max(0,Math.min(1,((crossing.x-a.x)*dx+(crossing.z-a.z)*dz)/(length*length)));
+    const distance=Math.hypot(crossing.x-a.x-t*dx,crossing.z-a.z-t*dz);
+    if(distance<closest){closest=distance;tangent={x:dx/length,z:dz/length};}
+  }
+  for(const across of [-20,0,20]){
+    const x=crossing.x+tangent.z*across,z=crossing.z-tangent.x*across;
+    const bed=scablandsSurfaceHeightAt(x,z)+riverDepthAt(x,z)-riverGorgeDepthAt(x,z);
+    const ray=new THREE.Raycaster(new THREE.Vector3(x-tangent.x*30,bed+3,z-tangent.z*30),
+      new THREE.Vector3(tangent.x,0,tangent.z),0,60);
+    assert.equal(ray.intersectObject(deckRoads.group,true).length,0,`${crossing.id} has clear air above the river bed`);
+  }
+}
+deckRoads.dispose();
