@@ -1,5 +1,9 @@
 # TUNNEL-TRIAL
 
+## Current round
+
+Job raiders and Big Bess now pass their stored height and update it with the town switch off. Big Bess's scene uses that height. `test-tunnels` and `test-scablands-solid` passed. The shared floor list is not yet connected: doing so exposed a steep step where the Pipe deck tapers into the bed. The new 0.6 m rule briefly selects the top floor there. The next round must fix that transition and the remaining floor, roof and tunnel rules before claiming the card is done. Raider `groundY` is still duplicated.
+
 ## Incomplete
 
 Integration was merged at b23714b22 (current integration was c88f8366974e060acaed379a3f153e395c76edec). Conflicts in the status page, ground look and scene were resolved, keeping integration's status and both the photo and tunnel rendering paths. The 100 m trial crosses the west scab scarp at a grade under .15. Both mouths meet the surface. A Titan and a Falcone drive it in both directions in the focused test.
