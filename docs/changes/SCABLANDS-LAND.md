@@ -2238,16 +2238,16 @@ more paint, and stays under "Short of right" in round 11's review. `test-scablan
 
 ### Dead trees along the river
 
-The realism switch places seeded dead trees and snags on the river banks, clears their footprints, draws them on the ground and adds solid trunks. Seed 1989 gives 118 candidates and 115 after clearance without job starts. Two picture views are ready for Claude. Trees do not appear on either map. No new event or sound cue was added.
+The realism switch places seeded dead trees and snags on the river banks, clears their footprints, draws them on the ground and adds solid trunks. Seed 1989 gives 118 candidates and 115 after clearance without job starts. Trees do not appear on either map. No new event or sound cue was added.
 
-Checks on this lane after integration was already up to date: things 42 of 42, solid 25 of 25, scene passed, hills 55 of 55, build passed. Replay fingerprints: 297 checks across 33 cases; combat replay fingerprints: 12 checks across four encounters. Sixteen scenario page expressions parsed with Node. Browser pictures were not run. The lane tier, test-everburn-easy and gas-road suites were not run, as directed.
+Integration was merged into this lane without conflicts. The things suite passed 42 of 42, including ground contact for every cleared tree, and a trunk hit and passing test at 0, 45 and 90 degrees. The solid suite passed 25 of 25, the scene suite passed, and the hills suite passed 55 of 55. The build passed. Replay fingerprints passed 297 checks across 33 cases; combat replay fingerprints passed 12 checks across four encounters. Two picture views are ready for Claude; their 16 page expressions passed Node parsing in the earlier round. The browser was not run. The lane tier, test-everburn-easy and gas-road suites were not run, as directed.
 
-**Not right yet:** A car passing two metres from a trunk can falsely hit it when its heading differs from the tree heading. With seed 1989, tree `tree:0:-1:0`, a car moving north from five metres south to five metres north, two metres east of its centre, slowed from 10 mph to 4.6975 mph in the contact check. The shared collision sweep rotates the car envelope into the trunk's seeded heading; a circular trunk's contact area should not change with that heading. The passing aligned-heading check does not cover this fault. The collision file is outside this card's owned files. Claude must re-slice the card to allow a correction and its tests. The all-tree ground-contact check and final browser judgment also remain.
+At 45 degrees the shared collision sweep still reports a hit at 2, 2.25, 2.5 and 2.75 m from a dead tree. It clears at 3 m for both trunk types at all three headings. The physical clearance is the car's 1.02 m half-width plus the tree's 0.45 m radius, or 1.47 m. The collision sweep enlarges that area at an angle using the car's length as well; QA-ROUND-SOLID-HEADING owns that fault. The test confirms that a head-on car is held before the trunk and slowed; it does not claim its speed becomes zero in one contact.
 
-**For Claude to run:** the two tree views in `scablands-things` and judge their appearance and ground contact. Run the lane tier if required at merge.
+**For Claude to run:** the two tree views in `scablands-things` and judge their appearance, spacing and ground contact. Run the lane tier at merge.
 
-**Changed assertions, for Claude to review:** none. New checks cover the named-way clearance and aligned trunk contacts.
+**Changed assertions, for Claude to review:** the passing distance changed from 2 m at the trunk's aligned heading to 3 m at 0, 45 and 90 degrees, because the shared sweep reports false hits closer than 3 m at 45 degrees. This relaxes the prior passing distance and expands the tested directions. The drawing rotation assertion now uses the tree's seeded heading instead of the trunk's solid heading, which is zero. All-tree ground contact and the head-on stopping position are new checks.
 
-**Codex decided:** none in this round.
+**Codex decided:** none. Claude directed the zero solid heading and the distance search.
 
-**Removed:** nothing.
+**Removed:** the trunk solid's seeded heading. The drawn tree keeps its seeded heading.
