@@ -1215,3 +1215,30 @@ The scenario now includes salt and Burn views, a real rock fall seen from 40 m, 
 Final checks on f10f2b2f8: all eight `test-scablands-*` suites passed, including 32 things tests; `test-replays` passed 297 checks and `test-combat-replays` passed 12, with fingerprints unchanged. `node --check tools/scenarios/scablands-things.mjs` and `npm.cmd run build` passed. Both requested branch merges were already up to date.
 
 The lane tier was stopped after 35 minutes: `test-everburn-easy` and `test-track-kits` had not returned. The following 16 suites failed: `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave2-audio`, `test-arsenal-wave3-audio`, `test-audio-analysis`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-review-evidence`, `test-warlord-blackiron`, and `test-warlord-tollkeeper`. The audio checks encountered FFmpeg permission errors. Claude must rerun the incomplete lane tier and these failures, and run the browser scenario. The build reported large bundle warnings.
+
+### Realism trial, step 3: Claude's drawing and the merge (15 November 2026)
+
+**Drawing.** `src/world/scablands-things-look.js` (new) gives each kind its shape and surface in code: rock broken along flat faces and
+wearing the scab rock photograph; bushes as crossed cards with a drawn picture; timber poles, posts and signs; lattice pylons as flat
+faces with the gaps cut out. `src/world/scablands-things-view.js` uses them, draws standing things by distance and small things by kind
+and distance, fills the small things' places again only after 1.5 m of travel, tints a stone by the ground it lies on, and paints the
+signs on planks with arrows. Sizes: stone 32 triangles, bush 12, pole 96, boulder 72, pylon 40.
+
+**Checks in this card's own new suite that changed with the drawing** (`tools/test-scablands-things.mjs`, not yet on integration when
+changed): small things that stand up (scrub, brush, stump) cast shadows, where the plain shapes cast none; a tower is one drawn pylon at
+each standing pylon, where it was a set of lines; standing things are checked after an update near them, because they are drawn by
+distance; a sign's line is a place and a distance with a painted arrow.
+
+**Changed assertion in an existing suite, reviewed by Claude:** `tools/test-p4-audio.mjs` leaves `world.fence.snap` out of the pre-P4
+sound bank pin, as the ember's and the ground's cues are; the pinned hash is unchanged.
+
+**Sound cue:** `world.fence.snap` (a fence post knocked down).
+
+**Race fingerprints:** unchanged (297 and 12), by Codex in the lane.
+
+**Browser scenario** `scablands-things` (Claude, visible window): passes; eight views within the limits; a car driven at a boulder and at
+a pole stops (24.7 to 2.0 mph and 24.6 to 2.0 mph).
+
+**Lane tier and build at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
+
+**Removed:** the plain shapes Codex placed first (boxes, cones and line towers) are replaced by the drawn ones in the same files.

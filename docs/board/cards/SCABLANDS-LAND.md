@@ -867,6 +867,41 @@ frame check under rule 8 comes before the switch goes on.
 5. A frame check is owed before the Scablands is opened to players beyond the story's switch (the drawn ground and
    wear cost graphics time). Not in this card (rule 9: the stories that use it are off).
 
+### Realism trial, step 3 result (Codex placed and made solid; Claude drew and judged, 15 November 2026): merged, switch off
+
+Sheet `docs/board/looks/scablands-land/round-10.jpg` with Claude's review beside it. Full notes:
+`docs/changes/SCABLANDS-LAND.md`, "Realism trial, step 3" and "Realism trial, step 3: Claude's
+drawing and the merge".
+
+- **Built:** small things round the car by ground (stones, scrub, dead brush, bones, cans, scrap,
+  salt lumps, burnt stumps); telegraph poles and wire along the East Road and the Iron Line;
+  fences near the towns; a painted sign at every fork; the line of dead pylons with its cables;
+  boulders alone and below the scarps; tyre ruts along the ways; the pole and pylon lines on both
+  maps. All of it only with `scablands-realism` on.
+- **Solid:** poles, fence posts, pylon feet, sign posts and boulders stop a car, a raider and Big
+  Bess, from one list that the rules and the scene share. A fence post hit at more than 25 km/h
+  falls with its wire (`world.fence.snap`), for the visit only; nothing is saved.
+- **Kept clear of solid things:** every road, way, ramp and the Steps' marked way, the bed near a
+  deck, Big Bess's and the furnace's roads, the raiders' ways in to the Everburn well, 30 m round
+  every job place, and a 14 m corridor along each leg of a job.
+- **Two independent reviews by Codex.** The first found that cars drove through the things, that
+  signs showed question marks and that the scenario could not fail; all three are cured. The
+  second confirmed the cures and found three smaller faults (placing work done with the switch
+  off, the map reading the switch for itself, the raiders' ways in not cleared); Claude read the
+  fixes.
+- **Limits:** at most 13 more draw calls and 27,508 more triangles in any of eight views (limits
+  40 and 150,000).
+- **Changed assertions, reviewed by Claude (rule 18):** `test-p4-audio` leaves the one new cue
+  `world.fence.snap` out of the older sound bank's pin, exactly as the ember's three cues and the
+  ground's nine are left out; the pinned hash is unchanged. No other existing assertion changed.
+  `test-scablands-solid` drives the four ways a second time with the switch on, and
+  `test-everburn-easy` can run two jobs with the switch on; both are additions.
+- **Open:** the pylons draw olive, not grey; boulders below the scarps are in no picture; leaning
+  poles are drawn upright; signs are small from the driver's seat. Not driven in real time with
+  the things on, and no frame check: both are owed before the switch is turned on for anyone.
+
+**Checks at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
+
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.
