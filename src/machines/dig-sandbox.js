@@ -60,7 +60,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher'];
+  const ids=['excavator','dumpTruck','trencher','drill'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
   return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
 }

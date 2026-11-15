@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, stepDrill, stepDrillRig} from '../src/machines/drill.js';
+import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drillYardControls, stepDrill, stepDrillRig} from '../src/machines/drill.js';
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 
@@ -42,3 +42,8 @@ rig=stepDrillRig(rig,{mastDown:true,feed:0.5},1).state;
 assert.equal(rig.wellheads.length,1, 'Striking water leaves a wellhead for the visit.');
 assert.deepEqual(createDrillRigState(4312).wellheads,[], 'A new visit starts without yard wellheads.');
 console.log('Drill: repeatable layers and water, jam recovery and town well save passed.');
+
+assert.deepEqual(drillYardControls({KeyW:true},'drive'),{forward:1,steer:0,mastDown:false,feed:0});
+assert.deepEqual(drillYardControls({Space:true},'work'),{mastDown:true,feed:0.5});
+assert.equal(drillYardControls({Space:true,KeyW:true},'work').feed,1);
+assert.equal(drillYardControls({KeyS:true},'work').feed,-1);

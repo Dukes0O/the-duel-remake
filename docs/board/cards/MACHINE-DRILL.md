@@ -13,3 +13,5 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 Hard feed above three quarters in rock jams the bit. Reversing the feed frees it. Layer boundaries vary with the seed and place and end at the water depth.
 
 The rig stops before the mast can feed. Yard wellheads last only for that visit.
+
+In the yard, Tab lowers the mast for work and raises it for travel. Hold Space for a steady feed, add W for hard feed, and hold S to reverse a jammed bit.

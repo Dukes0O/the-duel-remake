@@ -84,3 +84,13 @@ export function stepDrillRig(state, controls = {}, dtSeconds = 0) {
   }
   return {state:{...state, machine, hole, wellheads}, events};
 }
+
+/** The yard uses the same drive and work modes as the other machines. */
+export function drillYardControls(keys = {}, mode = 'drive') {
+  if (mode === 'drive') return {
+    forward:Number(!!keys.KeyW || !!keys.ArrowUp) - Number(!!keys.KeyS || !!keys.ArrowDown),
+    steer:Number(!!keys.KeyD || !!keys.ArrowRight) - Number(!!keys.KeyA || !!keys.ArrowLeft),
+    mastDown:false, feed:0,
+  };
+  return {mastDown:true, feed:keys.KeyS ? -1 : keys.Space ? (keys.KeyW ? 1 : 0.5) : 0};
+}

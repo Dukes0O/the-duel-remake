@@ -10,12 +10,14 @@ import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {machineToolPosition} from './machine.js';
+import {drillYardControls, drillMaterialAt} from './drill.js';
+import {createDrillView} from './drill-view.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const MODES=['chase','cab','work'];
-const MACHINE_IDS=['excavator','dumpTruck','trencher'];
-const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher'};
+const MACHINE_IDS=['excavator','dumpTruck','trencher','drill'];
+const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig'};
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
@@ -85,7 +87,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const effects=createDigFx({group:world,seed:1});
-  const machineViews=new Map();let modelAsset=null;
+  const machineViews=new Map();let modelAsset=null, drillView=null;
   const sound=(cue,data)=>{
     const now=performance.now();if(now<soundAfter)return;
     if(cue===MACHINE_SOUND_CUES.engine||cue===MACHINE_SOUND_CUES.hydraulic)soundAfter=now+700;
@@ -123,7 +125,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
     if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
     for(const id of MACHINE_IDS){
-      const root=machineRoot(machineAsset,id);
+      let root=machineRoot(machineAsset,id==='drill'?'trencher':id);
+      if(id==='drill' && root){drillView=createDrillView(root);root=drillView.root;}
       if(!root)throw new Error(`The machine model is missing ${id}.`);
       const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:sound});
       machineViews.set(id,view);
@@ -148,10 +151,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('mode'))sim={...sim,mode:sim.mode==='drive'?'work':'drive'};
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
-      const stepControls=machineControlInput(padKeys,null,sim.activeMachine==='trencher'?'drive':sim.mode);
+      const stepControls=sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,sim.activeMachine==='trencher'?'drive':sim.mode);
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
+    if(drillView && machineViews.has('drill'))drillView.update(sim.drill,machineViews.get('drill').body);
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
@@ -167,7 +171,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
     groundView.update();effects.update(elapsed);
-    const name=LABELS[sim.activeMachine],load=sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
+    const name=LABELS[sim.activeMachine],load=sim.activeMachine==='drill'?`${(sim.drill.hole?.depth ?? 0).toFixed(1)} m deep. ${sim.drill.hole ? drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth) : 'Ready to drill'}.` : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
       `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`;
     host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
@@ -178,7 +182,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
       message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
-    } else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
+    } else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Raise the mast before driving on.':'Drive to a spot. Press Tab to lower the mast. Hold Space to drill. Add W for harder feed. Hold S to reverse.';
+    else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);requestAnimationFrame(frame);
   }
