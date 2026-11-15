@@ -86,9 +86,9 @@ The mesa's shape prevents the requested straight, level breakthrough. A rules-on
 
 ## For Claude to run
 
-Run the lane tier at merge, and run `tools/scenarios/machine-borer.mjs` in the browser harness. The scenario uses memory-only storage, drives from the parked position, cuts 30 m, and records the mouth, face and inside views. Its automated view check tests whether machine and tunnel geometry project into the camera view and whether five centre pixels vary; it does not prove that the geometry is unobscured. Inspect all three pictures for Mabel, lining, lamps and the face. Check the first second at the mouth, effects, camera and sounds. The browser was not available in this lane.
+Run the lane tier at merge and `tools/scenarios/machine-borer.mjs` in the browser harness. It records the mesa overview, measurements, survey, spoil bank, mouth, face and inside views. Check the pictures, sounds and the first second at the mouth. The scenario was not run in this lane.
 
-To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times to select Mabel. Hold W to drive toward the scarp. Press Tab near the face for work mode. Hold W to move the thrust lever forward, then release W to hold it. Hold S to pull it back, and use A or D to curve gradually back toward the scarp face. Use the up and down arrows with thrust to adjust slope. A full return to the face takes roughly 400 m. Pull the lever back to zero for at least one second if the head stalls, then push it forward again. Watch for breakthrough and daylight. Hold S to reverse. C changes camera and Escape leaves. The route and breakthrough have not been tried by hand.
+To try by hand: enter the Wasteland yard and open The Dig. Press Q seven times to select Mabel. Press Tab to choose drive mode and hold W until her head reaches the mesa face. Press Tab for work mode. Read the far-side survey and the hill strip. Hold W to advance the thrust lever and release it to hold the setting. Pull it back with S if the head slows or stalls; hold it at zero for one second to free a stalled head, then advance it again. Use the up and down arrows to set the suggested rise, and A and D to steer. Keep boring to the far side. If the exit needs a cutting, tilt up until she reaches daylight. At zero lever, hold S to reverse. Press C to change between the following and mouth views. Press Escape to return to the yard. The complete trip still needs a hand play.
 
 ## Checks
 
@@ -117,7 +117,7 @@ The route planner needs a bridge from the Dig, centre-line links and changes to 
 
 ## Sound cues
 
-`borer.head` is the speed-following head loop. `borer.muck` is the conveyor loop. `borer.stall`, `borer.refuse` and `borer.breakthrough` mark those events. Sound needs a hands-on check.
+`borer.head` is the speed-following head loop. `borer.muck` is the conveyor loop. `borer.stall`, `borer.refuse`, `borer.breakthrough` and `borer.daylight` mark those events. Sound needs a hands-on check.
 
 ## Removed
 
@@ -134,3 +134,7 @@ The Dig shows the first far-side crown crossing, the height and suggested grade,
 ## Mesa browser scenario
 
 Merged `integration/wasteland` with no conflicts. The scenario now drives from the mesa parking place, records an overview from 120 m behind Mabel and the drawn mesa height above her floor, checks the survey and strip, cuts 50 m, records the spoil bank and takes the mouth, face and inside views. The overview temporarily moves the test camera and ground window; ordinary player cameras are unchanged. The measurements and pictures need Claude's browser run. The scenario file passes `node --check`, and all its page expressions parse with `new Function`. No existing assertions changed in this item. `node tools/test-machine-borer.mjs` passed. The remaining final checks and hand-play instructions are due in the next run.
+
+## Final checks after integration merge
+
+Merged `integration/wasteland` at `28d5544af` without conflicts. `test-machine-borer`, `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed individually. `node --check tools/scenarios/machine-borer.mjs` passed. The build passed with Vite's large-chunk and mixed-import warnings. The browser scenario and lane tier are for Claude to run. No assertions changed in this final check. No new race fingerprints were recorded; the earlier replay results above predate the latest integration merge.
