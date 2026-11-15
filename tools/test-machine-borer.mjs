@@ -177,6 +177,10 @@ let digBorer = {...sandbox, activeMachine:'borer', mode:'work', borer:createBore
 digBorer = stepDigSandbox(digBorer, {controls:{forward:1}}, 1);
 assert.ok(digBorer.borer.distanceM > 0, 'Work controls advance the Dig borer.');
 assert.deepEqual(exportDigTunnels(digBorer), digBorer.borer.segments, 'The Dig exposes the new cut as tunnel geometry.');
+const growingSegments = digBorer.borer.segments;
+digBorer = stepDigSandbox(digBorer, {controls:{forward:1}}, 1);
+assert.equal(digBorer.borer.segments, growingSegments, 'The Dig extends its owned segment list without copying it.');
+assert.deepEqual(exportDigTunnels(digBorer), digBorer.borer.segments, 'The index follows the in-place cut.');
 assert.equal(digSandboxMachineState(digBorer), digBorer.borer);
 const cutDistance = digBorer.borer.distanceM;
 const driveInBore = stepDigSandbox({...digBorer, mode:'drive'}, {controls:{forward:1}}, 1);

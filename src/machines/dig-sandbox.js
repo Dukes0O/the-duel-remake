@@ -214,8 +214,11 @@ function fixedStep(sim,input) {
       const direct=controls.directLever || (controls.padLever && leverSource === 'pad' && !controls.keyboardLever);
       const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
       const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
+      // The visit owns this growing list, just as it owns the tunnel index.
+      // Record the old count before the cutter extends it in place.
+      const oldCount=sim.borer.segments.length;
       const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope,
-        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started},
+        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started,mutableSegments:true},
         sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
@@ -223,7 +226,6 @@ function fixedStep(sim,input) {
       if(result.state.distanceM!==sim.borer.distanceM){
         const segments=result.state.segments;
         if (!sim.borer.started) next.tunnels=createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)});
-        const oldCount=sim.borer.segments.length;
         if (oldCount) next.tunnels.extendLast(segments[oldCount-1]);
         for (let i=oldCount;i<segments.length;i++) next.tunnels.extendLast(segments[i],true);
         next.dirty=true;

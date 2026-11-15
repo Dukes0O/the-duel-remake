@@ -268,7 +268,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;
-    if (next.segments === state.segments) {
+    if (!controls.mutableSegments && next.segments === state.segments) {
       next.segments = next.segments.slice();
       if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
     }
