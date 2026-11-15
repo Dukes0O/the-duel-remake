@@ -251,3 +251,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: the former furnace watch between the road barricades. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the horn and two riders after six seconds in sight, then the remaining steps.
+
+## Larger land, furnace horn (15 November 2026)
+
+- The furnace sounds its own `world.furnace.horn` cue after more than six uninterrupted seconds with the car in sight. Losing sight resets the count, and the horn sounds once per job. This is part of step 4a; the two responding riders are not yet built.
+- `node tools/test-everburn-job1.mjs`: passed. The real job step checks sight over the land, the reset, the six-second boundary and the one-time cue. `git diff --check`: passed.
+- For Claude to run: the requested scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: the former `arena.toll-gate` warning cue for this furnace watch. The old `everburn-play` scenario still needs replacement or removal.

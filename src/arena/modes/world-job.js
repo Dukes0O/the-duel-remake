@@ -690,7 +690,7 @@ export function stepWorldJob(duel, dt) {
     if (skylineWarningDue(sight, worldJob.skylineWarned)) {
       worldJob.skylineWarned = true;
       duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
-        cue: 'arena.toll-gate', position: car}});
+        cue: 'world.furnace.horn', position: car}});
     }
     if (sight.change) {
       duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);

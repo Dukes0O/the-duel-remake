@@ -18,6 +18,7 @@ import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
@@ -100,6 +101,34 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The real watch traces the ground, resets when sight is lost, and sounds once after six seconds.
+{
+  const world = createWorldJob(definition), events = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const tick = dt => { world.sightStep = 0; stepWorldJob(duel, dt); };
+  const horns = () => events.filter(event => event.arenaTell?.cue === 'world.furnace.horn');
+  assert.ok(SOUND_BANK['world.furnace.horn']?.layers.length);
+  tick(4);
+  assert.equal(world.skylineSight.visible, true);
+  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
+  tick(0.1);
+  assert.equal(world.skylineSight.seconds, 0);
+  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  tick(6);
+  assert.equal(horns().length, 0);
+  tick(0.1);
+  assert.equal(horns().length, 1);
+  tick(1);
+  assert.equal(horns().length, 1);
+}
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
 const waitingWorld = createWorldJob(definition);
 const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, lateral:0};
