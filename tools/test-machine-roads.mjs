@@ -227,6 +227,9 @@ visibleWork.cells['2:3'] = {height:0, spread:1, compaction:1, surface:1, roughne
 roadView.update(visibleWork);
 assert.notEqual(floorGeometry.attributes.color.getX(middle), softColor, 'A repaired road looks different.');
 assert.equal(floorPositions.getY(middle), 4, 'Repair restores the ground height.');
+delete visibleWork.cells['2:3'];
+roadView.update(visibleWork);
+assert.equal(floorGeometry.attributes.color.getX(middle), 1, 'Removing work restores the original ground colour.');
 visibleWork.bladeLoad = 2;
 roadView.update(visibleWork, {x:10, z:20, heading:0});
 const heap = scene.getObjectByName('dozer-blade-heap');

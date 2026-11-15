@@ -4,15 +4,15 @@ The dozer cuts and carries material into low ground. The roller firms the fill, 
 
 A town can record individual machine actions without changing an old save. Town roads use eight-metre cells. Their weakest metre sets the grade, and the existing haul route uses that grade to set truck speed. A rough patch can lower the grade and another pass can restore it. The yard does not write to a town or a save.
 
-## Review fixes in progress
+## Review fixes
 
-The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard test now checks the exact eight practice cells and nothing else. The scenario had an impossible third roller wait above the maximum compaction; it now caps the target and reports the yard state on every timeout. A keyboard-driven yard test reaches the paver and repairs the surface. The worked strip now reshapes and colours the yard floor across the width of the drum and screed, with no raised tiles. The earlier full results below precede these fixes and do not cover them.
+The dozer can now cut ordinary ground and spread its load with the blade raised. The road rules test passes with a 40-metre stretch made from ordinary ground. The paver now measures steering against its starting line, and paving detects neighbouring height changes. The roller can press a heap level. Driven tests cover both faults and their repair. The town now advances its haulers over saved machine roads during its own hourly ticks; a day-long test shows the paved road moves a truck farther. The fresh-yard test now checks the exact eight practice cells and nothing else. The scenario had an impossible third roller wait above the maximum compaction; it now caps the target and reports the yard state on every timeout. A keyboard-driven yard test reaches the paver and repairs the surface. The worked strip now reshapes and colours the yard floor across the width of the drum and screed, with no raised tiles. The checks below cover these fixes.
 
 ## Checks
 
-- Road rules, all machine, dig and town suites: passed, including older and new town save round trips, road grades, truck travel and repair.
+- Road rules, all machine, dig and town suites: passed, including older and new town save round trips, road grades, truck travel, repair and the yard ground view.
 - `test-replays.mjs`: passed 297 fingerprint checks across 33 cases. `test-combat-replays.mjs`: passed 12 fingerprint checks across four encounters. No fingerprints changed.
-- Lane tier: 35 of 37 passed. Town core exceeded its 10 ms timing limit under load at 10.81 ms, then passed alone at 5.09 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it (9 of 9).
+- Lane tier: 54 of 56 passed. Town people exceeded its 30 ms timing limit under load at 34.07 ms, then passed alone at 19.90 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it (9 of 9).
 - `npm.cmd run build`: passed. Vite reported its existing chunk-size and dynamic-import warnings.
 
 ## For Claude to run
