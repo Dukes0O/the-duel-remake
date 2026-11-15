@@ -93,16 +93,17 @@ export async function run(context) {
     for(const direction of [1,-1]) {
       const result=await context.evaluate(`(() => {const t=window.__tunnelTrial,d=t.d,s=d.state,seg=t.seg,dx=${dx},dz=${dz},direction=${direction};
         const origin=direction>0?seg.start:seg.end,heading=Math.atan2(dx*direction,dz*direction); t.a.inspectionCamera=null;
-        t.place(origin.x-direction*dx*8,origin.z-direction*dz*8,heading); s.speedMph=12; let furthest=-Infinity,floorSamples=0,maxFloorError=0;
+        t.place(origin.x-direction*dx*8,origin.z-direction*dz*8,heading); s.speedMph=12; let furthest=-Infinity,floorSamples=0,maxFloorError=0,firstFloor=Infinity,lastFloor=-Infinity;
         for(let i=0;i<1800;i++){const p=d.course.worldAt(s.s,s.lateral),along=(p.x-seg.start.x)*dx+(p.z-seg.start.z)*dz;furthest=Math.max(furthest,direction>0?along:100-along);if(furthest>103)break;
           const side=Math.abs((p.x-seg.start.x)*dz-(p.z-seg.start.z)*dx);
           if(along>2&&along<98&&side<seg.radius-1){const floor=seg.start.y-seg.radius+(seg.end.y-seg.start.y)*along/100;
-            floorSamples++;maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));}
+            floorSamples++;firstFloor=Math.min(firstFloor,along);lastFloor=Math.max(lastFloor,along);maxFloorError=Math.max(maxFloorError,Math.abs((s.groundHeight??s._jumpY)-floor));}
           const target=direction>0?seg.end:seg.start,turn=Math.atan2(Math.sin(Math.atan2(target.x+direction*dx*30-p.x,target.z+direction*dz*30-p.z)-d.course.at(s.s).heading-s.headingError),Math.cos(Math.atan2(target.x+direction*dx*30-p.x,target.z+direction*dz*30-p.z)-d.course.at(s.s).heading-s.headingError));
           d.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-turn*2))});d.step(1/60);}
-        t.frame();return {direction,furthest,floorSamples,maxFloorError};})()`);
+        t.frame();return {direction,furthest,floorSamples,firstFloor,lastFloor,maxFloorError};})()`);
       report.drives.push(result); assert.ok(result.furthest>103, `Drive ${direction} reached ${result.furthest} m`);
-      assert.ok(result.floorSamples>10 && result.maxFloorError<1, `Drive ${direction} stayed on the tunnel floor`);
+      assert.ok(result.floorSamples>10 && result.firstFloor<10 && result.lastFloor>90 && result.maxFloorError<1,
+        `Drive ${direction} stayed on the tunnel floor from mouth to mouth`);
     }
     const bridge=RIVER_LAND.crossings.find(c=>c.id==='girder-bridge'), points=RIVER_LAND.line.points, along=RIVER_LAND.line.along, index=along.findIndex(v=>v>=bridge.along);
     const p=points[index-1], q=points[index+1], len=Math.hypot(q.x-p.x,q.z-p.z), bx=(q.x-p.x)/len, bz=(q.z-p.z)/len;

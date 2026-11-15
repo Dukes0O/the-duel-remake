@@ -10,7 +10,7 @@ The browser scenario is written and syntax checked but has not run. It now draws
 
 The scenario now places the camera at the requested height before each picture. The renderer normally eases the camera vertically, so a picture taken after one frame could otherwise show the wrong view. This correction still needs Claude's browser check.
 
-The browser scenario now also records floor samples and the greatest height error on each drive. It fails if the car crosses over the scarp instead of staying on the tube floor. This check has not been run in a browser.
+The browser scenario now also records floor samples, their span, and the greatest height error on each drive. It fails if the car crosses over the scarp instead of staying on the tube floor from mouth to mouth. This check has not been run in a browser.
 
 Ordinary races and released courses keep the surface-only path with the trial switch off; the replay and world-composition guards passed. The terrain shader adds two vector uniforms, one radius uniform and one capsule-distance test per segment per ground fragment. There is no chunk selection or measured practical limit. The tube is an untextured cylinder; its entrances and joins have not been judged in a browser. No new game event or sound cue was added. My view remains no-go for a finished boring machine until dynamic rebuilding, a real play test and frame measurements are done. Compare a real cut with this shader before choosing.
 
@@ -36,6 +36,7 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 - Lane tier: 220 passed, seven reported failed. Two were stopped at the 30-minute lane limit: `test-everburn-easy.mjs` and `test-track-kits.mjs`; both remain incomplete. `test-town-core.mjs` failed its 10 ms timing limit at 12.22 ms under load, then passed its one rerun with a 6.55 ms slowest tick.
 - `test-circuit-eifel.mjs`, `test-review-evidence.mjs` and `test-warlord-tollkeeper.mjs` failed because FFmpeg could not start (`EPERM`); no audio changed here.
 - `test-shortcut-presets.mjs` fails its source freshness check because the trial changed `Course.groundAt`: recorded `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3df718f9c4264fe`, current `a23244774fb2baa6f021808d03f2272538612161df05e00bb0a81d18dc3a798d`. The saved shortcut data was not regenerated. Claude needs to re-slice the card to include that generated file and its solver verification, or direct another fix.
+- A separate fresh solver comparison found all 15 saved shortcut paths unchanged. This compares the full saved shortcut records for each selectable layout, but does not make the freshness suite pass or replace its other checks.
 - `npm.cmd run build`: passed after the lane run; the generated `dist` was removed.
 
 ## For Claude to run
