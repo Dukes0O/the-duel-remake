@@ -29,6 +29,15 @@ test('mesas leave the furnace descent clear', () => {
   }
 });
 
+test('mesas leave the Soup and Mall return corridor clear', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const points = [step.safePoints.at(-1).position, step.destination.position];
+  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+    assert.ok(distanceToRoad(mesa.x, mesa.z, points) >= mesa.radius + mesa.ramp + 60,
+      'the mesa and its ramp clear the shared return corridor');
+  }
+});
+
 test('mesas leave the chasing car an open approach to the furnace', () => {
   const a = LAND.at('ridge', -1350, 726);
   const b = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path[6].position;
@@ -54,6 +63,49 @@ test('the first three Hot Soup legs have clear hill corridors', () => {
           `Hot Soup leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
       }
     }
+  }
+});
+
+test('the shared Soup and Mall return leg is clear', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const a = step.safePoints.at(-1).position, destination = step.destination.position;
+  const dx = destination.x - a.x, dz = destination.z - a.z, length = Math.hypot(dx, dz);
+  const mall = EVERBURN_JOBS.find(job => job.id === 'everburn-key-under-mall').steps[0].returnPath;
+  assert.deepEqual(mall.slice(1).map(place => place.position), [a, destination]);
+  for (const point of sampleLine([a, destination], 10)) for (const offset of [-60, -30, 0, 30, 60]) {
+    const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+      `the shared return corridor has a hill at ${Math.round(x)}, ${Math.round(z)}`);
+  }
+});
+
+test('seeded Breaks hills leave the furnace return corridor clear', () => {
+  const path = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path;
+  const points = path.slice(17).map(place => place.position);
+  const seeded = HILLS.filter(hill => hill.kind === 'breaks' && !hill.passRoad).slice(3);
+  for (const hill of seeded) {
+    assert.ok(distanceToRoad(hill.x, hill.z, points) >= hill.radius + 60,
+      'each seeded Breaks hill clears the furnace return by 60 m');
+  }
+});
+
+test('Mall Road pass shoulders leave both remaining job corridors clear', () => {
+  const soup = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const legs = [[soup.safePoints.at(-1).position, soup.destination.position], [flags[2].position, flags[3].position]];
+  for (const hill of HILLS.filter(item => item.passRoad === 'mall-road')) {
+    for (const leg of legs) assert.ok(distanceToRoad(hill.x, hill.z, leg) >= hill.radius + 60);
+  }
+});
+
+test('the third Survey Flags leg is clear', () => {
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const start = flags[2].position, b = flags[3].position;
+  const dx = b.x - start.x, dz = b.z - start.z, length = Math.hypot(dx, dz);
+  for (const point of sampleLine([start, b], 10)) for (const offset of [-60, -30, 0, 30, 60]) {
+    const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+    assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+      `the third flag corridor has a hill at ${Math.round(x)}, ${Math.round(z)}`);
   }
 });
 
@@ -422,14 +474,35 @@ test('near scarp cells use a separate fine mesh and meet the old grid', () => {
     near.follow(x, z);
     const positions = near.faceMesh.geometry.getAttribute('position');
     const normals = near.faceMesh.geometry.getAttribute('normal');
+    assert.equal(normals.count, positions.count);
+    const faceIndex = near.faceMesh.geometry.index;
+    for (let i = 0; i < faceIndex.count; i++) assert.ok(faceIndex.getX(i) < positions.count);
     let closest = Infinity, index = -1;
     for (let i = 0; i < positions.count; i++) {
+      assert.ok(Number.isFinite(positions.getX(i)) && Number.isFinite(positions.getY(i)) && Number.isFinite(positions.getZ(i)));
+      const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i);
+      assert.ok(Number.isFinite(nx) && Number.isFinite(ny) && Number.isFinite(nz));
+      assert.ok(Math.abs(Math.hypot(nx, ny, nz) - 1) < .01 && ny > .2, `${face.scarp.id} normal ${i}`);
       const distance = Math.hypot(positions.getX(i) + near.centreX - x, positions.getZ(i) + near.centreZ - z);
       if (distance < closest) { closest = distance; index = i; }
     }
     assert.ok(closest < 4, `${face.scarp.id} has a fine nearby sample`);
     assert.ok(Math.abs(Math.hypot(normals.getX(index), normals.getY(index), normals.getZ(index)) - 1) < .001);
     assert.ok(near.geometry.index.count < 60 * 60 * 6, 'face cells replace the old triangles');
+    const faceCells = new Set();
+    for (let i = 0; i < positions.count; i += 81) {
+      faceCells.add(`${Math.round((positions.getX(i) + near.centreX) / NEAR_GROUND.cellX)},${Math.round((positions.getZ(i) + near.centreZ) / NEAR_GROUND.cellZ)}`);
+    }
+    const coarse = near.geometry.getAttribute('position'), coarseIndex = near.geometry.index;
+    for (let i = 0; i < coarseIndex.count; i += 3) {
+      let minX = Infinity, minZ = Infinity;
+      for (let j = 0; j < 3; j++) {
+        const vertex = coarseIndex.getX(i + j);
+        minX = Math.min(minX, coarse.getX(vertex) + near.centreX);
+        minZ = Math.min(minZ, coarse.getZ(vertex) + near.centreZ);
+      }
+      assert.ok(!faceCells.has(`${Math.round(minX / NEAR_GROUND.cellX)},${Math.round(minZ / NEAR_GROUND.cellZ)}`), 'coarse triangle overlaps a face cell');
+    }
   }
   near.dispose();
 });

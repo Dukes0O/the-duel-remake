@@ -968,3 +968,7 @@ For the first collision records, each pylon has four feet, 6 m apart, and each f
 ### Codex decided (Claude to review): taller mesas
 
 The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the existing .30 slope check. The eastern original mesa moves 400 m west to keep its longer ramp clear of the East Road. The additional mesas are selected again from the same seed with the larger ramp footprint.
+
+### Codex decided (Claude to review): Mall Road pass
+
+Move the Mall Road pass to 85.5 percent along the road so its shoulders clear the shared return and the third Survey Flags leg. Both shoulders remain beside the road.

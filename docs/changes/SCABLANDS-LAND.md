@@ -2113,3 +2113,79 @@ Integration remained up to date at c3cb1943b. The hills suite passed 50 of 50, s
 Not right yet: the seed 5 Easy chase stalls at the existing river bank as described above; the exact physics cause is not proved. The remaining job corridors and both gas-road drives are not fully proved. Claude must decide the chase and run and judge the pictures. Furnace cover on the plates' way belongs to EVERBURN-REMAKE job 1.
 
 Changed assertions: none in this check; the complete list for review is in the final integration note above. Codex decided: no new design decision. Removed: the generated build output. No new event or sound cue was added.
+
+### Hill country: near scarp normals
+
+The near scarp mesh now replaces its normal buffer whenever its changing face geometry is rebuilt. Three.js had reused the previous buffer even when the new geometry had a different vertex count, leaving invalid normals on later updates. The hills suite passed 50 of 50. It now checks every face position and normal beside each scarp, all face indices, and that no coarse triangle remains in a face cell. The picture needs Claude's visual judgment.
+
+Changed assertions: the existing near-scarp test checks every vertex and triangle instead of only one normal and the coarse index count. No assertion was loosened. Codex decided: no new design decision. Removed: the stale normal buffer on each rebuild. No event or sound cue was added. Race fingerprints were not checked in this step.
+
+### Hill country: remaining corridor proof started
+
+The hills suite now checks the first 900 m of the shared Hot Soup final leg and Mall return, and the final 5 km of the third Survey Flags leg. It confirms the first two routes share their final leg. Samples are 10 m apart with five lines across the 60 m corridor. All 52 hills checks passed.
+
+Not right yet: the rest of those legs is not clear. A 100 m diagnostic found raised ground on the shared leg from about 1,000 to 5,700 m from the safe road, and on the third flag leg from about 200 to 3,100 m from its start. Several Breaks hills, a mesa and a Mall Road pass shoulder are nearby. Their positions need to be resolved while keeping the passes and spacing intact. These samples are not a complete clearance proof.
+
+Changed assertions: none; the two checks are new. Codex decided: check the portions already clear while identifying the remaining obstructions. Removed: none. No event or sound was added. Race fingerprints and the browser were not checked in this step.
+
+### Hill country: clear mesas from the shared return
+
+Seeded mesa placement now keeps the full 60 m corridor from the safe road to the Everburn clear, including each ramp. The mesa at about (909, 1394) moved to (2214, -518); another moved from about (3750, -979) to (3755, -992) as the seeded search continued. Mesa heights retain their seeded values to floating-point precision, expressed as the actual difference from their ground level. The hills suite passed 53 of 53, including a new check of every mesa against the shared return. An initial run failed an exact height comparison by rounding; the recorded height now matches the actual crest difference. No assertion was changed or loosened.
+
+Not right yet: Breaks hills still cross the rest of the return and the third Survey Flags leg. The Mall Road pass shoulder also crosses the flag leg. These corridors still need the full proof. The aim-allocation fix, Easy chase driver and final checks remain. No new event or sound was added. Codex decided: use the job's named safe road and Everburn places for the mesa clearance. Removed: the two former seeded mesa sites. Race fingerprints and the browser were not checked in this step.
+
+### Hill country: move the Mall Road pass
+
+The Mall Road pass now stands 85.5 percent along the road instead of 30 percent. Both shoulders clear the shared Soup and Mall return and the third Survey Flags leg by 60 m. The hills suite passed 54 of 54, including the new shoulder clearance check and the existing pass, spacing and place-clearance checks.
+
+Not right yet: other Breaks hills still cross both corridors. Their full clearance proof, the aim-allocation fix, the Easy chase driver and final checks remain. Claude must judge the pictures. Race fingerprints were not checked in this step.
+
+Changed assertions: none; the shoulder clearance check is new. Codex decided: move the pair together along its own road. Removed: the former Mall Road pass position. No event or sound cue was added.
+
+### Hill country: finish the remaining corridor proof
+
+The Breaks' three starting hills and seeded field now stand clear of the full shared Hot Soup and Mall return, the third Survey Flags leg and the Boneyard gas road. The seeded selection also keeps 400 m from the six pass shoulders. The hills suite passed 54 of 54, including the full corridors, the hill count, spacing and three passes. The moved hills change the view and need Claude's visual judgment. Driving checks and final replay and world checks remain.
+
+Changed assertions for Claude to review: the shared return check now covers the whole leg instead of its first 900 m; the third Survey Flags check now covers the whole leg instead of its last 5 km. Both strengthen coverage and loosen nothing. Codex decided: use seeded selection from any existing Breaks hill, with radii of 260 to 320 m, to keep the specified count and spacing while clearing the routes. Removed: the former positions of the seeded Breaks hills. No event or sound cue was added. Race fingerprints were not checked in this step.
+
+### Hill country: rail region reference
+
+The rail-region test now compares the closed region with the current Scablands terrain, including the hills, before applying the existing place and river shapes. The 3,500 exact comparisons still check that the closed region leaves the land unchanged. The rail-region suite passed.
+
+Changed assertions, for Claude to review: at (1470, 247), the expected height changes from 1.1866134534972772 m to 2.1196134024079134 m because the west ramp of the mesa at (1800, 350) crosses open land there. Other grid expectations now include the same hill terrain. The closed-region equality is unchanged; this updates the reference for the intended terrain change, without loosening its tolerance. Codex decided: retain this mesa on open land. Removed: the pre-hill terrain reference. No event or sound cue was added. Race fingerprints were not checked in this step.
+
+### Hill country: reuse the aim point
+
+Scablands raider target selection and sight timing now reuse one point object instead of making a second point object for each candidate. The course's existing ground lookup still makes its own result. Hot Delivery also reuses the current car position for furnace and lookout sight when the player is driving. Race and arena calls retain their existing behavior. The hills suite passed 54 of 54.
+
+Changed assertions: none. Codex decided: no new design decision. Removed: the extra point allocation in these Scablands aim updates and the duplicate driving position lookup. No event or sound cue was added. Race fingerprints were not checked in this step. The Easy chase driver and final checks remain.
+
+### Hill country: Easy chase crossing, first attempt
+
+The Easy chase driver now chooses the Wash or South Ford when a river crossing or a steep bank blocks its way to the furnace. It follows the crossing before aiming at the furnace again. The battle driver keeps its former steering. This is an unverified first attempt: the suite did not reach a chase result in more than ten minutes and was stopped, so the chase and the gas roads have not passed this check. Hot Delivery, Get Out and Walk, Run Him Down, Slow Ride and The Key Under the Mall each finished 10 of 10 seeds. The file passed `node --check`. The remaining jobs and gas roads were not checked. No game event or sound cue was added. Race fingerprints were not checked.
+
+Changed assertions, for Claude to review: none. Lines 238 and 253 to 275 of `tools/test-everburn-easy.mjs` add a stored crossing route and change only chase steering. No assertion, pass mark, count, time limit or seed list changed. Codex decided: choose the shorter route through the Wash or South Ford, the crossings already used by this driver. Removed: direct steering toward the furnace while following that route.
+
+Not right yet: prove that this route completes the Easy chase and the rest of the suite. Then merge integration and run the final checks directed on the card. Claude must judge the updated pictures.
+
+### Hill country: furnace return and final proof
+
+A seeded Breaks hill at approximately (-1240, 3142) made the furnace's return route too steep. Seeded hill selection now keeps its hills clear of the named furnace return route, including the leg from the yard-to-Mall point to the furnace's return point. The hill was replaced by the next suitable seeded site. The existing solid suite checks both furnace roads and passed after this change, as did the hills (54 of 54), size and rail-region suites. The hills suite also checks the remaining job corridors. The four ways to Tin Town and the Ridge and Lookout climbs passed in the solid suite.
+
+Before that hill moved, the Easy suite passed all nine jobs: The Everburn finished 9 of 10 and each other job 10 of 10. Both gas roads passed 10 of 10 at each of four feud levels; the battle brought Big Bess home and was won 10 of 10. That run did not enable the realism switch. The changed ground needs a fresh drive check. Integration was merged at f70f09da5, bringing in a scenery change; there were no conflicts. The replay checks before this final hill move passed 297 checks across 33 cases and 12 checks across four encounters. World composition passed 63 checks across 20 events. The scenario passed syntax checking; Claude has already judged the eleven pictures, but the moved hills need a fresh look.
+
+Changed assertions, for Claude to review: no assertions changed in this step. The earlier rail reference moved from 1.1866134534972772 m to 2.1196134024079134 m due to the mesa ramp, with the same exact equality and no loosened tolerance. The chase driver changes only steering in `tools/test-everburn-easy.mjs` lines 238 and 253 to 275; no assertion, pass mark, count, time limit or seed list changed. Other changes are listed in the earlier final integration and near-scarp notes above.
+
+Codex decided: keep the furnace return clear using its existing named route points and the same 60 m clearance used for other jobs. No new game event or sound was added. Seen, lost and furnace warning cues remain `arena.tell`, `gate.latch` and `arena.toll-gate`.
+
+Not built by this slice: Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1.
+
+Removed: the former obstructing seeded hill site. No player saves were read or written.
+
+### Hill country: checks after the furnace return fix
+
+The new seeded-hill corridor check passed as part of 55 hills checks. The original Breaks hill near (-719, 2942) reaches the edge of the furnace return's 60 m corridor near (-515, 2680); the full corridor is therefore not free of every hill. The solid suite separately passed its slope and solid checks along both furnace roads, its four drives to Tin Town, and both climbs.
+
+On the updated land, the complete Easy suite passed: The Everburn finished 9 of 10, all eight other jobs 10 of 10, both gas roads at all four feud levels 10 of 10, and the battle home and won 10 of 10. With the realism switch on, Hot Delivery and Survey Flags each finished 10 of 10. The Scablands hills, solid, scene, size, things, ground, regions, map and job-map suites passed, as did rail-region and tunnels. Replays passed 297 checks across 33 cases and combat replays passed 12 across four encounters. World composition passed 63 checks across 20 events. The scenario passed Node syntax checking, and the build passed. The lane tier was not repeated, as directed.
+
+Changed assertions: none. The corridor test is new. Codex decided: test the seeded hill clearance separately from the existing furnace-road driveability check. Removed: none. No event or sound cue was added. Claude should judge the changed hill view and decide whether the original hill's partial corridor overlap needs further work.
