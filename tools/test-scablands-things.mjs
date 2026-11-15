@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData} from '../src/world/scablands-things.js';
-import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView} from '../src/world/scablands-things-view.js';
+import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
 test('fixed drawing uses every collision footprint once', () => {
@@ -331,5 +331,39 @@ test('the scene loads the trial only with its switch on', async () => {
   } finally {
     scene?.dispose();
     featureFlags.enabled = enabled;
+  }
+});
+
+
+test('fork signs use road destinations and share their posts with the solid index', () => {
+  const signs = forkSigns([]);
+  assert.ok(signs.length > 0);
+  assert.deepEqual(signs, forkSigns([]));
+  const fixed = clearedFixedThings(1989, []), grid = thingSolidGrid(fixed);
+  assert.deepEqual(fixed.signs, signs);
+  for (const sign of signs) {
+    assert.ok(thingFootprintClear(sign.x, sign.z, .25, []));
+    assert.ok(sign.destinations.length > 0);
+    for (const destination of sign.destinations) {
+      assert.equal(LAND.place(destination.id).name, destination.name);
+      assert.ok(Number.isInteger(destination.km) && destination.km > 0);
+    }
+    assert.ok(grid.near(sign.x, sign.z, sign.x, sign.z, 0).some(part => part.id === sign.id && part.kind === 'sign-post'));
+  }
+  const blocked = forkSigns([{x: signs[0].x, z: signs[0].z}]);
+  assert.ok(Math.hypot(blocked[0].x - signs[0].x, blocked[0].z - signs[0].z) >= 6.25);
+  const written = [];
+  const original = globalThis.document;
+  globalThis.document = {createElement: () => ({getContext: () => ({fillRect() {}, fillText(text) { written.push(text); }})})};
+  let view;
+  try {
+    view = createForkSignsView(signs);
+    assert.equal(view.group.children.length, 1);
+    assert.ok(view.group.children[0].material.map.isCanvasTexture);
+    assert.equal(written.length, signs.reduce((sum, sign) => sum + Math.min(sign.destinations.length, 4), 0));
+    assert.ok(written.every(text => /[??].+\d+ km$/.test(text)));
+  } finally {
+    view?.dispose();
+    if (original === undefined) delete globalThis.document; else globalThis.document = original;
   }
 });

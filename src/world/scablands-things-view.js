@@ -91,6 +91,7 @@ export function createFixedThingsView(fixed, loneBoulders = []) {
     'pylon-foot': [0x675e54, () => new THREE.BoxGeometry(1, 1, 1)],
     telegraph: [0x665848, () => new THREE.BoxGeometry(1, 1, 1)],
     'fence-post': [0x776858, () => new THREE.BoxGeometry(1, 1, 1)],
+    'sign-post': [0x776858, () => new THREE.BoxGeometry(1, 1, 1)],
     boulder: [0x777267, () => new THREE.BoxGeometry(1, 1, 1)],
   };
   for (const [kind, [colour, geometry]] of Object.entries(styles)) {
@@ -169,6 +170,50 @@ export function createThingsLinesView(fixed) {
   }};
 }
 
+// One texture and one mesh for all the hand-painted boards. In a headless
+// test there is no canvas, but the same boards and post records still exist.
+export function createForkSignsView(signs) {
+  const group = new THREE.Group();
+  if (!signs.length) return {group, dispose() {}};
+  let texture = null;
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = signs.length * 128;
+    const context = canvas.getContext('2d');
+    if (context) {
+      for (const [index, sign] of signs.entries()) {
+        const top = index * 128;
+        context.fillStyle = '#685340'; context.fillRect(0, top, 512, 128);
+        context.fillStyle = '#eee1bd'; context.font = 'bold 24px sans-serif';
+        const face = Math.atan2(sign.junction.x - sign.x, sign.junction.z - sign.z);
+        sign.destinations.slice(0, 4).forEach((destination, row) => {
+          const side = (destination.x - sign.junction.x) * Math.cos(face) - (destination.z - sign.junction.z) * Math.sin(face);
+          context.fillText(`${side < 0 ? '?' : '?'} ${destination.name.toUpperCase()} ${destination.km} km`, 12, top + 26 + row * 29, 488);
+        });
+      }
+      texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
+    }
+  }
+  const positions = [], uvs = [], indices = [];
+  for (const [index, sign] of signs.entries()) {
+    const heading = Math.atan2(sign.junction.x - sign.x, sign.junction.z - sign.z);
+    const c = Math.cos(heading), s = Math.sin(heading), halfWidth = 1.2;
+    for (const [across, height] of [[-halfWidth, 1.65], [halfWidth, 1.65], [halfWidth, 2.35], [-halfWidth, 2.35]])
+      positions.push(sign.x + across * c, sign.y + height, sign.z - across * s);
+    const bottom = 1 - (index + 1) / signs.length, top = 1 - index / signs.length;
+    uvs.push(0, bottom, 1, bottom, 1, top, 0, top);
+    const base = index * 4; indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const material = new THREE.MeshBasicMaterial({color: texture ? 0xffffff : 0x685340, map: texture, side: THREE.DoubleSide});
+  const mesh = new THREE.Mesh(geometry, material); mesh.name = 'Scablands fork signs';
+  group.add(mesh);
+  return {group, dispose() { geometry.dispose(); material.dispose(); texture?.dispose(); group.clear(); }};
+}
+
 // Create the trial once, and keep its batches for the lifetime of the scene.
 export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, halfDepth, heightAt}) {
   if (!enabled) return null;
@@ -176,10 +221,11 @@ export function createRealismThingsView({enabled, seed, jobStarts, halfWidth, ha
   const small = createSmallThingsView({seed, jobStarts, heightAt});
   const large = createFixedThingsView(fixed, loneBoulders);
   const lines = createThingsLinesView(fixed);
+  const signs = createForkSignsView(fixed.signs);
   const group = new THREE.Group();
   group.name = 'Scablands realism things';
-  group.add(small.group, large.group, lines.group);
+  group.add(small.group, large.group, lines.group, signs.group);
   return {group, fixed, loneBoulders, update: small.update, dispose() {
-    small.dispose(); large.dispose(); lines.dispose(); group.clear();
+    small.dispose(); large.dispose(); lines.dispose(); signs.dispose(); group.clear();
   }};
 }

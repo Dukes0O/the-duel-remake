@@ -223,12 +223,75 @@ export function thingFootprintClear(x, z, radius, jobStarts) {
   return true;
 }
 
+// Find junctions from the road lines themselves. Endpoints that meet a road
+// and true crossings both count; nearby intersections form one fork.
+export function forkSigns(jobStarts, {net = ROAD_NET, land = LAND} = {}) {
+  const junctions = [];
+  const add = (x, z) => {
+    if (!junctions.some(p => Math.hypot(p.x - x, p.z - z) < 60)) junctions.push({x, z});
+  };
+  const project = (p, a, b) => {
+    const dx = b.x - a.x, dz = b.z - a.z, length2 = dx * dx + dz * dz;
+    const t = length2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / length2)) : 0;
+    return {x: a.x + t * dx, z: a.z + t * dz, t};
+  };
+  for (let n = 0; n < net.roads.length; n++) for (let m = n + 1; m < net.roads.length; m++) {
+    const a = net.roads[n], b = net.roads[m];
+    for (const [first, second] of [[a, b], [b, a]]) for (const end of [first.points[0], first.points.at(-1)]) {
+      for (let i = 0; i + 1 < second.points.length; i++) {
+        const p = project(end, second.points[i], second.points[i + 1]);
+        if (Math.hypot(p.x - end.x, p.z - end.z) < ROAD_HALF_WIDTH) { add(p.x, p.z); break; }
+      }
+    }
+    for (let i = 0; i + 1 < a.points.length; i++) for (let j = 0; j + 1 < b.points.length; j++) {
+      const p = a.points[i], q = b.points[j], rx = a.points[i + 1].x - p.x, rz = a.points[i + 1].z - p.z;
+      const sx = b.points[j + 1].x - q.x, sz = b.points[j + 1].z - q.z, cross = rx * sz - rz * sx;
+      if (Math.abs(cross) < 1e-8) continue;
+      const t = ((q.x - p.x) * sz - (q.z - p.z) * sx) / cross;
+      const u = ((q.x - p.x) * rz - (q.z - p.z) * rx) / cross;
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) add(p.x + t * rx, p.z + t * rz);
+    }
+  }
+  const places = [land.yard, ...land.table];
+  return junctions.map((junction, index) => {
+    const destinations = new Map();
+    for (const road of net.roads) {
+      let nearest = null, travelled = 0;
+      for (let i = 0; i + 1 < road.points.length; i++) {
+        const a = road.points[i], b = road.points[i + 1], length = Math.hypot(b.x - a.x, b.z - a.z);
+        const p = project(junction, a, b), distance = Math.hypot(p.x - junction.x, p.z - junction.z);
+        if (!nearest || distance < nearest.distance) nearest = {distance, along: travelled + p.t * length};
+        travelled += length;
+      }
+      if (!nearest || nearest.distance > ROAD_HALF_WIDTH + 2) continue;
+      for (const [end, distance] of [[road.points[0], nearest.along], [road.points.at(-1), travelled - nearest.along]]) {
+        if (distance < 40) continue;
+        const place = places.reduce((best, row) => Math.hypot(row.x - end.x, row.z - end.z) < Math.hypot(best.x - end.x, best.z - end.z) ? row : best);
+        const offset = Math.hypot(place.x - end.x, place.z - end.z);
+        if (offset > 400) continue;
+        const km = Math.max(1, Math.round((distance + offset) / 1000));
+        const old = destinations.get(place.id);
+        if (!old || distance < old.distance) destinations.set(place.id, {id: place.id, name: place.name, km, distance, x: end.x, z: end.z});
+      }
+    }
+    let spot = null;
+    for (let radius = 22; radius <= 100 && !spot; radius += 8) for (let angle = 0; angle < 16; angle++) {
+      const heading = angle * Math.PI / 8, x = junction.x + Math.cos(heading) * radius, z = junction.z + Math.sin(heading) * radius;
+      if (thingFootprintClear(x, z, .25, jobStarts)) { spot = {x, z, heading}; break; }
+    }
+    if (!spot) throw new Error(`No clear position for road fork ${index}`);
+    return {id: `sign:${index}`, ...spot, y: scablandsSurfaceHeightAt(spot.x, spot.z), junction,
+      destinations: [...destinations.values()].sort((a, b) => a.distance - b.distance)};
+  });
+}
+
 // Keep empty positions in a line: a renderer must not join a wire across a
 // rejected pole or fence post. The caller supplies all job starts explicitly.
 export function clearedFixedThings(seed, jobStarts) {
   if (!Array.isArray(jobStarts)) throw new RangeError('Job starts are required');
   const clear = (item, radius) => thingFootprintClear(item.x, item.z, radius, jobStarts);
   return {
+    signs: forkSigns(jobStarts),
     pylons: pylonCandidates(seed).map(pylon => clear(pylon, 6) ? pylon : null),
     telegraphs: telegraphCandidates(seed).map(line => ({...line,
       poles: line.poles.map(pole => clear(pole, pole.state === 'down' ? 7 : .5) ? pole : null)})),
@@ -255,6 +318,7 @@ export function thingSolids(fixed, loneBoulders = []) {
       halfX, halfZ, heading, height, minY: y, maxY: y + height, center, size,
       collision: {center, halfExtents: [halfX, height / 2, halfZ], heading}, ...extra});
   };
+  for (const sign of fixed.signs ?? []) add(sign, sign.id, 'sign-post', sign.x, sign.z, .15, .15, 2.4, sign.heading);
   for (const pylon of fixed.pylons.filter(Boolean)) {
     for (const side of [-1, 1]) for (const end of [-1, 1]) {
       const c = Math.cos(pylon.heading), s = Math.sin(pylon.heading);
