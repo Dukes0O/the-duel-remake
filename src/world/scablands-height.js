@@ -17,6 +17,9 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
     Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:45,radius:320,topRadius:60}),
+    Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
+    Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
+    Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,0,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
   ]);
@@ -25,7 +28,7 @@ export const HILLS=hillsFor();
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
   for(const hill of hills){
-    if(hill.kind==='lookout'||hill.kind==='mesa') continue;
+    if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
   }
@@ -61,11 +64,11 @@ export function scablandsTerrainHeightAt(x,z,hills=HILLS){
       height+=(top-height)*weight;
       continue;
     }
-    if(hill.kind!=='lookout') continue;
+    if(hill.kind!=='lookout'&&hill.kind!=='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance>=hill.radius) continue;
     const weight=1-smooth((distance-hill.topRadius)/(hill.radius-hill.topRadius));
-    const top=oldTerrainHeightAt(hill.x,hill.z)+hill.height;
+    const top=hill.kind==='ridge-top'?hill.height:oldTerrainHeightAt(hill.x,hill.z)+hill.height;
     height+=(top-height)*weight;
   }
   return height;
@@ -76,7 +79,8 @@ export function scablandsPlainHeightAt(x,z){
   let height=scablandsTerrainHeightAt(x,z);
   for(const place of SCABLANDS_PLACES){
     const distance=Math.hypot(x-place.x,z-place.z),weight=1-smooth((distance-place.flatRadius)/18);
-    height+=(place.height-height)*weight;
+    const top=place.id==='ridge'?HILLS.find(hill=>hill.kind==='ridge-top').height:place.height;
+    height+=(top-height)*weight;
   }
   return height;
 }

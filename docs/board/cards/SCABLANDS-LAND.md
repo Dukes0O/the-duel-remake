@@ -673,6 +673,10 @@ flats. Its top is 45 m above the former ground, with a 60 m level radius. This p
 of the roads and gives it a clear view towards the yard. Survey Flags' fifth flag stays where
 it is.
 
+**Codex decided (Claude to review):** The Ridge has a level top at 45 m, with a 160 m
+radius and a broad shoulder. Two foothills stand north of it. The two existing Ridge roads
+provide ways up. Survey Flags' fifth flag stays at its existing position on the top.
+
 **Codex decided (Claude to review):** Each long edge of the salt pan and the scab plates
 bends once, alternating in and out by up to 180 m. The bends follow the named corner points.
 The existing smaller edge waves remain.

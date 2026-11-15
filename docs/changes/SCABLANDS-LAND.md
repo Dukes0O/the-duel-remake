@@ -1314,3 +1314,17 @@ For Claude to run: `test-full-check` on the laptop and the memory-only Performan
 Changed assertions, for Claude to review: none. Codex decided: the two mesas have 200 m top radii, 40 m steep rims and 150 m ramps; their centres follow the yard to Tin Town line at 40 and 70 percent, offset north and south respectively. Removed: none; the former ground remains outside the mesas.
 
 Still needed: Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: Ridge foothills and top
+
+The Ridge has two northern foothills and a level top at 45 m. Its broad shoulder joins the existing land, and the fifth Survey Flags flag stays at its existing position on the top. The Ridge place's level ground rises with the top. Both existing Ridge roads provide ways up. The land's switches stay off. No new game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed 8 tests, including the fifth flag's height, moving the Ridge, and both Ridge roads sampled at no more than 2 m with a maximum slope of .12. `test-scablands-size` passed 9 tests. Race fingerprints and world signatures were not checked in this run. The actual job routes and both gas roads still need their final checks.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario once it is written. The Ridge and other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the Ridge top is at 45 m, with a 160 m level radius and an 850 m shoulder; its two foothills are north of it. The card records this choice.
+
+Removed: the Ridge place's former 18 m level ground is replaced by the 45 m top while the new land is active.
+
+Still needed: detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.

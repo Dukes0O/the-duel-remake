@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HILLS, hillsFor, hillHeightAt, scablandsTerrainHeightAt} from '../src/world/scablands-height.js';
+import {HILLS, hillsFor, hillHeightAt, scablandsTerrainHeightAt, scablandsHeightAt} from '../src/world/scablands-height.js';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
@@ -118,6 +118,37 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
     const share = index === 0 ? .4 : .7;
     assert.ok(Math.abs(moved[index].x - mesa.x - 100 * share) < 1e-8);
     assert.ok(Math.abs(moved[index].z - mesa.z - 200 * share) < 1e-8);
+  }
+});
+
+test('the Ridge has foothills and a drivable way to the fifth flag on top', () => {
+  const ridge = LAND.place('ridge');
+  const top = HILLS.find(hill => hill.kind === 'ridge-top');
+  const foothills = HILLS.filter(hill => hill.kind === 'foothill');
+  assert.ok(foothills.length >= 2);
+  const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)));
+  for (const hill of [top, ...foothills]) {
+    const match = moved.find(item => item.kind === hill.kind && item.x === hill.x + 100 && item.z === hill.z + 200);
+    assert.ok(match, 'the Ridge hills follow the Ridge');
+  }
+  const flag = LAND.at('ridge', -74, 104);
+  assert.equal(scablandsHeightAt(flag.x, flag.z), top.height);
+  assert.equal(scablandsHeightAt(ridge.x, ridge.z), top.height);
+  for (const hill of foothills) {
+    assert.ok(hill.z < ridge.z, 'the foothills stand north of the Ridge');
+    assert.ok(hillHeightAt(hill.x, hill.z) >= hill.height);
+  }
+  for (const road of ROAD_NET.roads.filter(road => road.id === 'ridge-spur' || road.id === 'ridge-road')) {
+    for (let i = 1; i < road.points.length; i++) {
+      const a = road.points[i - 1], b = road.points[i];
+      const length = Math.hypot(b.x - a.x, b.z - a.z), steps = Math.ceil(length / 2);
+      let previous = scablandsHeightAt(a.x, a.z);
+      for (let step = 1; step <= steps; step++) {
+        const t = step / steps, height = scablandsHeightAt(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t);
+        assert.ok(Math.abs(height - previous) / (length / steps) <= .12, `${road.id} is drivable`);
+        previous = height;
+      }
+    }
   }
 });
 
