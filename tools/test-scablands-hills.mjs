@@ -14,6 +14,23 @@ import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch} from '../src/raiders.js';
+import {stepSkylineSight, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+
+test('the skyline furnace counts only clear time in range', () => {
+  const car = {x: FURNACE_SKYLINE.x + 100, z: FURNACE_SKYLINE.z};
+  const flat = () => 0;
+  const wall = (x) => x > FURNACE_SKYLINE.x + 40 && x < FURNACE_SKYLINE.x + 60 ? 20 : 0;
+  let sight = stepSkylineSight({}, car, 3, flat);
+  assert.equal(sight.change, 'seen');
+  assert.equal(sight.seconds, 3);
+  sight = stepSkylineSight(sight, car, 3, wall);
+  assert.equal(sight.change, 'lost');
+  assert.equal(sight.seconds, 0);
+  sight = stepSkylineSight(sight, car, 1, flat);
+  assert.equal(sight.change, 'seen');
+  assert.equal(sight.seconds, 1);
+  assert.equal(stepSkylineSight(sight, {x: car.x + 2000, z: car.z}, 1, flat).visible, false);
+});
 
 test('a raider searches the last visible place and returns to its post', () => {
   const mesa = HILLS.find(hill => hill.kind === 'mesa');

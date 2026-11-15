@@ -1426,3 +1426,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 15 tests, including a b
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the search's direct-only movement when a step is blocked.
 
 Still needed: item 2, complete navigation for difficult obstacles, furnace and lookout sight, seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: skyline furnace sight in progress
+
+During Hot Delivery the skyline furnace now checks the ground and its range before it sees the car. It counts uninterrupted time in sight and resets the count when the car reaches cover. Captions say when the furnace sees or loses the car. The seen cue is `arena.tell`; the lost cue is `gate.latch`. The car remains the target when the player is on foot. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 16 tests, including clear ground, cover, renewed sight and range. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: the furnace uses its existing map sight range and eye height, with ground sampled every 5 m. Removed: none.
+
+Still needed: item 2, connect six seconds in sight to the horn and riders, complete pursuit and lookout sight and captions, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The sight clock alone does not yet call riders. The card is not ready to merge.

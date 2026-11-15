@@ -5,6 +5,19 @@
 // changes a race; the scene reads `furnaceSighting` and the job engine reads `pathShare`.
 import {OLD_SMOKE} from './old-smoke.js';
 import {LAND} from '../scablands-names.js';
+import {sees, WATCH} from '../scablands-ways.js';
+import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+
+// The skyline furnace watches the car, not the driver on foot. Cover resets
+// the uninterrupted time in view. The caller owns the state and the effects.
+export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeightAt) {
+  const visible = !!car && sees(FURNACE_SKYLINE, car, {
+    heightAt, eye: WATCH.furnace.eye, range: WATCH.furnace.range, step: 5,
+  });
+  const change = visible === !!state.visible ? null : visible ? 'seen' : 'lost';
+  const seconds = visible ? (state.seconds ?? 0) + Math.max(0, dt) : 0;
+  return {visible, seconds, change};
+}
 
 // Where the furnace is seen in jobs 1 and 3, from a land (src/world/scablands-names.js), so that the marks move with the places they stand by.
 // Job 1: standing on the skyline north of the road, half way along the road's second leg (between the halfway camp and the second barricade) and 233 m north of it (smaller z is

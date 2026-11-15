@@ -5,7 +5,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -598,6 +598,16 @@ export function stepWorldJob(duel, dt) {
   const playerView = {position: point, s: player.s, lateral: player.lateral,
     speed: player.speedMph ?? 0};
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
+    const car = position(duel, state);
+    const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt);
+    worldJob.skylineSight = sight;
+    if (sight.change) {
+      duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'furnace-sight', targetId: 'player', seconds: 0,
+        cue: sight.visible ? 'arena.tell' : 'gate.latch', position: car}});
+    }
+  }
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
   if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid()).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
