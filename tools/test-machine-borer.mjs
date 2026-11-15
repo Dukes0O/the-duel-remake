@@ -11,7 +11,18 @@ import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
+import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+let storedMapping = null, mappingChanges = 0;
+const mappingStorage = {getItem:()=>storedMapping, setItem:(_key,value)=>{storedMapping=value;}};
+const unsubscribe = onMachineInputChange(()=>{mappingChanges++;});
+assert.equal(saveMachineInput({deviceId:'stick',axes:{boom:2}}, mappingStorage), true);
+assert.equal(mappingChanges, 1, 'A saved mapping notifies the open Dig.');
+assert.equal(loadMachineInput(mappingStorage).axes.boom, 2);
+unsubscribe();
+saveMachineInput({deviceId:'stick',axes:{boom:1}}, mappingStorage);
+assert.equal(mappingChanges, 1, 'Closing the Dig removes its mapping listener.');
 
 const modelView = {body:new THREE.Group()};
 poseBorerSlope(modelView, {slope:Math.PI / 30});
@@ -119,6 +130,8 @@ assert.deepEqual(borerYardControls({}, {axes:[0.2,-0.4,0,-0.5]}, {drive:{steer:0
   {forward:0.4,keyboardLever:false,padLever:true,steer:0.2,slope:0.5}, 'The mapped stick can change slope.');
 assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
+const spike = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 && Math.abs(x) < 1 ? 6 : 0});
+assert.equal(borerHasFace(spike, {x:0,z:0}, 0), false, 'A narrow spike is not a full-width face.');
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);
 const refusedOnce = stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1);
 const released = stepBorer(refusedOnce.state, {thrust:0}, flat, 'clay', 1);
@@ -313,6 +326,8 @@ const returned = stepBorer(reversed, {thrust:1}, hill, 'topsoil', 28).state;
 assert.ok(Math.abs(returned.z - 40) < 1e-6, 'Forward travel returns to the cutting face.');
 assert.deepEqual(returned.segments, forty.segments, 'Travelling through a cut does not cut it again.');
 const bent = stepBorer(createBorerState(), {thrust:1, steer:1, slope:1}, hill, 'topsoil', 20).state;
+const bentRestored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(bent.segments)));
+assert.deepEqual(exportDigTunnels(bentRestored), bent.segments, 'A bent tunnel survives a plain-data round trip.');
 const backedToMouth = stepBorer(bent, {thrust:-1, steer:-1}, hill, 'topsoil', 20).state;
 assert.ok(Math.hypot(backedToMouth.x, backedToMouth.y, backedToMouth.z) < 1e-7,
   'Reverse follows the bends and slope back to the mouth.');

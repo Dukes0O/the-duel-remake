@@ -5,7 +5,7 @@ import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
-import {loadMachineInput} from '../input-setup.js';
+import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace} from './borer.js';
 import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
@@ -194,6 +194,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
+  let savedMapping=loadMachineInput();
+  const refreshMapping=()=>{savedMapping=loadMachineInput();};
+  const unsubscribeMapping=onMachineInputChange(refreshMapping);
+  const onStorage=event=>{if(event.key===MACHINE_INPUT_STORAGE_KEY || event.key===null)refreshMapping();};
+  window.addEventListener('storage',onStorage);
   let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xe9e2d2,0x4a3e30,1.15));
@@ -297,7 +302,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   }
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
-    window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
+    window.removeEventListener('blur',onBlur);window.removeEventListener('storage',onStorage);unsubscribeMapping();observer.disconnect();for(const view of machineViews.values())view.dispose();
     borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
@@ -306,7 +311,6 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const padKeys={...keys};
     let pad=null;
     try { pad=Array.from(navigator.getGamepads?.() || []).find(device=>device?.connected) || null; } catch {}
-    const savedMapping=loadMachineInput();
     const axes=savedMapping && (!pad || savedMapping.deviceId===pad.id) ? savedMapping.axes : {};
     const borerMapping={drive:{steer:axes.swing ?? 0,forward:axes.boom ?? 1},slope:axes.arm ?? 3};
     // Material loading is one clear action. It transfers real bucket contents to the truck.

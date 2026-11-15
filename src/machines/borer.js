@@ -17,7 +17,9 @@ export function borerHasFace(ground, position, heading, radius = 3) {
   for (let distance = 1; distance <= 12; distance++) {
     const x = position.x + Math.sin(heading) * distance;
     const z = position.z + Math.cos(heading) * distance;
-    if (ground.heightAt(x, z) >= floor + 2 * radius) return true;
+    const across = Math.max(0, radius - 0.5);
+    if ([-across, 0, across].every(offset =>
+      ground.heightAt(x + Math.cos(heading) * offset, z - Math.sin(heading) * offset) >= floor + 2 * radius)) return true;
   }
   return false;
 }
