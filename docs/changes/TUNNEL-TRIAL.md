@@ -2,27 +2,31 @@
 
 The Scablands now has floor selection for the river beds under both decks. Cars, people, job raiders and Big Bess use their feet to select a floor, and deck roofs and height-limited solids keep actors on their own level. The drawn bed is open under the bridge and Pipe. The `wasteland-town` switch still controls the trial bore. The 100 m west-scarp trial has a flat floor, side walls, crown, closed cutting faces and checked joints; a grid limits segment lookup. Nothing is saved by the trial. The scene follows tunnel revisions, cuts only the mouths and grows the lining. The camera is constrained to the car's floor. No new game event or sound cue was added.
 
-The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude drove both tunnel directions successfully and measured 18.1 to 18.5 ms p95. The pictures were obscured by the interface. The revised scenario hides it and moves the inspection cameras; Claude must judge the new pictures.
+The browser scenario uses the game scene and tunnel API, memory-only storage and Performance quality. It grows the bore in 20 steps and requests the mouth, inside, above, chase and deck views and drives. The halfway view shows the closed cutting face; there is no machine cylinder yet. Claude drove both tunnel directions successfully and saw the bore, mouths and open decks in the revised pictures.
 
 Big Bess's position check failed because the trial treated every actor height as an absolute floor. Integration uses an offset for actors without a selected floor. The scene now uses the selected height after a mover marks it, and otherwise retains the previous offset. The existing assertion is unchanged and a new check covers a selected floor.
 
+## Shared build merge
+
+Merged `integration/wasteland` into this lane. Conflicts were settled as follows:
+
+- `course.js`: kept both tunnel revisions and the realism objects' shared solid grid.
+- `game.js`: passed both feature switches when creating an arena course.
+- `scablands-ground-look.js`: kept both track marks and tunnel mouths, including their shader cache keys and update hooks.
+- `scablands-scene.js`: kept tunnel updates and the realism objects, tracks and photographs.
+- `test-scablands-solid.mjs`: kept the open river-bed route and tested it with realism both off and on.
+
+The shared solid grid also feeds each job's grid, cars, raiders and Big Bess. Realism objects now carry their height range for collision checks. A focused check places a pole on the deck and a rock in the bed and checks both the course and job grids. The normal grounded-car contact path for other solids is unchanged. A comparison with the shared branch confirms that the ground shader text is byte-for-byte unchanged when there are no tracks or tunnels; a second check confirms both additions appear together.
+
 ## Checks
 
-The scenario passes `node --check`. A Node-only stub ran the scenario through both tunnel drives and both deck crossings and parsed all 62 evaluated scripts; all passed. It did not run the browser.
+`test-tunnels`, `test-scablands-things`, `test-scablands-solid` (24 checks), `test-scablands-scene`, and `test-scablands-size` passed. `test-replays` passed 297 fingerprints in 33 cases; `test-combat-replays` passed 12 fingerprints in four encounters. `test-shortcut-presets` passed 241 checks. `npm.cmd run build` passed with the existing chunk-size and mixed-import warnings.
 
-`test-tunnels`, `test-scablands-solid` (20 checks), `test-scablands-size`, `test-scablands-scene`, `test-old-smoke`, `test-everburn-play-start`, `test-ember-pot`, `test-replays`, `test-combat-replays`, `test-shortcut-presets`, and `node --check tools/scenarios/tunnel-trial.mjs` passed. The replay checks retained 297 race fingerprints in 33 cases and 12 combat fingerprints in four encounters. A 100 m tube takes 131 bytes in the simple JSON check, below the 2 MB ground budget; a tunnel save is not implemented.
-
-On commit 87f779b79, the lane tier ran 258 suites: 253 passed and five failed. Eifel, review evidence, Blackiron and Tollkeeper failed because FFmpeg could not start. The long Everburn Easy suite was accidentally included despite the instruction to leave it for Claude: Survey Flags finished 0 of 10, below its required 8 of 10. Its cause and whether integration already has the failure are unverified. `npm.cmd run build` passed with the existing Vite large-chunk and mixed-import warnings.
-
-Integration c88f83669 is an ancestor of this branch, and its status page is unchanged. The lane check found a non-Scablands contact regression; restricting the new calculation to the Scablands fixed it, and the core, tunnel and solid checks passed again. The final lane and build results are above.
+Claude ran the browser scenario successfully: the bridge floor error was 0 and frame times were 18.1 to 18.2 ms. Both tunnel drives passed in the prior run. No browser was run in this lane after the shared build was brought in.
 
 ## For Claude to run
 
-Run the revised browser scenario and judge the pictures and frame times. Investigate the Survey Flags failure and run the four FFmpeg-dependent suites at merge. Do not treat the lane as fully green until the Survey Flags failure is understood. The visible appearance is not yet proven, and no boring machine is built.
-
-The earlier Node reproduction used a Titan and missed a regular-car fault. A story-job reproduction with the scenario's exact line and a Falcone reproduced the browser's 0.87 m and 1.80 m errors: its stored ground height stayed at the starting height while `_jumpY` followed the bed. Grounded Scablands cars now update their stored height on each flight-rule support step and on landing. The Node test now drives both a Falcone and a Titan on both lines, comparing `scablandsActorFeet` with `course.groundAt` using those feet, and also verifies the selected floor is the bed. The scenario records every step and reports the worst three with the height sources. `a.stop()` cancels the game loop before the pictures and drives; the drive checks it remains stopped, and its synchronous loop advances only with its own `duel.step` calls. Placement gives the bed height directly, so no settling interval is needed. The browser has not yet verified the fix.
-
-Expected Falcone results for Claude's same setup: at the bridge, maximum floor error approximately 0 m, maximum cover 8 m, and 30 covered samples; at the Pipe, approximately 0 m, 8 m, and 11 samples. The Titan's largest measured floor difference is 0.0085 m. The Pipe's minimum covered samples is five, scaled from its 3.6 m half-width against the bridge's 7 m half-width. `node tools/test-tunnels.mjs` and `node --check tools/scenarios/tunnel-trial.mjs` passed for this fix.
+Run the lane tier and long Everburn suite at merge, as requested. The earlier lane run on commit 87f779b79 had four FFmpeg startup failures and a Survey Flags failure in the long Everburn suite; their status on this merged branch is unknown. Review the shared build in the browser. The boring machine itself is not built.
 
 ## Changed assertions, for Claude to review
 
@@ -44,11 +48,11 @@ The trial crosses the west scab scarp from just inside its foot to the high grou
 
 The trial has one segment, so each occupied 32 m grid cell holds one candidate. Support and wall queries scan that cell; motion also checks at most two neighbours and the two end faces. The separate clipping utility scans all segments without allocating. The slope query reuses its point and makes no closure per step.
 
-The ground shader holds eight mouth capsules, each with a capsule-distance test per fragment. The cost is bounded by the number of mouths, not by the length or segment count of the bore. This has not been timed. The lining is plain rock, the cutting face and openings have not been judged in the browser, and a machine, its sound and persistent tunnels remain to be built. My view is no-go for a finished boring machine on this evidence; first drive and time this trial, then decide how the machine grows, saves and decorates the bore. Claude makes the verdict after seeing it.
+The ground shader holds eight mouth capsules, each with a capsule-distance test per fragment. The cost is bounded by the number of mouths, not by the length or segment count of the bore. This has not been timed. The lining is plain rock; Claude saw the lit bore and its mouths, and a machine, its sound and persistent tunnels remain to be built. My view is no-go for a finished boring machine on this evidence; first drive and time this trial, then decide how the machine grows, saves and decorates the bore. Claude makes the verdict after seeing it.
 
 `three-bvh-csg` is MIT licensed. A second trial would need an isolated installation, closed terrain and cutter meshes, collision and terrain updates, and rebuild and frame measurements. Its cost is unmeasured.
 
-Ordinary released courses have no trial bore. Their replay fingerprints passed; the Scablands deck route intentionally changes where the two floors overlap. The player-visible results remain subject to Claude's browser check.
+Ordinary released courses have no trial bore. Their replay fingerprints passed; the Scablands deck route intentionally changes where the two floors overlap. The combined shared build remains subject to Claude's browser check.
 
 ## Removed
 

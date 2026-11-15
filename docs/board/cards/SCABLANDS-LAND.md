@@ -867,6 +867,59 @@ frame check under rule 8 comes before the switch goes on.
 5. A frame check is owed before the Scablands is opened to players beyond the story's switch (the drawn ground and
    wear cost graphics time). Not in this card (rule 9: the stories that use it are off).
 
+### Realism trial, step 3 result (Codex placed and made solid; Claude drew and judged, 15 November 2026): merged, switch off
+
+Sheet `docs/board/looks/scablands-land/round-10.jpg` with Claude's review beside it. Full notes:
+`docs/changes/SCABLANDS-LAND.md`, "Realism trial, step 3" and "Realism trial, step 3: Claude's
+drawing and the merge".
+
+- **Built:** small things round the car by ground (stones, scrub, dead brush, bones, cans, scrap,
+  salt lumps, burnt stumps); telegraph poles and wire along the East Road and the Iron Line;
+  fences near the towns; a painted sign at every fork; the line of dead pylons with its cables;
+  boulders alone and below the scarps; tyre ruts along the ways; the pole and pylon lines on both
+  maps. All of it only with `scablands-realism` on.
+- **Solid:** poles, fence posts, pylon feet, sign posts and boulders stop a car, a raider and Big
+  Bess, from one list that the rules and the scene share. A fence post hit at more than 25 km/h
+  falls with its wire (`world.fence.snap`), for the visit only; nothing is saved.
+- **Kept clear of solid things:** every road, way, ramp and the Steps' marked way, the bed near a
+  deck, Big Bess's and the furnace's roads, the raiders' ways in to the Everburn well, 30 m round
+  every job place, and a 14 m corridor along each leg of a job.
+- **Two independent reviews by Codex.** The first found that cars drove through the things, that
+  signs showed question marks and that the scenario could not fail; all three are cured. The
+  second confirmed the cures and found three smaller faults (placing work done with the switch
+  off, the map reading the switch for itself, the raiders' ways in not cleared); Claude read the
+  fixes.
+- **Limits:** at most 13 more draw calls and 27,508 more triangles in any of eight views (limits
+  40 and 150,000).
+- **Changed assertions, reviewed by Claude (rule 18):** `test-p4-audio` leaves the one new cue
+  `world.fence.snap` out of the older sound bank's pin, exactly as the ember's three cues and the
+  ground's nine are left out; the pinned hash is unchanged. No other existing assertion changed.
+  `test-scablands-solid` drives the four ways a second time with the switch on, and
+  `test-everburn-easy` can run two jobs with the switch on; both are additions.
+- **Open:** the pylons draw olive, not grey; boulders below the scarps are in no picture; leaning
+  poles are drawn upright; signs are small from the driver's seat. Not driven in real time with
+  the things on, and no frame check: both are owed before the switch is turned on for anyone.
+
+**Checks at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
+
 ## Removed
 
 The round tube road. The noise-texture colours in four recipes.
+
+### Codex decided (Claude to review): small-thing placement
+
+The design names which ground holds each thing but gives no counts. The first placing rules use the relative chances in `SMALL_DENSITY`, with more stones on the plates and river bed than the flats. These are a starting choice for Claude to judge in the trial. Salt lumps are limited to 90 m from the pan edge. The scene must pass every job start to the placer before the placing is used in the game.
+
+The first candidate line for pylons runs 100 m east of the Dry Dam, yard and Dead Mall. Spacing continues across the bend at the yard. The candidates still need clearance from roads, buildings and job starts before they can be drawn or made solid.
+
+Telegraph candidates stand 22 m from the East Road centre and 12 m from the Iron Line. The seed chooses 4 percent down and 12 percent leaning. These are starting choices for Claude to review. The candidates still need clearance before they are drawn or made solid.
+
+Fence candidates use one run on each road arriving within 200 m of Tin Town, starting 200 m from the road end. Runs are 200 to 600 m long, with posts 8 m apart and seeded gaps. They still need clearance checks before drawing or making them solid.
+
+Rock-fall candidates form seeded groups of two to five, 3 to 27 m from the foot of each scarp. They are 1 to 4 m across. Their footprints still need clearance checks before drawing or making them solid.
+
+Single-boulder candidates use 120 m cells, with at most one candidate per cell. The chance is 45 percent on plates and river bed, 12 percent on other ground, and zero on salt. Their full footprints still need clearance checks before drawing or making them solid.
+
+For the first clearance pass, allow a 6 m radius around a pylon, 0.5 m around a standing pole, 7 m around a down pole, and 0.25 m around a fence post. A boulder's radius is half its stated size. The later drawing and solid footprints must fit within these allowances or the clearance must be revised. Rejected line positions stay as gaps so wires do not cross them.
+
+For the first collision records, each pylon has four feet, 6 m apart, and each foot is 0.8 m across. Standing poles are 0.5 m across and 7 m tall; down poles are 6.8 m long. Fence posts are 0.3 m across and 1.4 m tall. A boulder's collision footprint and height use its stated size. The plain drawing must match these records before they are connected to the game.

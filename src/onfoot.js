@@ -35,7 +35,7 @@ function carPoint(course, car) {
 function nearbyObstacles(course, car, fromS, toS, from, to) {
   const obstacles = course.obstaclesNear(fromS, toS);
   // The Scablands' solids are found by a grid by world position (SCABLANDS-LAND round 4, slice 2b): a person cannot walk through a building.
-  return course.def?.scablands ? [...obstacles, ...(car.arena?.worldJob?.solidGrid ?? SOLID_GRID).near(from.x, from.z, to.x, to.z, 3)] : obstacles;
+  return course.def?.scablands ? [...obstacles, ...(car.arena?.worldJob?.solidGrid ?? course.solidGrid ?? SOLID_GRID).near(from.x, from.z, to.x, to.z, 3)] : obstacles;
 }
 
 function blockedByScenery(course, car, from, to, fromS, toS) {

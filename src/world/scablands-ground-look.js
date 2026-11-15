@@ -178,13 +178,22 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
     if(gRiver<80.0)discard;
     #endif` : 'float gRiver=128.0;';
 
+  let tracks = null;
+  const groundMaterials = new Set();
+  function setTracks(value) {
+    tracks = value;
+    for (const material of groundMaterials) material.needsUpdate = true;
+  }
+
   function apply(material, {riverHole = true} = {}) {
     if (!material?.isMeshStandardMaterial || material.userData.groundLook) return material;
     material.userData.groundLook = true;
     tunnelMaterials.add(material);
+    groundMaterials.add(material);
     material.defines = {...material.defines, ...(riverHole && regionsOn ? {GROUND_RIVER_HOLE: ''} : {})};
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
+      if (tracks) Object.assign(shader.uniforms, {uTracks: tracks.texture, uTracksBox: tracks.box});
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;')
         .replace('#include <project_vertex>', `#include <project_vertex>
@@ -331,15 +340,21 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           gc*=.88+.24*gGrit.b;
           diffuseColor.rgb=gc;`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n          totalEmissiveRadiance+=gGlow;');
+      if (tracks) shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform sampler2D uTracks;uniform vec4 uTracksBox;')
+        .replace('diffuseColor.rgb=gc;', `vec2 trackUV=(gq-uTracksBox.xy)*uTracksBox.zw;
+          if(all(greaterThanEqual(trackUV,vec2(0.0)))&&all(lessThanEqual(trackUV,vec2(1.0))))
+            gc*=1.0-.26*texture2D(uTracks,trackUV).r;
+          diffuseColor.rgb=gc;`);
       // The photographs' relief tilts the ground's own direction (worked out in the world, then turned to the camera's view).
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}`;
+    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
     material.needsUpdate = true;
     return material;
   }
-  return {apply, uniforms, setTunnelMouths};
+  return {apply, uniforms, setTunnelMouths, setTracks};
 }
 
 

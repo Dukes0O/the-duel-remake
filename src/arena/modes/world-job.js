@@ -614,7 +614,7 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
-  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid()).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
+  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
   const trainMetresBefore=worldJob.job.stepState.trainMetres??0;

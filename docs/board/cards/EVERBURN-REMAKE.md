@@ -251,6 +251,78 @@ written in the change note. A fifth drive takes the bed without scooping and arr
 until the land holds two heights at a deck (the tunnel lane's rule). Until then the bed's drive
 is proved from the Wash to the bridge and marked as owed.
 
+## Claude's drive on the larger land, in real time (15 November 2026)
+
+Driven by Claude's own key presses in a visible window at full frame rate (55 frames a second on
+Performance), in bursts of one to ten seconds with the game paused between them, on the land as
+merged (solid ground in, hills and placed things not yet). A burst is steered blind, so the
+steering was clumsier than a player's; the findings below do not depend on that. Memory-only
+saves, a private address. The tool is `tools/hand-drive.mjs` (new, asked for by this card: the
+app's own browser pane draws one frame a second while nobody is at the laptop).
+
+**What works.**
+- The pot's rule can be read while driving. Off the road at 150 km/h the gauge falls where a
+  player can see it (100 to 45 in 25 seconds). At nothing it says OUT, "back to the brazier", and
+  Cinder says "You dropped my fire! Go back, I've got more. Slower this time."
+- The East Road reads as a desert road to the horizon. The scab plates read as different ground:
+  dark, cracked, and the car slows on them at once.
+- The Girder Bridge is solid: the car stops against its side truss and has to back off.
+- Driving off the river's bank is a fall of 8 m that takes half the car's armour (121 to 63).
+- The river bed looks the best of anything on the land: pebbles, a sandy bank, the bridge above.
+- The large map shows the whole land, its regions, and the four ways with their lengths.
+
+**What a player would meet, to put right in slices 2 to 4 (each is in the design above unless
+marked new).**
+1. The car starts facing west, away from Tin Town, on bare plain. There is no gate, no Cinder
+   and no brazier in sight. (Slice 3.)
+2. **New: the brazier cannot be found.** "Back to the brazier" names a thing 300 m away that is a
+   speck, on a plain with no landmark, and neither map marks it. A brazier needs a column of
+   smoke that reads from a kilometre, a mark on both maps, and an arrow at the screen's edge
+   while the pot is out.
+3. **New: the river's bank cannot be seen from the plain.** From 100 m the bed is a pale band
+   and the near lip does not show, so the first fall comes with no warning. The lip needs a dark
+   broken edge, stones and scrub along it, and posts or a fence where a road runs near it.
+4. **New: from the bed, the Girder Bridge stands on a solid wall across the river.** The tunnel
+   lane now draws the bed under the decks and the deck on its piers (TUNNEL-TRIAL).
+5. The four arena weapons (UFO Jump, Bomb Storm, Crossbow, Flamethrower), style points, a race
+   clock and a "jump peak" box show during the job, and the jump box covers the ember gauge.
+   (Slice 4.)
+6. **New: the large map tells everything at once.** It lists all four ways with their barricades
+   and the furnace's sight before the player has left the yard. The design says only the East
+   Road is told and the rest is found. Cinder's caption also lies across the middle of the map.
+7. **New: the pause screen names the wrong event** at the Wasteland gate ("Pacific Canyon
+   Circuit").
+8. The bridge's trusses are the colour of new timber. They are to be rusted steel (Claude draws).
+9. At 150 to 190 km/h the plain gives no sense of speed, because nothing stands near the road.
+   Realism step 3 (things on the land) is the cure; judge it again when that is merged.
+
+**Not driven:** the Halfway Camp, the barricades and riders, the Steps, the Pipe, Tin Town's
+gate and bay. Those are driven when slices 2 and 3 are built.
+
+## Job 1: what the drive adds to the design (Claude, 15 November 2026)
+
+These settle findings 1, 2, 5, 6 and 7 of the drive, and are built with slices 2 to 4. Findings
+3, 4 and 8 are drawing and are Claude's; finding 9 is realism step 3.
+
+- **The yard stands on the land.** At the land's yard the Scrapdome's yard is drawn as it is on
+  the Home Yard screen (`src/scrapdome-yard.js`: its scaffold and barriers, its stacked wrecks),
+  solid, with an east gate 12 m wide between two posts. Job 1 starts with the car 40 m inside
+  that gate, facing it. Cinder stands at the gate by her brazier. A player who looks back from
+  the East Road sees the yard for two kilometres.
+- **A brazier can be found.** Each of the three braziers sends up a column of smoke 40 m tall
+  that reads from 1.5 km. The yard's brazier is on both maps from the start; the others appear
+  on the maps once seen. While the pot is out, an arrow at the screen's edge points to the
+  nearest brazier the player knows, with its distance.
+- **The map tells what Cinder told, and what the player has found.** At the start the large map
+  lists one way, the East Road, with her words: "The Ash Men hold the Girder Bridge." The other
+  three ways are ground and crossings on the map with nothing listed. A way is listed, with its
+  length, once the player has driven 300 m of it or come within sight of its crossing. A danger
+  on a way (a barricade, the furnace's sight, the wind on the pan, the Pipe's speed) is written
+  only once the player has seen or met it. The list is headed "What you know". A caption never
+  lies across the map: while the map is open it is said along the map's lower edge.
+- **The job's own screen.** No clock, no style points, no jump readout, and no weapons but the
+  lent flamethrower. The pause screen says "Hot Delivery, the Scablands".
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

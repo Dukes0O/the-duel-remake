@@ -12,11 +12,14 @@ import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-ru
 
 // SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
 const DT = 1 / 120, MAX_SECONDS = 3000;
+const trialJobsOnly = process.argv.includes('--scablands-things');
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
-  'warlord-cards': true, 'crew-gear': true};
+  'warlord-cards': true, 'crew-gear': true, ...(trialJobsOnly ? {'scablands-realism': true} : {})};
 const allJobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS];
 assert.equal(allJobs.length, 9);
-const jobs = allJobs;
+const jobs = trialJobsOnly ? allJobs.filter(job =>
+  ['everburn-hot-delivery', 'everburn-survey-flags'].includes(job.id)) : allJobs;
+if (trialJobsOnly) assert.equal(jobs.length, 2);
 assert.equal(new Set(jobs.map(job => job.id)).size, jobs.length);
 
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -397,7 +400,10 @@ for (const definition of jobs) {
   for (let seed = 1; seed <= 10; seed++) {
     const result = play(definition, seed);
     if (result.won) finishes++;
-    if (seed === 1 && !result.won) results.push({definition, result});
+    if ((seed === 1 || trialJobsOnly) && !result.won) {
+      console.log(`Failed ${definition.name}, seed ${seed}`);
+      results.push({definition, result});
+    }
     if (result.won) assert.equal(result.duel.state.arena.worldJob.settled, true);
   }
   console.log(`${definition.name}: ${finishes}/10 finished`);
@@ -415,8 +421,9 @@ for (const entry of results) if (entry.result) console.log(`Sample ${entry.defin
   )}`);
 for (const entry of results) if ('finishes' in entry)
   assert(entry.finishes >= 8, `${entry.definition.name}: ${entry.finishes}/10 finished; expected at least 8/10`);
-console.log('Everburn Easy driver: all nine jobs finished through real Duel inputs');
+console.log(`Everburn Easy driver: ${trialJobsOnly ? 'both realism trial jobs' : 'all nine jobs'} finished through real Duel inputs`);
 
+if (!trialJobsOnly) {
 // RUN-GAS: the same child-pace driver brings a gas run home on each road at each word of the feud, 8 times in 10 at least.
 // The run count is the try's number, so each try has its own ambush places.
 const FEUD_WORDS = ['Watching', 'Raiding', 'Hunting', 'War party'];
@@ -451,4 +458,6 @@ console.log('Everburn Easy driver: both gas roads at all four feud words brought
   assert.equal(home, 10, `Battle, Easy: Big Bess home ${home}/10; expected 10`);
   assert(won >= 8, `Battle, Easy: the battle won ${won}/10; expected at least 8/10`);
   console.log('Everburn Easy driver: the battle on the Boneyard road, Big Bess home every time and the furnace stopped through real Duel inputs');
+}
+
 }
