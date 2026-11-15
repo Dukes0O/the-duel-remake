@@ -2,13 +2,15 @@ import {SCABLANDS_LAYOUT,SCABLANDS_PLACES} from './scablands.js';
 import {riseHeightAt,riverDepthAt} from './scablands-regions.js';
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
+import {makeRng} from '../rng.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 
 // Hill centres follow named places. Their shoulders stand clear of the existing roads.
-export function hillsFor(land=LAND){
-  return Object.freeze([
+export function hillsFor(land=LAND,seed=1989){
+  const rng=makeRng(seed);
+  const hills=[
     Object.freeze({...land.at('ships-in-sand',-600,-600),kind:'dune',height:12,radius:220}),
     Object.freeze({...land.at('ships-in-sand',600,-600),kind:'dune',height:14,radius:220}),
     Object.freeze({...land.at('ships-in-sand',-600,600),kind:'dune',height:10,radius:220}),
@@ -22,7 +24,11 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
     Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
-  ]);
+  ];
+  return Object.freeze(hills.map(hill=>{
+    if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa') return hill;
+    return Object.freeze({...hill,spurs:rng.int(3,5),spurAngle:rng.range(0,Math.PI*2)});
+  }));
 }
 export const HILLS=hillsFor();
 // Build once. Keep table order inside each cell because mesas and flat tops blend in order.
@@ -53,7 +59,11 @@ export function hillHeightAt(x,z,hills=HILLS){
   for(const hill of nearbyHills(x,z,hills)){
     if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
-    if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
+    if(distance>=hill.radius) continue;
+    // The nominal radius is the outer bound, so shoulders cannot spill onto a cleared road.
+    const angle=Math.atan2(z-hill.z,x-hill.x);
+    const radius=hill.spurs ? hill.radius*(.875+.125*Math.sin(hill.spurs*angle+hill.spurAngle)) : hill.radius;
+    if(distance<radius) height=Math.max(height,hill.height*(1-smooth(distance/radius)));
   }
   return height;
 }

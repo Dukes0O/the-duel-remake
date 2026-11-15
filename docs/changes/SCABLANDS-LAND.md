@@ -1772,3 +1772,13 @@ The existing frozen hill table now has a 500 m cell index built once. Height que
 Check: `node tools/test-scablands-hills.mjs` passed 30 of 30. A new check compares indexed and full-table heights across the land. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the index comparison is new. Codex decided: no new design choice. Removed: full-table scans for the normal hill table.
 
 Still needed: part C's seeded hill country, clearance and route checks, dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: seeded shoulders
+
+The existing Breaks hills, dunes and foothills now have three to five seeded shoulders. Their outer radius stays within the former footprint, preserving the existing road clearances. The Lookout, Ridge top and mesas keep their existing shapes. This is one step toward the larger hill country; the requested counts, placement and route checks remain unfinished. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 31 of 31. The new check samples each hill for uneven shape, repeatability and slopes under 30 degrees. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the shoulder check is new. Codex decided: use the existing default game seed, 1989, for this fixed land table and keep each shoulder inside its former radius. Removed: round profiles for the existing Breaks hills, dunes and foothills.
+
+Still needed: the full seeded hill country, clearance and route checks, the dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

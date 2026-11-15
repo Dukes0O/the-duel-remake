@@ -446,6 +446,30 @@ test('the Ridge has foothills and a drivable way to the fifth flag on top', () =
   }
 });
 
+test('hill shoulders are seeded, uneven and gentle', () => {
+  assert.deepEqual(hillsFor(LAND, 1989), HILLS);
+  assert.notDeepEqual(hillsFor(LAND, 1990), HILLS);
+  for (const hill of HILLS.filter(item => ['breaks', 'dune', 'foothill'].includes(item.kind))) {
+    assert.ok(hill.spurs >= 3 && hill.spurs <= 5);
+    const heights = [];
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 90) {
+      const x = hill.x + Math.cos(angle) * hill.radius * .7;
+      const z = hill.z + Math.sin(angle) * hill.radius * .7;
+      const height = hillHeightAt(x, z, [hill]);
+      heights.push(height);
+      for (let fraction = .1; fraction <= 1; fraction += .1) {
+        const px = hill.x + Math.cos(angle) * hill.radius * fraction;
+        const pz = hill.z + Math.sin(angle) * hill.radius * fraction;
+        const base = hillHeightAt(px, pz, [hill]);
+        const dx = hillHeightAt(px + 1, pz, [hill]) - base;
+        const dz = hillHeightAt(px, pz + 1, [hill]) - base;
+        assert.ok(Math.hypot(dx, dz) <= Math.tan(Math.PI / 6), 'the shoulder is drivable');
+      }
+    }
+    assert.ok(Math.max(...heights) - Math.min(...heights) > 1, 'the shoulder is not round');
+  }
+});
+
 test('the hill index gives the same heights as the whole table', () => {
   const unindexed = [...HILLS];
   for (let x = -7000; x <= 7000; x += 113) for (let z = -5000; z <= 5000; z += 127) {
