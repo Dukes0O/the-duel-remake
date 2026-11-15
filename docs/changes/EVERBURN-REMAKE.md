@@ -231,3 +231,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the gate start and the remaining steps.
+
+## Larger land, start at the yard gate (15 November 2026)
+
+- Hot Delivery starts 40 m inside the east gate, facing out along its bearing. The yard brazier stands 8 m inside and 7 m left of the gate centre. Cinder stands beside it, clear of the road. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It measures the start, heading, Cinder and brazier against the real yard plan and checks clearance using the job's yard solids. `git diff --check`: passed.
+- Changed assertions, for Claude to review: the yard brazier's distance from the yard centre changed from at most 9 m to its gate-relative position; the start changed from 40 m west of the yard centre and heading p/2 to 40 m inside the gate and heading 1.0309944553390455 radians. Reason: the start moved to the yard's gate. The pickup's former position beside the yard centre moved to the gate for the same reason.
+- Codex decided: Cinder stands 2 m farther left than the brazier, so the figure and fire do not overlap. The brazier is at the specified 7 m offset; Claude should review the figure's placement.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Removed: the open-ground start west of the yard centre. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the furnace and remaining steps.

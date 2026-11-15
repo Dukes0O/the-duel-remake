@@ -244,7 +244,7 @@ for (const [index, barrier] of step.barriers.entries()) {
 
 for (const [index, brazier] of step.braziers.entries()) {
   const p = brazier.position, named = LAND.at(['yard', 'safe-road', 'the-wash'][index]);
-  assert.ok(Math.hypot(p.x - named.x, p.z - named.z) <= 9.000001);
+  if (index > 0) assert.ok(Math.hypot(p.x - named.x, p.z - named.z) <= 9.000001);
   assert.equal(p.y, scablandsSurfaceHeightAt(p.x, p.z));
   assert.equal(pushOutOfSolids(p.x, p.z, 1, undefined, p.y).hit, null);
 }
@@ -272,8 +272,22 @@ const figure = createCinderFigure();
 assert.equal(figure.name, 'Cinder at the yard gate');
 assert.ok(figure.children.some(child => child.isMesh));
 assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSpotsFor(step)[0].z) < 3);
-assert.equal(Math.hypot(step.carStart.x - step.origin.position.x, step.carStart.z - step.origin.position.z), 40);
-assert.ok(Math.abs(step.carStart.heading - Math.PI / 2) < 1e-9);
+// Measure the real start and pickup against the gate and job solids.
+{
+  const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const relative = point => ({along:(point.x - LAND.yard.x - gate.x) * forward.x + (point.z - LAND.yard.z - gate.z) * forward.z,
+    left:-(point.x - LAND.yard.x - gate.x) * forward.z + (point.z - LAND.yard.z - gate.z) * forward.x});
+  const start = relative(step.carStart), cinder = relative(pickup), fire = relative(step.braziers[0].position);
+  assert.ok(Math.abs(start.along + 40) < 1e-9 && Math.abs(start.left) < 1e-9);
+  assert.ok(Math.abs(step.carStart.heading - gate.bearing) < 1e-9);
+  assert.ok(Math.abs(fire.along + 8) < 1e-9 && Math.abs(fire.left - 7) < 1e-9);
+  assert.ok(Math.abs(cinder.along + 8) < 1e-9 && Math.abs(cinder.left - 9) < 1e-9);
+  const grid = createJobSolidGrid();
+  grid.setYard(yardPlan().solids);
+  for (const point of [step.carStart, pickup, step.braziers[0].position]) {
+    assert.equal(pushOutOfSolids(point.x, point.z, 1, grid, scablandsSurfaceHeightAt(point.x, point.z)).hit, null);
+  }
+}
 let job = createJob(definition, 19);
 const view = (x, z, speedKmh = 0) => ({player: {position: {x, z}}, speedKmh});
 const hud = () => worldHudModel({worldJob: {job, definition}, player: {x: step.carStart.x, z: step.carStart.z}});

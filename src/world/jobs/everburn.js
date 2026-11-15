@@ -11,6 +11,7 @@ import {LAND} from '../scablands-names.js';
 import {tinTownGateFor} from '../tin-town-gate.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.js';
+import {yardPlan} from '../scablands-yard-look.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -25,8 +26,14 @@ export function buildEverburn(land) {
   const yard = place('yard-gate', land.yard), tinTown = place('tin-town', at('tin-town'), 18);
   const boneyard = place('boneyard', at('boneyard'), 18), mall = place('dead-mall', at('dead-mall'), 14);
   const well = place('everburn', at('everburn'), 18), safeRoad = place('safe-road', at('safe-road'), 16);
-  const yardToCamp = Math.hypot(safeRoad.position.x - yard.position.x, safeRoad.position.z - yard.position.z) || 1;
-  const cinderAt = at('yard', (safeRoad.position.z - yard.position.z) / yardToCamp * 9, -(safeRoad.position.x - yard.position.x) / yardToCamp * 9 + 2);
+  const net = land === LAND ? ROAD_NET : roadNet(land), eastRoad = net.road('east-road');
+  const gate = yardPlan(net.roads).gate;
+  const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const gatePoint = at('yard', gate.x, gate.z);
+  const gateStart = at('yard', gate.x - forward.x * 40, gate.z - forward.z * 40);
+  const yardBrazierAt = at('yard', gate.x - forward.x * 8 - forward.z * 7, gate.z - forward.z * 8 + forward.x * 7);
+  // Leave space for Cinder beside the fire while keeping her off the road.
+  const cinderAt = at('yard', gate.x - forward.x * 8 - forward.z * 9, gate.z - forward.z * 8 + forward.x * 9);
   const beside = (from, toward) => {
     const dx = toward.x - from.x, dz = toward.z - from.z, length = Math.hypot(dx, dz) || 1;
     return {x:from.x + dz / length * 9, z:from.z - dx / length * 9};
@@ -34,7 +41,7 @@ export function buildEverburn(land) {
   const brazier = (id, point) => Object.freeze({id, position:Object.freeze({
     x:point.x, y:scablandsSurfaceHeightAt(point.x, point.z), z:point.z,
   })});
-  const braziers = path(brazier('yard-brazier', beside(yard.position, safeRoad.position)),
+  const braziers = path(brazier('yard-brazier', yardBrazierAt),
     brazier('halfway-brazier', beside(safeRoad.position, tinTown.position)),
     brazier('wash-brazier', at('the-wash')));
   const wellRaidersHold = place('everburn-well-raiders-hold', at('everburn', -2, -1), 8);
@@ -55,7 +62,7 @@ export function buildEverburn(land) {
   // Slow Ride follows the Boneyard Road and the East Road (SCABLANDS-LAND round 4, slice 2b): from the Boneyard over the Wash to the halfway camp, then over
   // the Girder Bridge to Tin Town. Big Bess obeys the ground, and the dry river's banks are too steep for her: the straight lines between the places crossed them.
   // The bridge's deck is 14 m wide with a solid truss each side, so the road is lined up on it 150 m before and after, on the East Road's own line.
-  const net = land === LAND ? ROAD_NET : roadNet(land), eastRoad = net.road('east-road'), bridgeAt = at('girder-bridge');
+  const bridgeAt = at('girder-bridge');
   const bridgeIn = place('bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12), bridgeOut = place('bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12);
   const furnaceBridgeIn = place('furnace-bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12), furnaceBridgeOut = place('furnace-bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12);
   // She sets out from where she stands in the Boneyard (the wrecks are solid: the straight way west from its middle runs through the south wreck) and leaves it by the west edge of the wreck field.
@@ -106,7 +113,7 @@ export function buildEverburn(land) {
       // The pot holds a live ember (src/world/jobs/ember-rule.js): driving takes it, and at 0 Cinder's spill line is said and the marker
       // moves to the nearest brazier (the yard gate, or the halfway camp once passed), where a stop gives a fresh scoop.
       steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:tinTown, radius:18,
-        carStart:carStart(at('yard', -40, 0), yard),
+        carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders,
