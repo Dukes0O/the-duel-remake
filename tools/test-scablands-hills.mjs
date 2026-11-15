@@ -318,11 +318,14 @@ test('ground and range hide a car until it breaks cover', () => {
 
 test('the dunes follow the Ships, have soft crests, and leave every road clear', () => {
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ships-in-sand', 100, 200)));
+  assert.equal(HILLS.filter(hill => hill.kind === 'dune').length, 14);
   for (const [index, hill] of HILLS.filter(hill => hill.kind === 'dune').entries()) {
     assert.equal(moved[index].x - hill.x, 100);
     assert.equal(moved[index].z - hill.z, 200);
     assert.ok(Math.hypot(hill.x - LAND.place('ships-in-sand').x, hill.z - LAND.place('ships-in-sand').z) < 1500);
     assert.ok(hill.height >= 8 && hill.height <= 15);
+    assert.ok(hill.radius >= 70 && hill.radius <= 130);
+    assert.ok(Math.hypot(hill.x - LAND.place('ships-in-sand').x, hill.z - LAND.place('ships-in-sand').z) > hill.radius + LAND.place('ships-in-sand').flatRadius);
     assert.equal(hillHeightAt(hill.x, hill.z), hill.height);
     assert.ok(hill.height * 1.5 / hill.radius < .12);
     for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
@@ -331,6 +334,13 @@ test('the dunes follow the Ships, have soft crests, and leave every road clear',
       assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears a dune`);
     }
   }
+});
+
+test('a dune crest hides a car from the far side', () => {
+  const dune = HILLS.filter(hill => hill.kind === 'dune')[1];
+  const watcher = {x: dune.x - dune.radius - 10, z: dune.z};
+  const car = {x: dune.x + dune.radius + 10, z: dune.z};
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, eye: 3, target: 1.5, step: 5, range: 500}), false);
 });
 
 test('the Breaks have spaced hills and leave the road passes open', () => {

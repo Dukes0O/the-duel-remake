@@ -3,6 +3,7 @@ import {riseHeightAt,riverDepthAt} from './scablands-regions.js';
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
 import {makeRng} from '../rng.js';
+import {ROAD_NET, distanceToRoad} from './scablands-road.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -10,11 +11,20 @@ const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 // Hill centres follow named places. Their shoulders stand clear of the existing roads.
 export function hillsFor(land=LAND,seed=1989){
   const rng=makeRng(seed);
+  // Rows run east to west, with a seeded stagger across the Ships' open sand.
+  // Select against the fixed land's roads so moving a named place moves its field together.
+  const duneRng=makeRng(seed ^ 0x53414e44), dunes=[];
+  for(let row=-3;row<=3 && dunes.length<14;row++) for(let column=-3;column<=3 && dunes.length<14;column++){
+    const dx=column*260+(row%2)*100+duneRng.range(-22,22), dz=row*260+duneRng.range(-22,22);
+    const radius=duneRng.range(105,130), height=duneRng.range(8,Math.min(15,radius*.079));
+    const reference=LAND.at('ships-in-sand',dx,dz);
+    if(Math.hypot(dx,dz)<radius+LAND.place('ships-in-sand').flatRadius+18) continue;
+    if(ROAD_NET.roads.some(road=>distanceToRoad(reference.x,reference.z,road.points)<=radius+road.halfWidth+10)) continue;
+    if(dunes.some(hill=>Math.hypot(hill.dx-dx,hill.dz-dz)<hill.radius+radius+10)) continue;
+    dunes.push({dx,dz,radius,height});
+  }
   const hills=[
-    Object.freeze({...land.at('ships-in-sand',-600,-600),kind:'dune',height:12,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',600,-600),kind:'dune',height:14,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',-600,600),kind:'dune',height:10,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',0,900),kind:'dune',height:13,radius:220}),
+    ...dunes.map(({dx,dz,radius,height})=>Object.freeze({...land.at('ships-in-sand',dx,dz),kind:'dune',height,radius})),
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),

@@ -1782,3 +1782,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 31 of 31. The new check samp
 Changed assertions: none; the shoulder check is new. Codex decided: use the existing default game seed, 1989, for this fixed land table and keep each shoulder inside its former radius. Removed: round profiles for the existing Breaks hills, dunes and foothills.
 
 Still needed: the full seeded hill country, clearance and route checks, the dune picture, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Hill country: dune field
+
+The Ships now have 14 seeded dunes in staggered rows. They keep clear of the Ships' flat ground and the existing roads. Their sizes and heights preserve the existing gentle slope check. Their new shapes also advance the seeded shoulder sequence for other hills. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 32 of 32. It checks the dune count, dimensions, road clearance and sight over one crest. It does not yet prove clearance for every job route or the visual quality of the field. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the count, dimensions, flat-ground clearance and sight checks are new. Codex decided: stagger the rows with a second seeded generator and keep dune heights within the existing slope limit. Removed: the four larger, widely spaced dunes.
+
+Still needed: the Breaks, mesas and foothills; all corridor and route checks; the dune picture and final checks. Claude must run the picture scenario and judge the views.
