@@ -5,7 +5,9 @@ import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
 import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
-import {RIVER_LAND} from '../src/world/scablands-regions.js';
+import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
+import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData, thingLandmarkLines} from '../src/world/scablands-things.js';
@@ -488,4 +490,23 @@ test('map landmark lines follow the drawn supports and stop at gaps', () => {
     ['pylon', 'pylons', [a, b]], ['telegraph', 'east-road', [a, b]],
     ['telegraph', 'east-road', [a, c]], ['telegraph', 'iron-line', [b, c]],
   ]);
+});
+
+
+test('named ways, truck routes and crossing ramps reject new footprints', () => {
+  const routes = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
+  routes.push(...Object.values(GAS_RUN_PATHS).map(path => path.map(place => place.position)));
+  for (const job of EVERBURN_JOBS) for (const step of job.steps)
+    if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace')) routes.push(step.path.map(place => place.position));
+  const steps = stepsWayFor();
+  routes.push([-1, 1].map(side => ({x: steps.x + side * steps.nx * steps.reach, z: steps.z + side * steps.nz * steps.reach})));
+  for (const points of routes) for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], count = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 20);
+    for (let n = 0; n <= count; n++) {
+      const t = n / count;
+      assert.equal(thingFootprintClear(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0, []), false);
+    }
+  }
+  for (const crossing of RIVER_LAND.crossings.filter(item => ['wash', 'ford', 'bridge', 'pipe'].includes(item.kind)))
+    assert.equal(thingFootprintClear(crossing.x, crossing.z, 0, []), false, crossing.id);
 });

@@ -5,7 +5,10 @@ import {GROUND_AREAS, edgeWarp, polygonMargin, riverDistanceAt, scablandsRegionA
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {SOLID_GRID, createSolidGrid} from './scablands-solids.js';
 import {RIVER_LAND} from './scablands-regions.js';
-import {sampleLine} from './scablands-ways.js';
+import {sampleLine, HOT_DELIVERY_WAYS, routeFor} from './scablands-ways.js';
+import {stepsWayFor, RIVER} from './scablands-regions.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './jobs/everburn.js';
+import {GAS_RUN_PATHS} from './jobs/gas-run.js';
 import {LAND} from './scablands-names.js';
 import {IRON_LINE, ironLineLength, sampleIronLine} from './iron-line.js';
 import {SCARPS} from './scablands-scarps.js';
@@ -203,6 +206,40 @@ function roadWithin(x, z, reach) {
 
 export const nearRoadForLitter = (x, z) => roadWithin(x, z, LITTER_REACH);
 
+// Protect the named ways and the routes used by the moving trucks. Index the
+// segments so that placing small things does not scan every route per cell.
+const routeCells = new Map();
+const routeLines = HOT_DELIVERY_WAYS.map(way => ({points: routeFor(way.legs, {
+  start: LAND.yard, destination: LAND.at('tin-town'),
+}), width: 7}));
+for (const path of Object.values(GAS_RUN_PATHS)) routeLines.push({points: path.map(place => place.position), width: 8});
+for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps) {
+  if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace'))
+    routeLines.push({points: step.path.map(place => place.position), width: 8});
+}
+const stepsWay = stepsWayFor();
+if (stepsWay) routeLines.push({width: 7, points: [-1, 1].map(side => ({
+  x: stepsWay.x + side * stepsWay.nx * stepsWay.reach,
+  z: stepsWay.z + side * stepsWay.nz * stepsWay.reach,
+}))});
+for (const {points, width} of routeLines) for (let n = 1; n < points.length; n++) {
+  const a = points[n - 1], b = points[n], reach = width + 28;
+  for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
+    for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
+      const key = roadKey(i, j);
+      if (!routeCells.has(key)) routeCells.set(key, []);
+      routeCells.get(key).push({a, b, width});
+    }
+}
+function routeWithin(x, z, radius) {
+  for (const {a, b, width} of routeCells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? []) {
+    const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
+    const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
+    if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) <= width + radius) return true;
+  }
+  return false;
+}
+
 // Reject the whole round footprint, not just its centre. The road index covers
 // up to 28 m beyond the road edge; callers must use a radius within that limit.
 // Job starts are required explicitly so a caller cannot silently omit them.
@@ -210,7 +247,16 @@ export function thingFootprintClear(x, z, radius, jobStarts) {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(radius) || radius < 0 || radius > 28 || !Array.isArray(jobStarts)) {
     throw new RangeError('A finite footprint and job starts are required');
   }
-  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius)) return false;
+  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius) || routeWithin(x, z, radius)) return false;
+  const river = RIVER_LAND.nearest(x, z);
+  if (river && RIVER_LAND.crossings.some(crossing => {
+    const along = Math.abs(river.along - crossing.along);
+    if (crossing.kind === 'wash' || crossing.kind === 'ford')
+      return along < crossing.reach + radius && river.distance < RIVER.rampLipHalfWidth + radius;
+    if (crossing.kind === 'bridge' || crossing.kind === 'pipe')
+      return along < 40 + radius && river.distance < RIVER.bedHalfWidth + radius;
+    return false;
+  })) return false;
   if (jobStarts.some(p => Math.hypot(x - p.x, z - p.z) < 6 + radius)) return false;
   for (const solid of SOLID_GRID.near(x, z, x, z, radius)) {
     const dx = x - solid.x, dz = z - solid.z;
