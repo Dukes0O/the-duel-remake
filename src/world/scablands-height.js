@@ -24,12 +24,24 @@ export function hillsFor(land=LAND,seed=1989){
     if(dunes.some(hill=>Math.hypot(hill.dx-dx,hill.dz-dz)<hill.radius+radius+10)) continue;
     dunes.push({dx,dz,radius,height});
   }
+  const lookout=land.at('ridge',-1200,900);
+  const ridgeRoad=(land===LAND?ROAD_NET:roadNet(land)).road('ridge-road');
+  let nearestRoad=null, nearestDistance=Infinity;
+  for(let i=1;i<ridgeRoad.points.length;i++){
+    const a=ridgeRoad.points[i-1],b=ridgeRoad.points[i],dx=b.x-a.x,dz=b.z-a.z;
+    const t=clamp(((lookout.x-a.x)*dx+(lookout.z-a.z)*dz)/(dx*dx+dz*dz));
+    const x=a.x+t*dx,z=a.z+t*dz,distance=Math.hypot(x-lookout.x,z-lookout.z);
+    if(distance<nearestDistance){nearestDistance=distance;nearestRoad={x,z};}
+  }
+  const roadAngle=Math.atan2(nearestRoad.z-lookout.z,nearestRoad.x-lookout.x);
+  // Include the north approach used by the existing drive as well as the road side.
+  const rampAngle=-Math.PI/2+Math.atan2(Math.sin(roadAngle+Math.PI/2),Math.cos(roadAngle+Math.PI/2))/2;
   const hills=[
     ...dunes.map(({dx,dz,radius,height})=>Object.freeze({...land.at('ships-in-sand',dx,dz),kind:'dune',height,radius})),
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
-    Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:60,radius:320,topRadius:60}),
+    Object.freeze({...lookout,kind:'lookout',height:60,radius:320,topRadius:60,ramp:300,rampAngle}),
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
@@ -136,7 +148,7 @@ const HILL_CELL_SIZE=500;
 function indexHills(hills){
   const columns=new Map();
   for(const hill of hills){
-    const reach=hill.radius+(hill.kind==='mesa'?hill.ramp:0);
+    const reach=hill.radius+((hill.kind==='mesa'||hill.kind==='lookout')?hill.ramp:0);
     for(let x=Math.floor((hill.x-reach)/HILL_CELL_SIZE);x<=Math.floor((hill.x+reach)/HILL_CELL_SIZE);x++){
       let column=columns.get(x);
       if(!column) columns.set(x,column=new Map());
@@ -199,10 +211,17 @@ export function scablandsTerrainHeightAt(x,z,hills=HILLS){
     }
     if(hill.kind!=='lookout'&&hill.kind!=='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
-    if(distance>=hill.radius) continue;
+    if(distance>=hill.radius+(hill.ramp??0)) continue;
     const weight=1-smooth((distance-hill.topRadius)/(hill.radius-hill.topRadius));
     const top=hill.kind==='ridge-top'?hill.height:oldTerrainHeightAt(hill.x,hill.z)+hill.height;
-    height+=(top-height)*weight;
+    const natural=height+(top-height)*weight;
+    if(hill.kind==='lookout'){
+      const angle=Math.atan2(z-hill.z,x-hill.x);
+      const difference=Math.atan2(Math.sin(angle-hill.rampAngle),Math.cos(angle-hill.rampAngle));
+      const rampWeight=1-smooth((Math.abs(difference)-.7)/.35);
+      const rampHeight=Math.max(height,top-Math.max(0,distance-hill.topRadius)*.16);
+      height=natural+(rampHeight-natural)*rampWeight;
+    } else height=natural;
   }
   return height;
 }

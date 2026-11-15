@@ -1980,3 +1980,13 @@ Checks: the hills suite passed 42 of 42. The focused furnace-road check passed. 
 Changed assertions: none. Codex decided: preserve the seeded placement reference so moving one mesa does not move the others. Removed: the northern mesa's former position on the furnace road.
 
 Still needed: three separate mesa-cover stretches, a drivable Lookout, job-corridor proof and Easy job drives, then integration and the final checks. Claude must run and judge the pictures.
+
+### Hill country: Lookout approach
+
+The 60 m Lookout now has a gradual approach facing the Ridge Road, also covering the existing northern drive. The first 300 m of the descent is followed by a gradual approach to the existing ground. This extra approach is needed to keep the rise below ten degrees. The other sides retain their previous shape. No game event or sound was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 43 of 43, including a new sampled slope check on the centre and northern approach. `node --test --test-name-pattern='a car drives up the Ridge and the Lookout' tools/test-scablands-solid.mjs` passed, without changing the driver. No browser, replay, world-signature or build check was run.
+
+Changed assertions: none. The slope check is new. Codex decided: centre the approach between the nearest point of the Ridge Road and the existing northern drive, and extend the approach beyond the 300 m ramp to meet the ten-degree limit. Removed: the impassable northern side of the Lookout.
+
+Still needed: three separate mesa-cover stretches, job-corridor proof and Easy job drives, integration and final checks. Claude must run and judge the pictures.

@@ -503,6 +503,17 @@ test('hill footprints leave both river decks clear from end to end', () => {
   }
 });
 
+test('the Lookout ramp stays below ten degrees on its approach', () => {
+  const hill = HILLS.find(item => item.kind === 'lookout');
+  assert.equal(hill.ramp, 300);
+  for (const angle of [hill.rampAngle, -Math.PI / 2]) {
+    for (let d = hill.topRadius; d < hill.radius + hill.ramp; d += 2) {
+      const height = distance => scablandsTerrainHeightAt(hill.x + Math.cos(angle) * distance, hill.z + Math.sin(angle) * distance);
+      assert.ok(Math.abs(height(d + 2) - height(d)) / 2 <= Math.tan(Math.PI / 18), `slope at ${d} m`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   assert.equal(hill.height, 60);
