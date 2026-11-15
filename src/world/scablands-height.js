@@ -124,13 +124,15 @@ export function hillsFor(land=LAND,seed=1989){
   // A pair of shoulders makes a pass on each road, while leaving its centre
   // outside both hill footprints. Derive the positions from the road itself.
   const roads=land===LAND?ROAD_NET:roadNet(land);
-  for(const [id,share] of [['burn-road',.3],['mall-road',.3],['mall-burn-road',.66]]){
+  for(const [id,share] of [['burn-road',.3],['mall-road',.3],['mall-burn-road',.655]]){
     const road=roads.road(id), start=road.points[0];
     const centre=roadPointFrom(road,start.x,start.z,road.length*share);
     const before=roadPointFrom(road,centre.x,centre.z,-5), after=roadPointFrom(road,centre.x,centre.z,5);
     const dx=after.x-before.x,dz=after.z-before.z,length=Math.hypot(dx,dz);
+    // The Mall-to-Everburn pass also borders the Boneyard gas-run route.
+    const offset=id==='mall-burn-road'?300:280;
     for(const side of [-1,1]) hills.push(Object.freeze({
-      x:centre.x-side*280*dz/length,z:centre.z+side*280*dx/length,
+      x:centre.x-side*offset*dz/length,z:centre.z+side*offset*dx/length,
       kind:'breaks',height:40,radius:260,passRoad:id,
     }));
   }

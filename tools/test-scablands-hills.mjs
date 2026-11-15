@@ -18,6 +18,23 @@ import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
+
+test('the Boneyard gas run has a clear hill corridor', () => {
+  const points = GAS_RUN_PATHS.boneyard.map(point => point.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    if (!length) continue;
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Boneyard gas run leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
 
 test('the first two Survey Flags legs have clear hill corridors', () => {
   const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;

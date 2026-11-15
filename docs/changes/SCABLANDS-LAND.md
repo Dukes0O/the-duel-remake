@@ -2022,3 +2022,11 @@ The first two legs between Survey Flags now have a hill-clearance check across 6
 Changed assertions: the mesa-clearance assertion now checks all four legs instead of only the third; it is stricter. The hill corridor check is new. Codex decided: sample the corridor every 20 m along each leg and at five offsets across it. Removed: none. Race fingerprints and world signatures were not checked in this step.
 
 Still needed: three separate mesa-cover stretches and the rest of the job-corridor proof, then integration and final checks. A diagnostic found new hill height on the third and fourth flag legs; the fourth ends on the intended Ridge top, so the clearance requirement and the approach need careful reconciliation. Claude must run and judge the pictures.
+
+### Hill country: Boneyard gas route
+
+Moved the Mall-to-Everburn pass shoulders from 66% to 65.5% of the road and from 280 m to 300 m on either side. This clears the Boneyard gas-run corridor while retaining the two rising shoulders and the hill spacing. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 47 of 47. A new check samples the Boneyard gas route every 10 m and at five offsets across its 60 m corridor. The new check replaces no assertion and loosens none. Race fingerprints, the browser pictures and the build were not checked in this step. Removed: the former pass shoulder positions. Codex decided: move this pass by half a percent of the road and set its shoulders 300 m from the centre to satisfy both corridor and spacing checks.
+
+Still needed: three separate 150 m mesa-cover stretches, the other job corridors, route drives after this change, integration and final checks. A 20 m grid scan found 3,043 candidate centres satisfying the sampled plate, road, river, place and way clearances; none of their 120 m circular shadows reached the currently visible portions of the plates way. This is not an exhaustive proof and does not model every mesa shape. The long gas route crosses the intended raised Ridge top on legs 5 and 6, so a strict comparison with the old flat terrain also fails there. Claude must run and judge the pictures.
