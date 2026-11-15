@@ -19,6 +19,10 @@ Fifth review: a new paving pass starts its own line. The trencher and road machi
 - Lane tier: 54 of 56 passed. Town people exceeded its 30 ms timing limit under load at 34.07 ms, then passed alone at 19.90 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it (9 of 9).
 - `npm.cmd run build`: passed. Vite reported its existing chunk-size and dynamic-import warnings.
 
+## Remaining work
+
+Shared ground exposes a visit-reset fault: after road work, a later dig can copy the changed ground into the yard's page-lifetime memory. The next visit then starts with that road-shaped ground. Keep the digging machines' existing memory behavior while ensuring road changes last only for the current visit. A probe cut ordinary ground from 0.899728 m to 0.799728 m, triggered the existing dirty-ground memory path, and found 0.799728 m on the next visit.
+
 ## For Claude to run
 
 Run `tools/scenarios/machine-roads.mjs` with memory-only saves. Check one picture of each machine working with only its own controls, a finished stretch, and a bad stretch. The scenario passed before the fourth-round visual changes; check the surface colours, screen text, shared ground and the repaired paving line. Browser checks cannot run in this lane. Review the code and the changed assertion before merging.
