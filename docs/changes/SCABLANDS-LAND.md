@@ -1211,3 +1211,19 @@ Checks: `test-scablands-hills`, `test-scablands-size` and `test-scablands-solid`
 For Claude to run: `test-full-check` in the laptop environment. The requested memory-only hills picture scenario still needs to be written after the remaining terrain is built, then run and judged by Claude.
 
 Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none in this partial step; the old ground remains outside the dunes.
+
+### Round 4, slice 2c: the Breaks in progress
+
+Three rolling hills rise 48 to 72 m in the south-west between the yard and the Dead Mall. Their crests are about 707 m apart, with a narrow valley between the shoulders. Each hill follows the Mall if it moves. The hill shoulders clear every road, so they do not change the existing road slopes. Survey Flags' fifth flag has not moved. The Scablands switches remain off. No new game event or sound cue was added.
+
+The Breaks are only a start: the other hill areas, full route and Easy driver checks, ground drawing, sight and search, natural outlines and the picture scenario remain to be built and checked.
+
+Checks: `test-scablands-hills` passed 3 tests, `test-scablands-size` passed 9, and `test-scablands-solid` passed 18. Race replays passed 297 checks across 33 cases, combat replays passed 12 checks across four encounters, and `test-course-kit` passed 8 tests. The recorded race fingerprints and world signatures are unchanged. Integration was already included.
+
+The lane tier passed 32 of 34 suites. `test-everburn-easy` failed: Survey Flags finished 0 of 10 runs, against its unchanged requirement of at least 8 of 10. The sample car was stuck near the river while seeking the fourth flag. The cause is not yet established, and the remaining Easy-driver jobs and gas roads have not been checked by that run. `test-full-check` failed in the known temporary-copy setup when `pwsh` was denied (`EACCES`). The build passed with bundle size warnings.
+
+For Claude to run: `test-full-check` on the laptop. The hills picture scenario still needs to be written and then run and judged by Claude. The next builder must investigate Survey Flags and rerun the Easy-driver check; this partial step is not ready to merge.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice.
+
+Removed: none in this partial step; the old ground remains outside the hills.

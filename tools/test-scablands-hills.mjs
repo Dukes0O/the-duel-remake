@@ -10,7 +10,7 @@ import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 
 test('the dunes follow the Ships, have soft crests, and leave every road clear', () => {
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ships-in-sand', 100, 200)));
-  for (const [index, hill] of HILLS.entries()) {
+  for (const [index, hill] of HILLS.filter(hill => hill.kind === 'dune').entries()) {
     assert.equal(moved[index].x - hill.x, 100);
     assert.equal(moved[index].z - hill.z, 200);
     assert.ok(Math.hypot(hill.x - LAND.place('ships-in-sand').x, hill.z - LAND.place('ships-in-sand').z) < 1500);
@@ -21,6 +21,27 @@ test('the dunes follow the Ships, have soft crests, and leave every road clear',
       const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
       assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears a dune`);
+    }
+  }
+});
+
+test('the Breaks have spaced hills and leave the road passes open', () => {
+  const hills = HILLS.filter(hill => hill.kind === 'breaks');
+  assert.ok(hills.length >= 3);
+  const mall = LAND.place('dead-mall');
+  for (const [index, hill] of hills.entries()) {
+    assert.ok(hill.x < 0 && hill.z > 0 && hill.z < mall.z);
+    assert.ok(hill.height >= 40 && hill.height <= 90);
+    assert.equal(hillHeightAt(hill.x, hill.z), hill.height);
+    if (index) {
+      const previous = hills[index - 1];
+      const spacing = Math.hypot(hill.x - previous.x, hill.z - previous.z);
+      assert.ok(spacing >= 400 && spacing <= 900);
+    }
+    for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
+      const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      assert.ok(Math.hypot(hill.x - a.x - t * dx, hill.z - a.z - t * dz) > hill.radius + road.halfWidth, `${road.id} clears the Breaks`);
     }
   }
 });

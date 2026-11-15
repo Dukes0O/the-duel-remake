@@ -6,14 +6,16 @@ import {LAND} from './scablands-names.js';
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
 
-// The first hills in the hill-country table are dunes around the Ships. Each centre follows the named place.
-// Their 220 m shoulders keep the climb gentle, and stand clear of the nearby road.
+// Hill centres follow named places. Their shoulders stand clear of the existing roads.
 export function hillsFor(land=LAND){
   return Object.freeze([
-    Object.freeze({...land.at('ships-in-sand',-600,-600),height:12,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',600,-600),height:14,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',-600,600),height:10,radius:220}),
-    Object.freeze({...land.at('ships-in-sand',0,900),height:13,radius:220}),
+    Object.freeze({...land.at('ships-in-sand',-600,-600),kind:'dune',height:12,radius:220}),
+    Object.freeze({...land.at('ships-in-sand',600,-600),kind:'dune',height:14,radius:220}),
+    Object.freeze({...land.at('ships-in-sand',-600,600),kind:'dune',height:10,radius:220}),
+    Object.freeze({...land.at('ships-in-sand',0,900),kind:'dune',height:13,radius:220}),
+    Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
+    Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
+    Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
   ]);
 }
 export const HILLS=hillsFor();
