@@ -160,7 +160,8 @@ function daylight(state, events, offLevelM) {
   events.push({type:'daylight', cue:'borer.daylight', message:state.message});
 }
 
-// Keep straight cuts as one segment; a change in direction starts a new one.
+// Keep straight cuts as one segment. Group short curved cuts into metre-long
+// chords so a held steering key does not create a new lining ring every tick.
 function addCut(segments, start, end, radius) {
   const last = segments.at(-1);
   if (last) {
@@ -168,7 +169,8 @@ function addCut(segments, start, end, radius) {
     const b = {x:end.x - start.x, y:end.y - start.y, z:end.z - start.z};
     const cross = Math.hypot(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     const lengths = Math.hypot(a.x, a.y, a.z) * Math.hypot(b.x, b.y, b.z);
-    if (cross <= lengths * 1e-9 && a.x * b.x + a.y * b.y + a.z * b.z > 0) {
+    if ((Math.hypot(a.x, a.y, a.z) < 1 || cross <= lengths * 1e-9) &&
+        a.x * b.x + a.y * b.y + a.z * b.z > 0) {
       last.end = end;
       return;
     }

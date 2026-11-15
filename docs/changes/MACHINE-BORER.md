@@ -178,3 +178,9 @@ The survey keeps its last displayed floor, grade, distance and remaining rise. I
 ## Following camera entry
 
 Uneven ground can hold the following camera above its outside waypoint, so a three-dimensional distance check can keep it waiting there forever. The camera now starts through the mouth when it reaches the waypoint in plan. The borer test covers a raised patch beside that waypoint and passed in 224.9 seconds. No existing assertions changed. The scenario's following-camera check still needs Claude's browser run; this test does not prove that the raised patch was the cause of the reported timeout. H3 to H6 and the final checks remain.
+
+## Tilt controls and lining
+
+The Dig already sends the up and down arrows to the slope control without moving the lever. The fault found in the view was the number of segments: holding an arrow created a new segment every 1/120 second. A lining rebuild with 1,500 such segments throws a maximum call stack error and stops the animation loop. Curved cuts now use chords about one metre long, while the machine's steering and slope limits remain unchanged. The real mesa key-path test cuts 16 m, holds up for 12 seconds and down for five, and checks that the machine moves and tilts in both directions. A separate lining probe rebuilt the resulting four segments successfully; the old method made 1,440 segments during the up hold alone. Claude must still confirm the real-key drive in the browser.
+
+`node tools/test-machine-borer.mjs` passed in 211.5 seconds. No existing assertions changed. No race fingerprints, browser, lane tier or build were run for this item. The first-push input, ground look, pace, test runtime and final checks remain.

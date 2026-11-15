@@ -134,6 +134,37 @@ assert.equal(machineDefinition('borer').name, 'Mabel');
 assert.equal(machineDefinition('borer').boreRadiusM, 3);
 assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward:1,keyboardLever:true,padLever:false,steer:-1,slope:1});
 assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,keyboardLever:true,padLever:false,steer:1,slope:-1});
+for (const [key, direction] of [['ArrowUp', 1], ['ArrowDown', -1]]) {
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>20});
+  let dig = createDigSandbox({ground});
+  dig = {...dig, activeMachine:'borer', mode:'work',
+    borer:{...createBorerState(), started:true, lever:0.31}};
+  const controls = borerYardControls({[key]:true}, null, null, dig.mode);
+  assert.equal(controls.forward, 0, `${key} does not move the thrust lever.`);
+  dig = stepDigSandbox(dig, {controls}, 2);
+  assert.ok(dig.borer.distanceM > 0, `${key} keeps the borer moving.`);
+  assert.ok(dig.borer.slope * direction > 0, `${key} tilts the head in the intended direction.`);
+  assert.ok(Math.abs(dig.borer.lever - 0.31) < 1e-8, `${key} leaves the lever alone.`);
+}
+// Use the same held keys and fixed steps as the Dig, after a real mesa approach.
+{
+  let dig = createDigSandbox({playerId:'borer-tilt-keys'});
+  const parked = dig.borer;
+  const x = parked.x + Math.sin(parked.heading) * 30;
+  const z = parked.z + Math.cos(parked.heading) * 30;
+  dig = {...dig, activeMachine:'borer', mode:'work',
+    borer:{...parked, x, z, y:dig.ground.heightAt(x,z), lever:0.31}};
+  for (let seconds = 0; seconds < 115 && dig.borer.distanceM < 16; seconds++)
+    dig = stepDigSandbox(dig, {controls:borerYardControls({})}, 1);
+  assert.ok(dig.borer.distanceM >= 16, 'The borer reaches the test depth.');
+  for (const [key, seconds, sign] of [['ArrowUp', 12, 1], ['ArrowDown', 5, -1]]) {
+    const before = {distance:dig.borer.distanceM, slope:dig.borer.slope};
+    dig = stepDigSandbox(dig, {controls:borerYardControls({[key]:true})}, seconds);
+    assert.ok(dig.borer.distanceM > before.distance, `${key} keeps cutting at the mesa.`);
+    assert.ok((dig.borer.slope - before.slope) * sign > 0, `${key} changes the slope at the mesa.`);
+  }
+  assert.ok(dig.borer.segments.length < 10, 'Holding the tilt keys does not create a ring for every simulation tick.');
+}
 const gentleKeyboard = borerYardControls({KeyW:true,ShiftLeft:true});
 assert.equal(gentleKeyboard.forward, 1, 'Shift does not change the lever input.');
 assert.equal(borerYardControls({KeyW:true,ShiftLeft:true}, null, null, 'drive').forward, 1,
