@@ -17,12 +17,24 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
+import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {Duel} from '../src/game.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The drawn furnace and its sight share the named high ground north of the Steps.
+{
+  const crossing = LAND.at('the-steps'), watch = LAND.at('furnace-watch');
+  const sighting = furnaceSighting({definition, job:{done:false}, actors:[]});
+  assert.deepEqual(FURNACE_SKYLINE, watch);
+  assert.equal(sighting.x, watch.x);
+  assert.equal(sighting.z, watch.z);
+  assert.ok(watch.z < crossing.z, 'the furnace stands north of the Steps');
+  assert.ok(scablandsSurfaceHeightAt(watch.x, watch.z) > scablandsSurfaceHeightAt(crossing.x, crossing.z) + 25,
+    'the furnace stands on high ground');
+}
 // The yard belongs only to jobs that request it, and its scene owns its meshes.
 {
   const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19), {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});

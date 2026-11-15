@@ -35,6 +35,8 @@ const NAMED_POINTS = Object.freeze([
   // The five crossings, each a share of the way along one stretch of the river.
   named('girder-bridge', 'The Girder Bridge', 'river-5', 'river-6', .818),
   named('the-steps', 'The Steps', 'river-5', 'river-6', .318),
+  // A mesa west and north of the crossing, overlooking the plates.
+  named('furnace-watch', 'The furnace watch', 'the-steps', null, 0, -812, -266),
   named('the-wash', 'The Wash', 'river-7', 'river-8', .5),
   named('the-pipe', 'The Pipe', 'river-3', 'river-4', .43),
   named('south-ford', 'The South Ford', 'river-8', 'river-9', .615),

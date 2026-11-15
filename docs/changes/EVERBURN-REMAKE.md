@@ -241,3 +241,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Removed: the open-ground start west of the yard centre. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the furnace and remaining steps.
+
+## Larger land, furnace watch position (15 November 2026)
+
+- The job's furnace sighting and sight rule now use a named watch on a mesa north of the Steps. The watch is about 855 m from the crossing and its ground is about 40 m above the crossing. This is the first part of step 4a. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It checks the actual sighting, named watch, direction and ground height. `git diff --check`: passed.
+- Codex decided: use the existing mesa west and north of the Steps for the furnace watch. Claude should review it during the drive and the later cover work.
+- For Claude to run: the requested browser scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: the former furnace watch between the road barricades. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the horn and two riders after six seconds in sight, then the remaining steps.
