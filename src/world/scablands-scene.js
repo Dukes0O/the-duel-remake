@@ -582,6 +582,14 @@ export function createScablandsScene(course,options={}){
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
+  // A plain fire beside the delivery bay until the forge has its final drawing.
+  const forgeFlameMaterial=createFlameMaterial(),forgeFlameGeometry=new THREE.PlaneGeometry(1,1);
+  forgeFlameGeometry.translate(0,.5,0);
+  const forgeFlame=new THREE.Mesh(forgeFlameGeometry,forgeFlameMaterial);
+  forgeFlame.name='Hot Delivery forge fire';forgeFlame.visible=false;forgeFlame.frustumCulled=false;
+  const forgeAt=LAND.at('tin-town',25,10);
+  forgeFlame.position.set(forgeAt.x,scablandsSurfaceHeightAt(forgeAt.x,forgeAt.z),forgeAt.z);
+  group.add(forgeFlame);let forgeStart=null,forgeGrade=null;
   // Plain barricades use the same dimensions and positions as the job solids.
   const barricadeGeometry=new THREE.BoxGeometry(12,2,1.4),barricadeMaterial=new THREE.MeshStandardMaterial({color:0x584438,roughness:1});
   const barricades=[0,1].map(()=>{const mesh=new THREE.Mesh(barricadeGeometry,barricadeMaterial);mesh.name='Ash Men barricade';group.add(mesh);return mesh;});
@@ -738,6 +746,11 @@ export function createScablandsScene(course,options={}){
         bessEffects.fires.forEach((fire,index)=>{fire.scale.y=fire.userData.tall*(.8+.3*Math.abs(Math.sin(seconds*4.7+index*2.3)));});
       }
       clock=seconds;
+      if(forgeFlame.visible){
+        const bright=forgeGrade==='bright',growth=Math.min(1,Math.max(0,seconds-forgeStart)/(bright?2:8));
+        forgeFlame.scale.set(bright?2.4:1.5,(bright?4:2)*growth,1);
+        forgeFlameMaterial.uniforms.uTime.value=seconds;
+      }
       if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
         furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
         group.worldToLocal(furnaceRig.localToWorld(arcFrom.set(furnaceEffects.chimneyX,furnaceEffects.chimneyY,furnaceEffects.chimneyZ)));
@@ -779,6 +792,9 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
+      if(delivered&&!forgeFlame.visible){forgeStart=clock;forgeGrade=delivered.grade;}
+      forgeFlame.visible=!!delivered;
       if(worldJob?.definition?.yard){
         if(!yard){
           yard=createYard({heightAt:(x,z)=>scablandsSurfaceHeightAt(LAND.yard.x+x,LAND.yard.z+z)});

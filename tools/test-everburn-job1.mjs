@@ -16,7 +16,7 @@ import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
-import {syncScene} from '../src/scene-systems.js';
+import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
@@ -147,6 +147,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
 // The real job records the delivered fire and sounds the forge once on arrival.
 {
   assert.ok(SOUND_BANK['world.forge.catch']?.layers.length);
+  const flameHeights = [];
   for (const [ember, grade] of [[70, 'bright'], [1, 'barely']]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
     duel.state.wastelandGateDiscovered = true;
@@ -158,12 +159,26 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     world.job.stepState = {loaded:true, ember, triggeredLines:step.sayNear.map(cue => `near:${cue.lineId}`)};
     const events = [], emit = duel.emit.bind(duel);
     duel.emit = event => {events.push(event); emit(event);};
+    const scene = createScablandsScene(duel.course, {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+    const flame = scene.group.getObjectByName('Hot Delivery forge fire');
+    syncScene(scene.group, state);
+    assert.equal(flame.visible, false, 'the forge is cold before delivery');
     stepWorldJob(duel, 0);
     assert.deepEqual(world.forgeFire, {ember, grade});
+    assert.equal(world.job.done, true, 'the completed carry no longer mounts the pot');
+    syncScene(scene.group, state);
+    animateScene(scene.group, 2);
+    assert.equal(flame.visible, true);
+    flameHeights.push(flame.scale.y);
+    const forge = LAND.at('tin-town', 25, 10);
+    assert.equal(flame.position.x, forge.x);
+    assert.equal(flame.position.z, forge.z);
+    scene.dispose();
     const catches = events.filter(event => event.arenaTell?.cue === 'world.forge.catch');
     assert.equal(catches.length, 1);
     assert.deepEqual(catches[0].arenaTell.position, bay);
   }
+  assert.ok(flameHeights[0] > flameHeights[1], 'a bright delivery catches more strongly and quickly');
 }
 // The bed route reaches the Wash scoop, then passes beneath the bridge on the lower floor.
 {
