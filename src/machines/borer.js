@@ -37,7 +37,10 @@ export function borerSurvey(ground, state) {
     const height = ground.heightAt(state.x + dx * distanceM, state.z + dz * distanceM);
     if (height > crown) inside = true;
     else if (inside) {
-      const riseM = height - state.y;
+      // The crown crossing is still on the face. Aim for the ground beyond it,
+      // using the same twelve-metre look ahead as the breakthrough rule.
+      const riseM = ground.heightAt(state.x + dx * (distanceM + 12),
+        state.z + dz * (distanceM + 12)) - state.y;
       return {distanceM, riseM, gradeOneIn:Math.abs(riseM) < 1e-9 ? null : distanceM / Math.abs(riseM)};
     }
   }

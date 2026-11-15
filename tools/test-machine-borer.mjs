@@ -209,6 +209,39 @@ while(seamBorer.distanceM < 100) {
       assert.equal(stepBorer(seamBorer, {thrust:1}, seamGround, null, 2).state.stalled, true);
   }
 }
+
+// Drive the real mesa with the same land and spoil refusals as the Dig.
+function driveMesa(kind) {
+  const visit = createDigSandbox({playerId:`mesa-proof-${kind}`});
+  const base = visit.ground, park = createDigBorer(base);
+  const x = park.x + 30 * Math.sin(park.heading), z = park.z + 30 * Math.cos(park.heading);
+  let machine = {...park, x, z, y:base.heightAt(x, z)};
+  const line = borerSurvey(base, machine);
+  const target = kind === 'survey' ? Math.atan(line.riseM / line.distanceM) : Math.PI / 30;
+  const ground = {...base, refusal:shape => borerLandRefusal(shape, base),
+    spoilRefusal:shape => borerSpoilRefusal(shape, base)};
+  for (let i = 0; i < 3000; i++) {
+    const before = machine.distanceM + (machine.exitCutting?.distanceM || 0);
+    const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting);
+    const slope = wantsClimb ? (machine.slope < target - 0.00001 ? 1 : machine.slope > target + 0.00001 ? -1 : 0) : 0;
+    machine = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2).state;
+    if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
+  }
+  closeDigSandbox();
+  return machine;
+}
+const surveyedDrive = driveMesa('survey');
+assert.equal(surveyedDrive.finished, true, `Surveyed drive: ${surveyedDrive.message}`);
+assert.ok(surveyedDrive.offLevelM <= 0.5, 'The surveyed drive reaches level ground.');
+assert.ok(surveyedDrive.segments[0].startOpen && surveyedDrive.segments.at(-1).endOpen, 'Both mouths open.');
+const climbingDrive = driveMesa('climb');
+assert.equal(climbingDrive.finished, true, `Climbing exit: ${climbingDrive.message}`);
+assert.ok(climbingDrive.exitCutting && climbingDrive.exitCutting.distanceM < 60, 'The exit cutting reaches the surface within 60 m.');
+const trenchDrive = driveMesa('trench');
+assert.equal(trenchDrive.message, 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.');
+const steepDrive = driveMesa('steep');
+assert.ok(steepDrive.message === BORER_OPEN_GROUND || /^She has come out .* up the face\./.test(steepDrive.message),
+  `A steep drive stops at open ground or a lip: ${steepDrive.message}`);
 assert.ok(seamEnds.length >= 4, 'A 100 m bore meets at least three seam changes.');
 assert.ok(seamKinds.includes('rock') && seamKinds.includes('gravel'));
 let leverTest = {...sandbox, activeMachine:'borer', mode:'work', borer:createBorerState()};
@@ -275,8 +308,8 @@ mesaFoot.y = realGround.heightAt(mesaFoot.x, mesaFoot.z);
 assert.equal(borerHasFace(realGround, mesaFoot, parked.heading), true, 'The mesa side is a face at the foot.');
 const survey = borerSurvey(realGround, {...mesaFoot, heading:parked.heading});
 assert.ok(survey && survey.distanceM > 200 && survey.distanceM < 400, 'The survey reaches the far side of the mesa.');
-const surveyedHeight = realGround.heightAt(mesaFoot.x + Math.sin(parked.heading)*survey.distanceM,
-  mesaFoot.z + Math.cos(parked.heading)*survey.distanceM);
+const surveyedHeight = realGround.heightAt(mesaFoot.x + Math.sin(parked.heading)*(survey.distanceM + 12),
+  mesaFoot.z + Math.cos(parked.heading)*(survey.distanceM + 12));
 assert.ok(Math.abs(survey.riseM - (surveyedHeight - mesaFoot.y)) < 1e-9);
 assert.ok(Math.abs(survey.gradeOneIn - survey.distanceM / Math.abs(survey.riseM)) < 1e-9);
 assert.equal(borerSurvey(flat, createBorerState()), null, 'Level ground has no far side.');
