@@ -45,6 +45,27 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.notEqual(pushOutOfSolids(pier.x, pier.z, .4, undefined, surface).hit?.id, pier.id, 'the pier does not block the deck');
 }
 
+// Grounded car contacts use the same 2.5 m body as movers for deck solids.
+// Other solids retain the original car envelope.
+{
+  const solid = {id: 'test-overhead', kind: 'girder', x: 0, z: 0, y: 2.4,
+    minY: 2.4, maxY: 4, height: 1.6, halfX: .5, halfZ: 5, verticalClearance: true};
+  function drive(obstacle) {
+    const actor = {prevS: -4, s: 4, prevLateral: 0, lateral: 0, groundHeight: 0,
+      prevGroundHeight: 0, speedMph: 0};
+    const course = {def: {scablands: true}, worldAt: (s, lateral) => ({x: s, z: lateral}),
+      at: () => ({heading: 0}), groundAt: () => ({y: 0})};
+    const game = {course, state: {arena: {worldJob: {solidGrid: {near: () => [obstacle]}}}},
+      _vehicleSpec: () => ({halfWidth: 1, halfLength: 1, height: 1}),
+      _roadPosition: point => ({s: point.x, lateral: point.z}), _obstacles: () => [],
+      _surface: () => ({mainRoad: false})};
+    _staticContacts.call(game, actor, false, []);
+    return actor.s;
+  }
+  assert.ok(drive(solid) < 0, 'a car meets a solid 2.4 m above its feet');
+  assert.equal(drive({...solid, verticalClearance: false}), 4, 'other solids keep the old body height');
+}
+
 // Job movers carry their support height from step to step, just as a chase does.
 // Check the entire crossing rather than only a stationary sample beneath a deck.
 for (const id of ['girder-bridge', 'the-pipe']) {

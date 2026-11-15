@@ -343,13 +343,17 @@ export function _staticContacts(car, player, journeyColliders = null) {
       // Authored overhead roofs need height even when a grounded car has none.
       // Local copies leave every unflagged obstacle's historical sweep exact.
       let hit;
+      // Scablands bridge and pipe solids use the same 2.5 m actor height
+      // as job movers. Other solids keep their established contact envelope.
+      const contactDimensions = this.course.def.scablands && obstacle.verticalClearance
+        ? {...dimensions, height: 2.5} : dimensions;
       if (obstacle.verticalClearance && (!Number.isFinite(start.y) || !Number.isFinite(end.y))) {
         verticalStart ??= {...start, y: Number.isFinite(start.y) ? start.y :
           (car.prevGroundHeight ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0)};
         verticalEnd ??= {...end, y: Number.isFinite(end.y) ? end.y :
           (car.groundHeight ?? this.course.groundAt(car.s, car.lateral).y) + (car.airHeight || 0)};
-        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, dimensions);
-      } else hit = sweepObstacle(start, end, collider, heading, dimensions);
+        hit = sweepObstacle(verticalStart, verticalEnd, collider, heading, contactDimensions);
+      } else hit = sweepObstacle(start, end, collider, heading, contactDimensions);
       if (hit && (!first || hit.t < first.t)) first = hit;
     }
     if (!first) break;

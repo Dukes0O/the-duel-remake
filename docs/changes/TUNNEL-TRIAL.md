@@ -2,6 +2,8 @@
 
 ## Current round
 
+Car contacts now test Scablands bridge and Pipe solids from the feet to 2.5 m above them, as job movers do. Other solids keep their existing contact envelope. `test-tunnels` and `test-scablands-solid` pass, including a check of both cases. The floor selector, roofs and remaining work below are still incomplete. No game event or sound cue was added.
+
 Job raiders and Big Bess now pass their stored height and update it with the town switch off. Job defence and escort raiders now keep only `y`; their inherited `groundY` was stale. A real job defence wave checks this. `test-tunnels` and `test-scablands-solid` passed. The shared floor list is not yet connected: doing so exposed a steep step where the Pipe deck tapers into the bed. The new 0.6 m rule briefly selects the top floor there. The next round must fix that transition and the remaining floor, roof and tunnel rules before claiming the card is done.
 
 ## Incomplete
