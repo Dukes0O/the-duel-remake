@@ -1879,3 +1879,12 @@ Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry ch
 Changed assertions: the scarp landmark changed from the foot to the rim, so the check now covers the top of the named face. Claude must review it; it is not loosened. Codex decided: use the face's own width to locate its rim. Removed: the foot as the scarp picture's landmark.
 
 Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
+
+
+### Hill country: named-place clearance
+
+The hills suite now checks every hill footprint, including each mesa ramp, against the flat ground and 30 m around every named place. The Ridge top is the named Ridge itself, so it is the one exception. The current land passes. This does not prove the job-leg corridors or the tunnel mouths. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 36 of 36. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the clearance check is new. Codex decided: use each named place's full flat radius and the whole mesa ramp footprint. Removed: none.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and the remaining protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge the picture scenario.

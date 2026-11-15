@@ -405,6 +405,18 @@ test('every Breaks hill stays in its country and clear of the three places', () 
   }
 });
 
+test('hill footprints leave named places and their surrounding ground clear', () => {
+  for (const hill of HILLS) {
+    for (const place of LAND.table) {
+      // The Ridge top is itself the named place, including the fifth flag.
+      if (hill.kind === 'ridge-top' && place.id === 'ridge') continue;
+      const reach = hill.radius + (hill.kind === 'mesa' ? hill.ramp : 0);
+      const clearance = Math.hypot(hill.x - place.x, hill.z - place.z) - reach - place.flatRadius;
+      assert.ok(clearance >= 30, `${hill.kind} leaves 30 m clear around ${place.id}`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
