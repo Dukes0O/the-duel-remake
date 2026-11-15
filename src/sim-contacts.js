@@ -266,8 +266,8 @@ export function _roadPosition(world, hintS) {
 }
 
 export function _supportAt(distance, lateral, actor = this.state) {
-  const layeredGround = this.course.def?.scablands && this.featureFlags?.enabled('wasteland-town') === true;
-  const height = this.course.groundTunnels || layeredGround ? actor?.groundHeight ?? actor?._jumpY : undefined;
+  const height = this.course.def?.scablands || this.course.groundTunnels
+    ? (actor?.airborne && Number.isFinite(actor?._jumpY) ? actor._jumpY : actor?.groundHeight ?? actor?._jumpY) : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
@@ -297,7 +297,7 @@ export function _staticContacts(car, player, journeyColliders = null) {
   const oldS = car.prevS ?? car.s, oldLateral = car.prevLateral ?? car.lateral;
   let start = this.course.worldAt(oldS, oldLateral), end = this.course.worldAt(car.s, car.lateral);
   if (![start.x, start.z, end.x, end.z].every(Number.isFinite)) return;
-  const layeredGround = this.course.def?.scablands && this.featureFlags?.enabled('wasteland-town') === true;
+  const layeredGround = this.course.def?.scablands;
   if (journeyColliders || car.airborne || car.airHeight > 0 || car.prevAirHeight > 0 || car.groundHeight != null ||
       ((this.course.groundTunnels || layeredGround) && Number.isFinite(car._jumpY))) {
     start.y = (car.prevGroundHeight ?? (this.course.groundTunnels || layeredGround ? car._jumpY : undefined) ?? this.course.groundAt(oldS, oldLateral).y) + (car.prevAirHeight ?? car.airHeight ?? 0);

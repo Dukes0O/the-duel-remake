@@ -75,9 +75,15 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit,open
 // The bed is a second floor only where the terrain has been lifted for a deck.
 export function scablandsFloorsAt(x,z,floors){
   const surface=scablandsSurfaceHeightAt(x,z);
-  const deckLift=riverGorgeDepthAt(x,z)-riverDepthAt(x,z);
+  const depth=riverDepthAt(x,z), deckLift=riverGorgeDepthAt(x,z)-depth;
   floors[0]=surface;
-  if(deckLift>0){floors[1]=surface-deckLift;return 2;}
+  if(deckLift>0){
+    // The old terrain blends the deck edge down into the bed. The actual
+    // deck stays level: do not mistake that blend for a third ramp floor.
+    floors[0]=surface+depth;
+    floors[1]=surface-deckLift;
+    return 2;
+  }
   return 1;
 }
 
@@ -89,13 +95,11 @@ export function selectScablandsFloor(floors,count,feet){
   return floors[count-1];
 }
 
-// With an actor below a bridge deck, return the continuous bed instead of the deck.
-// The edit applies to both levels. With no height hint, preserve the surface exactly.
+// Reuse storage for the common height query; no list is allocated per step.
+const floorScratch=[];
 export function scablandsActorHeightAt(x,z,actorHeight){
-  const surface=scablandsSurfaceHeightAt(x,z);
-  if(!Number.isFinite(actorHeight))return surface;
-  const depth=riverDepthAt(x,z), deckLift=riverGorgeDepthAt(x,z)-depth;
-  return deckLift>0 && actorHeight<surface+depth-1.2 ? surface-deckLift : surface;
+  const count=scablandsFloorsAt(x,z,floorScratch);
+  return selectScablandsFloor(floorScratch,count,actorHeight);
 }
 
 export function scablandsSurfaceAt(x,z){

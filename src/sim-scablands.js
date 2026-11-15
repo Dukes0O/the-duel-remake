@@ -60,10 +60,9 @@ export function scablandsGround(duel, actor, dt) {
   if (distance < 1e-4) return;
   // Use the same floor as vehicle support when this course has a trial tube.
   const actorHeight = actor.groundHeight ?? actor._jumpY;
-  const layeredGround = duel.featureFlags?.enabled('wasteland-town') === true;
-  const height = Number.isFinite(actorHeight) && (course.groundTunnels || layeredGround)
+  const height = Number.isFinite(actorHeight)
     ? (x, z) => {
-      const surface = layeredGround ? scablandsActorHeightAt(x, z, actorHeight) : scablandsSurfaceHeightAt(x, z);
+      const surface = scablandsActorHeightAt(x, z, actorHeight);
       return course.groundTunnels ? course.groundTunnels.groundAt({x, y: actorHeight, z}, actorHeight, surface) : surface;
     } : scablandsSurfaceHeightAt;
   const gain = height(to.x, to.z) - height(from.x, from.z);
