@@ -21,7 +21,7 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
     Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
-    Object.freeze({...land.between('yard','tin-town',.7,0,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
+    Object.freeze({...land.between('yard','tin-town',.7,500,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
   ]);
 }
 export const HILLS=hillsFor();

@@ -1499,3 +1499,17 @@ Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser s
 For Claude to run: `tools/scenarios/scablands-hills.mjs` and judge the pictures. Changed assertions: none. Codex decided: no new design choice. Removed: none.
 
 Still needed: item 5, integrate and run the final checks.
+
+### Round 4, slice 2c: furnace road clearance and final-check findings
+
+The eastern mesa now stands 500 m farther east, measured from the same named places. Both furnace roads clear climbable ground again. The hill tests still place the mesa on the scab plates and keep its ramp and roads clear. Survey Flags' fifth flag has not moved. No game event or sound cue was added.
+
+Checks after this change: `node tools/test-scablands-hills.mjs` passed 20 of 20 tests, and `node tools/test-scablands-solid.mjs` passed 19 of 19, including both furnace roads, both hill tops and all four routes to Tin Town. Earlier on 65e4ee51a, integration/wasteland was already included and the status page matched it. The build passed. The ground, hills, job map, map and scene suites passed; regions, size and solid failed. The solid failure was the furnace road fixed here. Both replay suites passed: 297 race fingerprint comparisons and 12 combat comparisons. World composition passed 63 checks across 20 events. These checks and the build predate the mesa move and must be repeated on the final code.
+
+The lane gate was stopped at 30 minutes: 87 of 89 suites had reported, with six failures. The Easy jobs and Medium gas runs had not finished. `test-old-smoke` failed the careful Medium driver; `test-scablands-regions` still expects the Ridge at its old height; `test-scablands-size` finds the moving ground replaces its index array; `test-scablands-solid` found the furnace road fixed above. `test-review-evidence` and `test-warlord-tollkeeper` could not start ffmpeg (EPERM). The failed size test also revealed that simply retaining the index array makes its 200-move timing fail and conflicts with the hills test's index-count check, so that attempted change was discarded. Survey Flags previously finished 10 of 10 seeds in the route-check round; the full Easy suite remains unfinished here.
+
+For Claude to run: the memory-only Performance picture scenario, its visual judgment, and the two ffmpeg-dependent tests on the laptop. The full Easy and Medium driving checks and final gate still need a completed run after the remaining fixes.
+
+Changed assertions, for Claude to review: the far scene gained exact checks of 40,623 corners and 76,852 triangles, replacing the earlier 32,361 corners and 64,000 triangles because of detailed scarp faces; the near scene remains 3,721 corners as on integration. The river route now requires arrival at Tin Town instead of returning only to the Boneyard Road. The raider search test starts sight at 0 seconds instead of 1 because visible raiders now move. The old regions assertion requiring the Ridge at its old height remains unchanged and fails against the designed 45 m summit; it needs Claude's review. No assertion was weakened in this run. Codex decided: move the mesa 500 m east, within the same scab plate, to clear the furnace road. Removed: the mesa's overlap with that road. The seen cue is `arena.tell`, the lost cue is `gate.latch`, and the furnace warning cue is `arena.toll-gate`.
+
+Still needed: fix moving-ground allocation and speed, resolve the Ridge assertion, investigate the Old Smoke Medium failure, repeat the final checks on the resulting code, and obtain Claude's picture verdict.
