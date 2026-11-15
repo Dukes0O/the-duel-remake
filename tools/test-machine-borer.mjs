@@ -11,9 +11,27 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
+import {createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// The survey text and strip change together only at displayed precision.
+let surveyWrites = 0, surveyDraws = 0;
+const surveyText = {set textContent(value) { surveyWrites++; this.value = value; }};
+const surveyContext = {clearRect() { surveyDraws++; }, beginPath() {}, moveTo() {}, lineTo() {}, fill() {}, stroke() {}, fillRect() {}};
+const surveyPanel = {querySelector: selector => selector === 'p' ? surveyText : {getContext: () => surveyContext}};
+const surveyCache = {}, surveyLine = {distanceM:100, riseM:2, gradeOneIn:50, y:0, heights:Array(81).fill(2)};
+const surveyState = {started:true, distanceM:10, y:0, slope:0};
+assert.equal(updateBorerSurvey(surveyPanel, surveyCache, surveyLine, surveyState), true);
+assert.equal(updateBorerSurvey(surveyPanel, surveyCache, surveyLine, {...surveyState, distanceM:10.1, y:0.01}), false);
+assert.equal(surveyWrites, 1);
+assert.equal(surveyDraws, 1);
+assert.equal(updateBorerSurvey(surveyPanel, surveyCache, surveyLine, {...surveyState, distanceM:11}), true);
+assert.equal(surveyWrites, 2);
+assert.equal(surveyDraws, 2);
+assert.equal(updateBorerSurvey(surveyPanel, surveyCache, surveyLine, {...surveyState, distanceM:11, slope:0.01}), true);
+assert.match(surveyText.value, /1 in 100 up/);
+assert.equal(surveyDraws, 3);
 
 let storedMapping = null, mappingChanges = 0;
 const mappingStorage = {getItem:()=>storedMapping, setItem:(_key,value)=>{storedMapping=value;}};

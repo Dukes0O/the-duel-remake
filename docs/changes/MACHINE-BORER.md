@@ -160,3 +160,9 @@ Merged `integration/wasteland` without conflicts. A bore that rises under open g
 The real mesa test now requires the six-degree climb to stop with `BORER_OPEN_GROUND` within 5 m of 277.86 m. The rising bore loses the full face behind its crown. This replaces the earlier assertion that accepted either the open-ground or lip sentence, as Claude directed. The browser scenario and final checks remain for later items.
 
 `node tools/test-machine-borer.mjs` passed in 201.2 seconds. The later pace item must bring it below 120 seconds. No browser, replay, lane tier or build was run for this item. No race fingerprints were recorded.
+
+## Survey display updates
+
+The survey keeps its last displayed floor, grade, distance and remaining rise. It rebuilds the words and redraws the strip only when a displayed value or survey line changes. The focused test checks unchanged values, a distance change and a grade change. No existing assertions changed.
+
+`node tools/test-machine-borer.mjs` passed in 197.9 seconds. No browser, replay, lane tier or build was run for this item. The test runtime remains above 120 seconds and must be shortened in the pace item. No race fingerprints were recorded.
