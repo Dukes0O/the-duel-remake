@@ -34,7 +34,7 @@ test('mesas leave the chasing car an open approach to the furnace', () => {
   const b = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path[6].position;
   const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
   const mesas = HILLS.filter(hill => hill.kind === 'mesa');
-  for (const point of sampleLine([a, b], 10)) for (const offset of [-60, -30, 0, 30, 60]) {
+  for (const point of sampleLine([a, b], 5)) for (const offset of [-60, -45, -30, -15, 0, 15, 30, 45, 60]) {
     const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
     assert.equal(scablandsTerrainHeightAt(x, z, mesas), scablandsTerrainHeightAt(x, z, []),
       `a mesa blocks the chase approach at ${Math.round(x)}, ${Math.round(z)}`);
