@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-11-14T21:58:25.526Z
+Observed at: 2026-11-15T01:07:19.300Z
 
-Observation commit: ed0904ae6f9089ed36700982119ebd10495060d8
+Observation commit: 492ae8416c3e89a9692faf638b42db8792bbcc43
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: ed0904ae6f9089ed36700982119ebd10495060d8
+Integration HEAD: 492ae8416c3e89a9692faf638b42db8792bbcc43
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -34,7 +34,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/bowl-art-rex | 9 | unknown | false | false | unknown |
 | codex/bowl-course | 9 | unknown | true | false | unknown |
 | codex/car-art-bully | 8 | unknown | false | false | unknown |
-| codex/crew-story-join | 8 | unknown | true | false | unknown |
+| codex/crew-story-join | 9 | unknown | true | false | unknown |
 | codex/mule-rails | 8 | unknown | true | false | unknown |
 | codex/perf-high-night | 30 | unknown | false | false | unknown |
 | codex/qa-arena-shove-baseline | 9 | unknown | true | false | unknown |
@@ -45,17 +45,19 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/rail-steps | 8 | unknown | true | false | unknown |
 | codex/skin-waste | 9 | unknown | true | false | unknown |
 | codex/town-art-works | 5 | unknown | false | false | unknown |
-| codex/tunnel-trial | 8 | unknown | false | false | unknown |
+| codex/tunnel-trial | 9 | unknown | false | false | unknown |
 | codex/wild-art-city | 8 | unknown | false | false | unknown |
 | codex/wild-art-desert | 9 | unknown | false | false | unknown |
 | codex/wild-art-waste | 8 | unknown | false | false | unknown |
 | codex/ww-art-crew | 8 | unknown | true | false | unknown |
 | codex/ww-art-dam | 8 | unknown | true | false | unknown |
 | codex/ww-art-mule | 9 | unknown | false | false | unknown |
-| codex/ww-art-rail | 7 | unknown | true | false | unknown |
-| codex/ww-art-whites | 7 | unknown | true | false | unknown |
+| codex/ww-art-rail | 8 | unknown | true | false | unknown |
+| codex/ww-art-whites | 8 | unknown | true | false | unknown |
 | codex/ww-boss | 9 | unknown | true | false | unknown |
-| lane/lab-formula-closed | 5 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
+| lane/lab-formula-closed | 5 | unknown | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
+| lane/machine-drill | 0 | unknown | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/machine-drill |
+| lane/tunnel-trial | 0 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tunnel-trial |
 
 ## Unmerged branches for idle review
 
@@ -67,11 +69,12 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 8 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
 | codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 30 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/town-art-works | unknown | 2026-11-09T11:01:51-07:00 | 5 | last commit 2026-11-09T11:01:51-07:00 | docs/board/looks/town-art-works-sawmill/round-1-review.md, docs/board/looks/town-art-works-sawmill/round-1.jpg, docs/board/looks/town-art-works-sawmill/round-2-review.md, docs/board/looks/town-art-works-sawmill/round-2.jpg, docs/board/looks/town-art-works-sawmill/round-3.jpg |
-| codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 8 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
+| codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 9 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 8 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 8 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
+| lane/machine-drill | unknown | 2026-11-14T18:01:54-07:00 | 0 | last commit 2026-11-14T18:01:54-07:00 | docs/changes/MACHINE-DRILL.md |
 
 ## Size targets
 
@@ -79,15 +82,15 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 712,092,227 B | +0 B | 250,000,000 B |
+| Build `dist/` | unavailable | unavailable | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 83,804,588 B | +370,001 B | 20,000,000 B |
-| Added bytes in last merge | 7,426 B | -641,584 B | 5,000,000 B |
+| Review `looks/` | 84,036,150 B | +231,562 B | 20,000,000 B |
+| Added bytes in last merge | 7,426 B | +0 B | 5,000,000 B |
 | All `public/` | 703,858,947 B | +0 B | unavailable |
-| Git objects | 1,722,839,040 B | +1,525,760 B | unavailable |
+| Git objects | 1,725,067,264 B | +2,228,224 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -96,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
 - Local main: missing
-- Local integration/wasteland: ed0904ae6f9089ed36700982119ebd10495060d8
+- Local integration/wasteland: 1fe826c79551bf169eed96fc08fef69353b91aa3
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
@@ -107,3 +110,5 @@ Remote-tracking refs are cached locally; no fetch or remote verification was per
 - Remote origin/integration/wasteland: behind local; cached commit 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a.
 
 Issue: Circuit manifest eifel-crown.js has unknown or malformed literal metadata.
+Issue: lane/lab-formula-closed: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed
+Issue: lane/machine-drill: Git inspection failed (status): fatal: detected dubious ownership in repository at 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/machine-drill' 'C:/Users/kyleb/.codex/worktrees/wasteland-integration/machine-drill/.git' is owned by: 	Kyle_Laptop/kyleb (S-1-5-21-3145047164-4149896009-1733930501-1001) but the current user is: 	Kyle_Laptop/CodexSandboxOffline (S-1-5-21-3145047164-4149896009-1733930501-1003) To add an exception for this directory, call:  	git config --global --add safe.directory C:/Users/kyleb/.codex/worktrees/wasteland-integration/machine-drill
