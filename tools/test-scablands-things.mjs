@@ -14,6 +14,27 @@ import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, rea
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
+import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
+import {preparedScarps} from '../src/world/scablands-scarps.js';
+
+test('the height used for things follows the drawn scarp triangles', () => {
+  const face = preparedScarps(SCARPS)[0];
+  const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
+  const middle = {x: face.a.x + face.tx * face.length / 2, z: face.a.z + face.tz * face.length / 2};
+  ground.follow(middle.x, middle.z);
+  ground.mesh.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster();
+  for (let along = -30; along <= 30; along += 10) for (let across = 2; across < face.width; across += 3) {
+    const x = middle.x + face.tx * along - face.tz * across;
+    const z = middle.z + face.tz * along + face.tx * across;
+    ray.set(new THREE.Vector3(x, 500, z), new THREE.Vector3(0, -1, 0));
+    const hits = ray.intersectObject(ground.mesh, true);
+    assert.ok(hits.length, 'the drawn ground covers the point');
+    assert.ok(Math.abs(nearGroundHeightAt(x, z, scablandsSurfaceHeightAt) - hits[0].point.y) < .001);
+    assert.ok(Math.abs(ground.heightAtDrawn(x, z) - hits[0].point.y) < .001);
+  }
+  ground.dispose();
+});
 
 test('a course with the trial off builds no placement indexes', async () => {
   const {Course} = await import('../src/course.js');

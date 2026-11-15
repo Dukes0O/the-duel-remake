@@ -1654,3 +1654,11 @@ The existing Easy driver completed Hot Delivery on seed 1 in 362.24 seconds. Tem
 Check: `node tools/test-scablands-hills.mjs` passed 29 of 29. The measured Hot Delivery run finished. Race fingerprints and world signatures were not rerun in this step. Changed assertions: one new caching and sampling check; no existing assertion changed or loosened. Codex decided: no new design choice. Sound cues: no new event. Removed: temporary measurement counters.
 
 Still needed: parts B and C and their final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: drawn scarp height
+
+Small things now read the same finer triangles that draw the near scarp faces. The near ground's drawn-height query uses those triangles too. A ray test checks the answer against the actual mesh at many points across a face. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 33 of 33. Changed assertions: none; the mesh comparison is a new check. Race fingerprints and world signatures were not rerun in this step. Codex decided: no new design choice. Removed: the coarse-triangle height estimate inside scarp face cells.
+
+Still needed: the river has a separate drawn gorge while small things currently sample the filled-in plain; resolve that and check standing things, hills and mesa faces. Finish the camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
