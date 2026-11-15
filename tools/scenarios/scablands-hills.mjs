@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {Script} from 'node:vm';
 import {LAND} from '../../src/world/scablands-names.js';
 import {HILLS} from '../../src/world/scablands-height.js';
-import {SCARPS} from '../../src/world/scablands-scarps.js';
+import {SCARP, SCARPS} from '../../src/world/scablands-scarps.js';
 import {ROAD_NET} from '../../src/world/scablands-road.js';
 import {stepsWayFor} from '../../src/world/scablands-regions.js';
 
@@ -40,6 +40,8 @@ export function views() {
     (onWay.z - mesa.z) * (mesa.radius + mesa.face + 250) / wayDistance);
   const {a, b} = SCARPS[0].stretches[0];
   const length = Math.hypot(b.x - a.x, b.z - a.z), foot = {x: (a.x + b.x) / 2, z: (a.z + b.z) / 2};
+  const scarpTop = offset(foot, -SCARPS[0].height * SCARP.faceRatio * (b.z - a.z) / length,
+    SCARPS[0].height * SCARP.faceRatio * (b.x - a.x) / length);
   const bankA = LAND.at('river-3'), bankB = LAND.at('river-4');
   const bankLength = Math.hypot(bankB.x - bankA.x, bankB.z - bankA.z);
   const bed = {x: (bankA.x + bankB.x) / 2, z: (bankA.z + bankB.z) / 2};
@@ -54,7 +56,7 @@ export function views() {
     {name: 'ridge-way-up', from: upRidge(600), to: upRidge(450)},
     {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard, landmark: towardYard(600)},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
-    {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: foot},
+    {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: scarpTop, landmark: scarpTop},
     {name: 'river-bank', from: bed, to: offset(bed, -(bankB.z - bankA.z) / bankLength * 100, (bankB.x - bankA.x) / bankLength * 100)},
   ];
 }

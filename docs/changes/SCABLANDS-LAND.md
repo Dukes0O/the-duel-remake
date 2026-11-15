@@ -1869,3 +1869,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 35 of 35. Race fingerprints 
 Changed assertions: none; the road-centre check is new. The older assertion that every Breaks hill clears every road remains in place and conflicts with building the required passes. A deliberate change to that assertion will need Claude's review. Codex decided: sample at intervals of at most 5 m. Removed: none.
 
 Still needed: build and prove all three Breaks passes, prove mesa cover and protected corridors, drive routes and jobs, and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: scarp picture target
+
+The scarp picture still starts 80 m from the foot on the low side, but now points to and checks the rim at the top of the face. The old landmark was the foot, where the scarp adds no height, so its projection did not establish that the face's top was in view. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A geometry check confirmed zero scarp height at the camera position and 14 m at the rim. The browser scenario was not run. Race fingerprints and world signatures were not rerun.
+
+Changed assertions: the scarp landmark changed from the foot to the rim, so the check now covers the top of the named face. Claude must review it; it is not loosened. Codex decided: use the face's own width to locate its rim. Removed: the foot as the scarp picture's landmark.
+
+Still needed: build and prove the three Breaks passes, prove mesa cover and protected corridors, drive the routes and jobs, and run final checks. Claude must run and judge all picture views.
