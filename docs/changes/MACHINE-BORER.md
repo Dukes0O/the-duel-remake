@@ -163,6 +163,14 @@ The real mesa test now requires the six-degree climb to stop with `BORER_OPEN_GR
 
 ## Survey display updates
 
+## H1 visibility measurements
+
+H1's zero-body-pixel check at 16 m conflicts with the current model and open mouth. The simulation position is at the head. The model's gantry deck reaches about 25.8 m behind the head after the view's 0.6 scale and head offset, so about 9.8 m of it still projects outside the mouth at 16 m. A camera looking through an open mouth can also see the machine inside it. Hiding all of it at that point would require hiding real geometry or closing the view through the portal.
+
+A rules-and-mesh probe at the mesa, with a 16 m straight tunnel and no spoil, found a 7 m mouth cut. From 30 m outside and 8 m above the floor, rays towards points 4, 8, 12 and 16 m in hit the ground mesh within that cut; the mouth shader discards those hits. The river shader does not account for this: its sampled field is 128 m at the reported camera and machine positions. The model's GLB materials are opaque. Claude confirmed that the 16 m zero-pixel check was wrong and asked for the measurements at 45 m.
+
+The browser scenario now records the head's position relative to the model and simulation, counts machine pixels from the side with and without the real ground, and counts portal, lining and surrounding ground pixels from the mouth. It writes these measurements before checking them. It waits until 45 m before checking the following camera. The scenario and its page expressions pass Node syntax checks. Chrome cannot run in this lane, so these measurements and H1's visual result remain unverified; H2 through H6 remain unfinished. No assertions in existing tests changed and no race fingerprints were run.
+
 The survey keeps its last displayed floor, grade, distance and remaining rise. It rebuilds the words and redraws the strip only when a displayed value or survey line changes. The focused test checks unchanged values, a distance change and a grade change. No existing assertions changed.
 
 `node tools/test-machine-borer.mjs` passed in 197.9 seconds. No browser, replay, lane tier or build was run for this item. The test runtime remains above 120 seconds and must be shortened in the pace item. No race fingerprints were recorded.

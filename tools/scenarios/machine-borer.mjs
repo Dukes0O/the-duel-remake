@@ -53,7 +53,7 @@ const page = {
       mouths:dig.simulation.tunnels.mouths,hit:v.groundRay(origin,direction,distance)}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
-  inside: `(() => window.__theDig.simulation.borer.travelM <= 30)()`,
+  inside: `(() => window.__theDig.simulation.borer.travelM <= 25)()`,
   overviewOn: `(() => { window.__theDig.setCheckOverview(true); return true; })()`,
   overviewOff: `(() => { window.__theDig.setCheckOverview(false); return true; })()`,
   overview: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck;
@@ -65,6 +65,53 @@ const page = {
       strip:!!p?.querySelector('canvas') && p.querySelector('canvas').getBoundingClientRect().width>0}; })()`,
   spoil: `(() => { const b=window.__theDig.simulation.borer.spoilBank;
     return {far:b.far, cells:b.cells.length}; })()`,
+  visibility: `(() => {
+    const d=window.__theDig, v=d.viewForCheck, T=v.three, s=d.simulation.tunnels.segments[0];
+    const forward=new T.Vector3(s.end.x-s.start.x,0,s.end.z-s.start.z).normalize();
+    const right=new T.Vector3(forward.z,0,-forward.x), mouth=new T.Vector3(s.start.x,s.start.y,s.start.z);
+    const floor=mouth.y-1.65, target=mouth.clone().addScaledVector(forward,20); target.y=floor+8;
+    const camera=v.camera.clone(), body=v.machine, head=body.getObjectByName('borerhead');
+    v.scene.updateMatrixWorld(true);
+    const headPos=head.getWorldPosition(new T.Vector3()), middle=new T.Box3().setFromObject(body).getCenter(new T.Vector3());
+    const b=d.simulation.borer;
+    const geometry={headAhead:headPos.clone().sub(middle).dot(forward),headFromSimulation:Math.hypot(headPos.x-b.x,headPos.z-b.z),head:headPos.toArray(),middle:middle.toArray()};
+    const saved=v.world.children.map(o=>[o,o.visible]), oldBackground=v.scene.background, oldFog=v.scene.fog;
+    const oldTarget=v.renderer.getRenderTarget(), renderTarget=new T.WebGLRenderTarget(800,600);
+    const marker=new T.MeshBasicMaterial({color:0xff00ff,toneMapped:false});
+    const pixels=new Uint8Array(800*600*4);
+    const rootOf=o=>{while(o && o.parent!==v.world)o=o.parent;return o;};
+    function draw(object, withGround) {
+      for(const [o] of saved)o.visible=false;
+      if(withGround) for(const o of v.groundObjects)rootOf(o).visible=true;
+      const root=rootOf(object); if(root)root.visible=true;
+      const materials=[];
+      object?.traverse(n=>{if(n.isMesh){materials.push([n,n.material]);n.material=marker;}});
+      try {
+        v.renderer.setRenderTarget(renderTarget);v.renderer.render(v.scene,camera);
+        v.renderer.readRenderTargetPixels(renderTarget,0,0,800,600,pixels);
+        let marked=0,groundAround=0;
+        for(let y=0;y<600;y++)for(let x=0;x<800;x++){
+          const i=(y*800+x)*4, r=pixels[i],g=pixels[i+1],bl=pixels[i+2];
+          if(r>245 && g<10 && bl>245)marked++;
+          else if(withGround && (r>8||g>8||bl>8) && x>200 && x<600 && y>100 && y<500 && (Math.abs(x-400)>65||Math.abs(y-300)>65))groundAround++;
+        }
+        return {marked,groundAround};
+      } finally {for(const [n,m] of materials)n.material=m;}
+    }
+    try {
+      v.scene.background=new T.Color(0);v.scene.fog=null;camera.aspect=800/600;camera.updateProjectionMatrix();
+      camera.position.copy(target).addScaledVector(right,40);camera.lookAt(target);camera.updateMatrixWorld(true);
+      const sideCamera=camera.position.toArray();
+      const alone=draw(body,false), covered=draw(body,true);
+      const entrance=mouth.clone();entrance.y=floor+3;
+      camera.position.copy(entrance).addScaledVector(forward,-25);camera.lookAt(entrance);camera.updateMatrixWorld(true);
+      const portal=draw(v.portals,true),lining=draw(v.lining,true);
+      return {geometry,side:{alone,covered,camera:sideCamera},mouth:{portal,lining}};
+    } finally {
+      for(const [o,visible] of saved)o.visible=visible;
+      v.scene.background=oldBackground;v.scene.fog=oldFog;v.renderer.setRenderTarget(oldTarget);renderTarget.dispose();marker.dispose();
+    }
+  })()`,
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
@@ -138,7 +185,7 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null};
+  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null};
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
@@ -182,6 +229,21 @@ export async function run(context) {
   await persist();
   console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
   assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
+  await press(context, 'KeyC');
+  await picture(context, 'machine-borer-mouth-20m', 20);
+  await press(context, 'KeyC');
+  await cutUntil(context, 45);
+  measurements.spoil = await context.evaluate(page.spoil);
+  measurements.survey = await context.evaluate(page.survey);
+  measurements.visibility = await context.evaluate(page.visibility);
+  await persist();
+  const visibility = measurements.visibility;
+  assert.ok(visibility.geometry.headAhead > 0 && visibility.geometry.headFromSimulation <= 2, 'the head leads and is at the simulation position');
+  assert.ok(visibility.side.alone.marked > 0 && visibility.side.covered.marked === 0, 'the hill hides the whole machine from the side');
+  assert.ok(visibility.mouth.portal.marked > 0 && visibility.mouth.lining.marked > 0 && visibility.mouth.portal.groundAround > 0, 'the mouth shows the portal, lining and surrounding ground');
+  assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
+  assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('to go'), 'the running survey and strip are shown');
+  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await context.waitFor(page.followingInside, 'following camera enters the bore', 15000);
   const roof = await context.evaluate(page.roofRay);
   measurements.roofRay = roof;
@@ -190,23 +252,13 @@ export async function run(context) {
   assert.ok(roof.cameraRoute?.inside && roof.cameraIndex === 0, 'the roof ray starts at the following camera inside the bore');
   assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-mouth-20m', 20);
+  await picture(context, 'machine-borer-mouth', 45);
   await press(context, 'KeyC');
-  await cutUntil(context, 50);
-  measurements.spoil = await context.evaluate(page.spoil);
-  measurements.survey = await context.evaluate(page.survey);
-  await persist();
-  assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
-  assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('to go'), 'the running survey and strip are shown');
-  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
-  await press(context, 'KeyC');
-  await picture(context, 'machine-borer-mouth', 50);
-  await press(context, 'KeyC');
-  await picture(context, 'machine-borer-face', 50);
+  await picture(context, 'machine-borer-face', 45);
   await key(context, 'KeyS', 'keydown');
   try {
     await context.waitFor(page.inside, '20 m back from the face', 60000);
-    const inside = await picture(context, 'machine-borer-inside', 50);
+    const inside = await picture(context, 'machine-borer-inside', 45);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
 }

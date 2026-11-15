@@ -533,7 +533,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   return {stop,get simulation(){return sim;},get failed(){return failed;},host,
     requestCentreSample(){sampleCentre=true;},
     setCheckOverview(value){checkOverview=!!value;},
-    get viewForCheck(){return {camera,groundRay:(origin,direction,far=Infinity)=>{
+    get viewForCheck(){return {camera,scene,world,renderer,three:THREE,groundObjects:[nearGround.mesh,yardFloor,editedGroup],groundRay:(origin,direction,far=Infinity)=>{
       world.updateMatrixWorld(true);
       const ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),
         new THREE.Vector3(direction.x,direction.y,direction.z).normalize(),0,far);
