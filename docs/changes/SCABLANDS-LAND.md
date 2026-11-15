@@ -1970,3 +1970,13 @@ The hills suite now compares the ground with and without mesas every 5 m along t
 Check: `node tools/test-scablands-hills.mjs` passed 42 of 42. Changed assertions: none; the corridor check is new. Codex decided: sample across the corridor at 30 m intervals; this is a sampled check, not a proof for every point. Removed: none. Race fingerprints, world signatures, route drives, build and browser pictures were not run in this step.
 
 The three cover stretches are still not met. A 10 m grid search for a 120 m radius mesa found no candidate shadow on the visible part of the way beyond 3,100 m along it, within the examined region and the road, river, plates and 200 m way clearances. The search used circular shadow geometry and is not an exhaustive proof. Continue with mesa cover, then check the remaining job corridors and drive the routes and jobs. Merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: furnace road clearance
+
+Moved the northern mesa 300 m east and 300 m north, clear of both furnace roads. The other seeded mesa positions stay as they were. No game event or sound was added.
+
+Checks: the hills suite passed 42 of 42. The focused furnace-road check passed. The full solid suite before this fix passed 23 of 25: all four ways to Tin Town passed with realism on and off, but the furnace road crossed the mesa and the car could not reach the raised Lookout. The furnace road passed after the move; the Lookout is still unresolved. No replay, world-signature, build or picture check was run.
+
+Changed assertions: none. Codex decided: preserve the seeded placement reference so moving one mesa does not move the others. Removed: the northern mesa's former position on the furnace road.
+
+Still needed: three separate mesa-cover stretches, a drivable Lookout, job-corridor proof and Easy job drives, then integration and the final checks. Claude must run and judge the pictures.
