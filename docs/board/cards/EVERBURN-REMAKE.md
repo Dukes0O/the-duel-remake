@@ -299,6 +299,30 @@ marked new).**
 **Not driven:** the Halfway Camp, the barricades and riders, the Steps, the Pipe, Tin Town's
 gate and bay. Those are driven when slices 2 and 3 are built.
 
+## Job 1: what the drive adds to the design (Claude, 15 November 2026)
+
+These settle findings 1, 2, 5, 6 and 7 of the drive, and are built with slices 2 to 4. Findings
+3, 4 and 8 are drawing and are Claude's; finding 9 is realism step 3.
+
+- **The yard stands on the land.** At the land's yard the Scrapdome's yard is drawn as it is on
+  the Home Yard screen (`src/scrapdome-yard.js`: its scaffold and barriers, its stacked wrecks),
+  solid, with an east gate 12 m wide between two posts. Job 1 starts with the car 40 m inside
+  that gate, facing it. Cinder stands at the gate by her brazier. A player who looks back from
+  the East Road sees the yard for two kilometres.
+- **A brazier can be found.** Each of the three braziers sends up a column of smoke 40 m tall
+  that reads from 1.5 km. The yard's brazier is on both maps from the start; the others appear
+  on the maps once seen. While the pot is out, an arrow at the screen's edge points to the
+  nearest brazier the player knows, with its distance.
+- **The map tells what Cinder told, and what the player has found.** At the start the large map
+  lists one way, the East Road, with her words: "The Ash Men hold the Girder Bridge." The other
+  three ways are ground and crossings on the map with nothing listed. A way is listed, with its
+  length, once the player has driven 300 m of it or come within sight of its crossing. A danger
+  on a way (a barricade, the furnace's sight, the wind on the pan, the Pipe's speed) is written
+  only once the player has seen or met it. The list is headed "What you know". A caption never
+  lies across the map: while the map is open it is said along the map's lower edge.
+- **The job's own screen.** No clock, no style points, no jump readout, and no weapons but the
+  lent flamethrower. The pause screen says "Hot Delivery, the Scablands".
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
