@@ -1406,3 +1406,13 @@ For Claude to run: the memory-only Performance picture scenario after it is writ
 Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: selection of hidden or out-of-range cars by Scablands camp raiders.
 
 Still needed: item 2, pursuit and the five-second search, furnace and lookout sight, seen and lost captions and cues; then route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: camp raider search in progress
+
+Scablands camp raiders remember the last place they saw the player's car. When it leaves sight or range, they walk to that place, search for five seconds, and return to their post. Seeing the car again refreshes the remembered place. Their steps use the existing ground and solid checks. The search does not read the hidden car's position. Other venues retain their former behaviour. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 14 tests, including the last seen place, search, return and seeing the car again. The search test uses a clear path; it does not prove that a raider can find a way around a steep face or solid. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: camp raiders walk at 3 m/s, the existing job-raider walking pace. Removed: none.
+
+Still needed: item 2, path finding around blocked ground, furnace and lookout sight, and seen and lost captions and cues; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The card is not ready to merge.

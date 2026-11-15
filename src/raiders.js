@@ -7,6 +7,7 @@ import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
 import {sees} from './world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {stepMover, FOOT_GRADE} from './world/scablands-movers.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -22,6 +23,39 @@ export function raiderHasClearShot(course, raider, target) {
   return !course.def.scablands || sees(raider, target, {
     heightAt: scablandsSurfaceHeightAt, eye: 1.48, target: 1.5, step: 5,
   });
+}
+
+// A camp raider remembers only the last place it could see. It searches there
+// for five seconds, then returns to its post; seeing the car starts this over.
+export function stepRaiderSearch(raider, target, dt, move = stepMover) {
+  const memory = raider.search ??= {home: {x: raider.x, z: raider.z}, last: null, phase: 'post', seconds: 0};
+  const visible = target && Math.hypot(target.x - raider.x, target.z - raider.z) <= FIRE_METERS &&
+    raiderHasClearShot({def: {scablands: true}}, raider, target);
+  if (visible) {
+    memory.last = {x: target.x, z: target.z};
+    memory.phase = 'seen'; memory.seconds = 0;
+    return;
+  }
+  if (memory.phase === 'seen') memory.phase = 'going';
+  if (memory.phase === 'post') return;
+  if (memory.phase === 'searching') {
+    memory.seconds += dt;
+    if (memory.seconds >= 5) memory.phase = 'returning';
+    else return;
+  }
+  const destination = memory.phase === 'returning' ? memory.home : memory.last;
+  const dx = destination.x - raider.x, dz = destination.z - raider.z;
+  const distance = Math.hypot(dx, dz), travel = Math.min(distance, 3 * dt);
+  if (distance > 1e-6 && travel > 0) {
+    const next = move(raider, {x: raider.x + dx / distance * travel, z: raider.z + dz / distance * travel},
+      {radius: .4, grade: FOOT_GRADE});
+    raider.x = next.x; raider.z = next.z; raider.yaw = Math.atan2(dx, dz);
+    raider.y = raider.groundY = scablandsSurfaceHeightAt(raider.x, raider.z);
+  }
+  if (Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
+    if (memory.phase === 'returning') { memory.phase = 'post'; memory.last = null; }
+    else { memory.phase = 'searching'; memory.seconds = 0; }
+  }
 }
 
 function clearRoadside(course, s, lateral) {
@@ -329,6 +363,10 @@ export function stepRaiders(duel, dt = 0) {
       }
     }
     collectSalvage(duel, zone);
+    if (duel.course.def.scablands && dt > 0 && !zone.ambushWave && !zone.raiders.some(raider => raider.ambushKey)) {
+      const car = !state.finished && !state.crushed && !state.combatWrecking ? point(duel, state) : null;
+      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt);
+    }
     const ahead = duel.relativeS(zone.s, state.s) - state.s;
     if (ahead > 0 && ahead < WARNING_METERS && zone.warnedLap !== state.currentLap) {
       zone.warnedLap = state.currentLap;

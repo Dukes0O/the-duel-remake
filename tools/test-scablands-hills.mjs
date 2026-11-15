@@ -13,7 +13,30 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot, targetFor} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor, stepRaiderSearch} from '../src/raiders.js';
+
+test('a raider searches the last visible place and returns to its post', () => {
+  const mesa = HILLS.find(hill => hill.kind === 'mesa');
+  const raider = {x: mesa.x - mesa.radius - 30, z: mesa.z};
+  const home = {...raider}, visible = {x: raider.x - 30, z: raider.z};
+  const hidden = {x: mesa.x + mesa.radius + 30, z: mesa.z};
+  const move = (_from, to) => to;
+  stepRaiderSearch(raider, visible, 1, move);
+  assert.equal(raider.search.phase, 'seen');
+  assert.deepEqual(raider.search.last, visible);
+  stepRaiderSearch(raider, hidden, 1, move);
+  assert.deepEqual(raider.search.last, visible, 'cover does not reveal the car position');
+  assert.ok(raider.x < home.x, 'the raider walks toward the last visible place');
+  for (let i = 0; i < 9; i++) stepRaiderSearch(raider, hidden, 1, move);
+  assert.equal(raider.search.phase, 'searching');
+  for (let i = 0; i < 5; i++) stepRaiderSearch(raider, hidden, 1, move);
+  assert.equal(raider.search.phase, 'returning');
+  for (let i = 0; i < 10; i++) stepRaiderSearch(raider, hidden, 1, move);
+  assert.equal(raider.search.phase, 'post');
+  assert.equal(raider.x, home.x);
+  stepRaiderSearch(raider, visible, 1, move);
+  assert.equal(raider.search.phase, 'seen', 'the car can be seen again');
+});
 
 test('Scablands raiders cannot shoot through a mesa', () => {
   const mesa = HILLS.find(hill => hill.kind === 'mesa');
