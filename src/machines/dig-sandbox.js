@@ -3,6 +3,7 @@ import {machineToolPosition} from './machine.js';
 import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
+import {createGroundTunnels} from '../world/ground-tunnels.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
@@ -88,12 +89,22 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
+}
+
+/** Copy the current visit's tunnels into plain data, without writing a store. */
+export function exportDigTunnels(sim) {
+  return sim.tunnels.segments;
+}
+
+/** Rebuild the current visit's tunnels from plain data, without reading a store. */
+export function importDigTunnels(sim, segments = []) {
+  return {...sim, tunnels:createGroundTunnels(segments, {heightAt:(x,z)=>sim.ground.heightAt(x,z)})};
 }
 
 /** Leaving the yard hands the Scablands back with its own ground, so a later job is unchanged. */

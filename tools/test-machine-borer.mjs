@@ -3,6 +3,7 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {closeDigSandbox, createDigSandbox, exportDigTunnels, importDigTunnels} from '../src/machines/dig-sandbox.js';
 
 const flat = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
 const hill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
@@ -51,6 +52,18 @@ assert.equal(stopped.heading, running.heading);
 assert.equal(stopped.slope, running.slope);
 const initial = createBorerState();
 const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80).state;
+const sandbox = createDigSandbox({ground:hill});
+const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+Object.defineProperty(globalThis, 'localStorage', {configurable:true, get() { throw new Error('Tunnel exchange must not access storage.'); }});
+const restored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(forty.segments)));
+assert.deepEqual(exportDigTunnels(restored), forty.segments, 'A bored tunnel survives a plain-data round trip.');
+const exported = exportDigTunnels(restored);
+exported[0].start.x += 100;
+assert.deepEqual(exportDigTunnels(restored), forty.segments, 'Exported data cannot alter the visit.');
+assert.deepEqual(exportDigTunnels(importDigTunnels(restored)), [], 'Missing tunnel data means no tunnels.');
+if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalStorage);
+else delete globalThis.localStorage;
+closeDigSandbox();
 const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
 const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80).state;
 const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>

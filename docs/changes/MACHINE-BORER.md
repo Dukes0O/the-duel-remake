@@ -10,6 +10,8 @@ Mabel can now reverse along her recorded tunnel at 1.4 m per second with her hea
 
 The conveyor's pile is ten metres to the right of the first tunnel mouth. Each new cut samples the ground's material layers through the underground cut and places the bulked material in that pile through fill. The tunnel segments represent the void without lowering the surface. Reverse travel does not cut or add muck. The machine stops if the pile would be in a protected place.
 
+Step 4 adds plain-data export and restore for the Dig's in-memory tunnels. Restoring validates and rebuilds the tunnel against the visit's ground. No store is read or written. Connecting the borer to the Dig remains step 5.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -31,12 +33,17 @@ The conveyor's pile is ten metres to the right of the first tunnel mouth. Each n
 - `node tools/test-tunnels.mjs`: passed after adding crossing passage support.
 - `node tools/test-machine-borer.mjs`: passed with breakthrough into a supplied passage, no false surface portal, and a separate-height passage that does not open the face.
 - `node tools/test-tunnels.mjs`: passed after the underground junction change.
+- `node tools/test-machine-borer.mjs`: passed with a bored tunnel exported and restored, independent copies, an empty list for missing data, and storage access forbidden during the exchange.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
 ## For Claude to run
 
-The browser scenario has not been written yet. An independent save review will be needed when saving is built.
+The browser scenario has not been written yet. The later card that connects the Dig to the town store will need the save checker and an independent save review.
+
+## Save bridge decision
+
+Claude decided that this card keeps tunnels in memory for the Dig visit. A later card will connect the Dig's ground, machines and tunnels to the town store. No save data has been changed.
 
 ## Changed assertions, for Claude to review
 
