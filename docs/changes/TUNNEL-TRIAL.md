@@ -2,7 +2,7 @@
 
 ## Incomplete
 
-Integration was merged at b23714b22. Conflicts in the status page, ground look and scene were resolved, keeping the integration status and both the photo and tunnel rendering paths. The west scab scarp now has a 100 m trial line with a grade below .15 and both mouths on the surface. Its height-query test passes in both directions, but an actual car journey at this site and the under-deck work remain. The previous rise measurements below are historical, not the chosen site.
+Integration was merged at b23714b22. Conflicts in the status page, ground look and scene were resolved, keeping the integration status and both the photo and tunnel rendering paths. The west scab scarp now has a 100 m trial line with a grade below .15 and both mouths on the surface. Its height-query test passes in both directions, but an actual car journey at this site and the under-deck work remain. The steep-ground rule now samples the tube floor when a tube is installed, so the scarp above does not stop a car underground; a focused test passes. The full car journey, the under-deck changes and scenario remain. The previous rise measurements below are historical, not the chosen site.
 
 This is unfinished work, not a passing trial. The lane contains the earlier tube query adapted to an explicit car-height argument in `course.groundAt`. Only `_supportAt` passes the car's `groundHeight`. Other calls retain the surface. There is no installed tunnel, switch-controlled scenario, visible opening, mesh, save, or driving proof on the real Ridge. A car placed inside without an initialized height is still unresolved. Do not merge this work as a finished trial.
 
@@ -23,6 +23,8 @@ The scene now passes the course's tubes to the near and coarse ground materials 
 A repeatable trial placement now joins the tube floor to the surface at both ends and measures the roof against the land. On the rise nearest the Ridge, a 100 m line along its road has no cover over an 8 m diameter roof at any of the 101 sampled points. This is a measurement of that line, not proof for every possible line. The real-site test checks both mouth heights; it does not yet drive a car there or show a tunnel with rock overhead. The placement is available for the unfinished scenario and is not installed in the game.
 
 ## Checks
+
+- After the integration merge: `node tools/test-tunnels.mjs` passed, including the scarp floor and steep-ground checks. `node tools/test-combat-replays.mjs` passed 12 checks. `npm.cmd run build` passed. These are interim checks; the final lane tier, world signatures and browser scenario remain.
 
 - `node tools/test-tunnels.mjs`: passed material generation and lining checks, plus ground-query, joined-slope continuity, surface-obstacle, wall-calculation, contact-hook and real simulated driving checks in both directions on a controlled level tube. The real Ridge mouths and save are not tested.
 - `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.

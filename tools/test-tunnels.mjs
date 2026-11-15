@@ -28,6 +28,20 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
   }
 }
 
+// The steep-ground rule must see the same floor as support, not the scarp above it.
+{
+  const {scablandsGround} = await import('../src/sim-scablands.js');
+  const trial = westScarpTrial(scablandsHeightAt), tubes = createGroundTunnels([trial.segment]);
+  const {start, end} = trial.segment;
+  const at = s => ({x: start.x + (end.x - start.x) * s / 100, z: start.z + (end.z - start.z) * s / 100});
+  const actor = {prevS: 13, s: 14, prevLateral: 0, lateral: 0, speedMph: 20,
+    groundHeight: start.y - 4 + (end.y - start.y) * .13};
+  const duel = {state: actor, course: {def: {scablands: true}, groundTunnels: tubes, worldAt: at},
+    _roadPosition: point => ({s: point.x, lateral: 0}), emit: () => { throw new Error('The tube floor is not a cliff.'); }};
+  scablandsGround(duel, actor, 1 / 120);
+  assert.equal(actor.s, 14, 'the scarp above does not stop a car inside the tube');
+}
+
 const course = new Course(SCABLANDS_VENUE, 20261114);
 const empty = createGroundTunnels();
 for (let i = 0; i < 300; i++) {

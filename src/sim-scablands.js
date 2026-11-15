@@ -58,7 +58,11 @@ export function scablandsGround(duel, actor, dt) {
   const from = groundPoint(course, oldS, oldLateral, scratch.from), to = groundPoint(course, actor.s, actor.lateral, scratch.to);
   const dx = to.x - from.x, dz = to.z - from.z, distance = Math.hypot(dx, dz);
   if (distance < 1e-4) return;
-  const height = scablandsSurfaceHeightAt, gain = height(to.x, to.z) - height(from.x, from.z);
+  // Use the same floor as vehicle support when this course has a trial tube.
+  const height = course.groundTunnels && Number.isFinite(actor.groundHeight)
+    ? (x, z) => course.groundTunnels.groundAt({x, y: actor.groundHeight, z}, actor.groundHeight, scablandsSurfaceHeightAt(x, z))
+    : scablandsSurfaceHeightAt;
+  const gain = height(to.x, to.z) - height(from.x, from.z);
   const kmh = Math.abs(actor.speedMph || 0) * MPH_TO_KMH, ledges = ledgeAt(to.x, to.z);
   const limit = climbLimit(kmh, ledges);
   if (gain > 0 && gain / distance > limit) {
