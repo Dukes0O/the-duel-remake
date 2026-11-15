@@ -29,7 +29,8 @@ const isFaceCell = (x, z) => faces.some(f => x <= f.x1 && x + cellX >= f.x0 && z
 // The height at (x, z) of the ground as it is drawn: the straight slopes between lattice corners, cut the way the window's
 // triangles are cut (each cell is two triangles meeting along the line from its (1, 0) corner to its (0, 1) corner). Used to lay
 // a thing on what is seen. `heightAt(x, z)` is the land's own height.
-export function nearGroundHeightAt(x, z, heightAt) {
+export function nearGroundHeightAt(x, z, heightAt, grid = NEAR_GROUND) {
+  const {cellX, cellZ, lift} = grid;
   const fx = x / cellX, fz = z / cellZ, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz;
   const corner = (i, j) => heightAt((ix + i) * cellX, (iz + j) * cellZ) + lift;
   if (isFaceCell(ix * cellX, iz * cellZ)) {
@@ -191,7 +192,7 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       if (Number.isNaN(centreI)) return null;
       const fx = x / cellX - (centreI - cellsX / 2), fz = z / cellZ - (centreJ - cellsZ / 2);
       if (fx < 0 || fz < 0 || fx >= cellsX || fz >= cellsZ) return null;
-      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt);
+      if (isFaceCell(Math.floor(x / cellX) * cellX, Math.floor(z / cellZ) * cellZ)) return nearGroundHeightAt(x, z, heightAt, grid);
       const ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, at = iz * across + ix;
       return u + v <= 1 ? heights[at] + (heights[at + 1] - heights[at]) * u + (heights[at + across] - heights[at]) * v :
         heights[at + across + 1] + (heights[at + across] - heights[at + across + 1]) * (1 - u) + (heights[at + 1] - heights[at + across + 1]) * (1 - v);

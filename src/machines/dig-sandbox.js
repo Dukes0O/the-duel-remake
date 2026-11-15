@@ -4,7 +4,7 @@ import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
-import {SCARPS} from '../world/scablands-scarps.js';
+import {HILLS} from '../world/scablands-height.js';
 import {createBorerState, stepBorer} from './borer.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
@@ -43,13 +43,17 @@ export function borerYardControls(keys = {}, pad = null, mapping = null, mode = 
     slope:keyboardSlope || (Math.abs(value) < .12 ? 0 : Math.max(-1, Math.min(1, value)))};
 }
 
-/** Park on the open side of the first west scarp, facing its foot. */
+/** Park outside the mesa's steep side, facing its centre. */
 export function createDigBorer(ground) {
-  const {a, b} = SCARPS.find(scarp => scarp.id === 'scab-west').stretches[0];
-  const length = Math.hypot(b.x - a.x, b.z - a.z);
-  const dx = -(b.z - a.z) / length, dz = (b.x - a.x) / length;
-  const x = (a.x + b.x) / 2 - 30 * dx, z = (a.z + b.z) / 2 - 30 * dz;
-  return createBorerState({x, y:ground.heightAt(x,z), z, heading:Math.atan2(dx,dz)});
+  const mesa = HILLS.filter(hill => hill.kind === 'mesa').reduce((nearest, hill) =>
+    Math.hypot(hill.x - 2214, hill.z + 518) < Math.hypot(nearest.x - 2214, nearest.z + 518) ? hill : nearest);
+  let angle = mesa.rampAngle + Math.PI / 2;
+  if (mesa.x * Math.cos(angle) + mesa.z * Math.sin(angle) > 0) angle += Math.PI;
+  // The land's rim has a small five-lobed edge, followed by the steep face.
+  const foot = mesa.radius + 8 * Math.sin(angle * 5) + mesa.face;
+  const dx = Math.cos(angle), dz = Math.sin(angle);
+  const x = mesa.x + (foot + 30) * dx, z = mesa.z + (foot + 30) * dz;
+  return createBorerState({x, y:ground.heightAt(x,z), z, heading:Math.atan2(-dx,-dz)});
 }
 
 // A raised patch followed by a shallow ditch gives the blade material to carry.

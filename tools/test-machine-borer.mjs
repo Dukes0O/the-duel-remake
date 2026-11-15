@@ -5,6 +5,7 @@ import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {borerLandRefusal, borerSpoilRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
+import {HILLS} from '../src/world/scablands-height.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
@@ -255,15 +256,24 @@ for (let distance=80; distance>=0; distance-=0.5) {
 const riverPoint=RIVER_LAND.line.points[0];
 assert.ok(borerSpoilRefusal({...riverPoint,radius:.49}, {refusal:()=>null}), 'The river bed is closed to spoil.');
 const parked = createDigBorer(hill);
+const mesa = HILLS.filter(item => item.kind === 'mesa').reduce((a,b) =>
+  Math.hypot(a.x-2214,a.z+518) < Math.hypot(b.x-2214,b.z+518) ? a : b);
+const outward = Math.atan2(parked.z-mesa.z, parked.x-mesa.x);
+const footRadius = mesa.radius + 8 * Math.sin(outward * 5) + mesa.face;
+assert.ok(Math.abs(Math.hypot(parked.x-mesa.x,parked.z-mesa.z) - footRadius - 30) < 1e-8);
+assert.ok(Math.abs(Math.cos(outward-mesa.rampAngle)) < 1e-8, 'Mabel approaches at right angles to the ramp.');
+assert.ok(Math.hypot(parked.x,parked.z) < Math.hypot(2*mesa.x-parked.x,2*mesa.z-parked.z), 'Mabel is on the yard side.');
+assert.ok(Math.abs(Math.sin(parked.heading)*Math.cos(outward)+Math.cos(parked.heading)*Math.sin(outward)+1) < 1e-8,
+  'Mabel faces the mesa centre.');
+assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
 const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
 const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};
-assert.ok(Math.abs(Math.hypot(parked.x - middle.x, parked.z - middle.z) - 30) < 1e-8);
-assert.ok(Math.hypot(parked.x + 30 * Math.sin(parked.heading) - middle.x,
-  parked.z + 30 * Math.cos(parked.heading) - middle.z) < 1e-8, 'Mabel faces the scarp from its open side.');
-assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
 // Use the same editable ground object as the live Dig, not a height-only stand-in.
 const realGround = createDigSandbox().ground;
-const realParked = createDigBorer(realGround);
+const scarpLength = Math.hypot(scarp.b.x-scarp.a.x, scarp.b.z-scarp.a.z);
+const scarpDx = -(scarp.b.z-scarp.a.z)/scarpLength, scarpDz = (scarp.b.x-scarp.a.x)/scarpLength;
+const realParked = {x:middle.x-30*scarpDx,z:middle.z-30*scarpDz,heading:Math.atan2(scarpDx,scarpDz)};
+realParked.y = realGround.heightAt(realParked.x,realParked.z);
 const drawnGround = createDigNearGround(new THREE.MeshBasicMaterial(), realGround);
 // The view first draws at the yard, then jumps to Mabel and follows her.
 drawnGround.follow(0, 18);
