@@ -11,6 +11,7 @@ import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
+import {machineControlInput} from '../input-contexts.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -26,6 +27,12 @@ const RESERVATIONS = Object.freeze([
     sentence:`${place.name} is a story place. Dig around it.`})),
 ]);
 const STEP = 1 / 60;
+
+/** Use the machines' drive mapping for thrust and steering; arrows set the slope. */
+export function borerYardControls(keys = {}, pad = null, mapping = null) {
+  const drive = machineControlInput(keys, pad, 'drive', mapping);
+  return {...drive, slope:Number(!!keys.ArrowUp) - Number(!!keys.ArrowDown)};
+}
 
 /** Park on the open side of the first west scarp, facing its foot. */
 export function createDigBorer(ground) {

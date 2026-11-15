@@ -3,7 +3,7 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
-import {closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox} from '../src/machines/dig-sandbox.js';
+import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 
@@ -23,6 +23,10 @@ assert.equal(pile.materialAt(0, 1, 0), 'gravel');
 assert.throws(() => pile.materialAt(NaN, 0, 0), TypeError);
 assert.equal(machineDefinition('borer').name, 'Mabel');
 assert.equal(machineDefinition('borer').boreRadiusM, 3);
+assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward:1,steer:-1,slope:1});
+assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,steer:1,slope:-1});
+assert.deepEqual(borerYardControls({}, {axes:[0.4,-0.6]}, {drive:{steer:0,forward:1}}),
+  {forward:0.6,steer:0.4,slope:0}, 'The borer uses the existing mapped machine axes.');
 assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);

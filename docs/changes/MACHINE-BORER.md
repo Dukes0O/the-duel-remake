@@ -16,6 +16,8 @@ Step 5 has begun with Mabel's starting position: 30 m from the first west scarp'
 
 The Dig simulation now holds Mabel and advances her in drive and work modes. Open-ground driving is limited to 4 km/h; work controls run the borer rules and update the visit's tunnel geometry and dug ground. Reverse follows the cut. The page controls, drawing, camera and sound still need connecting before she can be selected.
 
+The Dig page now maps Mabel's W and S to thrust, A and D to steering, and the up and down arrows to slope. The control function also accepts the existing mapped machine axes. Mabel is not yet in the selection list; her view and the page's controller connection still need work.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -40,6 +42,7 @@ The Dig simulation now holds Mabel and advances her in drive and work modes. Ope
 - `node tools/test-machine-borer.mjs`: passed with a bored tunnel exported and restored, independent copies, an empty list for missing data, and storage access forbidden during the exchange.
 - `node tools/test-machine-borer.mjs`: passed with the west scarp parking position, heading, ground height and real approach face.
 - `node tools/test-machine-borer.mjs`: passed with Dig simulation driving, cutting, tunnel updates and reverse travel.
+- `node tools/test-machine-borer.mjs`: passed with keyboard thrust, steering and slope and mapped machine axes.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
