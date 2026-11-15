@@ -14,6 +14,8 @@ The Dig now supplies the current tunnel to the cutter. It ignores the recent pas
 
 Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore, lever and camera checks, and a camera transition around a bend. Scenario expressions parsed in Node. The browser scenario was not run.
 
+The Dig now checks the land's own solid footprints, bridge and pipe decks, and public road net before Mabel cuts. Existing reserved-place sentences take precedence, including Tin Town's sentence. `node tools/test-machine-borer.mjs` passed with building, deck and road refusals through the Dig. The spoil bank, incremental indexing and remaining smaller Part B fixes still need work.
+
 ## Not built by this card
 
 - Joining a restored separate passage to a new cut in the Dig is not built.

@@ -3,8 +3,11 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
-import {borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
+import {borerLandRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
+import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
+import {ROAD_NET} from '../src/world/scablands-road.js';
+import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {followBorerSlope, poseBorerSlope, updateBorerCamera} from '../src/machines/dig-game.js';
@@ -58,6 +61,34 @@ borerSounds.dispose();
 const flat = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
 const hill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
 const blocked = createGroundEdit({region:{editable:true}, naturalHeight:()=>6, reservedShapes:[{x:0,z:0,radius:1}]});
+// The Dig checks the same structures, deck and roads the land uses.
+const openGround = createGroundEdit({region:{editable:true}, naturalHeight:()=>12});
+const building = SCABLANDS_SOLIDS.find(solid => solid.placeId && solid.kind !== 'girder');
+const road = ROAD_NET.roads[0].points[Math.floor(ROAD_NET.roads[0].points.length / 2)];
+const deck = RIVER_LAND.crossings.find(crossing => crossing.kind === 'bridge');
+const noRoad = {nearest:()=>null};
+assert.equal(borerLandRefusal({x:building.x,z:building.z,radius:3},openGround,
+  {near:()=>[building],net:noRoad,crossings:[]}),BORER_OBSTRUCTION, 'A building footprint alone stops the bore.');
+assert.equal(borerLandRefusal({x:road.x,z:road.z,radius:3},openGround,
+  {near:()=>[],net:ROAD_NET,crossings:[]}),BORER_OBSTRUCTION, 'A public road alone stops the bore.');
+const deckHit = ROAD_NET.nearest(deck.x,deck.z);
+const deckSupports = SCABLANDS_SOLIDS.filter(solid => solid.id.startsWith('girder-bridge-'));
+assert.equal(borerLandRefusal({x:deck.x,z:deck.z,radius:3},openGround,
+  {near:()=>deckSupports,net:{nearest:(x,z)=>x===deck.x && z===deck.z ? deckHit : null},crossings:[deck]}),
+  BORER_OBSTRUCTION, 'A deck alone stops the bore.');
+for (const [name, point] of [['building', building], ['road', road], ['deck', deck]]) {
+  assert.equal(borerLandRefusal({x:point.x,z:point.z,radius:3}, openGround), BORER_OBSTRUCTION,
+    `The land's ${name} stops the borer.`);
+  let protectedDig = createDigSandbox({ground:openGround, protectLand:true, playerId:`borer-${name}`});
+  protectedDig = {...protectedDig,activeMachine:'borer',mode:'work',
+    borer:{...createBorerState({x:point.x,y:0,z:point.z}),started:true,lever:1/3}};
+  protectedDig = stepDigSandbox(protectedDig,{controls:{directLever:true,forward:1/3}},1/60);
+  assert.equal(protectedDig.borer.message,BORER_OBSTRUCTION, `The Dig refuses the ${name}.`);
+  assert.equal(protectedDig.borer.distanceM,0);
+}
+const named = createGroundEdit({region:{editable:true},naturalHeight:()=>12,
+  reservedShapes:[{x:0,z:0,radius:1,sentence:"That's Tin Town. Auntie Solder would have words."}]});
+assert.equal(borerLandRefusal({x:0,z:0,radius:3},named),"That's Tin Town. Auntie Solder would have words.");
 const strata = createGroundEdit({region:{editable:true}, naturalHeight:()=>20, seed:19});
 assert.equal(strata.materialAt(0, 20, 0), 'topsoil');
 assert.equal(strata.materialAt(0, 17, 0), 'clay');

@@ -8,6 +8,9 @@ import {SCARPS} from '../world/scablands-scarps.js';
 import {createBorerState, stepBorer} from './borer.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
+import {solidsNear} from '../world/scablands-solids.js';
+import {ROAD_NET} from '../world/scablands-road.js';
+import {RIVER_LAND} from '../world/scablands-regions.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
@@ -24,7 +27,8 @@ const RESERVATIONS = Object.freeze([
   {x:90,z:120,radius:62,sentence:'The Dome is built here. Dig around it.'},
   {x:0,z:1120,radius:18,sentence:'The gate is protected ground. Dig around it.'},
   ...SCABLANDS_PLACES.map(place=>({x:place.x,z:place.z,radius:place.flatRadius,
-    sentence:`${place.name} is a story place. Dig around it.`})),
+    sentence:place.id === 'tin-town' ? "That's Tin Town. Auntie Solder would have words." :
+      `${place.name} is a story place. Dig around it.`})),
 ]);
 const STEP = 1 / 60;
 
@@ -71,6 +75,44 @@ function newGround(seed) {
     reservedShapes:RESERVATIONS});
 }
 
+// Test a round bore against a turned footprint in the land's own coordinates.
+function touchesFootprint(shape, footprint) {
+  const dx = shape.x - footprint.x, dz = shape.z - footprint.z;
+  const cos = Math.cos(footprint.heading || 0), sin = Math.sin(footprint.heading || 0);
+  const x = dx * cos - dz * sin, z = dx * sin + dz * cos;
+  return Math.hypot(Math.max(0, Math.abs(x) - footprint.halfX),
+    Math.max(0, Math.abs(z) - footprint.halfZ)) <= shape.radius;
+}
+
+/** Protect the land's own structures, decks and public roads from the bore. */
+export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_NET, crossings = RIVER_LAND.crossings} = {}) {
+  const existing = ground.refusal(shape);
+  if (existing) return existing;
+  for (const solid of near(shape.x, shape.z, shape.x, shape.z, shape.radius))
+    if (touchesFootprint(shape, solid)) return 'She will not cut there. Something stands in the way.';
+  for (const crossing of crossings) {
+    if (crossing.deckHalfWidth === undefined) continue;
+    const hit = net.nearest(crossing.x, crossing.z);
+    if (!hit) continue;
+    const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+    const supports = near(crossing.x, crossing.z, crossing.x, crossing.z, crossing.deckHalfWidth + 2);
+    const halfLength = Math.max(0, ...supports.filter(solid => solid.kind === 'girder').map(solid => solid.halfZ));
+    const deck = {...crossing, halfX:crossing.deckHalfWidth, halfZ:halfLength,
+      heading:Math.atan2(b.x - a.x, b.z - a.z)};
+    if (touchesFootprint(shape, deck)) return 'She will not cut there. Something stands in the way.';
+  }
+  // The road index accepts points. Surround the bore with a circumscribed
+  // octagon so its whole footprint, including its edge, is protected.
+  if (net.nearest(shape.x, shape.z)) return 'She will not cut there. Something stands in the way.';
+  const reach = shape.radius / Math.cos(Math.PI / 8);
+  for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    if (net.nearest(shape.x + reach * Math.cos(angle), shape.z + reach * Math.sin(angle)))
+      return 'She will not cut there. Something stands in the way.';
+  }
+  return null;
+}
+
 function roadGround(edit) {
   return {
     refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
@@ -89,7 +131,7 @@ function roadGround(edit) {
 const suppliedGroundWork = new WeakMap();
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground} = {}) {
   const edit = ground || newGround(seed);
   const memory = globalThis.__theDigGroundMemory ??= {};
   const saved = memory[playerId];
@@ -112,7 +154,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -166,7 +208,8 @@ function fixedStep(sim,input) {
       const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
       const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
       const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope,
-        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started},sim.ground,null,STEP);
+        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started},
+        sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM){
