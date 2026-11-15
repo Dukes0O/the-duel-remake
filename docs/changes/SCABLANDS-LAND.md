@@ -1284,3 +1284,15 @@ Checks: all eight Scablands suites passed, including nine placement tests. Both 
 Changed assertions: none. Codex decided: the candidate cell size and ground chances are recorded on the card. Removed: nothing; the existing land is unchanged.
 
 For Claude to run: rerun `test-full-check` at merge and run the browser scenario once it is written; Chrome cannot start in this job. The scene, clearance and solids, wires, signs, track drawing, map and scenario still need work. Cockpit sync could not open its protected credential and did not update Cockpit.
+
+### Realism trial, step 3: footprint clearance, in progress
+
+Added a shared clearance check for round footprints against roads, existing solid boxes and job starts. It checks the full footprint and requires the caller to provide job starts. Small candidates now use it with a 0.3 m radius. The road index covers footprints up to 28 m in radius. Road-deck footprints are excluded by the same road check. The other candidates are not yet filtered or connected to the scene, and all job starts still need to be supplied by the eventual caller. No game event or sound cue was added.
+
+Checks: all eight Scablands suites passed, including 10 placement tests. Both replay suites passed: 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. No separate world-signature files matched the requested name. Integration was already current. The lane tier passed 27 of 28; `test-full-check` could not start `pwsh` for its temporary copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: the centre-only small-thing clearance check, replaced by the footprint check.
+
+For Claude to run: `test-full-check` at merge and the browser scenario once written; Chrome cannot start in this job. The scene connection, remaining clearance and solids, wires, signs, track drawing, map and scenario remain to be built.
+
+Cockpit sync could not unlock its saved credential in this session and did not update Cockpit.

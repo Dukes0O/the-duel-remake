@@ -191,14 +191,36 @@ for (const road of ROAD_NET.roads) for (let n = 0; n + 1 < road.points.length; n
   }
 }
 
-export function nearRoadForLitter(x, z) {
+function roadWithin(x, z, reach) {
   const segments = roadCells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? [];
   for (const {a, b} of segments) {
     const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
     const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
-    if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) < LITTER_REACH) return true;
+    if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) <= reach) return true;
   }
   return false;
+}
+
+export const nearRoadForLitter = (x, z) => roadWithin(x, z, LITTER_REACH);
+
+// Reject the whole round footprint, not just its centre. The road index covers
+// up to 28 m beyond the road edge; callers must use a radius within that limit.
+// Job starts are required explicitly so a caller cannot silently omit them.
+export function thingFootprintClear(x, z, radius, jobStarts) {
+  if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(radius) || radius < 0 || radius > 28 || !Array.isArray(jobStarts)) {
+    throw new RangeError('A finite footprint and job starts are required');
+  }
+  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius)) return false;
+  if (jobStarts.some(p => Math.hypot(x - p.x, z - p.z) < 6 + radius)) return false;
+  for (const solid of SOLID_GRID.near(x, z, x, z, radius)) {
+    const dx = x - solid.x, dz = z - solid.z;
+    const c = Math.cos(solid.heading), s = Math.sin(solid.heading);
+    const localX = dx * c - dz * s, localZ = dx * s + dz * c;
+    const outsideX = Math.max(0, Math.abs(localX) - solid.halfX);
+    const outsideZ = Math.max(0, Math.abs(localZ) - solid.halfZ);
+    if (Math.hypot(outsideX, outsideZ) <= radius) return false;
+  }
+  return true;
 }
 
 // Chances per candidate, not counts per square metre. Salt lumps are confined to the pan edge below.
@@ -212,16 +234,6 @@ export const SMALL_DENSITY = Object.freeze({
   'salt-pan': {'stone': .04, 'salt': .16},
 });
 
-function insideSolid(x, z) {
-  for (const solid of SOLID_GRID.near(x, z, x, z, 1)) {
-    const dx = x - solid.x, dz = z - solid.z;
-    const c = Math.cos(solid.heading), s = Math.sin(solid.heading);
-    const localX = dx * c - dz * s, localZ = dx * s + dz * c;
-    if (Math.abs(localX) <= solid.halfX + .3 && Math.abs(localZ) <= solid.halfZ + .3) return true;
-  }
-  return false;
-}
-
 function seedCell(seed, i, j) {
   return (seed ^ Math.imul(i, 0x1f123bb5) ^ Math.imul(j, 0x5f356495)) >>> 0;
 }
@@ -234,7 +246,7 @@ export function smallThingsInCell(seed, i, j, jobStarts = []) {
   for (let index = 0; index < 12; index++) {
     const x = (i + rng.float()) * THINGS_CELL, z = (j + rng.float()) * THINGS_CELL;
     const choice = rng.float(), size = rng.float(), turn = rng.float();
-    if (ROAD_NET.nearest(x, z) || insideSolid(x, z) || jobStarts.some(p => Math.hypot(x - p.x, z - p.z) < 6)) continue;
+    if (!thingFootprintClear(x, z, .3, jobStarts)) continue;
     const ground = scablandsRegionAt(x, z);
     const weights = {...SMALL_DENSITY[ground]};
     if (ground === 'salt-pan' && Math.abs(polygonMargin(pan.points, x, z) + edgeWarp(x, z, pan.phase)) > 90) delete weights.salt;

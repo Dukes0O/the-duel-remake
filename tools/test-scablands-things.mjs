@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
@@ -158,4 +158,20 @@ test('fence candidates follow town approaches with seeded gaps and fall markers'
       assert.ok(Math.hypot(post.x - LAND.at('tin-town').x, post.z - LAND.at('tin-town').z) < 1000);
     }
   }
+});
+
+
+test('whole footprints clear roads, existing solids and job starts', async () => {
+  const {SCABLANDS_SOLIDS} = await import('../src/world/scablands-solids.js');
+  const road = ROAD_NET.roads[0], a = road.points[0], b = road.points[1];
+  const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+  const x = (a.x + b.x) / 2, z = (a.z + b.z) / 2;
+  assert.equal(thingFootprintClear(x, z, 2, []), false);
+  assert.equal(thingFootprintClear(x + dz / length * (ROAD_HALF_WIDTH + 1), z - dx / length * (ROAD_HALF_WIDTH + 1), 2, []), false);
+  const solid = SCABLANDS_SOLIDS[0];
+  assert.equal(thingFootprintClear(solid.x, solid.z, 2, []), false);
+  const start = LAND.between('yard', 'tin-town', .4);
+  assert.equal(thingFootprintClear(start.x, start.z, 2, [start]), false);
+  assert.throws(() => thingFootprintClear(x, z, 2), RangeError);
+  assert.throws(() => thingFootprintClear(x, z, 29, []), RangeError);
 });
