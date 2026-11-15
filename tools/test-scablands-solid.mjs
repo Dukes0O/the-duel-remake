@@ -544,6 +544,19 @@ test('a raider meeting a building is stopped by it; a truck is held by ground to
   worldJob.actors.push(raider);
   for (let step = 0; step < 60 * 14; step++) duel.step(DT);
   assert.ok(!inside(block, raider.x, raider.z) && raider.x > block.x - block.halfX - 1.5, `a raider of a real job walks at the building and stays outside it (${(block.x - block.halfX - raider.x).toFixed(2)} m from its face)`);
+  // A job wave comes from the common raid factory but moves by its own y.
+  worldJob.job.stepIndex = 0;
+  worldJob.job.stepState = {};
+  worldJob.job.steps[0] = {kind: 'defend', placeId: 'height-check',
+    place: {x: block.x - 45, z: block.z}, raiderEntry: {x: block.x - 60, z: block.z},
+    approachSpeed: 4.5, waveCount: 1};
+  duel.step(DT);
+  const wave = worldJob.waveZones?.['0:0'];
+  assert.ok(wave?.raiders.length, 'the job spawns its defence wave');
+  for (const member of wave.raiders) {
+    assert.ok(Number.isFinite(member.y), 'the raider has one world height');
+    assert.equal(Object.hasOwn(member, 'groundY'), false, 'the job does not keep a stale second height');
+  }
 });
 
 test('a person on foot cannot walk through a building', () => {

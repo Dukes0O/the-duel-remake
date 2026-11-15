@@ -407,11 +407,14 @@ function spawnWave(duel, worldJob, request, key) {
       const x = center.x + sideX * offset, z = center.z + sideZ * offset;
       const ground = duel.course.nearest(x, z, zone.s);
       Object.assign(raider, {s: ground.s, lateral: ground.lateral, x, y: ground.y,
-        z, groundY: ground.y, approachTarget, approachSpeed: request.approachSpeed || 0});
+        z, approachTarget, approachSpeed: request.approachSpeed || 0});
     });
   }
   const count = Math.max(1, Math.min(zone.raiders.length, Math.floor(request.n) || 1));
   zone.raiders = zone.raiders.slice(0, count);
+  // Job raiders move by their world y. The ordinary raid factory also makes a
+  // fighter groundY, which is not used by the job mover and would go stale.
+  for (const raider of zone.raiders) delete raider.groundY;
   duel.state.raids ??= {zones: [], shots: 0};
   duel.state.raids.zones.push(zone);
   worldJob.actors.push(...zone.raiders);
@@ -446,8 +449,9 @@ function spawnAmbush(duel, worldJob, request) {
     const side = index % 2 === 0 ? 1 : -1, across = side * (6 + 2.5 * Math.floor(index / 2)), along = (index - (count - 1) / 2) * 2;
     const x = place.x + sideX * across + way.x * along, z = place.z + sideZ * across + way.z * along;
     const ground = duel.course.nearest(x, z, zone.s);
-    Object.assign(raider, {id: `${key}:${index}`, s: ground.s, lateral: ground.lateral, x, y: ground.y, z, groundY: ground.y,
+    Object.assign(raider, {id: `${key}:${index}`, s: ground.s, lateral: ground.lateral, x, y: ground.y, z,
       yaw: Math.atan2(place.x - x, place.z - z), knockedDown: false, knockdownRemaining: 0, ambushKey: key});
+    delete raider.groundY;
   });
   zone.s = duel.course.nearest(place.x, place.z, zone.s).s;
   zone.id = key; zone.warnedLap = duel.state.currentLap; zone.nextShotAt = duel.state.stageTimeSec + 1.5;
