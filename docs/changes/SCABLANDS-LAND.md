@@ -1290,3 +1290,15 @@ Changed assertions, for Claude to review: none. Codex decided: no new design cho
 Checks: `test-scablands-hills` passed 6 tests and `test-scablands-map` passed 1,798 checks. The lane tier passed 42 of 45 suites: `test-everburn-easy` still failed Survey Flags at 0 of 10, `test-full-check` could not start `pwsh` in its temporary-copy setup (`EACCES`), and `test-town-core` missed its 10 ms timing limit with 11.65 ms under load. The town check passed on its one rerun, with a slowest tick of 5.56 ms; the existing QA-TIMING-UNDER-LOAD card covers timing under load. The other eight Easy jobs finished 10 of 10 before the failed assertion stopped the gas-road checks. The build passed with bundle size warnings.
 
 Race replays passed 297 checks and combat replays passed 12. The course-kit world-signature check passed. The checked race fingerprints and world signatures are unchanged. Integration was already included. For Claude to run: `test-full-check` on the laptop and, once written, the memory-only Performance hills picture scenario with draw calls and triangles. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.
+
+### Round 4, slice 2c: Survey Flags route repair
+
+The third flag is 300 m farther west, still placed from the Dead Mall and Everburn. The fifth flag stays where it is. The Breaks changed the driver's approach from the third flag; it entered the river bed on the way to the fourth and could not get out. The same seed finished with the dunes-only height from commit `681df7201` and failed with the Breaks height from `a050e5773`, with the earlier regions and ways held fixed. Moving the third flag lets the driver reach the crossing. No game event or sound cue was added.
+
+Checks: the existing Easy driver's Survey Flags helper finished 10 of 10 seeds with the moved flag. Seed 1 also finished using the actual job definition, in 790.1 seconds. `test-scablands-hills` passed 6 tests. The full Easy suite, gas roads, lane tier, replay and world-signature checks, and build remain for the final run after integration. Race fingerprints were not checked in this run.
+
+For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written. The hills need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the third flag's former position, replaced by a named-place offset 300 m west.
+
+Still needed: mesas, the Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario and final checks. The card is not ready to merge.
