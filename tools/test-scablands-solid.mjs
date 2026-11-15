@@ -9,6 +9,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {Duel} from '../src/game.js';
+import {scablandsContactObstacles} from '../src/sim-scablands.js';
 import {Course} from '../src/course.js';
 import {DRIVE} from '../src/config.js';
 import {wrapHeading} from '../src/offroad-physics.js';
@@ -559,4 +560,35 @@ test('ground rules: pure, and the same twice', () => {
   assert.ok(grid.every((row, i) => i === 0 || row.kmh >= grid[i - 1].kmh && row.armorShare >= grid[i - 1].armorShare), 'a longer fall is never a lighter hit');
   const pushed = pushOutOfSolids(SCABLANDS_SOLIDS[0].x, SCABLANDS_SOLIDS[0].z, .4);
   assert.ok(!inside(SCABLANDS_SOLIDS[0], pushed.x, pushed.z, .001), 'a point put in a solid is pushed out of it');
+});
+
+
+test('job braziers belong only to their own game', () => {
+  const startJob = () => {
+    const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed: 1, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1}}), true);
+    duel.state.countdown = 0;
+    for (let i = 0; i < 10; i++) duel.step(DT);
+    return duel;
+  };
+  const a = startJob(), b = startJob();
+  const gridA = a.state.arena.worldJob.solidGrid, gridB = b.state.arena.worldJob.solidGrid;
+  assert.ok(gridA.braziers.length > 0);
+  const spot = gridA.braziers[0];
+  const seesBrazier = duel => scablandsContactObstacles(duel, duel.state, spot, spot, []).some(solid => solid.id === spot.id);
+  assert.ok(seesBrazier(a) && seesBrazier(b));
+  gridA.setBraziers([]);
+  assert.ok(!seesBrazier(a) && seesBrazier(b), 'clearing one job does not change the other');
+  const fresh = newDuel();
+  assert.ok(!seesBrazier(fresh), 'a later event has no job solids');
+  const trace = duel => {
+    put(duel, spot.x - 8, spot.z, Math.PI / 2, 30);
+    duel.state.countdown = 0;
+    for (let i = 0; i < 120; i++) { duel.setInput({throttle: 1}); duel.step(DT); }
+    return [duel.state.s, duel.state.lateral, duel.state.speedMph];
+  };
+  const first = trace(fresh);
+  startJob();
+  assert.deepEqual(trace(newDuel()), first, 'the same seed and inputs do not depend on earlier jobs');
 });

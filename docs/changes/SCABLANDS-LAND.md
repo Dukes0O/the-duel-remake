@@ -1095,3 +1095,22 @@ grain that a photograph replaces is removed in that change.
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the
 far ground's 40 m drop, `detailCounts`, and every typed coordinate of the land in the jobs, solids, wrecks, gate, shacks and rail (replaced by
 `scablands-names.js`). The Whites' absolute positions. Nothing a player can reach.
+
+
+## Round 4 slice 2b: fixes after the review
+
+### Job solids
+
+Braziers now belong to the current job. Cars, people on foot and job actors use that job's list, while the fixed land grid stays shared. Ending a job leaves no braziers in another event. No new game event or sound cue was added.
+
+Checks: `test-scablands-solid` passes all 17 tests, including two jobs at once, a later event and repeat inputs after a job; `test-onfoot` passes 9 tests; `test-world-job-mode` passes. The other card checks, replay fingerprints, lane tier, build and browser scenario remain to be run after the remaining fixes.
+
+Changed assertions: none. A new isolation test was added.
+
+### Removed
+
+The shared grid's mutable extra-solids list was removed.
+
+### Still to do
+
+Big Bess's stopping places, the furnace paths, the three refused assertions and per-step allocations remain.

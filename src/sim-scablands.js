@@ -10,7 +10,7 @@ import {combatCrashThresholdMph} from './vehicle-impact.js';
 import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {ledgeAt} from './world/scablands-regions.js';
 import {GROUND, MPH_TO_KMH, climbLimit, dropFor, fallHit} from './world/scablands-ground-rules.js';
-import {solidsNear} from './world/scablands-solids.js';
+import {SOLID_GRID} from './world/scablands-solids.js';
 
 // The solids a swept move may meet, with the town layout's own (a town drive): one list, reused by the next call. `start` and `end` are the
 // move's world points; the grid is asked for everything within 6 m of the sweep (a car is under 3 m from its middle to its far corner).
@@ -18,7 +18,7 @@ export function scablandsContactObstacles(duel, car, start, end, base) {
   const out = duel._scablandsObstacles ??= [];
   out.length = 0;
   for (const obstacle of base) out.push(obstacle);
-  for (const solid of solidsNear(start.x, start.z, end.x, end.z, 6)) out.push(solid);
+  for (const solid of (duel.state.arena?.worldJob?.solidGrid ?? SOLID_GRID).near(start.x, start.z, end.x, end.z, 6)) out.push(solid);
   return out;
 }
 
