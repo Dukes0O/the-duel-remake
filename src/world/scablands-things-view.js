@@ -15,7 +15,9 @@ const SHADOWED = new Set(['scrub', 'brush', 'stump']);
 const SMALL_WITHIN = {stone: 70, bone: 55, can: 55, scrap: 60, salt: 70, scrub: THINGS_RANGE, brush: THINGS_RANGE, stump: THINGS_RANGE};
 const DRAWN_LARGER = {scrub: 2.2, brush: 1.8, stump: 2};
 // A stone is the rock of the ground it lies on: black on the scab plates and the burn, pale on the salt.
-const STONE_TINT = {'scab-plates': .3, burn: .32, 'salt-pan': 1.7, 'river-bed': 1.05, sand: 1.25};
+const STONE_TINT = {'scab-plates': .3, burn: .32, 'salt-pan': 1.3, 'river-bed': .7, sand: .85};
+// On every other ground a stone is drawn at this share of its own colour: in the land's strong light the full colour draws as chalk.
+const STONE_PLAIN = .62;
 const fadeWithin = (distance, range) => Math.max(0, Math.min(1, (range - distance) / (range * .2)));
 const STONE_WIDE = [1, 1.35, .75], STONE_HIGH = [.65, .45, 1];
 // How far off each standing kind is drawn, in metres, and the most of one kind drawn at once.
@@ -54,7 +56,7 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
           items = smallThingsInCell(seed, a, b, jobStarts);
           for (const item of items) {
             item.drawY = nearGroundHeightAt(item.x, item.z, heightAt);
-            item.tint = item.kind === 'stone' ? STONE_TINT[scablandsRegionAt(item.x, item.z)] ?? 1 : 1;
+            item.tint = item.kind === 'stone' ? STONE_TINT[scablandsRegionAt(item.x, item.z)] ?? STONE_PLAIN : 1;
           }
         }
         nextCells.set(key, items);
@@ -137,7 +139,7 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null) {
         }
         object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
         object.updateMatrix();
-        if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? 1));
+        if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? STONE_PLAIN));
         mesh.setMatrixAt(count++, object.matrix);
       }
       mesh.count = count; mesh.instanceMatrix.needsUpdate = true;
