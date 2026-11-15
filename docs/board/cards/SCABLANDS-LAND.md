@@ -940,3 +940,7 @@ Single-boulder candidates use 120 m cells, with at most one candidate per cell. 
 For the first clearance pass, allow a 6 m radius around a pylon, 0.5 m around a standing pole, 7 m around a down pole, and 0.25 m around a fence post. A boulder's radius is half its stated size. The later drawing and solid footprints must fit within these allowances or the clearance must be revised. Rejected line positions stay as gaps so wires do not cross them.
 
 For the first collision records, each pylon has four feet, 6 m apart, and each foot is 0.8 m across. Standing poles are 0.5 m across and 7 m tall; down poles are 6.8 m long. Fence posts are 0.3 m across and 1.4 m tall. A boulder's collision footprint and height use its stated size. The plain drawing must match these records before they are connected to the game.
+
+### Codex decided (Claude to review): taller mesas
+
+The six mesas use heights from 30 to 36 m so their smooth 220 m ramps meet the existing .30 slope check. The eastern original mesa moves 400 m west to keep its longer ramp clear of the East Road. The additional mesas are selected again from the same seed with the larger ramp footprint.

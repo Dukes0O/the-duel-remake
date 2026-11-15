@@ -1830,3 +1830,13 @@ The Ridge picture now starts on the actual Ridge spur and looks uphill at a near
 Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. A position check passed for the Ridge road, its uphill direction and all landmark distances. The browser scenario was not run. Race fingerprints and world signatures were not rerun. Changed assertions: none. Codex decided: check the nearby Ridge road and the flats toward the yard as the named features. Removed: the off-road Ridge position and the unreachable yard landmark check.
 
 Still needed: Claude must run and judge every picture, including the views after the Ridge. Raise and reshape the mesas to the new dimensions, prove the cover and protected routes, finish the remaining hill-country requirements and run the final checks.
+
+### Hill country: taller mesas
+
+All six mesas now rise 30 to 36 m, with 30 m sides and 220 m ramps. The eastern original mesa moved 400 m west to clear the East Road, and seeded mesas were selected again for their larger footprints. The existing Ridge picture correction is in commit 13b5b1086. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. Its first run exposed the East Road overlap; the rerun passed after moving the mesa. Race fingerprints and world signatures were not rerun. Claude must run and judge all picture views, including those after the Ridge.
+
+Changed assertion, for Claude to review: added mesas' height range changed from 15–25 m to 30–55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30–36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
+
+Still needed: prove the three separate furnace-cover stretches and all protected corridors; verify the Breaks and all three road passes; drive the routes and jobs; complete the remaining hill-country requirements and final checks.

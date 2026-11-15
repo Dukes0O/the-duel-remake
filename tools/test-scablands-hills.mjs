@@ -406,6 +406,7 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
   assert.equal(mesas.length, 6);
   const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
   for (const mesa of mesas) {
+    assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.face === 30 && mesa.ramp === 220);
     assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
     const top = scablandsTerrainHeightAt(mesa.x, mesa.z);
     assert.equal(top - scablandsTerrainHeightAt(mesa.x, mesa.z, []), mesa.height);
@@ -431,7 +432,7 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
   }
   for (const mesa of mesas.slice(2)) {
     const reach = mesa.radius + mesa.ramp;
-    assert.ok(mesa.height >= 15 && mesa.height <= 25 && mesa.radius >= 120 && mesa.radius <= 260);
+    assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.radius >= 120 && mesa.radius <= 260);
     assert.ok(distanceToRoad(mesa.x, mesa.z, RIVER_LAND.line.points) > reach + 78 + 150);
     for (const road of ROAD_NET.roads) {
       assert.ok(distanceToRoad(mesa.x, mesa.z, road.points) > reach + road.halfWidth + 200);
