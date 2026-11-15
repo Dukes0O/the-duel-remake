@@ -87,14 +87,61 @@ const place = (context, view) => context.evaluate(`(() => {
   return true;
 })()`);
 
+// Render just the main scene with shadows off, so the shadow pass is not counted.
 const observe = context => context.evaluate(`(() => {
-  const info = window.__render.renderer.info.render;
-  return {draws: info.calls, triangles: info.triangles};
+  const api = window.__render, renderer = api.renderer, root = api.scene.getObjectByName('Scablands realism things');
+  const batches = [], old = [], shadows = renderer.shadowMap.enabled;
+  try {
+    const transform = (m, v) => [0, 1, 2, 3].map(i => m[i] * v[0] + m[i + 4] * v[1] + m[i + 8] * v[2] + m[i + 12] * v[3]);
+    const inView = mesh => {
+      const values = mesh.instanceMatrix.array;
+      for (let i = 0; i < mesh.count; i++) {
+        let p = transform(mesh.matrixWorld.elements, [values[i * 16 + 12], values[i * 16 + 13], values[i * 16 + 14], 1]);
+        p = transform(api.camera.matrixWorldInverse.elements, p);
+        p = transform(api.camera.projectionMatrix.elements, p);
+        if (p[3] > 0 && Math.abs(p[0]) <= p[3] && Math.abs(p[1]) <= p[3] && Math.abs(p[2]) <= p[3]) return true;
+      }
+      return false;
+    };
+    root?.traverse(mesh => {
+      if (!mesh.isInstancedMesh || !mesh.count) return;
+      old.push([mesh, mesh.onAfterRender]);
+      mesh.onAfterRender = function (...args) { if (inView(mesh)) batches.push(mesh.name); old.find(row => row[0] === mesh)[1]?.apply(this, args); };
+    });
+    renderer.shadowMap.enabled = false;
+    renderer.info.reset(); renderer.render(api.scene, api.camera);
+    return {draws: renderer.info.render.calls, triangles: renderer.info.render.triangles, batches};
+  } finally {
+    renderer.shadowMap.enabled = shadows;
+    for (const [mesh, handler] of old) mesh.onAfterRender = handler;
+  }
+})()`);
+
+// Use the running course and its own inputs, and require a stop at the selected solid.
+const driveAtSolid = (context, kind) => context.evaluate(`(() => {
+  const a = window.__qaApp, d = a.duel, s = d.state, course = d.course;
+  const target = course.solidGrid.solids.find(item => item.kind === ${JSON.stringify(kind)});
+  if (!target) throw Error('Missing collision target: ' + ${JSON.stringify(kind)});
+  const start = course.nearest(target.x, target.z - 8), heading = 0;
+  s.s = s.prevS = start.s; s.lateral = s.prevLateral = start.lateral;
+  s.headingError = Math.atan2(Math.sin(heading - course.at(start.s).heading), Math.cos(heading - course.at(start.s).heading));
+  s.speedMph = 25; s.yawVelocity = s.pushVelocity = s.slipAngle = 0;
+  s.airborne = false; s.airHeight = s.prevAirHeight = 0; s._verticalSpeed = 0; s.groundHeight = s.prevGroundHeight = null;
+  s.impactTimer = 0; s.crashSpin = 0;
+  d.setInput({throttle: 0, brake: 0, steer: 0, boost: false});
+  for (let i = 0; i < 180; i++) {
+    const before = Math.abs(s.speedMph);
+    d.step(1 / 60);
+    const at = course.worldAt(s.s, s.lateral), after = Math.abs(s.speedMph);
+    if (Math.hypot(at.x - target.x, at.z - target.z) < 6 && before > 8 && after < before * .6)
+      return {id: target.id, impactSpeedMph: before, speedAfterMph: after};
+  }
+  throw Error('Car did not stop at ' + target.kind);
 })()`);
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
-  const report = {card: 'SCABLANDS-LAND', quality: 'performance', views: []};
+  const report = {card: 'SCABLANDS-LAND', quality: 'performance', measurement: 'main scene render with shadows off', views: []};
   const persist = () => writeFile(join(context.outputDir, 'scablands-things.json'), JSON.stringify(report, null, 2) + '\n');
   try {
     let positions;
@@ -116,8 +163,18 @@ export async function run(context) {
         if (row.off && row.on) {
           row.extra = {draws: row.on.draws - row.off.draws, triangles: row.on.triangles - row.off.triangles};
           row.withinLimits = row.extra.draws <= 40 && row.extra.triangles <= 150000;
+          if (!row.withinLimits) throw Error(view.name + ' exceeds the graphics limits: ' + JSON.stringify(row.extra));
         }
         console.log(JSON.stringify({pass: pass.name, view: view.name, ...measured, extra: row.extra}));
+      }
+      if (pass.name === 'on') {
+        const seen = new Set(report.views.flatMap(row => row.on.batches));
+        const required = ['stone', 'scrub', 'brush', 'bone', 'can', 'scrap', 'salt', 'stump',
+          'pylon-foot', 'telegraph', 'telegraph-down', 'fence-post', 'sign-post', 'boulder', 'pylons'];
+        const missing = required.filter(kind => !seen.has('Scablands ' + kind));
+        if (missing.length) throw Error('No batch drawn for: ' + missing.join(', '));
+        report.collisions = {};
+        for (const kind of ['boulder', 'telegraph']) report.collisions[kind] = await driveAtSolid(context, kind);
       }
     }
     await persist();
