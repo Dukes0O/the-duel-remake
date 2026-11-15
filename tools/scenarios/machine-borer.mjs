@@ -34,6 +34,8 @@ const page = {
     const origin=v.camera.position, direction={x:target.x-origin.x,y:target.y-origin.y,z:target.z-origin.z};
     const distance=Math.hypot(direction.x,direction.y,direction.z);
     return {origin:{x:origin.x,y:origin.y,z:origin.z},target,
+      travel:dig.simulation.borer.travelM,cameraIndex:dig.simulation.cameraIndex,
+      cameraRoute:v.camera.userData.borerRoute ?? null,
       originSurface:v.surfaceHeight(origin.x,origin.z),targetSurface:v.surfaceHeight(target.x,target.z),
       mouths:dig.simulation.tunnels.mouths,hit:v.groundRay(origin,direction,distance)}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,

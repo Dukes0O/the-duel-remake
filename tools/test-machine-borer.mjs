@@ -299,6 +299,15 @@ const ray = new THREE.Raycaster(new THREE.Vector3(roofX, crown, roofZ), new THRE
 const roofHit = ray.intersectObject(drawnGround.mesh)[0];
 assert.ok(roofHit && Math.abs(roofHit.point.y - scablandsSurfaceHeightAt(roofX, roofZ, realGround)) < .5,
   'A ray from inside hits the actual ground mesh above the bore.');
+// The scenario's 10 m target is above the scarp at this representative
+// outside-camera position. A clear ray here does not prove missing ground.
+const exampleOrigin = new THREE.Vector3(1751, 0.4, -650);
+const exampleTarget = new THREE.Vector3(1761, 7.45, -650);
+const exampleDirection = exampleTarget.clone().sub(exampleOrigin);
+const exampleRay = new THREE.Raycaster(exampleOrigin, exampleDirection.clone().normalize(), 0, exampleDirection.length());
+assert.ok(exampleTarget.y > scablandsSurfaceHeightAt(exampleTarget.x, exampleTarget.z, realGround));
+assert.equal(exampleRay.intersectObject(drawnGround.mesh).length, 0,
+  'The representative outside-to-sky ray clears the actual ground mesh.');
 drawnGround.dispose();
 const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
 assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');
