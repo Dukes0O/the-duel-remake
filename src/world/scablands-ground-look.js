@@ -361,6 +361,19 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             float layer=vGroundPos.y*.55+gBig.b*3.0+gMid.r*2.2;
             vec3 kc=uColBank*(.78+.34*gFine.g)*(.93+.12*smoothstep(.3,.7,abs(fract(layer)-.5)*2.0));
             ${photo('plates', 'kc', 'gBank*.85', 1, true)}gc=mix(gc,kc,gBank*.85);
+          }
+          // The lip. From the plain the bed lies out of sight below its bank, so the bank's edge is drawn where a driver can read it:
+          // for 40 m back from the drop the plain's dust is swept off pale rock, cracks run along the edge, and the last metres
+          // before the drop are dark and broken. Only on level ground, so a ramp down to a crossing keeps its own look.
+          float gLip=smoothstep(72.0,79.0,gRiver)*(1.0-smoothstep(98.0,124.0,gRiver))*(1.0-smoothstep(.004,.03,gSlope))*(1.0-wSand);
+          if(gLip>.01){
+            vec3 gEdge=vec3(.45,.39,.31)*(.74+.5*gFine.g)*(.86+.3*gMid.r);
+            float gRun=texture2D(uGroundNoise,vec2(gRiver*.055+gBig.r*.5,(gq.x+gq.y)*.0045)).g;
+            float gJoint=texture2D(uGroundNoise,gq*.027+.19).r;
+            float gSplit=(1.0-smoothstep(.0,.045,abs(gRun-.5)))+(1.0-smoothstep(.0,.04,abs(gJoint-.5)))*.6;
+            gc=mix(gc,gEdge,gLip*.8);
+            gc*=1.0-min(1.0,gSplit)*.65*gLip;
+            gc*=1.0-.62*(1.0-smoothstep(78.0,87.0,gRiver))*gLip;
           }` : ''}
           ${regionsOn && regions.hills ? `
           // ---- Hill country (slice 2c). A hill is worn rock, not a heap of the plain's dust: beds of buff, red, grey and pale stone lie
