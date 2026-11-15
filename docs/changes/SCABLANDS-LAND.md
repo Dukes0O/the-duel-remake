@@ -1714,3 +1714,11 @@ Checks: `node tools/test-camera-clearance.mjs` passed 2,091 checks, including th
 Changed assertions: none; the clearance checks are new. Codex decided: no new design choice. Removed: allowing the chase camera to remain beneath the drawn ground.
 
 Still needed: the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks. The camera has not been judged in the browser.
+
+### Review fixes: picture viewpoints
+
+The scarp picture now starts 80 m from the foot on its low side. The Lookout picture starts near the edge of its flat top facing the yard. A new picture looks toward the valley between two Breaks crests. These positions have not yet been judged in the browser. No game event or sound cue was added.
+
+Check: `node --check tools/scenarios/scablands-hills.mjs` passed. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the old scarp and Lookout picture positions.
+
+Still needed: the mesa view from the plates' way, the scenario's visibility and placement checks, the dune picture after part C, all of part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

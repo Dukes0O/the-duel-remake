@@ -13,6 +13,10 @@ const hill = kind => HILLS.find(item => item.kind === kind);
 export function views() {
   const breaks = hill('breaks'), mesa = hill('mesa'), ridge = hill('ridge-top');
   const lookout = hill('lookout'), dune = hill('dune');
+  const nextBreaks = HILLS.find(item => item.kind === 'breaks' && item !== breaks);
+  const yardDistance = Math.hypot(LAND.yard.x - lookout.x, LAND.yard.z - lookout.z);
+  const lookoutEdge = offset(lookout, (LAND.yard.x - lookout.x) * lookout.topRadius * .9 / yardDistance,
+    (LAND.yard.z - lookout.z) * lookout.topRadius * .9 / yardDistance);
   const burn = ROAD_NET.road('burn-road').points.reduce((best, point) =>
     Math.hypot(point.x - breaks.x, point.z - breaks.z) < Math.hypot(best.x - breaks.x, best.z - breaks.z) ? point : best);
   const angle = mesa.rampAngle + Math.PI;
@@ -24,12 +28,15 @@ export function views() {
   const bed = {x: (bankA.x + bankB.x) / 2, z: (bankA.z + bankB.z) / 2};
   return [
     {name: 'breaks-from-burn-road', from: burn, to: breaks},
+    {name: 'breaks-valley-from-crest', from: breaks, to: {
+      x: (breaks.x + nextBreaks.x) / 2, z: (breaks.z + nextBreaks.z) / 2,
+    }},
     {name: 'mesa-foot', from: side(mesa.radius + mesa.face + 60), to: mesa},
     {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120)},
     {name: 'ridge-way-up', from: offset(ridge, 0, -ridge.radius - 80), to: ridge},
-    {name: 'lookout-to-yard', from: lookout, to: LAND.yard},
+    {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard},
     {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
-    {name: 'scarp-face', from: offset(foot, 60 * (b.z - a.z) / length, -60 * (b.x - a.x) / length), to: foot},
+    {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: foot},
     {name: 'river-bank', from: bed, to: offset(bed, -(bankB.z - bankA.z) / bankLength * 100, (bankB.x - bankA.x) / bankLength * 100)},
   ];
 }
