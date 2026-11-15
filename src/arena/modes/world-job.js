@@ -18,6 +18,7 @@ import {scablandsDriveAt} from '../../world/scablands-regions.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
+import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 
 export const worldJobPosition = (duel, actor) => {
@@ -92,6 +93,10 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
+  if (definition.yard) {
+    worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setYard(yardPlan().solids);
+  }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);

@@ -16,6 +16,10 @@ import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {syncScene} from '../src/scene-systems.js';
+import {yardPlan} from '../src/world/scablands-yard-look.js';
+import {Duel} from '../src/game.js';
+import {placeActor} from '../src/arena/arena-event.js';
+import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
@@ -40,6 +44,48 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.equal(scene.group.getObjectByName('Scrapdome yard on the land'), undefined);
   scene.dispose();
   assert.equal(disposed, true, 'the detached yard is disposed with the scene');
+}
+// Drive real cars through the job's own yard grid. Other jobs have no yard solids.
+{
+  const plan = yardPlan();
+  const makeDuel = job => {
+    const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+      cpuDifficulty:'medium', opponents:[], job:{...job, seed:19}}), true);
+    duel.state.countdown = 0;
+    return duel;
+  };
+  const duel = makeDuel(definition), grid = duel.state.arena.worldJob.solidGrid;
+  assert.equal(grid.yard.length, plan.solids.length);
+  for (const [index, solid] of plan.solids.entries()) {
+    const actual = grid.yard[index];
+    for (const key of ['id', 'shape', 'x', 'z', 'halfX', 'halfZ', 'height']) assert.equal(actual[key], solid[key]);
+    assert.equal(actual.heading, solid.heading ?? 0);
+    assert.equal(actual.y, scablandsSurfaceHeightAt(actual.x, actual.z));
+  }
+  assert.equal(makeDuel(EVERBURN_JOBS[1]).state.arena.worldJob.solidGrid?.yard?.length ?? 0, 0);
+  const run = (target, bearing) => {
+    const d = makeDuel(definition), direction = {x:Math.sin(bearing), z:Math.cos(bearing)};
+    const start = {x:target.x - direction.x * 14, z:target.z - direction.z * 14};
+    const at = d.course.nearest(start.x, start.z);
+    placeActor(d, d.state, {s:at.s, lateral:at.lateral,
+      headingError:wrapHeading(bearing - d.course.at(at.s).heading)}, 30 / 1.609344);
+    d.state.countdown = 0;
+    for (let i = 0; i < 240; i++) { d.setInput({throttle:1}); d.step(1 / 60); }
+    const end = d.course.worldAt(d.state.s, d.state.lateral);
+    return (end.x - target.x) * direction.x + (end.z - target.z) * direction.z;
+  };
+  const wall = plan.solids.find(solid => solid.id.startsWith('yard-wall-'));
+  const wallBearing = Math.atan2(wall.x, wall.z);
+  assert.ok(run(wall, wallBearing) < 0, 'the car stops at a wall sheet');
+  const tower = plan.solids.find(solid => solid.id === 'yard-gate-tower-a');
+  assert.ok(run(tower, plan.gate.bearing) < 0, 'the car stops at a gate tower');
+  assert.equal(plan.openings.length, 6);
+  for (const opening of plan.openings) {
+    const target = {x:Math.sin(opening.bearing) * plan.radius, z:Math.cos(opening.bearing) * plan.radius};
+    assert.ok(run(target, opening.bearing) > 3, `the car passes the ${opening.id} opening`);
+  }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.

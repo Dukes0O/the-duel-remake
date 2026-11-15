@@ -221,3 +221,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: final barricades, smoke and Cinder figure. Changed assertions: none. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: yard solids, the gate start and the remaining steps.
+
+## Larger land, yard solids (15 November 2026)
+
+- Hot Delivery's own solid grid now holds every wall, tower, post, dome and mast from the yard drawing's plan. The solids follow the ground. Other jobs do not receive them. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It compares the real job grid with every shape in the plan and drives the real car into a wall and a gate tower and through all six road openings. `git diff --check`: passed.
+- For Claude to run: the requested browser scenario and final checks remain for the last round, including the two long drivers. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the gate start and the remaining steps.

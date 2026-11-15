@@ -202,13 +202,16 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   return {
     braziers: [],
     barricades: [],
+    yard: [],
     near(ax, az, bx, bz, pad) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
+      for (const solid of this.yard) found.push(solid);
       return found;
     },
+    setYard(solids) { this.yard = solids.map(solid => make(solid)); },
     setBraziers(spots) { this.braziers = spots.map(brazierSolid); },
     setBarricades(barriers) {
       this.barricades = barriers.map(({id, position, heading}) => make({id, kind:'barricade',
