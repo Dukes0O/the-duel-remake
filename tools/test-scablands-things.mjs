@@ -11,6 +11,21 @@ import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData, thingLandmarkLines} from '../src/world/scablands-things.js';
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
+import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
+
+test('a job queries its supplied land grid as well as its temporary braziers', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const things = thingSolidGrid(fixed);
+  const pole = things.solids.find(solid => solid.kind === 'telegraph');
+  const job = createJobSolidGrid(things);
+  job.setBraziers([{x: pole.x + 10, z: pole.z}]);
+  const nearby = job.near(pole.x, pole.z, pole.x, pole.z, 12);
+  assert.ok(nearby.includes(pole));
+  assert.ok(nearby.some(solid => solid.id === 'brazier-1'));
+  const defaultJob = createJobSolidGrid();
+  assert.deepEqual(defaultJob.near(pole.x, pole.z, pole.x, pole.z, 6),
+    [...SOLID_GRID.near(pole.x, pole.z, pole.x, pole.z, 6)]);
+});
 
 test('every collision footprint belongs to one batch, and is drawn at its own place and size when the player is near', () => {
   const fixed = clearedFixedThings(1989, []);

@@ -197,13 +197,13 @@ export function brazierSolid(spot, index) {
   return make({id: `brazier-${index + 1}`, placeId: null, kind: 'prop', shape: 'ellipse', x: spot.x, z: spot.z, halfX: .65, halfZ: .65, height: 1.15});
 }
 // Each job owns its temporary solids and its query result. The fixed grid never changes.
-export function createJobSolidGrid() {
+export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   return {
     braziers: [],
     near(ax, az, bx, bz, pad) {
       found.length = 0;
-      for (const solid of SOLID_GRID.near(ax, az, bx, bz, pad)) found.push(solid);
+      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       return found;
     },
