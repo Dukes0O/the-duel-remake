@@ -445,6 +445,7 @@ test('hill footprints leave both river decks clear from end to end', () => {
 
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
+  assert.equal(hill.height, 60);
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
     .find(item => item.kind === 'lookout');
   assert.equal(moved.x - hill.x, 100);

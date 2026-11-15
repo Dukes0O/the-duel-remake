@@ -58,7 +58,8 @@ export function views() {
     {name: 'mesa-top', from: mesa, to: side(mesa.radius + 120), landmark: side(mesa.radius * .8)},
     {name: 'ridge-way-up', from: upRidge(600), to: upRidge(450)},
     {name: 'lookout-to-yard', from: lookoutEdge, to: LAND.yard, landmark: towardYard(600)},
-    {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 50), to: dune},
+    // Leave room for the crest above the chase camera's downward view.
+    {name: 'ships-dunes', from: offset(dune, 0, -dune.radius - 300), to: dune},
     {name: 'scarp-face', from: offset(foot, 80 * (b.z - a.z) / length, -80 * (b.x - a.x) / length), to: scarpTop, landmark: scarpTop},
     {name: 'river-bank', from: bed, to: offset(bed, -(riverB.z - riverA.z) / bankLength * RIVER.lipHalfWidth,
       (riverB.x - riverA.x) / bankLength * RIVER.lipHalfWidth)},

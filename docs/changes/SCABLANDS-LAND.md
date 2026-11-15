@@ -1914,3 +1914,13 @@ The hills suite checks the full 176 m length of both river decks against every h
 Check: `node tools/test-scablands-hills.mjs` passed 38 of 38. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the deck check is new. Codex decided: use the deck direction and length used by the land's crossing solids, and include each deck's half-width. Removed: none.
 
 Still needed: build and prove all three Breaks road passes, prove the three mesa cover stretches and job corridors, drive the routes and jobs, and run final checks. Claude must run and judge the pictures.
+
+### Hill country: higher Lookout and dune picture
+
+The Lookout rises 60 m instead of 45 m, with the same footprint and level top. The dune picture starts 250 m farther from its crest so the feature has more room in the chase camera view. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 38 of 38; `node --check tools/scenarios/scablands-hills.mjs` passed. The browser picture was not run; Claude must check it and the views after it. Replay fingerprints and world signatures were not rerun.
+
+Changed assertions: added an exact 60 m Lookout height check, replacing no assertion. The old 45 m height was raised to 60 m at Claude's direction. The dune landmark is unchanged; its camera start moved 250 m farther away. Codex decided: use the greater distance to fit the crest in the picture. Removed: the former 45 m height and closer dune camera position.
+
+Still needed: prove and build the three road passes, prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks.

@@ -28,7 +28,7 @@ export function hillsFor(land=LAND,seed=1989){
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
-    Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:45,radius:320,topRadius:60}),
+    Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:60,radius:320,topRadius:60}),
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
