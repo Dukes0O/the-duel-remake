@@ -9,7 +9,7 @@ import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPictu
 import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
-import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
@@ -101,6 +101,33 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The actual world-job update applies the salt wind only on the pan.
+{
+  const polygon = GROUND_AREAS.polygons.find(area => area.id === 'salt-pan');
+  const centre = polygon.points.reduce((sum, point) => ({x:sum.x + point.x / polygon.points.length, z:sum.z + point.z / polygon.points.length}), {x:0, z:0});
+  let pan;
+  for (let dx = -1000; dx <= 1000 && !pan; dx += 100) for (let dz = -1000; dz <= 1000; dz += 100) {
+    const point = {x:centre.x + dx, z:centre.z + dz};
+    if (scablandsDriveAt(point.x, point.z).id === 'salt-pan') { pan = point; break; }
+  }
+  assert.ok(pan, 'the land has a salt pan point');
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = pan;
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  const lossAt = point => {
+    car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+    world.job.stepState = {loaded:true, ember:100};
+    stepWorldJob(duel, 1);
+    return 100 - world.job.stepState.ember;
+  };
+  const normal = step.carStart;
+  assert.notEqual(scablandsDriveAt(normal.x, normal.z).id, 'salt-pan');
+  const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
+  assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
+  assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
+}
 // The real watch traces the ground, resets when sight is lost, and sounds once after six seconds.
 {
   const world = createWorldJob(definition), events = [];

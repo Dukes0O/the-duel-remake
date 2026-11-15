@@ -269,3 +269,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
 - Still to build: the salt pan and remaining steps.
+
+## Larger land, salt pan wind (15 November 2026)
+
+- The salt pan cools Hot Delivery's ember 50% faster than ordinary ground. The world-job update reads the actual ground region; the extra cooling does not change rough-ground or impact loss. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real world-job update compares one second on the salt pan and ordinary ground. `git diff --check`: passed.
+- Codex decided: use a cold factor of 1.5, as the starting value for the six scripted drives. Those drives must check the arrival bands and may require tuning.
+- For Claude to draw: final barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the Pipe, river bed and remaining steps.

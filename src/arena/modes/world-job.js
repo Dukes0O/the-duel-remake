@@ -780,8 +780,9 @@ export function stepWorldJob(duel, dt) {
   state.scablandsHitKmh = 0;
   worldJob.riderHitKmh = 0;
   worldJob.lastKmh = kmh;
+  const ground = scablandsDriveAt(point.x, point.z);
   const view = {player: playerView, onFoot: !!state.onFoot,
-    speedKmh: kmh, hitKmh, safeKmh: scablandsDriveAt(point.x, point.z).safeKmh,
+    speedKmh: kmh, hitKmh, safeKmh: ground.safeKmh, groundRegion: ground.id,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,

@@ -35,7 +35,7 @@ function stepEmberCarry(step, state, view, dt) {
   while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
   const next = {...state, burntBarricades: [...burnt], safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
   if (!out) {
-    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, safeKmh: view.safeKmh, difficulty: view.difficulty, dt});
+    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, safeKmh: view.safeKmh, difficulty: view.difficulty, coldFactor: step.coldRegions?.[view.groundRegion] ?? 1, dt});
     next.ember = Math.max(0, Math.min(rule.start, ember - loss.total));
     // How fast the pot is losing ember from rough ground and hits, per second (cold alone is slower than 1).
     next.rate = dt > 0 ? (loss.rough + loss.hit) / dt : 0;
