@@ -1386,3 +1386,11 @@ Changed assertions, for Claude to review: the scene check's nearby ground count 
 Removed: the temporary 120 by 120 nearby grid and the triangles beneath the scarp face meshes.
 
 Still needed: item 2, sight and search; item 3, route checks; item 4, the picture scenario; and item 5, integration and final checks.
+
+### Round 4, slice 2c: raider shot sight in progress
+
+Scablands camp raiders now check the land between themselves and their chosen target before firing. A mesa can block a shot, and a clear line permits it. Other venues keep their existing shot rules. This is only part of item 2: target selection still happens before the sight check, and pursuit, the five-second search, the furnace, lookouts and seen/lost captions remain to be completed. No new game event or sound cue was added. Survey Flags' fifth flag remains in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 12 tests, including mesa cover, a clear line and unchanged sight handling for other venues. Race fingerprints and world signatures were not checked in this round. The remaining route checks, integration and final checks are still needed.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the Scablands camp raiders' ability to fire through intervening ground.

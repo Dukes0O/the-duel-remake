@@ -13,6 +13,17 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
+import {raiderHasClearShot} from '../src/raiders.js';
+
+test('Scablands raiders cannot shoot through a mesa', () => {
+  const mesa = HILLS.find(hill => hill.kind === 'mesa');
+  const raider = {x: mesa.x - mesa.radius - 100, z: mesa.z};
+  const hidden = {x: mesa.x + mesa.radius + 100, z: mesa.z};
+  const visible = {x: raider.x - 50, z: raider.z};
+  assert.equal(raiderHasClearShot({def: {scablands: true}}, raider, hidden), false);
+  assert.equal(raiderHasClearShot({def: {scablands: true}}, raider, visible), true);
+  assert.equal(raiderHasClearShot({def: {}}, raider, hidden), true);
+});
 
 test('each distant scarp face has fine cells at the land height', () => {
   const geometry = makeCoarseGround(null).geometry;

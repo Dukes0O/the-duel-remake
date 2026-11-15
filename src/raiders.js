@@ -5,6 +5,8 @@ import {crewPerks} from './crew.js';
 import {wastelandRulesActive} from './wasteland-access.js';
 import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
+import {sees} from './world/scablands-ways.js';
+import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
 // Wasteland simulation state, so ordinary races retain their original route.
@@ -14,6 +16,13 @@ const FIRE_METERS = 82;
 const SHOT_GAP_SECONDS = {easy: 1.6, medium: .8, hard: .8};
 const RAID_SALT = 0x7a1d0b5e;
 const T = COMBAT_TUNING.raider;
+
+// Only Scablands camps use its land for cover. Other venues keep their shot rules.
+export function raiderHasClearShot(course, raider, target) {
+  return !course.def.scablands || sees(raider, target, {
+    heightAt: scablandsSurfaceHeightAt, eye: 1.48, target: 1.5, step: 5,
+  });
+}
 
 function clearRoadside(course, s, lateral) {
   if (course.tunnelAt(s)) return false;
@@ -321,8 +330,10 @@ export function stepRaiders(duel, dt = 0) {
     if (state.stageTimeSec < zone.nextShotAt) continue;
     const target = targetFor(duel, zone);
     if (!target) continue;
+    const targetPoint = point(duel, target.actor);
     const raider = zone.raiders.find(member =>
-      !member.knockedDown && member.firedLap !== state.currentLap);
+      !member.knockedDown && member.firedLap !== state.currentLap &&
+      raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);
   }
 }
