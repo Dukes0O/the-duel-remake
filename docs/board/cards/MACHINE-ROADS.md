@@ -14,3 +14,5 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 - The yard starts with a raised patch and a shallow ditch in front of the dozer. They provide material to move and reset when the visit ends.
 - Hold Shift while driving the paver to keep the steady pace needed for a smooth surface. Driving at full speed can leave a rough surface that the player can pave again.
 - A town can apply the same individual machine actions to an optional road-work layer. Old towns gain no new field until work is applied. The yard remains separate from town saves.
+
+- Town road work uses the Scablands and groups whole-metre work into eight-metre town cells. The weakest part sets the grade: dirt until all parts are firm, the existing middle road speed when firm, and paved when all parts are smooth. A rough patch lowers the grade until repaired.
