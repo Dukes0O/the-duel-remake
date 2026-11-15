@@ -258,7 +258,12 @@ assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
 const realGround = {heightAt:scablandsNaturalHeightAt};
 const realParked = createDigBorer(realGround);
 const drawnGround = createDigNearGround(new THREE.MeshBasicMaterial(), realGround);
+// The view first draws at the yard, then jumps to Mabel and follows her.
+drawnGround.follow(0, 18);
 drawnGround.follow(realParked.x, realParked.z);
+for (let distance = 2; distance <= 30; distance += 2)
+  drawnGround.follow(realParked.x + distance * Math.sin(realParked.heading),
+    realParked.z + distance * Math.cos(realParked.heading));
 // Use the same untransformed world group as the Dig and inspect actual vertices,
 // rather than asking the height array what it intended to draw.
 const digWorld = new THREE.Group();

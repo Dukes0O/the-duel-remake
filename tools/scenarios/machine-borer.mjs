@@ -33,7 +33,9 @@ const page = {
     const target={x:s.start.x+10*dx/length,y:s.start.y+s.radius+3,z:s.start.z+10*dz/length};
     const origin=v.camera.position, direction={x:target.x-origin.x,y:target.y-origin.y,z:target.z-origin.z};
     const distance=Math.hypot(direction.x,direction.y,direction.z);
-    return {target,hit:v.groundRay(origin,direction,distance)}; })()`,
+    return {origin:{x:origin.x,y:origin.y,z:origin.z},target,
+      originSurface:v.surfaceHeight(origin.x,origin.z),targetSurface:v.surfaceHeight(target.x,target.z),
+      mouths:dig.simulation.tunnels.mouths,hit:v.groundRay(origin,direction,distance)}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
   inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
