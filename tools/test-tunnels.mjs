@@ -565,6 +565,14 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
     assert.equal(move.hit, true, 'the wall remains solid across a segment joint');
     assert.equal(move.position.z, 3);
   }
+  // A jump or large step can miss the adjoining segment's height range.
+  // The joint is still rock, not an extra exit from the tunnel.
+  for (const [from, to] of [[49, 51], [51, 49]]) {
+    const move = joined.constrainMotion({x: from, y: 4, z: 0}, {x: to, y: 30, z: 5}, 1);
+    assert.equal(move.hit, true, 'an unqualified neighbour closes the seam');
+    assert.equal(move.position.x, 50);
+    assert.equal(move.position.z, 3);
+  }
   const corner = createGroundTunnels([
     {start: {x: 0, y: 4, z: 0}, end: {x: 50, y: 4, z: 0}, radius: 4},
     {start: {x: 50, y: 4, z: 0}, end: {x: 50, y: 4, z: 50}, radius: 4},

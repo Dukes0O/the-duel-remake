@@ -2,6 +2,8 @@
 
 ## Current round
 
+A move that crosses a joint but misses the adjoining segment's height range now stops at the joint and stays inside the side walls. `node tools/test-tunnels.mjs` passed, including the new check in both directions. The rest of the tunnel enclosure remains unfinished.
+
 A car rising inside a tunnel now meets the current bore crown and falls back. The real flight step is covered by `node tools/test-tunnels.mjs`, which passed. The new flat floor and floor-based bore selection still need to replace the trial geometry before the enclosure is complete.
 
 Tunnel support now looks up nearby segments in a grid and reuses its projection and result objects. A 100-segment chain is checked across cell boundaries; `node tools/test-tunnels.mjs` passed. The wall handoff checks only adjacent segments, and the test exercises both directions at 99 joints. The rest of item 3 remains.

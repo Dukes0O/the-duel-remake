@@ -176,12 +176,14 @@ export function createGroundTunnels(segments = []) {
       const joint = along < 0 ? tube.start : tube.end;
       let next = null;
       const currentIndex = indices.get(tube);
+      let hasJoint = false;
       for (let index = Math.max(0, currentIndex - 1); index <= Math.min(tubes.length - 1, currentIndex + 1); index++) {
         const candidate = tubes[index];
         if (candidate === tube) continue;
         const joined = Math.hypot(candidate.start.x - joint.x, candidate.start.y - joint.y, candidate.start.z - joint.z) < 1e-7 ||
           Math.hypot(candidate.end.x - joint.x, candidate.end.y - joint.y, candidate.end.z - joint.z) < 1e-7;
         if (!joined) continue;
+        hasJoint = true;
         const cx = candidate.end.x - candidate.start.x, cz = candidate.end.z - candidate.start.z;
         const squared = cx * cx + cz * cz;
         const t = ((end.x - candidate.start.x) * cx + (end.z - candidate.start.z) * cz) / squared;
@@ -191,7 +193,19 @@ export function createGroundTunnels(segments = []) {
           break;
         }
       }
-      if (!next) return {position: {...end}, hit: false};
+      if (!next) {
+        // A move that misses the neighbouring bore must not escape into
+        // solid rock through the seam. Hold it at the joint instead.
+        if (hasJoint) {
+          const correction = along < 0 ? along : along - length;
+          const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
+          const limit = Math.max(0, tube.radius - clearance);
+          const sideways = side - Math.max(-limit, Math.min(limit, side));
+          return {position: {x: end.x - correction * dx / length + sideways * dz / length, y: end.y,
+            z: end.z - correction * dz / length - sideways * dx / length}, hit: true};
+        }
+        return {position: {...end}, hit: false};
+      }
       tube = next;
       dx = tube.end.x - tube.start.x; dz = tube.end.z - tube.start.z;
       length = Math.hypot(dx, dz);
