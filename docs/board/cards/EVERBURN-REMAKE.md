@@ -327,6 +327,22 @@ These settle findings 1, 2, 5, 6 and 7 of the drive, and are built with slices 2
 car is hidden from the furnace's standing place on at least three separate stretches of 150 m or more, with open ground
 between them, so that the short cut is a run from cover to cover. Mesas are 30 to 55 m high (SCABLANDS-LAND, slice 2c).
 
+## The yard on the land, drawn (Claude, 15 November 2026, night)
+
+Codex's first eight runs on job 1 made two small commits and then stalled on "the yard stands on the land": the piece was too
+large for a run, and my brief had told Codex to finish whole items. Two changes. The job's list is now cut into steps of one
+run each (2a to 10 in the lane's task). And the yard is Claude's drawing, since it is a drawing:
+`src/world/scablands-yard-look.js`, look round 2 (`docs/board/looks/everburn-remake/round-2.jpg` and its review).
+
+- **What changes in the design.** The yard is not a copy of the Home Yard screen's scaffold and wrecks, as first written. It is
+  a ring of scrap wall 170 m across round the meeting of the six roads, with an opening for each road, the east gate between two
+  towers of stacked containers, a dome and a mast. Job 1 starts as written: the car 40 m inside the east gate, facing it.
+- **For Codex, three small steps (in the lane's task):** `createYard({heightAt})` added to the Scablands scene at the land's
+  yard for a job that asks for it (job 1 now; each other job as it is remade, because their scripted drivers leave the yard
+  across open ground today); `yardPlan().solids` put into that job's solid grid; the car's start moved to 40 m inside the gate,
+  with Cinder and her brazier at the gate's inner side, clear of the roadway.
+- **Other jobs** keep the bare yard until each is remade. That is on purpose, not forgotten: every one of them is hidden.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

@@ -56,3 +56,13 @@ Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven
 - **The results sentence names no number.** It said "the most it pays is 80 scrap" beside "+96" on Medium, because the pay is multiplied by the difficulty. It now says "You had to relight it, so it pays less." Changed assertion, reviewed by Claude: the sentence check asks for "relight", "pays less" and no digit, where it asked for "80 scrap"; the cap of 80 itself is still checked on the line above it.
 - Review note for the sheet: `docs/board/looks/everburn-remake/round-1-review.md` (Claude).
 - **Changed assertion in `tools/scenarios/everburn-play.mjs`,** reviewed by Claude: the scenario held the accelerator alone and required job 1 to finish. That is the fault Kyle found. It now requires the opposite: the job does not finish that way, the pot goes out, and the gauge says OUT. It is stricter than before.
+
+### The yard's drawing (Claude, 15 November 2026, night)
+
+`src/world/scablands-yard-look.js` (new): `yardPlan()` (plain data: where each piece stands and the solid shapes), `yardShape`,
+`yardSignShape`, the two pictures and surfaces, and `createYard({heightAt})`. Nothing calls it yet; Codex places it for job 1.
+Run once in Node: 92 sheets, 3 containers, 10 posts, 109 solid shapes, 10,220 triangles, built in 52 ms. Seen in the game in a
+visible window with the yard put into the scene by hand (not committed): look round 2. No test added (Codex's placing step
+brings its own); no assertion changed. Sound: none, nothing here is an event.
+
+**Removed:** nothing.
