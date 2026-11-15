@@ -400,3 +400,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none. Race fingerprints: not checked this round.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: the initial list of all four routes and their unearned danger descriptions from Hot Delivery's map. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, seeing a crossing (15 November 2026)
+
+- Seeing a crossing within 400 m adds its way and length to Hot Delivery's map. The map draws discovered ways as well as the East Road. This is part of step 6c; driving 300 m of a way and recording dangers remain to be built. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It checks the real route and land crossing, discovery, the list and length, and that discovery is retained. `git diff --check`: passed.
+- Codex decided: a crossing is visible within 400 m with clear sight, matching brazier discovery. Claude should review the distance.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked this round.
+- Changed assertions: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.

@@ -1,8 +1,9 @@
 import {worldJobMapData} from '../route-map.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 import {getLandPicture, createPictureCanvas, createKnowledge, learn, jobFacts, drawSmallMap, drawBigMap, wayColour, wayLines, groundWords, wayKm, SMALL_MAP} from './scablands-map.js';
-import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay} from './scablands-ways.js';
+import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
+import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -182,11 +183,32 @@ export function worldMapWays({worldJob, car, target, land = LAND}) {
   return {start, ways: made};
 }
 
+// A crossing becomes useful map knowledge only when the car can see it.
+export function learnWayCrossings(knowledge, result, crossings, car, tunnels = null) {
+  let changed = false;
+  for (const way of result.ways) {
+    if (way.id === 'east-road' || knowledge.ways.has(way.id)) continue;
+    const visible = way.crossings.some(item => {
+      const crossing = crossings.find(place => place.id === item.id);
+      return crossing && sees(car, crossing, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+        tunnels, eye: 1.5, target: 2, step: 5, range: 400});
+    });
+    if (visible) { knowledge.ways.add(way.id); changed = true; }
+  }
+  if (changed) knowledge.version++;
+  return changed;
+}
+
 const escapeText = value => String(value).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} = {}) {
   if (hotDelivery) {
     const east = result.ways.find(way => way.id === 'east-road');
-    return `<h3>WHAT YOU KNOW</h3><ol>${east ? `<li class="world-hud-way" style="--way:${wayColour(0)}"><b>A</b><div><strong>${escapeText(east.name)}</strong><ul><li>The Ash Men hold the Girder Bridge.</li></ul></div></li>` : ''}</ol>`;
+    const items = result.ways.map((way, index) => {
+      if (way !== east && !knowledge.ways.has(way.id)) return '';
+      const detail = way === east ? '<ul><li>The Ash Men hold the Girder Bridge.</li></ul>' : ` <em>${wayKm(way.length)}</em>`;
+      return `<li class="world-hud-way" style="--way:${wayColour(index)}"><b>${String.fromCharCode(65 + index)}</b><div><strong>${escapeText(way.name)}</strong>${detail}</div></li>`;
+    }).join('');
+    return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>`;
   }
   const heading = `<h3>WAYS TO ${escapeText((targetName ?? 'THE MARKED PLACE').toUpperCase())}</h3>`;
   const items = result.ways.map((way, index) => {
@@ -228,7 +250,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   let active = false, mapOpen = false, disposed = false, pausedByMap = false;
   const land = picture ?? getLandPicture();
   let landCanvas = null, lastSmall = -Infinity, lastKnowledgeVersion = -1, lastFrame = null;
-  const knowledgeOf = new WeakMap();
+  const knowledgeOf = new WeakMap(), hotWaysOf = new WeakMap();
   // What the maps cost, kept where a check can read it: draws, milliseconds drawing, the slowest draw, and the milliseconds that
   // making the picture of the land took.
   const stats = root.worldMapStats = {smallDraws: 0, smallMs: 0, smallMaxMs: 0, bigDraws: 0, bigMs: 0, waysMs: 0, pictureMs: 0, updateMs: 0, updates: 0};
@@ -240,7 +262,7 @@ export function createWorldHud({host, app = null, picture = null}) {
     const result = worldMapWays({worldJob: frame.worldJob, car: frame.car, target});
     stats.waysMs = clock() - began;
     ways.innerHTML = waysMarkup(result, frame.target?.name, frame.knowledge, {hotDelivery});
-    if (context) drawBigMap(context, {...frame, ways: hotDelivery ? result.ways.filter(way => way.id === 'east-road') : result.ways}, BIG_MAP);
+    if (context) drawBigMap(context, {...frame, ways: hotDelivery ? result.ways.filter(way => way.id === 'east-road' || frame.knowledge.ways.has(way.id)) : result.ways}, BIG_MAP);
     stats.bigDraws++; stats.bigMs = clock() - began;
   };
   // While the big map is open the stage carries `world-map-open`, which lifts the story caption above the map (world-hud.css). The game
@@ -316,6 +338,14 @@ export function createWorldHud({host, app = null, picture = null}) {
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
       frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
       learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings, tunnels: duel.course.groundTunnels});
+      if (worldJob?.definition?.id === 'everburn-hot-delivery') {
+        let result = hotWaysOf.get(worldJob);
+        if (!result) {
+          result = worldMapWays({worldJob, car: frame.car, target: LAND.at('tin-town')});
+          hotWaysOf.set(worldJob, result);
+        }
+        learnWayCrossings(knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
+      }
       const pointer = brazierArrow(model.ember, frame.car, knowledge);
       brazierPointer.hidden = !pointer;
       if (pointer) {

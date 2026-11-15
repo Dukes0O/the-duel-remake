@@ -70,7 +70,7 @@ export function sourceRect(picture, view) {
 
 // ---- What the player has learnt (kept for the job) -----------------------------------------------------------------------------------------
 export const SEEN = Object.freeze({barricade: 450, furnace: 1200});
-export function createKnowledge() { return {barricades: new Map(), crossings: new Map(), sights: new Map(), braziers: new Map(), version: 0}; }
+export function createKnowledge() { return {barricades: new Map(), crossings: new Map(), sights: new Map(), braziers: new Map(), ways: new Set(), version: 0}; }
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 // What a job holds that a player can come to know: its barricades and the furnaces on the ground (the skyline furnace the scene
 // draws, and any furnace that is an actor of the job).

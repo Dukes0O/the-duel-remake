@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -40,6 +40,24 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.match(markup, /The Ash Men hold the Girder Bridge\./);
   for (const way of result.ways.slice(1)) assert.ok(!markup.includes(way.name));
   assert.doesNotMatch(markup, /barricade|furnace|Pipe|salt pan/i);
+}
+// Seeing a real crossing adds its way and length to the player's map knowledge.
+{
+  const worldJob = {definition, job:createJob(definition), actors:[]};
+  const result = worldMapWays({worldJob, car:LAND.yard, target:LAND.at('tin-town')});
+  const crossings = getLandPicture().marks.crossings;
+  const plates = result.ways.find(way => way.id === 'scab-plates');
+  const crossing = crossings.find(item => plates.crossings.some(hit => hit.id === item.id));
+  assert.ok(crossing, 'the plates way has a real crossing');
+  const knowledge = createKnowledge();
+  assert.equal(learnWayCrossings(knowledge, result, crossings, LAND.yard), false);
+  assert.ok(!waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true}).includes(plates.name));
+  assert.equal(learnWayCrossings(knowledge, result, crossings, crossing), true);
+  assert.ok(knowledge.ways.has(plates.id));
+  const markup = waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true});
+  assert.ok(markup.includes(plates.name));
+  assert.match(markup, /<em>[^<]+<\/em>/);
+  assert.equal(learnWayCrossings(knowledge, result, crossings, crossing), false);
 }
 // The actual pause screen names the job and the land, including between steps.
 {
