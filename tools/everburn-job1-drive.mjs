@@ -44,11 +44,13 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, previous;
+  let lowestEmber = state.arena.worldJob.job.stepState.ember;
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
     previous = car;
     peakSpeedMph = Math.max(peakSpeedMph, Math.abs(state.speedMph));
+    lowestEmber = Math.min(lowestEmber, state.arena.worldJob.job.stepState.ember);
     hit = nearestOnLine(points, car.x, car.z);
     maxDistance = Math.max(maxDistance, hit.distance);
     if (hit.along >= endAlong) break;
@@ -60,5 +62,5 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
     duel.step(1 / 60);
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph,
-    ember:state.arena.worldJob.job.stepState.ember, elapsedSeconds:ticks / 60, ticks};
+    ember:state.arena.worldJob.job.stepState.ember, lowestEmber, elapsedSeconds:ticks / 60, ticks};
 }

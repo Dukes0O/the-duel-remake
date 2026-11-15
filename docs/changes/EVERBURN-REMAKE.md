@@ -482,3 +482,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the rest of the East Road drive and its arrival band, the other five drives, camera, cover and scenario.
+
+## Larger land, two kilometres on the East Road (15 November 2026)
+
+- The Medium proof drive reaches 2 km on the East Road. The driver records the lowest real ember seen during each stretch, so the test can detect an ember going out before the end. At 2 km it had 79.73 ember; the fourth stretch took 31.22 seconds and stayed within 1.20 m of the road. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. `git diff --check`: passed. Race fingerprints were not checked this round.
+- An exploratory drive to 2.5 km did not pass: the car stopped making progress near 2,329 m and the ember went out during the 120-second limit. The cause needs investigation before the arrival proof can continue.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
