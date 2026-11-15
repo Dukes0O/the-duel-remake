@@ -37,6 +37,33 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.notEqual(pushOutOfSolids(pier.x, pier.z, .4, undefined, surface).hit?.id, pier.id, 'the pier does not block the deck');
 }
 
+// Job movers carry their support height from step to step, just as a chase does.
+// Check the entire crossing rather than only a stationary sample beneath a deck.
+for (const id of ['girder-bridge', 'the-pipe']) {
+  const crossing = RIVER_LAND.crossings.find(item => item.id === id);
+  const {points, along} = RIVER_LAND.line;
+  const index = along.findIndex(value => value >= crossing.along);
+  const a = points[index - 1], b = points[index + 1];
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+  const centre = {x: crossing.x + dz * 27, z: crossing.z - dx * 27};
+  for (const direction of [-1, 1]) {
+    let position = {x: centre.x - direction * dx * 45, z: centre.z - direction * dz * 45};
+    let height = scablandsActorHeightAt(position.x, position.z, -100);
+    let below = false;
+    for (let step = -44; step <= 45; step++) {
+      const target = {x: centre.x + direction * dx * step, z: centre.z + direction * dz * step};
+      const result = stepMover(position, target, {height});
+      assert.equal(result.blocked, false, `${id}: mover is not stopped under the deck`);
+      position = result;
+      height = result.y;
+      if (Math.abs(step) < 20 && scablandsSurfaceHeightAt(position.x, position.z) - height > 4) below = true;
+    }
+    assert.ok(below, `${id}: mover crosses below the deck in direction ${direction}`);
+    assert.ok(Math.hypot(position.x - centre.x, position.z - centre.z) > 44, `${id}: mover reaches the far side`);
+  }
+}
+
 // Use the real west scarp, with both ends joined to the ground.
 {
   const trial = westScarpTrial(scablandsHeightAt);
