@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
@@ -523,6 +523,12 @@ test('the new solid index leaves the named driving corridors clear', async () =>
   for (const job of EVERBURN_JOBS) for (const step of job.steps)
     if (step.path && (step.kind === 'escort' || step.actor?.id === 'old-smoke-furnace'))
       routes.push({width: 8, points: step.path.map(place => place.position)});
+  const jobLegs = jobDrivingLegs();
+  const survey = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0];
+  assert.ok(jobLegs.some(points => points.length === survey.finds.length + 1 &&
+    points[0] === survey.carStart && survey.finds.every((place, i) => points[i + 1] === place.position)),
+  'all survey legs must follow the flags in order');
+  routes.push(...jobLegs.map(points => ({width: 7, points})));
   const steps = stepsWayFor();
   routes.push({width: 7, points: [-1, 1].map(side =>
     ({x: steps.x + side * steps.nx * steps.reach, z: steps.z + side * steps.nz * steps.reach}))});

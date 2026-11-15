@@ -223,6 +223,39 @@ for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of 
 for (const path of Object.values(GAS_RUN_PATHS)) for (const place of path) {
   if (place.position) jobPlaces.push(place.position);
 }
+// The places are ordered as the job presents them to the driver. Keep these
+// corridors separate so small, non-solid decoration can remain on the legs.
+export function jobDrivingLegs() {
+  const routes = [];
+  for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) {
+    let previous = null;
+    for (const step of job.steps) {
+      const places = [];
+      const add = value => { const point = value?.position ?? value; if (Number.isFinite(point?.x) && Number.isFinite(point?.z)) places.push(point); };
+      add(step.carStart ?? previous);
+      if (step.kind === 'carry') { add(step.origin); for (const p of step.safePoints ?? []) add(p); add(step.destination); }
+      else if (step.kind === 'explore') for (const p of step.finds ?? []) add(p);
+      else if (step.kind === 'rescue') { for (const p of step.people ?? []) add(p); add(step.home); }
+      else if (step.kind === 'heist') { add(step.carPlace); for (const p of step.returnPath ?? []) add(p); add(step.escapePlace); }
+      else if (step.path) for (const p of step.path) add(p);
+      else { add(step.origin); add(step.place); for (const p of step.places ?? []) add(p); add(step.returnToCar); }
+      if (places.length > 1) routes.push(places);
+      previous = places.at(-1) ?? previous;
+    }
+  }
+  for (const path of Object.values(GAS_RUN_PATHS)) routes.push(path.map(place => place.position));
+  return routes;
+}
+const jobLegCells = new Map();
+for (const points of jobDrivingLegs()) for (let n = 1; n < points.length; n++) {
+  const a = points[n - 1], b = points[n], reach = 7 + 28;
+  for (let i = Math.floor((Math.min(a.x, b.x) - reach) / ROAD_CELL); i <= Math.floor((Math.max(a.x, b.x) + reach) / ROAD_CELL); i++)
+    for (let j = Math.floor((Math.min(a.z, b.z) - reach) / ROAD_CELL); j <= Math.floor((Math.max(a.z, b.z) + reach) / ROAD_CELL); j++) {
+      const key = roadKey(i, j);
+      if (!jobLegCells.has(key)) jobLegCells.set(key, []);
+      jobLegCells.get(key).push({a, b, width: 7});
+    }
+}
 const routeLines = HOT_DELIVERY_WAYS.map(way => ({points: routeFor(way.legs, {
   start: LAND.yard, destination: LAND.at('tin-town'),
 }), width: 7}));
@@ -245,8 +278,8 @@ for (const {points, width} of routeLines) for (let n = 1; n < points.length; n++
       routeCells.get(key).push({a, b, width});
     }
 }
-function routeWithin(x, z, radius) {
-  for (const {a, b, width} of routeCells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? []) {
+function routeWithin(x, z, radius, cells = routeCells) {
+  for (const {a, b, width} of cells.get(roadKey(Math.floor(x / ROAD_CELL), Math.floor(z / ROAD_CELL))) ?? []) {
     const dx = b.x - a.x, dz = b.z - a.z, length = dx * dx + dz * dz;
     const t = length ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / length)) : 0;
     if (Math.hypot(x - a.x - t * dx, z - a.z - t * dz) <= width + radius) return true;
@@ -257,11 +290,12 @@ function routeWithin(x, z, radius) {
 // Reject the whole round footprint, not just its centre. The road index covers
 // up to 28 m beyond the road edge; callers must use a radius within that limit.
 // Job starts are required explicitly so a caller cannot silently omit them.
-export function thingFootprintClear(x, z, radius, jobStarts) {
+export function thingFootprintClear(x, z, radius, jobStarts, {jobLegs = true} = {}) {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(radius) || radius < 0 || radius > 28 || !Array.isArray(jobStarts)) {
     throw new RangeError('A finite footprint and job starts are required');
   }
-  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius) || routeWithin(x, z, radius)) return false;
+  if (roadWithin(x, z, ROAD_HALF_WIDTH + radius) || routeWithin(x, z, radius) ||
+      (jobLegs && routeWithin(x, z, radius, jobLegCells))) return false;
   const river = RIVER_LAND.nearest(x, z);
   if (river && RIVER_LAND.crossings.some(crossing => {
     const along = Math.abs(river.along - crossing.along);
@@ -460,7 +494,7 @@ export function smallThingsInCell(seed, i, j, jobStarts = []) {
   for (let index = 0; index < 12; index++) {
     const x = (i + rng.float()) * THINGS_CELL, z = (j + rng.float()) * THINGS_CELL;
     const choice = rng.float(), size = rng.float(), turn = rng.float();
-    if (!thingFootprintClear(x, z, .3, jobStarts)) continue;
+    if (!thingFootprintClear(x, z, .3, jobStarts, {jobLegs: false})) continue;
     const ground = scablandsRegionAt(x, z);
     const weights = {...SMALL_DENSITY[ground]};
     if (ground === 'salt-pan' && Math.abs(polygonMargin(pan.points, x, z) + edgeWarp(x, z, pan.phase)) > 90) delete weights.salt;
