@@ -1328,3 +1328,17 @@ Changed assertions, for Claude to review: none. Codex decided: the Ridge top is 
 Removed: the Ridge place's former 18 m level ground is replaced by the 45 m top while the new land is active.
 
 Still needed: detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: river bank faces
+
+The river mesh now samples each bank every 2 m across the steep section, so the Steps' ledges and the river banks follow their ground height more closely. It keeps the existing ground material and computes normals from the mesh. No game event or sound cue was added. Survey Flags' fifth flag stays in place.
+
+Checks: `test-scablands-hills` passed 9 tests, including the drawn bank heights, two-metre cells and unit normals. Race fingerprints and world signatures were not checked in this run. The full job routes and both gas roads still need their final checks.
+
+Draw cost: the river still uses one draw call per visible piece. A full 64-section piece has 4,864 triangles, up from 2,560. Actual on-screen draw calls and triangle counts still need the browser scenario.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario after it is written. The land and its faces need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the coarser bank cells were replaced by two-metre cells.
+
+Still needed: detailed cells for all four scarps, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.

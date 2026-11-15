@@ -9,6 +9,29 @@ import {scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {createRiverDraw} from '../src/world/scablands-draw.js';
+import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
+
+test('the drawn Steps and river banks follow the ledges with fine cells', () => {
+  const steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');
+  const drawn = createRiverDraw({plainAt: () => 0, material: null, range: 1200});
+  drawn.update(steps.x, steps.z, {all: true});
+  const piece = drawn.pieces.reduce((best, item) =>
+    Math.hypot(item.centre.x - steps.x, item.centre.z - steps.z) < Math.hypot(best.centre.x - steps.x, best.centre.z - steps.z) ? item : best);
+  const positions = piece.mesh.geometry.getAttribute('position');
+  const normals = piece.mesh.geometry.getAttribute('normal');
+  const across = positions.count / (piece.last - piece.first + 1);
+  assert.equal(across, 39);
+  for (let i = 0; i < across; i++) {
+    const x = positions.getX(i), z = positions.getZ(i);
+    assert.ok(Math.abs(positions.getY(i) + riverGorgeDepthAt(x, z)) < .001);
+    assert.ok(Math.abs(Math.hypot(normals.getX(i), normals.getY(i), normals.getZ(i)) - 1) < .001);
+    if (i > 0 && ((i >= 3 && i <= 16) || (i >= 23 && i <= 36))) {
+      assert.ok(Math.hypot(x - positions.getX(i - 1), z - positions.getZ(i - 1)) <= 2.01);
+    }
+  }
+  drawn.dispose();
+});
 
 test('ground and range hide a car until it breaks cover', () => {
   const hill = HILLS.find(item => item.kind === 'breaks');

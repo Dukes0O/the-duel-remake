@@ -135,7 +135,10 @@ export function createRoadsDraw({net = ROAD_NET, river = RIVER_LAND, plainAt, ma
 
 // ---- The gorge ----------------------------------------------------------------------------------------------------------------------------
 const GORGE_STEP = 16, GORGE_SECTIONS = 64;
-const GORGE_ACROSS = Object.freeze([-92, -84, -78, -72, -66, -60, -56, -52, -40, -20, 0, 20, 40, 52, 56, 60, 66, 72, 78, 84, 92]);
+// Two-metre cells on each bank preserve the Steps' ledges as well as the steep river face.
+// The broad bed and the outer shoulders need fewer samples.
+const GORGE_ACROSS = Object.freeze([-92, -84, -80, -78, -76, -74, -72, -70, -68, -66, -64, -62, -60, -58, -56, -54, -52, -40, -20, 0,
+  20, 40, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 84, 92]);
 // The river's ends are rounded (the ground is cut by distance from the river's line), so the gorge's ribbon closes with a half circle.
 const CAPS = 8;
 
