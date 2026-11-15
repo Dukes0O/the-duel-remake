@@ -1704,3 +1704,13 @@ Each picture now clears the car's stored floor and flight height before placing 
 Check: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none. Codex decided: no new design choice. Removed: the previous view's stored height from the next view's placement.
 
 Still needed: chase camera ground clearance and the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: chase camera ground clearance
+
+The chase and wide cameras use the actual drawn near ground and river triangles to stay at least 1.2 m above the ground. The target rises with the terrain and follows the existing camera smoothing; a final clearance check prevents the camera entering a slope during the transition. Under decks and in tunnels the camera uses the car's floor. This changes only the view. No game event or sound cue was added.
+
+Checks: `node tools/test-camera-clearance.mjs` passed 2,091 checks, including the drawn hill clearance. `node tools/test-tunnels.mjs` passed, including new deck and tunnel floor checks. The first camera check attempt used the wrong Ridge name and was corrected before the passing run. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none; the clearance checks are new. Codex decided: no new design choice. Removed: allowing the chase camera to remain beneath the drawn ground.
+
+Still needed: the scenario's visible checks and views, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks. The camera has not been judged in the browser.

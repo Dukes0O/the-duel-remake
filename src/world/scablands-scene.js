@@ -4,7 +4,7 @@ import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
-import {createNearGround,NEAR_GROUND} from './near-ground.js';
+import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
 import {createGroundLook,createRoadLook,loadGroundPhotos,createTunnelMesh} from './scablands-ground-look.js';
 import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
@@ -857,6 +857,8 @@ export function createScablandsScene(course,options={}){
   group.userData.assetStatus='loading';group.userData.loadErrors=[];group.userData.solids=SCABLANDS_SOLIDS;
   // The road net, the gorge and the crossings are drawn in pieces built as the player nears them; a check or a picture can build them all.
   group.userData.roads=roads;group.userData.gorge=gorge;group.userData.crossings=crossings;group.userData.stepsWay=stepsWay;
+  group.userData.drawnGroundHeightAt=(x,z)=>
+    (riverField.distanceAt(x,z)<80?gorge.heightAtDrawn(x,z):null) ?? nearGroundHeightAt(x,z,plainHeightAt);
   // Where the furnace and Big Bess stand as drawn this frame, for the camera: [{id, x, y, z, heading, halfX, minZ, maxZ, height}].
   group.userData.bigMachineBoxes=()=>{
     const boxes=[];

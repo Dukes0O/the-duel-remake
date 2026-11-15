@@ -17,7 +17,7 @@ import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scabland
 import {stepMover} from '../src/world/scablands-movers.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
 import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
-import {constrainScablandsCamera} from '../src/camera-clearance.js';
+import {constrainScablandsCamera, raiseScablandsCamera} from '../src/camera-clearance.js';
 
 // The chase camera stays below each deck and leaves ordinary ground alone.
 for (const id of ['girder-bridge', 'the-pipe']) {
@@ -27,6 +27,9 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   const camera = {x,y:floors[0]+3,z}, car = {x,y:floors[1],z};
   assert.equal(constrainScablandsCamera({def:{scablands:true}},camera,car,floors[1]),true);
   assert.ok(camera.y < floors[0]-1.2);
+  camera.y=floors[1];
+  assert.equal(raiseScablandsCamera({def:{scablands:true}},camera,car,floors[1],()=>floors[1]),true);
+  assert.ok(Math.abs(camera.y-(floors[1]+1.2))<1e-8,'camera rises from the bed without jumping onto the deck');
   const above = {x,y:floors[0]+3,z};
   assert.equal(constrainScablandsCamera({def:{scablands:true}},above,car,floors[0]),false);
 }
@@ -39,6 +42,9 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.equal(constrainScablandsCamera(course,camera,car,0),true);
   assert.ok(Math.abs(camera.z) < 4 * Math.sqrt(1-.55**2));
   assert.ok(camera.y < 6.2);
+  camera.y=0;
+  assert.equal(raiseScablandsCamera(course,camera,car,0,()=>100),true);
+  assert.ok(camera.y<6.2,'camera rises from the bore floor, not the hillside above');
   const ordinary = {x:50,y:12,z:10};
   assert.equal(constrainScablandsCamera({def:{}},ordinary,car,0),false);
   assert.deepEqual(ordinary,{x:50,y:12,z:10});

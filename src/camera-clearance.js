@@ -1,4 +1,24 @@
-import {scablandsDeckRoofAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsDeckRoofAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+
+// Keep the camera over the visible ground, while using the car's floor under a roof.
+export function raiseScablandsCamera(course, position, car, feet, drawnHeightAt) {
+  if (!course.def?.scablands || !Number.isFinite(feet) || !drawnHeightAt) return false;
+  const tunnels = course.groundTunnels;
+  const carBore = tunnels?.tubeAt(car, feet, .6);
+  const cameraBore = carBore && tunnels.tubeAt(position, feet, .6);
+  let ground;
+  if (cameraBore) {
+    ground = cameraBore.floor;
+  } else {
+    ground = drawnHeightAt(position.x, position.z);
+    // On a deck the drawn river bed is below the car's actual floor.
+    if (!Number.isFinite(scablandsDeckRoofAt(position.x, position.z, feet)))
+      ground = Math.max(ground, scablandsActorHeightAt(position.x, position.z, feet));
+  }
+  if (!Number.isFinite(ground) || position.y >= ground + 1.2) return false;
+  position.y = ground + 1.2;
+  return true;
+}
 
 // Keep the chase view on the car's floor. Ordinary ground keeps its old path.
 export function constrainScablandsCamera(course, position, car, feet) {
