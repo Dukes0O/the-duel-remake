@@ -1,50 +1,38 @@
-﻿# TUNNEL-TRIAL
+# TUNNEL-TRIAL
 
 ## Incomplete
 
-Integration was merged at b23714b22. Conflicts in the status page, ground look and scene were resolved, keeping the integration status and both the photo and tunnel rendering paths. The west scab scarp now has a 100 m trial line with a grade below .15 and both mouths on the surface. A simulated Titan and Falcone now drive the actual Scablands scarp in both directions, with floor checks along the way. The under-deck work remains. The steep-ground rule now samples the tube floor when a tube is installed, so the scarp above does not stop a car underground; a focused test passes. The under-deck changes and scenario remain. The previous rise measurements below are historical, not the chosen site.
+Integration was merged at b23714b22. Conflicts in the status page, ground look and scene were resolved, keeping integration's status and both the photo and tunnel rendering paths. The 100 m trial crosses the west scab scarp at a grade under .15. Both mouths meet the surface. A Titan and a Falcone drive it in both directions in the focused test.
 
-This is unfinished work, not a passing trial. Ordinary cars do not track terrain pose, so, when a tunnel exists, support and the scarp rule use the height already tracked by their jump physics. The wall contact uses that height too. The lane contains the earlier tube query adapted to an explicit car-height argument in `course.groundAt`. Only `_supportAt` passes the car's `groundHeight`. Other calls retain the surface. There is no installed tunnel, switch-controlled scenario, visible opening, mesh, save, or driving proof on the real Ridge. A car placed inside without an initialized height is still unresolved. Do not merge this work as a finished trial.
+This round added a height-aware river-bed query, car support and slope checks, height-aware collision against deck trusses and piers, and the height read for job raiders and Big Bess. With the trial switch on, a car drives under the Girder Bridge and the Pipe in both directions. The four-way drive now travels from the Wash under the bridge, up the Steps and to Tin Town. The switch is off for players. The tests check the piers stay solid below the bridge and do not block the deck.
 
-The tube wall calculation now runs in car contacts when a tunnel is installed and the car starts inside it. A focused contact test checks the side limit and a car above the tube. A controlled straight-course test now drives a real simulated car through a level 100 m tube in both directions. This does not prove the mouths or a complete journey through the tube.
+The browser scenario is not written. In particular, the scene reads tubes only when it is built, so a scenario that shows the cylinder boring must arrange a real update to both ground materials and the lining. Do not claim a visual, frame, save-budget, or boring-machine pass. A mover's height selection has a focused check but a complete raider or Big Bess chase under the deck has not been driven. The full caller inventory remains to be completed.
 
-The support query now tolerates a rise of up to half a metre between samples, and an underground car's support skips surface obstacles and mountain support. A focused test carries the previous floor height along a sloping tube in both directions and checks that surface obstacles still apply above it. The level tube now has a driven-car test, but the half-metre slope allowance still needs testing at real driving speeds. The driving code also samples support for the player's default actor and needs a full journey check.
+The terrain shader adds two vector uniforms, one radius uniform and one capsule-distance test per segment per ground fragment. There is no chunk selection or measured practical limit. The tube is an untextured cylinder; its entrances and joins have not been judged in a browser. No new game event or sound cue was added. My view remains no-go for a finished boring machine until dynamic rebuilding, a real play test and frame measurements are done. Compare a real cut with this shader before choosing.
 
-The support query now ends at each mouth. Previously it could return the tunnel floor indefinitely beyond either end. The focused test checks that both approaches return the surface height; the controlled driving test still passes in both directions. This does not establish that the real site's floor meets the surface at the mouths.
-
-A grid scan around the rise nearest the Ridge, using 25 m position steps and 16 directions, found a maximum midpoint rise of about 1.03 m above the straight line between points 100 m apart. This is a sample, not a proof about every possible line. It suggests a car-sized tube with rock overhead needs approach cuts or different terrain. That choice has not been made.
-
-`course.groundAt` is used by driving and collision, rivals, people on foot, combat, camera, scenery, course construction and effects. Only car support was changed. Every other caller remains unreviewed for underground use, including people and other vehicles. Surface drawing and scenery should normally keep the surface height. The source inventory is `rg -n '\.groundAt\(' src` and `rg -n 'scablands(Surface|Natural|Terrain|Plain)?HeightAt\(' src`; these include unrelated methods with the same name. No race or released course was intentionally changed; replay and world signature guards were not completed, so that is not verified. No fingerprint was recorded.
-
-The scene now passes the course's tubes to the near and coarse ground materials and adds the inward-facing rock lining when `wasteland-town` is enabled. It reads the tubes when the scene is created; it does not yet update them while boring. There is still no installed trial tunnel or browser scenario. Each supplied segment adds two vector uniforms, one radius uniform and one capsule-distance test per ground fragment. There is no chunk selection or measured practical limit yet. The appearance and frame cost are unknown. No new sound event was added. The boring machine is not ready for a go decision on this evidence. Test an approach cut and a driven car first; then compare a real cut to the shader and measure both.
-
-[three-bvh-csg](https://github.com/gkjohnson/three-bvh-csg) is MIT licensed. It uses brushes and an evaluator for subtraction; the source warns about geometry and precision faults. A second trial needs an isolated installation, suitable closed cutting geometry, integration with terrain and collision, and measurements of rebuild and frame time. Cost is not measured.
-
-A repeatable trial placement now joins the tube floor to the surface at both ends and measures the roof against the land. On the rise nearest the Ridge, a 100 m line along its road has no cover over an 8 m diameter roof at any of the 101 sampled points. This is a measurement of that line, not proof for every possible line. The real-site test checks both mouth heights; it does not yet drive a car there or show a tunnel with rock overhead. The placement is available for the unfinished scenario and is not installed in the game.
+[three-bvh-csg](https://github.com/gkjohnson/three-bvh-csg) is MIT licensed. Its brushes and evaluator can subtract closed geometry. A second trial needs an isolated install, closed terrain and cutter geometry, collision and terrain updates, and rebuild and frame measurements. Cost is not measured.
 
 ## Checks
 
-- After the integration merge: `node tools/test-tunnels.mjs` passed, including the scarp floor and steep-ground checks. `node tools/test-combat-replays.mjs` passed 12 checks. `npm.cmd run build` passed. These are interim checks; the final lane tier, world signatures and browser scenario remain.
-
-- `node tools/test-tunnels.mjs`: passed material generation and lining checks, plus ground-query, joined-slope continuity, surface-obstacle, wall-calculation, contact-hook and real simulated driving checks in both directions on a controlled level tube. The real Ridge mouths and save are not tested.
+- `node tools/test-tunnels.mjs`: passed after the deck changes. It checks the scarp in both directions, both decks in both directions, the height switch, and a pier.
+- `node tools/test-scablands-solid.mjs`: passed 18 checks. The four-way route reached town with no hits.
 - `node tools/test-replays.mjs`: passed 297 fingerprints across 33 cases.
 - `node tools/test-combat-replays.mjs`: passed 12 fingerprints across four encounters.
-- Lane tier: interrupted in an earlier round before completion. No pass is claimed.
-- `npm.cmd run build`: passed after adding the real-site measurement. PowerShell blocked `npm` itself under its script policy.
-- Browser: not run. The requested scenario does not exist yet.
+- `npm.cmd run build`: passed.
+- Lane tier, world-signature guard, save budget and browser scenario: not completed this round.
 
 ## For Claude to run
 
-No runnable scenario is ready. After it is built, bore 100 m and drive both directions; inspect both mouths, the inside and ground above, using memory-only saves and Performance quality. Record pictures, draw calls, triangles and frame times.
+The scenario still needs to be built before Claude can run it. It must show a 100 m bore with a plain cylinder, a drive in each direction, views of both mouths, the inside, the ground above and a car under the Girder Bridge. Record draw calls, triangles and frame intervals using memory-only storage and Performance quality.
 
-## Changed assertions
+## Changed assertions, for Claude to review
 
-None.
+`tools/test-scablands-solid.mjs`, four ways: the former assertion expected the bridge deck to stop the car in the bed. It now requires the car to pass beneath the bridge, reach the Steps, and reach Tin Town without falling or wrecking. This moves the expected result toward the design and does not loosen the route requirement.
 
-## Codex decided
+## Codex decided (Claude to review)
 
-For the isolated driving check, the ground rises gently above a level tube on a controlled course. This is test ground, not a choice of Ridge site. The trial needs a site or approach that gives both a usable entrance and overhead rock.
+The trial line crosses the middle of the west scab scarp, from 5 m before its foot to 95 m beyond it. The deck underside is 1.2 m below the plain-level deck. Both heights share the existing ground edit.
 
 ## Removed
 
-The previous first-match selection at overlapping tube joints was replaced by the nearest eligible segment. Tunnel floor support no longer extends beyond the mouths. The ordinary ground shader is unchanged when no tunnel is supplied. Nothing else was removed.
+The previous dead-end route assertion and return to the Wash were replaced by the through route. The earlier surface-only choice for trial car support and job movers was replaced by a height-aware query. The ordinary ground shader remains unchanged when no tunnel is supplied.
