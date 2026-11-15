@@ -9,7 +9,7 @@ import {scarpHeightAt, SCARPS, preparedScarps} from '../src/world/scablands-scar
 import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
-import {sampleLine, sees} from '../src/world/scablands-ways.js';
+import {HOT_DELIVERY_WAYS, routeFor, sampleLine, sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
@@ -17,6 +17,157 @@ import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
+
+test('mesas leave the furnace descent clear', () => {
+  const points = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path
+    .slice(5, 7).map(point => point.position);
+  for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+    assert.ok(distanceToRoad(mesa.x, mesa.z, points) >= mesa.radius + mesa.ramp + 60,
+      'the mesa and its ramp clear the furnace descent and its 60 m corridor');
+  }
+});
+
+test('mesas leave the chasing car an open approach to the furnace', () => {
+  const a = LAND.at('ridge', -1350, 726);
+  const b = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path[6].position;
+  const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+  const mesas = HILLS.filter(hill => hill.kind === 'mesa');
+  for (const point of sampleLine([a, b], 5)) for (const offset of [-60, -45, -30, -15, 0, 15, 30, 45, 60]) {
+    const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+    assert.equal(scablandsTerrainHeightAt(x, z, mesas), scablandsTerrainHeightAt(x, z, []),
+      `a mesa blocks the chase approach at ${Math.round(x)}, ${Math.round(z)}`);
+  }
+});
+
+test('the first three Hot Soup legs have clear hill corridors', () => {
+  const step = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
+  const points = [step.origin, ...step.safePoints].map(place => place.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Hot Soup leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
+test('Slow Ride has a clear hill corridor', () => {
+  const points = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride').steps[0].path.map(point => point.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    if (!length) continue;
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Slow Ride leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
+test('the long gas road stays clear of hills apart from the Ridge top', () => {
+  const points = GAS_RUN_PATHS.long.map(point => point.position);
+  const withoutRidge = HILLS.filter(hill => hill.kind !== 'ridge-top');
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    if (!length) continue;
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z, withoutRidge), scablandsTerrainHeightAt(x, z, []),
+          `long gas road leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
+test('the Boneyard gas run has a clear hill corridor', () => {
+  const points = GAS_RUN_PATHS.boneyard.map(point => point.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    if (!length) continue;
+    for (const point of sampleLine([a, b], 10)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Boneyard gas run leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
+test('the first two Survey Flags legs have clear hill corridors', () => {
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  const points = flags.slice(0, 3).map(flag => flag.position);
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const point of sampleLine([a, b], 20)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+          `Survey Flags leg ${i} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
+
+test('mesas leave every Survey Flags leg clear', () => {
+  const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;
+  for (let i = 1; i < flags.length; i++) {
+    const leg = [flags[i - 1].position, flags[i].position];
+    for (const mesa of HILLS.filter(hill => hill.kind === 'mesa')) {
+      assert.ok(distanceToRoad(mesa.x, mesa.z, leg) >= mesa.radius + mesa.ramp + 60,
+        `the mesa and its ramp clear flag leg ${i} and its 60 m corridor`);
+    }
+  }
+});
+
+test('the thief and Big Bess have clear hill corridors', () => {
+  for (const id of ['everburn-run-him-down', 'everburn-slow-ride']) {
+    const job = EVERBURN_JOBS.find(item => item.id === id);
+    const points = job.steps[0].path.map(point => point.position ?? point);
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+      if (!length) continue;
+      for (const point of sampleLine([a, b], 20)) {
+        for (const offset of [-60, -30, 0, 30, 60]) {
+          const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+          assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, []),
+            `${job.name} has a hill in its corridor at ${Math.round(x)}, ${Math.round(z)}`);
+        }
+      }
+    }
+  }
+});
+
+test('mesa faces and ramps leave the plates way and its corridor clear', () => {
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const withoutMesas = HILLS.filter(hill => hill.kind !== 'mesa');
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i];
+    const dx = b.x - a.x, dz = b.z - a.z, length = Math.hypot(dx, dz);
+    for (const point of sampleLine([a, b], 5)) {
+      for (const offset of [-60, -30, 0, 30, 60]) {
+        const x = point.x - dz * offset / length, z = point.z + dx * offset / length;
+        assert.equal(scablandsTerrainHeightAt(x, z), scablandsTerrainHeightAt(x, z, withoutMesas),
+          `a mesa reaches the plates way corridor at ${Math.round(x)}, ${Math.round(z)}`);
+      }
+    }
+  }
+});
 
 test('the Ridge lookout sees only within range and over clear ground', () => {
   const ridge = LAND.at('ridge'), car = {x: ridge.x + 100, z: ridge.z};
@@ -347,15 +498,10 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
   const hills = HILLS.filter(hill => hill.kind === 'breaks');
   assert.ok(hills.length >= 3);
   const mall = LAND.place('dead-mall');
-  for (const [index, hill] of hills.entries()) {
-    assert.ok(hill.x < 0 && hill.z > 0 && hill.z < mall.z);
+  for (const hill of hills) {
+    assert.ok(hill.z > 0 && hill.z < mall.z);
     assert.ok(hill.height >= 40 && hill.height <= 90);
     assert.equal(hillHeightAt(hill.x, hill.z), hill.height);
-    if (index) {
-      const previous = hills[index - 1];
-      const spacing = Math.hypot(hill.x - previous.x, hill.z - previous.z);
-      assert.ok(spacing >= 400 && spacing <= 900);
-    }
     for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
       const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((hill.x - a.x) * dx + (hill.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
@@ -366,13 +512,28 @@ test('the Breaks have spaced hills and leave the road passes open', () => {
 
 test('the seeded Breaks have sixteen hills with nearby neighbours', () => {
   const hills = HILLS.filter(hill => hill.kind === 'breaks');
-  assert.equal(hills.length, 16);
+  assert.equal(hills.filter(hill => !hill.passRoad).length, 16);
+  assert.equal(hills.filter(hill => hill.passRoad).length, 6);
   for (const hill of hills) {
     const nearest = Math.min(...hills.filter(other => other !== hill)
       .map(other => Math.hypot(hill.x - other.x, hill.z - other.z)));
     assert.ok(nearest >= 400 && nearest <= 900);
     assert.ok(hill.radius >= 260 && hill.radius <= 460);
     assert.ok(hill.height >= 40 && hill.height <= 90);
+  }
+});
+
+test('each Breaks road runs between two rising shoulders', () => {
+  for (const id of ['burn-road', 'mall-road', 'mall-burn-road']) {
+    const road = ROAD_NET.road(id), shoulders = HILLS.filter(hill => hill.passRoad === id);
+    assert.equal(shoulders.length, 2, `${id} has two shoulders`);
+    const centre = {x: (shoulders[0].x + shoulders[1].x) / 2, z: (shoulders[0].z + shoulders[1].z) / 2};
+    assert.ok(distanceToRoad(centre.x, centre.z, road.points) < 1, `${id} runs between them`);
+    for (const hill of shoulders) {
+      const dx = hill.x - centre.x, dz = hill.z - centre.z, distance = Math.hypot(dx, dz);
+      assert.ok(hillHeightAt(centre.x + dx * 150 / distance, centre.z + dz * 150 / distance, [hill]) > 1,
+        `${id} has rising ground within 150 m on each side`);
+    }
   }
 });
 
@@ -443,8 +604,20 @@ test('hill footprints leave both river decks clear from end to end', () => {
   }
 });
 
+test('the Lookout ramp stays below ten degrees on its approach', () => {
+  const hill = HILLS.find(item => item.kind === 'lookout');
+  assert.equal(hill.ramp, 300);
+  for (const angle of [hill.rampAngle, -Math.PI / 2]) {
+    for (let d = hill.topRadius; d < hill.radius + hill.ramp; d += 2) {
+      const height = distance => scablandsTerrainHeightAt(hill.x + Math.cos(angle) * distance, hill.z + Math.sin(angle) * distance);
+      assert.ok(Math.abs(height(d + 2) - height(d)) / 2 <= Math.tan(Math.PI / 18), `slope at ${d} m`);
+    }
+  }
+});
+
 test('the Lookout has a level top, follows the Ridge, and leaves roads clear', () => {
   const hill = HILLS.find(item => item.kind === 'lookout');
+  assert.equal(hill.height, 60);
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ridge', 100, 200)))
     .find(item => item.kind === 'lookout');
   assert.equal(moved.x - hill.x, 100);
@@ -472,9 +645,11 @@ test('the scab plates have level mesas with steep sides and a drivable ramp', ()
   const mesas = HILLS.filter(hill => hill.kind === 'mesa');
   assert.equal(mesas.length, 6);
   const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
+  const way = routeFor(HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates').legs, {start: LAND.yard, destination: LAND.at('tin-town')});
   for (const mesa of mesas) {
     assert.ok(mesa.height >= 30 && mesa.height <= 55 && mesa.face === 30 && mesa.ramp === 220);
     assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
+    assert.ok(distanceToRoad(mesa.x, mesa.z, way) >= mesa.radius + 200, 'the mesa clears the plates way by 200 m');
     const top = scablandsTerrainHeightAt(mesa.x, mesa.z);
     assert.equal(top - scablandsTerrainHeightAt(mesa.x, mesa.z, []), mesa.height);
     for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {

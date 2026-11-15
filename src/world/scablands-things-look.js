@@ -9,7 +9,7 @@
 //
 // Small things (stone, scrub, brush, bone, can, scrap, salt, stump) are shaped about the origin within one unit, as the
 // view scales them: half a unit up and down, and the view sinks them a little into the ground. Standing things
-// (telegraph, telegraph-down, fence-post, sign-post, pylon-foot, boulder) are shaped inside a cube of one unit that the
+// (telegraph, telegraph-down, fence-post, sign-post, pylon-foot, dead-tree, snag, boulder) are shaped inside a cube of one unit that the
 // view stretches to the thing's own width, height and depth, so each is written here in metres over those sizes.
 import * as THREE from 'three';
 import {mergeGeometries, mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -289,6 +289,54 @@ function pylonFootShape([width, height, depth]) {
   });
 }
 
+// A dead cottonwood, of the kind that lines a river long after its water has gone: a crooked leaning trunk with a spread
+// foot, heavy limbs that reach out and fork, crooked branches and a crown of bare twigs, every end snapped off. Bleached
+// silver where the bark has fallen, dark in the forks and at the ground. `limbs` is how many times the wood forks (3 a
+// tree, 1 a broken snag). About 420 triangles a tree, 60 a snag.
+function deadTreeShape([width, height, depth], seed, limbs = 3) {
+  const rng = makeRng(seed), parts = [], up = new THREE.Vector3(0, 1, 0);
+  const tube = (a, b, r0, r1, sides) => {
+    const along = b.clone().sub(a), length = along.length();
+    return new THREE.CylinderGeometry(Math.max(r1, .024), Math.max(r0, .034), length, sides, 1, true).translate(0, length / 2, 0)
+      .applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, along.normalize())).translate(a.x, a.y, a.z);
+  };
+  // One length of wood in `pieces` crooked pieces, then its forks. `forks` counts down to the twigs (0).
+  const grow = (from, heading, length, radius, forks, pieces) => {
+    const sides = forks >= 2 ? 5 : forks === 1 ? 4 : 3, crook = forks >= 2 ? .22 : .42, joints = [from.clone()];
+    let at = from.clone(), way = heading.clone(), thick = radius;
+    const taper = forks ? .82 : .45;
+    for (let piece = 0; piece < pieces; piece++) {
+      const next = at.clone().addScaledVector(way, length / pieces);
+      parts.push(tube(at, next, thick, thick * taper, sides));
+      at = next; thick *= taper; joints.push(at.clone());
+      way = way.clone().add(new THREE.Vector3(rng.range(-crook, crook), rng.range(-.12, .22), rng.range(-crook, crook))).normalize();
+    }
+    if (!forks) return;
+    for (let i = 0; i < 3; i++) {
+      const turn = rng.range(0, Math.PI * 2), lift = forks === limbs ? rng.range(.25, .7) : rng.range(.05, .65);
+      const out = new THREE.Vector3(Math.sin(turn), lift, Math.cos(turn)).normalize();
+      const where = i === 0 ? at : joints[1 + Math.floor(rng.range(0, joints.length - 1.001))];
+      grow(where, way.clone().multiplyScalar(i === 0 ? .7 : .25).add(out).normalize(), length * rng.range(.5, .78), thick * (i === 0 ? .8 : .62), forks - 1, forks - 1 >= 1 ? 2 : 1);
+    }
+  };
+  const lean = new THREE.Vector3(rng.range(-.2, .2), 1, rng.range(-.2, .2)).normalize();
+  parts.push(tube(new THREE.Vector3(0, -.35, 0), new THREE.Vector3(0, .5, 0), .52, .33, 6));
+  grow(new THREE.Vector3(0, .45, 0), lean, limbs > 1 ? 3.4 : 2.6, .32, limbs, 3);
+  const merged = mergeGeometries(parts.map(part => { const g = part.toNonIndexed(); g.deleteAttribute('uv'); return g; }));
+  // Fitted to the thing's own size: the foot at the middle of the cube's floor, the highest twig at its top.
+  merged.computeBoundingBox();
+  const box = merged.boundingBox, reach = Math.max(-box.min.x, box.max.x, -box.min.z, box.max.z, .01);
+  const fit = Math.min(height / box.max.y, width / 2 / reach, depth / 2 / reach);
+  merged.scale(fit / width, fit / height, fit / depth).translate(0, -.5, 0);
+  merged.computeVertexNormals(); merged.computeBoundingSphere();
+  const silver = colour(0x8d8576), grey = colour(0x625a4d), dark = colour(0x2c2620), bark = colour(0x4a3f33);
+  return paint(merged, (p, n) => {
+    const metres = (p.y + .5) * height, grain = .5 + .5 * lump(p.x * width * 5, p.y * height * 1.3, p.z * depth * 5, seed);
+    const wood = mix(mix(grey, silver, grain * .8 + Math.max(0, n.y) * .3), bark, (1 - grain) * (1 - grain) * .9 * Math.max(0, 1 - metres / (height * .45)));
+    return mix(wood, dark, Math.max(0, 1 - metres / .7) * .75 + Math.max(0, -n.y) * .3);
+  });
+}
+
 // ---- What the view asks for -------------------------------------------------------------------------------------------------------------------
 const SMALL = {
   stone: () => rockShape({seed: 11, detail: 1, rough: .3, cuts: 5, base: -.3, tile: .9}),
@@ -306,6 +354,8 @@ const STANDING = {
   'fence-post': size => fencePostShape(size),
   'sign-post': size => signPostShape(size),
   'pylon-foot': size => pylonFootShape(size),
+  'dead-tree': size => deadTreeShape(size, 71, 3),
+  snag: size => deadTreeShape(size, 83, 1),
   boulder: () => rockShape({seed: 51, detail: 2, rough: .3, squat: .8, cuts: 11, base: -.26, tile: .55, wide: 1.25, sink: .2}),
 };
 // Which surface each kind wears: rock wears the ground's photographs, a plant its drawn picture, and sheet iron is seen from both sides.
@@ -388,11 +438,11 @@ export function pylonPicture(documentLike = typeof document === 'undefined' ? nu
   const canvas = documentLike.createElement('canvas'); canvas.width = 256; canvas.height = 1024;
   const pen = canvas.getContext('2d'), rng = makeRng(77);
   pen.clearRect(0, 0, 256, 1024); pen.lineCap = 'square';
-  const steel = () => `rgb(${[118, 116, 110].map(v => Math.round(v * rng.range(.8, 1.08))).join(',')})`;
+  const steel = () => `rgb(${[110, 117, 124].map(v => Math.round(v * rng.range(.8, 1.08))).join(',')})`;
   const bar = (x0, y0, x1, y1, wide) => {
     pen.strokeStyle = steel(); pen.lineWidth = wide; pen.beginPath(); pen.moveTo(x0, y0); pen.lineTo(x1, y1); pen.stroke();
     // Rust below the bar's lower end.
-    pen.strokeStyle = `rgba(104,62,38,${rng.range(.35, .7)})`; pen.lineWidth = wide * .6; pen.beginPath(); pen.moveTo(x1, y1); pen.lineTo(x1, Math.min(1023, y1 + rng.range(6, 22))); pen.stroke();
+    pen.strokeStyle = `rgba(104,62,38,${rng.range(.22, .5)})`; pen.lineWidth = wide * .6; pen.beginPath(); pen.moveTo(x1, y1); pen.lineTo(x1, Math.min(1023, y1 + rng.range(6, 22))); pen.stroke();
   };
   // Tower face: the picture's bottom is the foot. Panels are tall at the foot and short at the top.
   bar(5, 1023, 5, 0, 9); bar(123, 1023, 123, 0, 9);
@@ -414,6 +464,7 @@ export function pylonPicture(documentLike = typeof document === 'undefined' ? nu
 }
 
 export function pylonSurface(picture = pylonPicture()) {
-  // Old galvanised steel is dull: no shine, and taken down so that the land's strong light does not draw it white.
-  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0x8f8b82 : 0x6f6c66, alphaTest: .45, side: THREE.DoubleSide, roughness: 1, metalness: 0});
+  // Old galvanised steel is dull: no shine, taken down so that the land's strong light does not draw it white, and a little blue so
+  // that the same warm light draws it grey and not olive.
+  return new THREE.MeshStandardMaterial({map: picture, color: picture ? 0x868a8f : 0x6a6d70, alphaTest: .45, side: THREE.DoubleSide, roughness: 1, metalness: 0});
 }

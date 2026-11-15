@@ -702,6 +702,30 @@ fine enough that a hill 400 m across keeps its shape at a distance, inside the f
 Hill ground is drawn in code as what it is: scree on the steep faces, bare rock at the crests,
 the region's own ground in the valleys.
 
+**Numbers added after the first build (Claude, 15 November 2026).** Codex's first table was thirteen smooth domes on 140
+square kilometres, which is not hill country, and its pictures showed mesas too low to be cover. These numbers win over the
+list above where they differ:
+
+- **The Breaks: 16 hills,** 40 to 90 m high, radius 260 to 460 m, crests 400 to 900 m apart, placed from the land's seed. The
+  Burn Road, the Mall Road and the road from the Mall to the Everburn go through; each has a pass with a hill within 150 m on
+  both sides.
+- **Six mesas, 30 to 55 m high** (15 to 25 m read as a sliver on the horizon), radius 120 to 260 m, sides 30 m wide and too
+  steep to climb, one ramp each, 220 m long. Cover from the furnace on the plates' way (three hidden
+  stretches of 150 m or more) is built with EVERBURN-REMAKE job 1, whose design fixes where the furnace stands.
+- **Six foothills** round the Ridge, 18 to 40 m. **A dune field of 14** round the Ships, 8 to 15 m high and 70 to 130 m in
+  radius, so that a crest hides a car.
+- **The Lookout: 60 m,** with one ramp of 300 m on the side nearest the Ridge Road. The Ridge's top stays level and low: it is
+  a named place.
+- **No hill is a round dome:** each has 3 to 5 spurs, and no hill slope is steeper than 30 degrees (a mesa's side and a scarp
+  may be).
+- **Sight and floors.** Sight is traced from each actor's own floor, so a car under a deck or in a tunnel is hidden as the
+  ground and the deck hide it. **Stopping is not hiding:** a raider fires on a car it sees within range, moving or stopped,
+  after 1.2 s of unbroken sight (the Scablands only; races and arena events keep their rule).
+- **The chase camera** is never less than 1.2 m above the drawn ground.
+- **Drawn (Claude):** a hill is worn rock, not a heap of the plain's dust: level beds of buff, red, grey and pale stone show
+  as bands round its sides and rain has cut rills down every slope (`createHillField` and the hill block in
+  `src/world/scablands-ground-look.js`). Dunes stay sand; a hill in the salt pan shows its rock on its slopes.
+
 ### Slice 2d design (Claude, 14 November 2026): buildings fall
 
 Slice 2b makes every building solid. This slice makes the light ones fall, as Kyle asked.

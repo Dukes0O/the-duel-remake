@@ -259,37 +259,82 @@ const colour = (geometry, hex) => {
 
 // The bridge: a deck level with the plain, a truss up each side (two chords, uprights and a diagonal in each bay), cross ties across the
 // top and three piers down to the bed. `length` is the span along the road. Returns one geometry.
+// Drawn as old riveted steel: every member its own shade of rust (from the member's place, so it never changes), a gusset plate at every
+// joint, crossed wind bracing overhead, a portal with knee braces at each end, a plank deck with timber kerbs, and piers with caps and a
+// dark band where the floods stood. The solid shapes a car meets are unchanged (src/world/scablands-solids.js).
 export function girderBridgeGeometry({length = 176, deckWidth = 15, bay = 11, depthBelow = 9} = {}) {
-  const parts = [], steel = 0x5a4a3c, dark = 0x3b322b, concrete = 0x6b6358, half = length / 2, rail = deckWidth / 2 + .3, top = 5.4;
-  parts.push(colour(box(deckWidth, 1.2, length, 0, -.6, 0), 0x4b4137));
+  const parts = [], half = length / 2, rail = deckWidth / 2 + .3, top = 5.4;
+  // A shade of rust for the member at (a, b): deep red-brown through dark scale to a pale orange bloom.
+  const shade = (a, b, dark = 1) => {
+    const t = Math.abs(Math.sin(a * 12.9898 + b * 78.233) * 43758.5453) % 1, u = Math.abs(Math.sin(a * 39.346 + b * 11.135) * 24634.6345) % 1;
+    const r = (.215 + .085 * t) * dark, g = (.118 + .04 * t + .022 * u) * dark, bl = (.082 + .03 * u) * dark;
+    return new THREE.Color().setRGB(r, g, bl, THREE.SRGBColorSpace).getHex();
+  };
+  const turned = (width, height, depth, x, y, z, about) => {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    geometry.rotateY(about); geometry.translate(x, y, z);
+    return geometry;
+  };
+  // The deck: planks across the road in three weathered shades, a steel floor beam under every bay, a timber kerb along each edge.
+  const plank = 2.2, planks = Math.round(length / plank), plankStep = length / planks;
+  for (let index = 0; index < planks; index++) {
+    const t = Math.abs(Math.sin(index * 7.13) * 9973.1) % 1;
+    parts.push(colour(box(deckWidth, .5, plankStep - .05, 0, -.25, -half + (index + .5) * plankStep), [0x4a4138, 0x554a3e, 0x40382f][Math.floor(t * 3)]));
+  }
+  parts.push(colour(box(deckWidth - .4, .7, length, 0, -.85, 0), 0x2b2420));
+  for (const side of [-1, 1]) parts.push(colour(box(.35, .35, length, side * (deckWidth / 2 - .5), .17, 0), 0x6a6258));
   const bays = Math.round(length / bay), step = length / bays;
+  for (let index = 0; index <= bays; index++) parts.push(colour(box(deckWidth + 1.2, .5, .4, 0, -.95, -half + index * step), shade(index, 9, .7)));
   for (const side of [-1, 1]) {
     const x = side * rail;
-    parts.push(colour(box(.55, .55, length, x, top, 0), steel), colour(box(.7, .6, length, x, -.1, 0), dark));
+    parts.push(colour(box(.55, .55, length, x, top, 0), shade(side, 1)), colour(box(.7, .6, length, x, -.1, 0), shade(side, 2, .62)));
     for (let index = 0; index <= bays; index++) {
       const z = -half + index * step;
-      parts.push(colour(box(.4, top + .1, .4, x, top / 2, z), steel));
+      parts.push(colour(box(.4, top + .1, .4, x, top / 2, z), shade(index, side + 3)));
+      // Gusset plates on the outer face, at the foot and the head of every upright.
+      parts.push(colour(box(.08, 1.0, 1.5, x + side * .24, .55, z), shade(index, side + 5, .78)), colour(box(.08, .9, 1.5, x + side * .24, top - .4, z), shade(index, side + 7, .78)));
       if (index < bays) {
         const turn = Math.atan2(step, top) * (index % 2 ? 1 : -1), diagonal = Math.hypot(top, step);
-        parts.push(colour(box(.3, diagonal, .3, x, top / 2, z + step / 2, turn), steel));
+        parts.push(colour(box(.3, diagonal, .3, x, top / 2, z + step / 2, turn), shade(index + .5, side + 4)));
       }
     }
   }
-  // Cross ties over the roadway every third bay, high enough for any car and Big Bess.
-  for (let index = 1; index < bays; index += 3) parts.push(colour(box(deckWidth + .6, .35, .35, 0, top, -half + index * step), steel));
-  for (const along of [-half * .62, 0, half * .62]) parts.push(colour(box(deckWidth - 3, depthBelow + .6, 3.4, 0, -depthBelow / 2 - .55, along), concrete));
+  // Cross ties over the roadway every third bay, high enough for any car and Big Bess, with crossed wind bracing between them.
+  const ties = [];
+  for (let index = 0; index <= bays; index += 3) ties.push(-half + index * step);
+  if (ties.at(-1) < half - 1) ties.push(half);
+  ties.forEach((z, index) => parts.push(colour(box(deckWidth + .6, .35, .35, 0, top, z), shade(index, 21))));
+  for (let index = 0; index + 1 < ties.length; index++) {
+    const span = ties[index + 1] - ties[index], reach = Math.hypot(span, deckWidth + .6), about = Math.atan2(deckWidth + .6, span);
+    for (const way of [-1, 1]) parts.push(colour(turned(.14, .1, reach, 0, top + .05 * way, ties[index] + span / 2, about * way), shade(index, 23 + way, .85)));
+  }
+  // A portal at each end: a deeper beam overhead and a knee brace down to each end post.
+  for (const end of [-1, 1]) {
+    parts.push(colour(box(deckWidth + .6, .9, .3, 0, top - .3, end * half), shade(end, 31, .9)));
+    for (const side of [-1, 1]) {
+      const knee = new THREE.BoxGeometry(.2, 2.6, .2); knee.rotateZ(side * Math.PI / 4); knee.translate(side * (rail - .95), top - 1.2, end * half);
+      parts.push(colour(knee, shade(end, side + 33, .9)));
+    }
+  }
+  // Piers: weathered concrete, wider at the cap, dark where the floods stood.
+  for (const along of [-half * .62, 0, half * .62]) {
+    const stain = 2.2, tall = depthBelow + .6 - stain;
+    parts.push(colour(box(deckWidth - 3, tall, 3.4, 0, -.25 - tall / 2, along), 0x77706a));
+    parts.push(colour(box(deckWidth - 3, stain, 3.4, 0, -.25 - tall - stain / 2, along), 0x4f4a45));
+    parts.push(colour(box(deckWidth - 1.6, .7, 4.2, 0, -1.15, along), 0x827a72));
+  }
   return mergeGeometries(parts.map(part => part.toNonIndexed()));
 }
 
 // The Pipe: a narrow deck one car wide with an old pipeline on piers beside it, flanged every few metres.
 export function pipeGeometry({length = 176, deckWidth = 8.4, depthBelow = 9} = {}) {
-  const parts = [], half = length / 2, rust = 0x5c3f2b, pipeRadius = 1.15, pipeX = deckWidth / 2 + 2.2;
+  const parts = [], half = length / 2, rust = 0x47301f, pipeRadius = 1.15, pipeX = deckWidth / 2 + 2.2;
   parts.push(colour(box(deckWidth, 1.2, length, 0, -.6, 0), 0x4b4137));
   const pipe = new THREE.CylinderGeometry(pipeRadius, pipeRadius, length, 14, 1, false);
   pipe.rotateX(Math.PI / 2); pipe.translate(pipeX, 1.5, 0); parts.push(colour(pipe, rust));
   for (let z = -half + 6; z < half; z += 11) {
     const flange = new THREE.CylinderGeometry(pipeRadius + .22, pipeRadius + .22, .5, 14); flange.rotateX(Math.PI / 2); flange.translate(pipeX, 1.5, z);
-    parts.push(colour(flange, 0x3f2c20));
+    parts.push(colour(flange, 0x2f221a));
   }
   for (let z = -half + 9; z < half; z += 22) parts.push(colour(box(1.1, depthBelow + 2.4, 1.1, pipeX, -depthBelow / 2 + .35, z), 0x3d3630));
   for (const along of [-half * .6, 0, half * .6]) parts.push(colour(box(deckWidth - 2, depthBelow + .6, 2.6, 0, -depthBelow / 2 - .45, along), 0x6b6358));

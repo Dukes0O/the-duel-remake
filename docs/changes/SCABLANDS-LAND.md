@@ -1837,7 +1837,7 @@ All six mesas now rise 30 to 36 m, with 30 m sides and 220 m ramps. The eastern 
 
 Check: `node tools/test-scablands-hills.mjs` passed 33 of 33. Its first run exposed the East Road overlap; the rerun passed after moving the mesa. Race fingerprints and world signatures were not rerun. Claude must run and judge all picture views, including those after the Ridge.
 
-Changed assertion, for Claude to review: added mesas' height range changed from 15–25 m to 30–55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30–36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
+Changed assertion, for Claude to review: added mesas' height range changed from 15ï¿½25 m to 30ï¿½55 m to match the new design. This changes the accepted range, without weakening the new design. New checks require all six mesas to meet that range and have 30 m sides and 220 m ramps. Codex decided: keep the heights at 30ï¿½36 m so the existing smooth ramps pass the .30 slope check, and move the eastern original mesa west. Removed: the former lower, wider-sided mesa profiles.
 
 Still needed: prove the three separate furnace-cover stretches and all protected corridors; verify the Breaks and all three road passes; drive the routes and jobs; complete the remaining hill-country requirements and final checks.
 
@@ -1914,3 +1914,202 @@ The hills suite checks the full 176 m length of both river decks against every h
 Check: `node tools/test-scablands-hills.mjs` passed 38 of 38. The picture scenario, replay checks and world signatures were not run in this step. Changed assertions: none; the deck check is new. Codex decided: use the deck direction and length used by the land's crossing solids, and include each deck's half-width. Removed: none.
 
 Still needed: build and prove all three Breaks road passes, prove the three mesa cover stretches and job corridors, drive the routes and jobs, and run final checks. Claude must run and judge the pictures.
+
+### Hill country: higher Lookout and dune picture
+
+The Lookout rises 60 m instead of 45 m, with the same footprint and level top. The dune picture starts 250 m farther from its crest so the feature has more room in the chase camera view. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 38 of 38; `node --check tools/scenarios/scablands-hills.mjs` passed. The browser picture was not run; Claude must check it and the views after it. Replay fingerprints and world signatures were not rerun.
+
+Changed assertions: added an exact 60 m Lookout height check, replacing no assertion. The old 45 m height was raised to 60 m at Claude's direction. The dune landmark is unchanged; its camera start moved 250 m farther away. Codex decided: use the greater distance to fit the crest in the picture. Removed: the former 45 m height and closer dune camera position.
+
+Still needed: prove and build the three road passes, prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks.
+
+### Hill country: three road passes
+
+Added a pair of 40 m shoulders at each of the Burn Road, Mall Road and Mall to Everburn Road. Their positions follow the roads' named points, and their feet stay clear of the road centres. The 16 seeded Breaks hills remain. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 39 of 39, including new checks for rising ground within 150 m on both sides of each road and the existing centre-line clearance check. The browser pictures, route drives, replay checks and world signatures were not run in this step.
+
+Changed assertions, for Claude to review: the Breaks total changed from 16 to 22, comprising the original 16 and six pass shoulders, as directed. The former `x < 0` restriction was removed because the Mall Road follows x = 0 and its eastern shoulder must lie east of it; the existing widened-country check still applies. The consecutive table-order spacing check was removed because appended pass pairs have no geographic table order; the existing 400-900 m nearest-neighbour check applies to every hill. These changes relax the old table-order and west-only assertions, but preserve the specified geographic and nearest-neighbour requirements. No other assertion was loosened.
+
+Codex decided: place shoulders 280 m from each road centre with a 260 m radius, using 30%, 30% and 66% of the respective road lengths. Removed: the old assumption that all Breaks centres must lie west of x = 0.
+
+Still needed: prove mesa cover and job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: first furnace-cover mesa
+
+Placed one mesa between the furnace and the plates' way, using the yard and Tin Town as its anchors. The hill suite samples the way within the furnace's 1,400 m range and checks for a hidden stretch of at least 150 m and open ground. It passes 40 of 40. Sampling at 5 m found one long hidden stretch of about 745 m, a short one of about 60 m, and open ground between. This does not meet the three-stretch requirement yet. No game event or sound cue was added.
+
+Changed assertions: none. The cover check is new; it proves only the first required stretch, not all three. Codex decided: place the mesa 1,650 m west and 125 m south of the point 70% from the yard to Tin Town, with its ramp pointing west. Removed: one previously seeded mesa position, replaced by this mesa. Race fingerprints and pictures were not checked in this step.
+
+Still needed: provide and prove three separate 150 m furnace-cover stretches, prove the job corridors and drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.
+
+### Hill country: plates-way clearance
+
+Moved the first mesa off the plates' way. Seeded mesas now keep their nominal top radii at least 200 m from that way and their full ramp footprints clear of the trial tunnel mouths. A new assertion checks the nominal top clearance for all six mesas. The first mesa's centre moved from 200 m south to 350 m north of its named anchor; the later seeded positions changed as a result. No event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 40 of 40. An intermediate placement failed the tunnel-mouth, ramp and tunnel-roof checks and was replaced. The browser scenario, route drives, replay checks and world signatures were not run. Changed assertions: none; the clearance assertion is new. Codex decided: measure 200 m from the nominal mesa top radius for this check. This does not yet prove clearance of the whole face and ramp. Removed: the former mesa position across the way.
+
+Still needed: prove the complete mesa footprints clear the plates' way and provide three separate 150 m furnace-cover stretches. A coarse placement search did not find three stretches under the current road and river clearance checks; it is not an exhaustive proof. Check job corridors, drive the routes and jobs, merge integration and run the final checks. Claude must run and judge the picture scenario.
+
+### Hill country: measure mesa cover
+
+The hills suite now checks that the furnace-cover mesa itself adds at least 150 m of hidden ground on the plates' way. At 5 m intervals it adds about 590 m; without it the existing long hidden stretch falls from about 750 m to 160 m. The current land still has only two hidden stretches, about 750 m and 65 m, within the furnace's range, not the required three of 150 m. A coarse 20 m grid search of 120 m radius mesa centres, using the current road, river, place and plates clearance checks, found candidate shadows only at the same end of the way. This is not an exhaustive search and does not prove the design impossible. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 41 of 41. Race fingerprints, world signatures, route drives, build and browser pictures were not run in this step.
+
+Changed assertions: none. The mesa contribution check is new and does not weaken the existing cover assertion. Codex decided: compare the current surface to the same terrain without that mesa, sampling at 5 m. Removed: none.
+
+Still needed: provide and prove three separate 150 m mesa-cover stretches, prove job corridors, drive the routes and jobs, merge integration and run final checks. Claude must run and judge the picture scenario.
+
+### Hill country: plates way corridor
+
+The hills suite now compares the ground with and without mesas every 5 m along the plates' way, at the centre and at offsets up to 60 m on both sides. The mesa faces and ramps do not raise any of those sampled points. This covers the whole way, including the first cover mesa. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 42 of 42. Changed assertions: none; the corridor check is new. Codex decided: sample across the corridor at 30 m intervals; this is a sampled check, not a proof for every point. Removed: none. Race fingerprints, world signatures, route drives, build and browser pictures were not run in this step.
+
+The three cover stretches are still not met. A 10 m grid search for a 120 m radius mesa found no candidate shadow on the visible part of the way beyond 3,100 m along it, within the examined region and the road, river, plates and 200 m way clearances. The search used circular shadow geometry and is not an exhaustive proof. Continue with mesa cover, then check the remaining job corridors and drive the routes and jobs. Merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: furnace road clearance
+
+Moved the northern mesa 300 m east and 300 m north, clear of both furnace roads. The other seeded mesa positions stay as they were. No game event or sound was added.
+
+Checks: the hills suite passed 42 of 42. The focused furnace-road check passed. The full solid suite before this fix passed 23 of 25: all four ways to Tin Town passed with realism on and off, but the furnace road crossed the mesa and the car could not reach the raised Lookout. The furnace road passed after the move; the Lookout is still unresolved. No replay, world-signature, build or picture check was run.
+
+Changed assertions: none. Codex decided: preserve the seeded placement reference so moving one mesa does not move the others. Removed: the northern mesa's former position on the furnace road.
+
+Still needed: three separate mesa-cover stretches, a drivable Lookout, job-corridor proof and Easy job drives, then integration and the final checks. Claude must run and judge the pictures.
+
+### Hill country: Lookout approach
+
+The 60 m Lookout now has a gradual approach facing the Ridge Road, also covering the existing northern drive. The first 300 m of the descent is followed by a gradual approach to the existing ground. This extra approach is needed to keep the rise below ten degrees. The other sides retain their previous shape. No game event or sound was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 43 of 43, including a new sampled slope check on the centre and northern approach. `node --test --test-name-pattern='a car drives up the Ridge and the Lookout' tools/test-scablands-solid.mjs` passed, without changing the driver. No browser, replay, world-signature or build check was run.
+
+Changed assertions: none. The slope check is new. Codex decided: centre the approach between the nearest point of the Ridge Road and the existing northern drive, and extend the approach beyond the 300 m ramp to meet the ten-degree limit. Removed: the impassable northern side of the Lookout.
+
+Still needed: three separate mesa-cover stretches, job-corridor proof and Easy job drives, integration and final checks. Claude must run and judge the pictures.
+
+### Hill country: route proof in progress
+
+The solid suite passed all 25 checks, including the four ways to Tin Town with realism on and off, both furnace roads, and the drives to the Ridge and Lookout tops. The Easy driver finished Hot Delivery 10 of 10 times. Survey Flags failed seed 1; the full run was stopped after that failure, so the other seeds were not checked. A separate one-seed diagnostic reached flag index 3 and ran out of time at x 981, z -386, heading toward x 3039, z -3300. The cause is not yet known.
+
+Three separate 150 m cover stretches are still missing. No land or assertions changed in this step. No new event or sound was added. The browser pictures, integration merge, replay and world-signature suites, and build remain to be checked. Removed: none.
+
+### Hill country: two job corridors
+
+The hills suite now samples the thief's and Big Bess's job paths at 20 m intervals and across 60 m on each side. Both paths are clear of the new hills at those samples. This does not prove the other job corridors. A separate sample of the furnace path found raised ground, including near the Ridge, so that route still needs review against its intended climb. No game event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 44 of 44. The new corridor check replaces no assertion and loosens none. Codex decided: sample five lines across each corridor. Removed: none. Race fingerprints and world signatures were not checked in this step.
+
+Still needed: three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive, then integration and the final checks. Claude must run and judge the pictures.
+
+### Hill country: clear the Survey Flags leg
+
+One seeded mesa stood across the long leg between flags three and four, near the place where the Easy driver stopped. Mesa selection now keeps the leg and a 60 m corridor clear. It also rejects a new mesa if its ramp would be too steep on the existing ground. The mesa formerly centred near (1082, -525) is replaced by one near (915, 1377); the other five centres stay in place. The fifth flag stays where it is. No game event or sound was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 45 of 45. This includes a new clearance check and the existing mesa ramp checks. The Survey Flags drive has not yet been rerun, so the cause of its failure and the effect of this change are not confirmed. Race fingerprints, world signatures, the build and pictures were not checked in this step.
+
+Changed assertions: none. The corridor check is new and loosens no assertion. Codex decided: use the job's named third and fourth flag positions to select clear mesa sites, and check each candidate ramp at 2 m intervals. Removed: the mesa site across the flag route.
+
+Still needed: prove three separate mesa cover stretches, the remaining job corridors and a passing Survey Flags drive; then merge integration and run the final checks. Claude must run and judge the pictures.
+
+### Hill country: Survey Flags corridor proof
+
+The first two legs between Survey Flags now have a hill-clearance check across 60 m on either side. The mesa clearance check now covers all four legs. The hills suite passed 46 of 46. The Easy driver finished Survey Flags 10 of 10 times after the mesa moved, using the suite's driver and pass mark. The fifth flag stays in place. No event or sound was added.
+
+Changed assertions: the mesa-clearance assertion now checks all four legs instead of only the third; it is stricter. The hill corridor check is new. Codex decided: sample the corridor every 20 m along each leg and at five offsets across it. Removed: none. Race fingerprints and world signatures were not checked in this step.
+
+Still needed: three separate mesa-cover stretches and the rest of the job-corridor proof, then integration and final checks. A diagnostic found new hill height on the third and fourth flag legs; the fourth ends on the intended Ridge top, so the clearance requirement and the approach need careful reconciliation. Claude must run and judge the pictures.
+
+### Hill country: Boneyard gas route
+
+Moved the Mall-to-Everburn pass shoulders from 66% to 65.5% of the road and from 280 m to 300 m on either side. This clears the Boneyard gas-run corridor while retaining the two rising shoulders and the hill spacing. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 47 of 47. A new check samples the Boneyard gas route every 10 m and at five offsets across its 60 m corridor. The new check replaces no assertion and loosens none. Race fingerprints, the browser pictures and the build were not checked in this step. Removed: the former pass shoulder positions. Codex decided: move this pass by half a percent of the road and set its shoulders 300 m from the centre to satisfy both corridor and spacing checks.
+
+Still needed: three separate 150 m mesa-cover stretches, the other job corridors, route drives after this change, integration and final checks. A 20 m grid scan found 3,043 candidate centres satisfying the sampled plate, road, river, place and way clearances; none of their 120 m circular shadows reached the currently visible portions of the plates way. This is not an exhaustive proof and does not model every mesa shape. The long gas route crosses the intended raised Ridge top on legs 5 and 6, so a strict comparison with the old flat terrain also fails there. Claude must run and judge the pictures.
+
+### Not built by this slice
+
+Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1. The partial cover tests were removed under Claude's direction; every placed mesa remains.
+
+### Hill country: route proof continued
+
+Claude deferred furnace cover on the plates' way to EVERBURN-REMAKE job 1. The two partial cover tests were removed; all mesas remain. The hills suite passed 45 of 45, and the solid suite passed 25 of 25, including all four ways and both climbs. With realism on, Hot Delivery and Survey Flags each finished 10 of 10 using the Easy driver. A separate Easy run with realism on finished Hot Delivery, Get Out and Walk, Run Him Down, Slow Ride and The Key Under the Mall 10 of 10 each. The Everburn failed seed 1; that run was stopped before the other seeds finished.
+
+A diagnostic sampling each route every 40 m at the centre and 60 m either side found added hill height on the furnace route (legs 6 and 19), the Mall return (leg 2), and Survey Flags (leg 3). It also found the intended Ridge top on the furnace and long gas routes and the last flag leg. These samples do not prove the required clear corridors. The furnace and Mall routes include mesa or Breaks height outside the intended Ridge climb. Investigate and fix the clearances and the failed Everburn drive before claiming the proof.
+
+Changed assertions: removed the two partial furnace-cover assertions because Claude moved that requirement to job 1; no remaining assertion was loosened. Codex decided: run the existing Easy driver with realism enabled for this proof. Removed: the two deferred cover checks. No game event or sound was added. Race fingerprints, world signatures, final integration and the build remain to be checked. Claude must run and judge the pictures.
+
+The separate gas-road driver with realism on brought Big Bess home 10 of 10 on the long road at Watching. It was stopped before the remaining feud levels or the Boneyard road completed, so the gas-road suite has not passed. The final merge and checks were not started.
+
+### Hill country: long gas-road corridor
+
+The hills suite now checks the long gas road at 10 m intervals and five offsets across its 60 m corridor. It passed outside the Ridge top, which the road deliberately crosses. The hills suite passed 46 of 46. This adds an assertion and does not change or loosen an existing one. Codex decided to exclude the intended Ridge top from this clearance comparison. No game event or sound was added. Removed: none.
+
+The Everburn's Easy driver still failed seed 1 with realism on. It reached the chase, but timed out at 3,000 seconds with the furnace near (2892, 558) and the car near (3898, 207). The cause remains unconfirmed. A route scan also found hills on the furnace's sixth and nineteenth legs, the Mall return's second leg and Survey Flags' third leg. The Ridge top is additionally on the intended furnace and gas-road climbs. These sampled findings do not establish that the remaining corridors are clear. Race fingerprints, world signatures, final integration, pictures and build were not checked in this step.
+
+### Hill country: Slow Ride corridor
+
+The hills suite now samples every Slow Ride path leg every 10 m and at five offsets across its 60 m corridor. All samples remain at the former ground height. The hills suite passed 47 of 47. This new check does not change or loosen an assertion. No event or sound was added. Removed: none.
+
+A diagnostic identified one seeded mesa on the furnace's sixth leg, four Breaks hills on its nineteenth leg, and five Breaks hills on the third Survey Flags leg. One of the latter is a Mall Road pass shoulder. These routes still need clearance, and the failed Everburn drive still needs investigation. The other Easy jobs, both gas roads, final integration, replay and world checks, and build remain outstanding. Claude must run the picture scenario. Codex decided: use the existing Slow Ride path and sample spacing already used for gas roads.
+
+### Hill country: Hot Soup corridor
+
+The hills suite now checks the first three Hot Soup legs at 10 m intervals and five offsets across the 60 m corridor. All samples retain their former ground height. The hills suite passed 48 of 48. This is a new assertion and loosens none. No event or sound was added. Removed: none.
+
+The final leg from the safe road to the Everburn is not clear: a diagnostic found added hill height at 1,559 sampled points, with a maximum rise of about 66 m. The Mall return's second leg also crosses six Breaks hills and one mesa. These findings are samples, not proof of the complete corridors. The other corridor findings and the failed Everburn drive above remain unresolved. The four ways, Easy jobs and gas roads need their final proof, followed by the integration merge and final checks. Claude must run and judge the picture scenario. Codex decided: use Hot Soup's own safe points and the existing gas-road sampling intervals.
+
+### Hill country: clear the furnace descent
+
+The seeded mesa on the furnace's descent from the Ridge has moved from about (4388, -859) to (4988, -657). Mesa selection now keeps the descent and its 60 m corridor clear. The hills suite passed 49 of 49, including a new clearance check. The solid suite passed 25 of 25, including all four ways with realism on and off and the Ridge and Lookout climbs. No assertion was changed or loosened. No event or sound was added. Removed: the former mesa site.
+
+The other job corridors and the Everburn Easy drive still need proof. Both gas roads need their full driver run. The final integration merge, replay and world-composition checks, and build remain. Claude must run and judge the picture scenario. Race fingerprints were not checked in this step.
+### The Girder Bridge and the Pipe redrawn (Claude, 15 November 2026)
+
+From Claude's drive of job 1: the bridge's trusses were the colour of new timber. `girderBridgeGeometry` in
+`src/world/scablands-draw.js` now draws old riveted steel: each member its own shade of rust, a gusset plate at every joint, crossed
+wind bracing overhead, a portal with knee braces at each end, a plank deck with timber kerbs and a floor beam under every bay, and
+piers with caps and a dark band where floods stood. 3,264 triangles (about 960 before). The Pipe's pipeline and flanges are a darker
+rust. The solid shapes a car meets are unchanged. Seen in the game in a visible window from the road, the deck, beside and the bed.
+Checks: `test-scablands-scene`, `test-scablands-size`, `test-scablands-solid` (24), `test-tunnels`, and the build, all pass.
+**Removed:** the plain one-colour boxes of the trusses and the single deck slab.
+
+### Hill country: clear the furnace chase approach
+
+The seed 1 Easy chase slowed beside a mesa at about (3503, -1008), where its north face rises immediately ahead. The car was still on the chase step when the 3,000-second limit ended. Mesa selection now keeps the car's approach to the furnace clear. The obstructing seeded mesa moved from about (3449, -860) to (3750, -979); another seeded mesa moved from about (915, 1377) to (909, 1394) because selection continues through the same seed. All six remain. The search limit rose from 12,000 to 120,000 candidates to find the sixth clear site. A new test samples the approach every 10 m and five lines across its 60 m corridor. The existing driver and pass marks did not change. The same seed finished in 2,752 seconds with realism on. No event or sound cue was added.
+
+Changed assertions: none in this step; the corridor assertion is new. Codex decided: use the observed approach from the Ridge to the furnace's existing descent, expressed from the Ridge and the chase path. Removed: the two former seeded mesa sites. The integration merge kept both sides of this change note; the card merged without conflict.
+
+The clearance test was then strengthened to sample every 5 m along the approach and every 15 m across it; it passed 50 of 50. This changes no existing pass mark. After integration, the Scablands hills, solid, scene, size, things, ground, regions, map and job-map suites all passed. The solid suite drove all four ways to Tin Town and both climbs. The scenario passed `node --check`; Claude must run the pictures. The replay suite passed 297 checks across 33 cases, and the combat replay suite passed 12 checks across four encounters. World composition passed 63 checks across 20 events. The build passed with `npm.cmd run build`; PowerShell blocked `npm.ps1`. The lane tier was not run, as directed.
+
+Not right yet: the Easy driver finished Everburn seeds 1 through 4, but seed 5 timed out in the chase with the car at about (3202, 903) in the river bed. The hill table adds no height there; the cause of the stall is unconfirmed. Seed 6 did not finish during the attempted run; that run was stopped and seeds 7 through 10 and the gas-road proof were not run. The remaining job corridors have not all been proved clear: earlier scans found added height on the last Hot Soup leg, the Mall return and the third Survey Flags leg. Claude must judge the pictures and decide how to address the remaining route proof and seed 5. No change was made to the driver or its pass marks.
+
+### Hill country: final integration and checks
+
+Merged integration at c3cb1943b without conflicts. It added a Machine Borer card update. The scene test comment now correctly says the near window is 61 by 61 corners; no assertion changed.
+
+Checks on this merge: hills 50 of 50; solid 25 of 25, including the four ways and both climbs; scene, things 37 of 37, ground 5 of 5, regions 12 of 12, map and job map all passed. Both replay suites passed: 297 checks across 33 cases and 12 checks across four encounters. World composition passed 63 checks across 20 events. The picture scenario passed Node syntax checking; Claude must run and judge it. The build passed. The lane tier was not run, as directed.
+
+Not right yet: the size suite failed its ground-update timing assertion twice, at 401 ms and 429 ms for 200 moves. Its other eight checks passed. The earlier Everburn seed 5 chase timed out in the river bed near (3202, 903), where the hill table adds no height; the cause remains unknown. The remaining job corridors and both gas-road drives are not fully proved, as described above. These are not passing results.
+
+Changed assertions for Claude to review: the near window stays at 3,721 corners, unchanged from integration. The far-ground checks changed from 32,361 corners and 64,000 triangles to 40,623 and 76,852 for the detailed faces. The first search sight step changed from one second to zero because the raider now walks; a separate test restores one-second walking coverage. The Ridge height changed from 18 m to 45 m at the same tolerance. The river route now reaches Tin Town under the bridge instead of ending at the Boneyard Road, and the blocked-deck assertion was replaced for the opened route. The Breaks count changed from 16 to 22 for the six directed pass shoulders; the west-only and table-order spacing checks were replaced by the widened-country and nearest-neighbour checks, as recorded above. The two partial furnace-cover tests were removed by Claude's direction; that work belongs to EVERBURN-REMAKE job 1.
+
+Codex decided: no new design choice in this check. Sound cues remain arena.tell for seen, gate.latch for lost and arena.toll-gate for the furnace warning. Removed: the outdated 121-by-121 comment.
+
+### Hill country: Easy chase diagnosis
+
+The seed 5 Everburn drive was repeated with the existing Easy driver and realism on. It timed out at the 3,000-second limit in chase step 1. From about 1,497 seconds onward the car was near (3203, 902), in the river bed, while the furnace continued away. The car kept applying throttle toward the furnace. Along its heading the existing river bank rises roughly 3.6 m in 10 m; the hill table adds no height at those samples. The evidence points to the chase driver attempting the bank rather than using a crossing, although it does not prove the precise physics cause of the stall. No hill was moved and the driver and pass marks were unchanged. Claude must decide how to handle the chase. Seeds 6 to 10 and the gas-road proof remain unverified.
+
+Integration was already up to date at c3cb1943b. The final checks and the size timing failure are recorded immediately above; no code changed during this diagnosis. Changed assertions: none. Codex decided: no new design decision. Removed: none. No new event or sound cue was added.
+
+### Hill country: final check after chase diagnosis
+
+Integration remained up to date at c3cb1943b. The hills suite passed 50 of 50, solid 25 of 25, scene, size 9 of 9, things 37 of 37, ground 5 of 5, regions 12 of 12, map and job map. Both replay suites passed: 297 checks across 33 cases and 12 across four encounters. World composition passed 63 checks across 20 events. The picture scenario passed Node syntax checking and the build passed. The earlier size timing failure did not recur. The lane tier was not run, as directed.
+
+Not right yet: the seed 5 Easy chase stalls at the existing river bank as described above; the exact physics cause is not proved. The remaining job corridors and both gas-road drives are not fully proved. Claude must decide the chase and run and judge the pictures. Furnace cover on the plates' way belongs to EVERBURN-REMAKE job 1.
+
+Changed assertions: none in this check; the complete list for review is in the final integration note above. Codex decided: no new design decision. Removed: the generated build output. No new event or sound cue was added.

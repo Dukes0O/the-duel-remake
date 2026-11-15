@@ -3,7 +3,8 @@ import {riseHeightAt,riverDepthAt,GROUND_AREAS,polygonMargin,RIVER_LAND,RIVER} f
 import {scarpHeightAt} from './scablands-scarps.js';
 import {LAND} from './scablands-names.js';
 import {makeRng} from '../rng.js';
-import {ROAD_NET, distanceToRoad} from './scablands-road.js';
+import {ROAD_NET, roadNet, roadPointFrom, distanceToRoad} from './scablands-road.js';
+import {westScarpTrial} from './scablands-tunnel-trial.js';
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const smooth=value=>{value=clamp(value);return value*value*(3-2*value);};
@@ -23,41 +24,83 @@ export function hillsFor(land=LAND,seed=1989){
     if(dunes.some(hill=>Math.hypot(hill.dx-dx,hill.dz-dz)<hill.radius+radius+10)) continue;
     dunes.push({dx,dz,radius,height});
   }
+  const lookout=land.at('ridge',-1200,900);
+  const ridgeRoad=(land===LAND?ROAD_NET:roadNet(land)).road('ridge-road');
+  let nearestRoad=null, nearestDistance=Infinity;
+  for(let i=1;i<ridgeRoad.points.length;i++){
+    const a=ridgeRoad.points[i-1],b=ridgeRoad.points[i],dx=b.x-a.x,dz=b.z-a.z;
+    const t=clamp(((lookout.x-a.x)*dx+(lookout.z-a.z)*dz)/(dx*dx+dz*dz));
+    const x=a.x+t*dx,z=a.z+t*dz,distance=Math.hypot(x-lookout.x,z-lookout.z);
+    if(distance<nearestDistance){nearestDistance=distance;nearestRoad={x,z};}
+  }
+  const roadAngle=Math.atan2(nearestRoad.z-lookout.z,nearestRoad.x-lookout.x);
+  // Include the north approach used by the existing drive as well as the road side.
+  const rampAngle=-Math.PI/2+Math.atan2(Math.sin(roadAngle+Math.PI/2),Math.cos(roadAngle+Math.PI/2))/2;
   const hills=[
     ...dunes.map(({dx,dz,radius,height})=>Object.freeze({...land.at('ships-in-sand',dx,dz),kind:'dune',height,radius})),
     Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
-    Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:45,radius:320,topRadius:60}),
+    Object.freeze({...lookout,kind:'lookout',height:60,radius:320,topRadius:60,ramp:300,rampAngle}),
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
     Object.freeze({...land.at('ridge',550,-600),kind:'foothill',height:26,radius:320}),
-    Object.freeze({...land.between('yard','tin-town',.4,-600,-200),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
-    Object.freeze({...land.between('yard','tin-town',.7,100,800),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
+    Object.freeze({...land.between('yard','tin-town',.4,-600,350),kind:'mesa',height:35,radius:200,face:30,ramp:220,rampAngle:Math.PI}),
+    Object.freeze({...land.between('yard','tin-town',.7,400,1100),kind:'mesa',height:32,radius:200,face:30,ramp:220,rampAngle:0}),
+    // A mesa between the furnace and the plates' way gives the shortcut cover.
+    Object.freeze({...land.between('yard','tin-town',.7,-1650,125),kind:'mesa',height:35,radius:120,face:30,ramp:220,rampAngle:Math.PI}),
   ];
   // Select the additional plates from the fixed land, then express their
   // centres through the same named-place pair as the original eastern mesa.
   const mesaRng=makeRng(seed ^ 0x4d455341);
   const plates=GROUND_AREAS.polygons.find(area=>area.id==='scab-plates');
   const mesaBase=LAND.between('yard','tin-town',.7);
+  const platesWay=[LAND.yard,LAND.at('the-steps'),LAND.at('tin-town')];
+  // Keep the long Survey Flags leg open as well as the marked roads. Its
+  // endpoints use the same named places as the job's third and fourth flags.
+  const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
+    LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
+  // Keep the furnace's descent from the Ridge to the Boneyard open.
+  const furnaceDescent=[LAND.at('ridge',-74,104),LAND.between('ridge','boneyard',.599,-74,0)];
+  // The chasing car cuts across the plates toward the descending furnace.
+  const furnaceApproach=[LAND.at('ridge',-1350,726),furnaceDescent[1]];
+  const tunnel=westScarpTrial(()=>0).segment;
   const referenceHills=hills.map((hill,index)=>{
     const anchor=hill.kind==='dune'?'ships-in-sand':hill.kind==='breaks'?'dead-mall':'ridge';
-    const share=index===hills.length-2 ? .4 : .7;
+    const share=index===hills.length-3 ? .4 : .7;
     const moved=hill.kind==='mesa'?land.between('yard','tin-town',share):land.at(anchor);
     const fixed=hill.kind==='mesa'?LAND.between('yard','tin-town',share):LAND.at(anchor);
-    return {x:hill.x-moved.x+fixed.x,z:hill.z-moved.z+fixed.z,radius:hill.radius,ramp:hill.ramp??0};
+    // Keep the seeded choices stable when the northern mesa moves off the
+    // furnace road. The new position is checked against the resulting land.
+    const movedMesa=hill.kind==='mesa' && index===hills.length-2;
+    return {x:hill.x-(movedMesa?300:0)-moved.x+fixed.x,z:hill.z-(movedMesa?300:0)-moved.z+fixed.z,radius:hill.radius,ramp:hill.ramp??0};
   });
-  for(let attempt=0;attempt<12000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
+  for(let attempt=0;attempt<120000 && hills.filter(hill=>hill.kind==='mesa').length<6;attempt++){
     const dx=mesaRng.range(-3300,1300),dz=mesaRng.range(-1200,1400);
     const x=mesaBase.x+dx,z=mesaBase.z+dz;
     const radius=mesaRng.range(120,180),height=mesaRng.range(30,36),ramp=220,reach=radius+ramp;
     if(polygonMargin(plates.points,x,z)<=reach) continue;
+    if(distanceToRoad(x,z,platesWay)<radius+200) continue;
+    if(distanceToRoad(x,z,surveyLeg)<reach+60) continue;
+    if(distanceToRoad(x,z,furnaceDescent)<reach+60) continue;
+    if(distanceToRoad(x,z,furnaceApproach)<radius+110) continue;
+    if([tunnel.start,tunnel.end].some(mouth=>Math.hypot(x-mouth.x,z-mouth.z)<reach+30)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<reach+road.halfWidth+200)) continue;
     if(distanceToRoad(x,z,RIVER_LAND.line.points)<reach+RIVER.lipHalfWidth+150) continue;
     if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<reach+place.flatRadius+200)) continue;
     if(referenceHills.some(hill=>Math.hypot(x-hill.x,z-hill.z)<reach+hill.radius+hill.ramp+30)) continue;
+    const rampAngle=mesaRng.range(0,Math.PI*2), top=oldTerrainHeightAt(x,z)+height;
+    const rampHeight=d=>{
+      const ground=oldTerrainHeightAt(x+Math.cos(rampAngle)*d,z+Math.sin(rampAngle)*d);
+      return ground+(top-ground)*(1-smooth((d-radius)/ramp));
+    };
+    let driveable=true;
+    for(let d=radius;d<reach;d+=2){
+      if(Math.abs(rampHeight(d+2)-rampHeight(d))/2>.3){driveable=false;break;}
+    }
+    if(!driveable) continue;
     referenceHills.push({x,z,radius,ramp});
-    hills.push(Object.freeze({...land.between('yard','tin-town',.7,dx,dz),kind:'mesa',height,radius,face:30,ramp,rampAngle:mesaRng.range(0,Math.PI*2)}));
+    hills.push(Object.freeze({...land.between('yard','tin-town',.7,dx,dz),kind:'mesa',height,radius,face:30,ramp,rampAngle}));
   }
   // Grow the Breaks from the existing hills, using offsets from the Mall so
   // that the whole group follows that named place when the land is moved.
@@ -83,6 +126,21 @@ export function hillsFor(land=LAND,seed=1989){
     if(breaks.some(hill=>Math.hypot(x-hill.x,z-hill.z)<400)) continue;
     breaks.push({x,z,radius});
     hills.push(Object.freeze({...land.at('dead-mall',x-mall.x,z-mall.z),kind:'breaks',height,radius}));
+  }
+  // A pair of shoulders makes a pass on each road, while leaving its centre
+  // outside both hill footprints. Derive the positions from the road itself.
+  const roads=land===LAND?ROAD_NET:roadNet(land);
+  for(const [id,share] of [['burn-road',.3],['mall-road',.3],['mall-burn-road',.655]]){
+    const road=roads.road(id), start=road.points[0];
+    const centre=roadPointFrom(road,start.x,start.z,road.length*share);
+    const before=roadPointFrom(road,centre.x,centre.z,-5), after=roadPointFrom(road,centre.x,centre.z,5);
+    const dx=after.x-before.x,dz=after.z-before.z,length=Math.hypot(dx,dz);
+    // The Mall-to-Everburn pass also borders the Boneyard gas-run route.
+    const offset=id==='mall-burn-road'?300:280;
+    for(const side of [-1,1]) hills.push(Object.freeze({
+      x:centre.x-side*offset*dz/length,z:centre.z+side*offset*dx/length,
+      kind:'breaks',height:40,radius:260,passRoad:id,
+    }));
   }
   // The outer foothills are lower than the two near the Ridge. Select their
   // offsets against the fixed land so they follow the Ridge when it moves.
@@ -113,7 +171,7 @@ const HILL_CELL_SIZE=500;
 function indexHills(hills){
   const columns=new Map();
   for(const hill of hills){
-    const reach=hill.radius+(hill.kind==='mesa'?hill.ramp:0);
+    const reach=hill.radius+((hill.kind==='mesa'||hill.kind==='lookout')?hill.ramp:0);
     for(let x=Math.floor((hill.x-reach)/HILL_CELL_SIZE);x<=Math.floor((hill.x+reach)/HILL_CELL_SIZE);x++){
       let column=columns.get(x);
       if(!column) columns.set(x,column=new Map());
@@ -176,10 +234,17 @@ export function scablandsTerrainHeightAt(x,z,hills=HILLS){
     }
     if(hill.kind!=='lookout'&&hill.kind!=='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
-    if(distance>=hill.radius) continue;
+    if(distance>=hill.radius+(hill.ramp??0)) continue;
     const weight=1-smooth((distance-hill.topRadius)/(hill.radius-hill.topRadius));
     const top=hill.kind==='ridge-top'?hill.height:oldTerrainHeightAt(hill.x,hill.z)+hill.height;
-    height+=(top-height)*weight;
+    const natural=height+(top-height)*weight;
+    if(hill.kind==='lookout'){
+      const angle=Math.atan2(z-hill.z,x-hill.x);
+      const difference=Math.atan2(Math.sin(angle-hill.rampAngle),Math.cos(angle-hill.rampAngle));
+      const rampWeight=1-smooth((Math.abs(difference)-.7)/.35);
+      const rampHeight=Math.max(height,top-Math.max(0,distance-hill.topRadius)*.16);
+      height=natural+(rampHeight-natural)*rampWeight;
+    } else height=natural;
   }
   return height;
 }

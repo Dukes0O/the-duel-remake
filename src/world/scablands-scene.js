@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
+import {scablandsSurfaceHeightAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
@@ -697,6 +697,17 @@ export function createScablandsScene(course,options={}){
   const here={x:0,z:0};
   let nearTinTown=true,nearWell=true;
   const within=spot=>{const dx=here.x-spot.x,dz=here.z-spot.z;return dx*dx+dz*dz<=DRAW_RANGE*DRAW_RANGE;};
+  // The tunnel's lining is lit by the player's headlights and by day at its open mouths (src/world/tunnel-look.js). Drawing only.
+  const tunnelCar={x:0,y:0,z:0},tunnelForward={x:0,z:1};
+  function lightTunnel(state){
+    const {samples,step,length}=course,p=((state.s%length)+length)%length,sample=samples[Math.min(samples.length-1,Math.floor(p/step))];
+    const heading=(sample?.heading??0)+(state.headingError??0);
+    tunnelCar.x=here.x;tunnelCar.z=here.z;tunnelCar.y=scablandsActorFeet(state,scablandsSurfaceHeightAt(here.x,here.z))+.7;
+    tunnelForward.x=Math.sin(heading);tunnelForward.z=Math.cos(heading);
+    const mouths=(course.groundTunnels?.mouths??[]).map(mouth=>mouth.start)
+      .sort((a,b)=>(a.x-here.x)**2+(a.z-here.z)**2-(b.x-here.x)**2-(b.z-here.z)**2);
+    tunnelLining.userData.look.update({car:tunnelCar,forward:tunnelForward,mouths,headlights:state.onFoot?0:1});
+  }
   function locate(state){
     if(state?.onFoot&&Number.isFinite(state.fighter?.x)&&Number.isFinite(state.fighter?.z)){here.x=state.fighter.x;here.z=state.fighter.z;return true;}
     if(!Number.isFinite(state?.s)||!Number.isFinite(state?.lateral))return false;
@@ -747,6 +758,7 @@ export function createScablandsScene(course,options={}){
     },
     sync(state){
       syncTunnels();
+      if(tunnelLining?.userData.look&&locate(state))lightTunnel(state);
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
       if(things)things.setFallen(course.fallenFenceIds);
       if(locate(state)){
