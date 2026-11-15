@@ -66,6 +66,8 @@ The Dig now checks the land's own solid footprints, bridge and pipe decks, and p
 
 Merged `integration/wasteland` without conflicts. The merged near-ground code retains the land's refined scarp mesh and the Dig's two-metre grid. Its height query now uses the selected grid rather than the land's default grid. Mabel parks 30 m outside the nearest named mesa's steep foot, on the side nearer the yard, facing its centre. `node tools/test-machine-borer.mjs` passed. The mesa face, full breakthrough and browser scenario remain to be checked in the next items.
 
+The mesa's shape prevents the requested straight, level breakthrough. A rules-only probe with the real Dig ground and protected-place and muck checks disabled starts at the near foot, floor -1.62 m, and stops after 306.65 m with "She is coming up under open ground. Turn her down, or stop here." Ground at the stopped head is 2.96 m, 4.58 m above the starting floor. The bore remains closed. A separate sample at the far foot is about 1.21 m, 2.82 m above the starting floor. This is not a completed breakthrough test. Claude needs to decide whether the bore should climb, or change the mesa or its exit rule; this card must not change the hill. The current face rule also accepts the west scarp from metres 1 through 15 when measured from the head's current ground height, so requiring a six-metre rise alone does not distinguish every point on that slope from a face. The remaining face-rule, scenario and final-check items are unfinished.
+
 ## Not built by this card
 
 - Joining a restored separate passage to a new cut in the Dig is not built.
