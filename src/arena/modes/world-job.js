@@ -196,6 +196,10 @@ function updateJobActors(duel, worldJob, dt) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
   }
+  if (worldJob.skylineWarned) for (const actor of step?.furnaceRiders ?? []) {
+    updateJobActor(duel, worldJob, actor, 0);
+    pursueJobRider(duel, worldJob, actor, dt);
+  }
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
 }
@@ -689,6 +693,10 @@ export function stepWorldJob(duel, dt) {
     worldJob.skylineSight = sight;
     if (skylineWarningDue(sight, worldJob.skylineWarned)) {
       worldJob.skylineWarned = true;
+      for (const actor of currentStep.furnaceRiders ?? []) {
+        updateJobActor(duel, worldJob, actor, 0);
+        worldJob.actors.find(item => item.id === actor.id).pursuing = true;
+      }
       duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
         cue: 'world.furnace.horn', position: car}});
     }

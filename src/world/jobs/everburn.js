@@ -99,6 +99,10 @@ export function buildEverburn(land) {
     start:place(`ash-rider-start-${index + 1}`,
       roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 20)),
   })));
+  const furnaceRiders = path(...[-6, 6].map((offset, index) => Object.freeze({
+    id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
+    start:place(`furnace-rider-start-${index + 1}`, at('furnace-watch', offset, 0)),
+  })));
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
   // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
   const thiefPath = path(boneyard, planeRow, wingGap);
@@ -116,7 +120,7 @@ export function buildEverburn(land) {
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, burnable:true, spillLineId:'story.ember.cinder.4',
-        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders,
+        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders,
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},

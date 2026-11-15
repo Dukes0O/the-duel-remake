@@ -124,10 +124,24 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
   tick(6);
   assert.equal(horns().length, 0);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
   tick(0.1);
   assert.equal(horns().length, 1);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  assert.equal(riders.length, 2);
+  assert.ok(riders.every(rider => rider.pursuing && rider.renderCar === 'dusthawk_rally'));
+  const starts = riders.map(rider => ({...rider.position}));
+  assert.ok(starts.every(start => Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10));
+  car = {x:FURNACE_SKYLINE.x + 300, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  for (let i = 0; i < 180; i++) tick(0.1);
+  for (const [index, rider] of riders.entries()) {
+    assert.ok(rider.position.y < starts[index].y - 10, 'the rider comes down from the watch');
+    assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) < 30, 'the rider pursues the car');
+  }
   tick(1);
   assert.equal(horns().length, 1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2);
 }
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
 const waitingWorld = createWorldJob(definition);

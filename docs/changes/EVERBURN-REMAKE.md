@@ -259,3 +259,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the requested scenario and final checks, including the two long drivers, remain for the last round. Race fingerprints were not checked in this round.
 - Changed assertions: none. Codex decided: none. For Claude to draw: final barricades, smoke and Cinder figure.
 - Removed: the former `arena.toll-gate` warning cue for this furnace watch. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, furnace riders (15 November 2026)
+
+- The horn sends two Ash Men vehicles from the furnace watch after the car has been in sight for more than six seconds. They pursue and ram using the existing rider rules, and turn back at Tin Town. The horn uses `world.furnace.horn`; a ram uses `world.ember.spark`.
+- `node tools/test-everburn-job1.mjs`: passed. The real job step checks that no riders appear before the horn, exactly two appear, and both descend from the watch and pursue the car. `git diff --check`: passed.
+- Codex decided: the riders start 6 m either side of the furnace watch and use the existing Ash Men vehicle and pursuit speed. Claude should review their approach in the scripted drives.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked in this round.
+- Changed assertions: none. For Claude to draw: final barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the salt pan and remaining steps.
