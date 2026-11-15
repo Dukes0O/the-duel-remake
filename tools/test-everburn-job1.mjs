@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -11,7 +11,7 @@ import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
-import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine} from '../src/world/scablands-ways.js';
+import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine, sliceLine} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
@@ -40,6 +40,26 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.match(markup, /The Ash Men hold the Girder Bridge\./);
   for (const way of result.ways.slice(1)) assert.ok(!markup.includes(way.name));
   assert.doesNotMatch(markup, /barricade|furnace|Pipe|salt pan/i);
+}
+// Drive distinct parts of an actual way, without seeing a crossing.
+{
+  const worldJob = {definition, job:createJob(definition), actors:[]};
+  const result = worldMapWays({worldJob, car:LAND.yard, target:LAND.at('tin-town')});
+  const way = result.ways.find(item => item.id === 'scab-plates');
+  const point = metres => sliceLine(way.points, metres, metres)[0];
+  const knowledge = createKnowledge();
+  for (let metres = 0; metres <= 200; metres += 10) learnDrivenWays(knowledge, result, point(metres));
+  for (let metres = 190; metres >= 0; metres -= 10) learnDrivenWays(knowledge, result, point(metres));
+  assert.ok(!knowledge.ways.has(way.id), 'repeating 200 metres does not discover the way');
+  for (let metres = 10; metres <= 290; metres += 10) learnDrivenWays(knowledge, result, point(metres));
+  assert.ok(!knowledge.ways.has(way.id), 'less than 300 metres stays hidden');
+  for (let metres = 300; metres <= 310 && !knowledge.ways.has(way.id); metres += 10) learnDrivenWays(knowledge, result, point(metres));
+  assert.ok(knowledge.ways.has(way.id), '300 metres of the way reveals it');
+  assert.ok(waysMarkup(result, 'Tin Town', knowledge, {hotDelivery:true}).includes(way.name));
+  const teleported = createKnowledge();
+  learnDrivenWays(teleported, result, point(0));
+  learnDrivenWays(teleported, result, point(400));
+  assert.ok(!teleported.ways.has(way.id), 'a position jump does not count as driving');
 }
 // Seeing a real crossing adds its way and length to the player's map knowledge.
 {

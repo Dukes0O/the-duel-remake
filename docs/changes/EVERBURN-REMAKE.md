@@ -409,3 +409,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. Race fingerprints were not checked this round.
 - Changed assertions: none. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, driving a way (15 November 2026)
+
+- Driving 300 distinct metres near a Hot Delivery way adds it to the large map. Repeated travel over the same stretch and position jumps do not count twice. This is part of step 6c; recording dangers remains. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test follows the real plates way, checks repeated travel and the discovery threshold, and checks a position jump. The existing Pipe landing test also passed. `git diff --check`: passed.
+- Codex decided: count travel within 30 m of the mapped line and ignore steps over 50 m. Claude should review these distances during the drive.
+- Changed assertions: none. Race fingerprints: not checked this round.
+- For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: map dangers and captions, the six drives, camera, cover and scenario.

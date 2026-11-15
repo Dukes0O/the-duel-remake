@@ -1,7 +1,7 @@
 import {worldJobMapData} from '../route-map.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 import {getLandPicture, createPictureCanvas, createKnowledge, learn, jobFacts, drawSmallMap, drawBigMap, wayColour, wayLines, groundWords, wayKm, SMALL_MAP} from './scablands-map.js';
-import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees} from './scablands-ways.js';
+import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees, nearestOnLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 
@@ -199,6 +199,36 @@ export function learnWayCrossings(knowledge, result, crossings, car, tunnels = n
   return changed;
 }
 
+// Count distinct stretches driven near each way, so reversing over one stretch
+// or jumping to a distant position cannot uncover a way.
+export function learnDrivenWays(knowledge, result, car) {
+  const progress = knowledge.drivenWays ??= new Map();
+  let changed = false;
+  for (const way of result.ways) {
+    if (way.id === 'east-road' || knowledge.ways.has(way.id)) continue;
+    const hit = nearestOnLine(way.points, car.x, car.z);
+    if (!hit) continue;
+    let record = progress.get(way.id);
+    if (!record) progress.set(way.id, record = {previous:null, ranges:[]});
+    const previous = record.previous;
+    record.previous = hit.distance <= 30 ? {along:hit.along, x:car.x, z:car.z} : null;
+    if (!previous || !record.previous || Math.hypot(car.x - previous.x, car.z - previous.z) > 50 ||
+        Math.abs(hit.along - previous.along) > 50) continue;
+    const ranges = [...record.ranges, [Math.min(previous.along, hit.along), Math.max(previous.along, hit.along)]]
+      .sort((a, b) => a[0] - b[0]);
+    record.ranges = [];
+    for (const range of ranges) {
+      const last = record.ranges.at(-1);
+      if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+      else record.ranges.push(range);
+    }
+    if (record.ranges.reduce((sum, range) => sum + range[1] - range[0], 0) >= 300) {
+      knowledge.ways.add(way.id); knowledge.version++; changed = true;
+    }
+  }
+  return changed;
+}
+
 const escapeText = value => String(value).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} = {}) {
   if (hotDelivery) {
@@ -345,6 +375,7 @@ export function createWorldHud({host, app = null, picture = null}) {
           hotWaysOf.set(worldJob, result);
         }
         learnWayCrossings(knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
+        learnDrivenWays(knowledge, result, frame.car);
       }
       const pointer = brazierArrow(model.ember, frame.car, knowledge);
       brazierPointer.hidden = !pointer;
