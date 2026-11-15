@@ -9,7 +9,29 @@ import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid} from '../src/world/scablands-things.js';
-import {createSmallThingsView} from '../src/world/scablands-things-view.js';
+import {createFixedThingsView, createSmallThingsView} from '../src/world/scablands-things-view.js';
+import * as THREE from 'three';
+
+test('fixed drawing uses every collision footprint once', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const rock = clearedLoneBoulder(1989, 0, 0, []);
+  const solids = thingSolids(fixed, [rock]);
+  const view = createFixedThingsView(fixed, [rock]);
+  const drawn = view.group.children.flatMap(mesh => mesh.userData.solidIds);
+  assert.deepEqual([...drawn].sort(), solids.map(part => part.id).sort());
+  for (const mesh of view.group.children) {
+    const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), rotation = new THREE.Quaternion(), scale = new THREE.Vector3();
+    for (const [index, id] of mesh.userData.solidIds.entries()) {
+      const solid = solids.find(part => part.id === id);
+      mesh.getMatrixAt(index, matrix);
+      matrix.decompose(position, rotation, scale);
+      assert.ok(position.distanceTo(new THREE.Vector3(...solid.center)) < .001);
+      assert.ok(scale.distanceTo(new THREE.Vector3(...solid.size)) < .001);
+    }
+  }
+  view.dispose();
+  assert.equal(view.group.children.length, 0);
+});
 
 test('small things use one batch per kind and follow the player without shadows', () => {
   assert.throws(() => createSmallThingsView({seed: 1989}), TypeError);

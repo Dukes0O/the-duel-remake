@@ -1332,3 +1332,11 @@ The lane tier passed 26 of 28 suites. `test-full-check` could not launch `pwsh` 
 Changed assertions: none. Codex decided: the first clearance radii are recorded on the card; the eventual drawings and solids must fit them. Removed: nothing; the existing land is unchanged.
 
 For Claude to run: `test-full-check` at merge, and the browser scenario once it is written. Chrome cannot start in this job. Scene connection, job starts, solids, wires, signs, track drawing, map and scenario remain to be built.
+
+### Realism trial, step 3: fixed collision-footprint batches, in progress
+
+Added plain batches for the cleared pylon feet, telegraph poles, fence posts and boulders. Each batch reads the same collision records that the solid grid uses, with matching centres, sizes and headings. This is only the collision-footprint drawing: pylon towers, wires and the scene connection remain to be built. Nothing is enabled in the game yet. No game event or sound cue was added.
+
+The placement suite passed 14 tests, including a check that every collision record has one matching drawing. Changed assertions: none. Codex decided: no new design choice. Removed: nothing; the existing land is unchanged.
+
+For Claude to run: the browser scenario once it is written. Chrome cannot start in this job. The scene connection, job starts, solids, towers, wires, signs, track drawing, map and scenario remain to be built.

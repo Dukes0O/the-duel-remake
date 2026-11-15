@@ -1,6 +1,6 @@
 // Plain, batched small things for the realism trial. The scene owns the switch.
 import * as THREE from 'three';
-import {smallThingsInCell, THINGS_CELL, THINGS_RANGE} from './scablands-things.js';
+import {smallThingsInCell, thingSolids, THINGS_CELL, THINGS_RANGE} from './scablands-things.js';
 import {nearGroundHeightAt} from './near-ground.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 
@@ -79,4 +79,39 @@ export function createSmallThingsView({seed, jobStarts, heightAt = scablandsSurf
     group.clear();
   }
   return {group, update, dispose};
+}
+
+// Draw exactly the footprints supplied to the collision index. The caller
+// owns the trial switch and supplies the same cleared records to both users.
+export function createFixedThingsView(fixed, loneBoulders = []) {
+  const solids = thingSolids(fixed, loneBoulders);
+  const group = new THREE.Group();
+  const object = new THREE.Object3D();
+  const styles = {
+    'pylon-foot': [0x675e54, () => new THREE.BoxGeometry(1, 1, 1)],
+    telegraph: [0x665848, () => new THREE.BoxGeometry(1, 1, 1)],
+    'fence-post': [0x776858, () => new THREE.BoxGeometry(1, 1, 1)],
+    boulder: [0x777267, () => new THREE.BoxGeometry(1, 1, 1)],
+  };
+  for (const [kind, [colour, geometry]] of Object.entries(styles)) {
+    const parts = solids.filter(part => part.kind === kind);
+    if (!parts.length) continue;
+    const mesh = new THREE.InstancedMesh(geometry(), new THREE.MeshStandardMaterial({color: colour, roughness: 1}), parts.length);
+    mesh.name = `Scablands ${kind}`;
+    mesh.userData.solidIds = parts.map(part => part.id);
+    for (const [index, part] of parts.entries()) {
+      object.position.set(...part.center);
+      object.rotation.set(0, part.heading, 0);
+      object.scale.set(...part.size);
+      object.updateMatrix();
+      mesh.setMatrixAt(index, object.matrix);
+    }
+    mesh.computeBoundingSphere();
+    group.add(mesh);
+  }
+  function dispose() {
+    for (const mesh of group.children) { mesh.geometry.dispose(); mesh.material.dispose(); mesh.dispose(); }
+    group.clear();
+  }
+  return {group, dispose};
 }
