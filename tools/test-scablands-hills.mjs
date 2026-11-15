@@ -7,6 +7,20 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {GROUND_AREAS, groundAreas, polygonMargin, riseHeightAt} from '../src/world/scablands-regions.js';
 import {scarpHeightAt} from '../src/world/scablands-scarps.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
+import {sees} from '../src/world/scablands-ways.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+
+test('ground and range hide a car until it breaks cover', () => {
+  const hill = HILLS.find(item => item.kind === 'breaks');
+  const watcher = {x: hill.x - hill.radius - 80, z: hill.z};
+  const hidden = {x: hill.x + hill.radius + 80, z: hill.z};
+  const visible = {x: hill.x - hill.radius - 30, z: hill.z};
+  const options = {heightAt: scablandsSurfaceHeightAt, eye: 3, target: 1.5, step: 5, range: 1000};
+  assert.equal(sees(watcher, hidden, options), false, 'the hill hides the car');
+  assert.equal(sees(watcher, visible, options), true, 'the car is visible after leaving cover');
+  assert.equal(sees(watcher, visible, {...options, range: 49}), false, 'the car is outside sight range');
+  assert.equal(sees(watcher, visible, {...options, range: 50}), true, 'the edge of sight range is included');
+});
 
 test('the dunes follow the Ships, have soft crests, and leave every road clear', () => {
   const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'ships-in-sand', 100, 200)));

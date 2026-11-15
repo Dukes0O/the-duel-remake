@@ -1278,3 +1278,15 @@ Lane tier: 41 of 43 suites passed. `test-everburn-easy` again failed Survey Flag
 For Claude to run: `test-full-check` on the laptop, and the memory-only Performance hills picture scenario once written, including draw calls and triangles. The new outlines need visual judgment.
 
 Cockpit sync could not open its protected credential. The repository audit ran; its candidates are advisory and none were removed.
+
+### Round 4, slice 2c: sight range in progress
+
+The land's existing sight calculation now accepts a maximum range, including its edge. The route map uses that same check. A new test uses the actual ground height and a Breaks hill to check that the hill hides a car, that it is visible again after leaving cover, and that range is respected. This is groundwork: raiders, the furnace and lookouts do not yet use it to pursue or search, and no captions or new sound cues were added. The switches remain off and Survey Flags' fifth flag has not moved.
+
+The Survey Flags trace showed the Easy driver in the river bed, repeatedly aiming at a short detour, with no road route available. It did not establish a safe fix. Mesas, Ridge foothills and way up, detailed faces, sight and search, route checks and the hills picture scenario remain. The card is not ready to merge.
+
+Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the separate range comparison in the route map is replaced by the same comparison in its sight calculation.
+
+Checks: `test-scablands-hills` passed 6 tests and `test-scablands-map` passed 1,798 checks. The lane tier passed 42 of 45 suites: `test-everburn-easy` still failed Survey Flags at 0 of 10, `test-full-check` could not start `pwsh` in its temporary-copy setup (`EACCES`), and `test-town-core` missed its 10 ms timing limit with 11.65 ms under load. The town check passed on its one rerun, with a slowest tick of 5.56 ms; the existing QA-TIMING-UNDER-LOAD card covers timing under load. The other eight Easy jobs finished 10 of 10 before the failed assertion stopped the gas-road checks. The build passed with bundle size warnings.
+
+Race replays passed 297 checks and combat replays passed 12. The course-kit world-signature check passed. The checked race fingerprints and world signatures are unchanged. Integration was already included. For Claude to run: `test-full-check` on the laptop and, once written, the memory-only Performance hills picture scenario with draw calls and triangles. Cockpit sync could not open its protected credential. The repository audit ran; its candidates need review and none were removed.
