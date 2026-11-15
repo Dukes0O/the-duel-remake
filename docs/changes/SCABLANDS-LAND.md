@@ -1599,3 +1599,14 @@ For Claude to run: `test-review-evidence`, `test-warlord-tollkeeper`, and the me
 Changed assertions, for Claude to review: the far scene changes from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed faces; near ground stays at 3,721 corners. The Ridge flat-ground expectation changes from 18 m to the designed 45 m summit, with the 0.01 m tolerance unchanged. The search test's initial sight step changes from one second to zero because the raider now moves while it sees the car. The river check now drives from the yard to Tin Town and passes beneath the bridge, replacing the former Boneyard endpoint and the former blocked-deck assertion because the tunnel work opened that route. No pass mark was lowered.
 
 Codex decided: no further design choice. Removed: the blocked-deck route and its assertion, replaced by the through-route check.
+
+
+### Review fixes: sight at covered floors
+
+Sight now starts at each actor's stored feet height, checks the bridge deck and tunnel rock, and uses the tunnel bore where it is open. The furnace and Ridge lookout receive the active tunnel. Walking raiders retain their floor height. No new game event or sound cue was added.
+
+Check: `node tools/test-scablands-hills.mjs` passed 22 of 22, including the bridge deck and trial tunnel roof. The open-bed check currently covers the bed under the deck; a separate open-bed approach check and sight along the tunnel still need coverage. Race fingerprints and world signatures were not rerun in this step.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: sight and walking-raider height based solely on the top surface.
+
+Still needed: the remaining part A checks and fixes, including stopped cars, sight cost and search coverage; then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

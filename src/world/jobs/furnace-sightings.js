@@ -10,9 +10,9 @@ import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 
 // The skyline furnace watches the car, not the driver on foot. Cover resets
 // the uninterrupted time in view. The caller owns the state and the effects.
-export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeightAt) {
+export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeightAt, tunnels = null) {
   const visible = !!car && sees(FURNACE_SKYLINE, car, {
-    heightAt, eye: WATCH.furnace.eye, range: WATCH.furnace.range, step: 5,
+    heightAt, actorFloors: heightAt === scablandsSurfaceHeightAt, tunnels, eye: WATCH.furnace.eye, range: WATCH.furnace.range, step: 5,
   });
   const change = visible === !!state.visible ? null : visible ? 'seen' : 'lost';
   const seconds = visible ? (state.seconds ?? 0) + Math.max(0, dt) : 0;
@@ -26,9 +26,9 @@ export function skylineWarningDue(sight, warned) {
 
 // The Ridge lookout uses the same view as the route map, with closer samples
 // so narrow banks and scarps can also hide a car.
-export function stepRidgeSight(state, car, heightAt = scablandsSurfaceHeightAt) {
+export function stepRidgeSight(state, car, heightAt = scablandsSurfaceHeightAt, tunnels = null) {
   const visible = !!car && sees(LAND.at('ridge'), car, {
-    heightAt, eye: WATCH.lookout.eye, range: WATCH.lookout.range, step: 5,
+    heightAt, actorFloors: heightAt === scablandsSurfaceHeightAt, tunnels, eye: WATCH.lookout.eye, range: WATCH.lookout.range, step: 5,
   });
   return {visible, change: visible === !!state.visible ? null : visible ? 'seen' : 'lost'};
 }

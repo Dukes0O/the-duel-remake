@@ -6,7 +6,7 @@ import {wastelandRulesActive} from './wasteland-access.js';
 import {cpuCrewActor, damageCpuCrewFighter} from './crew-gear/cpu-crews.js';
 import {stepFighter, FIGHTER_STEP_SECONDS} from './onfoot.js';
 import {sees} from './world/scablands-ways.js';
-import {scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {scablandsActorHeightAt, scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {stepMover, FOOT_GRADE} from './world/scablands-movers.js';
 
 // Course geometry is untouched. These three small camps exist only in flagged
@@ -21,16 +21,16 @@ const T = COMBAT_TUNING.raider;
 // Only Scablands camps use its land for cover. Other venues keep their shot rules.
 export function raiderHasClearShot(course, raider, target) {
   return !course.def.scablands || sees(raider, target, {
-    heightAt: scablandsSurfaceHeightAt, eye: 1.48, target: 1.5, step: 5,
+    heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels: course.groundTunnels, eye: 1.48, target: 1.5, step: 2,
   });
 }
 
 // A camp raider remembers only the last place it could see. It searches there
 // for five seconds, then returns to its post; seeing the car starts this over.
-export function stepRaiderSearch(raider, target, dt, move = stepMover) {
+export function stepRaiderSearch(raider, target, dt, move = stepMover, course = {def: {scablands: true}}) {
   const memory = raider.search ??= {home: {x: raider.x, z: raider.z}, last: null, phase: 'post', seconds: 0};
   const visible = target && Math.hypot(target.x - raider.x, target.z - raider.z) <= FIRE_METERS &&
-    raiderHasClearShot({def: {scablands: true}}, raider, target);
+    raiderHasClearShot(course, raider, target);
   if (visible) {
     memory.last = {x: target.x, z: target.z};
     memory.phase = 'seen'; memory.seconds = 0;
@@ -49,7 +49,7 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   const travel = Math.min(Math.max(0, distance - (memory.phase === 'seen' ? 12 : 0)), 3 * dt);
   if (distance > 1e-6 && travel > 0) {
     const heading = Math.atan2(dx, dz);
-    const options = {radius: .4, grade: FOOT_GRADE};
+    const options = {radius: .4, grade: FOOT_GRADE, height: scablandsActorFeet(raider, raider.groundY)};
     const tryHeading = (angle, length) => move(raider,
       {x: raider.x + Math.sin(angle) * length, z: raider.z + Math.cos(angle) * length}, options);
     const clear = (next, length) => !next.blocked && Math.hypot(next.x - raider.x, next.z - raider.z) >= length * .9;
@@ -81,7 +81,7 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
     }
     if (!next) return;
     raider.x = next.x; raider.z = next.z; raider.yaw = usedHeading;
-    raider.y = raider.groundY = scablandsSurfaceHeightAt(raider.x, raider.z);
+    raider.y = raider.groundY = scablandsActorHeightAt(raider.x, raider.z, options.height);
   }
   if (memory.phase !== 'seen' && Math.hypot(destination.x - raider.x, destination.z - raider.z) < .1) {
     if (memory.phase === 'returning') { memory.phase = 'post'; memory.last = null; }
@@ -264,6 +264,7 @@ export function targetFor(duel, zone, preview = null, seconds = 0) {
     let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
     if (duel.course.def.scablands) {
       const at = point(duel, actor);
+      at.y = scablandsActorFeet(actor, undefined);
       const distances = zone.raiders.filter(member =>
         (!member.knockedDown || member.knockdownRemaining <= seconds) &&
         member.firedLap !== state.currentLap && raiderHasClearShot(duel.course, member, at))
@@ -404,7 +405,8 @@ export function stepRaiders(duel, dt = 0) {
     collectSalvage(duel, zone);
     if (duel.course.def.scablands && dt > 0 && !zone.ambushWave && !zone.raiders.some(raider => raider.ambushKey)) {
       const car = !state.finished && !state.crushed && !state.combatWrecking ? point(duel, state) : null;
-      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt);
+      if (car) car.y = scablandsActorFeet(state, undefined);
+      for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt, stepMover, duel.course);
     }
     const ahead = duel.relativeS(zone.s, state.s) - state.s;
     if (ahead > 0 && ahead < WARNING_METERS && zone.warnedLap !== state.currentLap) {
@@ -416,6 +418,7 @@ export function stepRaiders(duel, dt = 0) {
     const target = targetFor(duel, zone);
     if (!target) continue;
     const targetPoint = point(duel, target.actor);
+    if (duel.course.def.scablands) targetPoint.y = scablandsActorFeet(target.actor, undefined);
     const raider = zone.raiders.find(member =>
       !member.knockedDown && member.firedLap !== state.currentLap &&
       (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&

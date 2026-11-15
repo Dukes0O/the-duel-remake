@@ -10,7 +10,9 @@ import {makeCoarseGround} from '../src/world/scablands-scene.js';
 import {createNearGround, NEAR_GROUND} from '../src/world/near-ground.js';
 import {SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {sees} from '../src/world/scablands-ways.js';
-import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt} from '../src/world/scablands-ground.js';
+import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, campSightChange} from '../src/raiders.js';
@@ -379,4 +381,28 @@ test('the salt pan and plates have uneven outlines in the shared land data', () 
       assert.ok(Math.abs(polygonMargin(area.points, bend.x, bend.z)) < 1e-8);
     }
   }
+});
+
+
+test('sight follows the river bed beneath a deck and through open bed', () => {
+  const bridge = RIVER_LAND.crossings.find(c => c.id === 'girder-bridge');
+  const bed = scablandsActorHeightAt(bridge.x, bridge.z, -100);
+  const deck = scablandsActorHeightAt(bridge.x, bridge.z);
+  const car = {x: bridge.x, z: bridge.z, y: bed};
+  const watcher = {x: bridge.x, z: bridge.z, y: deck};
+  const options = {heightAt: scablandsSurfaceHeightAt, actorFloors: true, eye: 1.5, target: 1.5, step: 1};
+  assert.equal(sees(watcher, car, options), false, 'deck blocks sight from above');
+  const other = {x: bridge.x + 3, z: bridge.z, y: bed};
+  assert.equal(sees(other, car, options), true, 'the bed is open beneath the deck');
+});
+
+test('the tunnel roof hides a car from a watcher above', () => {
+  const trial = westScarpTrial(scablandsSurfaceHeightAt);
+  const tunnels = createGroundTunnels([trial.segment], {heightAt: scablandsSurfaceHeightAt});
+  const {start, end, radius} = trial.segment;
+  const t = .3, x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
+  const car = {x, z, y: start.y + (end.y - start.y) * t - radius * .55};
+  const watcher = {x, z, y: scablandsSurfaceHeightAt(x, z)};
+  assert.ok(watcher.y > car.y + radius * 2, 'trial has rock above the car');
+  assert.equal(sees(watcher, car, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels, step: .5}), false);
 });

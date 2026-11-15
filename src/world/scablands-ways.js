@@ -10,6 +10,7 @@ import {LAND} from './scablands-names.js';
 import {DRIVE, RIVER_LAND, scablandsDriveAt} from './scablands-regions.js';
 import {scablandsHeightAt} from './scablands-height.js';
 import {ROAD_NET} from './scablands-road.js';
+import {scablandsFloorsAt} from './scablands-ground.js';
 
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 
@@ -79,17 +80,29 @@ export function groundAlong(points, {driveAt = scablandsDriveAt, step = 25} = {}
 // ---- Sight ---------------------------------------------------------------------------------------------------------------------------
 // A watcher at `eye` metres above the ground sees a point `target` metres above its ground when no ground between them stands higher
 // than the line of sight (the highest angle the ground has taken so far from the watcher's eye) and it is within range. Heights are the land's own.
-export function sees(from, point, {heightAt = scablandsHeightAt, eye = 5, target = 1.5, step = 40, range = Infinity} = {}) {
-  const eyeY = heightAt(from.x, from.z) + eye, distance = gap(from, point);
+const sightFloors = [], sightPoint = {x: 0, y: 0, z: 0};
+const sightFeet = actor => Number.isFinite(actor.y) ? actor.y : Number.isFinite(actor.groundY) ? actor.groundY : undefined;
+export function sees(from, point, {heightAt = scablandsHeightAt, eye = 5, target = 1.5, step = 40, range = Infinity,
+  actorFloors = false, tunnels = null} = {}) {
+  const distance = gap(from, point);
   if (distance > range) return false;
-  if (distance < 1) return true;
-  const count = Math.max(1, Math.ceil(distance / step));
-  let highest = -Infinity;
+  const fromFeet = sightFeet(from), targetFeet = sightFeet(point);
+  const eyeY = (actorFloors && Number.isFinite(fromFeet) ? fromFeet : heightAt(from.x, from.z)) + eye;
+  const targetY = (actorFloors && Number.isFinite(targetFeet) ? targetFeet : heightAt(point.x, point.z)) + target;
+  const count = Math.max(1, Math.ceil(Math.max(distance / step, Math.abs(targetY - eyeY) / (actorFloors ? 1 : step))));
   for (let i = 1; i < count; i++) {
-    const t = i / count, ground = heightAt(from.x + (point.x - from.x) * t, from.z + (point.z - from.z) * t);
-    highest = Math.max(highest, (ground - eyeY) / (distance * t));
+    const t = i / count, x = from.x + (point.x - from.x) * t, z = from.z + (point.z - from.z) * t;
+    const y = eyeY + (targetY - eyeY) * t;
+    if (!actorFloors) { if (heightAt(x, z) > y) return false; continue; }
+    const floors = scablandsFloorsAt(x, z, sightFloors);
+    if (floors > 1) {
+      if (y < sightFloors[1] || (y >= sightFloors[0] - 1.2 && y <= sightFloors[0])) return false;
+    } else if (heightAt(x, z) > y) {
+      sightPoint.x = x; sightPoint.y = y; sightPoint.z = z;
+      if (!tunnels?.tubeAt(sightPoint, y)) return false;
+    }
   }
-  return (heightAt(point.x, point.z) + target - eyeY) / distance >= highest;
+  return true;
 }
 
 // The area a watcher can see: rays out from it over `halfAngle` either side of `heading` (a whole circle when halfAngle is pi), each

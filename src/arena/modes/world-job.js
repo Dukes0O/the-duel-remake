@@ -612,7 +612,7 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = position(duel, state);
-    const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt);
+    const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt, scablandsSurfaceHeightAt, duel.course.groundTunnels);
     worldJob.skylineSight = sight;
     if (skylineWarningDue(sight, worldJob.skylineWarned)) {
       worldJob.skylineWarned = true;
@@ -624,7 +624,7 @@ export function stepWorldJob(duel, dt) {
       duel.emit({arenaTell: {id: 'furnace-sight', targetId: 'player', seconds: 0,
         cue: sight.visible ? 'arena.tell' : 'gate.latch', position: car}});
     }
-    const lookout = stepRidgeSight(worldJob.ridgeSight ?? {}, car);
+    const lookout = stepRidgeSight(worldJob.ridgeSight ?? {}, car, scablandsSurfaceHeightAt, duel.course.groundTunnels);
     worldJob.ridgeSight = lookout;
     if (lookout.change) {
       duel._storyCallout(lookout.visible ? 'The lookout can see your car.' : 'The lookout has lost sight of your car.', 2.2);
