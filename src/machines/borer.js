@@ -4,7 +4,7 @@ import {makeRng} from '../rng.js';
 export const BORER_NO_FACE = 'There is not enough hill over her here. Dig her a cutting first.';
 export const BORER_OBSTRUCTION = 'She will not cut there. Something stands in the way.';
 export const BORER_STALL = 'The head has stalled. Ease off, then push again.';
-export const BORER_OPEN_GROUND = 'She is coming up under open ground. Turn her down, or stop here.';
+export const BORER_OPEN_GROUND = 'She is coming up under open ground with no face to come out of. This heading ends here. Back her out.';
 export const BORER_TRENCH = 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const radians = degrees => degrees * Math.PI / 180;
@@ -261,6 +261,12 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       const farX = next.x + Math.sin(next.heading) * 12;
       const farZ = next.z + Math.cos(next.heading) * 12;
       const difference = ground.heightAt(farX, farZ) - next.y;
+      if (difference > 3) {
+        if (next.message !== BORER_OPEN_GROUND)
+          events.push({type:'refuse', cue:'borer.refuse', message:BORER_OPEN_GROUND});
+        next.message = BORER_OPEN_GROUND;
+        continue;
+      }
       if (difference < -1) {
         const message = `She has come out ${(-difference).toFixed(1)} m up the face. Tip spoil below the mouth until she can drive out.`;
         if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});

@@ -551,6 +551,16 @@ const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shortHill, 
 assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);
 assert.equal(stoppedUnderGround.state.segments.at(-1).endOpen, false);
 assert.equal(stoppedUnderGround.events.filter(event => event.message === BORER_OPEN_GROUND).length, 1);
+assert.ok(Math.abs(stoppedUnderGround.state.z - 12) < 2, 'The refusal is within 2 m of the crown crossing.');
+assert.ok(stepBorer(stoppedUnderGround.state, {thrust:-1}, shortHill, 'topsoil', 2).state.travelM < stoppedUnderGround.state.travelM,
+  'She can back out when there is no face behind her.');
+const highFarGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 4});
+const highFar = stepBorer(createBorerState(), {thrust:1}, highFarGround, 'topsoil', 100);
+assert.equal(highFar.state.message, BORER_OPEN_GROUND, 'Ground more than 3 m above the floor ends this heading.');
+assert.ok(Math.abs(highFar.state.z - 30) < 2, 'The high-ground refusal is within 2 m of the crown crossing.');
+assert.equal(highFar.state.segments.at(-1).endOpen, false);
+assert.ok(stepBorer(highFar.state, {thrust:-1}, highFarGround, 'topsoil', 2).state.travelM < highFar.state.travelM,
+  'She can back out from high ground beyond a face.');
 // A self-crossing cut can be driven between its two passages. A crossing
 // on another level remains rock, and a car cannot leave either bore's floor.
 const crossingSegments = [

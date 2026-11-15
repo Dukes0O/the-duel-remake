@@ -148,3 +148,9 @@ Merged `integration/wasteland` at the start of this run without conflicts. The 6
 ## Lip recovery
 
 The lip refusal now tells the player to tip spoil below the mouth. The borer test fills the landing 12 m ahead using the ground layer, then proves the next step opens the mouth and reports daylight. The refusal sentence assertion changed to match Claude's ruling; the closed-mouth assertion remains. `node tools/test-machine-borer.mjs` passed in 283.0 seconds. The test still needs the speed work in the later pace item. No browser, replay, lane tier or build was run for this item.
+
+## Open-ground recovery
+
+Merged `integration/wasteland` without conflicts. A bore that rises under open ground, or reaches a far face with ground more than 3 m above its floor beyond it, now stops with the instruction to back out. The focused test checks both refusals within 2 m of the crown crossing and proves reverse works from each. The open-ground sentence assertion changed to Claude's new wording; the new high-ground refusal replaces the former exit-cutting behavior for that case. The cue remains `borer.refuse`.
+
+`node tools/test-machine-borer.mjs` passed in 198.3 seconds. The suite still exceeds 120 seconds; the later pace item must address that. No browser, replay, lane tier or build was run for this item. No race fingerprints were recorded.
