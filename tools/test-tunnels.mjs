@@ -28,6 +28,50 @@ import {scablandsHeightAt} from '../src/world/scablands-height.js';
   }
 }
 
+
+// Drive the actual Scablands car across the named scarp, in both directions.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {wrapHeading} = await import('../src/offroad-physics.js');
+  const {scablandsSurfaceHeightAt} = await import('../src/world/scablands-ground.js');
+  const trial = westScarpTrial(scablandsSurfaceHeightAt), {start, end, radius} = trial.segment;
+  const dx = (end.x - start.x) / 100, dz = (end.z - start.z) / 100;
+  for (const direction of [1, -1]) {
+    const d = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'wasteland-town': true}});
+    d.state.wastelandGateDiscovered = true;
+    assert.equal(d.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car: 'titan_monster', seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
+    d.state.arena.timeLimitSec = Infinity;
+    d.state.opponents[0].finished = true;
+    d.course.groundTunnels = createGroundTunnels([trial.segment]);
+    const origin = direction > 0 ? start : end;
+    const position = d.course.nearest(origin.x - direction * dx * 8, origin.z - direction * dz * 8);
+    const heading = Math.atan2(dx * direction, dz * direction);
+    placeActor(d, d.state, {s: position.s, lateral: position.lateral,
+      headingError: wrapHeading(heading - d.course.at(position.s).heading)}, 12);
+    d.state.countdown = 0;
+    let furthest = -Infinity, floorSamples = 0;
+    for (let i = 0; i < 60 * 30; i++) {
+      const here = d.course.worldAt(d.state.s, d.state.lateral);
+      const along = (here.x - start.x) * dx + (here.z - start.z) * dz;
+      const side = Math.abs((here.x - start.x) * dz - (here.z - start.z) * dx);
+      furthest = Math.max(furthest, direction > 0 ? along : 100 - along);
+      if (along > 2 && along < 98 && side < radius - 1) {
+        floorSamples++;
+        const floor = start.y - radius + (end.y - start.y) * along / 100;
+        assert.ok(Math.abs(d.state.groundHeight - floor) < 1, `scarp floor direction ${direction}, at ${along.toFixed(1)}: ${d.state.groundHeight} vs ${floor}`);
+      }
+      if (furthest > 103) break;
+      const target = direction > 0 ? {x: end.x + dx * 30, z: end.z + dz * 30} : {x: start.x - dx * 30, z: start.z - dz * 30};
+      const turn = wrapHeading(Math.atan2(target.x - here.x, target.z - here.z) - d.course.at(d.state.s).heading - d.state.headingError);
+      d.setInput({throttle: 1, steer: Math.max(-1, Math.min(1, -turn * 2))});
+      d.step(1 / 60);
+    }
+    assert.ok(floorSamples > 10, `the car stayed in the tube in direction ${direction}`);
+    assert.ok(furthest > 103, `car crosses the scarp in direction ${direction}: ${furthest.toFixed(1)} m`);
+  }
+}
+
 // The steep-ground rule must see the same floor as support, not the scarp above it.
 {
   const {scablandsGround} = await import('../src/sim-scablands.js');
