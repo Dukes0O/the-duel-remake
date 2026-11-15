@@ -1688,3 +1688,11 @@ Check: `node tools/test-scablands-things.mjs` passed 35 of 35. The river check c
 Changed assertions: none; the no-build check is new. Codex decided: no new design choice. Removed: raycasting and building river meshes solely to place objects.
 
 Still needed: verify standing objects against all terrain meshes; finish the camera and scenario fixes, part C, and the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: hill and mesa placement checks
+
+The things suite now compares the height used for placement with the actual near-ground triangles across a Breaks hill and a mesa, including the mesa face. Together with the existing scarp and river mesh checks and the standing-object offset check, this checks the common height source and its use by standing objects. It does not inspect each standing object against every mesh. No game event or sound cue was added.
+
+Check: `node tools/test-scablands-things.mjs` passed 36 of 36. Race fingerprints and world signatures were not rerun in this step. Changed assertions: none; the mesh comparison is a new check. Codex decided: no new design choice. Removed: none.
+
+Still needed: camera and scenario fixes, part C, and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

@@ -17,6 +17,29 @@ import * as THREE from 'three';
 import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
 import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
 import {preparedScarps} from '../src/world/scablands-scarps.js';
+import {HILLS} from '../src/world/scablands-height.js';
+
+test('the height used for things follows the drawn hills and mesa faces', () => {
+  const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
+  const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+  for (const kind of ['breaks', 'mesa']) {
+    const hill = HILLS.find(item => item.kind === kind);
+    ground.follow(hill.x, hill.z);
+    ground.mesh.updateMatrixWorld(true);
+    let checked = 0;
+    for (let dx = -hill.radius; dx <= hill.radius; dx += 23) for (let dz = -hill.radius; dz <= hill.radius; dz += 29) {
+      if (Math.hypot(dx, dz) > hill.radius) continue;
+      const x = hill.x + dx, z = hill.z + dz;
+      ray.set(new THREE.Vector3(x, 1000, z), down);
+      const hits = ray.intersectObject(ground.mesh, true);
+      assert.ok(hits.length, `${kind} ground covers the point`);
+      assert.ok(Math.abs(nearGroundHeightAt(x, z, scablandsSurfaceHeightAt) - hits[0].point.y) < .001, `${kind} placement follows the mesh`);
+      checked++;
+    }
+    assert.ok(checked > 100, `${kind} has enough samples`);
+  }
+  ground.dispose();
+});
 
 test('the river height for things follows the drawn bed and bank triangles', () => {
   const plainAt = (x, z) => scablandsSurfaceHeightAt(x, z) + riverDepthAt(x, z);
