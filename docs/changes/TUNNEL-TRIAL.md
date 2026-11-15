@@ -18,6 +18,12 @@ Merged `integration/wasteland` into this lane. Conflicts were settled as follows
 
 The shared solid grid also feeds each job's grid, cars, raiders and Big Bess. Realism objects now carry their height range for collision checks. A focused check places a pole on the deck and a rock in the bed and checks both the course and job grids. The normal grounded-car contact path for other solids is unchanged. A comparison with the shared branch confirms that the ground shader text is byte-for-byte unchanged when there are no tracks or tunnels; a second check confirms both additions appear together.
 
+## Survey Flags fix
+
+The third flag's height is an offset from the ground, but the job compared it with the car's absolute height. The car raised that flag later, changed its route and repeatedly hit the steep river bank near (2065, -1425). This was a ground-climb hit, not a deck, post, roof or wrong floor. Exploration now compares the car's height above its selected floor with the flag's ground-relative height. The physical position still keeps the car's absolute feet height. A real-car test covers the flag and a short drive over the crossing used by the successful route.
+
+Survey Flags and Hot Delivery each finished 10 of 10 seeds with the Easy suite's own driver, without the realism switch. The focused tunnel test and all 24 solid-ground tests passed. No existing assertion or route changed. No new sound cue is needed.
+
 ## Checks
 
 `test-tunnels`, `test-scablands-things`, `test-scablands-solid` (24 checks), `test-scablands-scene`, and `test-scablands-size` passed. `test-replays` passed 297 fingerprints in 33 cases; `test-combat-replays` passed 12 fingerprints in four encounters. `test-shortcut-presets` passed 241 checks. `npm.cmd run build` passed with the existing chunk-size and mixed-import warnings.
@@ -26,7 +32,7 @@ Claude ran the browser scenario successfully: the bridge floor error was 0 and f
 
 ## For Claude to run
 
-Run the lane tier and long Everburn suite at merge, as requested. The earlier lane run on commit 87f779b79 had four FFmpeg startup failures and a Survey Flags failure in the long Everburn suite; their status on this merged branch is unknown. Review the shared build in the browser. The boring machine itself is not built.
+Run the lane tier and long Everburn suite at merge, as requested. The earlier lane run on commit 87f779b79 had four FFmpeg startup failures. Its Survey Flags failure is fixed and the two requested jobs now pass independently. Review the shared build in the browser. The boring machine itself is not built.
 
 ## Changed assertions, for Claude to review
 

@@ -609,9 +609,12 @@ export function stepWorldJob(duel, dt) {
       !worldJob.clearedWaves.includes(waveNumber)) worldJob.clearedWaves.push(waveNumber);
   const player = state.onFoot && state.fighter ? state.fighter : state;
   const point = state.onFoot&&state.fighter?{x:state.fighter.x,y:state.fighter.y,z:state.fighter.z}:position(duel, player);
-  const playerView = {position: point, s: player.s, lateral: player.lateral,
-    speed: player.speedMph ?? 0};
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
+  // Exploration finds use heights above the local ground, not world altitudes.
+  const jobPoint = currentStep?.kind === 'explore' && duel.course.def.scablands
+    ? {...point, y: point.y - scablandsActorHeightAt(point.x, point.z, point.y)} : point;
+  const playerView = {position: jobPoint, s: player.s, lateral: player.lateral,
+    speed: player.speedMph ?? 0};
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
   if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
