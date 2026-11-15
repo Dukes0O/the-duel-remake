@@ -1340,3 +1340,7 @@ Added plain batches for the cleared pylon feet, telegraph poles, fence posts and
 The placement suite passed 14 tests, including a check that every collision record has one matching drawing. Changed assertions: none. Codex decided: no new design choice. Removed: nothing; the existing land is unchanged.
 
 For Claude to run: the browser scenario once it is written. Chrome cannot start in this job. The scene connection, job starts, solids, towers, wires, signs, track drawing, map and scenario remain to be built.
+
+After integration was confirmed current, all eight Scablands suites and both replay suites passed. Race fingerprints stayed unchanged: 297 race checks across 33 cases and 12 combat checks across four encounters. No separate world-signature test file matched the requested name. The lane tier passed 26 of 28 suites: `test-full-check` could not start `pwsh` for its temporary copy (EACCES); `test-town-core` reached 10.03 ms against its 10 ms limit under load, and passed alone on its one rerun at 6.65 ms. The build passed with bundle-size warnings. The matching drawing test also checks the heading and passed all 14 tests.
+
+For Claude to run: rerun `test-full-check` at merge and run the scenario after it is written. Cockpit sync could not unlock its protected credential, so it did not update Cockpit.

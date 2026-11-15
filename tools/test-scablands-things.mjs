@@ -27,6 +27,8 @@ test('fixed drawing uses every collision footprint once', () => {
       matrix.decompose(position, rotation, scale);
       assert.ok(position.distanceTo(new THREE.Vector3(...solid.center)) < .001);
       assert.ok(scale.distanceTo(new THREE.Vector3(...solid.size)) < .001);
+      const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), solid.heading);
+      assert.ok(rotation.angleTo(expected) < .001);
     }
   }
   view.dispose();

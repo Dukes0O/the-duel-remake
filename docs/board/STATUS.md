@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T07:55:45.820Z
+Observed at: 2026-11-15T08:09:40.121Z
 
-Observation commit: 5586f4460c3ba7895d9fa9e3da7b5dbf40664f78
+Observation commit: a9452f991386b01daccc597a142cd8bcd5e0d728
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 5586f4460c3ba7895d9fa9e3da7b5dbf40664f78
+Integration HEAD: a9452f991386b01daccc597a142cd8bcd5e0d728
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -30,7 +30,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
 | codex/batch-3 | 9 | unknown | true | false | unknown |
-| codex/board-lines | 8 | unknown | true | false | unknown |
+| codex/board-lines | 9 | unknown | true | false | unknown |
 | codex/bowl-art-rex | 9 | unknown | false | false | unknown |
 | codex/bowl-course | 9 | unknown | true | false | unknown |
 | codex/car-art-bully | 9 | unknown | false | false | unknown |
@@ -51,7 +51,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/wild-art-waste | 9 | unknown | false | false | unknown |
 | codex/ww-art-crew | 8 | unknown | true | false | unknown |
 | codex/ww-art-dam | 9 | unknown | true | false | unknown |
-| codex/ww-art-mule | 9 | unknown | false | false | unknown |
+| codex/ww-art-mule | 10 | unknown | false | false | unknown |
 | codex/ww-art-rail | 8 | unknown | true | false | unknown |
 | codex/ww-art-whites | 8 | unknown | true | false | unknown |
 | codex/ww-boss | 9 | unknown | true | false | unknown |
@@ -74,8 +74,8 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 9 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 9 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
-| codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/hills | unknown | 2026-11-15T00:31:26-07:00 | 0 | last commit 2026-11-15T00:31:26-07:00 | docs/board/STATUS.md, docs/board/cards/SCABLANDS-LAND.md, docs/board/run-log.md, docs/changes/SCABLANDS-LAND.md, src/world/scablands-height.js |
+| codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 10 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
+| lane/hills | unknown | 2026-11-15T00:59:09-07:00 | 0 | last commit 2026-11-15T00:59:09-07:00 | docs/board/STATUS.md, docs/board/cards/SCABLANDS-LAND.md, docs/board/run-log.md, docs/changes/SCABLANDS-LAND.md, src/world/scablands-height.js |
 | lane/tunnel-trial | unknown | 2026-11-15T00:42:11-07:00 | 0 | last commit 2026-11-15T00:42:11-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/arena/modes/world-job.js, src/course.js, src/sim-contacts.js |
 
 ## Size targets
@@ -84,7 +84,7 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | unavailable | unavailable | 250,000,000 B |
+| Build `dist/` | 717,126,272 B | unavailable | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
@@ -92,7 +92,7 @@ Targets are advisory. Change compares with the previous status observation when 
 | Review `looks/` | 84,687,451 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 882,366 B | +0 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,427,170,304 B | +304,128 B | unavailable |
+| Git objects | 1,427,678,208 B | +507,904 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
