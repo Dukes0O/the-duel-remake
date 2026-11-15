@@ -2,6 +2,8 @@
 
 ## Current round
 
+A real world job now walks a raider across the bed under each deck with the town switch off. The check follows its one stored height for the whole crossing and confirms it reaches the far side. `node tools/test-tunnels.mjs` passed. A car chase from the plain, Big Bess crossing above a raider, and the drive off the bank remain to be proved. No game event or sound cue was added.
+
 The flight check now also starts a falling car below each deck while its stored support is still at bank height. The real flight step keeps it below the deck and lands it on the bed. `node tools/test-tunnels.mjs` passed. This checks the fall after leaving the bank; the drive off the bank and the complete chase and crossing proofs still remain.
 
 Car placement now accepts an explicit floor height and clears it when none is supplied. The car support check covers both decks, and the drives under both decks now run with the town switch off. `test-tunnels` and `test-scablands-solid` pass. The bank fall, complete chase and crossing proofs remain to be added. No game event or sound cue was added.

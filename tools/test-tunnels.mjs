@@ -159,6 +159,43 @@ for (const id of ['girder-bridge', 'the-pipe']) {
 }
 
 // Use the real west scarp, with both ends joined to the ground.
+// Exercise the job's own raider update, including its stored height, across
+// each deck. The car is not placed near the raider for this crossing check.
+{
+  const {Duel} = await import('../src/game.js');
+  const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+  for (const id of ['girder-bridge', 'the-pipe']) {
+    const crossing = RIVER_LAND.crossings.find(item => item.id === id);
+    const {points, along} = RIVER_LAND.line;
+    const index = along.findIndex(value => value >= crossing.along);
+    const a = points[index - 1], b = points[index + 1];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    const dx = (b.x - a.x) / length, dz = (b.z - a.z) / length;
+    const centre = {x: crossing.x + dz * 27, z: crossing.z - dx * 27};
+    const start = {x: centre.x - dx * 40, z: centre.z - dz * 40};
+    const target = {x: centre.x + dx * 40, z: centre.z + dz * 40};
+    const duel = new Duel({seed: 1, featureFlags: {'hidden-road': true, arsenal: true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+      seed: 1, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1}}), true);
+    duel.state.countdown = 0;
+    const raider = {id: 'floor-crossing', ...start, y: scablandsActorHeightAt(start.x, start.z, -100),
+      health: 70, knockedDown: false, approachSpeed: 6, approachTarget: target};
+    duel.state.arena.worldJob.actors.push(raider);
+    let below = 0;
+    for (let tick = 0; tick < 900; tick++) {
+      duel.step(1 / 60);
+      const bed = scablandsActorHeightAt(raider.x, raider.z, -100);
+      assert.ok(Math.abs(raider.y - bed) < 1e-6, `${id}: job raider remains on the bed`);
+      assert.equal(Object.hasOwn(raider, 'groundY'), false);
+      if (scablandsSurfaceHeightAt(raider.x, raider.z) - bed > 4) below++;
+    }
+    assert.ok(below > 60, `${id}: job raider travels below the deck`);
+    assert.ok(Math.hypot(raider.x - target.x, raider.z - target.z) < 1, `${id}: job raider reaches the far side`);
+  }
+}
+
+// Use the real west scarp, with both ends joined to the ground.
 {
   const trial = westScarpTrial(scablandsHeightAt);
   const {start, end, radius} = trial.segment;
