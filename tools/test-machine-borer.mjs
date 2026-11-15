@@ -265,6 +265,19 @@ for (let distance = 0; distance <= 60; distance += 5) {
   assert.ok(Math.abs(drawnGround.heightAtDrawn(x,z) - scablandsSurfaceHeightAt(x,z,realGround)) < .3,
     `Drawn ground matches the scarp ${distance} m ahead.`);
 }
+// Read triangles from the actual mesh, including its underside from inside the hill.
+drawnGround.mesh.updateMatrixWorld(true);
+const mouthFloor = scablandsSurfaceHeightAt(realParked.x + 31 * Math.sin(realParked.heading),
+  realParked.z + 31 * Math.cos(realParked.heading), realGround);
+const roofX = realParked.x + 51 * Math.sin(realParked.heading);
+const roofZ = realParked.z + 51 * Math.cos(realParked.heading);
+const crown = mouthFloor + 1.65 + 3;
+assert.ok(scablandsSurfaceHeightAt(roofX, roofZ, realGround) >= crown + 6,
+  'The real scarp gives at least six metres of cover above the crown at 20 metres.');
+const ray = new THREE.Raycaster(new THREE.Vector3(roofX, crown, roofZ), new THREE.Vector3(0, 1, 0));
+const roofHit = ray.intersectObject(drawnGround.mesh)[0];
+assert.ok(roofHit && Math.abs(roofHit.point.y - scablandsSurfaceHeightAt(roofX, roofZ, realGround)) < .5,
+  'A ray from inside hits the actual ground mesh above the bore.');
 drawnGround.dispose();
 const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
 assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');

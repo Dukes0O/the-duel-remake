@@ -2,6 +2,14 @@
 
 Mabel is a selectable machine in the Dig, behind `wasteland-town`. She drives to the west scarp, cuts and lines a tunnel, makes a muck pile through the ground system, and reverses along her cut. The head, stall, steering, protected places and face rules are in the machine rules. The Dig has a dial, messages, camera, controls, plain machine model, face effects and conveyor. Claude's shared lining and portals draw the tunnel. Tunnels export to and restore from plain data for the current visit; no town store is read or written.
 
+## Scarp cover follow-up
+
+After checking integration was already merged, all seven machine suites, the tunnel suite, both replay suites (297 race and 12 combat fingerprints), and the build passed. No test suite filename contains `world-sign`. The browser scenario expressions parse in Node; the browser scenario and lane tier remain for Claude. The build reported its chunk-size and mixed-import warnings. No existing assertions changed in this follow-up.
+
+The Dig's near-ground triangles were drawn only from above. From inside the scarp their back faces disappeared, leaving sky around the bore. The Dig now draws both faces of that same ground mesh. An actual triangle ray from beneath the ground passes in the focused test. The mouth shader still cuts only the mouth capsule; the scenario's ground rays account for that cut.
+
+At the parked position the rules give x 1720.20, z -650.00 and floor -0.03 m. At the expected 31 m approach the floor is -0.17 m; 20 m farther ahead the surface is 11.46 m and the bore crown is 4.48 m, leaving 6.98 m cover. These are rule heights, not browser picture measurements. The revised browser scenario prints the ground mesh and rule heights at the requested 18 positions, checks cover after 20 m, and casts from the inside camera toward the roof. Claude must run it and record the picture measurements: this lane cannot run Chrome.
+
 ## Late drive follow-up
 
 The Dig now extends its own borer segment list in place, without copying the list on each cutting step. The standalone cutter still leaves its input state unchanged. The focused borer test passed, including a check that the Dig's index follows the growing list.

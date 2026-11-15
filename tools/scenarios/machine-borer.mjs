@@ -17,10 +17,21 @@ const page = {
   leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
   cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
   cut20: `(() => window.__theDig.simulation.borer.distanceM >= 20)()`,
-  rock: `(() => { const dig = window.__theDig, segment = dig.simulation.tunnels.segments[0];
-    const dx = segment.end.x - segment.start.x, dz = segment.end.z - segment.start.z, length = Math.hypot(dx,dz);
-    const x = segment.start.x + 15 * dx / length, z = segment.start.z + 15 * dz / length;
-    return {height:dig.viewForCheck.ground.heightAtDrawn(x,z), floor:segment.start.y - 1.65}; })()`,
+  groundSamples: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
+    const forward={x:Math.sin(b.heading),z:Math.cos(b.heading)}, right={x:forward.z,z:-forward.x};
+    return [-5,0,5].flatMap(side=>[0,10,20,30,40,60].map(distance=>{
+      const x=b.x+distance*forward.x+side*right.x, z=b.z+distance*forward.z+side*right.z;
+      return {side,distance,rules:v.surfaceHeight(x,z),hit:v.groundRay({x,y:200,z},{x:0,y:-1,z:0})};
+    })); })()`,
+  cover: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
+    const crown=b.y+1.65+3, hit=v.groundRay({x:b.x,y:200,z:b.z},{x:0,y:-1,z:0});
+    return {crown,rules:v.surfaceHeight(b.x,b.z),drawn:hit?.y ?? null}; })()`,
+  roofRay: `(() => { const dig=window.__theDig, v=dig.viewForCheck, s=dig.simulation.tunnels.segments[0];
+    const dx=s.end.x-s.start.x,dz=s.end.z-s.start.z,length=Math.hypot(dx,dz);
+    const target={x:s.start.x+10*dx/length,y:s.start.y+s.radius+3,z:s.start.z+10*dz/length};
+    const origin=v.camera.position, direction={x:target.x-origin.x,y:target.y-origin.y,z:target.z-origin.z};
+    const distance=Math.hypot(direction.x,direction.y,direction.z);
+    return {target,hit:v.groundRay(origin,direction,distance)}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
   inside: `(() => window.__theDig.simulation.borer.travelM <= 10)()`,
@@ -105,13 +116,19 @@ export async function run(context) {
   await context.waitFor(page.loaded, 'The Dig loaded', 60000);
   for (let i = 0; i < 7; i++) await press(context, 'KeyQ');
   await context.waitFor(page.selected, 'Mabel selected', 10000);
+  const samples = await context.evaluate(page.groundSamples);
+  for (const sample of samples) {
+    console.log(`Ground ${sample.distance} m ahead, ${sample.side} m right: rules ${sample.rules.toFixed(2)}, mesh ${sample.hit?.y?.toFixed(2) ?? 'no hit'}`);
+    assert.ok(sample.hit && Math.abs(sample.rules - sample.hit.y) <= 0.5, 'drawn ground matches the rules');
+  }
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
   await press(context, 'Tab');
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   await press(context, 'KeyC');
-  const rock = await context.evaluate(page.rock);
-  assert.ok(rock.height !== null && rock.height >= rock.floor + 4, 'drawn rock covers the bore 15 m beyond the mouth');
+  const cover = await context.evaluate(page.cover);
+  console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
+  assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
   await picture(context, 'machine-borer-mouth-20m', 20);
   await press(context, 'KeyC');
   await cutUntil(context, 30);
@@ -123,6 +140,9 @@ export async function run(context) {
   await key(context, 'KeyS', 'keydown');
   try {
     await context.waitFor(page.inside, '20 m back from the face', 60000);
+    const roof = await context.evaluate(page.roofRay);
+    console.log(`Ground above the bore: ${JSON.stringify(roof)}`);
+    assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
     const inside = await picture(context, 'machine-borer-inside');
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
