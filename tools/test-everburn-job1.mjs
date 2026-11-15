@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays, learnHotDeliveryDangers} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -485,6 +485,25 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
   assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
   assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
+
+  const knowledge = createKnowledge();
+  const routes = worldMapWays({worldJob:world, car:normal, target:LAND.at('tin-town')});
+  const map = () => waysMarkup(routes, 'Tin Town', knowledge, {hotDelivery:true});
+  learnHotDeliveryDangers(knowledge, world, normal);
+  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe/i);
+  lossAt(pan);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /The wind on the salt pan cools the ember faster\./);
+  assert.doesNotMatch(map(), /Cross the Pipe/i);
+  lossAt({...LAND.at('the-pipe')});
+  assert.equal(world.pipeDeck.onDeck, true);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /Cross the Pipe at 40 km\/h or less\./);
+  lossAt(normal);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /wind on the salt pan/);
+  assert.match(map(), /Cross the Pipe/);
+
 }
 // The real watch traces the ground, resets when sight is lost, and sounds once after six seconds.
 {

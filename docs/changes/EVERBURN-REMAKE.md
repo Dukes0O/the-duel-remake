@@ -426,3 +426,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none. Race fingerprints were not checked in this round.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: other dangers, map captions, the six drives, camera, cover and scenario.
+
+## Larger land, salt wind and Pipe on the map (15 November 2026)
+
+- The map records the salt pan wind when the car reaches the pan and the Pipe's speed limit when the car reaches its deck. Both stay on the list afterwards. No sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real job update supplies the Pipe deck state; the test checks both dangers are hidden beforehand, appear when met and remain afterwards. `git diff --check`: passed.
+- Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
+- For Claude to run: the requested browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: map captions, six drives, camera, cover and scenario.

@@ -4,6 +4,7 @@ import {getLandPicture, createPictureCanvas, createKnowledge, learn, jobFacts, d
 import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees, nearestOnLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
+import {scablandsDriveAt} from './scablands-regions.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -230,6 +231,15 @@ export function learnDrivenWays(knowledge, result, car) {
 }
 
 const escapeText = value => String(value).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+// Remember hazards only after the car meets them during this job.
+export function learnHotDeliveryDangers(knowledge, worldJob, car) {
+  const dangers = knowledge.hotDeliveryDangers ??= new Set();
+  const before = dangers.size;
+  if (car && scablandsDriveAt(car.x, car.z).id === 'salt-pan') dangers.add('salt-pan');
+  if (worldJob.pipeDeck?.onDeck) dangers.add('pipe');
+  if (dangers.size !== before) knowledge.version++;
+}
+
 export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} = {}) {
   if (hotDelivery) {
     const east = result.ways.find(way => way.id === 'east-road');
@@ -240,6 +250,8 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
     }).join('');
     const dangers = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}.`);
     if (knowledge.sights.size) dangers.push('The furnace watches the land.');
+    if (knowledge.hotDeliveryDangers?.has('salt-pan')) dangers.push('The wind on the salt pan cools the ember faster.');
+    if (knowledge.hotDeliveryDangers?.has('pipe')) dangers.push('Cross the Pipe at 40 km/h or less.');
     const learnt = dangers.length ? `<ul class="world-hud-learnt">${dangers.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '';
     return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>${learnt}`;
   }
@@ -379,6 +391,7 @@ export function createWorldHud({host, app = null, picture = null}) {
         }
         learnWayCrossings(knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
         learnDrivenWays(knowledge, result, frame.car);
+        learnHotDeliveryDangers(knowledge, worldJob, frame.car);
       }
       const pointer = brazierArrow(model.ember, frame.car, knowledge);
       brazierPointer.hidden = !pointer;
