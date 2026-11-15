@@ -148,7 +148,8 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
       const floor = center.y - tube.radius * 0.55;
       const ceiling = center.y + tube.radius;
       if (radial < tube.radius && actorHeight <= ceiling && actorHeight >= floor - floorTolerance &&
-          (!found || radial < nearestResult.radial)) {
+          (!found || floor > nearestResult.floor ||
+            (floor === nearestResult.floor && radial < nearestResult.radial))) {
         found = true;
         nearestResult.tube = tube;
         nearestResult.center.x = center.x; nearestResult.center.y = center.y; nearestResult.center.z = center.z;

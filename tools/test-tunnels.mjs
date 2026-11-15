@@ -647,6 +647,17 @@ assert.equal(car.lateral, 5, 'a car on selected covered ground is not held by bo
   }
 }
 
+// Where a bend overlaps in plan, choose the highest floor within step height.
+{
+  const tubes = createGroundTunnels([
+    {start: {x: 0, y: 2.2, z: 0}, end: {x: 10, y: 2.2, z: 0}, radius: 4},
+    {start: {x: 10, y: 2.2, z: 0}, end: {x: 10, y: 3.2, z: 10}, radius: 4},
+  ]);
+  const point = {x: 9, y: .1, z: 1};
+  assert.ok(Math.abs(tubes.groundAt(point, point.y, 20) - .1) < 1e-9,
+    'overlapping segments select the highest reachable floor');
+}
+
 // A bore cannot be made with a gap, a floor step or a zero-length segment.
 {
   const first = {start: {x: 0, y: 4, z: 0}, end: {x: 10, y: 4, z: 0}, radius: 4};
