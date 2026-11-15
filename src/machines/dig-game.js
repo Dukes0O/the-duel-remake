@@ -12,6 +12,7 @@ import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
+import {createRoadSounds, createRoadWorkView} from './roads-view.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -89,6 +90,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));
   const cuttingsView=createDrillCuttingsView(world,(x,z)=>sim.ground.heightAt(x,z));
   const drillSounds=createDrillSounds(app?.audio);
+  const roadSounds=createRoadSounds(app?.audio);
+  const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z));
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null;
@@ -150,7 +153,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
-    drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
+    roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
@@ -174,6 +177,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(frameEvents.some(event=>event.type==='drill-cuttings'))drillSounds.play('drill-feed');
       for(const event of frameEvents)if(event.cue)drillSounds.play(event.cue);
     }
+    for(const event of frameEvents)if(event.cue)roadSounds.play(event.cue);
+    roadView.update(sim.roadWork);
     wellheadView.update(sim.drill.wellheads);
     cuttingsView.update(sim.drill.hole);
     if(controlsMachine!==sim.activeMachine){
