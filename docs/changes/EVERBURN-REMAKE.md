@@ -164,3 +164,13 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - For Claude to draw: the final barricades, smoke and Cinder figure. For Claude to run: the requested scenario and final checks remain for the last round, including the two long drivers.
 - Changed assertions: none. Race fingerprints: not checked this round. Codex decided: none.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
+## Larger land, rider pursuit started (15 November 2026)
+
+- A waiting Ash Men vehicle starts pursuing the loaded pot when the car comes within 120 m of it. It follows the land's floor and solid checks. A rider keeps chasing after the car leaves that range. This is part of step 3b: the rider does not yet ram or jolt the pot. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real world-job step checks that a rider waits before loading, moves toward a nearby loaded pot and leaves the other rider waiting. `git diff --check`: passed.
+- Codex decided: 120 m is the initial pursuit range, subject to Claude's review and the scripted drives.
+- For Claude to draw: the final barricades, smoke and Cinder figure. For Claude to run: the browser scenario and final checks remain for the last round, including the two long drivers.
+- Changed assertions: none. Race fingerprints: not checked this round.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: rider rams and jolts, the scoop ambush, and the remaining steps.

@@ -174,9 +174,32 @@ export function prepareWorldJobControls(duel) {
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   updateJobActor(duel, worldJob, step?.actor, dt);
-  for (const actor of step?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, dt);
+  for (const actor of step?.waitingActors ?? []) {
+    updateJobActor(duel, worldJob, actor, dt);
+    pursueJobRider(duel, worldJob, actor, dt);
+  }
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
+}
+
+// The waiting cars begin pursuit when the loaded pot comes close to their post.
+// They use the land's mover, including its floor and solid checks.
+function pursueJobRider(duel, worldJob, actorDef, dt) {
+  const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+  if (!rider || rider.health <= 0 || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  const car = position(duel, duel.state);
+  const dx = car.x - rider.position.x, dz = car.z - rider.position.z;
+  const distance = Math.hypot(dx, dz);
+  if (!rider.pursuing && distance > 120) return;
+  rider.pursuing = true;
+  if (distance < 3 || dt <= 0) { rider.speed = 0; return; }
+  rider.heading = Math.atan2(dx, dz);
+  const travel = Math.min(distance - 3, 18 * dt);
+  const before = rider.position;
+  const moved = stepMover(before, {x: before.x + dx / distance * travel, z: before.z + dz / distance * travel},
+    {radius: 1.3, grid: worldJob.solidGrid, height: before.y});
+  rider.position = {x: moved.x, y: moved.y, z: moved.z};
+  rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
 }
 
 function updateJobActor(duel, worldJob, actorDef, dt) {

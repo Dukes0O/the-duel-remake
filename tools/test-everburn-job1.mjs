@@ -10,7 +10,7 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
-import {createWorldJob, initializeWorldJob} from '../src/arena/modes/world-job.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 const step = definition.steps[0], pickup = step.pickup.place.position;
@@ -30,6 +30,23 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   scablandsFloorsAt(actor.position.x, actor.position.z, floors);
   assert.equal(actor.position.y, floors[0]);
   assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
+}
+// A loaded pot near a post draws that post's rider; the other remains waiting.
+{
+  const rider = waitingWorld.actors[0], distant = waitingWorld.actors[1];
+  const start = {...rider.position}, otherStart = {...distant.position};
+  const car = {x:start.x + 30, y:start.y, z:start.z};
+  Object.assign(waitingState, {opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'});
+  Object.assign(waitingDuel, {emit:() => {}, _storyCallout:() => {}});
+  waitingDuel.course.worldAt = () => car;
+  waitingWorld.job.stepState = {};
+  stepWorldJob(waitingDuel, 0.25);
+  assert.deepEqual(rider.position, start, 'the rider waits before the pot is loaded');
+  waitingWorld.job.stepState = {loaded:true, ember:100};
+  stepWorldJob(waitingDuel, 0.25);
+  assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) < 30);
+  assert.ok(rider.speed > 0);
+  assert.deepEqual(distant.position, otherStart);
 }
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
 // The actual job grid holds both barricades on their named floor, including the bridge deck.
