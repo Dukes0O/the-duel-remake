@@ -8,7 +8,7 @@ import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {SCARPS, scarpsFor} from '../src/world/scablands-scarps.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
-import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData} from '../src/world/scablands-things.js';
+import {clearedFixedThings, clearedLoneBoulder, thingSolids, thingSolidGrid, realismThingsData, thingLandmarkLines} from '../src/world/scablands-things.js';
 import {createFixedThingsView, createSmallThingsView, createThingsLinesView, createRealismThingsView, createForkSignsView} from '../src/world/scablands-things-view.js';
 import * as THREE from 'three';
 
@@ -402,4 +402,17 @@ test('track drawing uses the named ways and refreshes as the player moves', asyn
   view.update(point.x1 + 512, point.z1);
   assert.equal(clears, 2);
   view.dispose();
+});
+
+
+test('map landmark lines follow the drawn supports and stop at gaps', () => {
+  const a = {x: 0, z: 0}, b = {x: 1, z: 1}, c = {x: 2, z: 2};
+  const lines = thingLandmarkLines({pylons: [a, b, null, c], telegraphs: [
+    {id: 'east-road', poles: [a, b, {...c, state: 'down'}, a, c]},
+    {id: 'iron-line', poles: [b, c]},
+  ]});
+  assert.deepEqual(lines.map(line => [line.kind, line.id, line.points]), [
+    ['pylon', 'pylons', [a, b]], ['telegraph', 'east-road', [a, b]],
+    ['telegraph', 'east-road', [a, c]], ['telegraph', 'iron-line', [b, c]],
+  ]);
 });

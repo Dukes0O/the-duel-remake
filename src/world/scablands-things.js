@@ -301,6 +301,23 @@ export function clearedFixedThings(seed, jobStarts) {
   };
 }
 
+// Map only the spans that the scene draws, preserving breaks at missing or fallen supports.
+export function thingLandmarkLines(fixed) {
+  const lines = [];
+  const collect = (kind, id, supports, usable) => {
+    let points = [];
+    const finish = () => { if (points.length > 1) lines.push({kind, id, points}); points = []; };
+    for (const support of supports) {
+      if (support && usable(support)) points.push({x: support.x, z: support.z});
+      else finish();
+    }
+    finish();
+  };
+  collect('pylon', 'pylons', fixed.pylons, () => true);
+  for (const line of fixed.telegraphs) collect('telegraph', line.id, line.poles, pole => pole.state !== 'down');
+  return lines;
+}
+
 export function clearedLoneBoulder(seed, i, j, jobStarts) {
   if (!Array.isArray(jobStarts)) throw new RangeError('Job starts are required');
   const rock = loneBoulderInCell(seed, i, j);
