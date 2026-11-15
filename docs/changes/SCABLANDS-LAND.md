@@ -1188,3 +1188,14 @@ Changed assertions, for Claude to review: the car-step allocation fix changed no
 Lane tier: 258 of 274 suites passed. `test-run-gas-medium` passed all targets. `test-everburn-play-start` failed because the last segment of the long gas road comes within 8 m of the old single Tin Town bounding box. The revised stopping place is clear of the actual solids, as `test-run-gas` and `test-scablands-solid` check. The old assertion was not changed; Claude must decide how to reconcile the box check with the new stops.
 
 The known job-environment failures were `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave3-audio`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-warlord-blackiron`, and `test-warlord-tollkeeper` (recordings or ffmpeg), `test-full-check` (fixture cleanup), and `test-review-evidence` (audio analysis). Claude should rerun them at merge. The build passed with `npm.cmd run build`.
+
+
+### Long gas road assertion after Claude's ruling
+
+Claude ruled that the Tin Town bounding rectangle was an approximation of its solids. The old check required each long gas road piece to stay 8 m from that rectangle unless it ended at the town centre, and required an end inside the rectangle to be at the centre. The new check requires every point of every long gas road piece, including its stopping place, to clear every Tin Town solid by Big Bess's 1.3 m half width plus 0.5 m. Each solid is measured in its own frame, and the minimum distance covers the whole segment. The other jobs keep their existing checks.
+
+Checks: `test-everburn-play-start` passed 982 checks; `test-run-gas` passed 8,504 checks; `test-scablands-solid` passed 18 tests; `npm.cmd run build` passed with bundle size warnings. The earlier lane-tier failure in `test-everburn-play-start` is resolved by Claude's ruling and this passing check. The known environment failures and the browser checks for Claude remain as listed above. Race fingerprints are unchanged from the replay checks recorded above; this change affects only a test. No new event or sound cue was added.
+
+Codex decided: no new design choice.
+
+Removed: the long gas road's bounding-rectangle approximation, replaced by the individual-solid clearance check.
