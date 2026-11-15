@@ -1,6 +1,6 @@
 # MACHINE-ROADS
 
-The dozer cuts and carries material into low ground. The roller firms the fill, and the paver lays a surface at a steady pace. Soft and rough work can be repaired. The yard keeps work for one visit and starts with material and a ditch. Each machine has its own controls, visible work, guidance and sound. These machines are behind `wasteland-town`.
+The dozer cuts and carries material into low ground. The roller firms the fill, and the paver lays a surface at a steady pace. Soft and rough work can be repaired. The yard starts with material and a ditch. Its machines now work the same ground. Each machine has its own controls, visible work, guidance and sound. These machines are behind `wasteland-town`.
 
 A town can record individual machine actions without changing an old save. Town roads use eight-metre cells. Their weakest metre sets the grade, and the existing haul route uses that grade to set truck speed. A rough patch can lower the grade and another pass can restore it. The yard does not write to a town or a save.
 
@@ -12,6 +12,7 @@ Fifth review: a new paving pass starts its own line. The trencher and road machi
 
 ## Checks
 
+- Fifth review on 89d40a217: road rules, all machine, dig and town suites passed. Both replay suites passed with 297 and 12 fingerprint checks; no fingerprints changed. The lane tier passed 54 of 56. Town people took 42.40 ms against 30 ms under load, and passed alone on the same commit at 21.58 ms. Review evidence could not start ffmpeg in the sandbox, then passed outside it, 9 of 9. The build passed with Vite chunk and dynamic-import warnings.
 - Fourth round: road rules passed, including the machine-text encoding check and separate loose, firm and paved colours. The build passed with the existing Vite warnings. The yard screen is UTF-8 without a byte-order mark and uses LF line endings. All files changed on this branch were checked for the same broken character.
 - Road rules, all machine, dig and town suites: passed, including older and new town save round trips, road grades, truck travel, repair and the yard ground view.
 - `test-replays.mjs`: passed 297 fingerprint checks across 33 cases. `test-combat-replays.mjs`: passed 12 fingerprint checks across four encounters. No fingerprints changed.
@@ -20,7 +21,7 @@ Fifth review: a new paving pass starts its own line. The trencher and road machi
 
 ## For Claude to run
 
-Run `tools/scenarios/machine-roads.mjs` with memory-only saves. Check one picture of each machine working with only its own controls, a finished stretch, and a bad stretch. The scenario passed before the fourth-round visual changes; check the new surface colours and screen text. Browser checks cannot run in this lane. Review the code and the changed assertion before merging.
+Run `tools/scenarios/machine-roads.mjs` with memory-only saves. Check one picture of each machine working with only its own controls, a finished stretch, and a bad stretch. The scenario passed before the fourth-round visual changes; check the surface colours, screen text, shared ground and the repaired paving line. Browser checks cannot run in this lane. Review the code and the changed assertion before merging.
 
 ## Sound cues
 
@@ -32,7 +33,7 @@ The fresh-yard assertion originally changed from `deepEqual(freshYard.roadWork, 
 
 ## Codex decided (Claude to review)
 
-Town work is in the Scablands. All metres in a town cell must be firm for the middle road speed and smooth for paved speed. The weakest metre sets the grade. A rough patch can be repaired.
+The roller packs one tenth of the material it displaces and pushes the rest to neighbouring ground. Town work is in the Scablands. All metres in a town cell must be firm for the middle road speed and smooth for paved speed. The weakest metre sets the grade. A rough patch can be repaired.
 
 ## Removed
 
