@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T11:55:45.071Z
+Observed at: 2026-11-15T13:18:11.236Z
 
-Observation commit: a261365074de7c06afd084a62497247a68c5f9ea
+Observation commit: 7b133429e5e23172c3694da7c863b22b3fb7c7e6
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: a261365074de7c06afd084a62497247a68c5f9ea
+Integration HEAD: 7b133429e5e23172c3694da7c863b22b3fb7c7e6
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -57,8 +57,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/ww-boss | 9 | unknown | true | false | unknown |
 | lane/hills | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/hills |
 | lane/lab-formula-closed | 5 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
-| lane/things | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/things |
-| lane/tunnel-trial | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tunnel-trial |
+| lane/tunnel-trial | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/tunnel-trial |
 
 ## Unmerged branches for idle review
 
@@ -75,8 +74,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 9 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 10 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/hills | unknown | 2026-11-15T03:26:15-07:00 | 0 | last commit 2026-11-15T03:26:15-07:00 | docs/board/cards/SCABLANDS-LAND.md, docs/board/run-log.md, docs/changes/SCABLANDS-LAND.md, src/arena/modes/world-job.js, src/raiders.js |
-| lane/tunnel-trial | unknown | 2026-11-15T04:30:35-07:00 | 0 | last commit 2026-11-15T04:30:35-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/arena/arena-event.js, src/arena/modes/world-job.js, src/camera-clearance.js |
+| lane/hills | unknown | 2026-11-15T05:43:33-07:00 | 0 | last commit 2026-11-15T05:43:33-07:00 | docs/board/cards/SCABLANDS-LAND.md, docs/board/run-log.md, docs/changes/SCABLANDS-LAND.md, src/arena/modes/world-job.js, src/raiders.js |
 
 ## Size targets
 
@@ -89,10 +87,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 84,974,015 B | +286,564 B | 20,000,000 B |
-| Added bytes in last merge | 26,950 B | -855,416 B | 5,000,000 B |
+| Review `looks/` | 85,143,224 B | +169,209 B | 20,000,000 B |
+| Added bytes in last merge | 121,038 B | +94,088 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,438,291,968 B | -297,513,984 B | unavailable |
+| Git objects | 1,439,593,472 B | +1,301,504 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -101,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
 - Local main: missing
-- Local integration/wasteland: a261365074de7c06afd084a62497247a68c5f9ea
+- Local integration/wasteland: 7b133429e5e23172c3694da7c863b22b3fb7c7e6
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
