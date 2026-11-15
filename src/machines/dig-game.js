@@ -224,7 +224,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
-      let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
+      let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping,sim.mode):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
       if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
@@ -301,7 +301,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       controlsPanel.querySelector('.the-dig-control-content').innerHTML=controlsMachine==='drill'
         ? '<h2>DRILL RIG CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to lower or raise the mast.</p><p>Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.</p>'
         : controlsMachine==='borer'
-          ? '<h2>MABEL CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to start work.</p><p>Hold W to cut and S to reverse. Use A and D to turn, and the up and down arrows to change slope.</p><p>Keep the head turning. Ease off if it slows.</p>'
+          ? '<h2>MABEL CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to start work.</p><p>Hold W to cut and S to reverse. Hold Shift with W to push gently through hard rock. Use A and D to turn, and the up and down arrows to change slope.</p><p>Keep the head turning. Ease off if it slows.</p>'
         : sim.roadMachines[controlsMachine]
           ? `<h2>${LABELS[controlsMachine].toUpperCase()} CONTROLS</h2><p>Drive with W, A, S and D. Hold Space while driving to work the ground.</p>${controlsMachine==='paver'?'<p>Hold Shift to pave slowly and smoothly.</p>':''}<p>Press Q to choose another machine. Press C to change the view.</p>`
           : originalControls;

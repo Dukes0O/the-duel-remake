@@ -50,6 +50,13 @@ assert.equal(machineDefinition('borer').name, 'Mabel');
 assert.equal(machineDefinition('borer').boreRadiusM, 3);
 assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward:1,steer:-1,slope:1});
 assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,steer:1,slope:-1});
+const gentleKeyboard = borerYardControls({KeyW:true,ShiftLeft:true});
+assert.equal(gentleKeyboard.forward, 1 / 3, 'The keyboard can use gentle thrust.');
+assert.equal(borerYardControls({KeyW:true,ShiftLeft:true}, null, null, 'drive').forward, 1,
+  'Gentle thrust does not slow open-ground driving.');
+const gentleRock = stepBorer(createBorerState(), {thrust:gentleKeyboard.forward}, hill, 'rock', 10).state;
+assert.equal(gentleRock.stalled, false, 'Gentle keyboard thrust keeps the head turning in hard rock.');
+assert.ok(gentleRock.distanceM > 1, 'Gentle keyboard thrust advances through hard rock.');
 assert.deepEqual(borerYardControls({}, {axes:[0.4,-0.6]}, {drive:{steer:0,forward:1}}),
   {forward:0.6,steer:0.4,slope:0}, 'The borer uses the existing mapped machine axes.');
 assert.deepEqual(borerYardControls({KeyW:true,ArrowUp:true}, {axes:[0,0,0,0]}, {drive:{steer:0,forward:1},slope:3}),

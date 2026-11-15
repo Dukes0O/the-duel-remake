@@ -38,6 +38,8 @@ The conveyor now carries moving clods while fresh ground is cut, and the existin
 
 Drive mode now stops the head and cannot cut after Mabel has entered a bore. Switch back to work mode to move along the tunnel or cut again.
 
+In work mode, holding Shift with W gives gentle thrust. This lets keyboard players keep the head turning in hard rock. Open-ground driving and reverse keep their usual speed.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -73,6 +75,7 @@ Drive mode now stops the head and cannot cut after Mabel has entered a bore. Swi
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed for controller axes, slope and keyboard priority.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding conveyor dirt and face sparks. Browser appearance is not yet checked.
 - `node tools/test-machine-borer.mjs`: passed with drive mode stopped inside a bore and no additional cutting.
+- `node tools/test-machine-borer.mjs` and `node --check src/machines/dig-game.js`: passed with gentle keyboard thrust advancing through hard rock without a stall, and ordinary drive speed unchanged.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -97,6 +100,8 @@ The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on th
 The Dig and town route planner have separate ground and tunnel data. The planner searches a surface grid and makes earthwork stages for the full route. Connecting a finished bore needs a bridge from the Dig to the town, centre-line links in the search and profiles, and work-order changes to exclude earthwork inside the bore. That is more than a small hook, so this card leaves roads and pipes through the bore for later.
 
 The apprentice system measures a timed machine demonstration and advances abstract work stages. It has no connection to the Dig, no 20-metre teaching check, and no way to apply a delegated line cut to the borer and its tunnel. This card leaves the apprentice out rather than inventing another system.
+
+Shift and W gives one-third thrust in work mode, matching the hardest rock. This gives keyboard players a way to cut without repeated stalls while preserving full thrust on W alone.
 
 ## Sound cues
 
