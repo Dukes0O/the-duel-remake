@@ -48,6 +48,16 @@ Job 1 (Hot Delivery) now carries live fire in an open pot. How the car is driven
 
 - `crashLimit` from job 1's data (both the step and its `easy` note) and the crash-size spill for job 1. The generic carry rule stays because Hot Soup uses it.
 
+### The yard's drawing (Claude, 15 November 2026, night)
+
+`src/world/scablands-yard-look.js` (new): `yardPlan()` (plain data: where each piece stands and the solid shapes), `yardShape`,
+`yardSignShape`, the two pictures and surfaces, and `createYard({heightAt})`. Nothing calls it yet; Codex places it for job 1.
+Run once in Node: 92 sheets, 3 containers, 10 posts, 109 solid shapes, 10,220 triangles, built in 52 ms. Seen in the game in a
+visible window with the yard put into the scene by hand (not committed): look round 2. No test added (Codex's placing step
+brings its own); no assertion changed. Sound: none, nothing here is an event.
+
+**Removed (the yard's drawing):** nothing.
+
 ## Changed at the merge (Claude, 14 November 2026)
 
 - **Rock costs ember by the metre, not by the second.** Claude drove the build flat out across the rock on Easy with one key held and the pot arrived (barely alive, 50 scrap, 20 seconds): a loss by the second lets a fast car cross the ground before the pot dies. `roughPerKmh: 0.12` (a second) became `roughPerMetre: 0.003` (for each km/h over 50, for each metre driven). At 120 km/h that is 7 a second where it was 8.4; at 206 km/h it is 27 a second where it was 18.7.
