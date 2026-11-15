@@ -138,3 +138,9 @@ Merged `integration/wasteland` with no conflicts. The scenario now drives from t
 ## Final checks after integration merge
 
 Merged `integration/wasteland` at `28d5544af` without conflicts. `test-machine-borer`, `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed individually. `node --check tools/scenarios/machine-borer.mjs` passed. The build passed with Vite's large-chunk and mixed-import warnings. The browser scenario and lane tier are for Claude to run. No assertions changed in this final check. No new race fingerprints were recorded; the earlier replay results above predate the latest integration merge.
+
+## Trench warning follow-up
+
+Merged `integration/wasteland` at the start of this run without conflicts. The 60 m exit-cutting sentence now warns without stopping Mabel, and repeats every 30 m with `borer.refuse`. The focused test drives 70 m into an exit cutting before tilting up, and checks the repeat warning. The former assertion that the warning stops her is replaced by checks that she keeps moving, as Claude directed.
+
+`node tools/test-machine-borer.mjs` passed in 217.6 seconds. The first run failed because its new test expected one warning even though the drive passed both 60 m and 90 m; the corrected test counts each threshold. The suite exceeds 120 seconds because `stepBorer` uses fixed 1/120-second internal steps; reducing its runtime remains for the pace item. No browser, replay, lane tier or build was run for this item.

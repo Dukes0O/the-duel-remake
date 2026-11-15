@@ -286,11 +286,6 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
         daylight(next, events, next.y - next.exitCutting.floor);
         continue;
       }
-      if (next.exitCutting.distanceM >= 60) {
-        if (next.message !== BORER_TRENCH) events.push({type:'refuse', cue:'borer.refuse', message:BORER_TRENCH});
-        next.message = BORER_TRENCH;
-        continue;
-      }
     }
     const heading = next.heading + steer * radians(0.5) * distance;
     const slope = clamp(next.slope + slopeInput * radians(0.3) * distance, -radians(6), radians(6));
@@ -329,7 +324,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       }
     }
     next.spoilBank = bank;
-    next.message = null;
+    if (next.message !== BORER_TRENCH) next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;
     if (!controls.mutableSegments && next.segments === state.segments) {
@@ -338,6 +333,12 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     if (next.exitCutting) {
       next.exitCutting = {...next.exitCutting, distanceM:next.exitCutting.distanceM + distance};
+      const warningAt = next.exitCutting.nextTrenchWarningM ?? 60;
+      if (next.exitCutting.distanceM >= warningAt) {
+        next.exitCutting.nextTrenchWarningM = warningAt + 30;
+        next.message = BORER_TRENCH;
+        events.push({type:'refuse', cue:'borer.refuse', message:BORER_TRENCH});
+      }
     } else {
       addCut(next.segments, start, end, radius);
       next.distanceM += distance; next.travelM = next.distanceM; next.started = true;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerSurvey, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {borerLandRefusal, borerSpoilRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
@@ -220,26 +220,32 @@ function driveMesa(kind) {
   const target = kind === 'survey' ? Math.atan(line.riseM / line.distanceM) : Math.PI / 30;
   const ground = {...base, refusal:shape => borerLandRefusal(shape, base),
     spoilRefusal:shape => borerSpoilRefusal(shape, base)};
+  let trenchWarnings = 0;
   for (let i = 0; i < 3000; i++) {
     const before = machine.distanceM + (machine.exitCutting?.distanceM || 0);
-    const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting);
+    const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting) || (kind === 'trench' && machine.exitCutting?.distanceM >= 70);
     const slope = wantsClimb ? (machine.slope < target - 0.00001 ? 1 : machine.slope > target + 0.00001 ? -1 : 0) : 0;
-    machine = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2).state;
+    const result = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2);
+    machine = result.state;
+    trenchWarnings += result.events.filter(event => event.message === BORER_TRENCH).length;
     if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
   }
   closeDigSandbox();
-  return machine;
+  return {machine, trenchWarnings};
 }
-const surveyedDrive = driveMesa('survey');
+const surveyedDrive = driveMesa('survey').machine;
 assert.equal(surveyedDrive.finished, true, `Surveyed drive: ${surveyedDrive.message}`);
 assert.ok(surveyedDrive.offLevelM <= 0.5, 'The surveyed drive reaches level ground.');
 assert.ok(surveyedDrive.segments[0].startOpen && surveyedDrive.segments.at(-1).endOpen, 'Both mouths open.');
-const climbingDrive = driveMesa('climb');
+const climbingDrive = driveMesa('climb').machine;
 assert.equal(climbingDrive.finished, true, `Climbing exit: ${climbingDrive.message}`);
 assert.ok(climbingDrive.exitCutting && climbingDrive.exitCutting.distanceM < 60, 'The exit cutting reaches the surface within 60 m.');
 const trenchDrive = driveMesa('trench');
-assert.equal(trenchDrive.message, 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.');
-const steepDrive = driveMesa('steep');
+assert.equal(trenchDrive.trenchWarnings, 1 + Math.floor((trenchDrive.machine.exitCutting.distanceM - 60) / 30),
+  'The warning sounds once at 60 m and once for every further 30 m.');
+assert.equal(trenchDrive.machine.finished, true, 'She can climb out after 70 m of exit cutting.');
+assert.ok(trenchDrive.machine.exitCutting.distanceM >= 70);
+const steepDrive = driveMesa('steep').machine;
 assert.ok(steepDrive.message === BORER_OPEN_GROUND || /^She has come out .* up the face\./.test(steepDrive.message),
   `A steep drive stops at open ground or a lip: ${steepDrive.message}`);
 assert.ok(seamEnds.length >= 4, 'A 100 m bore meets at least three seam changes.');
@@ -521,7 +527,12 @@ assert.ok(climbingExit.state.exitCutting.distanceM < 60);
 assert.ok(climbingExit.state.offLevelM > 0);
 assert.equal(climbingExit.events.filter(event => event.cue === 'borer.daylight').length, 1);
 const trench = stepBorer(exitCut.state, {thrust:1}, shallow, 'topsoil', 130);
-assert.equal(trench.state.message, 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.');
+assert.equal(trench.state.message, BORER_TRENCH);
+assert.ok(trench.state.exitCutting.distanceM > 60, 'The warning does not stop her.');
+assert.equal(trench.events.filter(event => event.message === BORER_TRENCH).length, 1);
+const longerTrench = stepBorer(trench.state, {thrust:1}, shallow, 'topsoil', 60);
+assert.ok(longerTrench.state.exitCutting.distanceM > 90);
+assert.equal(longerTrench.events.filter(event => event.message === BORER_TRENCH).length, 1, 'The warning repeats at 90 m.');
 const lipGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : -2});
 const lip = stepBorer(createBorerState(), {thrust:1}, lipGround, 'topsoil', 100);
 assert.equal(lip.state.message, 'She has come out 2.0 m up the face. Back her up and turn her down.');
