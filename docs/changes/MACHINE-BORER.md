@@ -36,6 +36,8 @@ Mabel now accepts a connected controller in the Dig. The existing machine axis s
 
 The conveyor now carries moving clods while fresh ground is cut, and the existing spark effect appears with the rock at the face. Both stop when cutting stops. Their appearance and placement need Claude's browser check.
 
+Drive mode now stops the head and cannot cut after Mabel has entered a bore. Switch back to work mode to move along the tunnel or cut again.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -70,6 +72,7 @@ The conveyor now carries moving clods while fresh ground is cut, and the existin
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the updated lining and portals. Browser appearance remains unchecked.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed for controller axes, slope and keyboard priority.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding conveyor dirt and face sparks. Browser appearance is not yet checked.
+- `node tools/test-machine-borer.mjs`: passed with drive mode stopped inside a bore and no additional cutting.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
@@ -90,6 +93,10 @@ None.
 For the head's first rules, topsoil takes full thrust, clay 80%, gravel 55%, and rock one third. This is a starting scale within the card's soft and hard endpoints. The ground stores only one fill material per cell, so the face query uses that material for fill above the natural surface. Walking pace is 1.4 m per second; forward travel in a cut uses the maximum cutting speed.
 
 The pile starts with a 0.75 m ground-edit radius, enough to cover a sample on the one-metre grid at any position. The pile has no volume limit. An underground cut samples 32 weighted strips across its face at the supplied ground position. Only newly cut lengths go through the conveyor. If the pile is protected, the machine stops before cutting and gives the place's sentence. The existing ground grid keeps only one material per cell, so mixed material in one pile cell is represented by its most recently deposited material.
+
+The Dig and town route planner have separate ground and tunnel data. The planner searches a surface grid and makes earthwork stages for the full route. Connecting a finished bore needs a bridge from the Dig to the town, centre-line links in the search and profiles, and work-order changes to exclude earthwork inside the bore. That is more than a small hook, so this card leaves roads and pipes through the bore for later.
+
+The apprentice system measures a timed machine demonstration and advances abstract work stages. It has no connection to the Dig, no 20-metre teaching check, and no way to apply a delegated line cut to the borer and its tunnel. This card leaves the apprentice out rather than inventing another system.
 
 ## Sound cues
 

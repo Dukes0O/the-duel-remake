@@ -155,6 +155,9 @@ function fixedStep(sim,input) {
       const refusal=sim.ground.refusal({x,z,radius:3});
       if(!refusal) next={...next,borer:{...sim.borer,x,z,heading,y:sim.ground.heightAt(x,z),headSpeed:0}};
       else next={...next,lastMessage:refusal};
+    } else if (sim.mode === 'drive') {
+      // Once inside the bore, cutting and tunnel travel belong to work mode.
+      next={...next,borer:{...sim.borer,headSpeed:0}};
     } else {
       const result=stepBorer(sim.borer,{thrust:controls.forward,steer:controls.steer,slope:controls.slope},sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
