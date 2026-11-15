@@ -3,7 +3,7 @@ import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drill
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 import * as THREE from 'three';
-import {createYardWellheadView} from '../src/machines/drill-view.js';
+import {createDrillSounds, createYardWellheadView} from '../src/machines/drill-view.js';
 
 const site=drillSite(4312,4,7);
 assert.deepEqual(site,drillSite(4312,4,7));
@@ -57,3 +57,17 @@ assert.deepEqual(drillYardControls({KeyW:true},'drive'),{forward:1,steer:0,mastD
 assert.deepEqual(drillYardControls({Space:true},'work'),{mastDown:true,feed:0.5});
 assert.equal(drillYardControls({Space:true,KeyW:true},'work').feed,1);
 assert.equal(drillYardControls({KeyS:true},'work').feed,-1);
+
+const tones=[];
+const audioParam={setValueAtTime(){},exponentialRampToValueAtTime(){}};
+const audio={master:{},context:{state:'running',currentTime:1,
+  createOscillator(){const oscillator={frequency:audioParam,connect(){},disconnect(){},start(){tones.push(this.type);},stop(){}};return oscillator;},
+  createGain(){return {gain:audioParam,connect(){},disconnect(){}};}}};
+const sounds=createDrillSounds(audio);
+for(const cue of ['drill-engine','drill-feed','drill-clay','drill-gravel','drill-rock','drill-jam','drill-reverse','drill-water'])sounds.play(cue);
+assert.equal(tones.length,8,'Each drill event has an audible sound.');
+sounds.play('drill-clay');
+assert.equal(tones.length,8,'Repeated ground sounds are limited.');
+audio.muted=true; audio.context.currentTime=2; sounds.play('drill-water');
+assert.equal(tones.length,8,'The drill respects mute.');
+sounds.dispose();

@@ -11,7 +11,7 @@ import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
-import {createDrillView, createYardWellheadView} from './drill-view.js';
+import {createDrillSounds, createDrillView, createYardWellheadView} from './drill-view.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -87,6 +87,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));
+  const drillSounds=createDrillSounds(app?.audio);
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null;
   const sound=(cue,data)=>{
@@ -129,7 +130,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       let root=machineRoot(machineAsset,id==='drill'?'trencher':id);
       if(id==='drill' && root){drillView=createDrillView(root);root=drillView.root;}
       if(!root)throw new Error(`The machine model is missing ${id}.`);
-      const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:sound});
+      const view=createMachineView({model:root,definition:machineDefinition(id),parent:world,onSound:id==='drill'?null:sound});
       machineViews.set(id,view);
     }
   }catch(error){
@@ -140,7 +141,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
-    wellheadView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
+    drillSounds.dispose();wellheadView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
@@ -157,6 +158,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
     if(drillView && machineViews.has('drill'))drillView.update(sim.drill,machineViews.get('drill').body);
+    if(sim.activeMachine==='drill'){
+      if(Math.abs(sim.drill.machine.speedMps)>.05 || frameEvents.some(event=>event.type==='drill-cuttings'))drillSounds.play('drill-engine');
+      if(frameEvents.some(event=>event.type==='drill-cuttings'))drillSounds.play('drill-feed');
+      for(const event of frameEvents)if(event.cue)drillSounds.play(event.cue);
+    }
     wellheadView.update(sim.drill.wellheads);
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){

@@ -1,5 +1,37 @@
 import * as THREE from 'three';
 
+// Short, distinct tones let the player hear the ground without reading the display.
+const DRILL_TONES = Object.freeze({
+  'drill-engine':[75, 'sawtooth', 0.18], 'drill-feed':[135, 'sawtooth', 0.12],
+  'drill-clay':[190, 'triangle', 0.1], 'drill-gravel':[310, 'square', 0.07],
+  'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
+  'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
+});
+
+/** Play through the game's own mixer, with each sound limited independently. */
+export function createDrillSounds(audio) {
+  const next = new Map(), voices = new Set();
+  return {
+    play(cue) {
+      const spec = DRILL_TONES[cue], ctx = audio?.context;
+      if (!spec || !ctx || !audio.master || audio.muted || audio.paused || ctx.state !== 'running') return;
+      const now = ctx.currentTime;
+      if (now < (next.get(cue) ?? 0)) return;
+      const [frequency, waveform, duration] = spec;
+      next.set(cue, now + (cue === 'drill-engine' ? 0.5 : cue === 'drill-feed' ? 0.3 : 0.22));
+      const oscillator = ctx.createOscillator(), gain = ctx.createGain();
+      oscillator.type = waveform; oscillator.frequency.setValueAtTime(frequency, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.07, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain); gain.connect(audio.master); voices.add(oscillator);
+      oscillator.onended = () => { voices.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
+      oscillator.start(now); oscillator.stop(now + duration);
+    },
+    dispose() { for (const voice of voices) voice.stop(); voices.clear(); },
+  };
+}
+
 /** Show each completed yard well at the ground height for this visit. */
 export function createYardWellheadView(parent, heightAt) {
   const group = new THREE.Group();
