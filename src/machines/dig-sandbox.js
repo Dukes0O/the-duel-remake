@@ -129,7 +129,7 @@ export function importDigTunnels(sim, segments = []) {
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver'];
+  const ids=['excavator','borer','dumpTruck','trencher','drill','dozer','roller','paver'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
   return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
 }
