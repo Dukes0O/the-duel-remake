@@ -3,11 +3,26 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates} from '../src/world/scablands-things.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates} from '../src/world/scablands-things.js';
 import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 
 const cell = point => [Math.floor(point.x / THINGS_CELL), Math.floor(point.z / THINGS_CELL)];
+test('telegraph candidates follow both lines at 60 metre intervals', () => {
+  const lines = telegraphCandidates(1989);
+  assert.deepEqual(lines, telegraphCandidates(1989));
+  assert.deepEqual(lines.map(line => line.id), ['east-road', 'iron-line']);
+  assert.notDeepEqual(lines, telegraphCandidates(1990));
+  for (const line of lines) {
+    assert.ok(line.poles.length > 20);
+    assert.ok(line.poles.some(p => p.state === 'down'));
+    assert.ok(line.poles.some(p => p.state === 'leaning'));
+    for (const [i, pole] of line.poles.entries()) {
+      assert.equal(pole.along, i * 60);
+      assert.ok(Number.isFinite(pole.x) && Number.isFinite(pole.y) && Number.isFinite(pole.z));
+    }
+  }
+});
 test('pylon candidates follow named places at a continuous 350 metre spacing', () => {
   const line = pylonCandidates(1989);
   assert.ok(line.length > 20);

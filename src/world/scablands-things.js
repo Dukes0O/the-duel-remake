@@ -7,9 +7,45 @@ import {SOLID_GRID} from './scablands-solids.js';
 import {RIVER_LAND} from './scablands-regions.js';
 import {sampleLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
+import {IRON_LINE, ironLineLength, sampleIronLine} from './iron-line.js';
 
 export const THINGS_CELL = 16;
 export const THINGS_RANGE = 120;
+
+// Candidate poles follow the actual road and rail lines. Clearance and solid
+// records must be added before these candidates are used by the scene.
+export function telegraphCandidates(seed, {road = ROAD_NET.road('east-road'), rail = IRON_LINE} = {}) {
+  const rng = makeRng(seed), lines = [];
+  const add = (id, length, pointAt, offset) => {
+    const poles = [];
+    for (let along = 0; along <= length; along += 60) {
+      const point = pointAt(along), x = point.x + Math.cos(point.heading) * offset;
+      const z = point.z - Math.sin(point.heading) * offset;
+      const state = rng.float(), lean = rng.float();
+      poles.push({id: `${id}:${poles.length}`, x, z, y: scablandsSurfaceHeightAt(x, z),
+        heading: point.heading, along, state: state < .04 ? 'down' : state < .16 ? 'leaning' : 'upright',
+        lean: (lean - .5) * .3});
+    }
+    lines.push({id, poles});
+  };
+  const pointOnRoad = along => {
+    let left = along;
+    for (let i = 0; i + 1 < road.points.length; i++) {
+      const a = road.points[i], b = road.points[i + 1], dx = b.x - a.x, dz = b.z - a.z;
+      const length = Math.hypot(dx, dz);
+      if (!length) continue;
+      if (left <= length || i + 2 === road.points.length) {
+        const t = Math.min(1, left / length);
+        return {x: a.x + dx * t, z: a.z + dz * t, heading: Math.atan2(dx, dz)};
+      }
+      left -= length;
+    }
+    throw new Error('The East Road has no usable segments');
+  };
+  add('east-road', road.length, pointOnRoad, ROAD_HALF_WIDTH + 8);
+  add('iron-line', ironLineLength(rail), along => sampleIronLine(rail, along), 12);
+  return lines;
+}
 
 // Candidate centres along a continuous line, spaced in metres along the line
 // rather than independently on each leg. The renderer and map can share the

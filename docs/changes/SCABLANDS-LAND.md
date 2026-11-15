@@ -1245,3 +1245,13 @@ Checks: `test-scablands-things` passed all 5 tests. All eight Scablands suites p
 Changed assertions: none. Codex decided: the candidate line passes 100 m east of each named place, as recorded on the card. Removed: nothing. The existing land is unchanged.
 
 For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it has been written. The scenario, clearance and solid index, small-object drawing, roadside lines and signs, boulders, tracks drawing and map still need to be built. The timing test's intermittent failure should be tracked as a small follow-up card.
+
+### Realism trial, step 3: telegraph candidates, in progress
+
+Added seeded candidate poles at 60 m intervals along the East Road and the existing Iron Line. They use the ground height and include upright, leaning and down states. The candidates are not connected to the scene or solids and still need clearance, wires and drawing. No game event or sound cue was added.
+
+Checks: all eight Scablands suites passed, including six placement tests. Both replay suites passed, 297 checks across 33 cases and 12 across four encounters; race fingerprints are unchanged. There were no separate world-signature test files matching the requested name. Integration was already current. The lane tier passed 27 of 28 suites; `test-full-check` could not start `pwsh` for its temporary copy (EACCES), the known lane environment failure. The build passed with bundle-size warnings.
+
+Changed assertions: none. Codex decided: the pole offsets and state proportions are recorded on the card for Claude to review. Removed: nothing. The existing land is unchanged.
+
+For Claude to run: rerun `test-full-check` at merge and run the browser scenario after it is written. Clearance and the solid index, small-object drawing, roadside lines and signs, boulders, tracks drawing, the map and the scenario remain. Cockpit sync could not open its protected credential and did not update Cockpit.
