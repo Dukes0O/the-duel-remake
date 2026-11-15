@@ -119,6 +119,45 @@ test('fixed trees pass footprint clearance and leave room at job starts', () => 
   assert.ok(!withStart.trees.some(tree => Math.hypot(tree.x - start.x, tree.z - start.z) < 7.2));
 });
 
+test('cleared trees have solid trunks at their full height', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const grid = thingSolidGrid(fixed);
+  for (const tree of fixed.trees) {
+    const trunk = grid.solids.find(solid => solid.id === tree.id);
+    assert.ok(trunk, `${tree.id} has a trunk`);
+    assert.equal(trunk.shape, 'ellipse');
+    assert.equal(trunk.halfX, tree.kind === 'snag' ? .35 : .45);
+    assert.equal(trunk.halfZ, trunk.halfX);
+    assert.equal(trunk.height, tree.height);
+    assert.equal(trunk.y, scablandsSurfaceHeightAt(tree.x, tree.z));
+    assert.ok(grid.near(tree.x, tree.z, tree.x, tree.z, 0).includes(trunk));
+  }
+});
+
+test('both tree shapes stand on the drawn ground and cast shadows', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const groundAt = (x, z) => scablandsSurfaceHeightAt(x, z) + 3;
+  const view = createFixedThingsView(fixed, [], null, groundAt);
+  for (const kind of ['dead-tree', 'snag']) {
+    const tree = fixed.trees.find(item => item.kind === kind);
+    const mesh = view.group.getObjectByName(`Scablands ${kind}`);
+    assert.ok(tree && mesh && mesh.castShadow);
+    view.update(tree.x, tree.z);
+    let found = false;
+    for (let index = 0; index < mesh.count; index++) {
+      const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), scale = new THREE.Vector3();
+      mesh.getMatrixAt(index, matrix);
+      matrix.decompose(position, new THREE.Quaternion(), scale);
+      if (Math.hypot(position.x - tree.x, position.z - tree.z) > .001) continue;
+      assert.ok(Math.abs(position.y - scale.y / 2 - groundAt(tree.x, tree.z)) < .05);
+      assert.ok(Math.abs(scale.x - tree.height) < .001 && Math.abs(scale.z - tree.height) < .001);
+      found = true;
+    }
+    assert.ok(found, `${kind} is drawn at its tree`);
+  }
+  view.dispose();
+});
+
 test('a job queries its supplied land grid as well as its temporary braziers', () => {
   const fixed = clearedFixedThings(1989, []);
   const things = thingSolidGrid(fixed);
@@ -157,7 +196,9 @@ test('every collision footprint belongs to one batch, and is drawn at its own pl
       assert.ok(solid, `${mesh.name} draws a thing where a footprint is`);
       if (Math.hypot(solid.x - centre.x, solid.z - centre.z) > 300) continue;
       assert.ok(position.distanceTo(new THREE.Vector3(...solid.center)) < .001);
-      assert.ok(scale.distanceTo(new THREE.Vector3(...solid.size)) < .001);
+      const tree = solid.kind === 'dead-tree' || solid.kind === 'snag';
+      const size = tree ? [solid.height, solid.height, solid.height] : solid.size;
+      assert.ok(scale.distanceTo(new THREE.Vector3(...size)) < .001);
       const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), solid.heading);
       assert.ok(rotation.angleTo(expected) < .001);
       checked.push(solid.id);

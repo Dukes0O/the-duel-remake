@@ -21,7 +21,7 @@ const STONE_PLAIN = .62;
 const fadeWithin = (distance, range) => Math.max(0, Math.min(1, (range - distance) / (range * .2)));
 const STONE_WIDE = [1, 1.35, .75], STONE_HIGH = [.65, .45, 1];
 // How far off each standing kind is drawn, in metres, and the most of one kind drawn at once.
-const DRAWN_WITHIN = {'pylon-foot': 900, telegraph: 1500, 'telegraph-down': 600, 'fence-post': 500, 'sign-post': 400, boulder: 800};
+const DRAWN_WITHIN = {'pylon-foot': 900, telegraph: 1500, 'telegraph-down': 600, 'fence-post': 500, 'sign-post': 400, boulder: 800, 'dead-tree': 1500, snag: 1500};
 const STANDING_AT_ONCE = 400;
 const CELL_RADIUS = Math.ceil(THINGS_RANGE / THINGS_CELL) + 1;
 const CAPACITY = (CELL_RADIUS * 2 + 1) ** 2 * 12;
@@ -109,11 +109,13 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
   const drawnAs = part => part.kind === 'telegraph' && part.size[1] < 1 ? 'telegraph-down' : part.kind;
   const batches = [];
   const groundOffset = part => groundAt ? groundAt(part.x, part.z) - scablandsSurfaceHeightAt(part.x, part.z) : 0;
-  for (const kind of ['pylon-foot', 'telegraph', 'telegraph-down', 'fence-post', 'sign-post', 'boulder']) {
+  for (const kind of ['pylon-foot', 'telegraph', 'telegraph-down', 'fence-post', 'sign-post', 'boulder', 'dead-tree', 'snag']) {
     const parts = solids.filter(part => drawnAs(part) === kind).map(part => ({...part, drawOffset: groundOffset(part)}));
     if (!parts.length) continue;
     const range = DRAWN_WITHIN[kind];
-    const mesh = new THREE.InstancedMesh(standingThingShape(kind, parts[0].size), thingSurface(kind, photos), Math.min(parts.length, STANDING_AT_ONCE));
+    const tree = kind === 'dead-tree' || kind === 'snag';
+    const shapeSize = tree ? Array(3).fill(parts[0].height) : parts[0].size;
+    const mesh = new THREE.InstancedMesh(standingThingShape(kind, shapeSize), thingSurface(kind, photos), Math.min(parts.length, STANDING_AT_ONCE));
     mesh.castShadow = mesh.receiveShadow = true;
     mesh.name = `Scablands ${kind}`;
     mesh.count = 0; mesh.frustumCulled = false;
@@ -141,7 +143,8 @@ export function createFixedThingsView(fixed, loneBoulders = [], photos = null, g
           object.position.y = part.center[1] + part.drawOffset - part.size[1] / 2 + part.size[0] / 2;
           object.rotation.z = Math.PI / 2;
         }
-        object.scale.set(part.size[0] * grown, part.size[1] * grown, part.size[2] * grown);
+        const tree = part.kind === 'dead-tree' || part.kind === 'snag';
+        object.scale.set((tree ? part.height : part.size[0]) * grown, part.size[1] * grown, (tree ? part.height : part.size[2]) * grown);
         object.updateMatrix();
         if (tinted) mesh.setColorAt(count, tint.setScalar(part.tint ??= STONE_TINT[scablandsRegionAt(part.x, part.z)] ?? STONE_PLAIN));
         mesh.userData.groundAnchorOffsets[count] = part.kind === 'fence-post' && fallen.has(part.id)
