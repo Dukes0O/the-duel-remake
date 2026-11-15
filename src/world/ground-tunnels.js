@@ -174,11 +174,31 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   // Constrain a move that starts inside one segment. Its ends remain open.
   // The caller supplies the vehicle's horizontal clearance from the wall.
   function constrainMotion(start, end, clearance = 0) {
-    point(start, 'Move start');
-    point(end, 'Move end');
+    checkPoint(start, 'Move start');
+    checkPoint(end, 'Move end');
     if (!finite(clearance) || clearance < 0) throw new TypeError('Clearance must be non-negative.');
     const inside = tubeAt(start, start.y);
-    if (!inside) return {position: {...end}, hit: false};
+    if (!inside) {
+      // A cutting face also stops an actor approaching from the rock side.
+      // Check just the two ends, not every segment in the chain.
+      for (let side = 0; side < 2 && tubes.length; side++) {
+        if (side === 0 ? startOpen : endOpen) continue;
+        const tube = side === 0 ? tubes[0] : lastTube;
+        const face = side === 0 ? tube.start : tube.end;
+        const dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
+        const length = Math.hypot(dx, dz), sign = side === 0 ? 1 : -1;
+        const before = sign * ((start.x - face.x) * dx + (start.z - face.z) * dz) / length;
+        const after = sign * ((end.x - face.x) * dx + (end.z - face.z) * dz) / length;
+        if (before >= 0 || after < 0) continue;
+        const t = -before / (after - before);
+        const x = start.x + (end.x - start.x) * t, z = start.z + (end.z - start.z) * t;
+        const y = start.y + (end.y - start.y) * t;
+        const sideways = Math.abs((x - face.x) * -dz + (z - face.z) * dx) / length;
+        if (sideways > tube.radius + clearance || y < face.y - tube.radius || y > face.y + tube.radius) continue;
+        return {position: {x, y, z}, hit: true};
+      }
+      return {position: {...end}, hit: false};
+    }
     let tube = inside.tube;
     let dx = tube.end.x - tube.start.x, dz = tube.end.z - tube.start.z;
     let length = Math.hypot(dx, dz);

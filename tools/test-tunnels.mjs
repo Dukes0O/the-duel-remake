@@ -538,6 +538,11 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   const closed = cutting.constrainMotion({x: 19, y: 0, z: 0}, {x: 22, y: 0, z: 0}, 1);
   assert.equal(closed.hit, true, 'the unfinished face stops a car');
   assert.equal(closed.position.x, 20);
+  const fromRock = cutting.constrainMotion({x: 22, y: 0, z: 0}, {x: 19, y: 0, z: 0}, 1);
+  assert.equal(fromRock.hit, true, 'the unfinished face also stops a car from outside');
+  assert.equal(fromRock.position.x, 20);
+  assert.equal(cutting.constrainMotion({x: 22, y: 10, z: 0}, {x: 19, y: 10, z: 0}, 1).hit,
+    false, 'the closed face does not block ground above');
   assert.equal(cutting.constrainMotion({x: 1, y: 0, z: 0}, {x: -2, y: 0, z: 0}, 1).hit,
     false, 'the mouth stays open');
   const complete = createGroundTunnels([segment], {heightAt: () => 0});
