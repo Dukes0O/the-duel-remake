@@ -1545,3 +1545,45 @@ For Claude to run: the full Easy jobs and Medium gas checks, the lane tier to co
 Changed assertions, for Claude to review: the far scene changed from 32,361 corners and 64,000 triangles to 40,623 corners and 76,852 triangles for the detailed scarp faces. Near ground remains 3,721 corners, as on integration. The river route now requires Tin Town instead of the Boneyard Road. The search test's initial sight step changed from one second to zero because the raider moves while seeing the car. The Ridge flat-ground expectation changed from 18 m to its designed 45 m summit, keeping the 0.01 m tolerance. No pass mark was lowered. Codex decided: no new design choice. Removed: none in this round.
 
 Still needed: the unfinished driving checks and a complete lane result, plus Claude's picture verdict. The card is not ready to hand over as complete.
+### Realism trial, step 3
+
+The switch adds seeded things, shared collision records, signs, tracks and map lines. A fast fence impact brings down its post and wire for the visit, without damage. Its sound cue is `world.fence.snap`.
+
+The review fixes build placement indexes only when needed, take map lines from the course, and leave small things on driving ways. The solid clearance routes use Everburn and side-job `path` and `actor.path`, `raiderEntries` to `raiderHold`, the ordered player destinations, and gas-run `GAS_RUN_PATHS` (also the escort and furnace paths). The four well approaches are included.
+
+Checks for these fixes: `test-scablands-things` passed 32 tests and `test-world-hud` passed. The previous checks and replay fingerprints on `3a9178542` passed as recorded before this review; the final checks must run again on the finished branch. The browser scenario is for Claude to run. The earlier lane run had FFmpeg and fixture-cleanup environment failures; Claude's branch fixed the P4 audio pin.
+
+Changed assertions: none in this review. Codex decided: no new design choice. Removed: the HUD's separate switch reading and landmark generation. The original land remains when the switch is off.
+
+The scenario now includes salt and Burn views, a real rock fall seen from 40 m, and reports picture and impact failures together. `node --check tools/scenarios/scablands-things.mjs` passed; `test-scablands-things` passed 32 tests after Claude?s latest drawing was merged. Claude must run the browser scenario.
+
+Final checks on f10f2b2f8: all eight `test-scablands-*` suites passed, including 32 things tests; `test-replays` passed 297 checks and `test-combat-replays` passed 12, with fingerprints unchanged. `node --check tools/scenarios/scablands-things.mjs` and `npm.cmd run build` passed. Both requested branch merges were already up to date.
+
+The lane tier was stopped after 35 minutes: `test-everburn-easy` and `test-track-kits` had not returned. The following 16 suites failed: `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave2-audio`, `test-arsenal-wave3-audio`, `test-audio-analysis`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-review-evidence`, `test-warlord-blackiron`, and `test-warlord-tollkeeper`. The audio checks encountered FFmpeg permission errors. Claude must rerun the incomplete lane tier and these failures, and run the browser scenario. The build reported large bundle warnings.
+
+### Realism trial, step 3: Claude's drawing and the merge (15 November 2026)
+
+**Drawing.** `src/world/scablands-things-look.js` (new) gives each kind its shape and surface in code: rock broken along flat faces and
+wearing the scab rock photograph; bushes as crossed cards with a drawn picture; timber poles, posts and signs; lattice pylons as flat
+faces with the gaps cut out. `src/world/scablands-things-view.js` uses them, draws standing things by distance and small things by kind
+and distance, fills the small things' places again only after 1.5 m of travel, tints a stone by the ground it lies on, and paints the
+signs on planks with arrows. Sizes: stone 32 triangles, bush 12, pole 96, boulder 72, pylon 40.
+
+**Checks in this card's own new suite that changed with the drawing** (`tools/test-scablands-things.mjs`, not yet on integration when
+changed): small things that stand up (scrub, brush, stump) cast shadows, where the plain shapes cast none; a tower is one drawn pylon at
+each standing pylon, where it was a set of lines; standing things are checked after an update near them, because they are drawn by
+distance; a sign's line is a place and a distance with a painted arrow.
+
+**Changed assertion in an existing suite, reviewed by Claude:** `tools/test-p4-audio.mjs` leaves `world.fence.snap` out of the pre-P4
+sound bank pin, as the ember's and the ground's cues are; the pinned hash is unchanged.
+
+**Sound cue:** `world.fence.snap` (a fence post knocked down).
+
+**Race fingerprints:** unchanged (297 and 12), by Codex in the lane.
+
+**Browser scenario** `scablands-things` (Claude, visible window): passes; eight views within the limits; a car driven at a boulder and at
+a pole stops (24.7 to 2.0 mph and 24.6 to 2.0 mph).
+
+**Lane tier and build at the merge (Claude):** lane tier 263 of 263 on the merged result, the build passes, browser scenario `scablands-things` passes in a visible window, replay fingerprints unchanged.
+
+**Removed:** the plain shapes Codex placed first (boxes, cones and line towers) are replaced by the drawn ones in the same files.

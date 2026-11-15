@@ -62,8 +62,8 @@ test('both furnace roads clear solids and climbable ground, including the return
 });
 
 // ---- A real Duel on the Scablands, driven through its own inputs -----------------------------------------------------------------------------
-function newDuel(car = 'falcone_f42') {
-  const duel = new Duel({seed: 1989, car, featureFlags: {'hidden-road': true}});
+function newDuel(car = 'falcone_f42', realism = false) {
+  const duel = new Duel({seed: 1989, car, featureFlags: {'hidden-road': true, 'scablands-realism': realism}});
   duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'last-car-rolling', car, seed: 1989, opponents: [{car: 'dusthawk_rally'}]}), true);
   const player = duel.state, opponent = player.opponents[0];
@@ -439,8 +439,8 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     ['the river bed (as far as the bridge, and out by the Wash)', null, 80, 300],
   ];
   const rows = [];
-  for (const [label, line, kmh, seconds] of ways) {
-    const duel = newDuel('falcone_f42');
+  for (const realism of [false, true]) for (const [label, line, kmh, seconds] of ways) {
+    const duel = newDuel('falcone_f42', realism);
     let driven;
     if (label.startsWith('the river bed')) {
       // KNOWN LIMIT (slice 2b, reported to Claude): a deck is level with the plain in the land's one height, so the Girder Bridge and the Pipe stand across the bed as
@@ -488,7 +488,7 @@ test('each of the four ways from the yard to Tin Town is driven end to end by a 
     assert.ok(!duel.state.combatWrecking, `${label}: not wrecked`);
     const rough = duel.hits.filter(hit => hit.kind === 'fall' && hit.kmh > 0);
     assert.equal(rough.length, 0, `${label}: no fall on the way (${rough.map(hit => hit.drop.toFixed(2) + ' m at ' + hit.t.toFixed(0) + ' s, ' + hit.x.toFixed(0) + ',' + hit.z.toFixed(0) + ' ' + hit.kmh0.toFixed(0) + ' km/h').join(', ')})`);
-    rows.push(`${label}: ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
+    rows.push(`${label} (realism ${realism ? 'on' : 'off'}): ${driven.seconds.toFixed(0)} s, ${duel.state.armor.toFixed(0)} of ${duel.state.maxArmor.toFixed(0)} armour, ${duel.hits.length} hits`);
   }
   console.log('the four ways: ' + rows.join('; '));
 });
@@ -576,6 +576,46 @@ test('a raider meeting a building is stopped by it; a truck is held by ground to
   assert.ok(!inside(block, raider.x, raider.z) && raider.x > block.x - block.halfX - 1.5, `a raider of a real job walks at the building and stays outside it (${(block.x - block.halfX - raider.x).toFixed(2)} m from its face)`);
 });
 
+test('a job raider walks around a trial boulder', () => {
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, arsenal: true, 'scablands-realism': true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42',
+    seed: 1989, cpuDifficulty: 'medium', opponents: [], job: {...EVERBURN_JOBS[0], seed: 1989}}), true);
+  duel.state.countdown = 0;
+  const worldJob = duel.state.arena.worldJob;
+  const rocks = duel.course.solidGrid.solids.filter(s => s.kind === 'boulder');
+  // Find an open approach that grazes the rock. A direct centre hit correctly stops a mover.
+  let route;
+  for (const rock of rocks) {
+    const start = {x: rock.x - 8, z: rock.z + rock.halfZ * .7};
+    const target = {x: rock.x + 8, z: start.z};
+    let at = {...start}, touched = false;
+    for (let i = 0; i < 60 * 10; i++) {
+      const dx = target.x - at.x, dz = target.z - at.z, gap = Math.hypot(dx, dz);
+      if (gap < .08) break;
+      const result = stepMover(at, {x: at.x + dx / gap * .075, z: at.z + dz / gap * .075},
+        {radius: .4, grade: FOOT_GRADE, grid: duel.course.solidGrid});
+      touched ||= result.blocked === 'solid' && Math.hypot(at.x - rock.x, at.z - rock.z) < rock.halfX + 1;
+      at = result;
+    }
+    if (touched && at.x > rock.x + rock.halfX + 1) { route = {rock, start, target}; break; }
+  }
+  assert.ok(route, 'a boulder has an open grazing approach');
+  const raider = {id: 'trial-boulder-raider', ...route.start, y: 0, health: 70, knockedDown: false,
+    approachSpeed: 4.5, approachTarget: route.target};
+  worldJob.actors.push(raider);
+  let closest = Infinity, greatestSideStep = 0;
+  for (let step = 0; step < 60 * 10; step++) {
+    duel.step(DT);
+    closest = Math.min(closest, Math.hypot(raider.x - route.rock.x, raider.z - route.rock.z));
+    greatestSideStep = Math.max(greatestSideStep, Math.abs(raider.z - route.start.z));
+    assert.ok(Math.hypot(raider.x - route.rock.x, raider.z - route.rock.z) >= route.rock.halfX - .01,
+      'the raider stays outside the boulder');
+  }
+  assert.ok(closest < route.rock.halfX + .6 && greatestSideStep > .1, 'the boulder changes the raider?s path');
+  assert.ok(raider.x > route.rock.x + route.rock.halfX + 1, 'the raider gets past the boulder');
+});
+
 test('a person on foot cannot walk through a building', () => {
   const duel = newDuel(), block = SCABLANDS_SOLIDS.find(solid => solid.id === 'tin-town-block-9');
   const start = {x: block.x - block.halfX - 6, z: block.z}, at = course.nearest(start.x, start.z);
@@ -638,4 +678,34 @@ test('job braziers belong only to their own game', () => {
   const first = trace(fresh);
   startJob();
   assert.deepEqual(trace(newDuel()), first, 'the same seed and inputs do not depend on earlier jobs');
+});
+
+test('trial boulders, poles and pylon feet stop and damage a car; the same ground is open when off', () => {
+  const trial = newDuel('banshee_muscle', true);
+  for (const kind of ['boulder', 'telegraph', 'pylon-foot']) {
+    let proved = false;
+    for (const solid of trial.course.solidGrid.solids.filter(row => row.kind === kind && row.height > 1)) {
+      for (const face of faces(solid)) {
+        const from = {x: face.x + face.nx * 18, z: face.z + face.nz * 18};
+        const heading = Math.atan2(-face.nx, -face.nz);
+        if (Math.abs(scablandsSurfaceHeightAt(from.x, from.z) - scablandsSurfaceHeightAt(solid.x, solid.z)) > .5) continue;
+        if (solidsNear(from.x, from.z, solid.x, solid.z, 4).length) continue;
+        const on = newDuel('banshee_muscle', true), off = newDuel('banshee_muscle', false);
+        let impact = 0;
+        const scrape = on._scrape.bind(on);
+        on._scrape = (zone, mph) => { impact = Math.max(impact, mph); return scrape(zone, mph); };
+        const enabled = straight(on, from, heading, 70, 2), disabled = straight(off, from, heading, 70, 2);
+        const along = row => (row.x - face.x) * face.nx + (row.z - face.z) * face.nz;
+        if (impact > 4 && enabled.at(-1).kmh < 12 && Math.min(...disabled.map(along)) < -5) {
+          assert.ok(!enabled.some(row => inside(solid, row.x, row.z)), `${kind}: the car stays outside`);
+          assert.ok(impact * MPH > 15, `${kind}: the hit reflects the car's speed`);
+          assert.ok(Object.values(on.state.damageZones).some(value => value > 0) || enabled.at(-1).armor < enabled[0].armor, `${kind}: the hit damages the car`);
+          proved = true;
+          break;
+        }
+      }
+      if (proved) break;
+    }
+    assert.ok(proved, `${kind}: a car hits the thing with the switch on and crosses its place with it off`);
+  }
 });

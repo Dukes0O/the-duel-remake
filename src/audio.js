@@ -1992,6 +1992,7 @@ export class EngineAudio {
       this._playCue('arena.wreck-credit');
     // SCABLANDS-LAND round 4, slice 2b: ground too steep to climb is a hit (the scab plates' impact cue) and a landing after a fall is the landing cue,
     // both from sounds the game has, scaled by the size of the hit.
+    if (ev.fenceSnap) this._playCue(ev.fenceSnap.cue, {scale: .7});
     if (ev.scablandsHit?.player)
       this._playCue(ev.scablandsHit.cue, {
         scale: clamp(0.5 + (ev.scablandsHit.kind === 'fall' ? (Number(ev.scablandsHit.kmh) || 0) / 50 : (Number(ev.scablandsHit.impactMph) || 0) / 60), 0.5, 1.6),

@@ -18,7 +18,7 @@ export function scablandsContactObstacles(duel, car, start, end, base) {
   const out = duel._scablandsObstacles ??= [];
   out.length = 0;
   for (const obstacle of base) out.push(obstacle);
-  for (const solid of (duel.state.arena?.worldJob?.solidGrid ?? SOLID_GRID).near(start.x, start.z, end.x, end.z, 6)) out.push(solid);
+  for (const solid of (duel.state.arena?.worldJob?.solidGrid ?? duel.course.solidGrid ?? SOLID_GRID).near(start.x, start.z, end.x, end.z, 6)) out.push(solid);
   return out;
 }
 

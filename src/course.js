@@ -21,6 +21,12 @@ import { buildFreestyleFeatures, freestyleSurfaceHeightAt, onFreestyleDrag } fro
 import { installBasins, installFarGround, installHillPads, installReliefScale } from './circuit-hills.js';
 import {scablandsSurfaceAt,scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {buildBowlFeatures} from './bowl/bowl-course.js';
+import {featureFlags} from './feature-flags.js';
+import {SCABLANDS_LAYOUT} from './world/scablands.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from './world/jobs/everburn.js';
+import {gasRunJob, GAS_RUN_ROADS, fieldBattleJob} from './world/jobs/gas-run.js';
+import {realismThingsData, thingSolids} from './world/scablands-things.js';
+import {SCABLANDS_SOLIDS, createSolidGrid} from './world/scablands-solids.js';
 const STEP=8, TAU=Math.PI*2, clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -73,8 +79,15 @@ const ROUTE_SHAPES={
 };
 
 export class Course {
-  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep}={}){
+  constructor(def,seed,{solveShortcuts=false,hiddenRoad=false,muddyHollow=false,deep,scablandsRealism}={}){
     this.def=def;this.seed=seed>>>0;this.theme=THEMES[def.theme];
+    if(def.scablands && (scablandsRealism ?? featureFlags.enabled('scablands-realism'))){
+      const jobs=[...EVERBURN_JOBS,...EVERBURN_SIDE_JOBS,...GAS_RUN_ROADS.map(road=>gasRunJob({road})),fieldBattleJob()];
+      const jobStarts=jobs.map(job=>job.steps[0]?.carStart).filter(Boolean);
+      this.realismThings={jobStarts,...realismThingsData({enabled:true,seed:this.seed,jobStarts,...SCABLANDS_LAYOUT})};
+      this.fallenFenceIds=new Set();
+      this.solidGrid=createSolidGrid([...SCABLANDS_SOLIDS,...thingSolids(this.realismThings.fixed,this.realismThings.loneBoulders)],this.fallenFenceIds);
+    }
     // An authored script (src/track-script.js) fixes its own length once the loop is closed.
     this.script=def.script?buildTrackScript(def):null;this.length=this.script?this.script.length:def.lengthU;this.step=this.script?this.script.step:STEP;
     this._solveShortcuts=solveShortcuts===true;

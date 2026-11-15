@@ -6,7 +6,6 @@ import {scablandsSurfaceHeightAt, scablandsGroundEdit, getScablandsOpenMarks, ge
 import {createGroundView} from './ground-view.js';
 import {createNearGround,NEAR_GROUND} from './near-ground.js';
 import {createGroundLook,createRoadLook,loadGroundPhotos} from './scablands-ground-look.js';
-import {featureFlags} from '../feature-flags.js';
 import {createRiverField,createRoadsDraw,createRiverDraw,createCrossings,createStepsWay} from './scablands-draw.js';
 import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
@@ -502,13 +501,15 @@ export function createScablandsScene(course,options={}){
   // Each region has its own ground, drawn from the same data the driving reads (src/world/scablands-ground-look.js).
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   // The realism trial's photographed surfaces (switch `scablands-realism`), only where there is a screen to draw on.
-  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&featureFlags.enabled('scablands-realism')))?loadGroundPhotos():null;
+  const groundPhotos=(options.groundPhotos??(typeof document!=='undefined'&&!!course.realismThings))?loadGroundPhotos():null;
   const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')},photos:groundPhotos});
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
   const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
+  const realismEnabled=!!course.realismThings;
+  let things=null,tracks=null;
   // The detailed ground is a window of 1,400 by 1,000 m that follows the player in whole cells and carries the shared physics
   // height; the coarse ground covers the whole land, with a hole where the window is (see the top of this file).
   const nearHole={value:new THREE.Vector4(0,0,0,0)};
@@ -650,6 +651,18 @@ export function createScablandsScene(course,options={}){
       // A place does not move: its matrices are worked out once, not every frame.
       lod.updateMatrixWorld(true);lod.traverse(node=>{node.matrixAutoUpdate=false;});group.add(lod);
     }));
+    if(realismEnabled&&!retired){
+      const {createRealismThingsView}=await import('./scablands-things-view.js');
+      if(retired)return false;
+      const {createScablandsTracks}=await import('./scablands-tracks.js');
+      if(retired)return false;
+      tracks=createScablandsTracks();
+      if(tracks){tracks.update(here.x,here.z);groundLook.setTracks(tracks);}
+      const {jobStarts}=course.realismThings;
+      things=createRealismThingsView({enabled:true,seed:course.seed,jobStarts,
+        halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,heightAt:plainHeightAt,photos:groundPhotos,data:course.realismThings});
+      group.add(things.group);things.update(here.x,here.z);
+    }
     group.userData.assetStatus='ready';return true;
   })().catch(error=>{if(!retired){group.userData.assetStatus='failed';group.userData.loadErrors.push(String(error?.message||error));
     console.error('Scablands art did not load:',String(error?.message||error));}return false;});
@@ -708,8 +721,9 @@ export function createScablandsScene(course,options={}){
     },
     sync(state){
       // The detailed ground follows the player, and what stands in a place is drawn and updated only while the player is near it.
+      if(things)things.setFallen(course.fallenFenceIds);
       if(locate(state)){
-        placeNearGround(here.x,here.z);
+        placeNearGround(here.x,here.z);things?.update(here.x,here.z);tracks?.update(here.x,here.z);
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
         tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=nearTinTown;
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
@@ -810,7 +824,7 @@ export function createScablandsScene(course,options={}){
   function dispose(){
     if(retired)return;retired=true;
     stopOpenMarkWatch();
-    editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
+    things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();

@@ -291,6 +291,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       let knowledge = knowledgeOf.get(worldJob);
       if (!knowledge) knowledgeOf.set(worldJob, knowledge = createKnowledge());
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
+      frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
       learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings});
       lastFrame = frame;
       if (mapOpen) { stats.updates++; stats.updateMs += clock() - began; return; }

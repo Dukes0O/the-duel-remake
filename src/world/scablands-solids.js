@@ -161,7 +161,7 @@ const CELL = 32;
 const cellOf = value => Math.floor(value / CELL);
 const key = (i, j) => i * 100003 + j;
 
-export function createSolidGrid(solids) {
+export function createSolidGrid(solids, removedIds = null) {
   const cells = new Map(), stamp = new Uint32Array(solids.length);
   let query = 0;
   const found = [];
@@ -182,7 +182,7 @@ export function createSolidGrid(solids) {
       for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
         const list = cells.get(key(i, j));
         if (!list) continue;
-        for (const index of list) if (stamp[index] !== query) { stamp[index] = query; found.push(solids[index]); }
+        for (const index of list) if (stamp[index] !== query) { stamp[index] = query; if (!removedIds?.has(solids[index].id)) found.push(solids[index]); }
       }
       return found;
     },
@@ -197,13 +197,13 @@ export function brazierSolid(spot, index) {
   return make({id: `brazier-${index + 1}`, placeId: null, kind: 'prop', shape: 'ellipse', x: spot.x, z: spot.z, halfX: .65, halfZ: .65, height: 1.15});
 }
 // Each job owns its temporary solids and its query result. The fixed grid never changes.
-export function createJobSolidGrid() {
+export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   return {
     braziers: [],
     near(ax, az, bx, bz, pad) {
       found.length = 0;
-      for (const solid of SOLID_GRID.near(ax, az, bx, bz, pad)) found.push(solid);
+      for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       return found;
     },
