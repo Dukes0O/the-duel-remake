@@ -214,8 +214,9 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     addCut(next.segments, start, end, radius);
     next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     // An existing passage can open the face underground as well as daylight.
-    // The caller supplies other passages, excluding the cut being made.
-    const passage = controls.tunnels?.tubeAt({x:next.x, y:next.y, z:next.z}, next.y, 0.6);
+    // Ignore the recent cut behind the head, but allow older stretches to join.
+    const passage = controls.tunnels?.tubeAt({x:next.x, y:next.y, z:next.z}, next.y, 0.6,
+      controls.tunnelsIncludeCurrent ? Math.max(0, next.distanceM - 2 * radius - 1) : Infinity);
     const joinedPassage = passage && Math.abs(passage.floor - next.y) <= 0.6;
     if (joinedPassage || (next.covered && Math.abs(ground.heightAt(next.x, next.z) - next.y) <= 0.3 &&
         borerHasFace(ground, next, next.heading + Math.PI, radius))) {

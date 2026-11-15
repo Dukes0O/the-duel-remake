@@ -8,6 +8,10 @@ The keyboard now moves a persistent thrust lever; the head dial has a working ba
 
 The real scarp height profile now has a 100 m deep-bore seam and stall check. The scenario cuts 50 m before reversing 20 m, so the tail remains inside the tunnel for the inside picture. The following camera moves along the recorded centre line around bends and uses the mouth to enter and leave the bore. The camera and scenario still need a hands-on check. Parts B and C remain.
 
+## Part B in progress
+
+The Dig now supplies the current tunnel to the cutter. It ignores the recent passage behind the head and opens the face on reaching an older stretch. `node tools/test-machine-borer.mjs` passed, including a returning curved passage, no early breakthrough and travel both ways at the junction. A longer simulated return exhausted Node's memory while the tunnel was rebuilt at every step; the separate indexing fix in Part B remains necessary.
+
 Focused checks: `node tools/test-machine-borer.mjs` passed, including a 100 m simulated deep bore, lever and camera checks, and a camera transition around a bend. Scenario expressions parsed in Node. The browser scenario was not run.
 
 ## Not built by this card

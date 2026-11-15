@@ -127,6 +127,12 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   // query visits only its own cell, even when the bore has many segments.
   const cellSize = 32, grid = new Map(), noTubes = [];
   const indices = new Map(tubes.map((tube, index) => [tube, index]));
+  let pathLength = 0;
+  const pathStarts = new Map(tubes.map(tube => {
+    const start = pathLength;
+    pathLength += Math.hypot(tube.end.x - tube.start.x, tube.end.y - tube.start.y, tube.end.z - tube.start.z);
+    return [tube, start];
+  }));
   for (const tube of tubes) {
     const minX = Math.floor((Math.min(tube.start.x, tube.end.x) - tube.radius) / cellSize);
     const maxX = Math.floor((Math.max(tube.start.x, tube.end.x) + tube.radius) / cellSize);
@@ -142,18 +148,21 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
   const projected = {x: 0, y: 0, z: 0};
   const nearestResult = {tube: null, center: {x: 0, y: 0, z: 0}, floor: 0, ceiling: 0, radial: 0};
 
-  function tubeAt(position, actorHeight = position?.y, floorTolerance = 0) {
+  function tubeAt(position, actorHeight = position?.y, floorTolerance = 0, beforeDistance = Infinity) {
     checkPoint(position, 'Actor position');
     if (!finite(actorHeight)) throw new TypeError('Actor height must be finite.');
     let found = false;
     const candidates = grid.get(Math.floor(position.x / cellSize))?.get(Math.floor(position.z / cellSize)) ?? noTubes;
     for (const tube of candidates) {
+      const length = Math.hypot(tube.end.x - tube.start.x, tube.end.y - tube.start.y, tube.end.z - tube.start.z);
+      const usable = Math.min(1, (beforeDistance - pathStarts.get(tube)) / length);
+      if (usable <= 0) continue;
       const center = horizontalProjection(position, tube, projected);
       // A tube's support ends at its mouths, rather than extending forever
       // along the approach on either side.
       const dxAxis = tube.end.x - tube.start.x, dzAxis = tube.end.z - tube.start.z;
       const along = (position.x - tube.start.x) * dxAxis + (position.z - tube.start.z) * dzAxis;
-      if (along < 0 || along > dxAxis * dxAxis + dzAxis * dzAxis) continue;
+      if (along < 0 || along > (dxAxis * dxAxis + dzAxis * dzAxis) * usable) continue;
       const dx = position.x - center.x, dz = position.z - center.z;
       const radial = Math.hypot(dx, dz);
       const floor = center.y - tube.radius * 0.55;

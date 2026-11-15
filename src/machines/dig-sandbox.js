@@ -165,7 +165,8 @@ function fixedStep(sim,input) {
       const direct=controls.directLever || (controls.padLever && leverSource === 'pad' && !controls.keyboardLever);
       const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
       const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
-      const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope},sim.ground,null,STEP);
+      const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope,
+        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started},sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM){

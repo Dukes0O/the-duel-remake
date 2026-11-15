@@ -322,6 +322,36 @@ for (const [start, end] of [
 ]) assert.equal(crossing.constrainMotion(start, end, 0.5).hit, false, 'Cars can turn through a junction.');
 assert.equal(crossing.constrainMotion({x:-1,y:0,z:0},{x:0,y:0,z:4},0.5).hit, false,
   'Cars can continue along the crossing passage.');
+// Approach the first stretch through the Dig's real stepping path. The
+// unfinished stretch behind the head must not count as a breakthrough.
+const turnRadius = 120, turnAngle = 2 * Math.PI - 0.228;
+const returningSegments = [{start:{x:-50,y:1.65,z:0}, end:{x:20,y:1.65,z:0}, radius:3, startOpen:true}];
+for (let i = 1; i <= 150; i++) {
+  const angle = turnAngle * i / 150;
+  returningSegments.push({start:{...returningSegments.at(-1).end},
+    end:{x:20 + turnRadius * Math.sin(angle),y:1.65,z:turnRadius * (1 - Math.cos(angle))},
+    radius:3, endOpen:false});
+}
+const returnEnd = returningSegments.at(-1).end;
+const returnLength = returningSegments.reduce((sum, segment) => sum + Math.hypot(
+  segment.end.x - segment.start.x, segment.end.z - segment.start.z), 0);
+const returnGround = createGroundEdit({region:{editable:true}, naturalHeight:()=>12});
+let returnDig = createDigSandbox({ground:returnGround, playerId:'borer-junction-test'});
+returnDig = {...returnDig, activeMachine:'borer', mode:'work',
+  tunnels:createGroundTunnels(returningSegments, {heightAt:()=>12}),
+  borer:{...createBorerState({x:returnEnd.x,y:0,z:returnEnd.z,heading:Math.PI / 2 - turnAngle}),
+    started:true, covered:true, distanceM:returnLength, travelM:returnLength,
+    segments:returningSegments, lever:1/3}};
+returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 1);
+assert.equal(returnDig.borer.finished, false, 'The recent passage is not a breakthrough.');
+returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 5);
+assert.equal(returnDig.borer.finished, true, 'The Dig opens the face into the earlier stretch.');
+assert.equal(returnDig.borer.segments.at(-1).endOpen, true);
+for (const [start, end] of [
+  [{x:returnDig.borer.x,y:0,z:0},{x:returnDig.borer.x,y:0,z:2}],
+  [{x:returnDig.borer.x,y:0,z:2},{x:returnDig.borer.x,y:0,z:0}],
+]) assert.equal(returnDig.tunnels.constrainMotion(start, end, 0.5).hit, false,
+  'Both passages remain drivable at the new junction.');
 const separated = createGroundTunnels(crossingSegments.map((segment, index) => index === 3
   ? {...segment, start:{...segment.start,y:11.65}, end:{...segment.end,y:11.65}}
   : index === 2 ? {...segment,end:{...segment.end,y:11.65}} : segment));
