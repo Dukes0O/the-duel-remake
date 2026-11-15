@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {drillMaterialAt} from './drill.js';
 
 // Short, distinct tones let the player hear the ground without reading the display.
 const DRILL_TONES = Object.freeze({
@@ -63,6 +64,40 @@ export function createYardWellheadView(parent, heightAt) {
     dispose() {
       group.removeFromParent();
       baseGeometry.dispose(); pipeGeometry.dispose(); capGeometry.dispose(); steel.dispose();
+    },
+  };
+}
+
+/** Keep the cuttings at each hole for the length of the yard visit. */
+export function createDrillCuttingsView(parent, heightAt) {
+  const group = new THREE.Group();
+  group.name = 'drill-cuttings';
+  parent.add(group);
+  const geometry = new THREE.SphereGeometry(1, 12, 8);
+  const colors = {clay:0x9c5b38, gravel:0x8b8171, rock:0x77736b, wet:0x302c27};
+  const heaps = new Map();
+  return {
+    update(hole) {
+      if (!hole || hole.depth <= 0) return;
+      const {x, z} = hole.site, key = `${x}:${z}`;
+      let heap = heaps.get(key);
+      if (!heap) {
+        heap = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({roughness:1}));
+        heap.name = `cuttings-${key}`;
+        heap.castShadow = true;
+        heap.position.set(x + 1.2, heightAt(x + 1.2, z), z);
+        group.add(heap);
+        heaps.set(key, heap);
+      }
+      const size = Math.min(1.2, 0.25 + hole.depth * 0.055);
+      heap.scale.set(size, size * 0.4, size * 0.8);
+      heap.material.color.setHex(colors[drillMaterialAt(hole.site, hole.depth)]);
+      heap.material.roughness = hole.struckWater ? 0.55 : 1;
+    },
+    dispose() {
+      group.removeFromParent();
+      geometry.dispose();
+      for (const heap of heaps.values()) heap.material.dispose();
     },
   };
 }

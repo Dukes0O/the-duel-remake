@@ -24,6 +24,10 @@ export async function run(context) {
   assert.equal(await context.evaluate('window.__theDig.failed'), false, 'machine models loaded');
   for (let i=0; i<3; i++) { await press(context, 'KeyQ'); await context.evaluate('new Promise(resolve => setTimeout(resolve, 200))'); }
   await context.waitFor('window.__theDig.simulation.activeMachine==="drill"', 'drill rig', 10000);
+  const panel=await context.evaluate('document.querySelector(".the-dig-controls").textContent');
+  assert.match(panel, /mast/i);
+  assert.match(panel, /feed/i);
+  assert.doesNotMatch(panel, /bucket/i);
   const before=await context.evaluate('({...window.__theDig.simulation.drill.machine})');
   await key(context, 'KeyW', 'keydown');
   await context.evaluate('new Promise(resolve => setTimeout(resolve, 2000))');
@@ -48,6 +52,12 @@ export async function run(context) {
   await key(context, 'Space', 'keyup');
   await context.screenshot('machine-drill-water');
   assert.match(await context.evaluate('document.querySelector(".the-dig-load").textContent'), /wet/i);
+  const well=await context.evaluate('({...window.__theDig.simulation.drill.wellheads[0]})');
+  await press(context, 'Tab');
+  await key(context, 'KeyS', 'keydown');
+  await context.waitFor(`(()=>{const m=window.__theDig.simulation.drill.machine;return Math.hypot(m.x-${well.x},m.z-${well.z})>=8;})()`, 'drive back from wellhead', 30000);
+  await key(context, 'KeyS', 'keyup');
+  await context.screenshot('machine-drill-wellhead');
   await press(context, 'Escape');
   await context.waitFor('!document.querySelector(".the-dig")&&window.__qaApp.isYardHomeActive()', 'return to yard', 10000);
   await context.evaluate('document.querySelector("[data-action=yard-the-dig]").click()');

@@ -3,7 +3,7 @@ import {createDrillState, createDrillRigState, drillMaterialAt, drillSite, drill
 import {createTown, deserializeTown, dispatchTownCommand, serializeTown, stepTown} from '../src/town/index.js';
 import {groundWaterFieldAt} from '../src/town/town-ground.js';
 import * as THREE from 'three';
-import {createDrillSounds, createYardWellheadView} from '../src/machines/drill-view.js';
+import {createDrillSounds, createYardWellheadView, createDrillCuttingsView} from '../src/machines/drill-view.js';
 
 const site=drillSite(4312,4,7);
 assert.deepEqual(site,drillSite(4312,4,7));
@@ -90,6 +90,23 @@ assert.equal(scene.children[0].children.length,1, 'A completed well is drawn onc
 assert.equal(scene.children[0].children[0].position.y,3, 'The well sits on the ground.');
 wellheadView.dispose();
 assert.equal(scene.children.length,0, 'Leaving the yard removes its wellheads.');
+const cuttingsView=createDrillCuttingsView(scene,()=>3);
+let hole={...createDrillState(4312,4,7),depth:1};
+cuttingsView.update(hole);
+const heap=scene.getObjectByName('cuttings-4:7');
+assert.ok(heap, 'Drilling leaves cuttings beside the hole.');
+assert.equal(heap.position.y,3);
+const small=heap.scale.x, clay=heap.material.color.getHex();
+hole={...hole,depth:hole.site.clayEnd+0.01};
+cuttingsView.update(hole);
+assert.ok(heap.scale.x>small, 'The heap grows with depth.');
+assert.notEqual(heap.material.color.getHex(),clay, 'The heap changes with the layer.');
+hole={...hole,depth:hole.site.depth,struckWater:true};
+cuttingsView.update(hole);
+assert.equal(heap.material.color.getHex(),0x302c27, 'Wet cuttings are dark.');
+assert.ok(heap.material.roughness<1, 'Wet cuttings have a damp surface.');
+cuttingsView.dispose();
+assert.equal(scene.children.length,0, 'Leaving the yard removes its cuttings.');
 console.log('Drill: repeatable layers and water, jam recovery and town well save passed.');
 
 assert.deepEqual(drillYardControls({KeyW:true},'drive'),{forward:1,steer:0,mastDown:false,feed:0});

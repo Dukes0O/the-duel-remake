@@ -11,7 +11,7 @@ import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt} from '../world/scablands-ground.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
-import {createDrillSounds, createDrillView, createYardWellheadView} from './drill-view.js';
+import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -69,7 +69,7 @@ function disposeScene(group){
 
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
 export async function startTheDig({app,onExit=()=>{}}={}){
-  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
+  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
@@ -87,7 +87,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));
+  const cuttingsView=createDrillCuttingsView(world,(x,z)=>sim.ground.heightAt(x,z));
   const drillSounds=createDrillSounds(app?.audio);
+  let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null;
   const sound=(cue,data)=>{
@@ -141,7 +143,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);observer.disconnect();for(const view of machineViews.values())view.dispose();
-    drillSounds.dispose();wellheadView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
+    drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
@@ -164,6 +166,13 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       for(const event of frameEvents)if(event.cue)drillSounds.play(event.cue);
     }
     wellheadView.update(sim.drill.wellheads);
+    cuttingsView.update(sim.drill.hole);
+    if(controlsMachine!==sim.activeMachine){
+      controlsMachine=sim.activeMachine;
+      controlsPanel.querySelector('.the-dig-control-content').innerHTML=controlsMachine==='drill'
+        ? '<h2>DRILL RIG CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to lower or raise the mast.</p><p>Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.</p>'
+        : originalControls;
+    }
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
@@ -179,7 +188,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
     groundView.update();effects.update(elapsed);
-    const name=LABELS[sim.activeMachine],load=sim.activeMachine==='drill'?`${(sim.drill.hole?.depth ?? 0).toFixed(1)} m deep. ${sim.drill.hole ? drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth) : 'Ready to drill'}.` : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
+    const name=LABELS[sim.activeMachine],load=sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
       `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`;
     host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
