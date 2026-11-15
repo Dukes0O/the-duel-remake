@@ -71,12 +71,14 @@ export async function run(context) {
         frame(){a.onFrame?.(d.state,0);window.__render.renderFrame();}
       };
     })()`);
+    const {start, end, radius} = segment, dx=(end.x-start.x)/100, dz=(end.z-start.z)/100;
+    await context.evaluate(`(() => {const t=window.__tunnelTrial; t.place(${start.x-dx*25},${start.z-dz*25},${Math.atan2(dx,dz)});
+      t.a.inspectionCamera={position:[${start.x-dx*18+dz*10},${start.y+7},${start.z-dz*18-dx*10}],target:[${start.x},${start.y},${start.z}]};t.frame();})()`);
     for (let i=1; i<=20; i++) {
       await context.evaluate(`window.__tunnelTrial.bore(${i/20}); window.__tunnelTrial.frame()`);
       if (i===10) await context.screenshot('tunnel-boring');
     }
     await context.evaluate('window.__tunnelTrial.machine.visible=false');
-    const {start, end, radius} = segment, dx=(end.x-start.x)/100, dz=(end.z-start.z)/100;
     const picture = async (name, x, z, y, target) => {
       await context.evaluate(`(() => {const t=window.__tunnelTrial; t.a.inspectionCamera={position:[${x},${y},${z}],target:${JSON.stringify(target)}}; t.frame();})()`);
       const file=await context.screenshot(`tunnel-${name}`);

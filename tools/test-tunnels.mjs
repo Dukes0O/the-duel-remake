@@ -42,6 +42,10 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   const trial = westScarpTrial(scablandsHeightAt);
   const {start, end, radius} = trial.segment;
   const tube = createGroundTunnels([trial.segment]);
+  // This measures the proposed tube data only, not a finished town save.
+  const tubeBytes = Buffer.byteLength(JSON.stringify({segments: tube.segments}), 'utf8');
+  assert.ok(tubeBytes < 2 * 1024 * 1024, `one 100 m tube uses ${tubeBytes} bytes of the 2 MB ground target`);
+  console.log(`100 m tube data: ${tubeBytes} bytes (town save not yet implemented).`);
   assert.ok(Math.abs(end.y - start.y) / 100 <= .15, 'the climb is no steeper than .15');
   assert.ok(Math.abs(Math.hypot(end.x - start.x, end.z - start.z) - 100) < 1e-9);
   assert.throws(() => trialTubeBetween(start, start, radius, scablandsHeightAt), RangeError);
