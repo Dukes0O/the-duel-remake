@@ -224,6 +224,12 @@ updateBorerCamera(boreCamera, forty, 0, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z - 6)<1e-6, 'The bore view follows the centre line behind the tail.');
 updateBorerCamera(boreCamera, forty, 1, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z + 22)<1e-6, 'The mouth view stands outside the mouth.');
+const twenty = {...forty, x:0, z:20, travelM:20,
+  segments:[{start:{x:0,y:1.65,z:0},end:{x:0,y:1.65,z:20}}]};
+updateBorerCamera(boreCamera, {...twenty, travelM:19.9}, 0, flat, 1, true);
+for (let i=0; i<600; i++) updateBorerCamera(boreCamera, twenty, 0, flat, 1/60);
+assert.equal(boreCamera.userData.borerRoute.inside, true, 'The following camera reaches the mouth at 20 m.');
+assert.ok(boreCamera.position.z <= 1 && boreCamera.position.z >= -0.1, 'The camera waits at the mouth, clear of the tail.');
 const bentCameraState = {...forty, travelM:80, x:30, z:50, heading:Math.PI/2,
   segments:[{start:{x:0,y:1.65,z:0},end:{x:0,y:1.65,z:50}},
     {start:{x:0,y:1.65,z:50},end:{x:30,y:1.65,z:50}}]};

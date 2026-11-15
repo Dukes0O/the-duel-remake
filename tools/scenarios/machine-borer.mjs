@@ -19,6 +19,7 @@ const page = {
   leverZero: `(() => window.__theDig.simulation.borer.lever <= 0)()`,
   cut: `(() => window.__theDig.simulation.borer.distanceM >= 30)()`,
   cut20: `(() => window.__theDig.simulation.borer.distanceM >= 20)()`,
+  followingInside: `(() => window.__theDig.viewForCheck.camera.userData.borerRoute?.inside === true)()`,
   groundSamples: `(() => { const dig=window.__theDig, b=dig.simulation.borer, v=dig.viewForCheck;
     const forward={x:Math.sin(b.heading),z:Math.cos(b.heading)}, right={x:forward.z,z:-forward.x};
     return [-5,0,5].flatMap(side=>[0,10,20,30,40,60].map(distance=>{
@@ -158,6 +159,7 @@ export async function run(context) {
   await persist();
   console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
   assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
+  await context.waitFor(page.followingInside, 'following camera enters the bore', 15000);
   const roof = await context.evaluate(page.roofRay);
   measurements.roofRay = roof;
   await persist();

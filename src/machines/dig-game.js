@@ -66,7 +66,7 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     const dx=first.end.x-mouth.x,dz=first.end.z-mouth.z,length=Math.hypot(dx,dz);
     position=new THREE.Vector3(mouth.x-22*dx/length,mouth.y-1.65+4,mouth.z-22*dz/length);
     target=new THREE.Vector3(mouth.x+dx/length*8,mouth.y,mouth.z+dz/length*8);
-  } else if(state.started && state.travelM>=24) {
+  } else if(state.started && state.travelM>=20) {
     inside=true;
     const behind=pointAt(state.travelM-34), tail=pointAt(state.travelM-18);
     position=new THREE.Vector3(behind.x,behind.y+2.2,behind.z);
