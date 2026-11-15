@@ -17,13 +17,15 @@ export function hillsFor(land=LAND){
     Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
     Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
     Object.freeze({...land.at('ridge',-1200,900),kind:'lookout',height:45,radius:320,topRadius:60}),
+    Object.freeze({...land.between('yard','tin-town',.4,0,-800),kind:'mesa',height:20,radius:200,face:40,ramp:150,rampAngle:Math.PI}),
+    Object.freeze({...land.between('yard','tin-town',.7,0,800),kind:'mesa',height:18,radius:200,face:40,ramp:150,rampAngle:0}),
   ]);
 }
 export const HILLS=hillsFor();
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
   for(const hill of hills){
-    if(hill.kind==='lookout') continue;
+    if(hill.kind==='lookout'||hill.kind==='mesa') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance<hill.radius) height=Math.max(height,hill.height*(1-smooth(distance/hill.radius)));
   }
@@ -46,6 +48,19 @@ function oldTerrainHeightAt(x,z){
 export function scablandsTerrainHeightAt(x,z,hills=HILLS){
   let height=oldTerrainHeightAt(x,z)+hillHeightAt(x,z,hills);
   for(const hill of hills){
+    if(hill.kind==='mesa'){
+      const dx=x-hill.x,dz=z-hill.z,distance=Math.hypot(dx,dz);
+      if(distance>=hill.radius+hill.ramp) continue;
+      // A broad ramp on one side joins a broken, steep rim around the flat top.
+      const angle=Math.atan2(dz,dx), difference=Math.atan2(Math.sin(angle-hill.rampAngle),Math.cos(angle-hill.rampAngle));
+      const rampWeight=1-smooth((Math.abs(difference)-.18)/.35);
+      const rim=hill.radius+8*Math.sin(angle*5)*smooth(Math.abs(difference)/.5);
+      const width=hill.face+(hill.ramp-hill.face)*rampWeight;
+      const weight=1-smooth((distance-rim)/width);
+      const top=oldTerrainHeightAt(hill.x,hill.z)+hill.height;
+      height+=(top-height)*weight;
+      continue;
+    }
     if(hill.kind!=='lookout') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance>=hill.radius) continue;

@@ -85,6 +85,42 @@ test('the Lookout has a level top, follows the Ridge, and leaves roads clear', (
   }
 });
 
+test('the scab plates have level mesas with steep sides and a drivable ramp', () => {
+  const mesas = HILLS.filter(hill => hill.kind === 'mesa');
+  assert.ok(mesas.length >= 2);
+  const plates = GROUND_AREAS.polygons.find(area => area.id === 'scab-plates');
+  for (const mesa of mesas) {
+    assert.ok(polygonMargin(plates.points, mesa.x, mesa.z) > mesa.radius + mesa.ramp);
+    const top = scablandsTerrainHeightAt(mesa.x, mesa.z);
+    assert.equal(top - scablandsTerrainHeightAt(mesa.x, mesa.z, []), mesa.height);
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+      const point = distance => ({x: mesa.x + Math.cos(angle) * distance, z: mesa.z + Math.sin(angle) * distance});
+      const inner = point(mesa.radius - 10);
+      assert.ok(Math.abs(scablandsTerrainHeightAt(inner.x, inner.z) - top) < 1e-8);
+    }
+    const rampPoint = distance => ({x: mesa.x + Math.cos(mesa.rampAngle) * distance, z: mesa.z + Math.sin(mesa.rampAngle) * distance});
+    for (let d = mesa.radius; d < mesa.radius + mesa.ramp; d += 2) {
+      const a = rampPoint(d), b = rampPoint(d + 2);
+      assert.ok(Math.abs(scablandsTerrainHeightAt(a.x, a.z) - scablandsTerrainHeightAt(b.x, b.z)) / 2 <= .30, 'the ramp can be driven');
+    }
+    const sideAngle = mesa.rampAngle + Math.PI;
+    const side = d => ({x: mesa.x + Math.cos(sideAngle) * d, z: mesa.z + Math.sin(sideAngle) * d});
+    const foot = side(mesa.radius + mesa.face), crest = side(mesa.radius);
+    assert.ok((scablandsTerrainHeightAt(crest.x, crest.z) - scablandsTerrainHeightAt(foot.x, foot.z)) / mesa.face > .3, 'the side is steep');
+    for (const road of ROAD_NET.roads) for (let i = 1; i < road.points.length; i++) {
+      const a = road.points[i - 1], b = road.points[i], dx = b.x - a.x, dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((mesa.x - a.x) * dx + (mesa.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      assert.ok(Math.hypot(mesa.x - a.x - t * dx, mesa.z - a.z - t * dz) > mesa.radius + mesa.ramp + road.halfWidth, `${road.id} clears the mesa`);
+    }
+  }
+  const moved = hillsFor(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', 100, 200))).filter(hill => hill.kind === 'mesa');
+  for (const [index, mesa] of mesas.entries()) {
+    const share = index === 0 ? .4 : .7;
+    assert.ok(Math.abs(moved[index].x - mesa.x - 100 * share) < 1e-8);
+    assert.ok(Math.abs(moved[index].z - mesa.z - 200 * share) < 1e-8);
+  }
+});
+
 test('an empty hill table leaves the former terrain height exact', () => {
   const smooth = value => { value = Math.max(0, Math.min(1, value)); return value * value * (3 - 2 * value); };
   for (let x = -7000; x <= 7000; x += 437) for (let z = -5000; z <= 5000; z += 419) {

@@ -1302,3 +1302,15 @@ For Claude to run: `test-full-check` on the laptop, and the memory-only Performa
 Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: the third flag's former position, replaced by a named-place offset 300 m west.
 
 Still needed: mesas, the Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario and final checks. The card is not ready to merge.
+
+### Round 4, slice 2c: mesas in progress
+
+Two mesas stand on the scab plates between the yard and Tin Town. Their level tops rise 20 m and 18 m above the former ground at their centres. Each has a broken steep rim and a broad ramp. Both follow the named places and leave the roads clear. Survey Flags' fifth flag stays where it is. The switches remain off. No game event or sound cue was added.
+
+Checks: `test-scablands-hills` passed all 7 tests, including the mesa tops, steep sides, ramp slopes, road clearance and movement with Tin Town. `test-scablands-size` passed all 9 tests. Race fingerprints and world signatures were not checked in this run. The complete job routes, including Survey Flags and both gas roads, still need checking after the remaining land changes.
+
+For Claude to run: `test-full-check` on the laptop and the memory-only Performance hills picture scenario after it is written. The mesas and other new land need visual judgment.
+
+Changed assertions, for Claude to review: none. Codex decided: the two mesas have 200 m top radii, 40 m steep rims and 150 m ramps; their centres follow the yard to Tin Town line at 40 and 70 percent, offset north and south respectively. Removed: none; the former ground remains outside the mesas.
+
+Still needed: Ridge foothills and way up, detailed faces, sight and search, route checks, the picture scenario, integration and final checks. The card is not ready to merge.
