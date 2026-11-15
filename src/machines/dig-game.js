@@ -6,7 +6,7 @@ import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
-import {borerHasFace} from './borer.js';
+import {borerHasFace, borerSurvey} from './borer.js';
 import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
@@ -205,6 +205,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const dial=document.createElement('div');dial.className='the-dig-head';dial.hidden=true;
   dial.innerHTML='<span>Head speed</span><svg viewBox="0 0 80 46" role="img"><path d="M 6 40 A 34 34 0 0 1 74 40"/><path class="good" d="M 57 11 A 34 34 0 0 1 74 40"/><line x1="40" y1="40" x2="10" y2="40"/></svg><label>Thrust <meter min="0" max="1" value="0"></meter></label>';
   host.querySelector('.the-dig-load').after(dial);
+  const surveyPanel=document.createElement('section');surveyPanel.className='the-dig-survey';surveyPanel.hidden=true;
+  surveyPanel.innerHTML='<p></p><canvas width="260" height="70" aria-label="The hill and the tunnel from the side"></canvas>';
+  surveyPanel.querySelector('canvas').style.cssText='width:260px;height:70px;max-width:100%;background:#394037';
+  dial.after(surveyPanel);
+  let surveyLine=null, surveyKey='';
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
@@ -448,6 +453,31 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
     host.querySelector('.the-dig-load').textContent=load;
     dial.hidden=sim.activeMachine!=='borer';
+    const b=sim.borer;
+    if(sim.activeMachine==='borer' && !b.started && borerHasFace(sim.ground,b,b.heading)) {
+      const key=[b.x.toFixed(1),b.z.toFixed(1),b.y.toFixed(1),b.heading.toFixed(3)].join(':');
+      if(key!==surveyKey) {
+        const result=borerSurvey(sim.ground,b);surveyKey=key;
+        surveyLine=result && {...result,x:b.x,y:b.y,z:b.z,heading:b.heading,
+          heights:Array.from({length:81},(_,i)=>sim.ground.heightAt(b.x+Math.sin(b.heading)*result.distanceM*i/80,b.z+Math.cos(b.heading)*result.distanceM*i/80))};
+      }
+    } else if(!b.started) {surveyLine=null;surveyKey='';}
+    surveyPanel.hidden=sim.activeMachine!=='borer' || !surveyLine;
+    if(!surveyPanel.hidden) {
+      const line=surveyLine, remaining=Math.max(0,line.distanceM-b.distanceM), gain=line.y+line.riseM-b.y;
+      const direction=value=>value>=0?'higher':'lower';
+      const grade=Math.abs(b.slope)<0.0001?'level':`1 in ${Math.round(1/Math.abs(Math.tan(b.slope)))} ${b.slope>0?'up':'down'}`;
+      surveyPanel.querySelector('p').textContent=!b.started
+        ? `Far side on this line: ${line.distanceM} m on, ${Math.abs(line.riseM).toFixed(1)} m ${direction(line.riseM)}. ${line.gradeOneIn ? `Hold a ${line.riseM>=0?'rise':'fall'} of 1 in ${Math.round(line.gradeOneIn)}.` : 'Keep her level.'}`
+        : `Floor: ${(b.y-line.y).toFixed(1)} m from the mouth. Grade: ${grade}. ${remaining.toFixed(0)} m to go, ${Math.abs(gain).toFixed(1)} m to ${gain>=0?'gain':'lose'}.`;
+      const ctx=surveyPanel.querySelector('canvas').getContext('2d'), low=Math.min(line.y,...line.heights)-2, high=Math.max(line.y,...line.heights)+2;
+      const py=y=>65-(y-low)/(high-low)*60;
+      ctx.clearRect(0,0,260,70);ctx.fillStyle='#a38a63';ctx.beginPath();ctx.moveTo(0,70);
+      line.heights.forEach((height,i)=>ctx.lineTo(i*260/80,py(height)));ctx.lineTo(260,70);ctx.fill();
+      ctx.strokeStyle='#fff0cb';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,py(line.y));
+      ctx.lineTo(Math.min(260,260*b.distanceM/line.distanceM),py(b.y));ctx.stroke();
+      ctx.fillStyle='#fff0cb';ctx.fillRect(257,py(line.y+line.riseM)-3,3,6);
+    }
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
     dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);

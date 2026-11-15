@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerSurvey, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {borerLandRefusal, borerSpoilRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
@@ -273,6 +273,14 @@ const realGround = createDigSandbox().ground;
 const mesaFoot = {x:parked.x + 30 * Math.sin(parked.heading), z:parked.z + 30 * Math.cos(parked.heading)};
 mesaFoot.y = realGround.heightAt(mesaFoot.x, mesaFoot.z);
 assert.equal(borerHasFace(realGround, mesaFoot, parked.heading), true, 'The mesa side is a face at the foot.');
+const survey = borerSurvey(realGround, {...mesaFoot, heading:parked.heading});
+assert.ok(survey && survey.distanceM > 200 && survey.distanceM < 400, 'The survey reaches the far side of the mesa.');
+const surveyedHeight = realGround.heightAt(mesaFoot.x + Math.sin(parked.heading)*survey.distanceM,
+  mesaFoot.z + Math.cos(parked.heading)*survey.distanceM);
+assert.ok(Math.abs(survey.riseM - (surveyedHeight - mesaFoot.y)) < 1e-9);
+assert.ok(Math.abs(survey.gradeOneIn - survey.distanceM / Math.abs(survey.riseM)) < 1e-9);
+assert.equal(borerSurvey(flat, createBorerState()), null, 'Level ground has no far side.');
+
 const mesaStart = stepBorer(createBorerState({...mesaFoot, heading:parked.heading}), {thrust:1}, realGround, 'topsoil', 1);
 assert.equal(mesaStart.state.started, true, 'Mabel starts cutting at the mesa side.');
 const rampDistance = mesa.radius + 100;

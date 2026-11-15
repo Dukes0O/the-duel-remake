@@ -25,6 +25,25 @@ export function borerHasFace(ground, position, heading, radius = 3) {
   return false;
 }
 
+/** Survey the first far-side crossing on the head's present horizontal line. */
+export function borerSurvey(ground, state) {
+  if (!ground || typeof ground.heightAt !== 'function' || !state ||
+      ![state.x, state.y, state.z, state.heading].every(Number.isFinite))
+    throw new TypeError('The survey needs ground and a position.');
+  const dx = Math.sin(state.heading), dz = Math.cos(state.heading);
+  const crown = state.y + 2 * machineDefinition('borer').boreRadiusM;
+  let inside = false;
+  for (let distanceM = 1; distanceM <= 2000; distanceM++) {
+    const height = ground.heightAt(state.x + dx * distanceM, state.z + dz * distanceM);
+    if (height > crown) inside = true;
+    else if (inside) {
+      const riseM = height - state.y;
+      return {distanceM, riseM, gradeOneIn:Math.abs(riseM) < 1e-9 ? null : distanceM / Math.abs(riseM)};
+    }
+  }
+  return null;
+}
+
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, travelM:0, headSpeed:0,

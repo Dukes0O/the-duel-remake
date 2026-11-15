@@ -122,3 +122,7 @@ The route planner needs a bridge from the Dig, centre-line links and changes to 
 ## Removed
 
 The Dig's plain trial tube was replaced by the shared lining and surface portals. No existing race assets were removed.
+
+## Survey line
+
+The Dig shows the first far-side crown crossing, the height and suggested grade, then the floor height, current grade and remaining distance and height. A side strip shows the ground and bore. The controls already name the arrow keys. The survey uses the ground at the crown crossing, as the ruling specifies: at the real mesa foot it reports 306 m and 5.1 m higher. The example in the ruling gives 307 m and 2.8 m; the real-ground driving proof must establish whether this crossing-based grade brings her out safely. `node tools/test-machine-borer.mjs` passed, including the new survey checks. The browser display has not been checked. No existing assertions changed.
