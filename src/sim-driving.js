@@ -485,7 +485,9 @@ export function _jump(actor, dt, simulationTime = this.state.stageTimeSec) {
     actor._verticalSpeed = Math.min(0, actor._verticalSpeed);
   }
   if (scablands && actor._verticalSpeed > 0) {
-    const roof = scablandsDeckRoofAt(groundPoint.x, groundPoint.z, actor._jumpY);
+    const tube = this.course.groundTunnels?.tubeAt(groundPoint, actor._jumpY);
+    const roof = Math.min(scablandsDeckRoofAt(groundPoint.x, groundPoint.z, actor._jumpY),
+      tube?.ceiling ?? Infinity);
     const highestFeet = Math.max(ground, roof - this._vehicleSpec(actor).height);
     if (predicted > highestFeet) {
       predicted = highestFeet;

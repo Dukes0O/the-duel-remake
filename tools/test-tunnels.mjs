@@ -84,6 +84,19 @@ for (const id of ['girder-bridge', 'the-pipe']) {
     `${id}: a fall below the deck lands on the bed`);
 }
 
+// The car's real flight step stops at a bore's crown and falls back.
+{
+  const tubes = createGroundTunnels([{start: {x: 0, y: 4, z: 0},
+    end: {x: 100, y: 4, z: 0}, radius: 4}]);
+  const actor = {s: 50, lateral: 0, speedMph: 0, airborne: true, _jumpY: 0,
+    groundHeight: 0, airHeight: 0, _verticalSpeed: 20, stageTimeSec: 0};
+  const game = {state: actor, car: {}, course: {def: {scablands: true}, groundTunnels: tubes, phase: () => 0},
+    _vehicleSpec: () => ({height: 2}), _supportAt: () => ({x: 50, y: 0, z: 0})};
+  for (let step = 0; step < 100 && actor._verticalSpeed > 0; step++) _jump.call(game, actor, .02, step * .02);
+  assert.ok(actor._jumpY + 2 <= 8 + 1e-9, 'the car stays below the crown');
+  assert.ok(actor._verticalSpeed < 0, 'the car falls after meeting the crown');
+}
+
 // A person placed below a deck keeps that floor when walking. An omitted
 // placement height still chooses the top floor.
 for (const id of ['girder-bridge', 'the-pipe']) {
