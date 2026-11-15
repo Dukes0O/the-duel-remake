@@ -36,7 +36,23 @@ export const SCABLANDS_LAYOUT = Object.freeze({
 // `lengthU` is a whole number of the course's 8 m steps (411 of them). At 3,290 the last step of the frame was 2 m long but was
 // read as 8 m, which put a car far from the oval and near the east axis off by up to 22 m (docs/changes/SCABLANDS-LAND.md,
 // "Round 4 slice 1", stage A).
+// The realism trial's light and air (SCABLANDS-LAND, "Kyle on realism", step 1; switch `scablands-realism`). A late-afternoon desert:
+// - the sun stands 25 degrees up in the south-south-west, so a car driving east is lit from behind its right shoulder and every
+//   thing throws a long shadow across the road;
+// - sunlight is about seven times the light from the sky (it was little more than the same), so the shadow side of a thing is dark;
+// - the haze starts at the car and thickens evenly to the far edge of what the camera sees, in the colour of the sky's horizon,
+//   so the land fades into the sky with no line between them;
+// - shadows reach 100 m from a point 45 m ahead of the car (they stopped at 45 m). The sun's light starts 320 m from that point,
+//   so that ground on the sunward edge of the shadow box lies 100 m inside it and a hill there still throws its shadow.
+export const SCABLANDS_LIGHT = Object.freeze({
+  sunOffset:Object.freeze({x:-144,y:134,z:253}), sunColor:0xffdcae, sun:5.4, hemi:.72, env:.6, ground:0x8a6748,
+  top:'#2c63a8', horizon:'#ddd3c1', fog:0xddd3c1, fogNear:20, fogFar:2500, exposure:1.22, bloom:.2,
+  sunStrength:1, cloudCover:.3, cloudTint:Object.freeze([1,.94,.84]),
+  shadowReach:100, shadowAhead:45, shadowFar:560,
+});
+
 export const SCABLANDS_VENUE = Object.freeze({
+  trialLight:SCABLANDS_LIGHT,
   id:'scablands', venue:true, layoutVersion:1, theme:'arena', stage:32,
   name:'The Scablands', lengthU:3288, closed:true, laps:1, kind:'arena',
   arena:true, townGate:Object.freeze({id:'scrapdome-gate',x:0,z:-92,radius:32,

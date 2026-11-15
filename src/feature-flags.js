@@ -69,6 +69,8 @@ export const FEATURE_STATES = Object.freeze({
   'story-everburn': 'dev',
   // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn. Off for players since 14 November 2026, with the story.
   'scablands-runs': 'dev',
+  // SCABLANDS-LAND, "Kyle on realism": the realism trial on the Scablands (light and air first, then photographed surfaces, then things at every size). Off in the game.
+  'scablands-realism': 'dev',
   // The Wasteland town and its shop finishes are still in development.
   'wasteland-town': 'dev',
   // The Bowl's air control and Show Night are built behind this switch.

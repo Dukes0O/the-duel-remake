@@ -793,6 +793,47 @@ The job's own line on the small map (`drawWorldJobMap`, `drawPlaceName`, `number
 `src/world/scablands-land.js`; the two exemptions in `tools/test-everburn-play-fixes-a.mjs` (`coveredByJob`) and `tools/test-everburn-play-fixes-round4.mjs` (`coveredByLamps`). Other game modes use
 `route-map.js` for their circuit map (`RouteMap`, `buildRouteMapGeometry`, the practice and hidden-road marks): all left exactly as they were.
 
+## Realism trial, step 1: light and air (Claude, 14 November 2026)
+
+Card section "Kyle on realism". Behind a new switch, `scablands-realism` (`dev`, off for players).
+
+### What was built
+
+- `src/world/scablands.js`: `SCABLANDS_LIGHT`, the trial's light, carried on the venue as `trialLight`: the sun's place, colour and
+  strength, the sky's light, the sky's and haze's colours, the haze's start and end, the exposure, the cloud cover, and the shadow box
+  (`shadowReach` 100 m, `shadowAhead` 45 m, `shadowFar` 560 m).
+- `src/scene-lighting.js`: a course's `trialLight` is laid over the day's look in place of its `light` when `useTrialLight()` says so
+  (asked once for each course). A light may widen the sun's shadow box; a widened box lies ahead of the camera and moves in whole shadow
+  texels so that shadow edges do not crawl. With no trial light the box, the sun's place and every setting are computed as before.
+- `src/render3d.js`: passes the switch's answer to the lighting.
+- `tools/scenarios/scablands-realism.mjs`: the before-and-after pictures (switch off, then on) at seven places on Performance and one on
+  High, with draw calls, triangles and the time between frames, and the sheet.
+
+No game event is added, so no sound cue.
+
+### Checks
+
+- Lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4 --keep-going`, from PowerShell): lane tier 89 of 92, and the three that failed pass after the new switch was counted in the two lists that pin the switches (`tools/test-feature-flags.mjs`, `start-preview.bat`); replays unchanged.
+- `npm run build`: passes.
+- Browser, visible window, memory-only saves: `scablands-realism` passes, 16 pictures. Draw calls and triangles before and after are the
+  same within a few per cent (134 to 303 draw calls, 177,000 to 320,000 triangles); the time between frames is the screen's 16.7 ms in
+  both. Not a frame check (rule 9).
+- One independent review of the code (a Sonnet reviewer, read only): no real faults; with the switch off the sun's place, the shadow box and every setting are computed exactly as before. On its
+  advice the sun's light starts 320 m from the shadow box's middle (it was 220 m), so that a hill on the sunward edge still throws
+  its shadow. Left as they are: the box jumps when an inspection camera looks straight down, and a switch turned mid-course takes
+  effect at the next course.
+- Race fingerprints: unchanged (no rule of a race is touched).
+
+### Changed assertions, for the card (rule 18)
+
+- `tools/test-feature-flags.mjs`: the count of switches is 55 (was 54) and `scablands-realism` joins the list that must be `dev`.
+  Nothing is loosened: the new switch is pinned off for players like the others.
+- `start-preview.bat`: the Preview's list of dev switches gains `scablands-realism`, as `tools/test-preview-launcher.mjs` requires.
+
+### Removed
+
+Nothing. The old light stays for players until the trial's three steps are judged; the card says what is removed when the switch goes on.
+
 ## Removed
 
 The four near ground tiles and the one far mesh of 2,800 by 2,000 m (replaced by the window and the coarse ground), `lowerFarUnderNear` and the

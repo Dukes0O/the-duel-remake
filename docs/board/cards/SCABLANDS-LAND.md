@@ -695,6 +695,29 @@ photographs supply the grain, and nothing is built as a box model.
 Not chosen: anything this laptop cannot hold inside the frame limit (traced light, dense plants
 to the horizon, whole scanned landscapes).
 
+### Realism trial, step 1 result (Claude, 14 November 2026): light and air, switch off
+
+Kyle, on the plan above: "Yeah! Let's experiment and go for it."
+
+Built behind a new switch, `scablands-realism` (off). Sheet
+`docs/board/looks/scablands-land/round-8.jpg` with Claude's review beside it; two before-and-after
+pictures sent to Kyle.
+
+- **Built:** a low strong sun from the south-south-west, a desert afternoon sky, haze that
+  thickens evenly from the car to the edge of sight in the horizon's colour, and shadows that
+  reach 100 m ahead of the car. With the switch off every course is lit exactly as before.
+- **Finding:** a small gain alone. Shadows and the far hill are better; the ground is still one
+  flat matt sheet, and that is now the plain fault. Light alone does not make this land look
+  real; the photographed surfaces of step 2 are where the gain is.
+- **Step 2 needs files from outside:** free-to-use (CC0) photographs of ground from Poly Haven or
+  ambientCG. Claude asks Kyle before downloading any file.
+- **Not timed as a frame check.** 60 pictures a second held before and after in a visible
+  window (the screen's limit).
+- **Changed assertions, reviewed by Claude (rule 18):** `tools/test-feature-flags.mjs` counts 55
+  switches (was 54) and requires `scablands-realism` to be `dev`; `start-preview.bat` lists it.
+  Neither is loosened: the new switch is pinned off for players.
+- **Independent review of the code:** no real faults; with the switch off nothing changes.
+
 ### Open at the end of slice 1
 
 - **Five older browser scenarios fail on the larger land** (run by Claude at the merge):
