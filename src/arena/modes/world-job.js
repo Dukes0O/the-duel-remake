@@ -204,7 +204,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   const index = Math.min(actor.pathIndex ?? 0, path.length - 1);
   const target = path[index];
   const dx = target.x - actor.position.x, dz = target.z - actor.position.z;
-  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, z: actor.position.z};
+  const gap = Math.hypot(dx, dz), travel = Math.max(0, follow.speed ?? actorDef.speed ?? 0) * dt, before = {x: actor.position.x, y: actor.position.y, z: actor.position.z};
   let arrived = gap <= travel || gap < .01;
   if (arrived) actor.position = {...target};
   else {
@@ -214,8 +214,10 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
   // pushed out of a building. Every stopping place must be clear of solids.
   if (duel.course.def.scablands && actor.position && !actor.train) {
-    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid});
+    const layered = duel.featureFlags?.enabled('wasteland-town') === true;
+    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid, height: layered ? before.y : undefined});
     actor.position.x = at.x; actor.position.z = at.z;
+    if (layered) actor.position.y = at.y;
     if (at.blocked) arrived = false;
   }
   if (arrived) {
@@ -569,7 +571,11 @@ function moveJobRaiders(duel, worldJob, dt) {
     }
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
-    if (scablands) { const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid}); actor.x = at.x; actor.z = at.z; }
+    if (scablands) {
+      const layered = duel.featureFlags?.enabled('wasteland-town') === true;
+      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid, height: layered ? actor.y : undefined});
+      actor.x = at.x; actor.z = at.z; if (layered) actor.y = at.y;
+    }
   }
 }
 

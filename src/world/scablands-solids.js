@@ -214,13 +214,13 @@ export function createJobSolidGrid() {
 // ---- A round thing against the solids ----------------------------------------------------------------------------------------------------------
 // Moves a point out of every solid it overlaps by a circle of `radius`, along the nearest face, as a raider on foot or a truck steps. Returns
 // {x, z, hit} (the solid it was last pushed from, or null). Cheap: it asks the grid once.
-export function pushOutOfSolids(x, z, radius = .4, grid = SOLID_GRID) {
+export function pushOutOfSolids(x, z, radius = .4, grid = SOLID_GRID, actorHeight) {
   let hit = null;
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     for (const solid of grid.near(x, z, x, z, radius + 2)) {
       // A mover on a deck passes over what stands under it (the bridge's piers), and a mover down in the bed passes under the deck's trusses and pipeline.
-      if (solid.verticalClearance) { const ground = scablandsSurfaceHeightAt(x, z); if (ground > solid.maxY - .01 || ground + 2.5 < solid.minY) continue; }
+      if (solid.verticalClearance) { const ground = Number.isFinite(actorHeight) ? actorHeight : scablandsSurfaceHeightAt(x, z); if (ground > solid.maxY - .01 || ground + 2.5 < solid.minY) continue; }
       const cos = Math.cos(solid.heading), sin = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
       const lx = dx * cos - dz * sin, lz = dx * sin + dz * cos;
       let nx, nz, depth;

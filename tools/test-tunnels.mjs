@@ -6,6 +6,8 @@ import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 import {scablandsHeightAt} from '../src/world/scablands-height.js';
 import {scablandsActorHeightAt, scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {RIVER_LAND, riverGorgeDepthAt, riverDepthAt} from '../src/world/scablands-regions.js';
+import {stepMover} from '../src/world/scablands-movers.js';
+import {SCABLANDS_SOLIDS, pushOutOfSolids} from '../src/world/scablands-solids.js';
 
 // The same position has a bed below each deck and a surface above it.
 for (const id of ['girder-bridge', 'the-pipe']) {
@@ -23,6 +25,16 @@ for (const id of ['girder-bridge', 'the-pipe']) {
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - bed) < .01, `${id}: car support uses the bed`);
   duel.featureFlags.enabled = () => false;
   assert.ok(Math.abs(_supportAt.call(duel, at.s, at.lateral, actor).y - surface) < .01, `${id}: switch off keeps the surface`);
+}
+
+// A mover below a deck reads the bed and still meets a pier.
+{
+  const pier = SCABLANDS_SOLIDS.find(solid => solid.id === 'girder-bridge-pier-2');
+  const bed = pier.minY, surface = scablandsSurfaceHeightAt(pier.x, pier.z);
+  const at = stepMover({x: pier.x, z: pier.z}, {x: pier.x, z: pier.z}, {height: bed, solids: false});
+  assert.ok(Math.abs(at.y - bed) < 1, 'a mover reads the bed');
+  assert.ok(pushOutOfSolids(pier.x, pier.z, .4, undefined, bed).hit, 'the pier is solid below the deck');
+  assert.notEqual(pushOutOfSolids(pier.x, pier.z, .4, undefined, surface).hit?.id, pier.id, 'the pier does not block the deck');
 }
 
 // Use the real west scarp, with both ends joined to the ground.
