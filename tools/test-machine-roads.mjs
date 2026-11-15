@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createRoadMachineState, createRoadWork, roadCell, roadCondition, stepRoadMachine, workRoadCell} from '../src/machines/roads.js';
+import {createRoadMachineState, createRoadWork, roadCell, roadCondition, roadYardControls, stepRoadMachine, workRoadCell} from '../src/machines/roads.js';
 import {closeDigSandbox, createDigSandbox, digSandboxMachineState, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 
 function buildRoad() {
@@ -21,6 +21,17 @@ function buildRoad() {
 }
 assert.deepEqual(buildRoad(), buildRoad(), 'The same work produces the same road.');
 assert.equal(roadCondition(roadCell(createRoadWork(), 0, 0)), 'unfinished');
+const slowControls = roadYardControls('paver', {forward:1, steer:0}, {Space:true, ShiftLeft:true});
+assert.equal(slowControls.forward, 0.5);
+assert.equal(roadYardControls('roller', {forward:1}, {ShiftLeft:true}).forward, 1);
+let repairGround = createRoadWork();
+repairGround.cells['0:1'] = {height:0, spread:1, compaction:1, surface:1, roughness:0.8};
+let repairMachine = createRoadMachineState('paver');
+for (let i=0; i<240; i++) {
+  const next = stepRoadMachine(repairMachine, repairGround, slowControls, 1/60);
+  repairMachine = next.state; repairGround = next.work;
+}
+assert.equal(roadCondition(roadCell(repairGround, 0, 1)), 'good', 'The keyboard slow pace repairs rough paving.');
 for (const kind of ['dozer', 'roller', 'paver']) {
   const initial = createRoadMachineState(kind);
   const ground = createRoadWork();

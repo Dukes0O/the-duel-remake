@@ -13,6 +13,7 @@ import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
 import {createDrillSounds, createDrillView, createYardWellheadView, createDrillCuttingsView} from './drill-view.js';
 import {createRoadSounds, createRoadWorkView} from './roads-view.js';
+import {roadYardControls} from './roads.js';
 
 const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
@@ -166,8 +167,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
-      const stepControls=sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
-      if(roadMachine)stepControls.working=!!padKeys.Space;
+      let stepControls=sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
+      if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
@@ -186,7 +187,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       controlsPanel.querySelector('.the-dig-control-content').innerHTML=controlsMachine==='drill'
         ? '<h2>DRILL RIG CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to lower or raise the mast.</p><p>Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.</p>'
         : sim.roadMachines[controlsMachine]
-          ? `<h2>${LABELS[controlsMachine].toUpperCase()} CONTROLS</h2><p>Drive with W, A, S and D. Hold Space while driving to work the ground.</p><p>Press Q to choose another machine. Press C to change the view.</p>`
+          ? `<h2>${LABELS[controlsMachine].toUpperCase()} CONTROLS</h2><p>Drive with W, A, S and D. Hold Space while driving to work the ground.</p>${controlsMachine==='paver'?'<p>Hold Shift to pave slowly and smoothly.</p>':''}<p>Press Q to choose another machine. Press C to change the view.</p>`
           : originalControls;
     }
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
@@ -216,7 +217,10 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
       message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
     } else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Raise the mast before driving on.':'Drive to a spot. Press Tab to lower the mast. Hold Space to drill. Add W for harder feed. Hold S to reverse.';
-    else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent='Drive with W, A, S and D. Hold Space to work the ground.';
+    else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=sim.activeMachine==='dozer'
+      ? 'Hold Space and drive through the raised ground to push it into the ditch.'
+      : sim.activeMachine==='roller' ? 'Hold Space and drive over the spread ground until it is firm.'
+      : 'Hold Space and Shift while driving over firm ground to lay a smooth surface.';
     else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);requestAnimationFrame(frame);

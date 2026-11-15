@@ -2,6 +2,8 @@
 
 Work in progress. Added pure road work rules for cutting, carrying and filling material, rolling a fill, and paving it. Soft and rough work can be corrected. The dozer, roller and paver have driving rules that apply work along their path. The yard simulation now holds all three machines and their shared road work for one visit. The machines can now be selected, driven and controlled in the yard, with a separate controls panel for each. Worked cells now have a visible surface that changes with their condition, and each road machine plays its named work sound. A raised patch and ditch give the dozer material to move. The town connection still needs to be built.
 
+The paver now has a slow pace on Shift, so keyboard players can repair rough paving. Each machine gives its own next-step guidance.
+
 ## Checks
 
 - `node tools/test-machine-roads.mjs`: passed for the rules built so far, including movement, raised tools, yard simulation and visit lifetime.
@@ -11,6 +13,9 @@ Work in progress. Added pure road work rules for cutting, carrying and filling m
 - `node tools/test-machine-roads.mjs`: passed after adding the visible surface and a repair appearance check.
 - `npm.cmd run build`: passed after adding the surface and sounds.
 - `node tools/test-machine-roads.mjs` and `npm.cmd run build`: passed after adding the practice ground.
+- `node tools/test-machine-roads.mjs`: passed after adding the paver's slow pace, including repair while driving with the keyboard controls.
+- `node tools/test-the-dig.mjs`: passed after adding the slow pace and guidance.
+- `npm.cmd run build`: passed after adding the slow pace and guidance.
 - Machine, dig, town, replay, world-signature and lane checks: still to run after the remaining work.
 - Browser scenario: still to write; Claude must run it. The lane tier also remains to run.
 - Integration branch: already an ancestor of this lane before this round.

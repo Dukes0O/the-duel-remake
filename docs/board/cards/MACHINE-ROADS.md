@@ -12,3 +12,4 @@ Design: [docs/MACHINES.md](../../MACHINES.md), which wins over [docs/WASTELAND_T
 
 - Road work uses whole-metre cells. A blade carries material from a cut into a fill; rolling firms the fill and paving records its condition. The yard uses Space while driving to operate each road machine. The town connection still needs to be built.
 - The yard starts with a raised patch and a shallow ditch in front of the dozer. They provide material to move and reset when the visit ends.
+- Hold Shift while driving the paver to keep the steady pace needed for a smooth surface. Driving at full speed can leave a rough surface that the player can pave again.

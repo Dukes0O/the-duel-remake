@@ -60,6 +60,13 @@ export function roadCondition(cell) {
   return cell.roughness > 0.2 ? 'rough' : 'good';
 }
 
+/** Shift gives the paver a steady working pace with a keyboard. */
+export function roadYardControls(kind, controls, keys = {}) {
+  const slow = kind === 'paver' && (keys.ShiftLeft || keys.ShiftRight);
+  return {...controls, forward:slow ? controls.forward * 0.5 : controls.forward,
+    working:!!keys.Space};
+}
+
 /** A yard machine works only as it travels, and leaves its work in the supplied yard. */
 export function createRoadMachineState(kind, position = {}) {
   if (!['dozer', 'roller', 'paver'].includes(kind)) throw new RangeError('Choose a road machine.');
