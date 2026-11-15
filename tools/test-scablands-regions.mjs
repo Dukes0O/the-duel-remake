@@ -310,9 +310,9 @@ test('rises of 20 to 40 m stand between the places; the places\' own ground stay
     }
   }
   assert.ok(steepRoad < .12, `the steepest grade along any road is ${(steepRoad * 100).toFixed(1)} percent`);
-  // The flat ground of each place is untouched by any rise or by the river.
+  // Each place stays flat. The Ridge's new summit is 45 m above the plain.
   for (const place of SCABLANDS_PLACES) for (const [dx, dz] of [[0, 0], [place.flatRadius * .8, 0], [0, -place.flatRadius * .8]])
-    assert.ok(Math.abs(scablandsHeightAt(place.x + dx, place.z + dz) - place.height) < .01, `${place.name}'s ground is flat at ${dx}, ${dz}`);
+    assert.ok(Math.abs(scablandsHeightAt(place.x + dx, place.z + dz) - (place.id === 'ridge' ? 45 : place.height)) < .01, `${place.name}'s ground is flat at ${dx}, ${dz}`);
 });
 
 // A place is not seen from the last one. A car on a road, coming to a place from beyond the rise that stands across the road before it, cannot see

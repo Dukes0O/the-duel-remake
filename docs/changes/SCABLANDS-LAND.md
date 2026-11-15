@@ -1523,3 +1523,13 @@ Checks: `node tools/test-scablands-size.mjs` passed 9 of 9, including its unchan
 For Claude to run: the memory-only Performance picture scenario and its visual judgment. Changed assertions: none. Codex decided: no new design choice. Removed: repeated calculation of retained fine scarp heights and replacement of the ground index array.
 
 Still needed: resolve the Ridge height assertion and Old Smoke Medium failure, then repeat the final checks after integration. The card is not ready to merge.
+
+### Round 4, slice 2c: Ridge summit check
+
+The existing place-flatness check now expects the Ridge's designed summit height. It still checks all three points within 0.01 m. No game event or sound cue was added; Survey Flags' fifth flag remains in place.
+
+Checks: `node tools/test-scablands-regions.mjs` passed 12 of 12; `node tools/test-scablands-hills.mjs` passed 20 of 20. The final replay and world-signature checks remain to be run on the final code.
+
+Changed assertions, for Claude to review: the Ridge's expected flat ground changed from 18 m to 45 m, as required by the new summit; its 0.01 m tolerance is unchanged. For Claude to run: the memory-only picture scenario and visual judgment, and the ffmpeg-dependent checks noted above. Codex decided: no new design choice. Removed: the old 18 m expectation for the Ridge.
+
+Still needed: investigate the Old Smoke Medium result and finish the final checks after integration.
