@@ -65,4 +65,67 @@ assert.equal(car.lateral, 3, 'car contact stops at the tube wall');
 car.prevLateral = 0; car.lateral = 5; car.groundHeight = car.prevGroundHeight = 30;
 _staticContacts.call(duel, car, false);
 assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
-console.log('Tunnel ground query and wall contact checks passed. Full driving and mouth tests remain.');
+
+
+// Drive the actual simulation through a level tube with gentle ground at both mouths.
+// This uses a small course so failure points to vehicle support, not road geometry.
+{
+  const {Duel} = await import('../src/game.js');
+  const {COURSE} = await import('../src/config.js');
+  const dt = 1 / 120;
+  const surface = x => Math.min(10, Math.max(0, (x - 30) * .5), Math.max(0, (130 - x) * .5));
+  for (const direction of [1, -1]) {
+    const d = new Duel({seed: 1989});
+    d.startCampaign({car: 'titan_monster', startStage: COURSE.findIndex(row => row.practice),
+      difficulty: 'casual', mode: 'timetrial'});
+    d.state.status = 'racing';
+    const at = (s, lateral = 0) => ({x: lateral, y: surface(s), z: s, heading: 0, curvature: 0});
+    const actualTubes = createGroundTunnels([{start: {x: 0, y: 4, z: 30},
+      end: {x: 0, y: 4, z: 130}, radius: 4}]);
+    d.course = {def: {id: 'tunnel-test', practice: true, kind: 'arena', theme: 'desert'},
+      groundTunnels: actualTubes, closed: false, length: 10000, raceLength: 20000,
+      features: {obstacles: [], mountains: [], ramps: [], crushables: [], shortcuts: [], flocks: []},
+      at, worldAt: at, groundAt(s, lateral, height) {
+        const p = at(s, lateral);
+        if (Number.isFinite(height)) p.y = actualTubes.groundAt(p, height, p.y);
+        return p;
+      }, nearest: (x, z) => ({s: z, lateral: x}), phase: s => s,
+      surfaceAt: () => ({mainRoad: false, road: false, roadHalfWidth: 7}),
+      themeAt: () => 'desert', roadHalfWidthAt: () => 7, nearestRadar: () => null,
+      obstaclesNear: () => d.course.features.obstacles};
+    d._obstacleArray = d.course.features.obstacles; d._obstacleQueryCache.clear(); d._lapGates = [];
+    const s = d.state;
+    Object.assign(s, {s: direction > 0 ? 20 : 140, lateral: 0, prevLateral: 0,
+      headingError: direction > 0 ? 0 : Math.PI, groundHeight: 0, speedMph: 20});
+    s.prevS = s.s;
+    d.setInput({throttle: 1});
+    let furthest = 0;
+    for (let i = 0; i < 2400; i++) {
+      d.step(dt);
+      if (s.s >= 32 && s.s <= 128) {
+        furthest = Math.max(furthest, direction > 0 ? s.s - 30 : 130 - s.s);
+        assert.ok(Math.abs(s.groundHeight) < .01, `car stays on floor at ${s.s}, height ${s.groundHeight}`);
+      }
+      if (direction > 0 ? s.s > 135 : s.s < 25) break;
+    }
+    assert.ok(furthest > 95, `car drives through direction ${direction}: ${furthest} metres`);
+  }
+}
+
+// A chain must hand support to the next segment as the car crosses a joint.
+{
+  const joined = createGroundTunnels([
+    {start: {x: 0, y: 4, z: 0}, end: {x: 50, y: 4, z: 0}, radius: 4},
+    {start: {x: 50, y: 4, z: 0}, end: {x: 100, y: 14, z: 0}, radius: 4},
+  ]);
+  for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
+    let height = Math.max(0, start - 50) * .2;
+    for (let x = start; step > 0 ? x <= end : x >= end; x += step) {
+      height = joined.groundAt({x, y: height, z: 0}, height, 30);
+      assert.ok(Math.abs(height - Math.max(0, x - 50) * .2) < 1e-8,
+        `floor follows the joined segments at ${x}, got ${height}`);
+    }
+  }
+}
+
+console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');

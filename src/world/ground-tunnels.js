@@ -42,20 +42,22 @@ export function createGroundTunnels(segments = []) {
   if (!Array.isArray(segments)) throw new TypeError('Tunnel segments must be a list.');
   const tubes = segments.map(validSegment);
 
-  function tubeAt(position, actorHeight = position?.y) {
+  function tubeAt(position, actorHeight = position?.y, floorTolerance = 0) {
     point(position, 'Actor position');
     if (!finite(actorHeight)) throw new TypeError('Actor height must be finite.');
+    let nearest = null;
     for (const tube of tubes) {
       const center = horizontalProjection(position, tube);
       const dx = position.x - center.x, dz = position.z - center.z;
       const radial = Math.hypot(dx, dz);
       const floor = center.y - tube.radius;
       const ceiling = center.y + tube.radius;
-      if (radial < tube.radius && actorHeight <= ceiling && actorHeight >= floor) {
-        return {tube, center, floor, ceiling, radial};
+      if (radial < tube.radius && actorHeight <= ceiling && actorHeight >= floor - floorTolerance &&
+          (!nearest || radial < nearest.radial)) {
+        nearest = {tube, center, floor, ceiling, radial};
       }
     }
-    return null;
+    return nearest;
   }
 
   function groundAt(position, actorHeight, terrainHeight) {
@@ -64,7 +66,7 @@ export function createGroundTunnels(segments = []) {
     // A support sample can move slightly uphill since the previous step.
     // Accept a small step below the new floor, without pulling an actor down
     // from the surface above the ceiling.
-    const inside = tubeAt(position, actorHeight) || tubeAt(position, actorHeight + 0.5);
+    const inside = tubeAt(position, actorHeight, 0.5);
     return inside ? inside.floor : terrainHeight;
   }
 

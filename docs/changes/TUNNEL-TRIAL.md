@@ -2,11 +2,11 @@
 
 ## Incomplete
 
-This is unfinished work, not a passing trial. The lane contains the earlier tube query adapted to an explicit car-height argument in `course.groundAt`. Only `_supportAt` passes the car's `groundHeight`. Other calls retain the surface. There is no installed tunnel, switch-controlled scenario, visible opening, mesh, enforced wall, save, or driving proof. A car placed inside without an initialized height is still unresolved. Do not merge this work as a finished trial.
+This is unfinished work, not a passing trial. The lane contains the earlier tube query adapted to an explicit car-height argument in `course.groundAt`. Only `_supportAt` passes the car's `groundHeight`. Other calls retain the surface. There is no installed tunnel, switch-controlled scenario, visible opening, mesh, save, or driving proof on the real Ridge. A car placed inside without an initialized height is still unresolved. Do not merge this work as a finished trial.
 
-The tube wall calculation now runs in car contacts when a tunnel is installed and the car starts inside it. A focused contact test checks the side limit and a car above the tube. It is not yet a driven-car test. This does not prove the mouths or a complete journey through the tube.
+The tube wall calculation now runs in car contacts when a tunnel is installed and the car starts inside it. A focused contact test checks the side limit and a car above the tube. A controlled straight-course test now drives a real simulated car through a level 100 m tube in both directions. This does not prove the mouths or a complete journey through the tube.
 
-The support query now tolerates a rise of up to half a metre between samples, and an underground car's support skips surface obstacles and mountain support. A focused test carries the previous floor height along a sloping tube in both directions and checks that surface obstacles still apply above it. This is not a driven-car test, and the half-metre limit still needs testing at real driving speeds. The driving code also samples support for the player's default actor and needs a full journey check.
+The support query now tolerates a rise of up to half a metre between samples, and an underground car's support skips surface obstacles and mountain support. A focused test carries the previous floor height along a sloping tube in both directions and checks that surface obstacles still apply above it. The level tube now has a driven-car test, but the half-metre slope allowance still needs testing at real driving speeds. The driving code also samples support for the player's default actor and needs a full journey check.
 
 A grid scan around the rise nearest the Ridge, using 25 m position steps and 16 directions, found a maximum midpoint rise of about 1.03 m above the straight line between points 100 m apart. This is a sample, not a proof about every possible line. It suggests a car-sized tube with rock overhead needs approach cuts or different terrain. That choice has not been made.
 
@@ -18,8 +18,9 @@ The shader was not built. Its cost, tube limit, and appearance are unknown. No n
 
 ## Checks
 
-- `node tools/test-tunnels.mjs`: passed ground-query, slope continuity, surface-obstacle, wall-calculation and contact-hook checks. These are not the required driving, mouth or save tests.
-- Lane tier: interrupted before completion. No pass is claimed.
+- `node tools/test-tunnels.mjs`: passed ground-query, joined-slope continuity, surface-obstacle, wall-calculation, contact-hook and real simulated driving checks in both directions on a controlled level tube. The real Ridge mouths and save are not tested.
+- Replay guard: interrupted in this round before completion. No pass is claimed.
+- Lane tier: interrupted in an earlier round before completion. No pass is claimed.
 - `npm.cmd run build`: passed. PowerShell blocked `npm` itself under its script policy.
 - Browser: not run. The requested scenario does not exist yet.
 
@@ -33,8 +34,8 @@ None.
 
 ## Codex decided
 
-No design decision was made. The trial needs a site or approach that gives both a usable entrance and overhead rock.
+For the isolated driving check, the ground rises gently above a level tube on a controlled course. This is test ground, not a choice of Ridge site. The trial needs a site or approach that gives both a usable entrance and overhead rock.
 
 ## Removed
 
-Nothing was replaced or removed.
+The previous first-match selection at overlapping tube joints was replaced by the nearest eligible segment. Nothing else was removed.

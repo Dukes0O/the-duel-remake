@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T01:07:19.300Z
+Observed at: 2026-11-15T01:14:36.254Z
 
-Observation commit: 492ae8416c3e89a9692faf638b42db8792bbcc43
+Observation commit: 2a22b346d9065428af03aa1a10f1f7038ea3bbee
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 492ae8416c3e89a9692faf638b42db8792bbcc43
+Integration HEAD: 2a22b346d9065428af03aa1a10f1f7038ea3bbee
 
 Integration source: dirty (only the full-tier evidence ledger is excluded).
 
@@ -74,7 +74,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 9 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 8 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 9 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/machine-drill | unknown | 2026-11-14T18:01:54-07:00 | 0 | last commit 2026-11-14T18:01:54-07:00 | docs/changes/MACHINE-DRILL.md |
+| lane/machine-drill | unknown | 2026-11-14T18:13:52-07:00 | 0 | last commit 2026-11-14T18:13:52-07:00 | docs/board/cards/MACHINE-DRILL.md, docs/changes/MACHINE-DRILL.md, src/machines/content/machines.js, src/machines/dig-game.js, src/machines/dig-sandbox.js |
 
 ## Size targets
 
@@ -87,10 +87,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 84,036,150 B | +231,562 B | 20,000,000 B |
+| Review `looks/` | 84,036,150 B | +0 B | 20,000,000 B |
 | Added bytes in last merge | 7,426 B | +0 B | 5,000,000 B |
 | All `public/` | 703,858,947 B | +0 B | unavailable |
-| Git objects | 1,725,067,264 B | +2,228,224 B | unavailable |
+| Git objects | 1,731,169,280 B | +6,102,016 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -99,7 +99,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
 - Local main: missing
-- Local integration/wasteland: 1fe826c79551bf169eed96fc08fef69353b91aa3
+- Local integration/wasteland: 02f0d634e44cce4964d748376fbb1eaab848d07a
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
