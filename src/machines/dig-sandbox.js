@@ -4,6 +4,8 @@ import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
+import {SCARPS} from '../world/scablands-scarps.js';
+import {createBorerState} from './borer.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
@@ -24,6 +26,15 @@ const RESERVATIONS = Object.freeze([
     sentence:`${place.name} is a story place. Dig around it.`})),
 ]);
 const STEP = 1 / 60;
+
+/** Park on the open side of the first west scarp, facing its foot. */
+export function createDigBorer(ground) {
+  const {a, b} = SCARPS.find(scarp => scarp.id === 'scab-west').stretches[0];
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const dx = -(b.z - a.z) / length, dz = (b.x - a.x) / length;
+  const x = (a.x + b.x) / 2 - 30 * dx, z = (a.z + b.z) / 2 - 30 * dz;
+  return createBorerState({x, y:ground.heightAt(x,z), z, heading:Math.atan2(dx,dz)});
+}
 
 // A raised patch followed by a shallow ditch gives the blade material to carry.
 // These are yard-only cells, separate from the town and from the ground save.

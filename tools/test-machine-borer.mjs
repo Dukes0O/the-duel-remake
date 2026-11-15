@@ -3,7 +3,9 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, borerHasFace, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
-import {closeDigSandbox, createDigSandbox, exportDigTunnels, importDigTunnels} from '../src/machines/dig-sandbox.js';
+import {closeDigSandbox, createDigBorer, createDigSandbox, exportDigTunnels, importDigTunnels} from '../src/machines/dig-sandbox.js';
+import {SCARPS} from '../src/world/scablands-scarps.js';
+import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 
 const flat = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
 const hill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
@@ -53,6 +55,17 @@ assert.equal(stopped.slope, running.slope);
 const initial = createBorerState();
 const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80).state;
 const sandbox = createDigSandbox({ground:hill});
+const parked = createDigBorer(hill);
+const scarp = SCARPS.find(item => item.id === 'scab-west').stretches[0];
+const middle = {x:(scarp.a.x + scarp.b.x) / 2, z:(scarp.a.z + scarp.b.z) / 2};
+assert.ok(Math.abs(Math.hypot(parked.x - middle.x, parked.z - middle.z) - 30) < 1e-8);
+assert.ok(Math.hypot(parked.x + 30 * Math.sin(parked.heading) - middle.x,
+  parked.z + 30 * Math.cos(parked.heading) - middle.z) < 1e-8, 'Mabel faces the scarp from its open side.');
+assert.equal(parked.y, hill.heightAt(parked.x, parked.z));
+const realGround = {heightAt:scablandsNaturalHeightAt};
+const realParked = createDigBorer(realGround);
+const foot = {x:realParked.x + 33 * Math.sin(realParked.heading), z:realParked.z + 33 * Math.cos(realParked.heading)};
+assert.equal(borerHasFace(realGround, foot, realParked.heading), true, 'The real scarp offers a face after the approach.');
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 Object.defineProperty(globalThis, 'localStorage', {configurable:true, get() { throw new Error('Tunnel exchange must not access storage.'); }});
 const restored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(forty.segments)));

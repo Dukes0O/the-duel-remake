@@ -12,6 +12,8 @@ The conveyor's pile is ten metres to the right of the first tunnel mouth. Each n
 
 Step 4 adds plain-data export and restore for the Dig's in-memory tunnels. Restoring validates and rebuilds the tunnel against the visit's ground. No store is read or written. Connecting the borer to the Dig remains step 5.
 
+Step 5 has begun with Mabel's starting position: 30 m from the first west scarp's midpoint, facing its foot. The real ground offers a cutting face at the end of that approach. She is not yet selectable or driven in the Dig.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -34,6 +36,7 @@ Step 4 adds plain-data export and restore for the Dig's in-memory tunnels. Resto
 - `node tools/test-machine-borer.mjs`: passed with breakthrough into a supplied passage, no false surface portal, and a separate-height passage that does not open the face.
 - `node tools/test-tunnels.mjs`: passed after the underground junction change.
 - `node tools/test-machine-borer.mjs`: passed with a bored tunnel exported and restored, independent copies, an empty list for missing data, and storage access forbidden during the exchange.
+- `node tools/test-machine-borer.mjs`: passed with the west scarp parking position, heading, ground height and real approach face.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
