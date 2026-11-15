@@ -1489,3 +1489,13 @@ Checks: the two selected solid-ground route tests passed. The hills suite passed
 For Claude to run: the memory-only Performance picture scenario after it is written. Changed assertions, for Claude to review: the river route's arrival check now requires Tin Town instead of the Boneyard Road, because it now drives the whole route. No pass mark was lowered. Codex decided: no new design choice. Removed: the incomplete endpoint in the river route check.
 
 Still needed: item 4, the picture scenario, then item 5, integration and final checks.
+
+### Round 4, slice 2c: hill-country pictures
+
+The memory-only Performance scenario takes the nine requested pictures and records draw calls and triangles for each. It uses the land's hill, road, scarp and river data to choose the views. Survey Flags' fifth flag remains in place. No game event or sound cue was added.
+
+Checks: `node --check tools/scenarios/scablands-hills.mjs` passed. The browser scenario was not run, as directed. Race fingerprints and world signatures were not checked in this round.
+
+For Claude to run: `tools/scenarios/scablands-hills.mjs` and judge the pictures. Changed assertions: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 5, integrate and run the final checks.
