@@ -25,6 +25,21 @@ const BORER_DIAL_CSS=`.the-dig-head{display:flex;gap:8px;align-items:center;font
 const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;color:#f7edd9;font:16px/1.35 system-ui,sans-serif}.the-dig canvas{display:block;width:100%;height:100%}.the-dig-hud{position:absolute;left:12px;top:12px;display:grid;gap:5px;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;background:#15211de8;border:1px solid #9d875c}.the-dig-hud h1{font-size:18px;margin:0}.the-dig-hud p{margin:0;font-size:13px}.the-dig-line{color:#f0bf74}.the-dig button{background:#344137;color:#fff1d8;border:1px solid #aa986f;padding:6px 9px;font:inherit;cursor:pointer}.the-dig-controls{position:absolute;right:12px;top:12px;width:220px;padding:8px 11px;background:#15211de8;border:1px solid #9d875c}.the-dig-controls h2{font-size:14px;margin:0}.the-dig-controls svg{width:100%;height:auto}.the-dig-controls svg rect{fill:#334137;stroke:#d0aa69}.the-dig-controls svg text{fill:#fff1d8;font:12px system-ui}.the-dig-controls p{margin:3px 0;font-size:12px}.the-dig-error{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);padding:16px 20px;background:#221c17;color:white}.the-dig-close{position:absolute;right:12px;bottom:12px}.the-dig-message{min-height:1.4em}@media(max-width:700px){.the-dig-controls{top:auto;bottom:54px;right:8px;width:200px}.the-dig-hud{left:8px;top:8px;padding:8px;font-size:13px}.the-dig-close{right:8px;bottom:8px}}`;
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
+// The yard floor does not reach the west scarp, where Mabel is parked.
+function scarpGround(scene, groundMaterial, centre) {
+  const size=1024, divisions=512, geometry=new THREE.PlaneGeometry(size,size,divisions,divisions);
+  geometry.rotateX(-Math.PI/2);
+  const position=geometry.attributes.position, uv=geometry.attributes.uv;
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
+  for(let i=0;i<position.count;i++){
+    const x=position.getX(i)+centre.x,z=position.getZ(i)+centre.z;
+    position.setXYZ(i,x,scablandsNaturalHeightAt(x,z),z);uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
+    const color=groundColour(x,z,0);geometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
+  }
+  geometry.computeVertexNormals();
+  const floor=new THREE.Mesh(geometry,groundMaterial);floor.name='West scarp ground';floor.receiveShadow=true;scene.add(floor);
+  return floor;
+}
 function staticYard(scene,groundMaterial){
   const floorGeometry=new THREE.PlaneGeometry(800,800,800,800);floorGeometry.rotateX(-Math.PI/2);
   const position=floorGeometry.attributes.position,uv=floorGeometry.attributes.uv;
@@ -93,6 +108,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const groundMaterial=new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1});
   const yardFloor=staticYard(world,groundMaterial);
+  scarpGround(world,groundMaterial,sim.borer);
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));

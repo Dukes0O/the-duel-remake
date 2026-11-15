@@ -22,6 +22,8 @@ The Dig now has synthesised borer sounds: a head loop whose pitch follows head s
 
 The Dig page has Mabel's head-speed dial, distance cut, control instructions and operating guidance. The dial follows the simulated head and is hidden for other machines. These controls remain unreachable until selection and the scarp scene are connected.
 
+The Dig scene now includes natural ground around Mabel's west scarp. It uses the same height and ground colour as the yard, over a 1,024 m square. Mabel, the tunnel and its openings still need to be drawn and checked there.
+
 ## Checks
 
 - `node tools/test-machine-borer.mjs`: passed for machine data, face and dug cutting, refusals, stall and release, full soft-ground speed, steering limits, and a 40 m straight cut with a closed face. The input state remains unchanged.
@@ -49,6 +51,7 @@ The Dig page has Mabel's head-speed dial, distance cut, control instructions and
 - `node tools/test-machine-borer.mjs`: passed with keyboard thrust, steering and slope and mapped machine axes.
 - `node tools/test-machine-borer.mjs`: passed with head pitch, conveyor, event cues and mute checks using a fake mixer.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the borer display. The display needs Claude's browser check.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the scarp ground. The view and load time have not been checked in a browser.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
