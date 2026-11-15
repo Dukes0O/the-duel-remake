@@ -43,6 +43,8 @@ Car contacts now test Scablands bridge and Pipe solids from the feet to 2.5 m ab
 
 Job raiders and Big Bess now pass their stored height and update it with the town switch off. Job defence and escort raiders now keep only `y`; their inherited `groundY` was stale. A real job defence wave checks this. `test-tunnels` and `test-scablands-solid` passed. The shared floor list is not yet connected: doing so exposed a steep step where the Pipe deck tapers into the bed. The new 0.6 m rule briefly selects the top floor there. The next round must fix that transition and the remaining floor, roof and tunnel rules before claiming the card is done.
 
+The bore walls now stop cars at the edge of the planned flat floor, including angled moves and segment joints. `node tools/test-tunnels.mjs` passed. The floor itself still uses the old round-bottom height, so the enclosure is not complete. No new sound cue was added.
+
 ## Incomplete
 
 Integration was merged at b23714b22 (current integration was c88f8366974e060acaed379a3f153e395c76edec). Conflicts in the status page, ground look and scene were resolved, keeping integration's status and both the photo and tunnel rendering paths. The 100 m trial crosses the west scab scarp at a grade under .15. Both mouths meet the surface. A Titan and a Falcone drive it in both directions in the focused test.
@@ -93,6 +95,8 @@ Ordinary races and released courses keep the surface-only path with the trial sw
 Rerun the incomplete Everburn Easy suite and the three FFmpeg-dependent checks. Run `tools/scenarios/tunnel-trial.mjs` with the browser harness. Check the 100 m bore, both drives, both mouths, the inside, the ground above and the bridge bed. The scenario records draw calls, triangles and frame intervals with memory-only storage on Performance. Check that Big Bess and raiders visibly chase under the deck as well. Judge the look and measure frame time.
 
 ## Changed assertions, for Claude to review
+
+Tunnel wall contact for a 4 m radius and 1 m car clearance changed from 3 m to approximately 2.3406586 m from the centre. The new value is where the prescribed flat floor meets the round bore, less the car clearance. The wall checks still require contact at every tested joint.
 
 Shortcut source fingerprint: `4915b2c4aa7d6f63a2d4b5883fa7395f7a99a6c9cd76f6b6f3df718f9c4264fe` to `a23244774fb2baa6f021808d03f2272538612161df05e00bb0a81d18dc3a798d`, because `Course.groundAt` changed; all 15 saved records are unchanged.
 

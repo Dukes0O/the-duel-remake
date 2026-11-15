@@ -1,6 +1,8 @@
 import {SCARPS} from './scablands-scarps.js';
 
 ﻿const finite = Number.isFinite;
+// Where the flat road at 0.55 radius below the centre meets the bore.
+const wallRadius = Math.sqrt(1 - 0.55 ** 2);
 
 /** Lay a straight trial tube between surface points and measure its cover. */
 export function trialTubeBetween(start, end, radius, heightAt, samples = 100) {
@@ -168,7 +170,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
 
   function wallAt(position, actorHeight) {
     const inside = tubeAt(position, actorHeight);
-    return inside ? {limit: inside.tube.radius, radial: inside.radial, center: inside.center} : null;
+    return inside ? {limit: inside.tube.radius * wallRadius, radial: inside.radial, center: inside.center} : null;
   }
 
   // Constrain a move that starts inside one segment. Its ends remain open.
@@ -234,7 +236,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
         if (hasJoint || closedFace) {
           const correction = along < 0 ? along : along - length;
           const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
-          const limit = Math.max(0, tube.radius - clearance);
+          const limit = Math.max(0, tube.radius * wallRadius - clearance);
           const sideways = side - Math.max(-limit, Math.min(limit, side));
           return {position: {x: end.x - correction * dx / length + sideways * dz / length, y: end.y,
             z: end.z - correction * dz / length - sideways * dx / length}, hit: true};
@@ -246,7 +248,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
       length = Math.hypot(dx, dz);
     }
     const side = ((end.x - tube.start.x) * -dz + (end.z - tube.start.z) * dx) / length;
-    const limit = Math.max(0, tube.radius - clearance);
+    const limit = Math.max(0, tube.radius * wallRadius - clearance);
     if (Math.abs(side) <= limit) return {position: {...end}, hit: false};
     const correction = side - Math.sign(side) * limit;
     return {position: {x: end.x + correction * dz / length, y: end.y,

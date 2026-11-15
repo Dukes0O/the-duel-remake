@@ -446,7 +446,14 @@ for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
 assert.equal(slope.wallAt({x: 50, y: 10, z: 3}, 10).radial, 3);
 assert.equal(slope.wallAt({x: 50, y: 10, z: 4}, 10), null);
 const motion = slope.constrainMotion({x: 50, y: 10, z: 0}, {x: 51, y: 10, z: 5}, 1);
-assert.deepEqual(motion, {position: {x: 51, y: 10, z: 3}, hit: true});
+const wallLimit = 4 * Math.sqrt(1 - .55 ** 2) - 1;
+assert.equal(motion.hit, true);
+for (const dx of [-5, 0, 5]) for (const side of [-1, 1]) {
+  const strike = slope.constrainMotion({x: 50, y: 10, z: 0}, {x: 50 + dx, y: 10, z: side * 5}, 1);
+  assert.equal(strike.hit, true, 'the wall stops angled moves');
+  assert.ok(Math.abs(strike.position.z - side * wallLimit) < 1e-9);
+}
+assert.ok(Math.abs(motion.position.z - wallLimit) < 1e-9);
 assert.equal(slope.constrainMotion({x: 99, y: 19, z: 0}, {x: 102, y: 19, z: 0}, 1).hit, false);
 assert.equal(slope.constrainMotion({x: 50, y: 30, z: 0}, {x: 51, y: 30, z: 5}, 1).hit, false);
 const undergroundCar = {groundHeight: 6};
@@ -469,7 +476,7 @@ const duel = {course: straight, _vehicleSpec: () => ({halfWidth: 1}),
   _roadPosition: p => ({s: p.x, lateral: p.z}), _obstacles: () => [],
   _surface: () => ({mainRoad: false})};
 _staticContacts.call(duel, car, false);
-assert.equal(car.lateral, 3, 'car contact stops at the tube wall');
+assert.ok(Math.abs(car.lateral - wallLimit) < 1e-9, 'car contact stops at the flat floor edge');
 car.prevLateral = 0; car.lateral = 5; car.groundHeight = car.prevGroundHeight = 30;
 _staticContacts.call(duel, car, false);
 assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
@@ -564,7 +571,7 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
     const move = chain.constrainMotion({x: joint - direction, y: 4, z: -33},
       {x: joint + direction, y: 4, z: -28}, 1);
     assert.equal(move.hit, true, `wall holds at joint ${joint}, direction ${direction}`);
-    assert.equal(move.position.z, -30);
+    assert.ok(Math.abs(move.position.z - (-33 + wallLimit)) < 1e-9);
   }
 }
 
@@ -585,7 +592,7 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   for (const [from, to] of [[49, 51], [51, 49]]) {
     const move = joined.constrainMotion({x: from, y: 4, z: 0}, {x: to, y: 4, z: 5}, 1);
     assert.equal(move.hit, true, 'the wall remains solid across a segment joint');
-    assert.equal(move.position.z, 3);
+    assert.ok(Math.abs(move.position.z - wallLimit) < 1e-9);
   }
   // A jump or large step can miss the adjoining segment's height range.
   // The joint is still rock, not an extra exit from the tunnel.
@@ -593,7 +600,7 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
     const move = joined.constrainMotion({x: from, y: 4, z: 0}, {x: to, y: 30, z: 5}, 1);
     assert.equal(move.hit, true, 'an unqualified neighbour closes the seam');
     assert.equal(move.position.x, 50);
-    assert.equal(move.position.z, 3);
+    assert.ok(Math.abs(move.position.z - wallLimit) < 1e-9);
   }
   const corner = createGroundTunnels([
     {start: {x: 0, y: 4, z: 0}, end: {x: 50, y: 4, z: 0}, radius: 4},
@@ -601,7 +608,7 @@ assert.equal(car.lateral, 5, 'a car above the tube is unaffected');
   ]);
   const turn = corner.constrainMotion({x: 49, y: 4, z: 0}, {x: 55, y: 4, z: 1}, 1);
   assert.equal(turn.hit, true, 'the next wall also holds at a bend');
-  assert.equal(turn.position.x, 53);
+  assert.ok(Math.abs(turn.position.x - (50 + wallLimit)) < 1e-9);
 }
 
 console.log('Tunnel support, joined segments, wall contact and simulated driving checks passed.');
