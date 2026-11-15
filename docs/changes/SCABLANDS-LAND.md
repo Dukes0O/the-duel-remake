@@ -2141,3 +2141,9 @@ The Mall Road pass now stands 85.5 percent along the road instead of 30 percent.
 Not right yet: other Breaks hills still cross both corridors. Their full clearance proof, the aim-allocation fix, the Easy chase driver and final checks remain. Claude must judge the pictures. Race fingerprints were not checked in this step.
 
 Changed assertions: none; the shoulder clearance check is new. Codex decided: move the pair together along its own road. Removed: the former Mall Road pass position. No event or sound cue was added.
+
+### Hill country: finish the remaining corridor proof
+
+The Breaks' three starting hills and seeded field now stand clear of the full shared Hot Soup and Mall return, the third Survey Flags leg and the Boneyard gas road. The seeded selection also keeps 400 m from the six pass shoulders. The hills suite passed 54 of 54, including the full corridors, the hill count, spacing and three passes. The moved hills change the view and need Claude's visual judgment. Driving checks and final replay and world checks remain.
+
+Changed assertions for Claude to review: the shared return check now covers the whole leg instead of its first 900 m; the third Survey Flags check now covers the whole leg instead of its last 5 km. Both strengthen coverage and loosen nothing. Codex decided: use seeded selection from any existing Breaks hill, with radii of 260 to 320 m, to keep the specified count and spacing while clearing the routes. Removed: the former positions of the seeded Breaks hills. No event or sound cue was added. Race fingerprints were not checked in this step.

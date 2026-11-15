@@ -38,9 +38,9 @@ export function hillsFor(land=LAND,seed=1989){
   const rampAngle=-Math.PI/2+Math.atan2(Math.sin(roadAngle+Math.PI/2),Math.cos(roadAngle+Math.PI/2))/2;
   const hills=[
     ...dunes.map(({dx,dz,radius,height})=>Object.freeze({...land.at('ships-in-sand',dx,dz),kind:'dune',height,radius})),
-    Object.freeze({...land.at('dead-mall',-1500,-2300),kind:'breaks',height:58,radius:360}),
-    Object.freeze({...land.at('dead-mall',-2000,-1800),kind:'breaks',height:72,radius:360}),
-    Object.freeze({...land.at('dead-mall',-1500,-1300),kind:'breaks',height:48,radius:360}),
+    Object.freeze({...land.at('dead-mall',-719,-1358),kind:'breaks',height:58,radius:360}),
+    Object.freeze({...land.at('dead-mall',-439,-1060),kind:'breaks',height:72,radius:360}),
+    Object.freeze({...land.at('dead-mall',-880,-813),kind:'breaks',height:48,radius:360}),
     Object.freeze({...lookout,kind:'lookout',height:60,radius:320,topRadius:60,ramp:300,rampAngle}),
     Object.freeze({...land.at('ridge'),kind:'ridge-top',height:45,radius:850,topRadius:160}),
     Object.freeze({...land.at('ridge',-750,-550),kind:'foothill',height:22,radius:300}),
@@ -61,6 +61,8 @@ export function hillsFor(land=LAND,seed=1989){
   const surveyLeg=[LAND.between('dead-mall','everburn',.413,-264.94,-117.98),
     LAND.between('ships-in-sand','ridge',.723,-26.43,88.94)];
   const soupReturn=[LAND.at('safe-road'),LAND.at('everburn')];
+  const boneyardGas=[LAND.at('everburn',12,3.5),LAND.between('dead-mall','everburn',.485,5.62,-18.9),
+    LAND.at('dead-mall',0,-60),LAND.between('dead-mall','boneyard',.551,16.19,54.48),LAND.at('boneyard',23,4)];
   // Keep the furnace's descent from the Ridge to the Boneyard open.
   const furnaceDescent=[LAND.at('ridge',-74,104),LAND.between('ridge','boneyard',.599,-74,0)];
   // The chasing car cuts across the plates toward the descending furnace.
@@ -112,18 +114,29 @@ export function hillsFor(land=LAND,seed=1989){
   const yard=LAND.yard, burn=LAND.place('everburn');
   const side=(a,b,p)=>(b.x-a.x)*(p.z-a.z)-(b.z-a.z)*(p.x-a.x);
   const triangle=[yard,burn,mall];
+  const passSites=[];
+  for(const [id,share] of [['burn-road',.3],['mall-road',.855],['mall-burn-road',.655]]){
+    const road=ROAD_NET.road(id),start=road.points[0];
+    const centre=roadPointFrom(road,start.x,start.z,road.length*share);
+    const before=roadPointFrom(road,centre.x,centre.z,-5),after=roadPointFrom(road,centre.x,centre.z,5);
+    const dx=after.x-before.x,dz=after.z-before.z,length=Math.hypot(dx,dz);
+    const offset=id==='mall-burn-road'?300:280;
+    for(const side of [-1,1]) passSites.push({x:centre.x-side*offset*dz/length,z:centre.z+side*offset*dx/length});
+  }
   const withinCountry=(x,z)=>{
     const point={x,z}, signs=triangle.map((a,i)=>side(a,triangle[(i+1)%3],point));
     if(signs.every(value=>value>=0)||signs.every(value=>value<=0)) return true;
     return triangle.some((a,i)=>distanceToRoad(x,z,[a,triangle[(i+1)%3]])<=600);
   };
-  for(let attempt=0;attempt<12000 && breaks.length<16;attempt++){
-    const anchor=breaks[breaks.length-1];
+  for(let attempt=0;attempt<120000 && breaks.length<16;attempt++){
+    const anchor=breaks[breaksRng.int(0,breaks.length-1)];
     const angle=breaksRng.range(0,Math.PI*2), distance=breaksRng.range(500,850);
     const x=anchor.x+Math.cos(angle)*distance, z=anchor.z+Math.sin(angle)*distance;
-    const radius=breaksRng.range(300,400), height=breaksRng.range(40,Math.min(70,radius*.17));
-    if(x>=0||z<=0||z>=mall.z||!withinCountry(x,z)||Math.hypot(x-yard.x,z-yard.z)<radius+500) continue;
+    const radius=breaksRng.range(260,320), height=breaksRng.range(40,Math.min(70,radius*.17));
+    if(z<=0||z>=mall.z||!withinCountry(x,z)||Math.hypot(x-yard.x,z-yard.z)<radius+500) continue;
     if([burn,mall].some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+350)) continue;
+    if([surveyLeg,soupReturn,boneyardGas].some(leg=>distanceToRoad(x,z,leg)<radius+60)) continue;
+    if(passSites.some(site=>Math.hypot(x-site.x,z-site.z)<400)) continue;
     if(ROAD_NET.roads.some(road=>distanceToRoad(x,z,road.points)<radius+road.halfWidth+10)) continue;
     if(LAND.table.some(place=>Math.hypot(x-place.x,z-place.z)<radius+place.flatRadius+30)) continue;
     if(breaks.some(hill=>Math.hypot(x-hill.x,z-hill.z)<400)) continue;
