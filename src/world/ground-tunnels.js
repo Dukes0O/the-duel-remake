@@ -61,7 +61,10 @@ export function createGroundTunnels(segments = []) {
   function groundAt(position, actorHeight, terrainHeight) {
     if (!finite(terrainHeight)) throw new TypeError('Terrain height must be finite.');
     if (!tubes.length) return terrainHeight;
-    const inside = tubeAt(position, actorHeight);
+    // A support sample can move slightly uphill since the previous step.
+    // Accept a small step below the new floor, without pulling an actor down
+    // from the surface above the ceiling.
+    const inside = tubeAt(position, actorHeight) || tubeAt(position, actorHeight + 0.5);
     return inside ? inside.floor : terrainHeight;
   }
 

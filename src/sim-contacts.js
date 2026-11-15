@@ -268,6 +268,11 @@ export function _supportAt(distance, lateral, actor = this.state) {
   const ground = this.course.groundAt(distance, lateral, actor?.groundHeight);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
   if (!capability) return ground;
+  // Surface obstacles must not lift an underground car back onto the hill.
+  const tunnels = this.course.groundTunnels;
+  if (tunnels && Number.isFinite(actor?.groundHeight) &&
+      (tunnels.tubeAt(ground, actor.groundHeight) ||
+       tunnels.tubeAt(ground, actor.groundHeight + 0.5))) return ground;
   const inMuddyHollow = this.course.muddyHollow?.contains(ground.x, ground.z);
   if (!inMuddyHollow && this.course.features.mountains?.length) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);

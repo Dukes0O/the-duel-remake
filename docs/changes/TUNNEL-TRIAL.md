@@ -6,6 +6,8 @@ This is unfinished work, not a passing trial. The lane contains the earlier tube
 
 The tube wall calculation now runs in car contacts when a tunnel is installed and the car starts inside it. A focused contact test checks the side limit and a car above the tube. It is not yet a driven-car test. This does not prove the mouths or a complete journey through the tube.
 
+The support query now tolerates a rise of up to half a metre between samples, and an underground car's support skips surface obstacles and mountain support. A focused test carries the previous floor height along a sloping tube in both directions and checks that surface obstacles still apply above it. This is not a driven-car test, and the half-metre limit still needs testing at real driving speeds. The driving code also samples support for the player's default actor and needs a full journey check.
+
 A grid scan around the rise nearest the Ridge, using 25 m position steps and 16 directions, found a maximum midpoint rise of about 1.03 m above the straight line between points 100 m apart. This is a sample, not a proof about every possible line. It suggests a car-sized tube with rock overhead needs approach cuts or different terrain. That choice has not been made.
 
 `course.groundAt` is used by driving and collision, rivals, people on foot, combat, camera, scenery, course construction and effects. Only car support was changed. Every other caller remains unreviewed for underground use, including people and other vehicles. Surface drawing and scenery should normally keep the surface height. The source inventory is `rg -n '\.groundAt\(' src` and `rg -n 'scablands(Surface|Natural|Terrain|Plain)?HeightAt\(' src`; these include unrelated methods with the same name. No race or released course was intentionally changed; replay and world signature guards were not completed, so that is not verified. No fingerprint was recorded.
@@ -16,7 +18,7 @@ The shader was not built. Its cost, tube limit, and appearance are unknown. No n
 
 ## Checks
 
-- `node tools/test-tunnels.mjs`: passed ground-query, wall-calculation and contact-hook checks. These are not the required driving, mouth or save tests.
+- `node tools/test-tunnels.mjs`: passed ground-query, slope continuity, surface-obstacle, wall-calculation and contact-hook checks. These are not the required driving, mouth or save tests.
 - Lane tier: interrupted before completion. No pass is claimed.
 - `npm.cmd run build`: passed. PowerShell blocked `npm` itself under its script policy.
 - Browser: not run. The requested scenario does not exist yet.

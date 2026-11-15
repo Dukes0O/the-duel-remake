@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
-import {_staticContacts} from '../src/sim-contacts.js';
+import {_staticContacts, _supportAt} from '../src/sim-contacts.js';
 
 const course = new Course(SCABLANDS_VENUE, 20261114);
 const empty = createGroundTunnels();
@@ -27,12 +27,31 @@ for (const height of [8, 10, 12]) {
   assert.equal(slope.groundAt({x: 50, y: height, z: 0}, height, 30), 6);
 }
 assert.equal(slope.groundAt({x: 50, y: 30, z: 0}, 30, 30), 30);
+// Carry the last support height forward as the car climbs in either direction.
+for (const [start, end, step] of [[0, 100, 1], [100, 0, -1]]) {
+  let height = start * 0.2 - 4;
+  for (let x = start; step > 0 ? x <= end : x >= end; x += step) {
+    height = slope.groundAt({x, y: height, z: 0}, height, 30);
+    assert.ok(Math.abs(height - (x * 0.2 - 4)) < 1e-9, `floor stays under the car at ${x}`);
+  }
+}
 assert.equal(slope.wallAt({x: 50, y: 10, z: 3}, 10).radial, 3);
 assert.equal(slope.wallAt({x: 50, y: 10, z: 4}, 10), null);
 const motion = slope.constrainMotion({x: 50, y: 10, z: 0}, {x: 51, y: 10, z: 5}, 1);
 assert.deepEqual(motion, {position: {x: 51, y: 10, z: 3}, hit: true});
 assert.equal(slope.constrainMotion({x: 99, y: 19, z: 0}, {x: 102, y: 19, z: 0}, 1).hit, false);
 assert.equal(slope.constrainMotion({x: 50, y: 30, z: 0}, {x: 51, y: 30, z: 5}, 1).hit, false);
+const undergroundCar = {groundHeight: 6};
+let obstacleChecks = 0;
+const supportDuel = {state: undergroundCar, car: {kind: 'rally'},
+  course: {groundTunnels: slope, features: {}, groundAt: (s, lateral, height) =>
+    ({x: s, z: lateral, y: slope.groundAt({x: s, y: height, z: lateral}, height, 30)})},
+  _obstacles: () => { obstacleChecks++; return []; }};
+assert.equal(_supportAt.call(supportDuel, 50, 0).y, 6);
+assert.equal(obstacleChecks, 0, 'surface obstacles do not lift an underground car');
+undergroundCar.groundHeight = 30;
+assert.equal(_supportAt.call(supportDuel, 50, 0).y, 30);
+assert.equal(obstacleChecks, 1, 'surface support still checks obstacles');
 // Exercise the real contact hook with a straight course and no other obstacles.
 const straight = {groundTunnels: slope, worldAt: (s, lateral) => ({x: s, z: lateral}),
   at: () => ({heading: 0}), groundAt: () => ({y: 30})};
