@@ -747,6 +747,54 @@ before-and-after pictures sent to Kyle.
   can." And on who does what: Codex for code and for checks, Claude for graphics, design and
   story.
 
+### Realism trial, step 3 design (Claude, 14 November 2026): things at every size
+
+**The fault.** After steps 1 and 2 the ground looks real and nothing stands on it. A real land
+has things at every size, and the eye judges distance and speed by them. All of this is behind
+`scablands-realism` and is placed by seed, so the land is the same on every visit.
+
+**Small, by the thousand, near the car** (within 120 m; each kind one batch; they fade in with
+distance and never pop):
+- stones in three shapes, 0.1 to 0.6 m, thicker near rock, the river and the plates' edges;
+- dry scrub: low grey-green tufts and dead brush, on the flats and the banks, none on salt;
+- bones, cans and scraps of sheet in the wreck fields and beside roads;
+- lumps of salt crust at the pan's edge; burnt stumps in the burn.
+Nothing here is solid: a wheel rolls over it. Scrub and scraps bend or scatter when driven
+through (a puff of dust; no rule of the drive changes).
+
+**Middle, by the hundred, within 600 m:**
+- boulders 1 to 4 m, alone and in falls below the scarps; solid (slice 2b's rule);
+- **telegraph poles along the East Road and the Iron Line**, 60 m apart, wire sagging between
+  them, some leaning, some down: the eye follows them to the horizon, and at speed they count
+  the distance;
+- **fence lines** of posts and sagging wire beside roads near each town, in runs of 200 to 600 m
+  with gaps; they fall when driven through (slice 2d's rule);
+- hand-painted road signs at every fork ("TIN TOWN 3 km", an arrow), from the land's own data;
+- hulks, tyre stacks and drums from the scrap kit at the camps and crossings.
+
+**Large, by hand, seen from kilometres:**
+- **a line of dead power pylons** from the Dry Dam past the yard to the Dead Mall, 40 m tall,
+  350 m apart, cables down between some: the land's long landmark, on the map too;
+- the Girder Bridge at its true size (its frames stand 9 m over the deck, with piers down into
+  the gorge), and the Pipe as a pipe 3 m across on trestles;
+- the mesas and hills of slice 2c.
+
+**Tracks.** The ground shows where others drive: faint twin ruts along each known way that is
+not a road (drawn in the ground's code from the same data the map lists its ways from), deeper
+at the crossings. A player who reads the ground finds the short cuts.
+
+**Air.** Low dust blowing across the flats in the wind's direction, and a far dust devil now
+and then. Dust from the car's wheels takes the ground's colour (it does already).
+
+**Who builds what.** Codex builds the placing (seeded cells, batches, fading, the pole, fence
+and pylon lines from the road data, the ruts' data, solidity through slice 2b's index) with
+plain shapes made in code. Claude then draws each kind (its shape, its surface, how it catches
+the low sun) from pictures, one sheet a round.
+
+**Limits.** No more than 40 more draw calls and 150,000 more triangles in any view on
+Performance; shadows from small things only within 40 m. Counted in the trial's scenario; the
+frame check under rule 8 comes before the switch goes on.
+
 ### Open at the end of slice 1
 
 - **Five older browser scenarios fail on the larger land** (run by Claude at the merge):
