@@ -221,6 +221,23 @@ for (const kind of ['roller','roller','roller','paver']) {
 }
 assert.equal(roadCondition(roadCell(sharedYard.roadWork,60,15)), 'good', 'The road crosses the filled ditch.');
 closeDigSandbox();
+// Digging persists during the page session, but road work belongs to one visit.
+let visit = createDigSandbox({playerId:'road-visit-reset-test'});
+const untouchedHeight = visit.ground.heightAt(60, 15);
+visit.activeMachine = 'dozer';
+Object.assign(visit.roadMachines.dozer.machine, {x:60,z:10,heading:0,speedMps:0});
+visit = stepDigSandbox(visit, {controls:{forward:1,working:true}}, 5);
+assert.ok(visit.ground.heightAt(60,15) < untouchedHeight - 0.05, 'The blade changes the ground during the visit.');
+visit.activeMachine = 'trencher';
+Object.assign(visit.trencher.machine, {x:70,z:10,heading:0,speedMps:0});
+const digHeight = visit.ground.heightAt(70,15);
+visit = stepDigSandbox(visit, {controls:{forward:1},action:'trench'}, 12);
+assert.ok(visit.ground.heightAt(70,15) < digHeight - 1, 'The trencher digs before leaving.');
+closeDigSandbox();
+const nextVisit = createDigSandbox({playerId:'road-visit-reset-test'});
+assert.ok(Math.abs(nextVisit.ground.heightAt(60,15) - untouchedHeight) < 1e-5, 'Road work does not persist into the next visit.');
+assert.ok(nextVisit.ground.heightAt(70,15) < digHeight - 1, 'The existing digging memory still persists.');
+closeDigSandbox();
 // Send the same held keys and machine positions as the browser scenario.
 let keyboardYard = createDigSandbox({playerId:'keyboard-road-test'});
 for (let i=0; i<4; i++) keyboardYard=switchDigMachine(keyboardYard);
