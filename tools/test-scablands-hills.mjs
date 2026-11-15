@@ -79,6 +79,16 @@ test('the shared Soup and Mall return leg is clear', () => {
   }
 });
 
+test('seeded Breaks hills leave the furnace return corridor clear', () => {
+  const path = EVERBURN_JOBS.find(job => job.id === 'everburn-the-everburn').steps[1].path;
+  const points = path.slice(17).map(place => place.position);
+  const seeded = HILLS.filter(hill => hill.kind === 'breaks' && !hill.passRoad).slice(3);
+  for (const hill of seeded) {
+    assert.ok(distanceToRoad(hill.x, hill.z, points) >= hill.radius + 60,
+      'each seeded Breaks hill clears the furnace return by 60 m');
+  }
+});
+
 test('Mall Road pass shoulders leave both remaining job corridors clear', () => {
   const soup = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-hot-soup').steps[0];
   const flags = EVERBURN_SIDE_JOBS.find(job => job.id === 'everburn-survey-flags').steps[0].finds;

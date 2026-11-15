@@ -2170,7 +2170,7 @@ Not right yet: prove that this route completes the Easy chase and the rest of th
 
 ### Hill country: furnace return and final proof
 
-A seeded Breaks hill at approximately (-1240, 3142) made the furnace's return route too steep. Seeded hill selection now keeps the entire named furnace return route clear, including the leg from the yard-to-Mall point to the furnace's return point. The hill was replaced by the next suitable seeded site. The existing solid suite checks both furnace roads and passed after this change, as did the hills (54 of 54), size and rail-region suites. The hills suite also checks the remaining job corridors. The four ways to Tin Town and the Ridge and Lookout climbs passed in the solid suite.
+A seeded Breaks hill at approximately (-1240, 3142) made the furnace's return route too steep. Seeded hill selection now keeps its hills clear of the named furnace return route, including the leg from the yard-to-Mall point to the furnace's return point. The hill was replaced by the next suitable seeded site. The existing solid suite checks both furnace roads and passed after this change, as did the hills (54 of 54), size and rail-region suites. The hills suite also checks the remaining job corridors. The four ways to Tin Town and the Ridge and Lookout climbs passed in the solid suite.
 
 Before that hill moved, the Easy suite passed all nine jobs: The Everburn finished 9 of 10 and each other job 10 of 10. Both gas roads passed 10 of 10 at each of four feud levels; the battle brought Big Bess home and was won 10 of 10. That run did not enable the realism switch. The changed ground needs a fresh drive check. Integration was merged at f70f09da5, bringing in a scenery change; there were no conflicts. The replay checks before this final hill move passed 297 checks across 33 cases and 12 checks across four encounters. World composition passed 63 checks across 20 events. The scenario passed syntax checking; Claude has already judged the eleven pictures, but the moved hills need a fresh look.
 
@@ -2181,3 +2181,11 @@ Codex decided: keep the furnace return clear using its existing named route poin
 Not built by this slice: Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1.
 
 Removed: the former obstructing seeded hill site. No player saves were read or written.
+
+### Hill country: checks after the furnace return fix
+
+The new seeded-hill corridor check passed as part of 55 hills checks. The original Breaks hill near (-719, 2942) reaches the edge of the furnace return's 60 m corridor near (-515, 2680); the full corridor is therefore not free of every hill. The solid suite separately passed its slope and solid checks along both furnace roads, its four drives to Tin Town, and both climbs.
+
+On the updated land, the complete Easy suite passed: The Everburn finished 9 of 10, all eight other jobs 10 of 10, both gas roads at all four feud levels 10 of 10, and the battle home and won 10 of 10. With the realism switch on, Hot Delivery and Survey Flags each finished 10 of 10. The Scablands hills, solid, scene, size, things, ground, regions, map and job-map suites passed, as did rail-region and tunnels. Replays passed 297 checks across 33 cases and combat replays passed 12 across four encounters. World composition passed 63 checks across 20 events. The scenario passed Node syntax checking, and the build passed. The lane tier was not repeated, as directed.
+
+Changed assertions: none. The corridor test is new. Codex decided: test the seeded hill clearance separately from the existing furnace-road driveability check. Removed: none. No event or sound cue was added. Claude should judge the changed hill view and decide whether the original hill's partial corridor overlap needs further work.
