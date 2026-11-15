@@ -43,9 +43,12 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
 export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
   const state = duel.state;
-  let hit, ticks = 0, maxDistance = 0;
+  let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, previous;
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
+    previous = car;
+    peakSpeedMph = Math.max(peakSpeedMph, Math.abs(state.speedMph));
     hit = nearestOnLine(points, car.x, car.z);
     maxDistance = Math.max(maxDistance, hit.distance);
     if (hit.along >= endAlong) break;
@@ -56,5 +59,5 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
   }
-  return {along:hit.along, distance:hit.distance, maxDistance, ticks};
+  return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, ticks};
 }
