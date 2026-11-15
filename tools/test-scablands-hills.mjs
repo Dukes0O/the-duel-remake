@@ -13,8 +13,22 @@ import {sees} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot, targetFor, stepRaiderSearch} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor, stepRaiderSearch, campSightChange} from '../src/raiders.js';
 import {stepSkylineSight, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+
+test('camp sight notices follow the combined view of active raiders', () => {
+  const first = {search: {phase: 'seen'}}, second = {search: {phase: 'post'}};
+  const zones = [{raiders: [first]}, {raiders: [second]}];
+  assert.deepEqual(campSightChange(false, zones), {seen: true, change: 'seen'});
+  first.search.phase = 'going'; second.search.phase = 'seen';
+  assert.deepEqual(campSightChange(true, zones), {seen: true, change: null});
+  second.knockedDown = true;
+  assert.deepEqual(campSightChange(true, zones), {seen: false, change: 'lost'});
+  second.knockedDown = false; second.ambushKey = 'escort';
+  assert.deepEqual(campSightChange(false, zones), {seen: false, change: null});
+  delete second.ambushKey;
+  assert.deepEqual(campSightChange(false, zones), {seen: true, change: 'seen'});
+});
 
 test('the skyline furnace counts only clear time in range', () => {
   const car = {x: FURNACE_SKYLINE.x + 100, z: FURNACE_SKYLINE.z};

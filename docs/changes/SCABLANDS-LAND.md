@@ -1436,3 +1436,13 @@ Checks: `node tools/test-scablands-hills.mjs` passed all 16 tests, including cle
 For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: the furnace uses its existing map sight range and eye height, with ground sampled every 5 m. Removed: none.
 
 Still needed: item 2, connect six seconds in sight to the horn and riders, complete pursuit and lookout sight and captions, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. The sight clock alone does not yet call riders. The card is not ready to merge.
+
+### Round 4, slice 2c: camp sight notices
+
+Camp raiders now tell the player when any active camp raider sees the car, and when the last one loses sight. Passing between two raiders' views does not produce a false lost notice. The seen cue is `arena.tell`; the lost cue is `gate.latch`. Escort ambushes keep their existing rules. Survey Flags' fifth flag stays in place.
+
+Checks: `node tools/test-scablands-hills.mjs` passed all 17 tests, including combined sight, loss and renewed sight. Race fingerprints and world signatures were not checked in this round. The final checks remain after integration.
+
+For Claude to run: the memory-only Performance picture scenario once written, and `test-full-check` on the laptop. Changed assertions, for Claude to review: none. Codex decided: no new design choice. Removed: none.
+
+Still needed: item 2, connect the furnace sight clock to its horn and riders, complete pursuit and lookout sight, and resolve difficult raider navigation; then item 3 route checks, item 4 picture scenario, and item 5 integration and final checks. This card is not ready to merge.

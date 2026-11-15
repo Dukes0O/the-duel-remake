@@ -88,6 +88,14 @@ export function stepRaiderSearch(raider, target, dt, move = stepMover) {
   }
 }
 
+// One notice covers all camp raiders, so moving between their views does not
+// produce a lost and seen pair while another raider still watches the car.
+export function campSightChange(wasSeen, zones) {
+  const seen = zones.some(zone => !zone.ambushWave && zone.raiders.some(raider =>
+    !raider.ambushKey && !raider.knockedDown && raider.search?.phase === 'seen'));
+  return {seen, change: seen === !!wasSeen ? null : seen ? 'seen' : 'lost'};
+}
+
 function clearRoadside(course, s, lateral) {
   if (course.tunnelAt(s)) return false;
   return !course.features.stations.some(station =>
@@ -412,5 +420,14 @@ export function stepRaiders(duel, dt = 0) {
       (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&
       raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);
+  }
+  if (duel.course.def.scablands && dt > 0) {
+    const sight = campSightChange(raids.campSawCar, raids.zones);
+    raids.campSawCar = sight.seen;
+    if (sight.change) {
+      duel._callout(sight.seen ? 'Raiders can see your car.' : 'Raiders have lost sight of your car.', 2.2);
+      duel.emit({arenaTell: {id: 'raider-sight', targetId: 'player', seconds: 0,
+        cue: sight.seen ? 'arena.tell' : 'gate.latch', position: point(duel, state)}});
+    }
   }
 }
