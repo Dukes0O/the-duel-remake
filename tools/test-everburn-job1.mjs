@@ -552,7 +552,33 @@ assert.equal(job.stepState.loaded, true);
 worldJob.job = job;
 assert.equal(frame().actors.length, 1);
 assert.ok(hud().ember.value > 99);
-assert.equal(hud().target.id, 'tin-town');
+assert.equal(hud().target.id, 'cold-forge');
+// Delivery requires the loaded car to stop in the forge bay; the arrival event carries the actual pay.
+{
+  const bay = step.destination.position;
+  assert.deepEqual({x:bay.x, z:bay.z}, LAND.at('tin-town', 25, 14));
+  const grid = createJobSolidGrid();
+  assert.equal(pushOutOfSolids(bay.x, bay.z, 2, grid, scablandsSurfaceHeightAt(bay.x, bay.z)).hit, null);
+  const ready = () => {
+    const delivery = createJob(definition, 19);
+    delivery.stepState = {loaded:true, ember:100, triggeredLines:step.sayNear.map(cue => `near:${cue.lineId}`)};
+    return delivery;
+  };
+  assert.equal(stepJob(ready(), view(bay.x + step.radius + .1, bay.z), 0).done, false);
+  assert.equal(stepJob(ready(), view(bay.x, bay.z, 1), 0).done, false);
+  assert.equal(stepJob(ready(), {...view(bay.x, bay.z), onFoot:true}, 0).done, false);
+  for (const [ember, grade, pay, relights] of [[70, 'bright', 120, 0], [30, 'alive', 80, 0], [1, 'barely', 50, 0], [70, 'bright', 80, 1]]) {
+    const delivery = ready();
+    delivery.stepState = {...delivery.stepState, ember, relights};
+    const result = stepJob(delivery, view(bay.x, bay.z), 0);
+    assert.equal(result.done, true);
+    const arrival = result.events.find(event => event.type === 'emberArrived');
+    assert.deepEqual({ember:arrival.ember, grade:arrival.grade, pay:arrival.pay, relights:arrival.relights}, {ember, grade, pay, relights});
+  }
+  const out = ready();
+  out.stepState = {...out.stepState, ember:0, out:true};
+  assert.equal(stepJob(out, view(bay.x, bay.z), 0).done, false);
+}
 // Exercise the real job step with each brazier, including interrupted stops and an out ember.
 job.stepState = {...job.stepState, ember: 0, out: true};
 for (const brazier of step.braziers) {

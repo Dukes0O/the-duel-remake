@@ -1,5 +1,15 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Forge bay stop (15 November 2026)
+
+- Hot Delivery now ends with the loaded car stopped within 6 m of the existing cold-forge place, rather than on reaching the town centre. The ember must be alight. The arrival event carries the grade and pay, including the relight cap. No new sound event was added; the forge's `world.forge.catch` belongs to step 5c.
+- `node tools/test-everburn-job1.mjs`: passed. The real job step checks the bay, a moving car, a player on foot, all three pay bands, the relight cap and an out ember. The bay centre is clear in the job solid grid. Race fingerprints were not checked in this round.
+- Changed assertions, for Claude to review: the loaded HUD target changed from `tin-town` to `cold-forge` because the destination is now the forge bay.
+- Codex decided: use the existing cold-forge place as the centre of a 6 m bay and the existing stopped threshold of under 1 km/h. Claude should review the bay on the hand drive.
+- For Claude to draw: the forge and bay, final gate door, barricades, smoke and Cinder. For Claude to run: the browser scenario, final checks and both long drivers remain for the last round.
+- Removed: finishing on entry to the town centre. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the visible pot transfer and forge fire, then the remaining steps.
+
 ## Tin Town gate door (15 November 2026)
 
 - Hot Delivery has a plain solid door across Tin Town's entrance. A car approaching below 30 km/h swings it aside and clears its job-only solid. The opening uses `world.tintown.gate` once. Other jobs retain their open entrance.

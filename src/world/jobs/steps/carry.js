@@ -77,7 +77,8 @@ function stepEmberCarry(step, state, view, dt) {
     return {state: next, complete: false, events, requests};
   }
   requests.push({type: 'marker', place: step.destination});
-  const complete = gap(here, step.destination) <= (step.radius ?? 5);
+  const complete = gap(here, step.destination) <= (step.radius ?? 5) &&
+    (!step.stopAtDestination || (!view.onFoot && Math.abs(view.speedKmh ?? 0) < 1));
   if (complete) events.push({type: 'emberArrived', ember: next.ember, relights: next.relights,
     grade: emberGrade(rule, next.ember), pay: emberPay(rule, next.ember, next.relights)});
   return {state: next, complete, events, requests};
