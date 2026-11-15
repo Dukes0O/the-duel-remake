@@ -24,7 +24,7 @@ const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;colo
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
 function staticYard(scene,groundMaterial){
-  const floorGeometry=new THREE.PlaneGeometry(800,800,400,400);floorGeometry.rotateX(-Math.PI/2);
+  const floorGeometry=new THREE.PlaneGeometry(800,800,800,800);floorGeometry.rotateX(-Math.PI/2);
   const position=floorGeometry.attributes.position,uv=floorGeometry.attributes.uv;
   floorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
   for(let i=0;i<position.count;i++){
@@ -41,6 +41,7 @@ function staticYard(scene,groundMaterial){
     pipe.rotation.x=Math.PI/2;pipe.position.set(-20+along*.46,scablandsNaturalHeightAt(-20,4)+.24+row*.4,4);pipe.castShadow=true;yard.add(pipe);
   }
   scene.add(yard);
+  return floor;
 }
 
 // With no surroundings to reflect, full metal draws black. Keep the paint and rust visible.
@@ -71,7 +72,7 @@ function disposeScene(group){
 
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
 export async function startTheDig({app,onExit=()=>{}}={}){
-  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
+  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape Â· Yard</button>`;
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
@@ -85,14 +86,14 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const world=new THREE.Group();scene.add(world);
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const groundMaterial=new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1});
-  staticYard(world,groundMaterial);
+  const yardFloor=staticYard(world,groundMaterial);
   const editedGroup=new THREE.Group();world.add(editedGroup);
   const groundView=createGroundView({group:editedGroup,groundEdit:sim.ground,material:groundMaterial});
   const wellheadView=createYardWellheadView(world,(x,z)=>sim.ground.heightAt(x,z));
   const cuttingsView=createDrillCuttingsView(world,(x,z)=>sim.ground.heightAt(x,z));
   const drillSounds=createDrillSounds(app?.audio);
   const roadSounds=createRoadSounds(app?.audio);
-  const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z));
+  const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor);
   let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null;
@@ -205,10 +206,10 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
     groundView.update();effects.update(elapsed);
-    const name=LABELS[sim.activeMachine],load=sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
-      sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
-      `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`;
-    host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} · ${sim.mode.toUpperCase()} MODE`;
+    const name=LABELS[sim.activeMachine],load=sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} mÂ³ cut Â· ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} mÂ³ in the ridge`:
+      sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} mÂ³ in bucket Â· ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} mÂ³ in truck`:
+      `${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} mÂ³ in truck`;
+    host.querySelector('.the-dig-machine').textContent=`${name.toUpperCase()} Â· ${sim.mode.toUpperCase()} MODE`;
     host.querySelector('.the-dig-load').textContent=load;
     if(sim.lastMessage&&sim.lastMessage!==shownMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
     if(now<messageUntil)message.textContent=shownMessage;
