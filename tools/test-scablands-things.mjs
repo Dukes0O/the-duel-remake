@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {ROAD_NET, ROAD_HALF_WIDTH, distanceToNet} from '../src/world/scablands-road.js';
-import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
-import {HOT_DELIVERY_WAYS, routeFor} from '../src/world/scablands-ways.js';
+import {smallThingsInCell, SMALL_DENSITY, THINGS_CELL, nearRoadForLitter, tracksForWay, pylonCandidates, telegraphCandidates, fenceCandidates, deadTreeCandidates, scarpBoulderCandidates, loneBoulderInCell, BOULDER_CELL, thingFootprintClear, forkSigns, jobDrivingLegs, thingIndexStatus} from '../src/world/scablands-things.js';
+import {HOT_DELIVERY_WAYS, routeFor, nearestOnLine} from '../src/world/scablands-ways.js';
 import {RIVER_LAND, riverDepthAt, stepsWayFor} from '../src/world/scablands-regions.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
@@ -18,6 +18,25 @@ import {createJobSolidGrid, SOLID_GRID} from '../src/world/scablands-solids.js';
 import {createNearGround, nearGroundHeightAt} from '../src/world/near-ground.js';
 import {preparedScarps} from '../src/world/scablands-scarps.js';
 import {HILLS} from '../src/world/scablands-height.js';
+
+test('dead tree candidates repeat and grow on the bank tops', () => {
+  const trees = deadTreeCandidates(1989);
+  assert.deepEqual(trees, deadTreeCandidates(1989));
+  assert.ok(trees.length >= 80 && trees.length <= 160, `${trees.length} trees`);
+  assert.ok(trees.some(tree => tree.kind === 'snag'));
+  const ways = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
+  for (const tree of trees) {
+    const river = RIVER_LAND.nearest(tree.x, tree.z);
+    assert.ok(river && river.distance >= 84 && river.distance <= 108);
+    assert.ok(RIVER_LAND.crossings.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= 120));
+    assert.ok(distanceToNet(tree.x, tree.z) >= 60);
+    assert.ok(ways.every(points => nearestOnLine(points, tree.x, tree.z).distance >= 60));
+    assert.ok(SCABLANDS_PLACES.every(p => Math.hypot(tree.x - p.x, tree.z - p.z) >= p.flatRadius + 150));
+    const heights = [[0, 0], [1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]].map(([x, z]) => scablandsSurfaceHeightAt(tree.x + x, tree.z + z));
+    assert.ok(Math.max(...heights) - Math.min(...heights) <= 1);
+    assert.ok(tree.kind === 'snag' ? tree.height >= 4 && tree.height <= 7 : tree.height >= 8 && tree.height <= 14);
+  }
+});
 
 test('the height used for things follows the drawn hills and mesa faces', () => {
   const ground = createNearGround({material: new THREE.MeshBasicMaterial({side: THREE.DoubleSide}), heightAt: scablandsSurfaceHeightAt});
@@ -92,6 +111,116 @@ test('a course with the trial off builds no placement indexes', async () => {
   assert.deepEqual(thingIndexStatus(), {road: false, routes: false});
 });
 
+test('cars meet trunks and clear them three metres to the side at three headings', async () => {
+  const {Course} = await import('../src/course.js');
+  const {SCABLANDS_VENUE} = await import('../src/world/scablands.js');
+  const {_staticContacts} = await import('../src/sim-contacts.js');
+  const {createSolidGrid} = await import('../src/world/scablands-solids.js');
+  const course = new Course(SCABLANDS_VENUE, 1989, {scablandsRealism: true});
+  for (const kind of ['dead-tree', 'snag']) {
+    const trunk = course.solidGrid.solids.find(solid => solid.kind === kind);
+    assert.ok(trunk);
+    course.solidGrid = createSolidGrid([trunk]);
+    for (const heading of [0, Math.PI / 4, Math.PI / 2]) for (const offset of [0, 3]) {
+      const c = Math.cos(heading), sn = Math.sin(heading);
+      course.worldAt = s => ({x: trunk.x + c * offset + sn * s, z: trunk.z - sn * offset + c * s});
+      course.at = () => ({heading});
+      const car = {prevS: -5, s: 5, prevLateral: 0, lateral: 0, speedMph: 10};
+      const duel = {course, state: {opponents: []}, car: {}, _obstacles: () => [], _vehicleSpec: () => ({}),
+        roadsideKnockAwayEnabled: () => false, destructionEnabled: () => false,
+        _roadPosition: p => ({s: sn * (p.x - trunk.x) + c * (p.z - trunk.z), lateral: 0}), _surface: () => ({mainRoad: false}), emit() {}};
+      _staticContacts.call(duel, car, false);
+      if (offset === 0) {
+        assert.ok(car.speedMph < 10, `${kind} slows the car`);
+        assert.ok(car.s < 0, `${kind} stops the car before the trunk`);
+      }
+      else assert.equal(car.speedMph, 10, `${kind} leaves the passing car alone`);
+    }
+    course.solidGrid = thingSolidGrid(course.realismThings.fixed, course.realismThings.loneBoulders);
+  }
+});
+
+test('fixed trees pass footprint clearance and leave room at job starts', () => {
+  const candidates = deadTreeCandidates(1989);
+  const fixed = clearedFixedThings(1989, []);
+  assert.deepEqual(fixed.trees, candidates.filter(tree => thingFootprintClear(tree.x, tree.z, 1.2, [])));
+  assert.ok(fixed.trees.length > 0);
+  const start = fixed.trees[0];
+  const withStart = clearedFixedThings(1989, [start]);
+  assert.ok(!withStart.trees.some(tree => Math.hypot(tree.x - start.x, tree.z - start.z) < 7.2));
+});
+
+test('cleared trees have solid trunks at their full height', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const grid = thingSolidGrid(fixed);
+  for (const tree of fixed.trees) {
+    const trunk = grid.solids.find(solid => solid.id === tree.id);
+    assert.ok(trunk, `${tree.id} has a trunk`);
+    assert.equal(trunk.shape, 'ellipse');
+    assert.equal(trunk.halfX, tree.kind === 'snag' ? .35 : .45);
+    assert.equal(trunk.halfZ, trunk.halfX);
+    assert.equal(trunk.height, tree.height);
+    assert.equal(trunk.heading, 0);
+    assert.equal(trunk.y, scablandsSurfaceHeightAt(tree.x, tree.z));
+    assert.ok(grid.near(tree.x, tree.z, tree.x, tree.z, 0).includes(trunk));
+  }
+});
+
+test('tree drawings retain distinct seeded headings while trunks stay unturned', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const first = fixed.trees[0];
+  const second = fixed.trees.find(tree => tree.heading !== first.heading);
+  assert.ok(second);
+  const solids = thingSolids(fixed, []);
+  const view = createFixedThingsView(fixed, []);
+  const rotations = [];
+  for (const tree of [first, second]) {
+    const trunk = solids.find(solid => solid.id === tree.id);
+    assert.equal(trunk.heading, 0);
+    assert.equal(trunk.collision.heading, 0);
+    assert.equal(trunk.drawHeading, tree.heading);
+    view.update(tree.x, tree.z);
+    const mesh = view.group.getObjectByName(`Scablands ${tree.kind}`);
+    let rotation;
+    for (let index = 0; index < mesh.count; index++) {
+      const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), quaternion = new THREE.Quaternion();
+      mesh.getMatrixAt(index, matrix);
+      matrix.decompose(position, quaternion, new THREE.Vector3());
+      if (Math.hypot(position.x - tree.x, position.z - tree.z) < .001) rotation = quaternion;
+    }
+    assert.ok(rotation, `${tree.id} is drawn`);
+    const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), tree.heading);
+    assert.ok(rotation.angleTo(expected) < .001);
+    rotations.push(rotation);
+  }
+  assert.ok(rotations[0].angleTo(rotations[1]) > .001);
+  view.dispose();
+});
+
+test('all trees stand on the drawn ground and cast shadows', () => {
+  const fixed = clearedFixedThings(1989, []);
+  const groundAt = (x, z) => scablandsSurfaceHeightAt(x, z) + 3;
+  const view = createFixedThingsView(fixed, [], null, groundAt);
+  for (const tree of fixed.trees) {
+    const {kind} = tree;
+    const mesh = view.group.getObjectByName(`Scablands ${kind}`);
+    assert.ok(tree && mesh && mesh.castShadow);
+    view.update(tree.x, tree.z);
+    let found = false;
+    for (let index = 0; index < mesh.count; index++) {
+      const matrix = new THREE.Matrix4(), position = new THREE.Vector3(), scale = new THREE.Vector3();
+      mesh.getMatrixAt(index, matrix);
+      matrix.decompose(position, new THREE.Quaternion(), scale);
+      if (Math.hypot(position.x - tree.x, position.z - tree.z) > .001) continue;
+      assert.ok(Math.abs(position.y - scale.y / 2 - groundAt(tree.x, tree.z)) < .05);
+      assert.ok(Math.abs(scale.x - tree.height) < .001 && Math.abs(scale.z - tree.height) < .001);
+      found = true;
+    }
+    assert.ok(found, `${kind} is drawn at its tree`);
+  }
+  view.dispose();
+});
+
 test('a job queries its supplied land grid as well as its temporary braziers', () => {
   const fixed = clearedFixedThings(1989, []);
   const things = thingSolidGrid(fixed);
@@ -130,8 +259,10 @@ test('every collision footprint belongs to one batch, and is drawn at its own pl
       assert.ok(solid, `${mesh.name} draws a thing where a footprint is`);
       if (Math.hypot(solid.x - centre.x, solid.z - centre.z) > 300) continue;
       assert.ok(position.distanceTo(new THREE.Vector3(...solid.center)) < .001);
-      assert.ok(scale.distanceTo(new THREE.Vector3(...solid.size)) < .001);
-      const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), solid.heading);
+      const tree = solid.kind === 'dead-tree' || solid.kind === 'snag';
+      const size = tree ? [solid.height, solid.height, solid.height] : solid.size;
+      assert.ok(scale.distanceTo(new THREE.Vector3(...size)) < .001);
+      const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), tree ? fixed.trees.find(item => item.id === solid.id).heading : solid.heading);
       assert.ok(rotation.angleTo(expected) < .001);
       checked.push(solid.id);
     }
