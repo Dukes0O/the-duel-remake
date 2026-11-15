@@ -76,8 +76,8 @@ export function scablandsSurfaceHeightAt(x,z,groundEdit=scablandsGroundEdit,open
 export function scablandsActorHeightAt(x,z,actorHeight){
   const surface=scablandsSurfaceHeightAt(x,z);
   if(!Number.isFinite(actorHeight))return surface;
-  const deckLift=riverGorgeDepthAt(x,z)-riverDepthAt(x,z);
-  return deckLift>1.2 && actorHeight<surface-1.2 ? surface-deckLift : surface;
+  const depth=riverDepthAt(x,z), deckLift=riverGorgeDepthAt(x,z)-depth;
+  return deckLift>0 && actorHeight<surface+depth-1.2 ? surface-deckLift : surface;
 }
 
 export function scablandsSurfaceAt(x,z){
