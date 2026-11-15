@@ -477,17 +477,17 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   return {stop,get simulation(){return sim;},get failed(){return failed;},host,
     requestCentreSample(){sampleCentre=true;},
     get viewForCheck(){return {camera,groundRay:(origin,direction,far=Infinity)=>{
-      nearGround.mesh.updateMatrixWorld(true);
+      world.updateMatrixWorld(true);
       const ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),
         new THREE.Vector3(direction.x,direction.y,direction.z).normalize(),0,far);
       // Raycaster cannot see the shader's mouth discard; apply the same capsule test.
       const mouths=drawnTunnels.mouths;
-      const hit=ray.intersectObject(nearGround.mesh,false).find(({point})=>!mouths.some(mouth=>{
+      const hit=ray.intersectObjects([nearGround.mesh,yardFloor,...editedGroup.children],false).find(({point})=>!mouths.some(mouth=>{
         const start=new THREE.Vector3(mouth.start.x,mouth.start.y,mouth.start.z);
         const axis=new THREE.Vector3(mouth.end.x,mouth.end.y,mouth.end.z).sub(start);
         const t=THREE.MathUtils.clamp(point.clone().sub(start).dot(axis)/Math.max(axis.lengthSq(),1e-8),0,1);
         return point.distanceToSquared(start.addScaledVector(axis,t)) < mouth.radius ** 2;
       }));
-      return hit ? {x:hit.point.x,y:hit.point.y,z:hit.point.z,distance:hit.distance} : null;
+      return hit ? {x:hit.point.x,y:hit.point.y,z:hit.point.z,distance:hit.distance,mesh:hit.object.name} : null;
     },surfaceHeight:(x,z)=>scablandsSurfaceHeightAt(x,z,sim.ground),readyToWork:Math.hypot(sim.borer.x-createDigBorer(sim.ground).x,sim.borer.z-createDigBorer(sim.ground).z)>=31 && borerHasFace(sim.ground,sim.borer,sim.borer.heading),pixels:camera.userData.centrePixels,ground:nearGround,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
 }
