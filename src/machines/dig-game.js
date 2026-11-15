@@ -24,7 +24,7 @@ const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
-const MACHINE_IDS=['excavator','borer','dumpTruck','trencher','drill','dozer','roller','paver'];
+const MACHINE_IDS=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
 
 /** Pitch the model around its cutting head as it follows the bore. */
@@ -366,5 +366,6 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     renderer.render(scene,camera);requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  return {stop,get simulation(){return sim;},get failed(){return failed;},host};
+  return {stop,get simulation(){return sim;},get failed(){return failed;},host,
+    get viewForCheck(){return {camera,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
 }
