@@ -102,6 +102,34 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// The real job requests the gate only for a car approaching slowly.
+{
+  const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {x:gate.x, z:gate.z + 30};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => ({...car, y:scablandsSurfaceHeightAt(car.x, car.z)})},
+    emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const tick = () => stepWorldJob(duel, 0.01);
+  tick();
+  assert.notEqual(world.tinTownGateRequested, true, 'a distant car does not request the gate');
+  car = {x:gate.x, z:gate.z + 10};
+  state.speedMph = 30 / 1.609344;
+  tick();
+  assert.notEqual(world.tinTownGateRequested, true, '30 km/h is too fast');
+  state.speedMph = 29 / 1.609344;
+  state.onFoot = true;
+  tick();
+  assert.notEqual(world.tinTownGateRequested, true, 'a person does not request the gate');
+  state.onFoot = false;
+  tick(); tick();
+  assert.equal(world.tinTownGateRequested, true);
+  assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
+}
 // The bed route reaches the Wash scoop, then passes beneath the bridge on the lower floor.
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');

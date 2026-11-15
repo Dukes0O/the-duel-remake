@@ -1,5 +1,15 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Tin Town gate approach (15 November 2026)
+
+- Hot Delivery requests the gate when the player is in the car within 20 m and travelling below 30 km/h. The request sounds `world.tintown.gate` once. This is the first part of step 5a: the entrance has no gate door yet, so nothing opens or blocks the car.
+- `node tools/test-everburn-job1.mjs`: passed. The real job update checks distance, the 30 km/h boundary, being on foot and the one-time sound. `git diff --check`: passed.
+- Codex decided: use 20 m as the approach distance. Claude should review it when the gate is drawn and driven.
+- Changed assertions: none. Race fingerprints were not checked in this round.
+- For Claude to run: the browser scenario, final checks and both long drivers remain for the last round. For Claude to draw: final barricades, smoke, Cinder and the Tin Town gate door.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+- Still to build: the gate door, its movement and collision, then the forge and remaining steps.
+
 ## River bed at the bridge (15 November 2026)
 
 - The bed way reaches the Wash brazier and bends around the Girder Bridge's centre pier. The car can pass below the deck. No new sound event was added; the scoop uses `world.ember.scoop`.

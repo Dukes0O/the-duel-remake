@@ -703,6 +703,13 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
+    const gate = currentStep.riderSafeWall;
+    if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
+        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20 && Math.abs(state.speedMph || 0) * MPH_TO_KMH < 30) {
+      worldJob.tinTownGateRequested = true;
+      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
+        cue:'world.tintown.gate', position:car}});
+    }
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
     if (worldJob.pipeDeck.tooFast && !worldJob.pipeSlip && !state.knock) {
       // Slide toward the nearer edge; free-body motion and the land handle the fall.
