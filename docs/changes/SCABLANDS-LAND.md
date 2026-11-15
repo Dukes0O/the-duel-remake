@@ -2044,3 +2044,9 @@ A diagnostic sampling each route every 40 m at the centre and 60 m either side f
 Changed assertions: removed the two partial furnace-cover assertions because Claude moved that requirement to job 1; no remaining assertion was loosened. Codex decided: run the existing Easy driver with realism enabled for this proof. Removed: the two deferred cover checks. No game event or sound was added. Race fingerprints, world signatures, final integration and the build remain to be checked. Claude must run and judge the pictures.
 
 The separate gas-road driver with realism on brought Big Bess home 10 of 10 on the long road at Watching. It was stopped before the remaining feud levels or the Boneyard road completed, so the gas-road suite has not passed. The final merge and checks were not started.
+
+### Hill country: long gas-road corridor
+
+The hills suite now checks the long gas road at 10 m intervals and five offsets across its 60 m corridor. It passed outside the Ridge top, which the road deliberately crosses. The hills suite passed 46 of 46. This adds an assertion and does not change or loosen an existing one. Codex decided to exclude the intended Ridge top from this clearance comparison. No game event or sound was added. Removed: none.
+
+The Everburn's Easy driver still failed seed 1 with realism on. It reached the chase, but timed out at 3,000 seconds with the furnace near (2892, 558) and the car near (3898, 207). The cause remains unconfirmed. A route scan also found hills on the furnace's sixth and nineteenth legs, the Mall return's second leg and Survey Flags' third leg. The Ridge top is additionally on the intended furnace and gas-road climbs. These sampled findings do not establish that the remaining corridors are clear. Race fingerprints, world signatures, final integration, pictures and build were not checked in this step.
