@@ -2030,3 +2030,7 @@ Moved the Mall-to-Everburn pass shoulders from 66% to 65.5% of the road and from
 Check: `node tools/test-scablands-hills.mjs` passed 47 of 47. A new check samples the Boneyard gas route every 10 m and at five offsets across its 60 m corridor. The new check replaces no assertion and loosens none. Race fingerprints, the browser pictures and the build were not checked in this step. Removed: the former pass shoulder positions. Codex decided: move this pass by half a percent of the road and set its shoulders 300 m from the centre to satisfy both corridor and spacing checks.
 
 Still needed: three separate 150 m mesa-cover stretches, the other job corridors, route drives after this change, integration and final checks. A 20 m grid scan found 3,043 candidate centres satisfying the sampled plate, road, river, place and way clearances; none of their 120 m circular shadows reached the currently visible portions of the plates way. This is not an exhaustive proof and does not model every mesa shape. The long gas route crosses the intended raised Ridge top on legs 5 and 6, so a strict comparison with the old flat terrain also fails there. Claude must run and judge the pictures.
+
+### Not built by this slice
+
+Cover from the furnace on the plates' way: with EVERBURN-REMAKE job 1. The partial cover tests were removed under Claude's direction; every placed mesa remains.

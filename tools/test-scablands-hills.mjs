@@ -82,39 +82,6 @@ test('the thief and Big Bess have clear hill corridors', () => {
   }
 });
 
-test('the plates way has a long stretch hidden from the furnace within range', () => {
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
-  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
-  const samples = sampleLine(points, 5).filter(point => Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= 1400);
-  let start = null, longest = 0, open = false;
-  for (const point of samples) {
-    const visible = sees(FURNACE_SKYLINE, point, {heightAt: scablandsSurfaceHeightAt, eye: 5, range: 1400, step: 5});
-    if (!visible) {
-      start ??= point.along;
-      longest = Math.max(longest, point.along - start);
-    } else {
-      start = null;
-      open = true;
-    }
-  }
-  assert.ok(longest >= 150, `longest hidden stretch is ${longest} m`);
-  assert.ok(open, 'the way also has open ground within range');
-});
-
-test('the furnace-cover mesa adds cover on the plates way', () => {
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
-  const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
-  const samples = sampleLine(points, 5).filter(point => Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= 1400);
-  const mesa = HILLS.filter(hill => hill.kind === 'mesa')[2];
-  const withoutMesa = HILLS.filter(hill => hill !== mesa);
-  const uncoveredHeight = (x, z) => scablandsSurfaceHeightAt(x, z)
-    - scablandsTerrainHeightAt(x, z) + scablandsTerrainHeightAt(x, z, withoutMesa);
-  const hiddenCount = heightAt => samples.filter(point => !sees(FURNACE_SKYLINE, point,
-    {heightAt, eye: 5, range: 1400, step: 5})).length;
-  const addedMetres = (hiddenCount(scablandsSurfaceHeightAt) - hiddenCount(uncoveredHeight)) * 5;
-  assert.ok(addedMetres >= 150, `the mesa adds about ${addedMetres} m of cover`);
-});
-
 test('mesa faces and ramps leave the plates way and its corridor clear', () => {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const points = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
