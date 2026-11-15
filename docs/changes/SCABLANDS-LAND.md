@@ -1167,8 +1167,24 @@ Removed: the Boneyard road's start through the well post.
 
 The scene check again requires a solid for each place that draws one, and checks that every solid is within 100 m of its own place or crossing. The moving-place check now checks the bridge trusses and piers, the Pipe, the Steps' posts, the ring fence, the bridge-side job places and the second ambush against their own placement rules, within 1 m.
 
-Changed assertions, for Claude to review: the Old Smoke chase limit was 4,000 seconds and is now 1,753 seconds. The slowest measured run was the Medium driver at 1,523.5084 seconds; 15 percent headroom, rounded up, gives 1,753 seconds. The Easy driver took 1,129.025 seconds on each of ten seeds. The restored placement checks add requirements and do not loosen the other assertions.
+Changed assertions, for Claude to review: the Old Smoke chase limit was 1,500 seconds before slice 2b, was raised to 4,000 seconds, and is now 1,753 seconds. The slowest measured run was the Medium driver at 1,523.5084 seconds; 15 percent headroom, rounded up, gives 1,753 seconds. The Easy driver took 1,129.025 seconds on each of ten seeds. The restored placement checks add requirements and do not loosen the other assertions.
 
 Checks: `test-scablands-scene` passed; `test-scablands-size` passed all 9 tests. `test-old-smoke` passed all 4,097 checks with the new limit, including 10 of 10 Easy chases. The other requested checks remain to be recorded. No game event or sound cue was added.
 
 Removed: the missing placement checks and the 4,000-second chase limit are replaced by the checks above.
+
+### Car-step allocations
+
+The Scablands car step reuses its world positions, slope input and collision point per game, and calls the existing height function directly. The step reads the course sampled positions directly using the same calculation as the course. Other callers are unchanged. No game event or sound cue was added.
+
+Removed: the car step's repeated temporary position and slope objects and its new height function.
+
+Checks after the review fixes: `test-scablands-solid` passed 18 tests; `test-scablands-scene`, `test-scablands-size`, `test-old-smoke`, `test-run-gas`, and `test-field-battle` passed. `test-everburn-easy` passed: all nine jobs and both roads at all four feud levels finished 10 of 10, and the battle was won 10 of 10. `test-replays` passed 297 checks over 33 cases; `test-combat-replays` passed 12 checks over four encounters. The recorded race fingerprints are unchanged.
+
+For Claude to run: the `scablands-solid` browser scenario, with memory-only saves, and the card's drive checks in a visible window: bank and lip, Steps, bridge, shack, wreck, gate post and girder, crossings and all four routes. Chrome cannot start in this job.
+
+Changed assertions, for Claude to review: the car-step allocation fix changed none. The earlier fixes and restored checks are recorded above, including the old and new values. Codex decided: no new design choice. The switches remain off.
+
+Lane tier: 258 of 274 suites passed. `test-run-gas-medium` passed all targets. `test-everburn-play-start` failed because the last segment of the long gas road comes within 8 m of the old single Tin Town bounding box. The revised stopping place is clear of the actual solids, as `test-run-gas` and `test-scablands-solid` check. The old assertion was not changed; Claude must decide how to reconcile the box check with the new stops.
+
+The known job-environment failures were `test-audio`, `test-arsenal-core-audio`, `test-arsenal-wave1-audio`, `test-arsenal-wave3-audio`, `test-audio-listening`, `test-circuit-eifel`, `test-combat-audio`, `test-deep-audio`, `test-deep-phone`, `test-lab-radio`, `test-p4-audio`, `test-warlord-blackiron`, and `test-warlord-tollkeeper` (recordings or ffmpeg), `test-full-check` (fixture cleanup), and `test-review-evidence` (audio analysis). Claude should rerun them at merge. The build passed with `npm.cmd run build`.

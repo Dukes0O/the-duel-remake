@@ -38,15 +38,27 @@ function hitGround(duel, actor, impactMph, nx, nz) {
   duel.emit({scablandsHit: {kind: 'climb', impactMph, player, cue: 'world.ground.scab-plates'}});
 }
 
+// Only x and z are needed here. Read the same sampled frame as Course.worldAt, without making a frame or a position on each step.
+function groundPoint(course, s, lateral, out) {
+  if (!course.def?.scablands || Object.hasOwn(course, 'at') || !course.samples) return course.worldAt(s, lateral);
+  const phase = course.phase(s), index = Math.min(course.samples.length - 2, Math.floor(phase / course.step));
+  const a = course.samples[index], b = course.samples[index + 1], t = (phase - a.s) / course.step;
+  const heading = a.heading + (b.heading - a.heading) * t;
+  out.x = a.x + (b.x - a.x) * t + Math.cos(heading) * lateral;
+  out.z = a.z + (b.z - a.z) * t - Math.sin(heading) * lateral;
+  return out;
+}
+
 // After a step's move and before its flight: the slope's pull on the car's speed, and the refusal of a step up ground too steep to grip.
 export function scablandsGround(duel, actor, dt) {
   if (actor.airborne || actor.tumble || actor.crushed || actor.combatWrecking || actor.knock) return;
   const course = duel.course, oldS = actor.prevS, oldLateral = actor.prevLateral;
   if (!Number.isFinite(oldS) || !Number.isFinite(oldLateral)) return;
-  const from = course.worldAt(oldS, oldLateral), to = course.worldAt(actor.s, actor.lateral);
+  const scratch = duel._scablandsGroundScratch ??= {from: {}, to: {}, put: {}, point: {}, slope: {capability: GROUND.slope}};
+  const from = groundPoint(course, oldS, oldLateral, scratch.from), to = groundPoint(course, actor.s, actor.lateral, scratch.to);
   const dx = to.x - from.x, dz = to.z - from.z, distance = Math.hypot(dx, dz);
   if (distance < 1e-4) return;
-  const height = (x, z) => scablandsSurfaceHeightAt(x, z), gain = height(to.x, to.z) - height(from.x, from.z);
+  const height = scablandsSurfaceHeightAt, gain = height(to.x, to.z) - height(from.x, from.z);
   const kmh = Math.abs(actor.speedMph || 0) * MPH_TO_KMH, ledges = ledgeAt(to.x, to.z);
   const limit = climbLimit(kmh, ledges);
   if (gain > 0 && gain / distance > limit) {
@@ -57,11 +69,13 @@ export function scablandsGround(duel, actor, dt) {
     const impactMph = Math.abs(actor.speedMph || 0) * incoming;
     // Stay at the foot, keep the part of the move that runs along the face, and be pushed back a little down it.
     const along = dx * nx + dz * nz;
-    const pose = duel._roadPosition({x: from.x + dx - nx * along + nx * GROUND.pushBack * incoming, z: from.z + dz - nz * along + nz * GROUND.pushBack * incoming}, actor.s);
+    scratch.point.x = from.x + dx - nx * along + nx * GROUND.pushBack * incoming;
+    scratch.point.z = from.z + dz - nz * along + nz * GROUND.pushBack * incoming;
+    const pose = duel._roadPosition(scratch.point, actor.s);
     if (Number.isFinite(pose.s) && Number.isFinite(pose.lateral)) { actor.s = pose.s; actor.lateral = pose.lateral; }
     // The car stands on the ground where it was put, with none of the upward speed it had: the flight rules (`_jump`) must not read the move back down the face
     // as the ground falling away from a car still rising.
-    const put = course.worldAt(actor.s, actor.lateral);
+    const put = groundPoint(course, actor.s, actor.lateral, scratch.put);
     actor._jumpY = height(put.x, put.z); actor._verticalSpeed = 0;
     actor.pushVelocity = (actor.pushVelocity || 0) * .25;
     actor.speedMph *= Math.max(.08, 1 - incoming * .94);
@@ -71,7 +85,8 @@ export function scablandsGround(duel, actor, dt) {
   // A slope pulls a car down it and holds it back going up, by the rule the courses' climbing cars have (slopeSpeedDelta); on the Steps' ledges
   // (cut for wheels) it pulls a quarter as much.
   if (actor.speedMph) {
-    const delta = slopeSpeedDelta({gain, distance, dt, capability: GROUND.slope}) * (ledges ? GROUND.ledgeSlopeShare : 1);
+    scratch.slope.gain = gain; scratch.slope.distance = distance; scratch.slope.dt = dt;
+    const delta = slopeSpeedDelta(scratch.slope) * (ledges ? GROUND.ledgeSlopeShare : 1);
     if (delta) actor.speedMph = Math.sign(actor.speedMph) * Math.max(0, Math.abs(actor.speedMph) + delta);
   }
 }
