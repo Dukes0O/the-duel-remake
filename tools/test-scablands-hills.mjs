@@ -15,7 +15,7 @@ import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
-import {raiderHasClearShot, targetFor, stepRaiderSearch, campSightChange} from '../src/raiders.js';
+import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange} from '../src/raiders.js';
 import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 
 test('the Ridge lookout sees only within range and over clear ground', () => {
@@ -151,6 +151,34 @@ test('raiders select a visible car within their own range', () => {
   assert.equal(targetFor(duel, zone), null);
   places.set(2, {x: raider.x - 40, z: raider.z, y: 0});
   assert.equal(targetFor(duel, zone, {actor: visible, pose: hidden}), null);
+});
+
+test('a stopped car needs continuous sight on the Scablands but is ignored in races', () => {
+  const yard = LAND.at('yard');
+  const car = {s: 0, lateral: 0, speedMph: 0, opponents: [], currentLap: 1};
+  const raider = {x: yard.x, z: yard.z, y: scablandsSurfaceHeightAt(yard.x, yard.z)};
+  let position = {x: yard.x + 10, z: yard.z, y: raider.y};
+  const duel = {state: car, course: {def: {scablands: true}, groundAt: () => position}, relativeS: () => 0};
+  const zone = {s: 0, raiders: [raider]};
+  assert.equal(targetFor(duel, zone)?.actor, car);
+  stepRaiderAim(duel, zone, 1);
+  assert.equal(targetFor(duel, zone, null, 0, true), null);
+  position = {...position, x: yard.x + 100};
+  stepRaiderAim(duel, zone, .1);
+  position = {...position, x: yard.x + 10};
+  stepRaiderAim(duel, zone, 1);
+  assert.equal(targetFor(duel, zone, null, 0, true), null, 'lost sight resets the clock');
+  stepRaiderAim(duel, zone, .2);
+  assert.equal(targetFor(duel, zone, null, 0, true)?.actor, car);
+  for (const status of ['finished', 'crushed', 'combatWrecking']) {
+    car[status] = true;
+    assert.equal(targetFor(duel, zone), null);
+    car[status] = false;
+  }
+  duel.course.def.scablands = false;
+  assert.equal(targetFor(duel, zone), null);
+  car.speedMph = 8;
+  assert.equal(targetFor(duel, zone)?.actor, car);
 });
 
 test('each distant scarp face has fine cells at the land height', () => {

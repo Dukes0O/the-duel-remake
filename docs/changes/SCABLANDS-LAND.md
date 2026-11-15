@@ -1610,3 +1610,13 @@ Check: `node tools/test-scablands-hills.mjs` passed 22 of 22, including the brid
 Changed assertions: none. Codex decided: no new design choice. Removed: sight and walking-raider height based solely on the top surface.
 
 Still needed: the remaining part A checks and fixes, including stopped cars, sight cost and search coverage; then parts B and C and final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.
+
+### Review fixes: stopped cars
+
+Scablands camp raiders can target a stopped car after 1.2 seconds of uninterrupted sight. Each raider tracks each car separately and losing sight resets that car's timer. Finished, crushed and wrecking cars remain ineligible. Other venues retain the 8 mph rule. No game event or sound cue was added.
+
+Checks: `node tools/test-scablands-hills.mjs` passed 23 of 23, including stopped cars, sight interruption, the delay and the other venues' speed rule. `node tools/test-raiders.mjs` passed 7 of 7. Race fingerprints and world signatures were not checked in this step.
+
+Changed assertions: none. Codex decided: no new design choice. Removed: the Scablands-only speed restriction on camp targets.
+
+Still needed: prove an actual shot follows the sight delay; reduce and measure sight cost, restore the one-second walking search test, finish parts B and C, and run the final checks. Claude must run the picture scenario and the ffmpeg-dependent checks.

@@ -252,7 +252,7 @@ function collectSalvage(duel, zone) {
     hitPosition: {x: crate.x, y: crate.y + 1, z: crate.z}});
 }
 
-export function targetFor(duel, zone, preview = null, seconds = 0) {
+export function targetFor(duel, zone, preview = null, seconds = 0, ready = false) {
   const state = duel.state;
   const available = [state, ...state.opponents];
   let best = null, distance = Infinity;
@@ -260,14 +260,15 @@ export function targetFor(duel, zone, preview = null, seconds = 0) {
     const original = available[index];
     const actor = original === preview?.actor ? preview.pose : original;
     if (!actor || actor.finished || actor.crushed || actor.combatWrecking ||
-        Math.abs(actor.speedMph || 0) < 8) continue;
+        (!duel.course.def.scablands && Math.abs(actor.speedMph || 0) < 8)) continue;
     let gap = Math.abs(duel.relativeS(zone.s, actor.s) - actor.s);
     if (duel.course.def.scablands) {
       const at = point(duel, actor);
       at.y = scablandsActorFeet(actor, undefined);
       const distances = zone.raiders.filter(member =>
         (!member.knockedDown || member.knockdownRemaining <= seconds) &&
-        member.firedLap !== state.currentLap && raiderHasClearShot(duel.course, member, at))
+        member.firedLap !== state.currentLap && (!ready || (member.sightTime?.get(original) || 0) >= 1.2) &&
+        Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS && raiderHasClearShot(duel.course, member, at))
         .map(member => Math.hypot(member.x - at.x, member.z - at.z));
       gap = distances.length ? Math.min(...distances) : Infinity;
     }
@@ -275,6 +276,25 @@ export function targetFor(duel, zone, preview = null, seconds = 0) {
     if (gap < distance) {best = {actor: original, targetIndex: index - 1}; distance = gap;}
   }
   return best;
+}
+
+// Sight time belongs to each watcher and car. Losing sight resets the clock.
+export function stepRaiderAim(duel, zone, dt) {
+  const state = duel.state;
+  for (const member of zone.raiders) {
+    const times = member.sightTime ??= new Map();
+    for (let index = -1; index < state.opponents.length; index++) {
+      const actor = index < 0 ? state : state.opponents[index];
+      let visible = !member.knockedDown && !actor.finished && !actor.crushed && !actor.combatWrecking;
+      if (visible) {
+        const at = point(duel, actor);
+        at.y = scablandsActorFeet(actor, undefined);
+        visible = Math.hypot(member.x - at.x, member.z - at.z) <= FIRE_METERS &&
+          raiderHasClearShot(duel.course, member, at);
+      }
+      times.set(actor, visible ? (times.get(actor) || 0) + dt : 0);
+    }
+  }
 }
 
 // Read-only stop admission: reuse the current native camp target and shot rules.
@@ -408,6 +428,7 @@ export function stepRaiders(duel, dt = 0) {
       if (car) car.y = scablandsActorFeet(state, undefined);
       for (const raider of zone.raiders) if (!raider.knockedDown) stepRaiderSearch(raider, car, dt, stepMover, duel.course);
     }
+    if (duel.course.def.scablands && dt > 0) stepRaiderAim(duel, zone, dt);
     const ahead = duel.relativeS(zone.s, state.s) - state.s;
     if (ahead > 0 && ahead < WARNING_METERS && zone.warnedLap !== state.currentLap) {
       zone.warnedLap = state.currentLap;
@@ -415,12 +436,13 @@ export function stepRaiders(duel, dt = 0) {
       duel.emit({raiderWarning: true, zone: zone.id});
     }
     if (state.stageTimeSec < zone.nextShotAt) continue;
-    const target = targetFor(duel, zone);
+    const target = targetFor(duel, zone, null, 0, !!duel.course.def.scablands);
     if (!target) continue;
     const targetPoint = point(duel, target.actor);
     if (duel.course.def.scablands) targetPoint.y = scablandsActorFeet(target.actor, undefined);
     const raider = zone.raiders.find(member =>
       !member.knockedDown && member.firedLap !== state.currentLap &&
+      (!duel.course.def.scablands || (member.sightTime?.get(target.actor) || 0) >= 1.2) &&
       (!duel.course.def.scablands || Math.hypot(member.x - targetPoint.x, member.z - targetPoint.z) <= FIRE_METERS) &&
       raiderHasClearShot(duel.course, member, targetPoint));
     if (raider) fire(duel, zone, raider, target);
