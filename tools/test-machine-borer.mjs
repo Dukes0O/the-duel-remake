@@ -52,6 +52,10 @@ assert.deepEqual(borerYardControls({KeyW:true,KeyA:true,ArrowUp:true}), {forward
 assert.deepEqual(borerYardControls({KeyS:true,KeyD:true,ArrowDown:true}), {forward:-1,steer:1,slope:-1});
 assert.deepEqual(borerYardControls({}, {axes:[0.4,-0.6]}, {drive:{steer:0,forward:1}}),
   {forward:0.6,steer:0.4,slope:0}, 'The borer uses the existing mapped machine axes.');
+assert.deepEqual(borerYardControls({KeyW:true,ArrowUp:true}, {axes:[0,0,0,0]}, {drive:{steer:0,forward:1},slope:3}),
+  {forward:1,steer:0,slope:1}, 'A connected idle controller does not disable the keyboard.');
+assert.deepEqual(borerYardControls({}, {axes:[0.2,-0.4,0,-0.5]}, {drive:{steer:0,forward:1},slope:3}),
+  {forward:0.4,steer:0.2,slope:0.5}, 'The mapped stick can change slope.');
 assert.equal(borerHasFace(flat, {x:0,z:0}, 0), false);
 assert.equal(borerHasFace(hill, {x:0,z:0}, 0), true);
 assert.equal(stepBorer(createBorerState(), {thrust:1}, flat, 'clay', 1).state.message, BORER_NO_FACE);

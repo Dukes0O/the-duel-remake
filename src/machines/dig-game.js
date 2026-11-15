@@ -5,6 +5,7 @@ import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
 import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
+import {loadMachineInput} from '../input-setup.js';
 import {borerYardControls,closeDigSandbox,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
@@ -199,6 +200,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     if(stopped)return;
     const elapsed=Math.min(.1,(now-lastTime)/1000);lastTime=now;accumulator+=elapsed;
     const padKeys={...keys};
+    let pad=null;
+    try { pad=Array.from(navigator.getGamepads?.() || []).find(device=>device?.connected) || null; } catch {}
+    const savedMapping=loadMachineInput();
+    const axes=savedMapping && (!pad || savedMapping.deviceId===pad.id) ? savedMapping.axes : {};
+    const borerMapping={drive:{steer:axes.swing ?? 0,forward:axes.boom ?? 1},slope:axes.arm ?? 3};
     // Material loading is one clear action. It transfers real bucket contents to the truck.
     const frameEvents=[], previousBoreDistance=sim.borer.distanceM;
     while(accumulator>=1/60){
@@ -206,7 +212,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
-      let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
+      let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
       if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;

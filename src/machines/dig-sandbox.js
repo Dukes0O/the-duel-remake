@@ -30,8 +30,13 @@ const STEP = 1 / 60;
 
 /** Use the machines' drive mapping for thrust and steering; arrows set the slope. */
 export function borerYardControls(keys = {}, pad = null, mapping = null) {
-  const drive = machineControlInput(keys, pad, 'drive', mapping);
-  return {...drive, slope:Number(!!keys.ArrowUp) - Number(!!keys.ArrowDown)};
+  const keyboard = machineControlInput(keys, null, 'drive');
+  const drive = machineControlInput({}, pad, 'drive', mapping);
+  const keyboardSlope = Number(!!keys.ArrowUp) - Number(!!keys.ArrowDown);
+  const axis = mapping?.slope;
+  const value = Number.isInteger(axis) && axis >= 0 ? -(pad?.axes?.[axis] || 0) : 0;
+  return {forward:keyboard.forward || drive.forward, steer:keyboard.steer || drive.steer,
+    slope:keyboardSlope || (Math.abs(value) < .12 ? 0 : Math.max(-1, Math.min(1, value)))};
 }
 
 /** Park on the open side of the first west scarp, facing its foot. */

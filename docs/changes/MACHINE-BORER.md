@@ -24,13 +24,15 @@ The Dig page has Mabel's head-speed dial, distance cut, control instructions and
 
 The Dig scene now includes natural ground around Mabel's west scarp. It uses the same height and ground colour as the yard, over a 1,024 m square. Mabel, the tunnel and its openings still need to be drawn and checked there.
 
-Mabel is now reached with Q from the excavator. Her model loads from the borer asset, and her chase camera follows her own height underground. The model and camera still need the tunnel drawing and Claude's browser check; the scarp surface has not yet been cut away for the view. Controller input still needs connecting.
+Mabel is now reached with Q from the excavator. Her model loads from the borer asset, and her chase camera follows her own height underground. The model and camera still need the tunnel drawing and Claude's browser check; the scarp surface has not yet been cut away for the view. Controller input is connected and needs a hands-on check.
 
 The head now turns with its simulated speed, and the existing rock effect appears at the face while she cuts. The rest of the lining and conveyor drawing is still to come.
 
 The Dig now draws the trial's continuous rock lining and closed cutting face as the bore grows. The same ground shader opens the mouth in the scarp. Drawing catches up after cutting stops and is limited to four updates a second. Rings, portals and conveyor dirt still need drawing; Claude must check the view in a browser.
 
 Claude's updated tunnel lining now receives the active machine position, heading and open mouths each frame. A portal stands at each surface mouth, facing out of the hill. The browser appearance still needs Claude's check.
+
+Mabel now accepts a connected controller in the Dig. The existing machine axis settings select steering, thrust and slope, with standard stick axes as a fallback. Keyboard input takes priority when both are used. Controller behaviour still needs a hands-on check.
 
 ## Checks
 
@@ -64,6 +66,7 @@ Claude's updated tunnel lining now receives the active machine position, heading
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after adding the head movement and face effect. Their appearance still needs a browser check.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the trial lining and ground openings. The drawing has not been checked in a browser.
 - `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed after connecting the updated lining and portals. Browser appearance remains unchecked.
+- `node --check src/machines/dig-game.js` and `node tools/test-machine-borer.mjs`: passed for controller axes, slope and keyboard priority.
 - Race fingerprints: not run yet. No existing race code was changed.
 - The lane tier, replay and world-signature suites, build and browser scenario remain for the final step.
 
