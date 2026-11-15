@@ -1334,7 +1334,7 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
     needs: ["TUNNEL-TRIAL","MACHINE-CORE","TOWN-ART-BORER"]
     locks: ["busy-game-files"]
     details: "docs/board/cards/MACHINE-BORER.md"
