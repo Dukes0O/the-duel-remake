@@ -11,6 +11,7 @@ export function scablandsLandingCamera(course, position, target, car, heading, b
   position.x += (car.x - sin * back - position.x) * next;
   position.z += (car.z - cos * back - position.z) * next;
   position.y += (Math.max(position.y, car.y + height) - position.y) * next;
+  position.y = Math.max(position.y, car.y);
   target.x += (x - target.x) * next;
   target.y += (ground - target.y) * next;
   target.z += (z - target.z) * next;

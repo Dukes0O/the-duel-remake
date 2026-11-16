@@ -1724,3 +1724,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` checks the real job step while the test holds the rider in place. The existing return-to-post and delivery checks also run. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: repeated movement attempts after the rider is stranded.
 - For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire. The out-of-view recovery, X4 to X9 and final checks remain.
+
+## X6: landing camera height
+
+- During the half-second return from the landing view, the Scablands camera stays at or above the car's height, even when its incoming position is below the car. The normal race camera is unchanged. No game event or sound cue was added.
+- Check: `node tools/test-camera-clearance.mjs` passed, including a camera starting 20 metres below the car during the return. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: nothing.
+- The stranded rider's out-of-view recovery, X4, X5, X7 to X9 and final checks remain. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
