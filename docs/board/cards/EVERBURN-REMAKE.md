@@ -412,6 +412,21 @@ Codex drove each way once with a plain scripted driver and the new numbers (cold
   first; if it drags, the bed's ground is made faster and its air colder, so that it stays the long, patient way without
   being the dull one.
 
+## The clean drives so far, and the river bed's ground, ruled (Claude, 16 November 2026)
+
+- **Plates, clean:** proved, from butte to butte with no furnace warning, alive.
+- **Salt pan, clean:** 9.4 km in 8.0 minutes, no ram, the Pipe at 37 km/h, arrived with 46: alive. Accepted.
+- **River bed:** 9.6 km in 11.7 to 11.9 minutes, arriving out with or without the Wash camp's scoop. That is twice Kyle's
+  yardstick and it breaks the design, so three numbers change:
+  - the bed is firm gravel, and a car holds 80 km/h on it with no loss for roughness (only the Wash's own crossing keeps
+    its soft sand);
+  - the cold lies in the bed: the pot cools two and a half times as fast down there, said on the screen once ("Cold air lies
+    in the river bed. The pot cools fast down here.") and kept on the map's "What you know";
+  - from the Steps to Tin Town the careful driver keeps to the plates' 50 km/h.
+  Expected: about seven minutes; alive with the scoop, barely or out without it. The bed's cold factor is the one number
+  Claude will move again if Codex's two drives say otherwise.
+- **East Road, clean:** not yet driven.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
