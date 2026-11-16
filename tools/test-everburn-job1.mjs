@@ -133,6 +133,15 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   console.log('Bed rider bypass:', JSON.stringify({reached:drive.reachedAll, jolts, last:drive.stretches.at(-1)}));
   assert.ok(drive.reachedAll, 'the car reaches the far side of the rider post');
   assert.equal(jolts.length, 0, 'the car avoids jolts on the bypass');
+  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
+  const washAlong = nearestOnLine(line, wash.position.x, wash.position.z).along;
+  const approach = driveMeasuredStretches(duel, line, [washAlong - 30], 28);
+  const scoop = driveToBrazier(duel, wash);
+  const pot = duel.state.arena.worldJob.job.stepState;
+  console.log('Bed Wash approach:', JSON.stringify({washAlong, approach:approach.stretches.at(-1), scoop, jolts:pot.joltCount ?? 0, ember:pot.ember}));
+  assert.ok(approach.reachedAll, 'the car reaches the Wash approach');
+  assert.ok(scoop.scooped, 'the car takes the Wash scoop');
+  assert.equal(pot.joltCount ?? 0, 0, 'the car reaches Wash without a jolt');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.

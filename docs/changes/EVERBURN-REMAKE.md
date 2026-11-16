@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed bypass reaches Wash (16 November 2026)
+
+- Extended the seeded Medium bed drive beyond the first rider to the Wash camp. The real car reaches the brazier and scoops without a jolt. It has 88.670 ember after the scoop. This is not yet a delivery proof. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive, which went out at 629.822 m. Integration is already included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: continue the existing bypass to Wash at its 28 mph target.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: continue from Wash without rider or ground impacts, then prove both bed deliveries and the remaining routes.
+
 ## Bed rider bypass (16 November 2026)
 
 - Added a gradual 150 m sideways line to the bed proof driver. The real Medium car reached 3 km without a jolt, passing the first rider contact seen on the centre line. It held 72.711 ember at that point. This is not yet a delivery proof. No game event or sound cue was added.
