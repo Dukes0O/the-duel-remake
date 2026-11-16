@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed drive beyond the crossing (16 November 2026)
+
+- The seeded Medium bed driver continues at its 12 mph target to 6.7 km without a jolt, with 60.694 ember after the Wash scoop. A trial accelerating to 28 mph afterwards struck steep ground near 6.924 km, took five ground jolts and ran the ember out. The drive has not reached the forge. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed for the 6.7 km drive. The straight-across drive went out at 629.822 m. The later trial failed and was removed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: retain the 12 mph target through 6.7 km. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a safe line past the steep ground near 6.924 km, then prove both bed deliveries.
+
 ## Bed bypass beyond the rough ground (16 November 2026)
 
 - The seeded Medium driver takes a gradual 150 m offset on the far side of the bed, starting at 6 km. It reaches 6.6 km with no jolts and 62.648 ember after the Wash scoop. It has not yet reached the forge. The earlier centre line met a rider at 6.563 km. This adds no game event or sound cue.
