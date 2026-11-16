@@ -155,8 +155,24 @@ export function borerSpoilSampledLength(oldLength, addedVolume) {
   if (![oldLength, addedVolume].every(Number.isFinite) || oldLength < 0 || addedVolume < 0)
     throw new TypeError('The spoil heap needs a non-negative length and volume.');
   if (addedVolume === 0) return oldLength;
-  const addedAt = length => borerSpoilProfileChanges(oldLength, length)
-    .reduce((total, cell) => total + cell.height, 0);
+  // Sizing probes the same heap many times. Sum heights directly rather than
+  // allocating a list of changed cells for every probe. Only the final
+  // length needs a list for the ground edit.
+  const first = Math.max(0, Math.floor(oldLength - 5 / 0.3));
+  const addedAt = length => {
+    let total = 0;
+    for (let along = first; along <= Math.ceil(length); along++) {
+      const near = Math.min(5, 0.3 * along);
+      const before = Math.max(0, Math.min(near, 0.3 * (oldLength - along)));
+      const after = Math.max(0, Math.min(near, 0.3 * (length - along)));
+      if (after <= before) continue;
+      for (let across = -7; across <= 7; across++) {
+        const side = 5 - 0.7 * Math.abs(across);
+        total += Math.min(after, side) - Math.min(before, side);
+      }
+    }
+    return total;
+  };
   let low = oldLength, high = oldLength + 1;
   while (addedAt(high) < addedVolume) high = oldLength + 2 * (high - oldLength);
   for (let i = 0; i < 40; i++) {

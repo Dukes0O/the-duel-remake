@@ -77,6 +77,14 @@ import * as THREE from 'three';
       .reduce((total, cell) => total + cell.height, 0);
     assert.ok(Math.abs(laid - volume) < 1e-8, 'Sampled cells hold the requested volume.');
   }
+  for (const oldLength of [0, 0.9, 1, 16.7, 33.4, 100]) {
+    for (const volume of [0.0001, 0.1, 5, 100]) {
+      const length = borerSpoilSampledLength(oldLength, volume);
+      const laid = borerSpoilProfileChanges(oldLength, length)
+        .reduce((total, cell) => total + cell.height, 0);
+      assert.ok(Math.abs(laid - volume) < 1e-8, 'Sizing agrees with the ground-cell changes.');
+    }
+  }
   assert.equal(borerSpoilSampledLength(10, 0), 10);
   assert.throws(() => borerSpoilSampledLength(0, -1), TypeError);
 }
