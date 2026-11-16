@@ -28,8 +28,11 @@ A8 adds all three calls. Pim calls once after three short attempts to free a sta
 
 A9 is complete. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The browser scenario sends a surveyed bore, records the board 30 seconds apart while the excavator is selected, visits the working face, takes the lever for five seconds and hands it back. It records each measurement and both pictures before reporting all failures. It still needs Claude to run it in Chrome.
 
+SP is underway. Bank planning now uses a set to find existing ground cells as it adds rows, avoiding a scan of the whole bank for each candidate. The bank is still the old narrow shape: the repose slopes, smooth crest, real-ground measurements and maximum cells filled per step remain to be implemented and checked.
+
 ## Checks
 
+- SP preparation: `node tools/test-machine-borer.mjs` passed, including unique bank cells and the existing ground-refresh check (864 height samples over 100 cutting steps).
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
 - `node tools/test-machine-borer-apprentice.mjs`: passed. Invalid cuts, two-cut means, later improvements, the Dig's Easy setting and limits, retaining a finished tunnel once, and freeing Mabel for a second cut.
 - `node tools/test-town-apprentices.mjs`: passed, 16 checks.

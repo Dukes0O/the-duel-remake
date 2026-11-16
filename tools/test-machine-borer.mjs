@@ -604,6 +604,8 @@ assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) <
   'A bent cut keeps its bulked volume in the bank.');
 assert.ok(bentMuck.spoilBank.cells.every(cell => !bentMuckGround.refusal({...cell, radius:0.49})),
   'The bank skips protected road ground.');
+assert.equal(new Set(bentMuck.spoilBank.cells.map(cell => `${cell.x},${cell.z}`)).size,
+  bentMuck.spoilBank.cells.length, 'Rounded bank positions never add the same ground cell twice.');
 assert.ok(bentMuck.spoilBank.cells.every(cell => bentMuckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001),
   'A bent cut keeps the bank below five metres.');
 const beforeReverse = pileVolume();

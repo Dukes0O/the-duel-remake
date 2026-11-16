@@ -105,6 +105,9 @@ function planSpoil(ground, segments, bank, amount) {
   const dx = end.x - start.x, dz = end.z - start.z, length = Math.hypot(dx, dz);
   const rightX = dz / length, rightZ = -dx / length;
   const cells = bank.cells, allocations = [];
+  // The wider bank needs many samples. Keep membership checks independent of
+  // its length as new rows are planned, including on diagonal headings.
+  let occupied;
   let remaining = amount, lastReason = null;
   while (remaining > 1e-9) {
     const nearEnd = cells.filter(cell => cell.along >= bank.far - 6 - 1e-9);
@@ -114,6 +117,7 @@ function planSpoil(ground, segments, bank, amount) {
       if (height < 5 - 1e-8 && (!best || height < best.height)) best = {cell, height};
     }
     if (!best) {
+      occupied ||= new Set(cells.map(cell => `${cell.x},${cell.z}`));
       let added = false;
       for (let tries = 0; tries < 128; tries++) {
         const along = bank.far + 1.5;
@@ -124,11 +128,13 @@ function planSpoil(ground, segments, bank, amount) {
           const distance = Math.max(0, along - back);
           const x = Math.round(start.x + rightX * (12 + distance) - rightZ * across);
           const z = Math.round(start.z + rightZ * (12 + distance) + rightX * across);
-          if (cells.some(cell => cell.x === x && cell.z === z)) continue;
+          const key = `${x},${z}`;
+          if (occupied.has(key)) continue;
           const shape = {x, z, radius:0.49};
           const reason = (ground.spoilRefusal || ground.refusal)(shape);
           if (reason) { lastReason = reason; continue; }
           cells.push({x, z, along:distance, base:ground.heightAt(x, z)});
+          occupied.add(key);
           added = true;
         }
         if (added) break;
