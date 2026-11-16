@@ -445,6 +445,40 @@ rider after the Steps (arriving with 2 in 11.8 minutes). Two faults, both Claude
 - The bed's way passes the Halfway Camp before it turns off for the Wash, so it meets the first barricade and may use the
   camp's brazier as well as the Wash camp's. What it avoids is the bridge.
 
+## Job 1 handed over: the picture check, a review and Claude's second drive (16 November 2026): not merged yet
+
+Codex's last table, with riders keeping to their road and the bed's cold at twice normal:
+
+| Way | km | Minutes | Rams | Scoops | Arrived with | Pay |
+| --- | ---: | ---: | ---: | --- | ---: | --- |
+| East Road | 7.96 | 6.1 | 1 | Halfway Camp | 58 | alive |
+| Plates, clean | 6.17 | 9.8 | 0 | none | 32 | alive |
+| Salt pan, clean | 9.40 | 8.0 | 0 | none | 46 | alive |
+| River bed | 9.47 | 10.4 | 0 | Wash camp | 36 | alive |
+| River bed, no scoop | 9.43 | 10.2 | 0 | none | 13 | barely |
+
+- **Picture check `everburn-job1` (Claude, visible window): passes, nine pictures, no failure listed.** The map at the start
+  lists one way, "The East Road: The Ash Men hold the Girder Bridge."; after the bridge it lists the river bed's way too, with
+  the two barricades and the bed's cold as things found. The result screen reads "The ember arrived alive" and pays.
+- **Claude's drive, in real time.** The yard's gate tower is solid (driven into, the pot lost 8). On the East Road the car
+  holds 194 km/h and the pot cools about a point every six seconds, so the road is two and a half minutes of driving plus its
+  two fights: a clean run is on course for bright. The Halfway Camp is found by its smoke; its rider rammed for exactly 15
+  and shoved the stopped car out of the brazier's 8 m; the flamethrower answers with "Road is clear. Keep your wheels under
+  you." Tin Town's gate stayed shut to a car at 49 km/h (the pot lost 8 on it) and let one through at 13. Tin Town reads as a
+  town. Steering in blind bursts took the car off the road at every bend, so the bends and the bridge were not driven; that
+  wants a person at the keys.
+- **Faults from the drive:** stopping on the forge's drawn ring did not end the job (the ring is larger than the place that
+  counts, which is 6 m); the camp's rider waits on the brazier itself; the result screen offers "Next job: Get Out and Walk",
+  a job Kyle turned down and which is not remade.
+- **Independent review by Codex:** no new save field; rules from seed and inputs. Faults: an out pot cannot be relit once
+  all three scoops are used; a returning rider can be held by a solid and the furnace's riders never give up; riders trace
+  sight 120 times a second; one assertion in the pot's suite was loosened and the old `everburn-play` check was emptied and
+  kept. Changes that reach beyond the job, all ruled or accepted: the bed's firm ground and cold (the land's), the buttes
+  (the land's), the camera in the air (the Scablands), a world job's screen (every world job, all hidden).
+- **Easy, said plainly:** Easy halves what a hit takes; it does not slow the cold. Claude once wrote "every loss"; the built
+  rule is the right one.
+- All nine things are with Codex. Then a confirmation review, the long tests, and the merge, still hidden. Then Kyle's try.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
