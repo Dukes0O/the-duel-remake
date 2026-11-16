@@ -50,7 +50,11 @@ The sizing probes now sum the sampled heights without creating a list of cells o
 
 The heap profile can now map its changed area onto the actual one-metre ground grid at any heading and mouth position. It visits each ground cell once, avoiding gaps or duplicate fills from rounding a rotated grid. This is preparation only: the cutter still uses the narrow bank, and sizing, protected ground, real-ground checks and the maximum cells filled per step remain outstanding.
 
+The heap can now size a deposit against the actual rotated and offset ground grid. It reuses candidate cell coordinates during sizing. This is preparation only: the cutter still uses the narrow bank. The new sizing function still needs a performance check in the cutting loop.
+
 ## Checks
+
+- SP rotated sizing: `node tools/test-machine-borer.mjs` checks requested volumes at four headings, four bank lengths and three load sizes.
 
 - SP rotated grid: `node tools/test-machine-borer.mjs` checks profile changes against the actual ground grid at four headings, three lengths and an offset mouth, including uniqueness and bounded changes.
 

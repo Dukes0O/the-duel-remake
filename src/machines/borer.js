@@ -213,6 +213,37 @@ export function borerSpoilSampledLength(oldLength, addedVolume) {
 }
 
 
+/** Size a deposit on the actual ground grid for any bank heading. */
+export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) {
+  if (![oldLength, addedVolume].every(Number.isFinite) || oldLength < 0 || addedVolume < 0)
+    throw new TypeError('The spoil heap needs a non-negative length and volume.');
+  // Validate the grid even for an empty deposit.
+  borerSpoilGridChanges(origin, direction, oldLength, oldLength);
+  if (addedVolume === 0) return oldLength;
+  const gridVolume = length => borerSpoilGridChanges(origin, direction, oldLength, length)
+    .reduce((sum, cell) => sum + cell.height, 0);
+  let low = oldLength, high = oldLength + 1;
+  while (gridVolume(high) < addedVolume) high = oldLength + 2 * (high - oldLength);
+  // The final bound contains every cell the probes can affect. Reuse their
+  // coordinates and original heights instead of rebuilding a grid per probe.
+  const candidates = borerSpoilGridChanges(origin, direction, oldLength, high)
+    .map(cell => ({along:cell.along, across:cell.across,
+      before:borerSpoilProfile(cell.along, cell.across, oldLength)}));
+  const addedAt = length => {
+    let total = 0;
+    for (const cell of candidates)
+      total += borerSpoilProfile(cell.along, cell.across, length) - cell.before;
+    return total;
+  };
+  for (let i = 0; i < 40; i++) {
+    const middle = (low + high) / 2;
+    if (addedAt(middle) < addedVolume) low = middle;
+    else high = middle;
+  }
+  return (low + high) / 2;
+}
+
+
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their
 // height before the bank reached them. Removed material makes room again.

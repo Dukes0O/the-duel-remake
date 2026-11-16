@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -115,6 +115,22 @@ import * as THREE from 'three';
   }
   assert.equal(borerSpoilSampledLength(10, 0), 10);
   assert.throws(() => borerSpoilSampledLength(0, -1), TypeError);
+}
+
+// Size against actual rotated, offset ground cells, including small first loads.
+{
+  const origin = {x:12.3, z:-2.6};
+  for (const angle of [0, Math.PI / 7, Math.PI / 4, Math.PI / 2]) {
+    const direction = {x:Math.cos(angle), z:Math.sin(angle)};
+    for (const oldLength of [0, 5.2, 40, 1000]) for (const volume of [0.01, 1, 100]) {
+      const length = borerSpoilGridLength(origin, direction, oldLength, volume);
+      const laid = borerSpoilGridChanges(origin, direction, oldLength, length)
+        .reduce((sum, cell) => sum + cell.height, 0);
+      assert.ok(Math.abs(laid - volume) < 1e-7, 'Rotated grid holds the requested volume.');
+    }
+    assert.equal(borerSpoilGridLength(origin, direction, 10, 0), 10);
+  }
+  assert.throws(() => borerSpoilGridLength(origin, {x:1,z:1}, 0, 0), TypeError);
 }
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
