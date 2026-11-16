@@ -394,6 +394,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const eighth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4000);
   assert.ok(eighth.along >= 4000, `the car follows the East Road for 4 km: ${JSON.stringify(eighth)}`);
   assert.ok(eighth.driven >= 490 && eighth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eighth)}`);
+  assert.ok(eighth.elapsedSeconds < 45, `the driver keeps moving until the bridge approach: ${JSON.stringify(eighth)}`);
   assert.ok(eighth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eighth)}`);
   assert.deepEqual(eighth.burntDuringDrive, [step.barriers[1].id], 'the real flamethrower burns the bridge barricade on this stretch');
   assert.ok(eighth.jolts.every(jolt => Number.isFinite(jolt.amount) && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),

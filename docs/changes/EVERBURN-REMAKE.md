@@ -656,3 +656,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach without changing the jolt rule, then measure the four arrival bands and times, camera, cover and scenario.
+
+## Larger land, faster bridge approach (15 November 2026)
+
+- The Medium proof driver stays at road speed until 45 m from the bridge barricade, while keeping its earlier camp approach. The real flamethrower still burns the bridge barricade. No new game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The 500 m bridge stretch took 38.63 seconds. The full drive took 9.91 minutes and arrived with 9.04 ember; a rider contact still caused a 16.90 jolt. This does not meet the bright arrival band. Race fingerprints were not checked in this round.
+- Changed assertions: none; the bridge time check is new. Codex decided: slow 45 m before the bridge barricade. Claude should review the driving choice.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the earlier 140 m bridge slowdown. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach, then measure all four route arrival bands and times, camera, cover and scenario.

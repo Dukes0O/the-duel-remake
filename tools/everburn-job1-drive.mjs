@@ -82,16 +82,19 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     // when a live barricade is in front of the car and within flame range.
     const step = state.arena.worldJob.definition.steps[0];
     const burnt = state.arena.worldJob.job.stepState.burntBarricades || [];
-    let barrierDistance = Infinity;
+    let barrierDistance = Infinity, barrierLimit = 140;
     for (const barrier of step.barriers || []) {
       if (burnt.includes(barrier.id)) continue;
       const dx = barrier.position.x - car.x, dz = barrier.position.z - car.z;
       const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
-      if (Math.abs(angle) < Math.PI / 6) barrierDistance = Math.min(barrierDistance, Math.hypot(dx, dz));
+      if (Math.abs(angle) < Math.PI / 6 && Math.hypot(dx, dz) < barrierDistance) {
+        barrierDistance = Math.hypot(dx, dz);
+        barrierLimit = barrier.id === 'ash-men-barricade-2' ? 45 : 140;
+      }
       if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
     }
     // Keep road speed until the final approach, then prepare for the slow gate.
-    const approachLimit = barrierDistance < 140 ? 8 : targetSpeedMph;
+    const approachLimit = barrierDistance < barrierLimit ? 8 : targetSpeedMph;
     const speedLimit = gateApproach && gateDistance < 200 ? Math.min(approachLimit, 16) : approachLimit;
     duel.setInput({throttle:Math.abs(state.speedMph) < speedLimit ? 0.8 : 0,
       brake:Math.abs(state.speedMph) > speedLimit + 3 ? 1 : 0,
