@@ -86,3 +86,7 @@ it is the second slice, built with the save checker (AGENTS rule 6), and nothing
 Sound: `borer.call` (the apprentice's call), `borer.daylight` as now.
 
 Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil bank's look (it is a flat pale slab).
+
+## Codex decided (Claude to review)
+
+- The Dig offers Pim because it has no town available without a save. The town record stores the measured line error separately and expresses accuracy as 1 / (1 + error in metres). Later lessons improve each measured figure independently.

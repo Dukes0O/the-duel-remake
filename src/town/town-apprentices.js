@@ -94,6 +94,37 @@ export function finishTeachingSession(town, sessionId, demonstration, {easy = fa
   return record;
 }
 
+/** Learn a line-cutting job from two finished cuts, then keep better figures. */
+export function recordBorerLesson(town, personId, lesson, {easy = false} = {}) {
+  requireTown(town);
+  const person = personIn(town, personId);
+  if (!person) throw new TypeError('That apprentice is not in town.');
+  if (!lesson) return null;
+  if (!['errorM', 'stallsPer100M', 'pace'].every(key => Number.isFinite(lesson[key]) && lesson[key] >= 0) || lesson.pace > 1)
+    throw new TypeError('The cut needs its measured figures.');
+  town.borerLessons ??= [];
+  town.borerLessons.push({...lesson});
+  let record = skillFor(town, personId, 'bore');
+  if (!record && town.borerLessons.length < 2) return null;
+  const figures = record ? lesson : Object.fromEntries(['errorM', 'stallsPer100M', 'pace'].map(key =>
+    [key, (town.borerLessons[0][key] + town.borerLessons[1][key]) / 2]));
+  const errorM = easy ? Math.min(.5, figures.errorM) : figures.errorM;
+  const pace = easy ? Math.max(.8, figures.pace) : figures.pace;
+  if (!record) {
+    record = {personId, kind:'bore', machineId:'borer', skill:.25, rate:pace,
+      accuracy:1 / (1 + errorM), errorM, stallsPer100M:figures.stallsPer100M,
+      taughtBy:'player', uses:0};
+    town.apprenticeships.push(record);
+    addBookEntry(town, 'player', person, 'bore');
+  } else {
+    record.errorM = Math.min(record.errorM, errorM);
+    record.stallsPer100M = Math.min(record.stallsPer100M, figures.stallsPer100M);
+    record.rate = Math.max(record.rate, pace);
+    record.accuracy = 1 / (1 + record.errorM);
+  }
+  return record;
+}
+
 export function canDelegate(town, personId, kind) {
   requireTown(town);
   if (kind === undefined) return town.apprenticeships.some(record => record.kind === personId);

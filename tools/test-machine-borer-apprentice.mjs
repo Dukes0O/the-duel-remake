@@ -1,0 +1,31 @@
+﻿import assert from 'node:assert/strict';
+import {borerCutLesson} from '../src/machines/borer.js';
+import {createDigSandbox} from '../src/machines/dig-sandbox.js';
+import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
+
+const sim = createDigSandbox();
+const town = sim.apprenticeTown;
+const cut = (errorM, stalls, pace, distanceM = 100, reachedDaylight = true) =>
+  borerCutLesson({mouthY:0, y:errorM, distanceM, reachedDaylight, stallCount:stalls, allowedCutM:distanceM / pace});
+assert.equal(town.people[0].name, 'Pim');
+assert.equal(recordBorerLesson(town, 'pim', cut(1, 2, .5, 99)), null);
+assert.equal(recordBorerLesson(town, 'pim', cut(1, 2, .5, 100, false)), null);
+assert.equal(town.borerLessons.length, 0);
+assert.equal(recordBorerLesson(town, 'pim', cut(1, 2, .5)), null);
+assert.equal(canDelegate(town, 'pim', 'bore'), false);
+const record = recordBorerLesson(town, 'pim', cut(3, 4, .9));
+assert.equal(canDelegate(town, 'pim', 'bore'), true);
+assert.equal(record.errorM, 2);
+assert.equal(record.stallsPer100M, 3);
+assert.ok(Math.abs(record.rate - .7) < 1e-9);
+assert.equal(record.taughtBy, 'player');
+recordBorerLesson(town, 'pim', cut(.25, 5, .8));
+assert.equal(record.errorM, .25);
+assert.equal(record.stallsPer100M, 3);
+assert.equal(record.rate, .8);
+const easy = {people:[{id:'pim', name:'Pim'}]};
+recordBorerLesson(easy, 'pim', cut(2, 1, .2), {easy:true});
+const safe = recordBorerLesson(easy, 'pim', cut(4, 3, .4), {easy:true});
+assert.equal(safe.errorM, .5);
+assert.equal(safe.rate, .8);
+console.log('Borer apprentice lessons: eligibility, averages, improvement and Easy passed.');

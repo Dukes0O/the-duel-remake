@@ -5,7 +5,8 @@ import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
 import {HILLS} from '../world/scablands-height.js';
-import {createBorerState, stepBorer} from './borer.js';
+import {borerCutLesson, createBorerState, stepBorer} from './borer.js';
+import {recordBorerLesson} from '../town/town-apprentices.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {solidsNear} from '../world/scablands-solids.js';
@@ -142,7 +143,7 @@ function roadGround(edit) {
 const suppliedGroundWork = new WeakMap();
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false} = {}) {
   const edit = ground || newGround(seed);
   const memory = globalThis.__theDigGroundMemory ??= {};
   const saved = memory[playerId];
@@ -165,7 +166,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,protectLand,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]},tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -243,7 +244,16 @@ function fixedStep(sim,input) {
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       const daylight=result.events.find(event=>event.type==='daylight');
-      if(daylight) next.daylightMessage=daylight.message;
+      if(daylight) {
+        next.daylightMessage=daylight.message;
+        const lesson=borerCutLesson(result.state);
+        if (lesson) {
+          const town={...sim.apprenticeTown, apprenticeships:sim.apprenticeTown.apprenticeships.map(record=>({...record})),
+            borerLessons:[...sim.apprenticeTown.borerLessons], book:[...sim.apprenticeTown.book]};
+          recordBorerLesson(town, 'pim', lesson, {easy:sim.easy});
+          next.apprenticeTown=town;
+        }
+      }
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM ||
           result.events.some(event=>event.type==='breakthrough'||event.type==='daylight')){
