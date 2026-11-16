@@ -51,4 +51,4 @@ suites, with the count. Claude will rule on owner suites for those in a later ca
 
 ## Codex decided (Claude to review)
 
-(none yet)
+A clean `--since HEAD` has no changed files or file-driven suites. The standard lane smoke and replay guards still run, as the card says nothing else changes in what is picked.

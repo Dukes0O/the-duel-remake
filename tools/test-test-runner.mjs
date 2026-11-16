@@ -12,11 +12,12 @@ same(new Set(LEGACY_SUITE_ORDER).size,80,'legacy suite order contains no duplica
 same(createHash('sha256').update(LEGACY_SUITE_ORDER.join('\n')).digest('hex'),'948bc2c6bb4aa171d73d10af114b079e10c87885c93a2799bd08ab3ba010a40b','migration preserves the exact complete legacy order');
 check(Object.isFrozen(LEGACY_SUITE_ORDER),'discovery cannot mutate the historical order');
 
-const defaults={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,json:false};
+const defaults={list:false,help:false,filters:[],jobs:1,keepGoing:false,tier:null,changed:false,since:null,json:false};
 same(parseArguments([]),defaults,'default runs all suites');
 same(parseArguments(['--list','--filter','Reverse','--filter=HEIGHT']),{...defaults,list:true,filters:['reverse','height']},'listing and repeated case-insensitive filters compose');
 same(parseArguments(['--filter','  core  ','-h']),{...defaults,help:true,filters:['core']},'filter whitespace is normalized and short help works');
 same(parseArguments(['--tier','full','--jobs=8','--keep-going','--json']),{...defaults,tier:'full',jobs:8,keepGoing:true,json:true},'new full-run options compose');
+same(parseArguments(['--tier=lane','--since=HEAD']),{...defaults,tier:'lane',since:'HEAD'},'since selects the supplied commit');
 same(parseArguments(['--tier=lane','--changed','--jobs','2']),{...defaults,tier:'lane',changed:true,jobs:2},'lane change selection and separate jobs argument compose');
 for(const args of [['--filter'],['--filter='],['--filter',' '],['--filter','--list'],['--unknown'],['reverse'],['--jobs'],['--jobs=0'],['--jobs=33'],['--jobs=abc'],['--tier'],['--tier=wrong'],['--tier','full','--changed']]){
   assert.throws(()=>parseArguments(args),/requires|Unknown argument|cannot narrow/,'malformed CLI input is rejected');checks++;
@@ -102,7 +103,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
 
 // FAC-03: only proven native heavyweight suites leave daytime lane dispatch.
 {
-  const heavy=['tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
+  const heavy=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs','tools/test-arena-shove.mjs','tools/test-old-smoke.mjs','tools/test-field-battle.mjs',
+    'tools/test-audio-crash-peak.mjs','tools/test-convoy-tanker-art.mjs',
     'tools/test-first-person-contact.mjs','tools/test-first-person-cloth.mjs','tools/test-first-person-polish.mjs',
     'tools/test-rustwall-p2-relief.mjs','tools/test-rook-p2-candidate.mjs',
     'tools/test-rustwall-p2.mjs','tools/test-rustwall-atlas-isolation.mjs',
@@ -126,6 +128,37 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     'the night full tier still runs every heavy suite');
   same(new Set(lane.map(task=>task.suite)).size,actual.length-heavy.length,
     'fully affected lane loses exactly the listed full-tier-only suites');
+}
+// QA-CHECKS-BY-CARD: explanations identify a changed file and survive JSON output.
+{
+  const suite='tools/test-everburn-easy.mjs',file='src/world/jobs/everburn.js';
+  const args=['--tier','lane','--list'];
+  const dependencies={discover:()=>[CORE_SUITE,suite],getChanges:()=>[file],
+    affected:(suites,paths)=>paths.includes(file)?suites.filter(name=>name===suite):[],
+    log:()=>{},error:()=>{}};
+  const messages=[];
+  same(await main(args,{...dependencies,log:message=>messages.push(message)}),0,'deferred list succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by ${file})`),'plan names the file that picked a deferred suite');
+  const json=[];
+  await main([...args,'--json'],{...dependencies,log:message=>json.push(message)});
+  same(JSON.parse(json[0]).leftToTheNight,[{suite,pickedBy:file}],'JSON plan includes deferred suite and reason');
+  const run=[];
+  await main(['--tier','lane','--json'],{...dependencies,log:message=>run.push(message),
+    run:async()=>({exitCode:0,passed:1,failures:[],notRun:0,durationMs:0})});
+  same(JSON.parse(run[0]).leftToTheNight,[{suite,pickedBy:file}],'JSON run includes deferred suite and reason');
+}
+// The real dependency graph defers both Everburn drives for that file alone.
+{
+  const file='src/world/jobs/everburn.js', deferred=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs'];
+  const impacted=suitesForChanges(actual,[file]);
+  check(deferred.every(suite=>impacted.includes(suite)),'Everburn alone picks both long drives');
+  check(deferred.every(suite=>!selectPlan(actual,{tier:'lane',affected:impacted}).some(task=>task.suite===suite)),
+    'Everburn lane defers both long drives');
+  const messages=[];
+  same(await main(['--list','--tier','lane','--changed'],{getChanges:()=>[file],log:message=>messages.push(message)}),0,
+    'Everburn lane plan succeeds');
+  check(deferred.every(suite=>messages.includes(`Left to the night: ${suite} (picked by ${file})`)),
+    'Everburn lane names both deferred drives and their cause');
 }
 // Instructor sampling uses the existing per-suite arguments, only in lane plans.
 {
@@ -320,6 +353,8 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(changedFiles({git}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],
     'changed mode includes branch, working-tree and untracked paths without duplicates');
   check(calls[1].includes('base123'),'changed mode compares with integration merge base');
+  same(changedFiles({git,since:'HEAD'}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],'since includes tracked and untracked changes');
+  assert.throws(()=>changedFiles({since:'missing',git:()=>({status:1,stdout:''})}),/Cannot find commit: missing/);checks++;
   const failedCalls=[];
   assert.throws(()=>changedFiles({git:(executable,args)=>{
     failedCalls.push([executable,...args]);
