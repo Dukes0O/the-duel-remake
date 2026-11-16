@@ -250,7 +250,7 @@ function validateCombat(packet) {
 }
 
 async function previousNight(date,dependencies) {
-  const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&name.slice(6,16)<date).sort().reverse();
+  const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&name.slice(6,16)<=date).sort().reverse();
   for(const name of names) try { const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name))); if(row.schema===1&&commitPattern.test(row.source))return row; } catch {}
   return null;
 }

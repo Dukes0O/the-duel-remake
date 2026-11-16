@@ -59,7 +59,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       if(files.get(copyRoot+'/'+reportName)!==sourceReport||files.has(copyRoot+'/src/game.js'))throw Error('Copy is changed; nonforced cleanup refused.');
       copies.push(['remove',copy.source]);
     },
-    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:lastGreen?previous:null});return evidence;},
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:(lastGreen || files.has(`${root}/docs/board/checks/night-${date}.json`))?previous:null});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],

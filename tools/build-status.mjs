@@ -315,6 +315,20 @@ function backups(root, liveRoot) {
 
 const cell = value => String(value ?? 'unknown').replaceAll('|', '\\|').replace(/[\r\n]/g, ' ');
 const bytes = (value, unit = 'B') => value === null ? 'unavailable' : `${value.toLocaleString('en-US')}${unit ? ` ${unit}` : ''}`;
+export function latestNight(root, now) {
+  const directory = join(root, 'docs/board/checks');
+  let names;
+  try { names = readdirSync(directory).filter(name => /^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)).sort().reverse(); }
+  catch { return null; }
+  for (const name of names) {
+    const value = jsonFile(join(directory, name)).value;
+    if (value?.schema !== 1 || !value.date || !value.source || !value.status) continue;
+    const today = new Date(now).toISOString().slice(0,10);
+    const nights = Math.max(0, Math.floor((Date.parse(today+'T00:00:00Z') - Date.parse(value.date+'T00:00:00Z')) / 86400000));
+    return {date:value.date, commit:value.source, result:value.status, nights};
+  }
+  return null;
+}
 export function renderStatus(report) {
   const lines = ['# Build status', '', `Observed at: ${report.time}`, '',
     `Observation commit: ${report.observationCommit}`, '',
@@ -325,6 +339,7 @@ export function renderStatus(report) {
     `Live build version: ${report.live.version ?? (report.live.checked ? 'missing or invalid manifest' : 'not checked')}`, '',
     `Full tier: ${report.fullRun.status}; exact HEAD passed: ${report.fullRun.exactHead ? 'yes' : 'no'}.`, '',
     `Last recorded full run: ${report.fullRun.time ?? 'unknown'}; tested commit: ${report.fullRun.commit ?? 'unknown'}.`, '',
+    `Latest nightly check: ${report.night ? `${report.night.date}; commit ${report.night.commit}; ${report.night.result}${report.night.nights > 1 ? `; none for ${report.night.nights} nights` : ''}.` : 'none recorded.'}`, '',
     '## Feature switches', '', '| Switch | State |', '| --- | --- |',
     ...Object.entries(report.features).map(([name, state]) => `| ${cell(name)} | ${cell(state)} |`), '',
     '## Lane branches', '', 'Age is whole days since the last branch commit. Removal candidates are suggestions only; this tool never removes a worktree.', '',
@@ -369,7 +384,7 @@ export function collectStatus({ root = ROOT, liveRoot = null, now = new Date().t
   const sizeReport = sizes(root);
   if (sizeReport.targetIssue) issues.push(`Size targets ${sizeReport.targetIssue}.`);
   return { schema: 1, time: now, observationCommit: integration.commit, integration, live,
-    fullRun: fullRun(root, integration, now), features, lanes: laneRows, sizes: sizeReport,
+    fullRun: fullRun(root, integration, now), night: latestNight(root, now), features, lanes: laneRows, sizes: sizeReport,
     backups: backups(root, liveRoot), issues };
 }
 
