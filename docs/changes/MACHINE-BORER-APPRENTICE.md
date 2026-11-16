@@ -32,8 +32,11 @@ SP is underway. Bank planning now uses a set to find existing ground cells as it
 
 The bank is now copied only when a cutting step plans a deposit, rather than on every call while Mabel is idle, stalled or travelling. A deposit still gets a separate copy so it cannot change an earlier simulation state.
 
+Planning a deposit now reads each existing bank cell's height once, even when the deposit needs several cells. Newly added cells use the height already read when they were created. This prepares for the wider bank without repeated land samples within one deposit; the heap itself is still outstanding.
+
 ## Checks
 
+- SP height reads: `node tools/test-machine-borer.mjs` passed. A deposit spanning nearly full cells reads each existing cell once per cutting step; the ground-refresh check sampled 864 heights over 100 steps.
 - SP copying: `node tools/test-machine-borer.mjs` passed. Idle work shares the unchanged bank, and a new deposit leaves the earlier bank state intact. The ground-refresh check sampled 864 heights over 100 cutting steps.
 - SP preparation: `node tools/test-machine-borer.mjs` passed, including unique bank cells and the existing ground-refresh check (864 height samples over 100 cutting steps).
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.

@@ -581,6 +581,24 @@ if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalS
 else delete globalThis.localStorage;
 closeDigSandbox();
 const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
+// A deposit spanning several nearly full cells must not resample them for
+// every allocation. A wider heap will have more cells to consider.
+{
+  const base = createGroundEdit({region:{editable:true}, naturalHeight:(_x, z)=>z >= 6 ? 20 : 0});
+  const reads = new Map();
+  const ground = {...base, heightAt(x, z) {
+    const key = `${x},${z}`;
+    reads.set(key, (reads.get(key) || 0) + 1);
+    return base.heightAt(x, z);
+  }};
+  const cells = [20, 21, 22].map(x => ({x, z:0, along:x - 20, base:-4.99}));
+  const state = {...createBorerState({z:10}), started:true, covered:true,
+    spoilBank:{far:2, cells}};
+  const result = stepBorer(state, {thrust:1/3}, ground, 'rock', 1/120);
+  assert.ok(result.state.distanceM > 0, 'The deposit and cut finish.');
+  for (const cell of cells)
+    assert.equal(reads.get(`${cell.x},${cell.z}`), 1, 'Planning samples each existing bank cell once per step.');
+}
 const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80 / 3).state;
 const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;

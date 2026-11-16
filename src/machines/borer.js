@@ -108,12 +108,16 @@ function planSpoil(ground, segments, bank, amount) {
   // The wider bank needs many samples. Keep membership checks independent of
   // its length as new rows are planned, including on diagonal headings.
   let occupied;
+  // A large deposit can choose several cells. Read each existing cell only
+  // once while planning it; the ground does not change until the plan lands.
+  const heights = new Map();
   let remaining = amount, lastReason = null;
   while (remaining > 1e-9) {
     const nearEnd = cells.filter(cell => cell.along >= bank.far - 6 - 1e-9);
     let best = null;
     for (const cell of nearEnd) {
-      const height = ground.heightAt(cell.x, cell.z) - cell.base + (cell.planned || 0);
+      if (!heights.has(cell)) heights.set(cell, ground.heightAt(cell.x, cell.z) - cell.base);
+      const height = heights.get(cell);
       if (height < 5 - 1e-8 && (!best || height < best.height)) best = {cell, height};
     }
     if (!best) {
@@ -133,7 +137,9 @@ function planSpoil(ground, segments, bank, amount) {
           const shape = {x, z, radius:0.49};
           const reason = (ground.spoilRefusal || ground.refusal)(shape);
           if (reason) { lastReason = reason; continue; }
-          cells.push({x, z, along:distance, base:ground.heightAt(x, z)});
+          const cell = {x, z, along:distance, base:ground.heightAt(x, z)};
+          cells.push(cell);
+          heights.set(cell, 0);
           occupied.add(key);
           added = true;
         }
@@ -144,6 +150,7 @@ function planSpoil(ground, segments, bank, amount) {
     }
     const volume = Math.min(remaining, 5 - best.height);
     best.cell.planned = (best.cell.planned || 0) + volume;
+    heights.set(best.cell, best.height + volume);
     allocations.push({cell:best.cell, volume});
     remaining -= volume;
   }
