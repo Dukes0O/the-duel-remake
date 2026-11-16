@@ -586,16 +586,15 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
   assert.ok(third.along >= 1500 && third.maxDistance < 10, 'the car follows the plates way for the next 500 m');
   assert.equal(third.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the plates drive records each actual jolt');
-  assert.ok(third.firstOut && third.firstOut.along >= 1000 && third.firstOut.along <= third.along,
-    'the drive records where the ember actually went out');
+  assert.equal(third.firstOut === null, third.ember > 0, 'the drive records an outage if one occurred');
   assert.ok(third.jolts.some(jolt => jolt.riders.length > 0), 'the drive records riders at a jolt');
   const fourth = driveAlongRoad(duel, route, 2000, 7200, 25);
   console.log('Plates 2 km:', JSON.stringify(fourth));
   assert.ok(fourth.along >= 2000 && fourth.maxDistance < 10, 'the car follows the plates way for a fourth 500 m');
   assert.equal(fourth.ember, duel.state.arena.worldJob.job.stepState.ember,
     'the fourth stretch records the actual ember');
-  assert.equal(fourth.beganOut, true, 'the fourth stretch records that the ember was already out');
-  assert.equal(fourth.firstOut, null, 'the earlier outage is not reported as a new one');
+  assert.equal(fourth.beganOut, third.ember <= 0, 'the fourth stretch records its starting ember');
+  assert.equal(fourth.firstOut !== null, !fourth.beganOut && fourth.ember <= 0, 'the drive records a new outage');
 }
 // Compare another legal plates speed using a fresh seeded job and real driving.
 {
@@ -605,23 +604,24 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
   duel.state.countdown = 0;
   assert.ok(driveToCinder(duel, pickup).loaded, 'the comparison driver collects the pot');
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20, 'the comparison driver leaves through the gate');
+  const yardExit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(yardExit.along >= 20, 'the comparison driver leaves through the gate');
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const opening = driveAlongRoad(duel, route, 2000, 18000, 28);
-  console.log('Plates 28 mph comparison:', JSON.stringify(opening));
+  const opening = driveAlongRoad(duel, route, 2000, 18000, 30);
+  console.log('Plates 30 mph drive:', JSON.stringify(opening));
   assert.ok(opening.along >= 2000 && opening.distance < 10, 'the comparison car follows the real plates way to 2 km');
   assert.equal(opening.ember, duel.state.arena.worldJob.job.stepState.ember, 'the comparison records the actual ember');
   assert.ok(opening.abovePlatesLimitTicks > 0 && opening.abovePlatesLimitTicks <= opening.ticks,
     'the driver records time above the plates speed limit');
   assert.equal(opening.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
     'the comparison records each actual jolt');
-  const continuation = driveMeasuredStretches(duel, route, [2500, 3000], 28);
-  console.log('Plates 28 mph continuation:', JSON.stringify(continuation));
+  const continuation = driveMeasuredStretches(duel, route, [2500, 3000], 30);
+  console.log('Plates continuation:', JSON.stringify(continuation));
   assert.equal(continuation.stretches.length, 2, 'the car reaches both measured stretches');
   for (const [index, stretch] of continuation.stretches.entries()) {
     assert.ok(stretch.along >= 2500 + index * 500 && stretch.maxDistance < 10, 'the car follows the plates way');
-    assert.equal(stretch.beganOut, true, 'the ember remains out on each stretch');
+    assert.equal(stretch.firstOut !== null, !stretch.beganOut && stretch.ember <= 0, 'the stretch records a new outage');
   }
   assert.equal(continuation.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember, 'the drive records the actual ember');
   assert.equal(continuation.ticks, continuation.stretches.reduce((sum, stretch) => sum + stretch.ticks, 0), 'the drive records actual elapsed ticks');
@@ -632,7 +632,7 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
   const ends = [];
   for (let along = 3500; along < gateAlong - 150; along += 500) ends.push(along);
   ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const remaining = driveMeasuredStretches(duel, route, ends, 28);
+  const remaining = driveMeasuredStretches(duel, route, ends, 30);
   console.log('Plates remaining approach:', JSON.stringify(remaining));
   assert.equal(remaining.reachedAll, true, 'the real car reaches each remaining measured stretch');
   assert.ok(remaining.stretches.every((stretch, index) => stretch.along >= ends[index] && stretch.maxDistance < 30),
@@ -652,12 +652,20 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
   const arrival = driveToForge(duel, definition.steps[0].destination.position);
   console.log('Plates forge arrival:', JSON.stringify(arrival));
   assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the plates car stops at the forge');
-  assert.equal(arrival.done, false, 'the job stays open because the pot is out');
-  assert.equal(duel.state.arena.worldJob.job.stepState.ember, 0, 'the actual pot is out at the forge');
-  const ticks = opening.ticks + continuation.ticks + remaining.ticks + gateDrive.ticks + arrival.ticks;
-  console.log('Plates minutes after the yard gate:', ticks / 3600);
+  const pot = duel.state.arena.worldJob.job.stepState;
+  const ember = arrival.done ? arrival.fire.ember : pot.ember;
+  assert.equal(arrival.done, ember > 0, 'the forge accepts the pot only while it is lit');
+  const stretches = [opening, ...continuation.stretches, ...remaining.stretches, gateDrive];
+  const ticks = yardExit.ticks + stretches.reduce((total, stretch) => total + stretch.ticks, 0) + arrival.ticks;
+  const measurement = {km:(yardExit.driven + stretches.reduce((total, stretch) => total + stretch.driven, 0) + arrival.driven) / 1000,
+    minutes:ticks / 3600, rams:stretches.flatMap(stretch => stretch.jolts).filter(jolt => jolt.riders.length > 0).length,
+    scoops:pot.scoopedBraziers || [], arrival:ember};
+  assert.equal(measurement.rams, arrival.observedJoltCount, 'rider contacts account for the recorded jolts');
+  assert.deepEqual(measurement.scoops, [], 'no brazier was scooped on the plates way');
+  console.log('Plates measurement:', JSON.stringify(measurement));
 
 }
+if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
 // Start the salt-pan measurement from the real pickup and yard gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});

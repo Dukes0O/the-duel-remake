@@ -824,3 +824,19 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertion, for Claude to review: the road scoop previously required a gain above 24.9 and at most 25. It now checks exactly 25 after that step's cooling, capped at the pot's 100-point capacity. With the fifteen-minute rate, the pot holds 80.161 before this scoop, so its observed gain is 19.839. The separate scoop rule test remains in place.
 - Codex decided: none. For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: measure the plates without tuning, updating the stale outage assertions for the ruled cold rate; then measure the other ways, camera, cover and scenario.
+
+## Fifteen-minute rules, plates measurement (16 November 2026)
+
+- The seeded Medium driver targeted 30 mph (48.3 km/h) on the plates, without adjusting the drive to reach a band. It reached the forge with the ember out. Five jolts had riders in contact. The driver briefly exceeded 50 km/h, including after rider contact; the opening came within 10 m of the route by 2 km but strayed up to 63.8 m while joining it. The distance and time start at pickup and include the yard exit and forge approach. No new sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | 6.160 | 8.634 | 5 observed contacts | None | 0 |
+| Salt pan | Not yet measured | | | | |
+| Bed | Not yet measured | | | | |
+
+- Checks: `EVERBURN_PLATES_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell, including the East Road and plates drives. `git diff --check` passed. Race fingerprints were not checked this round.
+- Changed assertions, for Claude to review: the old plates drive required the ember to go out between 1 km and 1.5 km, remain out through 3 km, and be out at the forge with the job open. Those fixed outcomes now check the actual state transitions and whether the forge accepted a lit pot. The fifteen-minute cold and capped-hit ruling changed the outcome: the earlier drive still has 53.326 ember at 1.5 km. The plates acceptance band remains 30 to 55 and this measurement misses it.
+- Codex decided: target 30 mph, close to the ruled 50 km/h, using the existing driver. For Claude to run: the browser scenario and final checks, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the old fixed outage expectations for the previous balance. The old `everburn-play` scenario still needs replacement or removal. Next: measure the salt pan and bed without tuning, then finish the remaining drives, camera, cover and scenario.

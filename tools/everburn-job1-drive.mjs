@@ -23,9 +23,11 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
   const state = duel.state;
   const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
   const target = {x:gate.x + forward.x * 45, z:gate.z + forward.z * 45};
-  let along = -Infinity, gateOffset = null, ticks = 0;
+  let along = -Infinity, gateOffset = null, ticks = 0, driven = 0, previous;
   for (; ticks < maxTicks && along < 20; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
+    previous = car;
     along = (car.x - gate.x) * forward.x + (car.z - gate.z) * forward.z;
     if (along >= 0 && gateOffset === null) {
       gateOffset = (car.x - gate.x) * forward.z - (car.z - gate.z) * forward.x;
@@ -37,7 +39,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
   }
-  return {along, gateOffset, ticks};
+  return {along, gateOffset, ticks, driven};
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
@@ -173,11 +175,13 @@ export function driveToForge(duel, destination, maxTicks = 3600) {
   const gate = world.definition.steps[0].riderSafeWall;
   const throughGate = {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15};
   let clearedGate = false;
-  let ticks = 0, distance = Infinity, stopping = false;
+  let ticks = 0, distance = Infinity, stopping = false, driven = 0, previous;
   let lastJoltCount = world.job.stepState.joltCount ?? 0;
   const jolts = [], startEmber = world.job.stepState.ember;
   for (; ticks < maxTicks && !world.job.done; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
+    previous = car;
     distance = Math.hypot(destination.x - car.x, destination.z - car.z);
     if (world.job.stepState.ember <= 0 && distance < 5 && Math.abs(state.speedMph) < 0.5) break;
     const pastGate = (car.x - gate.x) * gate.through.x + (car.z - gate.z) * gate.through.z;
@@ -198,7 +202,8 @@ export function driveToForge(duel, destination, maxTicks = 3600) {
     }
   }
   const car = duel.course.worldAt(state.s, state.lateral);
-  return {ticks, distance:Math.hypot(destination.x - car.x, destination.z - car.z),
+  if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
+  return {ticks, driven, distance:Math.hypot(destination.x - car.x, destination.z - car.z),
     speedMph:state.speedMph, done:world.job.done, fire:world.forgeFire, startEmber, jolts, observedJoltCount:lastJoltCount,
     position:{x:car.x, z:car.z}};
 }
