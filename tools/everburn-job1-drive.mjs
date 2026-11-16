@@ -168,6 +168,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const townGate = state.arena.worldJob.definition.steps[0].riderSafeWall;
   let nearestTownGate = Infinity, speedAtNearestTownGate = 0;
   const initiallyBurnt = new Set(state.arena.worldJob.job.stepState.burntBarricades || []);
+  const observedBurnt = new Set(initiallyBurnt);
+  const burns = [];
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     for (const actor of state.arena.worldJob.actors) {
@@ -232,6 +234,12 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     // when a live barricade is in front of the car and within flame range.
     const step = state.arena.worldJob.definition.steps[0];
     const burnt = state.arena.worldJob.job.stepState.burntBarricades || [];
+    for (const barrier of step.barriers || []) {
+      if (burnt.includes(barrier.id) && !observedBurnt.has(barrier.id)) {
+        observedBurnt.add(barrier.id);
+        burns.push({id:barrier.id, distance:Math.hypot(barrier.position.x - car.x, barrier.position.z - car.z)});
+      }
+    }
     let barrierDistance = Infinity, barrierLimit = 140;
     for (const barrier of step.barriers || []) {
       if (burnt.includes(barrier.id)) continue;
@@ -270,7 +278,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
     position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, nearRoadTargetTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
-    pursuits, burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
+    pursuits, burns, burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }
 

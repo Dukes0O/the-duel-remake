@@ -223,11 +223,15 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
     'the driver keeps the road speed on the clear approach to the camp');
   assert.ok(duel.state.arena.worldJob.job.stepState.burntBarricades.includes(step.barriers[0].id),
     'the camp barricade burns on the faster approach');
+  assert.equal(campApproach.burns.length, 1, 'the driver records the camp barricade burning');
+  assert.equal(campApproach.burns[0].id, step.barriers[0].id);
+  assert.ok(campApproach.burns[0].distance > 3, 'the camp barricade burns before the car reaches it');
   assert.ok(campApproach.jolts.every(jolt => jolt.riders.length > 0),
     'the faster approach does not hit the camp barricade');
   if (process.env.EVERBURN_CAMP_APPROACH_ONLY === '1') {
     console.log('Camp approach:', JSON.stringify({peakKmh:campApproach.peakSpeedMph * 1.609344,
-      seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length}));
+      seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length,
+      burns:campApproach.burns}));
     process.exit(0);
   }
   const joltsBeforeScoop = duel.state.arena.worldJob.job.stepState.joltCount ?? 0;

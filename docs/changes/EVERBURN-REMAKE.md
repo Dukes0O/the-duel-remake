@@ -1456,3 +1456,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the sustained-speed assertion is new. Codex decided: use 95 km/h as a measurement tolerance around the driver's 100 km/h target; Claude should review it.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: reliance on peak speed alone for the clear-road proof. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road barricade burn distance (16 November 2026)
+
+- The scripted driver now records the car's distance from each barricade when the real job first marks it burnt. The focused camp drive verifies the correct barricade burns before the car reaches it: 10.894 m away. This supplies evidence for the required ranged burn; it does not resolve the rider ram or the bright delivery.
+- Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_APPROACH_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across ember went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. No game event or sound cue was added.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: reliance on the burnt state alone as evidence of distance. Next: avoid a rider on the East Road and prove both clean bed drives, then finish the scenario and final checks.
