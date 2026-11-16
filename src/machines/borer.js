@@ -105,6 +105,34 @@ export function borerSpoilProfile(along, across, length) {
     5 - 0.7 * Math.abs(across)));
 }
 
+/** Volume under the profile, in cubic metres, before sampling it on the ground. */
+export function borerSpoilProfileVolume(length) {
+  if (!Number.isFinite(length) || length < 0)
+    throw new TypeError('The spoil heap needs a finite, non-negative length.');
+  const height = Math.min(5, 0.3 * length / 2);
+  const endLength = height / 0.3;
+  // Across a row of height h, the profile has area (10h - h²) / 0.7.
+  // Integrate the rising ends and the level section separately.
+  const ends = 2 * (5 * height ** 2 - height ** 3 / 3) / (0.3 * 0.7);
+  const middle = (length - 2 * endLength) * (10 * height - height ** 2) / 0.7;
+  return ends + middle;
+}
+
+/** Length of the profile needed to hold a given loose volume. */
+export function borerSpoilProfileLength(volume) {
+  if (!Number.isFinite(volume) || volume < 0)
+    throw new TypeError('The spoil heap needs a finite, non-negative volume.');
+  if (volume === 0) return 0;
+  let low = 0, high = 1;
+  while (borerSpoilProfileVolume(high) < volume) high *= 2;
+  for (let i = 0; i < 50; i++) {
+    const middle = low + (high - low) / 2;
+    if (borerSpoilProfileVolume(middle) < volume) low = middle;
+    else high = middle;
+  }
+  return low + (high - low) / 2;
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

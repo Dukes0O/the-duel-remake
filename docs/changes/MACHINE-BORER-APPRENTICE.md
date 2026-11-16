@@ -40,8 +40,11 @@ The planner scans backward from the bank's working end and stops at the first ol
 
 The spoil heap now has a tested target profile: at most 5 m high, rising at most 0.7 m per metre across the heap and 0.3 m per metre along its crest, including both ends. The deposit planner does not yet use this profile. The existing bank remains narrow until the planner is changed; the real-ground checks and maximum filled cells per step are still outstanding.
 
+The profile now has a volume calculation and a way to find the length needed for a given loose volume. Both account for the sloping ends and the level middle. They are preparation for the planner; they do not yet change the bank in the Dig.
+
 ## Checks
 
+- SP profile sizing: `node tools/test-machine-borer.mjs` passed. It checks the calculated volume against sampled profile heights at four lengths and checks that each volume gives back its length.
 - SP target profile: a direct Node check passed for every metre across and along a 40 m profile, including the 5 m crest and both slope limits.
 - SP working-end scan: `node tools/test-machine-borer.mjs` passed. It checks that planning stops after the eligible rows, even with 100 old cells; the ground-refresh check sampled 864 heights over 100 steps.
 - SP cell records: `node tools/test-machine-borer.mjs` passed. The test checks that deposits copy the list, share unchanged records and leave the preceding state intact.

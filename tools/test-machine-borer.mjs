@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -32,6 +32,23 @@ import * as THREE from 'three';
     }
   }
   assert.throws(() => borerSpoilProfile(0, 0, -1), TypeError);
+}
+
+// Size the planned heap against the actual profile, including its sloping ends.
+{
+  for (const length of [5, 25, 40, 100]) {
+    let sampledVolume = 0;
+    const spacing = 0.2;
+    for (let along = spacing / 2; along < length; along += spacing)
+      for (let across = -8 + spacing / 2; across < 8; across += spacing)
+        sampledVolume += borerSpoilProfile(along, across, length) * spacing ** 2;
+    const volume = borerSpoilProfileVolume(length);
+    assert.ok(Math.abs(sampledVolume / volume - 1) < 0.002, 'Profile volume matches sampled heights.');
+    assert.ok(Math.abs(borerSpoilProfileLength(volume) - length) < 1e-9, 'Volume gives back the needed length.');
+  }
+  assert.equal(borerSpoilProfileLength(0), 0);
+  assert.throws(() => borerSpoilProfileVolume(-1), TypeError);
+  assert.throws(() => borerSpoilProfileLength(Infinity), TypeError);
 }
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
