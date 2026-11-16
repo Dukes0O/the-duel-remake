@@ -442,7 +442,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           if(gFill>.01){
             vec3 gSpoil=vec3(.215,.18,.15)*(.55+.9*gFine.g)*(.78+.44*gMid.b);
             float gLump=smoothstep(.52,.74,texture2D(uGroundNoise,gq*.83+7.1).r);
-            gSpoil=mix(gSpoil,vec3(.4,.36,.3)*(.7+.5*gFine.r),gLump*.55);
+            gSpoil=mix(gSpoil,vec3(.33,.295,.245)*(.7+.5*gFine.r),gLump*.5);
             float gClod=1.0-smoothstep(.0,.12,abs(texture2D(uGroundNoise,gq*.21+2.3).g-.5));
             gSpoil*=1.0-.4*gClod;
             vec2 gDown=normalize(vGroundNormal.xz+vec2(1e-4,0.0));
