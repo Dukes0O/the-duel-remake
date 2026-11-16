@@ -226,26 +226,33 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
     for (const material of groundMaterials) material.needsUpdate = true;
   }
 
-  function apply(material, {riverHole = true} = {}) {
+  // `made` is for the ground of edited chunks (src/world/ground-view.js), which carry how far each corner was filled or cut.
+  function apply(material, {riverHole = true, made = false} = {}) {
     if (!material?.isMeshStandardMaterial || material.userData.groundLook) return material;
     material.userData.groundLook = true;
     tunnelMaterials.add(material);
     groundMaterials.add(material);
-    material.defines = {...material.defines, ...(riverHole && regionsOn ? {GROUND_RIVER_HOLE: ''} : {})};
+    material.defines = {...material.defines, ...(riverHole && regionsOn ? {GROUND_RIVER_HOLE: ''} : {}), ...(made ? {GROUND_MADE: ''} : {})};
     material.onBeforeCompile = shader => {
       Object.assign(shader.uniforms, uniforms);
       if (tracks) Object.assign(shader.uniforms, {uTracks: tracks.texture, uTracksBox: tracks.box});
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;')
+        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;\n#ifdef GROUND_MADE\nattribute float aMade;\nvarying float vMade;\n#endif')
         .replace('#include <project_vertex>', `#include <project_vertex>
           vGroundPos=(modelMatrix*vec4(transformed,1.0)).xyz;
-          vGroundNormal=mat3(modelMatrix)*objectNormal;`);
+          vGroundNormal=mat3(modelMatrix)*objectNormal;
+          #ifdef GROUND_MADE
+          vMade=aMade;
+          #endif`);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>
           uniform sampler2D uGroundNoise;uniform vec3 uGroundRock;uniform vec3 uGroundStone;
           uniform vec3 uColPlate;uniform vec3 uColSalt;uniform vec3 uColBed;uniform vec3 uColWreck;uniform vec3 uColSand;uniform vec3 uColBurn;uniform vec3 uColBank;
           ${areaCode}${tunnelCapable ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
+          #ifdef GROUND_MADE
+          varying float vMade;
+          #endif
           vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
           ${areaFunctions}${photoCode}`)
@@ -427,6 +434,24 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
           gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75*(1.0-wPan*.8-wSand*.7));
           gc*=.88+.24*gGrit.b;
+          #ifdef GROUND_MADE
+          // Made ground. Where the ground has been filled it is tipped spoil: loose broken rock, darker and coarser than any
+          // ground that has lain a thousand years, with pale dust on the lumps, tip lines down its sides, and none of the
+          // plain's cracks or the hills' beds. Where it has been cut it is fresh: darker, and damp at the foot of the cut.
+          float gFill=smoothstep(.2,1.1,vMade),gCut=smoothstep(.2,1.4,-vMade);
+          if(gFill>.01){
+            vec3 gSpoil=vec3(.215,.18,.15)*(.55+.9*gFine.g)*(.78+.44*gMid.b);
+            float gLump=smoothstep(.52,.74,texture2D(uGroundNoise,gq*.83+7.1).r);
+            gSpoil=mix(gSpoil,vec3(.4,.36,.3)*(.7+.5*gFine.r),gLump*.55);
+            float gClod=1.0-smoothstep(.0,.12,abs(texture2D(uGroundNoise,gq*.21+2.3).g-.5));
+            gSpoil*=1.0-.4*gClod;
+            vec2 gDown=normalize(vGroundNormal.xz+vec2(1e-4,0.0));
+            float gTip=smoothstep(.45,.8,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gDown.y,gDown.x))*.22,dot(gq,gDown)*.02)).b);
+            gSpoil*=1.0-.3*gTip*smoothstep(.01,.06,gSlope);
+            gc=mix(gc,gSpoil,gFill*.94);
+          }
+          if(gCut>.01)gc=mix(gc,gc*vec3(.6,.58,.57),gCut*.85);
+          #endif
           diffuseColor.rgb=gc;`)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n          totalEmissiveRadiance+=gGlow;');
       if (tracks) shader.fragmentShader = shader.fragmentShader
