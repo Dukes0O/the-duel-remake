@@ -42,8 +42,9 @@ For each, thirty minutes at most (rule 4):
 ## What done looks like
 
 A table in the change note: item, which of the four, the evidence in one line, what was done. Each item that still
-fails has its cause written into `docs/board/checks/standing-failures.json` once card QA-NIGHTLY-NEWS has made that
-file; until then the table is the record.
+fails has its cause written into `docs/board/checks/standing-failures.json`, in the words of the failure itself with every
+number written as `#` (the nightly check compares them that way). `p4-audio` and `ski-finish` are listed with "not yet
+known", so the first night reports each as failing in a new way until its real message is written in.
 
 ## Checks
 

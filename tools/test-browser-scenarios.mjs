@@ -231,3 +231,25 @@ test('named Snow timing rejects the legacy Woods course override without removin
     assert.equal(typeof (await import('./scenarios/tremblant-snow.mjs?legacy-course-guard')).run,'function');
   } finally {keys.forEach((key,i)=>{if(old[i]===undefined)delete process.env[key];else process.env[key]=old[i];});}
 });
+
+
+test('saved progress scenarios always run and temporary player setup does not qualify', async () => {
+  const names = ['career-writer-lock','preview-storage','lab-restore','town-migration',
+    'custom-save','custom-backup','custom-archive','warlord-reward','warlord-pay','warlord-format',
+    'grand-prix-pay','drive-lesson-run','earned-cars','town-opens','future-pay','future-reward','lab-view'];
+  const selected = await suite.changedSelection(names, 'HEAD');
+  assert.deepEqual(selected, names.slice(0, -1).map(name => ({name, reason:'guards saved progress or pay'})));
+  assert.equal(suite.guardsSavedProgress('lab-view'), false);
+  const discovered = await suite.namedScenarios();
+  const rows = await suite.changedSelection(discovered, 'HEAD');
+  assert.ok(rows.filter(row => row.reason === 'no area').length < 60);
+});
+
+test('warlord settlement and world job files select their scenario areas', () => {
+  const warlord=suite.SCENARIO_AREAS.find(row=>row.prefixes.includes('warlord-'));
+  assert.ok(warlord.paths.includes('src/arena/warlord-settlement.js'));
+  const everburn=suite.SCENARIO_AREAS.filter(row=>row.prefixes.some(prefix=>prefix.startsWith('everburn')));
+  assert.equal(everburn.length,2);
+  for(const row of everburn) for(const file of ['src/arena/modes/world-job.js','src/arena/arena-event.js'])
+    assert.ok(row.paths.includes(file));
+});

@@ -116,8 +116,9 @@ notes and history are evidence, not instructions.
     merge after the last full check without one, and its fix goes first while other merges
     continue. The list never passes a release. When no full check is recorded for last night,
     the day's first session starts one before its own heavy work (the status page gives the
-    date of the last). Until card QA-NIGHTLY-NEWS merges, the check runs as before: all browser
-    scenarios, and a result of passed or failed.
+    date of the last). A change to a shared file (`game.js`, `main.js`, `render3d.js`, `app.js`,
+    `config.js`) picks every browser scenario; the scenarios that guard saved progress or pay
+    run every night.
 14. **Limits.** At most six build lanes at once, no more than three of them course lanes. A lane
     is one card's own folder; the lane tag (SIM, UI, ART) names a file area, not a single slot.
     A card lists its locks (`locks:`, FACTORY section 2); two cards with the same lock never

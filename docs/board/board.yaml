@@ -554,17 +554,6 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-WIDE-FILES.md"
 
-  - id: QA-NIGHTLY-NEWS
-    title: "The nightly check tells news: a standing list, three results, browser scenarios for what changed"
-    owner: "codex"
-    lane: "TOOLS"
-    size: "M"
-    status: "building"
-    claimed_by: "Codex, lane `qa-nightly`, since 16 November 2026"
-    needs: []
-    locks: ["tools-full-check"]
-    details: "docs/board/cards/QA-NIGHTLY-NEWS.md"
-
   - id: QA-STANDING-BROWSER
     title: "The seven things that fail every night: cure each or say why it cannot pass"
     owner: "claude"

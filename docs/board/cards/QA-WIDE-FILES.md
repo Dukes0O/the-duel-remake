@@ -28,6 +28,14 @@ owner suites and importing it no longer picks a suite. For each file above, deci
 - what the night then catches that a lane no longer does, and whether that is acceptable for that file. The save rules in
   `src/progression.js` and the seeded generator are the two to be most careful with.
 
+## The same question for the nightly browser scenarios
+
+QA-NIGHTLY-NEWS (merged 16 November 2026) runs, on a weekday, the browser scenarios for what changed. A change to any of
+the five shared files picks all 222, and `src/render3d.js` changes on most art cards: against the last nightly's commit
+(12 November) the rule picked every scenario. With nothing changed it picks 70 (17 that guard saved progress or pay, 53
+that belong to no area). Watch the ledgers for two weeks (each records how many ran and how many were left for
+Saturday). If most nights still run everything, rule which scenarios a change to each shared file really needs.
+
 ## What done looks like
 
 A ruling per file in this card, then a Codex job that adds the owners to `SHARED_FILES` with a check in
