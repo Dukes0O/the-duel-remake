@@ -886,6 +886,7 @@ export function createScablandsScene(course,options={}){
       townDoor.rotation.y=doorOpen?Math.PI/2:0;
       townDoor.position.set(doorOpen?TIN_TOWN_GATE.opening/2:0,1.5,doorOpen?TIN_TOWN_GATE.opening/2:0);
       braziers.group.visible=Boolean(emberStep);
+      braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
       barricades.forEach((rig,index)=>{
         const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
         rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);

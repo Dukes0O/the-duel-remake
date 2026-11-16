@@ -520,3 +520,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: the standing drawing is fitted to the solid's depth; Claude should review the appearance.
 - For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the plain barricade slabs. The old `everburn-play` scenario still needs replacement or removal. Next: the smoke columns, then the remaining proof drives, camera, cover and scenario.
+
+## Larger land, brazier smoke (15 November 2026)
+
+- Each brazier now has Claude's animated 40 m smoke column at its fire mouth. The yard column disappears when the pot is loaded; both camp columns remain. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. It checks the three columns' positions, height, animation and pickup visibility. Race fingerprints were not checked in this round.
+- Changed assertions, for Claude to review: the old five-puff geometry bounds ran from the brazier foot to 40 m above it; the new column starts 1.1 m above the foot and has a 40 m shader height. The test now checks the actual fire-mouth position and `uHeight`, because the shader draws the height beyond the mesh's CPU-side bounds.
+- Codex decided: none. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the five smoke puffs at each brazier. The old `everburn-play` scenario still needs replacement or removal. Next: finish the East Road proof drive, the other five drives, camera, cover and scenario.

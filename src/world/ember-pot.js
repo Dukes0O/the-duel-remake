@@ -4,7 +4,8 @@
 // state and never changes it. The braziers stand at the two places a fresh scoop can be taken.
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {createFlameMaterial, createGroundGlowMaterial, createSmokeMaterial, createSparks, createScrapWear, scrapNoise} from './scrap-look.js';
+import {createFlameMaterial, createGroundGlowMaterial, createSparks, createScrapWear, scrapNoise} from './scrap-look.js';
+import {createSmokeColumn} from './smoke-column.js';
 
 // Live coals: a flat disc whose bright spots follow the clock and whose heat follows `uHeat` (0 dark, 1 full).
 function createCoalMaterial() {
@@ -159,7 +160,6 @@ export function createBraziers(count = 3) {
   const wear = createScrapWear({paint: 1}), iron = wear.apply(SOOT_IRON());
   const bowls = bowlGeometry(), card = new THREE.PlaneGeometry(1, 1), standing = new THREE.PlaneGeometry(1, 1); standing.translate(0, .5, 0);
   const flameMaterial = createFlameMaterial(), glowMaterial = createGroundGlowMaterial(), coalMaterial = createCoalMaterial();
-  const smokeMaterial = createSmokeMaterial();
   const coalDisc = new THREE.CircleGeometry(.5, 14);
   const stands = [];
   for (let index = 0; index < count; index++) {
@@ -171,27 +171,22 @@ export function createBraziers(count = 3) {
     stand.add(flame);
     const glow = new THREE.Mesh(card, glowMaterial); glow.rotation.x = -Math.PI / 2; glow.position.y = .14; glow.scale.setScalar(13); glow.renderOrder = 1; stand.add(glow);
     const sparks = createSparks(18); sparks.name = 'Sparks from the brazier'; stand.add(sparks);
-    const smoke = new THREE.Group(); smoke.name = 'Brazier smoke column';
-    for (let puff = 0; puff < 5; puff++) {
-      const cloud = new THREE.Mesh(card, smokeMaterial);
-      cloud.position.y = 4 + puff * 8;
-      cloud.scale.set(5 + puff * 1.5, 8, 1);
-      cloud.frustumCulled = false;
-      smoke.add(cloud);
-    }
+    const smoke = createSmokeColumn({height: 40}); smoke.name = 'Brazier smoke column'; smoke.position.y = 1.1;
     stand.add(smoke);
-    group.add(stand); stands.push({stand, flame, sparks});
+    group.add(stand); stands.push({stand, flame, sparks, smoke});
   }
   return {
     group,
     // `spots` are {x, y, z} in world metres, one for each brazier.
     place(spots) { stands.forEach((entry, index) => { const spot = spots[index]; entry.stand.visible = !!spot; if (spot) entry.stand.position.set(spot.x, spot.y, spot.z); }); },
+    setYardPotLoaded(loaded) { if (stands[0]) stands[0].smoke.visible = !loaded; },
     dispose() { disposeAll(group); },
     animate(seconds) {
       if (!group.visible) return;
       flameMaterial.uniforms.uTime.value = seconds; glowMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uHeat.value = 1;
       stands.forEach((entry, index) => {
         entry.flame.scale.y = 3.2 * (.86 + .2 * Math.abs(Math.sin(seconds * 4.7 + index * 2.1)));
+        entry.smoke.userData.update(seconds);
         entry.sparks.userData.place(seconds + index * .37, {x: 0, y: 1.3, z: 0}, {x: .3, z: .2}, 1);
       });
       wear.follow(group);

@@ -846,12 +846,18 @@ for (const [index, stand] of braziers.group.children.entries()) {
   assert.deepEqual(stand.position.toArray(), [position.x, position.y, position.z]);
   const smoke = stand.getObjectByName('Brazier smoke column');
   assert.ok(smoke);
-  const bounds = new THREE.Box3().setFromObject(smoke);
-  assert.ok(Math.abs(bounds.min.y - position.y) < 1e-9);
-  assert.ok(Math.abs(bounds.max.y - position.y - 40) < 1e-9);
-  assert.ok(Math.abs((bounds.min.x + bounds.max.x) / 2 - position.x) < 1e-9);
-  assert.ok(Math.abs((bounds.min.z + bounds.max.z) / 2 - position.z) < 1e-9);
+  const mouth = smoke.getWorldPosition(new THREE.Vector3());
+  assert.ok(Math.hypot(mouth.x - position.x, mouth.z - position.z) < .2);
+  assert.ok(Math.abs(mouth.y - position.y - 1.1) < 1e-9);
+  assert.equal(smoke.material.uniforms.uHeight.value, 40);
 }
+braziers.group.visible = true;
+braziers.animate(12.5);
+for (const stand of braziers.group.children) assert.equal(stand.getObjectByName('Brazier smoke column').material.uniforms.uTime.value, 12.5);
+braziers.setYardPotLoaded(true);
+assert.deepEqual(braziers.group.children.map(stand => stand.getObjectByName('Brazier smoke column').visible), [false, true, true]);
+braziers.setYardPotLoaded(false);
+assert.ok(braziers.group.children.every(stand => stand.getObjectByName('Brazier smoke column').visible));
 braziers.dispose();
 const figure = createCinderFigure();
 assert.equal(figure.name, 'Cinder at the yard gate');
