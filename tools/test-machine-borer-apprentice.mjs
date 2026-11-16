@@ -2,6 +2,7 @@
 import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, toggleBoreLever, visitBore, switchDigMachine, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {createGroundEdit} from '../src/world/ground-edit.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -244,6 +245,25 @@ assert.equal(drifting.boreOrders[0].driftCalled, true);
 drifting = stepDigSandbox(drifting, {}, 1/60);
 assert.equal(drifting.events.filter(event => event.type === 'bore-call').length, 0);
 console.log('A drift call is made once while another machine is selected.');
+
+// The cutter finds a high exit on real editable ground and calls only once.
+const lipGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : -2});
+let lipWork = {town:work.town, order:{...sent.boreOrders[0], stages:sent.boreOrders[0].stages.map(stage=>({...stage}))},
+  borer:createBorerState(), ground:lipGround};
+const lipCalls = [];
+for (let i=0; i<200 && !lipWork.order.highExitCalled; i++) {
+  const result = stepDelegatedBore(lipWork, 1);
+  lipCalls.push(...result.events.filter(event => event.type === 'bore-call'));
+  lipWork = {...lipWork, ...result};
+}
+assert.equal(lipWork.order.highExitCalled, true);
+assert.equal(lipCalls.length, 1);
+assert.equal(lipCalls[0].cue, 'borer.call');
+const lipHeight = lipCalls[0].message.match(/^Pim: She is (\d+\.\d) m up the face\./);
+assert.ok(lipHeight && Number(lipHeight[1]) > 1);
+const lipAgain = stepDelegatedBore(lipWork, 1);
+assert.equal(lipAgain.events.filter(event => event.type === 'bore-call').length, 0);
+console.log('High exit: real ground triggers one call.');
 
 
 // Compare a sent bore with the same hands on the real cutter and real mesa.

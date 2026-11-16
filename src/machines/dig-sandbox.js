@@ -345,6 +345,12 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
     result.events.push({type:'bore-call', cue:'borer.call',
       message:`${name}: We're ${Math.abs(drift).toFixed(1)} m off the line at ${result.state.distanceM.toFixed(1)} m. Come and set her straight.`});
   }
+  const highExit = result.events.find(event => event.reason === 'high-exit');
+  if (highExit && !nextOrder.highExitCalled) {
+    nextOrder.highExitCalled = true;
+    result.events.push({type:'bore-call', cue:'borer.call',
+      message:`${name}: She is ${highExit.heightM.toFixed(1)} m up the face. Please tip spoil below the mouth so she can get out.`});
+  }
   if (daylight) {
     const event = result.events.find(item => item.type === 'daylight');
     event.type = 'bore-daylight';

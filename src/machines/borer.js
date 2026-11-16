@@ -302,7 +302,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       }
       if (difference < -1) {
         const message = `She has come out ${(-difference).toFixed(1)} m up the face. Tip spoil below the mouth until she can drive out.`;
-        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', reason:'high-exit', heightM:-difference, message});
         next.message = message;
         continue;
       }
@@ -313,7 +313,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       const difference = ground.heightAt(next.x, next.z) - next.y;
       if (difference < -1) {
         const message = `She has come out ${(-difference).toFixed(1)} m up the face. Tip spoil below the mouth until she can drive out.`;
-        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', reason:'high-exit', heightM:-difference, message});
         next.message = message;
         continue;
       }
