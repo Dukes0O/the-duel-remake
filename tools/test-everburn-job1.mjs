@@ -124,7 +124,9 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
   duel.state.countdown = 0;
   assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+  const startClock = duel.state.arena.worldJob.clockSec;
+  const yardExit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(yardExit.along >= 20);
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
   const line = bedRiderBypass(routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')}), 150, -195);
   const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
@@ -263,6 +265,21 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     assert.equal(continuation.ember, currentPot.ember, 'the continuation records the actual unscooped pot');
     console.log('No-scoop beyond the Steps:', JSON.stringify({ember:currentPot.ember,
       jolts:currentPot.joltCount ?? 0, distance:continuation.along}));
+    if (process.env.EVERBURN_BED_TO_FORGE === '1') {
+      const towardGate = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, townSpeed, true);
+      assert.ok(towardGate.along >= pathLength(townLine) - 150, 'the car reaches the town approach');
+      const arrival = driveToForge(duel, definition.steps[0].destination.position, 18000);
+      const finalPot = duel.state.arena.worldJob.job.stepState;
+      console.log('No-scoop forge:', JSON.stringify({arrival, ember:finalPot.ember,
+        jolts:finalPot.joltCount ?? 0, scoops:finalPot.scoopedBraziers || [],
+        minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
+        kilometres:(yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) +
+          drive.stretches.reduce((sum, item) => sum + item.driven, 0) + end.driven + climb.driven +
+          townDrive.driven + continuation.driven + towardGate.driven + arrival.driven) / 1000}));
+      assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
+      assert.deepEqual(finalPot.scoopedBraziers || [], [], 'the car reaches the forge without scooping');
+      assert.equal(arrival.done, finalPot.ember > 0, 'the forge accepts only a lit pot');
+    }
   }
   process.exit(0);
 }
