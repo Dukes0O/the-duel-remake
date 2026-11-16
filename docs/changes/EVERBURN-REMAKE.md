@@ -1,4 +1,4 @@
-Ã¯Â»Â¿# EVERBURN-REMAKE, slice 5
+# EVERBURN-REMAKE, slice 5
 
 - Cinder accepts the stopped car within 12 m. Her brazier moved from 7 m to 20 m left of the gate line, clear of both approaches. No new event or sound cue.
 - Wrong message cause: a weapon start triggers Rook's callout without checking for a nearby fence or rider; reproduced by stepping the voice event.
@@ -13,4 +13,7 @@
 - Gate cause: stepping at 45 km/h reaches the solid door, which only opens below 30 km/h. It now opens on approach at any speed; the existing gate cue sounds.
 - Gate rule check: `node tools/test-everburn-play-start.mjs` passed on b3fb36d92 plus this change at 45 and 80 km/h, with no collision or jolt.
 - Changed assertion, for Claude to review: the gate no longer stays shut at 30 km/h; Claude ruled it must let cars through at 45 and 80 km/h.
-- Still needed: rider cause and cure; investigate the yard-exit failure; all remaining card, older-suite, replay, world-signature, lane and build checks. For Claude to run: the browser scenario.
+- Rider cause: stepping an Easy contact at 1/60 s measured a clipped last movement, then halved it: 2.16 km/h and no jolt.
+- Riders see loaded cars within 150 m of their fence, measure closing speed, and retreat 40 m for at least eight seconds. Existing cue: world.ember.spark.
+- Rider rule checks passed on 35cbad4b8 plus this change. `test-everburn-job1` reaches the existing yard-exit failure; the new rule checks pass first.
+- Still needed: inspect yard-exit failure and rider edge cases; run remaining card, older-suite, Easy drive, replay, world-signature, lane and build checks. For Claude: browser scenario.

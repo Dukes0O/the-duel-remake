@@ -42,6 +42,52 @@ import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
+// A small final movement on Easy still carries the rider's full closing speed.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car;
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[0];
+  car = {...rider.position, x:rider.position.x + 5.02};
+  for (let i = 0; i < 60 && !rider.ramContact; i++) stepWorldJob(duel, 1 / 60);
+  assert.ok(rider.ramContact, 'the rider reaches the stopped car');
+  assert.ok(Math.abs(world.riderHitKmh - 18) < 1e-6, 'the clipped last movement keeps the closing speed');
+  const contact = {...rider.position};
+  for (let i = 0; i < 479; i++) stepWorldJob(duel, 1 / 60);
+  assert.equal(world.job.stepState.joltCount, 1, 'the rider cannot ram twice inside eight seconds');
+  assert.ok(Math.abs(Math.hypot(rider.position.x - contact.x, rider.position.z - contact.z) - 40) < 1e-6,
+    'the rider backs off forty metres before charging again');
+  assert.ok(Math.abs(world.job.stepState.ember - (100 - 7.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
+    'Easy halves the capped ram once');
+}
+
+// A rider sees the loaded car near its fence even beyond the old 120 m limit.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), step = definition.steps[0];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car;
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const fence = step.barriers[0].position, rider = world.actors[0];
+  car = sampleLine(ROAD_NET.road('east-road').points, 1).find(p =>
+    Math.hypot(p.x - fence.x, p.z - fence.z) > 140 && Math.hypot(p.x - fence.x, p.z - fence.z) < 150 &&
+    Math.hypot(p.x - rider.position.x, p.z - rider.position.z) > 120 &&
+    sees(rider.position, {...p, y:scablandsSurfaceHeightAt(p.x, p.z)},
+      {heightAt:scablandsSurfaceHeightAt, actorFloors:true, eye:1.5, step:5}));
+  assert.ok(car, 'the road has a visible approach within 150 metres of the fence');
+  car = {...car, y:scablandsSurfaceHeightAt(car.x, car.z)};
+  stepWorldJob(duel, 0.1);
+  assert.equal(rider.pursuing, true, 'the rider charges on sight');
+}
+
 // Completing Hot Delivery does not offer a story job that is still being made.
 {
   let profile = markEmberRead(createProfile()).profile;
