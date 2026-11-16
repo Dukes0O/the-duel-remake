@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Landing camera (16 November 2026)
+
+- In the Scablands, the chase camera stays behind and above a car more than 3 m in the air and looks at the ground 20 m ahead. It keeps that view until landing, then returns over half a second. Other courses keep their existing camera. No game event or sound cue was added.
+- `node tools/test-camera-clearance.mjs`: passed, including a car 25 m above drawn ground beyond a mesa and a real perspective projection of its landing point. `git diff --check`: passed. Race fingerprints, lane tier and build remain for the last round.
+- Changed assertions: none. Codex decided: keep the landing view until touchdown once triggered, so it does not start returning while the car is still falling below 3 m.
+- For Claude to run: the browser scenario and final checks, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the airborne chase view that could leave the landing out of sight. The old `everburn-play` scenario still needs replacement or removal. Next: the two remaining proof drives, cover mesas and scenario.
+
 ## Fifteen-minute rules, bed measurement (16 November 2026)
 
 - The seeded Medium driver targeted 28 mph, followed the bed, and scooped at the Wash. It stopped at the forge with the ember out, so the job did not complete. Five jolts had rider contact. This misses the 30 to 55 band. The target speed is not yet proved to match the bed's ground allowance. No game event or sound cue was added.

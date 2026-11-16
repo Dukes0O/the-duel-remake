@@ -1,4 +1,4 @@
-import {scablandsActorFeet} from './world/scablands-ground.js';
+import {scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
@@ -43,7 +43,7 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim } from './camera-clearance.js';
+import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera } from './camera-clearance.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend } from './world-job-camera.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
@@ -644,7 +644,7 @@ export function attachRenderer(host, app) {
       for (const [object, visible] of visibility) object.visible = visible;
     }
   }
-  let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0;
+  let ready = false, lastMenu = null, previousT = performance.now(), machineLiftNow = 0, machineLiftApplied = 0, landingBlend = 0;
   let lastPresentationSeconds = 0, lastSaltHeatEnabled = false;
   function frame(now = performance.now(),measure=false,presentation={}) {
     if(disposed)return;
@@ -988,10 +988,17 @@ export function attachRenderer(host, app) {
     }
     if(!menu&&!st.onFoot&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&!yardHomePose&&!app.inspectionCamera)
       constrainScablandsCamera(course,camera.position,player.position,scablandsActorFeet(st, pp.y));
+    if (groundChase && course.def?.scablands) {
+      const mode = app.cameraMode || 'chase';
+      const height = mode === 'wide' ? (tall ? 7.5 : 5.6) : (tall ? 5.8 : 3.65);
+      landingBlend = scablandsLandingCamera(course, camera.position, lookTarget, player.position,
+        pp.heading + (st.headingError || 0), mode === 'wide' ? 16 : (tall ? 12 : 8.7), height, st.airHeight || 0, st.airborne, landingBlend, dt,
+        drawnGround || scablandsSurfaceHeightAt);
+    } else landingBlend = 0;
     if(groundChase)raiseScablandsCamera(course,camera.position,player.position,cameraFeet,drawnGround);
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
-        !yardHomePose&&!app.inspectionCamera&&['chase','wide'].includes(app.cameraMode||'chase')){
+        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
       cameraBodyProjection.copy(cameraBodyTarget).project(camera);

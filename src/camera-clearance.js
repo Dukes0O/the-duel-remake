@@ -1,5 +1,22 @@
 import {scablandsActorHeightAt, scablandsDeckRoofAt, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
 
+// Keep the landing in sight during a fall, then return to the usual view in half a second.
+export function scablandsLandingCamera(course, position, target, car, heading, back, height, airHeight, airborne, blend, dt, groundAt) {
+  if (!course.def?.scablands) return 0;
+  const next = airHeight > 3 ? 1 : airborne ? blend : Math.max(0, blend - Math.max(0, dt) / .5);
+  if (!next) return 0;
+  const sin = Math.sin(heading), cos = Math.cos(heading);
+  const x = car.x + sin * 20, z = car.z + cos * 20;
+  const ground = groundAt(x, z);
+  position.x += (car.x - sin * back - position.x) * next;
+  position.z += (car.z - cos * back - position.z) * next;
+  position.y += (Math.max(position.y, car.y + height) - position.y) * next;
+  target.x += (x - target.x) * next;
+  target.y += (ground - target.y) * next;
+  target.z += (z - target.z) * next;
+  return next;
+}
+
 // Keep the camera over the visible ground, while using the car's floor under a roof.
 export function raiseScablandsCamera(course, position, car, feet, drawnHeightAt) {
   if (!course.def?.scablands || !Number.isFinite(feet) || !drawnHeightAt) return false;
