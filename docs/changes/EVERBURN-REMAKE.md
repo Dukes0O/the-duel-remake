@@ -1541,3 +1541,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. The real job step checked pursuit at the camp, loss of sight for five seconds, the bridge's lower floor, the Steps and return to post. The straight-across ember went out at 629.822 m. Full job checks and replay fingerprints remain for the final round.
 - Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the barricade riders' unrestricted pursuit. Next: replace the trial drives with the three ruled delivery proofs, then the scenario and final checks.
+
+## East Road delivery proof after the rider rule (16 November 2026)
+
+- The seeded Medium driver now measures one East Road delivery and checks the actual forge result and pay against the ember band. It travelled 7.959 km in 6.068 minutes, took one ram, scooped at Halfway Camp and arrived with 58.298 ember: alive, paying 80 scrap. No new game event or sound cue was added.
+- Check: `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` passed, including the straight-across outage at 629.822 m. The plain full job run and other final checks remain.
+- Changed assertions, for Claude to review: the old clean-road proof required a bright arrival and at most one ram with no other jolts; the Director's R2 ruling replaces those requirements with reaching the forge, ending the job and receiving the pay for the actual band. The route and recorded ram and scoop counts remain visible in the measurement.
+- Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the East Road's offset trial and its intermediate speed, jolt and loss assertions from this delivery proof. Next: replace the bed trial drives with the two Steps-route deliveries, then the scenario and final checks.

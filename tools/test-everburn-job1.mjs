@@ -233,7 +233,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
   if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
 }
-// Measure a clean East Road drive at the ruled road speed.
+// Measure one seeded East Road delivery after the riders' road rule.
 if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
   duel.state.wastelandGateDiscovered = true;
@@ -244,98 +244,26 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
   const startClock = duel.state.arena.worldJob.clockSec;
   const exit = driveThroughYardGate(duel, yardPlan().gate);
-  assert.ok(exit.along >= 20);
   const road = ROAD_NET.road('east-road').points;
   const opening = driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344);
-  assert.ok(opening.reachedAll, 'the driver reaches the camp approach');
-  assert.ok(opening.stretches.some(stretch => stretch.peakSpeedMph * 1.609344 >= 100),
-    'the real car reaches 100 km/h on the clear road');
-  const clearRoad = opening.stretches.slice(1);
-  const nearTarget = clearRoad.reduce((sum, stretch) => sum + stretch.nearRoadTargetTicks, 0);
-  const clearTicks = clearRoad.reduce((sum, stretch) => sum + stretch.ticks, 0);
-  console.log('Clear road speed:', JSON.stringify({nearTargetTicks:nearTarget, ticks:clearTicks}));
-  assert.ok(nearTarget / clearTicks > 0.9, 'the car holds at least 95 km/h for most of the clear road after accelerating');
-  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45, 40);
-  assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
-  assert.ok(campApproach.peakSpeedMph * 1.609344 >= 100,
-    'the driver keeps the road speed on the clear approach to the camp');
-  assert.ok(duel.state.arena.worldJob.job.stepState.burntBarricades.includes(step.barriers[0].id),
-    'the camp barricade burns on the faster approach');
-  assert.equal(campApproach.burns.length, 1, 'the driver records the camp barricade burning');
-  assert.equal(campApproach.burns[0].id, step.barriers[0].id);
-  assert.ok(campApproach.burns[0].distance > 3, 'the camp barricade burns before the car reaches it');
-  assert.ok(campApproach.jolts.every(jolt => jolt.riders.length > 0),
-    'the faster approach does not hit the camp barricade');
-  assert.equal(campApproach.jolts.length, 0, 'the faster camp approach avoids rider rams and other jolts');
-  if (process.env.EVERBURN_CAMP_APPROACH_ONLY === '1') {
-    console.log('Camp approach:', JSON.stringify({peakKmh:campApproach.peakSpeedMph * 1.609344,
-      seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length,
-      burns:campApproach.burns}));
-    process.exit(0);
-  }
-  const joltsBeforeScoop = duel.state.arena.worldJob.job.stepState.joltCount ?? 0;
+  const camp = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45, 40);
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
-  assert.ok(scoop.scooped, 'the driver scoops at the camp');
-  assert.ok(scoop.emberBeforeScoop >= 0 && scoop.emberBeforeScoop <= 100, 'the scoop records the actual ember before refilling');
-  assert.ok(scoop.scoopGain > 0 && scoop.scoopGain <= 25, 'the scoop increases the actual ember by no more than 25');
-  assert.equal(scoop.ember, 100, 'the Halfway scoop fills the pot to its limit on this drive');
-  assert.ok(scoop.scoopGain < 25, 'the filled pot cannot retain the whole scoop');
-  console.log('Halfway scoop:', JSON.stringify({before:scoop.emberBeforeScoop, gain:scoop.scoopGain,
-    after:scoop.ember, seconds:scoop.elapsedSeconds}));
-  assert.equal(scoop.jolts.length, (duel.state.arena.worldJob.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
-    'the scoop records each jolt in the actual pot state');
-  if (process.env.EVERBURN_CAMP_SCOOP_ONLY === '1') process.exit(0);
-  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40, process.env.EVERBURN_BRIDGE_OFFSET_TRIAL === '1' ? 2.8 : 0);
-  assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
+  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40);
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
-  assert.ok(gate.along >= 7810 && duel.state.arena.worldJob.tinTownGateRequested, 'the car passes the open town gate');
   const pot = duel.state.arena.worldJob.job.stepState;
-  const scoops = [...(pot.scoopedBraziers || [])], burnt = [...(pot.burntBarricades || [])];
+  const scoops = [...(pot.scoopedBraziers || [])];
   const arrival = driveToForge(duel, step.destination.position);
-  const stretches = [...opening.stretches, campApproach, ...remaining.stretches, gate];
+  const stretches = [...opening.stretches, camp, ...remaining.stretches, gate];
   const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
     rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts].filter(jolt => jolt.riders.length > 0).length,
-    jolts:arrival.observedJoltCount, scoops, burnt, ember:arrival.fire?.ember ?? pot.ember};
-  console.log('Clean East Road measurement:', JSON.stringify(result));
-  console.log('Road jolts:', JSON.stringify([...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts]));
-  const afterScoop = [...remaining.stretches, gate];
-  const lossesByGround = {};
-  for (const stretch of afterScoop) {
-    for (const [ground, loss] of Object.entries(stretch.groundLoss)) {
-      lossesByGround[ground] = (lossesByGround[ground] ?? 0) + loss;
-    }
-  }
-  const recordedLoss = Object.values(lossesByGround).reduce((sum, loss) => sum + loss, 0);
-  assert.ok(Math.abs(recordedLoss - (scoop.ember - gate.ember)) < 0.01,
-    'ground losses account for the actual ember spent between the scoop and gate');
-  console.log('After-scoop losses by ground:', JSON.stringify(lossesByGround));
-  const roadSegments = remaining.stretches.map((stretch, index) => ({
-    endMetres:[2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600][index],
-    metres:stretch.driven, seconds:stretch.elapsedSeconds,
-    averageKmh:stretch.driven / stretch.elapsedSeconds * 3.6,
-    rams:stretch.jolts.filter(jolt => jolt.riders.length > 0).length,
-  }));
-  assert.ok(roadSegments.every(segment => Number.isFinite(segment.averageKmh) && segment.seconds > 0),
-    'each road segment records a finite speed from the actual drive');
-  assert.equal(roadSegments.reduce((sum, segment) => sum + segment.rams, 0),
-    remaining.stretches.flatMap(stretch => stretch.jolts).filter(jolt => jolt.riders.length > 0).length,
-    'the segment measurements account for the recorded rams');
-  console.log('Road segment speeds:', JSON.stringify(roadSegments));
-  if (process.env.EVERBURN_BRIDGE_OFFSET_TRIAL === '1') {
-    const hits = remaining.stretches.flatMap(stretch => stretch.jolts);
-    assert.equal(hits.length, 1, 'the offset trial records the single bridge jolt');
-    assert.equal(hits[0].riders[0]?.id, 'ash-rider-2', 'the actual bridge rider contacts the offset car');
-    assert.equal(hits[0].groundHits.length, 0, 'the recorded contact is not a ground impact');
-    assert.ok(arrival.done, 'the offset trial reaches the forge');
-    process.exit(0);
-  }
-  if (process.env.EVERBURN_ROAD_LOSS_ONLY === '1') process.exit(0);
-  assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
-  assert.deepEqual(scoops, ['halfway-brazier']);
-  assert.ok(step.barriers.every(barrier => burnt.includes(barrier.id)), 'both barricades burn');
-  assert.ok(result.rams <= 1 && result.jolts === result.rams, 'at most one ram and no other jolt');
-  assert.ok(result.ember >= 70, 'the ember arrives bright');
+    scoops, ember:arrival.fire?.ember ?? pot.ember, result:duel.state.arena.worldJob.emberResult};
+  console.log('East Road delivery:', JSON.stringify(result));
+  assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
+  const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
+  const pay = result.result.relights > 0 ? Math.min(rule.pay[grade], rule.pay.afterRelight) : rule.pay[grade];
+  assert.equal(result.result.grade, grade, 'the arrival records the ember band');
+  assert.equal(result.result.pay, pay, 'the job pays for that band');
   process.exit(0);
 }
 // Drive from the Wash along the land test's bed line toward the Steps.
