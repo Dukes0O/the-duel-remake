@@ -599,3 +599,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: the proof driver starts slowing within 200 m of the gate, aiming for 16 mph. Claude should review the drive.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the forge arrival and East Road balance, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road forge arrival (15 November 2026)
+
+- The Medium proof driver drives through Tin Town's open gate and stops in the real forge bay. The job completes and the existing `world.forge.catch` cue plays. This advances step 7a, but does not prove the required bright arrival.
+- `node tools/test-everburn-job1.mjs`: passed. The car stopped 4.90 m from the bay centre at 0.58 mph, with 6.46 ember, graded barely. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: the proof driver aims directly for the bay at up to 10 mph and brakes within 5 m. Claude should review the drive.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.

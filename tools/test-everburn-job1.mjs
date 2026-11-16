@@ -25,7 +25,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
-import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveToBrazier} from './everburn-job1-drive.mjs';
+import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -453,6 +453,9 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(world.tinTownGateRequested, true, 'the real slow approach opens the gate');
   assert.equal(world.solidGrid.townGate.length, 0, 'the open gate no longer blocks the car');
   console.log('East Road town entrance:', JSON.stringify(door));
+  const arrival = driveToForge(duel, step.destination.position);
+  console.log('East Road forge arrival:', JSON.stringify(arrival));
+  assert.equal(arrival.done, true, `the real car delivers at the forge: $(JSON.stringify(arrival))`);
 
 }
 // The real job requests the gate only for a car approaching slowly.
