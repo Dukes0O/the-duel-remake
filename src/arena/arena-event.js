@@ -292,6 +292,12 @@ export function stepArenaEvent(duel, dt) {
   const ambush = arena.mode === 'ambush-alley';
   const scablands = !!duel.course.def.scablands;
   state.stageTimeSec += dt; state.totalTimeSec += dt;
+  if (arena.mode === 'world-job' && arena.worldJob?.arrivalHold) {
+    state.speedMph = 0; state.pushVelocity = 0;
+    const decision = stepWorldJob(duel, dt);
+    if (decision) finish(duel, decision.reason, decision.winnerId);
+    return;
+  }
   if (state.crashFlash > 0) state.crashFlash = Math.max(0, state.crashFlash - dt);
   state.invulnerableSec = Math.max(0, state.invulnerableSec - dt);
   state.damageCooldown = Math.max(0, state.damageCooldown - dt);

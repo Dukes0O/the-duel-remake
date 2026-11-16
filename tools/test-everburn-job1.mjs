@@ -15,7 +15,7 @@ import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPictu
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
-import {forgePlan} from '../src/world/forge-look.js';
+import {FORGE, forgePlan} from '../src/world/forge-look.js';
 import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
@@ -1039,9 +1039,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
 }
-// The real job records the delivered fire and sounds the forge once on arrival.
+// The real job records the delivered fire and sounds the forge when the ember lands.
 {
   assert.ok(SOUND_BANK['world.forge.catch']?.layers.length);
+  assert.equal(step.arrivalHold.catchAt, FORGE.times.lit);
   const flameHeights = [];
   for (const [ember, grade] of [[70, 'bright'], [1, 'barely']]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
@@ -1062,7 +1063,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.equal(pot.visible, false);
     stepWorldJob(duel, 0);
     assert.deepEqual(world.forgeFire, {ember, grade});
-    assert.equal(world.job.done, true, 'the completed carry no longer mounts the pot');
+    assert.equal(world.job.done, false, 'the job waits for the forge');
+    assert.equal(world.arrivalHold.elapsed, 0);
+    const arrivalHud = worldHudModel({worldJob:world});
+    assert.equal(arrivalHud.line, 'Delivered. The forge takes the fire.');
+    assert.equal(arrivalHud.ember.value, ember, 'the gauge shows the ember that arrived');
+    assert.equal(events.filter(event => event.arenaTell?.cue === 'world.forge.catch').length, 0);
     // The forge and its crane (src/world/forge-look.js, 16 November 2026) replace the plain flame and the flying pot. The pot stands where it
     // stood on the car until the hook has it, is lifted off, is carried to the hearth and tipped, and only then does the forge catch.
     const where = object => { scene.group.updateMatrixWorld(true); return object.getWorldPosition(new THREE.Vector3()); };
@@ -1086,6 +1092,38 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     for (const id of ['tin-town-forge', 'tin-town-crane', 'tin-town-anvil']) assert.ok(SCABLANDS_SOLIDS.some(solid => solid.id === id), `${id} is solid`);
     // Each stands square to the land (heading 0), so its nearest point to the bay's middle is found a side at a time.
     assert.ok(forgePlan().solids.every(solid => Math.hypot(Math.max(0, Math.abs(solid.x - bay.x) - solid.halfX), Math.max(0, Math.abs(solid.z - bay.z) - solid.halfZ)) > step.radius + .5), 'and none of them stands in the bay');
+    state.status = 'racing';
+    state.paused = true;
+    duel.step(1 / 60);
+    assert.equal(world.arrivalHold.elapsed, 0, 'pausing stops the hold');
+    state.paused = false;
+    const armor = state.armor, before = {...world.emberResult}, place = {s:state.s, lateral:state.lateral};
+    const rider = world.actors.find(actor => actor.id === step.waitingActors[0].id);
+    const home = step.waitingActors[0].start.position;
+    rider.position = {...home, x:home.x + 30};
+    rider.returningToPost = true;
+    const riderBefore = {...rider.position};
+    state.scablandsHitKmh = 200;
+    world.riderHitKmh = 200;
+    duel.setInput({throttle:1, steer:1, boost:true});
+    assert.equal(duel.fireWeapon('flamethrower'), false, 'weapons cannot fire during the hold');
+    for (let i = 0; i < 294; i++) duel.step(1 / 60);
+    assert.equal(events.filter(event => event.arenaTell?.cue === 'world.forge.catch').length, 0);
+    for (let i = 0; i < 6; i++) duel.step(1 / 60);
+    assert.equal(events.filter(event => event.arenaTell?.cue === 'world.forge.catch').length, 1);
+    for (let i = 0; i < 234; i++) duel.step(1 / 60);
+    assert.equal(world.job.done, false, 'the job is still in progress at 8.9 seconds');
+    assert.equal(state.speedMph, 0);
+    assert.deepEqual({s:state.s, lateral:state.lateral}, place);
+    assert.equal(state.armor, armor);
+    assert.deepEqual(world.emberResult, before);
+    const heldHud = worldHudModel({worldJob:world});
+    assert.equal(heldHud.line, 'Delivered. The forge takes the fire.');
+    assert.equal(heldHud.ember.value, ember, 'the gauge keeps the delivered ember during the hold');
+    assert.notDeepEqual(rider.position, riderBefore, 'a retreating rider continues home');
+    for (let i = 0; i < 6; i++) duel.step(1 / 60);
+    assert.equal(world.job.done, true, 'the job ends at 9.0 seconds');
+    assert.deepEqual(world.emberResult, before);
     scene.dispose();
     const catches = events.filter(event => event.arenaTell?.cue === 'world.forge.catch');
     assert.equal(catches.length, 1);

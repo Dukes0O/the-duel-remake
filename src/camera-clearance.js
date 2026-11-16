@@ -118,3 +118,15 @@ export function selectCameraAim(projected,forward,body) {
     Math.abs(projected.x)<=1&&Math.abs(projected.y)<=1&&projected.z>=-1&&projected.z<=1;
   return inside?forward:body;
 }
+
+// Keep the standing camera above any solid it would otherwise occupy.
+export function raiseCameraOutOfSolids(position, solids) {
+  for (const solid of solids) {
+    const dx = position.x - solid.x, dz = position.z - solid.z;
+    const cos = Math.cos(solid.heading || 0), sin = Math.sin(solid.heading || 0);
+    const x = dx * cos - dz * sin, z = dx * sin + dz * cos;
+    if (Math.abs(x) <= solid.halfX + .3 && Math.abs(z) <= solid.halfZ + .3 &&
+        position.y >= solid.y - .3 && position.y <= solid.y + solid.height + .3)
+      position.y = solid.y + solid.height + .3;
+  }
+}

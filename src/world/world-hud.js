@@ -102,7 +102,7 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
   const bearing = target && position ? (Math.atan2(dx, dz) * 180 / Math.PI + 360) % 360 : null;
   const finds = [...(worldJob?.definition?.finds ?? []), ...(job?.steps ?? []).flatMap(item => item.finds ?? [])];
   return {
-    line: next.line, kind: next.kind, target, bearing,
+    line: worldJob?.arrivalHold ? 'Delivered. The forge takes the fire.' : next.line, kind: next.kind, target, bearing,
     prompt: townGatePrompt || (step?.kind==='onfoot' ? (onFoot ? 'HOLD F TO RETURN TO YOUR CAR' : 'HOLD F TO GET OUT') : ''),
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,

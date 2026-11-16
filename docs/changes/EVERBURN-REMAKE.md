@@ -1882,3 +1882,21 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Changed assertions, for Claude to review: the old checks required a rider to be behind the car and hidden, plus either 600 m along the road or 20 seconds hidden. They now check the two distance or blocked-ground conditions above, under Claude's latest Y1 ruling. Codex decided: none. Removed: heading, road-distance and hidden-time conditions for stranded rider recovery.
 - For Claude to run: the two long drivers and the lane tier, as recorded above. For Claude to draw: the pot transfer and forge fire. The scenario was previously passed by Claude.
 - Final checks: `test-replays.mjs` passed 297 unchanged fingerprints; `test-combat-replays.mjs` passed 12 unchanged fingerprints; `npm.cmd run build` passed. Integration was already included.
+
+## The hold, its camera and the Easy drives
+
+- The first part of the hold is built. Delivery keeps the result and ember while nine seconds of simulation time pass. Driving and weapon fire are disabled, combat does not advance against the car, retreating riders continue, and pause stops the hold. The existing `world.forge.catch` cue now sounds once at five seconds, when the ember reaches the forge. The test ties that time to `FORGE.times.lit`.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the delivery drives, pause, stopped car, weapon lock, hit indicators, retreating rider, preserved result, cue timing and the 8.9 and 9.0 second boundaries. Race fingerprints were not run in this round. The camera, screen words, browser pictures and Easy driver are still to do.
+- Changed assertions, for Claude to review: the forge cue was expected once on arrival; it is now expected zero times on arrival and once at five seconds, as the ruling requires. The completed job was expected immediately; it is now expected after nine seconds. No tolerances were loosened.
+- Codex decided: none. **Removed:** the forge catch cue at arrival. Picture 9 remains until the browser scenario is changed.
+- For Claude to run: the browser scenario and lane tier after the remaining work. The full Easy suite and final replay and build checks remain for the last round.
+
+- The hold screen now says "Delivered. The forge takes the fire." The ember gauge keeps the value delivered to the forge.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the screen model at arrival and at 8.9 seconds for bright and barely alive deliveries. Race fingerprints were not run in this round. No sound cue changed; `world.forge.catch` remains at five seconds.
+- Changed assertions: none in this round. Codex decided: none. **Removed:** the carry instruction during the hold.
+- Still needed: the camera, browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.
+
+- During the hold, the camera eases over one second to a standing view of the car and hearth, on the side away from the crane. It stays above the ground and rises out of solids. The simulation does not read the camera. The cue remains `world.forge.catch` at five seconds.
+- Checks: `node tools/test-forge-hold-camera.mjs` passed the position, target, solid clearance and bay sweep; `node tools/test-camera-clearance.mjs` passed 2,091 checks; `node --check src/render3d.js` and `git diff --check` passed. Race fingerprints were not run in this round.
+- Changed assertions: none. Codex decided: use smoothstep for the one-second transition. **Removed:** the chase-only view during the hold.
+- Still needed: the two browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.

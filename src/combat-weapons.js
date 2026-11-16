@@ -237,6 +237,7 @@ function fireCpuUfo(duel, actor, departure) {
 
 export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.rival) {
   const state = duel.state;
+  if (!enemy && state.arena?.worldJob?.arrivalHold) return false;
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
