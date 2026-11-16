@@ -538,6 +538,10 @@ paceDig = {...paceDig, activeMachine:'borer', mode:'work', borer:{...paceStart,
 for (let frame=0; frame<600; frame++) paceDig = stepDigSandbox(paceDig, {controls:{}}, 1/60);
 assert.ok(Math.abs(paceDig.borer.distanceM - 4.95) < 0.01,
   `At lever 0.33 the Dig cuts 4.95 m in 10 simulated seconds, got ${paceDig.borer.distanceM}.`);
+const paceDistance = paceDig.borer.distanceM;
+for (let frame=0; frame<15000; frame++) paceDig = stepDigSandbox(paceDig, {controls:{}}, 1/60);
+assert.ok(Math.abs(paceDig.borer.distanceM - paceDistance - 123.75) < 0.02,
+  `At lever 0.33 the Dig cuts 123.75 m in 250 simulated seconds, got ${paceDig.borer.distanceM - paceDistance}.`);
 
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 Object.defineProperty(globalThis, 'localStorage', {configurable:true, get() { throw new Error('Tunnel exchange must not access storage.'); }});

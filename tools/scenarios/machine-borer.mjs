@@ -182,12 +182,13 @@ async function cutUntil(context, metres) {
   } finally { if (held) await key(context, held, 'keyup'); }
 }
 
-async function reachDaylight(context, initialFloor, surveyText) {
+async function reachDaylight(context, initialFloor, surveyText, measurements, persist) {
   const match = surveyText.match(/Far side on this line: (\d+) m on, ([\d.]+) m (higher|lower)/);
   assert.ok(match, 'the far-side survey gives a distance and height');
   const targetDistance = Number(match[1]), targetY = initialFloor + Number(match[2]) * (match[3] === 'higher' ? 1 : -1);
   const deadline = Date.now() + 2400000;
   let leverKey = null, tiltKey = null, recovering = false, nextReport = Date.now();
+  const startWall = Date.now();
   async function change(oldKey, newKey) {
     if (oldKey !== newKey) { if (oldKey) await key(context, oldKey, 'keyup'); if (newKey) await key(context, newKey, 'keydown'); }
     return newKey;
@@ -196,7 +197,13 @@ async function reachDaylight(context, initialFloor, surveyText) {
     while (Date.now() < deadline) {
       const b = await context.evaluate(page.status);
       if (b.finished) return;
-      if (Date.now() >= nextReport) { console.log(`Daylight drive: ${b.distance.toFixed(1)} m, ${b.elapsed.toFixed(1)} simulated seconds, lever ${b.lever.toFixed(2)}, stalled ${b.stalled}, ${b.message || 'cutting'}`); nextReport += 30000; }
+      if (Date.now() >= nextReport) {
+        const sample = {...b, wallSeconds:(Date.now() - startWall) / 1000};
+        measurements.pace.push(sample);
+        await persist();
+        console.log(`Daylight drive: ${b.distance.toFixed(1)} m, ${b.elapsed.toFixed(1)} simulated seconds, ${sample.wallSeconds.toFixed(1)} wall seconds, lever ${b.lever.toFixed(3)}, stalled ${b.stalled}, ${b.message || 'cutting'}`);
+        nextReport += 30000;
+      }
       if (b.stalled) recovering = true;
       if (recovering && !b.stalled && b.lever <= 0) recovering = false;
       const wanted = recovering ? (b.lever > 0 ? 'KeyS' : null) : b.lever < 0.30 ? 'KeyW' : b.lever > 0.32 ? 'KeyS' : null;
@@ -221,7 +228,7 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null, firstPush:null};
+  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null, firstPush:null, pace:[]};
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
@@ -316,7 +323,7 @@ export async function run(context) {
     const inside = await picture(context, 'machine-borer-inside', 45);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
-  await reachDaylight(context, initialFloor, initialSurvey);
+  await reachDaylight(context, initialFloor, initialSurvey, measurements, persist);
   measurements.farMouth = await context.evaluate(page.farMouth);
   await persist();
   assert.equal(measurements.farMouth.mouths, 2, 'daylight opens both surface mouths');
