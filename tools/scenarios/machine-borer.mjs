@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
@@ -46,11 +45,17 @@ const page = {
     const target={x:s.start.x+d*dx/length,y:s.start.y+s.radius+3,z:s.start.z+d*dz/length};
     const origin=v.camera.position, direction={x:target.x-origin.x,y:target.y-origin.y,z:target.z-origin.z};
     const distance=Math.hypot(direction.x,direction.y,direction.z);
+    v.lining.updateWorldMatrix(true,true);
+    const ray=new v.three.Raycaster(new v.three.Vector3(origin.x,origin.y,origin.z),new v.three.Vector3(direction.x,direction.y,direction.z).normalize(),0,distance);
+    const hit=ray.intersectObject(v.lining,true)[0];
+    const axis=new v.three.Vector3(s.end.x-s.start.x,s.end.y-s.start.y,s.end.z-s.start.z);
+    const fromStart=hit?.point.clone().sub(new v.three.Vector3(s.start.x,s.start.y,s.start.z));
+    const axisDistance=hit ? fromStart.clone().addScaledVector(axis,-fromStart.dot(axis)/axis.lengthSq()).length() : null;
     return {coverStart,origin:{x:origin.x,y:origin.y,z:origin.z},target,
       travel:dig.simulation.borer.travelM,cameraIndex:dig.simulation.cameraIndex,
       cameraRoute:v.camera.userData.borerRoute ?? null,
       originSurface:v.surfaceHeight(origin.x,origin.z),targetSurface:v.surfaceHeight(target.x,target.z),
-      mouths:dig.simulation.tunnels.mouths,hit:v.groundRay(origin,direction,distance)}; })()`,
+      mouths:dig.simulation.tunnels.mouths,hit:hit ? {point:hit.point.toArray(),distance:hit.distance,axisDistance} : null}; })()`,
   mouth: `(() => window.__theDig.simulation.borer.travelM <= 0.1)()`,
   face: `(() => window.__theDig.simulation.borer.travelM >= 29.9)()`,
   inside: `(() => window.__theDig.simulation.borer.travelM <= 25)()`,
@@ -190,9 +195,10 @@ async function cutUntil(context, metres) {
   } finally { if (held) await key(context, held, 'keyup'); }
 }
 
-async function reachDaylight(context, initialFloor, surveyText, measurements, persist) {
-  const match = surveyText.match(/Far side on this line: (\d+) m on, ([\d.]+) m (higher|lower)/);
+async function reachDaylight(context, initialFloor, surveyText, measurements, persist, assert) {
+  const match = (surveyText || '').match(/Far side on this line: (\d+) m on, ([\d.]+) m (higher|lower)/);
   assert.ok(match, 'the far-side survey gives a distance and height');
+  if (!match) return;
   const targetDistance = Number(match[1]), targetY = initialFloor + Number(match[2]) * (match[3] === 'higher' ? 1 : -1);
   const deadline = Date.now() + 2400000;
   let leverKey = null, tiltKey = null, recovering = false, nextReport = Date.now();
@@ -225,9 +231,10 @@ async function reachDaylight(context, initialFloor, surveyText, measurements, pe
   } finally { if (leverKey) await key(context, leverKey, 'keyup'); if (tiltKey) await key(context, tiltKey, 'keyup'); }
 }
 
-async function picture(context, name, minimum = 30) {
+async function picture(context, name, measurements, assert, minimum = 30) {
   await context.evaluate(page.sample);
   const view = await context.evaluate(page.view);
+  measurements.pictures[name] = view;
   assert.equal(view.failed, false, 'Mabel and the yard models loaded');
   assert.ok(view.distance >= minimum && view.segments > 0, `the tunnel grew by ${minimum} m`);
   assert.ok(view.machine, `${name}: Mabel is in the camera view`);
@@ -237,8 +244,16 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null, firstPush:null, pace:[]};
+  const measurements = {failures:[], pictures:{}, groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null, firstPush:null, pace:[]};
+  const assert = {
+    ok: (condition, message) => { if (!condition) measurements.failures.push(message); },
+    equal: (actual, expected, message) => { if (actual !== expected) measurements.failures.push(`${message}: expected ${expected}, got ${actual}`); },
+  };
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
+  const attempt = async (label, action) => {
+    try { return await action(); }
+    catch (error) { measurements.failures.push(`${label}: ${error.message}`); await persist(); return null; }
+  };
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
   await context.waitFor(page.ready, 'isolated test game', 60000);
@@ -260,7 +275,7 @@ export async function run(context) {
   for (const sample of samples) {
     assert.ok(sample.hit && Math.abs(sample.rules - sample.hit.y) <= 0.5, 'drawn ground matches the rules');
   }
-  await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
+  await attempt('Mabel reaches the rock', () => holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000));
   await context.evaluate(page.overviewOn);
   await context.evaluate(page.frame);
   measurements.overview = await context.evaluate(page.overview);
@@ -269,6 +284,7 @@ export async function run(context) {
   assert.ok(measurements.overview.heightAboveFloor > 6, 'the overview shows the mesa above Mabel');
   assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('Far side'), 'the survey and strip are shown at the face');
   const overviewView = await context.evaluate(page.view);
+  measurements.overviewView = overviewView;
   assert.ok(overviewView.machine, 'Mabel is in the mesa overview');
   await context.screenshot('machine-borer-mesa-overview');
   await context.evaluate(page.overviewOff);
@@ -285,24 +301,21 @@ export async function run(context) {
   const afterPush = await context.evaluate(page.inputTiming);
   measurements.firstPush = {before:beforePush, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
-  // Keep boring even if the first push was lost. The visibility measurements
-  // at 45 m are independent evidence and must be saved before an assertion
-  // about that push can stop the scenario.
-  await cutUntil(context, 10);
+  await attempt('cut 10 m', () => cutUntil(context, 10));
   measurements.framePace = await context.evaluate(page.framePace);
   await persist();
   console.log(`Five-second cutting sample: ${JSON.stringify(measurements.framePace)}`);
-  await cutUntil(context, 20);
-  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
+  await attempt('cut 20 m', () => cutUntil(context, 20));
+  await attempt('pull the lever back', () => holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000));
   const cover = await context.evaluate(page.cover);
   measurements.cover = cover;
   await persist();
   console.log(`Cover at 20 m: crown ${cover.crown.toFixed(2)}, rules ${cover.rules.toFixed(2)}, mesh ${cover.drawn?.toFixed(2) ?? 'no hit'}`);
   assert.ok(cover.rules >= cover.crown + 6 && cover.drawn !== null && cover.drawn >= cover.crown + 6, 'rules and mesh give six metres of cover');
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-mouth-20m', 20);
+  await picture(context, 'machine-borer-mouth-20m', measurements, assert, 20);
   await press(context, 'KeyC');
-  await cutUntil(context, 45);
+  await attempt('cut 45 m', () => cutUntil(context, 45));
   measurements.spoil = await context.evaluate(page.spoil);
   measurements.survey = await context.evaluate(page.survey);
   measurements.visibility = await context.evaluate(page.visibility);
@@ -319,27 +332,28 @@ export async function run(context) {
   assert.ok(visibility.mouth.portal.marked > 0 && visibility.mouth.lining.marked > 0 && visibility.mouth.portal.groundAround > 0, 'the mouth shows the portal, lining and surrounding ground');
   assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
   assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('to go'), 'the running survey and strip are shown');
-  await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
-  await context.waitFor(page.followingInside, 'following camera enters the bore', 15000);
+  await attempt('pull the lever back', () => holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000));
+  try { await context.waitFor(page.followingInside, 'following camera enters the bore', 15000); }
+  catch (error) { measurements.failures.push(`following camera enters the bore: ${error.message}`); }
   const roof = await context.evaluate(page.roofRay);
   measurements.roofRay = roof;
   await persist();
-  console.log(`Ground above the bore: ${JSON.stringify(roof)}`);
+  console.log(`Lining above the bore: ${JSON.stringify(roof)}`);
   assert.ok(roof.cameraRoute?.inside && roof.cameraIndex === 0, 'the roof ray starts at the following camera inside the bore');
-  assert.ok(roof.hit, 'ground blocks the view from inside to above the crown');
+  assert.ok(roof.hit && roof.hit.axisDistance <= 3.5, 'the lining is hit within 3.5 m of the bore axis');
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-mouth', 45);
+  await picture(context, 'machine-borer-mouth', measurements, assert, 45);
   await press(context, 'KeyC');
-  await picture(context, 'machine-borer-face', 45);
+  await picture(context, 'machine-borer-face', measurements, assert, 45);
   await key(context, 'KeyS', 'keydown');
   try {
-    await context.waitFor(page.inside, '20 m back from the face', 60000);
-    const inside = await picture(context, 'machine-borer-inside', 45);
+    await attempt('20 m back from the face', () => context.waitFor(page.inside, '20 m back from the face', 60000));
+    const inside = await picture(context, 'machine-borer-inside', measurements, assert, 45);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
   await context.evaluate(page.startVisibility);
   try {
-    await reachDaylight(context, initialFloor, initialSurvey, measurements, persist);
+    await attempt('reach daylight', () => reachDaylight(context, initialFloor, initialSurvey, measurements, persist, assert));
   } finally {
     measurements.paceVisibility = await context.evaluate(page.paceVisibility);
     await persist();
@@ -351,5 +365,7 @@ export async function run(context) {
   assert.equal(measurements.farMouth.hit, null, 'the ray through the far mouth reaches open sky');
   await context.evaluate(page.farMouthOn);
   await context.evaluate(page.frame);
-  await picture(context, 'machine-borer-far-mouth', 45);
+  await picture(context, 'machine-borer-far-mouth', measurements, assert, 45);
+  await persist();
+  if (measurements.failures.length) throw Error(`Scenario failures:\n- ${measurements.failures.join('\n- ')}`);
 }

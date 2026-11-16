@@ -302,3 +302,9 @@ Removed: the separate daylight check that could accept a drop with no drawable m
 When Mabel joins another bore, her state and the `borer.breakthrough` event now say: "She has broken into the other bore." The junction test checks both the sentence and its existing sound cue. `node tools/test-machine-borer.mjs` passed. No existing assertions or race fingerprints changed. The browser scenario repair and final checks remain; Claude must run the browser scenario and lane tier.
 
 Removed: the silent underground breakthrough event.
+
+## Scenario lining and complete report
+
+The roof ray now checks the lining and records the hit's distance from the bore axis. Scenario checks collect their measurements and failures, take the remaining pictures, write `machine-borer-measurements.json`, and report the failures together. Timed driving and camera waits also record failures so later checks can continue. The browser scenario still needs Claude's run; page startup or a missing scene can prevent dependent measurements.
+
+`node --check tools/scenarios/machine-borer.mjs`, parsing every page expression on import, and `git diff --check` passed. No game rules, sound cues, race fingerprints or existing test assertions changed. Removed: the roof ray's ground-hit assertion, which could not reach the surface.
