@@ -7,12 +7,13 @@ import {LAND} from '../src/world/scablands-names.js';
 const plan = forgePlan(), ground = (x, z) => x * .01 + z * .02;
 const car = {x: plan.hearth.x, z: plan.hearth.z + 12};
 const view = forgeHoldView(car, plan, ground);
-assert.equal(view.position.x, car.x + 5);
-assert.equal(view.position.z, car.z + 10);
-assert.equal(view.position.y, ground(view.position.x, view.position.z) + 4.5);
+// Claude's numbers after the first hand drive of the hold (16 November 2026): nearer and lower, aimed nearer the hearth.
+assert.equal(view.position.x, car.x + 4);
+assert.equal(view.position.z, car.z + 7);
+assert.equal(view.position.y, ground(view.position.x, view.position.z) + 3.6);
 assert.equal(view.target.x, car.x);
-assert.equal(view.target.z, car.z - 6);
-assert.equal(view.target.y, ground(view.target.x, view.target.z) + 4);
+assert.equal(view.target.z, car.z - 8);
+assert.equal(view.target.y, ground(view.target.x, view.target.z) + 3);
 const centre = LAND.at('tin-town', 25, 14);
 for (let radius = 0; radius <= 8; radius += .25) for (let i = 0; i < 360; i++) {
   const a = i * Math.PI / 180;
