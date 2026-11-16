@@ -308,3 +308,9 @@ Removed: the silent underground breakthrough event.
 The roof ray now checks the lining and records the hit's distance from the bore axis. Scenario checks collect their measurements and failures, take the remaining pictures, write `machine-borer-measurements.json`, and report the failures together. Timed driving and camera waits also record failures so later checks can continue. The browser scenario still needs Claude's run; page startup or a missing scene can prevent dependent measurements.
 
 `node --check tools/scenarios/machine-borer.mjs`, parsing every page expression on import, and `git diff --check` passed. No game rules, sound cues, race fingerprints or existing test assertions changed. Removed: the roof ray's ground-hit assertion, which could not reach the surface.
+
+## Final checks after the review fixes
+
+Merged `integration/wasteland` without conflicts. `test-machine-borer` passed in 92.1 seconds; `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed. Scenario syntax and every page expression passed Node parsing. `npm.cmd run build` passed, with the existing mixed-import and large-chunk warnings; its output was sent to the Recycle Bin. No race fingerprints were run in this round. Claude runs the browser scenario and lane tier. The scenario's new lining ray and complete failure report have not been checked in a browser here.
+
+Changed assertions for this round: none. The corrected scenario replaces the ground roof-ray check with the lining-hit check Claude specified. Sound cues remain `borer.head`, `borer.stall`, `borer.refuse`, `borer.breakthrough`, `borer.daylight`, and `borer.muck`.
