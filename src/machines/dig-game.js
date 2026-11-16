@@ -277,7 +277,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   const {look:groundLook,hills:hillField,photos:groundPhotos}=createDigGroundLook(riverField);
-  const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}));
+  const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}),{made:true});
   const yardFloor=staticYard(world,groundMaterial);
   const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const nearGround=createDigNearGround(nearMaterial,sim.ground);

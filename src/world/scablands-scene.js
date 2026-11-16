@@ -514,7 +514,7 @@ export function createScablandsScene(course,options={}){
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const roadMaterial=createRoadLook({photo:groundPhotos?.road??null}).apply(new THREE.MeshStandardMaterial({color:0x6e5d47,roughness:1,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
   const gorgeMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}),{riverHole:false});
-  const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));
+  const editedMaterial=groundLook.apply(new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}),{made:true});
   const ground=new THREE.Group();ground.name='Scablands ground chunks';group.add(ground);
   let tunnelLining=tunnels?.segments.length?createTunnelMesh(tunnels):null;
   if(tunnelLining)ground.add(tunnelLining);
