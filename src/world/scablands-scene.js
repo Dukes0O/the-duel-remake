@@ -23,6 +23,7 @@ import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
+import {barricadeShape,barricadeSurface} from './ash-men-look.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -619,9 +620,18 @@ export function createScablandsScene(course,options={}){
     new THREE.MeshStandardMaterial({color:0x24201c,roughness:.88,metalness:.45}));
   transferPot.name='Hot Delivery pot transfer';transferPot.visible=false;group.add(transferPot);
   const transferFrom=new THREE.Vector3(),transferTo=new THREE.Vector3(forgeAt.x,forgeFlame.position.y+.2,forgeAt.z);
-  // Plain barricades use the same dimensions and positions as the job solids.
-  const barricadeGeometry=new THREE.BoxGeometry(12,2,1.4),barricadeMaterial=new THREE.MeshStandardMaterial({color:0x584438,roughness:1});
-  const barricades=[0,1].map(()=>{const mesh=new THREE.Mesh(barricadeGeometry,barricadeMaterial);mesh.name='Ash Men barricade';group.add(mesh);return mesh;});
+  const barricadeMaterial=barricadeSurface();
+  const barricades=[0,1].map(index=>{
+    const rig=new THREE.Group();rig.name='Ash Men barricade';
+    for(const burnt of [false,true]){
+      const geometry=barricadeShape({length:12,height:2,depth:1.4,seed:index+1,burnt});
+      // The drawing's stakes extend beyond its box. Fit the standing drawing to the solid's depth.
+      if(!burnt){geometry.computeBoundingBox();const box=geometry.boundingBox;
+        geometry.translate(0,0,-(box.min.z+box.max.z)/2);geometry.scale(1,1,1.4/(box.max.z-box.min.z));}
+      const mesh=new THREE.Mesh(geometry,barricadeMaterial);mesh.name=burnt?'Burnt barricade':'Standing barricade';rig.add(mesh);
+    }
+    group.add(rig);return rig;
+  });
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
@@ -876,9 +886,10 @@ export function createScablandsScene(course,options={}){
       townDoor.rotation.y=doorOpen?Math.PI/2:0;
       townDoor.position.set(doorOpen?TIN_TOWN_GATE.opening/2:0,1.5,doorOpen?TIN_TOWN_GATE.opening/2:0);
       braziers.group.visible=Boolean(emberStep);
-      barricades.forEach((mesh,index)=>{
-        const barrier=emberStep?.barriers?.[index];mesh.visible=Boolean(barrier)&&!worldJob?.job?.stepState?.burntBarricades?.includes(barrier.id);
-        if(barrier){const at=barrier.position;mesh.position.set(at.x,at.y+1,at.z);mesh.rotation.y=barrier.heading;}
+      barricades.forEach((rig,index)=>{
+        const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
+        rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);
+        if(barrier){const at=barrier.position;rig.position.set(at.x,at.y,at.z);rig.rotation.y=barrier.heading+Math.PI;}
       });
       cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);
       if(cinder.visible){
@@ -956,6 +967,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
+    barricadeMaterial.map?.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

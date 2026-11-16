@@ -512,3 +512,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the temporary Cinder figure after her model loads. The old `everburn-play` scenario still needs replacement or removal. Next: the barricade drawing, then the smoke column and remaining steps.
+
+## Larger land, barricade drawing (15 November 2026)
+
+- The two Ash Men barricades use Claude's standing and burnt drawings, with one shared surface. Their fronts face the yard, and burnt barriers remain visible after their solids are removed. The standing drawing is fitted to the solid's depth because its stakes extend beyond the supplied box. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real flamethrower burns both barriers; the test compares the drawn dimensions and placement with the job solids, and checks the burnt drawing and removal of each solid. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: the standing drawing is fitted to the solid's depth; Claude should review the appearance.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the plain barricade slabs. The old `everburn-play` scenario still needs replacement or removal. Next: the smoke columns, then the remaining proof drives, camera, cover and scenario.

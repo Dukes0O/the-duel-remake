@@ -784,25 +784,47 @@ for (const [index, barrier] of step.barriers.entries()) {
     worldAt:() => car, groundAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100};
+  const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19), {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+  syncScene(scene.group, state);
+  const drawings = scene.group.children.filter(node => node.name === 'Ash Men barricade');
+  assert.equal(drawings.length, 2);
   state.worldJobThingsHit = [{id:step.barriers[0].id, kind:'barricade', burnable:true}];
   car = {...step.barriers[0].position, heading:0};
   stepWorldJob(duel, 0.01);
   assert.ok(!world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'a projectile does not burn a barricade');
-  for (const barrier of step.barriers) {
+  for (const [index, barrier] of step.barriers.entries()) {
     const p = barrier.position;
     car = {x:p.x, y:p.y, z:p.z - 6, heading:0};
     state.headingError = 0;
     stepWorldJob(duel, 0.01);
     assert.equal(pushOutOfSolids(p.x, p.z, 1, world.solidGrid, p.y).hit?.id, barrier.id);
+    const solid = world.solidGrid.barricades.find(item => item.id === barrier.id);
+    const drawing = drawings[index], standing = drawing.children[0], burnt = drawing.children[1];
+    syncScene(scene.group, state);
+    standing.geometry.computeBoundingBox();
+    const size = standing.geometry.boundingBox.getSize(new THREE.Vector3());
+    assert.ok(Math.abs(size.x - 2 * solid.halfX) < .3);
+    assert.ok(Math.abs(size.z - 2 * solid.halfZ) < .3);
+    assert.equal(drawing.position.y, solid.minY);
+    assert.ok(Math.abs(drawing.rotation.y - barrier.heading - Math.PI) < 1e-9);
+    assert.equal(standing.visible, true);
+    assert.equal(burnt.visible, false);
     assert.ok(startFlamethrower(duel, state));
     stepFlamethrowers(duel, 0.1);
     assert.ok(state.worldJobThingsHit.some(hit => hit.id === barrier.id && hit.flame));
     stepWorldJob(duel, 0.01);
     assert.ok(world.job.stepState.burntBarricades.includes(barrier.id));
     assert.equal(pushOutOfSolids(p.x, p.z, 1, world.solidGrid, p.y).hit, null);
+    syncScene(scene.group, state);
+    assert.equal(standing.visible, false);
+    assert.equal(burnt.visible, true);
+    assert.notEqual(standing.geometry, burnt.geometry);
+    assert.equal(standing.material, burnt.material);
     assert.ok(!worldJobHitTargets(duel).some(target => target.id === barrier.id));
     state.combat.flameBursts = [];
   }
+  assert.equal(drawings[0].children[0].material, drawings[1].children[0].material);
+  scene.dispose();
 }
 
 for (const [index, brazier] of step.braziers.entries()) {
