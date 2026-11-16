@@ -201,8 +201,15 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(opening.reachedAll, 'the driver reaches the camp approach');
   assert.ok(opening.stretches.some(stretch => stretch.peakSpeedMph * 1.609344 >= 100),
     'the real car reaches 100 km/h on the clear road');
-  const campApproach = driveAlongRoad(duel, road, 2350);
+  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344);
   assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
+  assert.ok(campApproach.peakSpeedMph * 1.609344 >= 100,
+    'the driver keeps the road speed on the clear approach to the camp');
+  if (process.env.EVERBURN_CAMP_APPROACH_ONLY === '1') {
+    console.log('Camp approach:', JSON.stringify({peakKmh:campApproach.peakSpeedMph * 1.609344,
+      seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length}));
+    process.exit(0);
+  }
   const joltsBeforeScoop = duel.state.arena.worldJob.job.stepState.joltCount ?? 0;
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, 'the driver scoops at the camp');

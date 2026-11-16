@@ -1424,3 +1424,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the gap in the scripted road driver's scoop-interval ram count. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road camp approach (16 November 2026)
+
+- The clean-drive driver now targets 100 km/h on the clear approach to Halfway Camp, instead of 35 mph. Its real car peaks at 104.477 km/h on that stretch; the barricade approach still slows it. No game event or sound cue was added.
+- Checks: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_APPROACH_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across pot went out at 629.822 m. The complete `EVERBURN_CLEAN_ROAD=1` run fails the unchanged limit of one ram: 7.910 km, 6.476 minutes, two rams, one Halfway scoop, 51.826 ember, both barricades burnt. The camp ram is near 2.330 km and the bridge ram near 3.871 km. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the approach speed check is new. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the driver's 35 mph target on the clear camp approach. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
