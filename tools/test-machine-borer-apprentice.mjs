@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerCutLesson} from '../src/machines/borer.js';
-import {createDigSandbox, createDigSandboxForApp} from '../src/machines/dig-sandbox.js';
+import {createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -41,4 +41,13 @@ assert.equal(easyVisit.apprenticeTown.apprenticeships[0].errorM, .5);
 assert.equal(easyVisit.apprenticeTown.apprenticeships[0].rate, .8);
 assert.equal(normalVisit.apprenticeTown.apprenticeships[0].errorM, 3);
 assert.ok(Math.abs(normalVisit.apprenticeTown.apprenticeships[0].rate - .3) < 1e-9);
+// The visit retains a finished tunnel once, and ignores unfinished work.
+const visit = importDigTunnels(createDigSandbox({playerId:'second-cut'}), [
+  {start:{x:0,y:0,z:0}, end:{x:0,y:0,z:100}, radius:3, startOpen:true, endOpen:true},
+]);
+assert.equal(rememberDigTunnel(visit), visit);
+const completed = rememberDigTunnel({...visit, borer:{...visit.borer, reachedDaylight:true}});
+assert.deepEqual(completed.completedTunnels, [visit.tunnels]);
+assert.equal(rememberDigTunnel(completed), completed);
+assert.equal(completed.apprenticeTown, visit.apprenticeTown);
 console.log('Borer apprentice lessons: eligibility, averages, improvement and Easy passed.');

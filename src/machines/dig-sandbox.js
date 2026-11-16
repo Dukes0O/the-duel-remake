@@ -171,12 +171,18 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]},tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]}, completedTunnels:[],tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
     cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
+}
+
+/** Keep a completed tunnel index for later cuts in this visit. */
+export function rememberDigTunnel(sim) {
+  if (!sim.borer.reachedDaylight || !sim.tunnels.segments.length || sim.completedTunnels.includes(sim.tunnels)) return sim;
+  return {...sim, completedTunnels:[...sim.completedTunnels, sim.tunnels]};
 }
 
 /** Copy the current visit's tunnels into plain data, without writing a store. */
@@ -268,6 +274,7 @@ function fixedStep(sim,input) {
         for (let i=oldCount;i<segments.length;i++) next.tunnels.extendLast(segments[i],true);
         next.dirty=true;
       }
+      if (daylight) next=rememberDigTunnel(next);
     }
   } else if(sim.roadMachines[sim.activeMachine]){
     const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
