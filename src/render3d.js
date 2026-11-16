@@ -1,4 +1,6 @@
 import {scablandsActorFeet, scablandsSurfaceHeightAt} from './world/scablands-ground.js';
+import {forgePlan} from './world/forge-look.js';
+import {solidsNear} from './world/scablands-solids.js';
 import {speedKph} from './speed-format.js';
 import { rampChaseCamera } from './deep/deep-journey.js'; // DEEP-RAMP-2
 import {isSummitAttack} from './summit-attack.js';
@@ -43,8 +45,8 @@ import { updateDriver } from './driver.js';
 import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
-import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera } from './camera-clearance.js';
-import { facingChaseView, machineLift, easeMachineLift, machineLookBlend } from './world-job-camera.js';
+import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
+import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView } from './world-job-camera.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
 import { createRenderQuality } from './render-quality.js';
@@ -996,9 +998,20 @@ export function attachRenderer(host, app) {
         drawnGround || scablandsSurfaceHeightAt);
     } else landingBlend = 0;
     if(groundChase)raiseScablandsCamera(course,camera.position,player.position,cameraFeet,drawnGround);
+    const forgeHold = !menu && st.arena?.mode === 'world-job' && st.arena.worldJob?.arrivalHold;
+    if (forgeHold) {
+      const pose = forgeHoldView(player.position, forgePlan(), drawnGround || scablandsSurfaceHeightAt);
+      const t = Math.max(0, Math.min(1, forgeHold.elapsed)), blend = t * t * (3 - 2 * t);
+      camera.position.lerp(new THREE.Vector3(pose.position.x, pose.position.y, pose.position.z), blend);
+      lookTarget.lerp(new THREE.Vector3(pose.target.x, pose.target.y, pose.target.z), blend);
+      raiseScablandsCamera(course, camera.position, player.position, cameraFeet, drawnGround || scablandsSurfaceHeightAt);
+      raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
+      player.visible = true;
+      firstPersonView = false;
+    }
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
-        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&['chase','wide'].includes(app.cameraMode||'chase')){
+        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
       cameraBodyProjection.copy(cameraBodyTarget).project(camera);

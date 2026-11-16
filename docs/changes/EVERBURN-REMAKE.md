@@ -1895,3 +1895,8 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the screen model at arrival and at 8.9 seconds for bright and barely alive deliveries. Race fingerprints were not run in this round. No sound cue changed; `world.forge.catch` remains at five seconds.
 - Changed assertions: none in this round. Codex decided: none. **Removed:** the carry instruction during the hold.
 - Still needed: the camera, browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.
+
+- During the hold, the camera eases over one second to a standing view of the car and hearth, on the side away from the crane. It stays above the ground and rises out of solids. The simulation does not read the camera. The cue remains `world.forge.catch` at five seconds.
+- Checks: `node tools/test-forge-hold-camera.mjs` passed the position, target, solid clearance and bay sweep; `node tools/test-camera-clearance.mjs` passed 2,091 checks; `node --check src/render3d.js` and `git diff --check` passed. Race fingerprints were not run in this round.
+- Changed assertions: none. Codex decided: use smoothstep for the one-second transition. **Removed:** the chase-only view during the hold.
+- Still needed: the two browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.

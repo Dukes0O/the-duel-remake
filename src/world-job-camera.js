@@ -56,3 +56,14 @@ export function easeMachineLift(current, required, dt) {
 
 // How much the camera looks at the car instead of ahead: none on the ground, all of it from 2 m up.
 export const machineLookBlend = lift => Math.max(0, Math.min(1, lift / MACHINE_CLEARANCE_METRES));
+// The standing view is on the side of the hearth-to-car line away from the crane.
+export function forgeHoldView(car, plan, groundAt) {
+  const dx = car.x - plan.hearth.x, dz = car.z - plan.hearth.z;
+  const length = Math.hypot(dx, dz);
+  const ux = length ? dx / length : 0, uz = length ? dz / length : 1;
+  let sx = -uz, sz = ux;
+  if (sx * (plan.tower.x - plan.hearth.x) + sz * (plan.tower.z - plan.hearth.z) > 0) { sx = -sx; sz = -sz; }
+  const x = car.x + 10 * ux + 5 * sx, z = car.z + 10 * uz + 5 * sz;
+  const tx = (car.x + plan.hearth.x) / 2, tz = (car.z + plan.hearth.z) / 2;
+  return {position: {x, y: groundAt(x, z) + 4.5, z}, target: {x: tx, y: groundAt(tx, tz) + 4, z: tz}};
+}
