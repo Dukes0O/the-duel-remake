@@ -4,7 +4,7 @@ import {LAND} from '../src/world/scablands-names.js';
 
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.
-export function coverStretches(samples, classify) {
+export function sightStretches(samples, classify) {
   const stretches = [];
   for (const point of samples) {
     const visibility = classify(point);
@@ -14,6 +14,11 @@ export function coverStretches(samples, classify) {
     }
     stretch.to = point.along;
   }
+  return stretches;
+}
+
+export function coverStretches(samples, classify) {
+  const stretches = sightStretches(samples, classify);
   return stretches.filter((stretch, index) => stretch.visibility === 'hidden' &&
     stretch.to - stretch.from >= 150 && stretches[index - 1]?.visibility === 'open' &&
     stretches[index + 1]?.visibility === 'open');

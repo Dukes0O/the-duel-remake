@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates sight at ten-metre intervals (16 November 2026)
+
+- The job test now samples the plates way every 10 m and reports its longest stretch in the furnace's sight. On the current land it runs from 899 m to 1,378 m, approximately 479 m; one covered stretch qualifies. The measurement uses the real way and furnace sight rule. No game event or sound cue was added.
+- The next mesa cannot meet both written placement rules: the card requires its centre 150 to 220 m from the way and a radius of at least 110 m, while `tools/test-scablands-hills.mjs` requires every mesa centre to clear the way by at least its radius plus 200 m, at least 310 m. The test also fixes the number of mesas at six. Claude needs to decide the clearance and whether to add or move a mesa before this placement can proceed. No terrain was changed.
+- Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. The straight drive went out at 629.8 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers, and final checks as needed. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. The clean route drives, cover and scenario remain unfinished.
+
 ## Plates cover measurement (16 November 2026)
 
 - The cover check now keeps out-of-range sections separate from open ground. A covered stretch counts only when it is at least 150 m long and the furnace can see the car on both sides. A test also checks that a range gap or a short hidden stretch cannot count. The real land still has one qualifying stretch, not the required three. No game event or sound cue was added.

@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {coverStretches, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -38,10 +38,17 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const route = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
-  const stretches = coverStretches(sampleLine(route, 20), point => {
+  const samples = sampleLine(route, 10);
+  const classify = point => {
     if (Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) > WATCH.furnace.range) return 'out of range';
     return stepSkylineSight({}, point, 0).visible ? 'open' : 'hidden';
-  });
+  };
+  const runs = sightStretches(samples, classify);
+  const stretches = coverStretches(samples, classify);
+  const longestOpen = runs.filter(run => run.visibility === 'open')
+    .reduce((longest, run) => run.to - run.from > longest.to - longest.from ? run : longest);
+  assert.ok(longestOpen.to > longestOpen.from, 'the longest open stretch has a measurable length');
+  console.log(`Plates longest open stretch: ${longestOpen.from.toFixed(0)} to ${longestOpen.to.toFixed(0)} m; ${stretches.length} qualifying covered stretches`);
   assert.ok(stretches.length >= 1,
   'the plates have at least one 150 m stretch hidden from the furnace with open ground on each side');
   const points = Array.from({length: 23}, (_, index) => ({along:index * 20}));
