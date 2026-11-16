@@ -176,6 +176,7 @@ export function driveToForge(duel, destination, maxTicks = 3600) {
   for (; ticks < maxTicks && !world.job.done; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     distance = Math.hypot(destination.x - car.x, destination.z - car.z);
+    if (world.job.stepState.ember <= 0 && distance < 5 && Math.abs(state.speedMph) < 0.5) break;
     const pastGate = (car.x - gate.x) * gate.through.x + (car.z - gate.z) * gate.through.z;
     if (pastGate >= 12) clearedGate = true;
     const target = clearedGate ? destination : throughGate;

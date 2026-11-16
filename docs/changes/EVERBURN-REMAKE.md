@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates drive to the forge (15 November 2026)
+
+- The Medium plates driver now lines up outside Tin Town's gate, drives through it and stops at the forge. The proof driver records an out pot at the forge without calling it a successful delivery. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The 28 mph target drive reached the forge in 8.75 minutes after leaving the yard gate with 0 ember. Two rider jolts put it out at 1.55 km. The job remained open as intended. This does not meet the plates band of 30 to 55. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: line up 80 m outside the town gate and cross its centre at a 12 mph target; Claude should review the drive.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a viable plates drive and measure all four arrival bands and times, then finish the camera, cover and scenario.
+
 ## Larger land, plates drive to town approach (15 November 2026)
 
 - The seeded Medium plates drive now follows the real route from 3 km to the town approach, and the measured-stretch driver reports whether every target was reached. No game event or sound cue was added.

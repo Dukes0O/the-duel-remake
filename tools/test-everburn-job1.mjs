@@ -564,6 +564,23 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'the real car follows the plates way to the town approach');
   assert.equal(remaining.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
     'the approach records the actual ember');
+  // Join the gate's centre line from the outside before turning into town.
+  const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const gateLine = [{x:car.x, z:car.z},
+    {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
+    {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
+    {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
+  const gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
+  console.log('Plates gate approach:', JSON.stringify(gateDrive));
+  assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the plates car passes through the town gate');
+  assert.equal(duel.state.arena.worldJob.tinTownGateRequested, true, 'the slow plates approach opens the gate');
+  const arrival = driveToForge(duel, definition.steps[0].destination.position);
+  console.log('Plates forge arrival:', JSON.stringify(arrival));
+  assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the plates car stops at the forge');
+  assert.equal(arrival.done, false, 'the job stays open because the pot is out');
+  assert.equal(duel.state.arena.worldJob.job.stepState.ember, 0, 'the actual pot is out at the forge');
+  const ticks = opening.ticks + continuation.ticks + remaining.ticks + gateDrive.ticks + arrival.ticks;
+  console.log('Plates minutes after the yard gate:', ticks / 3600);
 
 }
 // The real job requests the gate only for a car approaching slowly.
