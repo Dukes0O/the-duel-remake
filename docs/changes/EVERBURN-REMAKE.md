@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed crossing distances (16 November 2026)
+
+- The proof now finds the Wash and South Ford from the actual bank impact using the game's river data. The Wash is 2,894 m away along the river, and the South Ford is 4,403 m away; their straight-line distances are 2,756 m and 4,228 m. Neither is a nearby exit from this impact. The clean bed delivery remains unproved. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive out at 629.82 m. Integration is already included. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a clean bed exit without retracing kilometres to a crossing, then prove both deliveries.
+
 ## Identify the bed climb (16 November 2026)
 
 - The proof driver now measures the real river and ground slopes at its first climb impact. The impact at 7,022.87 m is on the dry river bank: the river depth is 7.20 m, and its slope accounts for the ground slope at that point. There was no rider or solid in contact. A 35 m move toward the other side struck the bank sooner; a 35 m move away drew riders. Neither line is a clean delivery. No game event or sound cue was added.

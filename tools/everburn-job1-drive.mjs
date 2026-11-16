@@ -2,7 +2,7 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
-import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {riverDepthAt, RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
@@ -37,6 +37,17 @@ export function bedRiderBypass(route, offset, laterOffset = 0) {
 export function firstGroundClimb(drive) {
   return drive.stretches.flatMap(stretch => stretch.jolts)
     .find(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')) ?? null;
+}
+
+// Locate the gentler river crossings from the actual impact, along the river
+// rather than in a straight line across its banks.
+export function gentleCrossingsFrom(position) {
+  const hit = RIVER_LAND.nearest(position.x, position.z);
+  if (!hit) return [];
+  return RIVER_LAND.crossings.filter(crossing => crossing.kind === 'wash' || crossing.kind === 'ford')
+    .map(crossing => ({id:crossing.id, alongRiver:crossing.along - hit.along,
+      distance:Math.hypot(crossing.x - position.x, crossing.z - position.z)}))
+    .sort((a, b) => Math.abs(a.alongRiver) - Math.abs(b.alongRiver));
 }
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.

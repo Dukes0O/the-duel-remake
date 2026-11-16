@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, driveToFirstClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, gentleCrossingsFrom, driveToFirstClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -167,6 +167,14 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
     'the real ground at the impact is steep');
   assert.ok(trial.emberAfter < trial.emberBefore, 'the slow impact still takes ember from the real pot');
   assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
+  const crossings = gentleCrossingsFrom(climb.position);
+  console.log('Gentle crossings from the bank:', JSON.stringify(crossings));
+  assert.deepEqual(new Set(crossings.map(crossing => crossing.id)), new Set(['the-wash', 'south-ford']),
+    'both gentler crossings come from the real river');
+  assert.ok(crossings.every(crossing => Number.isFinite(crossing.alongRiver) && crossing.distance > 0),
+    'each crossing has a distance from the actual impact');
+  assert.ok(Math.abs(crossings[0].alongRiver) <= Math.abs(crossings[1].alongRiver),
+    'the nearer crossing along the river comes first');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.
