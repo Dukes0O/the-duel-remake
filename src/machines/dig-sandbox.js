@@ -5,8 +5,8 @@ import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
 import {HILLS} from '../world/scablands-height.js';
-import {borerCutLesson, borerHasFace, createBorerState, stepBorer} from './borer.js';
-import {canDelegate, recordBorerLesson} from '../town/town-apprentices.js';
+import {borerApprenticeControls, borerCutLesson, borerHasFace, createBorerState, stepBorer} from './borer.js';
+import {advanceDelegatedWork, canDelegate, recordBorerLesson} from '../town/town-apprentices.js';
 import {createWorkOrder} from '../town/town-work.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
@@ -269,6 +269,24 @@ export function sendBorer(sim, survey) {
   Object.assign(order, {personId:person.id, mouth:{x:sim.borer.x, y:sim.borer.y, z:sim.borer.z},
     heading:sim.borer.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM});
   return {...sim, boreOrders:[...sim.boreOrders, order]};
+}
+
+/** Advance one order with the real cutter; the caller owns its tunnel index. */
+export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSeconds = 0}, dtSeconds) {
+  if (!Number.isFinite(dtSeconds) || dtSeconds < 0) throw new TypeError('Work time must be non-negative.');
+  if (dtSeconds === 0) return {order, borer, stallSeconds, events:[]};
+  const apprentice = town.apprenticeships.find(record => record.personId === order.personId && record.kind === 'bore');
+  const hands = borerApprenticeControls(borer, order, apprentice, dtSeconds);
+  if (stallSeconds > 0) hands.thrust = 0;
+  const result = stepBorer(borer, {...hands, tunnels, tunnelsIncludeCurrent:borer.started, mutableSegments:true}, ground, null, dtSeconds);
+  const nextOrder = {...order, stages:order.stages.map(stage => ({...stage}))};
+  const daylight = result.events.some(event => event.type === 'daylight');
+  advanceDelegatedWork(town, nextOrder, order.personId, dtSeconds / 60, {}, {
+    boreCut:{metres:Math.max(0, result.state.distanceM - borer.distanceM), daylight},
+  });
+  const nextStallSeconds = result.events.some(event => event.type === 'stall')
+    ? 20 : Math.max(0, stallSeconds - dtSeconds);
+  return {order:nextOrder, borer:result.state, stallSeconds:nextStallSeconds, events:result.events};
 }
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */

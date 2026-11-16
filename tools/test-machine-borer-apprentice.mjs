@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
-import {borerCutLesson} from '../src/machines/borer.js';
-import {borerWatchingWords, canSendBorer, sendBorer, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {borerCutLesson, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {borerWatchingWords, canSendBorer, sendBorer, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -134,3 +134,26 @@ const another = {...sent, borer:{...sent.borer, x:20}};
 const queued = sendBorer(another, {...line, x:20});
 assert.deepEqual(queued.boreOrders.map(order=>order.id), ['bore-1','bore-2']);
 console.log('Borer sending: teaching, survey, face, refusal and order queue passed.');
+
+// The order records only ground cut by Mabel, and a stall costs 20 seconds.
+const workGround = {
+  heightAt:(x,z)=>Math.abs(x)<10 && z>=6 && z<125 ? 8 : 0,
+  materialAt:()=> 'rock', refusal:()=>null,
+  cut:(_shape,_height,_depth,{length})=>({ok:true,volume:length,volumes:{rock:length}}),
+  fill:()=>({ok:true}),
+};
+let work = {town:sendStart.apprenticeTown, order:sent.boreOrders[0], borer:createBorerState(), ground:workGround};
+assert.equal(stepDelegatedBore(work, 0).order, work.order);
+for (let i=0;i<600;i++) work={...work,...stepDelegatedBore(work,1/60)};
+assert.ok(Math.abs(work.borer.distanceM - 5)<1e-6);
+assert.ok(Math.abs(work.order.stages[0].completed - work.borer.distanceM)<1e-8);
+assert.equal(work.order.status, 'working');
+const stalledBorer = stepBorer(createBorerState(), {thrust:1}, workGround, 'rock', 2).state;
+assert.equal(stalledBorer.stalled, true);
+let paused = {...work, borer:stalledBorer, stallSeconds:20};
+for (let i=0;i<1200;i++) paused={...paused,...stepDelegatedBore(paused,1/60)};
+assert.equal(paused.borer.distanceM, stalledBorer.distanceM);
+assert.ok(paused.stallSeconds < 1e-8);
+paused={...paused,...stepDelegatedBore(paused,1/60)};
+assert.ok(paused.borer.distanceM > stalledBorer.distanceM);
+console.log('Delegated bore: real cutting, measured progress and stall delay passed.');
