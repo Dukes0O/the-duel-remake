@@ -53,6 +53,15 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
     if (!pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit) carClear++;
   }
   assert.ok(carClear >= 270, `a car has room on at least three quarters of Cinder's ring: ${carClear}/360`);
+  // A stopped car can collect the pot on the gate's centre line and leave straight ahead.
+  const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const stop = {x:gatePoint.x - 12 * forward.x, z:gatePoint.z - 12 * forward.z};
+  assert.ok(Math.hypot(stop.x - pickup.x, stop.z - pickup.z) < step.pickup.radius);
+  for (let along = -12; along <= 12; along += .25) {
+    const x = gatePoint.x + along * forward.x, z = gatePoint.z + along * forward.z;
+    assert.equal(pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit, null,
+      `the centre line through the yard gate is clear at ${along} m`);
+  }
   const view = (distance, speedKmh = 0) => ({player:{position:{x:pickup.x + distance, z:pickup.z}}, speedKmh});
   const job = () => createJob(EVERBURN_JOBS[0], 19);
   assert.equal(stepJob(job(), view(12.1), 0).stepState.pickingUp, undefined);
