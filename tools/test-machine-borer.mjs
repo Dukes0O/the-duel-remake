@@ -612,6 +612,9 @@ const bankSnapshot = structuredClone(bankBeforeIdle);
 const nextMuckCut = stepBorer(muckCut, {thrust:1}, muckGround, 'topsoil', 1 / 60).state;
 assert.deepEqual(bankBeforeIdle, bankSnapshot, 'A new deposit leaves the previous bank state unchanged.');
 assert.notStrictEqual(nextMuckCut.spoilBank, bankBeforeIdle, 'A deposit gets its own bank state.');
+assert.notStrictEqual(nextMuckCut.spoilBank.cells, bankBeforeIdle.cells, 'The cell list is copied before planning.');
+assert.strictEqual(nextMuckCut.spoilBank.cells[0], bankBeforeIdle.cells[0],
+  'Unchanged cell records are shared instead of copied on every deposit.');
 for (const cell of muckCut.spoilBank.cells) {
   assert.ok(muckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001, 'The bank stays at most five metres high.');
   assert.ok(cell.x >= 12 && Math.abs(cell.z) <= 1, 'The bank stays beside the mouth and away from the track.');

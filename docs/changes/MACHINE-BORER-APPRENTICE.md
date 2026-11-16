@@ -34,8 +34,11 @@ The bank is now copied only when a cutting step plans a deposit, rather than on 
 
 Planning a deposit now reads each existing bank cell's height once, even when the deposit needs several cells. Newly added cells use the height already read when they were created. This prepares for the wider bank without repeated land samples within one deposit; the heap itself is still outstanding.
 
+Deposit planning now shares unchanged cell records with the previous state while copying the cell list. It does not change those records, so an earlier state remains intact without allocating a new object for every cell on every cut.
+
 ## Checks
 
+- SP cell records: `node tools/test-machine-borer.mjs` passed. The test checks that deposits copy the list, share unchanged records and leave the preceding state intact.
 - SP height reads: `node tools/test-machine-borer.mjs` passed. A deposit spanning nearly full cells reads each existing cell once per cutting step; the ground-refresh check sampled 864 heights over 100 steps.
 - SP copying: `node tools/test-machine-borer.mjs` passed. Idle work shares the unchanged bank, and a new deposit leaves the earlier bank state intact. The ground-refresh check sampled 864 heights over 100 cutting steps.
 - SP preparation: `node tools/test-machine-borer.mjs` passed, including unique bank cells and the existing ground-refresh check (864 height samples over 100 cutting steps).

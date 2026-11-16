@@ -149,12 +149,10 @@ function planSpoil(ground, segments, bank, amount) {
       continue;
     }
     const volume = Math.min(remaining, 5 - best.height);
-    best.cell.planned = (best.cell.planned || 0) + volume;
     heights.set(best.cell, best.height + volume);
     allocations.push({cell:best.cell, volume});
     remaining -= volume;
   }
-  for (const cell of cells) delete cell.planned;
   return {allocations};
 }
 
@@ -355,7 +353,9 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
     const end = {x, y:next.y + Math.sin(slope) * distance + radius * 0.55, z};
-    const bank = {far:next.spoilBank.far, cells:next.spoilBank.cells.map(cell => ({...cell}))};
+    // Existing cell records are immutable. Copy the list, not every record,
+    // so widening the bank does not allocate an object for each old cell.
+    const bank = {far:next.spoilBank.far, cells:next.spoilBank.cells.slice()};
     const deposit = planSpoil(ground, next.segments.length ? next.segments : [{start, end}],
       bank, Math.PI * radius ** 2 * distance);
     if (deposit.reason) {
