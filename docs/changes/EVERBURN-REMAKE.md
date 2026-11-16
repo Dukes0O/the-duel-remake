@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates cover baseline (16 November 2026)
+
+- Added a job test that samples the actual plates way and the furnace's own sight rule, within its real range. It confirms one covered stretch of at least 150 m with open ground on both sides. At 20 m intervals, the current covered stretch runs approximately from 1,396 m to 3,110 m along the way. This is one stretch, not the three required. No terrain or game event changed and no sound cue was added.
+- `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs`: passed, including the cover baseline and the straight-across drive. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the cover check is new. Codex decided: sample every 20 m and count only points within the furnace's actual range, so distance alone cannot count as cover.
+- For Claude to run: the browser scenario, both long drivers and final checks remain. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: place or move mesas to provide three separate covered stretches, run the three required terrain suites, then finish the scenario and final checks.
+
 ## Straight across the plain (16 November 2026)
 
 - A seeded Medium car picks up the pot, leaves the yard gate and holds full throttle toward Tin Town. The real job state shows the ember out after 629.822 m in 0.330 minutes, within the 1.5 km target. The measurement starts outside the gate and records no counted jolts. No sound cue was added.

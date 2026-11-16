@@ -12,7 +12,7 @@ import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
-import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine, sliceLine, pathLength} from '../src/world/scablands-ways.js';
+import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
@@ -23,7 +23,7 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
-import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
+import {FURNACE_SKYLINE, furnaceSighting, stepSkylineSight} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -34,6 +34,23 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// Measure cover only within the furnace's range, using the same sight rule as the job.
+{
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const route = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
+  const samples = sampleLine(route, 20).filter(point =>
+    Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= WATCH.furnace.range);
+  const stretches = [];
+  for (const point of samples) {
+    const visible = stepSkylineSight({}, point, 0).visible;
+    let stretch = stretches.at(-1);
+    if (!stretch || stretch.visible !== visible) stretches.push(stretch = {visible, from: point.along, to: point.along});
+    stretch.to = point.along;
+  }
+  assert.ok(stretches.some((stretch, index) => !stretch.visible && stretch.to - stretch.from >= 150 &&
+    stretches[index - 1]?.visible && stretches[index + 1]?.visible),
+  'the plates have at least one 150 m stretch hidden from the furnace with open ground on each side');
+}
 // Floor it towards town across the plain, starting with the real pickup and gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
