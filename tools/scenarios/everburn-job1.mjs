@@ -4,13 +4,16 @@ import {join} from 'node:path';
 import {EAST_ROAD} from '../../src/world/scablands-road.js';
 import {pointAlong} from '../../src/world/scablands-road-geometry.js';
 
-export function mapFailures(name, measurement, start = false) {
+export function mapFailures(name, measurement, start = false, metBarricade = false) {
   if (measurement.map === null) return [`${name}: the large map is not open`];
   const failures = [];
   if (!/what you know/i.test(measurement.map)) failures.push(`${name}: the map has no What you know heading`);
   if (!/east road/i.test(measurement.map)) failures.push(`${name}: the East Road is missing from the map`);
   if (start && (measurement.mapWays.length !== 1 || !/east road/i.test(measurement.mapWays[0]))) {
     failures.push(`${name}: the starting map must list only the East Road`);
+  }
+  if (metBarricade && !/a barricade of the ash men/i.test(measurement.map)) {
+    failures.push(`${name}: the barricade met on the road is missing from the map`);
   }
   return failures;
 }
@@ -96,7 +99,7 @@ export async function run(context) {
       }, target, options);
       report.pictures.push({name, ...measurement});
       report.failures.push(...pictureFailures(name, measurement, options));
-      if (options.map) report.failures.push(...mapFailures(name, measurement, options.startMap));
+      if (options.map) report.failures.push(...mapFailures(name, measurement, options.startMap, options.metBarricade));
       await context.screenshot(name);
     } catch (error) { report.failures.push(`${name}: ${error.message}`); }
     await persist();
@@ -154,7 +157,7 @@ export async function run(context) {
     await picture('6-bridge-barricade','Ash Men barricade',{focus:true,index:1,dx:18,dy:8,dz:25,loaded:true});
     await page(context, () => { window.__qaApp.advance(0.2); });
     await key(context,'m','KeyM',77);
-    await picture('7-map-after-bridge','Ash Men barricade',{index:1,map:true,focus:true,dx:18,dy:8,dz:25});
+    await picture('7-map-after-bridge','Ash Men barricade',{index:1,map:true,metBarricade:true,focus:true,dx:18,dy:8,dz:25});
     await key(context,'m','KeyM',77);
     await place('gate',0,15);
     await page(context, () => { window.__qaApp.advance(0.5); });

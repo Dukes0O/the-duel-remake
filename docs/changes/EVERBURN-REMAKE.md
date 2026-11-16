@@ -1589,7 +1589,7 @@ The ordinary Medium job test ran in 70.4 seconds on 16 November. These are the r
 | Way | Kilometres | Minutes | Rams | Scoops | Ember |
 | --- | ---: | ---: | ---: | --- | ---: |
 | East Road | 7.959 | 6.068 | 1 | Halfway | 58.298 |
-| Plates | 6.170 | 9.785 | 0 | None | 34.164 |
+| Plates | 6.170 | 9.785 | 0 | None | 31.381 |
 | Salt pan | 9.396 | 8.039 | 0 | None | 46.403 |
 | Bed | 9.474 | 10.415 | 0 | Wash | 28.238 |
 | Bed without scoop | 9.430 | 10.229 | 0 | None | 5.915 |
@@ -1629,3 +1629,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-everburn-job1.mjs` passed, including the new combined-failure checks and the five delivery measurements above. `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The scenario still needs Claude's browser run; its actual framing has not been checked.
 - `test-ember-pot.mjs` still fails at its old East Road drive, which does not collect the pot. `test-everburn-line-audit.mjs` still expects the replaced opening line. Their old assertions were not changed and need Claude's review. The incomplete lane tier and other checks remain as recorded above. No game event, sound cue or race fingerprint changed in this pass.
 - Changed assertions: none. Codex decided: none. Removed: nothing.
+
+## Barricade on the visual map
+
+- The after-bridge picture now checks that the map lists an Ash Men barricade the car has met. The measurement already records the map text, and the scenario reports this fault with the other picture faults before it throws. No game event or sound cue was added.
+- Checks: `node tools/test-everburn-job1.mjs` passed in one plain run, including the map verdict and all six drives. `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The plates delivery measured 31.381 at the forge; the final table above now records that result.
+- Changed assertions: none; the map checks are new. Codex decided: none. Removed: nothing.
+- For Claude to run: the memory-only browser scenario and the two long drivers. The two older failing suites and incomplete lane tier remain as recorded above. The scenario has not been run in Chrome.

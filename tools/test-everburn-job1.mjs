@@ -41,6 +41,10 @@ assert.deepEqual(mapFailures('start', {map:'Other routes', mapWays:['Plates', 'S
   'start: the starting map must list only the East Road',
 ]);
 assert.deepEqual(mapFailures('bridge', {map:null, mapWays:[]}), ['bridge: the large map is not open']);
+assert.deepEqual(mapFailures('bridge', {map:'WHAT YOU KNOW\nEast Road\nA barricade of the Ash Men.', mapWays:['East Road']}, false, true), []);
+assert.deepEqual(mapFailures('bridge', {map:'WHAT YOU KNOW\nEast Road', mapWays:['East Road']}, false, true), [
+  'bridge: the barricade met on the road is missing from the map',
+]);
 assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:true, inView:true, loaded:true, potInView:true}, {loaded:true, pot:true}), []);
 assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:false, inView:false, loaded:false, potInView:false}, {loaded:true, pot:true}), [
   'Cinder: Cinder is not visible inside the picture', 'Cinder: the pot is not on the car', 'Cinder: the pot is not visible inside the picture',
