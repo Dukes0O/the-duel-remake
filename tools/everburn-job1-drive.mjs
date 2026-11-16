@@ -208,6 +208,11 @@ export function drivePlatesShelter(duel, route, endAlong) {
   return driveAlongRoad(duel, route, endAlong, 18000, 30.4, false, false, 0.1);
 }
 
+// A cautious crossing of the rough ground after the second shelter.
+export function drivePlatesRoughGround(duel, route, endAlong) {
+  return driveAlongRoad(duel, route, endAlong, 18000, 15, false, false, 0.1);
+}
+
 // The plates have a 50 km/h rough-ground threshold. Keep the opening below it
 // and return the actual car and ember measurements for each stretch.
 export function drivePlatesOpening(duel, route) {

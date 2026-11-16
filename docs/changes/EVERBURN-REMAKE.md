@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Slower plates crossing (16 November 2026)
+
+- Added a cautious test driver for the rough ground. On a fresh seeded Medium drive it crossed from 2.9 to 3.6 km at a 15 mph target with no jolts and 62.057 ember remaining. The furnace saw the car continuously for 36 seconds and sent riders, so this is not the clean drive. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: test a 15 mph target across the rough ground. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a line that crosses this ground without jolts or a furnace warning, then complete the clean drives and scenario.
+
 ## Plates ground hits (16 November 2026)
 
 - The proof driver now records the real ground-hit events on each jolt and removes its listener after each drive. The five jolts at 3,005 to 3,136 m were three falls of 2.55, 2.74 and 2.12 m, followed by two hits against ground too steep to climb. They were not rider contacts. The clean drive still goes out and is visible for 18 seconds; it is not proved. No game event or sound cue was added.

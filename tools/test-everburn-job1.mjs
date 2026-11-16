@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -172,6 +172,23 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.deepEqual(obstacle.jolts.map(jolt => jolt.groundHits.map(hit => hit.kind)),
     [['fall'], ['fall'], ['fall'], ['climb'], ['climb']],
     'the ground reports three landings followed by two steep climbs at the jolts');
+  // Repeat the same real approach at a lower speed to separate rough ground
+  // from the furnace exposure. This is not yet the clean route proof.
+  const slowDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  slowDuel.state.wastelandGateDiscovered = true;
+  assert.ok(slowDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  slowDuel.state.countdown = 0;
+  assert.ok(driveToCinder(slowDuel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(slowDuel, yardPlan().gate).along >= 20);
+  assert.ok(driveAlongRoad(slowDuel, line, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
+  assert.ok(drivePlatesShelter(slowDuel, line, 2900).along >= 2900);
+  const slowObstacle = drivePlatesRoughGround(slowDuel, line, 3600);
+  console.log('Plates slower obstacle approach:', JSON.stringify(slowObstacle));
+  assert.ok(slowObstacle.along >= 3600, 'the slower car crosses the rough ground');
+  assert.equal(slowObstacle.jolts.length, 0, 'the slower car crosses without jolts');
+  assert.ok(slowObstacle.longestFurnaceSightSeconds > 6 && slowDuel.state.arena.worldJob.skylineWarned,
+    'the slower crossing still triggers the furnace, so it is not the clean drive');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
