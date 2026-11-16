@@ -65,6 +65,23 @@ export function borerCutLesson(state) {
     pace:clamp(state.distanceM / state.allowedCutM, 0, 1)};
 }
 
+/** Set the apprentice's hands for one fixed Dig step, without sampling the land. */
+export function borerApprenticeControls(state, order, apprentice, dtSeconds) {
+  if (!Number.isFinite(dtSeconds) || dtSeconds <= 0 ||
+      !Number.isFinite(order?.grade) || !(order?.metres > 0) ||
+      !Number.isFinite(apprentice?.rate) || !Number.isFinite(apprentice?.errorM))
+    throw new TypeError('The apprentice needs a surveyed line, learned figures and work time.');
+  const pace = clamp(apprentice.rate, 0, 1);
+  const thrust = state.stalled ? 0 : pace / 3;
+  // Spread the learned height error along the line. Correct the head gradually,
+  // at the same turning limit as the player's controls.
+  const targetSlope = Math.atan(order.grade + apprentice.errorM / order.metres);
+  const expectedDistance = 1.5 * thrust * dtSeconds;
+  const slope = expectedDistance > 0
+    ? clamp((targetSlope - state.slope) / (radians(0.3) * expectedDistance), -1, 1) : 0;
+  return {thrust, slope, steer:0};
+}
+
 /** The conveyor starts its bank twelve metres to the right of the first mouth. */
 export function borerMuckPile(segments) {
   if (!Array.isArray(segments)) throw new TypeError('The borer needs a list of tunnel segments.');

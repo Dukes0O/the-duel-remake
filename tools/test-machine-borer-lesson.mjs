@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {borerCutLesson, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {borerApprenticeControls, borerCutLesson, createBorerState, stepBorer} from '../src/machines/borer.js';
 
 // A long face with a level landing. The ground accepts spoil without changing
 // the face, so each script measures the same rock and the same daylight.
@@ -40,3 +40,21 @@ assert.equal(borerCutLesson({...clean, distanceM:99}), null);
 assert.equal(borerCutLesson({...clean, reachedDaylight:false}), null);
 console.log('Borer lessons: clean, stalled, off level and slow cuts passed.');
 
+// The apprentice uses the cutter's real lever and head controls. The controls
+// do not need ground samples, and the real step still decides what is cut.
+for (const pace of [.8, 1]) {
+  const land = ground(), order = {grade:.01, metres:100};
+  const apprentice = {rate:pace, errorM:.5};
+  let state = createBorerState();
+  for (let i = 0; i < 600; i++) {
+    const hands = borerApprenticeControls(state, order, apprentice, 1/60);
+    state = stepBorer(state, hands, land, 'rock', 1/60).state;
+  }
+  assert.ok(Math.abs(state.distanceM - 5 * pace) < 1e-6);
+  assert.ok(Math.abs(Math.tan(state.slope) - .015) < 1e-6);
+  assert.equal(state.stalled, false);
+}
+const releaseHands = borerApprenticeControls({...createBorerState(), stalled:true},
+  {grade:0, metres:100}, {rate:1, errorM:0}, 1/60);
+assert.equal(releaseHands.thrust, 0);
+console.log('Borer apprentice hands: taught pace, grade and stall release passed.');

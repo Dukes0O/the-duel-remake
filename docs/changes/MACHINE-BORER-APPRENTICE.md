@@ -10,6 +10,8 @@ A4 adds a send button and F key at a surveyed, accepted face for a taught appren
 
 A5 has started. The town's delegated-work function now accepts a bore's measured cutting distance and daylight result. It keeps the order open beyond the surveyed distance and finishes it only at daylight. It does not change the taught pace on each simulation step. The Dig still needs to drive Mabel and report her results to this function.
 
+The apprentice's controls now set the lever to the taught share of the rock limit and turn the head toward the surveyed grade plus the learned height error, using Mabel's own steering limits. They release the lever when she stalls. These controls do not sample the land. They are not connected to the Dig yet; the 20-second stall delay and the order's progress still need to be built.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
@@ -18,6 +20,7 @@ A5 has started. The town's delegated-work function now accepts a bore's measured
 - A3: `node tools/test-machine-borer-apprentice.mjs` passed, including observations, grade limits, second-cut survey words and reset.
 - A4: `node tools/test-machine-borer-apprentice.mjs` passed, including missing teaching or survey, refused faces, line details and queue order.
 - A5 work-order support: `node tools/test-town-apprentices.mjs` passed, 21 checks, including measured distance, no work while time is stopped, and daylight completion.
+- A5 apprentice controls: `node tools/test-machine-borer-lesson.mjs` passed. The real cutter held both tested paces and reached the learned grade in rock; stalled controls release the lever.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -34,6 +37,8 @@ Mabel clears a daylight mouth by 12 m before she is ready for another cut. She c
 Holding the grade means 50 consecutive metres within 1 in 50 of the surveyed grade.
 
 A face already in the bore queue cannot be sent a second time with the same heading.
+
+The learned height error is spread upward over the surveyed distance. It is a magnitude in the existing lesson record, so it does not carry a direction.
 
 ## Sound
 
