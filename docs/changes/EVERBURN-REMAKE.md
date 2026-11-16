@@ -1796,3 +1796,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `test-ember-screens.mjs` passed 29 checks; `test-everburn-job1.mjs` passed all deliveries; `test-ember-lines.mjs` passed 60 captions and the note; `test-board.mjs` passed 642 checks. Integration was already included. No race code, fingerprints, save shape or sound cues changed. Easy halves hit loss; it does not slow cold.
 - Changed assertions, for Claude to review: the open-job count changed from one to zero and the wall's next-job button count changed from one to zero, both under Claude's X7 remade-job ruling. The checks for a remade next job remain explicit and strong. Codex decided: none. Removed: the old expectation that an unremade job is offered.
 - For Claude to run: the two long drivers and complete lane tier remain as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: furnace rider wrecks
+
+- A wrecked furnace rider stays at the place it was wrecked for the rest of the job, even when the car is more than 600 metres away. No sound cue, save or race rule changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including a wreck tested through the real job step and all five delivery drives. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: distance-based removal of wrecked furnace riders.
+- Still needed: prevent visible live riders from disappearing or jumping to their posts, including the 20-second recovery for a stranded road rider; then Y2 to Y5 and the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.

@@ -1224,6 +1224,29 @@ for (const reason of ['sight', 'town', 'time']) {
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
     'removed furnace riders do not reappear');
 }
+// A wrecked furnace rider stays where it was wrecked, even after the car leaves.
+{
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {x:FURNACE_SKYLINE.x + 100, z:FURNACE_SKYLINE.z, y:0};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.skylineWarned = true;
+  world.skylineSight = {visible:true};
+  world.sightStep = 1;
+  stepWorldJob(duel, 0);
+  const wreck = world.actors.find(actor => actor.id.startsWith('furnace-rider-'));
+  wreck.health = 0;
+  const wreckPosition = {...wreck.position};
+  world.furnaceRidersReturning = true;
+  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
+  stepWorldJob(duel, 1);
+  assert.ok(world.actors.includes(wreck), 'the wreck remains after the car leaves');
+  assert.deepEqual(wreck.position, wreckPosition, 'the wreck stays where it fell');
+  assert.ok(!world.furnaceRidersGone?.includes(wreck.id), 'the wreck is not marked removed');
+}
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
 const waitingWorld = createWorldJob(definition);
 const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, lateral:0};

@@ -239,6 +239,8 @@ function updateJobActors(duel, worldJob, dt) {
       if (worldJob.furnaceRidersGone?.includes(actorDef.id)) continue;
       updateJobActor(duel, worldJob, actorDef, 0);
       const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+      // Wrecks remain where they fell for the rest of the job.
+      if (rider.health <= 0) continue;
       if (worldJob.furnaceRidersReturning) {
         rider.returningToPost = true;
         const car = position(duel, duel.state);
