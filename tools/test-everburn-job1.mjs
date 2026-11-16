@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {stepCarry} from '../src/world/jobs/steps/carry.js';
 import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
@@ -31,6 +32,13 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// Cold loss is read from the actual carry step on ordinary ground.
+{
+  const carry = definition.steps[0];
+  const view = {player:{position:carry.carStart}, speedKmh:0, safeKmh:Infinity, difficulty:'medium'};
+  const result = stepCarry(carry, {loaded:true, ember:100}, view, 1);
+  assert.ok(Math.abs(100 - result.state.ember - 100 / 900) < 1e-9, 'a full pot cools in fifteen minutes');
+}
 // The starting map tells Cinder's one known way without revealing other routes or dangers.
 {
   const worldJob = {definition, job:createJob(definition), actors:[]};
@@ -834,7 +842,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const normal = step.carStart;
   assert.notEqual(scablandsDriveAt(normal.x, normal.z).id, 'salt-pan');
   const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
-  assert.ok(Math.abs(ordinaryLoss - 100 / 600) < 1e-9, 'a full pot cools in ten minutes on ordinary ground');
+  assert.ok(Math.abs(ordinaryLoss - 100 / 900) < 1e-9, 'a full pot cools in fifteen minutes on ordinary ground');
   assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
   assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
 

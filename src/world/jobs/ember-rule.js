@@ -8,8 +8,8 @@ export const MPH_TO_KMH = 1.609344;
 
 export const EMBER_RULE = Object.freeze({
   start: 100,
-  // The Director's larger-land ruling: a full pot cools to zero in ten minutes without jolts.
-  coldPerSecond: 100 / 600,
+  // The Director's larger-land ruling: a full pot cools to zero in fifteen minutes without jolts.
+  coldPerSecond: 100 / 900,
   roughPerMetre: 0.003,       // ground driven faster than it is safe: 0.003 for each km/h over the safe speed, for each metre driven (so going faster always costs more a metre)
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing
   hitPerKmh: 1.5,             // ember taken for each km/h shed in a hit
