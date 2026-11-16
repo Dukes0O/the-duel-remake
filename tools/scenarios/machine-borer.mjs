@@ -113,6 +113,7 @@ const page = {
     }
   })()`,
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
+  inputTiming: `(() => { const s = window.__theDig.simulation; return {elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever, distance:s.borer.distanceM}; })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
   sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
@@ -185,7 +186,7 @@ async function picture(context, name, minimum = 30) {
   return view;
 }
 export async function run(context) {
-  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null};
+  const measurements = {groundSamples:null, groundView:null, cover:null, roofRay:null, overview:null, survey:null, spoil:null, visibility:null, firstPush:null};
   const persist = () => writeFile(join(context.outputDir, 'machine-borer-measurements.json'), JSON.stringify(measurements, null, 2) + '\n');
   await persist();
   await context.navigate('/tools/menu-check.html?flags=wasteland-town');
@@ -222,6 +223,14 @@ export async function run(context) {
   await context.evaluate(page.overviewOff);
   await context.evaluate(page.frame);
   await press(context, 'Tab');
+  const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
+  await key(context, 'KeyW', 'keydown');
+  try { await new Promise(resolve => setTimeout(resolve, 1300)); }
+  finally { await key(context, 'KeyW', 'keyup'); }
+  const afterPush = await context.evaluate(page.inputTiming);
+  measurements.firstPush = {before:beforePush, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
+  await persist();
+  assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   const cover = await context.evaluate(page.cover);
