@@ -101,6 +101,30 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100};
   const fence = step.barriers[0].position, rider = world.actors[0];
+  const road = ROAD_NET.road('east-road').points;
+  const post = nearestOnLine(road, fence.x, fence.z);
+  const distant = sampleLine(road, 1).find(p => {
+    const onRoad = nearestOnLine(road, p.x, p.z);
+    return Math.hypot(p.x - fence.x, p.z - fence.z) > 160 &&
+      Math.hypot(p.x - rider.position.x, p.z - rider.position.z) > 130 &&
+      Math.abs(onRoad.along - post.along) < 900 &&
+      sees(rider.position, {...p, y:scablandsSurfaceHeightAt(p.x, p.z)},
+        {heightAt:scablandsSurfaceHeightAt, actorFloors:true, eye:1.5, step:5});
+  });
+  assert.ok(distant, 'the road has a visible point beyond both start distances');
+  car = {...distant, y:scablandsSurfaceHeightAt(distant.x, distant.z)};
+  stepWorldJob(duel, 0.1);
+  assert.ok(!rider.pursuing, 'a waiting rider does not start from far down the road');
+  rider.pursuing = true;
+  stepWorldJob(duel, 0.1);
+  assert.equal(rider.pursuing, true, 'a rider already chasing continues down the road');
+  rider.pursuing = false;
+  rider.position = {...car};
+  stepWorldJob(duel, 0.1);
+  assert.equal(rider.pursuing, true, 'a waiting rider starts within 120 metres of the car');
+  rider.pursuing = false;
+  rider.position = {...step.waitingActors[0].start.position, y:scablandsSurfaceHeightAt(step.waitingActors[0].start.position.x, step.waitingActors[0].start.position.z)};
+  rider.sightSeconds = 0;
   car = sampleLine(ROAD_NET.road('east-road').points, 1).find(p =>
     Math.hypot(p.x - fence.x, p.z - fence.z) > 140 && Math.hypot(p.x - fence.x, p.z - fence.z) < 150 &&
     Math.hypot(p.x - rider.position.x, p.z - rider.position.z) > 120 &&
@@ -567,6 +591,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(trialOpening.along >= 1200 && trialShelter.along >= 2900);
   assert.equal(trialOpening.jolts.length + trialShelter.jolts.length, 0, 'the opening avoids jolts');
   assert.equal(trialOpening.abovePlatesLimitTicks + trialShelter.abovePlatesLimitTicks, 0, 'the opening stays within 50 km/h');
+  console.log('Plates opening furnace sight:', JSON.stringify({opening:trialOpening.longestFurnaceSightSeconds, shelter:trialShelter.longestFurnaceSightSeconds, openingAt:trialOpening.longestFurnaceSight, shelterAt:trialShelter.longestFurnaceSight}));
   assert.ok(trialOpening.longestFurnaceSightSeconds <= 6 && trialShelter.longestFurnaceSightSeconds <= 6,
     'the opening stays within six seconds of furnace sight');
   const trialCrossing = drivePlatesRoughGround(trialDuel, trialLine, 3600, 15);

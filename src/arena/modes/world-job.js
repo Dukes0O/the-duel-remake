@@ -314,7 +314,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}));
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
     if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
-    if (!rider.pursuing && !visible) return;
+    const nearRider = Math.hypot(car.x - rider.position.x, car.z - rider.position.z) <= 120;
+    if (!rider.pursuing && (!visible || (!nearFence && !nearRider))) return;
   }
   if (worldJob.ridersRetreating || rider.returningToPost) {
     rider.pursuing = false;

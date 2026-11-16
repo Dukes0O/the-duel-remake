@@ -10,5 +10,8 @@
 - Codex decided: none. **Removed:** the old hand-over radius, brazier position, centre-point fence target, slow-only gate and clipped rider contact speed.
 - On ed27fe6b8: lane 132/135; job1 failed on the river-bed, scablands-size expected the old brazier place, and combat balance timed out but passed alone (34/34). With this change scablands-size passes 9/9; its brazier offset assertion changes from 7 to 20 m under Claude's ruling.
 - On ed27fe6b8: race replays 297, combat replays 12 and world composition 63 passed; build passed. Lane left convoy-tanker-art, everburn-easy, field-battle, first-person-polish, old-smoke and run-gas-medium to the night; Easy had already run as above.
-- Still needed: resolve the river-bed failure and establish the Easy deliveries' final fire; the existing Easy check reports completion, not the fire or rams. Audit older named suites not accounted for by the lane. Integration is up to date.
+- Road riders now start within 150 m of their fence or 120 m of themselves; an existing chase continues under the prior road and sight limits.
+- At 494f2b9e3 the Medium bed arrived with 35.597 fire and no rams; with this fix it arrived with 35.862 and no rams. Medium East Road: 40.998 and three rams. Easy East Road: all ten seeds arrived with 63.561 and three rams each.
+- Job1 still fails: the plates shelter drive spends 6.5 s in furnace sight, above its unchanged 6 s limit. The earlier bed failure is fixed. Easy Hot Delivery passed 10/10 with these changes.
+- Still needed: resolve the plates failure, audit older named suites, run the changed-file tier and build. Integration was already an ancestor at 494f2b9e3.
 - For Claude: run the browser scenario. No browser check has run here.
