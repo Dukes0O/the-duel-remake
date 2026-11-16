@@ -103,6 +103,19 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x, camp.position.z - posts[0].start.position.z) <= 1,
     'the rider returns to its post');
   assert.equal(camp.pursuing, false);
+  // A blocked return is measured by actual progress, not by requested speed.
+  camp.position = {...posts[0].start.position, x:posts[0].start.position.x + 100,
+    y:scablandsSurfaceHeightAt(posts[0].start.position.x + 100, posts[0].start.position.z)};
+  const blocked = {...camp.position};
+  camp.returningToPost = true;
+  for (let i = 0; i < 49; i++) { tick(0.1); camp.position = {...blocked}; }
+  assert.ok(!camp.returnStuck, 'the rider keeps trying for five seconds');
+  tick(0.2);
+  assert.equal(camp.returnStuck, true, 'the rider stops after making less than ten metres of progress');
+  assert.equal(camp.speed, 0);
+  const stopped = {...camp.position};
+  tick(1);
+  assert.deepEqual(camp.position, stopped, 'the stranded rider stays stopped');
 }
 // Measure cover only within the furnace's range, using the same sight rule as the job.
 {

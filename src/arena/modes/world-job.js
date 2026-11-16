@@ -277,7 +277,16 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const dx = home.x - rider.position.x, dz = home.z - rider.position.z;
     const distance = Math.hypot(dx, dz);
     rider.speed = 0;
-    if (distance > 1 && dt > 0) {
+    if (roadRider && distance > 1 && !rider.returnStuck) {
+      rider.returnCheckDistance ??= distance;
+      rider.returnCheckSeconds = (rider.returnCheckSeconds ?? 0) + Math.max(0, dt);
+      if (rider.returnCheckSeconds >= 5) {
+        if (rider.returnCheckDistance - distance < 10) rider.returnStuck = true;
+        rider.returnCheckDistance = distance;
+        rider.returnCheckSeconds = 0;
+      }
+    }
+    if (distance > 1 && dt > 0 && !rider.returnStuck) {
       rider.heading = Math.atan2(dx, dz);
       const travel = Math.min(distance, 18 * dt), before = rider.position;
       const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
@@ -288,6 +297,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     if (distance <= 1 && !worldJob.ridersRetreating) {
       rider.returningToPost = false;
       rider.lostSightSeconds = 0;
+      rider.returnCheckDistance = undefined;
+      rider.returnCheckSeconds = 0;
     }
     return;
   }

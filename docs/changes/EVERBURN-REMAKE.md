@@ -1717,3 +1717,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - The road rider's stranded-return recovery is still to build. X4 to X9 and the final checks remain. Race fingerprints were not rerun in this round.
 - Codex decided: none. Removed: the assumption that furnace riders pursue indefinitely. For Claude to run: the two long drivers and the lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
 - Check: `node tools/test-everburn-job1.mjs` passed, including all five deliveries and the new furnace return checks. Integration was already included.
+
+## X3: a stranded road rider stops
+
+- A road rider returning to its post stops if it makes less than ten metres of progress in five seconds. Its progress is measured from its actual position. The later return to its post when far away and out of view remains to build. No sound cue or save shape changed.
+- Check: `node tools/test-everburn-job1.mjs` checks the real job step while the test holds the rider in place. The existing return-to-post and delivery checks also run. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: repeated movement attempts after the rider is stranded.
+- For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire. The out-of-view recovery, X4 to X9 and final checks remain.
