@@ -282,67 +282,18 @@ export function borerSpoilStart(ground, origin, direction, cutVolume) {
 }
 
 
-// Plan deposits before cutting so protected ground can never swallow material.
-// One-metre ground samples are filled individually and capped against their
-// height before the bank reached them. Removed material makes room again.
+// Plan the heap before cutting, so a protected cell cannot swallow spoil.
 function planSpoil(ground, segments, bank, amount) {
-  const {start, end} = segments[0];
-  const dx = end.x - start.x, dz = end.z - start.z, length = Math.hypot(dx, dz);
-  const rightX = dz / length, rightZ = -dx / length;
-  const cells = bank.cells, allocations = [];
-  // The wider bank needs many samples. Keep membership checks independent of
-  // its length as new rows are planned, including on diagonal headings.
-  let occupied;
-  // A large deposit can choose several cells. Read each existing cell only
-  // once while planning it; the ground does not change until the plan lands.
-  const heights = new Map();
-  let remaining = amount, lastReason = null;
-  while (remaining > 1e-9) {
-    let best = null;
-    // Cells are appended in along-distance order. Older rows cannot receive
-    // this load, so stop at the first row outside the working end.
-    for (let index = cells.length - 1; index >= 0; index--) {
-      const cell = cells[index];
-      if (cell.along < bank.far - 6 - 1e-9) break;
-      if (!heights.has(cell)) heights.set(cell, ground.heightAt(cell.x, cell.z) - cell.base);
-      const height = heights.get(cell);
-      // Keep the earlier cell when heights tie, as in the forward scan.
-      if (height < 5 - 1e-8 && (!best || height <= best.height)) best = {cell, height};
-    }
-    if (!best) {
-      occupied ||= new Set(cells.map(cell => `${cell.x},${cell.z}`));
-      let added = false;
-      for (let tries = 0; tries < 128; tries++) {
-        const along = bank.far + 1.5;
-        bank.far = along;
-        // Bridge the 1.5 m load positions on the one-metre ground grid.
-        // A three-cell-wide strip remains visible on the two-metre view grid.
-        for (const back of [1, 0.5, 0]) for (const across of [0, -1, 1]) {
-          const distance = Math.max(0, along - back);
-          const x = Math.round(start.x + rightX * (12 + distance) - rightZ * across);
-          const z = Math.round(start.z + rightZ * (12 + distance) + rightX * across);
-          const key = `${x},${z}`;
-          if (occupied.has(key)) continue;
-          const shape = {x, z, radius:0.49};
-          const reason = (ground.spoilRefusal || ground.refusal)(shape);
-          if (reason) { lastReason = reason; continue; }
-          const cell = {x, z, along:distance, base:ground.heightAt(x, z)};
-          cells.push(cell);
-          heights.set(cell, 0);
-          occupied.add(key);
-          added = true;
-        }
-        if (added) break;
-      }
-      if (!added) return {reason:lastReason || BORER_OBSTRUCTION};
-      continue;
-    }
-    const volume = Math.min(remaining, 5 - best.height);
-    heights.set(best.cell, best.height + volume);
-    allocations.push({cell:best.cell, volume});
-    remaining -= volume;
+  if (bank.origin) {
+    return {...borerSpoilDeposit(ground, bank.origin, bank.direction, bank.far, amount),
+      origin:bank.origin, direction:bank.direction};
   }
-  return {allocations};
+  const {start, end} = segments[0];
+  const dx = end.x - start.x, dz = end.z - start.z;
+  const length = Math.hypot(dx, dz);
+  const direction = {x:dz / length, z:-dx / length};
+  const origin = {x:start.x + 12 * direction.x, z:start.z + 12 * direction.z};
+  return {...borerSpoilStart(ground, origin, direction, amount), direction};
 }
 
 // Follow the recorded centre line, including bends and slopes, without
@@ -422,7 +373,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
   // Leave the bank alone until a cutting step needs to plan a deposit. This
   // matters for the wider bank while Mabel is idle, stalled or travelling.
   let next = {...state, segments:state.segments || [], spoilBank:state.spoilBank ||
-    {far:-1.5, cells:[]}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
+    {far:0}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
     carry -= step;
@@ -542,11 +493,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     const start = {x:next.x, y:next.y + radius * 0.55, z:next.z};
     const end = {x, y:next.y + Math.sin(slope) * distance + radius * 0.55, z};
-    // Existing cell records are immutable. Copy the list, not every record,
-    // so widening the bank does not allocate an object for each old cell.
-    const bank = {far:next.spoilBank.far, cells:next.spoilBank.cells.slice()};
     const deposit = planSpoil(ground, next.segments.length ? next.segments : [{start, end}],
-      bank, Math.PI * radius ** 2 * distance);
+      next.spoilBank, Math.PI * radius ** 2 * distance);
     if (deposit.reason) {
       const message = refusalMessage(deposit.reason);
       if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
@@ -567,7 +515,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
           volume * cutVolume / cut.volume * 1.25);
       }
     }
-    next.spoilBank = bank;
+    next.spoilBank = {origin:deposit.origin, direction:deposit.direction, far:deposit.far};
     if (next.message !== BORER_TRENCH) next.message = null;
     next.heading = heading; next.slope = slope; next.x = x; next.z = z;
     next.y += Math.sin(slope) * distance;

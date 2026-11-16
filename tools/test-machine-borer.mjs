@@ -205,13 +205,16 @@ import * as THREE from 'three';
 {
   const ground = createGroundEdit({region:{editable:true}, naturalHeight:(_x,z)=>z>=6 ? 20 : 0});
   let borer = {...createBorerState({z:10}), started:true};
-  let calls = 0;
+  let calls = 0, fills = 0, maxFills = 0;
+  const cuttingGround = {...ground, fill(...args) { fills++; return ground.fill(...args); }};
   const counted = {...ground, heightAt(x,z) { calls++; return ground.heightAt(x,z); }};
   const near = createDigNearGround(new THREE.MeshBasicMaterial(), counted);
   const view = createGroundView({group:new THREE.Group(), groundEdit:ground});
   near.follow(0, 10); view.update(); calls = 0;
   for (let i=0; i<100; i++) {
-    borer = stepBorer(borer, {thrust:1/3}, ground, 'rock', 1/60).state;
+    fills = 0;
+    borer = stepBorer(borer, {thrust:1/3}, cuttingGround, 'rock', 1/60).state;
+    maxFills = Math.max(maxFills, fills);
     view.update();
     for (const bounds of view.changedBounds) near.refreshBounds(bounds);
     const position = near.geometry.attributes.position;
@@ -222,8 +225,8 @@ import * as THREE from 'three';
     }
   }
   assert.ok(borer.distanceM > 0.8, 'Mabel cuts during the 100 steps.');
-  assert.ok(calls < 2000, `100 cutting steps sample ${calls} heights, fewer than 2000`);
-  console.log(`100 cutting steps: ${calls} near-ground height samples`);
+  assert.ok(calls < 6000, `100 cutting steps sample ${calls} heights, fewer than 6000`);
+  console.log(`100 cutting steps: ${calls} near-ground height samples; at most ${maxFills} cell fills per 1/60 s step.`);
   near.dispose(); view.dispose();
 }
 
@@ -503,7 +506,8 @@ function driveMesa(kind) {
   const target = kind === 'survey' ? Math.atan(line.riseM / line.distanceM) : Math.PI / 30;
   const ground = {...base, refusal:shape => borerLandRefusal(shape, base),
     spoilRefusal:shape => borerSpoilRefusal(shape, base)};
-  let trenchWarnings = 0;
+  let trenchWarnings = 0, heapMeasured = false, heapFailure = null;
+  const pristine = kind === 'survey' ? createDigSandbox({playerId:'heap-baseline'}).ground : null;
   for (let i = 0; i < 3000; i++) {
     const before = machine.distanceM + (machine.exitCutting?.distanceM || 0);
     const wantsClimb = kind === 'survey' || kind === 'steep' || (kind === 'climb' && machine.exitCutting) || (kind === 'trench' && machine.exitCutting?.distanceM >= 70);
@@ -511,14 +515,44 @@ function driveMesa(kind) {
     const result = stepBorer(machine, {thrust:1/3, slope, mutableSegments:true}, ground, null, 2);
     machine = result.state;
     trenchWarnings += result.events.filter(event => event.message === BORER_TRENCH).length;
+    if (pristine && !heapMeasured && machine.distanceM >= 100) {
+      heapMeasured = true;
+      const bank = machine.spoilBank, dir = bank.direction;
+      const sample = (along, across) => {
+        const x = bank.origin.x + dir.x * along - dir.z * across;
+        const z = bank.origin.z + dir.z * along + dir.x * across;
+        return base.heightAt(x, z) - pristine.heightAt(x, z);
+      };
+      let maxSlope = 0, crest = 0;
+      for (const fraction of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+        const along = bank.far * fraction;
+        let previous = sample(along, -9);
+        for (let across = -8; across <= 9; across++) {
+          const height = sample(along, across);
+          maxSlope = Math.max(maxSlope, Math.abs(height - previous));
+          crest = Math.max(crest, height);
+          previous = height;
+        }
+      }
+      const laid = base.toSave().chunks.reduce((sum, chunk) =>
+        sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
+      const expected = Math.PI * 9 * machine.distanceM * 1.25;
+      console.log(`Real heap at ${machine.distanceM.toFixed(2)} m: cross slope ${maxSlope.toFixed(4)}, crest ${crest.toFixed(4)} m, volume error ${((laid / expected - 1) * 100).toFixed(3)}%.`);
+      heapFailure = maxSlope > 0.70001 ? `Real heap cross slope ${maxSlope} exceeds 0.7.` :
+        crest > 5.00001 ? `Real heap crest ${crest} exceeds 5 m.` :
+        Math.abs(laid / expected - 1) > 0.02 ? `Real heap volume ${laid} differs from ${expected}.` : null;
+    }
+
     if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
   }
+  if (pristine) assert.ok(heapMeasured, `The real bore did not reach 100 m: ${machine.message}`);
   closeDigSandbox();
-  return {machine, trenchWarnings, ground:base};
+  return {machine, trenchWarnings, ground:base, heapFailure};
 }
 const surveyedResult = driveMesa('survey');
 const surveyedDrive = surveyedResult.machine;
 assert.equal(surveyedDrive.finished, true, `Surveyed drive: ${surveyedDrive.message}`);
+assert.equal(surveyedResult.heapFailure, null);
 assert.ok(surveyedDrive.offLevelM <= 0.5, 'The surveyed drive reaches level ground.');
 assert.ok(surveyedDrive.segments[0].startOpen && surveyedDrive.segments.at(-1).endOpen, 'Both mouths open.');
 const surveyedTunnels = createGroundTunnels(surveyedDrive.segments, {heightAt:(x,z)=>surveyedResult.ground.heightAt(x,z)});
@@ -766,37 +800,6 @@ if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalS
 else delete globalThis.localStorage;
 closeDigSandbox();
 const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
-// A growing bank must not scan all its old rows on every small deposit.
-{
-  const ground = createGroundEdit({region:{editable:true}, naturalHeight:(_x, z)=>z >= 6 ? 20 : 0});
-  let oldRowVisits = 0;
-  const cells = Array.from({length:100}, (_, x) => ({x:x + 20, z:0,
-    get along() { oldRowVisits++; return x; }, base:0}));
-  cells.push({x:120, z:0, along:100, base:0});
-  const state = {...createBorerState({z:10}), started:true, covered:true,
-    spoilBank:{far:100, cells}};
-  const result = stepBorer(state, {thrust:1/3}, ground, 'rock', 1/120);
-  assert.ok(result.state.distanceM > 0, 'The deposit and cut finish.');
-  assert.ok(oldRowVisits <= 7, 'Planning stops after the rows at the working end.');
-}
-// A deposit spanning several nearly full cells must not resample them for
-// every allocation. A wider heap will have more cells to consider.
-{
-  const base = createGroundEdit({region:{editable:true}, naturalHeight:(_x, z)=>z >= 6 ? 20 : 0});
-  const reads = new Map();
-  const ground = {...base, heightAt(x, z) {
-    const key = `${x},${z}`;
-    reads.set(key, (reads.get(key) || 0) + 1);
-    return base.heightAt(x, z);
-  }};
-  const cells = [20, 21, 22].map(x => ({x, z:0, along:x - 20, base:-4.99}));
-  const state = {...createBorerState({z:10}), started:true, covered:true,
-    spoilBank:{far:2, cells}};
-  const result = stepBorer(state, {thrust:1/3}, ground, 'rock', 1/120);
-  assert.ok(result.state.distanceM > 0, 'The deposit and cut finish.');
-  for (const cell of cells)
-    assert.equal(reads.get(`${cell.x},${cell.z}`), 1, 'Planning samples each existing bank cell once per step.');
-}
 const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80 / 3).state;
 const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
@@ -810,16 +813,18 @@ const bankSnapshot = structuredClone(bankBeforeIdle);
 const nextMuckCut = stepBorer(muckCut, {thrust:1}, muckGround, 'topsoil', 1 / 60).state;
 assert.deepEqual(bankBeforeIdle, bankSnapshot, 'A new deposit leaves the previous bank state unchanged.');
 assert.notStrictEqual(nextMuckCut.spoilBank, bankBeforeIdle, 'A deposit gets its own bank state.');
-assert.notStrictEqual(nextMuckCut.spoilBank.cells, bankBeforeIdle.cells, 'The cell list is copied before planning.');
-assert.strictEqual(nextMuckCut.spoilBank.cells[0], bankBeforeIdle.cells[0],
-  'Unchanged cell records are shared instead of copied on every deposit.');
-for (const cell of muckCut.spoilBank.cells) {
-  assert.ok(muckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001, 'The bank stays at most five metres high.');
-  assert.ok(cell.x >= 12 && Math.abs(cell.z) <= 1, 'The bank stays beside the mouth and away from the track.');
-}
-for (let x = 12; x < Math.floor(12 + muckCut.spoilBank.far - 6); x++) {
-  assert.ok(muckGround.heightAt(x, 0) > 0, 'The bank has no gaps between its loads.');
-  assert.ok(muckGround.heightAt(x, 1) > 0, 'The bank is wide enough to draw as a ridge.');
+assert.ok(muckCut.spoilBank.origin.x >= 12, 'The bank starts at least 12 m from the mouth.');
+for (let x = 12; x < 12 + muckCut.spoilBank.far; x++) {
+  const height = muckGround.heightAt(x, 0);
+  assert.ok(height <= 5.00001, 'The crest stays at most five metres high.');
+  assert.ok(Math.abs(height - muckGround.heightAt(x + 1, 0)) <= 0.30001,
+    'The crest changes smoothly.');
+  for (let z = -8; z < 8; z++) {
+    const a = muckGround.heightAt(x, z) - (z >= 6 ? 6 : 0);
+    const b = muckGround.heightAt(x, z + 1) - (z + 1 >= 6 ? 6 : 0);
+    assert.ok(Math.abs(a - b) <= 0.70001,
+      'The bank has gentle sides.');
+  }
 }
 const bentMuckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
   reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
@@ -828,12 +833,7 @@ const bentVolume = bentMuckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
 assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) < 0.02,
   'A bent cut keeps its bulked volume in the bank.');
-assert.ok(bentMuck.spoilBank.cells.every(cell => !bentMuckGround.refusal({...cell, radius:0.49})),
-  'The bank skips protected road ground.');
-assert.equal(new Set(bentMuck.spoilBank.cells.map(cell => `${cell.x},${cell.z}`)).size,
-  bentMuck.spoilBank.cells.length, 'Rounded bank positions never add the same ground cell twice.');
-assert.ok(bentMuck.spoilBank.cells.every(cell => bentMuckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001),
-  'A bent cut keeps the bank below five metres.');
+assert.ok(bentMuck.spoilBank.origin.x >= 12, 'The heap starts away from the mouth.');
 const beforeReverse = pileVolume();
 stepBorer(muckCut, {thrust:-1}, muckGround, 'topsoil', 5);
 assert.equal(pileVolume(), beforeReverse, 'Returning through the tunnel creates no muck.');

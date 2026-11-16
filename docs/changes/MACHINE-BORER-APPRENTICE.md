@@ -60,7 +60,13 @@ The heap planner now prepares allocations in the form the cutter's fill loop use
 
 The heap can now find a clear starting position farther along the same bank line, without changing the ground. It searches up to 128 one-metre positions and returns the refusal if none is clear. This is preparation: the cutter still needs to use it, and a protected area encountered after a heap has started still needs handling.
 
+A direct connection of the prepared heap to Mabel was tried and removed because it did not pass the existing ground-refresh check. The wider deposit caused 2,556 near-ground height reads over 100 cutting steps, against the existing limit of 2,000. A diagnostic run with that one limit temporarily bypassed did not finish the borer suite before it was stopped; the test was restored unchanged. The real mesa, heap slopes, volume and maximum cells per step remain unproved. The next run needs a way to keep the wider fill and ground refresh within the existing performance limit, then connect and test the heap.
+
+SP connection: Mabel now places each cutting step's spoil through the prepared heap planner. The heap starts at least 12 m from the first mouth and searches along the same line for a clear start. If protected ground is encountered after the heap starts, the whole deposit is refused before cutting. The old narrow-bank planner was removed. On the real Dig ground at 101 m the sampled crest was 4.766 m, the laid volume was within 0.616% of the required bulked volume, and the steepest sampled side rose 0.700026 m in one metre, exceeding the 0.70001 test limit by 0.000016 m. This slope check is not yet passing. Over 100 measured 1/60-second steps, at most 67 cell fills occurred in one step (two fixed simulation steps); this is an observed maximum, not a proven bound. The 100-step refresh used 2,556 height reads. The honest surveyed mesa drive reached daylight without a bank refusal. The borer suite then failed on the slope check above, so later checks in that suite did not run.
+
 ## Checks
+
+- SP connection: `node tools/test-machine-borer.mjs` failed at the real-ground cross-slope check as measured above. The 100-step refresh, sampled crest, volume and surveyed daylight drive passed before that assertion.
 
 - SP clear starting position: `node tools/test-machine-borer.mjs` checks a protected starting area, retained line and volume, unchanged ground and refusal when no position is clear.
 
@@ -109,7 +115,9 @@ The heap can now find a clear starting position farther along the same bank line
 
 ## Changed assertions, for Claude to review
 
-None.
+- Near-ground refresh limit: fewer than 2,000 to fewer than 6,000 height reads in 100 steps. Raised by Claude, 16 November 2026: a heap at its angle of repose touches about five times the ground of the old three-cell bank; 6,000 is under 2 percent of what the fault cost.
+- Old bank cells within one metre of the centre line and the three-cell-wide ridge: replaced by a 12 m mouth clearance, five-metre height, and cross-slope and crest checks. Claude's SP ruling requires a heap at its angle of repose instead of the narrow wall.
+- Old bank record-sharing and scanning checks: removed with the old cell-list planner. The new planner keeps only the heap's origin, direction and length and lays only changed ground cells.
 
 ## Codex decided (Claude to review)
 
@@ -135,7 +143,7 @@ No new sound event in A1, A3 or A4. The stall, drift and high-exit calls use `bo
 
 ## Removed
 
-Nothing. This adds measurements to Mabel's existing cutting rules. The rest of this card will use them.
+The narrow three-cell spoil bank planner and its cell-list bookkeeping were replaced by the heap planner.
 
 ## For Claude to run
 
