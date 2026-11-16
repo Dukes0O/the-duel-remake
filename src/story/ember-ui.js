@@ -53,6 +53,7 @@ export function emberNextUp(props) {
   if (props.step === 'done') return {text: props.run ? 'Next up: The Everburn is lit. Big Bess is loading gas for Tin Town.' : 'Next up: The Everburn is lit. Replay any job from the Story Wall.', button: '<button type="button" class="start-button yard-next-button" data-action="yard-cards"><span>STORY WALL</span></button>'};
   const index = EMBER_JOBS.indexOf(props.step), job = props.steps[index];
   if (!job) return null;
+  if (job.state !== 'open') return {text: 'The next job is being made.', button: ''};
   return {text: `Next up: ${EMBER_JOB_NAMES[index]}. ${job.note}`,
     button: `<button type="button" class="start-button yard-next-button" data-ember-step="${escape(job.id)}"><span>${escape(job.button)}</span></button>`};
 }

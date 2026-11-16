@@ -1739,3 +1739,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Changed assertions, for Claude to review: the real wreck collision previously accepted any positive loss up to 40.1; it now requires the actual jolt to be exactly 15, as Claude directed. The new severe-hit check requires exactly 40. Codex decided: none.
 - Removed: `tools/scenarios/everburn-play.mjs`, replaced by `everburn-job1`. The `everburn-play` harness setting in the separate well scenario remains in use and is not a scenario list entry.
 - The stranded rider's out-of-view recovery, X4, X7, X8 and final checks remain. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## X7: only remade jobs are offered
+
+- The result screen, Story Wall and yard's next-up line no longer offer the next Everburn job until it is in the remade list. After Hot Delivery, the result offers Back to the yard and says the next job is being made. Existing progress is not changed. No sound cue or race fingerprint changed.
+- Changed assertions, for Claude to review: the older `test-ember-screens.mjs` expects one open story job after the first two are complete; it now finds none because the next job is not remade. Its later expectation of one next-job button is also obsolete. Those assertions were left unchanged for review. The new job test checks the actual result, wall and next-up screens after Hot Delivery.
+- Codex decided: the yard's next-up line also withholds the unfinished job, because it otherwise offers the same unavailable job. Removed: the offer to start an unremade next job.
+- For Claude to run: the two long drivers, lane tier and the older screen suite after its obsolete assertions are reviewed. For Claude to draw: the pot transfer and forge fire. The stranded rider's out-of-view recovery, X4, X8 and final checks remain.
+- Checks: `node tools/test-everburn-job1.mjs` passed, including all drives. `node tools/test-ember-screens.mjs` failed on its old one-open-job expectation as noted above. `git diff --check` passed. Integration was already included. The final replay and build checks remain.

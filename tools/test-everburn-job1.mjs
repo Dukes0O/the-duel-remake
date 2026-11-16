@@ -34,6 +34,26 @@ import {updateArenaMarkers} from '../src/arena/arena-tell-view.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 import {mapFailures, pictureFailures, drawFocusedPicture} from './scenarios/everburn-job1.mjs';
+import {createProfile} from '../src/progression.js';
+import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.js';
+import {emberStoryProps} from '../src/story/ember-road.js';
+import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Completing Hot Delivery does not offer a story job that is still being made.
+{
+  let profile = markEmberRead(createProfile()).profile;
+  profile = markEmberJob(profile, EMBER_JOBS[0]).profile;
+  const props = emberStoryProps(profile, {available:true});
+  const wall = emberWallMarkup(props);
+  assert.match(wall, /The next job is being made\./);
+  assert.doesNotMatch(wall, /data-ember-step="get-out-and-walk"/);
+  assert.deepEqual(emberNextUp(props), {text:'The next job is being made.', button:''});
+  const screen = arenaResultsScreen({arena:{mode:'world-job', result:{winnerId:'player'},
+    worldJob:{definition:EVERBURN_JOBS[0]}}}, {metric:()=>'', action:(label, id)=>`${id}:${label}|`, escapeHTML:String});
+  assert.match(screen.description, /The next job is being made\./);
+  assert.equal(screen.actions, 'arena-yard:BACK TO THE YARD|');
+}
 
 {
   assert.doesNotThrow(() => new Function(`return (${drawFocusedPicture.toString()})`), 'the focused view function parses for the page');

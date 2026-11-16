@@ -1,6 +1,7 @@
 // The Everburn's screen state (docs/WASTELAND_WORLD.md section 5). Reads the
 // save and returns plain display props; the app owns navigation and saving.
 import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, emberFeudWord, emberRuns, emberBattleOpen, emberFurnaceDead} from './ember-save.js';
+import {REMADE_EVERBURN_JOBS} from '../world/jobs/everburn.js';
 
 export const EMBER_JOB_NAMES = Object.freeze([
   'Hot Delivery', 'Get Out and Walk', 'Run Him Down', 'Slow Ride',
@@ -45,9 +46,9 @@ export function emberStoryProps(profile, {available = false, runs = false, runPa
   const step = ember.read !== true ? 'read' : EMBER_JOBS.find(id => !jobs.includes(id)) ?? 'done';
   const next = EMBER_JOBS.indexOf(step);
   const steps = EMBER_JOBS.map((id, index) => ({id,
-    state: jobs.includes(id) ? 'done' : index === next ? 'open' : 'locked',
-    note: jobs.includes(id) ? `${EMBER_JOB_NAMES[index]} is done.` : JOB_NOTES[index],
-    button: index === next ? (index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`) : '',
+    state: jobs.includes(id) ? 'done' : index === next && REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? 'open' : 'locked',
+    note: jobs.includes(id) ? `${EMBER_JOB_NAMES[index]} is done.` : index === next && !REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? 'The next job is being made.' : JOB_NOTES[index],
+    button: index === next && REMADE_EVERBURN_JOBS.includes(`everburn-${id}`) ? (index === 0 ? 'Go to the back gate' : `Start ${EMBER_JOB_NAMES[index]}`) : '',
   }));
   if (step === 'read') steps[0] = {...steps[0], state: 'open', button: 'Read Hollis’s note'};
   const props = {available: true, step, read: ember.read === true, steps,
