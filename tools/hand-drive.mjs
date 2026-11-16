@@ -11,7 +11,7 @@
 //        free:3000  or  free:3000:name      no keys, the game running
 //        eval:<javascript>                  evaluated in the page, the result printed
 //        shot:<name>                        a picture now (the pause screen, if the game is paused)
-//      Keys: the arrows, Space, Escape, Enter, Tab, ShiftLeft and the letters W A S D Q P C F E H M (as ArrowUp, KeyW and so on).
+//      Keys: the arrows, Space, Escape, Enter, Tab, ShiftLeft and the letters W A S D Q P C F E H M V G R X and the digits 1 to 4 (as ArrowUp, KeyW, Digit4 and so on).
 //   4. node tools/hand-drive.mjs stop       closes that Chrome and deletes its throwaway profile
 // Pictures are saved as .evidence/hand-drive/<name>.jpg under the folder the tool is run from, and are deleted after the review.
 import {spawn} from 'node:child_process';
@@ -20,7 +20,7 @@ import {join} from 'node:path';
 
 const here = join(process.cwd(), '.evidence', 'hand-drive'), PORT = 9333, profile = join(here, 'chrome-profile'), pidFile = join(here, 'chrome.pid');
 const sleep = ms => new Promise(done => setTimeout(done, ms));
-const VK = {ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Space: 32, Escape: 27, KeyP: 80, KeyC: 67, KeyF: 70, KeyE: 69, KeyH: 72, KeyM: 77, Enter: 13, KeyW: 87, KeyA: 65, KeyS: 83, KeyD: 68, KeyQ: 81, Tab: 9, ShiftLeft: 16};
+const VK = {ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Space: 32, Escape: 27, KeyP: 80, KeyC: 67, KeyF: 70, KeyE: 69, KeyH: 72, KeyM: 77, Enter: 13, KeyW: 87, KeyA: 65, KeyS: 83, KeyD: 68, KeyQ: 81, Tab: 9, ShiftLeft: 16, KeyV: 86, KeyG: 71, KeyR: 82, KeyX: 88, Digit1: 49, Digit2: 50, Digit3: 51, Digit4: 52};
 
 async function page() {
   for (let i = 0; i < 40; i++) {
@@ -71,7 +71,7 @@ if (command === 'start') {
   await sleep(1500); await rm(profile, {recursive: true, force: true}); await rm(pidFile, {force: true}); console.log('stopped', pid);
 } else if (command === 'do') {
   const browser = await connect();
-  const key = (type, code) => browser.send('Input.dispatchKeyEvent', {type, code, key: code.startsWith('Key') ? code.slice(3).toLowerCase() : code === 'Space' ? ' ' : code, windowsVirtualKeyCode: VK[code], nativeVirtualKeyCode: VK[code]});
+  const key = (type, code) => browser.send('Input.dispatchKeyEvent', {type, code, key: code.startsWith('Key') ? code.slice(3).toLowerCase() : code.startsWith('Digit') ? code.slice(5) : code === 'Space' ? ' ' : code, windowsVirtualKeyCode: VK[code], nativeVirtualKeyCode: VK[code]});
   // In the Dig (a machine yard, not a race) there is no race to pause: `window.__theDig` runs on its own.
   const running = on => browser.evaluate(`(() => { const a = window.__qaApp; if (!a || window.__theDig?.host?.isConnected) return; if (a.duel.state.paused === ${on}) a.togglePause(); })()`);
   const shot = async name => {
