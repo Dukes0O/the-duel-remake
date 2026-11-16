@@ -15,7 +15,7 @@ import {yardPlan} from '../scablands-yard-look.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
-export const REMADE_EVERBURN_JOBS = Object.freeze(['everburn-hot-delivery']);
+export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery'];
 
 export function buildEverburn(land) {
   const {at, between} = land;
