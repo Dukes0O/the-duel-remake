@@ -59,11 +59,11 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
       if(files.get(copyRoot+'/'+reportName)!==sourceReport||files.has(copyRoot+'/src/game.js'))throw Error('Copy is changed; nonforced cleanup refused.');
       copies.push(['remove',copy.source]);
     },
-    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1)});return evidence;},
+    makeTemp:async prefix=>{const evidence=prefix+'fixture-'+(++invocations);plan=nightPlan({date,root:copyRoot,evidence:copyRoot+'/.evidence/'+date+'/FAC-03/'+evidence.split('/').at(-1),previousSource:lastGreen?previous:null});return evidence;},
     refreshStatus:async()=>{metadata.push(['build-status']);files.set(`${root}/docs/board/STATUS.md`,'mock refreshed status');},
     recycleText:async file=>{metadata.push(['recycle',file]);files.delete(file);},
     processes:async()=>busy?[{pid:99,command:'node tools/run-tests.mjs --tier lane'}]:[],
-    scenarioNames:async()=>['smoke-extra'], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
+    scenarioNames:async()=>['smoke-extra'], scenarioSelection:async()=>[{name:'smoke-extra'}], listNightFiles:async()=>lastGreen?['night-2026-10-11.json']:[],
     readText:async path=>{if(!files.has(path))throw Error('ENOENT');return files.get(path);},
     writeText:async(path,text)=>files.set(path,text), mkdir:async()=>{},
     appendText:async(path,text)=>{logs.push([path,text]);files.set(path,(files.get(path)||'')+text);},
@@ -695,4 +695,13 @@ test('standing failures are published and passing entries are removed only after
   const strict=fixture({fail:'frames'});strict.files.set(file,JSON.stringify(list));
   const release=await runNight({...opts(),strict:true},strict.deps);
   assert.equal(release.status,'failed');assert.equal(strict.files.get(file),JSON.stringify(list));
+});
+
+
+test('weekday, Saturday and strict plans choose the expected browser scope',()=>{
+  const args = (date,strict=false) => nightPlan({date,previousSource:previous,strict})[3].args;
+  assert.deepEqual(args('2026-11-16').slice(1,3), ['--changed-since',previous]);
+  assert.equal(args('2026-11-14')[1], '--all');
+  assert.equal(args('2026-11-16',true)[1], '--all');
+  assert.equal(nightPlan({date:'2026-11-16'})[3].args[1], '--all');
 });

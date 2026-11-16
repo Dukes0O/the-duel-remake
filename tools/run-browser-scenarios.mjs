@@ -1,5 +1,5 @@
 // One owned QA build feeds isolated scenario children. Timing scenarios run alone.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -8,6 +8,59 @@ import { buildQaBundle, removeQaBundle, evidenceOutputDir, resolveEvidenceDir } 
 export const PROJECT_ROOT = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const harness = join(PROJECT_ROOT, 'tools', 'browser-harness.mjs');
 const scenarioDir = join(PROJECT_ROOT, 'tools', 'scenarios');
+
+// Prefixes and paths are intentionally narrow; unassigned scenarios always run.
+export const SCENARIO_AREAS = [
+  {prefixes:['lab-'], paths:['src/lab/']},
+  {prefixes:['deep-'], paths:['src/deep/']},
+  {prefixes:['heli-'], paths:['src/heli/']},
+  {prefixes:['ski-'], paths:['src/ski/']},
+  {prefixes:['everburn-','scablands-','run-'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js']},
+  {prefixes:['arena-'], paths:['src/arena/','src/arena-props.js','src/screen-arena.js']},
+  {prefixes:['arsenal-'], paths:['src/arsenal/']},
+  {prefixes:['crew-'], paths:['src/crew-gear/','src/crew.js','src/crew-ui.js']},
+  {prefixes:['warlord-'], paths:['src/warlords/','src/warlords.js','src/warlord-cards.js']},
+  {prefixes:['drive-lesson-'], paths:['src/lessons/']},
+  {prefixes:['circuit-'], paths:['src/circuits/','src/circuit-intel/']},
+];
+const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
+const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
+
+export async function changedSelection(names, commit, {root=PROJECT_ROOT, read=readFile} = {}) {
+  const diff = spawnSync('git', ['diff','--name-only','--no-renames',commit,'HEAD','--'],
+    {cwd:root, encoding:'utf8', shell:false, windowsHide:true});
+  if (diff.error || diff.status !== 0) throw Error('Cannot compare the previous full check commit: ' + (diff.error?.message || diff.stderr.trim()));
+  const changed = diff.stdout.split(/\r?\n/).filter(Boolean);
+  const changedSet = new Set(changed);
+  const isShared = changed.some(file => shared.has(file));
+  async function importsChanged(file, visited = new Set()) {
+    if (visited.has(file)) return false;
+    visited.add(file);
+    if (changedSet.has(file)) return true;
+    let text;
+    try { text = await read(join(root, file), 'utf8'); } catch { return false; }
+    for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.\.?\/[^'"]+)['"]/g)) {
+      const target = resolve(root, file, '..', match[1]).replaceAll('\\','/');
+      const base = resolve(root, 'tools/scenarios').replaceAll('\\','/') + '/';
+      if (target.startsWith(base)) {
+        const relative = 'tools/scenarios/' + target.slice(base.length);
+        if (await importsChanged(relative, visited)) return true;
+      }
+    }
+    return false;
+  }
+  const selected = [];
+  for (const name of names) {
+    const areas = SCENARIO_AREAS.filter(area => area.prefixes.some(prefix => name.startsWith(prefix)));
+    let reason = isShared ? 'shared file changed' : null;
+    if (!reason && await importsChanged('tools/scenarios/' + name + '.mjs')) reason = 'scenario or helper changed';
+    if (!reason && areas.some(area => changed.some(file => area.paths.some(entry => matchesPath(file, entry))))) reason = 'area changed';
+    if (!reason && !areas.length) reason = 'no area';
+    if (reason) selected.push({name, reason});
+  }
+  return selected;
+}
+
 
 // These existing recipes measure RAF/render cost or construction time, including
 // conditional art/diagnostic paths. Do not change their measurements or limits.
@@ -28,10 +81,11 @@ export function parseSuiteArguments(args) {
   const seen = new Set();
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (!['--all', '--scenarios', '--jobs', '--output-dir', '--timing-only', '--headed'].includes(flag) || seen.has(flag))
+    if (!['--all', '--scenarios', '--jobs', '--output-dir', '--timing-only', '--headed', '--changed-since', '--list'].includes(flag) || seen.has(flag))
       throw Error('Unknown or repeated browser suite option: ' + flag);
     seen.add(flag);
     if (flag === '--all') {options.all = true; continue;}
+    if (flag === '--list') {options.list = true; continue;}
     if (flag === '--timing-only') {options.timingOnly = true; continue;}
     if (flag === '--headed') {options.headed = true; continue;}
     const value = args[++index];
@@ -40,6 +94,7 @@ export function parseSuiteArguments(args) {
       if (!/^[1-4]$/.test(value)) throw Error('--jobs must be a whole number from 1 to 4.');
       options.jobs = Number(value);
     } else if (flag === '--output-dir') options.outputDir = value;
+    else if (flag === '--changed-since') options.changedSince = value;
     else {
       const names = value.split(',');
       if (names.some(name => !/^[a-z][a-z0-9-]*$/.test(name)) || new Set(names).size !== names.length)
@@ -47,7 +102,7 @@ export function parseSuiteArguments(args) {
       options.names = names;
     }
   }
-  if (options.all === !!options.names)
+  if ([options.all, !!options.names, !!options.changedSince].filter(Boolean).length !== 1)
     throw Error('Usage: node tools/run-browser-scenarios.mjs --all|--scenarios NAMES [--jobs 1..4] [--output-dir .evidence/PATH]');
   if (options.timingOnly) {
     if (!options.names || options.names.some(name => !['deep-frames','frame-pacing','tremblant-snow','tremblant-views'].includes(name)))
@@ -98,13 +153,19 @@ export async function main(args = process.argv.slice(2), {
 } = {}) {
   const options = parseSuiteArguments(args);
   const discovered = await discover({includeManual: !!options.names});
-  const selected = options.names ?? discovered;
+  const selection = options.changedSince ? await changedSelection(discovered, options.changedSince) : null;
+  const selected = options.names ?? (selection ? selection.map(row => row.name) : discovered);
+  if (options.list) {
+    for (const name of selected) log(`${name}: ${selection?.find(row => row.name === name)?.reason ?? (options.all ? 'all scenarios' : 'explicitly selected')}`);
+    log(`Selected ${selected.length}; left for Saturday ${discovered.length - selected.length}.`);
+    return 0;
+  }
   for (const name of selected) if (!discovered.includes(name) && !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
     throw Error('Unknown scenario: ' + name);
   const names = selected.filter(name => !Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name));
-  const delegatedNames = options.names ? selected.filter(name => Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
+  const delegatedNames = (options.names || options.changedSince) ? selected.filter(name => Object.hasOwn(WRAPPER_ONLY_SCENARIOS, name))
     : Object.keys(WRAPPER_ONLY_SCENARIOS);
-  if (!names.length && !delegatedNames.length) throw Error('No named browser scenarios were found.');
+  if (!names.length && !delegatedNames.length && !options.changedSince) throw Error('No named browser scenarios were found.');
   const delegations = delegatedNames.map(name => ({name, passed: null, status: 'run by its wrapper',
     wrapper: WRAPPER_ONLY_SCENARIOS[name], exitCode: null, evidenceDir: null, reportPath: null,
     screenshots: [], warnings: null, issues: null, error: null}));
@@ -152,7 +213,7 @@ export async function main(args = process.argv.slice(2), {
     }
     const delegated = delegations.length;
     const summary = {schema: 1, count: rows.length, executed: rows.length, delegated, delegations,
-      passed: rows.filter(row => row.passed === true).length,
+      leftForSaturday: discovered.length - names.length, passed: rows.filter(row => row.passed === true).length,
       failed: rows.filter(row => row.passed === false).length, archive, rows};
     if (options.timingOnly) summary.timingMode = 'timing-only';
     const summaryPath = join(archive, 'summary.json');

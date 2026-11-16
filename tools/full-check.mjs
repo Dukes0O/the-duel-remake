@@ -29,7 +29,7 @@ export function parseNightArguments(args=[]) {
   if(!options.idleAwake||!options.noPush)throw Error(usage);
   return options;
 }
-export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evidence',date,'FAC-03','night')}={}) {
+export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evidence',date,'FAC-03','night'),previousSource=null,strict=false}={}) {
   const frameDir=path(evidence,'frames'),browserDir=path(evidence,'browser');
   return [
     {id:'full',args:['tools/run-tests.mjs','--tier','full','--jobs','4','--keep-going','--json']},
@@ -40,7 +40,7 @@ export function nightPlan({root=ROOT,date=localDate(),evidence=path(root,'.evide
         {name:'tremblant-snow',packet:path(frameDir,'tremblant-snow','tremblant-snow-frame-pacing.json')},
         {name:'tremblant-views',packet:path(frameDir,'tremblant-views','tremblant-frame-pacing.json')}]},
     {id:'combat',args:['tools/combat-balance.mjs','--check']},
-    {id:'browser',args:['tools/run-browser-scenarios.mjs','--all','--jobs','4','--output-dir',browserDir],
+    {id:'browser',args:['tools/run-browser-scenarios.mjs',...(strict || new Date(date+'T12:00:00Z').getUTCDay()===6 || !previousSource ? ['--all'] : ['--changed-since',previousSource]),'--jobs','4','--output-dir',browserDir],
       env:{DUEL_NIGHT_FRAME_REUSE:'1',DUEL_NIGHT_FRAME_PACKET:path(frameDir,'frame-pacing','frame-pacing.json')},
       packet:path(browserDir,'summary.json')}
   ].map(row=>({...row,log:path(evidence,row.id+'.log')}));
@@ -219,7 +219,7 @@ function validateFull(packet) {
     packet.results.some(row=>row.passed!==true))throw Error('Full tier has failures, unrun suites or an incomplete actual packet.');
 }
 function validateBrowser(packet,names) {
-  if(packet?.schema!==1||packet.count!==names.length||packet.count<1||packet.passed!==packet.count||
+  if(packet?.schema!==1||packet.count!==names.length||packet.passed!==packet.count||
     packet.failed!==0||packet.rows?.length!==packet.count||packet.rows.some(row=>row.passed!==true)||
     packet.rows.map(row=>row.name).join('|')!==names.join('|'))throw Error('Browser acceptance has failures or missing named scenarios.');
 }
@@ -249,6 +249,11 @@ function validateCombat(packet) {
     throw Error('Missing actual current-rules combat balance aggregate.');
 }
 
+async function previousNight(date,dependencies) {
+  const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&name.slice(6,16)<date).sort().reverse();
+  for(const name of names) try { const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name))); if(row.schema===1&&commitPattern.test(row.source))return row; } catch {}
+  return null;
+}
 async function previousGreen(date,dependencies) {
   const names=(await dependencies.listNightFiles()).filter(name=>/^night-\d{4}-\d{2}-\d{2}\.json$/.test(name)&&
     name.slice(6,16)<=date).sort().reverse();
@@ -374,7 +379,8 @@ export async function runNight(options,overrides={}) {
   if(options?.idleAwake!==true||options.noPush!==true)throw Error(usage);
   const dependencies={root,print:message=>console.log(message),now:()=>new Date(),git:(args,cwd=root)=>gitCommand(args,cwd),processes:inspectNightProcesses,
     createCopy:source=>createCheckCopy(root,source),removeCopy:removeCheckCopy,framePollMs:1000,
-    scenarioNames:async copyRoot=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios(),readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
+    scenarioNames:async copyRoot=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).namedScenarios(),
+    scenarioSelection:async (copyRoot,names,commit)=>(await import(pathToFileURL(path(copyRoot,'tools/run-browser-scenarios.mjs')).href)).changedSelection(names,commit,{root:copyRoot}),readText:file=>readFile(file,'utf8'),writeText:writeFile,appendText:appendFile,
     mkdir:dir=>mkdir(dir,{recursive:true}),makeTemp:mkdtemp,
     refreshStatus:()=>refreshNightStatus(root),recycleText:file=>recycleNightDraft(file,root),
     listNightFiles:()=>readdir(path(root,'docs/board/checks')).catch(error=>{if(error.code==='ENOENT')return[];throw error;}),
@@ -386,6 +392,7 @@ export async function runNight(options,overrides={}) {
       displayPowerMeasured:false,processIsolationObserved:false},stages:[],failures:[],
     compaction:{status:'disabled',reason:'Separate Kyle authorization required; no history rewrite this run.'},
     push:{status:'disabled',reason:'--no-push; no push authorized this run.'}};
+  const lastNight=await previousNight(options.date,dependencies);
   const previous=await previousGreen(options.date,dependencies);packet.lastGreen=previous?.source||null;
   packet.lastGreenNight=previous?{schema:1,status:previous.status,source:previous.source,date:previous.date}:null;
   let firstMerge=null,attribution='Unknown: no previous green night.';
@@ -404,7 +411,7 @@ export async function runNight(options,overrides={}) {
     await assertNightSource(dependencies,null);
     copy=await dependencies.createCopy(source);
     const copyEvidence=path(copy.root,'.evidence',options.date,'FAC-03',packet.evidence.split('/').at(-1));
-    const plan=nightPlan({root:copy.root,date:options.date,evidence:copyEvidence});
+    const plan=nightPlan({root:copy.root,date:options.date,evidence:copyEvidence,previousSource:lastNight?.source,strict:options.strict});
     const assertCopy=async()=>{
       if((await dependencies.git(['rev-parse','HEAD'],copy.root)).trim()!==source||
         (await dependencies.git(['status','--porcelain'],copy.root)).trim())throw Error('Copied source changed.');
@@ -449,7 +456,7 @@ export async function runNight(options,overrides={}) {
         }else if(stage.id==='browser') {
           try {
             const actual=json(await dependencies.readText(stage.packet));
-            row.counts={passed:actual.passed,failed:actual.failed,total:actual.count};
+            row.counts={passed:actual.passed,failed:actual.failed,total:actual.count,leftForSaturday:actual.leftForSaturday};
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
             if(Array.isArray(actual.rows)&&actual.count===actual.rows.length&&
               actual.passed===actual.rows.filter(item=>item.passed===true).length&&
@@ -485,7 +492,12 @@ export async function runNight(options,overrides={}) {
         if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames') {if(frameError)throw frameError;}
-        else if(stage.id==='browser')validateBrowser(json(await dependencies.readText(stage.packet)),await dependencies.scenarioNames(copy.root));
+        else if(stage.id==='browser') {
+          const actual=json(await dependencies.readText(stage.packet));
+          const allNames=await dependencies.scenarioNames(copy.root);
+          const selected=stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,lastNight.source)).map(row=>row.name) : allNames;
+          validateBrowser(actual,selected);
+        }
         else validateCombat(json(result.stdout));
         await assertCopy();
         row.passed=true;

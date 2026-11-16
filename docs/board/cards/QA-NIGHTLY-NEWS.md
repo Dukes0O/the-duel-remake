@@ -70,4 +70,4 @@ has asked him about it.
 
 ## Codex decided (Claude to review)
 
-(none yet)
+Scenario prefixes map to paths: lab-: `src/lab/`; deep-: `src/deep/`; heli-: `src/heli/`; ski-: `src/ski/`; everburn-, scablands-, run-: `src/world/`, `src/story/`, `src/world.js`, `src/world-job-camera.js`; arena-: `src/arena/`, `src/arena-props.js`, `src/screen-arena.js`; arsenal-: `src/arsenal/`; crew-: `src/crew-gear/`, `src/crew.js`, `src/crew-ui.js`; warlord-: `src/warlords/`, `src/warlords.js`, `src/warlord-cards.js`; drive-lesson-: `src/lessons/`; circuit-: `src/circuits/`. Unassigned scenarios always run. A missing previous ledger runs all scenarios.
