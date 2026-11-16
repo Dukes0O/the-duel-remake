@@ -559,6 +559,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
     dial.querySelector('svg').setAttribute('aria-label',`Head speed ${Math.round(headSpeed*100)} percent.`);
     if(sim.lastMessage&&sim.lastMessage!==lastMachineMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
+    const boreNotice=frameEvents.find(event=>event.type==='bore-call'||event.type==='bore-daylight');
+    if(boreNotice){shownMessage=boreNotice.message;messageUntil=now+8000;}
     lastMachineMessage=sim.lastMessage;
     if(now<messageUntil)message.textContent=shownMessage;
     else if(!failed&&sim.activeMachine==='excavator'){

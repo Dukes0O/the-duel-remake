@@ -24,6 +24,8 @@ A6 adds a bore board to the Dig for active, waiting and finished orders. It show
 
 A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The bore board now offers a visit to the active bore. Choosing Mabel also goes to the working face. At the face, V or the button takes and returns the lever; the following and mouth cameras remain available.
 
+A8 has started. Pim calls once if the bore is more than a metre off its surveyed line. Daylight is announced by name while any machine is selected. Both messages appear on the Dig screen without extra land samples. The three failed stall attempts and high exit calls still need to be built and tested.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
@@ -39,6 +41,7 @@ A7 has started. The simulation can give the player the lever on the active bore 
 - A5 real mesa: `node tools/test-machine-borer-apprentice.mjs` passed. The sent bore reaches daylight with two mouths while the excavator is selected. The hand-driven cutter follows the same controls on separate real Dig ground; its distance, height, ground and spoil agree within 0.1 m. Closing does not advance the unfinished order without a simulation step.
 - A6: `node tools/test-machine-borer-apprentice.mjs` checks active, waiting and finished board entries, including drift, stalls and the estimate.
 - A7: `node tools/test-machine-borer-apprentice.mjs` checks visiting the working face, choosing Mabel, player cutting advancing the order, and Pim resuming at the same face.
+- A8: `node tools/test-machine-borer-apprentice.mjs` checks a single drift call with the excavator selected and the daylight announcement on the real mesa.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -64,7 +67,7 @@ The board estimates remaining time from the taught rock pace, expected stall fre
 
 ## Sound
 
-No new sound event in A1, A3 or A4. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
+No new sound event in A1, A3 or A4. The drift call uses `borer.call`. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
 
 ## Removed
 

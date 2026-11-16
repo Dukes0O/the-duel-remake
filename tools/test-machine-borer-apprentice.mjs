@@ -234,6 +234,18 @@ assert.ok(takeover.borer.distanceM > beforeReturn, 'The apprentice resumes at th
 assert.ok(Math.abs(takeover.boreOrders[0].stages[0].completed - takeover.borer.distanceM) < 1e-7);
 console.log('Taking and returning the lever keeps one bore and one order.');
 
+// A real cutting step reports drift once even while the excavator is selected.
+let drifting = {...background, activeMachine:'excavator', borer:{...background.borer, y:background.borer.y + 1.2}};
+drifting = stepDigSandbox(drifting, {}, 1/60);
+const driftCall = drifting.events.find(event => event.type === 'bore-call');
+assert.equal(driftCall?.cue, 'borer.call');
+assert.match(driftCall.message, /^Pim: We're .* off the line at .* Come and set her straight\.$/);
+assert.equal(drifting.boreOrders[0].driftCalled, true);
+drifting = stepDigSandbox(drifting, {}, 1/60);
+assert.equal(drifting.events.filter(event => event.type === 'bore-call').length, 0);
+console.log('A drift call is made once while another machine is selected.');
+
+
 // Compare a sent bore with the same hands on the real cutter and real mesa.
 let mesa = createDigSandbox({playerId:'apprentice-mesa-sent'});
 const parked = mesa.borer;
@@ -253,9 +265,15 @@ let hand = createBorerState(mouth);
 const handTunnels = createGroundTunnels([], {heightAt:(px,pz)=>handGround.heightAt(px,pz)});
 const apprentice = mesa.apprenticeTown.apprenticeships[0];
 const order = mesa.boreOrders[0];
+const daylightCalls = [];
 for (let second=0; second<900 && mesa.boreOrders[0].status !== 'finished'; second++) {
-  mesa = stepDigSandbox(mesa, {controls:{}}, 1);
+  const watchDaylight = mesa.borer.distanceM > mesaSurvey.distanceM - 40;
+  if (!watchDaylight) mesa = stepDigSandbox(mesa, {controls:{}}, 1);
   for (let frame=0; frame<60; frame++) {
+    if (watchDaylight) {
+      mesa = stepDigSandbox(mesa, {controls:{}}, 1/60);
+      daylightCalls.push(...mesa.events.filter(event => event.type === 'bore-daylight'));
+    }
     const oldCount = hand.segments.length;
     const previousDistance = hand.distanceM;
     const hands = borerApprenticeControls(hand, order, apprentice, 1/60);
@@ -270,6 +288,9 @@ for (let second=0; second<900 && mesa.boreOrders[0].status !== 'finished'; secon
 }
 assert.equal(mesa.boreOrders[0].status, 'finished', `Mesa bore stopped: ${mesa.borer.message}`);
 assert.equal(mesa.activeMachine, 'excavator');
+assert.equal(daylightCalls.length, 1);
+assert.equal(daylightCalls[0].cue, 'borer.daylight');
+assert.match(daylightCalls[0].message, /^Pim: Daylight\. She is through, .* m off level\.$/);
 assert.equal(mesa.tunnels.mouths.length, 2);
 assert.equal(hand.reachedDaylight, true);
 assert.ok(Math.abs(hand.distanceM - mesa.borer.distanceM) < .1);

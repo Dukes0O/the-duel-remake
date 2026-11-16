@@ -338,6 +338,18 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
   if (!playerControls && makingMistake && result.events.some(event => event.type === 'stall'))
     nextOrder.learnedStalls = learnedStalls + 1;
   const daylight = result.events.some(event => event.type === 'daylight');
+  const name = town.people.find(person => person.id === order.personId)?.name || 'Apprentice';
+  const drift = result.state.y - (order.mouth.y + order.grade * result.state.distanceM);
+  if (!nextOrder.driftCalled && Math.abs(drift) > 1) {
+    nextOrder.driftCalled = true;
+    result.events.push({type:'bore-call', cue:'borer.call',
+      message:`${name}: We're ${Math.abs(drift).toFixed(1)} m off the line at ${result.state.distanceM.toFixed(1)} m. Come and set her straight.`});
+  }
+  if (daylight) {
+    const event = result.events.find(item => item.type === 'daylight');
+    event.type = 'bore-daylight';
+    event.message = `${name}: Daylight. She is through, ${Math.abs(result.state.y - order.mouth.y).toFixed(1)} m off level.`;
+  }
   advanceDelegatedWork(town, nextOrder, order.personId, dtSeconds / 60, {}, {
     boreCut:{metres:Math.max(0, result.state.distanceM - borer.distanceM), daylight},
   });
@@ -361,7 +373,7 @@ function advanceDigBore(sim, input) {
     stallSeconds:starting ? 0 : sim.boreStallSeconds,
     playerControls:!starting && sim.activeMachine === 'borer' && sim.borePlayerAtLever ? input.controls || {} : null}, STEP);
   const changed = result.borer.distanceM !== borer.distanceM ||
-    result.events.some(event => event.type === 'breakthrough' || event.type === 'daylight');
+    result.events.some(event => event.type === 'breakthrough' || event.type === 'bore-daylight');
   if (changed) {
     if (oldCount) tunnels.extendLast(result.borer.segments[oldCount-1]);
     for (let i=oldCount; i<result.borer.segments.length; i++) tunnels.extendLast(result.borer.segments[i],true);
