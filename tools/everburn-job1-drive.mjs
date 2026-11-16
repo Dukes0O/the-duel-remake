@@ -140,7 +140,12 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
         id:actor.id, distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
         heightDifference:Math.abs(car.y - actor.position.y),
       }));
-      jolts.push({amount:pot.jolt, position:{x:car.x, z:car.z}, speedMph:Math.abs(state.speedMph), riders});
+      const nearbySolids = state.arena.worldJob.solidGrid.near(car.x, car.z, car.x, car.z, 8)
+        .filter(solid => Math.hypot(solid.x - car.x, solid.z - car.z) <= Math.hypot(solid.halfX, solid.halfZ) + 8)
+        .map(solid => ({id:solid.id, kind:solid.kind, x:solid.x, z:solid.z,
+          halfX:solid.halfX, halfZ:solid.halfZ, y:solid.y, height:solid.height}));
+      jolts.push({amount:pot.jolt, position:{x:car.x, y:car.y, z:car.z},
+        along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids});
       lastJoltCount = pot.joltCount;
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);

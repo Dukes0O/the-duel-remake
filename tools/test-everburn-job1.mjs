@@ -163,6 +163,12 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.equal(gap.abovePlatesLimitTicks, 0, 'the end of sheltered ground stays within 50 km/h');
   assert.ok(gap.longestFurnaceSightSeconds <= 6, 'the end of sheltered ground stays within six seconds of sight');
   assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders at the end of sheltered ground');
+  const obstacle = drivePlatesShelter(duel, line, 3600);
+  console.log('Plates obstacle measurements:', JSON.stringify(obstacle));
+  assert.ok(obstacle.along >= 3600, 'the car reaches the far side of the measured obstacle');
+  assert.ok(obstacle.jolts.length > 0, 'the measurement records the jolts that prevent a clean drive');
+  assert.ok(obstacle.jolts.every(jolt => Number.isFinite(jolt.along) && Number.isFinite(jolt.position.y) &&
+    Array.isArray(jolt.nearbySolids)), 'each jolt records its real position and nearby job solids');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.

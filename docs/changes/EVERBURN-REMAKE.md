@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates obstacle measurements (16 November 2026)
+
+- The real Medium drive continues from 2.9 to 3.6 km. Five 15-point jolts occur at 3,005, 3,011, 3,018, 3,134 and 3,136 m along the driven line. The job's solid grid reports no nearby solid and no rider is in contact at those moments. This does not establish what caused the jolts. The pot goes out at 3,136 m and the longest furnace sighting is 18 seconds, so the clean drive remains unproved. The driver now records each jolt's position, distance along the line, nearby solids and riders. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: identify the source of the jolts and find a drivable line through the gap without a furnace warning, then complete the clean drives and scenario.
+
 ## Plates drive toward the next gap (16 November 2026)
 
 - The seeded Medium car reaches 2.9 km with 74.313 ember, no jolts, no furnace warning and no speed above 50 km/h. A trial continuing on the centre line reached 3.6 km but took five jolts and went out; its longest furnace sighting was 18 seconds. Trials 90 m to either side became stuck. The clean drive is not yet proved. No game event or sound cue was added.
