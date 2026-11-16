@@ -458,12 +458,20 @@ export async function runNight(options,overrides={}) {
             const actual=json(await dependencies.readText(stage.packet));
             row.counts={passed:actual.passed,failed:actual.failed,total:actual.count,leftForSaturday:actual.leftForSaturday};
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
-            if(Array.isArray(actual.rows)&&actual.count===actual.rows.length&&
-              actual.passed===actual.rows.filter(item=>item.passed===true).length&&
-              actual.failed===actual.rows.filter(item=>item.passed===false).length&&
-              actual.passed+actual.failed===actual.count&&new Set(actual.rows.map(item=>item.name)).size===actual.count)
-              row.passedNames=actual.rows.filter(item=>item.passed===true).map(item=>item.name);
+
           }catch{}
+        }
+        if(stage.id==='browser') {
+          const actual=json(await dependencies.readText(stage.packet));
+          const allNames=await dependencies.scenarioNames(copy.root);
+          const selected=stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,lastNight.source)).map(row=>row.name) : allNames;
+          if(actual?.schema!==1 || !Array.isArray(actual.rows) || actual.count!==selected.length ||
+            actual.rows.length!==selected.length || actual.rows.some((item,index)=>item.name!==selected[index] || typeof item.passed!=='boolean') ||
+            new Set(selected).size!==selected.length || actual.passed!==actual.rows.filter(item=>item.passed).length ||
+            actual.failed!==actual.rows.filter(item=>!item.passed).length ||
+            result.exitCode!==(actual.failed?1:0))throw Error('Browser packet or child exit is incomplete or inconsistent.');
+          await assertCopy();
+          row.passedNames=actual.rows.filter(item=>item.passed).map(item=>item.name);
         }
         let frameError;
         if(stage.id==='frames') {

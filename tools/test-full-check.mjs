@@ -18,7 +18,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,timingPatch={},timingMissing=false}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,timingPatch={},timingMissing=false,browserPatch={}}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
@@ -102,7 +102,7 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
             files.set(recipe.packet,JSON.stringify({mode:'timing',reports,misses:0}));
           }
         }
-        if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify(browser()));
+        if(stage.id==='browser'&&missing!==stage.id)files.set(stage.packet,JSON.stringify({...browser(),...browserPatch}));
         if(stage.id==='combat')text=JSON.stringify({flags:[],policyRuns:51,baselineRaces:90,
           crossbowAim:{hitRate:.5},ownBombs:{maxSpeedLossPct:10}})+'\n';        child.stdout.end(text);child.stderr.end(fail===stage.id?'actual fixture error\n':'');
         active--;child.emit('close',fail===stage.id||stage.id==='full'&&fullFailures.length?1:0,null);
@@ -697,6 +697,18 @@ test('standing failures are published and passing entries are removed only after
   assert.equal(release.status,'failed');assert.equal(strict.files.get(file),JSON.stringify(list));
 });
 
+
+test('an invalid, partial, unselected or crashed browser result clears no standing entry',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'old'}];
+  for(const settings of [{missing:'browser'},{fail:'browser'},
+    {browserPatch:{count:2}},{browserPatch:{rows:[{name:'other',passed:true}]}}]) {
+    const f=fixture(settings);f.files.set(file,JSON.stringify(list));
+    const result=await runNight(opts(),f.deps);
+    assert.deepEqual(result.nowPassing,[]);
+    assert.equal(f.files.get(file),JSON.stringify(list));
+  }
+});
 
 test('weekday, Saturday and strict plans choose the expected browser scope',()=>{
   const args = (date,strict=false) => nightPlan({date,previousSource:previous,strict})[3].args;
