@@ -365,7 +365,21 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   if (!rider.pursuing && !roadRider && distance > 120 && !scoopAmbush) return;
   rider.pursuing = true;
   if (distance > 8) rider.ramContact = false;
-  if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }
+  if (distance <= 3 || dt <= 0) {
+    rider.speed = 0;
+    if (roadRider && dt > 0 && distance > 0 && !rider.ramContact && Math.abs(car.y - rider.position.y) < 3) {
+      const pose = worldPose(duel, duel.state);
+      const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+      const closing = -playerSpeed * (Math.sin(pose.heading) * dx / distance + Math.cos(pose.heading) * dz / distance);
+      if (closing > 0) {
+        rider.ramContact = true;
+        worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, closing * 3.6);
+        rider.ramRetreat = {x:rider.position.x - dz / distance * 40, z:rider.position.z + dx / distance * 40, seconds:0};
+        shoveCar(duel, {x:dx / distance, z:dz / distance, metresPerSecond:3});
+      }
+    }
+    return;
+  }
   rider.heading = Math.atan2(dx, dz);
   const pursuitSpeed = roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
   const travel = Math.min(distance - 3, pursuitSpeed * dt);

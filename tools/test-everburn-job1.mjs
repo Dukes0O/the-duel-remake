@@ -66,6 +66,30 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
     'Easy halves the capped ram once');
 }
 
+// A moving car can also close the last gap to a rider.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:10, headingError:Math.PI, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car;
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[0];
+  car = {...rider.position, z:rider.position.z + 2};
+  state.speedMph = 10;
+  rider.pursuing = true;
+  state.headingError = 0;
+  stepWorldJob(duel, 1 / 60);
+  assert.notEqual(rider.ramContact, true, 'a car moving away does not ram');
+  state.headingError = Math.PI;
+  stepWorldJob(duel, 1 / 60);
+  assert.equal(rider.ramContact, true, 'the approaching car makes contact');
+  assert.ok(Math.abs(world.riderHitKmh - 16.09344) < 1e-6, 'the car contributes its closing speed');
+  assert.ok(rider.ramRetreat, 'the rider backs off after contact');
+}
+
 // A rider sees the loaded car near its fence even beyond the old 120 m limit.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), step = definition.steps[0];
