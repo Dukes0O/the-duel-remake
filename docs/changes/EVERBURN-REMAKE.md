@@ -1782,3 +1782,9 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including visible, nearby and hidden stranded riders and all delivery drives. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: require both ends to remain well behind the car for five seconds, so neither end visibly jumps while the chase camera settles. Removed: the stranded rider's permanent stop.
 - For Claude to run: the two long drivers and the lane tier, as recorded above. For Claude to draw: the pot transfer and forge fire. Final job, pot, replay and build checks remain. The older screen suite's obsolete assertions remain for Claude to review, as recorded under X7.
+
+## Final review checks
+
+- On `59fa2dad0`, `test-everburn-job1.mjs` passed in 85.7 seconds, `test-ember-pot.mjs` passed 32 checks, `test-replays.mjs` passed 297 unchanged fingerprints, and `test-combat-replays.mjs` passed 12 unchanged fingerprints. `npm.cmd run build` passed; its output was removed. Integration was already included. The five delivery measurements remain in the table under Bed cold factor; the straight-across pot went out at 0.630 km.
+- Easy halves hit loss; it does not slow cold. Changed assertions and their reasons are recorded above. Codex decided: the choices are recorded above. Removed: the replaced scenario and obsolete rules and checks are recorded above.
+- For Claude to run: the two long drivers and the complete lane tier. The older screen suite still has obsolete assertions needing review, as recorded under X7. Claude reported that the nine-picture scenario passed; it was not rerun in this lane. For Claude to draw: the pot transfer and forge fire.
