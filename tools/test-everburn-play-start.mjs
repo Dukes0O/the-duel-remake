@@ -18,6 +18,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {facingChaseView, insideMachine, machineLift, easeMachineLift, machineLookBlend, MACHINE_CLEARANCE_METRES} from '../src/world-job-camera.js';
 import '../src/story/ember-lines.js';
@@ -50,6 +51,30 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
   assert.equal(stepJob(job(), view(12.1), 0).stepState.pickingUp, undefined);
   assert.equal(stepJob(job(), view(11.9, 10), 0).stepState.pickingUp, undefined);
   assert.ok(stepJob(job(), view(11.9), 0).stepState.pickingUp);
+}
+
+// Step the loaded job down the gate approach without driving or changing speed.
+for (const kmh of [45, 80]) {
+  const definition = EVERBURN_JOBS[0], gate = definition.steps[0].riderSafeWall;
+  const world = createWorldJob(definition), events = [];
+  const state = {arena:{mode:'world-job', worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:kmh / 1.609344, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car = {x:gate.x, z:gate.z + 200};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => ({...car, y:scablandsSurfaceHeightAt(car.x, car.z)})},
+    emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  state.speedMph = kmh / 1.609344;
+  world.job.stepState = {loaded:true, ember:100};
+  world.lastKmh = kmh;
+  for (let z = gate.z + 200; z >= gate.z - 10; z -= kmh / 3.6 / 120) {
+    car = {x:gate.x, z};
+    stepWorldJob(duel, 1 / 120);
+    const hit = pushOutOfSolids(car.x, car.z, 1.3, world.solidGrid, scablandsSurfaceHeightAt(car.x, car.z)).hit;
+    assert.notEqual(hit?.id, 'hot-delivery-town-door', `${kmh} km/h: the gate opens before the car reaches it`);
+    assert.equal(state.speedMph, kmh / 1.609344);
+    assert.equal(world.job.stepState.joltCount ?? 0, 0);
+  }
 }
 
 // ---- 1. The start check -------------------------------------------------------------------------------------------------------------

@@ -828,7 +828,7 @@ export function stepWorldJob(duel, dt) {
     const car = player === state ? point : position(duel, state);
     const gate = currentStep.riderSafeWall;
     if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
-        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20 && Math.abs(state.speedMph || 0) * MPH_TO_KMH < 30) {
+        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20) {
       worldJob.tinTownGateRequested = true;
       worldJob.solidGrid.setTownGate(null);
       duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,

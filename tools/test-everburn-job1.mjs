@@ -1006,7 +1006,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
 
 }
 
-// The real job requests the gate only for a car approaching slowly.
+// The real job opens the gate for an approaching car.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
   const state = {arena:{mode:'world-job', worldJob:world}, weaponLoadout:[], s:0, lateral:0,
@@ -1030,9 +1030,6 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.notEqual(world.tinTownGateRequested, true, 'a distant car does not request the gate');
   car = {x:gate.x, z:gate.z + 10};
   state.speedMph = 30 / 1.609344;
-  tick();
-  assert.notEqual(world.tinTownGateRequested, true, '30 km/h is too fast');
-  state.speedMph = 29 / 1.609344;
   state.onFoot = true;
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a person does not request the gate');
@@ -1088,7 +1085,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     // While the job holds, the crane keeps the job's own count and nothing else (reviewers found twice that it could run ahead of the job on
     // the scene's clock: through a pause, and whenever the count stood still). So the scene's clock alone moves nothing, paused or not.
     animateScene(scene.group, 2);
-    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the job’s count stands still');
+    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the jobâ€™s count stands still');
     state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 4);
     assert.ok(where(pot).distanceTo(from) < 1e-6, 'a paused game holds the crane still');
     state.paused = false;
