@@ -2,19 +2,19 @@
 
 A1 records stalls, cutting time and the distance the rock would have allowed while cutting. A completed cut to daylight of at least 100 m yields its height error from the mouth, stalls per 100 m and pace against the rock. An underground breakthrough does not count.
 
-A2 is underway. The Dig holds Pim and the observed lessons in memory. The town apprentice module now records the mean of two valid bore lessons, improves each figure independently on later lessons, and applies the Easy limits when requested. Daylight passes a valid hand-cut lesson to it, and the Dig passes the current Easy setting. Completed daylight tunnels are retained in the visit state. After Mabel drives 12 m beyond a daylight mouth, she can turn and start another cut. Displaying and using all retained tunnels together still needs work.
+A2 is complete. The Dig holds Pim and the observed lessons in memory. The town apprentice module now records the mean of two valid bore lessons, improves each figure independently on later lessons, and applies the Easy limits when requested. Daylight passes a valid hand-cut lesson to it, and the Dig passes the current Easy setting. Completed daylight tunnels are retained in the visit state. After Mabel drives 12 m beyond a daylight mouth, she can turn and start another cut. Displaying and using all retained tunnels together still needs work.
 
 A3 shows Pim riding along and records the survey, freeing a stall, holding the surveyed grade for 50 m, and daylight from the current cut. On the second cut Pim reads the survey distance and rise. The observations reset for the next cut and require no extra ground samples.
 
-A4 adds a send button and F key at a surveyed, accepted face for a taught apprentice. It queues a town work order with the mouth, heading, grade and distance. A face already in the queue cannot be sent twice with the same heading. This step does not yet advance the orders.
+A4 adds a send button and F key at a surveyed, accepted face for a taught apprentice. It queues a town work order with the mouth, heading, grade and distance. A face already in the queue cannot be sent twice with the same heading. The later cutting step advances the orders.
 
-A5 has started. The town's delegated-work function now accepts a bore's measured cutting distance and daylight result. It keeps the order open beyond the surveyed distance and finishes it only at daylight. It does not change the taught pace on each simulation step. The Dig still needs to drive Mabel and report her results to this function.
+A5 is complete. The town's delegated-work function now accepts a bore's measured cutting distance and daylight result. It keeps the order open beyond the surveyed distance and finishes it only at daylight. It does not change the taught pace on each simulation step. The Dig drives Mabel and reports her results to this function.
 
 The apprentice's controls now set the lever to the taught share of the rock limit and turn the head toward the surveyed grade plus the learned height error, using Mabel's own steering limits. They release the lever when she stalls. These controls do not sample the land.
 
 The delegated cutting step calls Mabel's cutter, reports the actual distance and daylight to the town's work order, and holds the lever off for 20 seconds after a stall.
 
-The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7.
+The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Only one set of controls drives Mabel at a time; the player can take the lever as described below.
 
 Learned stalls are now spaced along the bore. At each interval Pim presses too hard until Mabel's own rules cause a stall, then waits 20 seconds before cutting again. The cutter may reach a softer layer before a mistake takes effect; it keeps pressing until the material stalls her.
 
@@ -22,11 +22,11 @@ A finished order keeps its actual distance, height off level and stall count in 
 
 A6 adds a bore board to the Dig for active, waiting and finished orders. It shows the cutter, distance, floor drift, stalls and an estimated time to daylight. Finished orders show who cut them and how level they came out. The board reads the existing work state without sampling the ground.
 
-A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The bore board now offers a visit to the active bore. Choosing Mabel also goes to the working face. At the face, V or the button takes and returns the lever; the following and mouth cameras remain available.
+A7 is complete. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The bore board now offers a visit to the active bore. Choosing Mabel also goes to the working face. At the face, V or the button takes and returns the lever; the following and mouth cameras remain available.
 
 A8 adds all three calls. Pim calls once after three short attempts to free a stall, if the bore is more than a metre off its surveyed line, or if Mabel finds an exit more than a metre up a face. Pim keeps trying after the stall call. Daylight is announced by name while any machine is selected. These messages appear on the Dig screen without extra land samples.
 
-A9 has started. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The browser scenario sends a surveyed bore, records the board 30 seconds apart while the excavator is selected, visits the working face, takes the lever for five seconds and hands it back. It records each measurement and both pictures before reporting all failures. It still needs Claude to run it in Chrome.
+A9 is complete. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The browser scenario sends a surveyed bore, records the board 30 seconds apart while the excavator is selected, visits the working face, takes the lever for five seconds and hands it back. It records each measurement and both pictures before reporting all failures. It still needs Claude to run it in Chrome.
 
 ## Checks
 
@@ -48,8 +48,10 @@ A9 has started. A check-only setter teaches Pim through the existing lesson func
 - A8 stall: `node tools/test-machine-borer-apprentice.mjs` checks three failed releases, one call and resumed cutting on real editable ground.
 - A9 check setup: `node tools/test-machine-borer-apprentice.mjs` passed, including the taught record and the unchanged original visit.
 - A9: `node tools/test-machine-borer-apprentice-scenario.mjs` passed. All page expressions parse; a simulated failed run keeps both pictures, records measurements and reports multiple failures together. The browser scenario itself has not run.
-- Remaining card checks, replay checks and build: not run yet.
-- Race fingerprints: not checked yet.
+- Final checks after merging integration: `test-machine-borer`, `test-machine-borer-lesson`, `test-machine-borer-apprentice`, `test-machine-borer-apprentice-scenario`, `test-town-apprentices`, `test-ground-edit`, `test-machine-roads`, `test-tunnels` and `test-scablands-scene` all passed individually.
+- Race fingerprints: `test-replays` passed 297 checks; `test-combat-replays` passed 12 checks.
+- Build: `npm.cmd run build` passed. PowerShell blocked `npm.ps1` under its execution policy; the Windows command wrapper worked. Vite reported chunk-size and mixed-import warnings. The generated `dist` was removed.
+- The lane tier was not run, as A10 directs.
 
 ## Changed assertions, for Claude to review
 
@@ -83,4 +85,4 @@ Nothing. This adds measurements to Mabel's existing cutting rules. The rest of t
 
 ## For Claude to run
 
-The apprentice browser scenario and the hand play check, once the remaining steps are built.
+Run the apprentice browser scenario and the hand play check. Chrome cannot start in this job. The scenario has not been visually checked.
