@@ -222,7 +222,14 @@ function fixedStep(sim,input) {
         const x = sim.borer.x + Math.sin(sim.borer.heading) * move;
         const z = sim.borer.z + Math.cos(sim.borer.heading) * move;
         const refusal = sim.ground.refusal({x,z,radius:3});
-        if (!refusal) next={...next,borer:{...sim.borer,x,z,outsideM,y:sim.ground.heightAt(x,z),headSpeed:0}};
+        if (!refusal) {
+          const y=sim.ground.heightAt(x,z);
+          // Clear the whole machine from the mouth before freeing it for a new cut.
+          const borer=sim.borer.reachedDaylight && outsideM>=12
+            ? createBorerState({x,y,z,heading:sim.borer.heading,name:sim.borer.name})
+            : {...sim.borer,x,z,outsideM,y,headSpeed:0};
+          next={...next,borer};
+        }
         else next={...next,lastMessage:refusal};
       } else if (sim.borer.finished && forward < 0) {
         const result=stepBorer(sim.borer,{thrust:forward},sim.ground,null,STEP);

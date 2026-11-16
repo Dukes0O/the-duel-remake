@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerCutLesson} from '../src/machines/borer.js';
-import {createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel} from '../src/machines/dig-sandbox.js';
+import {createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -50,4 +50,20 @@ const completed = rememberDigTunnel({...visit, borer:{...visit.borer, reachedDay
 assert.deepEqual(completed.completedTunnels, [visit.tunnels]);
 assert.equal(rememberDigTunnel(completed), completed);
 assert.equal(completed.apprenticeTown, visit.apprenticeTown);
+// Driving clear of daylight frees the same machine for a second hand cut.
+let leaving = {...completed, ground:{...completed.ground, refusal:()=>null}, activeMachine:'borer', mode:'drive',
+  borer:{...completed.borer, started:true, finished:true, reachedDaylight:true,
+    distanceM:100, travelM:100, x:0, z:100, heading:0, outsideM:0}};
+leaving = stepDigSandbox(leaving, {controls:{forward:1}}, 5);
+assert.equal(leaving.borer.finished, true, 'Mabel can still reverse into the mouth while close to it.');
+leaving = stepDigSandbox(leaving, {controls:{forward:1}}, 7);
+assert.equal(leaving.borer.started, false);
+assert.equal(leaving.borer.finished, false);
+assert.equal(leaving.borer.distanceM, 0);
+assert.deepEqual(leaving.borer.segments, []);
+assert.equal(leaving.completedTunnels[0], visit.tunnels);
+assert.equal(leaving.apprenticeTown, visit.apprenticeTown);
+const beforeTurn = leaving.borer.heading;
+leaving = stepDigSandbox(leaving, {controls:{forward:1, steer:1}}, 1);
+assert.notEqual(leaving.borer.heading, beforeTurn, 'Mabel can turn toward another face.');
 console.log('Borer apprentice lessons: eligibility, averages, improvement and Easy passed.');
