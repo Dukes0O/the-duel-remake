@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed, direct route from the Steps (16 November 2026)
+
+- The real Medium car takes the land test's direct line from the Steps toward town at a 48 km/h target. Ash rider 2 makes contact at 103.551 m and takes 15 ember. The next 400 m has no jolt and costs 3.307 ember. The car holds 45.897 at 800 m. This is a diagnostic, not a clean delivery. The contact briefly pushes the car to 59.1 km/h. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_DIRECT_TRIAL=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. `git diff --check` passed. Integration is included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: avoid the rider and complete both bed deliveries, then the salt pan, East Road, scenario and final checks.
+
 ## Bed exit, 70 km/h trial (16 November 2026)
 
 - The real Medium car took the Wash scoop and climbed the Steps without a jolt. A 70 km/h target and a longer straight exit avoided rams for 800 m, but the pot fell from 67.709 to 15.050 on the scab plates. This exceeds the ground's safe speed and is a diagnostic, not a clean delivery. The safe-speed line still meets a rider. No game event or sound cue was added.
