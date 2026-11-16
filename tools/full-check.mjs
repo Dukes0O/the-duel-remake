@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const path=(...parts)=>join(...parts).replaceAll('\\','/');
-const usage='Usage: node tools/full-check.mjs --idle-awake --no-push [--date YYYY-MM-DD]';
+const usage='Usage: node tools/full-check.mjs --idle-awake --no-push [--date YYYY-MM-DD] [--strict]';
 const commitPattern=/^[a-f0-9]{40}$/;
 function localDate(now=new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -17,7 +17,8 @@ export function parseNightArguments(args=[]) {
   const options={idleAwake:false,noPush:false,date:localDate()},seen=new Set();
   for(let index=0;index<args.length;index++) {
     const arg=args[index];if(seen.has(arg))throw Error(usage);seen.add(arg);
-    if(arg==='--idle-awake')options.idleAwake=true;
+    if(arg==='--strict')options.strict=true;
+    else if(arg==='--idle-awake')options.idleAwake=true;
     else if(arg==='--no-push')options.noPush=true;
     else if(arg==='--date') {
       const date=args[++index];
@@ -254,11 +255,30 @@ async function previousGreen(date,dependencies) {
   for(const name of names) {
     try {
       const row=json(await dependencies.readText(path(dependencies.root,'docs/board/checks',name)));
-      if(row.schema===1&&row.status==='passed'&&commitPattern.test(row.source))return row;
-      if(row.schema===1&&row.lastGreenNight?.status==='passed'&&commitPattern.test(row.lastGreenNight.source))return row.lastGreenNight;
+      if(row.schema===1&&['passed','standing'].includes(row.status)&&commitPattern.test(row.source))return row;
+      if(row.schema===1&&['passed','standing'].includes(row.lastGreenNight?.status)&&commitPattern.test(row.lastGreenNight.source))return row.lastGreenNight;
     }catch{}
   }
   return null;
+}
+// Only a completed, individually passing check clears a standing entry.
+export function classifyNight(failures, stages, standing, strict=false) {
+  const key=(stage,name)=>stage+'\0'+name;
+  const listed=new Set(standing.map(item=>key(item.stage,item.name)));
+  const isStanding=failure=>{
+    const match=/^(full|browser): (.+)$/.exec(failure.name);
+    return listed.has(match?key(match[1],match[2]):key(failure.name,failure.name));
+  };
+  const fresh=failures.filter(item=>!isStanding(item));
+  const known=failures.filter(isStanding);
+  const nowPassing=standing.filter(item=>{
+    const stage=stages.find(row=>row.id===item.stage);
+    if(!stage)return false;
+    if(item.name===item.stage)return stage.passed===true;
+    return stage.passedNames?.includes(item.name)===true;
+  });
+  return {status:failures.length?(strict||fresh.length?'failed':'standing'):'passed',
+    failures:[...fresh,...known],fresh,nowPassing,remaining:standing.filter(item=>!nowPassing.includes(item))};
 }
 function refreshNightStatus(root) {
   const child=spawnSync(process.execPath,['tools/build-status.mjs'],{cwd:root,encoding:'utf8',shell:false,windowsHide:true});
@@ -290,6 +310,7 @@ async function maybeRead(dependencies,file) {
 async function publishNightReports(packet,morning,dependencies) {
   const {root}=dependencies;
   const names=[`docs/board/checks/night-${packet.date}.json`,`docs/board/checks/night-${packet.date}.md`,'docs/board/STATUS.md'];
+  if(dependencies.standingUpdate)names.push('docs/board/checks/standing-failures.json');
   const original=new Map(),drafts=new Map();let staged=false;
   try {
     await assertNightSource(dependencies,null);
@@ -300,6 +321,12 @@ async function publishNightReports(packet,morning,dependencies) {
     packet.publication={status:'prepared',paths:names};
     for(const [name,text]of [[names[0],JSON.stringify(packet,null,2)+'\n'],[names[1],morning]]) {
       const file=path(root,name);drafts.set(file,text);await dependencies.writeText(file,text);
+    }
+    if(dependencies.standingUpdate) {
+      const file=path(root,names[3]);
+      if(original.get(file)!==dependencies.standingUpdate.original)throw Error('Standing list changed during the run.');
+      const text=JSON.stringify(dependencies.standingUpdate.remaining,null,2)+'\n';
+      drafts.set(file,text);await dependencies.writeText(file,text);
     }
     try{await dependencies.refreshStatus();}
     finally{drafts.set(path(root,names[2]),await maybeRead(dependencies,path(root,names[2])));}
@@ -360,7 +387,7 @@ export async function runNight(options,overrides={}) {
     compaction:{status:'disabled',reason:'Separate Kyle authorization required; no history rewrite this run.'},
     push:{status:'disabled',reason:'--no-push; no push authorized this run.'}};
   const previous=await previousGreen(options.date,dependencies);packet.lastGreen=previous?.source||null;
-  packet.lastGreenNight=previous?{schema:1,status:'passed',source:previous.source,date:previous.date}:null;
+  packet.lastGreenNight=previous?{schema:1,status:previous.status,source:previous.source,date:previous.date}:null;
   let firstMerge=null,attribution='Unknown: no previous green night.';
   if(previous) {
     try {
@@ -424,6 +451,11 @@ export async function runNight(options,overrides={}) {
             const actual=json(await dependencies.readText(stage.packet));
             row.counts={passed:actual.passed,failed:actual.failed,total:actual.count};
             row.failureNames=(actual.rows||[]).filter(item=>item.passed!==true).map(item=>'browser: '+item.name);
+            if(Array.isArray(actual.rows)&&actual.count===actual.rows.length&&
+              actual.passed===actual.rows.filter(item=>item.passed===true).length&&
+              actual.failed===actual.rows.filter(item=>item.passed===false).length&&
+              actual.passed+actual.failed===actual.count&&new Set(actual.rows.map(item=>item.name)).size===actual.count)
+              row.passedNames=actual.rows.filter(item=>item.passed===true).map(item=>item.name);
           }catch{}
         }
         let frameError;
@@ -462,9 +494,22 @@ export async function runNight(options,overrides={}) {
     }
   }catch(error){failure('context',error.message);}
   finally {if(copy)try{await dependencies.removeCopy(copy);}catch(error){failure('copy-cleanup',error.message);}}
-  packet.finished=dependencies.now().toISOString();packet.status=packet.failures.length?'failed':'passed';
+  packet.finished=dependencies.now().toISOString();
+  let standing=[],standingText=null;
+  if(!options.strict) {
+    try {
+      standingText=await dependencies.readText(path(root,'docs/board/checks/standing-failures.json'));
+      standing=json(standingText);
+      if(!Array.isArray(standing)||standing.some(item=>!item.stage||!item.name||!item.since||!item.card||!item.cause))throw Error('Invalid standing list.');
+    } catch(error) {failure('standing-list',error.message);standing=[];}
+  }
+  const result=classifyNight(packet.failures,packet.stages,standing,!!options.strict);
+  packet.status=result.status;packet.failures=result.failures;packet.nowPassing=result.nowPassing;
+  if(result.nowPassing.length)dependencies.standingUpdate={original:standingText,remaining:result.remaining};
 
   const morning=[`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
+    ...(result.fresh.length?[`New failures: ${result.fresh.map(row=>row.name).join(', ')}. First merge: ${firstMerge||attribution}`]:[]),
+    ...packet.nowPassing.map(row=>`Now passing: ${row.stage}: ${row.name}.`),
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
     ...packet.stages.filter(row=>row.id==='frames').flatMap(row=>[
       ...(row.reports||[]).map(report=>`${report.quality}: p95 ${report.p95} ms, world build ${report.worldBuildMs} ms, full first-race load ${report.constructionMs} ms.`),
@@ -482,6 +527,6 @@ export async function runNight(options,overrides={}) {
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
   runNight(parseNightArguments(process.argv.slice(2))).then(packet=>{
     console.log(`Full check ${packet.date}: ${packet.status}; docs/board/checks/night-${packet.date}.json`);
-    process.exitCode=packet.status==='passed'?0:1;
+    process.exitCode=packet.status==='failed'?1:0;
   }).catch(error=>{console.error(error.message);process.exitCode=2;});
 }
