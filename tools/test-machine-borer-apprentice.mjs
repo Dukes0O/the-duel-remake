@@ -1,5 +1,5 @@
 ﻿import assert from 'node:assert/strict';
-import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {borerApprenticeControls, borerCutLesson, borerSpoilGridChanges, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, teachBorerForCheck, toggleBoreLever, visitBore, switchDigMachine, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
@@ -349,7 +349,8 @@ assert.ok(Math.abs(hand.distanceM - mesa.borer.distanceM) < .1);
 assert.ok(Math.abs(hand.y - mesa.borer.y) < .1);
 assert.deepEqual(mesa.boreOrders[0].result, {distanceM:mesa.borer.distanceM,
   offLevelM:Math.abs(mesa.borer.y-mouth.y), stalls:mesa.borer.stallCount});
-for (const cell of mesa.borer.spoilBank.cells)
+const heapCells = bank => borerSpoilGridChanges(bank.origin, bank.direction, 0, bank.far);
+for (const cell of [...heapCells(mesa.borer.spoilBank), ...heapCells(hand.spoilBank)])
   assert.ok(Math.abs(mesa.ground.heightAt(cell.x,cell.z) - handGround.heightAt(cell.x,cell.z)) < .1,
     'The hand cut and sent cut leave the same spoil.');
 for (let distance=0; distance<=mesa.borer.distanceM; distance+=5) {

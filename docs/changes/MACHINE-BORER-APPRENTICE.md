@@ -68,6 +68,8 @@ The heap profile now has small rounding margins: 0.699 m per metre at the sides 
 
 ## Checks
 
+- After the rounding fix and the integration merge, `test-machine-borer` passed: cross slope 0.6990 m per metre, crest 4.7691 m and volume error 0.616%, with daylight reached. The apprentice suite also passed the real mesa comparison after its test was updated to cover both heap footprints. The lesson, scenario expression, town apprentice, ground edit, machine roads, tunnels and Scablands scene suites passed individually. Race replays passed 297 checks and combat replays passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was not run, as A10 directs.
+
 - Rounding margins: a focused ground-fill check passed. Its steepest crest step was 0.299026 m. The full borer suite, run before the crest margin was added, reached daylight and passed the real-heap measurements but failed the crest check. Rerun the full suite after the crest fix. The real-ground measurements above were taken before the crest margin was added.
 
 - SP connection: `node tools/test-machine-borer.mjs` failed at the real-ground cross-slope check as measured above. The 100-step refresh, sampled crest, volume and surveyed daylight drive passed before that assertion.
@@ -118,6 +120,9 @@ The heap profile now has small rounding margins: 0.699 m per metre at the sides 
 - The lane tier was not run, as A10 directs.
 
 ## Changed assertions, for Claude to review
+
+- Bent-cut mouth clearance: X coordinate at least 12 m changed to distance from the mouth at least 12 m, with a 0.00000001 m floating-point allowance. The bank follows the turned heading, so its X coordinate alone does not measure its clearance. The required distance remains 12 m.
+- Hand and delegated spoil comparison: the removed bank cell list is replaced by the union of both heap footprints. The 0.1 m comparison is unchanged.
 
 - Near-ground refresh limit: fewer than 2,000 to fewer than 6,000 height reads in 100 steps. Raised by Claude, 16 November 2026: a heap at its angle of repose touches about five times the ground of the old three-cell bank; 6,000 is under 2 percent of what the fault cost.
 - Old bank cells within one metre of the centre line and the three-cell-wide ridge: replaced by a 12 m mouth clearance, five-metre height, and cross-slope and crest checks. Claude's SP ruling requires a heap at its angle of repose instead of the narrow wall.

@@ -837,7 +837,8 @@ const bentVolume = bentMuckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
 assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) < 0.02,
   'A bent cut keeps its bulked volume in the bank.');
-assert.ok(bentMuck.spoilBank.origin.x >= 12, 'The heap starts away from the mouth.');
+assert.ok(Math.hypot(bentMuck.spoilBank.origin.x, bentMuck.spoilBank.origin.z) >= 12 - 1e-8,
+  'The heap starts at least 12 m from the mouth on a bent cut.');
 const beforeReverse = pileVolume();
 stepBorer(muckCut, {thrust:-1}, muckGround, 'topsoil', 5);
 assert.equal(pileVolume(), beforeReverse, 'Returning through the tunnel creates no muck.');
