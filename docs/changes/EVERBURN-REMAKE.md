@@ -1398,3 +1398,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none for existing paths. The new measurement keeps the earlier trial assertions on their own paths. No game event or sound cue was added.
 - Codex decided: use the existing 600 m exit waypoint and a 48 km/h target for the ruled measurement. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: find a clean 50 km/h exit and measure both bed drives at the allowed speeds, then the East Road, scenario and final checks.
+
+## Bed road approach measurement (16 November 2026)
+
+- The ruled bed driver follows the named roads to the Wash at an 80 km/h target instead of taking the earlier off-road bypass at 28 mph. The real car reaches the Wash without a jolt and reaches at least 45 mph on the approach. It then follows the bed under the bridge and the Steps, with a 48 km/h target on the exit. No game event or sound cue was added.
+- With the Wash scoop: 9.451 km, 10.446 minutes, two rider jolts, ember 0. Without the scoop: 9.430 km, 10.245 minutes, one rider jolt, ember 0. Both exceed ten minutes and neither is a clean proof. The scooped car meets both the camp rider and bridge rider on the exit. The bridge rider starts pursuit 119.5 m away, 8.8 m above the car on the bridge, and catches it after the Steps. The unscooped car meets the bridge rider there. The exit briefly exceeds the 50 km/h target after contact, so it does not prove the safe-speed condition either. These results cannot establish the cold factor without a clean drive.
+- Checks: the focused job test passed in PowerShell with `EVERBURN_BED_STEPS_ONLY=1` and `EVERBURN_BED_RULED=1`, both with and without `EVERBURN_BED_NO_SCOOP=1`. Both also measured the straight-across outage at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. The approach checks are new. Codex decided: use the named road route at an 80 km/h target for this measurement. Claude should review it.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the off-road bypass from the ruled measurement only; earlier diagnostic drives retain it. Next: find an exit that avoids both riders at 50 km/h, measure both clean bed deliveries, then prove East Road and finish the scenario and final checks.

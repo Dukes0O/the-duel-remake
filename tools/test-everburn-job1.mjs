@@ -196,13 +196,19 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const yardExit = driveThroughYardGate(duel, yardPlan().gate);
   assert.ok(yardExit.along >= 20);
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const line = bedRiderBypass(routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')}), 150, -195);
+  const bedRoute = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const line = process.env.EVERBURN_BED_RULED === '1' ? bedRoute : bedRiderBypass(bedRoute, 150, -195);
   const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
-  const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
-    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 28);
-  assert.ok(approach.reachedAll, 'the car reaches the Wash');
-  const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
   const ruledBed = process.env.EVERBURN_BED_RULED === '1';
+  const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
+    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], ruledBed ? 80 / 1.609344 : 28);
+  if (!approach.reachedAll) console.log('Wash approach stopped:', JSON.stringify(approach.stretches.at(-1)));
+  assert.ok(approach.reachedAll, 'the car reaches the Wash');
+  if (ruledBed) {
+    assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the road approach reaches the Wash without a jolt');
+    assert.ok(approach.stretches.some(stretch => stretch.fastRoadSpeedTicks > 0), 'the car reaches road speed on the approach');
+  }
+  const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
   if (!skipWash) assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
   else assert.ok(!(duel.state.arena.worldJob.job.stepState.scoopedBraziers || []).includes(wash.id),
     'the car passes the Wash without a scoop');
