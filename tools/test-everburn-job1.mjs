@@ -233,11 +233,11 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const continuation = driveAlongRoad(duel, townLine, 800, 7200, townSpeed);
   console.log('Rider beyond the Steps:', JSON.stringify(continuation));
   assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
-  if (process.env.EVERBURN_BED_NO_SCOOP_FAST_EXIT === '1') {
-    assert.ok(skipWash && mediumTrial, 'this trial uses the unscooped 70 km/h exit');
+  if (process.env.EVERBURN_BED_NO_SCOOP_FAST_EXIT === '1' || process.env.EVERBURN_BED_SCOOP_FAST_EXIT === '1') {
+    assert.ok(mediumTrial, 'this trial uses the 70 km/h exit');
     const exitPot = duel.state.arena.worldJob.job.stepState;
     assert.equal(exitPot.joltCount ?? 0, 0, 'the rider has not rammed the car after 800 m');
-    assert.equal(exitPot.ember, 0, 'the unscooped ember is out on the rough exit');
+    if (skipWash) assert.equal(exitPot.ember, 0, 'the unscooped ember is out on the rough exit');
     const towardGate = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, townSpeed, true);
     assert.ok(towardGate.along >= pathLength(townLine) - 150, 'the car reaches the town approach');
     const gateCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -252,13 +252,16 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     const kilometres = (yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) +
       drive.stretches.reduce((sum, item) => sum + item.driven, 0) + end.driven + climb.driven +
       townDrive.driven + continuation.driven + towardGate.driven + gateDrive.driven + arrival.driven) / 1000;
-    console.log('No-scoop fast exit at forge:', JSON.stringify({kilometres,
+    console.log('Fast exit at forge:', JSON.stringify({kilometres,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
       jolts:finalPot.joltCount ?? 0, scoops:finalPot.scoopedBraziers || [], ember:finalPot.ember, arrival}));
     assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
-    assert.deepEqual(finalPot.scoopedBraziers || [], [], 'the car did not scoop');
+    assert.deepEqual(finalPot.scoopedBraziers || [], skipWash ? [] : [wash.id], 'the recorded scoops match the drive');
     assert.equal(finalPot.joltCount ?? 0, 0, 'the car reaches the forge without a jolt');
-    assert.equal(finalPot.ember, 0, 'the ember is out at the forge');
+    assert.equal(finalPot.ember, 0, 'the ember is out at the forge on this fast exit');
+    if (!skipWash) assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
+      'the scooped pot loses more than 50 on the first 800 m of rough ground');
+    assert.equal(arrival.done, finalPot.ember > 0, 'the forge accepts only a lit pot');
     process.exit(0);
   }
   if (fastTrial) {
