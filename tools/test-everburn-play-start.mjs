@@ -46,6 +46,13 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
     if (!pushOutOfSolids(x, z, 1, grid, scablandsSurfaceHeightAt(x, z)).hit) clear++;
   }
   assert.ok(clear >= 270, `at least three quarters of Cinder's ring is clear: ${clear}/360`);
+  // Leave room around the whole car, not just its centre, at the hand-over boundary.
+  let carClear = 0;
+  for (let i = 0; i < 360; i++) {
+    const angle = i * Math.PI / 180, x = pickup.x + 12 * Math.sin(angle), z = pickup.z + 12 * Math.cos(angle);
+    if (!pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit) carClear++;
+  }
+  assert.ok(carClear >= 270, `a car has room on at least three quarters of Cinder's ring: ${carClear}/360`);
   const view = (distance, speedKmh = 0) => ({player:{position:{x:pickup.x + distance, z:pickup.z}}, speedKmh});
   const job = () => createJob(EVERBURN_JOBS[0], 19);
   assert.equal(stepJob(job(), view(12.1), 0).stepState.pickingUp, undefined);
