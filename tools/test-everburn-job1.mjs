@@ -150,6 +150,26 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   tick(1);
   assert.deepEqual(camp.position, stopped, 'the stranded rider stays stopped');
 }
+// The camp rider reaches a scooping car later on Easy than on Hard.
+{
+  for (const difficulty of ['easy', 'hard']) {
+    const world = createWorldJob(definition), car = {...definition.steps[0].braziers[1].position};
+    const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+      opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:difficulty};
+    const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+      at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+    initializeWorldJob(duel, definition);
+    world.job.stepState = {loaded:true, ember:60};
+    for (let i = 0; i < 30; i++) {
+      stepWorldJob(duel, 0.1);
+      if (state.knock) state.speedMph = 7;
+    }
+    const scooped = world.job.stepState.scoopedBraziers?.includes('halfway-brazier') ?? false;
+    assert.equal(scooped, difficulty === 'easy', `${difficulty}: the scoop ${scooped ? 'finished' : 'was interrupted'}`);
+    assert.equal(!!state.knock, difficulty === 'hard', `${difficulty}: rider contact during the scoop`);
+  }
+}
+
 // Measure cover only within the furnace's range, using the same sight rule as the job.
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');

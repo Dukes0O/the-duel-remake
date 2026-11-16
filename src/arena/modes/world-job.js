@@ -321,7 +321,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   if (distance > 8) rider.ramContact = false;
   if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }
   rider.heading = Math.atan2(dx, dz);
-  const travel = Math.min(distance - 3, 18 * dt);
+  const pursuitSpeed = roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
+  const travel = Math.min(distance - 3, pursuitSpeed * dt);
   const before = rider.position;
   const moved = stepMover(before, {x: before.x + dx / distance * travel, z: before.z + dz / distance * travel},
     {radius: 1.3, grid: worldJob.solidGrid, height: before.y});
