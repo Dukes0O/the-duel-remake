@@ -7,7 +7,7 @@ import {LAND} from '../src/world/scablands-names.js';
 import {EMBER_RULE, emberLoss, emberGrade, emberPay, emberSentence, MPH_TO_KMH} from '../src/world/jobs/ember-rule.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
 import {EAST_ROAD, distanceToRoad, onRoadPoints, onScablandsRoad} from '../src/world/scablands-road.js';
-import {scablandsDriveAt} from '../src/world/scablands-regions.js';
+import {RIVER_LAND, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {arenaReward} from '../src/arena/arena-settlement.js';
 import '../src/story/ember-lines.js';
@@ -100,6 +100,21 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   check(jolts > 0 && Math.abs(held(duel).jolt - 15) < 1e-9, `a real wreck hit takes exactly 15 from the pot (jolt ${held(duel).jolt}, total drop ${drop.toFixed(3)})`);
   const severe = stepCarry(carry, {loaded: true}, view(100, {severeHit: true}), DT);
   check(severe.state.jolt === 40, 'a severe fall or dead-stop crash can take 40');
+}
+// Drive off the river bank and measure the actual landing and pot loss.
+{
+  const points = RIVER_LAND.line.points, i = Math.floor(points.length * .2);
+  const a = points[i], b = points[i + 3], length = Math.hypot(b.x - a.x, b.z - a.z);
+  const normal = {x:(b.z - a.z) / length, z:-(b.x - a.x) / length};
+  const startPoint = {x:a.x + normal.x * 260, z:a.z + normal.z * 260};
+  const target = {x:a.x - normal.x * 300, z:a.z - normal.z * 300};
+  const duel = start(), hits = [], emit = duel.emit.bind(duel);
+  duel.emit = event => { if (event.scablandsHit?.kind === 'fall') hits.push(event.scablandsHit); return emit(event); };
+  place(duel, startPoint, target, 200);
+  run(duel, [target], 200, {seconds:8, until:() => hits.some(hit => hit.drop > 3)});
+  const fall = hits.find(hit => hit.drop > 3), jolt = held(duel).jolt;
+  check(!!fall && jolt > 15 && jolt <= 40, `a ${fall?.drop?.toFixed(2)} m bank fall takes ${jolt} from the pot`);
+  console.log(`Bank fall: ${fall.drop.toFixed(2)} m, pot jolt ${jolt.toFixed(2)}.`);
 }
 // The remade job test covers going out, known braziers and delivery.
 // Running out leaves the job active and asks the player to find a brazier.

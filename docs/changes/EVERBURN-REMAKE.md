@@ -1839,3 +1839,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the five delivery drives. Integration was already included. Race fingerprints were not rerun in this round. No game behavior or sound cue changed.
 - Changed assertions, for Claude to review: the old 18-second distance expectation is incompatible with the later furnace return rule, as measured above. The nine-second closing check is retained and the return checks are added. Codex decided: none. Removed: no game feature.
 - Still needed: finish Y1 rider visibility and Y4's real fall and crash checks and well scenario name, then run the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y4: a real fall and the well scenario name
+
+- The pot suite now drives a loaded car off the river bank through the real game step. Its 7.17 m fall takes 40 from the pot, within the severe-hit cap. The well scenario now names its own harness.
+- Check: `node tools/test-ember-pot.mjs` passed 33 checks. No game behavior, save, sound cue or race fingerprint changed. Integration is included.
+- Changed assertions: none. Codex decided: none. Removed: the well scenario's reference to the removed `everburn-play` harness.
+- Still needed: Y4's real dead-stop collision check and Y1's out-of-view rider recovery, then the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
