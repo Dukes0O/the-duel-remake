@@ -127,7 +127,7 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
   const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const line = bedRiderBypass(route, 150);
+  const line = bedRiderBypass(route, 150, -150);
   const drive = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000], 28);
   const jolts = drive.stretches.flatMap(stretch => stretch.jolts);
   console.log('Bed rider bypass:', JSON.stringify({reached:drive.reachedAll, jolts, last:drive.stretches.at(-1)}));
@@ -147,10 +147,10 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   console.log('Bed beyond Wash:', JSON.stringify({reached:afterWash.reachedAll, jolts:afterJolts, last:afterWash.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
   assert.ok(afterWash.reachedAll, 'the car reaches 6.4 km beyond Wash');
   assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car reaches 6.4 km without a jolt');
-  const crossing = driveMeasuredStretches(duel, line, [6500], 12);
+  const crossing = driveMeasuredStretches(duel, line, [6500, 6600], 12);
   const crossingJolts = crossing.stretches.flatMap(stretch => stretch.jolts);
   console.log('Bed rough crossing:', JSON.stringify({reached:crossing.reachedAll, jolts:crossingJolts, last:crossing.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
-  assert.ok(crossing.reachedAll, 'the car crosses the rough ground');
+  assert.ok(crossing.reachedAll, 'the car reaches 6.6 km beyond the rough ground');
   assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car crosses without a jolt');
   process.exit(0);
 }
