@@ -133,6 +133,23 @@ export function borerSpoilProfileLength(volume) {
   return low + (high - low) / 2;
 }
 
+/** Ground-grid changes when the far end of the heap moves outwards. */
+export function borerSpoilProfileChanges(oldLength, newLength) {
+  if (![oldLength, newLength].every(Number.isFinite) || oldLength < 0 || newLength < oldLength)
+    throw new TypeError('The spoil heap needs two non-negative lengths in order.');
+  const changes = [];
+  // The far end cannot affect a sample more than 5 / 0.3 metres behind it.
+  const first = Math.max(0, Math.floor(oldLength - 5 / 0.3));
+  for (let along = first; along <= Math.ceil(newLength); along++) {
+    for (let across = -7; across <= 7; across++) {
+      const height = borerSpoilProfile(along, across, newLength) -
+        borerSpoilProfile(along, across, oldLength);
+      if (height > 1e-12) changes.push({along, across, height});
+    }
+  }
+  return changes;
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

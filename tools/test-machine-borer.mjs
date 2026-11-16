@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -49,6 +49,24 @@ import * as THREE from 'three';
   assert.equal(borerSpoilProfileLength(0), 0);
   assert.throws(() => borerSpoilProfileVolume(-1), TypeError);
   assert.throws(() => borerSpoilProfileLength(Infinity), TypeError);
+}
+
+// Growing the heap changes only the far end, even after a long bore.
+{
+  for (const [before, after] of [[0, 0.5], [5.2, 6.1], [40, 40.1], [1000, 1000.1]]) {
+    const changes = borerSpoilProfileChanges(before, after);
+    const byCell = new Map(changes.map(cell => [`${cell.along},${cell.across}`, cell.height]));
+    assert.equal(byCell.size, changes.length, 'Each changed grid cell occurs once.');
+    for (let along = 0; along <= Math.ceil(after); along++) {
+      for (let across = -8; across <= 8; across++) {
+        const expected = borerSpoilProfile(along, across, after) - borerSpoilProfile(along, across, before);
+        assert.ok(Math.abs((byCell.get(`${along},${across}`) || 0) - expected) < 1e-10);
+      }
+    }
+    assert.ok(changes.length <= 270, 'A short extension touches a bounded number of cells.');
+  }
+  assert.deepEqual(borerSpoilProfileChanges(10, 10), []);
+  assert.throws(() => borerSpoilProfileChanges(10, 9), TypeError);
 }
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
