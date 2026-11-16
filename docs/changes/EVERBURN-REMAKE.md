@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates cover separation (16 November 2026)
+
+- The cover measurement now requires at least 100 m of visible ground on both sides of a covered stretch. Its test rejects an 80 m gap and accepts 100 m. No terrain or game event changed, and no sound cue was added.
+- The real sight rule still finds one qualifying stretch. The other two covered stretches meet the edge of the furnace's range. The open gaps between the three existing hidden stretches measure about 250 m and 220 m. A trial third butte joined the first covered stretch to within 30 m of the middle one, so it was removed. Adding cover alone cannot open a gap within the existing hidden stretch. More placement work is needed to meet the three-stretch requirement without losing the required open gaps.
+- Check: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed; the straight drive went out at 629.8 m. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none; the gap checks are new. Codex decided: none. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the cover measurement's acceptance of open gaps shorter than 100 m. The old `everburn-play` scenario still needs replacement or removal.
+
 ## Second plates butte (16 November 2026)
 
 - Added a ramp-free butte between the Steps and Tin Town. The actual furnace sight rule finds hidden ground from 3,355 to 3,585 m along the plates way, after about 220 m of open ground. The hidden stretch ends at the furnace's range limit, so it does not count as a qualifying stretch with open ground on both sides. One qualifying stretch remains; more cover is needed. No game event or sound cue was added.

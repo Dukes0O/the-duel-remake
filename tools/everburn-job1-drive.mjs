@@ -21,7 +21,9 @@ export function coverStretches(samples, classify) {
   const stretches = sightStretches(samples, classify);
   return stretches.filter((stretch, index) => stretch.visibility === 'hidden' &&
     stretch.to - stretch.from >= 150 && stretches[index - 1]?.visibility === 'open' &&
-    stretches[index + 1]?.visibility === 'open');
+    stretches[index - 1].to - stretches[index - 1].from >= 100 &&
+    stretches[index + 1]?.visibility === 'open' &&
+    stretches[index + 1].to - stretches[index + 1].from >= 100);
 }
 
 // Drive from the job's real starting position to Cinder and wait for the pot.

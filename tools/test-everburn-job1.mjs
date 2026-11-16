@@ -62,6 +62,12 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const types = ['open', ...Array(9).fill('hidden'), 'out of range', ...Array(9).fill('hidden'), 'open', 'hidden', 'open'];
   assert.equal(coverStretches(points, point => types[point.along / 20]).length, 0,
     'out-of-range gaps and short hidden runs cannot count as separate cover');
+  const shortGap = ['open', 'open', 'open', 'open', 'open', ...Array(9).fill('hidden'), ...Array(7).fill('open')];
+  assert.equal(coverStretches(points, point => shortGap[point.along / 20]).length, 0,
+    'less than 100 m of open ground cannot separate cover');
+  const clearGap = [...Array(6).fill('open'), ...Array(9).fill('hidden'), ...Array(8).fill('open')];
+  assert.equal(coverStretches(points, point => clearGap[point.along / 20]).length, 1,
+    '100 m of open ground on both sides separates a covered stretch');
 }
 // Floor it towards town across the plain, starting with the real pickup and gate.
 {
