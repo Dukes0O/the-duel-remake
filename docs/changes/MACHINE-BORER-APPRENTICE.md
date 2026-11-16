@@ -12,7 +12,9 @@ A5 has started. The town's delegated-work function now accepts a bore's measured
 
 The apprentice's controls now set the lever to the taught share of the rock limit and turn the head toward the surveyed grade plus the learned height error, using Mabel's own steering limits. They release the lever when she stalls. These controls do not sample the land.
 
-The next part of A5 adds a step for delegated cutting. It calls Mabel's cutter, reports the actual distance and daylight to the town's work order, and holds the lever off for 20 seconds after a stall. It is tested on its own and is not yet connected to the Dig's simulation or tunnel index. The learned stall frequency still needs to cause stalls.
+The delegated cutting step calls Mabel's cutter, reports the actual distance and daylight to the town's work order, and holds the lever off for 20 seconds after a stall.
+
+The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7. The real-mesa completion and ground comparison still need to be proved, and learned stalls still need to be applied.
 
 ## Checks
 
@@ -24,6 +26,7 @@ The next part of A5 adds a step for delegated cutting. It calls Mabel's cutter, 
 - A5 work-order support: `node tools/test-town-apprentices.mjs` passed, 21 checks, including measured distance, no work while time is stopped, and daylight completion.
 - A5 apprentice controls: `node tools/test-machine-borer-lesson.mjs` passed. The real cutter held both tested paces and reached the learned grade in rock; stalled controls release the lever.
 - A5 delegated step: `node tools/test-machine-borer-apprentice.mjs` passed. It checks actual cutting distance against order progress, no work at zero time, and a 20-second pause at a stall.
+- A5 Dig connection: `node tools/test-machine-borer-apprentice.mjs` passed. The excavator remains selected while Mabel cuts, the order and tunnel advance, zero time does no work, and player controls do not drive her twice.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 

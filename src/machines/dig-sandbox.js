@@ -289,10 +289,41 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
   return {order:nextOrder, borer:result.state, stallSeconds:nextStallSeconds, events:result.events};
 }
 
+/** Run the first unfinished order once per simulation step. */
+function advanceDigBore(sim) {
+  const index = sim.boreOrders.findIndex(order => order.status !== 'finished');
+  if (index < 0) return {sim, events:[]};
+  const order = sim.boreOrders[index];
+  const starting = sim.activeBoreId !== order.id;
+  const borer = starting ? createBorerState({...order.mouth, heading:order.heading}) : sim.borer;
+  const tunnels = starting ? createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)}) : sim.tunnels;
+  const oldCount = borer.segments.length;
+  const ground = sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
+    spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground;
+  const result = stepDelegatedBore({town:sim.apprenticeTown, order, borer, ground, tunnels,
+    stallSeconds:starting ? 0 : sim.boreStallSeconds}, STEP);
+  const changed = result.borer.distanceM !== borer.distanceM ||
+    result.events.some(event => event.type === 'breakthrough' || event.type === 'daylight');
+  if (changed) {
+    if (oldCount) tunnels.extendLast(result.borer.segments[oldCount-1]);
+    for (let i=oldCount; i<result.borer.segments.length; i++) tunnels.extendLast(result.borer.segments[i],true);
+  }
+  const boreOrders = sim.boreOrders.slice();
+  boreOrders[index] = result.order;
+  let next = {...sim, boreOrders, borer:result.borer, tunnels, activeBoreId:order.id,
+    boreStallSeconds:result.stallSeconds, dirty:sim.dirty || changed};
+  if (result.order.status === 'finished') next = rememberDigTunnel(next);
+  return {sim:next, events:result.events};
+}
+
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
-  const events=[]; let next=sim;
-  if(sim.activeMachine==='borer'){
+  const bore=advanceDigBore(sim);
+  sim=bore.sim;
+  const events=[...bore.events]; let next=sim;
+  if(sim.activeMachine==='borer' && sim.boreOrders.some(order=>order.status !== 'finished')){
+    // Mabel is already at work. Taking her lever is added in the next step.
+  } else if(sim.activeMachine==='borer'){
     const controls=input.controls ?? {};
     if (!sim.borer.started && input.borerSurvey)
       next={...next,borerWatching:watchBorerCut(sim.borerWatching,sim.borer,sim.borer,input.borerSurvey)};

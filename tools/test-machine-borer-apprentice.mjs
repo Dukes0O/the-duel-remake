@@ -157,3 +157,18 @@ assert.ok(paused.stallSeconds < 1e-8);
 paused={...paused,...stepDelegatedBore(paused,1/60)};
 assert.ok(paused.borer.distanceM > stalledBorer.distanceM);
 console.log('Delegated bore: real cutting, measured progress and stall delay passed.');
+
+// The Dig advances the queued cutter even while the excavator is selected.
+let background = {...sent, activeMachine:'excavator'};
+const stopped = stepDigSandbox(background, {controls:{}}, 0);
+assert.equal(stopped.boreOrders[0].stages[0].completed, 0);
+background = stepDigSandbox(background, {controls:{}}, 2);
+assert.equal(background.activeMachine, 'excavator');
+assert.ok(background.borer.distanceM > 0, 'Mabel cuts while another machine is active.');
+assert.ok(Math.abs(background.boreOrders[0].stages[0].completed - background.borer.distanceM) < 1e-8);
+assert.ok(background.tunnels.segments.length > 0, 'The real cut extends the tunnel index.');
+const beforeBorer = background.borer.distanceM;
+background = stepDigSandbox({...background, activeMachine:'borer'}, {controls:{forward:1}}, 1);
+assert.ok(background.borer.distanceM > beforeBorer);
+assert.ok(background.borer.distanceM - beforeBorer < 1, 'Player controls do not drive Mabel twice.');
+console.log('Delegated bore runs in the Dig beside the selected machine.');
