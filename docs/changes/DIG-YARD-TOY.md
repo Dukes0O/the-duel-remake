@@ -1,18 +1,13 @@
-﻿# DIG-YARD-TOY
+# DIG-YARD-TOY
 
-- In progress: The Dig has its own `dev` switch for its yard button, entry and four shared machine sounds; the town keeps its switch. The yard shares the Dig's machine help.
-- Kept the later switch values: `wasteland-town` is `dev`, `nissan-skyline` is `on`.
-- Opening controls already appear without input in `src/machines/dig-game.js`.
-- Checks: `test-feature-flags` and `test-town-hooks` passed on abb52e7e0 plus the switch change; `test-dig-yard-switches` and `test-the-dig` passed on cbf13d8ac plus the yard help change; `test-machine-view` passed on baad701a7 plus the sound switch fix.
-- `test-the-dig` passed on b9aea8da0 plus the sound check: all four machine-view cues have sound-bank recipes and the Dig switch.
+- The Dig has its own `dev` switch for yard entry and machine sounds; the town keeps its switch. The yard shares machine help. Opening controls already appeared without input.
+- Kept later values: `wasteland-town` is `dev`, `nissan-skyline` is `on`. Preview lists the Dig.
+- Machine cues have sound-bank recipes, shared with the existing players. No new game event or cue.
+- Texture audit: machines-1 has 0 of 63,426 UV vertices near white; borer has 0 of 44,876. Before and after match: no model changed.
+- All town tile images have zero near-white pixels, including triangle interiors. Borer photo textures have 44 scattered near-white pixels, at most three in any row, not empty white cells. Claude's picture check remains needed.
+- Checks on 3f5c22450 plus this change: `test-the-dig`, `test-dig-yard-switches`, `test-machine-borer-scenario` and `test-machine-borer-apprentice-scenario` passed. Scenario page expressions parse in Node; literal machine sound requests have recipes.
+- Earlier checks passed: `test-feature-flags`, `test-town-hooks`, `test-machine-view`, `test-preview-launcher`, `test-yard-home` and `test-yard-next`.
 - Changed assertions for Claude: switch count 55 to 56 for the new switch; Dig entry test uses `the-dig` instead of `wasteland-town`.
-- Sound: no new game event or cue.
 - Removed: earlier duplicate `wasteland-town` and `nissan-skyline` switch entries.
-- Scenario now opens with `the-dig` only, checks opening controls and compares memory-only storage after machine use and a borer cut; it awaits a browser run. All page expressions parse in Node.
-- `test-the-dig` passed on 10148ac89 plus the scenario change.
-- Drill, road and borer tone recipes now live in the sound bank and are shared with their existing players; emitted cues are checked.
-- UV audit: machines-1 0 of 63,426 and borer 0 of 44,876 vertices sampled near white before and after; town materials use separate repeating tiles. Their images contain no near-white pixels. Borer photos have isolated highlights, not empty cells; triangle interiors still need checking.
-- Checks: `test-the-dig` and `test-dig-yard-switches` passed on fb4dff498 plus this change.
-- Preview's development switch list includes the Dig. `test-preview-launcher`, `test-feature-flags`, `test-yard-home`, `test-yard-next` and `test-machine-borer-scenario` passed on 0fb9cedb1 plus this change.
-- Still needed: browser save check, triangle-interior texture audit, remaining older suites, lane tier and build.
-- For Claude: browser scenario, play with sound, picture check and Dig yard frame check.
+- Still needed: remaining older suites, lane tier, build, browser save check and independent code review.
+- For Claude: run the browser scenario with memory-only storage, play with sound, check the pictures and run one Dig yard frame check.
