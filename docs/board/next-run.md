@@ -1,30 +1,53 @@
-# The current plan (written the night of 12 November 2026)
+# The current plan (written 16 November 2026, afternoon)
 
-This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's direction of 11 November is in
-`docs/board/decisions.md`: draw in code before building model files, and a boss needs a reason.
+This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's direction is in
+`docs/board/decisions.md`: draw in code before building model files, a boss needs a reason, a new world or story stays
+off until Claude has driven it by hand and Kyle has tried it, and (16 November) checks are sized to the card.
+
+Kyle, 16 November: the changes to how we check are made; build again, and look back in a few days to see whether more
+of each day now goes into play and pictures.
 
 ## Who does what
 
-- **Claude:** design, drawing code, the first example of each new kind of thing, and every verdict, by looking at
-  pictures from the game and at scripted play.
-- **Sonnet helpers** (started by Claude, each in its own copy of the repository when it writes code): builds from a
-  settled card, carving from photos with the kits, redrawing to an accepted example, gathering pictures and play
-  facts, routine fixes.
-- **Codex:** photos and painted pictures with its image tool, long runs, the nightly full check, and its ready cards
-  on the board. No new Blender art card starts until Claude's list of code-drawn work is on the board.
+- **Claude:** design, drawing code, story, the first example of each new kind of thing, and every verdict, by looking at
+  pictures from the game and by driving by hand.
+- **Codex:** the code of a settled card, its checks and its independent reviews, each card in its own lane.
+- **Sonnet helpers** (started by Claude, each in its own copy of the repository when it writes code): work that needs a
+  real browser, redrawing to an accepted example, gathering pictures and play facts, routine fixes.
 
 ## Now, in this order
 
 | Work | Card | Where it stands |
 | --- | --- | --- |
-| The Lab: a compelling place to learn | LAB-LOOK | All sixteen lesson boards and their answer cards are redrawn, Brian has painted portraits, the old lesson frame is gone, and Lift has the stage step (numbers in a strip under the board, the scene larger). Braking, Fuel, Wax, Launch and Projectile have the wide board (rounds 10 to 12, merged). With the physics panel open the two columns now give width to the picture (round 13). Next: the three weak pictures listed under round 13 on the card; then the challenges in the 3D world; then the walking hangar |
-| The Scablands as a place | SCABLANDS-LAND | Models carry their colours, wear and ground are drawn in code, the road is flat, Tin Town has a gate and 45 shacks. Next: the other places looked at the same way (the well, the Dead Mall, the Boneyard), then a frame check |
-| When a boss comes out | `docs/FEUDS_AND_RUNS.md` | Built behind the switches: the furnace run at Tin Town, the gas runs with the feud, the battle on the Boneyard road. Hidden again on 14 November with the Everburn. Nothing more is built here until EVERBURN-REMAKE has a job Kyle calls worth playing |
-| The Everburn, taken out and remade | EVERBURN-REMAKE, then EVERBURN-FURNACE-LOOK, SCABLANDS-LAND | Released 13 November, taken out 14 November after Kyle played jobs 1 and 2: no danger, no mechanics, a tiny safe world, a map that does not help, no lead-up, lamps that are floating shapes. Claude drove job 1 on 14 November (20 seconds, one key, no steering) and wrote its remake on the card: a live ember that jolts and cold put out, a watched road, a start with Cinder and an end at the forge. Slice 1, the ember, is building. Kyle, 14 November: the larger land first. SCABLANDS-LAND round 4 (14 km by 10 km, larger than any course; regions with their own ground and danger; at least two ways to every place, weighed on the map) is built after slice 1 and before the rest of job 1; Kyle tries the finished job before anything else in the story is touched |
+| Hot Delivery, the Everburn's first job, remade | EVERBURN-REMAKE | Merged 16 November, hidden. **Waiting for Kyle's try** on the private address (`tools/menu-check.html`, the button "Create temporary player who has found the wasteland"). Claude still owes a drive from end to end by hand with sound, and a frame check before any switch. Short of right in the pictures: no crane driver or smith, a small hearth from the far side, thin smoke. Job 2 is designed only after Kyle's try |
+| The Dig as a toy in the Scrapdome yard | DIG-YARD-TOY | Kyle said yes on 9 November. Codex is building it (lane `dig-yard-toy`), on its own switch `the-dig`, off. The Dig now holds the boring machine and Pim. Claude plays it by hand, then decides |
+| The nightly check's seven known failures | QA-STANDING-BROWSER | A Sonnet helper takes them one at a time in a real browser, after the full check of 16 November reports |
+| The Scablands as a place | SCABLANDS-LAND | The well, the Dead Mall and the Boneyard looked at the way Tin Town was; then one scene tried for the more real look (light and air first), with before-and-after pictures for Kyle |
+| The Lab: a compelling place to learn | LAB-LOOK | Next: the three weak pictures listed under round 13 on the card; then the challenges in the 3D world |
+| The machines drawn | MACHINE-ROADS, MACHINE-DRILL | The rules are merged; Claude draws the machines and the worked ground |
 
-Released on 13 November: four more wide Lab boards in the morning (build 26.11.13 14:53 UTC) and the Everburn story
-in the evening (build 26.11.14 02:37 UTC), with `story-everburn` and `scablands-runs` on. Nothing on integration is
-waiting for a release. `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca` stay off.
+**Waiting for Kyle's word, do not start:** Everburn job 2; the apprentice's slice 2 (bores and apprentices kept in the
+save); RUN-FIRE-LINE (a future idea); everything in "when a boss comes out" (`docs/FEUDS_AND_RUNS.md`), which waits for a
+job Kyle calls worth playing.
+
+Nothing on integration is released since 14 November. `story-everburn`, `scablands-runs` and `scablands-realism` are
+`dev`; `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca` stay off.
+
+## Looking back on Thursday 19 November
+
+The same five counts, taken for 17 to 19 November and set beside these for 9 to 16 November (eight days):
+
+| Count | 9 to 16 November |
+| --- | --- |
+| Cards merged | 22 in eight days, all on four of the days (3, 5, 10 and 4); four days with none |
+| Lines changed in checks for every 100 lines changed in the game (`tools/test-*`, `tools/scenarios` and the check runners against `src` and `public`) | 85; on 15 November 137 |
+| Lane runs a card had | Hot Delivery had two whole runs and six scripted drives; the rule is now one of each |
+| Things put in front of Kyle or Gratian (a job to try, a picture sheet, a thing switched on) | One job to try (Hot Delivery), one story released and taken out again |
+| Nights the full check reported by itself | None since 15 October; the task was repaired on 16 November |
+
+Command for the first two: `git log --since <day> --until <day> --numstat` over those paths, and the merges by their
+commit messages ("merged"). If the second count has not fallen and the fourth has not risen, the next change is to how
+cards are cut, not to the checks.
 
 ## Rules of thumb learned on 11 and 12 November
 
@@ -42,7 +65,7 @@ waiting for a release. `titan-bowl`, `wasteland-town`, `menu-front-door` and `de
 
 ## Switched off, and staying off until its card says otherwise
 
-`story-everburn`, `scablands-runs`, `titan-bowl`, `wasteland-town` and `menu-front-door`. The front door was pulled
+`story-everburn`, `scablands-runs`, `scablands-realism`, `titan-bowl`, `wasteland-town` and `menu-front-door`. The front door was pulled
 on 30 October at Gratian's request; do not switch it on unasked.
 
 ## Start prompt for Codex
