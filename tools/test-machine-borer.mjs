@@ -299,12 +299,24 @@ function driveMesa(kind) {
     if (machine.finished || (machine.message && machine.distanceM + (machine.exitCutting?.distanceM || 0) <= before + 1e-8)) break;
   }
   closeDigSandbox();
-  return {machine, trenchWarnings};
+  return {machine, trenchWarnings, ground:base};
 }
-const surveyedDrive = driveMesa('survey').machine;
+const surveyedResult = driveMesa('survey');
+const surveyedDrive = surveyedResult.machine;
 assert.equal(surveyedDrive.finished, true, `Surveyed drive: ${surveyedDrive.message}`);
 assert.ok(surveyedDrive.offLevelM <= 0.5, 'The surveyed drive reaches level ground.');
 assert.ok(surveyedDrive.segments[0].startOpen && surveyedDrive.segments.at(-1).endOpen, 'Both mouths open.');
+const surveyedTunnels = createGroundTunnels(surveyedDrive.segments, {heightAt:(x,z)=>surveyedResult.ground.heightAt(x,z)});
+assert.equal(surveyedTunnels.mouths.length, 2, 'The real mesa has two visible mouths at daylight.');
+assert.ok(surveyedResult.ground.heightAt(surveyedDrive.x, surveyedDrive.z) - surveyedDrive.y <= 0.3,
+  'The head reaches the open ground before daylight.');
+let finishedDrive = {...sandbox, ground:surveyedResult.ground, tunnels:surveyedTunnels,
+  activeMachine:'borer', mode:'drive', borer:surveyedDrive};
+finishedDrive = stepDigSandbox(finishedDrive, {controls:{forward:1}}, 1);
+assert.ok(Math.hypot(finishedDrive.borer.x-surveyedDrive.x, finishedDrive.borer.z-surveyedDrive.z) > 1,
+  'Drive mode moves out after daylight.');
+finishedDrive = stepDigSandbox(finishedDrive, {controls:{forward:-1}}, 2);
+assert.ok(finishedDrive.borer.travelM < finishedDrive.borer.distanceM, 'Drive mode backs into the bore.');
 const climbingDrive = driveMesa('climb').machine;
 assert.equal(climbingDrive.finished, true, `Climbing exit: ${climbingDrive.message}`);
 assert.ok(climbingDrive.exitCutting && climbingDrive.exitCutting.distanceM < 60, 'The exit cutting reaches the surface within 60 m.');
@@ -594,7 +606,7 @@ assert.equal(noJunction.state.finished, false, 'A passage on another level does 
 const shallow = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 2});
 const exitCut = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100 / 3);
 assert.ok(exitCut.state.exitCutting, 'A far face above the floor starts an exit cutting.');
-assert.equal(exitCut.state.segments.at(-1).endOpen, true);
+assert.equal(exitCut.state.segments.at(-1).endOpen, false, 'The far end stays closed until it reaches daylight.');
 assert.equal(exitCut.state.finished, false);
 const climbingExit = stepBorer(exitCut.state, {thrust:1, slope:1}, shallow, 'topsoil', 120);
 assert.equal(climbingExit.state.finished, true, 'Tilting up brings the exit cutting to the surface.');
@@ -617,8 +629,8 @@ const lipFar = {x:Math.round(lip.state.x + Math.sin(lip.state.heading) * 12),
 assert.ok(lipGround.fill(lipFar, 'rock', 29 * 2 * 1.25).ok, 'Real ground fill raises the landing.');
 assert.ok(Math.abs(lipGround.heightAt(lip.state.x + Math.sin(lip.state.heading) * 12,
   lip.state.z + Math.cos(lip.state.heading) * 12) - lip.state.y) <= 0.5);
-const filledLip = stepBorer(lip.state, {thrust:1}, lipGround, 'topsoil', 1 / 120);
-assert.equal(filledLip.state.finished, true, 'The next step reaches daylight after filling the lip.');
+const filledLip = stepBorer(lip.state, {thrust:1}, lipGround, 'topsoil', 15);
+assert.equal(filledLip.state.finished, true, 'She reaches daylight after filling the lip.');
 assert.equal(filledLip.state.segments.at(-1).endOpen, true);
 assert.equal(filledLip.events.filter(event => event.cue === 'borer.daylight').length, 1);
 const shortHill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 12 ? 8 : 2});

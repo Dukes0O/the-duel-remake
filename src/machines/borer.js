@@ -275,22 +275,17 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
         next.message = message;
         continue;
       }
-      // Open the last covered segment once. The cutting beyond it is not lining.
-      if (!controls.mutableSegments && next.segments === state.segments) {
-        next.segments = next.segments.slice();
-        if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
-      }
-      next.segments.at(-1).endOpen = true;
       events.push({type:'breakthrough', cue:'borer.breakthrough'});
       next.exitCutting = {distanceM:0, floor:next.y};
-      if (difference <= 0.5) {
-        daylight(next, events, difference);
-        continue;
-      }
     }
     if (next.exitCutting) {
       const difference = ground.heightAt(next.x, next.z) - next.y;
-      if (Math.abs(difference) <= 0.5) {
+      if (difference <= 0.3) {
+        if (!controls.mutableSegments && next.segments === state.segments) {
+          next.segments = next.segments.slice();
+          if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
+        }
+        next.segments.at(-1).endOpen = true;
         daylight(next, events, next.y - next.exitCutting.floor);
         continue;
       }
@@ -339,6 +334,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       next.segments = next.segments.slice();
       if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};
     }
+    addCut(next.segments, start, end, radius);
+    next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     if (next.exitCutting) {
       next.exitCutting = {...next.exitCutting, distanceM:next.exitCutting.distanceM + distance};
       const warningAt = next.exitCutting.nextTrenchWarningM ?? 60;
@@ -347,9 +344,6 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
         next.message = BORER_TRENCH;
         events.push({type:'refuse', cue:'borer.refuse', message:BORER_TRENCH});
       }
-    } else {
-      addCut(next.segments, start, end, radius);
-      next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
     }
     // An existing passage can open the face underground as well as daylight.
     // Ignore the recent cut behind the head, but allow older stretches to join.

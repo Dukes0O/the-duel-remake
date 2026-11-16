@@ -89,7 +89,10 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     if (!heightAt) return true;
     const surface = heightAt(end.x, end.z);
     if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
-    return Math.abs(surface - (end.y - tube.radius * 0.55)) <= 0.3;
+    const difference = surface - (end.y - tube.radius * 0.55);
+    return end === tube.end && tube.endOpen === true
+      ? difference <= 0.3 && difference >= -1
+      : Math.abs(difference) <= 0.3;
   }
   let startOpen = !tubes.length || (tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start));
   let lastTube = tubes[tubes.length - 1];

@@ -230,3 +230,11 @@ Claude's hand measurements close H1: the hill hides Mabel, the head leads, the m
 The tunnel-capable ground shader is already prepared when the Dig opens. The first actual lining, portal and edited ground depend on the first real cut and its mouth; preparing them earlier would require predicting or changing that cut. They remain created on the first cut. Claude's hand drive found a roughly one-second hitch once; it remains for a browser check and is not claimed fixed. The browser scenario must be run by Claude.
 
 Final checks at e5e268b19: `test-machine-borer` passed in 80.8 seconds; `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed. The scenario and Dig file passed Node syntax checks, and all scenario page expressions parsed. The build passed with Vite chunk-size and mixed-import warnings. The lane tier and browser scenario remain for Claude. No assertions or race fingerprints changed in this final item.
+
+## Far-side daylight, first part
+
+Merged `integration/wasteland` without conflicts. Mabel now keeps cutting beyond the crown crossing, with the far end closed, until her head reaches open ground. The Dig updates the tunnel when daylight opens its end. A finished Mabel can drive out and back along her cut. The tunnel surface-mouth check also accepts an explicitly open end up to 1 m above the landing, matching the existing lip rule.
+
+`node tools/test-machine-borer.mjs` passed, including the real mesa drive, two surface mouths, and drive-mode movement out and back. `node tools/test-tunnels.mjs` passed. The browser scenario, the far-mouth ray and picture, the daylight screen sentence, the rock pace fix, and final checks remain. The lane tier is for Claude. No race fingerprints were run.
+
+Changed assertions, for Claude to review: the exit cutting now expects a closed end instead of an open end before daylight, and the filled-lip test allows 15 seconds instead of one simulation step so the head reaches open ground. These follow Claude's E1 ruling; the daylight and lip recovery checks remain.

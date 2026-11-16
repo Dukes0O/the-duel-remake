@@ -199,8 +199,23 @@ function fixedStep(sim,input) {
   const events=[]; let next=sim;
   if(sim.activeMachine==='borer'){
     const controls=input.controls ?? {};
-    if(sim.mode==='drive' && !sim.borer.started){
+    if(sim.mode==='drive' && (!sim.borer.started || sim.borer.finished)){
       const forward=Math.max(-1,Math.min(1,controls.forward || 0));
+      if (sim.borer.finished && (sim.borer.travelM < sim.borer.distanceM - 1e-8) && forward !== 0) {
+        const result=stepBorer(sim.borer,{thrust:forward},sim.ground,null,STEP);
+        next={...next,borer:{...result.state,headSpeed:0}};
+      } else if (sim.borer.finished && ((sim.borer.outsideM || 0) > 0 || forward > 0)) {
+        const outsideM = Math.max(0, (sim.borer.outsideM || 0) + forward * (4/3.6) * STEP);
+        const move = outsideM - (sim.borer.outsideM || 0);
+        const x = sim.borer.x + Math.sin(sim.borer.heading) * move;
+        const z = sim.borer.z + Math.cos(sim.borer.heading) * move;
+        const refusal = sim.ground.refusal({x,z,radius:3});
+        if (!refusal) next={...next,borer:{...sim.borer,x,z,outsideM,y:sim.ground.heightAt(x,z),headSpeed:0}};
+        else next={...next,lastMessage:refusal};
+      } else if (sim.borer.finished && forward < 0) {
+        const result=stepBorer(sim.borer,{thrust:forward},sim.ground,null,STEP);
+        next={...next,borer:{...result.state,headSpeed:0}};
+      } else {
       const steer=Math.max(-1,Math.min(1,controls.steer || 0));
       const heading=sim.borer.heading-steer*0.25*STEP*Math.abs(forward);
       const x=sim.borer.x+Math.sin(heading)*forward*(4/3.6)*STEP;
@@ -208,6 +223,7 @@ function fixedStep(sim,input) {
       const refusal=sim.ground.refusal({x,z,radius:3});
       if(!refusal) next={...next,borer:{...sim.borer,x,z,heading,y:sim.ground.heightAt(x,z),headSpeed:0}};
       else next={...next,lastMessage:refusal};
+      }
     } else if (sim.mode === 'drive') {
       // Once inside the bore, cutting and tunnel travel belong to work mode.
       next={...next,borer:{...sim.borer,headSpeed:0}};
@@ -228,7 +244,7 @@ function fixedStep(sim,input) {
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM ||
-          result.events.some(event=>event.type==='breakthrough')){
+          result.events.some(event=>event.type==='breakthrough'||event.type==='daylight')){
         const segments=result.state.segments;
         if (!sim.borer.started) next.tunnels=createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)});
         if (oldCount) next.tunnels.extendLast(segments[oldCount-1]);
