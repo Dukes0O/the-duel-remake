@@ -177,9 +177,10 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       if (!actor.pursuing || pursuingIds.has(actor.id)) continue;
       pursuingIds.add(actor.id);
       const carPosition = worldJobPosition(duel, state);
-      pursuits.push({id:actor.id, along:nearestOnLine(points, car.x, car.z).along,
-        distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
-        heightDifference:Math.abs(carPosition.y - actor.position.y)});
+        pursuits.push({id:actor.id, along:nearestOnLine(points, car.x, car.z).along,
+          distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
+          heightDifference:Math.abs(carPosition.y - actor.position.y),
+          riderPosition:{...actor.position}, carPosition:{...carPosition}});
     }
     if (Math.hypot(car.x - bridge.x, car.z - bridge.z) < 45 &&
         scablandsSurfaceHeightAt(car.x, car.z) - worldJobPosition(duel, state).y > 4) passedUnderBridge = true;

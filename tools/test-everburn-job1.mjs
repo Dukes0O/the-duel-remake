@@ -362,6 +362,17 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const riderPursuit = drive.stretches.flatMap(stretch => stretch.pursuits)
     .find(pursuit => pursuit.id === 'ash-rider-2');
   console.log('Bridge rider pursuit:', JSON.stringify(riderPursuit));
+  if (ruledBed) {
+    const campPursuit = [...approach.stretches, ...drive.stretches]
+      .flatMap(stretch => stretch.pursuits).find(pursuit => pursuit.id === 'ash-rider-1');
+    assert.ok(campPursuit, 'the drive records where the camp rider begins pursuit');
+    assert.ok(campPursuit.distance <= 120, 'the camp rider begins pursuit within its approach range');
+    assert.ok(Math.abs(campPursuit.distance - Math.hypot(
+      campPursuit.carPosition.x - campPursuit.riderPosition.x,
+      campPursuit.carPosition.z - campPursuit.riderPosition.z)) < 1e-6,
+    'the pursuit distance comes from the real car and rider positions');
+    console.log('Camp rider pursuit:', JSON.stringify(campPursuit));
+  }
   if (oppositeBed) {
     assert.equal(pot.joltCount ?? 0, 0, 'the opposite bed line passes the bridge without a jolt');
     assert.ok(riderPursuit && riderPursuit.heightDifference > 3,
