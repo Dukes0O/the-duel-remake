@@ -1473,3 +1473,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. The no-jolt camp check is new. Codex decided: use a 40 mph barricade approach for this trial; Claude should review it.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the clean trial's 8 mph barricade approach target. Next: establish a bright East Road delivery and clean bed deliveries, then finish the scenario and final checks.
+
+## Halfway scoop on the clean road (16 November 2026)
+
+- The clean road test now checks the pot's real ember before and after the Halfway scoop. It reaches the scoop with 86.246 ember and gains 13.754, reaching the 100 limit; 11.246 of the nominal 25 cannot fit. The scoop approach and wait take 18.25 seconds. This explains part of the gap in the previous 58.298 arrival; the remaining bridge ram still costs ember. No game event or sound cue was added.
+- Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_SCOOP_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. It also confirmed the straight-across outage at 629.822 m. The complete clean drive remains below the bright band; replay fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; these are new checks. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: reliance on the scoop's nominal value when assessing the clean road drive. Next: avoid the bridge ram, prove both clean bed drives, then finish the scenario and final checks.

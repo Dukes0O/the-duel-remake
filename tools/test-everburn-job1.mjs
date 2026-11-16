@@ -238,8 +238,15 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const joltsBeforeScoop = duel.state.arena.worldJob.job.stepState.joltCount ?? 0;
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, 'the driver scoops at the camp');
+  assert.ok(scoop.emberBeforeScoop >= 0 && scoop.emberBeforeScoop <= 100, 'the scoop records the actual ember before refilling');
+  assert.ok(scoop.scoopGain > 0 && scoop.scoopGain <= 25, 'the scoop increases the actual ember by no more than 25');
+  assert.equal(scoop.ember, 100, 'the Halfway scoop fills the pot to its limit on this drive');
+  assert.ok(scoop.scoopGain < 25, 'the filled pot cannot retain the whole scoop');
+  console.log('Halfway scoop:', JSON.stringify({before:scoop.emberBeforeScoop, gain:scoop.scoopGain,
+    after:scoop.ember, seconds:scoop.elapsedSeconds}));
   assert.equal(scoop.jolts.length, (duel.state.arena.worldJob.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
     'the scoop records each jolt in the actual pot state');
+  if (process.env.EVERBURN_CAMP_SCOOP_ONLY === '1') process.exit(0);
   const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40);
   assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
