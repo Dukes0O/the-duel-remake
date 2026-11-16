@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
-import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, toggleBoreLever, visitBore, switchDigMachine, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, teachBorerForCheck, toggleBoreLever, visitBore, switchDigMachine, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
@@ -10,6 +10,11 @@ const town = sim.apprenticeTown;
 const cut = (errorM, stalls, pace, distanceM = 100, reachedDaylight = true) =>
   borerCutLesson({mouthY:0, y:errorM, distanceM, reachedDaylight, stallCount:stalls, allowedCutM:distanceM / pace});
 assert.equal(town.people[0].name, 'Pim');
+const checkVisit = teachBorerForCheck(sim);
+assert.equal(canDelegate(checkVisit.apprenticeTown, 'pim', 'bore'), true);
+assert.equal(checkVisit.apprenticeTown.borerLessons.length, 2);
+assert.equal(checkVisit.apprenticeTown.apprenticeships[0].taughtBy, 'player');
+assert.equal(canDelegate(town, 'pim', 'bore'), false, 'The check leaves the original visit untouched.');
 assert.equal(recordBorerLesson(town, 'pim', cut(1, 2, .5, 99)), null);
 assert.equal(recordBorerLesson(town, 'pim', cut(1, 2, .5, 100, false)), null);
 assert.equal(town.borerLessons.length, 0);

@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine, toggleBoreLever, visitBore} from './dig-sandbox.js';
+import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine, teachBorerForCheck, toggleBoreLever, visitBore} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -593,6 +593,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     requestCentreSample(){sampleCentre=true;},
     setCheckOverview(value){checkOverview=!!value;},
     setCheckFarMouth(value){checkFarMouth=!!value;},
+    teachBorerForCheck(){sim=teachBorerForCheck(sim);},
     get viewForCheck(){return {camera,scene,world,renderer,three:THREE,groundObjects:[nearGround.mesh,yardFloor,editedGroup],groundRay:(origin,direction,far=Infinity)=>{
       world.updateMatrixWorld(true);
       const ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),

@@ -206,6 +206,16 @@ export function switchDigMachine(sim) {
 }
 
 /** Visit the active bore without changing its work or taking the lever. */
+// Browser checks can skip the two long demonstrations without changing saves.
+export function teachBorerForCheck(sim) {
+  const town = {...sim.apprenticeTown, apprenticeships:[], borerLessons:[], book:[]};
+  const personId = town.people[0].id;
+  const lesson = {errorM:0, stallsPer100M:0, pace:1};
+  recordBorerLesson(town, personId, lesson);
+  recordBorerLesson(town, personId, lesson);
+  return {...sim, apprenticeTown:town};
+}
+
 export function visitBore(sim, id) {
   if (!sim.boreOrders.some(order => order.id === id && order.id === sim.activeBoreId && order.status !== 'finished')) return sim;
   return {...sim, activeMachine:'borer', mode:'work', cameraIndex:0, borePlayerAtLever:false};

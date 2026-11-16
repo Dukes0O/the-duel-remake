@@ -26,6 +26,8 @@ A7 has started. The simulation can give the player the lever on the active bore 
 
 A8 adds all three calls. Pim calls once after three short attempts to free a stall, if the bore is more than a metre off its surveyed line, or if Mabel finds an exit more than a metre up a face. Pim keeps trying after the stall call. Daylight is announced by name while any machine is selected. These messages appear on the Dig screen without extra land samples.
 
+A9 has started. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The scenario still needs to be written.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
@@ -44,6 +46,7 @@ A8 adds all three calls. Pim calls once after three short attempts to free a sta
 - A8: `node tools/test-machine-borer-apprentice.mjs` checks a single drift call with the excavator selected and the daylight announcement on the real mesa.
 - A8 high exit: `node tools/test-machine-borer-apprentice.mjs` checks a single call from Mabel's high-exit refusal on real editable ground.
 - A8 stall: `node tools/test-machine-borer-apprentice.mjs` checks three failed releases, one call and resumed cutting on real editable ground.
+- A9 check setup: `node tools/test-machine-borer-apprentice.mjs` passed, including the taught record and the unchanged original visit.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
