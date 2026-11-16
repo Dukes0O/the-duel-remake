@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {borerWatchingWords,borerYardControls,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -256,6 +256,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   surveyPanel.innerHTML='<p></p><canvas width="260" height="70" aria-label="The hill and the tunnel from the side"></canvas>';
   surveyPanel.querySelector('canvas').style.cssText='width:260px;height:70px;max-width:100%;background:#394037';
   dial.after(surveyPanel);
+  const watchingPanel=document.createElement('section');watchingPanel.className='the-dig-survey';
+  surveyPanel.after(watchingPanel);
   let surveyLine=null, surveyKey='';
   const surveyDisplayCache={};
   document.body.append(host);
@@ -393,7 +395,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping,sim.mode):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
       if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
       const action=pending.consume('load')?'load':actionFor();
-      sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
+      sim=stepDigSandbox(sim,{controls:stepControls,action,borerSurvey:!surveyPanel.hidden ? surveyLine : null},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
     if(drillView && machineViews.has('drill'))drillView.update(sim.drill,machineViews.get('drill').body);
     if(sim.activeMachine==='drill'){
@@ -521,6 +523,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       }
     } else if(!b.started) {surveyLine=null;surveyKey='';}
     surveyPanel.hidden=sim.activeMachine!=='borer' || !surveyLine;
+    watchingPanel.hidden=sim.activeMachine!=='borer';
+    if (!watchingPanel.hidden) watchingPanel.textContent=borerWatchingWords(sim).join(' ');
     if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
     dial.querySelector('meter').value=sim.borer.lever || 0;

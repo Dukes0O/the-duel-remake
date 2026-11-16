@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerCutLesson} from '../src/machines/borer.js';
-import {createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox} from '../src/machines/dig-sandbox.js';
+import {borerWatchingWords, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -67,3 +67,44 @@ const beforeTurn = leaving.borer.heading;
 leaving = stepDigSandbox(leaving, {controls:{forward:1, steer:1}}, 1);
 assert.notEqual(leaving.borer.heading, beforeTurn, 'Mabel can turn toward another face.');
 console.log('Borer apprentice lessons: eligibility, averages, improvement and Easy passed.');
+
+// Watching words follow this cut's events, not the total distance or a stall alone.
+let watching = {};
+const start = {started:false, stalled:false, distanceM:0, slope:0};
+assert.deepEqual(borerWatchingWords({...sim, borerWatching:watching}), [
+  'Pim is riding with you. Cut two tunnels and Pim can cut the rest.',
+  'Pim can run her now. At a face, choose Send Pim.',
+]);
+watching = watchBorerCut(watching, start, start, {distanceM:100, riseM:1});
+assert.equal(watching.survey, true);
+watching = watchBorerCut(watching, {...start, started:true, stalled:true},
+  {...start, started:true, stalled:true}, null);
+assert.equal(watching.freedStall, undefined);
+watching = watchBorerCut(watching, {...start, started:true, stalled:true},
+  {...start, started:true, stalled:false}, null);
+assert.equal(watching.freedStall, true);
+watching = watchBorerCut(watching, {...start, started:true},
+  {...start, started:true, distanceM:49, slope:Math.atan(.01)}, null);
+assert.equal(watching.heldGrade, undefined);
+watching = watchBorerCut(watching, {...start, started:true, distanceM:49},
+  {...start, started:true, distanceM:50, slope:Math.atan(.01)}, null, true);
+assert.equal(watching.heldGrade, true);
+assert.equal(watching.daylight, true);
+const words = borerWatchingWords({...sim, borerWatching:watching});
+for (const action of ['read the survey', 'free a stall', 'hold a grade', 'come out to daylight'])
+  assert.ok(words.includes(`Pim has seen you ${action}.`));
+let missed = watchBorerCut({}, start, start, {distanceM:100, riseM:0});
+missed = watchBorerCut(missed, {...start, started:true}, {...start, started:true, distanceM:49}, null);
+missed = watchBorerCut(missed, {...start, started:true, distanceM:49},
+  {...start, started:true, distanceM:50, slope:Math.atan(.021)}, null);
+assert.equal(missed.heldGrade, undefined);
+assert.equal(missed.gradeMetres, 0);
+const shown = stepDigSandbox({...createDigSandbox(), activeMachine:'borer', mode:'drive'},
+  {borerSurvey:{distanceM:100, riseM:1}}, 1/60);
+assert.equal(shown.borerWatching.survey, true);
+assert.deepEqual(leaving.borerWatching, {}, 'A new cut starts with no observations.');
+console.log('Borer watching words: survey, stall, grade, daylight and reset passed.');
+
+const secondCut = borerWatchingWords({...sim, borerWatching:watching,
+  apprenticeTown:{...town, apprenticeships:[], borerLessons:[town.borerLessons[0]]}});
+assert.ok(secondCut.includes('Pim: The far side is 100 m on and 1.0 m higher.'));

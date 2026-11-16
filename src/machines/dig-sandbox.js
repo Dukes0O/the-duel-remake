@@ -171,7 +171,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]}, completedTunnels:[],tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]}, borerWatching:{}, completedTunnels:[],tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -206,11 +206,50 @@ export function switchDigMachine(sim) {
 
 export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%(sim.activeMachine==='borer'?2:3)}; }
 
+/** Record only what happened during this hand cut, without sampling the ground. */
+export function watchBorerCut(watching, before, after, survey, reachedDaylight = false) {
+  const next = {...watching};
+  if (!before.started && survey && Number.isFinite(survey.riseM) && survey.distanceM > 0) {
+    next.survey = true;
+    next.grade = survey.riseM / survey.distanceM;
+    next.surveyDistanceM = survey.distanceM;
+    next.surveyRiseM = survey.riseM;
+  }
+  if (before.stalled && !after.stalled) next.freedStall = true;
+  const cut = Math.max(0, after.distanceM - before.distanceM);
+  if (cut && Number.isFinite(next.grade)) {
+    next.gradeMetres = Math.abs(Math.tan(after.slope) - next.grade) <= 1 / 50 + 1e-9
+      ? (next.gradeMetres || 0) + cut : 0;
+    if (next.gradeMetres >= 50 - 1e-8) next.heldGrade = true;
+  }
+  if (reachedDaylight) next.daylight = true;
+  return next;
+}
+
+export function borerWatchingWords(sim) {
+  const name = sim.apprenticeTown.people[0].name;
+  const seen = sim.borerWatching || {};
+  const words = [`${name} is riding with you. Cut two tunnels and ${name} can cut the rest.`];
+  for (const [key, action] of [['survey','read the survey'], ['freedStall','free a stall'],
+    ['heldGrade','hold a grade'], ['daylight','come out to daylight']]) {
+    if (seen[key]) words.push(`${name} has seen you ${action}.`);
+  }
+  if (seen.survey && sim.apprenticeTown.borerLessons.length === 1) {
+    const rise = seen.surveyRiseM;
+    words.push(`${name}: The far side is ${seen.surveyDistanceM} m on and ${Math.abs(rise).toFixed(1)} m ${rise >= 0 ? 'higher' : 'lower'}.`);
+  }
+  if (sim.apprenticeTown.apprenticeships.some(record => record.kind === 'bore'))
+    words.push(`${name} can run her now. At a face, choose Send ${name}.`);
+  return words;
+}
+
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
   if(sim.activeMachine==='borer'){
     const controls=input.controls ?? {};
+    if (!sim.borer.started && input.borerSurvey)
+      next={...next,borerWatching:watchBorerCut(sim.borerWatching,sim.borer,sim.borer,input.borerSurvey)};
     if(sim.mode==='drive' && (!sim.borer.started || sim.borer.finished)){
       const forward=Math.max(-1,Math.min(1,controls.forward || 0));
       if (sim.borer.finished && (sim.borer.travelM < sim.borer.distanceM - 1e-8) && forward !== 0) {
@@ -228,7 +267,7 @@ function fixedStep(sim,input) {
           const borer=sim.borer.reachedDaylight && outsideM>=12
             ? createBorerState({x,y,z,heading:sim.borer.heading,name:sim.borer.name})
             : {...sim.borer,x,z,outsideM,y,headSpeed:0};
-          next={...next,borer};
+          next={...next,borer, ...(borer.started ? {} : {borerWatching:{}})};
         }
         else next={...next,lastMessage:refusal};
       } else if (sim.borer.finished && forward < 0) {
@@ -260,8 +299,9 @@ function fixedStep(sim,input) {
         tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started,mutableSegments:true},
         sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
-      next={...next,borer:result.state,lastMessage:result.state.message || ''};
       const daylight=result.events.find(event=>event.type==='daylight');
+      next={...next,borer:result.state,lastMessage:result.state.message || '',
+        borerWatching:watchBorerCut(next.borerWatching, sim.borer, result.state, input.borerSurvey, !!daylight)};
       if(daylight) {
         next.daylightMessage=daylight.message;
         const lesson=borerCutLesson(result.state);
