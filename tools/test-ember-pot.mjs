@@ -237,7 +237,10 @@ const overSteps = kmh => (duel, car) => Math.hypot(car.x - stepsWay.x, car.z - s
   const input = {kmh: 120, lostKmh: 30, safeKmh: 50, dt: 1};
   const medium = emberLoss(EMBER_RULE, {...input, difficulty: 'medium'}), easy = emberLoss(EMBER_RULE, {...input, difficulty: 'easy'});
   check(Math.abs(easy.rough * 2 - medium.rough) < 1e-9 && Math.abs(easy.hit * 2 - medium.hit) < 1e-9 && easy.cold === medium.cold, 'Easy halves rough ground and hits and leaves cold alone');
-  check(Math.abs(medium.cold - .14) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 45) < 1e-9, 'cold 0.14 a second (SCABLANDS-LAND round 4, slice 2a; it was 0.33), ground 0.003 a metre for each km/h over its safe speed, hits 1.5 for each km/h');
+  check(Math.abs(medium.cold - 100 / 900) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && medium.hit === 15, 'cold takes 100 in fifteen minutes, rough ground takes 0.003 per metre per km/h over its safe speed, and a hit is capped at 15');
+  const severe = emberLoss(EMBER_RULE, {...input, lostKmh: 100, severeHit: true, difficulty: 'medium'});
+  const severeEasy = emberLoss(EMBER_RULE, {...input, lostKmh: 100, severeHit: true, difficulty: 'easy'});
+  check(severe.hit === 40 && severeEasy.hit === 20, 'a severe hit is capped at 40, or 20 on Easy');
   check(emberLoss(EMBER_RULE, {kmh: 200, safeKmh: Infinity, dt: 1}).rough === 0, 'a ground that is safe at any speed takes nothing at 200 km/h');
 }
 // (h) the same seed and inputs give the same ember, twice.

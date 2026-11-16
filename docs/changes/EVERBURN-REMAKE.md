@@ -1650,3 +1650,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-line-audit.mjs` passed, including the line inventory and 21 behaviour checks. `git diff --check` passed.
 - Changed assertions, for Claude to review: the former opening expected `story.ember.cinder.1` then `story.ember.cinder.2` before pickup; it now expects the three pickup lines in their defined order at Cinder, as the remade job requires. The old flamethrower line is retained as a replaced line rather than required to play. The spill checks now collect the pot first; their outcomes are unchanged.
 - Codex decided: none. Removed: the audit's assumption that the former opening plays before pickup. The old `test-ember-pot.mjs` still uses the former pickup, scoop, hit and cold rules and needs updating without weakening its checks. The lane tier remains incomplete, and the browser scenario and two long drivers remain for Claude as recorded above.
+
+## Legacy ember-loss checks (16 November 2026)
+
+- Updated the older ember-pot suite's loss checks for the Director's fifteen-minute cold rate and ordinary and severe hit caps. The existing Easy, rough-ground and unlimited-road checks remain; a new check covers the severe cap on Medium and Easy. No game event or sound cue changed.
+- Check: the actual loss section of `tools/test-ember-pot.mjs` passed alone, four checks. The complete old suite still fails before this section because its drive does not collect the pot; its pickup, scoops and old route still need migration. The previously recorded final checks and incomplete lane tier remain unchanged.
+- Changed assertions, for Claude to review: cold per second 0.14 to 100/900, and a 30 km/h hit 45 to 15, under the Director's 16 November ruling. Rough-ground and Easy assertions remain. Codex decided: none. Removed: the obsolete cold and uncapped-hit expectations.
+- For Claude to run: the browser scenario, the two long drivers, and the complete lane tier. For Claude to draw: the pot transfer and forge fire.
