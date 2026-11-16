@@ -142,6 +142,11 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   assert.ok(approach.reachedAll, 'the car reaches the Wash approach');
   assert.ok(scoop.scooped, 'the car takes the Wash scoop');
   assert.equal(pot.joltCount ?? 0, 0, 'the car reaches Wash without a jolt');
+  const afterWash = driveMeasuredStretches(duel, line, [5000, 5500, 6000], 28);
+  const afterJolts = afterWash.stretches.flatMap(stretch => stretch.jolts);
+  console.log('Bed beyond Wash:', JSON.stringify({reached:afterWash.reachedAll, jolts:afterJolts, last:afterWash.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
+  assert.ok(afterWash.reachedAll, 'the car reaches the rough ground beyond Wash');
+  assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car reaches the rough ground without a jolt');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.
