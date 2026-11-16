@@ -8,5 +8,7 @@
 - Changed assertions for Claude: switch count 55 to 56 for the new switch; Dig entry test uses `the-dig` instead of `wasteland-town`.
 - Sound: no new game event or cue.
 - Removed: earlier duplicate `wasteland-town` and `nissan-skyline` switch entries.
-- Still needed: save check, remaining sound audit, atlas audit and any fix, scenario, older suites, lane tier and build. Drill, road and borer sounds have separate tone players to account for in the sound audit.
+- Scenario now opens with `the-dig` only, checks opening controls and compares memory-only storage after machine use and a borer cut; it awaits a browser run. All page expressions parse in Node.
+- `test-the-dig` passed on 10148ac89 plus the scenario change.
+- Still needed: browser save check, remaining sound audit, atlas UV audit and any fix, older suites, lane tier and build. Drill, road and borer sounds use separate tone players.
 - For Claude: browser scenario, play with sound, picture check and Dig yard frame check.
