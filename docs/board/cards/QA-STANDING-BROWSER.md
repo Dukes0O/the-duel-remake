@@ -10,6 +10,20 @@ These failed in each of the last three nightly ledgers (`docs/board/checks/night
 the frame stage of the full check, and the browser scenarios `arena-shove`, `deep-frames`, `drive-lesson-run`,
 `frame-pacing`, `p4-audio` and `ski-finish`. `arsenal-wave1-audio` failed in two of the three and is looked at too.
 
+## Three of them already have cards
+
+Found the same day: three of the seven were given cards after the full check of 5 November, and nobody built them,
+because each is a browser scenario and Codex's lane jobs cannot start a browser. They are Claude's now, done by the same
+helper under this card, each closed in its own file:
+
+- `arena-shove`: QA-ARENA-SHOVE-BASELINE (the cause is known and Codex's ruling is written there; Claude reviews it first).
+- `drive-lesson-run`: QA-DRIVE-LESSON-RUN-BOARD (the check expects an older lesson board).
+- `ski-finish`: QA-SKI-FINISH-TIMEOUT (times out after the slalom).
+- `arsenal-wave1-audio` (two nights of three): QA-WAVE1-AUDIO-FLIGHT, Claude's already.
+
+Without a card until now: the frame stage, `deep-frames`, `frame-pacing` and `p4-audio`. The standing list of
+QA-NIGHTLY-NEWS names each item's own card where it has one.
+
 ## What to do
 
 For each, thirty minutes at most (rule 4):

@@ -398,7 +398,7 @@ tasks:
 
   - id: QA-ARENA-SHOVE-BASELINE
     title: "arena-shove stops: current baseline and candidate have identical src"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -408,7 +408,7 @@ tasks:
 
   - id: QA-DRIVE-LESSON-RUN-BOARD
     title: "drive-lesson-run expects an older lesson board"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -436,7 +436,7 @@ tasks:
 
   - id: QA-SKI-FINISH-TIMEOUT
     title: "ski-finish browser scenario times out after the slalom"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -550,7 +550,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane `qa-checks`, since 16 November 2026"
     needs: []
     locks: ["tools-test-runner"]
     details: "docs/board/cards/QA-CHECKS-BY-CARD.md"
@@ -560,7 +561,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane `qa-nightly`, since 16 November 2026"
     needs: []
     locks: ["tools-full-check"]
     details: "docs/board/cards/QA-NIGHTLY-NEWS.md"
