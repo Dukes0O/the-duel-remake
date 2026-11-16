@@ -80,7 +80,9 @@ export function updateBorerSurvey(panel, cache, line, b) {
     : `Floor: ${floor} m from the mouth. Grade: ${grade}. ${distance} m to go, ${gainText} m to ${gain >= 0 ? 'gain' : 'lose'}.`);
   if (cache.text !== text) panel.querySelector('p').textContent = text;
   cache.text = text;
-  const ctx = panel.querySelector('canvas').getContext('2d');
+  const canvas = panel.querySelector('canvas');
+  canvas.hidden = !!b.daylightMessage;
+  const ctx = canvas.getContext('2d');
   const low = Math.min(line.y, ...line.heights) - 2, high = Math.max(line.y, ...line.heights) + 2;
   const py = y => 65 - (y - low) / (high - low) * 60;
   ctx.clearRect(0, 0, 260, 70); ctx.fillStyle = '#a38a63'; ctx.beginPath(); ctx.moveTo(0, 70);
@@ -89,6 +91,10 @@ export function updateBorerSurvey(panel, cache, line, b) {
   ctx.lineTo(Math.min(260, 260 * b.distanceM / line.distanceM), py(b.y)); ctx.stroke();
   ctx.fillStyle = '#fff0cb'; ctx.fillRect(257, py(line.y + line.riseM) - 3, 3, 6);
   return true;
+}
+
+export function displayedBorerSurvey(sim, faceSurvey) {
+  return sim.activeMachine === 'borer' && sim.borer.started ? sim.borerCutSurvey : faceSurvey;
 }
 
 /** Pitch the model around its cutting head as it follows the bore. */
@@ -563,7 +569,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     surveyLine=surveyCache(sim.ground,surveyPosition,key);
     if (key!==surveyKey || previousSurvey!==surveyLine) sendButton.dataset.offerKey='';
     surveyKey=key;
-    surveyPanel.hidden=!surveyLine;
+    const displayedSurvey=displayedBorerSurvey(sim,surveyLine);
+    surveyPanel.hidden=!displayedSurvey;
     // Face and ground checks run only when the displayed survey or eligibility changes.
     const offerKey=[surveyKey,sim.boreOrders.length,sim.apprenticeTown.apprenticeships.length].join(':');
     if (offerKey !== sendButton.dataset.offerKey) {
@@ -581,7 +588,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     leverButton.textContent=sim.borePlayerAtLever?'V: Hand back the lever.':'V: Take the lever.';
     watchingPanel.hidden=sim.activeMachine!=='borer';
     if (!watchingPanel.hidden) watchingPanel.textContent=borerWatchingWords(sim).join(' ');
-    if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});
+    if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,displayedSurvey,{...b,daylightMessage:sim.daylightMessage || (b.finished ? sim.borerDaylightMessage : '')});
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
     dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);

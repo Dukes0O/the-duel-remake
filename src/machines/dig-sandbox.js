@@ -297,7 +297,7 @@ export function sendBorer(sim, survey) {
   const order = createWorkOrder({id, targetId:id, targetKind:'bore',
     stages:[{kind:'bore', amount:survey.distanceM, workHours:survey.distanceM / 1800}]});
   Object.assign(order, {personId:person.id, mouth:{x:survey.x, y:survey.y, z:survey.z},
-    heading:survey.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM});
+    heading:survey.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM, survey});
   return {...sim, boreOrders:[...sim.boreOrders, order]};
 }
 
@@ -421,6 +421,8 @@ function advanceDigBore(sim, input) {
   }
   boreOrders[index] = result.order;
   let next = {...sim, boreOrders, borer:result.borer, tunnels, activeBoreId:order.id,
+    borerCutSurvey:starting ? order.survey : sim.borerCutSurvey,
+    borerDaylightMessage:result.events.find(event => event.type === 'bore-daylight')?.message || (starting ? '' : sim.borerDaylightMessage),
     boreStallSeconds:result.stallSeconds, borePlayerAtLever:result.order.status === 'finished' ? false : sim.borePlayerAtLever,
     dirty:sim.dirty || changed};
   if (result.order.status === 'finished') next = rememberDigTunnel(next);
@@ -489,11 +491,11 @@ function fixedStep(sim,input) {
       next={...next,borer:{...sim.borer,headSpeed:0}};
     } else {
       const oldLever=sim.borer.lever || 0;
-      const input=Math.max(-1,Math.min(1,controls.forward || 0));
-      const leverSource=controls.keyboardLever ? 'keyboard' : controls.padLever && Math.abs(input) > .12 ? 'pad' : sim.borer.leverSource;
+      const thrustInput=Math.max(-1,Math.min(1,controls.forward || 0));
+      const leverSource=controls.keyboardLever ? 'keyboard' : controls.padLever && Math.abs(thrustInput) > .12 ? 'pad' : sim.borer.leverSource;
       const direct=controls.directLever || (controls.padLever && leverSource === 'pad' && !controls.keyboardLever);
-      const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
-      const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
+      const lever=direct ? Math.max(0,thrustInput) : Math.max(0,Math.min(1,oldLever + thrustInput * (thrustInput > 0 ? .25 : .5) * STEP));
+      const thrust=thrustInput < 0 && oldLever <= 0 && lever <= 0 ? thrustInput : lever;
       // The visit owns this growing list, just as it owns the tunnel index.
       // Record the old count before the cutter extends it in place.
       const oldCount=sim.borer.segments.length;
@@ -503,6 +505,8 @@ function fixedStep(sim,input) {
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       const daylight=result.events.find(event=>event.type==='daylight');
       next={...next,borer:result.state,lastMessage:result.state.message || '',
+        borerCutSurvey:!sim.borer.started && result.state.started ? input.borerSurvey : sim.borerCutSurvey,
+        borerDaylightMessage:daylight?.message || (!sim.borer.started && result.state.started ? '' : sim.borerDaylightMessage),
         borerWatching:watchBorerCut(next.borerWatching, sim.borer, result.state, input.borerSurvey, !!daylight)};
       if(daylight) {
         next.daylightMessage=daylight.message;

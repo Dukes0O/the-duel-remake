@@ -190,3 +190,12 @@ Run the older Mabel browser scenario to its end, the apprentice browser scenario
 On merge d480af408, the full `test-machine-borer` passed. Its real heap measured a maximum sampled cross slope of 0.6990 m per metre, a 4.7691 m crest and 0.616% volume error. Over 100 cutting steps it read 2,556 heights; the observed maximum was 67 cell fills in one 1/60-second step. The protected-ground and mesa checks passed.
 
 The lesson, apprentice, both scenario-expression, freeze, survey, town-apprentices, ground-edit, machine-roads, tunnels and scablands-scene tests each passed. The race replay fingerprints passed 297 checks and combat replay fingerprints passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was omitted as A10 directs. Browser scenarios were not run in this job.
+
+
+## V8: running survey and hill strip
+
+The Dig keeps the survey for the cut when Mabel starts, whether the player or Pim cuts. It shows the running floor, grade and distance with the hill strip, and shows the daylight sentence in their place when the bore is finished. A queued order carries its own survey. The existing face-survey cache still refreshes after edits along its line. Fixing a shadowed input also lets the hand cut pass the survey to the watching words. No new sound cue or race rule was added.
+
+The final checks passed on V8: `test-machine-borer`, `test-machine-borer-lesson`, `test-machine-borer-apprentice`, `test-machine-borer-survey`, `test-machine-borer-freeze`, both scenario-expression tests, `test-town-apprentices`, `test-ground-edit`, `test-machine-roads`, `test-tunnels` and `test-scablands-scene`. The survey test also confirms that the running text changes as the cut advances. The real heap measured a maximum sampled cross slope of 0.6990 m per metre, a 4.7691 m crest and 0.616% volume error. Over 100 cutting steps it read 2,556 heights and filled at most 67 cells per step.
+
+Race fingerprints passed 297 checks; combat replay fingerprints passed 12. `npm.cmd run build` passed on the final code in the previous run, with Vite's mixed-import and chunk-size warnings; `dist` was removed. The lane tier was omitted as A10 directs. Claude must run both browser scenarios and check the restored screen in a visible window. No existing assertion changed for V8; no new design decision was needed.

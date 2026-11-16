@@ -354,6 +354,7 @@ for (let second=0; second<900 && mesa.boreOrders[0].status !== 'finished'; secon
       mesa = stepDigSandbox(mesa, {controls:{forward:-1}}, 1/60);
       daylightCalls.push(...mesa.events.filter(event => event.type === 'bore-daylight'));
       if (mesa.events.some(event => event.type === 'bore-daylight')) {
+        assert.match(mesa.borerDaylightMessage, /^Pim: Daylight\./, 'The screen keeps the delegated daylight sentence.');
         assert.ok(Math.abs(mesa.borer.travelM - mesa.borer.distanceM) < 1e-8,
           'Held reverse cannot move the cutter again on the daylight step.');
         mesa = {...mesa, activeMachine:'excavator'};
