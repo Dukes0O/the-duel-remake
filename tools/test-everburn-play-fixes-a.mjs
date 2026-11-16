@@ -69,7 +69,7 @@ let result=stepChase(step,{},view(100),0); result=stepChase(step,result.state,vi
 assert.equal(result.events.length,0); result=stepChase(step,result.state,view(119),.1); assert.equal(result.events.length,0);
 result=stepChase(step,result.state,view(120),.1); assert.equal(result.events[0].lineId,'closer');
 result=stepChase(step,result.state,view(151),.1); assert.equal(result.restart,true); assert.equal(result.events.length,0);
-for (const [run, words] of [[null,'Replay any job from the Story Wall.'], [{},'Big Bess is loading gas for Tin Town.']]) {
+for (const [run, words] of [[null,'Visit the Story Wall.'], [{},'Big Bess is loading gas for Tin Town.']]) {
  const next=emberNextUp({available:true,step:'done',run}); assert.ok(next.text.includes(words)); assert.match(next.button,/data-action="yard-cards"/);
 }
 const definition={name:'test',steps:[{kind:'escort',path:[{position:{x:0,z:0}},{position:{x:100,z:30}}]}]};

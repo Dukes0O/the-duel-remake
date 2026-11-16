@@ -204,7 +204,8 @@ check(buildMs < 5000, 'the picture is made in a few seconds at the most even on 
   const facts = jobFacts(worldJob), knowledge = createKnowledge(), crossings = picture.marks.crossings;
   check(facts.barricades.length === 2 && facts.barricades.every(item => /^ash-men-barricade-/.test(item.id)), "Hot Delivery's two barricades of the Ash Men are what the job knows");
   check(facts.furnaces.length === 1 && facts.furnaces[0].id === 'furnace-skyline', "and the furnace on its skyline");
-  const first = facts.barricades[0], far = {x: first.x - SEEN.barricade - 100, z: first.z};
+  // The barricade at the Girder Bridge (EVERBURN-REMAKE job 1, 16 November 2026: the job's first barricade now stands at the Halfway Camp, on no crossing).
+  const bridge = LAND.at('girder-bridge'), first = facts.barricades.find(item => Math.hypot(item.x - bridge.x, item.z - bridge.z) < 50), far = {x: first.x - SEEN.barricade - 100, z: first.z};
   learn(knowledge, {car: far, ...facts, crossings});
   check(knowledge.barricades.size === 0 && knowledge.crossings.size === 0, 'a barricade out of sight is not learnt, and no crossing with it');
   check(learn(knowledge, {car: {x: first.x - 300, z: first.z}, ...facts, crossings}) && knowledge.barricades.size === 1, 'a barricade is learnt when the car comes within sight of it');
@@ -255,7 +256,12 @@ check(buildMs < 5000, 'the picture is made in a few seconds at the most even on 
   check(ways['east-road'].holders.some(holder => holder.who === 'Ash Men' && holder.count === 2), "and has both of the Ash Men's barricades on it");
   check(ways['river-bed'].grounds.some(ground => ground.key === 'river-bed' && ground.share > .1) && ways['river-bed'].crossings.some(crossing => crossing.under), 'the river bed way is partly river bed, and runs under a crossing');
   const furnace = way => way.sights.find(sight => sight.id === 'furnace-skyline')?.metres ?? 0;
-  check(furnace(ways['scab-plates']) > 1000 && furnace(ways['east-road']) > 1000, "the furnace on its skyline sees the scab plates way and the East Road for over a kilometre each");
+  // EVERBURN-REMAKE job 1 (16 November 2026): the furnace stands at its own watch above the Steps and two buttes give cover on the plates, so it
+  // sees less than the kilometre of each way it saw from the old skyline: 625 m of the plates way and 649 m of the East Road as the ways are
+  // sampled here, 498 m and 633 m by a reviewer's finer 5 m steps. What must hold is that both are watched for a few hundred metres and not for
+  // all of their length; the exact figure is the land's and is not pinned.
+  check(furnace(ways['scab-plates']) > 300 && furnace(ways['east-road']) > 300, "the furnace at its watch sees a few hundred metres of the scab plates way and of the East Road");
+  check(furnace(ways['scab-plates']) < ways['scab-plates'].length / 4, "and the plates way has cover from it for most of its length");
   check(furnace(ways['salt-pan']) === 0 && ways['salt-pan'].sights.some(sight => sight.id === 'ridge' && sight.metres > 1000), "the salt pan is out of the furnace's sight but seen from the Ridge");
   check(furnace(ways['river-bed']) < furnace(ways['scab-plates']), 'the river bed is hidden from the furnace more than the open plates');
   // The words are made from the numbers (not typed): the markup carries each way's length and its ground.

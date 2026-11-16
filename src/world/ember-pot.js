@@ -8,7 +8,7 @@ import {createFlameMaterial, createGroundGlowMaterial, createSparks, createScrap
 import {createSmokeColumn} from './smoke-column.js';
 
 // Live coals: a flat disc whose bright spots follow the clock and whose heat follows `uHeat` (0 dark, 1 full).
-function createCoalMaterial() {
+export function createCoalMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {uNoise: {value: scrapNoise()}, uTime: {value: 0}, uHeat: {value: 1}},
     vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
@@ -38,13 +38,25 @@ function disposeAll(root) {
 }
 
 // The pot: a squat iron pot, a thick rim, a bail handle and a bracket, as one piece of geometry. Metres, y up, +z the way the car faces.
-function potGeometry() {
+function potGeometry(onCar = true) {
   const body = new THREE.LatheGeometry([[.0, 0], [.2, 0], [.3, .06], [.35, .2], [.34, .34], [.37, .37], [.37, .4], [.32, .4], [.31, .37]]
     .map(([r, y]) => new THREE.Vector2(r, y)), 14);
+  const bail = new THREE.TorusGeometry(.33, .022, 5, 14, Math.PI); bail.translate(0, .4, 0);
+  if (!onCar) return mergeGeometries([body, bail], false);
   const bracket = new THREE.BoxGeometry(.84, .05, .62); bracket.translate(0, -.03, 0);
   const rails = [-.3, .3].map(x => { const rail = new THREE.BoxGeometry(.06, .22, .62); rail.translate(x, .08, 0); return rail; });
-  const bail = new THREE.TorusGeometry(.33, .022, 5, 14, Math.PI); bail.translate(0, .4, 0);
   return mergeGeometries([body, bracket, ...rails, bail], false);
+}
+
+// The same pot off the car, hung by its bail from a hook (src/world/forge-look.js). Its foot is at its own y 0 and the top of its
+// bail at .73 m. `group.userData.update(seconds, heat)` sets how hot its coals are (0 dark, 1 full).
+export function createLoosePot() {
+  const group = new THREE.Group(); group.name = "Cinder's ember pot, off the car";
+  const pot = new THREE.Mesh(potGeometry(false), SOOT_IRON()); pot.name = 'Iron pot'; pot.castShadow = true; group.add(pot);
+  const coalMaterial = createCoalMaterial(), coals = new THREE.Mesh(new THREE.CircleGeometry(.31, 16), coalMaterial);
+  coals.name = 'Ember coals'; coals.rotation.x = -Math.PI / 2; coals.position.y = .34; group.add(coals);
+  group.userData.update = (seconds, heat) => { coalMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uHeat.value = heat; };
+  return group;
 }
 
 // Where the pot stands on a car, from the car's own box (metres in the car's own frame): across its middle, at the back, on the deck.

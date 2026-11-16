@@ -15,6 +15,7 @@ import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {boneyardWrecks} from './boneyard-wrecks.js';
 import {tinTownGateSolids} from './tin-town-gate.js';
 import {tinTownSolids} from './tin-town-shacks.js';
+import {forgePlan} from './forge-look.js';
 import {everburnPropSolids} from './everburn-props.js';
 import {riverFor, stepsWayFor} from './scablands-regions.js';
 import {ROAD_NET, roadNet} from './scablands-road.js';
@@ -139,6 +140,8 @@ export function scablandsSolids(land = LAND) {
     halfX: wreck.size[0] / 2, halfZ: wreck.size[2] / 2, heading: 0, height: wreck.size[1], base: boneyard.height});
   for (const part of tinTownGateSolids(land)) rows.push({...part, placeId: 'tin-town'});
   for (const part of tinTownSolids(land)) rows.push({...part, placeId: 'tin-town'});
+  // The forge's hearth, its anvil and the crane's tower (src/world/forge-look.js).
+  for (const part of forgePlan(land).solids) rows.push({...part, placeId: 'tin-town'});
   for (const part of everburnPropSolids(land, WHEEL_HEIGHT)) rows.push({...part, placeId: 'everburn'});
   const mast = land.at('iron-line', MAST_POST.dx, MAST_POST.dz);
   rows.push({id: 'iron-line-radio-mast', placeId: 'iron-line', kind: 'post', shape: 'ellipse', x: mast.x, z: mast.z, halfX: MAST_POST.radius, halfZ: MAST_POST.radius,

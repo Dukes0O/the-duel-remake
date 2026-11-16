@@ -19,6 +19,7 @@ import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
+import {createForge} from './forge-look.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -608,19 +609,11 @@ export function createScablandsScene(course,options={}){
       cinder.add(model);
     }).catch(error=>{cinder.userData.loadError=String(error?.message||error);});
   }
-  // A plain fire beside the delivery bay until the forge has its final drawing.
-  const forgeFlameMaterial=createFlameMaterial(),forgeFlameGeometry=new THREE.PlaneGeometry(1,1);
-  forgeFlameGeometry.translate(0,.5,0);
-  const forgeFlame=new THREE.Mesh(forgeFlameGeometry,forgeFlameMaterial);
-  forgeFlame.name='Hot Delivery forge fire';forgeFlame.visible=false;forgeFlame.frustumCulled=false;
-  const forgeAt=LAND.at('tin-town',25,10);
-  forgeFlame.position.set(forgeAt.x,scablandsSurfaceHeightAt(forgeAt.x,forgeAt.z),forgeAt.z);
-  group.add(forgeFlame);let forgeStart=null,forgeGrade=null;
-  // A plain pot carries the fire from the stopped car to the forge.
-  const transferPot=new THREE.Mesh(new THREE.CylinderGeometry(.35,.25,.4,14),
-    new THREE.MeshStandardMaterial({color:0x24201c,roughness:.88,metalness:.45}));
-  transferPot.name='Hot Delivery pot transfer';transferPot.visible=false;group.add(transferPot);
-  const transferFrom=new THREE.Vector3(),transferTo=new THREE.Vector3(forgeAt.x,forgeFlame.position.y+.2,forgeAt.z);
+  // Tin Town's forge and its crane (src/world/forge-look.js). The crane keeps its hook over a car that is near, lifts the pot off
+  // the stopped car and tips the ember into the hearth; the fire that follows is as strong as the ember was.
+  const forge=createForge({heightAt:scablandsSurfaceHeightAt});forge.group.visible=false;group.add(forge.group);
+  forge.flame.name='Hot Delivery forge fire';forge.pot.name='Hot Delivery pot transfer';
+  let forgeGiven=false;
   const barricadeMaterial=barricadeSurface();
   const barricades=[0,1].map(index=>{
     const rig=new THREE.Group();rig.name='Ash Men barricade';
@@ -786,16 +779,7 @@ export function createScablandsScene(course,options={}){
         bessEffects.fires.forEach((fire,index)=>{fire.scale.y=fire.userData.tall*(.8+.3*Math.abs(Math.sin(seconds*4.7+index*2.3)));});
       }
       clock=seconds;
-      if(forgeFlame.visible){
-        const bright=forgeGrade==='bright',growth=Math.min(1,Math.max(0,seconds-forgeStart)/(bright?2:8));
-        forgeFlame.scale.set(bright?2.4:1.5,(bright?4:2)*growth,1);
-        forgeFlameMaterial.uniforms.uTime.value=seconds;
-        const travel=Math.min(1,Math.max(0,(seconds-forgeStart)/2));
-        transferPot.visible=travel<1;
-        transferPot.position.lerpVectors(transferFrom,transferTo,travel);
-        transferPot.position.y+=Math.sin(Math.PI*travel);
-
-      }
+      if(forge.group.visible)forge.animate(seconds);
       if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
         furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
         group.worldToLocal(furnaceRig.localToWorld(arcFrom.set(furnaceEffects.chimneyX,furnaceEffects.chimneyY,furnaceEffects.chimneyZ)));
@@ -832,20 +816,21 @@ export function createScablandsScene(course,options={}){
       if(locate(state)){
         placeNearGround(here.x,here.z);things?.update(here.x,here.z);tracks?.update(here.x,here.z);
         nearTinTown=within(tinTownPlace);nearWell=within(everburnPlace);
-        tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=nearTinTown;
+        tinTownGate.visible=tinTownShacks.visible=chimneySmoke.group.visible=forge.group.visible=nearTinTown;
+        forge.watch(here.x,here.z);
         everburnFire.group.visible=nearWell;mast.visible=within(ironLinePlace);
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
-      if(delivered&&!forgeFlame.visible){
-        forgeStart=clock;forgeGrade=delivered.grade;
-        const heading=course.at(state.s).heading+(state.headingError??0);
-        transferFrom.set(here.x-Math.sin(heading)*2,scablandsSurfaceHeightAt(here.x,here.z)+1.2,here.z-Math.cos(heading)*2);
-        transferPot.position.copy(transferFrom);transferPot.visible=true;
+      if(delivered&&!forgeGiven){
+        forgeGiven=true;
+        // The pot's place: where the car's own pot stood at the last frame (src/render3d.js notes it), or the back of the car.
+        const heading=course.at(state.s).heading+(state.headingError??0),seen=group.userData.emberPotAt;
+        forge.deliver(seen??{x:here.x-Math.sin(heading)*2,y:scablandsSurfaceHeightAt(here.x,here.z)+.85,z:here.z-Math.cos(heading)*2},
+          delivered.grade,delivered.ember/(worldJob.job?.steps?.[0]?.ember?.start??100),clock);
       }
-      if(!delivered)transferPot.visible=false;
-      forgeFlame.visible=!!delivered;
+      if(!delivered&&forgeGiven){forgeGiven=false;forge.reset();}
       if(worldJob?.definition?.yard){
         if(!yard){
           yard=createYard({heightAt:(x,z)=>scablandsSurfaceHeightAt(LAND.yard.x+x,LAND.yard.z+z)});
@@ -969,7 +954,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

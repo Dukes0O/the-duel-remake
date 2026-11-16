@@ -25,7 +25,8 @@ const SKYLINE_CUES = new Set(['vehicle.turbo-whistle', 'vehicle.blowoff']);
 const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landmark.shrine-bell', 'ambience.eifel', 'landmark.village-bell']);
 
 // EVERBURN-REMAKE adds Cinder's pot cues, made in code. Exactly those three are left out; the pinned hash below is unchanged.
-const EMBER_CUES = new Set(['world.ember.spark', 'world.ember.out', 'world.ember.scoop']);
+// EVERBURN-REMAKE job 1 (16 November 2026) adds the furnace's horn, Tin Town's gate and the forge catching, left out of the old pin too.
+const EMBER_CUES = new Set(['world.ember.spark', 'world.ember.out', 'world.ember.scoop', 'world.furnace.horn', 'world.tintown.gate', 'world.forge.catch']);
 // SCABLANDS-LAND round 4, slice 2a: one cue for each ground of the Scablands, new cues left out of the old pin as the ember's three were.
 const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'scab-plates', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));
 // SCABLANDS-LAND realism step 3: a fence post knocked down by a car. One new cue, left out of the old pin as the ember's three were.

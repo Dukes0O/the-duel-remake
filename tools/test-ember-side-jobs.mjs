@@ -9,7 +9,7 @@ import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {arenaResultsScreen, arenaPauseScreen} from '../src/screen-arena.js';
 import {EMBER_JOBS, markEmberJob, markEmberRead} from '../src/story/ember-save.js';
 import {emberWallMarkup} from '../src/story/ember-ui.js';
-import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, sideJobKey, sideJobOf} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, REMADE_EVERBURN_JOBS, sideJobKey, sideJobOf} from '../src/world/jobs/everburn.js';
 import '../src/story/ember-lines.js';
 
 let checks = 0;
@@ -77,6 +77,15 @@ for (const [label, options] of [['before the walk (job 2) is won', {jobs: 1}], [
 }
 
 // ---- The board lists the three jobs, and each starts as a world job at its start place -------------------------------------------------
+// Only remade jobs are offered (EVERBURN-REMAKE, 16 November 2026), and none of the three board jobs is remade yet. So the wall
+// offers none of them as things stand; the rest of this suite proves the board's own workings with the three counted as remade,
+// and the pause screen of a story job with the older story jobs counted as remade too.
+{
+  const app = yard(), wall = emberWallMarkup(app.storyProps('ember'));
+  for (const key of KEYS) check(!wall.includes(`data-ember-side-job="${key}"`), `${key}: not offered until it is remade`);
+  app.dispose?.();
+}
+REMADE_EVERBURN_JOBS.push(...[...EVERBURN_SIDE_JOBS, ...EVERBURN_JOBS].map(job => job.id).filter(id => !REMADE_EVERBURN_JOBS.includes(id)));
 for (const [index, key] of KEYS.entries()) {
   const app = yard(), job = EVERBURN_SIDE_JOBS[index];
   check(emberWallMarkup(app.storyProps('ember')).includes(`data-ember-side-job="${key}"`), `${key}: the wall has its Take job button`);

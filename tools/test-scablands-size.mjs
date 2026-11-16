@@ -2,6 +2,7 @@
 // is read back exactly; a drive across it takes the time distance and speed give, with no jump; the same inputs give the same
 // drive; everything that belongs to a place moves with it; the detailed ground follows the player on a fixed lattice.
 import assert from 'node:assert/strict';
+import {yardPlan} from '../src/world/scablands-yard-look.js';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
@@ -244,6 +245,24 @@ test('moving a place in a copy of the table moves everything that belongs to it,
       // Slice 2b: the places a job lines up on the East Road 150 m either side of the Girder Bridge are points of the road (a curve that bends as a place moves), as the
       // road's own derived nodes are, so they do not move by a straight share of a place's move; the bridge itself (a named point) is checked above.
       if (/^(furnace-)?bridge-(in|out)$|^ash-men-raid-2$/.test(id)) continue;
+      // EVERBURN-REMAKE job 1 (16 November 2026): the Halfway Camp's brazier stands 9 m to one side of the way from the camp to Tin Town, so it
+      // turns about the camp a little when either place moves. It belongs to the camp: it stays 9 m from it, on that same side of that way.
+      // Four more things of the job stand by a road's own line, which bends as a place moves, and each is checked against that line here: an Ash
+      // rider waits on the East Road 25 m past his barricade; Cinder and the yard's brazier stand 8 m inside the yard's east gate, 9 m and 7 m to its side.
+      // Each must be within 1 m of the place worked out here from the moved land.
+      const rider = /^ash-rider-start-([12])$/.exec(id);
+      if (rider) { const barrier = b.get(`ash-men-barricade-${rider[1]}`); near({x: b.get(id)[0], z: b.get(id)[1]}, roadPointFrom(east, barrier[0], barrier[1], 25), id); continue; }
+      if (id === 'cinder' || id === 'yard-brazier') {
+        // 8 m back from the gate along the road's own direction there, and 9 m (Cinder) or 7 m (the brazier) to the same side of it.
+        const gate = yardPlan(net.roads).gate, forward = {x: Math.sin(gate.bearing), z: Math.cos(gate.bearing)}, side = id === 'cinder' ? 9 : 7;
+        near({x: b.get(id)[0], z: b.get(id)[1]}, movedLand.at('yard', gate.x - forward.x * 8 - forward.z * side, gate.z - forward.z * 8 + forward.x * side), id);
+        continue;
+      }
+      if (id === 'halfway-brazier') {
+        const camp = movedLand.at('safe-road'), town = movedLand.at('tin-town'), dx = town.x - camp.x, dz = town.z - camp.z, length = Math.hypot(dx, dz);
+        near({x: b.get(id)[0], z: b.get(id)[1]}, {x: camp.x + dz / length * 9, z: camp.z - dx / length * 9}, id);
+        continue;
+      }
       const [mx, mz] = b.get(id), shift = [mx - x, mz - z];
       const share = Math.abs(delta[0]) > 0 ? shift[0] / delta[0] : 0;
       assert.ok(Math.abs(shift[1] - share * delta[1]) < 1e-6, `${moved}: ${id} moves along the way the place moved`);

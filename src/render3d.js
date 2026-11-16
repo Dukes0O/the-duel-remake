@@ -456,7 +456,7 @@ export function attachRenderer(host, app) {
   host.dataset.opponentExplosionWarmupMs='0';
   const vehicleAttachments=createVehicleAttachmentRegistry();
   // EVERBURN-REMAKE: Cinder's ember pot rides on the player's car in Hot Delivery. It only reads the job's state.
-  const emberPot=createEmberPot();
+  const emberPot=createEmberPot(),emberPotAt=new THREE.Vector3();
   // A neutral multiplier on the fur alone (the accepted white factor would darken below 1): at night the yeti reads dark
   // grey-green against the snow, and 2.6 lifts it to a pale grey-white while the texture and vertex-colour detail stay.
   const yetiAssets=createYetiAssets(),yetiView=createYetiView(yetiAssets,{furTint:new THREE.Color(2.6,2.6,2.6)});scene.add(yetiView.group);
@@ -1155,6 +1155,8 @@ export function attachRenderer(host, app) {
     {
       const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
       emberPot.update(carry?.ember&&(!carry.pickup||held.loaded)&&!st.onFoot?player:null,carry?.ember&&(!carry.pickup||held.loaded)?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
+      // Where the pot stands on the car, in the world's own metres, for the forge's crane to find it (src/world/forge-look.js).
+      if(emberPot.group.visible&&emberPot.group.parent)world.userData.emberPotAt=world.worldToLocal(emberPot.group.getWorldPosition(emberPotAt));
     }
     world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});
