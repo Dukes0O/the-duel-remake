@@ -217,7 +217,7 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const clearTicks = clearRoad.reduce((sum, stretch) => sum + stretch.ticks, 0);
   console.log('Clear road speed:', JSON.stringify({nearTargetTicks:nearTarget, ticks:clearTicks}));
   assert.ok(nearTarget / clearTicks > 0.9, 'the car holds at least 95 km/h for most of the clear road after accelerating');
-  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45);
+  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45, 40);
   assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
   assert.ok(campApproach.peakSpeedMph * 1.609344 >= 100,
     'the driver keeps the road speed on the clear approach to the camp');
@@ -228,6 +228,7 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(campApproach.burns[0].distance > 3, 'the camp barricade burns before the car reaches it');
   assert.ok(campApproach.jolts.every(jolt => jolt.riders.length > 0),
     'the faster approach does not hit the camp barricade');
+  assert.equal(campApproach.jolts.length, 0, 'the faster camp approach avoids rider rams and other jolts');
   if (process.env.EVERBURN_CAMP_APPROACH_ONLY === '1') {
     console.log('Camp approach:', JSON.stringify({peakKmh:campApproach.peakSpeedMph * 1.609344,
       seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length,
@@ -239,7 +240,7 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(scoop.scooped, 'the driver scoops at the camp');
   assert.equal(scoop.jolts.length, (duel.state.arena.worldJob.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
     'the scoop records each jolt in the actual pot state');
-  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344);
+  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40);
   assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
   assert.ok(gate.along >= 7810 && duel.state.arena.worldJob.tinTownGateRequested, 'the car passes the open town gate');

@@ -1464,3 +1464,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none. No game event or sound cue was added.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: reliance on the burnt state alone as evidence of distance. Next: avoid a rider on the East Road and prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road avoids the camp ram (16 November 2026)
+
+- The clean-drive helper can keep a higher speed on a barricade approach. At a 40 mph target through the camp and bridge approaches, the real car burns both barricades and avoids the camp rider. The approach test checks that no jolt occurs. The other drivers retain their previous speed. No game event or sound cue was added.
+- The full attempt covers 7.959 km in 6.068 minutes, scoops at Halfway, takes one bridge rider ram and arrives with 58.298 ember. It meets the ram limit but misses the bright band. The camp barricade burns 10.409 m ahead of the car. The test still fails on the unchanged bright-arrival assertion.
+- Checks: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_APPROACH_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across outage at 629.822 m. `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` failed on bright arrival as stated above. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. The no-jolt camp check is new. Codex decided: use a 40 mph barricade approach for this trial; Claude should review it.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the clean trial's 8 mph barricade approach target. Next: establish a bright East Road delivery and clean bed deliveries, then finish the scenario and final checks.
