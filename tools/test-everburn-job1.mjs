@@ -261,6 +261,18 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
     jolts:arrival.observedJoltCount, scoops, burnt, ember:arrival.fire?.ember ?? pot.ember};
   console.log('Clean East Road measurement:', JSON.stringify(result));
   console.log('Road jolts:', JSON.stringify([...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts]));
+  const afterScoop = [...remaining.stretches, gate];
+  const lossesByGround = {};
+  for (const stretch of afterScoop) {
+    for (const [ground, loss] of Object.entries(stretch.groundLoss)) {
+      lossesByGround[ground] = (lossesByGround[ground] ?? 0) + loss;
+    }
+  }
+  const recordedLoss = Object.values(lossesByGround).reduce((sum, loss) => sum + loss, 0);
+  assert.ok(Math.abs(recordedLoss - (scoop.ember - gate.ember)) < 0.01,
+    'ground losses account for the actual ember spent between the scoop and gate');
+  console.log('After-scoop losses by ground:', JSON.stringify(lossesByGround));
+  if (process.env.EVERBURN_ROAD_LOSS_ONLY === '1') process.exit(0);
   assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
   assert.deepEqual(scoops, ['halfway-brazier']);
   assert.ok(step.barriers.every(barrier => burnt.includes(barrier.id)), 'both barricades burn');

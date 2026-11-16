@@ -1481,3 +1481,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; these are new checks. Codex decided: none.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: reliance on the scoop's nominal value when assessing the clean road drive. Next: avoid the bridge ram, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road loss after the scoop (16 November 2026)
+
+- The seeded clean-road driver now accounts for actual pot loss by ground between the Halfway scoop and Tin Town's gate. It records 39.465 ember lost on road, including the 15-point bridge ram. The pot falls from 100 to 60.535 by the gate, then arrives at the forge with 58.298. The drive still misses the bright band.
+- A 60 mph barricade approach hit the bridge structure and took three rider contacts, arriving at 13.335; a 45 mph approach still took one ram and arrived at 58.307. Neither trial replaced the earlier 40 mph approach. No game event or sound cue was added.
+- Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_ROAD_LOSS_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The real pot's recorded ground losses reconcile with its change from scoop to gate. The straight-across pot went out at 629.822 m. The full clean-road acceptance remains failing on bright arrival. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the loss accounting is a new check. Codex decided: none.
+- For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: reliance on the arrival alone to explain the loss after the scoop. Next: establish a bright East Road delivery and clean bed deliveries, then finish the scenario and final checks.
