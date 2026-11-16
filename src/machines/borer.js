@@ -96,6 +96,15 @@ export function borerMuckPile(segments) {
   return {x:start.x + 12 * dz / length, z:start.z - 12 * dx / length, radius:0.75};
 }
 
+/** Height above the original ground of a level-crested spoil heap in metres. */
+export function borerSpoilProfile(along, across, length) {
+  if (![along, across, length].every(Number.isFinite) || length < 0)
+    throw new TypeError('The spoil profile needs finite distances and a non-negative length.');
+  // The crest rises at most 0.3 m per metre, including at both ends.
+  return Math.max(0, Math.min(5, 0.3 * along, 0.3 * (length - along),
+    5 - 0.7 * Math.abs(across)));
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

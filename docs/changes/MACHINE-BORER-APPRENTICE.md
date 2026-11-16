@@ -38,8 +38,11 @@ Deposit planning now shares unchanged cell records with the previous state while
 
 The planner scans backward from the bank's working end and stops at the first old row. Bank cells are appended in distance order; equal-height cells retain the previous first-cell choice. This avoids scanning the entire bank to find the rows that can receive a load. The heap shape is still outstanding.
 
+The spoil heap now has a tested target profile: at most 5 m high, rising at most 0.7 m per metre across the heap and 0.3 m per metre along its crest, including both ends. The deposit planner does not yet use this profile. The existing bank remains narrow until the planner is changed; the real-ground checks and maximum filled cells per step are still outstanding.
+
 ## Checks
 
+- SP target profile: a direct Node check passed for every metre across and along a 40 m profile, including the 5 m crest and both slope limits.
 - SP working-end scan: `node tools/test-machine-borer.mjs` passed. It checks that planning stops after the eligible rows, even with 100 old cells; the ground-refresh check sampled 864 heights over 100 steps.
 - SP cell records: `node tools/test-machine-borer.mjs` passed. The test checks that deposits copy the list, share unchanged records and leave the preceding state intact.
 - SP height reads: `node tools/test-machine-borer.mjs` passed. A deposit spanning nearly full cells reads each existing cell once per cutting step; the ground-refresh check sampled 864 heights over 100 steps.

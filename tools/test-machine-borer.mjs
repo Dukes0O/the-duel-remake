@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -15,6 +15,24 @@ import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// A full heap has a five-metre crest and a gentle slope on every edge.
+{
+  const length = 40;
+  assert.equal(borerSpoilProfile(20, 0, length), 5);
+  assert.equal(borerSpoilProfile(20, 8, length), 0);
+  assert.equal(borerSpoilProfile(0, 0, length), 0);
+  assert.equal(borerSpoilProfile(length, 0, length), 0);
+  for (let along = 0; along <= length; along++) {
+    for (let across = -8; across <= 8; across++) {
+      const height = borerSpoilProfile(along, across, length);
+      assert.ok(height <= 5 && height >= 0);
+      assert.ok(Math.abs(height - borerSpoilProfile(along + 1, across, length)) <= 0.300001);
+      assert.ok(Math.abs(height - borerSpoilProfile(along, across + 1, length)) <= 0.700001);
+    }
+  }
+  assert.throws(() => borerSpoilProfile(0, 0, -1), TypeError);
+}
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
 {
