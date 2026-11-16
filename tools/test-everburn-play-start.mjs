@@ -18,6 +18,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {EMBER_RULE} from '../src/world/jobs/ember-rule.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {facingChaseView, insideMachine, machineLift, easeMachineLift, machineLookBlend, MACHINE_CLEARANCE_METRES} from '../src/world-job-camera.js';
@@ -85,11 +86,14 @@ for (const kmh of [45, 80]) {
   world.lastKmh = kmh;
   for (let z = gate.z + 200; z >= gate.z - 10; z -= kmh / 3.6 / 120) {
     car = {x:gate.x, z};
+    const emberBefore = world.job.stepState.ember;
     stepWorldJob(duel, 1 / 120);
     const hit = pushOutOfSolids(car.x, car.z, 1.3, world.solidGrid, scablandsSurfaceHeightAt(car.x, car.z)).hit;
     assert.notEqual(hit?.id, 'hot-delivery-town-door', `${kmh} km/h: the gate opens before the car reaches it`);
     assert.equal(state.speedMph, kmh / 1.609344);
     assert.equal(world.job.stepState.joltCount ?? 0, 0);
+    assert.ok(Math.abs(world.job.stepState.ember - (emberBefore - EMBER_RULE.coldPerSecond / 120)) < 1e-9,
+      `${kmh} km/h: the gate approach costs only ordinary cooling`);
   }
 }
 
