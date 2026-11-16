@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed rider contact measurements (16 November 2026)
+
+- Corrected the proof driver's car height to use the job's actual floor position, and recorded the speed before and after each jolt. All three jolts on the slower bed drive had riders in contact on the same floor, within 0.051 m of the car's height. The speed drops were under 0.5 km/h, below the 8 km/h hit threshold. The earlier claim that riders were over 8 m above the car was wrong: it used the road reference height. No game event or sound cue was added.
+- Checks: `EVERBURN_BED_DETOUR_ONLY=1 node tools/test-everburn-job1.mjs` and `EVERBURN_BED_HAZARDS_ONLY=1 node tools/test-everburn-job1.mjs` passed. Both include the straight-across proof. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions, for Claude to review: the slower bed drive formerly asserted that the last two jolts had riders more than 8 m above the car. It now asserts all three have a rider in contact on the car's actual floor, and that speed loss alone cannot cause the jolts. The old measurement used the wrong height; the new assertion measures the collision rule's actual position.
+- Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the incorrect road-reference height from rider-contact measurements. The old `everburn-play` scenario still needs replacement or removal. Next: avoid the riders and prove both bed deliveries, then finish the other clean routes and scenario.
+
 ## Bed slower crossing (16 November 2026)
 
 - A seeded Medium drive slows to a 12 mph target after 6 km. It reaches the town approach without the four steep-ground impacts seen before. It still takes three jolts: one rider contact near 2.37 km and two later jolts with riders over 8 m above the car. This is not a clean delivery; the cause of the latter two jolts is not yet established. A 60 m sideways opening detour and a 100 m detour on the other side both still met the first rider. No game event or sound cue was added.

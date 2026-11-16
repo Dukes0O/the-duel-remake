@@ -194,8 +194,10 @@ if (process.env.EVERBURN_BED_DETOUR_ONLY === '1') {
   assert.equal(otherHits.length, 3, 'three jolts have no recorded ground impact');
   assert.ok(otherHits[0].riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 1),
     'the other jolt has a rider in contact on the same floor');
-  assert.ok(otherHits.slice(1).every(jolt => jolt.riders.some(rider => rider.heightDifference > 8)),
-    'the later jolts have riders more than eight metres above the car');
+  assert.ok(otherHits.every(jolt => jolt.riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 3)),
+    'each jolt has a rider in contact on the car?s floor');
+  assert.ok(otherHits.every(jolt => jolt.hitSignals.speedBeforeKmh - jolt.hitSignals.speedAfterKmh < 8),
+    'the measured speed drop alone cannot cause these jolts');
   process.exit(0);
 }
 // Measure a drivable line toward the first butte using the real car and sight timer.

@@ -1,6 +1,7 @@
 import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {worldJobPosition} from '../src/arena/modes/world-job.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
 // the way. The gradual joins let the real car follow the line at driving speed.
@@ -113,6 +114,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let firstOut = null;
   const jolts = [];
   let groundHits = [];
+  let hitSignals = null;
   const stopRecording = duel.onChange((_state, event) => {
     if (event.scablandsHit?.player) groundHits.push({...event.scablandsHit});
   });
@@ -141,17 +143,18 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     }
     const pot = state.arena.worldJob.job.stepState;
     if ((pot.joltCount ?? 0) > lastJoltCount) {
+      const carPosition = worldJobPosition(duel, state);
       const riders = state.arena.worldJob.actors.filter(actor => actor.ramContact).map(actor => ({
         id:actor.id, distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
-        heightDifference:Math.abs(car.y - actor.position.y),
+        heightDifference:Math.abs(carPosition.y - actor.position.y),
       }));
       const nearbySolids = state.arena.worldJob.solidGrid.near(car.x, car.z, car.x, car.z, 8)
         .filter(solid => Math.hypot(solid.x - car.x, solid.z - car.z) <= Math.hypot(solid.halfX, solid.halfZ) + 8)
         .map(solid => ({id:solid.id, kind:solid.kind, x:solid.x, z:solid.z,
           halfX:solid.halfX, halfZ:solid.halfZ, y:solid.y, height:solid.height}));
-      jolts.push({amount:pot.jolt, position:{x:car.x, y:car.y, z:car.z},
+      jolts.push({amount:pot.jolt, position:carPosition,
         along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids,
-        groundHits});
+        groundHits, hitSignals});
       lastJoltCount = pot.joltCount;
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);
@@ -187,7 +190,9 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       brake:Math.abs(state.speedMph) > speedLimit + brakeMargin ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     groundHits = [];
+    const speedBefore = Math.abs(state.speedMph) * 1.609344;
     duel.step(1 / 60);
+    hitSignals = {speedBeforeKmh:speedBefore, speedAfterKmh:Math.abs(state.speedMph) * 1.609344};
     const sightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
     if (sightSeconds > 0 && !sightStart) sightStart = {along:hit.along, x:car.x, z:car.z};
     if (sightSeconds === 0) sightStart = null;
