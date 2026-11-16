@@ -189,7 +189,7 @@ export function closeDigSandbox() { resetScablandsGroundEdit(); }
 export function switchDigMachine(sim) {
   const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
-  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
+  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive',daylightMessage:''};
 }
 
 export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%(sim.activeMachine==='borer'?2:3)}; }
@@ -242,6 +242,8 @@ function fixedStep(sim,input) {
         sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
           spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
       next={...next,borer:result.state,lastMessage:result.state.message || ''};
+      const daylight=result.events.find(event=>event.type==='daylight');
+      if(daylight) next.daylightMessage=daylight.message;
       events.push(...result.events);
       if(result.state.distanceM!==sim.borer.distanceM ||
           result.events.some(event=>event.type==='breakthrough'||event.type==='daylight')){
@@ -300,6 +302,8 @@ function fixedStep(sim,input) {
     }
     next={...next,haul:{...advanced,activeMachine:'excavator'}};
   }
+  if(sim.activeMachine==='borer' && sim.mode==='drive' &&
+      (next.borer.x!==sim.borer.x || next.borer.z!==sim.borer.z)) next.daylightMessage='';
   if(events.some(event=>event.type==='cut-refused'))next={...next,lastMessage:events.find(event=>event.type==='cut-refused').reason};
   if(events.some(event=>event.type==='dirt-plume'||event.type==='tip'||event.type==='spill'))next={...next,dirty:true};
   return {...next,events};

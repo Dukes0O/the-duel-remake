@@ -52,6 +52,9 @@ assert.equal(surveyDraws, 2);
 assert.equal(updateBorerSurvey(surveyPanel, surveyCache, surveyLine, {...surveyState, distanceM:11, slope:0.01}), true);
 assert.match(surveyText.value, /1 in 100 up/);
 assert.equal(surveyDraws, 3);
+const daylightText = 'Daylight. She is through, 0.3 m off level.';
+updateBorerSurvey(surveyPanel, surveyCache, surveyLine, {...surveyState, finished:true, daylightMessage:daylightText});
+assert.equal(surveyText.value, daylightText, 'The Dig survey displays the daylight sentence.');
 
 let storedMapping = null, mappingChanges = 0;
 const mappingStorage = {getItem:()=>storedMapping, setItem:(_key,value)=>{storedMapping=value;}};
@@ -334,8 +337,11 @@ farView.dispose(); farGround.mesh.geometry.dispose(); farMaterial.dispose();
 assert.ok(surveyedResult.ground.heightAt(surveyedDrive.x, surveyedDrive.z) - surveyedDrive.y <= 0.3,
   'The head reaches the open ground before daylight.');
 let finishedDrive = {...sandbox, ground:surveyedResult.ground, tunnels:surveyedTunnels,
-  activeMachine:'borer', mode:'drive', borer:surveyedDrive};
+  activeMachine:'borer', mode:'drive', borer:surveyedDrive, daylightMessage:daylightText};
+assert.equal(switchDigMachine(finishedDrive).daylightMessage, '', 'Changing machine clears the daylight sentence.');
+assert.equal(stepDigSandbox(finishedDrive, {controls:{}}, 1).daylightMessage, daylightText, 'The sentence remains while parked.');
 finishedDrive = stepDigSandbox(finishedDrive, {controls:{forward:1}}, 1);
+assert.equal(finishedDrive.daylightMessage, '', 'Driving clears the daylight sentence.');
 assert.ok(Math.hypot(finishedDrive.borer.x-surveyedDrive.x, finishedDrive.borer.z-surveyedDrive.z) > 1,
   'Drive mode moves out after daylight.');
 finishedDrive = stepDigSandbox(finishedDrive, {controls:{forward:-1}}, 2);

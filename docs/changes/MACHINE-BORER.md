@@ -244,3 +244,7 @@ Changed assertions, for Claude to review: the exit cutting now expects a closed 
 Merged `integration/wasteland`; it was already current. The real-ground borer test now casts along the drawn ground from 10 m inside the far mouth, applying the same mouth cut as the Dig, and finds no ground in the way. It retains the two-mouth and drive-out-and-back checks. The browser scenario now follows the survey to daylight and takes a final view from 25 m outside the far mouth, with a ray and mouth count recorded before their assertions. The scenario needs Claude's browser run; the automated daylight drive and its picture are not yet verified there.
 
 `node tools/test-machine-borer.mjs` passed in about 70 seconds. The scenario and Dig code passed Node syntax checks; importing the scenario parsed its page expressions. No existing assertions changed and no race fingerprints were run. The daylight screen sentence, rock pace, and final checks remain.
+
+## Daylight on screen
+
+The survey panel now shows the daylight sentence until Mabel moves in drive mode or another machine is chosen. The Dig's survey display and sandbox tests cover the sentence, waiting, driving and changing machines. `node tools/test-machine-borer.mjs` passed. No existing assertions changed. The browser scenario and rock pace remain to be checked; no race fingerprints were run.

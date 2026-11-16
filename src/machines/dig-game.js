@@ -59,13 +59,13 @@ export function updateBorerSurvey(panel, cache, line, b) {
   const distance = remaining.toFixed(0);
   const gainText = Math.abs(gain).toFixed(1);
   const grade = Math.abs(b.slope) < 0.0001 ? 'level' : `1 in ${Math.round(1 / Math.abs(Math.tan(b.slope)))} ${b.slope > 0 ? 'up' : 'down'}`;
-  const key = [b.started, floor, grade, distance, gainText, gain >= 0].join(':');
+  const key = [b.started, floor, grade, distance, gainText, gain >= 0, b.daylightMessage].join(':');
   if (cache.line === line && cache.key === key) return false;
   cache.line = line;
   cache.key = key;
-  const text = !b.started
+  const text = b.daylightMessage || (!b.started
     ? `Far side on this line: ${line.distanceM} m on, ${Math.abs(line.riseM).toFixed(1)} m ${line.riseM >= 0 ? 'higher' : 'lower'}. ${line.gradeOneIn ? `Hold a ${line.riseM >= 0 ? 'rise' : 'fall'} of 1 in ${Math.round(line.gradeOneIn)}.` : 'Keep her level.'}`
-    : `Floor: ${floor} m from the mouth. Grade: ${grade}. ${distance} m to go, ${gainText} m to ${gain >= 0 ? 'gain' : 'lose'}.`;
+    : `Floor: ${floor} m from the mouth. Grade: ${grade}. ${distance} m to go, ${gainText} m to ${gain >= 0 ? 'gain' : 'lose'}.`);
   if (cache.text !== text) panel.querySelector('p').textContent = text;
   cache.text = text;
   const ctx = panel.querySelector('canvas').getContext('2d');
@@ -521,7 +521,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       }
     } else if(!b.started) {surveyLine=null;surveyKey='';}
     surveyPanel.hidden=sim.activeMachine!=='borer' || !surveyLine;
-    if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,b);
+    if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});
     const headSpeed=sim.mode==='work'?sim.borer.headSpeed:0;
     dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
