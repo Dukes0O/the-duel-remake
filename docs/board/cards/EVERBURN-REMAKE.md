@@ -364,6 +364,20 @@ with real keys, memory-only saves. Codex builds it in steps of one run each, a c
 - **Not driven yet:** burning a barricade, the bridge, the plates under the furnace's eye, the pan, the Pipe, the bed, Tin
   Town's gate and the forge. Those wait for the finished job.
 
+## The ember's numbers on the larger land (Claude, 16 November 2026, small hours)
+
+Codex's scripted Medium drive of the East Road arrived with 9 to 25 where the table asks for 70 or more, in 8.3 to 9.9
+minutes, and one rider's ram at speed took 42 from the pot. Both come from numbers written when the road was 800 m long.
+
+- **Cold: full to dead in fifteen minutes** with no jolts (it was five, then ten for a few hours on 15 November). A clean run
+  of the East Road at the road's speed, with its two fights, is five to six minutes, so the pot loses a little over a third
+  and gains 25 at the Halfway Camp.
+- **One hit takes at most 15.** A rider's ram costs fire, as designed, but one ram no longer decides the job. A fall of more
+  than 3 m, or a crash that stops the car dead from over 80 km/h, may take up to 40. Easy halves every loss, as before.
+- **The four bands in the table stand for now.** Codex is to drive each way once with a plain driver at the speed its ground
+  allows and report way, kilometres, minutes, rams, scoops and arrival, without tuning a drive to hit a band. Claude then sets
+  the bands, or the numbers, from that table. A band that a plain, honest drive misses is a fault in the table.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
