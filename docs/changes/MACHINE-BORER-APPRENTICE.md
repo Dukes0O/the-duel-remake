@@ -68,7 +68,12 @@ The heap profile now has small rounding margins: 0.699 m per metre at the sides 
 
 V1 updates the older Mabel scenario to measure the heap from filled ground cells. It records the cell count, crest and steepest neighbouring side. The measurement is made once during the scenario, not during play.
 
+V7: returning along a curved bore now places Mabel exactly at the last segment's end when she reaches the face. Curved cuts are stored as chords, which can add up to less than the distance travelled; without the correction she could start the next segment short of the face. If her work throws, the Dig logs the error, stops her lever, shows "Mabel has stopped. Back her up and try again." and continues its clock and other machines. Reversing selects the player's lever for an active order and allows a retry. This guard adds no sound cue.
+
 ## Checks
+
+- V7: `node tools/test-machine-borer-freeze.mjs` passed. Four real-ground cuts stall, reverse and continue past 12 m with up, down, left and right inputs, and their tunnel segments join. A separate curved-chord case fails without the face correction. An injected cutter error is logged once, stops Mabel, and leaves the clock and excavator working. The reported key durations alone did not stall at the test's starting position; the test holds W and S longer as needed to produce and clear the real stall. The exact reported hand-drive sequence still needs a visible play check.
+- V7: `node tools/test-machine-borer.mjs` passed, including the real heap and mesa checks. It started before the retry change that gives the player the lever after an active order faults; the focused V7 test ran after that change. The later integration merge brought in card notes only.
 
 - V2: `node tools/test-machine-borer-apprentice.mjs` passed. A real mesa bore finishes with Mabel selected and reverse held; she stays at the working face on the daylight step instead of stepping back into the tunnel.
 

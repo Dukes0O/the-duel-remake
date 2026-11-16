@@ -422,12 +422,25 @@ function advanceDigBore(sim, input) {
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const boreWasActive = sim.boreOrders.some(order => order.status !== 'finished');
-  const bore=advanceDigBore(sim,input);
+  let bore={sim,events:[]};
+  const stopBorer = error => {
+    console.error('Mabel stopped:', error);
+    const message='Mabel has stopped. Back her up and try again.';
+    return {...sim, borer:{...sim.borer,lever:0,headSpeed:0}, borerFault:true, lastMessage:message};
+  };
+  // Do not repeatedly call a failed cutter. The player can back her up to retry.
+  if (sim.borerFault && sim.activeMachine === 'borer' && (input.controls?.forward || 0) < 0)
+    sim={...sim,borerFault:false, borePlayerAtLever:boreWasActive ? true : sim.borePlayerAtLever};
+  if (!sim.borerFault) {
+    try { bore=advanceDigBore(sim,input); }
+    catch (error) { bore={sim:stopBorer(error),events:[]}; }
+  } else bore={sim,events:[]};
   sim=bore.sim;
   const events=[...bore.events]; let next=sim;
-  if(sim.activeMachine==='borer' && boreWasActive){
+  if(sim.activeMachine==='borer' && (boreWasActive || sim.borerFault)){
     // The active order advances above, whether the apprentice or player holds the lever.
   } else if(sim.activeMachine==='borer'){
+    try {
     const controls=input.controls ?? {};
     if (!sim.borer.started && input.borerSurvey)
       next={...next,borerWatching:watchBorerCut(sim.borerWatching,sim.borer,sim.borer,input.borerSurvey)};
@@ -504,6 +517,7 @@ function fixedStep(sim,input) {
       }
       if (daylight) next=rememberDigTunnel(next);
     }
+    } catch (error) { next=stopBorer(error); }
   } else if(sim.roadMachines[sim.activeMachine]){
     const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};

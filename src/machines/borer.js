@@ -302,6 +302,17 @@ function planSpoil(ground, segments, bank, amount) {
 // Follow the recorded centre line, including bends and slopes, without
 // changing the cut or letting steering move the machine into the rock.
 function placeOnCut(state, distance, radius) {
+  // Chords approximate curved cuts, so their combined length can be slightly
+  // shorter than the distance the cutter travelled. At the face, use the
+  // actual end rather than leaving the machine just short of it.
+  if (distance >= state.distanceM - 1e-8 && state.segments.length) {
+    const last = state.segments.at(-1);
+    state.x = last.end.x; state.y = last.end.y - radius * 0.55; state.z = last.end.z;
+    state.heading = Math.atan2(last.end.x - last.start.x, last.end.z - last.start.z);
+    state.slope = Math.atan2(last.end.y - last.start.y,
+      Math.hypot(last.end.x - last.start.x, last.end.z - last.start.z));
+    return;
+  }
   let left = distance;
   for (const segment of state.segments) {
     const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y;
