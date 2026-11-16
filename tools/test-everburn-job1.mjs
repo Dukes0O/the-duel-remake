@@ -380,6 +380,17 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(seventh.driven >= 490 && seventh.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(seventh)}`);
   assert.ok(seventh.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(seventh)}`);
   console.log('East Road 3.5 km drive:', JSON.stringify(seventh));
+  const eighth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4000);
+  assert.ok(eighth.along >= 4000, `the car follows the East Road for 4 km: ${JSON.stringify(eighth)}`);
+  assert.ok(eighth.driven >= 490 && eighth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eighth)}`);
+  assert.ok(eighth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eighth)}`);
+  assert.ok(Number.isFinite(eighth.peakSpeedPosition.x) && Number.isFinite(eighth.peakSpeedPosition.z), 'the driver records where its peak speed occurred');
+  console.log('East Road 4 km drive:', JSON.stringify(eighth));
+  const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500);
+  assert.ok(ninth.along >= 4500, `the car follows the East Road for 4.5 km: ${JSON.stringify(ninth)}`);
+  assert.ok(ninth.driven >= 490 && ninth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(ninth)}`);
+  assert.ok(ninth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(ninth)}`);
+  console.log('East Road 4.5 km drive:', JSON.stringify(ninth));
 
 }
 // The real job requests the gate only for a car approaching slowly.

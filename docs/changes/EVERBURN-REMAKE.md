@@ -544,3 +544,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road to 4.5 kilometres (15 November 2026)
+
+- The Medium proof drive follows the East Road to 4.5 km. The driver records where its peak speed occurred, to help inspect unexpected speed on later stretches. This advances step 7a; it does not prove arrival. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. At 4 km the ember was 67.83; at 4.5 km it was 63.39. The latter stretch took 31.75 seconds and stayed within 1.28 m of the road. The preceding stretch briefly reached 42.05 mph at (3225.87, 297.93); Claude should review this speed in the drive. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
