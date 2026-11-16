@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Second plates butte (16 November 2026)
+
+- Added a ramp-free butte between the Steps and Tin Town. The actual furnace sight rule finds hidden ground from 3,355 to 3,585 m along the plates way, after about 220 m of open ground. The hidden stretch ends at the furnace's range limit, so it does not count as a qualifying stretch with open ground on both sides. One qualifying stretch remains; more cover is needed. No game event or sound cue was added.
+- Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs`, `node tools/test-scablands-hills.mjs`, `node tools/test-scablands-solid.mjs`, and `node tools/test-rail-region.mjs` passed. Race fingerprints, the lane tier and build remain for the final round. The prior scene check's gate-wear failure remains unresolved.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
 ## First plates butte (16 November 2026)
 
 - Added one ramp-free butte beside the plates way. The actual furnace sight rule finds hidden ground from 899 to 1,118 m along the route. It starts at the edge of the furnace's range, so it does not count as a stretch with open ground on both sides. The existing qualifying cover remains one stretch. More buttes and the clean drives are needed. The butte adds no game event or sound cue.

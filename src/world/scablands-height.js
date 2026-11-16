@@ -180,6 +180,7 @@ export function hillsFor(land=LAND,seed=1989){
   }
   // A small flat-topped butte stands between the furnace and the plates way.
   hills.push(Object.freeze({...land.between('yard','the-steps',.411,10,-120),kind:'butte',height:22,radius:60,face:20,ramp:0,rampAngle:0}));
+  hills.push(Object.freeze({...land.between('the-steps','tin-town',.025,9,-120),kind:'butte',height:22,radius:65,face:20,ramp:0,rampAngle:0}));
   return Object.freeze(hills.map(hill=>{
     if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa'||hill.kind==='butte') return hill;
     return Object.freeze({...hill,spurs:rng.int(3,5),spurAngle:rng.range(0,Math.PI*2)});

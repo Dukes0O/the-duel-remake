@@ -54,6 +54,10 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const firstCover = runs.find(run => run.visibility === 'hidden');
   assert.ok(firstCover && firstCover.from < 910 && firstCover.to > 1100, 'the first butte hides the approach within range');
   console.log(`First butte cover: ${firstCover.from.toFixed(0)} to ${firstCover.to.toFixed(0)} m`);
+  const lastCover = runs.find(run => run.visibility === 'hidden' && run.from > 3300);
+  assert.ok(lastCover && lastCover.from < 3370 && lastCover.to > 3570,
+    'the second butte hides the far approach within the furnace range');
+  console.log(`Second butte cover: ${lastCover.from.toFixed(0)} to ${lastCover.to.toFixed(0)} m`);
   const points = Array.from({length: 23}, (_, index) => ({along:index * 20}));
   const types = ['open', ...Array(9).fill('hidden'), 'out of range', ...Array(9).fill('hidden'), 'open', 'hidden', 'open'];
   assert.equal(coverStretches(points, point => types[point.along / 20]).length, 0,
