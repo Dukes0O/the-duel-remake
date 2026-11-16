@@ -19,7 +19,7 @@ import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} 
 import {FORGE, forgePlan, createForge} from '../src/world/forge-look.js';
 import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
-import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
+import {startFlamethrower, stepFlamethrowers, flameHitsSegment} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
@@ -1582,6 +1582,21 @@ for (const [index, barrier] of step.barriers.entries()) {
     assert.equal(pushOutOfSolids(named.x, named.z, 1, barricadeGrid, floors[1]).hit, null);
   }
 }
+// The flame catches a fence edge in range and cone, but not a fence outside either boundary.
+{
+  const origin = {x:0, z:0};
+  assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9}, {x:12, z:9}]), true);
+  assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9.01}, {x:12, z:9.01}]), false);
+  assert.equal(flameHitsSegment(origin, 0, [{x:3, z:6}, {x:12, z:6}]), false);
+  const world = createWorldJob(definition), fence = step.barriers[0];
+  world.job.stepState = {loaded:true, ember:100, burntBarricades:[]};
+  const at = fence.position;
+  const line = x => worldHudModel({worldJob:world, player:{x:at.x+x, z:at.z}}).line;
+  assert.equal(line(40), 'Burn the fence: get close and press 4.');
+  assert.equal(line(40.1), step.what);
+  world.job.stepState.burntBarricades = [fence.id];
+  assert.equal(line(0), step.what);
+}
 // Fire the real car flamethrower at each named barricade and step the job.
 {
   const world = createWorldJob(definition);
@@ -1604,7 +1619,9 @@ for (const [index, barrier] of step.barriers.entries()) {
   assert.ok(!world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'a projectile does not burn a barricade');
   for (const [index, barrier] of step.barriers.entries()) {
     const p = barrier.position;
-    car = {x:p.x, y:p.y, z:p.z - 6, heading:0};
+    const edge = {x:p.x + Math.cos(barrier.heading) * 5.5, z:p.z - Math.sin(barrier.heading) * 5.5};
+    car = {x:edge.x - Math.sin(barrier.heading) * 8, y:p.y,
+      z:edge.z - Math.cos(barrier.heading) * 8, heading:barrier.heading};
     state.headingError = 0;
     stepWorldJob(duel, 0.01);
     assert.equal(pushOutOfSolids(p.x, p.z, 1, world.solidGrid, p.y).hit?.id, barrier.id);

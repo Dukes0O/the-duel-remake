@@ -1,3 +1,4 @@
+import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -1109,7 +1110,7 @@ export function worldJobHitTargets(duel) {
     if (worldJob.job.stepState.burntBarricades?.includes(barrier.id)) continue;
     const at = barrier.position ?? barrier;
     targets.push({id: barrier.id, kind: 'barricade', position: at,
-      radius: 2, burnable: true});
+      segment: barricadeEnds(at, barrier.heading), burnable: true});
   }
   return targets;
 }

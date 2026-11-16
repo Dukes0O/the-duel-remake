@@ -93,6 +93,10 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     found, stepState: job?.stepState}, places);
   const position = markerOf(player, places);
   const target = next.target;
+  const nearbyFence = step?.ember && job?.stepState?.loaded && finitePoint(player) &&
+    (step.barriers ?? []).some(barrier => !(job.stepState.burntBarricades ?? []).includes(barrier.id) &&
+      Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
+  if (nearbyFence && !job.stepState.out) next.line = 'Burn the fence: get close and press 4.';
   const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
   const at=pointOf(player);
   const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8
