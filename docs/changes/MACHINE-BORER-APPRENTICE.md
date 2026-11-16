@@ -54,7 +54,11 @@ The heap can now size a deposit against the actual rotated and offset ground gri
 
 Rotated-grid sizing now calculates each candidate's fixed height limit once, rather than on every sizing probe. A local 1,000-deposit comparison took 73.0 ms before and 50.3 ms after; this is not a frame check. The cutter still needs to use the profile and the complete cutting loop needs a performance check.
 
+The rotated-grid planner can now report every protected cell in a proposed deposit without changing the ground. It uses the spoil-specific refusal when available. The cutter still uses the old bank; handling protected cells while keeping the new heap's shape remains to be connected.
+
 ## Checks
+
+- SP protected-ground planning: `node tools/test-machine-borer.mjs` checks the requested volume, protected and clear sites, an empty deposit and that planning leaves the ground unchanged.
 
 - SP repeated rotated deposits: `node tools/test-machine-borer.mjs` checks that 200 successive small deposits retain their requested total volume across grid and slope changes.
 

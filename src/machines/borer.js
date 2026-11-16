@@ -244,6 +244,19 @@ export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) 
   return (low + high) / 2;
 }
 
+/** Describe a deposit and any protected cells before changing the ground. */
+export function borerSpoilGridPlan(ground, origin, direction, oldLength, addedVolume) {
+  const length = borerSpoilGridLength(origin, direction, oldLength, addedVolume);
+  const cells = borerSpoilGridChanges(origin, direction, oldLength, length);
+  const refusal = ground.spoilRefusal || ground.refusal;
+  const blocked = [];
+  for (const cell of cells) {
+    const reason = refusal.call(ground, {x:cell.x, z:cell.z, radius:0.49});
+    if (reason) blocked.push({x:cell.x, z:cell.z, reason});
+  }
+  return {length, cells, blocked};
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

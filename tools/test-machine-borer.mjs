@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilGridPlan, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -15,6 +15,22 @@ import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// Planning reports protected ground before a cut or fill can change it.
+{
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>0,
+    reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
+  const origin = {x:12,z:0}, direction = {x:1,z:0};
+  const plan = borerSpoilGridPlan(ground, origin, direction, 0, 100);
+  assert.ok(plan.blocked.some(cell => cell.reason === 'Road.'), 'Protected cells are reported.');
+  assert.ok(Math.abs(plan.cells.reduce((sum, cell) => sum + cell.height, 0) - 100) < 1e-7,
+    'The plan accounts for the whole requested loose volume.');
+  assert.equal(ground.chunkCount, 0, 'Planning does not edit the ground.');
+  const open = borerSpoilGridPlan(ground, {x:100,z:0}, direction, 0, 100);
+  assert.deepEqual(open.blocked, [], 'A clear site has no protected cells.');
+  const empty = borerSpoilGridPlan(ground, origin, direction, 10, 0);
+  assert.deepEqual(empty.cells, []);
+}
 
 // A full heap has a five-metre crest and a gentle slope on every edge.
 {
