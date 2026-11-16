@@ -4,6 +4,17 @@ import {join} from 'node:path';
 import {EAST_ROAD} from '../../src/world/scablands-road.js';
 import {pointAlong} from '../../src/world/scablands-road-geometry.js';
 
+export function mapFailures(name, measurement, start = false) {
+  if (measurement.map === null) return [`${name}: the large map is not open`];
+  const failures = [];
+  if (!/what you know/i.test(measurement.map)) failures.push(`${name}: the map has no What you know heading`);
+  if (!/east road/i.test(measurement.map)) failures.push(`${name}: the East Road is missing from the map`);
+  if (start && (measurement.mapWays.length !== 1 || !/east road/i.test(measurement.mapWays[0]))) {
+    failures.push(`${name}: the starting map must list only the East Road`);
+  }
+  return failures;
+}
+
 // Every page expression is a self-contained function, checked before it is sent.
 const page = (context, fn, ...args) => {
   const source = `(${fn.toString()})(...${JSON.stringify(args)})`;
@@ -64,11 +75,12 @@ export async function run(context) {
         return {car:{x:at.x, z:at.z}, ember:job.job.stepState?.ember ?? null, loaded:job.job.stepState?.loaded ?? false,
           status:state.status, target, found:nodes.length, visible:!!visible, inView,
           projection:projection && {x:projection.x,y:projection.y,z:projection.z}, map:map?.innerText ?? null,
+          mapWays:map ? [...map.querySelectorAll('.world-hud-way strong')].map(item => item.innerText) : [],
           namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null};
       }, target, options);
       report.pictures.push({name, ...measurement});
       if (!measurement.visible || !measurement.inView) report.failures.push(`${name}: ${target} is not visible inside the picture`);
-      if (options.map && measurement.map === null) report.failures.push(`${name}: the large map is not open`);
+      if (options.map) report.failures.push(...mapFailures(name, measurement, options.startMap));
       if (options.loaded && !measurement.loaded) report.failures.push(`${name}: the pot is not on the car`);
       if (options.forge && !measurement.forgeFire) report.failures.push(`${name}: the forge has not caught fire`);
       await context.screenshot(name);
@@ -108,7 +120,7 @@ export async function run(context) {
     await page(context, () => { window.__qaApp.duel.state.cpuDifficulty='medium'; window.__qaApp.advance(0.2); });
     await picture('1-yard-start','Scrapdome yard on the land');
     await key(context,'m','KeyM',77);
-    await picture('2-map-start','Scrapdome yard on the land',{map:true});
+    await picture('2-map-start','Scrapdome yard on the land',{map:true,startMap:true});
     await key(context,'m','KeyM',77);
     await place('pickup',0,5);
     await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);

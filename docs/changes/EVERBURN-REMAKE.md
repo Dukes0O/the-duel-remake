@@ -1615,3 +1615,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - The caption inventory now checks the three pickup lines and Auntie Solder's retreat line word for word, alongside every existing caption. `node tools/test-ember-lines.mjs` passed: 60 captions and the note.
 - Changed assertions, for Claude to review: the expected inventory grows from 56 to 60 captions because this card adds those four lines. No existing caption or assertion was removed. No new sound cue or game event was added.
 - The old pot and line-audit suites still fail against the remade pickup and retained old line; the lane tier is incomplete as recorded above. For Claude to run: the visual scenario and the two long drivers. Removed: nothing.
+
+## Visual map checks (16 November 2026)
+
+- The visual scenario now records the listed map ways and checks that both map pictures have the What you know heading and East Road. At the start it also checks that East Road is the only listed way. It reports all map faults together. No game event or sound cue was added.
+- Checks: the plain job test checks the scenario's map verdicts for a correct map, three simultaneous faults, and a closed map. All 32 page expressions parsed in a mock harness; Chrome was not run. The integration branch was already an ancestor of this lane.
+- Changed assertions: none; the map verdict checks are new. Codex decided: none. Removed: nothing.
+- For Claude to run: the visual scenario and the two long drivers. The older pot and line-audit suites and the incomplete lane tier still need attention as recorded above. For Claude to draw: the pot transfer and forge fire.

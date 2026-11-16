@@ -32,6 +32,15 @@ import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStep
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
+import {mapFailures} from './scenarios/everburn-job1.mjs';
+
+// The visual handoff names all map faults, rather than accepting any open map.
+assert.deepEqual(mapFailures('start', {map:'WHAT YOU KNOW\nEast Road', mapWays:['East Road']}, true), []);
+assert.deepEqual(mapFailures('start', {map:'Other routes', mapWays:['Plates', 'Salt pan']}, true), [
+  'start: the map has no What you know heading', 'start: the East Road is missing from the map',
+  'start: the starting map must list only the East Road',
+]);
+assert.deepEqual(mapFailures('bridge', {map:null, mapWays:[]}), ['bridge: the large map is not open']);
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 // The actual job step confines barricade riders to their road and returns them to post.
