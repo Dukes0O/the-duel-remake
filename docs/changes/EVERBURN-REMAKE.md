@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates drive toward the next gap (16 November 2026)
+
+- The seeded Medium car reaches 2.9 km with 74.313 ember, no jolts, no furnace warning and no speed above 50 km/h. A trial continuing on the centre line reached 3.6 km but took five jolts and went out; its longest furnace sighting was 18 seconds. Trials 90 m to either side became stuck. The clean drive is not yet proved. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight drive. `git diff --check` passed. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: steer around the obstacles after 2.9 km and cross the gap without a furnace warning, then finish the clean drives and scenario.
+
 ## Plates sheltered ground (16 November 2026)
 
 - The Medium car continues from 1.6 to 2.6 km at no more than 50 km/h, without a jolt or a furnace warning. At 2.6 km it has 76.769 ember. The drive is not yet complete. No game event or sound cue was added.
