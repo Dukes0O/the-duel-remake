@@ -364,6 +364,11 @@ with real keys, memory-only saves. Codex builds it in steps of one run each, a c
 - **Not driven yet:** burning a barricade, the bridge, the plates under the furnace's eye, the pan, the Pipe, the bed, Tin
   Town's gate and the forge. Those wait for the finished job.
 
+**Seen in the game, 16 November (lane at f3fdc08b1):** the three stand-ins are gone. Cinder is her own figure beside the
+brazier; the smoke is one leaning column that marks the yard's gate from the start and the Halfway Camp from 260 m; the
+barricade is scrap sheet, drums and stakes across the road. All three read at first sight. The smoke is thin from far off and
+may want widening once the whole job is driven.
+
 ## The ember's numbers on the larger land (Claude, 16 November 2026, small hours)
 
 Codex's scripted Medium drive of the East Road arrived with 9 to 25 where the table asks for 70 or more, in 8.3 to 9.9
