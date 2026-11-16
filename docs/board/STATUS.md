@@ -1,12 +1,12 @@
 # Build status
 
-Observed at: 2026-11-15T23:28:47.275Z
+Observed at: 2026-11-16T03:13:14.456Z
 
-Observation commit: 5728c9dca5e44eae40f6981570fdd958bfc5b427
+Observation commit: 3104228f84995353c3a492472a65be7110e7a2a8
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 5728c9dca5e44eae40f6981570fdd958bfc5b427
+Integration HEAD: 3104228f84995353c3a492472a65be7110e7a2a8
 
 Integration source: clean (only the full-tier evidence ledger is excluded).
 
@@ -29,13 +29,13 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 
 | Branch | Age (days) | Dirty | Merged | Removable | Folder |
 | --- | --- | --- | --- | --- | --- |
-| codex/batch-3 | 9 | unknown | true | false | unknown |
+| codex/batch-3 | 10 | unknown | true | false | unknown |
 | codex/board-lines | 9 | unknown | true | false | unknown |
 | codex/bowl-art-rex | 10 | unknown | false | false | unknown |
 | codex/bowl-course | 10 | unknown | true | false | unknown |
 | codex/car-art-bully | 9 | unknown | false | false | unknown |
-| codex/crew-story-join | 9 | unknown | true | false | unknown |
-| codex/mule-rails | 9 | unknown | true | false | unknown |
+| codex/crew-story-join | 10 | unknown | true | false | unknown |
+| codex/mule-rails | 10 | unknown | true | false | unknown |
 | codex/perf-high-night | 31 | unknown | false | false | unknown |
 | codex/qa-arena-shove-baseline | 10 | unknown | true | false | unknown |
 | codex/qa-drive-lesson-run-board | 10 | unknown | true | false | unknown |
@@ -55,8 +55,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/ww-art-rail | 9 | unknown | true | false | unknown |
 | codex/ww-art-whites | 9 | unknown | true | false | unknown |
 | codex/ww-boss | 10 | unknown | true | false | unknown |
-| lane/borer | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/borer |
-| lane/everburn-job1 | 0 | true | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/everburn-job1 |
+| lane/everburn-job1 | 0 | false | false | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/everburn-job1 |
 | lane/lab-formula-closed | 6 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
 
 ## Unmerged branches for idle review
@@ -74,8 +73,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | codex/wild-art-desert | unknown | 2026-11-05T13:54:29-07:00 | 10 | last commit 2026-11-05T13:54:29-07:00 | docs/board/looks/wild-art-desert/round-1-review.md, docs/board/looks/wild-art-desert/round-1.jpg, docs/changes/WILD-ART-DESERT.md, public/assets/wildlife/collared-lizard.glb, public/assets/wildlife/condor.glb |
 | codex/wild-art-waste | unknown | 2026-11-05T21:14:21-07:00 | 9 | last commit 2026-11-05T21:14:21-07:00 | docs/board/cards/WILD-ART-WASTE.md, docs/board/looks/wild-art-waste/round-2-review.md, docs/board/looks/wild-art-waste/round-2.jpg, docs/board/looks/wild-art-waste/round-3-review.md, docs/board/looks/wild-art-waste/round-3.jpg |
 | codex/ww-art-mule | unknown | 2026-11-05T00:56:46-07:00 | 10 | last commit 2026-11-05T00:56:46-07:00 | docs/board/cards/WW-ART-MULE.md, docs/board/looks/ww-art-mule/round-1-review.md, docs/board/looks/ww-art-mule/round-1.jpg, docs/changes/WW-ART-MULE.md, public/assets/models/wasteland/scablands/mule.glb |
-| lane/borer | unknown | 2026-11-15T16:27:51-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/MACHINE-BORER.md, src/input-setup.js, src/machines/borer-sounds.js, src/machines/borer.js, src/machines/content/machines.js |
-| lane/everburn-job1 | unknown | 2026-11-15T16:27:03-07:00 | 0 | uncommitted changes; exact activity time unknown | docs/changes/EVERBURN-REMAKE.md, src/arena/modes/world-job.js, src/arsenal/flamethrower.js, src/render3d.js, src/sim-driving.js |
+| lane/everburn-job1 | unknown | 2026-11-15T20:12:01-07:00 | 0 | last commit 2026-11-15T20:12:01-07:00 | docs/board/cards/EVERBURN-REMAKE.md, docs/changes/EVERBURN-REMAKE.md, src/arena/modes/world-job.js, src/arsenal/flamethrower.js, src/camera-clearance.js |
 
 ## Size targets
 
@@ -88,10 +86,10 @@ Targets are advisory. Change compares with the previous status observation when 
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
-| Review `looks/` | 86,210,900 B | +594,252 B | 20,000,000 B |
-| Added bytes in last merge | 1,322,998 B | -1,677,993 B | 5,000,000 B |
+| Review `looks/` | 86,566,599 B | +355,699 B | 20,000,000 B |
+| Added bytes in last merge | 6,590,637 B | +5,267,639 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,462,445,056 B | +6,451,200 B | unavailable |
+| Git objects | 1,476,205,568 B | +13,760,512 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
@@ -100,7 +98,7 @@ Local branch refs preserve committed history in this repository; they are not a 
 
 - Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
 - Local main: missing
-- Local integration/wasteland: 5728c9dca5e44eae40f6981570fdd958bfc5b427
+- Local integration/wasteland: 3104228f84995353c3a492472a65be7110e7a2a8
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 

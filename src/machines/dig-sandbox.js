@@ -3,11 +3,18 @@ import {machineToolPosition} from './machine.js';
 import {machineLoadVolume} from './tools.js';
 import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
+import {createGroundTunnels} from '../world/ground-tunnels.js';
+import {HILLS} from '../world/scablands-height.js';
+import {createBorerState, stepBorer} from './borer.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
+import {solidsNear} from '../world/scablands-solids.js';
+import {ROAD_NET} from '../world/scablands-road.js';
+import {RIVER, RIVER_LAND, riverDistanceAt} from '../world/scablands-regions.js';
 import {createTrencherState, stepTrencher} from './trencher.js';
 import {createDrillRigState, stepDrillRig} from './drill.js';
 import {createRoadMachineState, createRoadWork, stepRoadMachine} from './roads.js';
+import {machineControlInput} from '../input-contexts.js';
 
 // The bucket reaches about 8.6 m from the excavator. The truck's
 // bed is that far to the player's left and the heap that far to the right, so a swing reaches each.
@@ -20,9 +27,34 @@ const RESERVATIONS = Object.freeze([
   {x:90,z:120,radius:62,sentence:'The Dome is built here. Dig around it.'},
   {x:0,z:1120,radius:18,sentence:'The gate is protected ground. Dig around it.'},
   ...SCABLANDS_PLACES.map(place=>({x:place.x,z:place.z,radius:place.flatRadius,
-    sentence:`${place.name} is a story place. Dig around it.`})),
+    sentence:place.id === 'tin-town' ? "That's Tin Town. Auntie Solder would have words." :
+      `${place.name} is a story place. Dig around it.`})),
 ]);
 const STEP = 1 / 60;
+
+/** Use the machines' drive mapping for thrust and steering; arrows set the slope. */
+export function borerYardControls(keys = {}, pad = null, mapping = null, mode = 'work') {
+  const keyboard = machineControlInput(keys, null, 'drive');
+  const drive = machineControlInput({}, pad, 'drive', mapping);
+  const keyboardSlope = Number(!!keys.ArrowUp) - Number(!!keys.ArrowDown);
+  const axis = mapping?.slope;
+  const value = Number.isInteger(axis) && axis >= 0 ? -(pad?.axes?.[axis] || 0) : 0;
+  return {forward:keyboard.forward || drive.forward, keyboardLever:!!keyboard.forward, padLever:mode === 'work' && !!pad, steer:keyboard.steer || drive.steer,
+    slope:keyboardSlope || (Math.abs(value) < .12 ? 0 : Math.max(-1, Math.min(1, value)))};
+}
+
+/** Park outside the mesa's steep side, facing its centre. */
+export function createDigBorer(ground) {
+  const mesa = HILLS.filter(hill => hill.kind === 'mesa').reduce((nearest, hill) =>
+    Math.hypot(hill.x - 2214, hill.z + 518) < Math.hypot(nearest.x - 2214, nearest.z + 518) ? hill : nearest);
+  let angle = mesa.rampAngle + Math.PI / 2;
+  if (mesa.x * Math.cos(angle) + mesa.z * Math.sin(angle) > 0) angle += Math.PI;
+  // The land's rim has a small five-lobed edge, followed by the steep face.
+  const foot = mesa.radius + 8 * Math.sin(angle * 5) + mesa.face;
+  const dx = Math.cos(angle), dz = Math.sin(angle);
+  const x = mesa.x + (foot + 30) * dx, z = mesa.z + (foot + 30) * dz;
+  return createBorerState({x, y:ground.heightAt(x,z), z, heading:Math.atan2(-dx,-dz)});
+}
 
 // A raised patch followed by a shallow ditch gives the blade material to carry.
 // These are yard-only cells, separate from the town and from the ground save.
@@ -47,6 +79,51 @@ function newGround(seed) {
     reservedShapes:RESERVATIONS});
 }
 
+// Test a round bore against a turned footprint in the land's own coordinates.
+function touchesFootprint(shape, footprint) {
+  const dx = shape.x - footprint.x, dz = shape.z - footprint.z;
+  const cos = Math.cos(footprint.heading || 0), sin = Math.sin(footprint.heading || 0);
+  const x = dx * cos - dz * sin, z = dx * sin + dz * cos;
+  return Math.hypot(Math.max(0, Math.abs(x) - footprint.halfX),
+    Math.max(0, Math.abs(z) - footprint.halfZ)) <= shape.radius;
+}
+
+/** Protect the land's own structures, decks and public roads from the bore. */
+export function borerLandRefusal(shape, ground, {near = solidsNear, net = ROAD_NET, crossings = RIVER_LAND.crossings} = {}) {
+  const existing = ground.refusal(shape);
+  if (existing) return existing;
+  for (const solid of near(shape.x, shape.z, shape.x, shape.z, shape.radius))
+    if (touchesFootprint(shape, solid)) return 'She will not cut there. Something stands in the way.';
+  for (const crossing of crossings) {
+    if (crossing.deckHalfWidth === undefined) continue;
+    const hit = net.nearest(crossing.x, crossing.z);
+    if (!hit) continue;
+    const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+    const supports = near(crossing.x, crossing.z, crossing.x, crossing.z, crossing.deckHalfWidth + 2);
+    const halfLength = Math.max(0, ...supports.filter(solid => solid.kind === 'girder').map(solid => solid.halfZ));
+    const deck = {...crossing, halfX:crossing.deckHalfWidth, halfZ:halfLength,
+      heading:Math.atan2(b.x - a.x, b.z - a.z)};
+    if (touchesFootprint(shape, deck)) return 'She will not cut there. Something stands in the way.';
+  }
+  // The road index accepts points. Surround the bore with a circumscribed
+  // octagon so its whole footprint, including its edge, is protected.
+  if (net.nearest(shape.x, shape.z)) return 'She will not cut there. Something stands in the way.';
+  const reach = shape.radius / Math.cos(Math.PI / 8);
+  for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    if (net.nearest(shape.x + reach * Math.cos(angle), shape.z + reach * Math.sin(angle)))
+      return 'She will not cut there. Something stands in the way.';
+  }
+  return null;
+}
+
+/** Spoil must also stay out of the river bed and its banks. */
+export function borerSpoilRefusal(shape, ground) {
+  if (riverDistanceAt(shape.x, shape.z) <= RIVER.rampLipHalfWidth + shape.radius)
+    return 'She will not cut there. Something stands in the way.';
+  return borerLandRefusal(shape, ground);
+}
+
 function roadGround(edit) {
   return {
     refusal(x,z) { return edit.refusal({x,z,radius:0.1}); },
@@ -65,7 +142,7 @@ function roadGround(edit) {
 const suppliedGroundWork = new WeakMap();
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground} = {}) {
   const edit = ground || newGround(seed);
   const memory = globalThis.__theDigGroundMemory ??= {};
   const saved = memory[playerId];
@@ -88,7 +165,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,playerId,haul,trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -96,21 +173,88 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player'} 
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
 
+/** Copy the current visit's tunnels into plain data, without writing a store. */
+export function exportDigTunnels(sim) {
+  return sim.tunnels.segments;
+}
+
+/** Rebuild the current visit's tunnels from plain data, without reading a store. */
+export function importDigTunnels(sim, segments = []) {
+  return {...sim, tunnels:createGroundTunnels(segments, {heightAt:(x,z)=>sim.ground.heightAt(x,z)})};
+}
+
 /** Leaving the yard hands the Scablands back with its own ground, so a later job is unchanged. */
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver'];
+  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
-  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive'};
+  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive',daylightMessage:''};
 }
 
-export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%3}; }
+export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%(sim.activeMachine==='borer'?2:3)}; }
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
   const events=[]; let next=sim;
-  if(sim.roadMachines[sim.activeMachine]){
+  if(sim.activeMachine==='borer'){
+    const controls=input.controls ?? {};
+    if(sim.mode==='drive' && (!sim.borer.started || sim.borer.finished)){
+      const forward=Math.max(-1,Math.min(1,controls.forward || 0));
+      if (sim.borer.finished && (sim.borer.travelM < sim.borer.distanceM - 1e-8) && forward !== 0) {
+        const result=stepBorer(sim.borer,{thrust:forward},sim.ground,null,STEP);
+        next={...next,borer:{...result.state,headSpeed:0}};
+      } else if (sim.borer.finished && ((sim.borer.outsideM || 0) > 0 || forward > 0)) {
+        const outsideM = Math.max(0, (sim.borer.outsideM || 0) + forward * (4/3.6) * STEP);
+        const move = outsideM - (sim.borer.outsideM || 0);
+        const x = sim.borer.x + Math.sin(sim.borer.heading) * move;
+        const z = sim.borer.z + Math.cos(sim.borer.heading) * move;
+        const refusal = sim.ground.refusal({x,z,radius:3});
+        if (!refusal) next={...next,borer:{...sim.borer,x,z,outsideM,y:sim.ground.heightAt(x,z),headSpeed:0}};
+        else next={...next,lastMessage:refusal};
+      } else if (sim.borer.finished && forward < 0) {
+        const result=stepBorer(sim.borer,{thrust:forward},sim.ground,null,STEP);
+        next={...next,borer:{...result.state,headSpeed:0}};
+      } else {
+      const steer=Math.max(-1,Math.min(1,controls.steer || 0));
+      const heading=sim.borer.heading-steer*0.25*STEP*Math.abs(forward);
+      const x=sim.borer.x+Math.sin(heading)*forward*(4/3.6)*STEP;
+      const z=sim.borer.z+Math.cos(heading)*forward*(4/3.6)*STEP;
+      const refusal=sim.ground.refusal({x,z,radius:3});
+      if(!refusal) next={...next,borer:{...sim.borer,x,z,heading,y:sim.ground.heightAt(x,z),headSpeed:0}};
+      else next={...next,lastMessage:refusal};
+      }
+    } else if (sim.mode === 'drive') {
+      // Once inside the bore, cutting and tunnel travel belong to work mode.
+      next={...next,borer:{...sim.borer,headSpeed:0}};
+    } else {
+      const oldLever=sim.borer.lever || 0;
+      const input=Math.max(-1,Math.min(1,controls.forward || 0));
+      const leverSource=controls.keyboardLever ? 'keyboard' : controls.padLever && Math.abs(input) > .12 ? 'pad' : sim.borer.leverSource;
+      const direct=controls.directLever || (controls.padLever && leverSource === 'pad' && !controls.keyboardLever);
+      const lever=direct ? Math.max(0,input) : Math.max(0,Math.min(1,oldLever + input * (input > 0 ? .25 : .5) * STEP));
+      const thrust=input < 0 && oldLever <= 0 && lever <= 0 ? input : lever;
+      // The visit owns this growing list, just as it owns the tunnel index.
+      // Record the old count before the cutter extends it in place.
+      const oldCount=sim.borer.segments.length;
+      const result=stepBorer({...sim.borer,lever,leverSource},{thrust,steer:controls.steer,slope:controls.slope,
+        tunnels:sim.tunnels,tunnelsIncludeCurrent:sim.borer.started,mutableSegments:true},
+        sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
+          spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground,null,STEP);
+      next={...next,borer:result.state,lastMessage:result.state.message || ''};
+      const daylight=result.events.find(event=>event.type==='daylight');
+      if(daylight) next.daylightMessage=daylight.message;
+      events.push(...result.events);
+      if(result.state.distanceM!==sim.borer.distanceM ||
+          result.events.some(event=>event.type==='breakthrough'||event.type==='daylight')){
+        const segments=result.state.segments;
+        if (!sim.borer.started) next.tunnels=createGroundTunnels([], {heightAt:(x,z)=>sim.ground.heightAt(x,z)});
+        if (oldCount) next.tunnels.extendLast(segments[oldCount-1]);
+        for (let i=oldCount;i<segments.length;i++) next.tunnels.extendLast(segments[i],true);
+        next.dirty=true;
+      }
+    }
+  } else if(sim.roadMachines[sim.activeMachine]){
     const result=stepRoadMachine(sim.roadMachines[sim.activeMachine],sim.roadWork,input.controls,STEP,roadGround(sim.ground));
     next={...next,roadWork:result.work,roadMachines:{...sim.roadMachines,[sim.activeMachine]:result.state}};
     events.push(...result.events);
@@ -158,6 +302,8 @@ function fixedStep(sim,input) {
     }
     next={...next,haul:{...advanced,activeMachine:'excavator'}};
   }
+  if(sim.activeMachine==='borer' && sim.mode==='drive' &&
+      (next.borer.x!==sim.borer.x || next.borer.z!==sim.borer.z)) next.daylightMessage='';
   if(events.some(event=>event.type==='cut-refused'))next={...next,lastMessage:events.find(event=>event.type==='cut-refused').reason};
   if(events.some(event=>event.type==='dirt-plume'||event.type==='tip'||event.type==='spill'))next={...next,dirty:true};
   return {...next,events};
@@ -178,5 +324,5 @@ export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
 }
 
 export function digSandboxMachineState(sim,id=sim.activeMachine) {
-  return sim.roadMachines[id]?.machine??(id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
+  return sim.roadMachines[id]?.machine??(id==='borer'?sim.borer:id==='trencher'?sim.trencher.machine:id==='drill'?sim.drill.machine:sim.haul.machines[id]);
 }

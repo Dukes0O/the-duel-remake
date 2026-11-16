@@ -292,7 +292,7 @@ Object.assign(keyboardYard.roadMachines.paver.machine, {x:40,z:15,heading:0,spee
 driveKeys(() => roadCondition(roadCell(keyboardYard.roadWork,40,17))==='good', true);
 closeDigSandbox();
 let yard = createDigSandbox({playerId:'road-test'});
-for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'excavator']) {
+for (const expected of ['dumpTruck', 'trencher', 'drill', 'dozer', 'roller', 'paver', 'borer', 'excavator']) {
   yard = switchDigMachine(yard);
   assert.equal(yard.activeMachine, expected, 'Every machine can be selected in the yard.');
 }

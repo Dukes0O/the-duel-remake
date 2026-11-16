@@ -315,6 +315,38 @@ This card left the apprentice out (Codex found that the town's apprentice rule h
 along a line). Kyle has since said that long cuts must be taught and sent, with a way to look in on the work. That is card
 MACHINE-BORER-APPRENTICE, which starts when this one is merged.
 
+### Result (Codex built her in rounds; four Codex reviews; Claude designed, ruled and drove her five times, 16 November 2026): merged, switch off
+
+Look sheet `docs/board/looks/machine-borer/round-1.jpg` with Claude's review. Full notes: `docs/changes/MACHINE-BORER.md`.
+
+- **Built, in the Dig only, behind `wasteland-town`, nothing saved:** Mabel, last in the Dig's machine order; a thrust lever
+  that stays where it is left; rock that stalls her and softer seams; the face rule; a survey line and a strip of the hill;
+  a head that tilts; breaking through to daylight with how level she came out; an exit cutting; her two cameras; the lined
+  tunnel and portals; a spoil bank; six sound cues. A cut re-lays only the corners of the near ground it touched
+  (`src/world/near-ground.js`), which the Scablands scene does not use differently from before.
+- **No state of hers is a dead end** (the rule made after the third review).
+- **Four independent reviews by Codex** (rule 17). The third found dead ends in Claude's own ruling; the fourth confirmed the
+  cures and found one edge case (daylight with the far mouth closed), since cured and tested.
+- **Changed assertions, reviewed by Claude (rule 18):**
+  - `test-machine-roads`: the Dig's machine order has `'borer'` before it wraps to the excavator (reviewed when ruled).
+  - `test-machine-borer` (her own suite, new with this card, rewritten as rulings changed): Shift-for-thrust became the
+    lever; one press of Q became seven (she is last); every time and distance pinned to her pace was divided by three when the
+    pace was ruled up from 0.5 to 1.5 m a second; the trench stop became a repeated warning; "out the side of the hill" and
+    "open ground" have new sentences; a far end is closed until daylight; the steep drive names its one refusal and its place.
+  - One is looser in form and is right: the spoil's place was "exactly on the bank's centre line" and is now "within a metre
+    of it", because the bank became a ridge three cells wide. It still starts 12 m from the mouth and its cells must connect.
+  - The picture check's roof measurement and side camera were Claude's own wording, wrong twice, and were replaced by
+    measurements that mean something (the lining is hit within 3.5 m of the axis; a side camera that stands above its ground).
+- **Not built, on purpose:** the apprentice (card MACHINE-BORER-APPRENTICE, Kyle's direction of 16 November); a car driving
+  her tunnel on the land, roads and pipes through it, and joining separately restored passages (with the save card).
+- **Open:** the spoil bank's look (Claude). Her sounds have not been heard by anyone. A bend has not been seen.
+
+**Checks at the merge (Claude):** lane tier 55 of 55 on 5f9c0aa0c (45 minutes, with `test-everburn-easy` passing); on her three
+later commits, which touch `src/machines/borer.js`, `src/world/ground-tunnels.js` and her own tests, `test-machine-borer`
+(89 s), `test-tunnels`, `test-ground-edit`, `test-machine-roads`, `test-scablands-scene` and `test-scablands-solid` pass;
+`npm run build` passes; browser scenario `machine-borer` passes in a visible window, six pictures, no failure listed, 301 frames
+in 5.0 s while cutting.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
