@@ -124,6 +124,18 @@ export function drivePlatesOpening(duel, route) {
   return {first, second};
 }
 
+// Continue a measured route in short stretches so a stuck car cannot be
+// mistaken for an arrival. All times and ember values come from the drive.
+export function driveMeasuredStretches(duel, route, ends, targetSpeedMph) {
+  const stretches = [];
+  for (const end of ends) {
+    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph);
+    stretches.push(stretch);
+    if (stretch.along < end) break;
+  }
+  return {stretches, ticks:stretches.reduce((total, stretch) => total + stretch.ticks, 0)};
+}
+
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
 export function driveToBrazier(duel, brazier, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;

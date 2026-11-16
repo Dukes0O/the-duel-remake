@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates drive to 3 km (15 November 2026)
+
+- Added a measured-stretch driver that stops if the real car fails to reach a stretch, and continued the seeded 28 mph plates drive to 3 km. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car reached 3 km in 3.89 minutes after the yard gate, staying within 0.05 m of the route over the last kilometre. The ember had gone out at 1.55 km after rider contacts and remained out. This is not an arrival proof; the 30 to 55 band remains unmet. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a viable plates drive and measure all four route arrivals and times, then finish the camera, cover and scenario.
+
 ## Larger land, plates speed comparison (15 November 2026)
 
 - Added a fresh seeded Medium plates drive at a 28 mph target and recorded simulation ticks above the 50 km/h plates threshold. This adds no game event or sound cue.

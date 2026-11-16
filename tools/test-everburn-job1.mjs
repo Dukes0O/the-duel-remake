@@ -25,7 +25,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
-import {driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -541,6 +541,15 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'the driver records time above the plates speed limit');
   assert.equal(opening.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
     'the comparison records each actual jolt');
+  const continuation = driveMeasuredStretches(duel, route, [2500, 3000], 28);
+  console.log('Plates 28 mph continuation:', JSON.stringify(continuation));
+  assert.equal(continuation.stretches.length, 2, 'the car reaches both measured stretches');
+  for (const [index, stretch] of continuation.stretches.entries()) {
+    assert.ok(stretch.along >= 2500 + index * 500 && stretch.maxDistance < 10, 'the car follows the plates way');
+    assert.equal(stretch.beganOut, true, 'the ember remains out on each stretch');
+  }
+  assert.equal(continuation.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember, 'the drive records the actual ember');
+  assert.equal(continuation.ticks, continuation.stretches.reduce((sum, stretch) => sum + stretch.ticks, 0), 'the drive records actual elapsed ticks');
 }
 // The real job requests the gate only for a car approaching slowly.
 {
