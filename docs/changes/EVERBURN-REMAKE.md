@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Stop at the bed climb (16 November 2026)
+
+- The proof driver can now stop at its first steep-ground impact, preserving the car and ember for a route correction. The existing bed line still hits the climb at 7,003.86 m. Its first impact takes 15 ember; it had 55.05 at 7 km. This does not prove a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight drive out at 629.82 m. `git diff --check` passed. Integration was already included. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: use the preserved car state to find a clean line past the climb and prove both bed deliveries, then finish the remaining clean drives and scenario.
+
 ## Bed obstruction after 7 km (16 November 2026)
 
 - The proof driver now reports the first actual steep-ground impact separately from rider contact. The existing clean line reaches 7 km, then hits a climb at 7,003.86 m with no rider in contact; repeated impacts put the ember out. A wider trial drew two furnace riders, and a gradual wider turn still struck the slope. The bed delivery remains unproved. No game event or sound cue was added.

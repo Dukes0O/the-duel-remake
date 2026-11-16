@@ -152,10 +152,12 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   console.log('Bed rough crossing:', JSON.stringify({reached:crossing.reachedAll, jolts:crossingJolts, last:crossing.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
   assert.ok(crossing.reachedAll, 'the car reaches 7 km beyond the rough ground');
   assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car crosses without a jolt');
-  const obstruction = driveMeasuredStretches(duel, line, [7100], 12);
+  const obstruction = driveMeasuredStretches(duel, line, [7100], 12, false, true);
   const climb = firstGroundClimb(obstruction);
   console.log('Bed obstruction beyond 7 km:', JSON.stringify({reached:obstruction.reachedAll, climb}));
   assert.ok(!obstruction.reachedAll && climb && climb.riders.length === 0, 'the current line meets steep ground beyond 7 km');
+  assert.equal(obstruction.stretches[0].jolts.length, 1, 'the driver stops at the first climb impact');
+  assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.

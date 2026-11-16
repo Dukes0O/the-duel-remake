@@ -121,7 +121,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3, stopOnClimb = false) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
@@ -175,6 +175,10 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
         along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids,
         groundHits, hitSignals});
       lastJoltCount = pot.joltCount;
+      if (stopOnClimb && groundHits.some(impact => impact.kind === 'climb')) {
+        hit = nearestOnLine(points, car.x, car.z);
+        break;
+      }
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);
     if (gateDistance < nearestTownGate) {
@@ -248,10 +252,10 @@ export function drivePlatesOpening(duel, route) {
 
 // Continue a measured route in short stretches so a stuck car cannot be
 // mistaken for an arrival. All times and ember values come from the drive.
-export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossPipe = false) {
+export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossPipe = false, stopOnClimb = false) {
   const stretches = [];
   for (const end of ends) {
-    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph, false, crossPipe);
+    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph, false, crossPipe, 3, stopOnClimb);
     stretches.push(stretch);
     if (stretch.along < end) break;
   }
