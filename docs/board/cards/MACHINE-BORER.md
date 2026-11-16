@@ -242,6 +242,14 @@ Commit 890610c2d in a visible window with real keys. Codex's picture check faile
 
 All six are with Codex, each with its numbers. Not heard: her sounds. Not seen: a break-through, the lining, a bend.
 
+**Corrected the same night.** "She stays in plain sight inside the hill" was not established. Codex measured her: the gantry
+trails 25.8 m behind her head, so at 16 m in about 10 m of her is rightly outside the mouth, and the mouth's cut is a capsule
+about the bore's own axis, which is right. What Claude saw may have been her trailing length, in a view where the hill's face
+and the plain wear the same ground. That is the second time Claude has read a picture of this hill wrongly. The fault is now
+put as three measurements in her picture check, and nothing is called a fault until they are in: which end of the model leads;
+with her head 45 m in, how many of her pixels are drawn from a camera 40 m to the side (none, with the ground); and whether
+the mouth shows its portal and lining with the hill's face round it.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
