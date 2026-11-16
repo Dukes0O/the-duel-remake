@@ -408,10 +408,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'the recorded bridge jolt has a rider in contact on the same floor');
   assert.ok(Number.isFinite(eighth.peakSpeedPosition.x) && Number.isFinite(eighth.peakSpeedPosition.z), 'the driver records where its peak speed occurred');
   console.log('East Road 4 km drive:', JSON.stringify(eighth));
-  const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500);
+  const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500, 7200, 50);
   assert.ok(ninth.along >= 4500, `the car follows the East Road for 4.5 km: ${JSON.stringify(ninth)}`);
   assert.ok(ninth.driven >= 490 && ninth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(ninth)}`);
   assert.ok(ninth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(ninth)}`);
+  assert.ok(ninth.fastRoadSpeedTicks / ninth.ticks > 0.8,
+    `the car accelerates back to road speed after the bridge: ${JSON.stringify(ninth)}`);
   console.log('East Road 4.5 km drive:', JSON.stringify(ninth));
   const tenth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 5000, 7200, 50);
   assert.ok(tenth.along >= 5000, `the car follows the East Road for 5 km: ${JSON.stringify(tenth)}`);

@@ -688,3 +688,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the sustained-speed check is new. Codex decided: use the established 50 mph target on this clear stretch as well; Claude should review the drive.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the 35 mph target on this stretch. The old `everburn-play` scenario still needs replacement or removal. Next: complete the road-speed proof and measure the other route arrivals and times, then finish the camera, cover and scenario.
+
+## Larger land, accelerate after the bridge (15 November 2026)
+
+- The Medium proof driver accelerates to its 50 mph road target on the 4 to 4.5 km stretch after the bridge. The test checks the actual car spends over 80% of that stretch at 45 mph or more. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car arrived with 18.37 ember in 8.97 minutes, below the required 70. The other routes and their times have not yet been measured. Race fingerprints were not checked in this round.
+- Changed assertions: none; the speed check is new. Codex decided: use the existing 50 mph target after the bridge; Claude should review the drive.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the 35 mph target on this stretch. The old `everburn-play` scenario still needs replacement or removal. Next: measure the remaining route arrivals and times, then finish the camera, cover and scenario.
