@@ -378,6 +378,35 @@ minutes, and one rider's ram at speed took 42 from the pot. Both come from numbe
   allows and report way, kilometres, minutes, rams, scoops and arrival, without tuning a drive to hit a band. Claude then sets
   the bands, or the numbers, from that table. A band that a plain, honest drive misses is a fault in the table.
 
+## The four ways, measured, and what the proofs are now (Claude, 16 November 2026)
+
+Codex drove each way once with a plain scripted driver and the new numbers (cold over fifteen minutes, one hit at most 15):
+
+| Way | km | Minutes | Rams or hits | Scoops | Arrived with |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.9 | 8.3 | 1 | Halfway Camp | 49 |
+| Plates | 6.2 | 8.6 | 5 | none | 0 |
+| Salt pan | 9.4 | 13.7 | 0 | none | 8 |
+| River bed | 9.4 | 14.0 | 5 | Wash camp | 0 |
+
+- **The numbers stand.** The drivers were slow (57 km/h on a road, the Pipe's 40 km/h for the whole pan) and took hits a
+  careful player avoids. Worked through, a clean drive at the speed its ground allows arrives at about 80 by the road, 43 by
+  the plates, 50 by the pan, 32 by the bed with its scoop and 7 without it. That is the spread the design wants.
+- **The narrower bands of the table of ways are withdrawn.** They were guesses. Pay has three bands (bright 70 or more, alive
+  30 to 69, barely under 30) and those are the only acceptance.
+- **Each way is proved by one clean drive:** the road at 100 km/h where clear, bright; the pan at road speed but for the Pipe,
+  alive; the plates from cover to cover with no riders sent, alive; the bed round its obstacles with the Wash camp's scoop,
+  alive, and without the scoop, barely or out; straight across the plain flat out, out before 1.5 km.
+- **Cover on the plates is a butte, not a mesa.** A mesa with its 220 m ramp cannot stand near a way, and the land's six are
+  counted. A butte is a flat-topped stump of rock, 45 to 70 m in radius and 14 to 22 m high, steep all round, with no ramp,
+  placed by the land's names 90 to 170 m from the plates' way on the furnace's side. Up to eight, for three separate hidden
+  stretches of 150 m or more with 100 m of open ground between them. (This adds a kind to SCABLANDS-LAND's hill country.)
+- **Whether these numbers make a good job is not settled by any script.** It is settled by Claude's drive and then Kyle's.
+- **Kyle's yardstick for a way's length (16 November 2026):** told that a careful drive by the salt pan is about six and a
+  half minutes, "6 minutes isn't bad". The river bed at about fourteen minutes is more than twice that. Claude drives it
+  first; if it drags, the bed's ground is made faster and its air colder, so that it stays the long, patient way without
+  being the dull one.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
