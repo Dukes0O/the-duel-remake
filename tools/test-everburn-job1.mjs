@@ -155,12 +155,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const gate = definition.steps[0].riderSafeWall;
+  const mediumTrial = process.env.EVERBURN_BED_MEDIUM_TRIAL === '1';
   const townLine = [{x:afterSteps.x, z:afterSteps.z},
-    {x:route.exit.x + 300, z:route.exit.z},
+    {x:route.exit.x + (mediumTrial ? 600 : 300), z:route.exit.z},
     {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
   const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
-  const townSpeed = (fastTrial ? 80 : safeTrial ? 48 : 60) / 1.609344;
+  const townSpeed = (fastTrial ? 80 : safeTrial ? 48 : mediumTrial ? 70 : 60) / 1.609344;
   const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
@@ -181,6 +182,11 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
       'the recorded ground losses add up to the actual change in the pot');
     assert.equal(continuation.jolts.length, 0, 'the faster car avoids the rider on this stretch');
     assert.ok(continuation.firstOut, 'the faster car loses the ember on the open ground');
+  } else if (mediumTrial) {
+    assert.equal(continuation.jolts.length, 0, 'the 70 km/h trial avoids the rider for 800 m');
+    assert.ok(emberBeforeTown - continuation.ember > 50, 'the 70 km/h trial loses more than 50 ember on the plates');
+    assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
+      'the actual pot loses over 50 on the plates despite avoiding a ram');
   } else if (safeTrial) {
     assert.ok(townDrive.groundLoss['scab-plates'] - townDrive.jolts.reduce((sum, jolt) => sum + jolt.amount, 0) < 10,
       'the safe-speed trial loses less than ten ember to cooling and rough ground');
