@@ -35,6 +35,18 @@ const MODES=['chase','cab','work'];
 const MACHINE_IDS=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
 
+/** Reuse a parked machine's ground height until it or the ground changes. */
+export function createMachineHeightCache() {
+  const entries = new Map();
+  return (ground, id, state) => {
+    const old = entries.get(id);
+    if (old && old.ground === ground && old.revision === ground.revision && old.x === state.x && old.z === state.z) return old.y;
+    const y = ground.heightAt(state.x, state.z);
+    entries.set(id, {ground, revision:ground.revision, x:state.x, z:state.z, y});
+    return y;
+  };
+}
+
 /** Give the Dig the same hill field and ground photographs as the land. */
 export function createDigGroundLook(riverField, loader) {
   const noHills=[];
@@ -95,6 +107,15 @@ export function followBorerSlope(camera, target, state, distance = 8, ahead = -3
 // The head is the simulation origin; the model's tail is about 18 m behind it.
 export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false) {
   const segments=state.segments || [], sin=Math.sin(state.heading), cos=Math.cos(state.heading);
+  const hasFace = () => {
+    const key = [state.x, state.y, state.z, state.heading, ground.revision].join(':');
+    let cached = camera.userData.borerFace;
+    if (!cached || cached.ground !== ground || cached.key !== key) {
+      cached = {ground, key, value:borerHasFace(ground,state,state.heading)};
+      camera.userData.borerFace = cached;
+    }
+    return cached.value;
+  };
   const pointAt = distance => {
     let left=Math.max(0,distance);
     for(const segment of segments) {
@@ -116,7 +137,7 @@ export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset 
     const behind=pointAt(state.travelM-34), tail=pointAt(state.travelM-18);
     position=new THREE.Vector3(behind.x,behind.y+2.2,behind.z);
     target=new THREE.Vector3(tail.x,tail.y+2.2,tail.z);
-  } else if(state.started || borerHasFace(ground,state,state.heading)) {
+  } else if(state.started || hasFace()) {
     position=new THREE.Vector3(state.x-24*sin+14*cos,state.y+8,state.z-24*cos-14*sin);
     target=new THREE.Vector3(state.x,state.y+2,state.z);
   } else {
@@ -264,6 +285,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   visitButton.type=leverButton.type='button';borePanel.append(boreWords,visitButton,leverButton);
   let surveyLine=null, surveyKey='';
   const surveyCache=createBorerSurveyCache();
+  const machineHeight=createMachineHeightCache();
   let surveyPosition=null, surveyPositionRevision=-1;
   const surveyDisplayCache={};
   let sendOffered=false;
@@ -493,13 +515,13 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
     for(const id of MACHINE_IDS){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
-      if(view){view.update({...state,y:id==='borer'?state.y:sim.ground.heightAt(state.x,state.z)},elapsed,id===sim.activeMachine?frameEvents:[]);
+      if(view){view.update({...state,y:id==='borer'?state.y:machineHeight(sim.ground,id,state)},elapsed,id===sim.activeMachine?frameEvents:[]);
         if(id==='borer')poseBorerSlope(view,state);
         view.root.visible=true;}
     }
     if(modelAsset){
       const isBorer=sim.activeMachine==='borer';
-      const y=isBorer?active.y:sim.ground.heightAt(active.x,active.z),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
+      const y=isBorer?active.y:machineHeight(sim.ground,sim.activeMachine,active),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
       if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
       else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});

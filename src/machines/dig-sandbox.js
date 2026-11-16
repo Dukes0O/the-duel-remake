@@ -313,7 +313,7 @@ export function boreBoard(sim) {
     const rate = apprentice?.rate || 0;
     const minutes = rate > 0 ? (remaining / (.5 * rate) + remaining / 100 * (apprentice.stallsPer100M || 0) * 20 + (active ? sim.boreStallSeconds || 0 : 0)) / 60 : null;
     return {id:order.id, name:person?.name || 'Apprentice', finished:order.status === 'finished',
-      active, done, remaining, drift, stalls:order.result?.stalls ?? (active ? sim.borer.stallCount : 0),
+      active, playerCutting:active && sim.borePlayerAtLever, done, remaining, drift, stalls:order.result?.stalls ?? (active ? sim.borer.stallCount : 0),
       minutes, offLevel:order.result?.offLevelM ?? null};
   });
 }
@@ -323,7 +323,7 @@ export function boreBoardWords(row) {
   if (row.finished) return `${title}: ${row.name} finished ${row.done.toFixed(1)} m, ${row.offLevel.toFixed(1)} m off level.`;
   if (!row.active) return `${title}: waiting. ${row.remaining.toFixed(1)} m.`;
   const time = row.minutes === null ? 'Time to daylight is unknown.' : `About ${Math.ceil(row.minutes)} minutes to daylight.`;
-  return `${title}: ${row.name} ${row.active ? 'is cutting' : 'is waiting'}. ${row.done.toFixed(1)} m cut, ${row.remaining.toFixed(1)} m to go. Floor ${Math.abs(row.drift).toFixed(1)} m ${row.drift < 0 ? 'below' : 'above'} the line. ${row.stalls} stalls. ${time}`;
+  return `${title}: ${row.playerCutting ? 'You are' : `${row.name} is`} cutting. ${row.done.toFixed(1)} m cut, ${row.remaining.toFixed(1)} m to go. Floor ${Math.abs(row.drift).toFixed(1)} m ${row.drift < 0 ? 'below' : 'above'} the line. ${row.stalls} ${row.stalls === 1 ? 'stall' : 'stalls'}. ${time}`;
 }
 
 /** Advance one order with the real cutter; the caller owns its tunnel index. */

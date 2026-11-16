@@ -74,6 +74,9 @@ V4: A survey now updates when ground on its line changes, including its face and
 
 ## Checks
 
+- V6: The bore board says who holds the lever and uses the singular for one stall. The camera caches its face check and parked machine views cache their ground heights until the relevant position or ground changes. `test-machine-borer-apprentice.mjs` passed, and focused cache checks passed. This adds no sound cue.
+- V6: `test-machine-borer.mjs` passed its real-heap measurements, then was stopped while running the remaining real-ground cases. It began before the parked-machine cache was added. Run the complete suite on the final code.
+
 - V4: `node tools/test-machine-borer-survey.mjs` passed on the final code. It checks a stationary survey after a fill and a cut on its line, and checks that idle frames and nearby edits away from the line do not read ground heights again. `node tools/test-ground-edit.mjs` passed on the final code. `node tools/test-machine-borer.mjs` passed on an earlier version of the cache; rerun it on the final code with the final checks.
 
 - V7: `node tools/test-machine-borer-freeze.mjs` passed. Four real-ground cuts stall, reverse and continue past 12 m with up, down, left and right inputs, and their tunnel segments join. A separate curved-chord case fails without the face correction. An injected cutter error is logged once, stops Mabel, and leaves the clock and excavator working. The reported key durations alone did not stall at the test's starting position; the test holds W and S longer as needed to produce and clear the real stall. The exact reported hand-drive sequence still needs a visible play check.

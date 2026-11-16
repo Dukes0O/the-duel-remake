@@ -169,6 +169,9 @@ assert.equal(workingRow.drift, 1);
 assert.equal(workingRow.stalls, 2);
 assert.ok(workingRow.minutes > 100 / .5 / 60);
 assert.match(boreBoardWords(workingRow), /Pim is cutting.*20.0 m cut.*100.0 m to go.*1.0 m above.*2 stalls.*minutes to daylight/);
+const playerRow = boreBoard({...boardSim, borePlayerAtLever:true, borer:{...boardSim.borer, stallCount:1}})[0];
+assert.match(boreBoardWords(playerRow), /You are cutting.*1 stall\./);
+assert.doesNotMatch(boreBoardWords(playerRow), /1 stalls/);
 assert.match(boreBoardWords(waitingRow), /^Bore 2: waiting\. 120\.0 m\.$/);
 const finishedRow = boreBoard({...boardSim, boreOrders:[{...boardSim.boreOrders[0], status:'finished',
   result:{distanceM:121, offLevelM:.4, stalls:3}}]})[0];

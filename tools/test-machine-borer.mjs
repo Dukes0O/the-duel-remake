@@ -12,7 +12,7 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
+import {createDigGroundLook, createDigNearGround, createMachineHeightCache, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
 
@@ -618,6 +618,30 @@ leverTest = stepDigSandbox(leverTest, {controls:{forward:-1}}, .5);
 assert.ok(leverTest.borer.lever<1e-8, 'S lowers the lever by half per second.');
 const boreCamera = new THREE.PerspectiveCamera();
 updateBorerCamera(boreCamera, createBorerState(), 0, flat, 1, true);
+{
+  let reads = 0;
+  const ground = {revision:0, heightAt:() => ++reads};
+  const height = createMachineHeightCache();
+  assert.equal(height(ground, 'excavator', {x:1,z:2}), 1);
+  assert.equal(height(ground, 'excavator', {x:1,z:2}), 1);
+  assert.equal(height(ground, 'excavator', {x:2,z:2}), 2);
+  ground.revision++;
+  assert.equal(height(ground, 'excavator', {x:2,z:2}), 3);
+}
+{
+  let reads = 0;
+  const ground = {revision:0, heightAt:() => { reads++; return 0; }};
+  const camera = new THREE.PerspectiveCamera();
+  const idle = createBorerState();
+  updateBorerCamera(camera, idle, 0, ground, 1, true);
+  const firstReads = reads;
+  assert.ok(firstReads > 0);
+  updateBorerCamera(camera, idle, 0, ground, 1);
+  assert.equal(reads, firstReads, 'An idle Mabel does not repeatedly sample the face.');
+  ground.revision++;
+  updateBorerCamera(camera, idle, 0, ground, 1);
+  assert.ok(reads > firstReads, 'A ground edit refreshes the face.');
+}
 assert.ok(Math.abs(boreCamera.position.z + 44)<1e-8, 'The open view sits behind the tail.');
 updateBorerCamera(boreCamera, forty, 0, hill, 1, true);
 assert.ok(Math.abs(boreCamera.position.z - 6)<1e-6, 'The bore view follows the centre line behind the tail.');
