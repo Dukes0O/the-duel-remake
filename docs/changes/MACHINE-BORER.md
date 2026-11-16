@@ -288,3 +288,11 @@ The Dig now finds the changed ground samples in each edited chunk and refreshes 
 `test-machine-borer`, `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks) and `test-scablands-scene` passed. The scenario passes `node --check` and its page expressions parse. `npm.cmd run build` passed with the existing mixed-import and chunk-size warnings. No existing assertions or race fingerprints changed. Claude must run the scenario and the lane tier; the frame rate and full daylight picture remain unverified here. The five-second sample is written to `machine-borer-measurements.json` as `framePace`.
 
 Removed: the Dig's full near-ground refresh on every edited chunk update. No game event or sound cue changed; the borer cues remain `borer.head`, `borer.stall`, `borer.refuse`, `borer.breakthrough`, `borer.daylight` and `borer.muck`.
+
+## Far-mouth drop after the survey
+
+Mabel and the tunnel drawing now share the same surface-mouth rule. If the landing drops more than 1 m below her floor after the first 12 m survey, she stops at the actual mouth with the lip sentence and `borer.refuse`; daylight waits until the ground is raised. The test covers a safe first survey followed by a 2 m drop. The existing lip-recovery test now fills the actual mouth as well as the surveyed landing, so its daylight assertion still proves a safe exit.
+
+`node tools/test-machine-borer.mjs` passed after that test setup was corrected; the first run found the unfilled actual mouth. `node tools/test-tunnels.mjs` passed. No existing assertion or race fingerprint changed. Browser scenario, lane tier and final checks remain for Claude or the final run. R2 and R3 remain.
+
+Removed: the separate daylight check that could accept a drop with no drawable mouth. No sound cue changed.

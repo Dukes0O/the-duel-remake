@@ -696,12 +696,21 @@ assert.equal(lip.state.segments.at(-1).endOpen, false);
 const lipFar = {x:Math.round(lip.state.x + Math.sin(lip.state.heading) * 12),
   z:Math.round(lip.state.z + Math.cos(lip.state.heading) * 12), radius:3};
 assert.ok(lipGround.fill(lipFar, 'rock', 29 * 2 * 1.25).ok, 'Real ground fill raises the landing.');
+assert.ok(lipGround.fill({x:0, z:31, radius:3}, 'rock', 29 * 2 * 1.25).ok, 'The actual mouth also has a safe landing.');
 assert.ok(Math.abs(lipGround.heightAt(lip.state.x + Math.sin(lip.state.heading) * 12,
   lip.state.z + Math.cos(lip.state.heading) * 12) - lip.state.y) <= 0.5);
 const filledLip = stepBorer(lip.state, {thrust:1}, lipGround, 'topsoil', 15);
 assert.equal(filledLip.state.finished, true, 'She reaches daylight after filling the lip.');
 assert.equal(filledLip.state.segments.at(-1).endOpen, true);
 assert.equal(filledLip.events.filter(event => event.cue === 'borer.daylight').length, 1);
+// The first landing survey can be safe while the ground drops at the actual mouth.
+const lateDropGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : z < 43 ? 2 : -2});
+const lateDrop = stepBorer(createBorerState(), {thrust:1}, lateDropGround, 'topsoil', 100);
+assert.ok(lateDrop.state.exitCutting, 'The first landing survey permits an exit cutting.');
+assert.equal(lateDrop.state.finished, false, 'A later drop cannot declare daylight with a closed mouth.');
+assert.equal(lateDrop.state.message, 'She has come out 2.0 m up the face. Tip spoil below the mouth until she can drive out.');
+assert.equal(lateDrop.state.segments.at(-1).endOpen, false);
+assert.equal(lateDrop.events.filter(event => event.cue === 'borer.daylight').length, 0);
 const shortHill = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 12 ? 8 : 2});
 const stoppedUnderGround = stepBorer(createBorerState(), {thrust:1}, shortHill, 'topsoil', 60);
 assert.equal(stoppedUnderGround.state.message, BORER_OPEN_GROUND);

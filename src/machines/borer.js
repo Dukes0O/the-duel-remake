@@ -1,5 +1,6 @@
 import {machineDefinition} from './content/machines.js';
 import {makeRng} from '../rng.js';
+import {tunnelEndMeetsSurface} from '../world/ground-tunnels.js';
 
 export const BORER_NO_FACE = 'There is not enough hill over her here. Dig her a cutting first.';
 export const BORER_OBSTRUCTION = 'She will not cut there. Something stands in the way.';
@@ -280,7 +281,13 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     if (next.exitCutting) {
       const difference = ground.heightAt(next.x, next.z) - next.y;
-      if (difference <= 0.3) {
+      if (difference < -1) {
+        const message = `She has come out ${(-difference).toFixed(1)} m up the face. Tip spoil below the mouth until she can drive out.`;
+        if (next.message !== message) events.push({type:'refuse', cue:'borer.refuse', message});
+        next.message = message;
+        continue;
+      }
+      if (tunnelEndMeetsSurface(ground.heightAt(next.x, next.z), next.y)) {
         if (!controls.mutableSegments && next.segments === state.segments) {
           next.segments = next.segments.slice();
           if (next.segments.length) next.segments[next.segments.length - 1] = {...next.segments.at(-1)};

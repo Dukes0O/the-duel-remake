@@ -64,6 +64,12 @@ function horizontalProjection(position, segment, result) {
   return result;
 }
 
+/** Whether an explicitly open far end meets the surface safely. */
+export function tunnelEndMeetsSurface(surface, floor) {
+  const difference = surface - floor;
+  return difference <= 0.3 && difference >= -1;
+}
+
 /** Tunnel tubes with height-aware ground lookup and shader hole tests. */
 export function createGroundTunnels(segments = [], {heightAt} = {}) {
   if (!Array.isArray(segments)) throw new TypeError('Tunnel segments must be a list.');
@@ -91,7 +97,7 @@ export function createGroundTunnels(segments = [], {heightAt} = {}) {
     if (!finite(surface)) throw new TypeError('Tunnel surface heights must be finite.');
     const difference = surface - (end.y - tube.radius * 0.55);
     return end === tube.end && tube.endOpen === true
-      ? difference <= 0.3 && difference >= -1
+      ? tunnelEndMeetsSurface(surface, end.y - tube.radius * 0.55)
       : Math.abs(difference) <= 0.3;
   }
   let startOpen = !tubes.length || (tubes[0].startOpen ?? openEnd(tubes[0], tubes[0].start));
