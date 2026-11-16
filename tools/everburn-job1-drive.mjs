@@ -391,8 +391,12 @@ export function driveToForge(duel, destination, maxTicks = 3600) {
     duel.step(1 / 60);
     const pot = world.job.stepState;
     if ((pot.joltCount ?? 0) > lastJoltCount) {
-      const at = duel.course.worldAt(state.s, state.lateral);
-      jolts.push({amount:pot.jolt, position:{x:at.x, z:at.z}, speedMph:Math.abs(state.speedMph)});
+      const position = worldJobPosition(duel, state);
+      const riders = world.actors.filter(actor => actor.ramContact).map(actor => ({
+        id:actor.id, distance:Math.hypot(position.x - actor.position.x, position.z - actor.position.z),
+        heightDifference:Math.abs(position.y - actor.position.y),
+      }));
+      jolts.push({amount:pot.jolt, position, speedMph:Math.abs(state.speedMph), riders});
       lastJoltCount = pot.joltCount;
     }
   }

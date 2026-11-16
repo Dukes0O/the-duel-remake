@@ -1441,3 +1441,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the two camp approach checks are new. Codex decided: use the bridge's existing 45 m braking distance for this camp trial. Claude should review it.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the clean trial's earlier 140 m camp braking distance. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
+
+## Final approach ram measurement (16 November 2026)
+
+- The proof driver now records riders touching the car during the final approach to the forge and includes those contacts in its East Road ram count. A focused check drives the final-approach helper through a simulated late contact and checks the rider's identity. No game event or sound cue was added.
+- Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the late-contact check and the straight-across outage at 629.822 m. `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` still fails the unchanged one-ram limit: 7.911 km, 6.104 minutes, two rams, one Halfway scoop and 54.307 ember. Neither ram was on the final approach. The bright band is also missed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the gap in the East Road proof's final-approach ram count. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.

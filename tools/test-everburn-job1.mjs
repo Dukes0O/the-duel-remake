@@ -151,6 +151,17 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.match(map(), /Cross the Pipe/);
 
 }
+// The final approach must count rider contact too, rather than hiding a late ram.
+{
+  const world = {definition:{steps:[{riderSafeWall:{x:0, z:0, through:{x:0, z:1}}}]},
+    job:{stepState:{ember:50, joltCount:0}}, actors:[{id:'late-rider', ramContact:true, position:{x:0, y:0, z:0}}]};
+  const state = {arena:{worldJob:world}, s:0, lateral:0, headingError:0, speedMph:0};
+  const duel = {state, course:{def:{}, worldAt:() => ({x:0, y:0, z:0, heading:0})}, setInput:() => {},
+    step:() => { world.job.stepState.joltCount++; world.job.stepState.jolt = 15; world.job.done = true; }};
+  const arrival = driveToForge(duel, {x:0, z:30});
+  assert.equal(arrival.jolts.length, 1, 'the final approach records the jolt');
+  assert.equal(arrival.jolts[0].riders[0].id, 'late-rider', 'the final approach records the rider in contact');
+}
 // Floor it towards town across the plain, starting with the real pickup and gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -229,10 +240,10 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const stretches = [...opening.stretches, campApproach, ...remaining.stretches, gate];
   const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-    rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts].filter(jolt => jolt.riders.length > 0).length,
+    rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts].filter(jolt => jolt.riders.length > 0).length,
     jolts:arrival.observedJoltCount, scoops, burnt, ember:arrival.fire?.ember ?? pot.ember};
   console.log('Clean East Road measurement:', JSON.stringify(result));
-  console.log('Road jolts:', JSON.stringify([...stretches.flatMap(item => item.jolts), ...scoop.jolts]));
+  console.log('Road jolts:', JSON.stringify([...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts]));
   assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
   assert.deepEqual(scoops, ['halfway-brazier']);
   assert.ok(step.barriers.every(barrier => burnt.includes(barrier.id)), 'both barricades burn');
