@@ -128,6 +128,8 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
 export function driveToForge(duel, destination, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;
   let ticks = 0, distance = Infinity, stopping = false;
+  let lastJoltCount = world.job.stepState.joltCount ?? 0;
+  const jolts = [], startEmber = world.job.stepState.ember;
   for (; ticks < maxTicks && !world.job.done; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     distance = Math.hypot(destination.x - car.x, destination.z - car.z);
@@ -138,9 +140,15 @@ export function driveToForge(duel, destination, maxTicks = 3600) {
     duel.setInput({throttle:speed < limit ? 0.5 : 0, brake:speed > limit + 0.2 ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
+    const pot = world.job.stepState;
+    if ((pot.joltCount ?? 0) > lastJoltCount) {
+      const at = duel.course.worldAt(state.s, state.lateral);
+      jolts.push({amount:pot.jolt, position:{x:at.x, z:at.z}, speedMph:Math.abs(state.speedMph)});
+      lastJoltCount = pot.joltCount;
+    }
   }
   const car = duel.course.worldAt(state.s, state.lateral);
   return {ticks, distance:Math.hypot(destination.x - car.x, destination.z - car.z),
-    speedMph:state.speedMph, done:world.job.done, fire:world.forgeFire,
+    speedMph:state.speedMph, done:world.job.done, fire:world.forgeFire, startEmber, jolts, observedJoltCount:lastJoltCount,
     position:{x:car.x, z:car.z}};
 }

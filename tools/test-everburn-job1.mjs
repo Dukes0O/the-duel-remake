@@ -453,9 +453,16 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(world.tinTownGateRequested, true, 'the real slow approach opens the gate');
   assert.equal(world.solidGrid.townGate.length, 0, 'the open gate no longer blocks the car');
   console.log('East Road town entrance:', JSON.stringify(door));
+  const joltsBeforeForge = world.job.stepState.joltCount ?? 0;
+  const emberBeforeForge = world.job.stepState.ember;
   const arrival = driveToForge(duel, step.destination.position);
   console.log('East Road forge arrival:', JSON.stringify(arrival));
-  assert.equal(arrival.done, true, `the real car delivers at the forge: $(JSON.stringify(arrival))`);
+  assert.equal(arrival.done, true, `the real car delivers at the forge: ${JSON.stringify(arrival)}`);
+  assert.equal(arrival.startEmber, emberBeforeForge, 'the forge drive records its starting ember');
+  assert.equal(arrival.jolts.length, arrival.observedJoltCount - joltsBeforeForge,
+    'the forge drive records each real jolt');
+  assert.ok(arrival.jolts.every(jolt => jolt.amount > 0 && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
+    'each forge approach jolt has its amount and position');
 
 }
 // The real job requests the gate only for a car approaching slowly.

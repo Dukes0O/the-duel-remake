@@ -607,3 +607,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: the proof driver aims directly for the bay at up to 10 mph and brakes within 5 m. Claude should review the drive.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.
+
+## Larger land, forge approach measurements (15 November 2026)
+
+- The proof driver now records the ember and each actual jolt on the way from the gate to the forge. This adds no game event or sound cue.
+- `node tools/test-everburn-job1.mjs`: passed. The car entered with 24.97 ember and suffered a 14.74 jolt at (5977.14, 63.84), just inside the gate, before arriving with 6.46. The test checks the measurements against the real job state before delivery clears it. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.
