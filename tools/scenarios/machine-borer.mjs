@@ -114,6 +114,19 @@ const page = {
   })()`,
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
   inputTiming: `(() => { const s = window.__theDig.simulation; return {elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever, distance:s.borer.distanceM}; })()`,
+  startInputTrace: `(() => {
+    const trace = {events:[], frames:[], active:true};
+    const snapshot = () => { const s = window.__theDig.simulation; return {time:performance.now(), elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever}; };
+    trace.listener = event => { if (event.code === 'Tab' || event.code === 'KeyW') trace.events.push({type:event.type, code:event.code, ...snapshot()}); };
+    document.addEventListener('keydown', trace.listener, true); document.addEventListener('keyup', trace.listener, true);
+    const frame = () => { if (!trace.active) return; trace.frames.push(snapshot()); requestAnimationFrame(frame); };
+    window.__theDig.inputTrace = trace; requestAnimationFrame(frame); return true;
+  })()`,
+  stopInputTrace: `(() => {
+    const trace = window.__theDig.inputTrace; trace.active = false;
+    document.removeEventListener('keydown', trace.listener, true); document.removeEventListener('keyup', trace.listener, true);
+    delete window.__theDig.inputTrace; return {events:trace.events, frames:trace.frames};
+  })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
   sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
@@ -222,6 +235,7 @@ export async function run(context) {
   await context.screenshot('machine-borer-mesa-overview');
   await context.evaluate(page.overviewOff);
   await context.evaluate(page.frame);
+  await context.evaluate(page.startInputTrace);
   await press(context, 'Tab');
   const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
   const pushSamples = [];
@@ -234,7 +248,8 @@ export async function run(context) {
   }
   finally { await key(context, 'KeyW', 'keyup'); }
   const afterPush = await context.evaluate(page.inputTiming);
-  measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
+  const trace = await context.evaluate(page.stopInputTrace);
+  measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, trace, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
   assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
   assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
