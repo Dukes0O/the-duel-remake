@@ -154,6 +154,33 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   car = {...camp.position, z:camp.position.z - 700};
   for (let i = 0; i < 210; i++) tick(0.1);
   assert.deepEqual(camp.position, stopped, 'a rider in front remains visible');
+  // A nearby rider must also recover after both ends stay hidden for 20 seconds.
+  let nearbyHiddenCar;
+  for (let angle = 0; angle < Math.PI * 2 && !nearbyHiddenCar; angle += Math.PI / 24) {
+    for (let distance = 250; distance <= 1200 && !nearbyHiddenCar; distance += 50) {
+      const candidate = {x:stopped.x + Math.sin(angle) * distance,
+        z:stopped.z + Math.cos(angle) * distance};
+      candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
+      const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
+        actorFloors:true, eye:5, target:2, step:5});
+      const road = ROAD_NET.road('east-road').points;
+      const roadDistance = Math.abs(nearestOnLine(road, candidate.x, candidate.z).along -
+        nearestOnLine(road, stopped.x, stopped.z).along);
+      if (roadDistance < 600 && hidden(stopped) && hidden(posts[0].start.position)) nearbyHiddenCar = {candidate, angle};
+    }
+  }
+  assert.ok(nearbyHiddenCar, 'the land provides a nearby hidden road rider and post');
+  car = nearbyHiddenCar.candidate;
+  state.headingError = nearbyHiddenCar.angle;
+  tick(19.9);
+  assert.deepEqual(camp.position, stopped, 'the nearby hidden rider waits for 20 seconds');
+  tick(0.2);
+  assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
+    camp.position.z - posts[0].start.position.z) < 0.01, 'the nearby hidden rider returns after 20 seconds');
+  camp.position = {...stopped};
+  camp.returningToPost = true;
+  camp.returnStuck = true;
+  camp.returnHiddenSeconds = 0;
   let hiddenCar;
   for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
     for (let distance = 700; distance <= 2400 && !hiddenCar; distance += 100) {

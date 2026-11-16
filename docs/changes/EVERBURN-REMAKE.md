@@ -1860,3 +1860,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including all five delivery drives. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: road-distance calculations while the rider or its post is visible.
 - Still needed: Y1 must also recover a rider beside the car but outside the actual camera view. The existing terrain-only test cannot establish this; camera visibility must be handled without allowing the renderer to change race state. Then run the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: twenty-second hidden recovery
+
+- The stranded rider's hidden-time counter is limited to the 20 seconds needed for recovery. A real-step check now proves that a rider and its post hidden by the land, with less than 600 metres of road between rider and car, do not reset at 19.9 seconds and do reset at 20.1 seconds. The earlier check covers the 600-metre threshold. No sound cue, save shape or race rule changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the five delivery drives; `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: unbounded accumulation of hidden time.
+- Still needed: Y1's rider beside the car and outside the actual camera view; the current terrain-only rule cannot establish that case. Then run the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
