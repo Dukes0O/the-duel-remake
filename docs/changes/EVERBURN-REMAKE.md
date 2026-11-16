@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Identify the bed climb (16 November 2026)
+
+- The proof driver now measures the real river and ground slopes at its first climb impact. The impact at 7,022.87 m is on the dry river bank: the river depth is 7.20 m, and its slope accounts for the ground slope at that point. There was no rider or solid in contact. A 35 m move toward the other side struck the bank sooner; a 35 m move away drew riders. Neither line is a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive out at 629.82 m. Integration is already included. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a route along or out of the river bed that avoids the bank and riders, and prove both bed deliveries.
+
 ## Bed climb at low speed (16 November 2026)
 
 - Added a route trial that records the real pot before and after the first climb impact. At 7,022.87 m the car hit the climb at 10.01 km/h, with no rider in contact. Ember fell from 54.95 to 40.52, including cooling and a 13.81-point jolt. Slowing alone does not make this line clean. A 198 m offset drew a rider at 6,660.63 m; a 190 m offset hit the climb at 7,013.32 m. No game event or sound cue was added.

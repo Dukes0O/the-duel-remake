@@ -159,6 +159,12 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   assert.ok(climb.along >= 7020, 'the car passes 7.02 km before the steep-ground impact');
   assert.equal(obstruction.stretches[0].jolts.length, 1, 'the driver stops at the first climb impact');
   assert.ok(climb.hitSignals.speedBeforeKmh < 11, 'the car slows below 11 km/h before the impact');
+  assert.ok(trial.terrain.riverDepth > 0, 'the ground impact is within the dry river');
+  assert.ok(Math.hypot(trial.terrain.riverGradient.x + trial.terrain.groundGradient.x,
+    trial.terrain.riverGradient.z + trial.terrain.groundGradient.z) < 0.02,
+  'the river bank accounts for the ground slope at the impact');
+  assert.ok(Math.hypot(trial.terrain.groundGradient.x, trial.terrain.groundGradient.z) > 0.25,
+    'the real ground at the impact is steep');
   assert.ok(trial.emberAfter < trial.emberBefore, 'the slow impact still takes ember from the real pot');
   assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
   process.exit(0);

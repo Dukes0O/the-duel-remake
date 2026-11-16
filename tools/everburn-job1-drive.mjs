@@ -2,6 +2,8 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
+import {riverDepthAt} from '../src/world/scablands-regions.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
 // the way. The gradual joins let the real car follow the line at driving speed.
@@ -268,7 +270,16 @@ export function driveToFirstClimb(duel, route, end, targetSpeedMph) {
   const pot = duel.state.arena.worldJob.job.stepState;
   const emberBefore = pot.ember;
   const drive = driveMeasuredStretches(duel, route, [end], targetSpeedMph, false, true);
-  return {drive, climb:firstGroundClimb(drive), emberBefore,
+  const climb = firstGroundClimb(drive);
+  let terrain = null;
+  if (climb) {
+    const {x, z} = climb.position, step = 1.5;
+    const gradient = height => ({x:(height(x + step, z) - height(x - step, z)) / (2 * step),
+      z:(height(x, z + step) - height(x, z - step)) / (2 * step)});
+    terrain = {riverDepth:riverDepthAt(x, z), riverGradient:gradient(riverDepthAt),
+      groundGradient:gradient(scablandsSurfaceHeightAt)};
+  }
+  return {drive, climb, terrain, emberBefore,
     emberAfter:duel.state.arena.worldJob.job.stepState.ember};
 }
 
