@@ -1,5 +1,11 @@
 const STORAGE_KEY = 'duel_machine_input_v1';
 const AXES = Object.freeze(['swing', 'boom', 'arm', 'bucket']);
+const mappingListeners = new Set();
+
+export function onMachineInputChange(listener) {
+  mappingListeners.add(listener);
+  return () => mappingListeners.delete(listener);
+}
 
 export function loadMachineInput(storage = globalThis.localStorage) {
   try {
@@ -16,7 +22,11 @@ export function saveMachineInput(mapping, storage = globalThis.localStorage) {
   const axes = Object.fromEntries(AXES.filter(name => Number.isInteger(mapping.axes[name]) && mapping.axes[name] >= 0)
     .map(name => [name, mapping.axes[name]]));
   if (!Object.keys(axes).length) return false;
-  try { storage?.setItem(STORAGE_KEY, JSON.stringify({ deviceId: mapping.deviceId, axes })); return true; }
+  try {
+    storage?.setItem(STORAGE_KEY, JSON.stringify({ deviceId: mapping.deviceId, axes }));
+    for (const listener of mappingListeners) listener();
+    return true;
+  }
   catch { return false; }
 }
 
