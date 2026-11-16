@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed hazard measurements (16 November 2026)
+
+- The seeded Medium driver follows the bed, scoops at Wash and reaches the town approach. Its five jolts were one rider contact at 2,373 m and four steep-ground impacts at 6,449 to 6,456 m along the route. The rider reported near the latter impacts was about 7 m above the car. The earlier table's five rider contacts were not five rams. No new event or sound cue was added.
+- Check: `EVERBURN_BED_HAZARDS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive. The test reads the real car, ground-hit events and job state. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: steer around the rider and steep ground, then prove the bed drives and remaining clean routes.
+
 
 ## Clean plates drive to the forge (16 November 2026)
 
