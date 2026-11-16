@@ -11,9 +11,22 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
+import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// The Dig supplies both the hills and the land's photographs to its ground shader.
+const loadedGroundPhotos=[];
+const digLook=createDigGroundLook({texture:new THREE.Texture(),box:{x0:0,z0:0,width:1,depth:1}},
+  {load(path){loadedGroundPhotos.push(path);return new THREE.Texture();}});
+const digMaterial=digLook.look.apply(new THREE.MeshStandardMaterial());
+const digShader={uniforms:{},vertexShader:'#include <common>\n#include <project_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <normal_fragment_maps>'};
+digMaterial.onBeforeCompile(digShader);
+assert.equal(digShader.uniforms.uHillField.value,digLook.hills.texture);
+assert.equal(digShader.uniforms.uPhPlate.value,digLook.photos.plates.map);
+assert.ok(loadedGroundPhotos.some(path=>path.endsWith('scablands-scab-rock-colour.jpg')));
+assert.ok(digLook.hills.texture.image.data.some(value=>value>0),'The hill field contains raised land.');
+digMaterial.dispose();digLook.hills.texture.dispose();digLook.photos.dispose();
 
 // The survey text and strip change together only at displayed precision.
 let surveyWrites = 0, surveyDraws = 0;

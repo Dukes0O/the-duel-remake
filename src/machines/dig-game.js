@@ -17,7 +17,8 @@ import {GROUND_AREAS} from '../world/scablands-regions.js';
 import {createRiverField} from '../world/scablands-draw.js';
 import {LAND} from '../world/scablands-names.js';
 import {SUN_OFFSET} from '../atmosphere.js';
-import {createGroundLook, createTunnelMesh} from '../world/scablands-ground-look.js';
+import {createGroundLook, createHillField, loadGroundPhotos, createTunnelMesh} from '../world/scablands-ground-look.js';
+import {HILLS,scablandsTerrainHeightAt} from '../world/scablands-height.js';
 import {tunnelPortalShape, tunnelPortalSurface} from '../world/tunnel-look.js';
 import {machineToolPosition} from './machine.js';
 import {drillYardControls, drillMaterialAt} from './drill.js';
@@ -33,6 +34,18 @@ const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
 const MACHINE_IDS=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
+
+/** Give the Dig the same hill field and ground photographs as the land. */
+export function createDigGroundLook(riverField, loader) {
+  const noHills=[];
+  const hills=createHillField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth,
+    raised:(x,z)=>scablandsTerrainHeightAt(x,z)-scablandsTerrainHeightAt(x,z,noHills),
+    spots:HILLS.map(hill=>({x:hill.x,z:hill.z,reach:(hill.radius+(hill.ramp??0))*1.3+40}))});
+  const photos=loadGroundPhotos(loader);
+  const look=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,
+    burn:LAND.place('everburn'),hills},photos});
+  return {look,hills,photos};
+}
 
 /** Update the survey only when one of its displayed values changes. */
 export function updateBorerSurvey(panel, cache, line, b) {
@@ -259,7 +272,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const world=new THREE.Group();scene.add(world);
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
-  const groundLook=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,burn:LAND.place('everburn')}});
+  const {look:groundLook,hills:hillField,photos:groundPhotos}=createDigGroundLook(riverField);
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}));
   const yardFloor=staticYard(world,groundMaterial);
   const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
@@ -356,7 +369,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   function stop(){
     if(stopped)return;stopped=true;document.removeEventListener('keydown',onDown,true);document.removeEventListener('keyup',onUp,true);
     window.removeEventListener('blur',onBlur);window.removeEventListener('storage',onStorage);unsubscribeMapping();observer.disconnect();for(const view of machineViews.values())view.dispose();
-    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
+    borerSounds.dispose();roadSounds.dispose();roadView.dispose();drillSounds.dispose();wellheadView.dispose();cuttingsView.dispose();effects.dispose();groundView.dispose();disposeScene(world);riverField.texture.dispose();hillField.texture.dispose();groundPhotos.dispose();renderer.dispose();closeDigSandbox();host.remove();onExit();
   }
   function frame(now){
     if(stopped)return;
