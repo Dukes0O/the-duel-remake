@@ -479,6 +479,41 @@ Codex's last table, with riders keeping to their road and the bed's cold at twic
   rule is the right one.
 - All nine things are with Codex. Then a confirmation review, the long tests, and the merge, still hidden. Then Kyle's try.
 
+## The forge, drawn, and two faults found at the merge (Claude, 16 November 2026, morning): not merged yet
+
+**The forge and its crane (Claude's drawing, `src/world/forge-look.js`).** A hearth of salvaged brick with a chimney of oil
+drums, a bellows, a quench drum, an anvil and a windbreak of sheet, just outside the bay's ring on its north side. Beside it a
+crane on an 11 m lattice tower with a 21 m jib, long enough to reach a car anywhere in the bay. While a car is near, the hook
+is kept over it. When the pot is handed over the hook comes down, lifts the pot off the car, carries it round and tips the
+ember into the hearth exactly 5.0 s later, wherever the car stopped (`FORGE.times`). The fire is the ember's own: bright
+catches in 2 s and burns tall with sparks, alive takes 5 s, barely creeps over 8 s. The hearth, the tower and the anvil are
+solid (`tin-town-forge`, `tin-town-crane`, `tin-town-anvil`) and none stands in the bay. The plain flame and the flying pot
+are removed.
+
+**Fault 1, found by Claude's hand drive: nobody sees the arrival.** The results screen comes up within a second of the car
+stopping and covers the forge. That was true of the plain flame as well, so the earlier line here that "the arrival is an
+event" was wrong. Ruled:
+
+- The job does not end when the car stops in the bay. A hold of 9.0 s of the game's own time begins. The car stays stopped
+  and the player's keys do nothing to it; nothing can hurt the car or the ember; the pause still works.
+- The instruction reads "Delivered. The forge takes the fire." The gauge keeps the ember that arrived.
+- The camera leaves the chase view over the first second and stands still: on the line from the hearth through the car,
+  10 m beyond the car, 5 m to the side away from the crane's tower, 4.5 m above the ground, looking at a point 4 m up, half
+  way between the car and the hearth. It keeps the camera's own rules about ground and solid things.
+- The cue `world.forge.catch` sounds 5.0 s into the hold, when the ember lands, and not at arrival.
+- After 9.0 s the job ends as it does now: the same result, the same pay, the same screen.
+
+**Fault 2, found by the lane tier: `tools/test-everburn-easy.mjs`, Hot Delivery 0 of 10 on Easy.** The suite's driver for
+this job was written for the old 800 m road. It has to be taught what the remade job asks (stop by Cinder, the East Road, the
+barricades, the gate at a walk, stop in the bay, wait through the hold). The bar stays 8 of 10. If a driver that does all of
+that cannot reach it, that is a fault in the job and comes back to Claude.
+
+**Five older suites corrected by Claude at the merge**, each to a ruling of this job, reviewed by Codex (two found weak and
+made strict): `test-ember-side-jobs`, `test-everburn-play-fixes-a`, `test-p4-audio`, `test-scablands-map`,
+`test-scablands-size`. The list with reasons goes in the result below when the job merges.
+
+Codex builds the hold, its camera and the Easy driver in lane `everburn-job1` (brief: both faults, small steps).
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
