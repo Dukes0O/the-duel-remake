@@ -199,23 +199,34 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     'the rider is already close and pursuing at the top of the Steps');
   const gate = definition.steps[0].riderSafeWall;
   const bypassTrial = process.env.EVERBURN_BED_TOWN_BYPASS === '1';
+  const oppositeExitTrial = process.env.EVERBURN_BED_OPPOSITE_EXIT === '1';
   const directTrial = process.env.EVERBURN_BED_DIRECT_TRIAL === '1';
   const mediumTrial = process.env.EVERBURN_BED_MEDIUM_TRIAL === '1';
   const dx = route.town.x - afterSteps.x, dz = route.town.z - afterSteps.z;
   const length = Math.hypot(dx, dz);
   const bypass = 100;
-  const townLine = bypassTrial ? [{x:afterSteps.x, z:afterSteps.z},
-    {x:afterSteps.x + dx / length * 350 - dz / length * bypass,
-      z:afterSteps.z + dz / length * 350 + dx / length * bypass}, route.town] : directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
+  const townLine = (bypassTrial || oppositeExitTrial) ? [{x:afterSteps.x, z:afterSteps.z},
+    {x:afterSteps.x + dx / length * 350 - dz / length * bypass * (oppositeExitTrial ? -1 : 1),
+      z:afterSteps.z + dz / length * 350 + dx / length * bypass * (oppositeExitTrial ? -1 : 1)}, route.town] : directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
     [{x:afterSteps.x, z:afterSteps.z},
       {x:route.exit.x + (mediumTrial ? 600 : 300), z:route.exit.z},
       {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
   const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
-  const townSpeed = (fastTrial ? 80 : (safeTrial || directTrial || bypassTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
+  const townSpeed = (fastTrial ? 80 : (safeTrial || directTrial || bypassTrial || oppositeExitTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
   const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
+  if (oppositeExitTrial) {
+    assert.ok(townDrive.along < 400, 'the opposite exit does not reach 400 m');
+    assert.ok(townDrive.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
+      'the real bridge rider contacts the car on the opposite exit');
+    assert.ok(townDrive.jolts.some(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')),
+      'the real car hits a steep climb on the opposite exit');
+    assert.equal(townDrive.ember, duel.state.arena.worldJob.job.stepState.ember,
+      'the measurement records the actual pot');
+    process.exit(0);
+  }
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
   if (bypassTrial) {
     assert.equal(townDrive.jolts.length, 1, 'the bypass meets one rider in the first 400 m');

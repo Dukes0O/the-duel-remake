@@ -1366,3 +1366,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_MEDIUM_TRIAL=1 EVERBURN_BED_SCOOP_FAST_EXIT=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none; this is a new measurement. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: find a safe-speed exit that avoids the rider and prove both bed drives, then the salt pan, East Road, scenario and final checks.
+
+## Bed, opposite safe-speed exit (16 November 2026)
+
+- The seeded Medium car scoops at the Wash, passes beneath the bridge and climbs the Steps. It then aims 100 m to the opposite side of the earlier bypass, targeting 48 km/h. The bridge rider contacts it 127 m along that line. At about 362 m the car hits a steep climb and cannot reach 400 m within two minutes; the ember goes out. This line is not a clean delivery. No game event or sound cue was added.
+- Check: `$env:EVERBURN_BED_STEPS_ONLY='1'; $env:EVERBURN_BED_OPPOSITE_EXIT='1'; node tools/test-everburn-job1.mjs` passed. It also proves the straight-across outage at 629.822 m. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; these are new measurements. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a safe-speed exit that avoids the rider and steep climb, then prove both bed drives, the salt pan and East Road; finish the scenario and checks. The earlier bed drives exceeded ten minutes, so Claude's ruling on the ground remains needed.
