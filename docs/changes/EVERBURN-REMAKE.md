@@ -560,3 +560,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road to 5.5 kilometres (15 November 2026)
+
+- The Medium proof drive reaches 5.5 km on the East Road. Its driver records the closest distance to Tin Town's real gate for the remaining approach. This advances step 7a; arrival is not yet proved. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed after confirming the integration branch is already merged. The last stretch covered 499.09 m in 31.53 seconds, stayed within 1.51 m of the road and ended with 54.54 ember, 1,408.76 m from the gate. `git diff --check`: passed. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.

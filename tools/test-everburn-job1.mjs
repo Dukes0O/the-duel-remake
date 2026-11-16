@@ -398,6 +398,13 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(tenth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(tenth)}`);
   assert.deepEqual(tenth.burntDuringDrive, [], 'the driver records that no barricade burned on this stretch');
   console.log('East Road 5 km drive:', JSON.stringify(tenth));
+  const eleventh = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 5500);
+  assert.ok(eleventh.along >= 5500, `the car follows the East Road for 5.5 km: ${JSON.stringify(eleventh)}`);
+  assert.ok(eleventh.driven >= 490 && eleventh.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eleventh)}`);
+  assert.ok(eleventh.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eleventh)}`);
+  assert.ok(eleventh.nearestTownGate < tenth.nearestTownGate, `the car gets closer to Tin Town's gate: ${JSON.stringify(eleventh)}`);
+  assert.ok(eleventh.nearestTownGate <= Math.hypot(eleventh.position.x - step.riderSafeWall.x, eleventh.position.z - step.riderSafeWall.z) + 0.01, 'the driver measures the real car position against the town gate');
+  console.log('East Road 5.5 km drive:', JSON.stringify(eleventh));
 
 }
 // The real job requests the gate only for a car approaching slowly.
