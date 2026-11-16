@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Hit limits (16 November 2026)
+
+- Ordinary jolts now take at most 15 ember. Falls over 3 m and crashes to rest from over 80 km/h can take up to 40. Easy halves the capped loss. The existing `world.ember.spark` cue is unchanged.
+- `node tools/test-everburn-job1.mjs`: the new real carry, world-job and landing checks passed, including a 42-point ram capped at 15 and falls on both sides of 3 m. The suite then failed at the pre-existing East Road scoop assertion: the 100-point pot ceiling limits that scoop to 19.8389 after the fifteen-minute cold ruling. No assertion was changed. Race fingerprints, lane tier and build remain for the last round.
+- Changed assertions: none. Codex decided: a car below 1 km/h counts as stopped for the severe crash rule, matching the job's stopped test.
+- For Claude to run: the browser scenario and final checks, including the two long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: uncapped ordinary hit loss. Next: measure the four ways once each without tuning, then camera, cover and scenario.
+
 ## Fifteen-minute cold rate (16 November 2026)
 
 - Set the pot's cold loss to 100 / 900 per second, as Claude ruled. The salt pan still uses its 1.5 multiplier. No game event or sound cue changed.

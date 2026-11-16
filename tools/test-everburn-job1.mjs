@@ -26,6 +26,8 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
+import {scablandsLanded} from '../src/sim-scablands.js';
+import {GROUND} from '../src/world/scablands-ground-rules.js';
 import {driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
@@ -38,6 +40,52 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const view = {player:{position:carry.carStart}, speedKmh:0, safeKmh:Infinity, difficulty:'medium'};
   const result = stepCarry(carry, {loaded:true, ember:100}, view, 1);
   assert.ok(Math.abs(100 - result.state.ember - 100 / 900) < 1e-9, 'a full pot cools in fifteen minutes');
+}
+// The real carry step caps ordinary hits and applies Easy after the cap.
+{
+  const view = {player:{position:definition.steps[0].carStart}, speedKmh:0, safeKmh:Infinity, hitKmh:28, difficulty:'medium'};
+  const hit = changes => stepCarry(definition.steps[0], {loaded:true, ember:100}, {...view, ...changes}, 0);
+  assert.equal(hit({}).state.jolt, 15, 'a ram that would cost 42 is capped at 15');
+  assert.equal(hit({difficulty:'easy'}).state.jolt, 7.5, 'Easy halves the capped hit');
+  assert.equal(hit({severeHit:true, hitKmh:100}).state.jolt, 40, 'a severe fall or crash is capped at 40');
+  assert.equal(hit({severeHit:true, hitKmh:100, difficulty:'easy'}).state.jolt, 20);
+}
+// Process impacts through the world job, including the previous-speed crash threshold.
+{
+  const step = definition.steps[0], car = {...step.carStart};
+  const waitingWorld = createWorldJob(definition);
+  const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, lateral:0};
+  const waitingDuel = {state:waitingState, seed:19, course:{def:{scablands:true},
+    nearest:() => ({s:0, lateral:0}), at:() => ({heading:0})}};
+  initializeWorldJob(waitingDuel, definition);
+  Object.assign(waitingState, {opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'});
+  Object.assign(waitingDuel, {emit:() => {}, _storyCallout:() => {}});
+  waitingDuel.course.worldAt = () => car;
+  const impact = ({lastKmh = 0, ram = 0, fall = false, fallKmh = 0, difficulty = 'medium'} = {}) => {
+    waitingWorld.job.stepState = {loaded:true, ember:100};
+    waitingWorld.lastKmh = lastKmh;
+    waitingWorld.riderHitKmh = ram;
+    waitingState.scablandsLongFall = fall;
+    waitingState.scablandsHitKmh = fallKmh;
+    waitingState.cpuDifficulty = difficulty;
+    stepWorldJob(waitingDuel, 0);
+    return waitingWorld.job.stepState.jolt;
+  };
+  assert.equal(impact({ram:28}), 15, 'the real job caps a 42-point ram');
+  assert.equal(impact({ram:28, difficulty:'easy'}), 7.5);
+  assert.equal(impact({lastKmh:80}), 15, '80 km/h is not over the crash threshold');
+  assert.equal(impact({lastKmh:81}), 40, 'a crash to rest from over 80 km/h has the higher cap');
+  assert.equal(impact({fall:true, fallKmh:50}), 40, 'a long fall has the higher cap');
+  assert.equal(impact({fallKmh:50}), 15, 'a shorter fall keeps the ordinary cap');
+  waitingDuel._scrape = () => {};
+  waitingDuel._callout = () => {};
+  for (const [drop, long] of [[2.9, false], [3.1, true]]) {
+    waitingState.scablandsLongFall = false;
+    waitingState._scablandsLanding = Math.sqrt(2 * GROUND.gravity * drop);
+    scablandsLanded(waitingDuel, waitingState);
+    assert.equal(waitingState.scablandsLongFall === true, long, 'the landing measures its own drop');
+  }
+  waitingState.cpuDifficulty = 'medium';
 }
 // The starting map tells Cinder's one known way without revealing other routes or dangers.
 {

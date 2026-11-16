@@ -116,7 +116,10 @@ export function scablandsLanded(duel, actor) {
   const speed = Math.abs(actor.speedMph || 0), shed = Math.min(speed * .75, hit.kmh / MPH_TO_KMH * .35);
   actor.speedMph = Math.sign(actor.speedMph || 1) * Math.max(0, speed - shed);
   // The ember reads this through the step's own speed loss (src/arena/modes/world-job.js): a fall puts out as much as the drop gives, at any speed.
-  if (player) duel.state.scablandsHitKmh = (duel.state.scablandsHitKmh || 0) + hit.kmh;
+  if (player) {
+    duel.state.scablandsHitKmh = (duel.state.scablandsHitKmh || 0) + hit.kmh;
+    if (duel.state.arena?.worldJob && drop > 3) duel.state.scablandsLongFall = true;
+  }
   if (combatArmorEnabled(duel) && (player || duel.state.opponents.includes(actor)) && !actor.combatWrecking && Number.isFinite(actor.maxArmor)) {
     // Never the last of the armour: a fall cannot end a job by itself.
     const amount = Math.min(hit.armorShare * actor.maxArmor, Math.max(0, (actor.armor ?? 0) - 1));

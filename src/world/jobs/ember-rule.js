@@ -13,6 +13,7 @@ export const EMBER_RULE = Object.freeze({
   roughPerMetre: 0.003,       // ground driven faster than it is safe: 0.003 for each km/h over the safe speed, for each metre driven (so going faster always costs more a metre)
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing
   hitPerKmh: 1.5,             // ember taken for each km/h shed in a hit
+  hitCap: 15, severeHitCap: 40,
   easyScale: 0.5,             // on Easy, rough ground and hits take half; cold is the same
   scoopKmh: 20,               // the car must be slower than this at a brazier to take a fresh scoop
   brightFrom: 70, aliveFrom: 30,
@@ -22,11 +23,11 @@ export const EMBER_RULE = Object.freeze({
 // What one step of driving takes from the pot. `kmh` is the car's speed, `lostKmh` the speed it shed in this step, `safeKmh` the speed
 // the ground under the car is safe at (Infinity when it takes nothing at any speed). Returns the ember taken by each cause (cold, rough
 // ground, a hit) and the total.
-export function emberLoss(rule, {kmh = 0, lostKmh = 0, safeKmh = Infinity, difficulty = 'medium', coldFactor = 1, dt = 0} = {}) {
+export function emberLoss(rule, {kmh = 0, lostKmh = 0, safeKmh = Infinity, difficulty = 'medium', coldFactor = 1, severeHit = false, dt = 0} = {}) {
   const scale = difficulty === 'easy' ? rule.easyScale : 1;
   const cold = rule.coldPerSecond * coldFactor * dt;
   const rough = rule.roughPerMetre * Math.max(0, kmh - safeKmh) * (kmh / 3.6) * dt * scale;
-  const hit = lostKmh > rule.hitFreeKmh ? rule.hitPerKmh * lostKmh * scale : 0;
+  const hit = lostKmh > rule.hitFreeKmh ? Math.min(rule.hitPerKmh * lostKmh, severeHit ? rule.severeHitCap : rule.hitCap) * scale : 0;
   return {cold, rough, hit, total: cold + rough + hit};
 }
 

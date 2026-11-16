@@ -816,12 +816,15 @@ export function stepWorldJob(duel, dt) {
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
   const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0, worldJob.riderHitKmh || 0);
+  const severeHit = state.scablandsLongFall === true ||
+    (worldJob.lastKmh > 80 && kmh < 1 && worldJob.lastKmh - kmh > 80);
   state.scablandsHitKmh = 0;
+  state.scablandsLongFall = false;
   worldJob.riderHitKmh = 0;
   worldJob.lastKmh = kmh;
   const ground = scablandsDriveAt(point.x, point.z);
   const view = {player: playerView, onFoot: !!state.onFoot,
-    speedKmh: kmh, hitKmh, safeKmh: ground.safeKmh, groundRegion: ground.id,
+    speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,
