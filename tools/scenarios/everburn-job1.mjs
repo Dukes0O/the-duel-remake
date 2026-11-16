@@ -1,6 +1,8 @@
 // Memory-only visual handoff for Hot Delivery. Claude runs this on Performance.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
+import {EAST_ROAD} from '../../src/world/scablands-road.js';
+import {pointAlong} from '../../src/world/scablands-road-geometry.js';
 
 // Every page expression is a self-contained function, checked before it is sent.
 const page = (context, fn, ...args) => {
@@ -34,16 +36,21 @@ export async function run(context) {
         render.scene.traverse(node => { if (node.name === target) nodes.push(node); });
         const node = nodes[options.index || 0];
         app.onFrame?.(state, 0); render.renderFrame();
+        const pointFor = item => {
+          item.updateWorldMatrix(true, false);
+          const point=item.getWorldPosition(camera.position.clone());
+          if (item.userData.plan?.gate) { point.x+=item.userData.plan.gate.x; point.z+=item.userData.plan.gate.z; point.y+=3; }
+          return point;
+        };
         if (options.focus && node) {
-          node.updateWorldMatrix(true, false);
-          const p = node.getWorldPosition(camera.position.clone());
+          const p = pointFor(node);
           camera.position.set(p.x + (options.dx || 0), p.y + (options.dy || 8), p.z + (options.dz || 30));
           camera.lookAt(p.x, p.y + (options.aimHeight || 1), p.z);
           camera.updateMatrixWorld(true); render.renderFrame();
         }
         const visible = node && (() => { for (let p = node; p; p = p.parent) if (!p.visible) return false; return true; })();
         let projection = null;
-        if (node) { node.updateWorldMatrix(true, false); const p = node.getWorldPosition(camera.position.clone()); p.y += options.aimHeight || 1; projection = p.project(camera); }
+        if (node) { const p = pointFor(node); p.y += options.aimHeight || 1; projection = p.project(camera); }
         const inView = !!projection && Math.abs(projection.x) < 1 && Math.abs(projection.y) < 1 && projection.z > -1 && projection.z < 1;
         const at = duel.course.worldAt(state.s, state.lateral);
         const map = document.querySelector('.world-hud-map:not([hidden])');
@@ -97,6 +104,7 @@ export async function run(context) {
     await wait(context, 'window.__qaApp.profile.story?.ember?.read===true', 'note read');
     await click(context,'[data-ember-step="hot-delivery"]');
     await wait(context, 'window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing"', 'Hot Delivery', 90000);
+    await wait(context, `(() => { let land; window.__render.scene.traverse(node => { if (node.name === 'The Scablands') land=node; }); return land?.userData.assetStatus === 'ready'; })()`, 'Scablands art', 120000);
     await page(context, () => { window.__qaApp.duel.state.cpuDifficulty='medium'; window.__qaApp.advance(0.2); });
     await picture('1-yard-start','Scrapdome yard on the land');
     await key(context,'m','KeyM',77);
@@ -105,8 +113,14 @@ export async function run(context) {
     await place('pickup',0,5);
     await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
     await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true});
-    await place('pickup',0,160);
-    await picture('4-east-road-yard','Scrapdome yard on the land',{focus:true,dx:100,dy:35,dz:100,loaded:true});
+    const road=pointAlong(EAST_ROAD.points, 400);
+    await page(context, road => {
+      const app=window.__qaApp, duel=app.duel, state=duel.state, pose=duel.course.nearest(road.x,road.z);
+      state.s=state.prevS=pose.s; state.lateral=state.prevLateral=pose.lateral; state.speedMph=0;
+      state.headingError=Math.atan2(Math.sin(Math.atan2(-road.x,-road.z)-duel.course.at(pose.s).heading),Math.cos(Math.atan2(-road.x,-road.z)-duel.course.at(pose.s).heading));
+      app.onFrame?.(state,0); window.__render.renderFrame();
+    }, road);
+    await picture('4-east-road-yard','Scrapdome yard on the land',{loaded:true});
     await place('barrier',0,35);
     await picture('5-halfway-barricade','Ash Men barricade',{focus:true,index:0,dx:18,dy:8,dz:25,loaded:true});
     await place('barrier',1,35);
