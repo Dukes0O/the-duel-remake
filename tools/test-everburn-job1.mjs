@@ -140,6 +140,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   camp.position = {...posts[0].start.position, x:posts[0].start.position.x + 100,
     y:scablandsSurfaceHeightAt(posts[0].start.position.x + 100, posts[0].start.position.z)};
   const blocked = {...camp.position};
+  car = {...blocked};
   camp.returningToPost = true;
   for (let i = 0; i < 49; i++) { tick(0.1); camp.position = {...blocked}; }
   assert.ok(!camp.returnStuck, 'the rider keeps trying for five seconds');
@@ -149,60 +150,40 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const stopped = {...camp.position};
   tick(1);
   assert.deepEqual(camp.position, stopped, 'the stranded rider stays stopped');
-  // Neither a visible rider nor a visible destination may jump.
-  state.headingError = 0;
-  car = {...camp.position, z:camp.position.z - 700};
-  for (let i = 0; i < 210; i++) tick(0.1);
-  assert.deepEqual(camp.position, stopped, 'a rider in front remains visible');
-  // A nearby rider must also recover after both ends stay hidden for 20 seconds.
-  let nearbyHiddenCar;
-  for (let angle = 0; angle < Math.PI * 2 && !nearbyHiddenCar; angle += Math.PI / 24) {
-    for (let distance = 250; distance <= 1200 && !nearbyHiddenCar; distance += 50) {
-      const candidate = {x:stopped.x + Math.sin(angle) * distance,
-        z:stopped.z + Math.cos(angle) * distance};
+  // A parked rider beside the car in open ground stays put.
+  car = {...stopped};
+  tick(21);
+  assert.deepEqual(camp.position, stopped, 'a nearby rider in open ground stays parked');
+  // Find real ground that hides the post and a rider less than 600 m away.
+  let hiddenCar, hiddenRider;
+  const home = posts[0].start.position;
+  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
+    for (let distance = 700; distance <= 2400 && !hiddenCar; distance += 100) {
+      const candidate = {x:home.x + Math.sin(angle) * distance, z:home.z + Math.cos(angle) * distance};
       candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
       const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
         actorFloors:true, eye:5, target:2, step:5});
-      const road = ROAD_NET.road('east-road').points;
-      const roadDistance = Math.abs(nearestOnLine(road, candidate.x, candidate.z).along -
-        nearestOnLine(road, stopped.x, stopped.z).along);
-      if (roadDistance < 600 && hidden(stopped) && hidden(posts[0].start.position)) nearbyHiddenCar = {candidate, angle};
+      if (!hidden(home)) continue;
+      for (let separation = 100; separation < 600; separation += 50) {
+        const point = {x:candidate.x - Math.sin(angle) * separation, z:candidate.z - Math.cos(angle) * separation};
+        point.y = scablandsSurfaceHeightAt(point.x, point.z);
+        if (hidden(point)) { hiddenCar = candidate; hiddenRider = point; break; }
+      }
     }
   }
-  assert.ok(nearbyHiddenCar, 'the land provides a nearby hidden road rider and post');
-  car = nearbyHiddenCar.candidate;
-  state.headingError = nearbyHiddenCar.angle;
-  tick(19.9);
-  assert.deepEqual(camp.position, stopped, 'the nearby hidden rider waits for 20 seconds');
-  tick(0.2);
-  assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
-    camp.position.z - posts[0].start.position.z) < 0.01, 'the nearby hidden rider returns after 20 seconds');
+  assert.ok(hiddenCar, 'the land hides the rider and post while the rider is within 600 metres');
+  car = hiddenCar;
+  camp.position = hiddenRider;
+  tick(0.1);
+  assert.ok(Math.hypot(camp.position.x - home.x, camp.position.z - home.z) < 0.01,
+    'both blocked sight lines allow recovery');
   camp.position = {...stopped};
   camp.returningToPost = true;
   camp.returnStuck = true;
-  camp.returnHiddenSeconds = 0;
-  let hiddenCar;
-  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
-    for (let distance = 700; distance <= 2400 && !hiddenCar; distance += 100) {
-      const candidate = {x:stopped.x + Math.sin(angle) * distance,
-        z:stopped.z + Math.cos(angle) * distance};
-      candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
-      const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
-        actorFloors:true, eye:5, target:2, step:5});
-      const road = ROAD_NET.road('east-road').points;
-      const roadDistance = Math.abs(nearestOnLine(road, candidate.x, candidate.z).along -
-        nearestOnLine(road, stopped.x, stopped.z).along);
-      if (roadDistance >= 600 && hidden(stopped) && hidden(posts[0].start.position)) hiddenCar = {candidate, angle};
-    }
-  }
-  assert.ok(hiddenCar, 'the land provides a hidden road rider and post');
-  car = hiddenCar.candidate;
-  state.headingError = hiddenCar.angle;
+  car = {x:stopped.x + 2000, z:stopped.z, y:scablandsSurfaceHeightAt(stopped.x + 2000, stopped.z)};
   tick(0.1);
-  assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
-    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns at 600 metres along the road without waiting 20 seconds');
-  assert.equal(camp.returnStuck, false);
-  assert.equal(camp.returningToPost, false);
+  assert.ok(Math.hypot(camp.position.x - home.x, camp.position.z - home.z) < 0.01,
+    'both ends 600 metres away allow recovery');
   // A wreck cannot use either recovery threshold, even after it was stranded.
   camp.position = {...stopped};
   camp.health = 0;
@@ -1293,30 +1274,59 @@ for (const reason of ['sight', 'town', 'time']) {
     assert.equal(riders.length, 2);
     assert.ok(riders.every(rider => rider.returningToPost && !rider.pursuing));
   }
-  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z};
-  car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  state.headingError = -Math.PI / 2;
-  world.sightStep = 1;
-  stepWorldJob(duel, 0.1);
-  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2,
-    'distant riders in front of the camera remain');
+  if (reason === 'town' && riders.length === 0) continue;
+  // A nearby rider and its post in open ground cannot disappear.
   const remaining = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
-  let hiddenCar;
-  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
-    const candidate = {x:FURNACE_SKYLINE.x + 1800 * Math.sin(angle), z:FURNACE_SKYLINE.z + 1800 * Math.cos(angle)};
-    candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
-    if (remaining.every(rider => !sees(candidate, rider.position, {heightAt:scablandsSurfaceHeightAt,
-      actorFloors:true, eye:5, target:2, step:5}))) hiddenCar = {candidate, angle};
-  }
-  assert.ok(hiddenCar, 'the land provides a hidden return');
-  car = hiddenCar.candidate;
-  state.headingError = hiddenCar.angle;
+  car = {...remaining[0].position};
   world.sightStep = 1;
   stepWorldJob(duel, 0.1);
-  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
+  assert.ok(world.actors.includes(remaining[0]), 'a nearby rider in open ground remains');
+  // Both ends are far away, regardless of heading or terrain.
+  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z,
+    y:scablandsSurfaceHeightAt(FURNACE_SKYLINE.x + 2000, FURNACE_SKYLINE.z)};
+  world.sightStep = 1;
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
+    'both distant ends allow removal');
   stepWorldJob(duel, 0.1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
     'removed furnace riders do not reappear');
+}
+// The furnace rider can leave when terrain hides both it and its post, even nearby.
+{
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {...FURNACE_SKYLINE, y:scablandsSurfaceHeightAt(FURNACE_SKYLINE.x, FURNACE_SKYLINE.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.skylineWarned = true;
+  world.furnaceRidersReturning = true;
+  world.sightStep = 1;
+  stepWorldJob(duel, 0);
+  const actorDef = step.furnaceRiders[0], rider = world.actors.find(actor => actor.id === actorDef.id);
+  const home = actorDef.start.position;
+  let hiddenCar, hiddenRider;
+  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
+    for (let distance = 700; distance <= 2400 && !hiddenCar; distance += 100) {
+      const candidate = {x:home.x + Math.sin(angle) * distance, z:home.z + Math.cos(angle) * distance};
+      candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
+      const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
+        actorFloors:true, eye:5, target:2, step:5});
+      if (!hidden(home)) continue;
+      for (let separation = 100; separation < 600; separation += 50) {
+        const point = {x:candidate.x - Math.sin(angle) * separation, z:candidate.z - Math.cos(angle) * separation};
+        point.y = scablandsSurfaceHeightAt(point.x, point.z);
+        if (hidden(point)) { hiddenCar = candidate; hiddenRider = point; break; }
+      }
+    }
+  }
+  assert.ok(hiddenCar, 'the land hides a nearby furnace rider and its post');
+  car = hiddenCar;
+  rider.position = hiddenRider;
+  stepWorldJob(duel, 0.1);
+  assert.ok(!world.actors.includes(rider), 'both blocked sight lines allow furnace rider removal');
 }
 // A wrecked furnace rider stays where it was wrecked, even after the car leaves.
 {

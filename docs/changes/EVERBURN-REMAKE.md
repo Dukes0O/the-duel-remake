@@ -1874,3 +1874,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including all five delivery drives. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: nothing.
 - Still needed: Y1's rider beside the car and outside the actual camera view. The current terrain-only rule cannot establish this case without a renderer-independent view test. Then run the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: simulation-only rider recovery
+
+- Stranded road riders return to their posts and returning furnace riders leave when both the rider and its post are at least 600 m from the car, or when the land blocks sight to both. Nearby riders in the open stay put. Wrecks stay where they fell. The rule reads the simulation and the land, never the camera. No sound cue or save shape changed.
+- `test-everburn-job1.mjs` passed, including all deliveries and real-ground checks of both recovery conditions, nearby parked riders and wrecks. It took about 80 seconds; the five scripted deliveries take most of that time. `test-ember-pot.mjs` passed 34 checks; `test-ember-screens.mjs` passed 34 checks.
+- Changed assertions, for Claude to review: the old checks required a rider to be behind the car and hidden, plus either 600 m along the road or 20 seconds hidden. They now check the two distance or blocked-ground conditions above, under Claude's latest Y1 ruling. Codex decided: none. Removed: heading, road-distance and hidden-time conditions for stranded rider recovery.
+- For Claude to run: the two long drivers and the lane tier, as recorded above. For Claude to draw: the pot transfer and forge fire. The scenario was previously passed by Claude.
+- Final checks: `test-replays.mjs` passed 297 unchanged fingerprints; `test-combat-replays.mjs` passed 12 unchanged fingerprints; `npm.cmd run build` passed. Integration was already included.

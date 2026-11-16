@@ -29,14 +29,13 @@ export const worldJobPosition = (duel, actor) => {
   return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
 const position = worldJobPosition;
-// A conservative renderer-independent guarantee: the rider is well behind
-// the car and the land blocks the view. If unsure, leave it in the world.
-function riderHiddenBehindCar(duel, car, rider) {
-  const heading = worldPose(duel, duel.state).heading;
-  const dx = rider.x - car.x, dz = rider.z - car.z;
-  return dx * Math.sin(heading) + dz * Math.cos(heading) < -200 &&
-    !sees(car, rider, {heightAt:scablandsSurfaceHeightAt, actorFloors:true,
-      tunnels:duel.course.groundTunnels, eye:5, target:2, step:5});
+// Both the rider and its post must be far away, or hidden by the ground.
+function riderCanLeave(duel, car, rider, post) {
+  const distance = point => Math.hypot(point.x - car.x, point.z - car.z);
+  if (distance(rider) >= 600 && distance(post) >= 600) return true;
+  const hidden = point => !sees(car, point, {heightAt:scablandsSurfaceHeightAt,
+    actorFloors:true, tunnels:duel.course.groundTunnels, eye:5, target:2, step:5});
+  return hidden(rider) && hidden(post);
 }
 // Keep sight work bounded and stagger the two road riders without using wall time.
 export function roadRiderSight(rider, dt, index, trace) {
@@ -253,8 +252,7 @@ function updateJobActors(duel, worldJob, dt) {
       if (worldJob.furnaceRidersReturning) {
         rider.returningToPost = true;
         const car = position(duel, duel.state);
-        if (Math.hypot(car.x - rider.position.x, car.z - rider.position.z) >= 600 &&
-            riderHiddenBehindCar(duel, car, rider.position)) {
+        if (riderCanLeave(duel, car, rider.position, actorDef.start.position)) {
           worldJob.actors.splice(worldJob.actors.indexOf(rider), 1);
           (worldJob.furnaceRidersGone ??= []).push(actorDef.id);
           continue;
@@ -311,23 +309,14 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         rider.returnCheckSeconds = 0;
       }
     }
-    // Both the old and new positions must be hidden before the rider moves.
-    // Road distance, rather than straight-line distance, measures how far the
-    // player has travelled from this rider's post.
+    // Check both ends before moving a stranded rider back to its post.
     if (roadRider && rider.returnStuck) {
-      const hidden = riderHiddenBehindCar(duel, car, rider.position) &&
-        riderHiddenBehindCar(duel, car, home);
-      rider.returnHiddenSeconds = hidden ? Math.min(20, (rider.returnHiddenSeconds ?? 0) + Math.max(0, dt)) : 0;
-      const road = hidden ? ROAD_NET.road('east-road').points : null;
-      const roadDistance = road ? Math.abs(nearestOnLine(road, car.x, car.z).along -
-        nearestOnLine(road, rider.position.x, rider.position.z).along) : 0;
-      if (hidden && (roadDistance >= 600 || rider.returnHiddenSeconds >= 20)) {
+      if (riderCanLeave(duel, car, rider.position, home)) {
         rider.position = {...home, y:scablandsSurfaceHeightAt(home.x, home.z)};
         rider.returnStuck = false;
         rider.returningToPost = false;
         rider.returnCheckDistance = undefined;
         rider.returnCheckSeconds = 0;
-        rider.returnHiddenSeconds = 0;
         rider.lostSightSeconds = 0;
         return;
       }
