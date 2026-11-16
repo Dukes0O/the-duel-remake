@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates speed comparison (15 November 2026)
+
+- Added a fresh seeded Medium plates drive at a 28 mph target and recorded simulation ticks above the 50 km/h plates threshold. This adds no game event or sound cue.
+- `node tools/test-everburn-job1.mjs`: passed. The car reached 2 km in 2.57 minutes after the yard gate, but the ember went out at 1,551.92 m after two rider contacts. It spent 13 ticks above 50 km/h. The 25 mph comparison also went out before 1.5 km. Neither is an arrival proof. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: compare a 28 mph target within the plates' 50 km/h limit; impacts briefly pushed the car above that limit.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: investigate a viable plates drive, measure all four arrivals and times, then finish camera, cover and scenario.
+
 ## Larger land, plates drive to 2 km (15 November 2026)
 
 - Extended the seeded Medium plates drive to 2 km. The driver now distinguishes an ember that was already out at the start of a stretch from one that went out during it. No game event or sound cue was added.

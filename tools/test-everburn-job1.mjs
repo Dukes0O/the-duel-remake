@@ -522,6 +522,26 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(fourth.beganOut, true, 'the fourth stretch records that the ember was already out');
   assert.equal(fourth.firstOut, null, 'the earlier outage is not reported as a new one');
 }
+// Compare another legal plates speed using a fresh seeded job and real driving.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, pickup).loaded, 'the comparison driver collects the pot');
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20, 'the comparison driver leaves through the gate');
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const opening = driveAlongRoad(duel, route, 2000, 18000, 28);
+  console.log('Plates 28 mph comparison:', JSON.stringify(opening));
+  assert.ok(opening.along >= 2000 && opening.distance < 10, 'the comparison car follows the real plates way to 2 km');
+  assert.equal(opening.ember, duel.state.arena.worldJob.job.stepState.ember, 'the comparison records the actual ember');
+  assert.ok(opening.abovePlatesLimitTicks > 0 && opening.abovePlatesLimitTicks <= opening.ticks,
+    'the driver records time above the plates speed limit');
+  assert.equal(opening.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
+    'the comparison records each actual jolt');
+}
 // The real job requests the gate only for a car approaching slowly.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
