@@ -75,7 +75,9 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   else {
     const homeCopy = canFight ? `The Scrapdome is open. ${fightCopy}` :
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${featureFlags?.enabled('gear-find') ? yardThingsToTry(profile, escapeHTML) : ''}`;
+    const gear = featureFlags?.enabled('gear-find') === true;
+    const dig = featureFlags?.enabled('the-dig') === true;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${gear || dig ? yardThingsToTry(profile, escapeHTML, {gear, dig}) : ''}`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }
