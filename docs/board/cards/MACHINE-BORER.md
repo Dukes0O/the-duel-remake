@@ -309,6 +309,12 @@ Commit 5f9c0aa0c, a visible window, real keys, the page's own clocks recorded.
 
 Not heard: her sounds. Not seen: a bend. The spoil bank's look is Claude's to draw.
 
+### The apprentice is its own card (Kyle's direction, 16 November 2026)
+
+This card left the apprentice out (Codex found that the town's apprentice rule had no way into the Dig and no rule for a cut
+along a line). Kyle has since said that long cuts must be taught and sent, with a way to look in on the work. That is card
+MACHINE-BORER-APPRENTICE, which starts when this one is merged.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile

@@ -1638,3 +1638,31 @@ Day/Night and Dossier remain waiting on that shared renderer dependency.
   list; the medal cars and the restored Sirena keep the fly-it-there rule.
 - Ski radio lines stay as on-screen text for now; no voice credits spent on
   them (Kyle, 26 October 2026). Heli-skiing does not wait on voice.
+
+## Long machine work is taught and sent (Kyle, 16 November 2026)
+
+Kyle: "the two 9.4km cuts will take too long for game play to be enjoyable. that means the first 2 cuts need to train an
+apprentice who can be sent off on the other 2 cuts. We should be able to check in and see the apprentice's progress".
+
+- A long piece of machine work is never the player's to do in full. The first two are done by hand and teach an apprentice;
+  the apprentice is sent on the rest; the player can look in on the work at any time, see it, and take over.
+- First built for the boring machine (card MACHINE-BORER-APPRENTICE). It applies to every machine line after it.
+- Recorded by Claude. Kyle was reading a table of driving routes as cuts; the rule he drew from it stands by itself.
+- To reverse: Kyle says so.
+
+## By hand, or set running: the player chooses, and sees the sum (Kyle, 16 November 2026)
+
+Kyle, on the ember run and the boring machine: "maybe we could have the boring machine option presented as a safe way to
+"automate" or have recurring runs where we can make money in the background instead of always having to run the course in the
+car. this is a kind of incentive, but also a real world thing that I'd like Gratian to be faced with, choose to always do
+things manually, or automate something that could bring ROI without constant manual intervention."
+
+- A job that comes round again may be given a way to run by itself, built by the player's own work, at a cost in scrap and
+  time, bringing less each time than doing it by hand but without the player.
+- The game shows the sum in plain words (what it costs, what it brings back, how long until it has paid for itself) and
+  keeps the tally afterwards. Neither answer is made the right one; doing it by hand is never taken away.
+- First designed for the fire run to Tin Town (card RUN-FIRE-LINE). Recorded by Claude.
+- Kyle, the same day: a future enhancement, to be handled later in development. The forge's timer is forty minutes of play,
+  not twenty, counted across sittings (twenty minutes one day and ten the next make thirty), with a warning when the
+  embers are getting low. Nothing is to be built from this now.
+- To reverse: Kyle says so.

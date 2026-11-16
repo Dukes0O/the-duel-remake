@@ -1348,6 +1348,26 @@ tasks:
     locks: ["busy-game-files"]
     details: "docs/board/cards/MACHINE-BORER.md"
 
+  - id: MACHINE-BORER-APPRENTICE
+    title: "The boring machine's apprentice: two cuts by hand, the rest sent, and a way to look in"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["MACHINE-BORER","TOWN-APPRENTICES"]
+    locks: ["busy-game-files"]
+    details: "docs/board/cards/MACHINE-BORER-APPRENTICE.md"
+
+  - id: RUN-FIRE-LINE
+    title: "Future idea: the fire line, a run to keep driving by hand or to set running by itself"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "backlog"
+    needs: ["EVERBURN-REMAKE","MACHINE-BORER","MACHINE-BORER-APPRENTICE"]
+    locks: []
+    details: "docs/board/cards/RUN-FIRE-LINE.md"
+
 
 
 
