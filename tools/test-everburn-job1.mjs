@@ -30,6 +30,7 @@ import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
 import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStepsRoute, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
+import {updateArenaMarkers} from '../src/arena/arena-tell-view.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 import {mapFailures, pictureFailures, drawFocusedPicture} from './scenarios/everburn-job1.mjs';
@@ -1355,6 +1356,8 @@ assert.equal(hud().target.id, 'cold-forge');
 {
   const bay = step.destination.position;
   assert.deepEqual({x:bay.x, z:bay.z}, LAND.at('tin-town', 25, 14));
+  assert.equal(step.radius, 8);
+  assert.equal(step.destination.radius, step.radius);
   const grid = createJobSolidGrid();
   assert.equal(pushOutOfSolids(bay.x, bay.z, 2, grid, scablandsSurfaceHeightAt(bay.x, bay.z)).hit, null);
   const ready = () => {
@@ -1362,7 +1365,8 @@ assert.equal(hud().target.id, 'cold-forge');
     delivery.stepState = {loaded:true, ember:100, triggeredLines:step.sayNear.map(cue => `near:${cue.lineId}`)};
     return delivery;
   };
-  assert.equal(stepJob(ready(), view(bay.x + step.radius + .1, bay.z), 0).done, false);
+  assert.equal(stepJob(ready(), view(bay.x + 7.5, bay.z), 0).done, true);
+  assert.equal(stepJob(ready(), view(bay.x + 8.5, bay.z), 0).done, false);
   assert.equal(stepJob(ready(), view(bay.x, bay.z, 1), 0).done, false);
   assert.equal(stepJob(ready(), {...view(bay.x, bay.z), onFoot:true}, 0).done, false);
   for (const [ember, grade, pay, relights] of [[70, 'bright', 120, 0], [30, 'alive', 80, 0], [1, 'barely', 50, 0], [70, 'bright', 80, 1]]) {
@@ -1376,6 +1380,19 @@ assert.equal(hud().target.id, 'cold-forge');
   const out = ready();
   out.stepState = {...out.stepState, ember:0, out:true};
   assert.equal(stepJob(out, view(bay.x, bay.z), 0).done, false);
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => ({x:bay.x + 20, z:bay.z, y:scablandsSurfaceHeightAt(bay.x + 20, bay.z)})},
+    emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job = ready();
+  stepWorldJob(duel, 0);
+  const group = new THREE.Group();
+  updateArenaMarkers(group, state.arena.markers, 0);
+  const ring = group.getObjectByName('Arena floor ring');
+  assert.ok(ring?.visible, 'the delivery ring is drawn');
+  assert.equal(ring.geometry.parameters.outerRadius * ring.scale.x, step.radius, 'the visible ring matches the trigger');
 }
 // Exercise the real job step with each brazier, including interrupted stops and an out ember.
 job.stepState = {...job.stepState, ember: 0, out: true};

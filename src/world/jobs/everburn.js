@@ -49,7 +49,7 @@ export function buildEverburn(land) {
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));
   // The Scablands' five named places, as the jobs define them (the big map marks and names them in every job).
   const SCABLANDS_PLACES = Object.freeze({yardGate: yard, tinTown, everburn: well, deadMall: mall, boneyard});
-  const forge = place('cold-forge', at('tin-town', 25, 14), 6), lamps = [
+  const forge = place('cold-forge', at('tin-town', 25, 14), 8), lamps = [
     place('forge-lamp-1', at('tin-town', 18, 8), 3), place('forge-lamp-2', at('tin-town', 25, 10), 3), place('forge-lamp-3', at('tin-town', 32, 8), 3),
   ];
 
@@ -116,7 +116,7 @@ export function buildEverburn(land) {
       easy:Object.freeze({markerRadius:18}), lineId:'story.ember.cinder.1',
       // The pot holds a live ember (src/world/jobs/ember-rule.js): driving takes it, and at 0 Cinder's spill line is said and the marker
       // moves to the nearest brazier (the yard gate, or the halfway camp once passed), where a stop gives a fresh scoop.
-      steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:forge, radius:6, stopAtDestination:true,
+      steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:forge, radius:forge.radius, stopAtDestination:true,
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.0}), burnable:true, spillLineId:'story.ember.cinder.4',

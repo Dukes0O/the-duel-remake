@@ -1695,3 +1695,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - `test-replays.mjs` passed 297 unchanged race fingerprints; `test-combat-replays.mjs` passed 12 unchanged combat fingerprints. `test-scablands-hills.mjs`, `test-scablands-solid.mjs`, `test-scablands-scene.mjs`, `test-rail-region.mjs` and `test-camera-clearance.mjs` all passed individually. `npm.cmd run build` passed; the generated build was removed. Integration was already an ancestor.
 - The complete lane tier remains for Claude: its previous partial run selected `test-run-gas-medium.mjs`, which this job excludes, and reported the sandbox audio failures listed above. The browser scenario was not run. Claude should run it, `test-everburn-easy.mjs`, `test-run-gas-medium.mjs` and the complete lane tier. Claude still needs to draw the pot transfer and forge fire.
 - Changed assertions for Claude to review: the bed factor and the migrated legacy loss, scoop and route checks are recorded in the preceding entries. Codex decided: none. Removed: the former instant refill and obsolete route checks and helpers, as detailed above. No sound cue or save shape changed in this pass.
+
+## X1: forge bay ring
+
+- The forge marker and delivery trigger now share an eight-metre radius. A stopped car completes the delivery when its centre is inside the ring; it must be travelling below 1 km/h. The existing forge catch cue remains `world.forge.catch`.
+- Check: `node tools/test-everburn-job1.mjs` passed, including stops at 7.5 and 8.5 metres and the actual ring geometry and scale. The five delivery measurements remained as in the table above. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions, for Claude to review: the former six-metre boundary is now eight metres, as Claude directed after the drive. The old outside-boundary check is replaced by explicit 7.5-metre and 8.5-metre checks. Codex decided: none. Removed: the separate six-metre trigger value.
+- For Claude to run: the two long drivers and the lane tier as recorded above. For Claude to draw: the pot transfer and forge fire. X2 to X9 and the final checks remain.
