@@ -1666,3 +1666,26 @@ things manually, or automate something that could bring ROI without constant man
   not twenty, counted across sittings (twenty minutes one day and ten the next make thirty), with a warning when the
   embers are getting low. Nothing is to be built from this now.
 - To reverse: Kyle says so.
+
+## Checks sized to the card, and a nightly check that tells news (Kyle, 16 November 2026)
+
+Kyle asked for an audit of how the game is built: "I've found many times in the past where we ended up doing more testing
+than building. we've made many successful corrections, but I'm curious where things stand now." The audit (a Sonnet
+session, read-only, the same day) found that writing checks is no longer the larger share of the work (23% of changed
+lines since 24 September, against 38% game and art and 39% notes) but that running them has grown: the full set from 9
+minutes to about an hour, the nightly run from 76 to 172 minutes, and two suites of 69 and 26 minutes making 63% of the
+check minutes in a lane run. On Hot Delivery about 6.4 of 10.5 Codex hours went to check code. Every recorded nightly run
+reads "failed" because of the same browser failures, and none ran after 13, 14 or 15 November. It proposed five changes.
+Kyle: "go ahead with the first four audit changes".
+
+- **Checks are picked by what the card touches.** A suite of three minutes or more runs in a lane only when the card names
+  it, and otherwise at night. (AGENTS rule 11; card QA-CHECKS-BY-CARD.)
+- **One lane run per card.** A fix made after it runs only the suites for the files changed since. (Rules 1 and 19.)
+- **The nightly check tells news.** Its failures that are known stand on a list, each with a card; only a new failure makes
+  the night "failed". Browser scenarios run for what changed, and all of them once a week. A night without a full check is
+  made up the next morning. (Rule 13; cards QA-NIGHTLY-NEWS and QA-STANDING-BROWSER.)
+- **One scripted proof drive per card.** Hand drives do the finding. (Gates; `docs/CODEX_PLAYBOOK.md` section 7.)
+- Not decided: the audit's fifth change (one short note per card, which changes rule 5's wording) and a "Background" view
+  in the Cockpit. Both wait for Kyle.
+- To reverse: Kyle says so.
+

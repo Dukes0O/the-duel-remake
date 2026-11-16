@@ -545,6 +545,35 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
 
+  - id: QA-CHECKS-BY-CARD
+    title: "Long suites go to the night, the lane says what it left, and a fix runs only what changed since"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: ["tools-test-runner"]
+    details: "docs/board/cards/QA-CHECKS-BY-CARD.md"
+
+  - id: QA-NIGHTLY-NEWS
+    title: "The nightly check tells news: a standing list, three results, browser scenarios for what changed"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: ["tools-full-check"]
+    details: "docs/board/cards/QA-NIGHTLY-NEWS.md"
+
+  - id: QA-STANDING-BROWSER
+    title: "The seven things that fail every night: cure each or say why it cannot pass"
+    owner: "claude"
+    lane: "TOOLS"
+    size: "M"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-STANDING-BROWSER.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"

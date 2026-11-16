@@ -96,8 +96,9 @@ real work or the merge's shared metadata transaction.
 | Gate | When | Command or evidence |
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
-| Conflict fix | After resolving a real conflict in the lane | One fresh targeted lane/build and review |
-| Full check | Once a day, on a copy of one commit; only the frame step needs the laptop alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, browser scenarios |
+| Conflict fix | After resolving a real conflict in the lane | The suites for the files in conflict, the build and a review |
+| Fix after the lane run | Any later change on the same card | Only the suites for the files changed since that run (`--since <its commit>` once QA-CHECKS-BY-CARD merges), never the tier again |
+| Full check | Once a day, on a copy of one commit; only the frame step needs the laptop alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, the browser scenarios for what changed (all on Saturday night); passed, passed with standing failures, or failed (AGENTS rule 13) |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
 The targeted lane includes smoke, replay and world-signature guards, plus
@@ -107,7 +108,12 @@ own files, such as `game.js`, `app.js` or `world.js`), and the shared files
 (`game.js`, `main.js`, `render3d.js`, `app.js`, `config.js`,
 `feature-flags.js`) select only their owner suites and the suites that read
 them as text: the smoke set and replay guards drive them in every lane. Suites
-in `NIGHT_ONLY_SUITES` run only in the full tier. Unmapped game files do not
+in `NIGHT_ONLY_SUITES` run only in the full tier, and every suite that takes
+three minutes or more alone belongs there (Kyle, 16 November 2026, after the
+audit: two suites of 69 and 26 minutes were 63% of a lane run's check
+minutes). A card whose own subject is such a suite's subject names it and runs
+it in its narrowest form (`test-everburn-easy.mjs --job <name>`). The lane
+tier prints the long suites it left to the night. Unmapped game files do not
 trigger a full daytime run; deeper effects belong to the full check.
 A failing lane blocks that lane. A full-check failure puts its fix first while
 other merges continue. A suite failing without changed game code gets one
@@ -130,15 +136,23 @@ assertions or fingerprints without a reviewed reason.
 
 Before a lane hands over a change to a job's rules, places, lines or sounds,
 the builder searches `tools/` for that job's ids, place names, line ids and cue
-names and runs every suite found, once, the long ones included
-(`test-everburn-easy.mjs` takes 26 minutes and drives one job with
-`--job <name>`; `test-run-gas-medium.mjs`). Short rounds that run only the
+names and runs every suite found, once. A long one is run in its narrowest
+form for the job in hand (`test-everburn-easy.mjs --job <name>`); the whole of
+it, and `test-run-gas-medium.mjs` when the card does not change the gas run,
+are left to the night. Short rounds that run only the
 suites being worked on never meet these. At the merge of the remade Hot
 Delivery (16 November 2026) six older suites failed that no round had run. A
 new sound cue joins the old pin's exclusion list in `test-p4-audio.mjs`. A thing
 placed beside a road's own line needs its own check in
 `test-scablands-size.mjs`; a thing placed from a named place uses whole eighths
 of a metre, so that it keeps its exact offset when that suite moves the place.
+
+**Scripted drives.** A brief asks for at most one scripted drive that proves
+a job can be finished, by one way, and the card names it. Six such drives on
+Hot Delivery took about five Codex hours and 149 of 228 saved changes, and the
+two faults a player would have met were found by hand. Rules are proved by
+checks that step the rules without driving. A way nobody has driven is driven
+by hand before it is shown.
 
 ### Integrator command
 

@@ -60,7 +60,8 @@ notes and history are evidence, not instructions.
 ## The rules
 
 1. **Check once, sized to the change.** The builder runs the card's checks, the lane tier and
-   the build. The merge runs only what the builder could not ("Gates" below).
+   the build. The merge runs only what the builder could not ("Gates" below). A card gets one
+   lane tier; a fix made after it runs only the suites for the files that fix changed (rule 19).
 2. **The full tier** runs in the nightly full check (rule 13) and, alone, before a release that
    rule 19 does not already cover. Always `--jobs 4`.
 3. **An unreliable suite.** A suite that fails with no game code changed since it last passed
@@ -92,14 +93,25 @@ notes and history are evidence, not instructions.
     guards, and the suites that import a changed file or name its path within two steps, never
     through a hub (a module that imports 20 or more game files) and never for importing a
     shared file (`docs/CODEX_PLAYBOOK.md` section 7). Deeper effects are the full check's job.
+    A long suite (three minutes or more alone; `NIGHT_ONLY_SUITES` in `tools/run-tests.mjs`) runs
+    in a lane only when the card names it, in its narrowest form, and otherwise at night. The
+    lane tier prints the long suites it left to the night, so the builder sees them.
 12. **Merge as soon as it is green:** the builder's lane tier and build, and one review where
     rule 17 asks for one. Two clean lanes never wait for each other.
 13. **The full check** runs once a day, while Kyle sleeps, on a copy of one commit: full tier,
-    frame check, combat balance (`combat-balance.mjs --check`), all browser scenarios, then a
-    short report. Run `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
+    frame check, combat balance (`combat-balance.mjs --check`), the browser scenarios for what
+    changed since the last full check (all of them on Saturday night and before a release), then
+    a short report. Run `node tools/full-check.mjs --idle-awake --no-push`. Building and merging
     continue; only its frame step needs the laptop alone (about 15 minutes), and each other
-    stage counts as one heavy job. A failure names the first merge after the last green full
-    check; its fix goes first and other merges continue.
+    stage counts as one heavy job. Its result is one of three. **Passed.** **Passed with standing
+    failures:** every failure is on the list in `docs/board/checks/standing-failures.json`, where
+    each has its card, its cause and the date it joined; an item that passes leaves the list that
+    night. **Failed:** a failure that is not on the list. Only that is news: it names the first
+    merge after the last full check without one, and its fix goes first while other merges
+    continue. The list never passes a release. When no full check is recorded for last night,
+    the day's first session starts one before its own heavy work (the status page gives the
+    date of the last). Until card QA-NIGHTLY-NEWS merges, the check runs as before: all browser
+    scenarios, and a result of passed or failed.
 14. **Limits.** At most six build lanes at once, no more than three of them course lanes. A lane
     is one card's own folder; the lane tag (SIM, UI, ART) names a file area, not a single slot.
     A card lists its locks (`locks:`, FACTORY section 2); two cards with the same lock never
@@ -129,7 +141,10 @@ notes and history are evidence, not instructions.
     - the story for the helicopter, the Deep and the Lab (with Gratian).
 19. **Never redo a passing check.** A full-tier pass counts for a later commit when the changes
     since are only docs, board, notes, art sheets or files no test reads. When code changed,
-    run the lane tier for those changes, not the whole tier. The whole tier reruns only when
+    run the lane tier for those changes, not the whole tier. After a card's one lane tier, a
+    later fix on that card runs only the suites picked for the files changed since that run
+    (`--since <that run's commit>`; until card QA-CHECKS-BY-CARD merges, the suites that import
+    or name those files, found by search), never the card's tier again. The whole tier reruns only when
     shared core files, the save shape or the physics changed since the last pass, and in the
     daily full check. A frame-check pass counts while the scene and its code are unchanged. The
     release note names the passed commit and what changed since.
@@ -151,10 +166,13 @@ notes and history are evidence, not instructions.
 
 - **The card names its checks** before code: the one to three checks that prove its claim and
   the laptop-only checks it needs (browser scenario, look, frame). Write a new test only when
-  it proves the card's point; prefer checking behaviour over pinning exact numbers.
+  it proves the card's point; prefer checking behaviour over pinning exact numbers. A card
+  names at most one scripted drive that proves a job can be finished, by one way. The rules are
+  proved by checks that do not drive; what a player would meet is found by hand, by Claude's
+  drive and then Kyle's.
 - **The builder runs them once**, on a branch with current `integration/wasteland` merged in:
   the card's checks, the lane tier (`node tools/run-tests.mjs --tier lane --changed --jobs 4`)
-  and `npm run build`, recorded in the change note.
+  and `npm run build`, recorded in the change note with the commit the tier ran on.
 - **The merge does not repeat them.** With no conflict in code, the laptop runs only what the
   builder could not: the laptop-only suites (`test-course-kit`, `test-earned-cars-ui`,
   `test-medals`, `test-drive-through`, `test-full-check`, `test-salt-flats`,
