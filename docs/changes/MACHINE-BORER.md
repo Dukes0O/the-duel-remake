@@ -187,6 +187,8 @@ The Dig already sends the up and down arrows to the slope control without moving
 
 ## First-push investigation
 
+The browser scenario now records the mode, simulation time, lever and distance at roughly 100 ms intervals during the first W hold, and checks that work mode was active before the hold. It writes the samples before either assertion. This will distinguish a late mode change, lost simulation time and a lever that fails to respond while simulation advances. The scenario syntax and all page expressions pass Node checks. The browser was not run here. H4 is still open: these measurements do not establish its cause or fix it.
+
 At the real mesa face, a rules-only probe holding W moved the lever from zero to 0.0625 in the first quarter second and to 0.325 in 1.3 seconds. That does not reproduce Claude's delay because it does not run the browser's input and drawing loop. The frame loop caps elapsed time at 0.1 seconds, so long frames can discard simulation time, but this has not been shown to cause the reported first-push fault. The browser scenario now records wall time, simulation time, mode, lever and distance for the first 1.3-second W hold before asserting that the lever moved. It writes the numbers before the assertion. Claude needs to run it; no fix for the delay is claimed yet.
 
 `node --check tools/scenarios/machine-borer.mjs` and the scenario's `new Function` expression checks passed. The browser scenario was not run. No existing assertions or race fingerprints changed. H4 remains open; H5, H6 and the final checks follow it.

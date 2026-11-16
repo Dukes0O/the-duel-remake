@@ -224,12 +224,19 @@ export async function run(context) {
   await context.evaluate(page.frame);
   await press(context, 'Tab');
   const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
+  const pushSamples = [];
   await key(context, 'KeyW', 'keydown');
-  try { await new Promise(resolve => setTimeout(resolve, 1300)); }
+  try {
+    while (Date.now() - pushStart < 1300) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      pushSamples.push({wallSeconds:(Date.now()-pushStart)/1000, ...await context.evaluate(page.inputTiming)});
+    }
+  }
   finally { await key(context, 'KeyW', 'keyup'); }
   const afterPush = await context.evaluate(page.inputTiming);
-  measurements.firstPush = {before:beforePush, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
+  measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
+  assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
   assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
