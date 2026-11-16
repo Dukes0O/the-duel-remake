@@ -40,7 +40,7 @@ export function firstGroundClimb(drive) {
 }
 
 // Use the same bed line and Steps exit as the land's end-to-end drive.
-export function bedStepsRoute() {
+export function bedStepsRoute(bedOffset = 27) {
   const wash = RIVER_LAND.crossings.find(crossing => crossing.kind === 'wash');
   const steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');
   const points = RIVER_LAND.line.points.filter((point, index) =>
@@ -48,7 +48,7 @@ export function bedStepsRoute() {
   const bed = points.map((point, index) => {
     const a = points[Math.max(0, index - 1)], b = points[Math.min(points.length - 1, index + 1)];
     const length = Math.hypot(b.x - a.x, b.z - a.z);
-    return {x:point.x + (b.z - a.z) / length * 27, z:point.z - (b.x - a.x) / length * 27};
+    return {x:point.x + (b.z - a.z) / length * bedOffset, z:point.z - (b.x - a.x) / length * bedOffset};
   });
   const way = stepsWayFor();
   const onWay = across => ({x:way.x + way.nx * across, z:way.z + way.nz * across});

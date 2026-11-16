@@ -1,3 +1,9 @@
+## Bed, opposite side of the bridge (16 November 2026)
+
+- The real Medium car tried the land test's bed line on the opposite side of the river. It passed under the bridge without a jolt, but the bridge rider began pursuing at 119.51 m, from 8.73 m above the car. The furnace saw the car for 11 seconds and sent both riders. This line does not prove a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_OPPOSITE=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.82 m. Integration is included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a clean bed route through the Steps and complete the deliveries, then the salt pan, East Road, scenario and final checks.
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
 ## Bed rider pursuit at the bridge (16 November 2026)

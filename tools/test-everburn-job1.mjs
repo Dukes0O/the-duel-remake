@@ -138,7 +138,8 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(Number.isFinite(washRiderDistance), 'the real rider has a measurable distance from the car at the Wash');
   console.log('Rider at Wash:', JSON.stringify({distance:washRiderDistance, pursuing:riderAtWash.pursuing,
     position:riderAtWash.position}));
-  const route = bedStepsRoute();
+  const oppositeBed = process.env.EVERBURN_BED_OPPOSITE === '1';
+  const route = bedStepsRoute(oppositeBed ? -27 : 27);
   const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const bedLine = [{x:car.x, z:car.z}, ...route.bed];
   const ends = [];
@@ -152,6 +153,17 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const riderPursuit = drive.stretches.flatMap(stretch => stretch.pursuits)
     .find(pursuit => pursuit.id === 'ash-rider-2');
   console.log('Bridge rider pursuit:', JSON.stringify(riderPursuit));
+  if (oppositeBed) {
+    assert.equal(pot.joltCount ?? 0, 0, 'the opposite bed line passes the bridge without a jolt');
+    assert.ok(riderPursuit && riderPursuit.heightDifference > 3,
+      'the bridge rider pursues the opposite bed line from another floor');
+    const furnaceRiders = drive.stretches.flatMap(stretch => stretch.pursuits)
+      .filter(pursuit => pursuit.id.startsWith('furnace-rider-'));
+    assert.equal(furnaceRiders.length, 2, 'both furnace riders are sent after the exposed opposite bed line');
+    assert.ok(drive.stretches.some(stretch => stretch.longestFurnaceSightSeconds > 6),
+      'the actual furnace sight lasts over six seconds on the opposite line');
+    process.exit(0);
+  }
   assert.ok(riderPursuit, 'the drive records the bridge rider pursuing the car');
   assert.ok(riderPursuit.distance <= 120, 'the rider begins pursuit within its approach range');
   assert.ok(riderPursuit.heightDifference > 3, 'the rider begins pursuit from a different floor');
