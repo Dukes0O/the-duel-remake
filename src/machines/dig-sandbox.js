@@ -421,10 +421,11 @@ function advanceDigBore(sim, input) {
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
+  const boreWasActive = sim.boreOrders.some(order => order.status !== 'finished');
   const bore=advanceDigBore(sim,input);
   sim=bore.sim;
   const events=[...bore.events]; let next=sim;
-  if(sim.activeMachine==='borer' && sim.boreOrders.some(order=>order.status !== 'finished')){
+  if(sim.activeMachine==='borer' && boreWasActive){
     // The active order advances above, whether the apprentice or player holds the lever.
   } else if(sim.activeMachine==='borer'){
     const controls=input.controls ?? {};

@@ -320,11 +320,17 @@ const order = mesa.boreOrders[0];
 const daylightCalls = [];
 for (let second=0; second<900 && mesa.boreOrders[0].status !== 'finished'; second++) {
   const watchDaylight = mesa.borer.distanceM > mesaSurvey.distanceM - 40;
+  if (watchDaylight) mesa = {...mesa, activeMachine:'borer'};
   if (!watchDaylight) mesa = stepDigSandbox(mesa, {controls:{}}, 1);
   for (let frame=0; frame<60; frame++) {
     if (watchDaylight) {
-      mesa = stepDigSandbox(mesa, {controls:{}}, 1/60);
+      mesa = stepDigSandbox(mesa, {controls:{forward:-1}}, 1/60);
       daylightCalls.push(...mesa.events.filter(event => event.type === 'bore-daylight'));
+      if (mesa.events.some(event => event.type === 'bore-daylight')) {
+        assert.ok(Math.abs(mesa.borer.travelM - mesa.borer.distanceM) < 1e-8,
+          'Held reverse cannot move the cutter again on the daylight step.');
+        mesa = {...mesa, activeMachine:'excavator'};
+      }
     }
     const oldCount = hand.segments.length;
     const previousDistance = hand.distanceM;

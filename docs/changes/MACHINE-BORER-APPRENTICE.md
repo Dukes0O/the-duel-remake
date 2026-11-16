@@ -70,6 +70,8 @@ V1 updates the older Mabel scenario to measure the heap from filled ground cells
 
 ## Checks
 
+- V2: `node tools/test-machine-borer-apprentice.mjs` passed. A real mesa bore finishes with Mabel selected and reverse held; she stays at the working face on the daylight step instead of stepping back into the tunnel.
+
 - V1: `node tools/test-machine-borer-scenario.mjs` passed. Every page expression parses, and a ground fixture confirms the heap measurement excludes a separate yard edit. The browser scenario still needs a run in Chrome.
 
 - After the rounding fix and the integration merge, `test-machine-borer` passed: cross slope 0.6990 m per metre, crest 4.7691 m and volume error 0.616%, with daylight reached. The apprentice suite also passed the real mesa comparison after its test was updated to cover both heap footprints. The lesson, scenario expression, town apprentice, ground edit, machine roads, tunnels and Scablands scene suites passed individually. Race replays passed 297 checks and combat replays passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was not run, as A10 directs.
