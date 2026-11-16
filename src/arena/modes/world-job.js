@@ -279,7 +279,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
       sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
         actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}));
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
-    if (!inRange || (rider.pursuing && rider.lostSightSeconds >= 5)) rider.returningToPost = true;
+    if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
     if (!rider.pursuing && !visible) return;
   }
   if (worldJob.ridersRetreating || rider.returningToPost) {
@@ -295,6 +295,31 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         if (rider.returnCheckDistance - distance < 10) rider.returnStuck = true;
         rider.returnCheckDistance = distance;
         rider.returnCheckSeconds = 0;
+      }
+    }
+    // Keep both ends well behind the car for several seconds before moving a
+    // stranded rider. This leaves time for the chase camera to settle and keeps
+    // the recovery independent of the renderer and its frame rate.
+    if (roadRider && rider.returnStuck) {
+      const pose = worldPose(duel, duel.state);
+      const headings = [pose.heading, duel.course.at(duel.state.s).heading];
+      const behind = point => {
+        const x = point.x - car.x, z = point.z - car.z;
+        const away = Math.hypot(x, z);
+        return away >= 600 && headings.every(heading =>
+          x * Math.sin(heading) + z * Math.cos(heading) < -away * 0.8);
+      };
+      rider.returnHiddenSeconds = behind(rider.position) && behind(home) ?
+        (rider.returnHiddenSeconds ?? 0) + Math.max(0, dt) : 0;
+      if (rider.returnHiddenSeconds >= 5) {
+        rider.position = {...home, y:scablandsSurfaceHeightAt(home.x, home.z)};
+        rider.returnStuck = false;
+        rider.returningToPost = false;
+        rider.returnCheckDistance = undefined;
+        rider.returnCheckSeconds = 0;
+        rider.returnHiddenSeconds = 0;
+        rider.lostSightSeconds = 0;
+        return;
       }
     }
     if (distance > 1 && dt > 0 && !rider.returnStuck) {

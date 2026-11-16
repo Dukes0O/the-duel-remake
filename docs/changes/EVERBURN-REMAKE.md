@@ -1775,3 +1775,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the real job step on Easy and Hard. The test applies the car's movement after a ram to interrupt the scoop. The Medium delivery measurements remain as in the table above. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: a 5 m/s Easy pursuit gives the three-second scoop time; the existing 18 m/s pursuit remains on Medium and Hard. Removed: the same pursuit speed on every difficulty.
 - Still needed: the stranded rider's out-of-view recovery and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## X3: stranded road rider recovery
+
+- A stranded road rider returns to its post after the rider and its post have both stayed at least 600 metres away and well behind the car for five seconds. The conservative heading check lets the chase camera settle without making the game depend on the renderer. A rider already at its post no longer starts a return merely because the car is out of range. No sound cue or save shape changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including visible, nearby and hidden stranded riders and all delivery drives. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: require both ends to remain well behind the car for five seconds, so neither end visibly jumps while the chase camera settles. Removed: the stranded rider's permanent stop.
+- For Claude to run: the two long drivers and the lane tier, as recorded above. For Claude to draw: the pot transfer and forge fire. Final job, pot, replay and build checks remain. The older screen suite's obsolete assertions remain for Claude to review, as recorded under X7.

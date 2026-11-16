@@ -149,6 +149,21 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const stopped = {...camp.position};
   tick(1);
   assert.deepEqual(camp.position, stopped, 'the stranded rider stays stopped');
+  // A visible or nearby rider cannot jump home. Once both the rider and
+  // its post have stayed behind the camera, it can safely take up its post.
+  state.headingError = 0;
+  car = {...camp.position, z:camp.position.z - 700};
+  for (let i = 0; i < 60; i++) tick(0.1);
+  assert.deepEqual(camp.position, stopped, 'a rider in front remains visible');
+  car = {...camp.position, z:camp.position.z + 500};
+  for (let i = 0; i < 60; i++) tick(0.1);
+  assert.deepEqual(camp.position, stopped, 'a rider less than 600 metres away stays put');
+  car = {...camp.position, z:camp.position.z + 800};
+  for (let i = 0; i < 60; i++) tick(0.1);
+  assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
+    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns to its post');
+  assert.equal(camp.returnStuck, false);
+  assert.equal(camp.returningToPost, false);
 }
 // The camp rider reaches a scooping car later on Easy than on Hard.
 {
