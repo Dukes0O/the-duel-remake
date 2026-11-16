@@ -8,11 +8,15 @@ import {FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
 import {captionText, storyLetter, storyLineKeys} from '../src/story/story-lines.js';
 
 const EXPECTED = [
+  ['Job 1 pickup', 'Cinder', 'Tin Town needs fire for its forge, so it can mend its pump.'],
+  ['Job 1 pickup', 'Cinder', 'This is the last fire we have. Old Smoke says all fire belongs to his furnace.'],
+  ['Job 1 pickup', 'Cinder', 'Take the East Road. The Ash Men hold the Girder Bridge. Burn their barricades.'],
   ['Job 1 start', 'Cinder', 'This pot holds the last of the Everburn. Don\'t drop it. I mean it.'],
   ['Job 1 start', 'Cinder', 'I\'ve bolted a flamethrower to your car. Press its number and burn anything in the way.'],
   ['First barricade', 'Cinder', 'Ash Men\'s fence. Get close, and burn it.'],
   ['Crash, pot spills', 'Cinder', 'You dropped my fire! Go back, I\'ve got more. Slower this time.'],
   ['Job 1 sighting', 'Cinder', 'See the smoke with wheels under it? That is Old Smoke\'s furnace. Keep the pot out of its sight.'],
+  ['Ash Men turn back', 'Auntie Solder', 'Our guns cover the road. The Ash Men will not come any closer.'],
   ['Tin Town in sight', 'Auntie Solder', 'Is that smoke coming from your roof, or are you just pleased to see us?'],
   ['Job 1 won', 'Auntie Solder', 'A live ember. I haven\'t seen one in a year. Bring it in.'],
   ['Job 2 start', 'Auntie Solder', 'You can\'t get that car down my alleys. You\'ve legs, haven\'t you?'],

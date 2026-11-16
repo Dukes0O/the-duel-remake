@@ -1609,3 +1609,9 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - For Claude to run: the browser scenario, `test-everburn-easy.mjs`, `test-run-gas-medium.mjs`, and a complete lane tier after excluding those two long suites from the lane runner. The scenario has not been visually verified. For Claude to draw: the pot transfer and forge fire.
 - Changed assertions for Claude to review are in the preceding entries, including the R2 delivery proofs and the yard-start and ground rulings. This final pass did not change assertions. Codex decided: none in this pass. Removed: the old `everburn-play` walk and the trial drivers and options named in earlier entries.
 - The scenario waits for Cinder's model before her picture; its 32 page expressions parse in the mock harness. The automatic integration merge commit lacks the requested co-author trailer; no history was rewritten.
+
+## Caption inventory (16 November 2026)
+
+- The caption inventory now checks the three pickup lines and Auntie Solder's retreat line word for word, alongside every existing caption. `node tools/test-ember-lines.mjs` passed: 60 captions and the note.
+- Changed assertions, for Claude to review: the expected inventory grows from 56 to 60 captions because this card adds those four lines. No existing caption or assertion was removed. No new sound cue or game event was added.
+- The old pot and line-audit suites still fail against the remade pickup and retained old line; the lane tier is incomplete as recorded above. For Claude to run: the visual scenario and the two long drivers. Removed: nothing.
