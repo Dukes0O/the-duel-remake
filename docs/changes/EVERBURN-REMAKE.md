@@ -623,3 +623,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: the driver goes 12 m past the gate before turning toward the forge; Claude should review the drive.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.
+
+## Larger land, ten-minute cold rate (15 November 2026)
+
+- Set cold loss to 100 / 600 ember per second under Claude's larger-land ruling. The ordinary-ground world-job test measures the actual loss against the ten-minute rate; the salt pan still cools 1.5 times as fast. No new game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The existing Medium East Road driver arrived with 5.77 ember, below the required 70. It slows to 25 mph well before the last 400 m and takes a 16.82 jolt at the camp, so it is not yet the road-speed proof Claude asked for. The other drive numbers and times are not yet measured. Race fingerprints were not checked this round.
+- Changed assertions: none; the ten-minute check is new. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the earlier 0.14-per-second cold rate. The old `everburn-play` scenario still needs replacement or removal. Next: bring the East Road driver up to the ruled road speed and measure arrival, then complete the other drives, camera, cover and scenario.

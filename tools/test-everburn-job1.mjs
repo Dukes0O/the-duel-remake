@@ -687,6 +687,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const normal = step.carStart;
   assert.notEqual(scablandsDriveAt(normal.x, normal.z).id, 'salt-pan');
   const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
+  assert.ok(Math.abs(ordinaryLoss - 100 / 600) < 1e-9, 'a full pot cools in ten minutes on ordinary ground');
   assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
   assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
 

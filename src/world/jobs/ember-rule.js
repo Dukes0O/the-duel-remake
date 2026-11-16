@@ -8,10 +8,8 @@ export const MPH_TO_KMH = 1.609344;
 
 export const EMBER_RULE = Object.freeze({
   start: 100,
-  // SCABLANDS-LAND round 4, slice 2a: 0.14 a second (full to dead in about twelve minutes with no jolts). A clean drive along the East Road
-  // (7.7 km, about three minutes) arrives bright; the straight drive across the scab plates held at 50 km/h takes about seven minutes and
-  // arrives alive; a car that never passes 30 km/h goes out before Tin Town by any way (6 km takes it twelve minutes).
-  coldPerSecond: 0.14,
+  // The Director's larger-land ruling: a full pot cools to zero in ten minutes without jolts.
+  coldPerSecond: 100 / 600,
   roughPerMetre: 0.003,       // ground driven faster than it is safe: 0.003 for each km/h over the safe speed, for each metre driven (so going faster always costs more a metre)
   hitFreeKmh: 8,              // a hit that sheds this much speed or less takes nothing
   hitPerKmh: 1.5,             // ember taken for each km/h shed in a hit
