@@ -186,7 +186,6 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     assert.equal(currentPot.joltCount ?? 0, 0, 'the no-scoop car climbs without a jolt');
     assert.ok(currentPot.ember > 0 && currentPot.ember < 50, 'the actual pot remains lit but has cooled on the way');
     console.log('No-scoop Steps:', JSON.stringify({ember:currentPot.ember, jolts:currentPot.joltCount ?? 0}));
-    process.exit(0);
   }
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const riderAtSteps = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
@@ -258,6 +257,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     'the rider is in contact at a recorded jolt on this line');
   assert.equal(continuation.jolts.length + townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the two stretches record every pot jolt');
+  if (skipWash) {
+    const currentPot = duel.state.arena.worldJob.job.stepState;
+    assert.ok(!(currentPot.scoopedBraziers || []).includes(wash.id), 'the continuation does not scoop at the Wash');
+    assert.equal(continuation.ember, currentPot.ember, 'the continuation records the actual unscooped pot');
+    console.log('No-scoop beyond the Steps:', JSON.stringify({ember:currentPot.ember,
+      jolts:currentPot.joltCount ?? 0, distance:continuation.along}));
+  }
   process.exit(0);
 }
 // Test a gradual line around the first rider on the bed route.
