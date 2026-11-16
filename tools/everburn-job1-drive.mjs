@@ -382,6 +382,9 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
       scoopGain = world.job.stepState.ember - emberBefore;
     }
   }
+  const finalCar = duel.course.worldAt(state.s, state.lateral);
+  if (previous) driven += Math.hypot(finalCar.x - previous.x, finalCar.z - previous.z);
+  distance = Math.hypot(finalCar.x - brazier.position.x, finalCar.z - brazier.position.z);
   return {distance, ticks, driven, elapsedSeconds:ticks / 60, emberBeforeScoop, scoopGain, ember:world.job.stepState.ember, jolts, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
 }
 

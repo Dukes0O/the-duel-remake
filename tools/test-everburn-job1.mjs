@@ -325,7 +325,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     assert.ok(approach.stretches.some(stretch => stretch.fastRoadSpeedTicks > 0), 'the car reaches road speed on the approach');
   }
   const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
-  if (!skipWash) assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
+  const washScoop = skipWash ? null : driveToBrazier(duel, wash);
+  if (!skipWash) {
+    assert.ok(washScoop.scooped, 'the car scoops at the Wash');
+    const stoppedCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    assert.ok(Math.abs(washScoop.distance - Math.hypot(stoppedCar.x - wash.position.x,
+      stoppedCar.z - wash.position.z)) < 1e-6, 'the scoop reports the real final car position');
+  }
   else assert.ok(!(duel.state.arena.worldJob.job.stepState.scoopedBraziers || []).includes(wash.id),
     'the car passes the Wash without a scoop');
   const riderAtWash = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
@@ -463,11 +469,17 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
       jolts:duel.state.arena.worldJob.job.stepState.joltCount ?? 0};
     const arrival = driveToForge(duel, definition.steps[0].destination.position, 18000);
     const finalPot = duel.state.arena.worldJob.job.stepState;
-    const kilometres = (yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) +
+    const kilometres = (yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) + (washScoop?.driven ?? 0) +
       drive.stretches.reduce((sum, item) => sum + item.driven, 0) + end.driven + climb.driven +
       townDrive.driven + continuation.driven + towardGate.driven + gateDrive.driven + arrival.driven) / 1000;
+    if (washScoop) {
+      assert.ok(washScoop.driven > 0 && washScoop.elapsedSeconds >= 3,
+        'the delivery distance includes the actual approach and wait at the Wash');
+      assert.equal(washScoop.jolts.length, 0, 'the Wash scoop takes no jolt');
+    }
     console.log('Fast exit at forge:', JSON.stringify({kilometres,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
+      washApproachMetres:washScoop?.driven ?? 0, washApproachSeconds:washScoop?.elapsedSeconds ?? 0,
       jolts:ruledBed ? beforeForge.jolts : finalPot.joltCount ?? 0, scoops:ruledBed ? beforeForge.scoops : finalPot.scoopedBraziers || [],
       ember:arrival.fire?.ember ?? finalPot.ember, arrival}));
     assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
