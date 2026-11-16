@@ -34,6 +34,39 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// Floor it towards town across the plain, starting with the real pickup and gate.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  duel.state.countdown = 0;
+  const pickup = definition.steps[0].pickup.place.position;
+  assert.ok(driveToCinder(duel, pickup).loaded);
+  const exit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(exit.along >= 20);
+  const state = duel.state, pot = state.arena.worldJob.job.stepState;
+  const start = duel.course.worldAt(state.s, state.lateral), town = LAND.at('tin-town');
+  let driven = 0, ticks = 0, previous = start, firstOut = null;
+  for (; ticks < 18000 && driven < 1500 && firstOut === null; ticks++) {
+    const car = duel.course.worldAt(state.s, state.lateral);
+    driven += Math.hypot(car.x - previous.x, car.z - previous.z);
+    previous = car;
+    if (state.arena.worldJob.job.stepState.ember <= 0) { firstOut = driven; break; }
+    const turn = wrapHeading(Math.atan2(town.x - car.x, town.z - car.z) - (car.heading + state.headingError));
+    duel.setInput({throttle:1, brake:0, steer:Math.max(-1, Math.min(1, -turn * 2))});
+    duel.step(1 / 60);
+  }
+  const actual = state.arena.worldJob.job.stepState;
+  const measurement = {metres:driven, minutes:ticks / 3600, ember:actual.ember,
+    jolts:actual.joltCount ?? 0, firstOut, timedOut:ticks === 18000};
+  console.log('Straight-across measurement:', JSON.stringify(measurement));
+  assert.ok(pot.loaded && driven > 0, 'the actual car carries the pot across the plain');
+  assert.equal(firstOut !== null, actual.ember <= 0, 'the recorded outage agrees with the job state');
+  assert.ok(!measurement.timedOut, 'the measurement reaches its distance or the ember goes out');
+  assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
+  if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
+}
 // Cold loss is read from the actual carry step on ordinary ground.
 {
   const carry = definition.steps[0];

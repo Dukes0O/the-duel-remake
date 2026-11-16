@@ -1,5 +1,21 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Straight across the plain (16 November 2026)
+
+- A seeded Medium car picks up the pot, leaves the yard gate and holds full throttle toward Tin Town. The real job state shows the ember out after 629.822 m in 0.330 minutes, within the 1.5 km target. The measurement starts outside the gate and records no counted jolts. No sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | 6.160 | 8.634 | 5 observed contacts | None | 0 |
+| Salt pan | 9.394 | 13.745 | 0 | None | 8.367 |
+| Bed | 9.425 | 13.959 | 5 observed contacts | Wash | 0 |
+
+- Check: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: aim directly at Tin Town after clearing the gate and hold full throttle; Claude should review this interpretation of straight across.
+- For Claude to run: the browser scenario and both long drivers, plus final checks not run here. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: three separated cover stretches and the scenario. All four route arrivals miss their bands; the plates and bed measurements have the limitations recorded below.
+
 ## Bed without a scoop (16 November 2026)
 
 - The seeded Medium driver follows the bed without stopping at the Wash. It stops at the forge with the ember out after 9.396 km and 13.754 minutes, with three observed rider contacts and no scoops. The job remains open because the pot is out. No new game event or sound cue was added. The existing scooped drive still arrives out, below its 30 to 55 band.
