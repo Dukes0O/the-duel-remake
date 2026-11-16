@@ -584,3 +584,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof and balance, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road jolt measurements (15 November 2026)
+
+- The proof driver records each pot jolt's actual amount, position and car speed during a road stretch. This makes the loss on the unfinished East Road drive visible. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test compares the recorded camp and bridge jolts with the actual pot's jolt count and checks the recorded camp jolt. The camp approach had one jolt of 16.82 ember at (1994.83, 1197.91), at 28.25 mph; the bridge stretch had none. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof and balance, the other five drives, camera, cover and scenario.
