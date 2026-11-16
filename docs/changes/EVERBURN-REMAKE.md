@@ -1832,3 +1832,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-ember-screens.mjs` passed 34 checks, including existing progress, no unremade board offers, a remade board offer and the yard's locked next job. `git diff --check` passed. Integration is included. No save shape, sound cue or race fingerprint changed.
 - Changed assertions, for Claude to review: the board previously expected three offered jobs and three Take job buttons after the second story job; both are now zero until those jobs are remade, as Y3 directs. The new check adds one id to the remade list and requires exactly its button. Codex decided: none. Removed: offers for unremade board jobs and the promise to replay any job.
 - Still needed: finish Y1 rider visibility, Y4 and Y5, then the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y5: furnace rider pursuit assertion
+
+- The nine-second check still proves both furnace riders come down and close at least 30 metres. The former expectation that they reach within 30 metres after 18 seconds cannot hold at this test's car position: the furnace loses sight, so the ten-second loss-of-sight rule sends both riders home. In the attempted check the first rider was 145.8 metres away at 18 seconds and returning. The test now also proves the furnace has lost sight and both riders are returning.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the five delivery drives. Integration was already included. Race fingerprints were not rerun in this round. No game behavior or sound cue changed.
+- Changed assertions, for Claude to review: the old 18-second distance expectation is incompatible with the later furnace return rule, as measured above. The nine-second closing check is retained and the return checks are added. Codex decided: none. Removed: no game feature.
+- Still needed: finish Y1 rider visibility and Y4's real fall and crash checks and well scenario name, then run the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.

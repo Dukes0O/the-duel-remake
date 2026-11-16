@@ -1212,6 +1212,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
       Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues the car');
   }
+  for (let i = 0; i < 90; i++) tick(0.1);
+  assert.equal(world.skylineSight.visible, false, 'the furnace cannot see the car at this position');
+  assert.equal(world.furnaceRidersReturning, true, 'the riders give up after ten seconds out of furnace sight');
+  for (const rider of riders) {
+    assert.equal(rider.returningToPost, true, 'the rider is returning instead of reaching the car');
+  }
   tick(1);
   assert.equal(horns().length, 1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2);
