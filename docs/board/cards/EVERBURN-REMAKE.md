@@ -427,6 +427,24 @@ Codex drove each way once with a plain scripted driver and the new numbers (cold
   Claude will move again if Codex's two drives say otherwise.
 - **East Road, clean:** not yet driven.
 
+## Riders keep to their road, and what scripts are asked to prove (Claude, 16 November 2026)
+
+Codex spent about forty runs steering scripted cars round riders, and the river bed's drive still took a ram from the bridge's
+rider after the Steps (arriving with 2 in 11.8 minutes). Two faults, both Claude's.
+
+- **A rule was missing.** The design let a rider follow a car anywhere, so the bed, which is meant to be out of everyone's
+  sight, was not. **An Ash Men rider belongs to its barricade on the East Road:** it chases only a car within 120 m of the
+  road's centre line and within 900 m along the road of its own barricade, turns back when the car leaves that ground or has
+  been out of its sight for 5 seconds, never goes down into the river bed and never climbs the Steps. The furnace's two
+  riders on the plates keep their own rule.
+- **Scripts were asked to prove what only driving can.** The plates' and the salt pan's clean deliveries are kept as proofs.
+  For the river bed (with and without the Wash camp's scoop) and the East Road, one scripted drive each is kept as it comes,
+  and it proves only that the job can be finished that way and pays by the band the pot arrived in. Its minutes and arrival go
+  in the note's table. Whether the minutes and the bands are right is judged by Claude's own drive, then Kyle's. This repeats,
+  in small, the lesson at the top of this card: a job that a script can finish is not thereby worth playing.
+- The bed's way passes the Halfway Camp before it turns off for the Wash, so it meets the first barricade and may use the
+  camp's brazier as well as the Wash camp's. What it avoids is the bridge.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
