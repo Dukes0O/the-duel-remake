@@ -128,6 +128,11 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
   const line = platesCoverLine(route);
+  const careful = driveAlongRoad(duel, line, 1200, 18000, 30.4, false, false, 0.1);
+  console.log('Plates speed-limited approach:', JSON.stringify(careful));
+  assert.ok(careful.along >= 1200, 'the car reaches the obstacle at the plates speed');
+  assert.equal(careful.abovePlatesLimitTicks, 0, 'the car stays within 50 km/h up to the obstacle');
+  assert.equal(careful.jolts.length, 0, 'the speed-limited approach avoids jolts');
   const drive = driveAlongRoad(duel, line, 1600, 18000, 30);
   console.log('Plates cover approach:', JSON.stringify(drive));
   assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');

@@ -100,7 +100,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
@@ -173,7 +173,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     const approachLimit = barrierDistance < barrierLimit ? 8 : Math.min(targetSpeedMph, pipeLimit);
     const speedLimit = gateApproach && gateDistance < 200 ? Math.min(approachLimit, 16) : approachLimit;
     duel.setInput({throttle:Math.abs(state.speedMph) < speedLimit ? 0.8 : 0,
-      brake:Math.abs(state.speedMph) > speedLimit + 3 ? 1 : 0,
+      brake:Math.abs(state.speedMph) > speedLimit + brakeMargin ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
     const sightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;

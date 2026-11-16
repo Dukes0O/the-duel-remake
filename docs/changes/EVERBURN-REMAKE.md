@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates speed-limited approach (16 November 2026)
+
+- The real Medium car reaches 1,200 m on the shelter line without a jolt or exceeding 50 km/h. Its peak is 49.72 km/h. The driver now permits a smaller braking margin for this check. Beyond 1,200 m the existing drive still exceeds the limit, so the clean plates drive is not proved. A trial at the limit through 1,600 m was visible to the furnace for 6.5 seconds; turning earlier caused two collisions. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight drive and the existing shelter checks. `git diff --check` passed. Integration is already merged. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: use a tighter braking margin for the speed-limited test. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: finish the speed-limited shelter approach, then the clean drives and scenario.
+
 ## Plates first shelter, no furnace warning (16 November 2026)
 
 - The Medium test driver turns further toward shelter after passing the obstacle. On the real drive to 1.6 km it takes no jolts, keeps 84.63 ember and is in furnace sight for at most 6.0 seconds. The furnace does not send riders. The car briefly reaches 33.07 mph, above 50 km/h, so this is not yet the clean route proof. No game event or sound cue was added.
