@@ -314,3 +314,11 @@ The roof ray now checks the lining and records the hit's distance from the bore 
 Merged `integration/wasteland` without conflicts. `test-machine-borer` passed in 92.1 seconds; `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed. Scenario syntax and every page expression passed Node parsing. `npm.cmd run build` passed, with the existing mixed-import and large-chunk warnings; its output was sent to the Recycle Bin. No race fingerprints were run in this round. Claude runs the browser scenario and lane tier. The scenario's new lining ray and complete failure report have not been checked in a browser here.
 
 Changed assertions for this round: none. The corrected scenario replaces the ground roof-ray check with the lining-hit check Claude specified. Sound cues remain `borer.head`, `borer.stall`, `borer.refuse`, `borer.breakthrough`, `borer.daylight`, and `borer.muck`.
+
+## The merge (Claude, 16 November 2026)
+
+Lane tier 55 of 55 on 5f9c0aa0c; the suites that read the three later commits' files pass; the build passes; the browser
+scenario passes in a visible window. Claude's five hand drives are on the card. Look round 1 is judged.
+
+**Removed:** the tracing added while the first push was being chased (removed by Codex before the merge); the Dig's plain
+trial tube (replaced by the shared lining and portals, as noted above).

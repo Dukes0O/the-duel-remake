@@ -84,3 +84,5 @@ it is the second slice, built with the save checker (AGENTS rule 6), and nothing
 5. Claude drives it by hand before it is called done: two cuts, a send, a look in, a take-over.
 
 Sound: `borer.call` (the apprentice's call), `borer.daylight` as now.
+
+Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil bank's look (it is a flat pale slab).
