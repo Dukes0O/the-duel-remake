@@ -56,7 +56,11 @@ Rotated-grid sizing now calculates each candidate's fixed height limit once, rat
 
 The rotated-grid planner can now report every protected cell in a proposed deposit without changing the ground. It uses the spoil-specific refusal when available. The cutter still uses the old bank; handling protected cells while keeping the new heap's shape remains to be connected.
 
+The heap planner now prepares allocations in the form the cutter's fill loop uses. The profile is sized by the cut volume: the ground fill receives the 1.25 loose volume and stores the compacted height. A protected cell refuses the whole proposed deposit before the ground changes. The cutter still uses the old bank. Connecting the heap must also preserve the existing ability to find space around protected ground.
+
 ## Checks
+
+- SP fill allocations: `node tools/test-machine-borer.mjs` checks successive deposits through real ground fill against the profile and cut volume, and verifies that a protected deposit leaves the ground untouched.
 
 - SP protected-ground planning: `node tools/test-machine-borer.mjs` checks the requested volume, protected and clear sites, an empty deposit and that planning leaves the ground unchanged.
 

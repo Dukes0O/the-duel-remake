@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilGridPlan, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilGridPlan, borerSpoilDeposit, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -15,6 +15,32 @@ import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// The cutter's allocations reproduce the sampled profile through real fill.
+{
+  const origin = {x:12.3,z:-2.6}, direction = {x:Math.SQRT1_2,z:Math.SQRT1_2};
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>0});
+  let far = 0, cut = 0;
+  for (const volume of [0.1, 1, 30, 100]) {
+    const deposit = borerSpoilDeposit(ground, origin, direction, far, volume);
+    assert.equal(deposit.reason, undefined);
+    for (const {cell, volume:allocation} of deposit.allocations)
+      assert.ok(ground.fill({...cell,radius:0.49}, 'rock', allocation * 1.25).ok);
+    cut += volume;
+    far = deposit.far;
+  }
+  let actual = 0;
+  for (const chunk of ground.toSave().chunks)
+    for (const height of chunk.delta) actual += height;
+  assert.ok(Math.abs(actual - cut) < 0.001, 'Fill retains the whole cut volume after bulking.');
+  for (const cell of borerSpoilGridChanges(origin, direction, 0, far))
+    assert.ok(Math.abs(ground.heightAt(cell.x, cell.z) - cell.height) < 0.00001,
+      'Successive allocations reproduce the heap profile.');
+  const blocked = createGroundEdit({region:{editable:true}, naturalHeight:()=>0,
+    reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
+  assert.deepEqual(borerSpoilDeposit(blocked, {x:12,z:0}, {x:1,z:0}, 0, 100), {reason:'Road.'});
+  assert.equal(blocked.chunkCount, 0, 'A refused deposit leaves the ground untouched.');
+}
 
 // Planning reports protected ground before a cut or fill can change it.
 {

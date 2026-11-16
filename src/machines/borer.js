@@ -257,6 +257,17 @@ export function borerSpoilGridPlan(ground, origin, direction, oldLength, addedVo
   return {length, cells, blocked};
 }
 
+/** Prepare the cutter's allocations without altering the bank or the ground. */
+export function borerSpoilDeposit(ground, origin, direction, oldLength, cutVolume) {
+  const plan = borerSpoilGridPlan(ground, origin, direction, oldLength, cutVolume);
+  if (plan.blocked.length) return {reason:plan.blocked[0].reason};
+  // Ground fill applies the 1.25 bulking factor to these allocations. Its
+  // stored height is compacted again, so the profile is sized by cut volume.
+  return {far:plan.length, allocations:plan.cells.map(cell => ({
+    cell:{x:cell.x, z:cell.z}, volume:cell.height
+  }))};
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their
