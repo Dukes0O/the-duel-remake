@@ -1407,3 +1407,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. The approach checks are new. Codex decided: use the named road route at an 80 km/h target for this measurement. Claude should review it.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the off-road bypass from the ruled measurement only; earlier diagnostic drives retain it. Next: find an exit that avoids both riders at 50 km/h, measure both clean bed deliveries, then prove East Road and finish the scenario and final checks.
+
+## East Road clean-drive attempt (16 November 2026)
+
+- A seeded Medium driver targets 100 km/h on the clear East Road, slows for the camp, scoops at Halfway, burns both barricades and reaches the forge. The real car reaches 100 km/h. It takes two rider rams: one by the camp on approach and one on the bridge. It does not meet the clean-drive acceptance. No game event or sound cue was added.
+- Measurement: 7.910 km, 6.594 minutes, two rams, one Halfway scoop, ember 51.035. The prior bed measurements were both out, with rider contact; they do not establish the clean-bed cold factor.
+- Check: `$env:EVERBURN_CLEAN_ROAD='1'; node tools/test-everburn-job1.mjs` fails the clean-drive assertion for at most one ram. The bright-arrival assertion also remains unmet. The same run confirms the straight-across ember goes out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. This is a new acceptance test, which deliberately fails until the drive meets the ruled conditions. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: avoid a rider on the East Road without changing the rider, then finish the clean bed drives, scenario and final checks.

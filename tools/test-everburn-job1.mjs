@@ -184,6 +184,48 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
   if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
 }
+// Measure a clean East Road drive at the ruled road speed.
+if (process.env.EVERBURN_CLEAN_ROAD === '1') {
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  duel.state.countdown = 0;
+  const step = definition.steps[0];
+  assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
+  const startClock = duel.state.arena.worldJob.clockSec;
+  const exit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(exit.along >= 20);
+  const road = ROAD_NET.road('east-road').points;
+  const opening = driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344);
+  assert.ok(opening.reachedAll, 'the driver reaches the camp approach');
+  assert.ok(opening.stretches.some(stretch => stretch.peakSpeedMph * 1.609344 >= 100),
+    'the real car reaches 100 km/h on the clear road');
+  const campApproach = driveAlongRoad(duel, road, 2350);
+  assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
+  const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
+  assert.ok(scoop.scooped, 'the driver scoops at the camp');
+  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344);
+  assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
+  const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
+  assert.ok(gate.along >= 7810 && duel.state.arena.worldJob.tinTownGateRequested, 'the car passes the open town gate');
+  const pot = duel.state.arena.worldJob.job.stepState;
+  const scoops = [...(pot.scoopedBraziers || [])], burnt = [...(pot.burntBarricades || [])];
+  const arrival = driveToForge(duel, step.destination.position);
+  const stretches = [...opening.stretches, campApproach, ...remaining.stretches, gate];
+  const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
+    minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
+    rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
+    jolts:arrival.observedJoltCount, scoops, burnt, ember:arrival.fire?.ember ?? pot.ember};
+  console.log('Clean East Road measurement:', JSON.stringify(result));
+  console.log('Road jolts:', JSON.stringify(stretches.flatMap(item => item.jolts)));
+  assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
+  assert.deepEqual(scoops, ['halfway-brazier']);
+  assert.ok(step.barriers.every(barrier => burnt.includes(barrier.id)), 'both barricades burn');
+  assert.ok(result.rams <= 1 && result.jolts === result.rams, 'at most one ram and no other jolt');
+  assert.ok(result.ember >= 70, 'the ember arrives bright');
+  process.exit(0);
+}
 // Drive from the Wash along the land test's bed line toward the Steps.
 if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
