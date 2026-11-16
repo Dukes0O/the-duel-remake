@@ -711,3 +711,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the road-speed check is new. Codex decided: keep the existing 50 mph road target on the clear town approach; Claude should review the drive.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the 35 mph target on this stretch. The old `everburn-play` scenario still needs replacement or removal. Next: measure all four route arrivals and times, then finish the camera, cover and scenario.
+
+## Larger land, first kilometre at road speed (15 November 2026)
+
+- The Medium proof driver accelerates after the yard and holds its 50 mph target over the first clear kilometre. The test reads the car's actual speed. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car reached the forge with 24.73 ember in 8.34 minutes. The East Road's required 70 is not met. The other route arrivals and times remain unmeasured. Race fingerprints were not checked this round.
+- Changed assertions, for Claude to review: the 500 m to 1 km check previously required peak speed below 40 mph; it now requires at least 95% of ticks at 45 mph or more. Claude ruled that the Medium driver keeps road speed where clear. The arrival band is unchanged.
+- Codex decided: use the established 50 mph target on this clear stretch. Claude should review the drive.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the proof driver's 35 mph target on the first kilometre. The old `everburn-play` scenario still needs replacement or removal. Next: measure the remaining route arrivals and times, then finish the camera, cover and scenario.
