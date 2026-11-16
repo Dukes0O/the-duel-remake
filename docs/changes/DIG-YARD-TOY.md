@@ -10,5 +10,8 @@
 - Removed: earlier duplicate `wasteland-town` and `nissan-skyline` switch entries.
 - Scenario now opens with `the-dig` only, checks opening controls and compares memory-only storage after machine use and a borer cut; it awaits a browser run. All page expressions parse in Node.
 - `test-the-dig` passed on 10148ac89 plus the scenario change.
-- Still needed: browser save check, remaining sound audit, atlas UV audit and any fix, older suites, lane tier and build. Drill, road and borer sounds use separate tone players.
+- Drill, road and borer tone recipes now live in the sound bank and are shared with their existing players; emitted cues are checked.
+- UV audit: machines-1 0 of 63,426 and borer 0 of 44,876 vertices sampled near white before and after; town materials use separate repeating tiles. This does not inspect triangle interiors.
+- Checks: `test-the-dig` and `test-dig-yard-switches` passed on fb4dff498 plus this change.
+- Still needed: browser save check, triangle-interior texture audit, older suites, lane tier and build.
 - For Claude: browser scenario, play with sound, picture check and Dig yard frame check.

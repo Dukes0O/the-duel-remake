@@ -8,13 +8,22 @@ import {machineToolPosition} from '../src/machines/machine.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {scablandsGroundEdit,scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 import {MACHINE_SOUND_CUES} from '../src/machines/view.js';
-import {SOUND_BANK} from '../src/sound-bank.js';
+import {DIG_MACHINE_TONES,SOUND_BANK} from '../src/sound-bank.js';
 
-for (const cue of Object.values(MACHINE_SOUND_CUES)) {
+for (const cue of [...Object.values(MACHINE_SOUND_CUES), ...Object.keys(DIG_MACHINE_TONES)]) {
   assert.ok(SOUND_BANK[cue], `the Dig's machine cue ${cue} exists in the sound bank`);
   assert.equal(SOUND_BANK[cue].flag, 'the-dig', `${cue} is available with the Dig switch`);
   assert.ok(SOUND_BANK[cue].file || SOUND_BANK[cue].layers?.length, `${cue} has sound to play`);
 }
+
+// The simulation emits literal event names plus one cue per drill material.
+for (const file of ['borer.js', 'dig-sandbox.js', 'drill.js', 'roads.js']) {
+  const source = await readFile(new URL(`../src/machines/${file}`, import.meta.url), 'utf8');
+  for (const match of source.matchAll(/cue:\s*['"]([^'"]+)['"]/g))
+    assert.ok(DIG_MACHINE_TONES[match[1]], `${file} cue ${match[1]} has a playable recipe`);
+}
+for (const material of ['clay', 'gravel', 'rock'])
+  assert.ok(DIG_MACHINE_TONES[`drill-${material}`], `${material} has a drill sound`);
 
 const flags=enabled=>({enabled:name=>name==='the-dig'&&enabled});
 const home=featureFlags=>yardHomeScreen({profile:{wasteland:{}},playerName:'Test',escapeHTML:value=>String(value),featureFlags});

@@ -41,7 +41,22 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   volume,
   type,
 });
+// The Dig's short machine sounds share their recipes with the players that synthesize them.
+export const DIG_MACHINE_TONES = Object.freeze({
+  'drill-engine':[75, 'sawtooth', 0.18], 'drill-feed':[135, 'sawtooth', 0.12],
+  'drill-clay':[190, 'triangle', 0.1], 'drill-gravel':[310, 'square', 0.07],
+  'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
+  'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
+  'dozer-blade':[110, 'sawtooth', 0.18], 'roller-ground':[75, 'triangle', 0.18],
+  'paver-surface':[165, 'square', 0.18],
+  'borer.stall':[85, 'square', 0.4], 'borer.call':[260, 'triangle', 0.6],
+  'borer.refuse':[180, 'triangle', 0.25], 'borer.breakthrough':[460, 'triangle', 0.45],
+  'borer.daylight':[360, 'triangle', 0.8],
+});
+
 export const SOUND_BANK = {
+  ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
+    [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,

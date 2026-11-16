@@ -1,3 +1,4 @@
+import {DIG_MACHINE_TONES} from '../sound-bank.js';
 import * as THREE from 'three';
 import {roadCondition} from './roads.js';
 
@@ -102,12 +103,11 @@ export function createRoadWorkView(parent, heightAt, floor, sharedGround = false
   };
 }
 
-const TONES = {'dozer-blade':[110, 'sawtooth'], 'roller-ground':[75, 'triangle'], 'paver-surface':[165, 'square']};
 export function createRoadSounds(audio) {
   const next = new Map(), voices = new Set();
   return {
     play(cue) {
-      const spec = TONES[cue], ctx = audio?.context;
+      const spec = DIG_MACHINE_TONES[cue], ctx = audio?.context;
       if (!spec || !ctx || !audio.master || audio.muted || audio.paused || ctx.state !== 'running') return;
       const now = ctx.currentTime;
       if (now < (next.get(cue) ?? 0)) return;
