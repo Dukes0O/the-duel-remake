@@ -213,12 +213,21 @@ const overSteps = kmh => (duel, car) => Math.hypot(car.x - stepsWay.x, car.z - s
   duel.step(DT);
   check(held(duel).out === true && worldJob.marker.id === 'safe-road', `past the halfway camp the nearest brazier is the camp (${worldJob.marker?.id})`);
 }
-// Not under 20 km/h: no scoop.
+// A scoop needs a stopped car for three seconds and can be taken once per brazier.
 {
-  const state = {ember: 0, out: true, relights: 0, safeIndex: 0};
-  const at = {position: {x: 2, z: 2}};
-  check(stepCarry(carry, state, {player: at, speedKmh: 40, difficulty: 'medium'}, DT).state.out === true, 'a car going 40 km/h through the brazier takes no scoop');
-  check(stepCarry(carry, state, {player: at, speedKmh: 10, difficulty: 'medium'}, DT).state.ember === 100, 'a car slower than 20 km/h at the brazier takes a fresh scoop');
+  const brazier = carry.braziers[1];
+  const at = {position: brazier.position};
+  const view = {player: at, speedKmh: 0, difficulty: 'medium', safeKmh: Infinity};
+  let state = {loaded: true, ember: 0, out: true, relights: 0};
+  state = stepCarry(carry, state, {...view, speedKmh: 40}, 3).state;
+  check(state.out && state.ember === 0, 'driving through a brazier takes no scoop');
+  state = stepCarry(carry, state, view, 2.9).state;
+  check(state.out && state.ember === 0, 'stopping for less than three seconds takes no scoop');
+  const scoop = stepCarry(carry, state, view, .1);
+  state = scoop.state;
+  check(!state.out && state.ember === 25 && state.relights === 1 && scoop.events.some(event => event.type === 'emberRelit'), 'three seconds stopped restores 25 and records a relight');
+  state = stepCarry(carry, state, view, 3).state;
+  check(state.ember < 25 && state.relights === 1, 'the same brazier cannot be scooped twice');
 }
 
 // (f) pay by grade, and the screen's sentence.

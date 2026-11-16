@@ -1657,3 +1657,9 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: the actual loss section of `tools/test-ember-pot.mjs` passed alone, four checks. The complete old suite still fails before this section because its drive does not collect the pot; its pickup, scoops and old route still need migration. The previously recorded final checks and incomplete lane tier remain unchanged.
 - Changed assertions, for Claude to review: cold per second 0.14 to 100/900, and a 30 km/h hit 45 to 15, under the Director's 16 November ruling. Rough-ground and Easy assertions remain. Codex decided: none. Removed: the obsolete cold and uncapped-hit expectations.
 - For Claude to run: the browser scenario, the two long drivers, and the complete lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Legacy scoop checks (16 November 2026)
+
+- The older ember-pot suite now exercises the real carry step at the Halfway Camp brazier: driving through and stopping for less than three seconds do not scoop; stopping for three seconds restores 25, records the relight and emits its event; the same brazier cannot be used twice. The focused section passed all four checks. No game event or sound cue changed.
+- Changed assertions, for Claude to review: the old expectation of an instant refill to 100 below 20 km/h is replaced by the remade job's stopped-for-three-seconds, plus-25, once-per-brazier rule. The old moving-car rejection remains. The complete old suite still fails earlier at its obsolete delivery drive; its remaining old hit and route checks also need migration. The lane tier remains incomplete as recorded above.
+- Codex decided: none. Removed: the obsolete instant-refill expectation. For Claude to run: the visual scenario, the two long drivers and the complete lane tier. For Claude to draw: the pot transfer and forge fire. Race fingerprints are unchanged by this test-only change.
