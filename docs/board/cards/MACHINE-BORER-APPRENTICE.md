@@ -72,6 +72,31 @@ it is the second slice, built with the save checker (AGENTS rule 6), and nothing
 - "{name}: We're {drift} m off the line at {metres} m. Come and set her straight."
 - "{name}: Daylight. She is through, {off} m off level."
 
+## Slice 1, first handing over (Codex built it in about thirty runs; 16 November 2026): not merged yet
+
+- **Built:** two cuts teach, with the apprentice's three numbers taken from what the player did; "Send"; a sent bore cut by
+  her own step at the taught pace while any machine is in hand; the bore board; go and see; the lever taken and handed back;
+  the three calls; daylight told. Pim is the Dig's one apprentice. The Dig keeps a town of its own for the record, with the
+  town's own functions and shapes; no second apprentice system.
+- **The spoil heap** (owed from MACHINE-BORER): the bank was a wall 3 m wide and 4.6 m high with upright sides. It is now a
+  heap at its angle of repose: steepest side 0.699 m in a metre, crest 4.77 m, volume within 0.6 percent of what was cut.
+  Claude's limit of 2,000 height reads over 100 cutting steps was set for the wall and stalled Codex for ten runs; it is
+  6,000 now (the fault it guards against cost 372,100).
+- **Picture check** `machine-borer-apprentice` (Claude, visible window): passes; the board reads "Bore 1: Pim is cutting.
+  15.3 m cut, 288.7 m to go. Floor 0.0 m below the line. 0 stalls. About 10 minutes to daylight." with the excavator in hand.
+  The older `machine-borer` check broke on the heap's new shape; with Codex.
+- **Independent review by Codex:** the design is in the code. Four faults: her step runs twice on the daylight step when she
+  is selected; a second bore cannot really be queued, because she starts the first at once and no other face can then be
+  surveyed (ruled: the survey and "Send here next" work from whichever machine the player is in at a face); the survey can
+  go stale when the ground changes; a check on protected ground was dropped with the old bank. All with Codex.
+- **Claude's hand drive froze the Dig.** On the first teaching cut, after a stall freed by pulling the lever back into
+  reverse and a tilt of the head, her step threw "Tunnel segments must join without a gap or a step" every frame and the
+  Dig's clock stopped: the picture still drew, nothing moved, no key answered. No test and no review had found it. With
+  Codex, with the inputs, her state and the two segment lists; and a rule added: an error in her step stops her and says so,
+  and never stops the Dig.
+- Seen before the freeze: "Pim is riding with you. Cut two tunnels and Pim can cut the rest. Pim has seen you read the
+  survey. Pim has seen you free a stall." That is the teaching shown in words, as designed.
+
 ## Checks (named before code)
 
 1. Rules: after two hand cuts the apprentice's three numbers equal the player's; one cut does not teach; a cut under 100 m
