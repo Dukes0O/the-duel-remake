@@ -11,7 +11,7 @@ import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
-import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine, sliceLine} from '../src/world/scablands-ways.js';
+import {sees, HOT_DELIVERY_WAYS, routeFor, nearestOnLine, sliceLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
@@ -550,6 +550,21 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   }
   assert.equal(continuation.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember, 'the drive records the actual ember');
   assert.equal(continuation.ticks, continuation.stretches.reduce((sum, stretch) => sum + stretch.ticks, 0), 'the drive records actual elapsed ticks');
+  // Continue to the town approach even with an extinguished pot, so the
+  // failed attempt records the route rather than presenting a partial drive.
+  const gate = definition.steps[0].riderSafeWall;
+  const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
+  const ends = [];
+  for (let along = 3500; along < gateAlong - 150; along += 500) ends.push(along);
+  ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
+  const remaining = driveMeasuredStretches(duel, route, ends, 28);
+  console.log('Plates remaining approach:', JSON.stringify(remaining));
+  assert.equal(remaining.reachedAll, true, 'the real car reaches each remaining measured stretch');
+  assert.ok(remaining.stretches.every((stretch, index) => stretch.along >= ends[index] && stretch.maxDistance < 30),
+    'the real car follows the plates way to the town approach');
+  assert.equal(remaining.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
+    'the approach records the actual ember');
+
 }
 // The real job requests the gate only for a car approaching slowly.
 {

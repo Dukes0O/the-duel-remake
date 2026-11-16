@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates drive to town approach (15 November 2026)
+
+- The seeded Medium plates drive now follows the real route from 3 km to the town approach, and the measured-stretch driver reports whether every target was reached. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car reached 5.85 km, about 163 m from the gate, in 7.68 minutes after leaving the yard gate. The ember was already out after rider contacts at 1.55 km. An exploratory direct gate approach stopped against the wall, 36.77 m from the forge; this is not an arrival or proof of the 30 to 55 band. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a viable plates drive and a correct gate approach, measure all four route arrivals and times, then finish the camera, cover and scenario.
+
 ## Larger land, plates drive to 3 km (15 November 2026)
 
 - Added a measured-stretch driver that stops if the real car fails to reach a stretch, and continued the seeded 28 mph plates drive to 3 km. No game event or sound cue was added.

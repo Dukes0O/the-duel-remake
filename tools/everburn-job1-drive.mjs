@@ -133,7 +133,8 @@ export function driveMeasuredStretches(duel, route, ends, targetSpeedMph) {
     stretches.push(stretch);
     if (stretch.along < end) break;
   }
-  return {stretches, ticks:stretches.reduce((total, stretch) => total + stretch.ticks, 0)};
+  return {stretches, ticks:stretches.reduce((total, stretch) => total + stretch.ticks, 0),
+    reachedAll:stretches.length === ends.length && stretches.every((stretch, index) => stretch.along >= ends[index])};
 }
 
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
