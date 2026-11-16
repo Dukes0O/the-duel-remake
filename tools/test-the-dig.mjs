@@ -7,6 +7,14 @@ import {machineLoadVolume} from '../src/machines/tools.js';
 import {machineToolPosition} from '../src/machines/machine.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {scablandsGroundEdit,scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
+import {MACHINE_SOUND_CUES} from '../src/machines/view.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
+
+for (const cue of Object.values(MACHINE_SOUND_CUES)) {
+  assert.ok(SOUND_BANK[cue], `the Dig's machine cue ${cue} exists in the sound bank`);
+  assert.equal(SOUND_BANK[cue].flag, 'the-dig', `${cue} is available with the Dig switch`);
+  assert.ok(SOUND_BANK[cue].file || SOUND_BANK[cue].layers?.length, `${cue} has sound to play`);
+}
 
 const flags=enabled=>({enabled:name=>name==='the-dig'&&enabled});
 const home=featureFlags=>yardHomeScreen({profile:{wasteland:{}},playerName:'Test',escapeHTML:value=>String(value),featureFlags});
