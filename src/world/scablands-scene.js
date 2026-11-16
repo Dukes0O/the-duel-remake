@@ -831,6 +831,8 @@ export function createScablandsScene(course,options={}){
           delivered.grade,delivered.ember/(worldJob.job?.steps?.[0]?.ember?.start??100),clock);
       }
       if(!delivered&&forgeGiven){forgeGiven=false;forge.reset();}
+      // The crane and the fire keep the job's own count of its hold, so a pause stops them with the game and the cue lands with the ember.
+      if(forgeGiven)forge.hold(worldJob.arrivalHold?.elapsed??null,state.paused===true);
       if(worldJob?.definition?.yard){
         if(!yard){
           yard=createYard({heightAt:(x,z)=>scablandsSurfaceHeightAt(LAND.yard.x+x,LAND.yard.z+z)});

@@ -566,6 +566,15 @@ Look sheet `docs/board/looks/everburn-remake/round-3.jpg` with Claude's review. 
     - `test-world-job-mode`: the first marker is Cinder and then the forge; a first win offers no job that is not remade,
       and names the next job when it is counted as remade.
     - `test-forge-hold-camera`: Claude's own numbers for the standing view replace the first ones.
+- **The review of what the merge added (Codex, independent, rule 17):** the hold ends after nine seconds of the game's own
+  time in every case it could find, pay and result are the arrival's, no other job enters a hold, the cue sounds once at
+  5.0 s, and the corrected suites match their rulings. One real fault: with the game paused during the hold the crane and
+  the fire ran on, so the ember could land before its sound. Cured: the crane and the fire now keep the job's own count of
+  its hold and stop with a pause (tested). One weakness: the pot's noted place could have been an earlier job's if the
+  pot were never drawn on the car first; it is now forgotten whenever the pot is off the car. Asked for and added: a check
+  that no place, start or path point of any Everburn job, board job or gas run stands within 1 m of the forge's solids.
+  Known and accepted: the land's solids import the forge's plan from a drawing file, as they already do for Tin Town's
+  shacks and the yard.
 - **Short of right:** see the look review. **For Claude still:** an end-to-end drive of the bends, the bridge, the Pipe,
   the Steps and the bed; the forge's cue has not been heard.
 - **Before any switch goes on:** Kyle's own try on a private address (rule 18, "anything he asked to try first"), the frame

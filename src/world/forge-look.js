@@ -235,9 +235,10 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
   // What the crane is doing. `bearing` is the arm's turn (0 points south, along +z), `reach` the trolley's distance from the
   // tower, `length` the line paid out. While it only watches a car it moves at a rate. Once the pot is handed over its work is
   // set by the clock alone (FORGE.times, seconds after the hand-over), so the ember lands in the hearth at the same moment
-  // wherever the car stopped, and the job can time its own ending and its sound to that moment.
+  // wherever the car stopped, and the job can time its own ending and its sound to that moment. That clock is the job's own
+  // count of its hold whenever the scene passes it (`hold`), so a pause stops the crane and the fire with the game.
   const park = {bearing: pitBearing + .9, reach: 7};
-  let bearing = park.bearing, reach = park.reach, length = lengthUp, last = null, car = null, job = null, lit = null, grade = null, tip = 0;
+  let bearing = park.bearing, reach = park.reach, length = lengthUp, last = null, car = null, job = null, grade = null, tip = 0;
   const place = () => {
     arm.rotation.y = bearing; trolley.position.z = reach;
     for (const line of lines) line.scale.y = length;
@@ -266,7 +267,6 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
     tip = tau < T.right ? span(tau, T.set, T.poured) : 1 - span(tau, T.right, T.righted);
     // The hook has the pot from the moment it reaches it; the ember lands at T.lit.
     if (tau >= T.lower && pot.parent !== hook) { hook.add(pot); pot.position.set(0, -FORGE.potBelowHook, 0); }
-    if (tau >= T.lit && lit == null) lit = job.at + T.lit;
   };
 
   return {
@@ -278,25 +278,37 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
     deliver(at, gradeName, ember = 1, now = null) {
       if (job) return;
       job = {...from(at.x, at.z), length: lineTop - FORGE.potBelowHook - (at.y - base), ember: Math.max(0, Math.min(1, ember)),
-        start: {bearing, reach, length}, at: Number.isFinite(now) ? now : last};
+        start: {bearing, reach, length}, tau: 0, held: null, heldSeen: null, paused: false};
+      if (last == null && Number.isFinite(now)) last = now;
       grade = FIRE[gradeName] ? gradeName : 'alive';
       // The pot stands where it stood on the car until the hook has it.
       group.add(pot); pot.position.set(at.x - plan.hearth.x, at.y - base, at.z - plan.hearth.z); pot.rotation.set(0, 0, 0); pot.visible = true;
     },
-    reset() { job = null; lit = null; grade = null; tip = 0; group.add(pot); pot.visible = false; pot.rotation.set(0, 0, 0); },
+    // The job's own count of its hold, in seconds, and whether the game is paused. Called every frame while the job holds.
+    hold(elapsed, paused = false) {
+      if (!job) return;
+      job.held = Number.isFinite(elapsed) ? elapsed : null; job.paused = paused === true;
+      // The first count sets the clock at once; after that the clock follows the count each time it moves on.
+      if (job.held != null && job.heldSeen == null) { job.heldSeen = job.held; job.tau = job.held; }
+    },
+    reset() { job = null; grade = null; tip = 0; group.add(pot); pot.visible = false; pot.rotation.set(0, 0, 0); },
     pot, flame: flames[1],
-    get phase() { return !job ? 'watch' : phaseAt((last ?? job.at ?? 0) - (job.at ?? 0)); },
-    get litAt() { return lit; },
+    get phase() { return !job ? 'watch' : phaseAt(job.tau); },
+    get lit() { return !!job && job.tau >= T.lit; },
     // `seconds` is the scene's clock. While the crane watches, a long gap between two calls is worked through in short steps
     // (at most ten seconds of it), so the arm never jumps.
     animate(seconds) {
-      if (job) { job.at ??= seconds; work(seconds - job.at); }
-      else {
-        const owed = last == null ? 0 : Math.min(10, Math.max(0, seconds - last));
+      const owed = last == null ? 0 : Math.min(10, Math.max(0, seconds - last));
+      if (job) {
+        // The job's count when it has moved on since the last frame; otherwise the scene's own clock, unless the game is paused.
+        if (job.held != null && job.held !== job.heldSeen) { job.tau = job.held; job.heldSeen = job.held; }
+        else if (!job.paused) job.tau += owed;
+        work(job.tau);
+      } else {
         for (let done = 0; owed - done > 1e-6;) { const dt = Math.min(.05, owed - done); done += dt; watchStep(dt); }
       }
       last = seconds;
-      const phase = this.phase;
+      const phase = this.phase, burning = job && job.tau >= T.lit ? job.tau - T.lit : null;
       place();
       // The hook swings a little while the arm or the trolley is moving, and settles when they stop.
       const onHook = pot.parent === hook, moving = phase === 'carry' || phase === 'reach' || (phase === 'watch' && car) ? 1 : .25;
@@ -305,10 +317,10 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
       if (pot.visible) {
         pot.rotation.set(0, 0, 0);
         if (onHook) { pot.rotation.y = -bearing; pot.rotateX(-tip * 1.9); }
-        pot.userData.update(seconds, lit == null ? job.ember : Math.max(0, job.ember * (1 - (seconds - lit) / .5)));
+        pot.userData.update(seconds, burning == null ? job.ember : Math.max(0, job.ember * (1 - burning / .5)));
       }
       // The fire grows from the moment the ember lands, as fast and as tall as the ember was good.
-      const fire = lit == null ? null : FIRE[grade], grown = fire ? Math.min(1, (seconds - lit) / fire.seconds) : 0, eased = grown * grown * (3 - 2 * grown);
+      const fire = burning == null ? null : FIRE[grade], grown = fire ? Math.min(1, burning / fire.seconds) : 0, eased = grown * grown * (3 - 2 * grown);
       coalMaterial.uniforms.uTime.value = seconds; coalMaterial.uniforms.uHeat.value = fire ? Math.min(1, .25 + .75 * eased) * (.45 + .55 * fire.size) : 0;
       flameMaterial.uniforms.uTime.value = seconds; glowMaterial.uniforms.uTime.value = seconds;
       flames.forEach((flame, index) => {
@@ -319,7 +331,7 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
       });
       glow.visible = !!fire; if (fire) glow.scale.setScalar((5 + 9 * fire.size) * (.3 + .7 * eased));
       // Sparks fly when the ember lands, and keep flying from a fire that burns bright.
-      const burst = lit != null && seconds - lit < 1.4;
+      const burst = burning != null && burning < 1.4;
       sparks.visible = burst || (grade === 'bright' && eased > .5);
       if (sparks.visible) { sparks.geometry.setDrawRange(0, burst ? 36 : 14); sparks.userData.place(seconds, {x: FORGE.pit.x, y: FORGE.pit.y + .3, z: FORGE.pit.z}, {x: 0, z: 1}, 0); }
       smoke.visible = !!fire && eased > .05;

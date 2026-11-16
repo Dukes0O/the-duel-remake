@@ -1170,7 +1170,9 @@ export function attachRenderer(host, app) {
       // Once the pot is handed over at the forge it is the crane's to draw (src/world/forge-look.js), so it leaves the car.
       emberPot.update(carry?.ember&&(!carry.pickup||held.loaded)&&!st.onFoot&&!worldJob.forgeFire?player:null,carry?.ember&&(!carry.pickup||held.loaded)?{ember:held.ember??carry.ember.start,max:carry.ember.start,out:held.out===true,rate:held.rate??0,jolts:held.joltCount??0}:null,presentationSeconds);
       // Where the pot stands on the car, in the world's own metres, for the forge's crane to find it (src/world/forge-look.js).
+      // It is forgotten whenever the pot is off the car for any other reason, so that a later job never reads an old place.
       if(emberPot.group.visible&&emberPot.group.parent)world.userData.emberPotAt=world.worldToLocal(emberPot.group.getWorldPosition(emberPotAt));
+      else if(!worldJob?.forgeFire)world.userData.emberPotAt=null;
     }
     world.userData.updatePitCrew?.(st);
     lighting.updateVehicles({course,position:pp,player,police,distance,tall,now:ambientNow,high:app.ambientOcclusionEnabled!==false,menu});

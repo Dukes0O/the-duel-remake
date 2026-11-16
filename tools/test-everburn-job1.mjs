@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {gasRunPaths} from '../src/world/jobs/gas-run.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
 import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, checkWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
@@ -15,7 +16,7 @@ import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPictu
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
-import {FORGE, forgePlan} from '../src/world/forge-look.js';
+import {FORGE, forgePlan, createForge} from '../src/world/forge-look.js';
 import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
@@ -1084,16 +1085,20 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.equal(pot.visible, true, 'the pot leaves the car');
     const from = where(pot);
     assert.ok(Math.hypot(from.x - bay.x, from.z - bay.z) < 4, 'and stands at the back of the stopped car');
-    animateScene(scene.group, 3);
+    // A paused game holds the crane still (a reviewer found it ran on while the job's hold was paused).
+    state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 2);
+    assert.ok(where(pot).distanceTo(from) < 1e-6, 'a paused game holds the crane still');
+    state.paused = false; syncScene(scene.group, state);
+    animateScene(scene.group, 5);
     assert.equal(pot.visible, true);
     assert.ok(where(pot).distanceTo(from) > .1, 'the pot moves toward the forge');
     assert.ok(where(pot).y > from.y + 1, 'the pot is lifted off the car');
     assert.equal(flame.visible, false, 'the forge stays cold until the ember is tipped into it');
-    animateScene(scene.group, 12);
+    animateScene(scene.group, 14);
     const hearth = forgePlan().hearth, over = where(pot);
     assert.ok(Math.hypot(over.x - hearth.x, over.z - hearth.z) < .5, 'the transfer ends over the hearth');
     assert.equal(flame.visible, true, 'and the forge has caught');
-    animateScene(scene.group, 22);
+    animateScene(scene.group, 24);
     flameHeights.push(flame.scale.y);
     const fire = where(flame);
     assert.ok(Math.hypot(fire.x - hearth.x, fire.z - hearth.z) < 1, 'the fire burns in the hearth');
@@ -1139,6 +1144,34 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.deepEqual(catches[0].arenaTell.position, bay);
   }
   assert.ok(flameHeights[0] > flameHeights[1], 'a bright delivery catches more strongly and quickly');
+  // The forge's solids are in the land for every job. No place, start or path point of any Everburn job, board job or gas run stands
+  // inside one, or within 1 m of one (a reviewer asked for this to be shown, not assumed).
+  {
+    const solids = forgePlan().solids, seen = new Set(), found = [];
+    const walk = node => {
+      if (!node || typeof node !== 'object' || seen.has(node)) return;
+      seen.add(node);
+      const point = node.position ?? node;
+      if (Number.isFinite(point?.x) && Number.isFinite(point?.z)) found.push({id: node.id ?? '(a point)', x: point.x, z: point.z});
+      for (const value of Array.isArray(node) ? node : Object.values(node)) walk(value);
+    };
+    walk([EVERBURN_JOBS, EVERBURN_SIDE_JOBS, gasRunPaths(LAND)]);
+    assert.ok(found.length > 100, `the walk found the jobs' places (${found.length})`);
+    for (const point of found) for (const solid of solids)
+      assert.ok(Math.abs(point.x - solid.x) > solid.halfX + 1 || Math.abs(point.z - solid.z) > solid.halfZ + 1, `${point.id} stands clear of ${solid.id}`);
+  }
+  // The crane keeps the job's own count of its hold, not the wall clock, so the ember lands with the cue.
+  {
+    const forge = createForge({documentLike: null}), bay = step.destination.position;
+    forge.animate(0); forge.deliver({x: bay.x, y: 1, z: bay.z}, 'bright', 1, 0); forge.hold(0, false);
+    forge.hold(4.9, false); forge.animate(.01);
+    assert.equal(forge.lit, false, 'the ember has not landed at 4.9 s of the hold');
+    forge.hold(5, false); forge.animate(.02);
+    assert.equal(forge.lit, true, 'and has landed at 5.0 s');
+    forge.hold(5, true); forge.animate(30);
+    assert.equal(forge.phase, 'pour', 'a pause holds the crane where it was, however long it lasts');
+    forge.dispose();
+  }
 }
 // The bed route reaches the Wash scoop, then passes beneath the bridge on the lower floor.
 {
