@@ -271,7 +271,9 @@ function updateJobActors(duel, worldJob, dt) {
 // They use the land's mover, including its floor and solid checks.
 function pursueJobRider(duel, worldJob, actorDef, dt) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
-  if (!rider || rider.health <= 0 || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  if (!rider || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  // A wreck stays where it fell, even if it was already returning to its post.
+  if (rider.health <= 0) return;
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);

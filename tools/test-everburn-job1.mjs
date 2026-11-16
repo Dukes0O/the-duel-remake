@@ -203,6 +203,15 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns at 600 metres along the road without waiting 20 seconds');
   assert.equal(camp.returnStuck, false);
   assert.equal(camp.returningToPost, false);
+  // A wreck cannot use either recovery threshold, even after it was stranded.
+  camp.position = {...stopped};
+  camp.health = 0;
+  camp.returningToPost = true;
+  camp.returnStuck = true;
+  camp.returnHiddenSeconds = 19.9;
+  tick(21);
+  assert.deepEqual(camp.position, stopped, 'a wrecked road rider stays where it fell');
+  assert.equal(camp.returnStuck, true, 'a wrecked road rider is not returned to its post');
 }
 // The camp rider reaches a scooping car later on Easy than on Hard.
 {

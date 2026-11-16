@@ -1867,3 +1867,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the five delivery drives; `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: unbounded accumulation of hidden time.
 - Still needed: Y1's rider beside the car and outside the actual camera view; the current terrain-only rule cannot establish that case. Then run the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: wrecked road rider
+
+- The road rider's wreck guard is explicit: even a stranded rider stays where it was wrecked. The real job-step test starts with a wrecked, stranded rider near the end of its hidden timer and beyond the road-distance threshold; neither threshold moves it. No game behavior, save, sound cue or race fingerprint changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including all five delivery drives. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: nothing.
+- Still needed: Y1's rider beside the car and outside the actual camera view. The current terrain-only rule cannot establish this case without a renderer-independent view test. Then run the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
