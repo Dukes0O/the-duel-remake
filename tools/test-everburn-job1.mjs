@@ -514,6 +514,13 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(third.firstOut && third.firstOut.along >= 1000 && third.firstOut.along <= third.along,
     'the drive records where the ember actually went out');
   assert.ok(third.jolts.some(jolt => jolt.riders.length > 0), 'the drive records riders at a jolt');
+  const fourth = driveAlongRoad(duel, route, 2000, 7200, 25);
+  console.log('Plates 2 km:', JSON.stringify(fourth));
+  assert.ok(fourth.along >= 2000 && fourth.maxDistance < 10, 'the car follows the plates way for a fourth 500 m');
+  assert.equal(fourth.ember, duel.state.arena.worldJob.job.stepState.ember,
+    'the fourth stretch records the actual ember');
+  assert.equal(fourth.beganOut, true, 'the fourth stretch records that the ember was already out');
+  assert.equal(fourth.firstOut, null, 'the earlier outage is not reported as a new one');
 }
 // The real job requests the gate only for a car approaching slowly.
 {

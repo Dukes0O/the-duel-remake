@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates drive to 2 km (15 November 2026)
+
+- Extended the seeded Medium plates drive to 2 km. The driver now distinguishes an ember that was already out at the start of a stretch from one that went out during it. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The fourth 500 m took 45.10 seconds, stayed within 1.35 m of the route and had no jolts. The ember was already out at 1,497.60 m; this is not a delivery or an arrival-band proof. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: continue the plates drive at the existing 25 mph target for this measurement.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the proof driver's misleading report of a new outage at the beginning of a stretch when the ember was already out. The old `everburn-play` scenario still needs replacement or removal. Next: investigate the plates rider contacts and complete the route measurements, then camera, cover and scenario.
+
 ## Larger land, plates rider contact (15 November 2026)
 
 - Extended the seeded Medium plates drive to 1.5 km and recorded where the actual ember first goes out. No game event or sound cue was added.

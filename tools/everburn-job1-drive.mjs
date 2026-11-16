@@ -46,6 +46,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
+  const beganOut = lowestEmber <= 0;
   let firstOut = null;
   const jolts = [];
   let lastJoltCount = state.arena.worldJob.job.stepState.joltCount ?? 0;
@@ -63,7 +64,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       peakSpeedPosition = {x:car.x, z:car.z};
     }
     lowestEmber = Math.min(lowestEmber, state.arena.worldJob.job.stepState.ember);
-    if (firstOut === null && state.arena.worldJob.job.stepState.ember <= 0) {
+    if (!beganOut && firstOut === null && state.arena.worldJob.job.stepState.ember <= 0) {
       firstOut = {along:nearestOnLine(points, car.x, car.z).along, ticks, position:{x:car.x, z:car.z}};
     }
     const pot = state.arena.worldJob.job.stepState;
@@ -110,7 +111,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, jolts, firstOut,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, jolts, beganOut, firstOut,
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)), ticks};
 }
 
