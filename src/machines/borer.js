@@ -150,6 +150,23 @@ export function borerSpoilProfileChanges(oldLength, newLength) {
   return changes;
 }
 
+/** Extend the sampled heap by the requested volume, in cubic metres. */
+export function borerSpoilSampledLength(oldLength, addedVolume) {
+  if (![oldLength, addedVolume].every(Number.isFinite) || oldLength < 0 || addedVolume < 0)
+    throw new TypeError('The spoil heap needs a non-negative length and volume.');
+  if (addedVolume === 0) return oldLength;
+  const addedAt = length => borerSpoilProfileChanges(oldLength, length)
+    .reduce((total, cell) => total + cell.height, 0);
+  let low = oldLength, high = oldLength + 1;
+  while (addedAt(high) < addedVolume) high = oldLength + 2 * (high - oldLength);
+  for (let i = 0; i < 40; i++) {
+    const middle = (low + high) / 2;
+    if (addedAt(middle) < addedVolume) low = middle;
+    else high = middle;
+  }
+  return (low + high) / 2;
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

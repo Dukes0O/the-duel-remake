@@ -44,8 +44,11 @@ The profile now has a volume calculation and a way to find the length needed for
 
 The profile can now list only the one-metre cells that change as the far end grows. Its check compares those changes with the full profile, including a 1,000 m bank. The planner still needs to use these changes and account for the sampled volume, protected ground and actual ground heights. The bank in the Dig is still the old shape.
 
+The profile can now find how far it must grow to hold a given volume on its one-metre samples. This accounts for the difference between a continuous profile and the cells actually filled. It is not yet connected to the deposit planner; the bank remains the old shape. The repeated profile calculations in this sizing method need a performance check before it is used on each cutting step.
+
 ## Checks
 
+- SP sampled sizing: `node tools/test-machine-borer.mjs` passed. It checks small and large deposits at several bank lengths against the sum of the changed cells.
 - SP incremental profile: `node tools/test-machine-borer.mjs` passed. It checks each changed grid cell against the full profile and bounds the cells changed by a short extension.
 - SP profile sizing: `node tools/test-machine-borer.mjs` passed. It checks the calculated volume against sampled profile heights at four lengths and checks that each volume gives back its length.
 - SP target profile: a direct Node check passed for every metre across and along a 40 m profile, including the 5 m crest and both slope limits.

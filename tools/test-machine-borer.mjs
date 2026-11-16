@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -67,6 +67,18 @@ import * as THREE from 'three';
   }
   assert.deepEqual(borerSpoilProfileChanges(10, 10), []);
   assert.throws(() => borerSpoilProfileChanges(10, 9), TypeError);
+}
+
+// Size deposits against the actual one-metre samples, not a continuous integral.
+{
+  for (const [oldLength, volume] of [[0, 0.01], [5.2, 1], [40, 0.2], [1000, 12]]) {
+    const length = borerSpoilSampledLength(oldLength, volume);
+    const laid = borerSpoilProfileChanges(oldLength, length)
+      .reduce((total, cell) => total + cell.height, 0);
+    assert.ok(Math.abs(laid - volume) < 1e-8, 'Sampled cells hold the requested volume.');
+  }
+  assert.equal(borerSpoilSampledLength(10, 0), 10);
+  assert.throws(() => borerSpoilSampledLength(0, -1), TypeError);
 }
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.
