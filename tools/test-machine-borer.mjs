@@ -131,6 +131,17 @@ import * as THREE from 'three';
     assert.equal(borerSpoilGridLength(origin, direction, 10, 0), 10);
   }
   assert.throws(() => borerSpoilGridLength(origin, {x:1,z:1}, 0, 0), TypeError);
+  // Repeated small deposits cross grid-cell and slope changes over time.
+  const direction = {x:Math.SQRT1_2, z:Math.SQRT1_2};
+  let length = 0, total = 0;
+  for (let i = 0; i < 200; i++) {
+    const volume = 0.07 + (i % 5) * 0.03;
+    const next = borerSpoilGridLength(origin, direction, length, volume);
+    total += borerSpoilGridChanges(origin, direction, length, next)
+      .reduce((sum, cell) => sum + cell.height, 0);
+    length = next;
+  }
+  assert.ok(Math.abs(total - 26) < 1e-7, 'Repeated deposits preserve the requested volume.');
 }
 
 // Each spoil load changes only its neighbourhood, not the whole Dig window.

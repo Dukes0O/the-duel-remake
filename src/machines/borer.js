@@ -227,12 +227,13 @@ export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) 
   // The final bound contains every cell the probes can affect. Reuse their
   // coordinates and original heights instead of rebuilding a grid per probe.
   const candidates = borerSpoilGridChanges(origin, direction, oldLength, high)
-    .map(cell => ({along:cell.along, across:cell.across,
+    .map(cell => ({along:cell.along,
+      ceiling:Math.min(5, 0.3 * cell.along, 5 - 0.7 * Math.abs(cell.across)),
       before:borerSpoilProfile(cell.along, cell.across, oldLength)}));
   const addedAt = length => {
     let total = 0;
     for (const cell of candidates)
-      total += borerSpoilProfile(cell.along, cell.across, length) - cell.before;
+      total += Math.max(0, Math.min(cell.ceiling, 0.3 * (length - cell.along))) - cell.before;
     return total;
   };
   for (let i = 0; i < 40; i++) {

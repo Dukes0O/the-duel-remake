@@ -52,7 +52,11 @@ The heap profile can now map its changed area onto the actual one-metre ground g
 
 The heap can now size a deposit against the actual rotated and offset ground grid. It reuses candidate cell coordinates during sizing. This is preparation only: the cutter still uses the narrow bank. The new sizing function still needs a performance check in the cutting loop.
 
+Rotated-grid sizing now calculates each candidate's fixed height limit once, rather than on every sizing probe. A local 1,000-deposit comparison took 73.0 ms before and 50.3 ms after; this is not a frame check. The cutter still needs to use the profile and the complete cutting loop needs a performance check.
+
 ## Checks
+
+- SP repeated rotated deposits: `node tools/test-machine-borer.mjs` checks that 200 successive small deposits retain their requested total volume across grid and slope changes.
 
 - SP rotated sizing: `node tools/test-machine-borer.mjs` checks requested volumes at four headings, four bank lengths and three load sizes.
 
