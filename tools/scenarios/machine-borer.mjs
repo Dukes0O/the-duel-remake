@@ -114,7 +114,12 @@ const page = {
       v.scene.background=oldBackground;v.scene.fog=oldFog;v.renderer.setRenderTarget(oldTarget);renderTarget.dispose();marker.dispose();
     }
   })()`,
-  status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
+  status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message}; })()`,
+  farMouthOn: `(() => { window.__theDig.setCheckFarMouth(true); return true; })()`,
+  farMouth: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck, s=d.simulation.tunnels.segments.at(-1);
+    const dir={x:Math.sin(b.heading),y:0,z:Math.cos(b.heading)};
+    const origin={x:s.end.x-10*dir.x,y:s.end.y,z:s.end.z-10*dir.z};
+    return {finished:b.finished,message:b.message,mouths:d.simulation.tunnels.mouths.length,origin,hit:v.groundRay(origin,dir,35)}; })()`,
   inputTiming: `(() => { const s = window.__theDig.simulation; return {elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever, distance:s.borer.distanceM}; })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
@@ -176,6 +181,34 @@ async function cutUntil(context, metres) {
     throw Error(`Cut timed out at ${state.distance.toFixed(1)} m, lever ${state.lever.toFixed(2)}, stalled ${state.stalled}`);
   } finally { if (held) await key(context, held, 'keyup'); }
 }
+
+async function reachDaylight(context, initialFloor, surveyText) {
+  const match = surveyText.match(/Far side on this line: (\d+) m on, ([\d.]+) m (higher|lower)/);
+  assert.ok(match, 'the far-side survey gives a distance and height');
+  const targetDistance = Number(match[1]), targetY = initialFloor + Number(match[2]) * (match[3] === 'higher' ? 1 : -1);
+  const deadline = Date.now() + 2400000;
+  let leverKey = null, tiltKey = null, recovering = false, nextReport = Date.now();
+  async function change(oldKey, newKey) {
+    if (oldKey !== newKey) { if (oldKey) await key(context, oldKey, 'keyup'); if (newKey) await key(context, newKey, 'keydown'); }
+    return newKey;
+  }
+  try {
+    while (Date.now() < deadline) {
+      const b = await context.evaluate(page.status);
+      if (b.finished) return;
+      if (Date.now() >= nextReport) { console.log(`Daylight drive: ${b.distance.toFixed(1)} m, lever ${b.lever.toFixed(2)}, stalled ${b.stalled}, ${b.message || 'cutting'}`); nextReport += 30000; }
+      if (b.stalled) recovering = true;
+      if (recovering && !b.stalled && b.lever <= 0) recovering = false;
+      const wanted = recovering ? (b.lever > 0 ? 'KeyS' : null) : b.lever < 0.30 ? 'KeyW' : b.lever > 0.32 ? 'KeyS' : null;
+      leverKey = await change(leverKey, wanted);
+      const grade = Math.atan((targetY - b.y) / Math.max(20, targetDistance - b.distance));
+      tiltKey = await change(tiltKey, b.slope < grade - 0.0001 ? 'ArrowUp' : b.slope > grade + 0.0001 ? 'ArrowDown' : null);
+      await context.evaluate(page.pause);
+    }
+    throw Error(`Daylight drive timed out: ${JSON.stringify(await context.evaluate(page.status))}`);
+  } finally { if (leverKey) await key(context, leverKey, 'keyup'); if (tiltKey) await key(context, tiltKey, 'keyup'); }
+}
+
 async function picture(context, name, minimum = 30) {
   await context.evaluate(page.sample);
   const view = await context.evaluate(page.view);
@@ -225,6 +258,8 @@ export async function run(context) {
   await context.evaluate(page.overviewOff);
   await context.evaluate(page.frame);
   await press(context, 'Tab');
+  const initialFloor = (await context.evaluate(page.status)).y;
+  const initialSurvey = measurements.survey.text;
   const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
   await key(context, 'KeyW', 'keydown');
   try {
@@ -281,4 +316,12 @@ export async function run(context) {
     const inside = await picture(context, 'machine-borer-inside', 45);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
+  await reachDaylight(context, initialFloor, initialSurvey);
+  measurements.farMouth = await context.evaluate(page.farMouth);
+  await persist();
+  assert.equal(measurements.farMouth.mouths, 2, 'daylight opens both surface mouths');
+  assert.equal(measurements.farMouth.hit, null, 'the ray through the far mouth reaches open sky');
+  await context.evaluate(page.farMouthOn);
+  await context.evaluate(page.frame);
+  await picture(context, 'machine-borer-far-mouth', 45);
 }

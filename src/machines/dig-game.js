@@ -266,7 +266,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const unsubscribeMapping=onMachineInputChange(refreshMapping);
   const onStorage=event=>{if(event.key===MACHINE_INPUT_STORAGE_KEY || event.key===null)refreshMapping();};
   window.addEventListener('storage',onStorage);
-  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false;
+  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false, checkFarMouth=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xb2cde0,0x714226,1.65));
   const sun=new THREE.DirectionalLight(0xffddac,3.3);sun.position.set(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -492,6 +492,11 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else {camera.position.set(0,22,68);camera.lookAt(0,0,30);}
     for(const event of frameEvents)if(event.type==='dirt-plume'||event.type==='tip'||event.type==='spill')effects.burst({x:event.x,y:(event.y||0)+.25,z:event.z,
       direction:{x:Math.sin(active.heading||0),z:Math.cos(active.heading||0)},strength:event.type==='dirt-plume'?3.1:2.4,material:event.material});
+    if(checkFarMouth && sim.activeMachine==='borer' && active.finished) {
+      const dx=Math.sin(active.heading), dz=Math.cos(active.heading);
+      camera.position.set(active.x+25*dx,active.y+5,active.z+25*dz);
+      camera.lookAt(active.x,active.y+2,active.z);
+    }
     if(checkOverview && sim.activeMachine==='borer') {
       const forwardX=Math.sin(active.heading), forwardZ=Math.cos(active.heading);
       camera.position.set(active.x-120*forwardX,active.y+90,active.z-120*forwardZ);
@@ -552,6 +557,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   return {stop,get simulation(){return sim;},get failed(){return failed;},host,
     requestCentreSample(){sampleCentre=true;},
     setCheckOverview(value){checkOverview=!!value;},
+    setCheckFarMouth(value){checkFarMouth=!!value;},
     get viewForCheck(){return {camera,scene,world,renderer,three:THREE,groundObjects:[nearGround.mesh,yardFloor,editedGroup],groundRay:(origin,direction,far=Infinity)=>{
       world.updateMatrixWorld(true);
       const ray=new THREE.Raycaster(new THREE.Vector3(origin.x,origin.y,origin.z),

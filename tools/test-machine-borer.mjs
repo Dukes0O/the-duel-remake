@@ -3,6 +3,7 @@ import {machineDefinition} from '../src/machines/content/machines.js';
 import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
+import {createGroundView} from '../src/world/ground-view.js';
 import {borerLandRefusal, borerSpoilRefusal, borerYardControls, closeDigSandbox, createDigBorer, createDigSandbox, digSandboxMachineState, exportDigTunnels, importDigTunnels, stepDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {SCARPS} from '../src/world/scablands-scarps.js';
 import {HILLS} from '../src/world/scablands-height.js';
@@ -308,6 +309,28 @@ assert.ok(surveyedDrive.offLevelM <= 0.5, 'The surveyed drive reaches level grou
 assert.ok(surveyedDrive.segments[0].startOpen && surveyedDrive.segments.at(-1).endOpen, 'Both mouths open.');
 const surveyedTunnels = createGroundTunnels(surveyedDrive.segments, {heightAt:(x,z)=>surveyedResult.ground.heightAt(x,z)});
 assert.equal(surveyedTunnels.mouths.length, 2, 'The real mesa has two visible mouths at daylight.');
+
+// Cast through the same drawn ground and the same mouth capsule as the Dig.
+const farMaterial = new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+const farGround = createDigNearGround(farMaterial, surveyedResult.ground);
+farGround.follow(surveyedDrive.x, surveyedDrive.z);
+const farEdited = new THREE.Group();
+const farView = createGroundView({group:farEdited, groundEdit:surveyedResult.ground, material:farMaterial});
+farView.update(); farGround.mesh.updateMatrixWorld(true); farEdited.updateMatrixWorld(true);
+const farEnd = surveyedDrive.segments.at(-1).end;
+const farDirection = new THREE.Vector3(Math.sin(surveyedDrive.heading), 0, Math.cos(surveyedDrive.heading));
+const rayOrigin = new THREE.Vector3(farEnd.x, farEnd.y, farEnd.z).addScaledVector(farDirection, -10);
+const farRay = new THREE.Raycaster(rayOrigin, farDirection, 0, 35);
+const farBlocked = farRay.intersectObjects([farGround.mesh, ...farEdited.children], false).find(({point}) =>
+  !surveyedTunnels.mouths.some(mouth => {
+    const start = new THREE.Vector3(mouth.start.x, mouth.start.y, mouth.start.z);
+    const axis = new THREE.Vector3(mouth.end.x, mouth.end.y, mouth.end.z).sub(start);
+    const t = THREE.MathUtils.clamp(point.clone().sub(start).dot(axis) / Math.max(axis.lengthSq(), 1e-8), 0, 1);
+    return point.distanceToSquared(start.addScaledVector(axis, t)) < mouth.radius ** 2;
+  }));
+assert.equal(farBlocked, undefined, 'A ray along the bore from 10 m inside the far mouth reaches open sky.');
+farView.dispose(); farGround.mesh.geometry.dispose(); farMaterial.dispose();
+
 assert.ok(surveyedResult.ground.heightAt(surveyedDrive.x, surveyedDrive.z) - surveyedDrive.y <= 0.3,
   'The head reaches the open ground before daylight.');
 let finishedDrive = {...sandbox, ground:surveyedResult.ground, tunnels:surveyedTunnels,

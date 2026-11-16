@@ -238,3 +238,9 @@ Merged `integration/wasteland` without conflicts. Mabel now keeps cutting beyond
 `node tools/test-machine-borer.mjs` passed, including the real mesa drive, two surface mouths, and drive-mode movement out and back. `node tools/test-tunnels.mjs` passed. The browser scenario, the far-mouth ray and picture, the daylight screen sentence, the rock pace fix, and final checks remain. The lane tier is for Claude. No race fingerprints were run.
 
 Changed assertions, for Claude to review: the exit cutting now expects a closed end instead of an open end before daylight, and the filled-lip test allows 15 seconds instead of one simulation step so the head reaches open ground. These follow Claude's E1 ruling; the daylight and lip recovery checks remain.
+
+## Far-mouth proof
+
+Merged `integration/wasteland`; it was already current. The real-ground borer test now casts along the drawn ground from 10 m inside the far mouth, applying the same mouth cut as the Dig, and finds no ground in the way. It retains the two-mouth and drive-out-and-back checks. The browser scenario now follows the survey to daylight and takes a final view from 25 m outside the far mouth, with a ray and mouth count recorded before their assertions. The scenario needs Claude's browser run; the automated daylight drive and its picture are not yet verified there.
+
+`node tools/test-machine-borer.mjs` passed in about 70 seconds. The scenario and Dig code passed Node syntax checks; importing the scenario parsed its page expressions. No existing assertions changed and no race fingerprints were run. The daylight screen sentence, rock pace, and final checks remain.
