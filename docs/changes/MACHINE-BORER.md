@@ -222,3 +222,9 @@ The first mouth previously changed the ground shader and marked its materials fo
 ## Collecting the visibility evidence
 
 The scenario now saves the 45 m visibility measurements before it checks whether the first W push was prompt. A slow first push previously stopped the run before those measurements could be collected. The first-push assertions still run and can still fail. Earlier setup and cover failures can still stop the scenario. `node --check tools/scenarios/machine-borer.mjs`, the page-expression parse checks, and `git diff --check` passed. The browser scenario was not run. H4's cause remains unconfirmed, and the final checks are still due. No race fingerprints changed.
+
+## Final scenario and first-cut setup
+
+Claude's hand measurements close H1: the hill hides Mabel, the head leads, the mouth shows the lining and portal, and the following camera enters the bore. The scenario now places its side camera 30 m outside and 35 m to the side, 12 m above the rules ground, and looks at her middle. It records and checks the camera height and the visibility counts. The first W check compares lever travel with the Dig's simulation time and records wall time without requiring it to match. Temporary input and frame tracing was removed.
+
+The tunnel-capable ground shader is already prepared when the Dig opens. The first actual lining, portal and edited ground depend on the first real cut and its mouth; preparing them earlier would require predicting or changing that cut. They remain created on the first cut. Claude's hand drive found a roughly one-second hitch once; it remains for a browser check and is not claimed fixed. The browser scenario must be run by Claude.

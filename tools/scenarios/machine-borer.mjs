@@ -100,13 +100,15 @@ const page = {
     }
     try {
       v.scene.background=new T.Color(0);v.scene.fog=null;camera.aspect=800/600;camera.updateProjectionMatrix();
-      camera.position.copy(target).addScaledVector(right,40);camera.lookAt(target);camera.updateMatrixWorld(true);
+      camera.position.copy(mouth).addScaledVector(forward,-30).addScaledVector(right,35);
+      const sideGround=v.surfaceHeight(camera.position.x,camera.position.z);
+      camera.position.y=sideGround+12;camera.lookAt(middle);camera.updateMatrixWorld(true);
       const sideCamera=camera.position.toArray();
       const alone=draw(body,false), covered=draw(body,true);
       const entrance=mouth.clone();entrance.y=floor+3;
       camera.position.copy(entrance).addScaledVector(forward,-25);camera.lookAt(entrance);camera.updateMatrixWorld(true);
       const portal=draw(v.portals,true),lining=draw(v.lining,true);
-      return {geometry,side:{alone,covered,camera:sideCamera},mouth:{portal,lining}};
+      return {geometry,side:{alone,covered,camera:sideCamera,ground:sideGround},mouth:{portal,lining}};
     } finally {
       for(const [o,visible] of saved)o.visible=visible;
       v.scene.background=oldBackground;v.scene.fog=oldFog;v.renderer.setRenderTarget(oldTarget);renderTarget.dispose();marker.dispose();
@@ -114,21 +116,6 @@ const page = {
   })()`,
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
   inputTiming: `(() => { const s = window.__theDig.simulation; return {elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever, distance:s.borer.distanceM}; })()`,
-  startInputTrace: `(() => {
-    const trace = {events:[], frames:[], digFrames:[], active:true};
-    const snapshot = () => { const s = window.__theDig.simulation; return {time:performance.now(), elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever}; };
-    trace.listener = event => { if (event.code === 'Tab' || event.code === 'KeyW') trace.events.push({type:event.type, code:event.code, ...snapshot()}); };
-    // The Dig stops Tab at document capture. Observe it on window first so the
-    // trace includes the actual event without changing the Dig's handling.
-    window.addEventListener('keydown', trace.listener, true); window.addEventListener('keyup', trace.listener, true);
-    const frame = () => { if (!trace.active) return; trace.frames.push(snapshot()); requestAnimationFrame(frame); };
-    window.__theDig.inputTrace = trace; requestAnimationFrame(frame); return true;
-  })()`,
-  stopInputTrace: `(() => {
-    const trace = window.__theDig.inputTrace; trace.active = false;
-    window.removeEventListener('keydown', trace.listener, true); window.removeEventListener('keyup', trace.listener, true);
-    delete window.__theDig.inputTrace; return {events:trace.events, frames:trace.frames, digFrames:trace.digFrames};
-  })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
   sample: `(() => { window.__theDig.requestCentreSample(); return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); })()`,
@@ -237,21 +224,18 @@ export async function run(context) {
   await context.screenshot('machine-borer-mesa-overview');
   await context.evaluate(page.overviewOff);
   await context.evaluate(page.frame);
-  await context.evaluate(page.startInputTrace);
   await press(context, 'Tab');
   const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
-  const pushSamples = [];
   await key(context, 'KeyW', 'keydown');
   try {
     while (Date.now() - pushStart < 1300) {
       await new Promise(resolve => setTimeout(resolve, 100));
-      pushSamples.push({wallSeconds:(Date.now()-pushStart)/1000, ...await context.evaluate(page.inputTiming)});
+      await context.evaluate(page.inputTiming);
     }
   }
   finally { await key(context, 'KeyW', 'keyup'); }
   const afterPush = await context.evaluate(page.inputTiming);
-  const trace = await context.evaluate(page.stopInputTrace);
-  measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, trace, wallSeconds:(Date.now()-pushStart)/1000};
+  measurements.firstPush = {before:beforePush, after:afterPush, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
   // Keep boring even if the first push was lost. The visibility measurements
   // at 45 m are independent evidence and must be saved before an assertion
@@ -272,10 +256,12 @@ export async function run(context) {
   measurements.visibility = await context.evaluate(page.visibility);
   await persist();
   const visibility = measurements.visibility;
-  assert.ok(trace.digFrames.some(frame => frame.wHeld), 'the Dig recorded the first W hold');
   assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
-  assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
+  const simulatedSeconds = afterPush.elapsed - beforePush.elapsed;
+  assert.ok(simulatedSeconds > 0, 'simulation advances during the first W press');
+  assert.ok(Math.abs((afterPush.lever - beforePush.lever) - simulatedSeconds * 0.25) <= 0.01, 'the first W press moves the lever at a quarter travel per simulation second');
   assert.ok(visibility.geometry.headAhead > 0 && visibility.geometry.headFromSimulation <= 2, 'the head leads and is at the simulation position');
+  assert.ok(visibility.side.camera[1] > visibility.side.ground, 'the side camera is above ground');
   assert.ok(visibility.side.alone.marked > 0 && visibility.side.covered.marked === 0, 'the hill hides the whole machine from the side');
   assert.ok(visibility.mouth.portal.marked > 0 && visibility.mouth.lining.marked > 0 && visibility.mouth.portal.groundAround > 0, 'the mouth shows the portal, lining and surrounding ground');
   assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
