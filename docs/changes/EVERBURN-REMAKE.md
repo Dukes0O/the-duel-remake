@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates first shelter, no furnace warning (16 November 2026)
+
+- The Medium test driver turns further toward shelter after passing the obstacle. On the real drive to 1.6 km it takes no jolts, keeps 84.63 ember and is in furnace sight for at most 6.0 seconds. The furnace does not send riders. The car briefly reaches 33.07 mph, above 50 km/h, so this is not yet the clean route proof. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` and `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the new sight and warning checks add to the existing checks. Codex decided: turn from a 45 m offset toward 65 m after 1.3 km for this test drive. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the constant 45 m trial line. The old `everburn-play` scenario still needs replacement or removal. Next: keep the car within the ground speed and finish the cover and clean route proofs, then the scenario.
+
 ## Closer plates shelter line (16 November 2026)
 
 - The Medium test driver moves 45 m toward the first shelter and joins the line earlier. It reaches 1.6 km with no jolts and 84.59 ember. The longest furnace sighting is 7.0 seconds, from 1,283 to 1,380 m on the driven line. That still sends riders and does not prove the clean drive. The car briefly reached 33.05 mph, above the plates' 50 km/h target. No game event or sound cue was added.

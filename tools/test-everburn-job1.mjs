@@ -133,7 +133,8 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');
   assert.ok(drive.longestFurnaceSightSeconds < 22.5, 'the shelter line reduces the measured exposure');
   assert.equal(drive.jolts.length, 0, 'the car reaches the first shelter without a jolt');
-  assert.ok(drive.longestFurnaceSightSeconds < 7.1, 'the closer line reduces exposure to seven seconds');
+  assert.ok(drive.longestFurnaceSightSeconds <= 6, 'the first shelter approach stays within six seconds of sight');
+  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on this approach');
   assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
   process.exit(0);
 }
