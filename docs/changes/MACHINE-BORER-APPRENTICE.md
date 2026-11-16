@@ -184,3 +184,9 @@ The narrow three-cell spoil bank planner and its cell-list bookkeeping were repl
 ## For Claude to run
 
 Run the older Mabel browser scenario to its end, the apprentice browser scenario and the hand play check. Chrome cannot start in this job. The scenario has not been visually checked.
+
+## Final checks after review fixes
+
+On merge d480af408, the full `test-machine-borer` passed. Its real heap measured a maximum sampled cross slope of 0.6990 m per metre, a 4.7691 m crest and 0.616% volume error. Over 100 cutting steps it read 2,556 heights; the observed maximum was 67 cell fills in one 1/60-second step. The protected-ground and mesa checks passed.
+
+The lesson, apprentice, both scenario-expression, freeze, survey, town-apprentices, ground-edit, machine-roads, tunnels and scablands-scene tests each passed. The race replay fingerprints passed 297 checks and combat replay fingerprints passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was omitted as A10 directs. Browser scenarios were not run in this job.
