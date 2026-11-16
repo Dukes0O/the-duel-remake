@@ -1890,3 +1890,8 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Changed assertions, for Claude to review: the forge cue was expected once on arrival; it is now expected zero times on arrival and once at five seconds, as the ruling requires. The completed job was expected immediately; it is now expected after nine seconds. No tolerances were loosened.
 - Codex decided: none. **Removed:** the forge catch cue at arrival. Picture 9 remains until the browser scenario is changed.
 - For Claude to run: the browser scenario and lane tier after the remaining work. The full Easy suite and final replay and build checks remain for the last round.
+
+- The hold screen now says "Delivered. The forge takes the fire." The ember gauge keeps the value delivered to the forge.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the screen model at arrival and at 8.9 seconds for bright and barely alive deliveries. Race fingerprints were not run in this round. No sound cue changed; `world.forge.catch` remains at five seconds.
+- Changed assertions: none in this round. Codex decided: none. **Removed:** the carry instruction during the hold.
+- Still needed: the camera, browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.

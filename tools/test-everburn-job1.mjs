@@ -1065,6 +1065,9 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.deepEqual(world.forgeFire, {ember, grade});
     assert.equal(world.job.done, false, 'the job waits for the forge');
     assert.equal(world.arrivalHold.elapsed, 0);
+    const arrivalHud = worldHudModel({worldJob:world});
+    assert.equal(arrivalHud.line, 'Delivered. The forge takes the fire.');
+    assert.equal(arrivalHud.ember.value, ember, 'the gauge shows the ember that arrived');
     assert.equal(events.filter(event => event.arenaTell?.cue === 'world.forge.catch').length, 0);
     // The forge and its crane (src/world/forge-look.js, 16 November 2026) replace the plain flame and the flying pot. The pot stands where it
     // stood on the car until the hook has it, is lifted off, is carried to the hearth and tipped, and only then does the forge catch.
@@ -1114,6 +1117,9 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.deepEqual({s:state.s, lateral:state.lateral}, place);
     assert.equal(state.armor, armor);
     assert.deepEqual(world.emberResult, before);
+    const heldHud = worldHudModel({worldJob:world});
+    assert.equal(heldHud.line, 'Delivered. The forge takes the fire.');
+    assert.equal(heldHud.ember.value, ember, 'the gauge keeps the delivered ember during the hold');
     assert.notDeepEqual(rider.position, riderBefore, 'a retreating rider continues home');
     for (let i = 0; i < 6; i++) duel.step(1 / 60);
     assert.equal(world.job.done, true, 'the job ends at 9.0 seconds');
