@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -259,6 +259,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const watchingPanel=document.createElement('section');watchingPanel.className='the-dig-survey';
   surveyPanel.after(watchingPanel);
   const sendButton=document.createElement('button');sendButton.type='button';sendButton.hidden=true;watchingPanel.after(sendButton);
+  const borePanel=document.createElement('section');borePanel.className='the-dig-survey';sendButton.after(borePanel);
   let surveyLine=null, surveyKey='';
   const surveyDisplayCache={};
   let sendOffered=false;
@@ -535,6 +536,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     }
     sendButton.hidden=!sendOffered;
     if(sendOffered)sendButton.textContent=`F: Send ${sim.apprenticeTown.people[0].name}`;
+    const boardWords=boreBoard(sim).map(boreBoardWords);
+    borePanel.hidden=boardWords.length===0;
+    borePanel.textContent=boardWords.length ? `Bore board. ${boardWords.join(' ')}` : '';
     watchingPanel.hidden=sim.activeMachine!=='borer';
     if (!watchingPanel.hidden) watchingPanel.textContent=borerWatchingWords(sim).join(' ');
     if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});

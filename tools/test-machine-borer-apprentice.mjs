@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
-import {borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
@@ -135,6 +135,24 @@ const another = {...sent, borer:{...sent.borer, x:20}};
 const queued = sendBorer(another, {...line, x:20});
 assert.deepEqual(queued.boreOrders.map(order=>order.id), ['bore-1','bore-2']);
 console.log('Borer sending: teaching, survey, face, refusal and order queue passed.');
+
+const boardSim = {...queued, activeBoreId:'bore-1', boreStallSeconds:20,
+  borer:{...queued.borer, y:2, stallCount:2},
+  boreOrders:queued.boreOrders.map((order, i) => i ? order : {...order,
+    stages:order.stages.map(stage => ({...stage, completed:20}))})};
+const [workingRow, waitingRow] = boreBoard(boardSim);
+assert.equal(workingRow.name, 'Pim');
+assert.equal(workingRow.done, 20);
+assert.equal(workingRow.remaining, 100);
+assert.equal(workingRow.drift, 1);
+assert.equal(workingRow.stalls, 2);
+assert.ok(workingRow.minutes > 100 / .5 / 60);
+assert.match(boreBoardWords(workingRow), /Pim is cutting.*20.0 m cut.*100.0 m to go.*1.0 m above.*2 stalls.*minutes to daylight/);
+assert.match(boreBoardWords(waitingRow), /Pim is waiting/);
+const finishedRow = boreBoard({...boardSim, boreOrders:[{...boardSim.boreOrders[0], status:'finished',
+  result:{distanceM:121, offLevelM:.4, stalls:3}}]})[0];
+assert.match(boreBoardWords(finishedRow), /Pim finished 121.0 m, 0.4 m off level/);
+console.log('Bore board: working, waiting and finished orders passed.');
 
 // The order records only ground cut by Mabel, and a stall costs 20 seconds.
 const workGround = {
