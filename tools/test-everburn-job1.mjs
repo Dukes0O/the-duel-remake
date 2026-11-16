@@ -132,6 +132,8 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   console.log('Plates cover approach:', JSON.stringify(drive));
   assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');
   assert.ok(drive.longestFurnaceSightSeconds < 22.5, 'the shelter line reduces the measured exposure');
+  assert.equal(drive.jolts.length, 0, 'the car reaches the first shelter without a jolt');
+  assert.ok(drive.longestFurnaceSightSeconds < 7.1, 'the closer line reduces exposure to seven seconds');
   assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
   process.exit(0);
 }
