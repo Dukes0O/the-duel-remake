@@ -1905,3 +1905,18 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-everburn-job1.mjs` passed, including the picture failure checks and all scripted deliveries. All 36 page expressions were exercised through a mock and parsed with `new Function`; `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The browser scenario was not run. Race fingerprints were not run in this round.
 - Changed assertions: none. Codex decided: none. **Removed:** picture 9's focused forge view, replaced by the two hold pictures.
 - Still needed: the Easy driver and final checks. For Claude to run: the browser scenario and lane tier.
+
+- The Easy suite accepts `--job hot-delivery` (or the full job id), reports every failed seed for a selected job, and skips unrelated jobs. An unknown job is rejected. The eight-of-ten requirement is unchanged.
+- Baseline: `node tools/test-everburn-easy.mjs --job hot-delivery` ran all ten old-driver attempts and failed as expected, 0/10. Each reached the 3,000-second limit in the carry step with the pot loaded, ember at zero, and the job waiting for the yard-gate marker at (0, 0). No barricades had been burnt. The final car positions (x, z, metres) were:
+  - Seed 1: (-0.029, 0.019).
+  - Seed 2: (-0.029, 0.019).
+  - Seed 3: (-0.029, 0.019).
+  - Seed 4: (-0.029, 0.019).
+  - Seed 5: (-0.029, 0.019).
+  - Seed 6: (-0.029, 0.019).
+  - Seed 7: (-0.029, 0.019).
+  - Seed 8: (-0.029, 0.019).
+  - Seed 9: (-0.029, 0.019).
+  - Seed 10: (-0.029, 0.019).
+- Checks: the selected run exercised the filter and all ten attempts; its expected failure shows the old driver still needs teaching. `node --check tools/test-everburn-easy.mjs` and `git diff --check` passed. An unknown job was rejected. No game behavior, sound cue, assertion or race fingerprint changed. Codex decided: none. **Removed:** nothing.
+- Still needed: reuse the Hot Delivery proof drive for the Easy driver, then run its ten drives and the final checks. For Claude to run: the browser scenario and lane tier.
