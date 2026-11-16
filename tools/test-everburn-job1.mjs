@@ -83,6 +83,74 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.equal(coverStretches(points, point => clearGap[point.along / 20]).length, 1,
     '100 m of open ground on both sides separates a covered stretch');
 }
+// The real job applies ground cooling and remembers the bed warning.
+{
+  const step = definition.steps[0];
+  const polygon = GROUND_AREAS.polygons.find(area => area.id === 'salt-pan');
+  const centre = polygon.points.reduce((sum, point) => ({x:sum.x + point.x / polygon.points.length, z:sum.z + point.z / polygon.points.length}), {x:0, z:0});
+  let pan;
+  for (let dx = -1000; dx <= 1000 && !pan; dx += 100) for (let dz = -1000; dz <= 1000; dz += 100) {
+    const point = {x:centre.x + dx, z:centre.z + dz};
+    if (scablandsDriveAt(point.x, point.z).id === 'salt-pan') { pan = point; break; }
+  }
+  assert.ok(pan, 'the land has a salt pan point');
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = pan;
+  const captions = [];
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  const lossAt = point => {
+    car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+    world.job.stepState = {loaded:true, ember:100};
+    stepWorldJob(duel, 1);
+    return 100 - world.job.stepState.ember;
+  };
+  const normal = step.carStart;
+  assert.notEqual(scablandsDriveAt(normal.x, normal.z).id, 'salt-pan');
+  const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
+  assert.ok(Math.abs(ordinaryLoss - 100 / 900) < 1e-9, 'a full pot cools in fifteen minutes on ordinary ground');
+  assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
+  assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
+  const wash = LAND.at('the-wash');
+  let bed;
+  for (let dx = -500; dx <= 500 && !bed; dx += 20) for (let dz = -500; dz <= 500; dz += 20) {
+    const point = {x:wash.x + dx, z:wash.z + dz};
+    const ground = scablandsDriveAt(point.x, point.z);
+    if (ground.id === 'river-bed' && !ground.soft) { bed = point; break; }
+  }
+  assert.ok(bed, 'the land has firm river bed');
+  assert.equal(scablandsDriveAt(bed.x, bed.z).safeKmh, 80);
+  state.speedMph = 80 / 1.609344;
+  world.lastKmh = 80;
+  const bedLoss = lossAt(bed);
+  assert.ok(Math.abs(bedLoss / ordinaryLoss - 2.5) < 1e-9, 'the bed cools 2.5 times as fast with no rough loss at 80 km/h');
+  lossAt(bed);
+  assert.equal(captions.filter(text => text === 'Cold air lies in the river bed. The pot cools fast down here.').length, 1);
+  state.speedMph = 0;
+
+
+  const knowledge = createKnowledge();
+  const routes = worldMapWays({worldJob:world, car:normal, target:LAND.at('tin-town')});
+  const map = () => waysMarkup(routes, 'Tin Town', knowledge, {hotDelivery:true});
+  learnHotDeliveryDangers(knowledge, world, normal);
+  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe|Cold air lies/i);
+  learnHotDeliveryDangers(knowledge, world, bed);
+  assert.match(map(), /Cold air lies in the river bed\. The pot cools fast down here\./);
+  lossAt(pan);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /The wind on the salt pan cools the ember faster\./);
+  assert.doesNotMatch(map(), /Cross the Pipe/i);
+  lossAt({...LAND.at('the-pipe')});
+  assert.equal(world.pipeDeck.onDeck, true);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /Cross the Pipe at 40 km\/h or less\./);
+  lossAt(normal);
+  learnHotDeliveryDangers(knowledge, world, car);
+  assert.match(map(), /wind on the salt pan/);
+  assert.match(map(), /Cross the Pipe/);
+
+}
 // Floor it towards town across the plain, starting with the real pickup and gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -1617,53 +1685,6 @@ if (process.env.EVERBURN_BED_ONLY === '1') process.exit(0);
   assert.equal(fast.falls.length, 1, 'the fast car takes one landing hit');
   assert.ok(fast.falls[0].drop > 2, 'the hit measures the real fall');
   assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
-}
-// The actual world-job update applies the salt wind only on the pan.
-{
-  const polygon = GROUND_AREAS.polygons.find(area => area.id === 'salt-pan');
-  const centre = polygon.points.reduce((sum, point) => ({x:sum.x + point.x / polygon.points.length, z:sum.z + point.z / polygon.points.length}), {x:0, z:0});
-  let pan;
-  for (let dx = -1000; dx <= 1000 && !pan; dx += 100) for (let dz = -1000; dz <= 1000; dz += 100) {
-    const point = {x:centre.x + dx, z:centre.z + dz};
-    if (scablandsDriveAt(point.x, point.z).id === 'salt-pan') { pan = point; break; }
-  }
-  assert.ok(pan, 'the land has a salt pan point');
-  const world = createWorldJob(definition);
-  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
-  let car = pan;
-  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
-  initializeWorldJob(duel, definition);
-  const lossAt = point => {
-    car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
-    world.job.stepState = {loaded:true, ember:100};
-    stepWorldJob(duel, 1);
-    return 100 - world.job.stepState.ember;
-  };
-  const normal = step.carStart;
-  assert.notEqual(scablandsDriveAt(normal.x, normal.z).id, 'salt-pan');
-  const ordinaryLoss = lossAt(normal), panLoss = lossAt(pan);
-  assert.ok(Math.abs(ordinaryLoss - 100 / 900) < 1e-9, 'a full pot cools in fifteen minutes on ordinary ground');
-  assert.ok(Math.abs(ordinaryLoss - step.ember.coldPerSecond) < 1e-9);
-  assert.ok(Math.abs(panLoss / ordinaryLoss - 1.5) < 1e-9, 'the pan cools the pot half as fast again');
-
-  const knowledge = createKnowledge();
-  const routes = worldMapWays({worldJob:world, car:normal, target:LAND.at('tin-town')});
-  const map = () => waysMarkup(routes, 'Tin Town', knowledge, {hotDelivery:true});
-  learnHotDeliveryDangers(knowledge, world, normal);
-  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe/i);
-  lossAt(pan);
-  learnHotDeliveryDangers(knowledge, world, car);
-  assert.match(map(), /The wind on the salt pan cools the ember faster\./);
-  assert.doesNotMatch(map(), /Cross the Pipe/i);
-  lossAt({...LAND.at('the-pipe')});
-  assert.equal(world.pipeDeck.onDeck, true);
-  learnHotDeliveryDangers(knowledge, world, car);
-  assert.match(map(), /Cross the Pipe at 40 km\/h or less\./);
-  lossAt(normal);
-  learnHotDeliveryDangers(knowledge, world, car);
-  assert.match(map(), /wind on the salt pan/);
-  assert.match(map(), /Cross the Pipe/);
-
 }
 // The real watch traces the ground, resets when sight is lost, and sounds once after six seconds.
 {

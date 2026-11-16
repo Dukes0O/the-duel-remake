@@ -2,7 +2,7 @@
 // graphics: the carry step (steps/carry.js) feeds it what the car did this step and keeps the result in its step state.
 // The pot holds an ember from 100 down to 0. Cold takes a little all the time, ground taken faster than it is safe takes more, and a
 // hard hit takes a lot at once. At 0 the pot is out and must be relit at a brazier. How fast a ground is safe is the ground's own
-// (src/world/scablands-regions.js: any speed on a road, the salt pan and the sand, 90 km/h on the flats, 70 in the river bed, 50 on
+// (src/world/scablands-regions.js: any speed on a road, the salt pan and the sand, 90 km/h on the flats, 80 in the river bed, 50 on
 // the scab plates), and the carry step reads it for the point the car is on.
 export const MPH_TO_KMH = 1.609344;
 

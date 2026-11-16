@@ -119,7 +119,7 @@ export function buildEverburn(land) {
       steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:forge, radius:6, stopAtDestination:true,
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', cinderAt, 8), radius:8, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
-        safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5}), burnable:true, spillLineId:'story.ember.cinder.4',
+        safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.5}), burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders,
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
