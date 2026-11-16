@@ -1,13 +1,12 @@
-# DIG-YARD-TOY
+﻿# DIG-YARD-TOY
 
-- The Dig has its own `dev` switch for yard entry and machine sounds; the town keeps its switch. The yard shares machine help. Opening controls already appeared without input.
-- Kept later values: `wasteland-town` is `dev`, `nissan-skyline` is `on`. Preview lists the Dig.
-- Machine cues have sound-bank recipes, shared with the existing players. No new game event or cue.
-- Texture audit: machines-1 has 0 of 63,426 UV vertices near white; borer has 0 of 44,876. Before and after match: no model changed.
-- All town tile images have zero near-white pixels, including triangle interiors. Borer photo textures have 44 scattered near-white pixels, at most three in any row, not empty white cells. Claude's picture check remains needed.
-- Checks on 3f5c22450 plus this change: `test-the-dig`, `test-dig-yard-switches`, `test-machine-borer-scenario` and `test-machine-borer-apprentice-scenario` passed. Scenario page expressions parse in Node; literal machine sound requests have recipes.
-- Earlier checks passed: `test-feature-flags`, `test-town-hooks`, `test-machine-view`, `test-preview-launcher`, `test-yard-home` and `test-yard-next`.
-- Changed assertions for Claude: switch count 55 to 56 for the new switch; Dig entry test uses `the-dig` instead of `wasteland-town`.
-- Removed: earlier duplicate `wasteland-town` and `nissan-skyline` switch entries.
-- Still needed: remaining older suites, lane tier, build, browser save check and independent code review.
-- For Claude: run the browser scenario with memory-only storage, play with sound, check the pictures and run one Dig yard frame check.
+- The Dig has its own `dev` switch for yard entry and machine sounds; town keeps its switch. Yard help shares machine keys. Opening controls already appeared without input.
+- Kept later switch values: `wasteland-town` is `dev`; `nissan-skyline` is `on`. Preview lists the Dig.
+- Existing machine events use their named sound-bank cues; no new game event was added.
+- Texture audit before and after: machines-1 has 0 of 63,426 UV vertices near white; borer has 0 of 44,876. No model changed. Borer photos contain 44 scattered near-white pixels; Claude must check the picture.
+- On 16fdc2d1d: Dig, yard switches, machine haul and view passed; lane 98/114, with 14 failures passing individually outside the sandbox. Build passed.
+- On the current changes: both audio suites and both borer scenario syntax checks passed; all four updated machine scenario modules parse.
+- Changed assertions for Claude: switch count 55 to 56; Dig entry uses `the-dig`. Both audio pin exclusion lists extended for Dig additions; historical hashes unchanged.
+- Removed: earlier duplicate `wasteland-town` and `nissan-skyline` entries.
+- For Claude: run the Dig and four machine browser scenarios, including memory-only save comparison; play with sound, check pictures and run one Dig yard frame check. Independent review remains.
+- Still needed: finish matching older suites, changed-files lane rerun and build. Lane deferred five long suites to night.

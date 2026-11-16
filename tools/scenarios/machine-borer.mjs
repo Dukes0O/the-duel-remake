@@ -270,7 +270,7 @@ export async function run(context) {
     catch (error) { measurements.failures.push(`${label}: ${error.message}`); await persist(); return null; }
   };
   await persist();
-  await context.navigate('/tools/menu-check.html?flags=wasteland-town');
+  await context.navigate('/tools/menu-check.html?flags=wasteland-town,the-dig');
   await context.waitFor(page.ready, 'isolated test game', 60000);
   await context.evaluate(page.enter);
   await context.waitFor(page.yard, 'The Dig button', 60000);
