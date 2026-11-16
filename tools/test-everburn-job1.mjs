@@ -164,6 +164,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
   assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the diagnostic records every pot jolt');
+  const continuation = driveAlongRoad(duel, townLine, 800, 7200, 60 / 1.609344);
+  console.log('Rider beyond the Steps:', JSON.stringify(continuation));
+  assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
+  assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
+    'the rider is in contact at a recorded jolt on this line');
+  assert.equal(continuation.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
+    'the continuation records every pot jolt');
   process.exit(0);
 }
 // Test a gradual line around the first rider on the bed route.
