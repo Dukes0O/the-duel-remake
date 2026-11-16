@@ -591,3 +591,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - `node tools/test-everburn-job1.mjs`: passed. The test compares the recorded camp and bridge jolts with the actual pot's jolt count and checks the recorded camp jolt. The camp approach had one jolt of 16.82 ember at (1994.83, 1197.91), at 28.25 mph; the bridge stretch had none. `git diff --check`: passed. Race fingerprints were not checked this round.
 - Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof and balance, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road gate approach (15 November 2026)
+
+- The Medium proof driver slows for Tin Town and reaches the gate under 30 km/h. The real job opens the gate and removes its solid. This advances step 7a; it does not yet reach the forge or prove a bright arrival. The existing `world.tintown.gate` cue plays. No new game event was added.
+- `node tools/test-everburn-job1.mjs`: passed. At 7.6 km the ember was 28.87; at 7.81 km the car was 6.35 m from the gate, travelling 26.16 km/h, with 24.97 ember. The required bright arrival remains unproved and this drive needs balance work. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: the proof driver starts slowing within 200 m of the gate, aiming for 16 mph. Claude should review the drive.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the forge arrival and East Road balance, the other five drives, camera, cover and scenario.

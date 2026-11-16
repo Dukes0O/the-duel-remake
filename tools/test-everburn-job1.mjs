@@ -437,6 +437,23 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(nearTown.speedAtNearestTownGate, Math.abs(duel.state.speedMph), 'the drive records the real speed at its nearest gate position');
   console.log('East Road 7 km drive:', JSON.stringify(nearTown));
 
+  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 25, true);
+  assert.ok(gateApproach.along >= 7600, `the car follows the road toward the gate: ${JSON.stringify(gateApproach)}`);
+  assert.ok(gateApproach.maxDistance < 20, `the car stays near the road: ${JSON.stringify(gateApproach)}`);
+  assert.ok(gateApproach.nearestTownGate < nearTown.nearestTownGate, 'the car gets closer to the gate');
+  assert.ok(gateApproach.lowestEmber > 0, `the ember stays alight on this stretch: ${JSON.stringify(gateApproach)}`);
+  console.log('East Road gate approach:', JSON.stringify(gateApproach));
+  const gate = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7750, 7200, 25, true);
+  assert.ok(gate.along >= 7750, `the car drives up to the gate: ${JSON.stringify(gate)}`);
+  assert.ok(gate.nearestTownGate < 100, `the car reaches the gate: ${JSON.stringify(gate)}`);
+  assert.ok(gate.speedAtNearestTownGate * 1.609344 < 30, `the car approaches under 30 km/h: ${JSON.stringify(gate)}`);
+  console.log('East Road gate drive:', JSON.stringify(gate));
+  const door = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7810, 7200, 25, true);
+  assert.ok(door.along >= 7810, `the car reaches the town entrance: ${JSON.stringify(door)}`);
+  assert.equal(world.tinTownGateRequested, true, 'the real slow approach opens the gate');
+  assert.equal(world.solidGrid.townGate.length, 0, 'the open gate no longer blocks the car');
+  console.log('East Road town entrance:', JSON.stringify(door));
+
 }
 // The real job requests the gate only for a car approaching slowly.
 {
