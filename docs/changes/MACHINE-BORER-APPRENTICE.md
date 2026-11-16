@@ -14,9 +14,11 @@ The apprentice's controls now set the lever to the taught share of the rock limi
 
 The delegated cutting step calls Mabel's cutter, reports the actual distance and daylight to the town's work order, and holds the lever off for 20 seconds after a stall.
 
-The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7. The real-mesa completion and ground comparison still need to be proved.
+The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7.
 
 Learned stalls are now spaced along the bore. At each interval Pim presses too hard until Mabel's own rules cause a stall, then waits 20 seconds before cutting again. The cutter may reach a softer layer before a mistake takes effect; it keeps pressing until the material stalls her.
+
+A finished order keeps its actual distance, height off level and stall count in memory for the bore board. A real mesa comparison now checks a sent cut against the real cutter driven along the same line.
 
 ## Checks
 
@@ -30,6 +32,7 @@ Learned stalls are now spaced along the bore. At each interval Pim presses too h
 - A5 delegated step: `node tools/test-machine-borer-apprentice.mjs` passed. It checks actual cutting distance against order progress, no work at zero time, and a 20-second pause at a stall.
 - A5 Dig connection: `node tools/test-machine-borer-apprentice.mjs` passed. The excavator remains selected while Mabel cuts, the order and tunnel advance, zero time does no work, and player controls do not drive her twice.
 - A5 learned stalls: `node tools/test-machine-borer-apprentice.mjs` passed. A learned mistake causes a real stall, pauses the cutter and lets work resume.
+- A5 real mesa: `node tools/test-machine-borer-apprentice.mjs` passed. The sent bore reaches daylight with two mouths while the excavator is selected. The hand-driven cutter follows the same controls on separate real Dig ground; its distance, height, ground and spoil agree within 0.1 m. Closing does not advance the unfinished order without a simulation step.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 

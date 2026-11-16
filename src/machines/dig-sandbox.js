@@ -317,6 +317,10 @@ function advanceDigBore(sim) {
     for (let i=oldCount; i<result.borer.segments.length; i++) tunnels.extendLast(result.borer.segments[i],true);
   }
   const boreOrders = sim.boreOrders.slice();
+  if (result.order.status === 'finished') {
+    result.order.result = {distanceM:result.borer.distanceM,
+      offLevelM:Math.abs(result.borer.y - order.mouth.y), stalls:result.borer.stallCount};
+  }
   boreOrders[index] = result.order;
   let next = {...sim, boreOrders, borer:result.borer, tunnels, activeBoreId:order.id,
     boreStallSeconds:result.stallSeconds, dirty:sim.dirty || changed};
