@@ -194,3 +194,9 @@ At the real mesa face, a rules-only probe holding W moved the lever from zero to
 ## Dig ground look
 
 The Dig now supplies the land's hill field and ground photographs to its ground look, using the same height difference and hill bounds as the Scablands scene. It releases those textures when the Dig closes. A focused shader check confirms that the hill field and rock photograph reach the material and that the hill field contains raised ground. `node tools/test-machine-borer.mjs` passed in 198.3 seconds. No existing assertions or race fingerprints changed. Claude still needs to inspect the mesa in the browser. The first-push cause remains unconfirmed; the scenario's timing measurements are for Claude to run. H6, the shorter test runtime and the final checks remain.
+
+## Cutting pace
+
+Claude's H6 ruling raises full-capacity cutting from 0.5 to 1.5 m/s; rock still permits one third of the lever, and the two-second stall and steering limits are unchanged. `node tools/test-machine-borer.mjs` passed in 71.2 seconds, including the full real-ground drives with protections and spoil enabled. Its fixed 1/120-second simulation steps remain unchanged. The first two attempts exposed time-based setup assumptions in the exit cutting and junction checks; both were corrected and the full suite then passed.
+
+Changed assertions for Claude to review: the 10 m steering cut now takes 20/3 seconds instead of 20; the 40 m straight and bent cuts take 80/3 seconds instead of 80; the exit-cutting setup and warning drives use 100/3, 130/3 and 60/3 seconds instead of 100, 130 and 60; and the junction steps use 1/3 and 5/3 seconds instead of 1 and 5. Their distance, spoil, warning and junction assertions remain the same. These changes follow Claude's threefold pace ruling. No race fingerprints were run. Browser H1 and H2 remain for Claude, and the H4 first-push fault remains unconfirmed and unfixed. The final checks remain.

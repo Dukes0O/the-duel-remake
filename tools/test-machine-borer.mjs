@@ -222,15 +222,15 @@ const fromFace = stepBorer({...createBorerState({z:10}), started:true}, {thrust:
 assert.equal(fromFace.state.stalled, true, 'The head uses the material at the face.');
 result = stepBorer(result.state, {}, hill, 'rock', 1);
 assert.equal(result.state.stalled, false);
-let running = stepBorer(createBorerState(), {thrust:1,steer:1,slope:1}, hill, 'topsoil', 20).state;
-assert.ok(Math.abs(running.distanceM - 10) < 1e-8);
+let running = stepBorer(createBorerState(), {thrust:1,steer:1,slope:1}, hill, 'topsoil', 20 / 3).state;
+assert.ok(Math.abs(running.distanceM - 10) < 1e-8, 'Full thrust cuts 1.5 metres per second in soft rock.');
 assert.ok(running.heading <= running.distanceM * Math.PI / 360 + 1e-9);
 assert.ok(running.slope <= running.distanceM * Math.PI / 600 + 1e-9);
 const stopped = stepBorer(running, {steer:1,slope:1}, hill, 'rock', 2).state;
 assert.equal(stopped.heading, running.heading);
 assert.equal(stopped.slope, running.slope);
 const initial = createBorerState();
-const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80).state;
+const forty = stepBorer(initial, {thrust:1}, hill, 'topsoil', 80 / 3).state;
 const sandbox = createDigSandbox({ground:hill});
 let selectedBorer = sandbox;
 for (let i = 0; i < 7; i++) selectedBorer = switchDigMachine(selectedBorer);
@@ -494,7 +494,7 @@ if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalS
 else delete globalThis.localStorage;
 closeDigSandbox();
 const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
-const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80).state;
+const muckCut = stepBorer(createBorerState(), {thrust:1}, muckGround, 'topsoil', 80 / 3).state;
 const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
 const expectedMuck = Math.PI * 3 ** 2 * 40 * 1.25;
@@ -510,7 +510,7 @@ for (let x = 12; x < Math.floor(12 + muckCut.spoilBank.far - 6); x++) {
 }
 const bentMuckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0,
   reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
-const bentMuck = stepBorer(createBorerState(), {thrust:1,steer:1}, bentMuckGround, 'topsoil', 80).state;
+const bentMuck = stepBorer(createBorerState(), {thrust:1,steer:1}, bentMuckGround, 'topsoil', 80 / 3).state;
 const bentVolume = bentMuckGround.toSave().chunks.reduce((sum, chunk) =>
   sum + chunk.delta.reduce((total, height) => total + height, 0), 0) * 1.25;
 assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) < 0.02,
@@ -547,7 +547,7 @@ assert.equal(reversed.distanceM, forty.distanceM);
 const returned = stepBorer(reversed, {thrust:1}, hill, 'topsoil', 28).state;
 assert.ok(Math.abs(returned.z - 40) < 1e-6, 'Forward travel returns to the cutting face.');
 assert.deepEqual(returned.segments, forty.segments, 'Travelling through a cut does not cut it again.');
-const bent = stepBorer(createBorerState(), {thrust:1, steer:1, slope:1}, hill, 'topsoil', 20).state;
+const bent = stepBorer(createBorerState(), {thrust:1, steer:1, slope:1}, hill, 'topsoil', 20 / 3).state;
 const bentRestored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(bent.segments)));
 assert.deepEqual(exportDigTunnels(bentRestored), bent.segments, 'A bent tunnel survives a plain-data round trip.');
 const backedToMouth = stepBorer(bent, {thrust:-1, steer:-1}, hill, 'topsoil', 20).state;
@@ -586,7 +586,7 @@ const noJunction = stepBorer(createBorerState(), {thrust:1, tunnels:highPassage}
   createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 8 : 0}), 'topsoil', 60);
 assert.equal(noJunction.state.finished, false, 'A passage on another level does not open the face.');
 const shallow = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : 2});
-const exitCut = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100);
+const exitCut = stepBorer(createBorerState(), {thrust:1}, shallow, 'topsoil', 100 / 3);
 assert.ok(exitCut.state.exitCutting, 'A far face above the floor starts an exit cutting.');
 assert.equal(exitCut.state.segments.at(-1).endOpen, true);
 assert.equal(exitCut.state.finished, false);
@@ -595,11 +595,11 @@ assert.equal(climbingExit.state.finished, true, 'Tilting up brings the exit cutt
 assert.ok(climbingExit.state.exitCutting.distanceM < 60);
 assert.ok(climbingExit.state.offLevelM > 0);
 assert.equal(climbingExit.events.filter(event => event.cue === 'borer.daylight').length, 1);
-const trench = stepBorer(exitCut.state, {thrust:1}, shallow, 'topsoil', 130);
+const trench = stepBorer(exitCut.state, {thrust:1}, shallow, 'topsoil', 130 / 3);
 assert.equal(trench.state.message, BORER_TRENCH);
 assert.ok(trench.state.exitCutting.distanceM > 60, 'The warning does not stop her.');
 assert.equal(trench.events.filter(event => event.message === BORER_TRENCH).length, 1);
-const longerTrench = stepBorer(trench.state, {thrust:1}, shallow, 'topsoil', 60);
+const longerTrench = stepBorer(trench.state, {thrust:1}, shallow, 'topsoil', 60 / 3);
 assert.ok(longerTrench.state.exitCutting.distanceM > 90);
 assert.equal(longerTrench.events.filter(event => event.message === BORER_TRENCH).length, 1, 'The warning repeats at 90 m.');
 const lipGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : z < 30 ? 8 : -2});
@@ -665,9 +665,9 @@ returnDig = {...returnDig, activeMachine:'borer', mode:'work',
   borer:{...createBorerState({x:returnEnd.x,y:0,z:returnEnd.z,heading:Math.PI / 2 - turnAngle}),
     started:true, covered:true, distanceM:returnLength, travelM:returnLength,
     segments:returningSegments, lever:1/3}};
-returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 1);
+returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 1 / 3);
 assert.equal(returnDig.borer.finished, false, 'The recent passage is not a breakthrough.');
-returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 5);
+returnDig = stepDigSandbox(returnDig, {controls:{directLever:true,forward:1/3,steer:-1}}, 5 / 3);
 assert.equal(returnDig.borer.finished, true, 'The Dig opens the face into the earlier stretch.');
 assert.equal(returnDig.borer.segments.at(-1).endOpen, true);
 for (const [start, end] of [

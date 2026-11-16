@@ -251,7 +251,7 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
       events.push({type:'stall', cue:'borer.stall', message:BORER_STALL});
       continue;
     }
-    const distance = 0.5 * Math.min(thrust, capacity) * step;
+    const distance = 1.5 * Math.min(thrust, capacity) * step;
     if (ground.heightAt(next.x, next.z) >= next.y + 2 * radius) next.covered = true;
     if (next.covered && !next.exitCutting && atCrown(ground, next, radius)) {
       if (!behindIsFace(ground, next, radius)) {
