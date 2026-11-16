@@ -21,8 +21,26 @@ export const SCENARIO_AREAS = [
   {prefixes:['crew-'], paths:['src/crew-gear/','src/crew.js','src/crew-ui.js']},
   {prefixes:['warlord-'], paths:['src/warlords/','src/warlords.js','src/warlord-cards.js']},
   {prefixes:['drive-lesson-'], paths:['src/lessons/']},
-  {prefixes:['circuit-'], paths:['src/circuits/','src/circuit-intel/']},
+  {prefixes:['circuit-','ardennes-','eifel-','kogane-','p4-','tremblant-','harbour-','stavelot-','summit-'], paths:['src/circuits/','src/circuit-intel/','src/circuit-landmarks.js','src/circuit-variants.js','src/circuit-winter.js','src/course.js']},
+  {prefixes:['combat-','field-battle'], paths:['src/combat.js','src/combat-actors.js','src/combat-ai.js','src/combat-armor.js','src/combat-effects.js','src/combat-hud.js','src/combat-pickups.js','src/combat-projectiles.js','src/combat-scene.js','src/combat-scoring.js','src/combat-teams.js','src/combat-weapons.js']},
+  {prefixes:['audio-','weapon-audio','fight-voices'], paths:['src/audio.js','src/audio-output.js']},
+  {prefixes:['onfoot-','first-person-'], paths:['src/onfoot.js','src/onfoot-camera.js','src/onfoot-figures.js','src/onfoot-hints.js','src/onfoot-race.js','src/onfoot-transition.js','src/onfoot-weapons.js']},
+  {prefixes:['machine-','the-dig'], paths:['src/machines/']},
+  {prefixes:['town-'], paths:['src/town/']},
+  {prefixes:['armor-kit-','armored-ram','car-loadout-'], paths:['src/armor-kits.js','src/armor-kit-meshes.js','src/car-loadout.js','src/screen-armory.js']},
+  {prefixes:['raider-'], paths:['src/raiders.js','src/raider-markers.js']},
+  {prefixes:['grand-prix'], paths:['src/grand-prix-cups.js','src/grand-prix-career.js']},
+  {prefixes:['drive-lessons-','lessons-v2-'], paths:['src/lessons/']},
+  {prefixes:['everburn','rescue-','fire-finish','fire-view','map-finish','map-view','tunnel-trial'], paths:['src/world/','src/story/','src/world.js','src/world-job-camera.js']},
+  {prefixes:['track-kits','track-review'], paths:['src/track-kits.js','src/track-script.js','src/track-script-scene.js','src/track-script-course.js']},
+  {prefixes:['enzo-look'], paths:['src/enzo-vehicle.js']},
+  {prefixes:['mclaren-f1-look'], paths:['src/mclaren-f1-vehicle.js']},
+  {prefixes:['skyline-audio'], paths:['src/skyline-vehicle.js','src/audio.js']},
+  {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
 ];
+// These scenarios guard saved progress, including backups and migration.
+export const guardsSavedProgress = name => name.startsWith('career-') || name === 'preview-storage' ||
+  /save|storage|backup|restore|archive|migrat/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
 
@@ -52,7 +70,7 @@ export async function changedSelection(names, commit, {root=PROJECT_ROOT, read=r
   const selected = [];
   for (const name of names) {
     const areas = SCENARIO_AREAS.filter(area => area.prefixes.some(prefix => name.startsWith(prefix)));
-    let reason = isShared ? 'shared file changed' : null;
+    let reason = guardsSavedProgress(name) ? 'guards saved progress' : isShared ? 'shared file changed' : null;
     if (!reason && await importsChanged('tools/scenarios/' + name + '.mjs')) reason = 'scenario or helper changed';
     if (!reason && areas.some(area => changed.some(file => area.paths.some(entry => matchesPath(file, entry))))) reason = 'area changed';
     if (!reason && !areas.length) reason = 'no area';

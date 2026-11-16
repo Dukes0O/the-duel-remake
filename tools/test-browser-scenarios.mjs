@@ -231,3 +231,15 @@ test('named Snow timing rejects the legacy Woods course override without removin
     assert.equal(typeof (await import('./scenarios/tremblant-snow.mjs?legacy-course-guard')).run,'function');
   } finally {keys.forEach((key,i)=>{if(old[i]===undefined)delete process.env[key];else process.env[key]=old[i];});}
 });
+
+
+test('saved progress scenarios always run and temporary player setup does not qualify', async () => {
+  const names = ['career-writer-lock','preview-storage','lab-restore','town-migration',
+    'custom-save','custom-backup','custom-archive','lab-view'];
+  const selected = await suite.changedSelection(names, 'HEAD');
+  assert.deepEqual(selected, names.slice(0, -1).map(name => ({name, reason:'guards saved progress'})));
+  assert.equal(suite.guardsSavedProgress('lab-view'), false);
+  const discovered = await suite.namedScenarios();
+  const rows = await suite.changedSelection(discovered, 'HEAD');
+  assert.ok(rows.filter(row => row.reason === 'no area').length < 60);
+});
