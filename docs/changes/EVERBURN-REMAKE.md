@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed drive past 7 km (16 November 2026)
+
+- The seeded Medium driver takes a gradual 185 m offset around the steep ground and holds it longer. It reaches 7 km with no jolts and 55.052 ember after the Wash scoop. It has not yet reached the forge. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed. The straight-across drive went out at 629.822 m. A 150 m offset hit steep ground; a 220 m offset drew two rider rams. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: use the 185 m offset and maintain it past the crossing. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the earlier 150 m offset on this section. The old `everburn-play` scenario still needs replacement or removal. Next: continue to the forge and prove both bed deliveries.
+
 ## Bed drive to 6.8 km (16 November 2026)
 
 - The seeded Medium driver continues at a 12 mph target to 6.8 km with no jolts and 58.900 ember after the Wash scoop. A trial continuing to 7 km struck steep ground at 6.924 km, took five ground jolts and ran the ember out. The drive has not reached the forge. No game event or sound cue was added.

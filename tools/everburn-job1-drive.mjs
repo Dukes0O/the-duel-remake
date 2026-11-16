@@ -24,7 +24,7 @@ export function bedRiderBypass(route, offset, laterOffset = 0) {
     const before = points[Math.max(0, index - 1)], after = points[Math.min(points.length - 1, index + 1)];
     const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
     const weight = Math.max(0, Math.min(1, (point.along - 1400) / 400, (3100 - point.along) / 400));
-    const laterWeight = Math.max(0, Math.min(1, (point.along - 6000) / 400, (7400 - point.along) / 400));
+    const laterWeight = Math.max(0, Math.min(1, (point.along - 6000) / 400, (7900 - point.along) / 400));
     const totalOffset = offset * weight + laterOffset * laterWeight;
     return {x:point.x - dz / length * totalOffset, z:point.z + dx / length * totalOffset};
   });
