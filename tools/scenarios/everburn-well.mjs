@@ -39,7 +39,7 @@ function check(p,when){
   if(p.rig.plates!==6||p.rig.embers!==9)throw Error(`${when}: the furnace has ${p.rig.plates} plates and ${p.rig.embers} vent lights; it needs 6 and 9`);
 }
 export async function run(c) {
-  await c.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards&harness=everburn-play');
+  await c.navigate('/tools/menu-check.html?flags=hidden-road,story-everburn,warlord-cards&harness=everburn-well');
   await c.waitFor('window.__qaApp?.duel.state.status==="menu"','menu',60000);
   const ember=`a.profile={...a.profile,wasteland:{...a.profile.wasteland,version:1,discoveredGate:true},story:{...a.profile.story,ember:{...(a.profile.story?.ember||{}),read:true,jobs:${FIVE}}}};a._saveProfile();`;
   await c.evaluate(`(()=>{const a=window.__qaApp;if(!window.name.startsWith('__duel_qa_tab_v2:'))throw Error('memory-only storage missing');${ember}})()`);

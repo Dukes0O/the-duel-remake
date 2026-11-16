@@ -178,8 +178,11 @@ export function hillsFor(land=LAND,seed=1989){
     const height=18+4*(2000-distance)/950;
     hills.push(Object.freeze({...land.at('ridge',dx,dz),kind:'foothill',height,radius}));
   }
+  // A small flat-topped butte stands between the furnace and the plates way.
+  hills.push(Object.freeze({...land.between('yard','the-steps',.411,10,-120),kind:'butte',height:22,radius:60,face:20,ramp:0,rampAngle:0}));
+  hills.push(Object.freeze({...land.between('the-steps','tin-town',.025,9,-120),kind:'butte',height:22,radius:65,face:20,ramp:0,rampAngle:0}));
   return Object.freeze(hills.map(hill=>{
-    if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa') return hill;
+    if(hill.kind==='lookout'||hill.kind==='ridge-top'||hill.kind==='mesa'||hill.kind==='butte') return hill;
     return Object.freeze({...hill,spurs:rng.int(3,5),spurAngle:rng.range(0,Math.PI*2)});
   }));
 }
@@ -189,7 +192,7 @@ const HILL_CELL_SIZE=500;
 function indexHills(hills){
   const columns=new Map();
   for(const hill of hills){
-    const reach=hill.radius+((hill.kind==='mesa'||hill.kind==='lookout')?hill.ramp:0);
+    const reach=hill.radius+(hill.kind==='butte'?hill.face:(hill.kind==='mesa'||hill.kind==='lookout')?hill.ramp:0);
     for(let x=Math.floor((hill.x-reach)/HILL_CELL_SIZE);x<=Math.floor((hill.x+reach)/HILL_CELL_SIZE);x++){
       let column=columns.get(x);
       if(!column) columns.set(x,column=new Map());
@@ -210,7 +213,7 @@ function nearbyHills(x,z,hills){
 export function hillHeightAt(x,z,hills=HILLS){
   let height=0;
   for(const hill of nearbyHills(x,z,hills)){
-    if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='ridge-top') continue;
+    if(hill.kind==='lookout'||hill.kind==='mesa'||hill.kind==='butte'||hill.kind==='ridge-top') continue;
     const distance=Math.hypot(x-hill.x,z-hill.z);
     if(distance>=hill.radius) continue;
     // The nominal radius is the outer bound, so shoulders cannot spill onto a cleared road.
@@ -237,13 +240,13 @@ function oldTerrainHeightAt(x,z){
 export function scablandsTerrainHeightAt(x,z,hills=HILLS){
   let height=oldTerrainHeightAt(x,z)+hillHeightAt(x,z,hills);
   for(const hill of nearbyHills(x,z,hills)){
-    if(hill.kind==='mesa'){
+    if(hill.kind==='mesa'||hill.kind==='butte'){
       const dx=x-hill.x,dz=z-hill.z,distance=Math.hypot(dx,dz);
-      if(distance>=hill.radius+hill.ramp) continue;
+      if(distance>=hill.radius+(hill.kind==='butte' ? hill.face : hill.ramp)) continue;
       // A broad ramp on one side joins a broken, steep rim around the flat top.
       const angle=Math.atan2(dz,dx), difference=Math.atan2(Math.sin(angle-hill.rampAngle),Math.cos(angle-hill.rampAngle));
-      const rampWeight=1-smooth((Math.abs(difference)-.18)/.35);
-      const rim=hill.radius+8*Math.sin(angle*5)*smooth(Math.abs(difference)/.5);
+      const rampWeight=hill.kind==='butte' ? 0 : 1-smooth((Math.abs(difference)-.18)/.35);
+      const rim=hill.kind==='butte' ? hill.radius : hill.radius+8*Math.sin(angle*5)*smooth(Math.abs(difference)/.5);
       const width=hill.face+(hill.ramp-hill.face)*rampWeight;
       const weight=1-smooth((distance-rim)/width);
       const top=oldTerrainHeightAt(hill.x,hill.z)+hill.height;

@@ -2,7 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../../world/scablands-ground.js';
+import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
 import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
@@ -14,10 +14,13 @@ import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
-import {scablandsDriveAt} from '../../world/scablands-regions.js';
+import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
+import {ROAD_NET} from '../../world/scablands-road.js';
+import {nearestOnLine, sees} from '../../world/scablands-ways.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
+import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 
 export const worldJobPosition = (duel, actor) => {
@@ -26,7 +29,42 @@ export const worldJobPosition = (duel, actor) => {
   return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
 const position = worldJobPosition;
+// Both the rider and its post must be far away, or hidden by the ground.
+function riderCanLeave(duel, car, rider, post) {
+  const distance = point => Math.hypot(point.x - car.x, point.z - car.z);
+  if (distance(rider) >= 600 && distance(post) >= 600) return true;
+  const hidden = point => !sees(car, point, {heightAt:scablandsSurfaceHeightAt,
+    actorFloors:true, tunnels:duel.course.groundTunnels, eye:5, target:2, step:5});
+  return hidden(rider) && hidden(post);
+}
+// Keep sight work bounded and stagger the two road riders without using wall time.
+export function roadRiderSight(rider, dt, index, trace) {
+  rider.sightWait ??= index * 0.125;
+  rider.sightWait -= Math.max(0, dt);
+  if (rider.sightWait <= 0) {
+    rider.roadVisible = trace();
+    rider.sightWait = 0.25;
+  }
+  return rider.roadVisible === true;
+}
 const EMPTY_HIT_TARGETS = [];
+// The drawn Pipe is 176 m long and follows the Salt Road at the named crossing.
+// Keep the car's floor in the question: the river bed below is not the deck.
+const PIPE_CROSSING = RIVER_LAND.crossings.find(crossing => crossing.id === 'the-pipe');
+const PIPE_ROAD_HIT = ROAD_NET.nearest(PIPE_CROSSING.x, PIPE_CROSSING.z);
+const pipePoints = PIPE_ROAD_HIT.road.points;
+const pipeA = pipePoints[PIPE_ROAD_HIT.index], pipeB = pipePoints[PIPE_ROAD_HIT.index + 1];
+const pipeLength = Math.hypot(pipeB.x - pipeA.x, pipeB.z - pipeA.z);
+const pipeDirection = {x:(pipeB.x - pipeA.x) / pipeLength, z:(pipeB.z - pipeA.z) / pipeLength};
+export function pipeDeckSpeed(point, speedKmh) {
+  const dx = point.x - PIPE_CROSSING.x, dz = point.z - PIPE_CROSSING.z;
+  const along = dx * pipeDirection.x + dz * pipeDirection.z;
+  const across = dx * pipeDirection.z - dz * pipeDirection.x;
+  const floor = scablandsSurfaceHeightAt(point.x, point.z);
+  const onDeck = Math.abs(along) <= 88 && Math.abs(across) <= PIPE_CROSSING.deckHalfWidth &&
+    Number.isFinite(point.y) && Math.abs(point.y - floor) <= 2;
+  return {onDeck, tooFast:onDeck && speedKmh > 40};
+}
 const FURNACE_ID = 'old-smoke-furnace';
 // Existing cues only (src/sound-bank.js), played through the arena tell event.
 // townReached is the horn (the one that warns of the shove) and gateBurnt is the flamethrower's flame catching.
@@ -92,8 +130,16 @@ export function initializeWorldJob(duel, definition) {
   worldJob.activeLoan = null;
   applyStepLoan(duel, worldJob);
   if(definition.kind==='town-drive')duel.course.townLayout=definition.layout??null;
+  if (definition.yard) {
+    worldJob.solidGrid = createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setYard(yardPlan().solids);
+  }
+  if (definition.id === 'everburn-hot-delivery') {
+    worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
+  }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
+  for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
   state.worldJobThingsHit = [];
   if (definition.steps[0]?.faceOriginToPlace && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
     const target = definition.steps[0].place.position;
@@ -173,8 +219,147 @@ export function prepareWorldJobControls(duel) {
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   updateJobActor(duel, worldJob, step?.actor, dt);
+  const wall = step?.riderSafeWall;
+  if (wall && worldJob.job.stepState.loaded && !worldJob.ridersRetreating) {
+    const car = position(duel, duel.state);
+    const yaw = Math.atan2(wall.through.x, wall.through.z);
+    const along = (car.x - wall.x) * Math.cos(yaw) - (car.z - wall.z) * Math.sin(yaw);
+    const half = wall.opening / 2 + 2.1 + wall.fenceLength;
+    const nearest = Math.max(-half, Math.min(half, along));
+    const x = wall.x + nearest * Math.cos(yaw), z = wall.z - nearest * Math.sin(yaw);
+    if (Math.hypot(car.x - x, car.z - z) <= wall.radius) {
+      worldJob.ridersRetreating = true;
+      sayLine(duel, worldJob, wall.lineId);
+    }
+  }
+  for (const actor of step?.waitingActors ?? []) {
+    updateJobActor(duel, worldJob, actor, dt);
+    pursueJobRider(duel, worldJob, actor, dt);
+  }
+  if (worldJob.skylineWarned) {
+    const elapsed = Math.max(0, dt);
+    worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;
+    worldJob.furnaceLostSightSeconds = worldJob.skylineSight?.visible ? 0 :
+      (worldJob.furnaceLostSightSeconds ?? 0) + elapsed;
+    if (worldJob.furnaceLostSightSeconds >= 10 || worldJob.ridersRetreating || worldJob.furnacePursuitSeconds >= 90)
+      worldJob.furnaceRidersReturning = true;
+    for (const actorDef of step?.furnaceRiders ?? []) {
+      if (worldJob.furnaceRidersGone?.includes(actorDef.id)) continue;
+      updateJobActor(duel, worldJob, actorDef, 0);
+      const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+      // Wrecks remain where they fell for the rest of the job.
+      if (rider.health <= 0) continue;
+      if (worldJob.furnaceRidersReturning) {
+        rider.returningToPost = true;
+        const car = position(duel, duel.state);
+        if (riderCanLeave(duel, car, rider.position, actorDef.start.position)) {
+          worldJob.actors.splice(worldJob.actors.indexOf(rider), 1);
+          (worldJob.furnaceRidersGone ??= []).push(actorDef.id);
+          continue;
+        }
+      }
+      pursueJobRider(duel, worldJob, actorDef, dt);
+    }
+  }
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
+}
+
+// The waiting cars begin pursuit when the loaded pot comes close to their post.
+// They use the land's mover, including its floor and solid checks.
+function pursueJobRider(duel, worldJob, actorDef, dt) {
+  const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+  if (!rider || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  // A wreck stays where it fell, even if it was already returning to its post.
+  if (rider.health <= 0) return;
+  const car = position(duel, duel.state);
+  const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
+    worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  if (roadRider && !worldJob.ridersRetreating && !rider.returningToPost) {
+    const road = ROAD_NET.road('east-road').points;
+    const carOnRoad = nearestOnLine(road, car.x, car.z);
+    const step = worldJob.job.steps[worldJob.job.stepIndex];
+    const barrier = step.barriers[step.waitingActors.indexOf(actorDef)].position;
+    const post = nearestOnLine(road, barrier.x, barrier.z);
+    const ground = scablandsDriveAt(car.x, car.z);
+    const floors = [];
+    scablandsFloorsAt(car.x, car.z, floors);
+    const inRange = carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900 &&
+      ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
+      (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
+    const visible = inRange && roadRiderSight(rider, dt, step.waitingActors.indexOf(actorDef), () =>
+      sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
+        actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}));
+    rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
+    if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
+    if (!rider.pursuing && !visible) return;
+  }
+  if (worldJob.ridersRetreating || rider.returningToPost) {
+    rider.pursuing = false;
+    const home = actorDef.start.position;
+    const dx = home.x - rider.position.x, dz = home.z - rider.position.z;
+    const distance = Math.hypot(dx, dz);
+    rider.speed = 0;
+    if (roadRider && distance > 1 && !rider.returnStuck) {
+      rider.returnCheckDistance ??= distance;
+      rider.returnCheckSeconds = (rider.returnCheckSeconds ?? 0) + Math.max(0, dt);
+      if (rider.returnCheckSeconds >= 5) {
+        if (rider.returnCheckDistance - distance < 10) rider.returnStuck = true;
+        rider.returnCheckDistance = distance;
+        rider.returnCheckSeconds = 0;
+      }
+    }
+    // Check both ends before moving a stranded rider back to its post.
+    if (roadRider && rider.returnStuck) {
+      if (riderCanLeave(duel, car, rider.position, home)) {
+        rider.position = {...home, y:scablandsSurfaceHeightAt(home.x, home.z)};
+        rider.returnStuck = false;
+        rider.returningToPost = false;
+        rider.returnCheckDistance = undefined;
+        rider.returnCheckSeconds = 0;
+        rider.lostSightSeconds = 0;
+        return;
+      }
+    }
+    if (distance > 1 && dt > 0 && !rider.returnStuck) {
+      rider.heading = Math.atan2(dx, dz);
+      const travel = Math.min(distance, 18 * dt), before = rider.position;
+      const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
+        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+      rider.position = {x:moved.x, y:moved.y, z:moved.z};
+      rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+    }
+    if (distance <= 1 && !worldJob.ridersRetreating) {
+      rider.returningToPost = false;
+      rider.lostSightSeconds = 0;
+      rider.returnCheckDistance = undefined;
+      rider.returnCheckSeconds = 0;
+    }
+    return;
+  }
+  const dx = car.x - rider.position.x, dz = car.z - rider.position.z;
+  const distance = Math.hypot(dx, dz);
+  const scoopAmbush = actorDef.scoopAmbush && worldJob.job.stepState.scoopBrazier === actorDef.scoopAmbush;
+  if (!rider.pursuing && distance > 120 && !scoopAmbush) return;
+  rider.pursuing = true;
+  if (distance > 8) rider.ramContact = false;
+  if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }
+  rider.heading = Math.atan2(dx, dz);
+  const pursuitSpeed = roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
+  const travel = Math.min(distance - 3, pursuitSpeed * dt);
+  const before = rider.position;
+  const moved = stepMover(before, {x: before.x + dx / distance * travel, z: before.z + dz / distance * travel},
+    {radius: 1.3, grid: worldJob.solidGrid, height: before.y});
+  rider.position = {x: moved.x, y: moved.y, z: moved.z};
+  rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+  const remaining = Math.hypot(car.x - moved.x, car.z - moved.z);
+  if (!rider.ramContact && remaining <= 3.001 && rider.speed > 0 && Math.abs(car.y - moved.y) < 3) {
+    rider.ramContact = true;
+    // The next job step treats the impact as a speed loss, using the same
+    // ember rule and sound as other hits. Contact must break before another ram.
+    worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, rider.speed * 3.6 * 0.5);
+    shoveCar(duel, {x: dx / distance, z: dz / distance, metresPerSecond: 3});
+  }
 }
 
 function updateJobActor(duel, worldJob, actorDef, dt) {
@@ -612,6 +797,24 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
+    const gate = currentStep.riderSafeWall;
+    if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
+        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20 && Math.abs(state.speedMph || 0) * MPH_TO_KMH < 30) {
+      worldJob.tinTownGateRequested = true;
+      worldJob.solidGrid.setTownGate(null);
+      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
+        cue:'world.tintown.gate', position:car}});
+    }
+    worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
+    if (worldJob.pipeDeck.tooFast && !worldJob.pipeSlip && !state.knock) {
+      // Slide toward the nearer edge; free-body motion and the land handle the fall.
+      const across = (car.x - PIPE_CROSSING.x) * pipeDirection.z - (car.z - PIPE_CROSSING.z) * pipeDirection.x;
+      const side = across < 0 ? -1 : 1;
+      shoveCar(duel, {x:side * pipeDirection.z, z:-side * pipeDirection.x, metresPerSecond:18});
+      if (state.knock) state.knock.scablandsFlight = true;
+      worldJob.pipeSlip = true;
+    }
+    if (!worldJob.pipeDeck.onDeck) worldJob.pipeSlip = false;
     // The simulation runs at 120 steps per second. Stagger the two long
     // traces, keeping each result for 30 steps between checks.
     const sightStep = worldJob.sightStep ?? 0;
@@ -620,8 +823,12 @@ export function stepWorldJob(duel, dt) {
     worldJob.skylineSight = sight;
     if (skylineWarningDue(sight, worldJob.skylineWarned)) {
       worldJob.skylineWarned = true;
+      for (const actor of currentStep.furnaceRiders ?? []) {
+        updateJobActor(duel, worldJob, actor, 0);
+        worldJob.actors.find(item => item.id === actor.id).pursuing = true;
+      }
       duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
-        cue: 'arena.toll-gate', position: car}});
+        cue: 'world.furnace.horn', position: car}});
     }
     if (sight.change) {
       duel._storyCallout(sight.visible ? 'The furnace can see your car.' : 'The furnace has lost sight of your car.', 2.2);
@@ -643,7 +850,12 @@ export function stepWorldJob(duel, dt) {
     speed: player.speedMph ?? 0};
   // The braziers of a Hot Delivery carry step are solid while they are drawn (src/world/ember-pot.js says where they stand).
   const brazierKey = currentStep?.ember ? worldJob.job.stepIndex : -1;
-  if (worldJob.brazierKey !== brazierKey) { worldJob.brazierKey = brazierKey; (worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid)).setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []); }
+  if (worldJob.brazierKey !== brazierKey) {
+    worldJob.brazierKey = brazierKey;
+    const grid = worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    grid.setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []);
+    grid.setBarricades(currentStep?.ember ? currentStep.barriers ?? [] : []);
+  }
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
   const trainMetresBefore=worldJob.job.stepState.trainMetres??0;
@@ -694,11 +906,20 @@ export function stepWorldJob(duel, dt) {
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
-  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0);
+  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0, worldJob.riderHitKmh || 0);
+  const severeHit = state.scablandsLongFall === true ||
+    (worldJob.lastKmh > 80 && kmh < 1 && worldJob.lastKmh - kmh > 80);
   state.scablandsHitKmh = 0;
+  state.scablandsLongFall = false;
+  worldJob.riderHitKmh = 0;
   worldJob.lastKmh = kmh;
+  const ground = scablandsDriveAt(point.x, point.z);
+  if (currentStep?.ember && worldJob.job.stepState?.loaded && ground.id === 'river-bed' && !worldJob.bedColdSaid) {
+    worldJob.bedColdSaid = true;
+    duel._storyCallout('Cold air lies in the river bed. The pot cools fast down here.', 3);
+  }
   const view = {player: playerView, onFoot: !!state.onFoot,
-    speedKmh: kmh, hitKmh, safeKmh: scablandsDriveAt(point.x, point.z).safeKmh,
+    speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),
     actors, crashSize: state.lastCrashSize || 0,
@@ -712,6 +933,10 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
+  if (next.events.some(event => event.type === 'burn') && currentStep?.ember) {
+    const burnt = next.stepState.burntBarricades ?? [];
+    worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));
+  }
   // The moment a step began its closing lines: the scene times the furnace's sighting after Job 3's catch from it.
   if (next.stepState.linesClosing && !Number.isFinite(worldJob.wonAtSec)) worldJob.wonAtSec = worldJob.clockSec;
   // FIELD-BATTLE-ASH: how the battle ended, fixed by the escort step the moment Big Bess arrived ('won' or 'arrived').
@@ -773,8 +998,15 @@ export function stepWorldJob(duel, dt) {
     // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
     // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
     if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
-    if (event.type === 'emberArrived') worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
-      sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
+    if (event.type === 'emberArrived') {
+      worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
+        sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
+      if (worldJob.definition.id === 'everburn-hot-delivery') {
+        worldJob.forgeFire = {ember:event.ember, grade:event.grade};
+        duel.emit({arenaTell:{id:'forge-catch', targetId:'player', seconds:0,
+          cue:'world.forge.catch', position:{...currentStep.destination.position}}});
+      }
+    }
     if(event.type==='roofBoard'&&state.fighter) {
       Object.assign(state.fighter,{x:event.position.x,y:event.position.y,z:event.position.z,groundY:event.position.y});
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
@@ -846,6 +1078,7 @@ export function worldJobHitTargets(duel) {
     }
   }
   for (const barrier of step?.barriers ?? []) {
+    if (worldJob.job.stepState.burntBarricades?.includes(barrier.id)) continue;
     const at = barrier.position ?? barrier;
     targets.push({id: barrier.id, kind: 'barricade', position: at,
       radius: 2, burnable: true});

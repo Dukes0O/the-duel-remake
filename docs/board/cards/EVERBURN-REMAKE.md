@@ -483,3 +483,7 @@ Codex's last table, with riders keeping to their road and the bed's cold at twic
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
 the save. The game does not show it while the switches are off. Nothing was wiped.
+
+## Codex decided (Claude to review)
+
+- A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.

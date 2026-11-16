@@ -192,7 +192,7 @@ export const DRIVE = Object.freeze({
   'salt-pan': drive('salt-pan', 'Salt pan', 1.25, .80, .02, .04, Infinity, 0xe9e5db),
   flats: drive('flats', 'Flats', .75, .90, .03, .12, 90, 0x8a7458),
   'scab-plates': drive('scab-plates', 'Scab plates', .45, .85, .05, .55, 50, 0x45403b, {shake: .16}),
-  'river-bed': drive('river-bed', 'River bed', .60, .75, .04, .22, 70, 0x7d7a72, {shake: .05}),
+  'river-bed': drive('river-bed', 'River bed', .80, .75, .04, .22, 80, 0x7d7a72, {shake: .05}),
   'river-bed-soft': drive('river-bed', 'River bed, soft sand', .30, .75, .09, .30, 70, 0x8f8b80, {soft: true, shake: .07}),
   sand: drive('sand', 'Sand', .35, .60, .08, .20, Infinity, 0xc9b27c, {shake: .04}),
   burn: drive('burn', 'The burn', .75, .90, .03, .14, 90, 0x2b2825),
@@ -276,11 +276,10 @@ export function polygonMargin(points, x, z) {
   return inside ? edge : -edge;
 }
 
-// Soft sand in the river bed: patches of about a hundred metres, and the bottom of the Wash.
+// Soft sand remains at the Wash crossing; the rest of the bed is firm gravel.
 export function riverSoftAt(x, z, river = RIVER_LAND) {
   const wash = river.crossings.find(crossing => crossing.kind === 'wash');
-  if (wash && Math.hypot(x - wash.x, z - wash.z) < 90) return true;
-  return Math.sin(x * .0153 + z * .0101) * Math.sin(x * .0121 - z * .0187 + 1.3) > .24;
+  return !!wash && Math.hypot(x - wash.x, z - wash.z) < 75;
 }
 
 // What the ground under (x, z) is, in the order the card sets: roads, the river bed, the wreck fields, the sand, the burn, the salt

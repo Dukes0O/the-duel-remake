@@ -342,10 +342,14 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
     const arsenal = arsenalEnabled(app.duel);
     const lockout = arsenal ? carEffect(state, 'disabled') : null;
+    const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
+    const loanSlotIndex = worldJob?.activeLoan === 'flamethrower'
+      ? state.weaponLoadout?.lastIndexOf('flamethrower') : -1;
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
       button.hidden = slot === 3 && ((button === loanSlot) !== (id === 'flamethrower'));
+      if (worldJob && (slot !== loanSlotIndex || id !== 'flamethrower')) button.hidden = true;
       if (button === loanSlot) {
         if (button.hidden) button.remove();
         else if (!button.isConnected) slotBar.append(button);

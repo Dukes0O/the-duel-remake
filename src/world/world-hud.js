@@ -1,8 +1,10 @@
 import {worldJobMapData} from '../route-map.js';
 import {SCABLANDS_PLACES} from './scablands.js';
 import {getLandPicture, createPictureCanvas, createKnowledge, learn, jobFacts, drawSmallMap, drawBigMap, wayColour, wayLines, groundWords, wayKm, SMALL_MAP} from './scablands-map.js';
-import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay} from './scablands-ways.js';
+import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees, nearestOnLine} from './scablands-ways.js';
 import {LAND} from './scablands-names.js';
+import {scablandsSurfaceHeightAt} from './scablands-ground.js';
+import {scablandsDriveAt} from './scablands-regions.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -32,8 +34,8 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
       line = step.what ?? `Drive to ${labelOf(target, places)}`;
       break;
     case 'carry':
-      target = step.destination ?? step.origin;
-      line = step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
+      target = step.pickup && !stepState.loaded ? step.pickup.place : step.destination ?? step.origin;
+      line = step.pickup && !stepState.loaded ? 'Drive to Cinder and stop.' : step.what ?? `Carry ${labelOf({id: step.load}, places)} to ${labelOf(target, places)}`;
       break;
     case 'chase': {
       const targetActor = actor(step.targetId);
@@ -107,7 +109,7 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
     truck: step?.kind==='escort'&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
-    ember: step?.ember ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
+    ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
@@ -131,7 +133,21 @@ const SMALL_MAP_EVERY_MS = 33;
 export function worldMapCar(state, course) {
   if (state.onFoot && state.fighter) return {x: state.fighter.x, z: state.fighter.z, heading: state.fighter.yaw ?? 0};
   const at = course.worldAt(state.s, state.lateral || 0);
-  return {x: at.x, z: at.z, heading: (at.heading ?? 0) + (state.headingError || 0)};
+  return {x: at.x, y: at.y, z: at.z, heading: (at.heading ?? 0) + (state.headingError || 0)};
+}
+
+// Direction on screen is relative to the car, with zero pointing towards the top.
+export function brazierArrow(ember, car, knowledge) {
+  if (!ember?.out || !car || !knowledge?.braziers?.size) return null;
+  let nearest = null, distance = Infinity;
+  for (const brazier of knowledge.braziers.values()) {
+    const gap = Math.hypot(brazier.x - car.x, brazier.z - car.z);
+    if (gap < distance) { nearest = brazier; distance = gap; }
+  }
+  const angle = Math.atan2(nearest.x - car.x, nearest.z - car.z) - (car.heading ?? 0);
+  const x = Math.sin(angle), y = -Math.cos(angle);
+  const scale = 1 / Math.max(Math.abs(x), Math.abs(y));
+  return {id: nearest.id, distance, angle: angle * 180 / Math.PI, x: 50 + x * scale * 46, y: 50 + y * scale * 44};
 }
 
 // What both maps are drawn from at this moment: only reads the game.
@@ -139,7 +155,9 @@ export function worldMapFrame({state, course, model, knowledge, picture, canvas}
   const worldJob = state.arena.worldJob, car = worldMapCar(state, course);
   const data = worldJobMapData(course, state);
   const target = model?.target ? {id: model.target.id, name: model.target.name, x: model.target.x, z: model.target.z} : null;
-  const actors = (data?.marks ?? []).filter(mark => mark.kind !== 'player');
+  const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
+  const awaitingPickup = worldJob?.definition?.id === 'everburn-hot-delivery' && step?.pickup && !worldJob.job.stepState.loaded;
+  const actors = awaitingPickup ? [] : (data?.marks ?? []).filter(mark => mark.kind !== 'player');
   return {picture, canvas, car, target, knowledge, actors, worldJob};
 }
 
@@ -166,8 +184,86 @@ export function worldMapWays({worldJob, car, target, land = LAND}) {
   return {start, ways: made};
 }
 
+// A crossing becomes useful map knowledge only when the car can see it.
+export function learnWayCrossings(knowledge, result, crossings, car, tunnels = null, trace = sees) {
+  let changed = false;
+  for (const way of result.ways) {
+    if (way.id === 'east-road' || knowledge.ways.has(way.id)) continue;
+    const visible = way.crossings.some(item => {
+      const crossing = crossings.find(place => place.id === item.id);
+      return crossing && trace(car, crossing, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+        tunnels, eye: 1.5, target: 2, step: 5, range: 400});
+    });
+    if (visible) { knowledge.ways.add(way.id); changed = true; }
+  }
+  if (changed) knowledge.version++;
+  return changed;
+}
+
+// Check crossing visibility at most twice per second for each job.
+export function checkWayCrossings(schedule, now, knowledge, result, crossings, car, tunnels = null, trace = sees) {
+  if (now - schedule.last < 0.5) return false;
+  schedule.last = now;
+  return learnWayCrossings(knowledge, result, crossings, car, tunnels, trace);
+}
+
+// Count distinct stretches driven near each way, so reversing over one stretch
+// or jumping to a distant position cannot uncover a way.
+export function learnDrivenWays(knowledge, result, car) {
+  const progress = knowledge.drivenWays ??= new Map();
+  let changed = false;
+  for (const way of result.ways) {
+    if (way.id === 'east-road' || knowledge.ways.has(way.id)) continue;
+    const hit = nearestOnLine(way.points, car.x, car.z);
+    if (!hit) continue;
+    let record = progress.get(way.id);
+    if (!record) progress.set(way.id, record = {previous:null, ranges:[]});
+    const previous = record.previous;
+    record.previous = hit.distance <= 30 ? {along:hit.along, x:car.x, z:car.z} : null;
+    if (!previous || !record.previous || Math.hypot(car.x - previous.x, car.z - previous.z) > 50 ||
+        Math.abs(hit.along - previous.along) > 50) continue;
+    const ranges = [...record.ranges, [Math.min(previous.along, hit.along), Math.max(previous.along, hit.along)]]
+      .sort((a, b) => a[0] - b[0]);
+    record.ranges = [];
+    for (const range of ranges) {
+      const last = record.ranges.at(-1);
+      if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+      else record.ranges.push(range);
+    }
+    if (record.ranges.reduce((sum, range) => sum + range[1] - range[0], 0) >= 300) {
+      knowledge.ways.add(way.id); knowledge.version++; changed = true;
+    }
+  }
+  return changed;
+}
+
 const escapeText = value => String(value).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-export function waysMarkup(result, targetName, knowledge) {
+// Remember hazards only after the car meets them during this job.
+export function learnHotDeliveryDangers(knowledge, worldJob, car) {
+  const dangers = knowledge.hotDeliveryDangers ??= new Set();
+  const before = dangers.size;
+  if (car && scablandsDriveAt(car.x, car.z).id === 'salt-pan') dangers.add('salt-pan');
+  if (car && scablandsDriveAt(car.x, car.z).id === 'river-bed') dangers.add('river-bed');
+  if (worldJob.pipeDeck?.onDeck) dangers.add('pipe');
+  if (dangers.size !== before) knowledge.version++;
+}
+
+export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} = {}) {
+  if (hotDelivery) {
+    const east = result.ways.find(way => way.id === 'east-road');
+    const items = result.ways.map((way, index) => {
+      if (way !== east && !knowledge.ways.has(way.id)) return '';
+      const detail = way === east ? '<ul><li>The Ash Men hold the Girder Bridge.</li></ul>' : ` <em>${wayKm(way.length)}</em>`;
+      return `<li class="world-hud-way" style="--way:${wayColour(index)}"><b>${String.fromCharCode(65 + index)}</b><div><strong>${escapeText(way.name)}</strong>${detail}</div></li>`;
+    }).join('');
+    const dangers = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}.`);
+    if (knowledge.sights.size) dangers.push('The furnace watches the land.');
+    if (knowledge.hotDeliveryDangers?.has('salt-pan')) dangers.push('The wind on the salt pan cools the ember faster.');
+    if (knowledge.hotDeliveryDangers?.has('river-bed')) dangers.push('Cold air lies in the river bed. The pot cools fast down here.');
+    if (knowledge.hotDeliveryDangers?.has('pipe')) dangers.push('Cross the Pipe at 40 km/h or less.');
+    const learnt = dangers.length ? `<ul class="world-hud-learnt">${dangers.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '';
+    return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>${learnt}`;
+  }
   const heading = `<h3>WAYS TO ${escapeText((targetName ?? 'THE MARKED PLACE').toUpperCase())}</h3>`;
   const items = result.ways.map((way, index) => {
     const lines = wayLines(way).map(line => `<li>${escapeText(line)}</li>`).join('');
@@ -179,6 +275,17 @@ export function waysMarkup(result, targetName, knowledge) {
     (learnt.length ? `<ul class="world-hud-learnt">${learnt.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '<p class="world-hud-none">Nothing yet. Drive, and look.</p>');
 }
 
+export function moveMapCaption(caption, map, original = null) {
+  if (!caption) return null;
+  if (original) {
+    original.parent.insertBefore(caption, original.next);
+    return null;
+  }
+  const place = {parent: caption.parentNode, next: caption.nextSibling};
+  map.append(caption);
+  return place;
+}
+
 export function createWorldHud({host, app = null, picture = null}) {
   const doc = host.ownerDocument;
   if (doc?.head && !doc.getElementById(STYLE_ID)) {
@@ -187,7 +294,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   }
   const root = doc.createElement('section'); root.className = 'world-hud'; root.hidden = true;
   root.setAttribute('aria-label', 'Scablands job guidance');
-  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-ember" hidden><b>EMBER</b><span class="world-hud-ember-bar"><i></i></span><em></em></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
+  root.innerHTML = `<div class="world-hud-line" role="status"></div><div class="world-hud-prompt" role="status"></div><div class="world-hud-progress" hidden></div><div class="world-hud-truck" hidden><span></span><progress></progress></div><div class="world-hud-ember" hidden><b>EMBER</b><span class="world-hud-ember-bar"><i></i></span><em></em></div><div class="world-hud-brazier-arrow" role="status" hidden><i>▲</i><span></span></div><div class="world-hud-compass" aria-label="Direction to goal"><b>N</b><i></i></div>
     <section class="world-hud-minimap" aria-label="Map of the land round your car"><canvas class="world-hud-minimap-canvas" width="${SMALL_MAP.width}" height="${SMALL_MAP.height}" role="img" aria-label="Map of the land round your car"></canvas></section>
     <button class="world-hud-map-button" type="button" aria-expanded="false">M · MAP</button>
     <section class="world-hud-map" role="dialog" aria-label="Scablands map" hidden><header><b>THE SCABLANDS</b><span class="world-hud-map-sub">The whole land, north at the top. The game stands still while this is open.</span><button type="button" data-world-map-close>CLOSE</button></header>
@@ -199,29 +306,32 @@ export function createWorldHud({host, app = null, picture = null}) {
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
   const emberGauge = root.querySelector('.world-hud-ember'), emberBar = emberGauge.querySelector('i'), emberNote = emberGauge.querySelector('em'), emberLabel = emberGauge.querySelector('b');
+  const brazierPointer = root.querySelector('.world-hud-brazier-arrow'), brazierDirection = brazierPointer.querySelector('i'), brazierDistance = brazierPointer.querySelector('span');
   let lastJolts = 0;
   const mapButton = root.querySelector('.world-hud-map-button'), map = root.querySelector('.world-hud-map');
   const canvas = root.querySelector('.world-hud-map-canvas'), context = canvas?.getContext?.('2d');
   const smallCanvas = root.querySelector('.world-hud-minimap-canvas'), smallContext = smallCanvas?.getContext?.('2d');
   const ways = root.querySelector('.world-hud-ways');
-  let active = false, mapOpen = false, disposed = false, pausedByMap = false;
+  let active = false, mapOpen = false, disposed = false, pausedByMap = false, captionPlace = null;
+  const caption = host.querySelector('#race-callout');
   const land = picture ?? getLandPicture();
   let landCanvas = null, lastSmall = -Infinity, lastKnowledgeVersion = -1, lastFrame = null;
-  const knowledgeOf = new WeakMap();
+  const knowledgeOf = new WeakMap(), hotWaysOf = new WeakMap(), crossingChecksOf = new WeakMap();
   // What the maps cost, kept where a check can read it: draws, milliseconds drawing, the slowest draw, and the milliseconds that
   // making the picture of the land took.
   const stats = root.worldMapStats = {smallDraws: 0, smallMs: 0, smallMaxMs: 0, bigDraws: 0, bigMs: 0, waysMs: 0, pictureMs: 0, updateMs: 0, updates: 0};
   const clock = () => globalThis.performance?.now?.() ?? Date.now();
   const drawBig = frame => {
     const began = clock();
-    const result = worldMapWays({worldJob: frame.worldJob, car: frame.car, target: frame.target});
+    const hotDelivery = frame.worldJob?.definition?.id === 'everburn-hot-delivery';
+    const target = hotDelivery ? LAND.at('tin-town') : frame.target;
+    const result = worldMapWays({worldJob: frame.worldJob, car: frame.car, target});
     stats.waysMs = clock() - began;
-    ways.innerHTML = waysMarkup(result, frame.target?.name, frame.knowledge);
-    if (context) drawBigMap(context, {...frame, ways: result.ways}, BIG_MAP);
+    ways.innerHTML = waysMarkup(result, frame.target?.name, frame.knowledge, {hotDelivery});
+    if (context) drawBigMap(context, {...frame, ways: hotDelivery ? result.ways.filter(way => way.id === 'east-road' || frame.knowledge.ways.has(way.id)) : result.ways}, BIG_MAP);
     stats.bigDraws++; stats.bigMs = clock() - began;
   };
-  // While the big map is open the stage carries `world-map-open`, which lifts the story caption above the map (world-hud.css). The game
-  // stands still while the map is open, and the pause screen is not shown over it.
+  // The caption sits on the map's lower edge while the game is paused for the map.
   const setMapOpen = value => {
     if (value === mapOpen) return;
     if (value && app) {
@@ -229,6 +339,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       app.worldMapOpen = true; app.togglePause(); pausedByMap = true;
     }
     mapOpen = value; map.hidden = !mapOpen; mapButton.setAttribute('aria-expanded', String(mapOpen)); host.classList?.toggle('world-map-open', mapOpen);
+    captionPlace = moveMapCaption(caption, map, captionPlace);
     if (!value && app) { app.worldMapOpen = false; if (pausedByMap && app.duel.state.paused) app.togglePause(); pausedByMap = false; }
     if (mapOpen && lastFrame) drawBig(lastFrame);
   };
@@ -292,7 +403,28 @@ export function createWorldHud({host, app = null, picture = null}) {
       if (!knowledge) knowledgeOf.set(worldJob, knowledge = createKnowledge());
       const frame = worldMapFrame({state, course: duel.course, model, knowledge, picture: land, canvas: landCanvas?.canvas ?? null});
       frame.landmarkLines = duel.course.realismThings?.landmarkLines ?? [];
-      learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings});
+      learn(knowledge, {car: frame.car, ...jobFacts(worldJob), crossings: land.marks.crossings, tunnels: duel.course.groundTunnels});
+      if (worldJob?.definition?.id === 'everburn-hot-delivery') {
+        let result = hotWaysOf.get(worldJob);
+        if (!result) {
+          result = worldMapWays({worldJob, car: frame.car, target: LAND.at('tin-town')});
+          hotWaysOf.set(worldJob, result);
+        }
+        let crossingChecks = crossingChecksOf.get(worldJob);
+        if (!crossingChecks) crossingChecksOf.set(worldJob, crossingChecks = {last: -Infinity});
+        checkWayCrossings(crossingChecks, state.stageTimeSec ?? 0, knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
+        learnDrivenWays(knowledge, result, frame.car);
+        learnHotDeliveryDangers(knowledge, worldJob, frame.car);
+      }
+      const pointer = brazierArrow(model.ember, frame.car, knowledge);
+      brazierPointer.hidden = !pointer;
+      if (pointer) {
+        brazierPointer.style.left = `${pointer.x}%`;
+        brazierPointer.style.top = `${pointer.y}%`;
+        brazierDirection.style.transform = `rotate(${pointer.angle}deg)`;
+        brazierDistance.textContent = `${Math.round(pointer.distance)} m`;
+        brazierPointer.setAttribute('aria-label', `Nearest known brazier, ${Math.round(pointer.distance)} metres away`);
+      }
       lastFrame = frame;
       if (mapOpen) { stats.updates++; stats.updateMs += clock() - began; return; }
       const now = clock();
@@ -309,6 +441,7 @@ export function createWorldHud({host, app = null, picture = null}) {
     },
     dispose() {
       if (disposed) return;
+      if (captionPlace) captionPlace = moveMapCaption(caption, map, captionPlace);
       disposed = true; root.removeEventListener('click', click); doc.removeEventListener('keydown', keydown); host.classList?.remove('world-map-open'); host.classList?.remove('world-minimap-on'); root.remove();
     },
   };

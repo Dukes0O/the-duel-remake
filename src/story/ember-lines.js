@@ -11,11 +11,15 @@ export const EMBER_NOTE = note(EMBER_NOTE_ID, 'Hollis (a note, never spoken)', '
   'Driver, the forge at Tin Town has gone cold, and no forge means no boiler parts. A woman named Cinder is at the back gate with a pot of fire and a bad attitude. I like her. Go and see. Hollis');
 
 export const EMBER_CAPTIONS = Object.freeze({
+  'story.ember.cinder.pickup.1': line('Cinder', 'Job 1 pickup', 'Tin Town needs fire for its forge, so it can mend its pump.'),
+  'story.ember.cinder.pickup.2': line('Cinder', 'Job 1 pickup', 'This is the last fire we have. Old Smoke says all fire belongs to his furnace.'),
+  'story.ember.cinder.pickup.3': line('Cinder', 'Job 1 pickup', 'Take the East Road. The Ash Men hold the Girder Bridge. Burn their barricades.'),
   'story.ember.cinder.1': line('Cinder', 'Job 1 start', 'This pot holds the last of the Everburn. Don\'t drop it. I mean it.'),
   'story.ember.cinder.2': line('Cinder', 'Job 1 start', 'I\'ve bolted a flamethrower to your car. Press its number and burn anything in the way.'),
   'story.ember.cinder.3': line('Cinder', 'First barricade', 'Ash Men\'s fence. Get close, and burn it.'),
   'story.ember.cinder.4': line('Cinder', 'Crash, pot spills', 'You dropped my fire! Go back, I\'ve got more. Slower this time.'),
   'story.ember.cinder.24': line('Cinder', 'Job 1 sighting', 'See the smoke with wheels under it? That is Old Smoke\'s furnace. Keep the pot out of its sight.'),
+  'story.ember.auntie-solder.retreat': line('Auntie Solder', 'Ash Men turn back', 'Our guns cover the road. The Ash Men will not come any closer.'),
   'story.ember.auntie-solder.1': line('Auntie Solder', 'Tin Town in sight', 'Is that smoke coming from your roof, or are you just pleased to see us?'),
   'story.ember.auntie-solder.2': line('Auntie Solder', 'Job 1 won', 'A live ember. I haven\'t seen one in a year. Bring it in.'),
   'story.ember.auntie-solder.3': line('Auntie Solder', 'Job 2 start', 'You can\'t get that car down my alleys. You\'ve legs, haven\'t you?'),

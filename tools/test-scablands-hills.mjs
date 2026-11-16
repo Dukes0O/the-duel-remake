@@ -906,3 +906,30 @@ test('actors can see along the trial tunnel bore', () => {
   assert.equal(sees(at(.3), at(.7), {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
     tunnels, eye: 1.5, target: 1.5, step: 1}), true);
 });
+
+
+test('buttes have steep sides and clear the roads, ways and places', () => {
+  const buttes = HILLS.filter(hill => hill.kind === 'butte');
+  assert.ok(buttes.length >= 1 && buttes.length <= 8);
+  const routes = HOT_DELIVERY_WAYS.map(way => routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')}));
+  for (const hill of buttes) {
+    assert.ok(hill.radius >= 45 && hill.radius <= 70 && hill.height >= 14 && hill.height <= 22);
+    assert.equal(hill.face, 20);
+    assert.equal(hill.ramp, 0);
+    for (const road of ROAD_NET.roads)
+      assert.ok(distanceToRoad(hill.x, hill.z, road.points) >= hill.radius + hill.face + 25 + road.halfWidth, road.id);
+    const platesDistance = distanceToRoad(hill.x, hill.z, routes[1]);
+    assert.ok(platesDistance >= 90 && platesDistance <= 170, 'the butte stands beside the plates way');
+    for (const route of routes)
+      assert.ok(distanceToRoad(hill.x, hill.z, route) >= hill.radius + hill.face + 25);
+    for (const place of LAND.table)
+      assert.ok(Math.hypot(hill.x - place.x, hill.z - place.z) >= hill.radius + 60 + place.flatRadius, place.id);
+    for (let i = 0; i < 16; i++) {
+      const angle = i * Math.PI / 8;
+      const point = d => ({x: hill.x + Math.cos(angle) * d, z: hill.z + Math.sin(angle) * d});
+      const crest = point(hill.radius), foot = point(hill.radius + hill.face);
+      const rise = (p) => scablandsTerrainHeightAt(p.x, p.z, [hill]) - scablandsTerrainHeightAt(p.x, p.z, []);
+      assert.ok((rise(crest) - rise(foot)) / hill.face > .3, 'every side is steep');
+    }
+  }
+});

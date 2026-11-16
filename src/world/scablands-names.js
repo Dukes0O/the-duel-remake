@@ -34,15 +34,21 @@ const NAMED_POINTS = Object.freeze([
   named('river-10', 'The river mouth', 'boneyard', 'dead-mall', 0.601, 240, 805),
   // The five crossings, each a share of the way along one stretch of the river.
   named('girder-bridge', 'The Girder Bridge', 'river-5', 'river-6', .818),
+  // The bed way bends around the bridge's centre pier.
+  named('girder-bed-approach', 'Bridge bed approach', 'river-5', 'river-6', .918),
+  named('girder-bed-passage', 'Bridge bed passage', 'girder-bridge', null, 0, 15, -13),
+  named('girder-bed-exit', 'Bridge bed exit', 'river-5', 'river-6', .718),
   named('the-steps', 'The Steps', 'river-5', 'river-6', .318),
+  // A mesa west and north of the crossing, overlooking the plates.
+  named('furnace-watch', 'The furnace watch', 'the-steps', null, 0, -812, -266),
   named('the-wash', 'The Wash', 'river-7', 'river-8', .5),
   named('the-pipe', 'The Pipe', 'river-3', 'river-4', .43),
   named('south-ford', 'The South Ford', 'river-8', 'river-9', .615),
   // The halfway camp, on the East Road's straight stretch between the yard and the bend before the Girder Bridge.
   named('safe-road', 'The halfway camp', 'yard', 'boneyard', .47, 8, -230),
-  // The Ash Men's two barricades stand on the East Road: the first before the bridge, the second after it.
-  named('ash-barricade-1', 'First barricade', 'safe-road', 'girder-bridge', .8481, 13.67, 18.58),
-  named('ash-barricade-2', 'Second barricade', 'girder-bridge', 'tin-town', .2768, -46.15, -429.75),
+  // The Ash Men's barricades stand at the camp and on the bridge deck.
+  named('ash-barricade-1', 'First barricade', 'safe-road'),
+  named('ash-barricade-2', 'Second barricade', 'girder-bridge'),
 ]);
 
 export function createLand(table = SCABLANDS_PLACES) {

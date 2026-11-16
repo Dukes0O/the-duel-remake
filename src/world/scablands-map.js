@@ -9,7 +9,8 @@
 import {SCABLANDS_SOLIDS} from './scablands-scene.js';
 import {createLandPicture, landMarks, REGION_COLOURS} from './scablands-picture.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
-import {sightOutline, WATCH, holderOf} from './scablands-ways.js';
+import {sightOutline, sees, WATCH, holderOf} from './scablands-ways.js';
+import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsHeightAt} from './scablands-height.js';
 
 // ---- The picture of the game's land, made once ---------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ export function sourceRect(picture, view) {
 
 // ---- What the player has learnt (kept for the job) -----------------------------------------------------------------------------------------
 export const SEEN = Object.freeze({barricade: 450, furnace: 1200});
-export function createKnowledge() { return {barricades: new Map(), crossings: new Map(), sights: new Map(), version: 0}; }
+export function createKnowledge() { return {barricades: new Map(), crossings: new Map(), sights: new Map(), braziers: new Map(), ways: new Set(), version: 0}; }
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 // What a job holds that a player can come to know: its barricades and the furnaces on the ground (the skyline furnace the scene
 // draws, and any furnace that is an actor of the job).
@@ -81,11 +82,19 @@ export function jobFacts(worldJob) {
   if (sighted?.hidden) furnaces.push({id: 'furnace-skyline', hidden: true});
   else if (sighted) furnaces.push({id: 'furnace-skyline', x: sighted.x, z: sighted.z, heading: sighted.heading});
   for (const actor of worldJob?.actors ?? []) if (actor.furnace && actor.position) furnaces.push({id: actor.id, x: actor.position.x, z: actor.position.z, heading: actor.heading ?? 0});
-  return {barricades, furnaces};
+  const braziers = worldJob?.definition?.id === 'everburn-hot-delivery' ? (step?.braziers ?? []) : [];
+  return {barricades, furnaces, braziers};
 }
 // Adds what the car is near enough to see. Returns true when something new was learnt or a sight moved.
-export function learn(knowledge, {car, barricades = [], furnaces = [], crossings = [], heightAt = scablandsHeightAt}) {
+export function learn(knowledge, {car, barricades = [], furnaces = [], crossings = [], braziers = [], heightAt = scablandsHeightAt, tunnels = null}) {
   let changed = false;
+  for (const [index, brazier] of braziers.entries()) {
+    const point = brazier.position ?? brazier;
+    if (knowledge.braziers.has(brazier.id)) continue;
+    if (index !== 0 && !sees(car, point, {heightAt: scablandsSurfaceHeightAt, actorFloors: true, tunnels, eye: 1.5, target: 2, step: 5, range: 400})) continue;
+    knowledge.braziers.set(brazier.id, {id: brazier.id, x: point.x, z: point.z});
+    changed = true;
+  }
   for (const item of barricades) {
     if (knowledge.barricades.has(item.id) || gap(car, item) > SEEN.barricade) continue;
     knowledge.barricades.set(item.id, {id: item.id, x: item.x, z: item.z, who: holderOf(item.id)});
@@ -240,6 +249,17 @@ function drawBarricades(ctx, view, knowledge, size) {
   }
 }
 
+// A flame marks each known brazier on both maps.
+function drawBraziers(ctx, view, knowledge) {
+  for (const brazier of knowledge.braziers?.values() ?? []) {
+    const at = toScreen(view, brazier.x, brazier.z);
+    if (at.x < 0 || at.y < 0 || at.x > view.width || at.y > view.height) continue;
+    ctx.save(); ctx.translate(at.x, at.y);
+    ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(6, 2); ctx.lineTo(4, 7); ctx.lineTo(-4, 7); ctx.lineTo(-6, 2); ctx.closePath();
+    ctx.fillStyle = INK.warn; ctx.strokeStyle = INK.paper; ctx.lineWidth = 2; ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+}
+
 // The car: an arrow turned the way the car faces, with a ring so that it is found at a glance.
 export function drawCarArrow(ctx, x, y, heading, size = 13) {
   ctx.save(); ctx.translate(x, y);
@@ -295,6 +315,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   for (const place of marks.places) if (visible(place.x, place.z)) drawPlace(ctx, view, place, {minimum: 2.5});
   for (const camp of marks.camps) if (visible(camp.x, camp.z)) { const at = toScreen(view, camp.x, camp.z); drawPlace(ctx, view, {...camp, flatRadius: 18, plan: []}, {minimum: 2}); names.push({at, string: camp.name, rank: 3, tries: [[0, -17], [0, 19], [60, 0]], options: {size: 13, colour: INK.mute}}); }
   drawBarricades(ctx, view, knowledge, 6);
+  drawBraziers(ctx, view, knowledge);
   for (const place of marks.places) if (visible(place.x, place.z)) { const at = toScreen(view, place.x, place.z), r = Math.max(8, place.flatRadius * view.scale); names.push({at, string: shortName(place.name), rank: 1, tries: [[0, -(r + 12)], [0, r + 14], [r + 50, 0], [-(r + 50), 0]], options: {size: 16, spacing: 1}}); }
   names.sort((a, b) => a.rank - b.rank);
   for (const item of names) nameAt(ctx, boxes, item.string, item.at.x, item.at.y, item.tries, item.options, view, item.rank <= 2);
@@ -408,6 +429,7 @@ export function drawBigMap(ctx, frame, {width, height}) {
   for (const place of marks.places) drawPlace(ctx, view, place, {minimum: 4});
   for (const camp of marks.camps) drawPlace(ctx, view, {...camp, flatRadius: 18, plan: []}, {minimum: 3});
   drawBarricades(ctx, view, knowledge, 9);
+  drawBraziers(ctx, view, knowledge);
   for (const crossing of marks.crossings) { const at = toScreen(view, crossing.x, crossing.z); crossingGlyph(ctx, crossing.kind, at.x, at.y, 11, knowledge.crossings.has(crossing.id)); }
   // Names, most important first: the car and the job's place, places, crossings, the grounds, the river, then roads; each only where
   // there is room, so that no name is written over another.

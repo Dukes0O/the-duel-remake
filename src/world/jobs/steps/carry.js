@@ -4,19 +4,38 @@ const spot = value => value?.position ?? value ?? {};
 const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
 
 // A carry that holds a live ember (step.ember, src/world/jobs/ember-rule.js). Driving takes ember; at 0 the pot is out and the
-// marker moves to the nearest brazier (the origin, or the safe point once it has been passed), where a stop gives a fresh scoop.
+// marker moves to a brazier, where the player can stop for a scoop.
 // The job does not end and the car is not moved. It completes at the destination only with the pot alight.
 function stepEmberCarry(step, state, view, dt) {
   const rule = step.ember, here = view.player?.position ?? {};
   const events = [], requests = [];
-  if (step.burnable && (view.thingsHit ?? []).some(hit => hit.kind === 'barricade' && hit.burnable)) {
-    for (const hit of view.thingsHit.filter(hit => hit.kind === 'barricade' && hit.burnable)) events.push({type: 'burn', id: hit.id});
+  // The pickup is a job phase: cold and jolts start only after Cinder has spoken.
+  if (step.pickup && !state.loaded) {
+    const place = step.pickup.place;
+    if (!state.pickingUp) {
+      const stopped = Math.abs(view.speedKmh ?? 0) < 1;
+      if (stopped && gap(here, place) <= step.pickup.radius) {
+        return {state: {...state, pickingUp: true}, complete: false, events: [],
+          requests: [{type: 'marker', place}, ...step.pickup.lines.map(lineId => ({type: 'say', lineId}))]};
+      }
+    } else if ((state.lineQueue?.length ?? 0) === 0 && (state.lineRemaining ?? 0) <= 0) {
+      state = {...state, loaded: true, ember: rule.start};
+    }
+    if (!state.loaded) return {state, complete: false, events: [], requests: [{type: 'marker', place}]};
+  }
+  const burnt = new Set(state.burntBarricades ?? []);
+  if (step.burnable) for (const hit of view.thingsHit ?? []) {
+    if (hit.kind === 'barricade' && hit.burnable && hit.flame &&
+        step.barriers?.some(barrier => barrier.id === hit.id) && !burnt.has(hit.id)) {
+      burnt.add(hit.id);
+      events.push({type: 'burn', id: hit.id});
+    }
   }
   let safeIndex = state.safeIndex ?? 0, ember = state.ember ?? rule.start, relights = state.relights ?? 0, out = state.out === true;
   while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
-  const next = {safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
+  const next = {...state, burntBarricades: [...burnt], safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
   if (!out) {
-    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, safeKmh: view.safeKmh, difficulty: view.difficulty, dt});
+    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, severeHit: view.severeHit, safeKmh: view.safeKmh, difficulty: view.difficulty, coldFactor: step.coldRegions?.[view.groundRegion] ?? 1, dt});
     next.ember = Math.max(0, Math.min(rule.start, ember - loss.total));
     // How fast the pot is losing ember from rough ground and hits, per second (cold alone is slower than 1).
     next.rate = dt > 0 ? (loss.rough + loss.hit) / dt : 0;
@@ -27,12 +46,30 @@ function stepEmberCarry(step, state, view, dt) {
       requests.push({type: 'say', lineId: step.spillLineId});
     }
   }
+  if (step.braziers) {
+    const used = state.scoopedBraziers ?? [];
+    const brazier = step.braziers.find(place => (next.out || !used.includes(place.id)) && gap(here, place) <= 8);
+    const stopping = brazier && Math.abs(view.speedKmh ?? 0) < 1;
+    const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
+    next.scoopBrazier = stopping ? brazier.id : null;
+    next.scoopTime = scoopTime;
+    if (stopping && scoopTime >= 3) {
+      const wasOut = next.out;
+      next.ember = Math.min(rule.start, next.ember + 25);
+      next.out = false;
+      next.relights = relights + (wasOut ? 1 : 0);
+      next.scoopedBraziers = wasOut ? used : [...used, brazier.id];
+      next.scoopBrazier = null;
+      next.scoopTime = 0;
+      events.push({type: 'emberRelit', place: brazier.id});
+    }
+  }
   if (next.out) {
     // The nearest place a fresh scoop can be taken: the yard gate always, the halfway camp once passed.
     const scoops = [step.origin, ...(step.safePoints ?? []).slice(0, safeIndex)].filter(Boolean);
     const nearest = scoops.reduce((best, place) => gap(here, place) < gap(here, best) ? place : best, scoops[0]);
     requests.push({type: 'marker', place: nearest});
-    if (out && nearest && gap(here, nearest) <= (spot(nearest).radius ?? 5) && (view.speedKmh ?? 0) < rule.scoopKmh) {
+    if (!step.braziers && out && nearest && gap(here, nearest) <= (spot(nearest).radius ?? 5) && (view.speedKmh ?? 0) < rule.scoopKmh) {
       next.ember = rule.start; next.out = false; next.relights = relights + 1;
       events.push({type: 'emberRelit', place: nearest.id ?? null});
       requests[requests.length - 1] = {type: 'marker', place: step.destination};
@@ -40,7 +77,8 @@ function stepEmberCarry(step, state, view, dt) {
     return {state: next, complete: false, events, requests};
   }
   requests.push({type: 'marker', place: step.destination});
-  const complete = gap(here, step.destination) <= (step.radius ?? 5);
+  const complete = gap(here, step.destination) <= (step.radius ?? 5) &&
+    (!step.stopAtDestination || (!view.onFoot && Math.abs(view.speedKmh ?? 0) < 1));
   if (complete) events.push({type: 'emberArrived', ember: next.ember, relights: next.relights,
     grade: emberGrade(rule, next.ember), pay: emberPay(rule, next.ember, next.relights)});
   return {state: next, complete, events, requests};

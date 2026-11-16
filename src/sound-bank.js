@@ -627,6 +627,12 @@ export const SOUND_BANK = {
   'world.ground.burn': cue('vehicle', {filter: ['lowpass', 500], duration: .3, tail: .35, noiseVolume: .2, priority: 45, limit: 2, layers: [tone(60, .3, .08, 'sine', 0, 40)]}),
   'world.ember.scoop': cue('interface', {priority: 70, limit: 1, volume: .5,
     layers: [{...noise(500, .5, .5, 'lowpass'), endFrequency: 1800, attack: .3}, tone(220, .5, .2, 'triangle', .05, 440)]}),
+  'world.furnace.horn': cue('impacts', {priority: 85, limit: 1, volume: .6,
+    layers: [tone(110, 1.4, .35, 'sawtooth', 0, 105), tone(165, 1.4, .2, 'triangle', 0, 158)]}),
+  'world.tintown.gate': cue('impacts', {priority: 70, limit: 1, volume: .5,
+    layers: [{...noise(400, 1, .3, 'lowpass'), endFrequency:180}, tone(90, 1, .15, 'triangle', 0, 55)]}),
+  'world.forge.catch': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency:1800, attack:.25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
   'arena.toll-gate': cue('impacts', {
     priority: 85,
     limit: 1,

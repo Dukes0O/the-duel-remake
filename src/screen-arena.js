@@ -4,7 +4,7 @@ import {teamTotal} from './arena/warlord-event.js';
 import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {WARLORDS} from './warlords.js';
 import {EMBER_CAPTIONS} from './story/ember-lines.js';
-import {EVERBURN_JOBS, sideJobKey} from './world/jobs/everburn.js';
+import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS, sideJobKey} from './world/jobs/everburn.js';
 import {EMBER_BATTLE_RESULTS, emberFeudSentence} from './story/ember-road.js';
 import {CARS} from './config.js';
 import {arenaVenueAvailable} from './wasteland-access.js';
@@ -219,7 +219,9 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
     const won = result.winnerId === 'player';
     const jobIndex = Math.max(0, EVERBURN_JOBS.findIndex(item => item.id === job?.id));
     // A notice-board job has no next job: it ends at BACK TO THE YARD.
-    const next = won && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const candidate = won && job?.run !== true && !sideJobKey(job) ? EVERBURN_JOBS[jobIndex + 1] : null;
+    const next = candidate && REMADE_EVERBURN_JOBS.includes(candidate.id) ? candidate : null;
+    const awaitingRemake = won && candidate && !next && REMADE_EVERBURN_JOBS.includes(job?.id);
     // RUN-GAS: a gas run says where the Ash Men stand now, and how many runs have arrived.
     const run = job?.run === true && won ? result.gasRun : null;
     const lineId = job?.resultLineId ?? job?.steps?.at(-1)?.arrivalLineId ?? job?.steps?.at(-1)?.wonLineId;
@@ -235,10 +237,10 @@ export function arenaResultsScreen(state, {metric, action, escapeHTML}) {
       !(EMBER_CAPTIONS[line.lineId]?.text && description.includes(EMBER_CAPTIONS[line.lineId].text))).map(line => line.text))] : [];
     const rewards = won && result.settlementSaved ? metric('SCRAP EARNED', `+${Number.isSafeInteger(result.scrapEarned) ? result.scrapEarned : 0}`, true) : '';
     const item = won && result.settlementSaved ? (result.weaponEarned || result.placeFound || result.findEarned) : null;
-    return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: emberSentence ? `${description} ${emberSentence}` : description, closing,
+    return {eyebrow: 'THE EVERBURN', title: escapeHTML(String(job?.name ?? 'WORLD JOB').toUpperCase()), description: `${description}${emberSentence ? ` ${emberSentence}` : ''}${awaitingRemake ? ' The next job is being made.' : ''}`, closing,
       metrics: rewards + (run ? metric('THE ASH MEN', escapeHTML(String(run.word).toUpperCase())) + metric('GAS RUNS', String(run.runs)) : '') + (item ? metric(result.placeFound ? 'PLACE FOUND' : 'FOUND', escapeHTML(String(item).replaceAll('-', ' ').toUpperCase())) : ''),
       extra: '', actions: won ? (job?.run === true ? action('DRIVE ANOTHER RUN', 'world-job-retry', true) : next ? action(`NEXT JOB: ${next.name.toUpperCase()}`, 'ember-next-job', true) : '') +
-        action('BACK TO THE YARD', 'arena-yard', !next && job?.run !== true) + action('MAIN MENU', 'menu') :
+        action('BACK TO THE YARD', 'arena-yard', !next && job?.run !== true) + (awaitingRemake ? '' : action('MAIN MENU', 'menu')) :
         action('TRY AGAIN', 'world-job-retry', true) + action('BACK TO THE YARD', 'arena-yard') + action('MAIN MENU', 'menu')};
   }
   if (arena.mode === 'ambush-alley') {
@@ -314,8 +316,9 @@ export function arenaPauseScreen(state, {metric, action, time, escapeHTML = Stri
   if (state.arena?.mode === 'world-job') {
     const worldJob = state.arena.worldJob, step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
     const name = worldJob?.definition?.name ?? 'The job';
+    const place = worldJob?.definition?.id === 'everburn-hot-delivery' ? ', the Scablands' : '';
     return {eyebrow: 'THE SCABLANDS / PAUSED', title: 'JOB<br>ON HOLD.',
-      description: escapeHTML(step?.what ? `${name}. ${step.what}` : `${name}.`),
+      description: escapeHTML(step?.what ? `${name}${place}. ${step.what}` : `${name}${place}.`),
       metrics: metric('TIME ON THE JOB', time(Math.max(0, state.stageTimeSec ?? 0)), true),
       extra: '', actions: action('BACK TO THE JOB', 'resume', true) + action('START AGAIN', 'world-job-retry') + action('BACK TO THE YARD', 'arena-yard')};
   }

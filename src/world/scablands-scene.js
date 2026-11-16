@@ -22,8 +22,10 @@ import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.j
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
+import {createYard} from './scablands-yard-look.js';
+import {barricadeShape,barricadeSurface} from './ash-men-look.js';
 import {createEverburnProps} from './everburn-props.js';
-import {createBraziers,brazierSpotsFor} from './ember-pot.js';
+import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
 import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
@@ -450,6 +452,7 @@ export function createScablandsScene(course,options={}){
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
   let openMarks=options.openMarks??getScablandsOpenMarks();
   const group=new THREE.Group();group.name='The Scablands';
+  let yard=null;
   let retired=false;
   let townDraw=null;
   let whites=createTheWhitesScene({openMarks,loadAsset});
@@ -564,6 +567,11 @@ export function createScablandsScene(course,options={}){
   roads.update(0,0);gorge.update(0,0);crossings.update(0,0);stepsWay.update(0,0);
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
+  const townDoor=new THREE.Mesh(new THREE.BoxGeometry(TIN_TOWN_GATE.opening,3,.5),
+    createScrapWear({paint:1,dust:0x6b5a44,dustTop:3}).apply(
+      new THREE.MeshStandardMaterial({color:0x66584b,roughness:1})));
+  townDoor.name='Hot Delivery town gate door';
+  townDoor.position.y=1.5;tinTownGate.add(townDoor);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.
   const tinTownShacks=createTinTownShacks();group.add(tinTownShacks);
   // Smoke from three of the shacks' stovepipes, placed from the clock in animate.
@@ -573,8 +581,58 @@ export function createScablandsScene(course,options={}){
   const mast=radioMast(group);
   // The Everburn's fire and its column of smoke, drawn in code and always burning (src/world/everburn-fire.js).
   const everburnPlace=LAND.place('everburn'),tinTownPlace=LAND.place('tin-town'),ironLinePlace=LAND.place('iron-line');
-  // The two braziers where a fresh scoop is taken in Hot Delivery (src/world/ember-pot.js): shown only while that job's carry step is on.
-  const braziers=createBraziers(2);group.add(braziers.group);let brazierKey='';
+  // The braziers and their smoke are shown while the ember carry step is on.
+  const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
+  const cinder=createCinderFigure();group.add(cinder);
+  let cinderRequested=false;
+  function requestCinder(){
+    if(cinderRequested)return;
+    cinderRequested=true;
+    cinder.userData.modelReady=Promise.resolve().then(()=>loadAsset('/assets/models/wasteland/crew/cinder.glb')).then(asset=>{
+      if(retired||!asset?.scene)return;
+      const model=asset.scene;
+      let near=null;
+      model.traverse(node=>{
+        const detail=String(node.userData?.lod||node.name).toLowerCase();
+        if(/(^|[-_ ])far($|[-_ ])/.test(detail))node.visible=false;
+        if(/(^|[-_ ])near($|[-_ ])/.test(detail))near=node;
+      });
+      const visibleModel=near||model,box=new THREE.Box3().setFromObject(visibleModel),height=box.max.y-box.min.y;
+      if(!Number.isFinite(height)||height<=0)return;
+      model.scale.multiplyScalar(1.7/height);
+      model.updateMatrixWorld(true);
+      const feet=new THREE.Box3().setFromObject(visibleModel).min.y;
+      model.position.y-=feet;
+      model.name='Cinder crew model';
+      for(const child of [...cinder.children])child.visible=false;
+      cinder.add(model);
+    }).catch(error=>{cinder.userData.loadError=String(error?.message||error);});
+  }
+  // A plain fire beside the delivery bay until the forge has its final drawing.
+  const forgeFlameMaterial=createFlameMaterial(),forgeFlameGeometry=new THREE.PlaneGeometry(1,1);
+  forgeFlameGeometry.translate(0,.5,0);
+  const forgeFlame=new THREE.Mesh(forgeFlameGeometry,forgeFlameMaterial);
+  forgeFlame.name='Hot Delivery forge fire';forgeFlame.visible=false;forgeFlame.frustumCulled=false;
+  const forgeAt=LAND.at('tin-town',25,10);
+  forgeFlame.position.set(forgeAt.x,scablandsSurfaceHeightAt(forgeAt.x,forgeAt.z),forgeAt.z);
+  group.add(forgeFlame);let forgeStart=null,forgeGrade=null;
+  // A plain pot carries the fire from the stopped car to the forge.
+  const transferPot=new THREE.Mesh(new THREE.CylinderGeometry(.35,.25,.4,14),
+    new THREE.MeshStandardMaterial({color:0x24201c,roughness:.88,metalness:.45}));
+  transferPot.name='Hot Delivery pot transfer';transferPot.visible=false;group.add(transferPot);
+  const transferFrom=new THREE.Vector3(),transferTo=new THREE.Vector3(forgeAt.x,forgeFlame.position.y+.2,forgeAt.z);
+  const barricadeMaterial=barricadeSurface();
+  const barricades=[0,1].map(index=>{
+    const rig=new THREE.Group();rig.name='Ash Men barricade';
+    for(const burnt of [false,true]){
+      const geometry=barricadeShape({length:12,height:2,depth:1.4,seed:index+1,burnt});
+      // The drawing's stakes extend beyond its box. Fit the standing drawing to the solid's depth.
+      if(!burnt){geometry.computeBoundingBox();const box=geometry.boundingBox;
+        geometry.translate(0,0,-(box.min.z+box.max.z)/2);geometry.scale(1,1,1.4/(box.max.z-box.min.z));}
+      const mesh=new THREE.Mesh(geometry,barricadeMaterial);mesh.name=burnt?'Burnt barricade':'Standing barricade';rig.add(mesh);
+    }
+    group.add(rig);return rig;
+  });
   const everburnFire=createEverburnFire();
   everburnFire.group.position.set(everburnPlace.x,scablandsSurfaceHeightAt(everburnPlace.x,everburnPlace.z),everburnPlace.z);group.add(everburnFire.group);everburnFire.animate(0);
 
@@ -728,6 +786,16 @@ export function createScablandsScene(course,options={}){
         bessEffects.fires.forEach((fire,index)=>{fire.scale.y=fire.userData.tall*(.8+.3*Math.abs(Math.sin(seconds*4.7+index*2.3)));});
       }
       clock=seconds;
+      if(forgeFlame.visible){
+        const bright=forgeGrade==='bright',growth=Math.min(1,Math.max(0,seconds-forgeStart)/(bright?2:8));
+        forgeFlame.scale.set(bright?2.4:1.5,(bright?4:2)*growth,1);
+        forgeFlameMaterial.uniforms.uTime.value=seconds;
+        const travel=Math.min(1,Math.max(0,(seconds-forgeStart)/2));
+        transferPot.visible=travel<1;
+        transferPot.position.lerpVectors(transferFrom,transferTo,travel);
+        transferPot.position.y+=Math.sin(Math.PI*travel);
+
+      }
       if(cinderArc.visible&&furnaceRig&&furnaceEffects&&bessRig){
         furnaceRig.updateWorldMatrix(true,false);bessRig.updateWorldMatrix(true,false);group.updateWorldMatrix(true,false);
         group.worldToLocal(furnaceRig.localToWorld(arcFrom.set(furnaceEffects.chimneyX,furnaceEffects.chimneyY,furnaceEffects.chimneyZ)));
@@ -769,6 +837,22 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
+      if(delivered&&!forgeFlame.visible){
+        forgeStart=clock;forgeGrade=delivered.grade;
+        const heading=course.at(state.s).heading+(state.headingError??0);
+        transferFrom.set(here.x-Math.sin(heading)*2,scablandsSurfaceHeightAt(here.x,here.z)+1.2,here.z-Math.cos(heading)*2);
+        transferPot.position.copy(transferFrom);transferPot.visible=true;
+      }
+      if(!delivered)transferPot.visible=false;
+      forgeFlame.visible=!!delivered;
+      if(worldJob?.definition?.yard){
+        if(!yard){
+          yard=createYard({heightAt:(x,z)=>scablandsSurfaceHeightAt(LAND.yard.x+x,LAND.yard.z+z)});
+          yard.position.set(LAND.yard.x,0,LAND.yard.z);
+        }
+        if(!yard.parent)group.add(yard);
+      }else if(yard?.parent)group.remove(yard);
       const stepNow=worldJob?.job?.steps?.[worldJob.job.stepIndex];
       // The furnace follows its actor in Old Smoke's chase and in the battle on the Boneyard road (FIELD-BATTLE-ASH), where it stays
       // where it stopped or turned away when the job is over.
@@ -796,9 +880,28 @@ export function createScablandsScene(course,options={}){
         placeRig(bessRig,escort,worldJob?.job?.steps?.[worldJob.job.stepIndex]?.path||[],0,true,bessPlace,BESS_REST);
         bessWear.follow(bessRig);
       }
-      // The braziers stand beside the yard gate and the halfway camp, on the side of the road away from the line of the way.
+      // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
+      const doorOpen=worldJob?.tinTownGateRequested===true;
+      townDoor.rotation.y=doorOpen?Math.PI/2:0;
+      townDoor.position.set(doorOpen?TIN_TOWN_GATE.opening/2:0,1.5,doorOpen?TIN_TOWN_GATE.opening/2:0);
       braziers.group.visible=Boolean(emberStep);
+      braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
+      barricades.forEach((rig,index)=>{
+        const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
+        rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);
+        if(barrier){const at=barrier.position;rig.position.set(at.x,at.y,at.z);rig.rotation.y=barrier.heading+Math.PI;}
+      });
+      cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);
+      if(cinder.visible){
+        const at=emberStep.pickup.place.position;
+        cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
+        const start=emberStep.carStart;
+        if(start)cinder.rotation.y=Math.atan2(start.x-at.x,start.z-at.z);
+        requestCinder();
+        if(worldJob.job?.stepState?.loaded&&Math.hypot(here.x-at.x,here.z-at.z)>=60)cinder.visible=false;
+      }
       if(emberStep){
         const spots=brazierSpotsFor(emberStep),key=JSON.stringify(spots);
         if(key!==brazierKey){
@@ -862,6 +965,11 @@ export function createScablandsScene(course,options={}){
   });
   function dispose(){
     if(retired)return;retired=true;
+    if(yard){
+      if(!yard.parent)group.add(yard);
+      yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
+    }
+    barricadeMaterial.map?.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

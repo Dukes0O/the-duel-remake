@@ -105,7 +105,7 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
             Math.abs((thing.position.y || 0) - at.y) < 3) {
           burst.worldJobHits.push(thing.id);
           reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,
-            burnable: thing.kind === 'barricade' && thing.burnable});
+            burnable: thing.kind === 'barricade' && thing.burnable, flame: true});
         }
       }
     }

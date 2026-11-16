@@ -181,7 +181,9 @@ export const HOT_DELIVERY_WAYS = Object.freeze([
   Object.freeze({id: 'salt-pan', name: 'By the salt pan', lookouts: Object.freeze(['ridge']), legs: Object.freeze([Object.freeze({road: 'salt-road', untilRoadStart: 'ridge-spur'}),
     Object.freeze({road: 'ridge-spur'}), Object.freeze({road: 'ridge-road'})])}),
   Object.freeze({id: 'river-bed', name: 'Along the river bed', legs: Object.freeze([Object.freeze({road: 'east-road', until: 'safe-road'}),
-    Object.freeze({road: 'boneyard-road', until: 'the-wash'}), Object.freeze({river: Object.freeze(['the-wash', 'the-steps'])}), Object.freeze({to: 'the-steps'})])}),
+    Object.freeze({road: 'boneyard-road', until: 'the-wash'}), Object.freeze({river: Object.freeze(['the-wash', 'girder-bed-approach'])}),
+    Object.freeze({to: 'girder-bed-passage'}), Object.freeze({to: 'girder-bed-exit'}),
+    Object.freeze({river: Object.freeze(['girder-bed-exit', 'the-steps'])})])}),
 ]);
 
 // ---- The graph of roads, for a way between two places that has no way written for it ---------------------------------------------------
