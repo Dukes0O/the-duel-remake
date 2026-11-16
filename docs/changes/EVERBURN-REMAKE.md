@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates opening (15 November 2026)
+
+- A seeded Medium driver picks up the pot, leaves through the yard gate and follows the first kilometre of the plates way using the real car and job. It targets 25 mph, below the rough-ground threshold. No game event or sound was added.
+- `node tools/test-everburn-job1.mjs`: passed. The first 500 m took 38.65 seconds and ended with 89.76 ember; the next 500 m took 44.28 seconds and ended with 82.37 ember. These times start after leaving the gate. The full plates drive and its arrival band remain unproved. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: target 25 mph for the plates opening, pending the full drive and Claude's review.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: extend the plates drive to the Steps and forge, then measure the other routes, finish the camera, cover and scenario.
+
 ## Larger land, proof drive through the yard gate (15 November 2026)
 
 - The seeded Medium proof drive now continues from Cinder through the actual east gate with the ember alight. This is part of step 7a; the East Road arrival and its ember band still need proof. No sound event was added.

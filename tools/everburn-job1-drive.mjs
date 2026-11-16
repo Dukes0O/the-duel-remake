@@ -110,6 +110,14 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)), ticks};
 }
 
+// The plates have a 50 km/h rough-ground threshold. Keep the opening below it
+// and return the actual car and ember measurements for each stretch.
+export function drivePlatesOpening(duel, route) {
+  const first = driveAlongRoad(duel, route, 500, 7200, 25);
+  const second = driveAlongRoad(duel, route, 1000, 7200, 25);
+  return {first, second};
+}
+
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
 export function driveToBrazier(duel, brazier, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;

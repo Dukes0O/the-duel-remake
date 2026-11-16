@@ -25,7 +25,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, furnaceSighting} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
-import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -486,6 +486,26 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'each forge approach jolt has its amount and position');
   assert.equal(arrival.jolts.length, 0, `the car clears the gate before turning toward the forge: ${JSON.stringify(arrival)}`);
 
+}
+// Begin the plates proof from the same real pickup and yard gate as the road drive.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, pickup).loaded, 'the plates driver collects the actual pot');
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20, 'the plates driver leaves through the gate');
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const {first, second} = drivePlatesOpening(duel, route);
+  console.log('Plates first 500 m:', JSON.stringify(first));
+  assert.ok(first.along >= 500, 'the car reaches 500 m along the plates way');
+  assert.ok(first.distance < 10, 'the car joins the plates way after leaving the gate');
+  assert.ok(first.lowestEmber > 0, 'the ember stays alight on the first stretch');
+  console.log('Plates first kilometre:', JSON.stringify(second));
+  assert.ok(second.along >= 1000 && second.maxDistance < 10, 'the car follows the plates way for another 500 m');
+  assert.ok(second.lowestEmber > 0, 'the ember stays alight through the first kilometre');
 }
 // The real job requests the gate only for a car approaching slowly.
 {
