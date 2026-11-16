@@ -1,5 +1,11 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed speed trial after the Steps (16 November 2026)
+
+- The actual car takes the same Steps route at 80 km/h after the climb. It avoids rider contact through 800 m, but the ember falls from 67.709 to 30.502 in the first 400 m and goes out at 719.270 m. This does not prove a clean delivery. At 60 km/h the rider still hits the car. No game event or sound cue was added.
+- Checks: `EVERBURN_BED_STEPS_ONLY=1 node tools/test-everburn-job1.mjs` passed at both the original speed and with `EVERBURN_BED_FAST_TRIAL=1`. The straight-across drive went out at 629.822 m. Integration is included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a clean line at the ground's speed, complete both bed deliveries, then the salt pan, East Road and scenario.
 ## Bed continuation diagnostic (16 November 2026)
 
 - The real Medium car continues to 800 m beyond the Steps. At 477.72 m ash rider 2 is in contact when a jolt takes 15 ember; the car has 25.39 at 800 m. This is a hazard check, not a clean delivery. Trials 70 m and 200 m to one side struck steep ground; 50 m and 150 m to the other met the rider. No game event or sound cue was added.

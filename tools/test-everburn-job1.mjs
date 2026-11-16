@@ -158,16 +158,23 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const townLine = [{x:afterSteps.x, z:afterSteps.z},
     {x:route.exit.x + 300, z:route.exit.z},
     {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
-  const townDrive = driveAlongRoad(duel, townLine, 400, 7200, 60 / 1.609344);
+  const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
+  const townSpeed = (fastTrial ? 80 : 60) / 1.609344;
+  const emberBeforeTown = pot.ember;
+  const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
   assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
   assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the diagnostic records every pot jolt');
-  const continuation = driveAlongRoad(duel, townLine, 800, 7200, 60 / 1.609344);
+  const continuation = driveAlongRoad(duel, townLine, 800, 7200, townSpeed);
   console.log('Rider beyond the Steps:', JSON.stringify(continuation));
   assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
-  assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
+  if (fastTrial) {
+    assert.ok(emberBeforeTown - townDrive.ember > 30, 'the fast car loses more than 30 ember before the rider');
+    assert.equal(continuation.jolts.length, 0, 'the faster car avoids the rider on this stretch');
+    assert.ok(continuation.firstOut, 'the faster car loses the ember on the open ground');
+  } else assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
     'the rider is in contact at a recorded jolt on this line');
   assert.equal(continuation.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the continuation records every pot jolt');
