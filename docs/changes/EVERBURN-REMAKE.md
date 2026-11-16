@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed rider pursuit at the bridge (16 November 2026)
+
+- The drive records the real riders when pursuit is first observed on each stretch. The bridge rider starts pursuit 2,027 m along the bed line, 119.56 m from the car and 8.77 m above it. The car has passed beneath the bridge without a jolt. At the top of the Steps the rider is already pursuing and 70.57 m away; it then rams the direct town route. This identifies why changing only the route after the Steps did not avoid that rider. This is a diagnostic, not a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_DIRECT_TRIAL=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.82 m. Integration is included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the pursuit and floor checks are new. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: avoid the bridge rider before or during the bed crossing, then finish both bed deliveries, the salt pan, East Road, scenario and final checks.
+
 ## Bed, offset line toward town (16 November 2026)
 
 - A real Medium car follows a line 100 m to one side of the direct line after the Steps, at a 48 km/h target. Ash rider 2 makes contact at 80.163 m and takes 15 ember. The next 400 m has no jolt, leaving 45.900 ember at 800 m. Rider contact briefly raises speed to 59.3 km/h. This is a diagnostic, not a clean delivery. A trial on the other side also met the rider and struck steep ground; it was discarded. No game event or sound cue was added.

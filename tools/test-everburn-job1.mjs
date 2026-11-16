@@ -132,6 +132,12 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 28);
   assert.ok(approach.reachedAll, 'the car reaches the Wash');
   assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
+  const riderAtWash = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
+  const washCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const washRiderDistance = Math.hypot(riderAtWash.position.x - washCar.x, riderAtWash.position.z - washCar.z);
+  assert.ok(Number.isFinite(washRiderDistance), 'the real rider has a measurable distance from the car at the Wash');
+  console.log('Rider at Wash:', JSON.stringify({distance:washRiderDistance, pursuing:riderAtWash.pursuing,
+    position:riderAtWash.position}));
   const route = bedStepsRoute();
   const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const bedLine = [{x:car.x, z:car.z}, ...route.bed];
@@ -143,6 +149,12 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     length:pathLength(bedLine), ember:pot.ember, jolts:pot.joltCount ?? 0}));
   assert.ok(drive.reachedAll, 'the car follows the river toward the Steps');
   assert.ok(drive.stretches.some(stretch => stretch.passedUnderBridge), 'the car passes under the bridge on the bed');
+  const riderPursuit = drive.stretches.flatMap(stretch => stretch.pursuits)
+    .find(pursuit => pursuit.id === 'ash-rider-2');
+  console.log('Bridge rider pursuit:', JSON.stringify(riderPursuit));
+  assert.ok(riderPursuit, 'the drive records the bridge rider pursuing the car');
+  assert.ok(riderPursuit.distance <= 120, 'the rider begins pursuit within its approach range');
+  assert.ok(riderPursuit.heightDifference > 3, 'the rider begins pursuit from a different floor');
   assert.equal(pot.joltCount ?? 0, 0, 'the car reaches the Steps approach without a jolt');
   const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, 60 / 1.609344);
   console.log('Steps approach:', JSON.stringify(end));
@@ -154,6 +166,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(climb.along >= pathLength(climbLine) - 25, 'the car climbs the Steps toward town');
   assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const riderAtSteps = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
+  const stepsRiderDistance = Math.hypot(riderAtSteps.position.x - afterSteps.x, riderAtSteps.position.z - afterSteps.z);
+  console.log('Rider after Steps:', JSON.stringify({distance:stepsRiderDistance, pursuing:riderAtSteps.pursuing,
+    position:riderAtSteps.position, car:afterSteps}));
+  assert.ok(Number.isFinite(stepsRiderDistance), 'the real rider has a measurable distance after the Steps');
+  assert.ok(riderAtSteps.pursuing && stepsRiderDistance < 120,
+    'the rider is already close and pursuing at the top of the Steps');
   const gate = definition.steps[0].riderSafeWall;
   const bypassTrial = process.env.EVERBURN_BED_TOWN_BYPASS === '1';
   const directTrial = process.env.EVERBURN_BED_DIRECT_TRIAL === '1';

@@ -158,6 +158,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let groundHits = [];
   const groundLoss = {};
   let hitSignals = null;
+  const pursuits = [];
+  const pursuingIds = new Set();
   const stopRecording = duel.onChange((_state, event) => {
     if (event.scablandsHit?.player) groundHits.push({...event.scablandsHit});
   });
@@ -167,6 +169,14 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const initiallyBurnt = new Set(state.arena.worldJob.job.stepState.burntBarricades || []);
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    for (const actor of state.arena.worldJob.actors) {
+      if (!actor.pursuing || pursuingIds.has(actor.id)) continue;
+      pursuingIds.add(actor.id);
+      const carPosition = worldJobPosition(duel, state);
+      pursuits.push({id:actor.id, along:nearestOnLine(points, car.x, car.z).along,
+        distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
+        heightDifference:Math.abs(carPosition.y - actor.position.y)});
+    }
     if (Math.hypot(car.x - bridge.x, car.z - bridge.z) < 45 &&
         scablandsSurfaceHeightAt(car.x, car.z) - worldJobPosition(duel, state).y > 4) passedUnderBridge = true;
     const pipe = LAND.at('the-pipe');
@@ -258,7 +268,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
     position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
-    burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
+    pursuits, burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }
 
