@@ -1498,3 +1498,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the segment measurements are new. Codex decided: none.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: avoid the bridge rider without changing it, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road bridge offset trial (16 November 2026)
+
+- The real driver can try a tapered line across the bridge. A 2.8 m target offset still meets the bridge rider and delivers 59.944 ember in 6.074 minutes, with one ram. At 2.9 m and 3 m the car did not reach town. A 2 m offset on either side also met the rider. This is a route measurement, not a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_BRIDGE_OFFSET_TRIAL=1 node tools/test-everburn-job1.mjs` passed, recording the rider contact and no ground impact. The straight-across ember went out at 629.822 m. The clean road acceptance still fails on bright arrival. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: try another way past the bridge rider, prove both clean bed drives, then finish the scenario and final checks.

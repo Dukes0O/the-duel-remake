@@ -247,7 +247,7 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.equal(scoop.jolts.length, (duel.state.arena.worldJob.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
     'the scoop records each jolt in the actual pot state');
   if (process.env.EVERBURN_CAMP_SCOOP_ONLY === '1') process.exit(0);
-  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40);
+  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40, process.env.EVERBURN_BRIDGE_OFFSET_TRIAL === '1' ? 2.8 : 0);
   assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
   assert.ok(gate.along >= 7810 && duel.state.arena.worldJob.tinTownGateRequested, 'the car passes the open town gate');
@@ -284,6 +284,14 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
     remaining.stretches.flatMap(stretch => stretch.jolts).filter(jolt => jolt.riders.length > 0).length,
     'the segment measurements account for the recorded rams');
   console.log('Road segment speeds:', JSON.stringify(roadSegments));
+  if (process.env.EVERBURN_BRIDGE_OFFSET_TRIAL === '1') {
+    const hits = remaining.stretches.flatMap(stretch => stretch.jolts);
+    assert.equal(hits.length, 1, 'the offset trial records the single bridge jolt');
+    assert.equal(hits[0].riders[0]?.id, 'ash-rider-2', 'the actual bridge rider contacts the offset car');
+    assert.equal(hits[0].groundHits.length, 0, 'the recorded contact is not a ground impact');
+    assert.ok(arrival.done, 'the offset trial reaches the forge');
+    process.exit(0);
+  }
   if (process.env.EVERBURN_ROAD_LOSS_ONLY === '1') process.exit(0);
   assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
   assert.deepEqual(scoops, ['halfway-brazier']);
