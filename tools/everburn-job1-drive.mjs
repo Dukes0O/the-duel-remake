@@ -10,7 +10,7 @@ export function platesCoverLine(route) {
     const before = points[Math.max(0, index - 1)], after = points[Math.min(points.length - 1, index + 1)];
     const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
     const weight = Math.max(0, Math.min(1, (point.along - 700) / 200, (1800 - point.along) / 200));
-    const offset = -(45 + 20 * Math.max(0, Math.min(1, (point.along - 1300) / 100))) * weight;
+    const offset = -(45 + 45 * Math.max(0, Math.min(1, (point.along - 1295) / 70))) * weight;
     return {x:point.x - dz / length * offset, z:point.z + dx / length * offset};
   });
 }

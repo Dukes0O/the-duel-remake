@@ -133,11 +133,12 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.ok(careful.along >= 1200, 'the car reaches the obstacle at the plates speed');
   assert.equal(careful.abovePlatesLimitTicks, 0, 'the car stays within 50 km/h up to the obstacle');
   assert.equal(careful.jolts.length, 0, 'the speed-limited approach avoids jolts');
-  const drive = driveAlongRoad(duel, line, 1600, 18000, 30);
+  const drive = driveAlongRoad(duel, line, 1600, 18000, 30.4, false, false, 0.1);
   console.log('Plates cover approach:', JSON.stringify(drive));
   assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');
   assert.ok(drive.longestFurnaceSightSeconds < 22.5, 'the shelter line reduces the measured exposure');
   assert.equal(drive.jolts.length, 0, 'the car reaches the first shelter without a jolt');
+  assert.equal(drive.abovePlatesLimitTicks, 0, 'the car stays within 50 km/h through the shelter approach');
   assert.ok(drive.longestFurnaceSightSeconds <= 6, 'the first shelter approach stays within six seconds of sight');
   assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on this approach');
   assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
