@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed slower crossing (16 November 2026)
+
+- A seeded Medium drive slows to a 12 mph target after 6 km. It reaches the town approach without the four steep-ground impacts seen before. It still takes three jolts: one rider contact near 2.37 km and two later jolts with riders over 8 m above the car. This is not a clean delivery; the cause of the latter two jolts is not yet established. A 60 m sideways opening detour and a 100 m detour on the other side both still met the first rider. No game event or sound cue was added.
+- Check: `EVERBURN_BED_DETOUR_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: measure the rough crossing with a 12 mph target. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a clean bed line and identify the two high-floor jolts, then prove both bed deliveries and the remaining clean routes.
+
 ## Bed hazard measurements (16 November 2026)
 
 - The seeded Medium driver follows the bed, scoops at Wash and reaches the town approach. Its five jolts were one rider contact at 2,373 m and four steep-ground impacts at 6,449 to 6,456 m along the route. The rider reported near the latter impacts was about 7 m above the car. The earlier table's five rider contacts were not five rams. No new event or sound cue was added.

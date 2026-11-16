@@ -154,6 +154,50 @@ if (process.env.EVERBURN_BED_HAZARDS_ONLY === '1') {
     'the other jolt has a rider in contact on the same floor');
   process.exit(0);
 }
+// Measure a slower crossing of the steep ground on the bed approach to town.
+if (process.env.EVERBURN_BED_DETOUR_ONLY === '1') {
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
+  const washAlong = nearestOnLine(route, wash.position.x, wash.position.z).along;
+  const ends = [];
+  for (let along = 500; along < washAlong - 50; along += 500) ends.push(along);
+  ends.push(washAlong - 30);
+  const drive = driveMeasuredStretches(duel, route, ends, 28);
+  assert.ok(drive.reachedAll, 'the car reaches the Wash approach');
+  assert.ok(driveToBrazier(duel, wash).scooped, 'the car takes the Wash scoop');
+  const gate = definition.steps[0].riderSafeWall;
+  const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
+  const remainingEnds = [];
+  for (let along = washAlong + 500; along < gateAlong - 150; along += 500) remainingEnds.push(along);
+  remainingEnds.push(Math.min(pathLength(route) - 1, gateAlong - 150));
+  const earlyEnds = remainingEnds.filter(along => along < 6000);
+  earlyEnds.push(6000);
+  const early = driveMeasuredStretches(duel, route, earlyEnds, 28);
+  assert.ok(early.reachedAll, 'the car reaches the rough ground');
+  const remaining = driveMeasuredStretches(duel, route, remainingEnds.filter(along => along > 6000), 12);
+  assert.ok(remaining.reachedAll, 'the car reaches the town approach');
+  const jolts = [...drive.stretches, ...early.stretches, ...remaining.stretches].flatMap(stretch => stretch.jolts);
+  console.log('Bed slower crossing:', JSON.stringify(jolts));
+  assert.equal(jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
+    'the recorded hazards account for the actual jolts');
+  assert.equal(jolts.filter(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')).length, 0,
+    'the detour avoids steep-ground impacts');
+  const otherHits = jolts.filter(jolt => jolt.groundHits.length === 0);
+  assert.equal(otherHits.length, 3, 'three jolts have no recorded ground impact');
+  assert.ok(otherHits[0].riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 1),
+    'the other jolt has a rider in contact on the same floor');
+  assert.ok(otherHits.slice(1).every(jolt => jolt.riders.some(rider => rider.heightDifference > 8)),
+    'the later jolts have riders more than eight metres above the car');
+  process.exit(0);
+}
 // Measure a drivable line toward the first butte using the real car and sight timer.
 if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
