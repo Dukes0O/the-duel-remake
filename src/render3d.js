@@ -1260,10 +1260,8 @@ export function attachRenderer(host, app) {
       if(deepRevision!==deepView.revision){deepRevision=deepView.revision;ambientShading.refresh();sceneRevision++;}
       const preparationMs=performance.now()-preparationStarted;
       const renderStarted=performance.now();renderMainView(renderer,composer,high);
-      // The mirror is put away while the forge takes the fire: the car is stopped and the hook passes where the mirror hangs.
-      const kits = trackKitsOf(world), holding = st.arena?.mode === 'world-job' && st.arena.worldJob?.arrivalHold;
-      if (holding) rearView.hide();
-      else if (kits) {
+      const kits = trackKitsOf(world);
+      if (kits) {
         const previousRender = renderer.render;
         renderer.render = function(renderedScene, renderedCamera, ...args) {
           if (renderedScene !== scene || renderedCamera !== rearView.camera)

@@ -70,6 +70,11 @@ export async function run(context) {
         const nodes = [];
         render.scene.traverse(node => { if (node.name === target) nodes.push(node); });
         const node = nodes[options.index || 0];
+        // The page keeps running between this script's calls, so a picture of the hold steps to its own moment here, in the call that measures it.
+        // The scene hears of the hold's count in one drawn frame and shows it in the next, so two frames are drawn.
+        if (options.holdAt != null && job.arrivalHold) {
+          app.advance(options.holdAt - job.arrivalHold.elapsed); app.onFrame?.(state, 0); render.renderFrame();
+        }
         app.onFrame?.(state, 0); render.renderFrame();
         const pointFor = item => {
           item.updateWorldMatrix(true, false);
@@ -183,9 +188,7 @@ export async function run(context) {
       if (!app.duel.state.arena.worldJob.arrivalHold) throw Error('The delivery hold did not start');
       app.onFrame?.(app.duel.state,0); window.__render.renderFrame();
     });
-    await page(context, () => { window.__qaApp.advance(3); });
     await picture('9-pot-in-air','Hot Delivery pot transfer',{aboveCar:true,holdAt:3,aimHeight:0});
-    await page(context, () => { window.__qaApp.advance(5); });
     await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }

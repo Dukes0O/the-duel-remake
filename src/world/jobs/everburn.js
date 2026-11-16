@@ -232,8 +232,9 @@ export function buildEverburn(land) {
       // point it passed.
       steps:[step('carry',{what:'Carry Auntie’s hot soup from her kitchen to the diggers at the Everburn well.', load:'hot-soup', origin:kitchen,
         destination:well, safePoints:path(townSafeCorner, place('south-road', at('tin-town', -30, -30), 10), safeRoad),
-        // The car starts on open ground beside the kitchen, outside the town's solid, facing the first safe point.
-        carStart:carStart(at('tin-town', 24, -2), townSafeCorner),
+        // The car starts on open ground beside the kitchen, outside the town's solid, facing the first safe point. Moved 2 m west when the
+        // forge was built beside it (16 November 2026): it and the camera behind it stand more than 3 m clear of the forge and the town.
+        carStart:carStart(at('tin-town', 22, -2.5), townSafeCorner),
         radius:18, crashLimit:10, spillLineId:'story.ember.auntie-solder.12', reward:'scrap'})]}),
   ]);
 
