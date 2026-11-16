@@ -614,6 +614,52 @@ Look sheet `docs/board/looks/everburn-remake/round-3.jpg` with Claude's review. 
 - **Before any switch goes on:** Kyle's own try on a private address (rule 18, "anything he asked to try first"), the frame
   check on Performance, and the nightly full check.
 
+## Claude's drive by hand from the yard to the forge, and slice 5 (16 November 2026, afternoon)
+
+The East Road on Easy, in a visible window, real keys in bursts, about six minutes of driving: the pot arrived alive (35),
+80 scrap, and the ending played (the crane lifts the pot by 3 s, the forge has a flame and smoke by 7 s). The bridge, the
+town on its hills and the gate read well. Not driven by hand yet: the plates and the Steps, the Pipe, the river bed.
+**Verdict: it can be finished, and it is not yet worth Kyle's try.** On the road nothing endangered the pot; the only skill
+asked was stopping in the right spot three times. That is too near what Kyle rejected. What a player meets:
+
+1. **Cinder.** The car reaches 80 km/h in a second and a half and she stands 33 m ahead. A car that overshoots is kept more
+   than 8 m from her by the gate tower and the yard wall, and the screen only repeats "Drive to Cinder and stop."
+2. **Her brazier** stands between the stopped car and the gate. Setting off into it cost 8.
+3. **A fence burns only from 11 m of its middle, inside 15 degrees** (`FLAME_RULES` 9 m, the target a 2 m spot), and the fence
+   is about 20 m wide. Four bursts from 28, 22, 17 and 12 m did nothing, each costing eleven seconds of recharge. The second
+   fence was missed once from 13 m for being 19 degrees to one side. Nothing on the screen says closer, or which key.
+4. **"Road is clear. Keep your wheels under you."** was shown after a burst that hit nothing, with the fence standing.
+5. **The riders did nothing.** At each fence a rider came to within 3 m of the standing car and the pot lost nothing. Once the
+   car was moving again the riders were hundreds of metres behind. The furnace's two riders turned back at 700 m ("The
+   furnace has lost sight of your car."); the player never saw them.
+6. **Tin Town's gate.** On the road's own line at 45 km/h the car was stopped dead at about x 5974, z 65, three metres before
+   the gate, and the pot lost 7.5. Nothing drawn stands there. A second press of the gas went through.
+7. **The first two kilometres** are one straight with nothing on it, a minute and a half at one speed.
+
+**Slice 5, the cures (Codex builds; rulings are Claude's):**
+- **Cinder:** the hand-over counts within 12 m (was 8). Her brazier moves so that it is at least 6 m clear of the straight
+  line from the job's start to the middle of the yard's gate and of the line from her to that gate. A check walks a ring of
+  12 m round her and shows a car can stand on at least three quarters of it.
+- **A fence is its whole length.** A burst burns it when any point of the drawn fence is within the flame's 9 m and cone.
+  From 40 m the job's line reads "Burn the fence: get close and press 4." and changes back when it is burnt.
+- **The wrong message:** found at its source; never shown while an unburnt fence is within 150 m or a rider within 200 m.
+- **A rider's ram costs fire whether or not the player is moving.** The ram is counted by the speed at which the two cars
+  meet, with the rule's own numbers (nothing under 8 km/h, 1.5 for each km/h, 15 at most, half on Easy). A rider charges as
+  soon as it sees the loaded car within 150 m of its fence, so a player who stops to burn is met by a moving car, and may
+  burn the rider, burn the fence and go, or leave the road. A rider that has rammed backs off 40 m before it comes again, so
+  one rider cannot take more than one ram in eight seconds.
+- **The gate:** the cause found by stepping the rules along the road's last 200 m at 45 and at 80 km/h; no speed is shed
+  and no ember lost between the last bend and the gate's far side.
+- **Checks:** rule checks for each cure, without driving. The card's one scripted drive stays the East Road on Easy
+  (`test-everburn-easy --job hot-delivery`), which must still arrive alive with both riders ramming.
+- **Sound:** no new event. A ram already has its cue.
+
+**Slice 6, designed, built after slice 5: the scout.** One Ash Men rider waits beside the road 900 m from the yard. When the
+loaded car comes within 250 m in its sight it sounds its horn and runs for the Halfway Camp at 70 km/h. If it gets there
+first, the camp's rider is already out on the road and comes at the player before the fence. If the player catches it
+(a burst, or a ram that costs a jolt), the camp is caught asleep and its rider starts ten seconds late. That gives the long
+straight a chase with a reason. Cue: the scout's horn, `world.ashmen.horn` (the furnace's horn recipe, higher and shorter).
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
