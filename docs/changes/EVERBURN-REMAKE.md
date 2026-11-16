@@ -1731,3 +1731,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-camera-clearance.mjs` passed, including a camera starting 20 metres below the car during the return. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: nothing.
 - The stranded rider's out-of-view recovery, X4, X5, X7 to X9 and final checks remain. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## X5: exact hit checks and replaced scenario
+
+- The real car's wreck collision now checks the pot's actual jolt is exactly 15. The carry step also checks a severe fall or dead-stop crash can take 40. The existing Easy checks cover the halved losses. Easy halves hit loss; it does not slow cold. No game event or sound cue changed.
+- Check: `node tools/test-ember-pot.mjs` passed 32 checks. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions, for Claude to review: the real wreck collision previously accepted any positive loss up to 40.1; it now requires the actual jolt to be exactly 15, as Claude directed. The new severe-hit check requires exactly 40. Codex decided: none.
+- Removed: `tools/scenarios/everburn-play.mjs`, replaced by `everburn-job1`. The `everburn-play` harness setting in the separate well scenario remains in use and is not a scenario list entry.
+- The stranded rider's out-of-view recovery, X4, X7, X8 and final checks remain. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.

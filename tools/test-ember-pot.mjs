@@ -97,7 +97,9 @@ const field = [{x: tinTown.x, z: tinTown.z}];
     if (Number.isFinite(before) && Number.isFinite(step.ember)) drop = Math.max(drop, before - step.ember);
     before = step.ember; jolts = step.joltCount ?? 0;
   }, until: d => (held(d).joltCount ?? 0) > 0});
-  check(jolts > 0 && drop > 0 && drop <= 40.1, `a real hit on a wreck jolts the pot at once (took ${drop.toFixed(1)} in one step)`);
+  check(jolts > 0 && Math.abs(held(duel).jolt - 15) < 1e-9, `a real wreck hit takes exactly 15 from the pot (jolt ${held(duel).jolt}, total drop ${drop.toFixed(3)})`);
+  const severe = stepCarry(carry, {loaded: true}, view(100, {severeHit: true}), DT);
+  check(severe.state.jolt === 40, 'a severe fall or dead-stop crash can take 40');
 }
 // The remade job test covers going out, known braziers and delivery.
 // Running out leaves the job active and asks the player to find a brazier.
