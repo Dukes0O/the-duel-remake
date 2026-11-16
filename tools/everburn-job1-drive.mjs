@@ -2,6 +2,23 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 
+// Keep gaps outside the watcher's range separate from open ground: they cannot
+// prove that the car comes back into view between two places of cover.
+export function coverStretches(samples, classify) {
+  const stretches = [];
+  for (const point of samples) {
+    const visibility = classify(point);
+    let stretch = stretches.at(-1);
+    if (!stretch || stretch.visibility !== visibility) {
+      stretches.push(stretch = {visibility, from:point.along, to:point.along});
+    }
+    stretch.to = point.along;
+  }
+  return stretches.filter((stretch, index) => stretch.visibility === 'hidden' &&
+    stretch.to - stretch.from >= 150 && stretches[index - 1]?.visibility === 'open' &&
+    stretches[index + 1]?.visibility === 'open');
+}
+
 // Drive from the job's real starting position to Cinder and wait for the pot.
 // This is the shared opening for the six Medium proof drives.
 export function driveToCinder(duel, cinder, maxTicks = 1800) {

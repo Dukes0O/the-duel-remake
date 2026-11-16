@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates cover measurement (16 November 2026)
+
+- The cover check now keeps out-of-range sections separate from open ground. A covered stretch counts only when it is at least 150 m long and the furnace can see the car on both sides. A test also checks that a range gap or a short hidden stretch cannot count. The real land still has one qualifying stretch, not the required three. No game event or sound cue was added.
+- `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs`: passed. The furnace stands on a seeded mesa; moving that mesa also changes the watch's height and sight. The next placement must retain the high-ground watch and clear the other jobs' corridors. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers, plus the final checks. For Claude to draw: the pot transfer and forge fire.
+- Removed: the cover measurement's filtering of out-of-range samples before checking for open ground. Next: provide three separated covered stretches, run the required terrain checks, and finish the scenario and final checks.
+
 ## Plates cover baseline (16 November 2026)
 
 - Added a job test that samples the actual plates way and the furnace's own sight rule, within its real range. It confirms one covered stretch of at least 150 m with open ground on both sides. At 20 m intervals, the current covered stretch runs approximately from 1,396 m to 3,110 m along the way. This is one stretch, not the three required. No terrain or game event changed and no sound cue was added.

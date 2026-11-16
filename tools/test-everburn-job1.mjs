@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {coverStretches, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -38,18 +38,16 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const route = routeFor(way.legs, {start: LAND.yard, destination: LAND.at('tin-town')});
-  const samples = sampleLine(route, 20).filter(point =>
-    Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) <= WATCH.furnace.range);
-  const stretches = [];
-  for (const point of samples) {
-    const visible = stepSkylineSight({}, point, 0).visible;
-    let stretch = stretches.at(-1);
-    if (!stretch || stretch.visible !== visible) stretches.push(stretch = {visible, from: point.along, to: point.along});
-    stretch.to = point.along;
-  }
-  assert.ok(stretches.some((stretch, index) => !stretch.visible && stretch.to - stretch.from >= 150 &&
-    stretches[index - 1]?.visible && stretches[index + 1]?.visible),
+  const stretches = coverStretches(sampleLine(route, 20), point => {
+    if (Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) > WATCH.furnace.range) return 'out of range';
+    return stepSkylineSight({}, point, 0).visible ? 'open' : 'hidden';
+  });
+  assert.ok(stretches.length >= 1,
   'the plates have at least one 150 m stretch hidden from the furnace with open ground on each side');
+  const points = Array.from({length: 23}, (_, index) => ({along:index * 20}));
+  const types = ['open', ...Array(9).fill('hidden'), 'out of range', ...Array(9).fill('hidden'), 'open', 'hidden', 'open'];
+  assert.equal(coverStretches(points, point => types[point.along / 20]).length, 0,
+    'out-of-range gaps and short hidden runs cannot count as separate cover');
 }
 // Floor it towards town across the plain, starting with the real pickup and gate.
 {
