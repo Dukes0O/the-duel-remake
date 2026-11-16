@@ -1,5 +1,22 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed without a scoop (16 November 2026)
+
+- The seeded Medium driver follows the bed without stopping at the Wash. It stops at the forge with the ember out after 9.396 km and 13.754 minutes, with three observed rider contacts and no scoops. The job remains open because the pot is out. No new game event or sound cue was added. The existing scooped drive still arrives out, below its 30 to 55 band.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | 6.160 | 8.634 | 5 observed contacts | None | 0 |
+| Salt pan | 9.394 | 13.745 | 0 | None | 8.367 |
+| Bed | 9.425 | 13.959 | 5 observed contacts | Wash | 0 |
+
+- Checks: `EVERBURN_BED_ONLY=1 node tools/test-everburn-job1.mjs` passed, including both bed drives. Race fingerprints, lane tier and build remain for the last round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Still to build: the straight-across drive, three separated cover stretches and the scenario. The present furnace mesa hides one long stretch rather than three separated stretches.
+
+
 ## Landing camera (16 November 2026)
 
 - In the Scablands, the chase camera stays behind and above a car more than 3 m in the air and looks at the ground 20 m ahead. It keeps that view until landing, then returns over half a second. Other courses keep their existing camera. No game event or sound cue was added.

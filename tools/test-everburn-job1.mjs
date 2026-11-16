@@ -734,8 +734,8 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
 }
 if (process.env.EVERBURN_SALT_ONLY === '1') process.exit(0);
 
-// Measure the bed from pickup, including the Wash scoop and the actual forge approach.
-{
+// Measure the bed with and without a Wash scoop from the same seeded start.
+for (const scoopAtWash of [true, false]) {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
   duel.state.wastelandGateDiscovered = true;
   assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
@@ -754,8 +754,8 @@ if (process.env.EVERBURN_SALT_ONLY === '1') process.exit(0);
   const opening = driveMeasuredStretches(duel, route, beforeWash, 28);
   let scoop = null, remaining = null, gateDrive = null, arrival = null;
   if (opening.reachedAll) {
-    scoop = driveToBrazier(duel, wash);
-    if (scoop.scooped) {
+    if (scoopAtWash) scoop = driveToBrazier(duel, wash);
+    if (!scoopAtWash || scoop?.scooped) {
       const gate = step.riderSafeWall;
       const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
       const ends = [];
@@ -781,9 +781,13 @@ if (process.env.EVERBURN_SALT_ONLY === '1') process.exit(0);
     scoops:pot.scoopedBraziers || [], arrival:arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5 ? pot.ember : null,
     ember:pot.ember, openingReached:opening.reachedAll, scoop, remainingReached:remaining?.reachedAll ?? false,
     last:(remaining?.stretches || opening.stretches).at(-1), forge:arrival};
-  console.log('Bed measurement:', JSON.stringify(measurement));
+  console.log(scoopAtWash ? 'Bed measurement:' : 'Bed without scoop measurement:', JSON.stringify(measurement));
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the actual pot');
-  assert.ok(opening.reachedAll && scoop?.scooped && remaining?.reachedAll, 'the driver reaches and scoops at the Wash and follows the bed');
+  assert.ok(opening.reachedAll && (!scoopAtWash || scoop?.scooped) && remaining?.reachedAll, 'the driver follows the bed and scoops when requested');
+  if (!scoopAtWash) {
+    assert.deepEqual(measurement.scoops, [], 'the driver takes no scoop');
+    assert.equal(measurement.arrival, 0, 'the ember is out at the forge without a scoop');
+  }
   assert.ok(arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the driver stops at the forge');
   assert.equal(measurement.arrival, pot.ember, 'the arrival records the actual ember even when it is out');
   assert.equal(measurement.rams, arrival.observedJoltCount, 'observed rider contacts account for the actual jolts');
