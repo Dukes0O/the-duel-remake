@@ -66,7 +66,11 @@ SP connection: Mabel now places each cutting step's spoil through the prepared h
 
 The heap profile now has small rounding margins: 0.699 m per metre at the sides and 0.299 m per metre at the ends. These leave room for accumulated ground-grid rounding under the 0.7 side and 0.3 crest limits. On the real Dig ground at 101 m, the steepest sampled side was 0.6990 m per metre, the crest was 4.7708 m, and laid volume differed from the required volume by 0.616%. The 100-step refresh measured 2,556 height reads and at most 67 fills per 1/60-second step; that is an observed maximum, not a proven bound. Protected ground encountered after the heap starts still refuses the deposit before cutting.
 
+V1 updates the older Mabel scenario to measure the heap from filled ground cells. It records the cell count, crest and steepest neighbouring side. The measurement is made once during the scenario, not during play.
+
 ## Checks
+
+- V1: `node tools/test-machine-borer-scenario.mjs` passed. Every page expression parses, and a ground fixture confirms the heap measurement excludes a separate yard edit. The browser scenario still needs a run in Chrome.
 
 - After the rounding fix and the integration merge, `test-machine-borer` passed: cross slope 0.6990 m per metre, crest 4.7691 m and volume error 0.616%, with daylight reached. The apprentice suite also passed the real mesa comparison after its test was updated to cover both heap footprints. The lesson, scenario expression, town apprentice, ground edit, machine roads, tunnels and Scablands scene suites passed individually. Race replays passed 297 checks and combat replays passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was not run, as A10 directs.
 
@@ -121,6 +125,8 @@ The heap profile now has small rounding margins: 0.699 m per metre at the sides 
 
 ## Changed assertions, for Claude to review
 
+- Older Mabel scenario: the bank growth assertion now reads filled heap cells instead of the removed bank cell list; new checks measure the 5 m crest and 0.7 m per metre side limit. Claude requested the heap measurement in V1.
+
 - Bent-cut mouth clearance: X coordinate at least 12 m changed to distance from the mouth at least 12 m, with a 0.00000001 m floating-point allowance. The bank follows the turned heading, so its X coordinate alone does not measure its clearance. The required distance remains 12 m.
 - Hand and delegated spoil comparison: the removed bank cell list is replaced by the union of both heap footprints. The 0.1 m comparison is unchanged.
 
@@ -156,4 +162,4 @@ The narrow three-cell spoil bank planner and its cell-list bookkeeping were repl
 
 ## For Claude to run
 
-Run the apprentice browser scenario and the hand play check. Chrome cannot start in this job. The scenario has not been visually checked.
+Run the older Mabel browser scenario to its end, the apprentice browser scenario and the hand play check. Chrome cannot start in this job. The scenario has not been visually checked.

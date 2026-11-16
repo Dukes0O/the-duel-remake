@@ -2,7 +2,7 @@ import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 
 // Every expression is a function call, so each can be parsed independently.
-const page = {
+export const page = {
   ready: `(() => !!window.__qaApp && !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value && window.name.startsWith('__duel_qa_tab_v2:'))()`,
   enter: `(() => { const app = window.__qaApp; app.stop();
     if (!app.addPlayer('Mabel test').ok) throw Error('Could not create the memory-only player');
@@ -68,8 +68,23 @@ const page = {
   survey: `(() => { const p=window.__theDig.host.querySelector('.the-dig-survey');
     return {visible:!!p && !p.hidden, text:p?.querySelector('p')?.textContent,
       strip:!!p?.querySelector('canvas') && p.querySelector('canvas').getBoundingClientRect().width>0}; })()`,
-  spoil: `(() => { const b=window.__theDig.simulation.borer.spoilBank;
-    return {far:b.far, cells:b.cells.length}; })()`,
+  spoil: `(() => { const sim=window.__theDig.simulation, b=sim.borer.spoilBank;
+    const cells=new Map();
+    for(const chunk of sim.ground.toSave().chunks) for(let i=0;i<chunk.delta.length;i++) {
+      const height=chunk.delta[i]; if(height<=0) continue;
+      const x=chunk.x*32+i%32, z=chunk.z*32+Math.floor(i/32);
+      const dx=x-b.origin.x, dz=z-b.origin.z;
+      const along=dx*b.direction.x+dz*b.direction.z, across=-dx*b.direction.z+dz*b.direction.x;
+      if(along>=-1 && along<=b.far+1 && Math.abs(across)<=8) cells.set(x+','+z,height);
+    }
+    let crest=0, steepestSide=0;
+    for(const [key,height] of cells) {
+      crest=Math.max(crest,height);
+      const [x,z]=key.split(',').map(Number);
+      for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]])
+        steepestSide=Math.max(steepestSide,Math.abs(height-(cells.get((x+dx)+','+(z+dz)) || 0)));
+    }
+    return {far:b.far,cells:cells.size,crest,steepestSide}; })()`,
   visibility: `(() => {
     const d=window.__theDig, v=d.viewForCheck, T=v.three, s=d.simulation.tunnels.segments[0];
     const forward=new T.Vector3(s.end.x-s.start.x,0,s.end.z-s.start.z).normalize();
@@ -330,7 +345,9 @@ export async function run(context) {
   assert.ok(visibility.side.camera[1] > visibility.side.ground, 'the side camera is above ground');
   assert.ok(visibility.side.alone.marked > 0 && visibility.side.covered.marked === 0, 'the hill hides the whole machine from the side');
   assert.ok(visibility.mouth.portal.marked > 0 && visibility.mouth.lining.marked > 0 && visibility.mouth.portal.groundAround > 0, 'the mouth shows the portal, lining and surrounding ground');
-  assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil bank grows');
+  assert.ok(measurements.spoil.far > 0 && measurements.spoil.cells > 0, 'the spoil heap grows');
+  assert.ok(measurements.spoil.crest <= 5.00001, 'the spoil heap is no higher than five metres');
+  assert.ok(measurements.spoil.steepestSide <= 0.70001, 'the spoil heap has gentle sides');
   assert.ok(measurements.survey.visible && measurements.survey.strip && measurements.survey.text.includes('to go'), 'the running survey and strip are shown');
   await attempt('pull the lever back', () => holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000));
   try { await context.waitFor(page.followingInside, 'following camera enters the bore', 15000); }
