@@ -1951,3 +1951,7 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - The Easy driver follows the safe points again after a restart, slows through the town corner and drives forward out of reverse. It no longer treats Hot Soup as a return to town. No game event or sound cue changed.
 - Checks passed: `test-everburn-play-start.mjs` (1,006), `test-everburn-easy.mjs --job hot-soup` (10/10), `test-ember-side-jobs.mjs` (221), and `test-everburn-job1.mjs`. Race fingerprints were not run.
 - Changed assertions: none. Codex decided: use 8 mph through the first two safe points. **Removed:** the East Road override for Hot Soup.
+- **What the final lane tier found (three more, all Claude's own):** the mirror's rule now lives in `src/rear-view.js`
+  (`rearViewActive`), not in the renderer's text that two suites read; Hot Soup's start moved 2 m, clear of the forge
+  (`src/world/jobs/everburn.js`); the picture check steps to each hold picture's moment inside the measuring call. Results
+  and the list of suites rerun are on the card under "Checks at the merge". Lessons: `docs/CODEX_PLAYBOOK.md` section 7.

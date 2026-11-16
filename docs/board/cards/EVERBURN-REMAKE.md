@@ -575,6 +575,40 @@ Look sheet `docs/board/looks/everburn-remake/round-3.jpg` with Claude's review. 
   that no place, start or path point of any Everburn job, board job or gas run stands within 1 m of the forge's solids.
   Known and accepted: the land's solids import the forge's plan from a drawing file, as they already do for Tin Town's
   shacks and the yard.
+- **Checks at the merge (Claude, 16 November 2026):**
+  - First lane tier on the candidate (198 suites): seven older suites failed, all from the job's own rulings;
+    corrected as listed above.
+  - Final lane tier on the finished candidate (d12e9927e; 224 suites, 75 minutes): 221 passed. The three that failed were
+    real faults in what Claude added at the merge, each cured without changing the suite that found it:
+    - `test-frame-metrics` and `test-scene-presentation` read the renderer's own text around the mirror's draw. Claude's
+      line that put the mirror away during the hold stood inside that text. The rule moved to `rearViewActive` in
+      `src/rear-view.js`, where the mirror already decides whether to show; `src/render3d.js` reads as before.
+      `test-rear-view` has two new checks (a job holding at its end hides the mirror; a job not holding keeps it).
+    - `test-everburn-play-start`: Hot Soup's car started 2.6 m from the new forge (every start must stand 3 m clear). Its
+      start moved 2 m (to 22, -2.5 in metres of x and z from Tin Town's middle): the car is 3.9 m clear and the camera
+      behind it 3.6 m. From the moved start the suite's Easy driver then failed 0 of 10. Codex traced it: the driver
+      took Hot Soup's second safe point for a delivery to the town and followed the East Road into the town's blocks (a
+      rule put into the driver for Hot Delivery the day before; from the old start it had passed by luck). Codex
+      corrected the driver, with no assertion changed: 10 of 10. Hot Soup is not offered (it is not remade).
+    - The picture check (`everburn-job1`) took its two hold pictures at 3.03 s and 8.36 s, not 3.0 and 8.0: the page keeps
+      running between the script's calls, and nobody had run those two pictures in a browser. Each now steps to its own
+      moment inside the call that measures it, and draws two frames, because the scene shows the hold's count one
+      drawn frame after it hears of it. The 0.02 s allowance is unchanged.
+  - After the cures (rule 19: the suites for what changed, not the tier again): `test-everburn-play-start`,
+    `test-frame-metrics`, `test-scene-presentation`, `test-rear-view`, `test-ember-side-jobs`, `test-scablands-hills`,
+    `test-scablands-job-map`, `test-everburn-play-fixes-round4`, `test-combat-effects`, `test-forge-hold-camera`,
+    `test-everburn-job1` and `test-everburn-easy --job hot-soup` pass; the build passes; the picture check passes with
+    ten pictures, seen by Claude.
+  - Codex's fifth review (of those cures) found that the crane could still run ahead of the job on the scene's clock while
+    the job's count stood still. Cured: while the job holds, the crane's clock is the job's count and nothing else
+    (`hold` in `src/world/forge-look.js`). Also from it: a noted pot place more than 4 m from the car is not believed, and
+    the mirror's rule asks for a world job. `test-everburn-job1`'s forge section changed with the cure (rule 18, reviewed
+    by Claude): it had moved the crane by the scene's clock, which was the fault itself. It now sets the job's count, and
+    newly asserts that the scene's clock alone moves nothing, paused or not, that the forge is cold at 4.9 s and that a
+    flame shows by 6.0 s. Nothing is loosened. The picture check passed again afterwards.
+  - `tools/menu-check.js`: one button on the private test page makes a temporary player who has found the wasteland, so
+    that the yard can be reached by hand. Claude reached the yard, the Story Wall and Hollis's note with it.
+  - Codex's sixth reading (of the last cures) confirmed the crane's clock during the hold and the mirror's rule, and found no fault. Three questions it could not settle from the one commit it was given (Claude's brief was too narrow) are settled by Claude: the pot's noted place and the car's place are both in the land's own measure, and a place wrongly refused only falls back to the back of the car; the new button uses the same two calls as the test page's two older buttons, whose memory-only storage `test-qa-storage` proves; after the hold nothing is timed against the fire.
 - **Short of right:** see the look review. **For Claude still:** an end-to-end drive of the bends, the bridge, the Pipe,
   the Steps and the bed; the forge's cue has not been heard.
 - **Before any switch goes on:** Kyle's own try on a private address (rule 18, "anything he asked to try first"), the frame

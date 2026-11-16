@@ -147,6 +147,20 @@ placed beside a road's own line needs its own check in
 `test-scablands-size.mjs`; a thing placed from a named place uses whole eighths
 of a metre, so that it keeps its exact offset when that suite moves the place.
 
+Three more from the same merge, each found only by the last lane tier:
+
+- **A new solid** on the land: run `test-everburn-play-start.mjs` (every job's
+  car and camera start 3 m clear of every solid) before anything else.
+- **The renderer's text is read by suites.** `test-frame-metrics.mjs` and
+  `test-scene-presentation.mjs` match the lines of `src/render3d.js` between the
+  main view's draw and the mirror's. Put a new rule in the module that owns the
+  thing (`rearViewActive` in `src/rear-view.js` for the mirror), not between
+  those lines, and run both suites after any edit near them.
+- **A browser scenario's page keeps running** between the script's calls. A
+  picture that must be taken at an exact moment steps to that moment inside the
+  same call that measures it. A scenario that was only parsed, never run in a
+  browser, is not checked: say so in the change note, as a thing still owed.
+
 **Scripted drives.** A brief asks for at most one scripted drive that proves
 a job can be finished, by one way, and the card names it. Six such drives on
 Hot Delivery took about five Codex hours and 149 of 228 saved changes, and the
