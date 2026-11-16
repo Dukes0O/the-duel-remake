@@ -52,6 +52,14 @@ const completion=document.createElement('button');completion.textContent='Create
   app.profile={...app.profile,credits:50000,unlockedCars:prerequisites,upgrades};app._saveProfile();
   refreshRaceSetup();completion.disabled=true;panel.open=false;
 };panel.append(completion);
+// For a try by hand of things kept behind switches in the wasteland (Hot Delivery, the Dig): a temporary player who has
+// already found the gate, so the menu offers the visit to the Scrapdome.
+const gateFound=document.createElement('button');gateFound.textContent='Create temporary player who has found the wasteland';gateFound.onclick=()=>{
+  if(app.duel.state.status!=='menu')return;
+  app.addPlayer('Wasteland QA');
+  app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};app._saveProfile();
+  refreshRaceSetup();gateFound.disabled=true;panel.open=false;
+};panel.append(gateFound);
 let frozenPaint=0;
 const mirror=document.createElement('button');mirror.textContent='Freeze rear-view traffic sample';mirror.onclick=()=>{
   if(app.duel.state.status!=='menu')return;

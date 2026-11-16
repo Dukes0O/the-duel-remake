@@ -1085,21 +1085,33 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.equal(pot.visible, true, 'the pot leaves the car');
     const from = where(pot);
     assert.ok(Math.hypot(from.x - bay.x, from.z - bay.z) < 4, 'and stands at the back of the stopped car');
-    // A paused game holds the crane still (a reviewer found it ran on while the job's hold was paused).
-    state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 2);
+    // While the job holds, the crane keeps the job's own count and nothing else (reviewers found twice that it could run ahead of the job on
+    // the scene's clock: through a pause, and whenever the count stood still). So the scene's clock alone moves nothing, paused or not.
+    animateScene(scene.group, 2);
+    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the job’s count stands still');
+    state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 4);
     assert.ok(where(pot).distanceTo(from) < 1e-6, 'a paused game holds the crane still');
-    state.paused = false; syncScene(scene.group, state);
-    animateScene(scene.group, 5);
+    state.paused = false;
+    // The job's count is set here by hand, as the job itself sets it a step at a time (proved further down).
+    const holdAt = seconds => { world.arrivalHold.elapsed = seconds; syncScene(scene.group, state); animateScene(scene.group, 4 + seconds); };
+    holdAt(3);
     assert.equal(pot.visible, true);
     assert.ok(where(pot).distanceTo(from) > .1, 'the pot moves toward the forge');
     assert.ok(where(pot).y > from.y + 1, 'the pot is lifted off the car');
     assert.equal(flame.visible, false, 'the forge stays cold until the ember is tipped into it');
-    animateScene(scene.group, 14);
+    holdAt(4.9);
+    assert.equal(flame.visible, false, 'and is still cold a tenth of a second before the cue');
+    holdAt(6);
+    assert.equal(flame.visible, true, 'a flame shows within a second of the cue at five seconds, whatever the ember');
+    holdAt(8.9);
     const hearth = forgePlan().hearth, over = where(pot);
     assert.ok(Math.hypot(over.x - hearth.x, over.z - hearth.z) < .5, 'the transfer ends over the hearth');
     assert.equal(flame.visible, true, 'and the forge has caught');
-    animateScene(scene.group, 24);
+    // After the hold the fire burns on under the results by the scene's own clock.
+    const held = world.arrivalHold; world.arrivalHold = null; syncScene(scene.group, state);
+    animateScene(scene.group, 26);
     flameHeights.push(flame.scale.y);
+    world.arrivalHold = held; held.elapsed = 0;
     const fire = where(flame);
     assert.ok(Math.hypot(fire.x - hearth.x, fire.z - hearth.z) < 1, 'the fire burns in the hearth');
     for (const id of ['tin-town-forge', 'tin-town-crane', 'tin-town-anvil']) assert.ok(SCABLANDS_SOLIDS.some(solid => solid.id === id), `${id} is solid`);

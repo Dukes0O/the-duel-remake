@@ -5,7 +5,7 @@ export const REAR_VIEW_FAR = 220;
 export const REAR_VIEW_INTERVAL_MS = 1000 / 30;
 // The mirror is put away while a world job holds at its end (Hot Delivery's forge takes the fire): the car is stopped and the
 // crane's hook passes where the mirror hangs.
-export const rearViewActive = state => !state?.onFoot && !state?.arena?.worldJob?.arrivalHold &&
+export const rearViewActive = state => !state?.onFoot && !(state?.arena?.mode === 'world-job' && state.arena.worldJob?.arrivalHold) &&
   ['countdown', 'racing', 'crashed', 'ticket'].includes(state?.status);
 
 // CSS owns the frame placement; WebGL uses the same measured interior. The

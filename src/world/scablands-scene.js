@@ -825,8 +825,10 @@ export function createScablandsScene(course,options={}){
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
-        // The pot's place: where the car's own pot stood at the last frame (src/render3d.js notes it), or the back of the car.
-        const heading=course.at(state.s).heading+(state.headingError??0),seen=group.userData.emberPotAt;
+        // The pot's place: where the car's own pot stood at the last frame (src/render3d.js notes it), or the back of the car. A noted
+        // place that is not at the car (left from an earlier frame or job) is not believed.
+        const heading=course.at(state.s).heading+(state.headingError??0),noted=group.userData.emberPotAt;
+        const seen=noted&&Math.hypot(noted.x-here.x,noted.z-here.z)<4?noted:null;
         forge.deliver(seen??{x:here.x-Math.sin(heading)*2,y:scablandsSurfaceHeightAt(here.x,here.z)+.85,z:here.z-Math.cos(heading)*2},
           delivered.grade,delivered.ember/(worldJob.job?.steps?.[0]?.ember?.start??100),clock);
       }

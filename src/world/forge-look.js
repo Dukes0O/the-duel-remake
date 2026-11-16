@@ -278,7 +278,7 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
     deliver(at, gradeName, ember = 1, now = null) {
       if (job) return;
       job = {...from(at.x, at.z), length: lineTop - FORGE.potBelowHook - (at.y - base), ember: Math.max(0, Math.min(1, ember)),
-        start: {bearing, reach, length}, tau: 0, held: null, heldSeen: null, paused: false};
+        start: {bearing, reach, length}, tau: 0, held: null, paused: false};
       if (last == null && Number.isFinite(now)) last = now;
       grade = FIRE[gradeName] ? gradeName : 'alive';
       // The pot stands where it stood on the car until the hook has it.
@@ -288,8 +288,8 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
     hold(elapsed, paused = false) {
       if (!job) return;
       job.held = Number.isFinite(elapsed) ? elapsed : null; job.paused = paused === true;
-      // The first count sets the clock at once; after that the clock follows the count each time it moves on.
-      if (job.held != null && job.heldSeen == null) { job.heldSeen = job.held; job.tau = job.held; }
+      // While the job holds, the crane's clock is that count and nothing else: it cannot run ahead of the job on the scene's clock.
+      if (job.held != null) job.tau = job.held;
     },
     reset() { job = null; grade = null; tip = 0; group.add(pot); pot.visible = false; pot.rotation.set(0, 0, 0); },
     pot, flame: flames[1],
@@ -300,8 +300,8 @@ export function createForge({heightAt = () => 0, plan = forgePlan(), documentLik
     animate(seconds) {
       const owed = last == null ? 0 : Math.min(10, Math.max(0, seconds - last));
       if (job) {
-        // The job's count when it has moved on since the last frame; otherwise the scene's own clock, unless the game is paused.
-        if (job.held != null && job.held !== job.heldSeen) { job.tau = job.held; job.heldSeen = job.held; }
+        // While the job holds, its count alone moves the crane. After the hold the fire burns on by the scene's own clock, unless the game is paused.
+        if (job.held != null) job.tau = job.held;
         else if (!job.paused) job.tau += owed;
         work(job.tau);
       } else {
