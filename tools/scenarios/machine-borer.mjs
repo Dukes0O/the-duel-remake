@@ -118,7 +118,7 @@ const page = {
   startVisibility: `(() => { const d=window.__theDig, start=performance.now();
     const record=() => d.paceVisibility.events.push({wallSeconds:(performance.now()-start)/1000, hidden:document.hidden, elapsed:d.simulation.elapsed, distance:d.simulation.borer.distanceM});
     d.paceVisibility={events:[],record}; document.addEventListener('visibilitychange',record); record(); return true; })()`,
-  visibility: `(() => window.__theDig.paceVisibility.events.slice())()`,
+  paceVisibility: `(() => window.__theDig.paceVisibility.events.slice())()`,
   stopVisibility: `(() => { const d=window.__theDig; document.removeEventListener('visibilitychange',d.paceVisibility.record); delete d.paceVisibility; return true; })()`,
   farMouthOn: `(() => { window.__theDig.setCheckFarMouth(true); return true; })()`,
   farMouth: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck, s=d.simulation.tunnels.segments.at(-1);
@@ -205,7 +205,7 @@ async function reachDaylight(context, initialFloor, surveyText, measurements, pe
       if (Date.now() >= nextReport) {
         const sample = {...b, wallSeconds:(Date.now() - startWall) / 1000};
         measurements.pace.push(sample);
-        measurements.paceVisibility = await context.evaluate(page.visibility);
+        measurements.paceVisibility = await context.evaluate(page.paceVisibility);
         await persist();
         console.log(`Daylight drive: ${b.distance.toFixed(1)} m, ${b.elapsed.toFixed(1)} simulated seconds, ${sample.wallSeconds.toFixed(1)} wall seconds, lever ${b.lever.toFixed(3)}, stalled ${b.stalled}, ${b.message || 'cutting'}`);
         nextReport += 30000;
@@ -333,7 +333,7 @@ export async function run(context) {
   try {
     await reachDaylight(context, initialFloor, initialSurvey, measurements, persist);
   } finally {
-    measurements.paceVisibility = await context.evaluate(page.visibility);
+    measurements.paceVisibility = await context.evaluate(page.paceVisibility);
     await persist();
     await context.evaluate(page.stopVisibility);
   }

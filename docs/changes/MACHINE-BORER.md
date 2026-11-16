@@ -264,3 +264,7 @@ The browser scenario now saves wall time, simulation time, distance, exact lever
 ## Pace and the hidden window
 
 The fourth hand-drive record says the browser window was hidden for about four minutes during the drive. At 0.495 m per simulated second, 126.9 m takes about 256 seconds, leaving about 224 seconds of the reported 480 seconds unexplained. The hidden interval is close to that difference, but the record does not establish whether it overlaps the measured 126.9 m interval. The scenario now records each visibility change with wall time, simulation time and distance, and writes those events alongside its pace samples even on timeout. Claude can compare the intervals without guessing. No pace rule was changed: E3 remains open until that comparison explains the hand drive. The browser scenario and final checks remain to be run. No assertions or race fingerprints changed.
+
+## Pace scenario repair
+
+The pace visibility recorder had the same name as the picture visibility measurement. It replaced that measurement, so the scenario could fail before reaching the daylight drive. The two now have distinct names. `node --check`, importing the scenario to parse its page expressions, and `git diff --check` passed. The browser scenario still needs Claude to run it; E3 and the final checks remain open. No assertions or race fingerprints changed.
