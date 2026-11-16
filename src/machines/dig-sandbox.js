@@ -277,9 +277,17 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
   if (dtSeconds === 0) return {order, borer, stallSeconds, events:[]};
   const apprentice = town.apprenticeships.find(record => record.personId === order.personId && record.kind === 'bore');
   const hands = borerApprenticeControls(borer, order, apprentice, dtSeconds);
+  // Space learned mistakes along the cut. Keep pressing until the cutter's own
+  // overload rules produce the stall, then wait for the next interval.
+  const learnedStalls = order.learnedStalls || 0;
+  const stallRate = Math.max(0, apprentice.stallsPer100M || 0);
+  const makingMistake = stallRate > 0 && borer.distanceM >= (learnedStalls + 1) * 100 / stallRate;
+  if (makingMistake && !borer.stalled && stallSeconds <= 0) hands.thrust = 1;
   if (stallSeconds > 0) hands.thrust = 0;
   const result = stepBorer(borer, {...hands, tunnels, tunnelsIncludeCurrent:borer.started, mutableSegments:true}, ground, null, dtSeconds);
   const nextOrder = {...order, stages:order.stages.map(stage => ({...stage}))};
+  if (makingMistake && result.events.some(event => event.type === 'stall'))
+    nextOrder.learnedStalls = learnedStalls + 1;
   const daylight = result.events.some(event => event.type === 'daylight');
   advanceDelegatedWork(town, nextOrder, order.personId, dtSeconds / 60, {}, {
     boreCut:{metres:Math.max(0, result.state.distanceM - borer.distanceM), daylight},

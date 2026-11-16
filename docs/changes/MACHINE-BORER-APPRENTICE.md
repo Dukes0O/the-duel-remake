@@ -14,7 +14,9 @@ The apprentice's controls now set the lever to the taught share of the rock limi
 
 The delegated cutting step calls Mabel's cutter, reports the actual distance and daylight to the town's work order, and holds the lever off for 20 seconds after a stall.
 
-The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7. The real-mesa completion and ground comparison still need to be proved, and learned stalls still need to be applied.
+The Dig now runs the first unfinished bore on each fixed simulation step, including while another machine is selected. It updates the tunnel index from Mabel's actual segments and retains it on daylight. Mabel cannot also be driven by the player while the order runs; taking the lever remains for A7. The real-mesa completion and ground comparison still need to be proved.
+
+Learned stalls are now spaced along the bore. At each interval Pim presses too hard until Mabel's own rules cause a stall, then waits 20 seconds before cutting again. The cutter may reach a softer layer before a mistake takes effect; it keeps pressing until the material stalls her.
 
 ## Checks
 
@@ -27,6 +29,7 @@ The Dig now runs the first unfinished bore on each fixed simulation step, includ
 - A5 apprentice controls: `node tools/test-machine-borer-lesson.mjs` passed. The real cutter held both tested paces and reached the learned grade in rock; stalled controls release the lever.
 - A5 delegated step: `node tools/test-machine-borer-apprentice.mjs` passed. It checks actual cutting distance against order progress, no work at zero time, and a 20-second pause at a stall.
 - A5 Dig connection: `node tools/test-machine-borer-apprentice.mjs` passed. The excavator remains selected while Mabel cuts, the order and tunnel advance, zero time does no work, and player controls do not drive her twice.
+- A5 learned stalls: `node tools/test-machine-borer-apprentice.mjs` passed. A learned mistake causes a real stall, pauses the cutter and lets work resume.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -45,6 +48,8 @@ Holding the grade means 50 consecutive metres within 1 in 50 of the surveyed gra
 A face already in the bore queue cannot be sent a second time with the same heading.
 
 The learned height error is spread upward over the surveyed distance. It is a magnitude in the existing lesson record, so it does not carry a direction.
+
+Learned stalls are evenly spaced by distance. A mistake continues until the real cutter stalls, including across softer material.
 
 ## Sound
 

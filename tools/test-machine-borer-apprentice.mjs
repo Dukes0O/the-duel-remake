@@ -158,6 +158,22 @@ paused={...paused,...stepDelegatedBore(paused,1/60)};
 assert.ok(paused.borer.distanceM > stalledBorer.distanceM);
 console.log('Delegated bore: real cutting, measured progress and stall delay passed.');
 
+// A learned mistake uses the real overload and stall, then costs 20 seconds.
+const mistakeTown = {...work.town, apprenticeships:work.town.apprenticeships.map(record =>
+  ({...record, stallsPer100M:100}))};
+let mistake = {town:mistakeTown, order:{...sent.boreOrders[0], stages:sent.boreOrders[0].stages.map(stage=>({...stage}))},
+  borer:createBorerState(), ground:workGround};
+for (let i=0; i<300; i++) mistake={...mistake,...stepDelegatedBore(mistake,1/60)};
+assert.equal(mistake.borer.stallCount, 1, 'A learned mistake stalls the real cutter.');
+assert.equal(mistake.order.learnedStalls, 1);
+assert.ok(mistake.stallSeconds > 18);
+const stalledAt = mistake.borer.distanceM;
+for (let i=0; i<1000; i++) mistake={...mistake,...stepDelegatedBore(mistake,1/60)};
+assert.equal(mistake.borer.distanceM, stalledAt, 'The apprentice waits before cutting again.');
+for (let i=0; i<300; i++) mistake={...mistake,...stepDelegatedBore(mistake,1/60)};
+assert.ok(mistake.borer.distanceM > stalledAt, 'Work resumes after the stall.');
+console.log('Delegated bore: learned stalls use the cutter and pause work.');
+
 // The Dig advances the queued cutter even while the excavator is selected.
 let background = {...sent, activeMachine:'excavator'};
 const stopped = stepDigSandbox(background, {controls:{}}, 0);
