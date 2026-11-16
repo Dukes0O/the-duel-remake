@@ -74,3 +74,30 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, elapsedSeconds:ticks / 60, ticks};
 }
+
+// Approach a camp fire, stop nearby and wait for the real scoop rule.
+export function driveToBrazier(duel, brazier, maxTicks = 3600) {
+  const state = duel.state, world = state.arena.worldJob;
+  let distance = Infinity, ticks = 0, stopping = false, scoopGain = 0;
+  for (; ticks < maxTicks && !(world.job.stepState.scoopedBraziers || []).includes(brazier.id); ticks++) {
+    const car = duel.course.worldAt(state.s, state.lateral);
+    distance = Math.hypot(car.x - brazier.position.x, car.z - brazier.position.z);
+    const turn = wrapHeading(Math.atan2(brazier.position.x - car.x, brazier.position.z - car.z) - (car.heading + state.headingError));
+    const barriers = state.arena.worldJob.definition.steps[0].barriers || [];
+    for (const barrier of barriers) {
+      const dx = barrier.position.x - car.x, dz = barrier.position.z - car.z;
+      const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
+      if (!(world.job.stepState.burntBarricades || []).includes(barrier.id) && Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
+    }
+    const speed = Math.abs(state.speedMph);
+    if (distance < 7) stopping = true;
+    const targetSpeed = stopping ? 0 : distance > 25 ? 15 : 5;
+    duel.setInput({throttle:speed < targetSpeed ? 0.5 : 0,
+      brake:speed > targetSpeed + 1 ? 1 : 0,
+      steer:Math.max(-1, Math.min(1, -turn * 2))});
+    const emberBefore = world.job.stepState.ember;
+    duel.step(1 / 60);
+    if ((world.job.stepState.scoopedBraziers || []).includes(brazier.id)) scoopGain = world.job.stepState.ember - emberBefore;
+  }
+  return {distance, ticks, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
+}

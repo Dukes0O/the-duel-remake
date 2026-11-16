@@ -528,3 +528,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions, for Claude to review: the old five-puff geometry bounds ran from the brazier foot to 40 m above it; the new column starts 1.1 m above the foot and has a 40 m shader height. The test now checks the actual fire-mouth position and `uHeight`, because the shader draws the height beyond the mesh's CPU-side bounds.
 - Codex decided: none. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the five smoke puffs at each brazier. The old `everburn-play` scenario still needs replacement or removal. Next: finish the East Road proof drive, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road camp scoop (15 November 2026)
+
+- The Medium proof driver burns the camp barricade, turns back to the Halfway Camp brazier, stops and takes a scoop, then returns to the road. This advances step 7a; it does not prove arrival at Tin Town. The existing `world.ember.scoop` cue sounds for the scoop. No new game event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real car stopped 6.76 m from the brazier, gained 24.998 ember including the cold loss on that step, and left with 83.03 ember. At 2.5 km it had 81.34 ember. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: the proof driver burns the barricade before returning to the brazier. Claude should review the drive.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
