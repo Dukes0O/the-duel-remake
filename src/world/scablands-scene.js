@@ -568,7 +568,8 @@ export function createScablandsScene(course,options={}){
   // Tin Town's gate, across the road at the place the furnace's path names (src/world/tin-town-gate.js).
   const tinTownGate=createTinTownGate({ground:scablandsSurfaceHeightAt(TIN_TOWN_GATE.x,TIN_TOWN_GATE.z)});group.add(tinTownGate);
   const townDoor=new THREE.Mesh(new THREE.BoxGeometry(TIN_TOWN_GATE.opening,3,.5),
-    new THREE.MeshStandardMaterial({color:0x66584b,roughness:1}));
+    createScrapWear({paint:1,dust:0x6b5a44,dustTop:3}).apply(
+      new THREE.MeshStandardMaterial({color:0x66584b,roughness:1})));
   townDoor.name='Hot Delivery town gate door';
   townDoor.position.y=1.5;tinTownGate.add(townDoor);
   // The shacks, scaffolds, water tower and fence round the town's own model, drawn in code.

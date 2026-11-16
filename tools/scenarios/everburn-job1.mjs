@@ -47,10 +47,17 @@ export async function run(context) {
         const inView = !!projection && Math.abs(projection.x) < 1 && Math.abs(projection.y) < 1 && projection.z > -1 && projection.z < 1;
         const at = duel.course.worldAt(state.s, state.lateral);
         const map = document.querySelector('.world-hud-map:not([hidden])');
+        const inPicture = [];
+        render.scene.traverse(item => {
+          if (!item.name || !item.visible || inPicture.length >= 200) return;
+          for (let parent=item.parent; parent; parent=parent.parent) if (!parent.visible) return;
+          const point=item.getWorldPosition(camera.position.clone()).project(camera);
+          if (Math.abs(point.x)<1 && Math.abs(point.y)<1 && point.z>-1 && point.z<1) inPicture.push(item.name);
+        });
         return {car:{x:at.x, z:at.z}, ember:job.job.stepState?.ember ?? null, loaded:job.job.stepState?.loaded ?? false,
           status:state.status, target, found:nodes.length, visible:!!visible, inView,
           projection:projection && {x:projection.x,y:projection.y,z:projection.z}, map:map?.innerText ?? null,
-          namedInScene:[...new Set(nodes.map(item=>item.name))], forgeFire:job.forgeFire ?? null};
+          namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null};
       }, target, options);
       report.pictures.push({name, ...measurement});
       if (!measurement.visible || !measurement.inView) report.failures.push(`${name}: ${target} is not visible inside the picture`);
@@ -115,6 +122,10 @@ export async function run(context) {
     await page(context, () => { for(let i=0;i<80;i++) window.__qaApp.advance(0.1); });
     await picture('9-forge-alight','Hot Delivery forge fire',{focus:true,dx:10,dy:6,dz:12,forge:true});
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
+  for (const name of ['1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
+    '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-forge-alight']) {
+    if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
+  }
   await persist();
   if (report.failures.length) throw Error(report.failures.join('\n'));
 }

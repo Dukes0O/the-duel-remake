@@ -1579,3 +1579,23 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Checks: `node --check tools/scenarios/everburn-job1.mjs` passed. A mock harness parsed all 30 page expressions with `new Function`; Chrome was not run under this job's rules. No game event or sound cue was added.
 - Changed assertions: none. Codex decided: none. For Claude to run: `everburn-job1` in the memory-only browser harness, `test-everburn-easy.mjs` and `test-run-gas-medium.mjs`. For Claude to draw: the pot transfer and forge fire.
 - Removed: the obsolete `everburn-play` walk is replaced by an alias to the new scenario. Next: final checks and the delivery table.
+
+- The visual report also lists named objects projected inside each picture. The mock harness again parsed all 30 page expressions; the actual views still need Claude's browser run.
+
+## Final delivery measurements
+
+The ordinary Medium job test ran in 70.4 seconds on 16 November. These are the real job results; the bed figures remain for Claude to judge by hand.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Ember |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.959 | 6.068 | 1 | Halfway | 58.298 |
+| Plates | 6.170 | 9.785 | 0 | None | 34.164 |
+| Salt pan | 9.396 | 8.039 | 0 | None | 46.403 |
+| Bed | 9.474 | 10.415 | 0 | Wash | 28.238 |
+| Bed without scoop | 9.430 | 10.229 | 0 | None | 5.915 |
+
+The straight-across pot went out after 0.630 km. Both bed drives exceeded ten minutes. Cold is 100/900 per second, with factors 1.5 on salt and 2.5 in the bed. The named event cues are `world.ember.spark`, `world.ember.out`, `world.ember.scoop`, `world.furnace.horn`, `world.tintown.gate`, and `world.forge.catch`; the Scablands has its wind bed.
+
+Changed assertions for Claude to review: the Director's R2 ruling replaced the earlier narrow road and bed arrival and clean-driving requirements with forge completion and pay matching the actual band. Earlier entries record the start's move to the yard gate, the bed ground ruling and the cold-rate changes. No save shape changed. The old visual walk and unused route trials were removed or replaced as recorded above.
+
+- Final scene check initially failed twice because the new Hot Delivery gate door lacked the gate's existing wear treatment. Applied that treatment to the door; `node tools/test-scablands-scene.mjs` then passed. The existing assertion was unchanged. The visual scenario also records named objects in view and names any picture that could not be measured.
