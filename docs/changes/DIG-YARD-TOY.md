@@ -11,5 +11,7 @@
 - Changed assertions for Claude: switch count 55 to 56; Dig entry uses `the-dig`. Both audio pin exclusion lists extended for Dig additions; historical hashes unchanged. Added checks for four machine scenario switches.
 - Review fixes on df31c7a9a plus this change: Dig keys stop at the overlay except M; a failed renderer removes the host and listeners. Restored dig, truck and trench scenario checks; page expressions parse.
 - Review checks on df31c7a9a plus this change: Dig test, changed-files lane 32/32 (297 replay checks) and build passed.
+- Confirming review on 94a13af4e plus this change: key releases reach the game beneath; Dig presses stay blocked except M. Restored two-frame picture waits. Dig test, scenario parsing and build passed; changed-files lane 31/32, with FFmpeg EPERM passing on an outside-sandbox rerun. Replay: 297 checks passed.
+- Changed assertion for Claude: the key gate now allows all releases, as directed, so a key held before entry can be released.
 - Removed: earlier duplicate `wasteland-town` and `nissan-skyline` entries.
 - For Claude: run the Dig and four machine browser scenarios, including the memory-only save comparison; play with sound, check pictures and run one Dig yard frame check.

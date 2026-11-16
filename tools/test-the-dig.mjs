@@ -16,8 +16,27 @@ for (const type of ['keydown', 'keyup']) {
   for (const code of ['KeyW', 'KeyE', 'Space', 'KeyV', 'Escape', 'Digit1', 'KeyM']) {
     let stopped = false;
     gateDigKey({type, code, stopImmediatePropagation() { stopped = true; }});
-    assert.equal(stopped, code !== 'KeyM', `${type} ${code} reaches the game only for sound`);
+    assert.equal(stopped, type === 'keydown' && code !== 'KeyM', `${type} ${code} follows the Dig input gate`);
   }
+}
+{
+  const held = new Set();
+  let digOpen = false;
+  const send = (type, code) => {
+    let stopped = false;
+    const event = {type, code, stopImmediatePropagation() { stopped = true; }};
+    if (digOpen) gateDigKey(event);
+    if (!stopped) type === 'keydown' ? held.add(code) : held.delete(code);
+  };
+  send('keydown', 'KeyW');
+  assert.ok(held.has('KeyW'), 'the game sees a key held before the Dig opens');
+  digOpen = true;
+  send('keyup', 'KeyW');
+  assert.ok(!held.has('KeyW'), 'a release in the Dig clears the key held beneath');
+  send('keydown', 'KeyA');
+  assert.ok(!held.has('KeyA'), 'a key pressed in the Dig never reaches the game beneath');
+  send('keyup', 'KeyA');
+  assert.ok(!held.has('KeyA'), 'the game beneath still has no held key after release');
 }
 // A failed renderer must leave neither the overlay nor either mapping listener behind.
 {

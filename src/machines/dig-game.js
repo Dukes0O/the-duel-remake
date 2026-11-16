@@ -272,9 +272,9 @@ function disposeScene(group){
   for(const mat of materials)mat.dispose();
 }
 
-/** Keep the game underneath from receiving Dig input, except the sound toggle. */
+/** Block Dig key presses from the game underneath, except the sound toggle. */
 export function gateDigKey(event) {
-  if (event.code !== 'KeyM') event.stopImmediatePropagation();
+  if (event.type === 'keydown' && event.code !== 'KeyM') event.stopImmediatePropagation();
 }
 
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
