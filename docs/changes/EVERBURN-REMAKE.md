@@ -1,5 +1,11 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates sheltered ground (16 November 2026)
+
+- The Medium car continues from 1.6 to 2.6 km at no more than 50 km/h, without a jolt or a furnace warning. At 2.6 km it has 76.769 ember. The drive is not yet complete. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight drive. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: continue the plates drive beyond 2.6 km, then finish the clean drives and scenario.
 ## Plates shelter at the ground speed (16 November 2026)
 
 - The Medium driver turns farther toward the first shelter after clearing the obstacle. The real car reaches 1.6 km with no jolts, 84.924 ember and a peak of 49.81 km/h on that stretch. Its longest continuous furnace sighting is 6.0 seconds, and the furnace sends no riders. This proves the approach, not the complete plates drive. No game event or sound cue was added.

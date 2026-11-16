@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -142,6 +142,20 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.ok(drive.longestFurnaceSightSeconds <= 6, 'the first shelter approach stays within six seconds of sight');
   assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on this approach');
   assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
+  const next = drivePlatesShelter(duel, line, 2000);
+  console.log('Plates next approach:', JSON.stringify(next));
+  assert.ok(next.along >= 2000 && next.distance < 10, 'the car reaches the next sheltered stretch');
+  assert.equal(next.jolts.length, 0, 'the next stretch avoids jolts');
+  assert.equal(next.abovePlatesLimitTicks, 0, 'the next stretch stays within 50 km/h');
+  assert.ok(next.longestFurnaceSightSeconds <= 6, 'the next stretch stays within six seconds of sight');
+  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on the next stretch');
+  const further = drivePlatesShelter(duel, line, 2600);
+  console.log('Plates further approach:', JSON.stringify(further));
+  assert.ok(further.along >= 2600 && further.distance < 10, 'the car continues through the sheltered ground');
+  assert.equal(further.jolts.length, 0, 'the sheltered ground avoids jolts');
+  assert.equal(further.abovePlatesLimitTicks, 0, 'the sheltered ground stays within 50 km/h');
+  assert.ok(further.longestFurnaceSightSeconds <= 6, 'the sheltered ground stays within six seconds of sight');
+  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders through the sheltered ground');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.

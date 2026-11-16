@@ -191,6 +191,11 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }
 
+// Continue the careful plates drive at the tested ground-speed limit.
+export function drivePlatesShelter(duel, route, endAlong) {
+  return driveAlongRoad(duel, route, endAlong, 18000, 30.4, false, false, 0.1);
+}
+
 // The plates have a 50 km/h rough-ground threshold. Keep the opening below it
 // and return the actual car and ember measurements for each stretch.
 export function drivePlatesOpening(duel, route) {
