@@ -313,16 +313,17 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(yardExit.along >= 20);
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
   const bedRoute = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const line = process.env.EVERBURN_BED_RULED === '1' ? bedRoute : bedRiderBypass(bedRoute, 150, -195);
+  const approachBypass = process.env.EVERBURN_BED_APPROACH_BYPASS === '1';
+  const line = process.env.EVERBURN_BED_RULED === '1' && !approachBypass ? bedRoute : bedRiderBypass(bedRoute, 150, -195);
   const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
   const ruledBed = process.env.EVERBURN_BED_RULED === '1';
   const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
-    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], ruledBed ? 80 / 1.609344 : 28);
+    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], approachBypass ? 50 / 1.609344 : ruledBed ? 80 / 1.609344 : 28);
   if (!approach.reachedAll) console.log('Wash approach stopped:', JSON.stringify(approach.stretches.at(-1)));
   assert.ok(approach.reachedAll, 'the car reaches the Wash');
   if (ruledBed) {
     assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the road approach reaches the Wash without a jolt');
-    assert.ok(approach.stretches.some(stretch => stretch.fastRoadSpeedTicks > 0), 'the car reaches road speed on the approach');
+    if (!approachBypass) assert.ok(approach.stretches.some(stretch => stretch.fastRoadSpeedTicks > 0), 'the car reaches road speed on the approach');
   }
   const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
   const washScoop = skipWash ? null : driveToBrazier(duel, wash);
@@ -340,6 +341,18 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(Number.isFinite(washRiderDistance), 'the real rider has a measurable distance from the car at the Wash');
   console.log('Rider at Wash:', JSON.stringify({distance:washRiderDistance, pursuing:riderAtWash.pursuing,
     position:riderAtWash.position}));
+  if (approachBypass) {
+    const camp = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-1');
+    const pot = duel.state.arena.worldJob.job.stepState;
+    const pursuits = approach.stretches.flatMap(stretch => stretch.pursuits);
+    console.log('Bypass camp rider:', JSON.stringify({pursuing:camp.pursuing, position:camp.position,
+      jolts:pot.joltCount ?? 0, ember:pot.ember, minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
+      kilometres:(yardExit.driven + approach.stretches.reduce((sum, stretch) => sum + stretch.driven, 0) + (washScoop?.driven ?? 0)) / 1000}));
+    assert.ok(!pursuits.some(pursuit => pursuit.id === camp.id), 'the camp rider never starts pursuit on the bypass');
+    assert.ok(!camp.pursuing, 'the approach bypass stays out of the camp rider pursuit');
+    assert.equal(pot.joltCount ?? 0, 0, 'the bypass reaches the Wash without a jolt');
+    if (process.env.EVERBURN_BED_BYPASS_FULL !== '1') process.exit(0);
+  }
   const oppositeBed = process.env.EVERBURN_BED_OPPOSITE === '1';
   const route = bedStepsRoute(oppositeBed ? -27 : 27);
   const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -362,7 +375,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const riderPursuit = drive.stretches.flatMap(stretch => stretch.pursuits)
     .find(pursuit => pursuit.id === 'ash-rider-2');
   console.log('Bridge rider pursuit:', JSON.stringify(riderPursuit));
-  if (ruledBed) {
+  if (ruledBed && !approachBypass) {
     const campPursuit = [...approach.stretches, ...drive.stretches]
       .flatMap(stretch => stretch.pursuits).find(pursuit => pursuit.id === 'ash-rider-1');
     assert.ok(campPursuit, 'the drive records where the camp rider begins pursuit');
