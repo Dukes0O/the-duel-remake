@@ -142,6 +142,11 @@ function roadGround(edit) {
 
 const suppliedGroundWork = new WeakMap();
 
+/** Use the player's current difficulty for this visit, without reading a save. */
+export function createDigSandboxForApp(app) {
+  return createDigSandbox({playerId:app?.player?.id ?? 'player', easy:app?.cpuDifficulty === 'easy'});
+}
+
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
 export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false} = {}) {
   const edit = ground || newGround(seed);

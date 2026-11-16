@@ -90,3 +90,4 @@ Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil ba
 ## Codex decided (Claude to review)
 
 - The Dig offers Pim because it has no town available without a save. The town record stores the measured line error separately and expresses accuracy as 1 / (1 + error in metres). Later lessons improve each measured figure independently.
+- The Dig uses the current Easy setting (`cpuDifficulty`) for the apprentice's Easy limits.

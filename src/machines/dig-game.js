@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandbox, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {borerYardControls,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -260,7 +260,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const surveyDisplayCache={};
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
-  let sim=createDigSandbox({playerId:app?.player?.id??'player'}),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
+  let sim=createDigSandboxForApp(app),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
   let savedMapping=loadMachineInput();
   const refreshMapping=()=>{savedMapping=loadMachineInput();};
   const unsubscribeMapping=onMachineInputChange(refreshMapping);

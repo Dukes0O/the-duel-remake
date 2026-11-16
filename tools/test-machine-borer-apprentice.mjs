@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerCutLesson} from '../src/machines/borer.js';
-import {createDigSandbox} from '../src/machines/dig-sandbox.js';
+import {createDigSandbox, createDigSandboxForApp} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -28,4 +28,17 @@ recordBorerLesson(easy, 'pim', cut(2, 1, .2), {easy:true});
 const safe = recordBorerLesson(easy, 'pim', cut(4, 3, .4), {easy:true});
 assert.equal(safe.errorM, .5);
 assert.equal(safe.rate, .8);
+const easyVisit = createDigSandboxForApp({player:{id:'lesson-easy'}, cpuDifficulty:'easy'});
+const normalVisit = createDigSandboxForApp({player:{id:'lesson-normal'}, cpuDifficulty:'medium'});
+assert.equal(easyVisit.easy, true);
+assert.equal(easyVisit.playerId, 'lesson-easy');
+assert.equal(normalVisit.easy, false);
+for (const visit of [easyVisit, normalVisit]) {
+  recordBorerLesson(visit.apprenticeTown, 'pim', cut(2, 1, .2), {easy:visit.easy});
+  recordBorerLesson(visit.apprenticeTown, 'pim', cut(4, 3, .4), {easy:visit.easy});
+}
+assert.equal(easyVisit.apprenticeTown.apprenticeships[0].errorM, .5);
+assert.equal(easyVisit.apprenticeTown.apprenticeships[0].rate, .8);
+assert.equal(normalVisit.apprenticeTown.apprenticeships[0].errorM, 3);
+assert.ok(Math.abs(normalVisit.apprenticeTown.apprenticeships[0].rate - .3) < 1e-9);
 console.log('Borer apprentice lessons: eligibility, averages, improvement and Easy passed.');
