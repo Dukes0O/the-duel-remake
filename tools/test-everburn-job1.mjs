@@ -608,6 +608,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(opening.stretches.every(stretch => stretch.maxDistance < 30), 'the car follows the real way');
   assert.equal(opening.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
     'the drive records the actual pot');
+  const bend = driveAlongRoad(duel, route, 2000, 12000, 12);
+  console.log('Salt-pan bend:', JSON.stringify(bend));
+  assert.ok(bend.along >= 2000, 'the car follows the salt-pan way through the bend');
+  assert.equal(bend.ember, duel.state.arena.worldJob.job.stepState.ember, 'the bend records the actual pot');
 }
 // The real job requests the gate only for a car approaching slowly.
 {

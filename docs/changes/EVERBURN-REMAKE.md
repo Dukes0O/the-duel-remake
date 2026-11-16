@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, salt-pan bend (15 November 2026)
+
+- The seeded Medium driver slows to a 12 mph target after 1.5 km and follows the real salt-pan way to 2 km. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The 500 m stretch took 87.85 seconds, with no jolts; the actual pot held 55.45 at 2 km. This is not an arrival or proof of the required band. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: try a 12 mph target on this stretch to avoid the earlier collision; Claude should review the driving speed.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: measure the rest of the salt-pan and bed routes, then the camera, cover and scenario.
+
 ## Larger land, salt-pan opening (15 November 2026)
 
 - The seeded Medium driver leaves the yard gate and joins the actual salt-pan way outside the yard, then follows it to 1.5 km. No game event or sound cue was added.
