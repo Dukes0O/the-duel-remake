@@ -1900,3 +1900,8 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-forge-hold-camera.mjs` passed the position, target, solid clearance and bay sweep; `node tools/test-camera-clearance.mjs` passed 2,091 checks; `node --check src/render3d.js` and `git diff --check` passed. Race fingerprints were not run in this round.
 - Changed assertions: none. Codex decided: use smoothstep for the one-second transition. **Removed:** the chase-only view during the hold.
 - Still needed: the two browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.
+
+- The visual scenario now takes two pictures through the game's own camera: the lifted pot at three seconds and the lit forge at eight seconds. It checks the hold time, visibility and the pot's height, records each fault and continues to the end of the hold. `world.forge.catch` remains at five seconds.
+- Checks: `node tools/test-everburn-job1.mjs` passed, including the picture failure checks and all scripted deliveries. All 36 page expressions were exercised through a mock and parsed with `new Function`; `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The browser scenario was not run. Race fingerprints were not run in this round.
+- Changed assertions: none. Codex decided: none. **Removed:** picture 9's focused forge view, replaced by the two hold pictures.
+- Still needed: the Easy driver and final checks. For Claude to run: the browser scenario and lane tier.

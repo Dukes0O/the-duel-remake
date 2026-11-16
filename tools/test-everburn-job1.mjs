@@ -85,6 +85,14 @@ assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:true, inVie
 assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:false, inView:false, loaded:false, potInView:false}, {loaded:true, pot:true}), [
   'Cinder: Cinder is not visible inside the picture', 'Cinder: the pot is not on the car', 'Cinder: the pot is not visible inside the picture',
 ]);
+assert.deepEqual(pictureFailures('pot', {target:'pot', visible:true, inView:true, aboveCar:true, holdElapsed:3}, {aboveCar:true, holdAt:3}), []);
+assert.deepEqual(pictureFailures('pot', {target:'pot', visible:false, inView:false, aboveCar:false, holdElapsed:2}, {aboveCar:true, holdAt:3}), [
+  'pot: pot is not visible inside the picture', 'pot: the pot is not above the car', 'pot: the delivery hold is not at 3 seconds',
+]);
+assert.deepEqual(pictureFailures('fire', {target:'fire', visible:true, inView:true, forgeFire:{}, holdElapsed:8}, {forge:true, holdAt:8}), []);
+assert.deepEqual(pictureFailures('fire', {target:'fire', visible:false, inView:false, forgeFire:null, holdElapsed:8}, {forge:true, holdAt:8}), [
+  'fire: fire is not visible inside the picture', 'fire: the forge has not caught fire',
+]);
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 // Count the actual sight calls made by the same scheduler used in the job step.
