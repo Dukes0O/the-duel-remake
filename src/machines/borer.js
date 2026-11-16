@@ -51,7 +51,18 @@ export function borerSurvey(ground, state) {
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, travelM:0, headSpeed:0,
-    lever:0, stalled:false, overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
+    lever:0, stalled:false, stallCount:0, cuttingSeconds:0, allowedCutM:0, mouthY:y, reachedDaylight:false,
+    overloadSeconds:0, releaseSeconds:0, stepCarrySeconds:0, message:null, segments:[], covered:false, finished:false};
+}
+
+/** Describe a completed hand cut without keeping the machine or ground. */
+export function borerCutLesson(state) {
+  if (!state?.reachedDaylight || !Number.isFinite(state.distanceM) || state.distanceM < 100 ||
+      !Number.isFinite(state.mouthY) || !Number.isFinite(state.y) ||
+      !Number.isFinite(state.allowedCutM) || state.allowedCutM <= 0) return null;
+  return {errorM:Math.abs(state.y - state.mouthY),
+    stallsPer100M:(state.stallCount || 0) * 100 / state.distanceM,
+    pace:clamp(state.distanceM / state.allowedCutM, 0, 1)};
 }
 
 /** The conveyor starts its bank twelve metres to the right of the first mouth. */
@@ -157,6 +168,7 @@ function atCrown(ground, state, radius) {
 function daylight(state, events, offLevelM) {
   state.offLevelM = Math.abs(offLevelM);
   state.finished = true;
+  state.reachedDaylight = true;
   state.message = `Daylight. She is through, ${state.offLevelM.toFixed(1)} m off level.`;
   events.push({type:'daylight', cue:'borer.daylight', message:state.message});
 }
@@ -248,7 +260,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     next.headSpeed = overloaded ? capacity / thrust : 1;
     next.overloadSeconds = overloaded ? next.overloadSeconds + step : 0;
     if (next.overloadSeconds >= 2 - 1e-9) {
-      next.stalled = true; next.headSpeed = 0; next.message = BORER_STALL;
+      next.stalled = true; next.stallCount = (next.stallCount || 0) + 1;
+      next.headSpeed = 0; next.message = BORER_STALL;
       events.push({type:'stall', cue:'borer.stall', message:BORER_STALL});
       continue;
     }
@@ -343,6 +356,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     }
     addCut(next.segments, start, end, radius);
     next.distanceM += distance; next.travelM = next.distanceM; next.started = true;
+    next.cuttingSeconds = (next.cuttingSeconds || 0) + step;
+    next.allowedCutM = (next.allowedCutM || 0) + 1.5 * capacity * step;
     if (next.exitCutting) {
       next.exitCutting = {...next.exitCutting, distanceM:next.exitCutting.distanceM + distance};
       const warningAt = next.exitCutting.nextTrenchWarningM ?? 60;
