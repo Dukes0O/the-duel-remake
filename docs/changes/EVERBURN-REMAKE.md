@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, salt-pan opening (15 November 2026)
+
+- The seeded Medium driver leaves the yard gate and joins the actual salt-pan way outside the yard, then follows it to 1.5 km. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The join took 65.53 seconds with no jolts; the pot held 70.09 at 1.5 km. A trial continuing toward 2 km hit a solid near the bend and went out at 1.88 km. The driver needs a workable approach before this route's arrival and time can be measured. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: join the salt road outside the yard using a point 200 m beyond the gate and the road at 350 m; Claude should review the drive.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: drive the salt-pan bend and measure the remaining route arrivals and times, then finish the camera, cover and scenario.
+
 ## Larger land, plates drive to the forge (15 November 2026)
 
 - The Medium plates driver now lines up outside Tin Town's gate, drives through it and stops at the forge. The proof driver records an out pot at the forge without calling it a successful delivery. No game event or sound cue was added.

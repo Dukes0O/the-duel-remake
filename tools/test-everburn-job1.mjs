@@ -583,6 +583,32 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   console.log('Plates minutes after the yard gate:', ticks / 3600);
 
 }
+// Start the salt-pan measurement from the real pickup and yard gate.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, pickup).loaded, 'the salt-pan driver collects the actual pot');
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20, 'the salt-pan driver leaves through the gate');
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'salt-pan');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const gate = yardPlan().gate;
+  const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const approach = [{x:car.x, z:car.z},
+    {x:gate.x + Math.sin(gate.bearing) * 200, z:gate.z + Math.cos(gate.bearing) * 200},
+    sliceLine(route, 350, 351).at(-1)];
+  const join = driveAlongRoad(duel, approach, pathLength(approach) - 1, 12000, 20);
+  console.log('Salt-pan join:', JSON.stringify(join));
+  assert.ok(join.along >= pathLength(approach) - 1, 'the car joins the salt road outside the yard');
+  const opening = driveMeasuredStretches(duel, route, [500, 1000, 1500], 28);
+  console.log('Salt-pan opening:', JSON.stringify(opening));
+  assert.equal(opening.reachedAll, true, 'the car reaches each opening stretch on the salt-pan way');
+  assert.ok(opening.stretches.every(stretch => stretch.maxDistance < 30), 'the car follows the real way');
+  assert.equal(opening.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
+    'the drive records the actual pot');
+}
 // The real job requests the gate only for a car approaching slowly.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
