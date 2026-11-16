@@ -127,7 +127,7 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
   const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const line = bedRiderBypass(route, 150, -185);
+  const line = bedRiderBypass(route, 150, -195);
   const drive = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000], 28);
   const jolts = drive.stretches.flatMap(stretch => stretch.jolts);
   console.log('Bed rider bypass:', JSON.stringify({reached:drive.reachedAll, jolts, last:drive.stretches.at(-1)}));
@@ -156,6 +156,7 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   const climb = firstGroundClimb(obstruction);
   console.log('Bed obstruction beyond 7 km:', JSON.stringify({reached:obstruction.reachedAll, climb}));
   assert.ok(!obstruction.reachedAll && climb && climb.riders.length === 0, 'the current line meets steep ground beyond 7 km');
+  assert.ok(climb.along >= 7020, 'the car passes 7.02 km before the steep-ground impact');
   assert.equal(obstruction.stretches[0].jolts.length, 1, 'the driver stops at the first climb impact');
   assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
   process.exit(0);
