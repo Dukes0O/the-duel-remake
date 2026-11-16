@@ -309,21 +309,17 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         rider.returnCheckSeconds = 0;
       }
     }
-    // Keep both ends well behind the car for several seconds before moving a
-    // stranded rider. This leaves time for the chase camera to settle and keeps
-    // the recovery independent of the renderer and its frame rate.
+    // Both the old and new positions must be hidden before the rider moves.
+    // Road distance, rather than straight-line distance, measures how far the
+    // player has travelled from this rider's post.
     if (roadRider && rider.returnStuck) {
-      const pose = worldPose(duel, duel.state);
-      const headings = [pose.heading, duel.course.at(duel.state.s).heading];
-      const behind = point => {
-        const x = point.x - car.x, z = point.z - car.z;
-        const away = Math.hypot(x, z);
-        return away >= 600 && headings.every(heading =>
-          x * Math.sin(heading) + z * Math.cos(heading) < -away * 0.8);
-      };
-      rider.returnHiddenSeconds = behind(rider.position) && behind(home) ?
-        (rider.returnHiddenSeconds ?? 0) + Math.max(0, dt) : 0;
-      if (rider.returnHiddenSeconds >= 5) {
+      const hidden = riderHiddenBehindCar(duel, car, rider.position) &&
+        riderHiddenBehindCar(duel, car, home);
+      rider.returnHiddenSeconds = hidden ? (rider.returnHiddenSeconds ?? 0) + Math.max(0, dt) : 0;
+      const road = ROAD_NET.road('east-road').points;
+      const roadDistance = Math.abs(nearestOnLine(road, car.x, car.z).along -
+        nearestOnLine(road, rider.position.x, rider.position.z).along);
+      if (hidden && (roadDistance >= 600 || rider.returnHiddenSeconds >= 20)) {
         rider.position = {...home, y:scablandsSurfaceHeightAt(home.x, home.z)};
         rider.returnStuck = false;
         rider.returningToPost = false;

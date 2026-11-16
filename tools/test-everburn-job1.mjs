@@ -149,19 +149,28 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const stopped = {...camp.position};
   tick(1);
   assert.deepEqual(camp.position, stopped, 'the stranded rider stays stopped');
-  // A visible or nearby rider cannot jump home. Once both the rider and
-  // its post have stayed behind the camera, it can safely take up its post.
+  // Neither a visible rider nor a visible destination may jump.
   state.headingError = 0;
   car = {...camp.position, z:camp.position.z - 700};
-  for (let i = 0; i < 60; i++) tick(0.1);
+  for (let i = 0; i < 210; i++) tick(0.1);
   assert.deepEqual(camp.position, stopped, 'a rider in front remains visible');
-  car = {...camp.position, z:camp.position.z + 500};
-  for (let i = 0; i < 60; i++) tick(0.1);
-  assert.deepEqual(camp.position, stopped, 'a rider less than 600 metres away stays put');
-  car = {...camp.position, z:camp.position.z + 800};
-  for (let i = 0; i < 60; i++) tick(0.1);
+  let hiddenCar;
+  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
+    for (let distance = 700; distance <= 2400 && !hiddenCar; distance += 100) {
+      const candidate = {x:stopped.x + Math.sin(angle) * distance,
+        z:stopped.z + Math.cos(angle) * distance};
+      candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
+      const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
+        actorFloors:true, eye:5, target:2, step:5});
+      if (hidden(stopped) && hidden(posts[0].start.position)) hiddenCar = {candidate, angle};
+    }
+  }
+  assert.ok(hiddenCar, 'the land provides a hidden road rider and post');
+  car = hiddenCar.candidate;
+  state.headingError = hiddenCar.angle;
+  for (let i = 0; i < 210 && camp.returnStuck; i++) tick(0.1);
   assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
-    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns to its post');
+    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns to its hidden post');
   assert.equal(camp.returnStuck, false);
   assert.equal(camp.returningToPost, false);
 }
