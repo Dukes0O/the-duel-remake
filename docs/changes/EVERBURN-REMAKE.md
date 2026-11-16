@@ -1,5 +1,21 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Fifteen-minute rules, salt-pan attempt (16 November 2026)
+
+- The seeded Medium driver followed the salt-pan road at a 28 mph target. At the bend it struck solids repeatedly and could not reach the next 2 km waypoint. The ember went out before the car stopped trying. This is an incomplete drive, not an arrival. No game event or sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | 6.160 | 8.634 | 5 observed contacts | None | 0 |
+| Salt pan | 2.453, incomplete | 4.991 | 0 | None | Not reached; ember 0 |
+| Bed | Not yet measured | | | | |
+
+- Checks: `EVERBURN_SALT_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the road and plates measurements. The salt-pan measurement reads actual car travel, pot state and jolts; six jolts had no rider contact. The driver needs a general way to follow the bend before this route can be measured to the forge. Race fingerprints, lane tier and build remain for the last round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and final checks, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the previous 12 mph bend-specific target from this measurement. The old `everburn-play` scenario still needs replacement or removal. Next: make the plain driver follow the salt-pan bend without tuning for ember, measure the arrival, then the bed, camera, cover and scenario.
+
+
 ## Hit limits (16 November 2026)
 
 - Ordinary jolts now take at most 15 ember. Falls over 3 m and crashes to rest from over 80 km/h can take up to 40. Easy halves the capped loss. The existing `world.ember.spark` cue is unchanged.
