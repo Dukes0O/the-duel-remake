@@ -56,8 +56,8 @@ choose which one to read; they do not override the spec or current board.
 - `docs/board/looks/` keeps compact review sheets and verdicts. Raw captures
   are deleted after review. Frozen browser QA data lives in
   `tools/fixtures/art-review/`, where the tests read it.
-- `docs/changes/` holds new task notes until their still-needed facts are
-  folded into current docs or release notes. Superseded task notes and
-  handoffs are deleted; Git text history retains old detail if needed.
+- `docs/changes/` holds short task notes (about 15 lines) for work in progress.
+  A note and its card file are deleted in the merge commit, with the essentials
+  in the commit message; Git text history retains old detail if needed.
 - `docs/board/checks/` and `docs/board/waves/` hold specific test and wave
   decisions. Read them only when the current card points there.

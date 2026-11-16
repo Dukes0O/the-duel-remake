@@ -545,16 +545,14 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
 
-  - id: QA-CHECKS-BY-CARD
-    title: "Long suites go to the night, the lane says what it left, and a fix runs only what changed since"
-    owner: "codex"
+  - id: QA-WIDE-FILES
+    title: "Some game files still pick hundreds of suites each: rule which suites own them"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
-    status: "building"
-    claimed_by: "Codex, lane `qa-checks`, since 16 November 2026"
+    status: "ready"
     needs: []
-    locks: ["tools-test-runner"]
-    details: "docs/board/cards/QA-CHECKS-BY-CARD.md"
+    details: "docs/board/cards/QA-WIDE-FILES.md"
 
   - id: QA-NIGHTLY-NEWS
     title: "The nightly check tells news: a standing list, three results, browser scenarios for what changed"

@@ -26,7 +26,7 @@ runs; only its frame step needs the laptop to itself.
 | Gate | A check required before a change moves on |
 | Fingerprint | A code from a replay; an unchanged code means unchanged behavior |
 | Integration | integration/wasteland, where reviewed lane changes meet |
-| Change note | docs/changes/<id>.md, holding design, verdict and removals |
+| Change note | docs/changes/<id>.md, at most about 15 lines: what changed, checks and commit, changed assertions, removals; deleted with its card in the merge commit |
 
 ## 3. Production lines
 
@@ -68,7 +68,7 @@ replaced or explicitly dropped; being idle is not permission to remove one.
    The Director claims it and commits board/inbox/STATUS changes immediately.
    A design question goes to Claude in writing; move to another card while waiting.
 2. Start from current integration in an isolated lane. Settle the card's design
-   in its change note before code. Use meaningful acceptance tests first when
+   in its card's file before code. Use meaningful acceptance tests first when
    the behavior needs tests. A docs-only card does not need wording tests.
 3. Build inside owned files and granted hooks. Keep seed/input behavior
    repeatable and views unable to change race state. Never touch real saves.
@@ -97,7 +97,7 @@ real work or the merge's shared metadata transaction.
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
 | Conflict fix | After resolving a real conflict in the lane | The suites for the files in conflict, the build and a review |
-| Fix after the lane run | Any later change on the same card | Only the suites for the files changed since that run (`--since <its commit>` once QA-CHECKS-BY-CARD merges), never the tier again |
+| Fix after the lane run | Any later change on the same card | `node tools/run-tests.mjs --tier lane --changed --since <that run's commit> --jobs 4`: only the suites for the files changed since that run, never the tier again |
 | Full check | Once a day, on a copy of one commit; only the frame step needs the laptop alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, the browser scenarios for what changed (all on Saturday night); passed, passed with standing failures, or failed (AGENTS rule 13) |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 
@@ -224,8 +224,11 @@ go first. After release, the inbox states what changed in plain language.
 
 Current AGENTS.md is the rule source; do not paste an older duplicate template.
 The board names ownership, dependencies and locks; FAC-06 moves open details
-under docs/board/cards/. A change note contains task/status/kind/flag, settled
-design, a short evidence verdict, reviewed behavior/assertion changes and Removed.
+under docs/board/cards/. A change note is at most about 15 lines: what changed,
+the checks run and on which commit, reviewed behavior/assertion changes and Removed.
+Its essentials go in the merge's commit message; the note and the card's file are
+deleted in the merge commit (Git keeps them). Settled design that must last moves
+into the current docs for that area, not into a note.
 Evidence lives in ignored .evidence/<date>/<card>/; keep recipes, not raw output.
 Only runtime assets go in public/. Lanes never edit README or VERIFICATION.
 

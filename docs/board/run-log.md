@@ -1676,3 +1676,4 @@ WW-ART-RAIL Wednesday and the coal heap merged, card still open: both pass (roun
 
 - 15 November: Janitor checked the repository audit for the hills lane. No uncertain candidates were removed.
 - 15 November: Hill-country lane sweep: the repository audit ran; its candidates need review, so none were removed.
+- 16 November: Retired 402 finished card files and 656 finished change notes (kept: live cards and their notes, plus 2 cards and 6 notes still opened by a check or a design page); change notes are now about 15 lines and are deleted with their card in the merge commit (AGENTS Always, playbook section 10).

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync,readdirSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {
@@ -20,19 +20,8 @@ assert.equal(TOWN_MIGRATIONS[0].version,1); checks++;
 assert.equal(SCABLANDS_TOWN_REGION.groundHeightAt(0,0),0); checks++;
 check(registeredTownSystems().some(system=>system.name==='town-people' && system.everyTicks===1), 'people system is registered through the town entry point and runs each tick');
 
-// Keep the data contract in step with every authored art id. IDs with a
-// numeric suffix are expanded below; part names such as "building:lamp" are
-// deliberately not building ids.
-const artIds=new Set();
-for(const file of readdirSync(new URL('../docs/board/cards/',import.meta.url))) if(file.startsWith('TOWN-ART-')&&file.endsWith('.md')) {
-  const text=readFileSync(new URL(`../docs/board/cards/${file}`,import.meta.url),'utf8');
-  for(const match of text.matchAll(/`([a-z][a-z0-9]*(?:-[a-z0-9]+)*)`(?:\s+(\d+)x\d+)?/g)) {
-    if(match[1].includes(':')) continue;
-    if(match[2]) artIds.add(match[1]); else if(BUILDINGS.some(row=>row.id===match[1])) artIds.add(match[1]);
-  }
-}
+// Keep the data contract in step with the authored art ids: each has a building row.
 for(const id of ['hand-well','standpipe','water-tower','pump-house','treatment-plant','reservoir','latrine','bathhouse','reed-bed','trash-sorter','soup-kitchen','chicken-run','goat-pen','greenhouse','salvage-yard','forge','sawmill','kiln','warehouse','windmill','generator','solar-rack','fuel-depot','watchtower','guard-post','fire-station','clinic','school','town-hall','old-ground','workshop','motor-pool','trading-post','toll-bank','radio-mast','helipad','tavern','wreck-ring','drive-in','mud-pit','big-wheel','scrap-coaster']) {
-  check(artIds.has(id),`art cards name ${id}`);
   check(BUILDINGS.some(row=>row.id===id),`building data includes ${id}`);
 }
 
