@@ -218,3 +218,7 @@ The first-push trace now also records each Dig frame's W state, mode and lever b
 The first mouth previously changed the ground shader and marked its materials for recompilation during the first W hold. The Dig now prepares the tunnel-capable shader when it opens, with no mouth cut until boring starts. The borer test checks that the first mouth changes the shader's mouth count without changing its program key or requesting a material rebuild. This removes one possible source of the first-push pause; the browser trace is still needed to establish whether it was the cause, including any first-use cost of the portal and lining.
 
 `node tools/test-machine-borer.mjs` passed in 72.2 seconds. No existing assertions changed, and no race fingerprints were run. Claude should run the browser scenario and inspect its first-push trace, H1 measurements and following-camera check. The final checks remain.
+
+## Collecting the visibility evidence
+
+The scenario now saves the 45 m visibility measurements before it checks whether the first W push was prompt. A slow first push previously stopped the run before those measurements could be collected. The first-push assertions still run and can still fail. Earlier setup and cover failures can still stop the scenario. `node --check tools/scenarios/machine-borer.mjs`, the page-expression parse checks, and `git diff --check` passed. The browser scenario was not run. H4's cause remains unconfirmed, and the final checks are still due. No race fingerprints changed.

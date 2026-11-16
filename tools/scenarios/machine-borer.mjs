@@ -253,9 +253,9 @@ export async function run(context) {
   const trace = await context.evaluate(page.stopInputTrace);
   measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, trace, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
-  assert.ok(trace.digFrames.some(frame => frame.wHeld), 'the Dig recorded the first W hold');
-  assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
-  assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
+  // Keep boring even if the first push was lost. The visibility measurements
+  // at 45 m are independent evidence and must be saved before an assertion
+  // about that push can stop the scenario.
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   const cover = await context.evaluate(page.cover);
@@ -272,6 +272,9 @@ export async function run(context) {
   measurements.visibility = await context.evaluate(page.visibility);
   await persist();
   const visibility = measurements.visibility;
+  assert.ok(trace.digFrames.some(frame => frame.wHeld), 'the Dig recorded the first W hold');
+  assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
+  assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
   assert.ok(visibility.geometry.headAhead > 0 && visibility.geometry.headFromSimulation <= 2, 'the head leads and is at the simulation position');
   assert.ok(visibility.side.alone.marked > 0 && visibility.side.covered.marked === 0, 'the hill hides the whole machine from the side');
   assert.ok(visibility.mouth.portal.marked > 0 && visibility.mouth.lining.marked > 0 && visibility.mouth.portal.groundAround > 0, 'the mouth shows the portal, lining and surrounding ground');
