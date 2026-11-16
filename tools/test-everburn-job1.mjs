@@ -85,6 +85,14 @@ assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:true, inVie
 assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:false, inView:false, loaded:false, potInView:false}, {loaded:true, pot:true}), [
   'Cinder: Cinder is not visible inside the picture', 'Cinder: the pot is not on the car', 'Cinder: the pot is not visible inside the picture',
 ]);
+assert.deepEqual(pictureFailures('pot', {target:'pot', visible:true, inView:true, aboveCar:true, holdElapsed:3}, {aboveCar:true, holdAt:3}), []);
+assert.deepEqual(pictureFailures('pot', {target:'pot', visible:false, inView:false, aboveCar:false, holdElapsed:2}, {aboveCar:true, holdAt:3}), [
+  'pot: pot is not visible inside the picture', 'pot: the pot is not above the car', 'pot: the delivery hold is not at 3 seconds',
+]);
+assert.deepEqual(pictureFailures('fire', {target:'fire', visible:true, inView:true, forgeFire:{}, holdElapsed:8}, {forge:true, holdAt:8}), []);
+assert.deepEqual(pictureFailures('fire', {target:'fire', visible:false, inView:false, forgeFire:null, holdElapsed:8}, {forge:true, holdAt:8}), [
+  'fire: fire is not visible inside the picture', 'fire: the forge has not caught fire',
+]);
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 // Count the actual sight calls made by the same scheduler used in the job step.
@@ -1044,7 +1052,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(SOUND_BANK['world.forge.catch']?.layers.length);
   assert.equal(step.arrivalHold.catchAt, FORGE.times.lit);
   const flameHeights = [];
-  for (const [ember, grade] of [[70, 'bright'], [1, 'barely']]) {
+  for (const [ember, grade, pay] of [[70, 'bright', 120], [1, 'barely', 50]]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
     duel.state.wastelandGateDiscovered = true;
     assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
@@ -1124,6 +1132,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     for (let i = 0; i < 6; i++) duel.step(1 / 60);
     assert.equal(world.job.done, true, 'the job ends at 9.0 seconds');
     assert.deepEqual(world.emberResult, before);
+    assert.equal(world.emberResult.pay, pay, 'the hold keeps the delivery payment');
     scene.dispose();
     const catches = events.filter(event => event.arenaTell?.cue === 'world.forge.catch');
     assert.equal(catches.length, 1);

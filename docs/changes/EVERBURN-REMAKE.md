@@ -1900,3 +1900,33 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-forge-hold-camera.mjs` passed the position, target, solid clearance and bay sweep; `node tools/test-camera-clearance.mjs` passed 2,091 checks; `node --check src/render3d.js` and `git diff --check` passed. Race fingerprints were not run in this round.
 - Changed assertions: none. Codex decided: use smoothstep for the one-second transition. **Removed:** the chase-only view during the hold.
 - Still needed: the two browser pictures, Easy drives and final checks. For Claude to run: the browser scenario and lane tier.
+
+- The visual scenario now takes two pictures through the game's own camera: the lifted pot at three seconds and the lit forge at eight seconds. It checks the hold time, visibility and the pot's height, records each fault and continues to the end of the hold. `world.forge.catch` remains at five seconds.
+- Checks: `node tools/test-everburn-job1.mjs` passed, including the picture failure checks and all scripted deliveries. All 36 page expressions were exercised through a mock and parsed with `new Function`; `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The browser scenario was not run. Race fingerprints were not run in this round.
+- Changed assertions: none. Codex decided: none. **Removed:** picture 9's focused forge view, replaced by the two hold pictures.
+- Still needed: the Easy driver and final checks. For Claude to run: the browser scenario and lane tier.
+
+- The Easy suite accepts `--job hot-delivery` (or the full job id), reports every failed seed for a selected job, and skips unrelated jobs. An unknown job is rejected. The eight-of-ten requirement is unchanged.
+- Baseline: `node tools/test-everburn-easy.mjs --job hot-delivery` ran all ten old-driver attempts and failed as expected, 0/10. Each reached the 3,000-second limit in the carry step with the pot loaded, ember at zero, and the job waiting for the yard-gate marker at (0, 0). No barricades had been burnt. The final car positions (x, z, metres) were:
+  - Seed 1: (-0.029, 0.019).
+  - Seed 2: (-0.029, 0.019).
+  - Seed 3: (-0.029, 0.019).
+  - Seed 4: (-0.029, 0.019).
+  - Seed 5: (-0.029, 0.019).
+  - Seed 6: (-0.029, 0.019).
+  - Seed 7: (-0.029, 0.019).
+  - Seed 8: (-0.029, 0.019).
+  - Seed 9: (-0.029, 0.019).
+  - Seed 10: (-0.029, 0.019).
+- Checks: the selected run exercised the filter and all ten attempts; its expected failure shows the old driver still needs teaching. `node --check tools/test-everburn-easy.mjs` and `git diff --check` passed. An unknown job was rejected. No game behavior, sound cue, assertion or race fingerprint changed. Codex decided: none. **Removed:** nothing.
+- Still needed: reuse the Hot Delivery proof drive for the Easy driver, then run its ten drives and the final checks. For Claude to run: the browser scenario and lane tier.
+
+- The Easy driver now uses the shared Hot Delivery proof drive: it collects the pot, follows the East Road, burns the barricades, collects fire at the camp, enters town slowly and waits at the forge through the hold. Failed drives report the stage and final car position. The other jobs retain their existing driver.
+- Check: `node tools/test-everburn-easy.mjs --job hot-delivery` passed 10/10 seeds, with the eight-of-ten requirement unchanged. No game rule, sound cue, assertion or race fingerprint changed. `world.forge.catch` remains at five seconds.
+- Changed assertions: none. Codex decided: none. **Removed:** the old direct-marker driver for Hot Delivery.
+- Still needed: final card checks, replay and world-signature suites, build and the full Easy suite. For Claude to run: the browser scenario and lane tier.
+
+- Final checks: `test-everburn-job1.mjs` passed, including explicit checks that bright and barely alive deliveries still pay 120 and 50 after the hold. `test-ember-pot.mjs`, `test-ember-screens.mjs`, `test-camera-clearance.mjs`, `test-scablands-scene.mjs` and `test-forge-hold-camera.mjs` passed. The selected Hot Delivery Easy run passed 10/10, as recorded above. `test-replays.mjs` passed 297 fingerprints and `test-combat-replays.mjs` passed 12; neither fingerprint set changed. There are no other suite filenames containing `replay` or `world-sign` in `tools/`. `npm run build` passed with its existing chunk-size warnings.
+- The full Easy suite was stopped after 30 minutes, beyond its expected 26 minutes. All nine story jobs passed (The Everburn 9/10 and the other eight 10/10). The long-road Watching, Raiding and Hunting gas runs passed 10/10 each. The remaining five gas cases and the battle did not finish, so the full suite has no final result.
+- Changed assertions, for Claude to review: no existing assertions changed in this round; the payment checks were added. The earlier arrival and cue assertion changes are recorded above. Codex decided: none in this round; the smoothstep camera transition is recorded above. The cue remains `world.forge.catch` at five seconds. **Removed:** nothing in this round; the arrival cue and former picture 9 were removed as recorded above.
+- For Claude to run: the full Easy suite, the browser scenario and the lane tier. The browser scenario's page expressions were parsed in the earlier round; it has not been run in Chrome.

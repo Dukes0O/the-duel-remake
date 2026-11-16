@@ -24,6 +24,10 @@ export function pictureFailures(name, measurement, options = {}) {
   if (options.loaded && !measurement.loaded) failures.push(`${name}: the pot is not on the car`);
   if (options.pot && !measurement.potInView) failures.push(`${name}: the pot is not visible inside the picture`);
   if (options.forge && !measurement.forgeFire) failures.push(`${name}: the forge has not caught fire`);
+  if (options.aboveCar && !measurement.aboveCar) failures.push(`${name}: the pot is not above the car`);
+  if (options.holdAt != null && Math.abs((measurement.holdElapsed ?? -100) - options.holdAt) > 0.02) {
+    failures.push(`${name}: the delivery hold is not at ${options.holdAt} seconds`);
+  }
   return failures;
 }
 
@@ -80,7 +84,7 @@ export async function run(context) {
         }
         const visible = node && (() => { for (let p = node; p; p = p.parent) if (!p.visible) return false; return true; })();
         let projection = null;
-        if (node) { const p = pointFor(node); p.y += options.aimHeight || 1; projection = p.project(camera); }
+        if (node) { const p = pointFor(node); p.y += options.aimHeight ?? 1; projection = p.project(camera); }
         const inView = !!projection && Math.abs(projection.x) < 1 && Math.abs(projection.y) < 1 && projection.z > -1 && projection.z < 1;
         let potInView = false;
         render.scene.traverse(item => {
@@ -90,6 +94,8 @@ export async function run(context) {
           potInView = Math.abs(point.x)<1 && Math.abs(point.y)<1 && point.z>-1 && point.z<1;
         });
         const at = duel.course.worldAt(state.s, state.lateral);
+        const ground = duel.course.groundAt(state.s, state.lateral);
+        const aboveCar = !!node && pointFor(node).y > ground.y + 1.5;
         const map = document.querySelector('.world-hud-map:not([hidden])');
         const inPicture = [];
         render.scene.traverse(item => {
@@ -102,7 +108,8 @@ export async function run(context) {
           status:state.status, target, found:nodes.length, visible:!!visible, inView, potInView,
           projection:projection && {x:projection.x,y:projection.y,z:projection.z}, map:map?.innerText ?? null,
           mapWays:map ? [...map.querySelectorAll('.world-hud-way strong')].map(item => item.innerText) : [],
-          namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null};
+          namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null,
+          aboveCar, holdElapsed:job.arrivalHold?.elapsed ?? null};
       }, target, options, drawFocusedPicture.toString());
       report.pictures.push({name, ...measurement});
       report.failures.push(...pictureFailures(name, measurement, options));
@@ -170,11 +177,20 @@ export async function run(context) {
     await page(context, () => { window.__qaApp.advance(0.5); });
     await picture('8-tin-town-gate','Hot Delivery town gate door',{focus:true,dx:20,dy:12,dz:35,loaded:true});
     await place('forge',0,2);
-    await page(context, () => { for(let i=0;i<80;i++) window.__qaApp.advance(0.1); });
-    await picture('9-forge-alight','Hot Delivery forge fire',{focus:true,dx:10,dy:6,dz:12,forge:true});
+    await page(context, () => {
+      const app=window.__qaApp;
+      for (let i=0; i<600 && !app.duel.state.arena.worldJob.arrivalHold; i++) app.advance(1/60);
+      if (!app.duel.state.arena.worldJob.arrivalHold) throw Error('The delivery hold did not start');
+      app.onFrame?.(app.duel.state,0); window.__render.renderFrame();
+    });
+    await page(context, () => { window.__qaApp.advance(3); });
+    await picture('9-pot-in-air','Hot Delivery pot transfer',{aboveCar:true,holdAt:3,aimHeight:0});
+    await page(context, () => { window.__qaApp.advance(5); });
+    await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
+    await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
   for (const name of ['1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
-    '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-forge-alight']) {
+    '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }
   await persist();

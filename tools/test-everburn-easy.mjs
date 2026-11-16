@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {LAND} from '../src/world/scablands-names.js';
-import {EAST_ROAD} from '../src/world/scablands-road.js';
+import {EAST_ROAD, ROAD_NET} from '../src/world/scablands-road.js';
+import {yardPlan} from '../src/world/scablands-yard-look.js';
+import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveMeasuredStretches,
+  driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {roadGraph, roadWay} from '../src/world/scablands-ways.js';
 import {pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
@@ -13,13 +16,18 @@ import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-ru
 // SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
 const DT = 1 / 120, MAX_SECONDS = 3000;
 const trialJobsOnly = process.argv.includes('--scablands-things');
+const jobArg = process.argv.indexOf('--job');
+assert(jobArg < 0 || process.argv[jobArg + 1], '--job needs a job id');
+const selectedJob = jobArg < 0 ? null : process.argv[jobArg + 1];
 const flags = {'hidden-road': true, arsenal: true, 'arsenal-wave3': true,
   'warlord-cards': true, 'crew-gear': true, ...(trialJobsOnly ? {'scablands-realism': true} : {})};
 const allJobs = [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS];
 assert.equal(allJobs.length, 9);
-const jobs = trialJobsOnly ? allJobs.filter(job =>
-  ['everburn-hot-delivery', 'everburn-survey-flags'].includes(job.id)) : allJobs;
-if (trialJobsOnly) assert.equal(jobs.length, 2);
+const jobs = selectedJob ? allJobs.filter(job => job.id === selectedJob || job.id === `everburn-${selectedJob}`) :
+  trialJobsOnly ? allJobs.filter(job =>
+    ['everburn-hot-delivery', 'everburn-survey-flags'].includes(job.id)) : allJobs;
+if (selectedJob) assert.equal(jobs.length, 1, `Unknown job: ${selectedJob}`);
+if (trialJobsOnly && !selectedJob) assert.equal(jobs.length, 2);
 assert.equal(new Set(jobs.map(job => job.id)).size, jobs.length);
 
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -383,6 +391,20 @@ function playerInput(duel) {
   duel.setInput({interact: !!interact});
 }
 
+function driveHotDelivery(duel, definition) {
+  const step = definition.steps[0], road = ROAD_NET.road('east-road').points;
+  duel.state.countdown = 0;
+  if (!driveToCinder(duel, step.pickup.place.position).loaded) return 'collecting the pot';
+  if (driveThroughYardGate(duel, yardPlan().gate).along < 20) return 'leaving the yard';
+  if (!driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344).reachedAll) return 'following the East Road to the camp';
+  if (driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40).along < 2350) return 'passing the camp';
+  if (!driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier')).scooped) return 'collecting fire at the camp';
+  if (!driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40).reachedAll) return 'following the East Road to town';
+  if (driveAlongRoad(duel, road, 7810, 12000, 25, true).along < 7810) return 'approaching the town gate';
+  if (!driveToForge(duel, step.destination.position).done) return 'stopping in the forge bay or waiting for the forge';
+  return null;
+}
+
 function play(definition, seed) {
   const duel = new Duel({seed, featureFlags: flags});
   let raiderHits = 0;
@@ -393,15 +415,17 @@ function play(definition, seed) {
     car: 'falcone_f42', seed, cpuDifficulty: 'easy', opponents: [],
     weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job}), true,
   `${definition.name} starts in a real headless Duel`);
-  const limit = Math.ceil(MAX_SECONDS / DT);
-  for (let tick = 0; tick < limit && duel.state.status !== 'arena_result'; tick++) {
-    if (duel.state.status === 'racing') playerInput(duel);
+  const hotDelivery = definition.id === 'everburn-hot-delivery';
+  const waitingFor = hotDelivery ? driveHotDelivery(duel, definition) : null;
+  const limit = hotDelivery ? 240 : Math.ceil(MAX_SECONDS / DT);
+  for (let tick = 0; tick < limit && duel.state.status !== 'arena_result' && !waitingFor; tick++) {
+    if (!hotDelivery && duel.state.status === 'racing') playerInput(duel);
     else duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: false});
     duel.step(DT);
   }
   const worldJob = duel.state.arena.worldJob;
   return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
-    seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
+    waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
     stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState,
     onFoot: duel.state.onFoot, marker: worldJob.marker, waves: worldJob.clearedWaves,
@@ -423,17 +447,17 @@ for (const definition of jobs) {
   for (let seed = 1; seed <= 10; seed++) {
     const result = play(definition, seed);
     if (result.won) finishes++;
-    if ((seed === 1 || trialJobsOnly) && !result.won) {
+    if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);
-      results.push({definition, result});
+      results.push({definition, result, seed});
     }
     if (result.won) assert.equal(result.duel.state.arena.worldJob.settled, true);
   }
   console.log(`${definition.name}: ${finishes}/10 finished`);
   results.push({definition, finishes});
 }
-for (const entry of results) if (entry.result) console.log(`Sample ${entry.definition.name}: ${JSON.stringify({
-  seconds: entry.result.seconds, stepIndex: entry.result.stepIndex, stepState: entry.result.stepState,
+for (const entry of results) if (entry.result) console.log(`Sample ${entry.definition.name}, seed ${entry.seed}: ${JSON.stringify({
+  waitingFor: entry.result.waitingFor, seconds: entry.result.seconds, stepIndex: entry.result.stepIndex, stepState: entry.result.stepState,
   onFoot: entry.result.onFoot, marker: entry.result.marker, status: entry.result.duel.state.status,
   waves: entry.result.waves, actorCount: entry.result.actorCount, actors: entry.result.actors,
   footWeapons: entry.result.footWeapons, fighterInput: entry.result.fighterInput,
@@ -444,9 +468,9 @@ for (const entry of results) if (entry.result) console.log(`Sample ${entry.defin
   )}`);
 for (const entry of results) if ('finishes' in entry)
   assert(entry.finishes >= 8, `${entry.definition.name}: ${entry.finishes}/10 finished; expected at least 8/10`);
-console.log(`Everburn Easy driver: ${trialJobsOnly ? 'both realism trial jobs' : 'all nine jobs'} finished through real Duel inputs`);
+console.log(`Everburn Easy driver: ${selectedJob ? jobs[0].name : trialJobsOnly ? 'both realism trial jobs' : 'all nine jobs'} finished through real Duel inputs`);
 
-if (!trialJobsOnly) {
+if (!trialJobsOnly && !selectedJob) {
 // RUN-GAS: the same child-pace driver brings a gas run home on each road at each word of the feud, 8 times in 10 at least.
 // The run count is the try's number, so each try has its own ambush places.
 const FEUD_WORDS = ['Watching', 'Raiding', 'Hunting', 'War party'];
