@@ -1344,7 +1344,8 @@ tasks:
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane borer-apprentice, since 16 November 2026 (slice 1)"
     needs: ["MACHINE-BORER","TOWN-APPRENTICES"]
     locks: ["busy-game-files"]
     details: "docs/board/cards/MACHINE-BORER-APPRENTICE.md"
