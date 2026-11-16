@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
-import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, toggleBoreLever, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
@@ -207,6 +207,23 @@ background = stepDigSandbox({...background, activeMachine:'borer'}, {controls:{f
 assert.ok(background.borer.distanceM > beforeBorer);
 assert.ok(background.borer.distanceM - beforeBorer < 1, 'Player controls do not drive Mabel twice.');
 console.log('Delegated bore runs in the Dig beside the selected machine.');
+
+let takeover = toggleBoreLever({...background, activeMachine:'borer'});
+assert.equal(takeover.borePlayerAtLever, true);
+const beforeTakeover = takeover.borer.distanceM;
+const beforeOrder = takeover.boreOrders[0].stages[0].completed;
+takeover = stepDigSandbox(takeover, {controls:{forward:1/3, directLever:true}}, 5);
+const playerCut = takeover.borer.distanceM - beforeTakeover;
+assert.ok(playerCut > 0, 'The player cuts while holding the lever.');
+assert.ok(Math.abs(takeover.boreOrders[0].stages[0].completed - beforeOrder - playerCut) < 1e-7,
+  'The player cutting advances the same order.');
+takeover = toggleBoreLever(takeover);
+assert.equal(takeover.borePlayerAtLever, false);
+const beforeReturn = takeover.borer.distanceM;
+takeover = stepDigSandbox(takeover, {}, 5);
+assert.ok(takeover.borer.distanceM > beforeReturn, 'The apprentice resumes at the same face.');
+assert.ok(Math.abs(takeover.boreOrders[0].stages[0].completed - takeover.borer.distanceM) < 1e-7);
+console.log('Taking and returning the lever keeps one bore and one order.');
 
 // Compare a sent bore with the same hands on the real cutter and real mesa.
 let mesa = createDigSandbox({playerId:'apprentice-mesa-sent'});

@@ -22,6 +22,8 @@ A finished order keeps its actual distance, height off level and stall count in 
 
 A6 adds a bore board to the Dig for active, waiting and finished orders. It shows the cutter, distance, floor drift, stalls and an estimated time to daylight. Finished orders show who cut them and how level they came out. The board reads the existing work state without sampling the ground.
 
+A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The screen controls and choosing a bore still need to be connected.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
@@ -36,6 +38,7 @@ A6 adds a bore board to the Dig for active, waiting and finished orders. It show
 - A5 learned stalls: `node tools/test-machine-borer-apprentice.mjs` passed. A learned mistake causes a real stall, pauses the cutter and lets work resume.
 - A5 real mesa: `node tools/test-machine-borer-apprentice.mjs` passed. The sent bore reaches daylight with two mouths while the excavator is selected. The hand-driven cutter follows the same controls on separate real Dig ground; its distance, height, ground and spoil agree within 0.1 m. Closing does not advance the unfinished order without a simulation step.
 - A6: `node tools/test-machine-borer-apprentice.mjs` checks active, waiting and finished board entries, including drift, stalls and the estimate.
+- A7: `node tools/test-machine-borer-apprentice.mjs` checks that the player's cutting advances the order and Pim resumes at the same face.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 

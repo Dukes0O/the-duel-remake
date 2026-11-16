@@ -202,7 +202,14 @@ export function closeDigSandbox() { resetScablandsGroundEdit(); }
 export function switchDigMachine(sim) {
   const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
-  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive',daylightMessage:''};
+  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive',daylightMessage:'', borePlayerAtLever:false};
+}
+
+/** Take or return the lever on the bore currently being cut. */
+export function toggleBoreLever(sim) {
+  if (sim.activeMachine !== 'borer' || !sim.boreOrders.some(order =>
+    order.id === sim.activeBoreId && order.status !== 'finished')) return sim;
+  return {...sim, mode:'work', borePlayerAtLever:!sim.borePlayerAtLever};
 }
 
 export function cycleDigCamera(sim) { return {...sim,cameraIndex:(sim.cameraIndex+1)%(sim.activeMachine==='borer'?2:3)}; }
@@ -296,21 +303,33 @@ export function boreBoardWords(row) {
 }
 
 /** Advance one order with the real cutter; the caller owns its tunnel index. */
-export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSeconds = 0}, dtSeconds) {
+export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSeconds = 0, playerControls = null}, dtSeconds) {
   if (!Number.isFinite(dtSeconds) || dtSeconds < 0) throw new TypeError('Work time must be non-negative.');
   if (dtSeconds === 0) return {order, borer, stallSeconds, events:[]};
   const apprentice = town.apprenticeships.find(record => record.personId === order.personId && record.kind === 'bore');
-  const hands = borerApprenticeControls(borer, order, apprentice, dtSeconds);
+  let cutter = borer;
+  let hands = borerApprenticeControls(borer, order, apprentice, dtSeconds);
   // Space learned mistakes along the cut. Keep pressing until the cutter's own
   // overload rules produce the stall, then wait for the next interval.
   const learnedStalls = order.learnedStalls || 0;
   const stallRate = Math.max(0, apprentice.stallsPer100M || 0);
   const makingMistake = stallRate > 0 && borer.distanceM >= (learnedStalls + 1) * 100 / stallRate;
-  if (makingMistake && !borer.stalled && stallSeconds <= 0) hands.thrust = 1;
-  if (stallSeconds > 0) hands.thrust = 0;
-  const result = stepBorer(borer, {...hands, tunnels, tunnelsIncludeCurrent:borer.started, mutableSegments:true}, ground, null, dtSeconds);
+  if (playerControls) {
+    const input = Math.max(-1, Math.min(1, playerControls.forward || 0));
+    const oldLever = borer.lever || 0;
+    const leverSource = playerControls.keyboardLever ? 'keyboard' : playerControls.padLever && Math.abs(input) > .12 ? 'pad' : borer.leverSource;
+    const direct = playerControls.directLever || (playerControls.padLever && leverSource === 'pad' && !playerControls.keyboardLever);
+    const lever = direct ? Math.max(0, input) : Math.max(0, Math.min(1, oldLever + input * (input > 0 ? .25 : .5) * dtSeconds));
+    cutter = {...borer, lever, leverSource};
+    hands = {thrust:input < 0 && oldLever <= 0 && lever <= 0 ? input : lever,
+      steer:playerControls.steer, slope:playerControls.slope};
+  } else {
+    if (makingMistake && !borer.stalled && stallSeconds <= 0) hands.thrust = 1;
+    if (stallSeconds > 0) hands.thrust = 0;
+  }
+  const result = stepBorer(cutter, {...hands, tunnels, tunnelsIncludeCurrent:borer.started, mutableSegments:true}, ground, null, dtSeconds);
   const nextOrder = {...order, stages:order.stages.map(stage => ({...stage}))};
-  if (makingMistake && result.events.some(event => event.type === 'stall'))
+  if (!playerControls && makingMistake && result.events.some(event => event.type === 'stall'))
     nextOrder.learnedStalls = learnedStalls + 1;
   const daylight = result.events.some(event => event.type === 'daylight');
   advanceDelegatedWork(town, nextOrder, order.personId, dtSeconds / 60, {}, {
@@ -322,7 +341,7 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
 }
 
 /** Run the first unfinished order once per simulation step. */
-function advanceDigBore(sim) {
+function advanceDigBore(sim, input) {
   const index = sim.boreOrders.findIndex(order => order.status !== 'finished');
   if (index < 0) return {sim, events:[]};
   const order = sim.boreOrders[index];
@@ -333,7 +352,8 @@ function advanceDigBore(sim) {
   const ground = sim.protectLand ? {...sim.ground, refusal:shape=>borerLandRefusal(shape,sim.ground),
     spoilRefusal:shape=>borerSpoilRefusal(shape,sim.ground)} : sim.ground;
   const result = stepDelegatedBore({town:sim.apprenticeTown, order, borer, ground, tunnels,
-    stallSeconds:starting ? 0 : sim.boreStallSeconds}, STEP);
+    stallSeconds:starting ? 0 : sim.boreStallSeconds,
+    playerControls:!starting && sim.activeMachine === 'borer' && sim.borePlayerAtLever ? input.controls || {} : null}, STEP);
   const changed = result.borer.distanceM !== borer.distanceM ||
     result.events.some(event => event.type === 'breakthrough' || event.type === 'daylight');
   if (changed) {
@@ -347,18 +367,19 @@ function advanceDigBore(sim) {
   }
   boreOrders[index] = result.order;
   let next = {...sim, boreOrders, borer:result.borer, tunnels, activeBoreId:order.id,
-    boreStallSeconds:result.stallSeconds, dirty:sim.dirty || changed};
+    boreStallSeconds:result.stallSeconds, borePlayerAtLever:result.order.status === 'finished' ? false : sim.borePlayerAtLever,
+    dirty:sim.dirty || changed};
   if (result.order.status === 'finished') next = rememberDigTunnel(next);
   return {sim:next, events:result.events};
 }
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */
 function fixedStep(sim,input) {
-  const bore=advanceDigBore(sim);
+  const bore=advanceDigBore(sim,input);
   sim=bore.sim;
   const events=[...bore.events]; let next=sim;
   if(sim.activeMachine==='borer' && sim.boreOrders.some(order=>order.status !== 'finished')){
-    // Mabel is already at work. Taking her lever is added in the next step.
+    // The active order advances above, whether the apprentice or player holds the lever.
   } else if(sim.activeMachine==='borer'){
     const controls=input.controls ?? {};
     if (!sim.borer.started && input.borerSurvey)
