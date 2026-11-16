@@ -22,7 +22,7 @@ A finished order keeps its actual distance, height off level and stall count in 
 
 A6 adds a bore board to the Dig for active, waiting and finished orders. It shows the cutter, distance, floor drift, stalls and an estimated time to daylight. Finished orders show who cut them and how level they came out. The board reads the existing work state without sampling the ground.
 
-A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The screen controls and choosing a bore still need to be connected.
+A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The bore board now offers a visit to the active bore. Choosing Mabel also goes to the working face. At the face, V or the button takes and returns the lever; the following and mouth cameras remain available.
 
 ## Checks
 
@@ -38,7 +38,7 @@ A7 has started. The simulation can give the player the lever on the active bore 
 - A5 learned stalls: `node tools/test-machine-borer-apprentice.mjs` passed. A learned mistake causes a real stall, pauses the cutter and lets work resume.
 - A5 real mesa: `node tools/test-machine-borer-apprentice.mjs` passed. The sent bore reaches daylight with two mouths while the excavator is selected. The hand-driven cutter follows the same controls on separate real Dig ground; its distance, height, ground and spoil agree within 0.1 m. Closing does not advance the unfinished order without a simulation step.
 - A6: `node tools/test-machine-borer-apprentice.mjs` checks active, waiting and finished board entries, including drift, stalls and the estimate.
-- A7: `node tools/test-machine-borer-apprentice.mjs` checks that the player's cutting advances the order and Pim resumes at the same face.
+- A7: `node tools/test-machine-borer-apprentice.mjs` checks visiting the working face, choosing Mabel, player cutting advancing the order, and Pim resuming at the same face.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -60,7 +60,7 @@ The learned height error is spread upward over the surveyed distance. It is a ma
 
 Learned stalls are evenly spaced by distance. A mistake continues until the real cutter stalls, including across softer material.
 
-The board estimates remaining time from the taught rock pace, expected stall frequency and any current stall wait. A waiting order's estimate is its own cutting time and does not include earlier orders.
+The board estimates remaining time from the taught rock pace, expected stall frequency and any current stall wait. A waiting order's estimate is its own cutting time and does not include earlier orders. Only the bore being cut offers a visit, because waiting bores have no working face yet.
 
 ## Sound
 

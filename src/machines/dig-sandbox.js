@@ -202,7 +202,13 @@ export function closeDigSandbox() { resetScablandsGroundEdit(); }
 export function switchDigMachine(sim) {
   const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
-  return {...sim,activeMachine,mode:activeMachine==='excavator'?'work':'drive',daylightMessage:'', borePlayerAtLever:false};
+  return {...sim,activeMachine,mode:activeMachine==='excavator' || (activeMachine==='borer' && sim.boreOrders.some(order => order.id === sim.activeBoreId && order.status !== 'finished'))?'work':'drive',daylightMessage:'', borePlayerAtLever:false};
+}
+
+/** Visit the active bore without changing its work or taking the lever. */
+export function visitBore(sim, id) {
+  if (!sim.boreOrders.some(order => order.id === id && order.id === sim.activeBoreId && order.status !== 'finished')) return sim;
+  return {...sim, activeMachine:'borer', mode:'work', cameraIndex:0, borePlayerAtLever:false};
 }
 
 /** Take or return the lever on the bore currently being cut. */

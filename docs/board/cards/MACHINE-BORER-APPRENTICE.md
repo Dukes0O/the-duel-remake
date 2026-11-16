@@ -96,3 +96,5 @@ Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil ba
 - A held grade means 50 consecutive metres within 1 in 50 of the surveyed grade.
 
 - A face already in the bore queue cannot be sent a second time with the same heading.
+
+- Only the active bore offers a visit. Waiting bores have no working face yet.

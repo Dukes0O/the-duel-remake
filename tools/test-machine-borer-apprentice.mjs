@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerApprenticeControls, borerCutLesson, borerSurvey, createBorerState, stepBorer} from '../src/machines/borer.js';
-import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, toggleBoreLever, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {boreBoard, boreBoardWords, borerLandRefusal, borerSpoilRefusal, borerWatchingWords, canSendBorer, sendBorer, closeDigSandbox, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDelegatedBore, stepDigSandbox, toggleBoreLever, visitBore, switchDigMachine, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
@@ -208,7 +208,16 @@ assert.ok(background.borer.distanceM > beforeBorer);
 assert.ok(background.borer.distanceM - beforeBorer < 1, 'Player controls do not drive Mabel twice.');
 console.log('Delegated bore runs in the Dig beside the selected machine.');
 
-let takeover = toggleBoreLever({...background, activeMachine:'borer'});
+const visited = visitBore({...background, activeMachine:'excavator', cameraIndex:2}, background.activeBoreId);
+assert.equal(visited.activeMachine, 'borer');
+assert.equal(visited.mode, 'work');
+assert.equal(visited.cameraIndex, 0);
+assert.equal(visited.borer, background.borer, 'Visiting keeps the working face.');
+assert.equal(visitBore(background, 'missing'), background, 'Only the working bore can be visited.');
+const selectedMabel = switchDigMachine({...background, activeMachine:'paver'});
+assert.equal(selectedMabel.activeMachine, 'borer');
+assert.equal(selectedMabel.mode, 'work', 'Choosing Mabel visits the working bore.');
+let takeover = toggleBoreLever(visited);
 assert.equal(takeover.borePlayerAtLever, true);
 const beforeTakeover = takeover.borer.distanceM;
 const beforeOrder = takeover.boreOrders[0].stages[0].completed;

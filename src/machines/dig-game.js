@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine, toggleBoreLever, visitBore} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -260,6 +260,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   surveyPanel.after(watchingPanel);
   const sendButton=document.createElement('button');sendButton.type='button';sendButton.hidden=true;watchingPanel.after(sendButton);
   const borePanel=document.createElement('section');borePanel.className='the-dig-survey';sendButton.after(borePanel);
+  const boreWords=document.createElement('p'),visitButton=document.createElement('button'),leverButton=document.createElement('button');
+  visitButton.type=leverButton.type='button';borePanel.append(boreWords,visitButton,leverButton);
   let surveyLine=null, surveyKey='';
   const surveyDisplayCache={};
   let sendOffered=false;
@@ -322,6 +324,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else if(down&&!event.repeat&&event.code==='Escape'){event.stopImmediatePropagation();stop();return;}
     else if(down&&!event.repeat&&event.code==='Tab'){event.stopImmediatePropagation();pending.push('mode');return;}
     else if(down&&!event.repeat&&event.code==='KeyQ'){event.stopImmediatePropagation();pending.push('machine');return;}
+    else if(down&&!event.repeat&&event.code==='KeyV'){event.stopImmediatePropagation();pending.push('lever');return;}
     else if(down&&!event.repeat&&event.code==='KeyF'){event.stopImmediatePropagation();pending.push('send');return;}
     else if(down&&!event.repeat&&event.code==='KeyC'){event.stopImmediatePropagation();pending.push('camera');return;}
     if(down&&!event.repeat&&event.code==='KeyE'&&sim.activeMachine==='excavator')pending.push('load');
@@ -330,6 +333,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const onDown=e=>keyboard(e,true),onUp=e=>keyboard(e,false),onBlur=()=>{for(const key of Object.keys(keys))keys[key]=false;};
   document.addEventListener('keydown',onDown,true);document.addEventListener('keyup',onUp,true);window.addEventListener('blur',onBlur);
   sendButton.addEventListener('click',()=>pending.push('send'));
+  visitButton.addEventListener('click',()=>pending.push('visit'));
+  leverButton.addEventListener('click',()=>pending.push('lever'));
   host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;});
   host.querySelector('.the-dig-close').addEventListener('click',stop);
   try{
@@ -396,6 +401,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('mode'))sim={...sim,mode:sim.mode==='drive'?'work':'drive'};
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
+      if(pending.consume('visit')) {sim=visitBore(sim,sim.activeBoreId);previousCameraMachine='';}
+      if(pending.consume('lever'))sim=toggleBoreLever(sim);
       if(pending.consume('send') && sendOffered)sim=sendBorer(sim,surveyLine);
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
       let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping,sim.mode):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
@@ -536,9 +543,14 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     }
     sendButton.hidden=!sendOffered;
     if(sendOffered)sendButton.textContent=`F: Send ${sim.apprenticeTown.people[0].name}`;
-    const boardWords=boreBoard(sim).map(boreBoardWords);
+    const board=boreBoard(sim), boardWords=board.map(boreBoardWords);
     borePanel.hidden=boardWords.length===0;
-    borePanel.textContent=boardWords.length ? `Bore board. ${boardWords.join(' ')}` : '';
+    boreWords.textContent=boardWords.length ? `Bore board. ${boardWords.join(' ')}` : '';
+    const workingBore=board.find(row=>row.active);
+    visitButton.hidden=!workingBore;
+    if(workingBore)visitButton.textContent=`Go and see bore ${workingBore.id.replace(/^bore-/, '')}.`;
+    leverButton.hidden=!workingBore || sim.activeMachine!=='borer';
+    leverButton.textContent=sim.borePlayerAtLever?'V: Hand back the lever.':'V: Take the lever.';
     watchingPanel.hidden=sim.activeMachine!=='borer';
     if (!watchingPanel.hidden) watchingPanel.textContent=borerWatchingWords(sim).join(' ');
     if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});
@@ -553,7 +565,8 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
       const full=Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0)>=machineDefinition('excavator').tools.bucket.capacityM3-.01;
       message.textContent=full?'The bucket is full. Press E over the truck bed to load it.':tip&&tip.y>sim.ground.heightAt(tip.x,tip.z)+.05?'Lower the boom until the bucket touches the ground.':'The bucket is on the ground. Hold Space to dig.';
-    } else if(!failed && sim.activeMachine==='borer')message.textContent=sim.mode==='drive'?'Drive to the rock. Press Tab to start work.':'Hold W to push the lever forward and S to pull it back. Keep the head turning.';
+    } else if(!failed && sim.activeMachine==='borer' && sim.activeBoreId && sim.boreOrders.some(order=>order.id===sim.activeBoreId && order.status!=='finished'))message.textContent=sim.borePlayerAtLever?'You have the lever. Press V to hand it back.':'Pim is cutting. Press V to take the lever.';
+    else if(!failed && sim.activeMachine==='borer')message.textContent=sim.mode==='drive'?'Drive to the rock. Press Tab to start work.':'Hold W to push the lever forward and S to pull it back. Keep the head turning.';
     else if(!failed && sim.activeMachine==='drill')message.textContent=sim.drill.hole?.jammed?'The bit is jammed. Hold S to back it out.':sim.drill.hole?.struckWater?'Water reached. Raise the mast before driving on.':'Drive to a spot. Press Tab to lower the mast. Hold Space to drill. Add W for harder feed. Hold S to reverse.';
     else if(!failed && sim.roadMachines[sim.activeMachine])message.textContent=sim.activeMachine==='dozer'
       ? 'Hold Space while driving to gather ground. Let go of Space and drive to spread it.'
