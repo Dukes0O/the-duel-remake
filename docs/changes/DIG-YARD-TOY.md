@@ -11,7 +11,8 @@
 - Scenario now opens with `the-dig` only, checks opening controls and compares memory-only storage after machine use and a borer cut; it awaits a browser run. All page expressions parse in Node.
 - `test-the-dig` passed on 10148ac89 plus the scenario change.
 - Drill, road and borer tone recipes now live in the sound bank and are shared with their existing players; emitted cues are checked.
-- UV audit: machines-1 0 of 63,426 and borer 0 of 44,876 vertices sampled near white before and after; town materials use separate repeating tiles. This does not inspect triangle interiors.
+- UV audit: machines-1 0 of 63,426 and borer 0 of 44,876 vertices sampled near white before and after; town materials use separate repeating tiles. Their images contain no near-white pixels. Borer photos have isolated highlights, not empty cells; triangle interiors still need checking.
 - Checks: `test-the-dig` and `test-dig-yard-switches` passed on fb4dff498 plus this change.
-- Still needed: browser save check, triangle-interior texture audit, older suites, lane tier and build.
+- Preview's development switch list includes the Dig. `test-preview-launcher`, `test-feature-flags`, `test-yard-home`, `test-yard-next` and `test-machine-borer-scenario` passed on 0fb9cedb1 plus this change.
+- Still needed: browser save check, triangle-interior texture audit, remaining older suites, lane tier and build.
 - For Claude: browser scenario, play with sound, picture check and Dig yard frame check.
