@@ -155,20 +155,29 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const gate = definition.steps[0].riderSafeWall;
+  const bypassTrial = process.env.EVERBURN_BED_TOWN_BYPASS === '1';
   const directTrial = process.env.EVERBURN_BED_DIRECT_TRIAL === '1';
   const mediumTrial = process.env.EVERBURN_BED_MEDIUM_TRIAL === '1';
-  const townLine = directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
+  const dx = route.town.x - afterSteps.x, dz = route.town.z - afterSteps.z;
+  const length = Math.hypot(dx, dz);
+  const bypass = 100;
+  const townLine = bypassTrial ? [{x:afterSteps.x, z:afterSteps.z},
+    {x:afterSteps.x + dx / length * 350 - dz / length * bypass,
+      z:afterSteps.z + dz / length * 350 + dx / length * bypass}, route.town] : directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
     [{x:afterSteps.x, z:afterSteps.z},
       {x:route.exit.x + (mediumTrial ? 600 : 300), z:route.exit.z},
       {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
   const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
-  const townSpeed = (fastTrial ? 80 : (safeTrial || directTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
+  const townSpeed = (fastTrial ? 80 : (safeTrial || directTrial || bypassTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
   const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
-  if (directTrial) {
+  if (bypassTrial) {
+    assert.equal(townDrive.jolts.length, 1, 'the bypass meets one rider in the first 400 m');
+    assert.ok(townDrive.jolts[0].riders.some(rider => rider.id === 'ash-rider-2'), 'the rider is in contact');
+  } else if (directTrial) {
     assert.equal(townDrive.jolts.length, 1, 'the direct line meets one rider');
     assert.ok(townDrive.jolts[0].riders.some(rider => rider.id === 'ash-rider-2'),
       'the real rider is in contact on the direct line');
@@ -193,6 +202,8 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     assert.ok(emberBeforeTown - continuation.ember > 50, 'the 70 km/h trial loses more than 50 ember on the plates');
     assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
       'the actual pot loses over 50 on the plates despite avoiding a ram');
+  } else if (bypassTrial) {
+    assert.equal(continuation.jolts.length, 0, 'the bypass has no more jolts through 800 m');
   } else if (directTrial) {
     assert.equal(continuation.jolts.length, 0, 'the direct line has no further jolt through 800 m');
     assert.ok(townDrive.ember - continuation.ember < 4, 'the pot loses less than four ember on the second stretch');
