@@ -1,5 +1,6 @@
 import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine} from '../src/world/scablands-ways.js';
+import {LAND} from '../src/world/scablands-names.js';
 
 // Drive from the job's real starting position to Cinder and wait for the pot.
 // This is the shared opening for the six Medium proof drives.
@@ -43,10 +44,11 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
+  let pipePeakSpeedMph = 0;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
   const beganOut = lowestEmber <= 0;
   let firstOut = null;
@@ -57,6 +59,10 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const initiallyBurnt = new Set(state.arena.worldJob.job.stepState.burntBarricades || []);
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    const pipe = LAND.at('the-pipe');
+    if (crossPipe && Math.hypot(car.x - pipe.x, car.z - pipe.z) < 85) {
+      pipePeakSpeedMph = Math.max(pipePeakSpeedMph, Math.abs(state.speedMph));
+    }
     if (Math.abs(state.speedMph) >= 30) roadSpeedTicks++;
     if (Math.abs(state.speedMph) >= 45) fastRoadSpeedTicks++;
     if (Math.abs(state.speedMph) * 1.609344 > 50) abovePlatesLimitTicks++;
@@ -105,7 +111,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
     }
     // Keep road speed until the final approach, then prepare for the slow gate.
-    const approachLimit = barrierDistance < barrierLimit ? 8 : targetSpeedMph;
+    const pipeLimit = crossPipe && Math.hypot(car.x - pipe.x, car.z - pipe.z) < 180 ? 20 : targetSpeedMph;
+    const approachLimit = barrierDistance < barrierLimit ? 8 : Math.min(targetSpeedMph, pipeLimit);
     const speedLimit = gateApproach && gateDistance < 200 ? Math.min(approachLimit, 16) : approachLimit;
     duel.setInput({throttle:Math.abs(state.speedMph) < speedLimit ? 0.8 : 0,
       brake:Math.abs(state.speedMph) > speedLimit + 3 ? 1 : 0,
@@ -114,7 +121,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, jolts, beganOut, firstOut,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, jolts, beganOut, firstOut,
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)), ticks};
 }
 
@@ -128,10 +135,10 @@ export function drivePlatesOpening(duel, route) {
 
 // Continue a measured route in short stretches so a stuck car cannot be
 // mistaken for an arrival. All times and ember values come from the drive.
-export function driveMeasuredStretches(duel, route, ends, targetSpeedMph) {
+export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossPipe = false) {
   const stretches = [];
   for (const end of ends) {
-    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph);
+    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph, false, crossPipe);
     stretches.push(stretch);
     if (stretch.along < end) break;
   }

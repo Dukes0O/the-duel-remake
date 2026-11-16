@@ -686,7 +686,7 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   const join = driveAlongRoad(duel, approach, pathLength(approach) - 1, 12000, 20);
   console.log('Salt-pan join:', JSON.stringify(join));
   assert.ok(join.along >= pathLength(approach) - 1, 'the car joins the salt road outside the yard');
-  const opening = driveMeasuredStretches(duel, route, [500, 1000, 1500], 28);
+  const opening = driveMeasuredStretches(duel, route, [500, 1000, 1500], 28, true);
   console.log('Salt-pan opening:', JSON.stringify(opening));
   assert.equal(opening.reachedAll, true, 'the car reaches each opening stretch on the salt-pan way');
   assert.ok(opening.stretches.every(stretch => stretch.maxDistance < 30), 'the car follows the real way');
@@ -699,8 +699,11 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   const ends = [];
   for (let along = 2000; along < gateAlong - 150; along += 500) ends.push(along);
   ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const remaining = driveMeasuredStretches(duel, route, ends, 28);
+  const remaining = driveMeasuredStretches(duel, route, ends, 28, true);
   const stretches = [join, ...opening.stretches, ...remaining.stretches];
+  const pipePeakKmh = Math.max(...stretches.map(item => item.pipePeakSpeedMph)) * 1.609344;
+  assert.ok(pipePeakKmh > 0 && pipePeakKmh <= 40,
+    'the real car stays within the Pipe speed limit');
   let arrival = null;
   if (remaining.reachedAll) {
     const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -718,12 +721,13 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
     rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
     jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (arrival?.jolts.length || 0),
     scoops:pot.scoopedBraziers || [], arrival:arrival?.done ? arrival.fire.ember : null,
-    ember:pot.ember, reachedAll:remaining.reachedAll, last:remaining.stretches.at(-1), forge:arrival};
+    ember:pot.ember, pipePeakKmh, reachedAll:remaining.reachedAll, last:remaining.stretches.at(-1), forge:arrival};
   console.log('Salt-pan measurement:', JSON.stringify(measurement));
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the real pot');
   assert.equal(measurement.jolts, arrival?.observedJoltCount ?? pot.joltCount ?? 0,
     'the measurement accounts for the real jolts');
   assert.ok(measurement.rams <= measurement.jolts, 'rider contacts are counted separately from other jolts');
+  assert.ok(remaining.reachedAll && arrival?.done, 'the salt-pan drive reaches and delivers at the forge');
   if (arrival) assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'an arrival stops at the forge');
   else assert.equal(measurement.arrival, null, 'a stuck drive is not recorded as an arrival');
 
