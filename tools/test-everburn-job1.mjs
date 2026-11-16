@@ -430,6 +430,8 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 35);
   assert.ok(approachTown.along >= 6500, `the car follows the East Road toward Tin Town: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.driven >= 990 && approachTown.maxDistance < 20, `the car drives the next kilometre close to the road: ${JSON.stringify(approachTown)}`);
+  assert.ok(approachTown.roadSpeedTicks / approachTown.ticks > 0.95,
+    `the car stays above 30 mph for at least 95% of the clear kilometre: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.lowestEmber > 0, `the ember stays alight on the approach: ${JSON.stringify(approachTown)}`);
   assert.ok(Math.abs(duel.state.speedMph) > 30, 'the driver maintains road speed before the town approach');
   assert.ok(approachTown.nearestTownGate < eleventh.nearestTownGate, 'the car gets closer to the gate');

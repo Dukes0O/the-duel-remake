@@ -664,3 +664,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the bridge time check is new. Codex decided: slow 45 m before the bridge barricade. Claude should review the driving choice.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the earlier 140 m bridge slowdown. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach, then measure all four route arrival bands and times, camera, cover and scenario.
+
+## Larger land, clear-road speed evidence (15 November 2026)
+
+- The proof driver now counts simulation steps at 30 mph or more. Its test checks that it holds that speed for at least 95% of the clear kilometre toward Tin Town. This adds no game event or sound cue.
+- `node tools/test-everburn-job1.mjs`: passed. The existing drive arrived with 9.04 ember in 9.91 minutes, below the required 70. A trial at 20 mph near the bridge made the ember go out before town and was discarded. Race fingerprints were not checked in this round.
+- Changed assertions: none; the speed-duration check is new. Codex decided: none.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach and measure the four route arrival bands and times, then finish camera, cover and scenario.
