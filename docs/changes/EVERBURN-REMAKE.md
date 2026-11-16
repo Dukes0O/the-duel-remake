@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed climb at low speed (16 November 2026)
+
+- Added a route trial that records the real pot before and after the first climb impact. At 7,022.87 m the car hit the climb at 10.01 km/h, with no rider in contact. Ember fell from 54.95 to 40.52, including cooling and a 13.81-point jolt. Slowing alone does not make this line clean. A 198 m offset drew a rider at 6,660.63 m; a 190 m offset hit the climb at 7,013.32 m. No game event or sound cue was added.
+- Checks: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight drive out at 629.82 m. `git diff --check` passed. Integration is already included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the low-speed and ember-loss checks are new. Codex decided: measure this approach at a 6 mph target. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a clean line past the climb and finish both bed deliveries, the other clean drives and scenario.
+
 ## Bed line at the climb (16 November 2026)
 
 - The Medium proof driver takes a 195 m later offset. It reaches 7,022.89 m without a jolt before striking steep ground, compared with 7,003.86 m on the earlier line. No rider is in contact at the impact. The first hit takes 15 ember; this is not a clean delivery. The 170 m trial hit the slope sooner and the 200 m trial drew two rider rams. No game event or sound cue was added.

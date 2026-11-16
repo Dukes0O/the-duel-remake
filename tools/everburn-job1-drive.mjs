@@ -263,6 +263,15 @@ export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossP
     reachedAll:stretches.length === ends.length && stretches.every((stretch, index) => stretch.along >= ends[index])};
 }
 
+// Preserve the actual pot values around the first climb impact for route trials.
+export function driveToFirstClimb(duel, route, end, targetSpeedMph) {
+  const pot = duel.state.arena.worldJob.job.stepState;
+  const emberBefore = pot.ember;
+  const drive = driveMeasuredStretches(duel, route, [end], targetSpeedMph, false, true);
+  return {drive, climb:firstGroundClimb(drive), emberBefore,
+    emberAfter:duel.state.arena.worldJob.job.stepState.ember};
+}
+
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
 export function driveToBrazier(duel, brazier, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;
