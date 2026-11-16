@@ -373,6 +373,9 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   }
   function frame(now){
     if(stopped)return;
+    const inputTrace=window.__theDig?.inputTrace;
+    const traceFrame=inputTrace?.active ? {start:performance.now(), wallSeconds:(now-lastTime)/1000,
+      modeBefore:sim.mode, wHeld:!!keys.KeyW, leverBefore:sim.borer.lever} : null;
     const elapsed=Math.min(.1,(now-lastTime)/1000);lastTime=now;accumulator+=elapsed;
     const padKeys={...keys};
     let pad=null;
@@ -391,6 +394,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       const action=pending.consume('load')?'load':actionFor();
       sim=stepDigSandbox(sim,{controls:stepControls,action},1/60);frameEvents.push(...sim.events);accumulator-=1/60;
     }
+    if(traceFrame){traceFrame.simEnd=performance.now();traceFrame.modeAfter=sim.mode;traceFrame.leverAfter=sim.borer.lever;}
     if(drillView && machineViews.has('drill'))drillView.update(sim.drill,machineViews.get('drill').body);
     if(sim.activeMachine==='drill'){
       if(Math.abs(sim.drill.machine.speedMps)>.05 || frameEvents.some(event=>event.type==='drill-cuttings'))drillSounds.play('drill-engine');
@@ -495,6 +499,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       nearGround.follow(active.x+150*forwardX,active.z+150*forwardZ);
     } else nearGround.follow(active.x,active.z);
     if(groundView.update())nearGround.refresh();
+    if(traceFrame)traceFrame.groundEnd=performance.now();
     effects.update(elapsed);
     const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
@@ -533,6 +538,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     else if(!failed)message.textContent=sim.activeMachine==='dumpTruck'?'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.':'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.';
     const controlsSvg=controlsPanel.querySelector('svg');if(controlsSvg)controlsSvg.setAttribute('aria-label',`${name} controls`);
     renderer.render(scene,camera);
+    if(traceFrame){traceFrame.renderEnd=performance.now();inputTrace.digFrames.push(traceFrame);}
     // Read immediately after drawing, before the browser clears the drawing buffer.
     if(sampleCentre) {
     const gl=renderer.getContext(), pixels=new Uint8Array(4), samples=[];

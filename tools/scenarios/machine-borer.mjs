@@ -115,7 +115,7 @@ const page = {
   status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled}; })()`,
   inputTiming: `(() => { const s = window.__theDig.simulation; return {elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever, distance:s.borer.distanceM}; })()`,
   startInputTrace: `(() => {
-    const trace = {events:[], frames:[], active:true};
+    const trace = {events:[], frames:[], digFrames:[], active:true};
     const snapshot = () => { const s = window.__theDig.simulation; return {time:performance.now(), elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever}; };
     trace.listener = event => { if (event.code === 'Tab' || event.code === 'KeyW') trace.events.push({type:event.type, code:event.code, ...snapshot()}); };
     // The Dig stops Tab at document capture. Observe it on window first so the
@@ -127,7 +127,7 @@ const page = {
   stopInputTrace: `(() => {
     const trace = window.__theDig.inputTrace; trace.active = false;
     window.removeEventListener('keydown', trace.listener, true); window.removeEventListener('keyup', trace.listener, true);
-    delete window.__theDig.inputTrace; return {events:trace.events, frames:trace.frames};
+    delete window.__theDig.inputTrace; return {events:trace.events, frames:trace.frames, digFrames:trace.digFrames};
   })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
   frame: `(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))()`,
@@ -253,6 +253,7 @@ export async function run(context) {
   const trace = await context.evaluate(page.stopInputTrace);
   measurements.firstPush = {before:beforePush, samples:pushSamples, after:afterPush, trace, wallSeconds:(Date.now()-pushStart)/1000};
   await persist();
+  assert.ok(trace.digFrames.some(frame => frame.wHeld), 'the Dig recorded the first W hold');
   assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
   assert.ok(afterPush.lever - beforePush.lever >= 0.25, 'the first W press moves the lever promptly');
   await cutUntil(context, 20);
