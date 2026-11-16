@@ -113,12 +113,16 @@ function planSpoil(ground, segments, bank, amount) {
   const heights = new Map();
   let remaining = amount, lastReason = null;
   while (remaining > 1e-9) {
-    const nearEnd = cells.filter(cell => cell.along >= bank.far - 6 - 1e-9);
     let best = null;
-    for (const cell of nearEnd) {
+    // Cells are appended in along-distance order. Older rows cannot receive
+    // this load, so stop at the first row outside the working end.
+    for (let index = cells.length - 1; index >= 0; index--) {
+      const cell = cells[index];
+      if (cell.along < bank.far - 6 - 1e-9) break;
       if (!heights.has(cell)) heights.set(cell, ground.heightAt(cell.x, cell.z) - cell.base);
       const height = heights.get(cell);
-      if (height < 5 - 1e-8 && (!best || height < best.height)) best = {cell, height};
+      // Keep the earlier cell when heights tie, as in the forward scan.
+      if (height < 5 - 1e-8 && (!best || height <= best.height)) best = {cell, height};
     }
     if (!best) {
       occupied ||= new Set(cells.map(cell => `${cell.x},${cell.z}`));

@@ -36,8 +36,11 @@ Planning a deposit now reads each existing bank cell's height once, even when th
 
 Deposit planning now shares unchanged cell records with the previous state while copying the cell list. It does not change those records, so an earlier state remains intact without allocating a new object for every cell on every cut.
 
+The planner scans backward from the bank's working end and stops at the first old row. Bank cells are appended in distance order; equal-height cells retain the previous first-cell choice. This avoids scanning the entire bank to find the rows that can receive a load. The heap shape is still outstanding.
+
 ## Checks
 
+- SP working-end scan: `node tools/test-machine-borer.mjs` passed. It checks that planning stops after the eligible rows, even with 100 old cells; the ground-refresh check sampled 864 heights over 100 steps.
 - SP cell records: `node tools/test-machine-borer.mjs` passed. The test checks that deposits copy the list, share unchanged records and leave the preceding state intact.
 - SP height reads: `node tools/test-machine-borer.mjs` passed. A deposit spanning nearly full cells reads each existing cell once per cutting step; the ground-refresh check sampled 864 heights over 100 steps.
 - SP copying: `node tools/test-machine-borer.mjs` passed. Idle work shares the unchanged bank, and a new deposit leaves the earlier bank state intact. The ground-refresh check sampled 864 heights over 100 cutting steps.

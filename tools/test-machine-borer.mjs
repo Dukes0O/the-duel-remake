@@ -581,6 +581,19 @@ if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalS
 else delete globalThis.localStorage;
 closeDigSandbox();
 const muckGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z >= 6 ? 6 : 0});
+// A growing bank must not scan all its old rows on every small deposit.
+{
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:(_x, z)=>z >= 6 ? 20 : 0});
+  let oldRowVisits = 0;
+  const cells = Array.from({length:100}, (_, x) => ({x:x + 20, z:0,
+    get along() { oldRowVisits++; return x; }, base:0}));
+  cells.push({x:120, z:0, along:100, base:0});
+  const state = {...createBorerState({z:10}), started:true, covered:true,
+    spoilBank:{far:100, cells}};
+  const result = stepBorer(state, {thrust:1/3}, ground, 'rock', 1/120);
+  assert.ok(result.state.distanceM > 0, 'The deposit and cut finish.');
+  assert.ok(oldRowVisits <= 7, 'Planning stops after the rows at the working end.');
+}
 // A deposit spanning several nearly full cells must not resample them for
 // every allocation. A wider heap will have more cells to consider.
 {
