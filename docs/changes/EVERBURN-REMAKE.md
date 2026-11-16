@@ -121,7 +121,7 @@ page only. No test added, no assertion changed, no sound.
 ## Changed at the merge (Claude, 14 November 2026)
 
 - **Rock costs ember by the metre, not by the second.** Claude drove the build flat out across the rock on Easy with one key held and the pot arrived (barely alive, 50 scrap, 20 seconds): a loss by the second lets a fast car cross the ground before the pot dies. `roughPerKmh: 0.12` (a second) became `roughPerMetre: 0.003` (for each km/h over 50, for each metre driven). At 120 km/h that is 7 a second where it was 8.4; at 206 km/h it is 27 a second where it was 18.7.
-- **Changed assertion** in `tools/test-ember-pot.mjs`, reviewed by Claude: the pinned rock loss at 120 km/h for one second is `0.003 × 70 × (120 / 3.6)` where it was `0.12 × 70`. The number moved because the rule changed; the check is as strict as before. Two checks added: flat out on Easy puts the pot out before the town, and 200 km/h gets less far over rock than 100 km/h. 42 checks.
+- **Changed assertion** in `tools/test-ember-pot.mjs`, reviewed by Claude: the pinned rock loss at 120 km/h for one second is `0.003 Ã— 70 Ã— (120 / 3.6)` where it was `0.12 Ã— 70`. The number moved because the rule changed; the check is as strict as before. Two checks added: flat out on Easy puts the pot out before the town, and 200 km/h gets less far over rock than 100 km/h. 42 checks.
 - Claude's verdict and what the slice still lacks are on the card, section "Slice 1 result".
 - **The results sentence names no number.** It said "the most it pays is 80 scrap" beside "+96" on Medium, because the pay is multiplied by the difficulty. It now says "You had to relight it, so it pays less." Changed assertion, reviewed by Claude: the sentence check asks for "relight", "pays less" and no digit, where it asked for "80 scrap"; the cap of 80 itself is still checked on the line above it.
 - Review note for the sheet: `docs/board/looks/everburn-remake/round-1-review.md` (Claude).
@@ -408,7 +408,7 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 
 ## Larger land, map at the start (15 November 2026)
 
-- Hot Delivery's large map begins with “What you know”, the East Road and Cinder's warning that the Ash Men hold the Girder Bridge. It does not list or draw the other route lines or disclose their dangers. The route is calculated to Tin Town even before pickup. This is the first part of step 6c; discovering other routes and dangers remains to be built. No sound event was added.
+- Hot Delivery's large map begins with â€œWhat you knowâ€, the East Road and Cinder's warning that the Ash Men hold the Girder Bridge. It does not list or draw the other route lines or disclose their dangers. The route is calculated to Tin Town even before pickup. This is the first part of step 6c; discovering other routes and dangers remains to be built. No sound event was added.
 - `node tools/test-everburn-job1.mjs`: passed. The test reads the map's real route descriptions and list markup and checks the starting words and hidden routes. `git diff --check`: passed.
 - Changed assertions: none. Codex decided: none. Race fingerprints: not checked this round.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
@@ -672,3 +672,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the speed-duration check is new. Codex decided: none.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach and measure the four route arrival bands and times, then finish camera, cover and scenario.
+
+## Larger land, faster clear-road drive (15 November 2026)
+
+- The Medium proof driver targets 50 mph on the clear road from 5.5 to 7 km, then slows for the town approach. Its test reads the real car's speed and checks that it stays at or above 45 mph for at least 95% of the first clear kilometre. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car held at least 45 mph for 2,628 of 2,645 measured ticks over the kilometre and delivered with 13.67 ember in 9.44 minutes. The required East Road arrival is at least 70, so this does not prove the band. The other route arrivals and times are not yet measured. Race fingerprints were not checked in this round.
+- Changed assertions, for Claude to review: none; the sustained 45 mph check is new. Codex decided: target 50 mph on this clear stretch, within the road's actual handling, for Claude to review.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the 35 mph target on this clear stretch. The old `everburn-play` scenario still needs replacement or removal. Next: finish the East Road road-speed drive and measure all four route arrivals and times before deciding whether the bands can be met; then camera, cover and scenario.

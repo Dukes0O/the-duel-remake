@@ -427,17 +427,19 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(eleventh.nearestTownGate <= Math.hypot(eleventh.position.x - step.riderSafeWall.x, eleventh.position.z - step.riderSafeWall.z) + 0.01, 'the driver measures the real car position against the town gate');
   console.log('East Road 5.5 km drive:', JSON.stringify(eleventh));
 
-  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 35);
+  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 50);
   assert.ok(approachTown.along >= 6500, `the car follows the East Road toward Tin Town: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.driven >= 990 && approachTown.maxDistance < 20, `the car drives the next kilometre close to the road: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.roadSpeedTicks / approachTown.ticks > 0.95,
     `the car stays above 30 mph for at least 95% of the clear kilometre: ${JSON.stringify(approachTown)}`);
+  assert.ok(approachTown.fastRoadSpeedTicks / approachTown.ticks > 0.95,
+    `the car stays above 45 mph for at least 95% of the clear kilometre`);
   assert.ok(approachTown.lowestEmber > 0, `the ember stays alight on the approach: ${JSON.stringify(approachTown)}`);
   assert.ok(Math.abs(duel.state.speedMph) > 30, 'the driver maintains road speed before the town approach');
   assert.ok(approachTown.nearestTownGate < eleventh.nearestTownGate, 'the car gets closer to the gate');
   console.log('East Road 6.5 km drive:', JSON.stringify(approachTown));
 
-  const nearTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7000, 7200, 35);
+  const nearTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7000, 7200, 50);
   assert.ok(nearTown.along >= 7000, `the car follows the road to 7 km: ${JSON.stringify(nearTown)}`);
   assert.ok(nearTown.driven >= 490 && nearTown.maxDistance < 20, `the car stays on the road: ${JSON.stringify(nearTown)}`);
   assert.ok(nearTown.lowestEmber > 0, `the ember stays alight: ${JSON.stringify(nearTown)}`);
