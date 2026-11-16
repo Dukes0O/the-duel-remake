@@ -97,6 +97,42 @@ it is the second slice, built with the save checker (AGENTS rule 6), and nothing
 - Seen before the freeze: "Pim is riding with you. Cut two tunnels and Pim can cut the rest. Pim has seen you read the
   survey. Pim has seen you free a stall." That is the teaching shown in words, as designed.
 
+## Slice 1 result (Codex built it; one Codex review; Claude designed, ruled and drove it, 16 November 2026): merged, switch off
+
+Look sheet `docs/board/looks/machine-borer/round-2.jpg` with Claude's review. Full notes: `docs/changes/MACHINE-BORER-APPRENTICE.md`.
+
+- **Built, in the Dig, behind `wasteland-town`, nothing saved:** everything in "Slice 1, first handing over" above, and
+  since then: the freeze cured at its cause (a new segment after a stall and a reverse was handed on as an extension of the
+  last) with a test that repeats Claude's inputs; an error in her step now stops her, says "Mabel has stopped. Back her up and
+  try again." and never stops the Dig; one step of hers a simulation step; a second bore queued from whichever machine the
+  player is in at a face ("Send here next"), started by the apprentice when the first reaches daylight; the survey refreshed
+  when the ground under its line changes; the board's words.
+- **Claude's second drive:** the sequence that froze the Dig cuts on (7.7 m to 17.5 m, the clock running). The first teaching
+  cut driven to its end by hand: 307 m, "Daylight. She is through, 0.0 m off level.", and the screen reading "Pim has seen
+  you read the survey. Pim has seen you free a stall. Pim has seen you hold a grade. Pim has seen you come out to daylight."
+  One cut did not teach, as designed. The running survey and the hill's strip had gone from the screen after the survey's
+  refresh was added; found by hand and by the older picture check, cured, and both checks pass.
+- **The spoil heap:** crest 4.96 m, steepest side 0.53 m in a metre, 283 frames in 5 s while cutting with it. Drawn by
+  Claude as loose rock (round 2).
+- **Changed assertions, reviewed by Claude (rule 18):** the limit on heights asked of the land over 100 cutting steps, 2,000
+  to 6,000, Claude's own number and reason (a heap touches five times the ground of the old wall; the fault it guards cost
+  372,100); the narrow bank's shape checks replaced by the heap's (slope, crest, volume, connected) and its protected-ground
+  check put back for the heap after the review found it dropped; the mouth's clearance measured as a distance and not along
+  one axis, which is right once a bore can bend. Nothing else is loosened.
+- **Not built, on purpose:** slice 2 (bores, orders and apprentices kept with the town's save).
+- **Open:**
+  - Claude drove one teaching cut, not two, and used the check's own setter to see sending; the two-cut path to a taught
+    apprentice is proved by rules and by Codex's tests, not yet by hand from end to end.
+  - `tools/test-machine-borer.mjs` now takes about six minutes and `test-machine-borer-apprentice.mjs` over two (the heap made
+    her scripted bores heavier). Card QA-BORER-SUITE-TIME.
+  - Kyle has not tried it. It is his direction; it should be shown to him in the Dig before slice 2 is built.
+
+**Checks at the merge (Claude):** lane tier 65 of 67 on the candidate (79 minutes): `test-town-core` failed its timing check
+beside other work (11.8 ms against 10 ms; card QA-TIMING-UNDER-LOAD) and `test-review-evidence` failed in the hour after
+midnight (card QA-EVIDENCE-MIDNIGHT); each passes alone on the same code (rule 3). On Codex's last commit, which touches
+only the Dig's screen: `test-machine-borer`, `-apprentice`, `-survey` and `-freeze` pass. `npm run build` passes. Both browser
+scenarios pass in a visible window (six pictures and two, no failure listed).
+
 ## Checks (named before code)
 
 1. Rules: after two hand cuts the apprentice's three numbers equal the player's; one cut does not teach; a cut under 100 m

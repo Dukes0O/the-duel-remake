@@ -536,6 +536,15 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-ROUND-SOLID-HEADING.md"
 
+  - id: QA-BORER-SUITE-TIME
+    title: "The boring machine's two suites take eight minutes between them"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    details: "docs/board/cards/QA-BORER-SUITE-TIME.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
@@ -1340,12 +1349,11 @@ tasks:
 
 
   - id: MACHINE-BORER-APPRENTICE
-    title: "The boring machine's apprentice: two cuts by hand, the rest sent, and a way to look in"
+    title: "The boring machine's apprentice, slice 2: bores, orders and apprentices kept with the town (slice 1 is merged; show Kyle first)"
     owner: "codex"
     lane: "SIM"
     size: "L"
-    status: "building"
-    claimed_by: "Codex, lane borer-apprentice, since 16 November 2026 (slice 1)"
+    status: "backlog"
     needs: ["MACHINE-BORER","TOWN-APPRENTICES"]
     locks: ["busy-game-files"]
     details: "docs/board/cards/MACHINE-BORER-APPRENTICE.md"

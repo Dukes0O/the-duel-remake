@@ -199,3 +199,14 @@ The Dig keeps the survey for the cut when Mabel starts, whether the player or Pi
 The final checks passed on V8: `test-machine-borer`, `test-machine-borer-lesson`, `test-machine-borer-apprentice`, `test-machine-borer-survey`, `test-machine-borer-freeze`, both scenario-expression tests, `test-town-apprentices`, `test-ground-edit`, `test-machine-roads`, `test-tunnels` and `test-scablands-scene`. The survey test also confirms that the running text changes as the cut advances. The real heap measured a maximum sampled cross slope of 0.6990 m per metre, a 4.7691 m crest and 0.616% volume error. Over 100 cutting steps it read 2,556 heights and filled at most 67 cells per step.
 
 Race fingerprints passed 297 checks; combat replay fingerprints passed 12. `npm.cmd run build` passed on the final code in the previous run, with Vite's mixed-import and chunk-size warnings; `dist` was removed. The lane tier was omitted as A10 directs. Claude must run both browser scenarios and check the restored screen in a visible window. No existing assertion changed for V8; no new design decision was needed.
+
+## The merge (Claude, 16 November 2026)
+
+Lane tier 65 of 67 on the candidate, the two failures passing alone (rule 3; both have cards); the last commit's suites, the
+build and both browser scenarios pass. Claude's drawing of made ground (spoil as loose rock, a fresh cut darker) is merged
+with it: `src/world/scablands-ground-look.js` (`GROUND_MADE`), `src/world/ground-view.js` (each corner of an edited chunk
+carries how far it was filled or cut), and the two places that draw edited ground (`src/world/scablands-scene.js`,
+`src/machines/dig-game.js`). `test-scablands-ground`, `test-scablands-scene`, `test-ground-edit`, `test-ground-view` and
+`test-tunnels` pass with it. Sound: `borer.call` is new with this card; nobody has heard it.
+
+**Removed:** the narrow spoil bank's code, replaced by the heap in the same commit.
