@@ -330,18 +330,18 @@ test('every failed full suite keeps attribution while the morning report stays u
   assert.ok(f.files.get(`${root}/docs/board/checks/night-${date}.md`).trim().split('\n').length<20);
 });
 test('child UTF-8 decoding retains a multibyte JSON and stderr character split across chunks',async()=>{
-  const writes=[], value=Buffer.from('{"name":"å¤œ"}\n'), split=value.indexOf(Buffer.from('å¤œ'))+1;
+  const writes=[], value=Buffer.from('{"name":"夜"}\n'), split=value.indexOf(Buffer.from('夜'))+1;
   const result=await runChild('node',['controlled'],{logPath:'log',appendText:async(_,text)=>writes.push(text),
     spawnImpl:()=>{
       const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();
       queueMicrotask(()=>{
         child.stdout.write(value.subarray(0,split));child.stdout.end(value.subarray(split));
-        const error=Buffer.from('Ã©');child.stderr.write(error.subarray(0,1));child.stderr.end(error.subarray(1));
+        const error=Buffer.from('é');child.stderr.write(error.subarray(0,1));child.stderr.end(error.subarray(1));
         child.emit('close',0,null);
       });return child;
     }});
-  assert.equal(JSON.parse(result.stdout).name,'å¤œ');assert.equal(result.stderr,'Ã©');
-  assert.equal(writes.join('').includes('ï¿½'),false);
+  assert.equal(JSON.parse(result.stdout).name,'夜');assert.equal(result.stderr,'é');
+  assert.equal(writes.join('').includes('�'),false);
 });
 test('append rejection is handled immediately and reported after child close and queued writes',()=>{
   const moduleUrl=new URL('./full-check.mjs',import.meta.url).href;
