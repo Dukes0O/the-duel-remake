@@ -250,6 +250,39 @@ put as three measurements in her picture check, and nothing is called a fault un
 with her head 45 m in, how many of her pixels are drawn from a camera 40 m to the side (none, with the ground); and whether
 the mouth shows its portal and lining with the hill's face round it.
 
+### Claude's fourth hand drive: through the mesa by hand (16 November 2026, small hours)
+
+Commit a8d1d3847 in a visible window with real keys: 300 m of bore, from the face to the far side, on the surveyed grade.
+
+- **The hill hides her: there was no fault.** With her head 46.8 m in and 26.7 m of ground over her, from cameras standing over
+  open ground: 30 m out from the mouth and 35 m to either side, 6,593 and 6,636 of her pixels drawn alone and none with the
+  ground; from 60 m above the mesa, 6,862 alone and none with the ground; from 60 m out near the mouth's line, 54 of 2,485
+  (through the mouth, which is right). The camera Claude had specified for Codex's check stood inside the hill.
+- **The mouth is a mouth:** the striped portal, the lining, her tail and gantry inside it, the hill's face round it. From the
+  first mouth, once she is through, the far end shows as a point of daylight 300 m away.
+- **Her controls:** the up arrow tilts her while she bores. The slow first push is a hitch of about a second at the first cut
+  (the simulation's clock moved 0.72 s in 1.68 s of wall time), not a lost key; Codex could not move the first cut's set-up
+  earlier and it stays: one second, once. The following camera is inside the bore behind her from 21 m.
+- **The survey works as a game.** The line said "301 m on, 1.6 m higher. Hold a rise of 1 in 189." Claude held 1 in 207 from
+  52 m in, a little short, and at 178 m the screen said "122 m to go, 0.9 m to gain", from which the miss could be worked out
+  in the head: about 0.3 m low. She came out with "Daylight. She is through, 0.3 m off level."
+- **Three faults at the far side, with Codex:**
+  1. After daylight she cannot go forward, in work mode or drive mode (45 seconds of W in drive mode moved her 0 m). She stands
+     with her head at (2328.4, -617), floor 0.87, and 6.16 m of ground by the rules at that place. The Dig still counts one
+     open mouth, and nothing of the far side is seen from inside. Daylight is declared where the ground comes down to her
+     crown; the drawing opens a mouth only where the bore's end is in the open. The two rules must agree: she bores on until
+     her head is out, the far mouth is drawn with its portal, and she can be driven out onto the far ground.
+  2. The daylight sentence was not on the screen. The screen still read "1 m to go, 0.3 m to gain".
+  3. Her pace was half the ruling. At lever 0.33 she made 127 m in 8 minutes (0.26 m a second) at a steady 60 frames a
+     second, with the simulation on real time. The ruling asked for about 0.5 m a second in rock, ten minutes for this mesa;
+     it took about twenty.
+- **Short of right, Claude's to draw later:** the spoil bank is a flat pale slab with no ground look.
+- **A note on the tool:** the drive's window was minimised by something part-way and drew no frames for four minutes
+  (`document.hidden` was true). It was restored through the browser's own debugging port. `tools/hand-drive.mjs` should restore
+  its window before every step.
+
+Not heard: her sounds. Not seen: a bend, the far portal.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
