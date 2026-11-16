@@ -1,3 +1,10 @@
+## Bed without the Wash scoop, through the Steps (16 November 2026)
+
+- The seeded Medium car passes the Wash without stopping, drives under the bridge and climbs the Steps. The actual pot has 44.212 ember and no jolts at the top. The bridge rider starts pursuit, so this is not yet a clean delivery or a proof of the arrival band. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_NO_SCOOP=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. `git diff --check` passed. Integration is included. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: finish the bed delivery without a ram, with and without the scoop, then the salt pan, East Road, scenario and final checks.
+
 ## Bed, opposite side of the bridge (16 November 2026)
 
 - The real Medium car tried the land test's bed line on the opposite side of the river. It passed under the bridge without a jolt, but the bridge rider began pursuing at 119.51 m, from 8.73 m above the car. The furnace saw the car for 11 seconds and sent both riders. This line does not prove a clean delivery. No game event or sound cue was added.

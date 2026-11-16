@@ -131,7 +131,10 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
     nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 28);
   assert.ok(approach.reachedAll, 'the car reaches the Wash');
-  assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
+  const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
+  if (!skipWash) assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
+  else assert.ok(!(duel.state.arena.worldJob.job.stepState.scoopedBraziers || []).includes(wash.id),
+    'the car passes the Wash without a scoop');
   const riderAtWash = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
   const washCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const washRiderDistance = Math.hypot(riderAtWash.position.x - washCar.x, riderAtWash.position.z - washCar.z);
@@ -177,6 +180,14 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   console.log('Steps climb:', JSON.stringify(climb));
   assert.ok(climb.along >= pathLength(climbLine) - 25, 'the car climbs the Steps toward town');
   assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
+  if (skipWash) {
+    const currentPot = duel.state.arena.worldJob.job.stepState;
+    assert.ok(!(currentPot.scoopedBraziers || []).includes(wash.id), 'the Wash remains unused at the top of the Steps');
+    assert.equal(currentPot.joltCount ?? 0, 0, 'the no-scoop car climbs without a jolt');
+    assert.ok(currentPot.ember > 0 && currentPot.ember < 50, 'the actual pot remains lit but has cooled on the way');
+    console.log('No-scoop Steps:', JSON.stringify({ember:currentPot.ember, jolts:currentPot.joltCount ?? 0}));
+    process.exit(0);
+  }
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const riderAtSteps = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
   const stepsRiderDistance = Math.hypot(riderAtSteps.position.x - afterSteps.x, riderAtSteps.position.z - afterSteps.z);
