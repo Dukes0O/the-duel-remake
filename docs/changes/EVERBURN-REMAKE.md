@@ -808,3 +808,19 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Codex decided: use the established 50 mph target on this clear stretch. Claude should review the drive.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the proof driver's 35 mph target on the first kilometre. The old `everburn-play` scenario still needs replacement or removal. Next: measure the remaining route arrivals and times, then finish the camera, cover and scenario.
+
+## Fifteen-minute rules, East Road measurement (16 November 2026)
+
+- The seeded Medium drive travelled 7.908 km from pickup to the forge in 8.337 minutes, took one observed rider ram and one Halfway Camp scoop, and arrived with 49.261 ember. It burned both barricades. The arrival is below the East Road's 70-point band; this is a measurement, not a tuned result. The 15-point ram cap and 100 / 900 cold rate were used. No new sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | Not yet measured | | | | |
+| Salt pan | Not yet measured | | | | |
+| Bed | Not yet measured | | | | |
+
+- Checks: `EVERBURN_ROAD_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The full job test reached the road arrival but failed at the old plates assertion that the ember goes out before 1.5 km: it now has 53.326 there under the fifteen-minute ruling. Race fingerprints were not checked in this round. `git diff --check` passed.
+- Changed assertion, for Claude to review: the road scoop previously required a gain above 24.9 and at most 25. It now checks exactly 25 after that step's cooling, capped at the pot's 100-point capacity. With the fifteen-minute rate, the pot holds 80.161 before this scoop, so its observed gain is 19.839. The separate scoop rule test remains in place.
+- Codex decided: none. For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: measure the plates without tuning, updating the stale outage assertions for the ruled cold rate; then measure the other ways, camera, cover and scenario.

@@ -140,7 +140,7 @@ export function driveMeasuredStretches(duel, route, ends, targetSpeedMph) {
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
 export function driveToBrazier(duel, brazier, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;
-  let distance = Infinity, ticks = 0, stopping = false, scoopGain = 0;
+  let distance = Infinity, ticks = 0, stopping = false, scoopGain = 0, emberBeforeScoop = null;
   for (; ticks < maxTicks && !(world.job.stepState.scoopedBraziers || []).includes(brazier.id); ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     distance = Math.hypot(car.x - brazier.position.x, car.z - brazier.position.z);
@@ -159,9 +159,12 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     const emberBefore = world.job.stepState.ember;
     duel.step(1 / 60);
-    if ((world.job.stepState.scoopedBraziers || []).includes(brazier.id)) scoopGain = world.job.stepState.ember - emberBefore;
+    if ((world.job.stepState.scoopedBraziers || []).includes(brazier.id)) {
+      emberBeforeScoop = emberBefore;
+      scoopGain = world.job.stepState.ember - emberBefore;
+    }
   }
-  return {distance, ticks, elapsedSeconds:ticks / 60, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
+  return {distance, ticks, elapsedSeconds:ticks / 60, emberBeforeScoop, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
 }
 
 // Drive into the forge bay and stop; the job itself decides whether delivery succeeds.

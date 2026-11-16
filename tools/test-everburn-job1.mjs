@@ -389,6 +389,14 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const result = driveToCinder(duel, pickup);
   assert.equal(world.job.stepState.loaded, true, `the real car collects the pot from Cinder; distance ${result.distance.toFixed(1)} m`);
   assert.ok(world.job.stepState.ember > 99, 'the pickup begins with a bright ember');
+  let distanceMetres = 0;
+  const originalStep = duel.step.bind(duel);
+  duel.step = dt => {
+    const before = duel.course.worldAt(state.s, state.lateral);
+    originalStep(dt);
+    const after = duel.course.worldAt(state.s, state.lateral);
+    distanceMetres += Math.hypot(after.x - before.x, after.z - before.z);
+  };
   const exit = driveThroughYardGate(duel, yardPlan().gate);
   assert.ok(exit.along >= 20, `the loaded car drives through the gate: ${JSON.stringify(exit)}`);
   assert.ok(Math.abs(exit.gateOffset) < 6, `the car crosses within the 12 m gate: ${JSON.stringify(exit)}`);
@@ -432,7 +440,8 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, `the real car stops and scoops at the camp: ${JSON.stringify(scoop)}`);
   assert.equal(scoop.elapsedSeconds, scoop.ticks / 60, 'the scoop records its actual driving time');
-  assert.ok(scoop.scoopGain > 24.9 && scoop.scoopGain <= 25, `the scoop restores 25 ember: ${JSON.stringify(scoop)}`);
+  assert.ok(Math.abs(scoop.ember - Math.min(step.ember.start, scoop.emberBeforeScoop - step.ember.coldPerSecond / 60 + 25)) < 1e-8,
+    `the scoop adds 25 after cooling, up to the pot's capacity: ${JSON.stringify(scoop)}`);
   console.log('East Road camp scoop:', JSON.stringify(scoop));
   const fifth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2500);
   assert.ok(fifth.along >= 2500, `the car passes the camp: ${JSON.stringify(fifth)}`);
@@ -529,6 +538,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   console.log('East Road town entrance:', JSON.stringify(door));
   const joltsBeforeForge = world.job.stepState.joltCount ?? 0;
   const emberBeforeForge = world.job.stepState.ember;
+  const scoopsAtForge = [...world.job.stepState.scoopedBraziers];
   const arrival = driveToForge(duel, step.destination.position);
   console.log('East Road forge arrival:', JSON.stringify(arrival));
   const driveTicks = [exit, road, next, further, fourth, approach, scoop, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, approachTown, nearTown, gateApproach, gate, door, arrival].reduce((sum, segment) => sum + segment.ticks, 0);
@@ -541,8 +551,17 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(arrival.jolts.every(jolt => jolt.amount > 0 && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
     'each forge approach jolt has its amount and position');
   assert.equal(arrival.jolts.length, 0, `the car clears the gate before turning toward the forge: ${JSON.stringify(arrival)}`);
+  const measurement = {way:'East Road', kilometres:distanceMetres / 1000, minutes:driveTicks / 3600,
+    rams:eighth.jolts.filter(jolt => jolt.riders.length > 0).length,
+    scoops:scoopsAtForge, arrival:arrival.fire.ember};
+  assert.ok(measurement.kilometres > 7.8 && measurement.minutes > 0);
+  assert.equal(measurement.rams, arrival.observedJoltCount, 'the observed rider contact accounts for the recorded hit');
+  assert.deepEqual(measurement.scoops, ['halfway-brazier']);
+  assert.equal(measurement.arrival, world.forgeFire.ember);
+  console.log('East Road measurement:', JSON.stringify(measurement));
 
 }
+if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
 // Begin the plates proof from the same real pickup and yard gate as the road drive.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
