@@ -58,7 +58,11 @@ The rotated-grid planner can now report every protected cell in a proposed depos
 
 The heap planner now prepares allocations in the form the cutter's fill loop uses. The profile is sized by the cut volume: the ground fill receives the 1.25 loose volume and stores the compacted height. A protected cell refuses the whole proposed deposit before the ground changes. The cutter still uses the old bank. Connecting the heap must also preserve the existing ability to find space around protected ground.
 
+The heap can now find a clear starting position farther along the same bank line, without changing the ground. It searches up to 128 one-metre positions and returns the refusal if none is clear. This is preparation: the cutter still needs to use it, and a protected area encountered after a heap has started still needs handling.
+
 ## Checks
+
+- SP clear starting position: `node tools/test-machine-borer.mjs` checks a protected starting area, retained line and volume, unchanged ground and refusal when no position is clear.
 
 - SP fill allocations: `node tools/test-machine-borer.mjs` checks successive deposits through real ground fill against the profile and cut volume, and verifies that a protected deposit leaves the ground untouched.
 

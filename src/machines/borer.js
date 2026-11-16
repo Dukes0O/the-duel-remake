@@ -268,6 +268,19 @@ export function borerSpoilDeposit(ground, origin, direction, oldLength, cutVolum
   }))};
 }
 
+/** Find a clear starting position along the bank's existing line. */
+export function borerSpoilStart(ground, origin, direction, cutVolume) {
+  let reason = BORER_OBSTRUCTION;
+  for (let offset = 0; offset < 128; offset++) {
+    const candidate = {x:origin.x + direction.x * offset,
+      z:origin.z + direction.z * offset};
+    const deposit = borerSpoilDeposit(ground, candidate, direction, 0, cutVolume);
+    if (!deposit.reason) return {origin:candidate, ...deposit};
+    reason = deposit.reason;
+  }
+  return {reason};
+}
+
 
 // Plan deposits before cutting so protected ground can never swallow material.
 // One-metre ground samples are filled individually and capped against their

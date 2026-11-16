@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilGridPlan, borerSpoilDeposit, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilGridLength, borerSpoilGridPlan, borerSpoilDeposit, borerSpoilStart, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -15,6 +15,21 @@ import {createBorerSounds} from '../src/machines/borer-sounds.js';
 import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
+
+// A new heap can start further down the same line to avoid protected ground.
+{
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:()=>0,
+    reservedShapes:[{x:15,z:0,radius:2,sentence:'Road.'}]});
+  const origin = {x:12,z:0}, direction = {x:1,z:0};
+  const start = borerSpoilStart(ground, origin, direction, 10);
+  assert.ok(start.origin.x > origin.x, 'The heap moves past protected ground.');
+  assert.equal(start.origin.z, origin.z, 'The heap stays on its original line.');
+  assert.ok(start.allocations.every(({cell}) => !ground.refusal({...cell,radius:0.49})));
+  assert.ok(Math.abs(start.allocations.reduce((sum, item) => sum + item.volume, 0) - 10) < 1e-7);
+  assert.equal(ground.chunkCount, 0, 'Finding a site does not change the ground.');
+  const closed = {...ground, spoilRefusal:()=> 'No room.'};
+  assert.deepEqual(borerSpoilStart(closed, origin, direction, 10), {reason:'No room.'});
+}
 
 // The cutter's allocations reproduce the sampled profile through real fill.
 {
