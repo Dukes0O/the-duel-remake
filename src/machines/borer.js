@@ -9,6 +9,9 @@ export const BORER_OPEN_GROUND = 'She is coming up under open ground with no fac
 export const BORER_TRENCH = 'She is cutting a trench, not a tunnel. Raise her head and bring her up to the ground.';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const radians = degrees => degrees * Math.PI / 180;
+// Leave room for ground-grid rounding when repeated fills accumulate.
+const SPOIL_SIDE_GRADE = 0.699;
+const SPOIL_END_GRADE = 0.299;
 const hardness = Object.freeze({topsoil:1, clay:0.8, gravel:0.55, rock:1 / 3});
 const refusalMessage = refusal => (refusal === 'A building or protected place is in the way.' ||
   refusal === 'This region is protected ground.') ? BORER_OBSTRUCTION : refusal;
@@ -101,20 +104,20 @@ export function borerSpoilProfile(along, across, length) {
   if (![along, across, length].every(Number.isFinite) || length < 0)
     throw new TypeError('The spoil profile needs finite distances and a non-negative length.');
   // The crest rises at most 0.3 m per metre, including at both ends.
-  return Math.max(0, Math.min(5, 0.3 * along, 0.3 * (length - along),
-    5 - 0.7 * Math.abs(across)));
+  return Math.max(0, Math.min(5, SPOIL_END_GRADE * along, SPOIL_END_GRADE * (length - along),
+    5 - SPOIL_SIDE_GRADE * Math.abs(across)));
 }
 
 /** Volume under the profile, in cubic metres, before sampling it on the ground. */
 export function borerSpoilProfileVolume(length) {
   if (!Number.isFinite(length) || length < 0)
     throw new TypeError('The spoil heap needs a finite, non-negative length.');
-  const height = Math.min(5, 0.3 * length / 2);
-  const endLength = height / 0.3;
+  const height = Math.min(5, SPOIL_END_GRADE * length / 2);
+  const endLength = height / SPOIL_END_GRADE;
   // Across a row of height h, the profile has area (10h - h²) / 0.7.
   // Integrate the rising ends and the level section separately.
-  const ends = 2 * (5 * height ** 2 - height ** 3 / 3) / (0.3 * 0.7);
-  const middle = (length - 2 * endLength) * (10 * height - height ** 2) / 0.7;
+  const ends = 2 * (5 * height ** 2 - height ** 3 / 3) / (SPOIL_END_GRADE * SPOIL_SIDE_GRADE);
+  const middle = (length - 2 * endLength) * (10 * height - height ** 2) / SPOIL_SIDE_GRADE;
   return ends + middle;
 }
 
@@ -138,8 +141,8 @@ export function borerSpoilProfileChanges(oldLength, newLength) {
   if (![oldLength, newLength].every(Number.isFinite) || oldLength < 0 || newLength < oldLength)
     throw new TypeError('The spoil heap needs two non-negative lengths in order.');
   const changes = [];
-  // The far end cannot affect a sample more than 5 / 0.3 metres behind it.
-  const first = Math.max(0, Math.floor(oldLength - 5 / 0.3));
+  // The far end cannot affect a sample more than 5 / SPOIL_END_GRADE metres behind it.
+  const first = Math.max(0, Math.floor(oldLength - 5 / SPOIL_END_GRADE));
   for (let along = first; along <= Math.ceil(newLength); along++) {
     for (let across = -7; across <= 7; across++) {
       const height = borerSpoilProfile(along, across, newLength) -
@@ -157,7 +160,7 @@ export function borerSpoilGridChanges(origin, direction, oldLength, newLength) {
       Math.abs(Math.hypot(direction.x, direction.z) - 1) > 1e-8)
     throw new TypeError('The spoil heap needs an origin, a unit direction and two lengths in order.');
   if (newLength === oldLength) return [];
-  const first = Math.max(0, oldLength - 5 / 0.3);
+  const first = Math.max(0, oldLength - 5 / SPOIL_END_GRADE);
   const corners = [];
   for (const along of [first, newLength]) for (const across of [-8, 8]) {
     corners.push({x:origin.x + direction.x * along - direction.z * across,
@@ -187,16 +190,16 @@ export function borerSpoilSampledLength(oldLength, addedVolume) {
   // Sizing probes the same heap many times. Sum heights directly rather than
   // allocating a list of changed cells for every probe. Only the final
   // length needs a list for the ground edit.
-  const first = Math.max(0, Math.floor(oldLength - 5 / 0.3));
+  const first = Math.max(0, Math.floor(oldLength - 5 / SPOIL_END_GRADE));
   const addedAt = length => {
     let total = 0;
     for (let along = first; along <= Math.ceil(length); along++) {
-      const near = Math.min(5, 0.3 * along);
-      const before = Math.max(0, Math.min(near, 0.3 * (oldLength - along)));
-      const after = Math.max(0, Math.min(near, 0.3 * (length - along)));
+      const near = Math.min(5, SPOIL_END_GRADE * along);
+      const before = Math.max(0, Math.min(near, SPOIL_END_GRADE * (oldLength - along)));
+      const after = Math.max(0, Math.min(near, SPOIL_END_GRADE * (length - along)));
       if (after <= before) continue;
       for (let across = -7; across <= 7; across++) {
-        const side = 5 - 0.7 * Math.abs(across);
+        const side = 5 - SPOIL_SIDE_GRADE * Math.abs(across);
         total += Math.min(after, side) - Math.min(before, side);
       }
     }
@@ -228,12 +231,12 @@ export function borerSpoilGridLength(origin, direction, oldLength, addedVolume) 
   // coordinates and original heights instead of rebuilding a grid per probe.
   const candidates = borerSpoilGridChanges(origin, direction, oldLength, high)
     .map(cell => ({along:cell.along,
-      ceiling:Math.min(5, 0.3 * cell.along, 5 - 0.7 * Math.abs(cell.across)),
+      ceiling:Math.min(5, SPOIL_END_GRADE * cell.along, 5 - SPOIL_SIDE_GRADE * Math.abs(cell.across)),
       before:borerSpoilProfile(cell.along, cell.across, oldLength)}));
   const addedAt = length => {
     let total = 0;
     for (const cell of candidates)
-      total += Math.max(0, Math.min(cell.ceiling, 0.3 * (length - cell.along))) - cell.before;
+      total += Math.max(0, Math.min(cell.ceiling, SPOIL_END_GRADE * (length - cell.along))) - cell.before;
     return total;
   };
   for (let i = 0; i < 40; i++) {

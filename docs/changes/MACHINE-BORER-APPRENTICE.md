@@ -64,7 +64,11 @@ A direct connection of the prepared heap to Mabel was tried and removed because 
 
 SP connection: Mabel now places each cutting step's spoil through the prepared heap planner. The heap starts at least 12 m from the first mouth and searches along the same line for a clear start. If protected ground is encountered after the heap starts, the whole deposit is refused before cutting. The old narrow-bank planner was removed. On the real Dig ground at 101 m the sampled crest was 4.766 m, the laid volume was within 0.616% of the required bulked volume, and the steepest sampled side rose 0.700026 m in one metre, exceeding the 0.70001 test limit by 0.000016 m. This slope check is not yet passing. Over 100 measured 1/60-second steps, at most 67 cell fills occurred in one step (two fixed simulation steps); this is an observed maximum, not a proven bound. The 100-step refresh used 2,556 height reads. The honest surveyed mesa drive reached daylight without a bank refusal. The borer suite then failed on the slope check above, so later checks in that suite did not run.
 
+The heap profile now has small rounding margins: 0.699 m per metre at the sides and 0.299 m per metre at the ends. These leave room for accumulated ground-grid rounding under the 0.7 side and 0.3 crest limits. On the real Dig ground at 101 m, the steepest sampled side was 0.6990 m per metre, the crest was 4.7708 m, and laid volume differed from the required volume by 0.616%. The 100-step refresh measured 2,556 height reads and at most 67 fills per 1/60-second step; that is an observed maximum, not a proven bound. Protected ground encountered after the heap starts still refuses the deposit before cutting.
+
 ## Checks
+
+- Rounding margins: a focused ground-fill check passed. Its steepest crest step was 0.299026 m. The full borer suite, run before the crest margin was added, reached daylight and passed the real-heap measurements but failed the crest check. Rerun the full suite after the crest fix. The real-ground measurements above were taken before the crest margin was added.
 
 - SP connection: `node tools/test-machine-borer.mjs` failed at the real-ground cross-slope check as measured above. The 100-step refresh, sampled crest, volume and surveyed daylight drive passed before that assertion.
 

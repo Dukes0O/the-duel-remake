@@ -78,6 +78,10 @@ import * as THREE from 'three';
   const length = 40;
   assert.equal(borerSpoilProfile(20, 0, length), 5);
   assert.equal(borerSpoilProfile(20, 8, length), 0);
+  assert.ok(borerSpoilProfile(20, 0, length) - borerSpoilProfile(20, 1, length) < 0.7,
+    'The side profile leaves room for ground-grid rounding.');
+  assert.ok(borerSpoilProfile(1, 0, length) - borerSpoilProfile(0, 0, length) < 0.3,
+    'The crest profile leaves room for ground-grid rounding.');
   assert.equal(borerSpoilProfile(0, 0, length), 0);
   assert.equal(borerSpoilProfile(length, 0, length), 0);
   for (let along = 0; along <= length; along++) {
