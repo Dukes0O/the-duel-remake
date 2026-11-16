@@ -52,7 +52,9 @@ export function emberStoryProps(profile, {available = false, runs = false, runPa
   }));
   if (step === 'read') steps[0] = {...steps[0], state: 'open', button: 'Read Hollis’s note'};
   const props = {available: true, step, read: ember.read === true, steps,
-    notes: [], sideJobs: jobs.includes(EMBER_JOBS[1]) ? SIDE_JOBS : [],
+    notes: [], noticeBoardOpen: jobs.includes(EMBER_JOBS[1]),
+    noticeBoardWaiting: SIDE_JOBS.some(job => !REMADE_EVERBURN_JOBS.includes(`everburn-${job.id}`)),
+    sideJobs: jobs.includes(EMBER_JOBS[1]) ? SIDE_JOBS.filter(job => REMADE_EVERBURN_JOBS.includes(`everburn-${job.id}`)) : [],
     ended: step === 'done' && ember.end === true};
   // The gas run: shown only with its switch on and the sixth job won. It never finishes, so it never carries a tick.
   if (runs === true && EMBER_JOBS.every(id => jobs.includes(id))) {

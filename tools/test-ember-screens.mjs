@@ -57,9 +57,20 @@ for (const id of EMBER_JOBS.slice(0, 2)) profile = markEmberJob(profile, id).pro
 const afterWalk = emberStoryProps(profile, {available: true});
 same(afterWalk.steps.filter(step => step.state === 'open').length, 0, 'the unremade next job is locked');
 same(afterWalk.steps.filter(step => step.state === 'done').length, 2, 'the first two jobs are ticked');
-same(afterWalk.sideJobs.length, 3, 'the notice board opens after the walk');
+same(afterWalk.noticeBoardOpen, true, 'the notice board opens after the walk');
+same(afterWalk.sideJobs.length, 0, 'no unremade board job is offered');
 const board = emberWallMarkup(afterWalk);
-same(count(board, /data-ember-side-job=/g), 3, 'each notice-board job has one take button');
+same(count(board, /data-ember-side-job=/g), 0, 'unremade board jobs have no take buttons');
+ok(board.includes('TIN TOWN NOTICE BOARD') && board.includes('The next job is being made.'), 'the board explains the wait');
+REMADE_EVERBURN_JOBS.push('everburn-lost-prospector');
+try {
+  const remadeBoard = emberWallMarkup(emberStoryProps(profile, {available: true}));
+  same(count(remadeBoard, /data-ember-side-job=/g), 1, 'a remade board job has one take button');
+  ok(remadeBoard.includes('data-ember-side-job="lost-prospector"'), 'the button names the remade board job');
+} finally {
+  REMADE_EVERBURN_JOBS.pop();
+}
+ok(!emberNextUp(afterWalk).text.includes('Run Him Down') && !emberNextUp(afterWalk).button, 'the yard does not name or offer an unremade job');
 same(count(board, /data-ember-step=/g), 0, 'the unremade next story job has no button');
 ok(board.includes('The next job is being made.'), 'the wall explains why the next job is locked');
 const unsafe = emberStoryProps(profile, {available: true});

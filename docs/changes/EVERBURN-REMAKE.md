@@ -1824,3 +1824,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the five drives, the 10-second trace limit, and identical simulated drives with different numbers of repeated screen updates. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: the sight scheduler test now supplies seconds rather than milliseconds; its 20-trace limit is unchanged. Codex decided: none. Removed: wall-clock timing for crossing discovery.
 - Still needed: finish Y1's out-of-view recovery, Y3 to Y5 and final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y3: notice board and yard offer
+
+- The Tin Town notice board stays visible for existing progress but offers only jobs in the single remade list. It says "The next job is being made." while any board job is waiting. Adding a board job's id to that same list makes its Take job button available.
+- The yard's next-up display reads the list indirectly: it uses the story screen's open or locked state, which is set from the remade list. A locked next job has no name or start button in the yard. The completed-story line no longer promises that every job can be replayed.
+- Check: `node tools/test-ember-screens.mjs` passed 34 checks, including existing progress, no unremade board offers, a remade board offer and the yard's locked next job. `git diff --check` passed. Integration is included. No save shape, sound cue or race fingerprint changed.
+- Changed assertions, for Claude to review: the board previously expected three offered jobs and three Take job buttons after the second story job; both are now zero until those jobs are remade, as Y3 directs. The new check adds one id to the remade list and requires exactly its button. Codex decided: none. Removed: offers for unremade board jobs and the promise to replay any job.
+- Still needed: finish Y1 rider visibility, Y4 and Y5, then the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
