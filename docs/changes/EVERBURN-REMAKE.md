@@ -1373,3 +1373,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `$env:EVERBURN_BED_STEPS_ONLY='1'; $env:EVERBURN_BED_OPPOSITE_EXIT='1'; node tools/test-everburn-job1.mjs` passed. It also proves the straight-across outage at 629.822 m. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none; these are new measurements. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: find a safe-speed exit that avoids the rider and steep climb, then prove both bed drives, the salt pan and East Road; finish the scenario and checks. The earlier bed drives exceeded ten minutes, so Claude's ruling on the ground remains needed.
+
+## Clean salt-pan drive (16 November 2026)
+
+- The seeded Medium driver takes the salt road at a 100 km/h target, slows within 180 m of the Pipe, then reaches the forge with 46.403 ember, an alive delivery. The drive covers 9.396 km in 8.039 minutes, with no rams, other jolts or scoops. The Pipe's measured peak is 37.029 km/h. The clear opening holds at least 45 mph for over 95% of its measured time. No game event or sound cue was added.
+- Check: `$env:EVERBURN_SALT_ONLY='1'; node tools/test-everburn-job1.mjs` passed, including the straight-across outage at 629.822 m. The focused salt run skips the earlier exploratory road and plates measurements, which have their own runs. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. The clean-drive assertions are new. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: prove the bed drives and the bright East Road drive, then the scenario and final checks. The bed has exceeded ten minutes, so Claude's ruling on its ground is needed.

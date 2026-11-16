@@ -649,6 +649,8 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   console.log('Clean plates measurement:', JSON.stringify(measurement));
   process.exit(0);
 }
+const step = definition.steps[0], pickup = step.pickup.place.position;
+if (process.env.EVERBURN_SALT_ONLY !== '1') {
 // Cold loss is read from the actual carry step on ordinary ground.
 {
   const carry = definition.steps[0];
@@ -955,7 +957,6 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
     assert.ok(run(target, opening.bearing) > 3, `the car passes the ${opening.id} opening`);
   }
 }
-const step = definition.steps[0], pickup = step.pickup.place.position;
 // Cinder uses her crew model, stands on the ground and leaves view after the loaded car drives away.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -1288,6 +1289,7 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
 
 }
 if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
+}
 // Start the salt-pan measurement from the real pickup and yard gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -1308,10 +1310,12 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   const join = driveAlongRoad(duel, approach, pathLength(approach) - 1, 12000, 20);
   console.log('Salt-pan join:', JSON.stringify(join));
   assert.ok(join.along >= pathLength(approach) - 1, 'the car joins the salt road outside the yard');
-  const opening = driveMeasuredStretches(duel, route, [500, 1000, 1500], 28, true);
+  const opening = driveMeasuredStretches(duel, route, [500, 1000, 1500], 100 / 1.609344, true);
   console.log('Salt-pan opening:', JSON.stringify(opening));
   assert.equal(opening.reachedAll, true, 'the car reaches each opening stretch on the salt-pan way');
   assert.ok(opening.stretches.every(stretch => stretch.maxDistance < 30), 'the car follows the real way');
+  assert.ok(opening.stretches.slice(1).every(stretch => stretch.fastRoadSpeedTicks / stretch.ticks > 0.95),
+    'the car holds road speed on the clear opening');
   assert.equal(opening.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
     'the drive records the actual pot');
   // Keep the same road speed for the remaining route. Do not tune the
@@ -1321,7 +1325,7 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   const ends = [];
   for (let along = 2000; along < gateAlong - 150; along += 500) ends.push(along);
   ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const remaining = driveMeasuredStretches(duel, route, ends, 28, true);
+  const remaining = driveMeasuredStretches(duel, route, ends, 100 / 1.609344, true);
   const stretches = [join, ...opening.stretches, ...remaining.stretches];
   const pipePeakKmh = Math.max(...stretches.map(item => item.pipePeakSpeedMph)) * 1.609344;
   assert.ok(pipePeakKmh > 0 && pipePeakKmh <= 40,
@@ -1348,7 +1352,8 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the real pot');
   assert.equal(measurement.jolts, arrival?.observedJoltCount ?? pot.joltCount ?? 0,
     'the measurement accounts for the real jolts');
-  assert.ok(measurement.rams <= measurement.jolts, 'rider contacts are counted separately from other jolts');
+  assert.equal(measurement.rams, 0, 'the careful salt-pan drive takes no rider rams');
+  assert.ok(measurement.arrival >= 30 && measurement.arrival < 70, 'the salt-pan ember arrives alive');
   assert.ok(remaining.reachedAll && arrival?.done, 'the salt-pan drive reaches and delivers at the forge');
   if (arrival) assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'an arrival stops at the forge');
   else assert.equal(measurement.arrival, null, 'a stuck drive is not recorded as an arrival');
