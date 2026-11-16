@@ -631,3 +631,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the ten-minute check is new. Codex decided: none.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the earlier 0.14-per-second cold rate. The old `everburn-play` scenario still needs replacement or removal. Next: bring the East Road driver up to the ruled road speed and measure arrival, then complete the other drives, camera, cover and scenario.
+
+## Larger land, road-speed approach (15 November 2026)
+
+- The Medium driver keeps its 35 mph road target past 7 km and slows for the gate only on the final approach. It records the scoop time and total delivery time from actual simulation steps. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car delivered 14.36 ember in 9.38 minutes from leaving Cinder, with a 16.82 ember camp jolt. This is below the required 70. It does not prove the arrival band. Race fingerprints were not checked this round.
+- Changed assertions, for Claude to review: at 6.5 km, the old check required speed below 30 mph; the new check requires speed above 30 mph because Claude ruled that the driver must keep road speed until the last 400 m. No game acceptance band changed.
+- Codex decided: none. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the premature 25 mph target on the open road. The old `everburn-play` scenario still needs replacement or removal. Next: avoid the camp collision using a realistic approach and measure the four arrival bands and times before any balance decision.

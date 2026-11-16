@@ -373,6 +373,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   console.log('East Road camp approach:', JSON.stringify(approach));
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, `the real car stops and scoops at the camp: ${JSON.stringify(scoop)}`);
+  assert.equal(scoop.elapsedSeconds, scoop.ticks / 60, 'the scoop records its actual driving time');
   assert.ok(scoop.scoopGain > 24.9 && scoop.scoopGain <= 25, `the scoop restores 25 ember: ${JSON.stringify(scoop)}`);
   console.log('East Road camp scoop:', JSON.stringify(scoop));
   const fifth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2500);
@@ -421,15 +422,15 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(eleventh.nearestTownGate <= Math.hypot(eleventh.position.x - step.riderSafeWall.x, eleventh.position.z - step.riderSafeWall.z) + 0.01, 'the driver measures the real car position against the town gate');
   console.log('East Road 5.5 km drive:', JSON.stringify(eleventh));
 
-  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 25);
+  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 35);
   assert.ok(approachTown.along >= 6500, `the car follows the East Road toward Tin Town: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.driven >= 990 && approachTown.maxDistance < 20, `the car drives the next kilometre close to the road: ${JSON.stringify(approachTown)}`);
   assert.ok(approachTown.lowestEmber > 0, `the ember stays alight on the approach: ${JSON.stringify(approachTown)}`);
-  assert.ok(Math.abs(duel.state.speedMph) < 30, 'the driver can slow down for the town approach');
+  assert.ok(Math.abs(duel.state.speedMph) > 30, 'the driver maintains road speed before the town approach');
   assert.ok(approachTown.nearestTownGate < eleventh.nearestTownGate, 'the car gets closer to the gate');
   console.log('East Road 6.5 km drive:', JSON.stringify(approachTown));
 
-  const nearTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7000, 7200, 25);
+  const nearTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7000, 7200, 35);
   assert.ok(nearTown.along >= 7000, `the car follows the road to 7 km: ${JSON.stringify(nearTown)}`);
   assert.ok(nearTown.driven >= 490 && nearTown.maxDistance < 20, `the car stays on the road: ${JSON.stringify(nearTown)}`);
   assert.ok(nearTown.lowestEmber > 0, `the ember stays alight: ${JSON.stringify(nearTown)}`);
@@ -437,7 +438,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(nearTown.speedAtNearestTownGate, Math.abs(duel.state.speedMph), 'the drive records the real speed at its nearest gate position');
   console.log('East Road 7 km drive:', JSON.stringify(nearTown));
 
-  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 25, true);
+  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 35, true);
   assert.ok(gateApproach.along >= 7600, `the car follows the road toward the gate: ${JSON.stringify(gateApproach)}`);
   assert.ok(gateApproach.maxDistance < 20, `the car stays near the road: ${JSON.stringify(gateApproach)}`);
   assert.ok(gateApproach.nearestTownGate < nearTown.nearestTownGate, 'the car gets closer to the gate');
@@ -457,6 +458,9 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const emberBeforeForge = world.job.stepState.ember;
   const arrival = driveToForge(duel, step.destination.position);
   console.log('East Road forge arrival:', JSON.stringify(arrival));
+  const driveTicks = [exit, road, next, further, fourth, approach, scoop, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, approachTown, nearTown, gateApproach, gate, door, arrival].reduce((sum, segment) => sum + segment.ticks, 0);
+  console.log('East Road delivery minutes:', driveTicks / 3600);
+  assert.ok(driveTicks > 0, 'the delivery time comes from actual driving steps');
   assert.equal(arrival.done, true, `the real car delivers at the forge: ${JSON.stringify(arrival)}`);
   assert.equal(arrival.startEmber, emberBeforeForge, 'the forge drive records its starting ember');
   assert.equal(arrival.jolts.length, arrival.observedJoltCount - joltsBeforeForge,

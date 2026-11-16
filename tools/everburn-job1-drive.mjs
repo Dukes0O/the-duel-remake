@@ -84,7 +84,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
       if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
     }
-    // The town gate opens below 30 km/h. Start slowing well before reaching it.
+    // Keep road speed until the final approach, then prepare for the slow gate.
     const speedLimit = gateApproach && gateDistance < 200 ? Math.min(targetSpeedMph, 16) : targetSpeedMph;
     duel.setInput({throttle:Math.abs(state.speedMph) < speedLimit ? 0.8 : 0,
       brake:Math.abs(state.speedMph) > speedLimit + 3 ? 1 : 0,
@@ -121,7 +121,7 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
     duel.step(1 / 60);
     if ((world.job.stepState.scoopedBraziers || []).includes(brazier.id)) scoopGain = world.job.stepState.ember - emberBefore;
   }
-  return {distance, ticks, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
+  return {distance, ticks, elapsedSeconds:ticks / 60, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
 }
 
 // Drive into the forge bay and stop; the job itself decides whether delivery succeeds.
