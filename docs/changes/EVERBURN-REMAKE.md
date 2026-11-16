@@ -1663,3 +1663,20 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - The older ember-pot suite now exercises the real carry step at the Halfway Camp brazier: driving through and stopping for less than three seconds do not scoop; stopping for three seconds restores 25, records the relight and emits its event; the same brazier cannot be used twice. The focused section passed all four checks. No game event or sound cue changed.
 - Changed assertions, for Claude to review: the old expectation of an instant refill to 100 below 20 km/h is replaced by the remade job's stopped-for-three-seconds, plus-25, once-per-brazier rule. The old moving-car rejection remains. The complete old suite still fails earlier at its obsolete delivery drive; its remaining old hit and route checks also need migration. The lane tier remains incomplete as recorded above.
 - Codex decided: none. Removed: the obsolete instant-refill expectation. For Claude to run: the visual scenario, the two long drivers and the complete lane tier. For Claude to draw: the pot transfer and forge fire. Race fingerprints are unchanged by this test-only change.
+
+## Bed cold factor (16 November 2026)
+
+- The river bed cools the pot at twice the ordinary rate, under Claude's latest ruling. The unchanged Medium drives measured:
+
+| Way | Kilometres | Minutes | Rams | Scoops | Ember | Band |
+| --- | ---: | ---: | ---: | --- | ---: | --- |
+| East Road | 7.959 | 6.068 | 1 | Halfway | 58.298 | alive |
+| Plates | 6.170 | 9.785 | 0 | none | 32.309 | alive |
+| Salt pan | 9.396 | 8.039 | 0 | none | 46.403 | alive |
+| Bed | 9.474 | 10.415 | 0 | Wash | 35.597 | alive |
+| Bed without scoop | 9.430 | 10.229 | 0 | none | 13.240 | barely |
+
+- The plates figure also changes because that drive crosses the bed. The straight-across pot went out at 0.630 km. The bed drives exceed ten minutes.
+- Check: `node tools/test-everburn-job1.mjs` passed, including both unchanged bed drives and the real cold-rate check.
+- Changed assertions, for Claude to review: the measured bed-to-ordinary cooling ratio is 2.0 instead of 2.5, as Claude ruled. No new event or sound cue. Codex decided: none. Removed: the 2.5 bed factor.
+- For Claude to draw: the pot transfer and forge fire. For Claude to run: the memory-only browser scenario and the two long drivers. The older pot suite and final checks still need completion.

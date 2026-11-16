@@ -193,7 +193,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   state.speedMph = 80 / 1.609344;
   world.lastKmh = 80;
   const bedLoss = lossAt(bed);
-  assert.ok(Math.abs(bedLoss / ordinaryLoss - 2.5) < 1e-9, 'the bed cools 2.5 times as fast with no rough loss at 80 km/h');
+  assert.ok(Math.abs(bedLoss / ordinaryLoss - 2.0) < 1e-9, 'the bed cools twice as fast with no rough loss at 80 km/h');
   lossAt(bed);
   assert.equal(captions.filter(text => text === 'Cold air lies in the river bed. The pot cools fast down here.').length, 1);
   state.speedMph = 0;
