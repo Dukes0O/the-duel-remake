@@ -704,3 +704,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the speed check is new. Codex decided: use the existing 50 mph target on this clear stretch; Claude should review the drive.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the 35 mph target on this stretch. The old `everburn-play` scenario still needs replacement or removal. Next: measure all four route arrivals and times, then finish the camera, cover and scenario.
+## Larger land, road speed toward town (15 November 2026)
+
+- The Medium proof driver maintains its 50 mph target on the clear approach toward Tin Town, then slows for the gate. The test measures the real car's speed. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car held at least 45 mph for all 1,602 measured ticks on the 600 m approach and delivered 21.85 ember in 8.62 minutes. The required arrival is 70 or more, so the road band is not proved. Trials at 50 mph immediately after camp and before the bridge caused the ember to go out and were discarded. Race fingerprints were not checked in this round.
+- Changed assertions: none; the road-speed check is new. Codex decided: keep the existing 50 mph road target on the clear town approach; Claude should review the drive.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the 35 mph target on this stretch. The old `everburn-play` scenario still needs replacement or removal. Next: measure all four route arrivals and times, then finish the camera, cover and scenario.

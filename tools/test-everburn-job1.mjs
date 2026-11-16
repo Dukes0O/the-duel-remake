@@ -453,9 +453,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(nearTown.speedAtNearestTownGate, Math.abs(duel.state.speedMph), 'the drive records the real speed at its nearest gate position');
   console.log('East Road 7 km drive:', JSON.stringify(nearTown));
 
-  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 35, true);
+  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 50, true);
   assert.ok(gateApproach.along >= 7600, `the car follows the road toward the gate: ${JSON.stringify(gateApproach)}`);
   assert.ok(gateApproach.maxDistance < 20, `the car stays near the road: ${JSON.stringify(gateApproach)}`);
+  assert.ok(gateApproach.fastRoadSpeedTicks > 0, 'the car holds road speed before slowing for town');
   assert.ok(gateApproach.nearestTownGate < nearTown.nearestTownGate, 'the car gets closer to the gate');
   assert.ok(gateApproach.lowestEmber > 0, `the ember stays alight on this stretch: ${JSON.stringify(gateApproach)}`);
   console.log('East Road gate approach:', JSON.stringify(gateApproach));
