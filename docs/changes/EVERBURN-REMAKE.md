@@ -1930,3 +1930,17 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - The full Easy suite was stopped after 30 minutes, beyond its expected 26 minutes. All nine story jobs passed (The Everburn 9/10 and the other eight 10/10). The long-road Watching, Raiding and Hunting gas runs passed 10/10 each. The remaining five gas cases and the battle did not finish, so the full suite has no final result.
 - Changed assertions, for Claude to review: no existing assertions changed in this round; the payment checks were added. The earlier arrival and cue assertion changes are recorded above. Codex decided: none in this round; the smoothstep camera transition is recorded above. The cue remains `world.forge.catch` at five seconds. **Removed:** nothing in this round; the arrival cue and former picture 9 were removed as recorded above.
 - For Claude to run: the full Easy suite, the browser scenario and the lane tier. The browser scenario's page expressions were parsed in the earlier round; it has not been run in Chrome.
+
+## The merge (Claude, 16 November 2026)
+
+- **Claude's own code in this merge:** `src/world/forge-look.js` (new: the forge and its crane, their plain solid shapes,
+  the crane's clock); `src/world/ember-pot.js` (the pot off the car; the coal drawing shared); `src/world/scablands-scene.js`
+  (the forge stands in Tin Town, watches the car and is told of the hand-over); `src/world/scablands-solids.js` (three solids
+  join Tin Town's); `src/render3d.js` (the pot's place noted for the crane; the pot leaves the car at the hand-over; the
+  mirror put away during the hold); `src/world-job-camera.js` (the standing view's numbers).
+- **Sound:** no new cue. `world.forge.catch` moved from arrival to 5.0 s into the hold. Nobody has heard it.
+- **Removed at the merge:** the plain flame and the flying pot in `src/world/scablands-scene.js`, replaced by the forge in the
+  same change. Nothing else beyond what the notes above list.
+- **What the lane tier found, and Claude's lesson from it:** seven older suites that no short round had run. The rule that
+  would have caught them is now in `docs/CODEX_PLAYBOOK.md` section 7, and the lesson about a drawn moment that nobody sees
+  in `docs/ART_LINE.md` ("Moments").

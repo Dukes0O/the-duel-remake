@@ -479,7 +479,7 @@ Codex's last table, with riders keeping to their road and the bed's cold at twic
   rule is the right one.
 - All nine things are with Codex. Then a confirmation review, the long tests, and the merge, still hidden. Then Kyle's try.
 
-## The forge, drawn, and two faults found at the merge (Claude, 16 November 2026, morning): not merged yet
+## The forge, drawn, and two faults found at the merge (Claude, 16 November 2026, morning)
 
 **The forge and its crane (Claude's drawing, `src/world/forge-look.js`).** A hearth of salvaged brick with a chimney of oil
 drums, a bellows, a quench drum, an anvil and a windbreak of sheet, just outside the bay's ring on its north side. Beside it a
@@ -512,7 +512,64 @@ that cannot reach it, that is a fault in the job and comes back to Claude.
 made strict): `test-ember-side-jobs`, `test-everburn-play-fixes-a`, `test-p4-audio`, `test-scablands-map`,
 `test-scablands-size`. The list with reasons goes in the result below when the job merges.
 
-Codex builds the hold, its camera and the Easy driver in lane `everburn-job1` (brief: both faults, small steps).
+Codex built the hold, its camera and the Easy driver in lane `everburn-job1` in eight short runs.
+
+## Job 1 result (Codex built it in about 260 short runs with three Codex reviews; Claude designed, ruled, drew and drove it, 16 November 2026): merged, switches off, waiting for Kyle's try
+
+Look sheet `docs/board/looks/everburn-remake/round-3.jpg` with Claude's review. Full notes: `docs/changes/EVERBURN-REMAKE.md`.
+
+- **Built:** everything in "Job 1 remade", "Job 1 on the larger land" and "what the drive adds", as later ruled: the yard on
+  the land for this job, the start at its gate, Cinder and the pot; three braziers with smoke, a scoop of 25 once each and a
+  relight always; two barricades with riders that keep to their road; the furnace's watch on the plates with cover buttes;
+  the pan's wind, the Pipe's speed, the bed's cold and firm ground; Tin Town's gate, the forge and its crane, the bay and pay
+  by the ember; the nine-second hold with its standing camera; a world job's own screen; the map's "What you know"; the
+  camera in the air; only remade jobs offered.
+- **Claude's third drive (the ending, by hand, in real time, twice):** with a bright ember (82) and one barely alive (14).
+  The words, the standing view, the hook taking the pot, the ember landing and the fire were seen on the real screen, and
+  the results came up after them. Three changes followed from it and are in: the standing view nearer and lower (7 m beyond
+  the car, 4 m to the side, 3.6 m up, aimed 3 m up two thirds of the way to the hearth), the pot no longer drawn on the car
+  once it is handed over (it was drawn twice), the mirror put away during the hold.
+- **The Easy drives:** Hot Delivery 10 of 10 on Easy with a driver that does what the job asks (it was 0 of 10 with the old
+  road's driver, which sat at the yard's gate for 3,000 s). The bar is unchanged. The suite drives one job with `--job`.
+- **No save field is added or changed. Nothing changes for players with switches as they are.**
+- **Changed assertions, reviewed by Claude (rule 18):**
+  - `test-scablands-regions`: the river bed's ground figures, [.60, .75, 70] to [.80, .75, 80] (the bed ruled firm and fast).
+  - `test-ember-pot`: rewritten to the ruled numbers (cold over fifteen minutes; a hit at most 15, a fall or a dead stop up to
+    40, each now proved through a real fall off the river's bank and a real crash at 170 km/h; a scoop after three seconds
+    stopped, 25, once each; a relight always). Its old delivery, outage and Easy drives tested an 800 m road that no longer
+    exists and are removed; the remade job's own suite has their meaning.
+  - `test-ember-screens`: after two finished jobs the open job and its button were 1 and are 0, and the board's three jobs
+    are not offered, because none is remade; new checks prove that adding a job to the one list opens it on both screens.
+  - `test-everburn-line-audit`: job 1's opening lines are the pickup's three; the old second line is kept by its id and
+    excused from "every line is used". That one line is the only thing loosened, and it is a line that is no longer said.
+  - `test-everburn-job1`: the job was done at arrival and is done 9.0 s after it (checked at 8.9 s and 9.0 s, same result
+    and pay); the forge's cue sounded at arrival and sounds once at 5.0 s, held equal to the crane's own clock; the plain
+    flame's and flying pot's checks are replaced by the crane's (the pot stands at the car, is lifted, ends over the hearth;
+    the forge is cold until the ember lands; a bright fire stands taller than one barely alive; the three solids exist and
+    none stands in the bay).
+  - `tools/scenarios/everburn-play.mjs` is removed, replaced by `everburn-job1`, whose picture 9 is now two pictures in the hold.
+  - Seven older suites, corrected by Claude at the merge after the lane tier found them failing:
+    - `test-ember-side-jobs`: first proves that none of the three board jobs is offered as things stand, then counts every
+      Everburn job as remade so that its checks of the board's own workings still run.
+    - `test-everburn-play-fixes-a`: the yard's words after the story, "Replay any job from the Story Wall." to "Visit the
+      Story Wall."
+    - `test-p4-audio`: `world.furnace.horn`, `world.tintown.gate` and `world.forge.catch` are left out of the old sound pin,
+      as the ember's three cues were; the pinned hash is unchanged.
+    - `test-scablands-map`: the barricade that holds the Girder Bridge is found by where it stands (the first barricade is
+      now at the Halfway Camp). The furnace's sight of the plates way and the East Road was "over 1,000 m each"; from its own
+      watch, with the buttes, it is 625 m and 649 m as the ways are sampled (498 m and 633 m by the reviewer's finer steps).
+      The check now asks for a few hundred metres of each (over 300 m) and that the plates way has cover for most of its
+      length. This is the one threshold lowered, and it follows the furnace's move and the buttes.
+    - `test-scablands-size`: the Halfway Camp's brazier, the two riders' starts, Cinder and the yard's brazier stand beside a
+      road's own line and leave the straight-share rule; each is checked instead within 1 m of the place worked out from the
+      moved land (the first version checked distance only; the reviewer found that weak and it was made exact).
+    - `test-world-job-mode`: the first marker is Cinder and then the forge; a first win offers no job that is not remade,
+      and names the next job when it is counted as remade.
+    - `test-forge-hold-camera`: Claude's own numbers for the standing view replace the first ones.
+- **Short of right:** see the look review. **For Claude still:** an end-to-end drive of the bends, the bridge, the Pipe,
+  the Steps and the bed; the forge's cue has not been heard.
+- **Before any switch goes on:** Kyle's own try on a private address (rule 18, "anything he asked to try first"), the frame
+  check on Performance, and the nightly full check.
 
 ## Saved progress
 
