@@ -45,7 +45,15 @@ async function connect() {
     if (result.exceptionDetails) throw Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
     return result.result.value;
   };
-  return {send, evaluate, close: () => socket.close()};
+  // A page that is hidden draws no frames, and the game stands still. Something on the laptop can minimise this window during a
+  // long drive (it happened on 16 November 2026, four minutes into a bore), so it is put back before every step.
+  const restore = async () => {
+    try {
+      const {windowId, bounds} = await send('Browser.getWindowForTarget');
+      if (bounds?.windowState && bounds.windowState !== 'normal') await send('Browser.setWindowBounds', {windowId, bounds: {windowState: 'normal'}});
+    } catch { /* an older Chrome without the call: carry on */ }
+  };
+  return {send, evaluate, restore, close: () => socket.close()};
 }
 
 const [command, ...steps] = process.argv.slice(2);
@@ -71,6 +79,7 @@ if (command === 'start') {
     await writeFile(join(here, `${name}.jpg`), Buffer.from(data, 'base64'));
   };
   for (const step of steps) {
+    await browser.restore();
     const [kind, ...rest] = step.split(':');
     if (kind === 'hold' || kind === 'free') {
       const codes = kind === 'hold' ? rest[0].split('+') : [], ms = Number(rest[kind === 'hold' ? 1 : 0]);
