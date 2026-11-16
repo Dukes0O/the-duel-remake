@@ -1,5 +1,20 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Fifteen-minute rules, bed measurement (16 November 2026)
+
+- The seeded Medium driver targeted 28 mph, followed the bed, and scooped at the Wash. It stopped at the forge with the ember out, so the job did not complete. Five jolts had rider contact. This misses the 30 to 55 band. The target speed is not yet proved to match the bed's ground allowance. No game event or sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| East Road | 7.908 | 8.337 | 1 | Halfway Camp | 49.261 |
+| Plates | 6.160 | 8.634 | 5 observed contacts | None | 0 |
+| Salt pan | 9.394 | 13.745 | 0 | None | 8.367 |
+| Bed | 9.425 | 13.959 | 5 observed contacts | Wash | 0 |
+
+- Checks: `EVERBURN_BED_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the other three drives. The measurement includes the distance driven to the Wash fire. Race fingerprints, lane tier and build remain for the last round.
+- Changed assertions: none. Codex decided: use the existing 28 mph route controller for this measurement; Claude should review its suitability for the bed. For Claude to run: the browser scenario and final checks, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: the bed without a scoop and straight-across drive, camera, cover and scenario.
+
 ## Fifteen-minute rules, salt-pan measurement (16 November 2026)
 
 - The seeded Medium driver targets 28 mph on the salt road and 20 mph near the Pipe, as the Pipe requires at most 40 km/h. The real car reached at most 37.032 km/h within 85 m of the crossing. It reached the forge with 8.367 ember, below the 55 to 69 band. No game event or sound cue was added.

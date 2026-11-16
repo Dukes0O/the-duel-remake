@@ -733,6 +733,63 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
 
 }
 if (process.env.EVERBURN_SALT_ONLY === '1') process.exit(0);
+
+// Measure the bed from pickup, including the Wash scoop and the actual forge approach.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, pickup).loaded, 'the bed driver collects the pot');
+  const exit = driveThroughYardGate(duel, yardPlan().gate);
+  assert.ok(exit.along >= 20, 'the bed driver leaves through the yard gate');
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const wash = step.braziers.find(item => item.id === 'wash-brazier');
+  const washAlong = nearestOnLine(route, wash.position.x, wash.position.z).along;
+  const beforeWash = [];
+  for (let along = 500; along < washAlong - 50; along += 500) beforeWash.push(along);
+  beforeWash.push(washAlong - 30);
+  const opening = driveMeasuredStretches(duel, route, beforeWash, 28);
+  let scoop = null, remaining = null, gateDrive = null, arrival = null;
+  if (opening.reachedAll) {
+    scoop = driveToBrazier(duel, wash);
+    if (scoop.scooped) {
+      const gate = step.riderSafeWall;
+      const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
+      const ends = [];
+      for (let along = washAlong + 500; along < gateAlong - 150; along += 500) ends.push(along);
+      ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
+      remaining = driveMeasuredStretches(duel, route, ends, 28);
+      if (remaining.reachedAll) {
+        const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+        const gateLine = [{x:car.x, z:car.z},
+          {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
+          {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
+          {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
+        gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
+        if (gateDrive.along >= pathLength(gateLine) - 1) arrival = driveToForge(duel, step.destination.position);
+      }
+    }
+  }
+  const stretches = [...opening.stretches, ...(remaining?.stretches || []), ...(gateDrive ? [gateDrive] : [])];
+  const pot = duel.state.arena.worldJob.job.stepState;
+  const measurement = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + (scoop?.driven || 0) + (arrival?.driven || 0)) / 1000,
+    minutes:(exit.ticks + stretches.reduce((sum, item) => sum + item.ticks, 0) + (scoop?.ticks || 0) + (arrival?.ticks || 0)) / 3600,
+    rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
+    scoops:pot.scoopedBraziers || [], arrival:arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5 ? pot.ember : null,
+    ember:pot.ember, openingReached:opening.reachedAll, scoop, remainingReached:remaining?.reachedAll ?? false,
+    last:(remaining?.stretches || opening.stretches).at(-1), forge:arrival};
+  console.log('Bed measurement:', JSON.stringify(measurement));
+  assert.equal(measurement.ember, pot.ember, 'the measurement reads the actual pot');
+  assert.ok(opening.reachedAll && scoop?.scooped && remaining?.reachedAll, 'the driver reaches and scoops at the Wash and follows the bed');
+  assert.ok(arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the driver stops at the forge');
+  assert.equal(measurement.arrival, pot.ember, 'the arrival records the actual ember even when it is out');
+  assert.equal(measurement.rams, arrival.observedJoltCount, 'observed rider contacts account for the actual jolts');
+}
+if (process.env.EVERBURN_BED_ONLY === '1') process.exit(0);
+
 // The real job requests the gate only for a car approaching slowly.
 {
   const world = createWorldJob(definition), events = [], gate = step.riderSafeWall;
