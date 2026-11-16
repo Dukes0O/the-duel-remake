@@ -235,9 +235,10 @@ test('named Snow timing rejects the legacy Woods course override without removin
 
 test('saved progress scenarios always run and temporary player setup does not qualify', async () => {
   const names = ['career-writer-lock','preview-storage','lab-restore','town-migration',
-    'custom-save','custom-backup','custom-archive','lab-view'];
+    'custom-save','custom-backup','custom-archive','warlord-reward','warlord-pay','warlord-format',
+    'grand-prix-pay','drive-lesson-run','earned-cars','town-opens','future-pay','future-reward','lab-view'];
   const selected = await suite.changedSelection(names, 'HEAD');
-  assert.deepEqual(selected, names.slice(0, -1).map(name => ({name, reason:'guards saved progress'})));
+  assert.deepEqual(selected, names.slice(0, -1).map(name => ({name, reason:'guards saved progress or pay'})));
   assert.equal(suite.guardsSavedProgress('lab-view'), false);
   const discovered = await suite.namedScenarios();
   const rows = await suite.changedSelection(discovered, 'HEAD');

@@ -39,8 +39,8 @@ export const SCENARIO_AREAS = [
   {prefixes:['earned-cars'], paths:['src/earned-cars-ui.js','src/unlock-vehicles.js']},
 ];
 // These scenarios guard saved progress, including backups and migration.
-export const guardsSavedProgress = name => name.startsWith('career-') || name === 'preview-storage' ||
-  /save|storage|backup|restore|archive|migrat/.test(name);
+export const guardsSavedProgress = name => name.startsWith('career-') || ['preview-storage','warlord-format','drive-lesson-run','earned-cars','town-opens'].includes(name) ||
+  /save|storage|backup|restore|archive|migrat|pay|reward/.test(name);
 const shared = new Set(['src/game.js','src/main.js','src/render3d.js','src/app.js','src/config.js']);
 const matchesPath = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
 
@@ -70,7 +70,7 @@ export async function changedSelection(names, commit, {root=PROJECT_ROOT, read=r
   const selected = [];
   for (const name of names) {
     const areas = SCENARIO_AREAS.filter(area => area.prefixes.some(prefix => name.startsWith(prefix)));
-    let reason = guardsSavedProgress(name) ? 'guards saved progress' : isShared ? 'shared file changed' : null;
+    let reason = guardsSavedProgress(name) ? 'guards saved progress or pay' : isShared ? 'shared file changed' : null;
     if (!reason && await importsChanged('tools/scenarios/' + name + '.mjs')) reason = 'scenario or helper changed';
     if (!reason && areas.some(area => changed.some(file => area.paths.some(entry => matchesPath(file, entry))))) reason = 'area changed';
     if (!reason && !areas.length) reason = 'no area';
