@@ -16,6 +16,32 @@ import {createDigGroundLook, createDigNearGround, followBorerSlope, poseBorerSlo
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
 
+// Each spoil load changes only its neighbourhood, not the whole Dig window.
+{
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight:(_x,z)=>z>=6 ? 20 : 0});
+  let borer = {...createBorerState({z:10}), started:true};
+  let calls = 0;
+  const counted = {...ground, heightAt(x,z) { calls++; return ground.heightAt(x,z); }};
+  const near = createDigNearGround(new THREE.MeshBasicMaterial(), counted);
+  const view = createGroundView({group:new THREE.Group(), groundEdit:ground});
+  near.follow(0, 10); view.update(); calls = 0;
+  for (let i=0; i<100; i++) {
+    borer = stepBorer(borer, {thrust:1/3}, ground, 'rock', 1/60).state;
+    view.update();
+    for (const bounds of view.changedBounds) near.refreshBounds(bounds);
+    const position = near.geometry.attributes.position;
+    for (const bounds of view.changedBounds) for (let j=0; j<position.count; j++) {
+      const x=position.getX(j)+near.centreX, z=position.getZ(j)+near.centreZ;
+      if (x>=bounds.minX && x<=bounds.maxX && z>=bounds.minZ && z<=bounds.maxZ)
+        assert.ok(Math.abs(position.getY(j) - (ground.heightAt(x,z)+.025)) < .02);
+    }
+  }
+  assert.ok(borer.distanceM > 0.8, 'Mabel cuts during the 100 steps.');
+  assert.ok(calls < 2000, `100 cutting steps sample ${calls} heights, fewer than 2000`);
+  console.log(`100 cutting steps: ${calls} near-ground height samples`);
+  near.dispose(); view.dispose();
+}
+
 // The Dig supplies both the hills and the land's photographs to its ground shader.
 const loadedGroundPhotos=[];
 const digLook=createDigGroundLook({texture:new THREE.Texture(),box:{x0:0,z0:0,width:1,depth:1}},

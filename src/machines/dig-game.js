@@ -503,7 +503,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       camera.lookAt(active.x+150*forwardX,active.y+12,active.z+150*forwardZ);
       nearGround.follow(active.x+150*forwardX,active.z+150*forwardZ);
     } else nearGround.follow(active.x,active.z);
-    if(groundView.update())nearGround.refresh();
+    if(groundView.update()) for(const bounds of groundView.changedBounds) nearGround.refreshBounds(bounds);
     effects.update(elapsed);
     const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:

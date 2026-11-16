@@ -57,15 +57,26 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
     throw new TypeError('Ground view needs a Three.js group and ground edit layer.');
   const ownedMaterial = material || new THREE.MeshStandardMaterial({vertexColors: true, roughness: 1});
   const meshes = new Map(), snapshots = new Map();
-  let disposed = false;
+  let disposed = false, changedBounds = [];
   function update() {
     if (disposed) return 0;
     const rows = groundEdit.toSave().chunks, live = new Set();
+    changedBounds = [];
     let changed = 0;
     for (const row of rows) {
       const key = `${row.x},${row.z}`;
       live.add(key);
       let mesh = meshes.get(key);
+      const previous = snapshots.get(key);
+      let minX = SIDE, minZ = SIDE, maxX = -1, maxZ = -1;
+      for (let i = 0; i < row.delta.length; i++) {
+        if (row.delta[i] === (previous?.delta[i] ?? 0)) continue;
+        const x = i % SIDE, z = Math.floor(i / SIDE);
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+      }
+      if (maxX >= 0) changedBounds.push({minX: row.x * SIDE + minX - 1, maxX: row.x * SIDE + maxX + 1,
+        minZ: row.z * SIDE + minZ - 1, maxZ: row.z * SIDE + maxZ + 1});
       if (!mesh) {
         mesh = new THREE.Mesh(makeChunk(row, groundEdit.heightAt), ownedMaterial);
         mesh.name = `Scablands edited ground ${key}`; mesh.receiveShadow = true; mesh.userData.chunk = {x: row.x, z: row.z};
@@ -77,6 +88,8 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
       snapshots.set(key, {delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
     }
     for (const [key, mesh] of meshes) if (!live.has(key)) {
+      const [x, z] = key.split(",").map(Number);
+      changedBounds.push({minX:x * SIDE - 1, maxX:(x + 1) * SIDE + 1, minZ:z * SIDE - 1, maxZ:(z + 1) * SIDE + 1});
       group.remove(mesh); mesh.geometry.dispose(); meshes.delete(key); snapshots.delete(key); changed++;
     }
     return changed;
@@ -93,5 +106,5 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
     for (const mesh of meshes.values()) { group.remove(mesh); mesh.geometry.dispose(); }
     meshes.clear(); snapshots.clear(); if (!material) ownedMaterial.dispose();
   }
-  return Object.freeze({update, dispose, get chunkCount() { return meshes.size; }});
+  return Object.freeze({update, dispose, get changedBounds() { return changedBounds; }, get chunkCount() { return meshes.size; }});
 }

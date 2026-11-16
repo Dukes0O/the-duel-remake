@@ -139,8 +139,8 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
   let centreI = NaN, centreJ = NaN;
   const cornerHeight = (i, j) => heightAt(i * cellX, j * cellZ) + lift;
 
-  function shade() {
-    for (let iz = 0; iz < down; iz++) for (let ix = 0; ix < across; ix++) {
+  function shade(x0 = 0, x1 = cellsX, z0 = 0, z1 = cellsZ) {
+    for (let iz = z0; iz <= z1; iz++) for (let ix = x0; ix <= x1; ix++) {
       const at = iz * across + ix, h = heights[at];
       positions[at * 3 + 1] = h;
       // The slope from the corners either side (one side at the window's edge).
@@ -186,6 +186,34 @@ export function createNearGround({material, heightAt, name = 'Scablands near gro
       const i = centreI, j = centreJ;
       faceHeights.clear();
       centreI = NaN; centreJ = NaN; place(i, j);
+    },
+    // Re-sample only edited corners and their neighbours. Face cells have their
+    // own finer samples, so invalidate only those touched by the edit.
+    refreshBounds({minX, maxX, minZ, maxZ}) {
+      if (Number.isNaN(centreI)) return;
+      const originI = centreI - cellsX / 2, originJ = centreJ - cellsZ / 2;
+      const x0 = Math.max(0, Math.floor(minX / cellX - originI));
+      const x1 = Math.min(cellsX, Math.ceil(maxX / cellX - originI));
+      const z0 = Math.max(0, Math.floor(minZ / cellZ - originJ));
+      const z1 = Math.min(cellsZ, Math.ceil(maxZ / cellZ - originJ));
+      if (x0 > x1 || z0 > z1) return;
+      for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++)
+        heights[z * across + x] = cornerHeight(originI + x, originJ + z);
+      shade(Math.max(0, x0 - 1), Math.min(cellsX, x1 + 1),
+        Math.max(0, z0 - 1), Math.min(cellsZ, z1 + 1));
+      let facesChanged = false;
+      for (const key of faceHeights.keys()) {
+        const [i, j] = key.split(',').map(Number);
+        if ((i + 1) * cellX >= minX && i * cellX <= maxX &&
+            (j + 1) * cellZ >= minZ && j * cellZ <= maxZ) {
+          faceHeights.delete(key); facesChanged = true;
+        }
+      }
+      // Face edges also depend on the neighbouring coarse corners.
+      if (!facesChanged) for (let z = Math.max(0, z0 - 1); z < Math.min(cellsZ, z1 + 1) && !facesChanged; z++)
+        for (let x = Math.max(0, x0 - 1); x < Math.min(cellsX, x1 + 1); x++)
+          if (isFaceCell((originI + x) * cellX, (originJ + z) * cellZ)) { facesChanged = true; break; }
+      if (facesChanged) updateFaces();
     },
     // The drawn height at (x, z), read from this window's own corners, for a point inside it; null outside.
     heightAtDrawn(x, z) {

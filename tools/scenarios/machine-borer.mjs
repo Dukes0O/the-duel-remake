@@ -115,6 +115,9 @@ const page = {
     }
   })()`,
   status: `(() => { const s = window.__theDig.simulation, b = s.borer; return {elapsed:s.elapsed, distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message, hidden:document.hidden}; })()`,
+  framePace: `(() => new Promise(resolve => { const start=performance.now(), elapsed=window.__theDig.simulation.elapsed; let frames=0;
+    function tick() { frames++; if(performance.now()-start>=5000) resolve({frames,wallSeconds:(performance.now()-start)/1000,elapsedSeconds:window.__theDig.simulation.elapsed-elapsed,lever:window.__theDig.simulation.borer.lever,stalled:window.__theDig.simulation.borer.stalled}); else requestAnimationFrame(tick); }
+    requestAnimationFrame(tick); }))()`,
   startVisibility: `(() => { const d=window.__theDig, start=performance.now();
     const record=() => d.paceVisibility.events.push({wallSeconds:(performance.now()-start)/1000, hidden:document.hidden, elapsed:d.simulation.elapsed, distance:d.simulation.borer.distanceM});
     d.paceVisibility={events:[],record}; document.addEventListener('visibilitychange',record); record(); return true; })()`,
@@ -174,7 +177,7 @@ async function cutUntil(context, metres) {
       if (state.stalled) recovering = true;
       if (recovering && !state.stalled && state.lever <= 0) recovering = false;
       const wanted = recovering ? (state.lever > 0 ? 'KeyS' : null) :
-        state.lever < 0.30 ? 'KeyW' : state.lever > 0.32 ? 'KeyS' : null;
+        state.lever < 0.325 ? 'KeyW' : state.lever > 0.335 ? 'KeyS' : null;
       if (wanted !== held) {
         if (held) await key(context, held, 'keyup');
         held = wanted;
@@ -285,6 +288,10 @@ export async function run(context) {
   // Keep boring even if the first push was lost. The visibility measurements
   // at 45 m are independent evidence and must be saved before an assertion
   // about that push can stop the scenario.
+  await cutUntil(context, 10);
+  measurements.framePace = await context.evaluate(page.framePace);
+  await persist();
+  console.log(`Five-second cutting sample: ${JSON.stringify(measurements.framePace)}`);
   await cutUntil(context, 20);
   await holdUntil(context, 'KeyS', page.leverZero, 'pull the lever back', 10000);
   const cover = await context.evaluate(page.cover);
