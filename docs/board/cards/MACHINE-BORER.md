@@ -283,6 +283,15 @@ Commit a8d1d3847 in a visible window with real keys: 300 m of bore, from the fac
 
 Not heard: her sounds. Not seen: a bend, the far portal.
 
+**The pace fault, found (16 November 2026).** It is not her pace. Driven again at a3ad0f98b with the page's own clocks
+recorded: while she cuts, the Dig draws about six frames a second (29 in 5 s, the worst 205 ms) where it draws 60 standing
+still, and the simulation's clock runs at half the wall clock, a third once the tunnel is long. Her advance per simulated
+second is the ruled 0.5 m. A processor profile put 84% of the time in the near ground being laid again in full
+(`src/world/near-ground.js`, `refresh` and `place`) every frame in which she cuts, each corner asking the land for its
+height. Claude's first figure also included four minutes with the window minimised, and so proved nothing by itself. Codex
+has the profile: a cut re-lays only the corners it touched. Smooth play is the first objective; she does not merge at six
+frames a second. The far mouth and the daylight sentence are fixed in Codex's tests and will be seen once she bores at speed.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
