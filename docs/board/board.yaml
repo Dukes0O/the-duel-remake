@@ -550,7 +550,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane `qa-checks`, since 16 November 2026"
     needs: []
     locks: ["tools-test-runner"]
     details: "docs/board/cards/QA-CHECKS-BY-CARD.md"
@@ -560,7 +561,8 @@ tasks:
     owner: "codex"
     lane: "TOOLS"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane `qa-nightly`, since 16 November 2026"
     needs: []
     locks: ["tools-full-check"]
     details: "docs/board/cards/QA-NIGHTLY-NEWS.md"
