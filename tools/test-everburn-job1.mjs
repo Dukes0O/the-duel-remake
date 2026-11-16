@@ -202,6 +202,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 28);
   assert.ok(approach.reachedAll, 'the car reaches the Wash');
   const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
+  const ruledBed = process.env.EVERBURN_BED_RULED === '1';
   if (!skipWash) assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
   else assert.ok(!(duel.state.arena.worldJob.job.stepState.scoopedBraziers || []).includes(wash.id),
     'the car passes the Wash without a scoop');
@@ -217,7 +218,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const bedLine = [{x:car.x, z:car.z}, ...route.bed];
   const ends = [];
   for (let along = 500; along < pathLength(bedLine) - 50; along += 500) ends.push(along);
-  const drive = driveMeasuredStretches(duel, bedLine, ends, 60 / 1.609344);
+  const drive = driveMeasuredStretches(duel, bedLine, ends, (ruledBed ? 80 : 60) / 1.609344);
   const pot = duel.state.arena.worldJob.job.stepState;
   console.log('Bed toward the Steps:', JSON.stringify({reached:drive.reachedAll, last:drive.stretches.at(-1),
     length:pathLength(bedLine), ember:pot.ember, jolts:pot.joltCount ?? 0}));
@@ -241,7 +242,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(riderPursuit.distance <= 120, 'the rider begins pursuit within its approach range');
   assert.ok(riderPursuit.heightDifference > 3, 'the rider begins pursuit from a different floor');
   assert.equal(pot.joltCount ?? 0, 0, 'the car reaches the Steps approach without a jolt');
-  const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, 60 / 1.609344);
+  const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, (ruledBed ? 80 : 60) / 1.609344);
   console.log('Steps approach:', JSON.stringify(end));
   assert.ok(end.along >= pathLength(bedLine) - 25, 'the car reaches the end of the bed line');
   const here = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -254,7 +255,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     const currentPot = duel.state.arena.worldJob.job.stepState;
     assert.ok(!(currentPot.scoopedBraziers || []).includes(wash.id), 'the Wash remains unused at the top of the Steps');
     assert.equal(currentPot.joltCount ?? 0, 0, 'the no-scoop car climbs without a jolt');
-    assert.ok(currentPot.ember > 0 && currentPot.ember < 50, 'the actual pot remains lit but has cooled on the way');
+    if (!ruledBed) assert.ok(currentPot.ember > 0 && currentPot.ember < 50, 'the actual pot remains lit but has cooled on the way');
     console.log('No-scoop Steps:', JSON.stringify({ember:currentPot.ember, jolts:currentPot.joltCount ?? 0}));
   }
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -263,7 +264,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   console.log('Rider after Steps:', JSON.stringify({distance:stepsRiderDistance, pursuing:riderAtSteps.pursuing,
     position:riderAtSteps.position, car:afterSteps}));
   assert.ok(Number.isFinite(stepsRiderDistance), 'the real rider has a measurable distance after the Steps');
-  assert.ok(riderAtSteps.pursuing && stepsRiderDistance < 120,
+  if (!ruledBed) assert.ok(riderAtSteps.pursuing && stepsRiderDistance < 120,
     'the rider is already close and pursuing at the top of the Steps');
   const gate = definition.steps[0].riderSafeWall;
   const bypassTrial = process.env.EVERBURN_BED_TOWN_BYPASS === '1';
@@ -277,11 +278,11 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     {x:afterSteps.x + dx / length * 350 - dz / length * bypass * (oppositeExitTrial ? -1 : 1),
       z:afterSteps.z + dz / length * 350 + dx / length * bypass * (oppositeExitTrial ? -1 : 1)}, route.town] : directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
     [{x:afterSteps.x, z:afterSteps.z},
-      {x:route.exit.x + (mediumTrial ? 600 : 300), z:route.exit.z},
+      {x:route.exit.x + ((mediumTrial || ruledBed) ? 600 : 300), z:route.exit.z},
       {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
   const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
-  const townSpeed = (fastTrial ? 80 : (safeTrial || directTrial || bypassTrial || oppositeExitTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
+  const townSpeed = (ruledBed ? 48 : fastTrial ? 80 : (safeTrial || directTrial || bypassTrial || oppositeExitTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
   const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
@@ -296,7 +297,10 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     process.exit(0);
   }
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
-  if (bypassTrial) {
+  if (ruledBed) {
+    assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
+      'the ruled exit records the actual jolts');
+  } else if (bypassTrial) {
     assert.equal(townDrive.jolts.length, 1, 'the bypass meets one rider in the first 400 m');
     assert.ok(townDrive.jolts[0].riders.some(rider => rider.id === 'ash-rider-2'), 'the rider is in contact');
   } else if (directTrial) {
@@ -312,11 +316,11 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const continuation = driveAlongRoad(duel, townLine, 800, 7200, townSpeed);
   console.log('Rider beyond the Steps:', JSON.stringify(continuation));
   assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
-  if (process.env.EVERBURN_BED_NO_SCOOP_FAST_EXIT === '1' || process.env.EVERBURN_BED_SCOOP_FAST_EXIT === '1') {
-    assert.ok(mediumTrial, 'this trial uses the 70 km/h exit');
+  if (ruledBed || process.env.EVERBURN_BED_NO_SCOOP_FAST_EXIT === '1' || process.env.EVERBURN_BED_SCOOP_FAST_EXIT === '1') {
+    assert.ok(ruledBed || mediumTrial, 'this trial uses the selected exit speed');
     const exitPot = duel.state.arena.worldJob.job.stepState;
-    assert.equal(exitPot.joltCount ?? 0, 0, 'the rider has not rammed the car after 800 m');
-    if (skipWash) assert.equal(exitPot.ember, 0, 'the unscooped ember is out on the rough exit');
+    if (!ruledBed) assert.equal(exitPot.joltCount ?? 0, 0, 'the rider has not rammed the car after 800 m');
+    if (skipWash && !ruledBed) assert.equal(exitPot.ember, 0, 'the unscooped ember is out on the rough exit');
     const towardGate = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, townSpeed, true);
     assert.ok(towardGate.along >= pathLength(townLine) - 150, 'the car reaches the town approach');
     const gateCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
@@ -326,6 +330,8 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
       {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
     const gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
     assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the car passes through the town gate');
+    const beforeForge = {scoops:[...(duel.state.arena.worldJob.job.stepState.scoopedBraziers || [])],
+      jolts:duel.state.arena.worldJob.job.stepState.joltCount ?? 0};
     const arrival = driveToForge(duel, definition.steps[0].destination.position, 18000);
     const finalPot = duel.state.arena.worldJob.job.stepState;
     const kilometres = (yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) +
@@ -333,14 +339,15 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
       townDrive.driven + continuation.driven + towardGate.driven + gateDrive.driven + arrival.driven) / 1000;
     console.log('Fast exit at forge:', JSON.stringify({kilometres,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-      jolts:finalPot.joltCount ?? 0, scoops:finalPot.scoopedBraziers || [], ember:finalPot.ember, arrival}));
+      jolts:ruledBed ? beforeForge.jolts : finalPot.joltCount ?? 0, scoops:ruledBed ? beforeForge.scoops : finalPot.scoopedBraziers || [],
+      ember:arrival.fire?.ember ?? finalPot.ember, arrival}));
     assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
-    assert.deepEqual(finalPot.scoopedBraziers || [], skipWash ? [] : [wash.id], 'the recorded scoops match the drive');
-    assert.equal(finalPot.joltCount ?? 0, 0, 'the car reaches the forge without a jolt');
-    assert.equal(finalPot.ember, 0, 'the ember is out at the forge on this fast exit');
-    if (!skipWash) assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
+    assert.deepEqual(ruledBed ? beforeForge.scoops : finalPot.scoopedBraziers || [], skipWash ? [] : [wash.id], 'the recorded scoops match the drive');
+    if (!ruledBed) assert.equal(finalPot.joltCount ?? 0, 0, 'the car reaches the forge without a jolt');
+    if (!ruledBed) assert.equal(finalPot.ember, 0, 'the ember is out at the forge on this fast exit');
+    if (!skipWash && !ruledBed) assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
       'the scooped pot loses more than 50 on the first 800 m of rough ground');
-    assert.equal(arrival.done, finalPot.ember > 0, 'the forge accepts only a lit pot');
+    assert.equal(arrival.done, (arrival.fire?.ember ?? finalPot.ember) > 0, 'the forge accepts only a lit pot');
     process.exit(0);
   }
   if (fastTrial) {

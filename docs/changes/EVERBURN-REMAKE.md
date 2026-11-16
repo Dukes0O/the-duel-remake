@@ -1389,3 +1389,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Codex decided: a 0.80 floor-speed share gives the firm bed enough speed for 80 km/h; the Wash soft area has a 75 m radius to cover the ruled 150 m crossing. Claude should review those choices.
 - For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the scattered soft-sand patches in the river bed. Next: measure both clean bed deliveries with the 80 km/h bed and 50 km/h exit, then the East Road, scenario and final checks.
+
+## Ruled bed measurements (16 November 2026)
+
+- Added a focused seeded drive for the firm bed at an 80 km/h target, the Steps, and a 48 km/h target toward Tin Town. It reads the pot and forge fire from the real job. The earlier approach to the Wash still targets 28 mph, so these times do not prove a full-speed clean drive.
+- With the Wash scoop: 9.636 km, 12.309 minutes, one rider ram, ember 1.822 (barely). Without: 9.610 km, 12.089 minutes, one rider ram, ember 0 (out). Neither is a clean proof and both exceed ten minutes. The bridge rider begins pursuit from its bridge position, about 120 m from the car and 8.8 m above it; it catches the car about 205 m beyond the Steps on the tested exit. The scooped result misses the alive band. Claude's bed cold-factor ruling is needed after a clean drive establishes its numbers.
+- Checks: PowerShell `EVERBURN_BED_STEPS_ONLY=1`, `EVERBURN_BED_RULED=1` with and without `EVERBURN_BED_NO_SCOOP=1`: both passed their measurement checks. The no-scoop and scoop readings include the straight-across outage at 629.822 m. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none for existing paths. The new measurement keeps the earlier trial assertions on their own paths. No game event or sound cue was added.
+- Codex decided: use the existing 600 m exit waypoint and a 48 km/h target for the ruled measurement. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a clean 50 km/h exit and measure both bed drives at the allowed speeds, then the East Road, scenario and final checks.
