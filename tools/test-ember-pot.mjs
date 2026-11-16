@@ -100,6 +100,16 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   check(jolts > 0 && drop > 0 && drop <= 40.1, `a real hit on a wreck jolts the pot at once (took ${drop.toFixed(1)} in one step)`);
 }
 // The remade job test covers going out, known braziers and delivery.
+// Running out leaves the job active and asks the player to find a brazier.
+{
+  const view = {player: {position: carry.origin.position}, speedKmh: 10, safeKmh: Infinity, difficulty: 'medium'};
+  const wentOut = stepCarry(carry, {loaded: true, ember: 0.01}, view, 1);
+  check(wentOut.state.out && !wentOut.complete && wentOut.events.some(event => event.type === 'emberOut'), 'running out emits the event and leaves the job active');
+  check(wentOut.requests.some(request => request.type === 'marker' && request.place.id === carry.origin.id), 'the out pot points to the known yard brazier');
+  const stillOut = stepCarry(carry, wentOut.state, view, 1);
+  check(!stillOut.events.some(event => event.type === 'emberOut'), 'the outage event is emitted only once');
+}
+
 // A scoop needs a stopped car for three seconds and can be taken once per brazier.
 {
   const brazier = carry.braziers[1];
