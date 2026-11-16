@@ -248,3 +248,9 @@ Merged `integration/wasteland`; it was already current. The real-ground borer te
 ## Daylight on screen
 
 The survey panel now shows the daylight sentence until Mabel moves in drive mode or another machine is chosen. The Dig's survey display and sandbox tests cover the sentence, waiting, driving and changing machines. `node tools/test-machine-borer.mjs` passed. No existing assertions changed. The browser scenario and rock pace remain to be checked; no race fingerprints were run.
+
+## Rock pace investigation
+
+At lever 0.33 the Dig's fixed-step path, with real mesa ground, land protections and spoil enabled, cuts 4.95 m in 10 simulated seconds: 0.495 m/s. The rule uses 1.5 m/s times the lever, and rock's capacity is one third. This does not reproduce Claude's 126.9 m in 480 wall seconds, or establish where the difference went. At a constant 0.495 m/s, that distance would take about 256.4 simulated seconds. The scenario now reports simulated time along with distance and lever, so a browser drive can compare it with wall time. No speed number was changed without a reproduced cause.
+
+`node tools/test-machine-borer.mjs` passed in 80.5 seconds. The scenario passed `node --check` and all page expressions parsed. No existing assertions changed. Claude must run the browser scenario and compare its clocks; the pace fault and final checks remain open. No race fingerprints were run.

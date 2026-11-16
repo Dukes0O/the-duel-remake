@@ -114,7 +114,7 @@ const page = {
       v.scene.background=oldBackground;v.scene.fog=oldFog;v.renderer.setRenderTarget(oldTarget);renderTarget.dispose();marker.dispose();
     }
   })()`,
-  status: `(() => { const b = window.__theDig.simulation.borer; return {distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message}; })()`,
+  status: `(() => { const s = window.__theDig.simulation, b = s.borer; return {elapsed:s.elapsed, distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message}; })()`,
   farMouthOn: `(() => { window.__theDig.setCheckFarMouth(true); return true; })()`,
   farMouth: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck, s=d.simulation.tunnels.segments.at(-1);
     const dir={x:Math.sin(b.heading),y:0,z:Math.cos(b.heading)};
@@ -162,7 +162,7 @@ async function cutUntil(context, metres) {
     while (Date.now() < deadline) {
       const state = await context.evaluate(page.status);
       if (Date.now() >= nextReport) {
-        console.log(`Mabel: ${state.distance.toFixed(1)} m, lever ${state.lever.toFixed(2)}, stalled ${state.stalled}`);
+        console.log(`Mabel: ${state.distance.toFixed(1)} m, ${state.elapsed.toFixed(1)} simulated seconds, lever ${state.lever.toFixed(2)}, stalled ${state.stalled}`);
         nextReport += 30000;
       }
       if (state.distance >= metres) return;
@@ -196,7 +196,7 @@ async function reachDaylight(context, initialFloor, surveyText) {
     while (Date.now() < deadline) {
       const b = await context.evaluate(page.status);
       if (b.finished) return;
-      if (Date.now() >= nextReport) { console.log(`Daylight drive: ${b.distance.toFixed(1)} m, lever ${b.lever.toFixed(2)}, stalled ${b.stalled}, ${b.message || 'cutting'}`); nextReport += 30000; }
+      if (Date.now() >= nextReport) { console.log(`Daylight drive: ${b.distance.toFixed(1)} m, ${b.elapsed.toFixed(1)} simulated seconds, lever ${b.lever.toFixed(2)}, stalled ${b.stalled}, ${b.message || 'cutting'}`); nextReport += 30000; }
       if (b.stalled) recovering = true;
       if (recovering && !b.stalled && b.lever <= 0) recovering = false;
       const wanted = recovering ? (b.lever > 0 ? 'KeyS' : null) : b.lever < 0.30 ? 'KeyW' : b.lever > 0.32 ? 'KeyS' : null;

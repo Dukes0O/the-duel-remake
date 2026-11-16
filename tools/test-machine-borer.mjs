@@ -529,6 +529,16 @@ while (realBore.distanceM < 100 && !realBore.finished && !realBore.message) {
 assert.ok(realBore.distanceM >= 100, `The scarp bore stopped at ${realBore.distanceM}: ${realBore.message}`);
 assert.ok(realSeams.size >= 4, 'The real scarp profile has at least three hardness changes in 100 m.');
 
+// Measure the Dig's fixed-step path, including the real mesa ground and spoil.
+let paceDig = createDigSandbox({playerId:'borer-pace'});
+const paceStart = paceDig.borer;
+paceDig = {...paceDig, activeMachine:'borer', mode:'work', borer:{...paceStart,
+  x:paceStart.x + 60 * Math.sin(paceStart.heading), z:paceStart.z + 60 * Math.cos(paceStart.heading),
+  started:true, covered:true, lever:0.33}};
+for (let frame=0; frame<600; frame++) paceDig = stepDigSandbox(paceDig, {controls:{}}, 1/60);
+assert.ok(Math.abs(paceDig.borer.distanceM - 4.95) < 0.01,
+  `At lever 0.33 the Dig cuts 4.95 m in 10 simulated seconds, got ${paceDig.borer.distanceM}.`);
+
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 Object.defineProperty(globalThis, 'localStorage', {configurable:true, get() { throw new Error('Tunnel exchange must not access storage.'); }});
 const restored = importDigTunnels(sandbox, JSON.parse(JSON.stringify(forty.segments)));
