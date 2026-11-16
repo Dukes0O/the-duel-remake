@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {machineDefinition} from '../src/machines/content/machines.js';
-import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
+import {BORER_NO_FACE, BORER_OBSTRUCTION, BORER_OPEN_GROUND, BORER_STALL, BORER_TRENCH, borerHasFace, borerSurvey, borerMuckPile, borerSpoilProfile, borerSpoilProfileVolume, borerSpoilProfileLength, borerSpoilProfileChanges, borerSpoilGridChanges, borerSpoilSampledLength, createBorerState, stepBorer} from '../src/machines/borer.js';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundTunnels} from '../src/world/ground-tunnels.js';
 import {createGroundView} from '../src/world/ground-view.js';
@@ -67,6 +67,34 @@ import * as THREE from 'three';
   }
   assert.deepEqual(borerSpoilProfileChanges(10, 10), []);
   assert.throws(() => borerSpoilProfileChanges(10, 9), TypeError);
+}
+
+// A rotated heap changes each actual ground cell once, without rounding collisions.
+{
+  for (const angle of [0, Math.PI / 7, Math.PI / 4, Math.PI / 2]) {
+    const origin = {x:12.3, z:-2.6};
+    const direction = {x:Math.cos(angle), z:Math.sin(angle)};
+    for (const [before, after] of [[0, 4.1], [40, 40.3], [1000, 1000.3]]) {
+      const cells = borerSpoilGridChanges(origin, direction, before, after);
+      const indexed = new Map(cells.map(cell => [`${cell.x},${cell.z}`, cell.height]));
+      assert.equal(indexed.size, cells.length, 'Ground cells are never counted twice.');
+      const middle = (before + after) / 2;
+      const cx = origin.x + direction.x * middle, cz = origin.z + direction.z * middle;
+      for (let x = Math.floor(cx - 30); x <= Math.ceil(cx + 30); x++) {
+        for (let z = Math.floor(cz - 30); z <= Math.ceil(cz + 30); z++) {
+          const dx = x - origin.x, dz = z - origin.z;
+          const along = dx * direction.x + dz * direction.z;
+          const across = -dx * direction.z + dz * direction.x;
+          const expected = borerSpoilProfile(along, across, after) -
+            borerSpoilProfile(along, across, before);
+          assert.ok(Math.abs((indexed.get(`${x},${z}`) || 0) - expected) < 1e-10);
+        }
+      }
+      assert.ok(cells.length <= 300, 'A short extension changes a bounded number of cells.');
+    }
+  }
+  assert.deepEqual(borerSpoilGridChanges({x:0,z:0}, {x:1,z:0}, 10, 10), []);
+  assert.throws(() => borerSpoilGridChanges({x:0,z:0}, {x:1,z:1}, 0, 1), TypeError);
 }
 
 // Size deposits against the actual one-metre samples, not a continuous integral.

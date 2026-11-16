@@ -48,7 +48,11 @@ The profile can now find how far it must grow to hold a given volume on its one-
 
 The sizing probes now sum the sampled heights without creating a list of cells on every probe. A local 1,000-deposit timing fell from 155.6 ms to 25.1 ms; this is a comparison on this laptop, not a frame check. The planner still needs to use the profile and account for real ground and protected cells.
 
+The heap profile can now map its changed area onto the actual one-metre ground grid at any heading and mouth position. It visits each ground cell once, avoiding gaps or duplicate fills from rounding a rotated grid. This is preparation only: the cutter still uses the narrow bank, and sizing, protected ground, real-ground checks and the maximum cells filled per step remain outstanding.
+
 ## Checks
+
+- SP rotated grid: `node tools/test-machine-borer.mjs` checks profile changes against the actual ground grid at four headings, three lengths and an offset mouth, including uniqueness and bounded changes.
 
 - SP sizing cost: `node tools/test-machine-borer.mjs` passed with additional small and large deposits across six starting lengths, comparing the sizing result with the actual cell changes.
 - SP sampled sizing: `node tools/test-machine-borer.mjs` passed. It checks small and large deposits at several bank lengths against the sum of the changed cells.

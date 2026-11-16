@@ -150,6 +150,35 @@ export function borerSpoilProfileChanges(oldLength, newLength) {
   return changes;
 }
 
+/** Changes on the actual ground grid, including a turned or offset mouth. */
+export function borerSpoilGridChanges(origin, direction, oldLength, newLength) {
+  if (![origin?.x, origin?.z, direction?.x, direction?.z, oldLength, newLength].every(Number.isFinite) ||
+      oldLength < 0 || newLength < oldLength ||
+      Math.abs(Math.hypot(direction.x, direction.z) - 1) > 1e-8)
+    throw new TypeError('The spoil heap needs an origin, a unit direction and two lengths in order.');
+  if (newLength === oldLength) return [];
+  const first = Math.max(0, oldLength - 5 / 0.3);
+  const corners = [];
+  for (const along of [first, newLength]) for (const across of [-8, 8]) {
+    corners.push({x:origin.x + direction.x * along - direction.z * across,
+      z:origin.z + direction.z * along + direction.x * across});
+  }
+  const minX = Math.ceil(Math.min(...corners.map(point => point.x)));
+  const maxX = Math.floor(Math.max(...corners.map(point => point.x)));
+  const minZ = Math.ceil(Math.min(...corners.map(point => point.z)));
+  const maxZ = Math.floor(Math.max(...corners.map(point => point.z)));
+  const changes = [];
+  for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) {
+    const dx = x - origin.x, dz = z - origin.z;
+    const along = dx * direction.x + dz * direction.z;
+    const across = -dx * direction.z + dz * direction.x;
+    const height = borerSpoilProfile(along, across, newLength) -
+      borerSpoilProfile(along, across, oldLength);
+    if (height > 1e-12) changes.push({x, z, along, across, height});
+  }
+  return changes;
+}
+
 /** Extend the sampled heap by the requested volume, in cubic metres. */
 export function borerSpoilSampledLength(oldLength, addedVolume) {
   if (![oldLength, addedVolume].every(Number.isFinite) || oldLength < 0 || addedVolume < 0)
