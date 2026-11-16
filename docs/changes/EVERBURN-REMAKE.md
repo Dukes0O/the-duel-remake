@@ -1557,3 +1557,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions, for Claude to review: the earlier bed trials required clean driving and particular ember values; the Director's R2 ruling replaces those with reaching the forge, completing the job, and receiving the pay for the actual band. The two new checks use the same Steps route and report actual measurements.
 - Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the Steps-route rider, bypass and speed trials in this part of the test. Next: remove the remaining trial helpers and switches, make the three delivery proofs part of the plain test, then finish the scenario and final checks.
+
+## Kept delivery proofs in the plain job test (16 November 2026)
+
+- The ordinary job test now runs the road delivery, both Steps-route bed deliveries, the clean plates and salt-pan deliveries, and the straight-across outage without environment switches. The earlier ambush setup now lets the rider return to its post before the car reaches the camp, as the road rule requires. No game event or sound cue was added.
+- Check: `node tools/test-everburn-job1.mjs` passed in one plain run, in roughly one minute. An initial run found the stale ambush setup; the unchanged pursuit assertion passed after the setup was corrected. Race fingerprints, the other final checks and build remain to run.
+- Changed assertions, for Claude to review: the earlier trial drives and their route-specific assertions were removed under the Director's R2 ruling; the kept road and bed tests assert forge completion and pay for the actual ember band. The clean plates, salt-pan and straight-across acceptance checks remain.
+- Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the unused bed bypass and climb-finding helpers, the bypass, hazard and detour trials, the superseded road, bed and plates trial drives, and their environment switches. Some unused optional trial arguments in the shared driver remain for the next cleanup. Next: finish that cleanup, write the scenario and run the final checks.

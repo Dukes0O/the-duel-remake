@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, bedStepsRoute, driveToFirstClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStepsRoute, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -231,10 +231,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.equal(firstOut !== null, actual.ember <= 0, 'the recorded outage agrees with the job state');
   assert.ok(!measurement.timedOut, 'the measurement reaches its distance or the ember goes out');
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
-  if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
 }
 // Measure one seeded East Road delivery after the riders' road rule.
-if (process.env.EVERBURN_CLEAN_ROAD === '1') {
+{
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
   duel.state.wastelandGateDiscovered = true;
   assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
@@ -264,10 +263,9 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const pay = result.result.relights > 0 ? Math.min(rule.pay[grade], rule.pay.afterRelight) : rule.pay[grade];
   assert.equal(result.result.grade, grade, 'the arrival records the ember band');
   assert.equal(result.result.pay, pay, 'the job pays for that band');
-  process.exit(0);
 }
 // Measure the Steps route using the real car and job state.
-if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
+{
   for (const scoopAtWash of [true, false]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
     duel.state.wastelandGateDiscovered = true;
@@ -328,256 +326,11 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     assert.equal(result.result.grade, grade, 'the arrival records the ember band');
     assert.equal(result.result.pay, pay, 'the job pays for that band');
   }
-  process.exit(0);
 }
-// Test a gradual line around the first rider on the bed route.
-if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const line = bedRiderBypass(route, 150, -195);
-  const drive = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000], 28);
-  const jolts = drive.stretches.flatMap(stretch => stretch.jolts);
-  console.log('Bed rider bypass:', JSON.stringify({reached:drive.reachedAll, jolts, last:drive.stretches.at(-1)}));
-  assert.ok(drive.reachedAll, 'the car reaches the far side of the rider post');
-  assert.equal(jolts.length, 0, 'the car avoids jolts on the bypass');
-  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
-  const washAlong = nearestOnLine(line, wash.position.x, wash.position.z).along;
-  const approach = driveMeasuredStretches(duel, line, [washAlong - 30], 28);
-  const scoop = driveToBrazier(duel, wash);
-  const pot = duel.state.arena.worldJob.job.stepState;
-  console.log('Bed Wash approach:', JSON.stringify({washAlong, approach:approach.stretches.at(-1), scoop, jolts:pot.joltCount ?? 0, ember:pot.ember}));
-  assert.ok(approach.reachedAll, 'the car reaches the Wash approach');
-  assert.ok(scoop.scooped, 'the car takes the Wash scoop');
-  assert.equal(pot.joltCount ?? 0, 0, 'the car reaches Wash without a jolt');
-  const afterWash = driveMeasuredStretches(duel, line, [5000, 5500, 6000, 6100, 6200, 6300, 6400], 28);
-  const afterJolts = afterWash.stretches.flatMap(stretch => stretch.jolts);
-  console.log('Bed beyond Wash:', JSON.stringify({reached:afterWash.reachedAll, jolts:afterJolts, last:afterWash.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
-  assert.ok(afterWash.reachedAll, 'the car reaches 6.4 km beyond Wash');
-  assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car reaches 6.4 km without a jolt');
-  const crossing = driveMeasuredStretches(duel, line, [6500, 6600, 6700, 6800, 6900, 7000], 12);
-  const crossingJolts = crossing.stretches.flatMap(stretch => stretch.jolts);
-  console.log('Bed rough crossing:', JSON.stringify({reached:crossing.reachedAll, jolts:crossingJolts, last:crossing.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
-  assert.ok(crossing.reachedAll, 'the car reaches 7 km beyond the rough ground');
-  assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car crosses without a jolt');
-  const trial = driveToFirstClimb(duel, line, 7100, 6);
-  const {drive:obstruction, climb} = trial;
-  console.log('Bed slow climb trial:', JSON.stringify(trial));
-  assert.ok(!obstruction.reachedAll && climb && climb.riders.length === 0, 'the current line meets steep ground beyond 7 km');
-  assert.ok(climb.along >= 7020, 'the car passes 7.02 km before the steep-ground impact');
-  assert.equal(obstruction.stretches[0].jolts.length, 1, 'the driver stops at the first climb impact');
-  assert.ok(climb.hitSignals.speedBeforeKmh < 11, 'the car slows below 11 km/h before the impact');
-  assert.ok(trial.terrain.riverDepth > 0, 'the ground impact is within the dry river');
-  assert.ok(Math.hypot(trial.terrain.riverGradient.x + trial.terrain.groundGradient.x,
-    trial.terrain.riverGradient.z + trial.terrain.groundGradient.z) < 0.02,
-  'the river bank accounts for the ground slope at the impact');
-  assert.ok(Math.hypot(trial.terrain.groundGradient.x, trial.terrain.groundGradient.z) > 0.25,
-    'the real ground at the impact is steep');
-  assert.ok(trial.emberAfter < trial.emberBefore, 'the slow impact still takes ember from the real pot');
-  assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
-  process.exit(0);
-}
-// Identify bed hazards from the real car before choosing a clean line.
-if (process.env.EVERBURN_BED_HAZARDS_ONLY === '1') {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
-  const washAlong = nearestOnLine(route, wash.position.x, wash.position.z).along;
-  const ends = [];
-  for (let along = 500; along < washAlong - 50; along += 500) ends.push(along);
-  ends.push(washAlong - 30);
-  const drive = driveMeasuredStretches(duel, route, ends, 28);
-  assert.ok(drive.reachedAll, 'the car reaches the Wash approach');
-  assert.ok(driveToBrazier(duel, wash).scooped, 'the car takes the Wash scoop');
-  const gate = definition.steps[0].riderSafeWall;
-  const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
-  const remainingEnds = [];
-  for (let along = washAlong + 500; along < gateAlong - 150; along += 500) remainingEnds.push(along);
-  remainingEnds.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const remaining = driveMeasuredStretches(duel, route, remainingEnds, 28);
-  assert.ok(remaining.reachedAll, 'the car reaches the town approach');
-  const jolts = [...drive.stretches, ...remaining.stretches].flatMap(stretch => stretch.jolts);
-  console.log('Bed hazards:', JSON.stringify(jolts));
-  assert.equal(jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
-    'the recorded hazards account for the actual jolts');
-  assert.equal(jolts.filter(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')).length, 4,
-    'four jolts are steep-ground impacts');
-  const otherHits = jolts.filter(jolt => jolt.groundHits.length === 0);
-  assert.equal(otherHits.length, 1, 'one jolt has no recorded ground impact');
-  assert.ok(otherHits[0].riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 1),
-    'the other jolt has a rider in contact on the same floor');
-  process.exit(0);
-}
-// Measure a slower crossing of the steep ground on the bed approach to town.
-if (process.env.EVERBURN_BED_DETOUR_ONLY === '1') {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
-  const washAlong = nearestOnLine(route, wash.position.x, wash.position.z).along;
-  const ends = [];
-  for (let along = 500; along < washAlong - 50; along += 500) ends.push(along);
-  ends.push(washAlong - 30);
-  const drive = driveMeasuredStretches(duel, route, ends, 28);
-  assert.ok(drive.reachedAll, 'the car reaches the Wash approach');
-  assert.ok(driveToBrazier(duel, wash).scooped, 'the car takes the Wash scoop');
-  const gate = definition.steps[0].riderSafeWall;
-  const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
-  const remainingEnds = [];
-  for (let along = washAlong + 500; along < gateAlong - 150; along += 500) remainingEnds.push(along);
-  remainingEnds.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const earlyEnds = remainingEnds.filter(along => along < 6000);
-  earlyEnds.push(6000);
-  const early = driveMeasuredStretches(duel, route, earlyEnds, 28);
-  assert.ok(early.reachedAll, 'the car reaches the rough ground');
-  const remaining = driveMeasuredStretches(duel, route, remainingEnds.filter(along => along > 6000), 12);
-  assert.ok(remaining.reachedAll, 'the car reaches the town approach');
-  const jolts = [...drive.stretches, ...early.stretches, ...remaining.stretches].flatMap(stretch => stretch.jolts);
-  console.log('Bed slower crossing:', JSON.stringify(jolts));
-  assert.equal(jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
-    'the recorded hazards account for the actual jolts');
-  assert.equal(jolts.filter(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')).length, 0,
-    'the detour avoids steep-ground impacts');
-  const otherHits = jolts.filter(jolt => jolt.groundHits.length === 0);
-  assert.equal(otherHits.length, 3, 'three jolts have no recorded ground impact');
-  assert.ok(otherHits[0].riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 1),
-    'the other jolt has a rider in contact on the same floor');
-  assert.ok(otherHits.every(jolt => jolt.riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 3)),
-    'each jolt has a rider in contact on the car?s floor');
-  assert.ok(otherHits.every(jolt => jolt.hitSignals.speedBeforeKmh - jolt.hitSignals.speedAfterKmh < 8),
-    'the measured speed drop alone cannot cause these jolts');
-  process.exit(0);
-}
-// Measure a drivable line toward the first butte using the real car and sight timer.
-if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+// Prove the clean plates delivery using its measured cover route.
+{
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
   const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const line = platesCoverLine(route);
-  const careful = driveAlongRoad(duel, line, 1200, 18000, 30.4, false, false, 0.1);
-  console.log('Plates speed-limited approach:', JSON.stringify(careful));
-  assert.ok(careful.along >= 1200, 'the car reaches the obstacle at the plates speed');
-  assert.equal(careful.abovePlatesLimitTicks, 0, 'the car stays within 50 km/h up to the obstacle');
-  assert.equal(careful.jolts.length, 0, 'the speed-limited approach avoids jolts');
-  const drive = driveAlongRoad(duel, line, 1600, 18000, 30.4, false, false, 0.1);
-  console.log('Plates cover approach:', JSON.stringify(drive));
-  assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');
-  assert.ok(drive.longestFurnaceSightSeconds < 22.5, 'the shelter line reduces the measured exposure');
-  assert.equal(drive.jolts.length, 0, 'the car reaches the first shelter without a jolt');
-  assert.equal(drive.abovePlatesLimitTicks, 0, 'the car stays within 50 km/h through the shelter approach');
-  assert.ok(drive.longestFurnaceSightSeconds <= 6, 'the first shelter approach stays within six seconds of sight');
-  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on this approach');
-  assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
-  const next = drivePlatesShelter(duel, line, 2000);
-  console.log('Plates next approach:', JSON.stringify(next));
-  assert.ok(next.along >= 2000 && next.distance < 10, 'the car reaches the next sheltered stretch');
-  assert.equal(next.jolts.length, 0, 'the next stretch avoids jolts');
-  assert.equal(next.abovePlatesLimitTicks, 0, 'the next stretch stays within 50 km/h');
-  assert.ok(next.longestFurnaceSightSeconds <= 6, 'the next stretch stays within six seconds of sight');
-  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders on the next stretch');
-  const further = drivePlatesShelter(duel, line, 2600);
-  console.log('Plates further approach:', JSON.stringify(further));
-  assert.ok(further.along >= 2600 && further.distance < 10, 'the car continues through the sheltered ground');
-  assert.equal(further.jolts.length, 0, 'the sheltered ground avoids jolts');
-  assert.equal(further.abovePlatesLimitTicks, 0, 'the sheltered ground stays within 50 km/h');
-  assert.ok(further.longestFurnaceSightSeconds <= 6, 'the sheltered ground stays within six seconds of sight');
-  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders through the sheltered ground');
-  const gap = drivePlatesShelter(duel, line, 2900);
-  console.log('Plates next cover:', JSON.stringify(gap));
-  assert.ok(gap.along >= 2900 && gap.distance < 10, 'the car reaches the end of sheltered ground');
-  assert.equal(gap.jolts.length, 0, 'the end of sheltered ground avoids jolts');
-  assert.equal(gap.abovePlatesLimitTicks, 0, 'the end of sheltered ground stays within 50 km/h');
-  assert.ok(gap.longestFurnaceSightSeconds <= 6, 'the end of sheltered ground stays within six seconds of sight');
-  assert.ok(!duel.state.arena.worldJob.skylineWarned, 'the furnace does not send riders at the end of sheltered ground');
-  const obstacle = drivePlatesShelter(duel, line, 3600);
-  console.log('Plates obstacle measurements:', JSON.stringify(obstacle));
-  assert.ok(obstacle.along >= 3600, 'the car reaches the far side of the measured obstacle');
-  assert.ok(obstacle.jolts.length > 0, 'the measurement records the jolts that prevent a clean drive');
-  assert.ok(obstacle.jolts.every(jolt => Number.isFinite(jolt.along) && Number.isFinite(jolt.position.y) &&
-    Array.isArray(jolt.nearbySolids)), 'each jolt records its real position and nearby job solids');
-  assert.deepEqual(obstacle.jolts.map(jolt => jolt.groundHits.map(hit => hit.kind)),
-    [['fall'], ['fall'], ['fall'], ['climb'], ['climb']],
-    'the ground reports three landings followed by two steep climbs at the jolts');
-  // Repeat the same real approach at a lower speed to separate rough ground
-  // from the furnace exposure. This is not yet the clean route proof.
-  const slowDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  slowDuel.state.wastelandGateDiscovered = true;
-  assert.ok(slowDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  slowDuel.state.countdown = 0;
-  assert.ok(driveToCinder(slowDuel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(slowDuel, yardPlan().gate).along >= 20);
-  assert.ok(driveAlongRoad(slowDuel, line, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
-  assert.ok(drivePlatesShelter(slowDuel, line, 2900).along >= 2900);
-  const slowObstacle = drivePlatesRoughGround(slowDuel, line, 3600);
-  console.log('Plates slower obstacle approach:', JSON.stringify(slowObstacle));
-  assert.ok(slowObstacle.along >= 3600, 'the slower car crosses the rough ground');
-  assert.equal(slowObstacle.jolts.length, 0, 'the slower car crosses without jolts');
-  assert.ok(slowObstacle.longestFurnaceSightSeconds > 6 && slowDuel.state.arena.worldJob.skylineWarned,
-    'the slower crossing still triggers the furnace, so it is not the clean drive');
-  // Try a gradual turn toward the far shelter, measuring the actual car and
-  // furnace timer rather than assuming that an offset is safe to drive.
-  const offsetDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  offsetDuel.state.wastelandGateDiscovered = true;
-  assert.ok(offsetDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  offsetDuel.state.countdown = 0;
-  assert.ok(driveToCinder(offsetDuel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(offsetDuel, yardPlan().gate).along >= 20);
-  const offsetLine = platesCoverLine(route, -60);
-  assert.ok(driveAlongRoad(offsetDuel, offsetLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
-  assert.ok(drivePlatesShelter(offsetDuel, offsetLine, 2900).along >= 2900);
-  const offsetCrossing = drivePlatesRoughGround(offsetDuel, offsetLine, 3600);
-  console.log('Plates offset crossing:', JSON.stringify(offsetCrossing));
-  assert.ok(offsetCrossing.along >= 3600, 'the car reaches the far side on the offset line');
-  assert.ok(offsetCrossing.jolts.length > 0 && offsetCrossing.jolts.every(jolt =>
-    jolt.groundHits.some(hit => hit.kind === 'climb')), 'the offset line hits steep ground');
-  assert.ok(offsetCrossing.longestFurnaceSightSeconds <= 6 && !offsetDuel.state.arena.worldJob.skylineWarned,
-    'the offset crossing stays out of the furnace warning');
-  // Measure a line halfway between the centre and the steep far offset.
-  const middleDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  middleDuel.state.wastelandGateDiscovered = true;
-  assert.ok(middleDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  middleDuel.state.countdown = 0;
-  assert.ok(driveToCinder(middleDuel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(middleDuel, yardPlan().gate).along >= 20);
-  const middleLine = platesCoverLine(route, -20);
-  assert.ok(driveAlongRoad(middleDuel, middleLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
-  assert.ok(drivePlatesShelter(middleDuel, middleLine, 2900).along >= 2900);
-  const middleCrossing = drivePlatesRoughGround(middleDuel, middleLine, 3600, 20);
-  console.log('Plates middle crossing:', JSON.stringify(middleCrossing));
-  assert.ok(middleCrossing.along >= 3600, 'the car reaches the far side on the middle line');
-  assert.ok(middleCrossing.jolts.length > 0 && middleCrossing.jolts.every(jolt =>
-    jolt.groundHits.some(hit => hit.kind === 'climb')), 'the faster middle line hits steep ground');
-  assert.ok(middleCrossing.longestFurnaceSightSeconds > 6 && middleDuel.state.arena.worldJob.skylineWarned,
-    'the faster middle line still triggers the furnace');
-  // Try the remaining ground between the measured middle and far lines.
   const trialDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
   trialDuel.state.wastelandGateDiscovered = true;
   assert.ok(trialDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
@@ -652,10 +405,8 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
     minutes:cleanStretches.reduce((sum, stretch) => sum + stretch.ticks, 0) / 3600,
     rams:arrival.observedJoltCount, scoops:[], arrival:arrival.fire.ember};
   console.log('Clean plates measurement:', JSON.stringify(measurement));
-  process.exit(0);
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
-if (process.env.EVERBURN_SALT_ONLY !== '1') {
 // Cold loss is read from the actual carry step on ordinary ground.
 {
   const carry = definition.steps[0];
@@ -999,305 +750,6 @@ if (process.env.EVERBURN_SALT_ONLY !== '1') {
   assert.equal(figure.visible, false, 'Cinder is hidden once the loaded car is 60 m away');
   scene.dispose();
 }
-// Start the Medium proof drive at the actual yard start and pick up the pot by driving to Cinder.
-{
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
-  const state = duel.state, world = state.arena.worldJob;
-  state.countdown = 0;
-  const result = driveToCinder(duel, pickup);
-  assert.equal(world.job.stepState.loaded, true, `the real car collects the pot from Cinder; distance ${result.distance.toFixed(1)} m`);
-  assert.ok(world.job.stepState.ember > 99, 'the pickup begins with a bright ember');
-  let distanceMetres = 0;
-  const originalStep = duel.step.bind(duel);
-  duel.step = dt => {
-    const before = duel.course.worldAt(state.s, state.lateral);
-    originalStep(dt);
-    const after = duel.course.worldAt(state.s, state.lateral);
-    distanceMetres += Math.hypot(after.x - before.x, after.z - before.z);
-  };
-  const exit = driveThroughYardGate(duel, yardPlan().gate);
-  assert.ok(exit.along >= 20, `the loaded car drives through the gate: ${JSON.stringify(exit)}`);
-  assert.ok(Math.abs(exit.gateOffset) < 6, `the car crosses within the 12 m gate: ${JSON.stringify(exit)}`);
-  assert.ok(world.job.stepState.ember > 0, 'the ember stays alight through the gate');
-  const exitEmber = world.job.stepState.ember;
-  const road = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 500, 7200, 50);
-  assert.ok(road.along >= 500, `the car follows the East Road for 500 m: ${JSON.stringify(road)}`);
-  assert.ok(road.maxDistance < 20, `the car stays close to the road: ${JSON.stringify(road)}`);
-  assert.ok(road.fastRoadSpeedTicks / road.ticks > 0.5, `the car reaches road speed after leaving the yard: ${JSON.stringify(road)}`);
-  assert.ok(world.job.stepState.ember > 70, `the ember is still bright on the first stretch: ${world.job.stepState.ember}; gate ${exitEmber}; ${JSON.stringify(road)}`);
-  console.log('East Road 500 m drive:', JSON.stringify(road));
-  const next = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 1000, 7200, 50);
-  assert.ok(next.along >= 1000, `the car follows the East Road for 1 km: ${JSON.stringify(next)}`);
-  assert.ok(next.driven >= 490, `the real car travels the next stretch: ${JSON.stringify(next)}`);
-  assert.ok(next.fastRoadSpeedTicks / next.ticks > 0.95, `the car keeps road speed on the clear stretch: ${JSON.stringify(next)}`);
-  assert.ok(next.maxDistance < 20, `the car stays close to the road on the next stretch: ${JSON.stringify(next)}`);
-  assert.ok(world.job.stepState.ember > 0, `the ember stays alight after 1 km: ${world.job.stepState.ember}; ${JSON.stringify(next)}`);
-  console.log('East Road 1 km drive:', JSON.stringify(next));
-  const further = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 1500, 7200, 50);
-  assert.ok(further.along >= 1500, `the car follows the East Road for 1.5 km: ${JSON.stringify(further)}`);
-  assert.ok(further.driven >= 490, `the real car travels the third stretch: ${JSON.stringify(further)}`);
-  assert.ok(further.maxDistance < 20, `the car stays close to the road on the third stretch: ${JSON.stringify(further)}`);
-  assert.equal(further.ember, world.job.stepState.ember, 'the drive records the real ember at the end of the stretch');
-  assert.ok(further.ember > 0, `the ember stays alight after 1.5 km: ${JSON.stringify(further)}`);
-  assert.ok(further.elapsedSeconds > 0, 'the drive records its elapsed time');
-  assert.ok(further.fastRoadSpeedTicks / further.ticks > 0.8,
-    `the car accelerates to road speed on the clear stretch: ${JSON.stringify(further)}`);
-  console.log('East Road 1.5 km drive:', JSON.stringify(further));
-  const fourth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2000);
-  assert.ok(fourth.along >= 2000, `the car follows the East Road for 2 km: ${JSON.stringify(fourth)}`);
-  assert.ok(fourth.driven >= 490 && fourth.maxDistance < 20, `the car drives the fourth stretch close to the road: ${JSON.stringify(fourth)}`);
-  assert.ok(fourth.lowestEmber > 0 && fourth.lowestEmber <= fourth.ember, `the ember stays alight throughout the fourth stretch: ${JSON.stringify(fourth)}`);
-  console.log('East Road 2 km drive:', JSON.stringify(fourth));
-  const joltsBeforeCamp = world.job.stepState.joltCount ?? 0;
-  const approach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2350);
-  assert.ok(approach.along >= 2350, `the car approaches the camp: ${JSON.stringify(approach)}`);
-  assert.equal(approach.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeCamp,
-    'the driver records each real jolt on the camp approach');
-  assert.equal(approach.jolts.length, 0, `the driver slows for the camp barricade without a jolt: ${JSON.stringify(approach)}`);
-  console.log('East Road camp approach:', JSON.stringify(approach));
-  const joltsBeforeScoop = world.job.stepState.joltCount ?? 0;
-  const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
-  assert.ok(scoop.scooped, `the real car stops and scoops at the camp: ${JSON.stringify(scoop)}`);
-  assert.equal(scoop.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
-    'the scoop records each jolt in the actual pot state');
-  assert.equal(scoop.elapsedSeconds, scoop.ticks / 60, 'the scoop records its actual driving time');
-  assert.ok(Math.abs(scoop.ember - Math.min(step.ember.start, scoop.emberBeforeScoop - step.ember.coldPerSecond / 60 + 25)) < 1e-8,
-    `the scoop adds 25 after cooling, up to the pot's capacity: ${JSON.stringify(scoop)}`);
-  console.log('East Road camp scoop:', JSON.stringify(scoop));
-  const fifth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2500);
-  assert.ok(fifth.along >= 2500, `the car passes the camp: ${JSON.stringify(fifth)}`);
-  assert.ok(world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'the car burns the camp barricade with its loaned flamethrower');
-  assert.ok(fifth.lowestEmber > 0, `the ember stays alight past the camp: ${JSON.stringify(fifth)}`);
-  console.log('East Road camp drive:', JSON.stringify(fifth));
-  const sixth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 3000);
-  assert.ok(sixth.along >= 3000, `the car follows the East Road for 3 km: ${JSON.stringify(sixth)}`);
-  assert.ok(sixth.driven >= 490 && sixth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(sixth)}`);
-  assert.ok(sixth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(sixth)}`);
-  console.log('East Road 3 km drive:', JSON.stringify(sixth));
-  const seventh = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 3500);
-  assert.ok(seventh.along >= 3500, `the car follows the East Road for 3.5 km: ${JSON.stringify(seventh)}`);
-  assert.ok(seventh.driven >= 490 && seventh.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(seventh)}`);
-  assert.ok(seventh.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(seventh)}`);
-  console.log('East Road 3.5 km drive:', JSON.stringify(seventh));
-  const joltsBeforeBridge = world.job.stepState.joltCount ?? 0;
-  const eighth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4000);
-  assert.ok(eighth.along >= 4000, `the car follows the East Road for 4 km: ${JSON.stringify(eighth)}`);
-  assert.ok(eighth.driven >= 490 && eighth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eighth)}`);
-  assert.ok(eighth.elapsedSeconds < 45, `the driver keeps moving until the bridge approach: ${JSON.stringify(eighth)}`);
-  assert.ok(eighth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eighth)}`);
-  assert.deepEqual(eighth.burntDuringDrive, [step.barriers[1].id], 'the real flamethrower burns the bridge barricade on this stretch');
-  assert.ok(eighth.jolts.every(jolt => Number.isFinite(jolt.amount) && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
-    'the driver records actual jolts and their positions');
-  assert.equal(eighth.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeBridge,
-    'the recorded jolts match the real pot state');
-  assert.ok(eighth.jolts.every(jolt => Array.isArray(jolt.riders) && jolt.riders.every(rider =>
-    typeof rider.id === 'string' && Number.isFinite(rider.distance) && Number.isFinite(rider.heightDifference))),
-    'each jolt records the real riders in contact with the car');
-  assert.ok(eighth.jolts.some(jolt => jolt.riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 3)),
-    'the recorded bridge jolt has a rider in contact on the same floor');
-  assert.ok(Number.isFinite(eighth.peakSpeedPosition.x) && Number.isFinite(eighth.peakSpeedPosition.z), 'the driver records where its peak speed occurred');
-  console.log('East Road 4 km drive:', JSON.stringify(eighth));
-  const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500, 7200, 50);
-  assert.ok(ninth.along >= 4500, `the car follows the East Road for 4.5 km: ${JSON.stringify(ninth)}`);
-  assert.ok(ninth.driven >= 490 && ninth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(ninth)}`);
-  assert.ok(ninth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(ninth)}`);
-  assert.ok(ninth.fastRoadSpeedTicks / ninth.ticks > 0.8,
-    `the car accelerates back to road speed after the bridge: ${JSON.stringify(ninth)}`);
-  console.log('East Road 4.5 km drive:', JSON.stringify(ninth));
-  const tenth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 5000, 7200, 50);
-  assert.ok(tenth.along >= 5000, `the car follows the East Road for 5 km: ${JSON.stringify(tenth)}`);
-  assert.ok(tenth.driven >= 490 && tenth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(tenth)}`);
-  assert.ok(tenth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(tenth)}`);
-  assert.deepEqual(tenth.burntDuringDrive, [], 'the driver records that no barricade burned on this stretch');
-  console.log('East Road 5 km drive:', JSON.stringify(tenth));
-  const eleventh = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 5500, 7200, 50);
-  assert.ok(eleventh.along >= 5500, `the car follows the East Road for 5.5 km: ${JSON.stringify(eleventh)}`);
-  assert.ok(eleventh.driven >= 490 && eleventh.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eleventh)}`);
-  assert.ok(eleventh.fastRoadSpeedTicks / eleventh.ticks > 0.95,
-    `the car keeps at least 45 mph on the clear road after the bridge: ${JSON.stringify(eleventh)}`);
-  assert.ok(eleventh.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eleventh)}`);
-  assert.ok(eleventh.nearestTownGate < tenth.nearestTownGate, `the car gets closer to Tin Town's gate: ${JSON.stringify(eleventh)}`);
-  assert.ok(eleventh.nearestTownGate <= Math.hypot(eleventh.position.x - step.riderSafeWall.x, eleventh.position.z - step.riderSafeWall.z) + 0.01, 'the driver measures the real car position against the town gate');
-  console.log('East Road 5.5 km drive:', JSON.stringify(eleventh));
-
-  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 50);
-  assert.ok(approachTown.along >= 6500, `the car follows the East Road toward Tin Town: ${JSON.stringify(approachTown)}`);
-  assert.ok(approachTown.driven >= 990 && approachTown.maxDistance < 20, `the car drives the next kilometre close to the road: ${JSON.stringify(approachTown)}`);
-  assert.ok(approachTown.roadSpeedTicks / approachTown.ticks > 0.95,
-    `the car stays above 30 mph for at least 95% of the clear kilometre: ${JSON.stringify(approachTown)}`);
-  assert.ok(approachTown.fastRoadSpeedTicks / approachTown.ticks > 0.95,
-    `the car stays above 45 mph for at least 95% of the clear kilometre`);
-  assert.ok(approachTown.lowestEmber > 0, `the ember stays alight on the approach: ${JSON.stringify(approachTown)}`);
-  assert.ok(Math.abs(duel.state.speedMph) > 30, 'the driver maintains road speed before the town approach');
-  assert.ok(approachTown.nearestTownGate < eleventh.nearestTownGate, 'the car gets closer to the gate');
-  console.log('East Road 6.5 km drive:', JSON.stringify(approachTown));
-
-  const nearTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7000, 7200, 50);
-  assert.ok(nearTown.along >= 7000, `the car follows the road to 7 km: ${JSON.stringify(nearTown)}`);
-  assert.ok(nearTown.driven >= 490 && nearTown.maxDistance < 20, `the car stays on the road: ${JSON.stringify(nearTown)}`);
-  assert.ok(nearTown.lowestEmber > 0, `the ember stays alight: ${JSON.stringify(nearTown)}`);
-  assert.ok(nearTown.nearestTownGate < approachTown.nearestTownGate, 'the car gets closer to the gate');
-  assert.equal(nearTown.speedAtNearestTownGate, Math.abs(duel.state.speedMph), 'the drive records the real speed at its nearest gate position');
-  console.log('East Road 7 km drive:', JSON.stringify(nearTown));
-
-  const gateApproach = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7600, 7200, 50, true);
-  assert.ok(gateApproach.along >= 7600, `the car follows the road toward the gate: ${JSON.stringify(gateApproach)}`);
-  assert.ok(gateApproach.maxDistance < 20, `the car stays near the road: ${JSON.stringify(gateApproach)}`);
-  assert.ok(gateApproach.fastRoadSpeedTicks > 0, 'the car holds road speed before slowing for town');
-  assert.ok(gateApproach.nearestTownGate < nearTown.nearestTownGate, 'the car gets closer to the gate');
-  assert.ok(gateApproach.lowestEmber > 0, `the ember stays alight on this stretch: ${JSON.stringify(gateApproach)}`);
-  console.log('East Road gate approach:', JSON.stringify(gateApproach));
-  const gate = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7750, 7200, 25, true);
-  assert.ok(gate.along >= 7750, `the car drives up to the gate: ${JSON.stringify(gate)}`);
-  assert.ok(gate.nearestTownGate < 100, `the car reaches the gate: ${JSON.stringify(gate)}`);
-  assert.ok(gate.speedAtNearestTownGate * 1.609344 < 30, `the car approaches under 30 km/h: ${JSON.stringify(gate)}`);
-  console.log('East Road gate drive:', JSON.stringify(gate));
-  const door = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 7810, 7200, 25, true);
-  assert.ok(door.along >= 7810, `the car reaches the town entrance: ${JSON.stringify(door)}`);
-  assert.equal(world.tinTownGateRequested, true, 'the real slow approach opens the gate');
-  assert.equal(world.solidGrid.townGate.length, 0, 'the open gate no longer blocks the car');
-  console.log('East Road town entrance:', JSON.stringify(door));
-  const joltsBeforeForge = world.job.stepState.joltCount ?? 0;
-  const emberBeforeForge = world.job.stepState.ember;
-  const scoopsAtForge = [...world.job.stepState.scoopedBraziers];
-  const arrival = driveToForge(duel, step.destination.position);
-  console.log('East Road forge arrival:', JSON.stringify(arrival));
-  const driveTicks = [exit, road, next, further, fourth, approach, scoop, fifth, sixth, seventh, eighth, ninth, tenth, eleventh, approachTown, nearTown, gateApproach, gate, door, arrival].reduce((sum, segment) => sum + segment.ticks, 0);
-  console.log('East Road delivery minutes:', driveTicks / 3600);
-  assert.ok(driveTicks > 0, 'the delivery time comes from actual driving steps');
-  assert.equal(arrival.done, true, `the real car delivers at the forge: ${JSON.stringify(arrival)}`);
-  assert.equal(arrival.startEmber, emberBeforeForge, 'the forge drive records its starting ember');
-  assert.equal(arrival.jolts.length, arrival.observedJoltCount - joltsBeforeForge,
-    'the forge drive records each real jolt');
-  assert.ok(arrival.jolts.every(jolt => jolt.amount > 0 && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
-    'each forge approach jolt has its amount and position');
-  assert.equal(arrival.jolts.length, 0, `the car clears the gate before turning toward the forge: ${JSON.stringify(arrival)}`);
-  const measurement = {way:'East Road', kilometres:distanceMetres / 1000, minutes:driveTicks / 3600,
-    rams:eighth.jolts.filter(jolt => jolt.riders.length > 0).length,
-    scoops:scoopsAtForge, arrival:arrival.fire.ember};
-  assert.ok(measurement.kilometres > 7.8 && measurement.minutes > 0);
-  assert.equal(measurement.rams, arrival.observedJoltCount, 'the observed rider contact accounts for the recorded hit');
-  assert.deepEqual(measurement.scoops, ['halfway-brazier']);
-  assert.equal(measurement.arrival, world.forgeFire.ember);
-  console.log('East Road measurement:', JSON.stringify(measurement));
-
-}
-if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
-// Begin the plates proof from the same real pickup and yard gate as the road drive.
-{
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, pickup).loaded, 'the plates driver collects the actual pot');
-  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20, 'the plates driver leaves through the gate');
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const {first, second} = drivePlatesOpening(duel, route);
-  console.log('Plates first 500 m:', JSON.stringify(first));
-  assert.ok(first.along >= 500, 'the car reaches 500 m along the plates way');
-  assert.ok(first.distance < 10, 'the car joins the plates way after leaving the gate');
-  assert.ok(first.lowestEmber > 0, 'the ember stays alight on the first stretch');
-  console.log('Plates first kilometre:', JSON.stringify(second));
-  assert.ok(second.along >= 1000 && second.maxDistance < 10, 'the car follows the plates way for another 500 m');
-  assert.ok(second.lowestEmber > 0, 'the ember stays alight through the first kilometre');
-  const third = driveAlongRoad(duel, route, 1500, 7200, 25);
-  console.log('Plates 1.5 km:', JSON.stringify(third));
-  assert.ok(third.along >= 1500 && third.maxDistance < 10, 'the car follows the plates way for the next 500 m');
-  assert.equal(third.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
-    'the plates drive records each actual jolt');
-  assert.equal(third.firstOut === null, third.ember > 0, 'the drive records an outage if one occurred');
-  assert.ok(third.longestFurnaceSightSeconds > 6 && duel.state.arena.worldJob.skylineWarned,
-    'the existing plates driver records the uninterrupted sighting that sends the riders');
-  assert.equal(third.longestFurnaceSight.seconds, third.longestFurnaceSightSeconds,
-    'the longest sighting records the real sight timer');
-  assert.ok(third.longestFurnaceSight.start.along < third.longestFurnaceSight.end.along,
-    'the sighting records where the moving car entered and left the exposed stretch');
-  if (process.env.EVERBURN_PLATES_SIGHT_ONLY === '1') process.exit(0);
-  assert.ok(third.jolts.some(jolt => jolt.riders.length > 0), 'the drive records riders at a jolt');
-  const fourth = driveAlongRoad(duel, route, 2000, 7200, 25);
-  console.log('Plates 2 km:', JSON.stringify(fourth));
-  assert.ok(fourth.along >= 2000 && fourth.maxDistance < 10, 'the car follows the plates way for a fourth 500 m');
-  assert.equal(fourth.ember, duel.state.arena.worldJob.job.stepState.ember,
-    'the fourth stretch records the actual ember');
-  assert.equal(fourth.beganOut, third.ember <= 0, 'the fourth stretch records its starting ember');
-  assert.equal(fourth.firstOut !== null, !fourth.beganOut && fourth.ember <= 0, 'the drive records a new outage');
-}
-// Compare another legal plates speed using a fresh seeded job and real driving.
-{
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, pickup).loaded, 'the comparison driver collects the pot');
-  const yardExit = driveThroughYardGate(duel, yardPlan().gate);
-  assert.ok(yardExit.along >= 20, 'the comparison driver leaves through the gate');
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const opening = driveAlongRoad(duel, route, 2000, 18000, 30);
-  console.log('Plates 30 mph drive:', JSON.stringify(opening));
-  assert.ok(opening.along >= 2000 && opening.distance < 10, 'the comparison car follows the real plates way to 2 km');
-  assert.equal(opening.ember, duel.state.arena.worldJob.job.stepState.ember, 'the comparison records the actual ember');
-  assert.ok(opening.abovePlatesLimitTicks > 0 && opening.abovePlatesLimitTicks <= opening.ticks,
-    'the driver records time above the plates speed limit');
-  assert.equal(opening.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount ?? 0,
-    'the comparison records each actual jolt');
-  const continuation = driveMeasuredStretches(duel, route, [2500, 3000], 30);
-  console.log('Plates continuation:', JSON.stringify(continuation));
-  assert.equal(continuation.stretches.length, 2, 'the car reaches both measured stretches');
-  for (const [index, stretch] of continuation.stretches.entries()) {
-    assert.ok(stretch.along >= 2500 + index * 500 && stretch.maxDistance < 10, 'the car follows the plates way');
-    assert.equal(stretch.firstOut !== null, !stretch.beganOut && stretch.ember <= 0, 'the stretch records a new outage');
-  }
-  assert.equal(continuation.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember, 'the drive records the actual ember');
-  assert.equal(continuation.ticks, continuation.stretches.reduce((sum, stretch) => sum + stretch.ticks, 0), 'the drive records actual elapsed ticks');
-  // Continue to the town approach even with an extinguished pot, so the
-  // failed attempt records the route rather than presenting a partial drive.
-  const gate = definition.steps[0].riderSafeWall;
-  const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
-  const ends = [];
-  for (let along = 3500; along < gateAlong - 150; along += 500) ends.push(along);
-  ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-  const remaining = driveMeasuredStretches(duel, route, ends, 30);
-  console.log('Plates remaining approach:', JSON.stringify(remaining));
-  assert.equal(remaining.reachedAll, true, 'the real car reaches each remaining measured stretch');
-  assert.ok(remaining.stretches.every((stretch, index) => stretch.along >= ends[index] && stretch.maxDistance < 30),
-    'the real car follows the plates way to the town approach');
-  assert.equal(remaining.stretches.at(-1).ember, duel.state.arena.worldJob.job.stepState.ember,
-    'the approach records the actual ember');
-  // Join the gate's centre line from the outside before turning into town.
-  const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
-  const gateLine = [{x:car.x, z:car.z},
-    {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
-    {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
-    {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
-  const gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
-  console.log('Plates gate approach:', JSON.stringify(gateDrive));
-  assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the plates car passes through the town gate');
-  assert.equal(duel.state.arena.worldJob.tinTownGateRequested, true, 'the slow plates approach opens the gate');
-  const arrival = driveToForge(duel, definition.steps[0].destination.position);
-  console.log('Plates forge arrival:', JSON.stringify(arrival));
-  assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the plates car stops at the forge');
-  const pot = duel.state.arena.worldJob.job.stepState;
-  const ember = arrival.done ? arrival.fire.ember : pot.ember;
-  assert.equal(arrival.done, ember > 0, 'the forge accepts the pot only while it is lit');
-  const stretches = [opening, ...continuation.stretches, ...remaining.stretches, gateDrive];
-  const ticks = yardExit.ticks + stretches.reduce((total, stretch) => total + stretch.ticks, 0) + arrival.ticks;
-  const measurement = {km:(yardExit.driven + stretches.reduce((total, stretch) => total + stretch.driven, 0) + arrival.driven) / 1000,
-    minutes:ticks / 3600, rams:stretches.flatMap(stretch => stretch.jolts).filter(jolt => jolt.riders.length > 0).length,
-    scoops:pot.scoopedBraziers || [], arrival:ember};
-  assert.equal(measurement.rams, arrival.observedJoltCount, 'rider contacts account for the recorded jolts');
-  assert.deepEqual(measurement.scoops, [], 'no brazier was scooped on the plates way');
-  console.log('Plates measurement:', JSON.stringify(measurement));
-
-}
-if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
-}
 // Start the salt-pan measurement from the real pickup and yard gate.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -1367,67 +819,6 @@ if (process.env.EVERBURN_PLATES_ONLY === '1') process.exit(0);
   else assert.equal(measurement.arrival, null, 'a stuck drive is not recorded as an arrival');
 
 }
-if (process.env.EVERBURN_SALT_ONLY === '1') process.exit(0);
-
-// Measure the bed with and without a Wash scoop from the same seeded start.
-for (const scoopAtWash of [true, false]) {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, pickup).loaded, 'the bed driver collects the pot');
-  const exit = driveThroughYardGate(duel, yardPlan().gate);
-  assert.ok(exit.along >= 20, 'the bed driver leaves through the yard gate');
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const wash = step.braziers.find(item => item.id === 'wash-brazier');
-  const washAlong = nearestOnLine(route, wash.position.x, wash.position.z).along;
-  const beforeWash = [];
-  for (let along = 500; along < washAlong - 50; along += 500) beforeWash.push(along);
-  beforeWash.push(washAlong - 30);
-  const opening = driveMeasuredStretches(duel, route, beforeWash, 28);
-  let scoop = null, remaining = null, gateDrive = null, arrival = null;
-  if (opening.reachedAll) {
-    if (scoopAtWash) scoop = driveToBrazier(duel, wash);
-    if (!scoopAtWash || scoop?.scooped) {
-      const gate = step.riderSafeWall;
-      const gateAlong = nearestOnLine(route, gate.x, gate.z).along;
-      const ends = [];
-      for (let along = washAlong + 500; along < gateAlong - 150; along += 500) ends.push(along);
-      ends.push(Math.min(pathLength(route) - 1, gateAlong - 150));
-      remaining = driveMeasuredStretches(duel, route, ends, 28);
-      if (remaining.reachedAll) {
-        const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
-        const gateLine = [{x:car.x, z:car.z},
-          {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
-          {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
-          {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
-        gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
-        if (gateDrive.along >= pathLength(gateLine) - 1) arrival = driveToForge(duel, step.destination.position);
-      }
-    }
-  }
-  const stretches = [...opening.stretches, ...(remaining?.stretches || []), ...(gateDrive ? [gateDrive] : [])];
-  const pot = duel.state.arena.worldJob.job.stepState;
-  const measurement = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + (scoop?.driven || 0) + (arrival?.driven || 0)) / 1000,
-    minutes:(exit.ticks + stretches.reduce((sum, item) => sum + item.ticks, 0) + (scoop?.ticks || 0) + (arrival?.ticks || 0)) / 3600,
-    rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
-    scoops:pot.scoopedBraziers || [], arrival:arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5 ? pot.ember : null,
-    ember:pot.ember, openingReached:opening.reachedAll, scoop, remainingReached:remaining?.reachedAll ?? false,
-    last:(remaining?.stretches || opening.stretches).at(-1), forge:arrival};
-  console.log(scoopAtWash ? 'Bed measurement:' : 'Bed without scoop measurement:', JSON.stringify(measurement));
-  assert.equal(measurement.ember, pot.ember, 'the measurement reads the actual pot');
-  assert.ok(opening.reachedAll && (!scoopAtWash || scoop?.scooped) && remaining?.reachedAll, 'the driver follows the bed and scoops when requested');
-  if (!scoopAtWash) {
-    assert.deepEqual(measurement.scoops, [], 'the driver takes no scoop');
-    assert.equal(measurement.arrival, 0, 'the ember is out at the forge without a scoop');
-  }
-  assert.ok(arrival && arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the driver stops at the forge');
-  assert.equal(measurement.arrival, pot.ember, 'the arrival records the actual ember even when it is out');
-  assert.equal(measurement.rams, arrival.observedJoltCount, 'observed rider contacts account for the actual jolts');
-}
-if (process.env.EVERBURN_BED_ONLY === '1') process.exit(0);
 
 // The real job requests the gate only for a car approaching slowly.
 {
@@ -1736,6 +1127,9 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   assert.equal(world.job.stepState.scoopBrazier, 'yard-brazier');
   assert.notEqual(world.actors[0].pursuing, true);
   car = {...step.braziers[1].position};
+  // Let the rider finish returning to its post after the yard visit.
+  world.actors[0].position = {...step.waitingActors[0].start.position};
+  stepWorldJob(duel, 0.1);
   world.actors[0].position = {...world.actors[0].position, x:car.x + 200, z:car.z};
   stepWorldJob(duel, 0.1);
   assert.equal(world.job.stepState.scoopBrazier, 'halfway-brazier');

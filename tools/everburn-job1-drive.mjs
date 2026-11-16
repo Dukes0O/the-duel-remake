@@ -2,7 +2,7 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
-import {riverDepthAt, RIVER_LAND, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
+import {RIVER_LAND, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
@@ -17,26 +17,6 @@ export function platesCoverLine(route, farOffset = 0) {
     const offset = -(45 + 45 * Math.max(0, Math.min(1, (point.along - 1295) / 70))) * weight + farOffset * farWeight;
     return {x:point.x - dz / length * offset, z:point.z + dx / length * offset};
   });
-}
-
-// Give the bed driver a gradual sideways line around the first rider post.
-export function bedRiderBypass(route, offset, laterOffset = 0) {
-  const points = sampleLine(route, 10);
-  return points.map((point, index) => {
-    const before = points[Math.max(0, index - 1)], after = points[Math.min(points.length - 1, index + 1)];
-    const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
-    const weight = Math.max(0, Math.min(1, (point.along - 1400) / 400, (3100 - point.along) / 400));
-    const laterWeight = Math.max(0, Math.min(1, (point.along - 6000) / 400, (7900 - point.along) / 400));
-    const totalOffset = offset * weight + laterOffset * laterWeight;
-    return {x:point.x - dz / length * totalOffset, z:point.z + dx / length * totalOffset};
-  });
-}
-
-// Report the first climb impact from the real simulation, so a proof drive can
-// distinguish steep ground from rider contact without inferring it from speed.
-export function firstGroundClimb(drive) {
-  return drive.stretches.flatMap(stretch => stretch.jolts)
-    .find(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')) ?? null;
 }
 
 // Use the same bed line and Steps exit as the land's end-to-end drive.
@@ -323,24 +303,6 @@ export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossP
   }
   return {stretches, ticks:stretches.reduce((total, stretch) => total + stretch.ticks, 0),
     reachedAll:stretches.length === ends.length && stretches.every((stretch, index) => stretch.along >= ends[index])};
-}
-
-// Preserve the actual pot values around the first climb impact for route trials.
-export function driveToFirstClimb(duel, route, end, targetSpeedMph) {
-  const pot = duel.state.arena.worldJob.job.stepState;
-  const emberBefore = pot.ember;
-  const drive = driveMeasuredStretches(duel, route, [end], targetSpeedMph, false, true);
-  const climb = firstGroundClimb(drive);
-  let terrain = null;
-  if (climb) {
-    const {x, z} = climb.position, step = 1.5;
-    const gradient = height => ({x:(height(x + step, z) - height(x - step, z)) / (2 * step),
-      z:(height(x, z + step) - height(x, z - step)) / (2 * step)});
-    terrain = {riverDepth:riverDepthAt(x, z), riverGradient:gradient(riverDepthAt),
-      groundGradient:gradient(scablandsSurfaceHeightAt)};
-  }
-  return {drive, climb, terrain, emberBefore,
-    emberAfter:duel.state.arena.worldJob.job.stepState.ember};
 }
 
 // Approach a camp fire, stop nearby and wait for the real scoop rule.
