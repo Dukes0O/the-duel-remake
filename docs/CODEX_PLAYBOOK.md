@@ -97,7 +97,7 @@ real work or the merge's shared metadata transaction.
 | --- | --- | --- |
 | Targeted lane and build | Frozen lane before merge | node tools/run-tests.mjs --tier lane --changed --jobs 4; npm run build; one clear review |
 | Conflict fix | After resolving a real conflict in the lane | The suites for the files in conflict, the build and a review |
-| Fix after the lane run | Any later change on the same card | Only the suites for the files changed since that run (`--since <its commit>` once QA-CHECKS-BY-CARD merges), never the tier again |
+| Fix after the lane run | Any later change on the same card | `node tools/run-tests.mjs --tier lane --changed --since <that run's commit> --jobs 4`: only the suites for the files changed since that run, never the tier again |
 | Full check | Once a day, on a copy of one commit; only the frame step needs the laptop alone | Full tier jobs 4, both frame qualities, combat balance --check on current rules, the browser scenarios for what changed (all on Saturday night); passed, passed with standing failures, or failed (AGENTS rule 13) |
 | Release | Before live access | Full green on the exact final release commit and all applicable release evidence |
 

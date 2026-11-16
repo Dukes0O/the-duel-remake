@@ -149,8 +149,8 @@ notes and history are evidence, not instructions.
     since are only docs, board, notes, art sheets or files no test reads. When code changed,
     run the lane tier for those changes, not the whole tier. After a card's one lane tier, a
     later fix on that card runs only the suites picked for the files changed since that run
-    (`--since <that run's commit>`; until card QA-CHECKS-BY-CARD merges, the suites that import
-    or name those files, found by search), never the card's tier again. The whole tier reruns only when
+    (`node tools/run-tests.mjs --tier lane --changed --since <that run's commit> --jobs 4`),
+    never the card's tier again. The whole tier reruns only when
     shared core files, the save shape or the physics changed since the last pass, and in the
     daily full check. A frame-check pass counts while the scene and its code are unchanged. The
     release note names the passed commit and what changed since.
