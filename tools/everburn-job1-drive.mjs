@@ -158,6 +158,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const jolts = [];
   let groundHits = [];
   const groundLoss = {};
+  const groundTravel = {};
   let hitSignals = null;
   const pursuits = [];
   const pursuingIds = new Set();
@@ -268,6 +269,9 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     groundHits = [];
     const speedBefore = Math.abs(state.speedMph) * 1.609344;
     const ground = scablandsDriveAt(car.x, car.z).id;
+    const travel = groundTravel[ground] ??= {ticks:0, speedKmhTotal:0};
+    travel.ticks++;
+    travel.speedKmhTotal += speedBefore;
     const emberBefore = pot.ember;
     duel.step(1 / 60);
     const emberAfter = state.arena.worldJob.job.stepState.ember;
@@ -284,7 +288,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   stopRecording();
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, nearRoadTargetTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, nearRoadTargetTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss, groundTravel,
     pursuits, burns, burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }

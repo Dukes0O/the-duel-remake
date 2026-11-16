@@ -1505,3 +1505,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_BRIDGE_OFFSET_TRIAL=1 node tools/test-everburn-job1.mjs` passed, recording the rider contact and no ground impact. The straight-across ember went out at 629.822 m. The clean road acceptance still fails on bright arrival. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: try another way past the bridge rider, prove both clean bed drives, then finish the scenario and final checks.
+
+## River bed speed measurement (16 November 2026)
+
+- The ruled drive now records the real car's speed by ground, so the bed's speed can be checked separately from the slower Steps and approaches. On firm and soft river-bed ground together, the scooped car averages 79.787 km/h for 1.834 minutes; the unscooped car averages 79.866 km/h for 1.826 minutes. These are measurements, not clean delivery proofs. No game event or sound cue was added.
+- Checks: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_RULED=1 node tools/test-everburn-job1.mjs`, with and without `EVERBURN_BED_NO_SCOOP=1`, passed in PowerShell. The scooped drive took 10.446 minutes, two rider jolts, and arrived out. The unscooped drive took 10.245 minutes, one rider jolt, and arrived out. Both exceed ten minutes. The straight-across ember went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: reliance on the target speed alone to describe the speed actually driven on the bed. Next: find a route beyond the Steps that avoids the riders, measure both clean bed drives, then prove East Road and finish the scenario and final checks.

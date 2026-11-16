@@ -342,6 +342,13 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   for (let along = 500; along < pathLength(bedLine) - 50; along += 500) ends.push(along);
   const drive = driveMeasuredStretches(duel, bedLine, ends, (ruledBed ? 80 : 60) / 1.609344);
   const pot = duel.state.arena.worldJob.job.stepState;
+  if (ruledBed) {
+    const travel = drive.stretches.map(stretch => stretch.groundTravel['river-bed']).filter(Boolean);
+    const ticks = travel.reduce((sum, item) => sum + item.ticks, 0);
+    const meanKmh = travel.reduce((sum, item) => sum + item.speedKmhTotal, 0) / ticks;
+    assert.ok(ticks > 0 && Number.isFinite(meanKmh), 'the real driver records speed on the river bed');
+    console.log('Bed ground speed:', JSON.stringify({minutes:ticks / 3600, meanKmh}));
+  }
   console.log('Bed toward the Steps:', JSON.stringify({reached:drive.reachedAll, last:drive.stretches.at(-1),
     length:pathLength(bedLine), ember:pot.ember, jolts:pot.joltCount ?? 0}));
   assert.ok(drive.reachedAll, 'the car follows the river toward the Steps');
