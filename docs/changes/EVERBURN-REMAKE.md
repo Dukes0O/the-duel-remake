@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates exposure location (16 November 2026)
+
+- The real drive now records the start and end of its longest continuous furnace sighting. The existing 25 mph driver is exposed from 1,132 m to 1,386 m along the plates way for 22.5 seconds. It cannot be the clean drive: that 254 m gap takes over six seconds at this speed. No game event or sound cue was added.
+- Check: `EVERBURN_PLATES_SIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed, including checks against the real sight timer and car position. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a drivable covered path across the exposed gap and prove the clean plates drive, then the other clean drives and scenario.
+
 ## Plates drive sight measurement (16 November 2026)
 
 - The scripted driver records the longest uninterrupted furnace sighting from the real job state. The existing 25 mph plates drive was visible for 22.5 seconds between 1 and 1.5 km and the furnace sent its warning. This is not the clean drive: it must cross open ground within six seconds and arrive alive without a ram. No game event or sound cue was added.

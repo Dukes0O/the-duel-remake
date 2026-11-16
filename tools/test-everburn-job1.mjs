@@ -671,6 +671,10 @@ if (process.env.EVERBURN_ROAD_ONLY === '1') process.exit(0);
   assert.equal(third.firstOut === null, third.ember > 0, 'the drive records an outage if one occurred');
   assert.ok(third.longestFurnaceSightSeconds > 6 && duel.state.arena.worldJob.skylineWarned,
     'the existing plates driver records the uninterrupted sighting that sends the riders');
+  assert.equal(third.longestFurnaceSight.seconds, third.longestFurnaceSightSeconds,
+    'the longest sighting records the real sight timer');
+  assert.ok(third.longestFurnaceSight.start.along < third.longestFurnaceSight.end.along,
+    'the sighting records where the moving car entered and left the exposed stretch');
   if (process.env.EVERBURN_PLATES_SIGHT_ONLY === '1') process.exit(0);
   assert.ok(third.jolts.some(jolt => jolt.riders.length > 0), 'the drive records riders at a jolt');
   const fourth = driveAlongRoad(duel, route, 2000, 7200, 25);
