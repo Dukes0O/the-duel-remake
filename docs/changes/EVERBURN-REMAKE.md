@@ -1534,3 +1534,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Checks: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_RULED=1 EVERBURN_BED_APPROACH_BYPASS=1 node tools/test-everburn-job1.mjs` passed. The same command with `EVERBURN_BED_BYPASS_FULL=1` completed the measured delivery; it did not meet clean-drive acceptance. The straight-across ember went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none; the bypass checks are new. Codex decided: use 50 km/h on this plates-ground approach trial. Claude should review it. For Claude to run: the browser scenario and both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: find a route after the Steps that avoids the bridge rider, then prove both bed deliveries and the East Road.
+
+## Riders keep to their road (16 November 2026)
+
+- Job 1's barricade riders now pursue only within 120 m of the East Road and 900 m along it from their post. They turn back after five seconds without sight or when the car leaves their ground, including the bed and Steps, and return to their post. The furnace riders keep their existing rule. No new sound cue is needed.
+- Check: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. The real job step checked pursuit at the camp, loss of sight for five seconds, the bridge's lower floor, the Steps and return to post. The straight-across ember went out at 629.822 m. Full job checks and replay fingerprints remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the barricade riders' unrestricted pursuit. Next: replace the trial drives with the three ruled delivery proofs, then the scenario and final checks.

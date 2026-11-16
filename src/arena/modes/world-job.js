@@ -2,7 +2,7 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear} from '../../crew-gear/signature.js';
-import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../../world/scablands-ground.js';
+import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
 import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
@@ -14,8 +14,9 @@ import {startKnock} from '../../vehicle-knock.js';
 import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
-import {scablandsDriveAt, RIVER_LAND} from '../../world/scablands-regions.js';
+import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
 import {ROAD_NET} from '../../world/scablands-road.js';
+import {nearestOnLine, sees} from '../../world/scablands-ways.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
@@ -231,7 +232,27 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
   if (!rider || rider.health <= 0 || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
   const car = position(duel, duel.state);
-  if (worldJob.ridersRetreating) {
+  const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
+    worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  if (roadRider && !worldJob.ridersRetreating && !rider.returningToPost) {
+    const road = ROAD_NET.road('east-road').points;
+    const carOnRoad = nearestOnLine(road, car.x, car.z);
+    const step = worldJob.job.steps[worldJob.job.stepIndex];
+    const barrier = step.barriers[step.waitingActors.indexOf(actorDef)].position;
+    const post = nearestOnLine(road, barrier.x, barrier.z);
+    const ground = scablandsDriveAt(car.x, car.z);
+    const floors = [];
+    scablandsFloorsAt(car.x, car.z, floors);
+    const inRange = carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900 &&
+      ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
+      (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
+    const visible = inRange && sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
+      actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5});
+    rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
+    if (!inRange || (rider.pursuing && rider.lostSightSeconds >= 5)) rider.returningToPost = true;
+    if (!rider.pursuing && !visible) return;
+  }
+  if (worldJob.ridersRetreating || rider.returningToPost) {
     rider.pursuing = false;
     const home = actorDef.start.position;
     const dx = home.x - rider.position.x, dz = home.z - rider.position.z;
@@ -244,6 +265,10 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         {radius:1.3, grid:worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+    }
+    if (distance <= 1 && !worldJob.ridersRetreating) {
+      rider.returningToPost = false;
+      rider.lostSightSeconds = 0;
     }
     return;
   }

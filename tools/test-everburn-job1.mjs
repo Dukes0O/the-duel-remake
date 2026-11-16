@@ -15,7 +15,7 @@ import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPictu
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
-import {riverDepthAt, scablandsDriveAt, GROUND_AREAS} from '../src/world/scablands-regions.js';
+import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
@@ -34,6 +34,44 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// The actual job step confines barricade riders to their road and returns them to post.
+{
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {...definition.steps[0].waitingActors[0].start.position};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const [camp, bridge] = world.actors, posts = definition.steps[0].waitingActors;
+  const tick = dt => stepWorldJob(duel, dt);
+  car = {...posts[0].start.position, y:camp.position.y};
+  tick(0.1);
+  assert.equal(camp.pursuing, true, 'the camp rider chases a car on the road');
+  car = {...car, y:car.y - 100};
+  tick(4.9);
+  assert.equal(camp.pursuing, true, 'the rider searches for five seconds after losing sight');
+  tick(0.2);
+  assert.equal(camp.pursuing, false, 'the rider turns back after five seconds without sight');
+  const crossing = LAND.at('girder-bridge'), floors = [];
+  scablandsFloorsAt(crossing.x, crossing.z, floors);
+  car = {...crossing, y:floors[1]};
+  bridge.pursuing = true;
+  tick(0.1);
+  assert.equal(bridge.pursuing, false, 'the bridge rider does not chase beneath the deck');
+  const steps = stepsWayFor();
+  car = {x:steps.x, z:steps.z, y:scablandsSurfaceHeightAt(steps.x, steps.z)};
+  bridge.pursuing = true;
+  tick(0.1);
+  assert.equal(bridge.pursuing, false, 'the bridge rider does not chase on the Steps');
+  car = {...posts[0].start.position, x:posts[0].start.position.x + 2000, y:camp.position.y};
+  camp.position = {...posts[0].start.position, y:camp.position.y, x:posts[0].start.position.x + 10};
+  camp.pursuing = true;
+  for (let i = 0; i < 100; i++) tick(0.1);
+  assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x, camp.position.z - posts[0].start.position.z) <= 1,
+    'the rider returns to its post');
+  assert.equal(camp.pursuing, false);
+}
 // Measure cover only within the furnace's range, using the same sight rule as the job.
 {
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
