@@ -203,8 +203,11 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
     'the real car reaches 100 km/h on the clear road');
   const campApproach = driveAlongRoad(duel, road, 2350);
   assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
+  const joltsBeforeScoop = duel.state.arena.worldJob.job.stepState.joltCount ?? 0;
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, 'the driver scoops at the camp');
+  assert.equal(scoop.jolts.length, (duel.state.arena.worldJob.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
+    'the scoop records each jolt in the actual pot state');
   const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344);
   assert.ok(remaining.reachedAll, 'the driver reaches the town approach');
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
@@ -215,10 +218,10 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   const stretches = [...opening.stretches, campApproach, ...remaining.stretches, gate];
   const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-    rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
+    rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts].filter(jolt => jolt.riders.length > 0).length,
     jolts:arrival.observedJoltCount, scoops, burnt, ember:arrival.fire?.ember ?? pot.ember};
   console.log('Clean East Road measurement:', JSON.stringify(result));
-  console.log('Road jolts:', JSON.stringify(stretches.flatMap(item => item.jolts)));
+  console.log('Road jolts:', JSON.stringify([...stretches.flatMap(item => item.jolts), ...scoop.jolts]));
   assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
   assert.deepEqual(scoops, ['halfway-brazier']);
   assert.ok(step.barriers.every(barrier => burnt.includes(barrier.id)), 'both barricades burn');
@@ -1176,8 +1179,11 @@ if (process.env.EVERBURN_SALT_ONLY !== '1') {
     'the driver records each real jolt on the camp approach');
   assert.equal(approach.jolts.length, 0, `the driver slows for the camp barricade without a jolt: ${JSON.stringify(approach)}`);
   console.log('East Road camp approach:', JSON.stringify(approach));
+  const joltsBeforeScoop = world.job.stepState.joltCount ?? 0;
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, `the real car stops and scoops at the camp: ${JSON.stringify(scoop)}`);
+  assert.equal(scoop.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeScoop,
+    'the scoop records each jolt in the actual pot state');
   assert.equal(scoop.elapsedSeconds, scoop.ticks / 60, 'the scoop records its actual driving time');
   assert.ok(Math.abs(scoop.ember - Math.min(step.ember.start, scoop.emberBeforeScoop - step.ember.coldPerSecond / 60 + 25)) < 1e-8,
     `the scoop adds 25 after cooling, up to the pot's capacity: ${JSON.stringify(scoop)}`);

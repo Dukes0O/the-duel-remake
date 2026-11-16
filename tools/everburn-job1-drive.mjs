@@ -325,6 +325,8 @@ export function driveToFirstClimb(duel, route, end, targetSpeedMph) {
 export function driveToBrazier(duel, brazier, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;
   let distance = Infinity, ticks = 0, stopping = false, scoopGain = 0, emberBeforeScoop = null, driven = 0, previous;
+  let lastJoltCount = world.job.stepState.joltCount ?? 0;
+  const jolts = [];
   for (; ticks < maxTicks && !(world.job.stepState.scoopedBraziers || []).includes(brazier.id); ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     if (previous) driven += Math.hypot(car.x - previous.x, car.z - previous.z);
@@ -345,12 +347,21 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     const emberBefore = world.job.stepState.ember;
     duel.step(1 / 60);
+    const pot = world.job.stepState;
+    if ((pot.joltCount ?? 0) > lastJoltCount) {
+      const position = worldJobPosition(duel, state);
+      jolts.push({amount:pot.jolt, position, riders:world.actors.filter(actor => actor.ramContact).map(actor => ({
+        id:actor.id, distance:Math.hypot(position.x - actor.position.x, position.z - actor.position.z),
+        heightDifference:Math.abs(position.y - actor.position.y),
+      }))});
+      lastJoltCount = pot.joltCount;
+    }
     if ((world.job.stepState.scoopedBraziers || []).includes(brazier.id)) {
       emberBeforeScoop = emberBefore;
       scoopGain = world.job.stepState.ember - emberBefore;
     }
   }
-  return {distance, ticks, driven, elapsedSeconds:ticks / 60, emberBeforeScoop, scoopGain, ember:world.job.stepState.ember, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
+  return {distance, ticks, driven, elapsedSeconds:ticks / 60, emberBeforeScoop, scoopGain, ember:world.job.stepState.ember, jolts, scooped:(world.job.stepState.scoopedBraziers || []).includes(brazier.id)};
 }
 
 // Drive into the forge bay and stop; the job itself decides whether delivery succeeds.

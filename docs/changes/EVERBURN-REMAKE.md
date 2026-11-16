@@ -1416,3 +1416,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. This is a new acceptance test, which deliberately fails until the drive meets the ruled conditions. Codex decided: none.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: avoid a rider on the East Road without changing the rider, then finish the clean bed drives, scenario and final checks.
+
+## Scoop measurement (16 November 2026)
+
+- The scripted brazier approach now records pot jolts and riders in contact while the car approaches and scoops. The East Road proof includes that interval in its ram count and checks the recorded count against the real pot state. No game event or sound cue was added.
+- Checks: `EVERBURN_ROAD_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the scoop count check. `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` still fails its clean-drive assertion: two rams, 51.035 ember, 6.594 minutes. Neither ram occurred during the scoop. `git diff --check` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the gap in the scripted road driver's scoop-interval ram count. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
