@@ -666,6 +666,8 @@ const junction = stepBorer(createBorerState(), {thrust:1, tunnels:otherPassage},
 assert.equal(junction.state.finished, true, 'The head breaks into an existing passage.');
 assert.equal(junction.state.segments.at(-1).endOpen, true);
 assert.equal(junction.events.filter(event => event.cue === 'borer.breakthrough').length, 1);
+assert.equal(junction.state.message, 'She has broken into the other bore.');
+assert.equal(junction.events.find(event => event.cue === 'borer.breakthrough').message, junction.state.message);
 const joinedCut = createGroundTunnels(junction.state.segments, {heightAt:(x,z)=>junctionGround.heightAt(x,z)});
 assert.equal(joinedCut.mouths.length, 1, 'An underground junction does not make a surface mouth.');
 const highPassage = createGroundTunnels([{start:{x:-20,y:11.65,z:25}, end:{x:20,y:11.65,z:25}, radius:3}]);

@@ -360,7 +360,8 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
     if (!next.exitCutting && joinedPassage) {
       next.segments.at(-1).endOpen = true;
       next.finished = true;
-      events.push({type:'breakthrough', cue:'borer.breakthrough'});
+      next.message = 'She has broken into the other bore.';
+      events.push({type:'breakthrough', cue:'borer.breakthrough', message:next.message});
     }
   }
   next.stepCarrySeconds = Math.max(0, carry);

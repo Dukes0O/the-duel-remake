@@ -296,3 +296,9 @@ Mabel and the tunnel drawing now share the same surface-mouth rule. If the landi
 `node tools/test-machine-borer.mjs` passed after that test setup was corrected; the first run found the unfilled actual mouth. `node tools/test-tunnels.mjs` passed. No existing assertion or race fingerprint changed. Browser scenario, lane tier and final checks remain for Claude or the final run. R2 and R3 remain.
 
 Removed: the separate daylight check that could accept a drop with no drawable mouth. No sound cue changed.
+
+## Underground breakthrough message
+
+When Mabel joins another bore, her state and the `borer.breakthrough` event now say: "She has broken into the other bore." The junction test checks both the sentence and its existing sound cue. `node tools/test-machine-borer.mjs` passed. No existing assertions or race fingerprints changed. The browser scenario repair and final checks remain; Claude must run the browser scenario and lane tier.
+
+Removed: the silent underground breakthrough event.
