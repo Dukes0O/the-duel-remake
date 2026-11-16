@@ -1572,3 +1572,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `node tools/test-everburn-job1.mjs` passed in one plain run, about one minute. It includes the road, both bed drives, plates, salt pan and straight-across outage.
 - Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the unused trial options and helper named above. Next: write the scenario and run the final checks.
+
+## Hot Delivery visual scenario (16 November 2026)
+
+- Added a memory-only Performance scenario for the yard, Cinder, both barricades, both map views, Tin Town's gate and the lit forge. It records the car position, ember, map text and named scene object at each picture, checks that the named object is in view, and writes all collected failures to `everburn-job1-measurements.json` before reporting them. The car is placed for each view; this is a visual check, not a driving proof.
+- Checks: `node --check tools/scenarios/everburn-job1.mjs` passed. A mock harness parsed all 30 page expressions with `new Function`; Chrome was not run under this job's rules. No game event or sound cue was added.
+- Changed assertions: none. Codex decided: none. For Claude to run: `everburn-job1` in the memory-only browser harness, `test-everburn-easy.mjs` and `test-run-gas-medium.mjs`. For Claude to draw: the pot transfer and forge fire.
+- Removed: the obsolete `everburn-play` walk is replaced by an alias to the new scenario. Next: final checks and the delivery table.
