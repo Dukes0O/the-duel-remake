@@ -17,6 +17,17 @@ export function platesCoverLine(route, farOffset = 0) {
   });
 }
 
+// Give the bed driver a gradual sideways line around the first rider post.
+export function bedRiderBypass(route, offset) {
+  const points = sampleLine(route, 10);
+  return points.map((point, index) => {
+    const before = points[Math.max(0, index - 1)], after = points[Math.min(points.length - 1, index + 1)];
+    const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
+    const weight = Math.max(0, Math.min(1, (point.along - 1400) / 400, (3100 - point.along) / 400));
+    return {x:point.x - dz / length * offset * weight, z:point.z + dx / length * offset * weight};
+  });
+}
+
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.
 export function sightStretches(samples, classify) {

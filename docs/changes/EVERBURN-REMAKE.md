@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed rider bypass (16 November 2026)
+
+- Added a gradual 150 m sideways line to the bed proof driver. The real Medium car reached 3 km without a jolt, passing the first rider contact seen on the centre line. It held 72.711 ember at that point. This is not yet a delivery proof. No game event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive, which went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: use a gradual 150 m offset to measure the first rider bypass.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: continue the bypass through Wash and avoid the later rider contacts, then prove both bed deliveries and the remaining routes.
+
 ## Bed rider contact measurements (16 November 2026)
 
 - Corrected the proof driver's car height to use the job's actual floor position, and recorded the speed before and after each jolt. All three jolts on the slower bed drive had riders in contact on the same floor, within 0.051 m of the car's height. The speed drops were under 0.5 km/h, below the 8 km/h hit threshold. The earlier claim that riders were over 8 m above the car was wrong: it used the road reference height. No game event or sound cue was added.

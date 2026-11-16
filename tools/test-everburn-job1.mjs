@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -115,6 +115,25 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(!measurement.timedOut, 'the measurement reaches its distance or the ember goes out');
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
   if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
+}
+// Test a gradual line around the first rider on the bed route.
+if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const line = bedRiderBypass(route, 150);
+  const drive = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000], 28);
+  const jolts = drive.stretches.flatMap(stretch => stretch.jolts);
+  console.log('Bed rider bypass:', JSON.stringify({reached:drive.reachedAll, jolts, last:drive.stretches.at(-1)}));
+  assert.ok(drive.reachedAll, 'the car reaches the far side of the rider post');
+  assert.equal(jolts.length, 0, 'the car avoids jolts on the bypass');
+  process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.
 if (process.env.EVERBURN_BED_HAZARDS_ONLY === '1') {
