@@ -114,7 +114,7 @@ const page = {
       v.scene.background=oldBackground;v.scene.fog=oldFog;v.renderer.setRenderTarget(oldTarget);renderTarget.dispose();marker.dispose();
     }
   })()`,
-  status: `(() => { const s = window.__theDig.simulation, b = s.borer; return {elapsed:s.elapsed, distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message}; })()`,
+  status: `(() => { const s = window.__theDig.simulation, b = s.borer; return {elapsed:s.elapsed, distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message, hidden:document.hidden}; })()`,
   startVisibility: `(() => { const d=window.__theDig, start=performance.now();
     const record=() => d.paceVisibility.events.push({wallSeconds:(performance.now()-start)/1000, hidden:document.hidden, elapsed:d.simulation.elapsed, distance:d.simulation.borer.distanceM});
     d.paceVisibility={events:[],record}; document.addEventListener('visibilitychange',record); record(); return true; })()`,
@@ -304,7 +304,8 @@ export async function run(context) {
   assert.equal(beforePush.mode, 'work', 'Mabel is in work mode before the first W press');
   const simulatedSeconds = afterPush.elapsed - beforePush.elapsed;
   assert.ok(simulatedSeconds > 0, 'simulation advances during the first W press');
-  assert.ok(Math.abs((afterPush.lever - beforePush.lever) - simulatedSeconds * 0.25) <= 0.01, 'the first W press moves the lever at a quarter travel per simulation second');
+  const leverTravel = afterPush.lever - beforePush.lever;
+  assert.ok(leverTravel >= 0.25 * (simulatedSeconds - 0.2) && leverTravel <= 0.25 * simulatedSeconds + 0.01, 'the first W press moves the lever at a quarter travel per simulation second, allowing for key delivery');
   assert.ok(visibility.geometry.headAhead > 0 && visibility.geometry.headFromSimulation <= 2, 'the head leads and is at the simulation position');
   assert.ok(visibility.side.camera[1] > visibility.side.ground, 'the side camera is above ground');
   assert.ok(visibility.side.alone.marked > 0 && visibility.side.covered.marked === 0, 'the hill hides the whole machine from the side');
