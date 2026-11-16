@@ -208,6 +208,24 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
     jolt.groundHits.some(hit => hit.kind === 'climb')), 'the offset line hits steep ground');
   assert.ok(offsetCrossing.longestFurnaceSightSeconds <= 6 && !offsetDuel.state.arena.worldJob.skylineWarned,
     'the offset crossing stays out of the furnace warning');
+  // Measure a line halfway between the centre and the steep far offset.
+  const middleDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  middleDuel.state.wastelandGateDiscovered = true;
+  assert.ok(middleDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  middleDuel.state.countdown = 0;
+  assert.ok(driveToCinder(middleDuel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(middleDuel, yardPlan().gate).along >= 20);
+  const middleLine = platesCoverLine(route, -20);
+  assert.ok(driveAlongRoad(middleDuel, middleLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
+  assert.ok(drivePlatesShelter(middleDuel, middleLine, 2900).along >= 2900);
+  const middleCrossing = drivePlatesRoughGround(middleDuel, middleLine, 3600, 20);
+  console.log('Plates middle crossing:', JSON.stringify(middleCrossing));
+  assert.ok(middleCrossing.along >= 3600, 'the car reaches the far side on the middle line');
+  assert.ok(middleCrossing.jolts.length > 0 && middleCrossing.jolts.every(jolt =>
+    jolt.groundHits.some(hit => hit.kind === 'climb')), 'the faster middle line hits steep ground');
+  assert.ok(middleCrossing.longestFurnaceSightSeconds > 6 && middleDuel.state.arena.worldJob.skylineWarned,
+    'the faster middle line still triggers the furnace');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
