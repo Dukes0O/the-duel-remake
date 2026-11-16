@@ -286,6 +286,21 @@ the game.
   A sign is its own `slab`.
 - `metallicFactor` at most 0.3, since nothing is there to reflect.
 
+### Moments (a thing that happens, not a thing that stands)
+
+- **A drawn moment that no player sees.** Hot Delivery's hand-over and the
+  forge taking the fire played behind the results screen, which comes up within
+  a second of the car stopping (found by hand, 16 November 2026). Before drawing
+  a moment, take pictures in the real game at that moment and for the seconds
+  after it, with the game's own camera and every screen the game puts up. Three
+  things must hold: the camera faces it, no screen covers it, and the game waits
+  for it. Where the game does not wait, the cure is a rule (a timed hold in the
+  job) and a camera, built by Codex, and it comes before the drawing.
+- **A moment keeps one clock.** The drawing's timing is set in seconds after
+  the event that starts it (`FORGE.times` in `src/world/forge-look.js`), never
+  by how far something has to travel, so that the job's rule and its sound can
+  be timed to the same numbers and a test can hold the two equal.
+
 ### Sheets
 
 - **Sheets show other buildings.** A family file holds every building at its own origin, so a building's review views must hide the others, or a stray block appears (the big wheel, 7 November).

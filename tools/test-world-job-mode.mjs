@@ -6,7 +6,7 @@ import {finishArenaEvent} from '../src/arena/arena-event.js';
 import {loadPlayers, PLAYERS_KEY} from '../src/progression.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 import {arenaHud, arenaResultsScreen} from '../src/screen-arena.js';
-import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
+import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 
 const dt = 1 / 120;
 for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) for (const step of job.steps)
@@ -42,9 +42,16 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.match(jobHud.scoreText,/Cinder's ember pot/);
   assert(Number.isFinite(jobHud.remainingSec),'job HUD shows finite elapsed time');
   assert.deepEqual(jobHud.rows,[],'world jobs do not show an arena table');
-  assert.equal(worldHudModel({worldJob:app.duel.state.arena.worldJob,
-    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).target.id,'tin-town',
-    'the Scablands map guidance carries the job destination marker');
+  // EVERBURN-REMAKE job 1 (16 November 2026): the job starts by sending the car to Cinder for the pot, and to Tin Town once the pot is on.
+  const guide=()=>worldHudModel({worldJob:app.duel.state.arena.worldJob,
+    player:app.duel.course.worldAt(app.duel.state.s,app.duel.state.lateral)}).target.id;
+  assert.equal(guide(),'cinder','the Scablands map guidance carries the first marker of the job, Cinder with the pot');
+  {
+    const job=app.duel.state.arena.worldJob.job;
+    job.stepState={...job.stepState,loaded:true,ember:job.steps[0].ember.start};
+    app.advance(.1);
+    assert.equal(guide(),'cold-forge','and the job destination marker once the pot is on the car');
+  }
   const arena=app.duel.state.arena,worldJob=arena.worldJob;
   worldJob.job.stepIndex=worldJob.job.steps.length;worldJob.job.done=true;
   finishArenaEvent(app.duel,'job-complete','player');
@@ -58,8 +65,16 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.match(wonScreen.description,/A live ember\./,'results use the existing story completion line');
   assert.match(wonScreen.metrics,/SCRAP EARNED/,'won job results show scrap');
   assert.doesNotMatch(wonScreen.metrics,/HOLD|WRECKS|PLACE/,'world job results omit arena metrics');
-  assert.match(wonScreen.actions,/NEXT JOB: GET OUT AND WALK/,'first win names the next job');
-  assert.match(wonScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
+  // Only remade jobs are offered (EVERBURN-REMAKE, 16 November 2026) and job 2 is not remade: the first win offers the yard and no next job.
+  assert.doesNotMatch(wonScreen.actions,/NEXT JOB|ember-next-job/,'first win offers no job that is not remade');
+  assert.match(wonScreen.actions,/data-action="arena-yard" data-primary="true"/,'and the yard is the primary action');
+  // With job 2 counted as remade, the first win names it and wires it, as before.
+  REMADE_EVERBURN_JOBS.push(EVERBURN_JOBS[1].id);
+  try {
+    const nextScreen=arenaResultsScreen(app.duel.state,{metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
+    assert.match(nextScreen.actions,/NEXT JOB: GET OUT AND WALK/,'first win names the next job');
+    assert.match(nextScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
+  } finally { REMADE_EVERBURN_JOBS.pop(); }
   const failedScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-failed'},worldJob:arena.worldJob}},
     {metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
   assert.match(failedScreen.actions,/TRY AGAIN/,'failed job offers a retry');

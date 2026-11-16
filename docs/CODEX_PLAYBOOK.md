@@ -128,6 +128,18 @@ eight cars, delivered p95 at most 18.5 ms and construction under one second.
 Never time an art round or hidden unfinished content. Do not alter existing
 assertions or fingerprints without a reviewed reason.
 
+Before a lane hands over a change to a job's rules, places, lines or sounds,
+the builder searches `tools/` for that job's ids, place names, line ids and cue
+names and runs every suite found, once, the long ones included
+(`test-everburn-easy.mjs` takes 26 minutes and drives one job with
+`--job <name>`; `test-run-gas-medium.mjs`). Short rounds that run only the
+suites being worked on never meet these. At the merge of the remade Hot
+Delivery (16 November 2026) six older suites failed that no round had run. A
+new sound cue joins the old pin's exclusion list in `test-p4-audio.mjs`. A thing
+placed beside a road's own line needs its own check in
+`test-scablands-size.mjs`; a thing placed from a named place uses whole eighths
+of a metre, so that it keeps its exact offset when that suite moves the place.
+
 ### Integrator command
 
 Run tools/integrate-lane.mjs from the factory checkout with explicit
