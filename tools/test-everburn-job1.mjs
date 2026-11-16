@@ -201,10 +201,14 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(opening.reachedAll, 'the driver reaches the camp approach');
   assert.ok(opening.stretches.some(stretch => stretch.peakSpeedMph * 1.609344 >= 100),
     'the real car reaches 100 km/h on the clear road');
-  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344);
+  const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45);
   assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
   assert.ok(campApproach.peakSpeedMph * 1.609344 >= 100,
     'the driver keeps the road speed on the clear approach to the camp');
+  assert.ok(duel.state.arena.worldJob.job.stepState.burntBarricades.includes(step.barriers[0].id),
+    'the camp barricade burns on the faster approach');
+  assert.ok(campApproach.jolts.every(jolt => jolt.riders.length > 0),
+    'the faster approach does not hit the camp barricade');
   if (process.env.EVERBURN_CAMP_APPROACH_ONLY === '1') {
     console.log('Camp approach:', JSON.stringify({peakKmh:campApproach.peakSpeedMph * 1.609344,
       seconds:campApproach.elapsedSeconds, rams:campApproach.jolts.filter(jolt => jolt.riders.length).length}));

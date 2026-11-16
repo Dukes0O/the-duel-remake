@@ -1432,3 +1432,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the approach speed check is new. Codex decided: none.
 - For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the driver's 35 mph target on the clear camp approach. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road later camp braking (16 November 2026)
+
+- The clean-drive test driver keeps road speed until 45 m from the camp barricade, then burns it. The real car reaches 104.477 km/h on the approach and does not hit the barricade. This change is confined to the clean-drive trial; other scripted drivers keep their earlier braking distance. No game event or sound cue was added.
+- The full trial takes 6.104 minutes over 7.911 km, scoops once and burns both barricades. It takes two rider rams and arrives with 54.307 ember. It does not meet the clean-drive limit or bright band. The camp ram occurs at 2.330 km and the bridge ram at 3.871 km.
+- Checks: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_APPROACH_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` failed at the unchanged limit of one ram; the bright band is also missed. Both runs confirmed the straight-across outage at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the two camp approach checks are new. Codex decided: use the bridge's existing 45 m braking distance for this camp trial. Claude should review it.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the clean trial's earlier 140 m camp braking distance. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.

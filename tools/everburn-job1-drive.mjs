@@ -142,7 +142,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3, stopOnClimb = false) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3, stopOnClimb = false, campBrakeDistance = 140) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
@@ -237,7 +237,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
       if (Math.abs(angle) < Math.PI / 6 && Math.hypot(dx, dz) < barrierDistance) {
         barrierDistance = Math.hypot(dx, dz);
-        barrierLimit = barrier.id === 'ash-men-barricade-2' ? 45 : 140;
+        barrierLimit = barrier.id === 'ash-men-barricade-2' ? 45 : campBrakeDistance;
       }
       if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
     }
