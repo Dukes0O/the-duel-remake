@@ -1672,7 +1672,7 @@ braziers.dispose();
 const figure = createCinderFigure();
 assert.equal(figure.name, 'Cinder at the yard gate');
 assert.ok(figure.children.some(child => child.isMesh));
-assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSpotsFor(step)[0].z) < 3);
+assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSpotsFor(step)[0].z) >= 6);
 // Measure the real start and pickup against the gate and job solids.
 {
   const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
@@ -1681,7 +1681,7 @@ assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSp
   const start = relative(step.carStart), cinder = relative(pickup), fire = relative(step.braziers[0].position);
   assert.ok(Math.abs(start.along + 40) < 1e-9 && Math.abs(start.left) < 1e-9);
   assert.ok(Math.abs(step.carStart.heading - gate.bearing) < 1e-9);
-  assert.ok(Math.abs(fire.along + 8) < 1e-9 && Math.abs(fire.left - 7) < 1e-9);
+  assert.ok(Math.abs(fire.along + 8) < 1e-9 && Math.abs(fire.left - 20) < 1e-9);
   assert.ok(Math.abs(cinder.along + 8) < 1e-9 && Math.abs(cinder.left - 9) < 1e-9);
   const grid = createJobSolidGrid();
   grid.setYard(yardPlan().solids);
@@ -1704,9 +1704,9 @@ assert.equal(frame().target.id, 'cinder');
 assert.deepEqual(frame().actors, []);
 job = stepJob(job, view(pickup.x, pickup.z, 10), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 8.1, pickup.z), 1);
+job = stepJob(job, view(pickup.x + 12.1, pickup.z), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 7.9, pickup.z), .1);
+job = stepJob(job, view(pickup.x + 11.9, pickup.z), .1);
 const lines = job.requests.filter(request => request.type === 'say').map(request => request.lineId);
 for (let i = 0; i < 100 && !job.stepState.loaded; i++) {
   job = stepJob(job, view(pickup.x, pickup.z), .1);
