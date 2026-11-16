@@ -251,6 +251,13 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.equal(beyondCrossing.abovePlatesLimitTicks, 0, 'the ground beyond the crossing stays within 50 km/h');
   assert.ok(beyondCrossing.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
     'the ground beyond the crossing avoids the furnace warning');
+  const townward = drivePlatesShelter(trialDuel, trialLine, 4700);
+  console.log('Plates townward approach:', JSON.stringify(townward));
+  assert.ok(townward.along >= 4700, 'the car reaches the next stretch toward town');
+  assert.equal(townward.jolts.length, 0, 'the townward stretch avoids jolts');
+  assert.equal(townward.abovePlatesLimitTicks, 0, 'the townward stretch stays within 50 km/h');
+  assert.ok(townward.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
+    'the townward stretch avoids the furnace warning');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
