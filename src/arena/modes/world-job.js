@@ -772,9 +772,37 @@ function moveJobRaiders(duel, worldJob, dt) {
   }
 }
 
+function finishWorldJob(duel, worldJob) {
+  const state = duel.state;
+  worldJob.settled = true;
+  if (worldJob.definition.battle === true) settleBattle(worldJob);
+  state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
+  if (worldJob.originalCrewId) state.crewId = worldJob.originalCrewId;
+  if (worldJob.originalFootWeaponSelected && state.footWeapons)
+    state.footWeapons.selected = worldJob.originalFootWeaponSelected;
+  initializeCrewGear(duel);
+  return {reason: 'job-complete', winnerId: 'player'};
+}
+
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  if (worldJob.arrivalHold) {
+    const hold = worldJob.arrivalHold;
+    worldJob.clockSec = state.stageTimeSec;
+    hold.elapsed = Math.min(hold.seconds, hold.elapsed + dt);
+    if (!hold.caught && hold.elapsed + 1e-9 >= hold.catchAt) {
+      hold.caught = true;
+      duel.emit({arenaTell:{id:'forge-catch', targetId:'player', seconds:0,
+        cue:'world.forge.catch', position:{...hold.position}}});
+    }
+    updateJobActors(duel, worldJob, dt);
+    if (hold.elapsed + 1e-9 >= hold.seconds) {
+      worldJob.job = hold.completedJob;
+      return finishWorldJob(duel, worldJob);
+    }
+    return null;
+  }
   if(worldJob.definition.kind==='town-drive'){
     const gate=worldJob.definition.layout?.gate;
     if(gate){
@@ -931,6 +959,7 @@ export function stepWorldJob(duel, dt) {
     train:worldJob.actors.find(actor=>actor.train),
     contact, waveCleared: worldJob.clearedWaves};
   const previousStep = worldJob.job.stepIndex;
+  const previousStepState = worldJob.job.stepState;
   const next = stepJob(worldJob.job, view, dt);
   worldJob.job = next;
   if (next.events.some(event => event.type === 'burn') && currentStep?.ember) {
@@ -1003,8 +1032,6 @@ export function stepWorldJob(duel, dt) {
         sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
       if (worldJob.definition.id === 'everburn-hot-delivery') {
         worldJob.forgeFire = {ember:event.ember, grade:event.grade};
-        duel.emit({arenaTell:{id:'forge-catch', targetId:'player', seconds:0,
-          cue:'world.forge.catch', position:{...currentStep.destination.position}}});
       }
     }
     if(event.type==='roofBoard'&&state.fighter) {
@@ -1012,14 +1039,15 @@ export function stepWorldJob(duel, dt) {
       worldJob.roofRide={x:event.position.x,y:event.position.y,z:event.position.z};
     }
     if (event.type === 'done') {
-      worldJob.settled = true;
-      if (worldJob.definition.battle === true) settleBattle(worldJob);
-      state.weaponLoadout = [...(worldJob.originalWeaponLoadout || [])];
-      if (worldJob.originalCrewId) state.crewId = worldJob.originalCrewId;
-      if (worldJob.originalFootWeaponSelected && state.footWeapons)
-        state.footWeapons.selected = worldJob.originalFootWeaponSelected;
-      initializeCrewGear(duel);
-      return {reason: 'job-complete', winnerId: 'player'};
+      if (currentStep?.arrivalHold) {
+        worldJob.arrivalHold = {elapsed:0, ...currentStep.arrivalHold,
+          position:{...currentStep.destination.position}, completedJob:next};
+        worldJob.job = {...next, done:false, stepIndex:previousStep,
+          stepState:{...previousStepState, loaded:true, ember:worldJob.emberResult?.ember}};
+        state.speedMph = 0; state.pushVelocity = 0;
+        return null;
+      }
+      return finishWorldJob(duel, worldJob);
     }
   }
   applyRequests(duel, worldJob, next.requests);

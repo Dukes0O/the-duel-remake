@@ -1882,3 +1882,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Changed assertions, for Claude to review: the old checks required a rider to be behind the car and hidden, plus either 600 m along the road or 20 seconds hidden. They now check the two distance or blocked-ground conditions above, under Claude's latest Y1 ruling. Codex decided: none. Removed: heading, road-distance and hidden-time conditions for stranded rider recovery.
 - For Claude to run: the two long drivers and the lane tier, as recorded above. For Claude to draw: the pot transfer and forge fire. The scenario was previously passed by Claude.
 - Final checks: `test-replays.mjs` passed 297 unchanged fingerprints; `test-combat-replays.mjs` passed 12 unchanged fingerprints; `npm.cmd run build` passed. Integration was already included.
+
+## The hold, its camera and the Easy drives
+
+- The first part of the hold is built. Delivery keeps the result and ember while nine seconds of simulation time pass. Driving and weapon fire are disabled, combat does not advance against the car, retreating riders continue, and pause stops the hold. The existing `world.forge.catch` cue now sounds once at five seconds, when the ember reaches the forge. The test ties that time to `FORGE.times.lit`.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the delivery drives, pause, stopped car, weapon lock, hit indicators, retreating rider, preserved result, cue timing and the 8.9 and 9.0 second boundaries. Race fingerprints were not run in this round. The camera, screen words, browser pictures and Easy driver are still to do.
+- Changed assertions, for Claude to review: the forge cue was expected once on arrival; it is now expected zero times on arrival and once at five seconds, as the ruling requires. The completed job was expected immediately; it is now expected after nine seconds. No tolerances were loosened.
+- Codex decided: none. **Removed:** the forge catch cue at arrival. Picture 9 remains until the browser scenario is changed.
+- For Claude to run: the browser scenario and lane tier after the remaining work. The full Easy suite and final replay and build checks remain for the last round.
