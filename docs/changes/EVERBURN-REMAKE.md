@@ -1490,3 +1490,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none; the loss accounting is a new check. Codex decided: none.
 - For Claude to run: the browser scenario and the two long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: reliance on the arrival alone to explain the loss after the scoop. Next: establish a bright East Road delivery and clean bed deliveries, then finish the scenario and final checks.
+
+## East Road segment speeds (16 November 2026)
+
+- The clean-drive test now records the real car's distance, time, average speed and rider contacts for each road segment after the Halfway scoop. The clear segments average 100.3 to 101.4 km/h. The segment containing the bridge averages 86.3 km/h and contains the one 15-point ram. Avoiding that ram would leave about 73 ember on this measured drive, before any change in driving time. No game event or sound cue was added.
+- Check: `EVERBURN_CLEAN_ROAD=1 EVERBURN_ROAD_LOSS_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The full clean-drive acceptance remains failing: 58.298 ember in 6.068 minutes, one ram. The straight-across ember went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the segment measurements are new. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: avoid the bridge rider without changing it, prove both clean bed drives, then finish the scenario and final checks.

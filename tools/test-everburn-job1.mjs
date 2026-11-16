@@ -272,6 +272,18 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(Math.abs(recordedLoss - (scoop.ember - gate.ember)) < 0.01,
     'ground losses account for the actual ember spent between the scoop and gate');
   console.log('After-scoop losses by ground:', JSON.stringify(lossesByGround));
+  const roadSegments = remaining.stretches.map((stretch, index) => ({
+    endMetres:[2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600][index],
+    metres:stretch.driven, seconds:stretch.elapsedSeconds,
+    averageKmh:stretch.driven / stretch.elapsedSeconds * 3.6,
+    rams:stretch.jolts.filter(jolt => jolt.riders.length > 0).length,
+  }));
+  assert.ok(roadSegments.every(segment => Number.isFinite(segment.averageKmh) && segment.seconds > 0),
+    'each road segment records a finite speed from the actual drive');
+  assert.equal(roadSegments.reduce((sum, segment) => sum + segment.rams, 0),
+    remaining.stretches.flatMap(stretch => stretch.jolts).filter(jolt => jolt.riders.length > 0).length,
+    'the segment measurements account for the recorded rams');
+  console.log('Road segment speeds:', JSON.stringify(roadSegments));
   if (process.env.EVERBURN_ROAD_LOSS_ONLY === '1') process.exit(0);
   assert.ok(arrival.done && arrival.distance < 5, 'the driver delivers at the forge');
   assert.deepEqual(scoops, ['halfway-brazier']);
