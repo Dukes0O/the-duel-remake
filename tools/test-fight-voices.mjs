@@ -268,3 +268,22 @@ test('four actual actor-attributed Arsenal cues can announce without any generic
       'cue-only native action shows the exact subtitle');
   }
 });
+
+test('Rook does not call the road clear near a standing fence or a rider', async () => {
+  const f = fixture(), s = state(), fence = {id:'fence', position:{x:0,z:28}};
+  const job = {steps:[{barriers:[fence]}], stepIndex:0, stepState:{burntBarricades:[]}};
+  s.arena = {mode:'world-job', worldJob:{job, actors:[]}};
+  const course = {worldAt:() => ({x:0,z:0})};
+  f.audio.event({arsenalCue:'weapon.flame.start', actor:'player'}, s, course);
+  equal(await subtitle(s), null, 'an unburnt fence prevents the clear-road line');
+  job.stepState.burntBarricades.push('fence');
+  s.arena.worldJob.actors.push({id:'ash-rider-1', health:100, position:{x:0,z:199}});
+  f.audio.event({weaponFired:'flamethrower'}, s, course);
+  equal(await subtitle(s), null, 'a nearby rider prevents the line');
+  s.arena.worldJob.actors[0].position.z = 201;
+  f.audio.event({weaponFired:'flamethrower'}, s, course);
+  equal(await subtitle(s), 'Road is clear. Keep your wheels under you.', 'the callout remains available after danger has passed');
+  s.arena.worldJob.actors[0].position.z = 199;
+  f.update(s);
+  equal(await subtitle(s), null, 'the line stops if a rider comes close while it is shown');
+});

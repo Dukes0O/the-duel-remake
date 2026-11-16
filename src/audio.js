@@ -1693,7 +1693,7 @@ export class EngineAudio {
 
   event(ev, state, course) {
     if (ev?.menu) { this._clearTurbo(); this._clearVehicleVoices(); }
-    this.fightVoices.event(ev, state);
+    this.fightVoices.event(ev, state, course);
     // Automatic visits emit opening while the stage is prepared, then stageLoaded.
     // Preserve only that same visit's already-observed event across the reset.
     if (
