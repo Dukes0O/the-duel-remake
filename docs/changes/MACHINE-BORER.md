@@ -212,3 +212,9 @@ The trace now listens on window capture, before the Dig's document capture handl
 The first-push trace now also records each Dig frame's W state, mode and lever before and after simulation, the elapsed wall time and timestamps after simulation, ground updates and rendering. The scenario writes these to its measurements file before checking that W reached a frame. This separates input delivery from a slow frame or elapsed time discarded by the frame limit. A local rules-and-ground-view probe at the mesa measured 3.3 ms for the first simulation step and 8.4 ms for the first edited-ground update; it did not include browser rendering and does not explain the reported delay. Claude must run the browser scenario; H4 is not yet fixed. The scenario and Dig files pass `node --check`, and all scenario page expressions parse. No existing assertions or race fingerprints changed.
 
 `node tools/test-machine-borer.mjs` passed in 71.1 seconds after the trace change. The browser scenario and final checks remain.
+
+## First-cut ground shader
+
+The first mouth previously changed the ground shader and marked its materials for recompilation during the first W hold. The Dig now prepares the tunnel-capable shader when it opens, with no mouth cut until boring starts. The borer test checks that the first mouth changes the shader's mouth count without changing its program key or requesting a material rebuild. This removes one possible source of the first-push pause; the browser trace is still needed to establish whether it was the cause, including any first-use cost of the portal and lining.
+
+`node tools/test-machine-borer.mjs` passed in 72.2 seconds. No existing assertions changed, and no race fingerprints were run. Claude should run the browser scenario and inspect its first-push trace, H1 measurements and following-camera check. The final checks remain.

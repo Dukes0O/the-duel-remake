@@ -24,6 +24,12 @@ const digShader={uniforms:{},vertexShader:'#include <common>\n#include <project_
 digMaterial.onBeforeCompile(digShader);
 assert.equal(digShader.uniforms.uHillField.value,digLook.hills.texture);
 assert.equal(digShader.uniforms.uPhPlate.value,digLook.photos.plates.map);
+assert.equal(digShader.uniforms.uTunnelCount.value,0,'The prepared ground has no mouth before cutting.');
+const groundProgramKey=digMaterial.customProgramCacheKey(), groundMaterialVersion=digMaterial.version;
+digLook.look.setTunnelMouths([{start:{x:1,y:2,z:3},end:{x:1,y:2,z:4},radius:3}]);
+assert.equal(digShader.uniforms.uTunnelCount.value,1,'The first mouth reaches the prepared shader.');
+assert.equal(digMaterial.customProgramCacheKey(),groundProgramKey,'The first mouth does not change the shader program.');
+assert.equal(digMaterial.version,groundMaterialVersion,'The first mouth does not request a shader rebuild.');
 assert.ok(loadedGroundPhotos.some(path=>path.endsWith('scablands-scab-rock-colour.jpg')));
 assert.ok(digLook.hills.texture.image.data.some(value=>value>0),'The hill field contains raised land.');
 digMaterial.dispose();digLook.hills.texture.dispose();digLook.photos.dispose();

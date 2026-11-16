@@ -44,6 +44,10 @@ export function createDigGroundLook(riverField, loader) {
   const photos=loadGroundPhotos(loader);
   const look=createGroundLook({regions:{areas:GROUND_AREAS,field:riverField.texture,box:riverField.box,
     burn:LAND.place('everburn'),hills},photos});
+  // Reserve the mouth shader before any ground material is drawn. Otherwise
+  // the first cut changes the shader and can pause the first thrust to compile it.
+  look.setTunnelMouths([{start:{x:0,y:0,z:0},end:{x:0,y:0,z:1},radius:3}]);
+  look.setTunnelMouths([]);
   return {look,hills,photos};
 }
 
