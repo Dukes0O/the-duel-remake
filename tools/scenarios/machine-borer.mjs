@@ -228,10 +228,7 @@ export async function run(context) {
   const beforePush = await context.evaluate(page.inputTiming), pushStart = Date.now();
   await key(context, 'KeyW', 'keydown');
   try {
-    while (Date.now() - pushStart < 1300) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await context.evaluate(page.inputTiming);
-    }
+    await new Promise(resolve => setTimeout(resolve, 1300));
   }
   finally { await key(context, 'KeyW', 'keyup'); }
   const afterPush = await context.evaluate(page.inputTiming);
