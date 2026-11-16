@@ -1549,3 +1549,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions, for Claude to review: the old clean-road proof required a bright arrival and at most one ram with no other jolts; the Director's R2 ruling replaces those requirements with reaching the forge, ending the job and receiving the pay for the actual band. The route and recorded ram and scoop counts remain visible in the measurement.
 - Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the East Road's offset trial and its intermediate speed, jolt and loss assertions from this delivery proof. Next: replace the bed trial drives with the two Steps-route deliveries, then the scenario and final checks.
+
+## Bed deliveries after the rider rule (16 November 2026)
+
+- The seeded Medium driver follows the Wash, the river bed under the bridge, and the Steps to Tin Town. With the Wash scoop it travels 9.474 km in 10.415 minutes, takes no rams and delivers 28.238 ember, barely alight, for 50 scrap. Without the scoop it travels 9.430 km in 10.229 minutes, takes no rams and delivers 5.915 ember, barely alight, for 50 scrap. The real job ends and pays the recorded band in both cases. No new sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across outage at 629.822 m. The plain full job run and final checks remain.
+- Changed assertions, for Claude to review: the earlier bed trials required clean driving and particular ember values; the Director's R2 ruling replaces those with reaching the forge, completing the job, and receiving the pay for the actual band. The two new checks use the same Steps route and report actual measurements.
+- Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the Steps-route rider, bypass and speed trials in this part of the test. Next: remove the remaining trial helpers and switches, make the three delivery proofs part of the plain test, then finish the scenario and final checks.

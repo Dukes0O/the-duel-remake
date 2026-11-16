@@ -266,268 +266,67 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.equal(result.result.pay, pay, 'the job pays for that band');
   process.exit(0);
 }
-// Drive from the Wash along the land test's bed line toward the Steps.
+// Measure the Steps route using the real car and job state.
 if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
-  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
-  duel.state.wastelandGateDiscovered = true;
-  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
-  duel.state.countdown = 0;
-  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
-  const startClock = duel.state.arena.worldJob.clockSec;
-  const yardExit = driveThroughYardGate(duel, yardPlan().gate);
-  assert.ok(yardExit.along >= 20);
-  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
-  const bedRoute = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
-  const approachBypass = process.env.EVERBURN_BED_APPROACH_BYPASS === '1';
-  const line = process.env.EVERBURN_BED_RULED === '1' && !approachBypass ? bedRoute : bedRiderBypass(bedRoute, 150, -195);
-  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
-  const ruledBed = process.env.EVERBURN_BED_RULED === '1';
-  const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
-    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], approachBypass ? 50 / 1.609344 : ruledBed ? 80 / 1.609344 : 28);
-  if (!approach.reachedAll) console.log('Wash approach stopped:', JSON.stringify(approach.stretches.at(-1)));
-  assert.ok(approach.reachedAll, 'the car reaches the Wash');
-  if (ruledBed) {
-    assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the road approach reaches the Wash without a jolt');
-    if (!approachBypass) assert.ok(approach.stretches.some(stretch => stretch.fastRoadSpeedTicks > 0), 'the car reaches road speed on the approach');
-  }
-  const skipWash = process.env.EVERBURN_BED_NO_SCOOP === '1';
-  const washScoop = skipWash ? null : driveToBrazier(duel, wash);
-  if (!skipWash) {
-    assert.ok(washScoop.scooped, 'the car scoops at the Wash');
-    const stoppedCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
-    assert.ok(Math.abs(washScoop.distance - Math.hypot(stoppedCar.x - wash.position.x,
-      stoppedCar.z - wash.position.z)) < 1e-6, 'the scoop reports the real final car position');
-  }
-  else assert.ok(!(duel.state.arena.worldJob.job.stepState.scoopedBraziers || []).includes(wash.id),
-    'the car passes the Wash without a scoop');
-  const riderAtWash = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
-  const washCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
-  const washRiderDistance = Math.hypot(riderAtWash.position.x - washCar.x, riderAtWash.position.z - washCar.z);
-  assert.ok(Number.isFinite(washRiderDistance), 'the real rider has a measurable distance from the car at the Wash');
-  console.log('Rider at Wash:', JSON.stringify({distance:washRiderDistance, pursuing:riderAtWash.pursuing,
-    position:riderAtWash.position}));
-  if (approachBypass) {
-    const camp = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-1');
-    const pot = duel.state.arena.worldJob.job.stepState;
-    const pursuits = approach.stretches.flatMap(stretch => stretch.pursuits);
-    console.log('Bypass camp rider:', JSON.stringify({pursuing:camp.pursuing, position:camp.position,
-      jolts:pot.joltCount ?? 0, ember:pot.ember, minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-      kilometres:(yardExit.driven + approach.stretches.reduce((sum, stretch) => sum + stretch.driven, 0) + (washScoop?.driven ?? 0)) / 1000}));
-    assert.ok(!pursuits.some(pursuit => pursuit.id === camp.id), 'the camp rider never starts pursuit on the bypass');
-    assert.ok(!camp.pursuing, 'the approach bypass stays out of the camp rider pursuit');
-    assert.equal(pot.joltCount ?? 0, 0, 'the bypass reaches the Wash without a jolt');
-    if (process.env.EVERBURN_BED_BYPASS_FULL !== '1') process.exit(0);
-  }
-  const oppositeBed = process.env.EVERBURN_BED_OPPOSITE === '1';
-  const route = bedStepsRoute(oppositeBed ? -27 : 27);
-  const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
-  const bedLine = [{x:car.x, z:car.z}, ...route.bed];
-  const ends = [];
-  for (let along = 500; along < pathLength(bedLine) - 50; along += 500) ends.push(along);
-  const drive = driveMeasuredStretches(duel, bedLine, ends, (ruledBed ? 80 : 60) / 1.609344);
-  const pot = duel.state.arena.worldJob.job.stepState;
-  if (ruledBed) {
-    const travel = drive.stretches.map(stretch => stretch.groundTravel['river-bed']).filter(Boolean);
-    const ticks = travel.reduce((sum, item) => sum + item.ticks, 0);
-    const meanKmh = travel.reduce((sum, item) => sum + item.speedKmhTotal, 0) / ticks;
-    assert.ok(ticks > 0 && Number.isFinite(meanKmh), 'the real driver records speed on the river bed');
-    console.log('Bed ground speed:', JSON.stringify({minutes:ticks / 3600, meanKmh}));
-  }
-  console.log('Bed toward the Steps:', JSON.stringify({reached:drive.reachedAll, last:drive.stretches.at(-1),
-    length:pathLength(bedLine), ember:pot.ember, jolts:pot.joltCount ?? 0}));
-  assert.ok(drive.reachedAll, 'the car follows the river toward the Steps');
-  assert.ok(drive.stretches.some(stretch => stretch.passedUnderBridge), 'the car passes under the bridge on the bed');
-  const riderPursuit = drive.stretches.flatMap(stretch => stretch.pursuits)
-    .find(pursuit => pursuit.id === 'ash-rider-2');
-  console.log('Bridge rider pursuit:', JSON.stringify(riderPursuit));
-  if (ruledBed && !approachBypass) {
-    const campPursuit = [...approach.stretches, ...drive.stretches]
-      .flatMap(stretch => stretch.pursuits).find(pursuit => pursuit.id === 'ash-rider-1');
-    assert.ok(campPursuit, 'the drive records where the camp rider begins pursuit');
-    assert.ok(campPursuit.distance <= 120, 'the camp rider begins pursuit within its approach range');
-    assert.ok(Math.abs(campPursuit.distance - Math.hypot(
-      campPursuit.carPosition.x - campPursuit.riderPosition.x,
-      campPursuit.carPosition.z - campPursuit.riderPosition.z)) < 1e-6,
-    'the pursuit distance comes from the real car and rider positions');
-    console.log('Camp rider pursuit:', JSON.stringify(campPursuit));
-  }
-  if (oppositeBed) {
-    assert.equal(pot.joltCount ?? 0, 0, 'the opposite bed line passes the bridge without a jolt');
-    assert.ok(riderPursuit && riderPursuit.heightDifference > 3,
-      'the bridge rider pursues the opposite bed line from another floor');
-    const furnaceRiders = drive.stretches.flatMap(stretch => stretch.pursuits)
-      .filter(pursuit => pursuit.id.startsWith('furnace-rider-'));
-    assert.equal(furnaceRiders.length, 2, 'both furnace riders are sent after the exposed opposite bed line');
-    assert.ok(drive.stretches.some(stretch => stretch.longestFurnaceSightSeconds > 6),
-      'the actual furnace sight lasts over six seconds on the opposite line');
-    process.exit(0);
-  }
-  assert.ok(riderPursuit, 'the drive records the bridge rider pursuing the car');
-  assert.ok(riderPursuit.distance <= 120, 'the rider begins pursuit within its approach range');
-  assert.ok(riderPursuit.heightDifference > 3, 'the rider begins pursuit from a different floor');
-  assert.equal(pot.joltCount ?? 0, 0, 'the car reaches the Steps approach without a jolt');
-  const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, (ruledBed ? 80 : 60) / 1.609344);
-  console.log('Steps approach:', JSON.stringify(end));
-  assert.ok(end.along >= pathLength(bedLine) - 25, 'the car reaches the end of the bed line');
-  const here = duel.course.worldAt(duel.state.s, duel.state.lateral);
-  const climbLine = [{x:here.x, z:here.z}, route.steps, route.exit];
-  const climb = driveAlongRoad(duel, climbLine, pathLength(climbLine) - 25, 18000, 20 / 1.609344);
-  console.log('Steps climb:', JSON.stringify(climb));
-  assert.ok(climb.along >= pathLength(climbLine) - 25, 'the car climbs the Steps toward town');
-  assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
-  if (skipWash) {
-    const currentPot = duel.state.arena.worldJob.job.stepState;
-    assert.ok(!(currentPot.scoopedBraziers || []).includes(wash.id), 'the Wash remains unused at the top of the Steps');
-    assert.equal(currentPot.joltCount ?? 0, 0, 'the no-scoop car climbs without a jolt');
-    if (!ruledBed) assert.ok(currentPot.ember > 0 && currentPot.ember < 50, 'the actual pot remains lit but has cooled on the way');
-    console.log('No-scoop Steps:', JSON.stringify({ember:currentPot.ember, jolts:currentPot.joltCount ?? 0}));
-  }
-  const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
-  const riderAtSteps = duel.state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-2');
-  const stepsRiderDistance = Math.hypot(riderAtSteps.position.x - afterSteps.x, riderAtSteps.position.z - afterSteps.z);
-  console.log('Rider after Steps:', JSON.stringify({distance:stepsRiderDistance, pursuing:riderAtSteps.pursuing,
-    position:riderAtSteps.position, car:afterSteps}));
-  assert.ok(Number.isFinite(stepsRiderDistance), 'the real rider has a measurable distance after the Steps');
-  if (!ruledBed) assert.ok(riderAtSteps.pursuing && stepsRiderDistance < 120,
-    'the rider is already close and pursuing at the top of the Steps');
-  const gate = definition.steps[0].riderSafeWall;
-  const bypassTrial = process.env.EVERBURN_BED_TOWN_BYPASS === '1';
-  const oppositeExitTrial = process.env.EVERBURN_BED_OPPOSITE_EXIT === '1';
-  const directTrial = process.env.EVERBURN_BED_DIRECT_TRIAL === '1';
-  const mediumTrial = process.env.EVERBURN_BED_MEDIUM_TRIAL === '1';
-  const dx = route.town.x - afterSteps.x, dz = route.town.z - afterSteps.z;
-  const length = Math.hypot(dx, dz);
-  const bypass = 100;
-  const townLine = (bypassTrial || oppositeExitTrial) ? [{x:afterSteps.x, z:afterSteps.z},
-    {x:afterSteps.x + dx / length * 350 - dz / length * bypass * (oppositeExitTrial ? -1 : 1),
-      z:afterSteps.z + dz / length * 350 + dx / length * bypass * (oppositeExitTrial ? -1 : 1)}, route.town] : directTrial ? [{x:afterSteps.x, z:afterSteps.z}, route.town] :
-    [{x:afterSteps.x, z:afterSteps.z},
-      {x:route.exit.x + ((mediumTrial || ruledBed) ? 600 : 300), z:route.exit.z},
+  for (const scoopAtWash of [true, false]) {
+    const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+    duel.state.wastelandGateDiscovered = true;
+    assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+    duel.state.countdown = 0;
+    const step = definition.steps[0];
+    assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
+    const startClock = duel.state.arena.worldJob.clockSec;
+    const yard = driveThroughYardGate(duel, yardPlan().gate);
+    const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+    const line = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+    const wash = step.braziers.find(item => item.id === 'wash-brazier');
+    const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
+      nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 80 / 1.609344);
+    assert.ok(approach.reachedAll, 'the car reaches the Wash');
+    const scoop = scoopAtWash ? driveToBrazier(duel, wash) : null;
+    if (scoopAtWash) assert.ok(scoop.scooped, 'the car scoops at the Wash');
+    const route = bedStepsRoute();
+    const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    const bedLine = [{x:car.x, z:car.z}, ...route.bed];
+    const ends = [];
+    for (let along = 500; along < pathLength(bedLine) - 50; along += 500) ends.push(along);
+    const bed = driveMeasuredStretches(duel, bedLine, ends, 80 / 1.609344);
+    assert.ok(bed.reachedAll, 'the car follows the bed');
+    assert.ok(bed.stretches.some(stretch => stretch.passedUnderBridge), 'the car passes under the bridge');
+    const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, 80 / 1.609344);
+    assert.ok(end.along >= pathLength(bedLine) - 25, 'the car reaches the Steps');
+    const here = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    const climbLine = [{x:here.x, z:here.z}, route.steps, route.exit];
+    const climb = driveAlongRoad(duel, climbLine, pathLength(climbLine) - 25, 18000, 20 / 1.609344);
+    assert.ok(climb.along >= pathLength(climbLine) - 25, 'the car climbs the Steps');
+    const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    const gate = step.riderSafeWall;
+    const townLine = [{x:afterSteps.x, z:afterSteps.z}, {x:route.exit.x + 600, z:route.exit.z},
       {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
-  const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
-  const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
-  const townSpeed = (ruledBed ? 48 : fastTrial ? 80 : (safeTrial || directTrial || bypassTrial || oppositeExitTrial) ? 48 : mediumTrial ? 70 : 60) / 1.609344;
-  const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
-  const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
-  console.log('Steps toward town:', JSON.stringify(townDrive));
-  if (oppositeExitTrial) {
-    assert.ok(townDrive.along < 400, 'the opposite exit does not reach 400 m');
-    assert.ok(townDrive.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
-      'the real bridge rider contacts the car on the opposite exit');
-    assert.ok(townDrive.jolts.some(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')),
-      'the real car hits a steep climb on the opposite exit');
-    assert.equal(townDrive.ember, duel.state.arena.worldJob.job.stepState.ember,
-      'the measurement records the actual pot');
-    process.exit(0);
-  }
-  assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
-  if (ruledBed) {
-    assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
-      'the ruled exit records the actual jolts');
-  } else if (bypassTrial) {
-    assert.equal(townDrive.jolts.length, 1, 'the bypass meets one rider in the first 400 m');
-    assert.ok(townDrive.jolts[0].riders.some(rider => rider.id === 'ash-rider-2'), 'the rider is in contact');
-  } else if (directTrial) {
-    assert.equal(townDrive.jolts.length, 1, 'the direct line meets one rider');
-    assert.ok(townDrive.jolts[0].riders.some(rider => rider.id === 'ash-rider-2'),
-      'the real rider is in contact on the direct line');
-  } else if (safeTrial) {
-    assert.ok(townDrive.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
-      'the safe-speed trial records the rider in contact');
-  } else assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
-  assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
-    'the diagnostic records every pot jolt');
-  const continuation = driveAlongRoad(duel, townLine, 800, 7200, townSpeed);
-  console.log('Rider beyond the Steps:', JSON.stringify(continuation));
-  assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
-  if (ruledBed || process.env.EVERBURN_BED_NO_SCOOP_FAST_EXIT === '1' || process.env.EVERBURN_BED_SCOOP_FAST_EXIT === '1') {
-    assert.ok(ruledBed || mediumTrial, 'this trial uses the selected exit speed');
-    const exitPot = duel.state.arena.worldJob.job.stepState;
-    if (!ruledBed) assert.equal(exitPot.joltCount ?? 0, 0, 'the rider has not rammed the car after 800 m');
-    if (skipWash && !ruledBed) assert.equal(exitPot.ember, 0, 'the unscooped ember is out on the rough exit');
-    const towardGate = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, townSpeed, true);
-    assert.ok(towardGate.along >= pathLength(townLine) - 150, 'the car reaches the town approach');
+    const town = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, 48 / 1.609344, true);
+    assert.ok(town.along >= pathLength(townLine) - 150, 'the car reaches town');
     const gateCar = duel.course.worldAt(duel.state.s, duel.state.lateral);
     const gateLine = [{x:gateCar.x, z:gateCar.z},
       {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
       {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
       {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
     const gateDrive = driveAlongRoad(duel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
-    assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the car passes through the town gate');
-    const beforeForge = {scoops:[...(duel.state.arena.worldJob.job.stepState.scoopedBraziers || [])],
-      jolts:duel.state.arena.worldJob.job.stepState.joltCount ?? 0};
-    const arrival = driveToForge(duel, definition.steps[0].destination.position, 18000);
-    const finalPot = duel.state.arena.worldJob.job.stepState;
-    const kilometres = (yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) + (washScoop?.driven ?? 0) +
-      drive.stretches.reduce((sum, item) => sum + item.driven, 0) + end.driven + climb.driven +
-      townDrive.driven + continuation.driven + towardGate.driven + gateDrive.driven + arrival.driven) / 1000;
-    if (washScoop) {
-      assert.ok(washScoop.driven > 0 && washScoop.elapsedSeconds >= 3,
-        'the delivery distance includes the actual approach and wait at the Wash');
-      assert.equal(washScoop.jolts.length, 0, 'the Wash scoop takes no jolt');
-    }
-    console.log('Fast exit at forge:', JSON.stringify({kilometres,
+    assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the car passes the gate');
+    const pot = duel.state.arena.worldJob.job.stepState;
+    const scoops = [...(pot.scoopedBraziers || [])];
+    const arrival = driveToForge(duel, step.destination.position, 18000);
+    const stretches = [...approach.stretches, ...bed.stretches, end, climb, town, gateDrive];
+    const result = {kilometres:(yard.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + (scoop?.driven ?? 0) + arrival.driven) / 1000,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-      washApproachMetres:washScoop?.driven ?? 0, washApproachSeconds:washScoop?.elapsedSeconds ?? 0,
-      jolts:ruledBed ? beforeForge.jolts : finalPot.joltCount ?? 0, scoops:ruledBed ? beforeForge.scoops : finalPot.scoopedBraziers || [],
-      ember:arrival.fire?.ember ?? finalPot.ember, arrival}));
-    assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
-    assert.deepEqual(ruledBed ? beforeForge.scoops : finalPot.scoopedBraziers || [], skipWash ? [] : [wash.id], 'the recorded scoops match the drive');
-    if (!ruledBed) assert.equal(finalPot.joltCount ?? 0, 0, 'the car reaches the forge without a jolt');
-    if (!ruledBed) assert.equal(finalPot.ember, 0, 'the ember is out at the forge on this fast exit');
-    if (!skipWash && !ruledBed) assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
-      'the scooped pot loses more than 50 on the first 800 m of rough ground');
-    assert.equal(arrival.done, (arrival.fire?.ember ?? finalPot.ember) > 0, 'the forge accepts only a lit pot');
-    process.exit(0);
-  }
-  if (fastTrial) {
-    assert.ok(emberBeforeTown - townDrive.ember > 30, 'the fast car loses more than 30 ember before the rider');
-    assert.ok(townDrive.groundLoss['scab-plates'] > 30, 'the actual pot loses over 30 on the plates');
-    assert.ok(Math.abs(Object.values(townDrive.groundLoss).reduce((sum, loss) => sum + loss, 0) - (emberBeforeTown - townDrive.ember)) < 0.001,
-      'the recorded ground losses add up to the actual change in the pot');
-    assert.equal(continuation.jolts.length, 0, 'the faster car avoids the rider on this stretch');
-    assert.ok(continuation.firstOut, 'the faster car loses the ember on the open ground');
-  } else if (mediumTrial) {
-    assert.equal(continuation.jolts.length, 0, 'the 70 km/h trial avoids the rider for 800 m');
-    assert.ok(emberBeforeTown - continuation.ember > 50, 'the 70 km/h trial loses more than 50 ember on the plates');
-    assert.ok(townDrive.groundLoss['scab-plates'] + continuation.groundLoss['scab-plates'] > 50,
-      'the actual pot loses over 50 on the plates despite avoiding a ram');
-  } else if (bypassTrial) {
-    assert.equal(continuation.jolts.length, 0, 'the bypass has no more jolts through 800 m');
-  } else if (directTrial) {
-    assert.equal(continuation.jolts.length, 0, 'the direct line has no further jolt through 800 m');
-    assert.ok(townDrive.ember - continuation.ember < 4, 'the pot loses less than four ember on the second stretch');
-  } else if (safeTrial) {
-    assert.ok(townDrive.groundLoss['scab-plates'] - townDrive.jolts.reduce((sum, jolt) => sum + jolt.amount, 0) < 10,
-      'the safe-speed trial loses less than ten ember to cooling and rough ground');
-    assert.ok(Math.abs(Object.values(townDrive.groundLoss).reduce((sum, loss) => sum + loss, 0) - (emberBeforeTown - townDrive.ember)) < 0.001,
-      'the recorded ground losses add up to the actual change in the pot');
-  } else assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
-    'the rider is in contact at a recorded jolt on this line');
-  assert.equal(continuation.jolts.length + townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
-    'the two stretches record every pot jolt');
-  if (skipWash) {
-    const currentPot = duel.state.arena.worldJob.job.stepState;
-    assert.ok(!(currentPot.scoopedBraziers || []).includes(wash.id), 'the continuation does not scoop at the Wash');
-    assert.equal(continuation.ember, currentPot.ember, 'the continuation records the actual unscooped pot');
-    console.log('No-scoop beyond the Steps:', JSON.stringify({ember:currentPot.ember,
-      jolts:currentPot.joltCount ?? 0, distance:continuation.along}));
-    if (process.env.EVERBURN_BED_TO_FORGE === '1') {
-      const towardGate = driveAlongRoad(duel, townLine, pathLength(townLine) - 150, 18000, townSpeed, true);
-      assert.ok(towardGate.along >= pathLength(townLine) - 150, 'the car reaches the town approach');
-      const arrival = driveToForge(duel, definition.steps[0].destination.position, 18000);
-      const finalPot = duel.state.arena.worldJob.job.stepState;
-      console.log('No-scoop forge:', JSON.stringify({arrival, ember:finalPot.ember,
-        jolts:finalPot.joltCount ?? 0, scoops:finalPot.scoopedBraziers || [],
-        minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
-        kilometres:(yardExit.driven + approach.stretches.reduce((sum, item) => sum + item.driven, 0) +
-          drive.stretches.reduce((sum, item) => sum + item.driven, 0) + end.driven + climb.driven +
-          townDrive.driven + continuation.driven + towardGate.driven + arrival.driven) / 1000}));
-      assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the car stops at the forge');
-      assert.deepEqual(finalPot.scoopedBraziers || [], [], 'the car reaches the forge without scooping');
-      assert.equal(arrival.done, finalPot.ember > 0, 'the forge accepts only a lit pot');
-    }
+      rams:[...stretches.flatMap(item => item.jolts), ...(scoop?.jolts ?? []), ...arrival.jolts].filter(jolt => jolt.riders.length).length,
+      scoops, ember:arrival.fire?.ember ?? pot.ember, done:arrival.done, result:duel.state.arena.worldJob.emberResult};
+    console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
+    assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
+    const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
+    const pay = result.result.relights > 0 ? Math.min(rule.pay[grade], rule.pay.afterRelight) : rule.pay[grade];
+    assert.equal(result.result.grade, grade, 'the arrival records the ember band');
+    assert.equal(result.result.pay, pay, 'the job pays for that band');
   }
   process.exit(0);
 }
