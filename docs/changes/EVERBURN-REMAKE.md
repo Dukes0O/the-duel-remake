@@ -1754,3 +1754,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the delivery drives, pursuit and loss-of-sight checks, and a ten-second count using the sight scheduler called by the job. Each rider makes at most 40 traces in ten seconds. The existing delivery measurements remain unchanged. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: tracing each road rider's sight every simulation step.
 - Still needed: the map discovery limit and its count test, the stranded rider's out-of-view recovery, X8 and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## X4: map crossing sight checks
+
+- Hot Delivery checks crossing visibility at most twice a second per job, while driven-way progress and other map knowledge still update each frame. No sound cue or save shape changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including 1,200 screen updates over ten simulated seconds and exactly 20 crossing sight traces. All delivery measurements remain as in the table above. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: crossing visibility checks on every screen update.
+- Still needed: the stranded rider's out-of-view recovery, X8 and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.

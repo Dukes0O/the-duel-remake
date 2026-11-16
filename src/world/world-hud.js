@@ -185,19 +185,26 @@ export function worldMapWays({worldJob, car, target, land = LAND}) {
 }
 
 // A crossing becomes useful map knowledge only when the car can see it.
-export function learnWayCrossings(knowledge, result, crossings, car, tunnels = null) {
+export function learnWayCrossings(knowledge, result, crossings, car, tunnels = null, trace = sees) {
   let changed = false;
   for (const way of result.ways) {
     if (way.id === 'east-road' || knowledge.ways.has(way.id)) continue;
     const visible = way.crossings.some(item => {
       const crossing = crossings.find(place => place.id === item.id);
-      return crossing && sees(car, crossing, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
+      return crossing && trace(car, crossing, {heightAt: scablandsSurfaceHeightAt, actorFloors: true,
         tunnels, eye: 1.5, target: 2, step: 5, range: 400});
     });
     if (visible) { knowledge.ways.add(way.id); changed = true; }
   }
   if (changed) knowledge.version++;
   return changed;
+}
+
+// Check crossing visibility at most twice per second for each job.
+export function checkWayCrossings(schedule, now, knowledge, result, crossings, car, tunnels = null, trace = sees) {
+  if (now - schedule.last < 500) return false;
+  schedule.last = now;
+  return learnWayCrossings(knowledge, result, crossings, car, tunnels, trace);
 }
 
 // Count distinct stretches driven near each way, so reversing over one stretch
@@ -309,7 +316,7 @@ export function createWorldHud({host, app = null, picture = null}) {
   const caption = host.querySelector('#race-callout');
   const land = picture ?? getLandPicture();
   let landCanvas = null, lastSmall = -Infinity, lastKnowledgeVersion = -1, lastFrame = null;
-  const knowledgeOf = new WeakMap(), hotWaysOf = new WeakMap();
+  const knowledgeOf = new WeakMap(), hotWaysOf = new WeakMap(), crossingChecksOf = new WeakMap();
   // What the maps cost, kept where a check can read it: draws, milliseconds drawing, the slowest draw, and the milliseconds that
   // making the picture of the land took.
   const stats = root.worldMapStats = {smallDraws: 0, smallMs: 0, smallMaxMs: 0, bigDraws: 0, bigMs: 0, waysMs: 0, pictureMs: 0, updateMs: 0, updates: 0};
@@ -403,7 +410,9 @@ export function createWorldHud({host, app = null, picture = null}) {
           result = worldMapWays({worldJob, car: frame.car, target: LAND.at('tin-town')});
           hotWaysOf.set(worldJob, result);
         }
-        learnWayCrossings(knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
+        let crossingChecks = crossingChecksOf.get(worldJob);
+        if (!crossingChecks) crossingChecksOf.set(worldJob, crossingChecks = {last: -Infinity});
+        checkWayCrossings(crossingChecks, clock(), knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
         learnDrivenWays(knowledge, result, frame.car);
         learnHotDeliveryDangers(knowledge, worldJob, frame.car);
       }

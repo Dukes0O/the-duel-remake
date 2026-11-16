@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
-import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
+import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, checkWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
@@ -586,6 +586,18 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   learnDrivenWays(teleported, result, point(400));
   assert.ok(!teleported.ways.has(way.id), 'a position jump does not count as driving');
 }
+// Screen updates cannot trace a crossing more than twice per second.
+{
+  const knowledge = createKnowledge(), schedule = {last: -Infinity};
+  const result = {ways:[{id:'plates', crossings:[{id:'test-crossing'}]}]};
+  const crossings = [{id:'test-crossing', x:0, z:0}];
+  let traces = 0;
+  for (let frame = 0; frame < 1200; frame++) {
+    checkWayCrossings(schedule, frame * 1000 / 120, knowledge, result, crossings, LAND.yard, null, () => { traces++; return false; });
+  }
+  assert.equal(traces, 20, 'ten seconds of screen updates make twenty crossing traces');
+}
+
 // Seeing a real crossing adds its way and length to the player's map knowledge.
 {
   const worldJob = {definition, job:createJob(definition), actors:[]};
