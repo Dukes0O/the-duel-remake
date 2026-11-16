@@ -292,6 +292,23 @@ height. Claude's first figure also included four minutes with the window minimis
 has the profile: a cut re-lays only the corners it touched. Smooth play is the first objective; she does not merge at six
 frames a second. The far mouth and the daylight sentence are fixed in Codex's tests and will be seen once she bores at speed.
 
+### Claude's fifth hand drive: she passes, end to end (16 November 2026)
+
+Commit 5f9c0aa0c, a visible window, real keys, the page's own clocks recorded.
+
+- **Frames while she cuts:** 283 in 5 s (the worst frame 20 ms) where there were 29, after Codex made a cut re-lay only the
+  corners of the near ground it touched. The simulation runs on real time.
+- **Pace:** 15.0 m every 30 s at a third lever, from 32 m to 288 m without a change: 0.5 m a second, ten minutes for this mesa,
+  as ruled.
+- **The line:** surveyed 1 in 189, held 1 in 187; at 292 m the screen read "9 m to go, 0.0 m to gain".
+- **The far side:** "Daylight. She is through, 0.0 m off level." (0.03 m), on the screen; two open mouths; in drive mode she
+  drove 39 m out onto the far ground, seen from inside the bore framed by the far mouth.
+- **A fourth review by Codex (confirmation, rule 17)** confirmed the cures of the third and found one edge case (daylight
+  accepted with the far mouth still closed where the ground falls more than 1 m away beyond it) and a missing sentence when
+  she breaks into another bore. Both with Codex, with the picture check's last ill-posed measurement.
+
+Not heard: her sounds. Not seen: a bend. The spoil bank's look is Claude's to draw.
+
 ## Checks (named before code)
 
 - `tools/test-machine-borer.mjs`, new: she cuts 40 m straight and leaves 40 m of tunnel with a closed far end; the pile
