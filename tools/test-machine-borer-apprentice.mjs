@@ -194,6 +194,33 @@ for (let i=0; i<300; i++) mistake={...mistake,...stepDelegatedBore(mistake,1/60)
 assert.ok(mistake.borer.distanceM > stalledAt, 'Work resumes after the stall.');
 console.log('Delegated bore: learned stalls use the cutter and pause work.');
 
+// Three incomplete releases leave the real cutter stalled, then Pim keeps trying.
+const retryGround = createGroundEdit({region:{editable:true}, naturalHeight:(x,z)=>z < 6 ? 0 : 8});
+const retryStall = stepBorer(createBorerState(), {thrust:1}, retryGround, 'rock', 2).state;
+assert.equal(retryStall.stalled, true);
+let retry = {town:work.town, order:{...sent.boreOrders[0], stages:sent.boreOrders[0].stages.map(stage=>({...stage}))},
+  borer:retryStall, ground:retryGround, stallSeconds:20};
+const retryCalls = [];
+for (let i=0; i<1200; i++) {
+  const result = stepDelegatedBore(retry, 1/60);
+  retryCalls.push(...result.events.filter(event => event.type === 'bore-call'));
+  retry = {...retry, ...result};
+  if (i === 89) assert.equal(retry.borer.stalled, true, 'Three short releases did not free the head.');
+}
+assert.equal(retryCalls.length, 1);
+assert.equal(retryCalls[0].cue, 'borer.call');
+assert.match(retryCalls[0].message, /^Pim: She's stopped at .* Hard rock\. Come and look, or I'll keep at it\.$/);
+assert.equal(retry.borer.stalled, false, 'Pim eventually frees the head.');
+const retryDistance = retry.borer.distanceM;
+for (let i=0; i<120; i++) {
+  const result = stepDelegatedBore(retry, 1/60);
+  retryCalls.push(...result.events.filter(event => event.type === 'bore-call'));
+  retry = {...retry, ...result};
+}
+assert.equal(retryCalls.length, 1, 'The stall call is said once.');
+assert.ok(retry.borer.distanceM > retryDistance, 'Cutting resumes after the call.');
+console.log('Stall: three failed releases call once, then work resumes on real ground.');
+
 // The Dig advances the queued cutter even while the excavator is selected.
 let background = {...sent, activeMachine:'excavator'};
 const stopped = stepDigSandbox(background, {controls:{}}, 0);

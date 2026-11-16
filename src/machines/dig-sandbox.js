@@ -332,13 +332,25 @@ export function stepDelegatedBore({town, order, borer, ground, tunnels, stallSec
   } else {
     if (makingMistake && !borer.stalled && stallSeconds <= 0) hands.thrust = 1;
     if (stallSeconds > 0) hands.thrust = 0;
+    // Three short attempts do not ease the lever for the full second Mabel
+    // needs. After that Pim keeps it released for the rest of the wait.
+    if (borer.stalled && stallSeconds > 18.5 && stallSeconds <= 20)
+      hands.thrust = (20 - stallSeconds) % .5 < .25 ? 0 : 1;
   }
   const result = stepBorer(cutter, {...hands, tunnels, tunnelsIncludeCurrent:borer.started, mutableSegments:true}, ground, null, dtSeconds);
   const nextOrder = {...order, stages:order.stages.map(stage => ({...stage}))};
+  if (result.events.some(event => event.type === 'stall')) nextOrder.failedStallReleases = 0;
+  if (!playerControls && borer.stalled && borer.releaseSeconds > 0 && hands.thrust > 0 && result.state.stalled)
+    nextOrder.failedStallReleases = (nextOrder.failedStallReleases || 0) + 1;
   if (!playerControls && makingMistake && result.events.some(event => event.type === 'stall'))
     nextOrder.learnedStalls = learnedStalls + 1;
   const daylight = result.events.some(event => event.type === 'daylight');
   const name = town.people.find(person => person.id === order.personId)?.name || 'Apprentice';
+  if (nextOrder.failedStallReleases >= 3 && !nextOrder.stallCalled) {
+    nextOrder.stallCalled = true;
+    result.events.push({type:'bore-call', cue:'borer.call',
+      message:`${name}: She's stopped at ${result.state.distanceM.toFixed(1)} m. Hard rock. Come and look, or I'll keep at it.`});
+  }
   const drift = result.state.y - (order.mouth.y + order.grade * result.state.distanceM);
   if (!nextOrder.driftCalled && Math.abs(drift) > 1) {
     nextOrder.driftCalled = true;

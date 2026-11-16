@@ -98,3 +98,5 @@ Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil ba
 - A face already in the bore queue cannot be sent a second time with the same heading.
 
 - Only the active bore offers a visit. Waiting bores have no working face yet.
+
+- At a delegated stall, Pim first makes three short attempts to ease the lever. Each is too short to free the head. Pim then holds it off long enough to free her, within the existing 20-second wait.

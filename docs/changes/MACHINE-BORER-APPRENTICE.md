@@ -24,7 +24,7 @@ A6 adds a bore board to the Dig for active, waiting and finished orders. It show
 
 A7 has started. The simulation can give the player the lever on the active bore and return it to Pim. Both use the same cutter and order, and changing machines returns the lever. The bore board now offers a visit to the active bore. Choosing Mabel also goes to the working face. At the face, V or the button takes and returns the lever; the following and mouth cameras remain available.
 
-A8 has started. Pim calls once if the bore is more than a metre off its surveyed line or Mabel finds an exit more than a metre up a face. Daylight is announced by name while any machine is selected. These messages appear on the Dig screen without extra land samples. The three failed stall attempts call still needs to be built and tested.
+A8 adds all three calls. Pim calls once after three short attempts to free a stall, if the bore is more than a metre off its surveyed line, or if Mabel finds an exit more than a metre up a face. Pim keeps trying after the stall call. Daylight is announced by name while any machine is selected. These messages appear on the Dig screen without extra land samples.
 
 ## Checks
 
@@ -43,6 +43,7 @@ A8 has started. Pim calls once if the bore is more than a metre off its surveyed
 - A7: `node tools/test-machine-borer-apprentice.mjs` checks visiting the working face, choosing Mabel, player cutting advancing the order, and Pim resuming at the same face.
 - A8: `node tools/test-machine-borer-apprentice.mjs` checks a single drift call with the excavator selected and the daylight announcement on the real mesa.
 - A8 high exit: `node tools/test-machine-borer-apprentice.mjs` checks a single call from Mabel's high-exit refusal on real editable ground.
+- A8 stall: `node tools/test-machine-borer-apprentice.mjs` checks three failed releases, one call and resumed cutting on real editable ground.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -66,9 +67,11 @@ Learned stalls are evenly spaced by distance. A mistake continues until the real
 
 The board estimates remaining time from the taught rock pace, expected stall frequency and any current stall wait. A waiting order's estimate is its own cutting time and does not include earlier orders. Only the bore being cut offers a visit, because waiting bores have no working face yet.
 
+At a delegated stall, Pim makes three short release attempts before holding the lever off long enough to free the head. All of this takes place within the existing 20-second wait.
+
 ## Sound
 
-No new sound event in A1, A3 or A4. The drift and high-exit calls use `borer.call`. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
+No new sound event in A1, A3 or A4. The stall, drift and high-exit calls use `borer.call`. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
 
 ## Removed
 
