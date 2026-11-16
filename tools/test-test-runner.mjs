@@ -147,6 +147,17 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
     run:async()=>({exitCode:0,passed:1,failures:[],notRun:0,durationMs:0})});
   same(JSON.parse(run[0]).leftToTheNight,[{suite,pickedBy:file}],'JSON run includes deferred suite and reason');
 }
+// Missing presentation readers must not claim an unrelated asset selected a suite.
+{
+  const suite='tools/test-everburn-easy.mjs',asset='public/assets/textures/pine-bough.png',file='src/world/jobs/everburn.js';
+  const messages=[];
+  const plan=async paths=>{messages.length=0;return main(['--tier','lane','--list'],{
+    discover:()=>[CORE_SUITE,suite],getChanges:()=>paths,log:message=>messages.push(message),error:()=>{}});};
+  same(await plan([asset,file]),0,'mixed presentation plan succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by ${file})`),'real reader wins over missing presentation reader fallback');
+  same(await plan([asset]),0,'presentation fallback plan succeeds');
+  check(messages.includes(`Left to the night: ${suite} (picked by the change as a whole)`),'fallback alone names the change as a whole');
+}
 // The real dependency graph defers both Everburn drives for that file alone.
 {
   const file='src/world/jobs/everburn.js', deferred=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs'];
@@ -352,8 +363,9 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   };
   same(changedFiles({git}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],
     'changed mode includes branch, working-tree and untracked paths without duplicates');
-  check(calls[1].includes('base123'),'changed mode compares with integration merge base');
+  check(calls[1].includes('base123')&&calls[1].includes('--no-renames'),'changed mode compares with integration merge base without rename detection');
   same(changedFiles({git,since:'HEAD'}),['src/game.js','tools/test-test-runner.mjs','tools/test-new.mjs'],'since includes tracked and untracked changes');
+  check(calls[4].includes('--no-renames'),'since compares without rename detection');
   assert.throws(()=>changedFiles({since:'missing',git:()=>({status:1,stdout:''})}),/Cannot find commit: missing/);checks++;
   const failedCalls=[];
   assert.throws(()=>changedFiles({git:(executable,args)=>{

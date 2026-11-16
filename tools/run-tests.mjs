@@ -251,7 +251,7 @@ export function changedFiles({cwd=PROJECT_ROOT,git=spawnSync,since=null}={}){
     base=merge.stdout.trim();
   }
   return [...new Set([
-    ...execute(['diff','--name-only','-z',base,'--']),
+    ...execute(['diff','--no-renames','--name-only','-z',base,'--']),
     ...execute(['ls-files','--others','--exclude-standard','-z'])
   ])];
 }
@@ -441,7 +441,7 @@ export const SHARED_FILES=Object.freeze({
   'src/game.js':[],'src/main.js':[],'src/render3d.js':[],'src/app.js':[],'src/config.js':[],
   'src/feature-flags.js':['tools/test-feature-flags.mjs','tools/test-preview-launcher.mjs']
 });
-export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_IMPORTS,dependencyCache=new Map(),graphCache=new Map(),...options}={}){
+export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_IMPORTS,dependencyCache=new Map(),graphCache=new Map(),presentationFallback=true,...options}={}){
   const changed=new Set(paths.map(normalized));
   if(!changed.size)return [];
   if([...changed].some(fullScope))return [...suites];
@@ -478,7 +478,7 @@ export function suitesForChanges(suites,paths,{reach=LANE_REACH,hubImports=HUB_I
     }
   }
   // Explicit mappings must have their real readers in this inventory.
-  if([...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
+  if(presentationFallback&&[...requiredReaders].some(reader=>!mapped.has(reader)))return [...suites];
   // A changed game file no selected suite reaches is named, not a reason to run everything.
   // The night full tier and the release full tier still cover it.
   const unmapped=[...changed].filter(path=>!path.startsWith('docs/')&&!path.endsWith('.md')&&
@@ -581,8 +581,8 @@ export async function main(args=process.argv.slice(2),{discover=discoverSuites,r
     if(options.tier==='lane'||options.changed){
       const candidates=selectSuites(suites.filter(suite=>NIGHT_ONLY_SUITES.includes(suite)&&impacted.includes(suite)),options.filters);
       for(const suite of candidates){
-        const file=paths.find(path=>affected([suite],[path],{projectRoot:root,dependencyCache,graphCache}).includes(suite));
-        if(file)deferred.push({suite,pickedBy:file});
+        const file=paths.find(path=>affected([suite],[path],{projectRoot:root,dependencyCache,graphCache,presentationFallback:false}).includes(suite));
+        deferred.push({suite,pickedBy:file||'the change as a whole'});
       }
     }
     const reportDeferred=()=>deferred.forEach(({suite,pickedBy})=>log(`Left to the night: ${suite} (picked by ${pickedBy})`));

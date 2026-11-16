@@ -34,3 +34,7 @@ Game files selecting more than 40 lane suites (including standard guards):
 | `src/world-surfaces.js` (46) | `src/world.js` (85) | `src/world/ground-edit.js` (48) | `src/world/jobs/ember-rule.js` (42) | `src/world/jobs/everburn.js` (59) | `src/world/jobs/furnace-sightings.js` (41) | `src/world/jobs/steps/escort.js` (44) |
 | `src/world/scablands-ground.js` (66) | `src/world/scablands-names.js` (50) | `src/world/scablands-regions.js` (50) | `src/world/scablands-road.js` (55) | `src/world/scablands-solids.js` (49) | `src/world/scablands-ways.js` (42) | `src/world/scablands-yard-look.js` (42) |
 | `src/world/scablands.js` (67) | `src/world/tin-town-gate.js` (42) | `src/yeti.js` (55) |  |  |  |  |
+
+Review round 2: Git diffs disable rename detection; deferred explanations ignore missing presentation-reader fallback and name the whole change when needed.
+Checks: test-test-runner 226 passed; test-board 654 passed; test-repo-hygiene passed.
+Changed assertions: merge-base Git call now also requires --no-renames; added coverage for --since and both deferred explanations. Race fingerprints and sound cues: not applicable. Removed: misleading single-file explanations.
