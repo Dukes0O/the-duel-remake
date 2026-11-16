@@ -639,3 +639,12 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions, for Claude to review: at 6.5 km, the old check required speed below 30 mph; the new check requires speed above 30 mph because Claude ruled that the driver must keep road speed until the last 400 m. No game acceptance band changed.
 - Codex decided: none. For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the premature 25 mph target on the open road. The old `everburn-play` scenario still needs replacement or removal. Next: avoid the camp collision using a realistic approach and measure the four arrival bands and times before any balance decision.
+
+## Larger land, slowing for barricades (15 November 2026)
+
+- The Medium proof driver slows when an unburnt barricade is ahead and uses the loaned flamethrower. The camp approach now has no pot jolt; the existing `weapon.flame.start` cue sounds. No new game event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The car took a scoop and delivered 5.83 ember in 10.23 minutes, below the required 70. Its camp approach briefly reached 41.76 mph, and one jolt occurred elsewhere in the drive. The other route times and arrival numbers remain unmeasured. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions, for Claude to review: the camp approach formerly required at least one recorded jolt; it now requires zero, because the driver slows to avoid the barricade. The separate assertion still checks the recorded count against the real pot state.
+- Codex decided: begin slowing 140 m before a live barricade and target 8 mph until it burns. Claude should review this driving choice and the recorded peak speed.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: the proof driver's full-speed barricade approach. The old `everburn-play` scenario still needs replacement or removal. Next: find the remaining jolt and improve the road drive, then measure the other routes before any balance decision.

@@ -368,8 +368,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(approach.along >= 2350, `the car approaches the camp: ${JSON.stringify(approach)}`);
   assert.equal(approach.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeCamp,
     'the driver records each real jolt on the camp approach');
-  assert.ok(approach.jolts.some(jolt => jolt.amount > 0 && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
-    'the camp approach records the jolt and where it happened');
+  assert.equal(approach.jolts.length, 0, `the driver slows for the camp barricade without a jolt: ${JSON.stringify(approach)}`);
   console.log('East Road camp approach:', JSON.stringify(approach));
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
   assert.ok(scoop.scooped, `the real car stops and scoops at the camp: ${JSON.stringify(scoop)}`);
