@@ -576,3 +576,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road to seven kilometres (15 November 2026)
+
+- The Medium proof drive follows the East Road to 7 km. The driver records the real car's speed at its closest point to Tin Town's gate, for the slow gate approach. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The final stretch covered 497.87 m in 44.10 seconds, stayed within 1.97 m of the road and ended with 36.29 ember, 768.01 m from the gate, at 25.01 mph. The required bright arrival is not yet proved; the ember is already below 70. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof and balance, the other five drives, camera, cover and scenario.

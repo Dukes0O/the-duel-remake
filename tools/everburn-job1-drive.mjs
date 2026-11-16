@@ -46,7 +46,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
   const townGate = state.arena.worldJob.definition.steps[0].riderSafeWall;
-  let nearestTownGate = Infinity;
+  let nearestTownGate = Infinity, speedAtNearestTownGate = 0;
   const initiallyBurnt = new Set(state.arena.worldJob.job.stepState.burntBarricades || []);
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
@@ -57,7 +57,11 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       peakSpeedPosition = {x:car.x, z:car.z};
     }
     lowestEmber = Math.min(lowestEmber, state.arena.worldJob.job.stepState.ember);
-    nearestTownGate = Math.min(nearestTownGate, Math.hypot(car.x - townGate.x, car.z - townGate.z));
+    const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);
+    if (gateDistance < nearestTownGate) {
+      nearestTownGate = gateDistance;
+      speedAtNearestTownGate = Math.abs(state.speedMph);
+    }
     hit = nearestOnLine(points, car.x, car.z);
     maxDistance = Math.max(maxDistance, hit.distance);
     if (hit.along >= endAlong) break;
@@ -79,7 +83,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     duel.step(1 / 60);
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
-    ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, elapsedSeconds:ticks / 60,
+    ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
     position:{x:previous.x, z:previous.z},
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)), ticks};
 }
