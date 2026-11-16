@@ -1,6 +1,19 @@
 import {wrapHeading} from '../src/offroad-physics.js';
-import {nearestOnLine, sliceLine} from '../src/world/scablands-ways.js';
+import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
+
+// Move toward the shelter on the first exposed plates stretch, then return to
+// the way. The gradual joins let the real car follow the line at driving speed.
+export function platesCoverLine(route) {
+  const points = sampleLine(route, 10);
+  return points.map((point, index) => {
+    const before = points[Math.max(0, index - 1)], after = points[Math.min(points.length - 1, index + 1)];
+    const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
+    const weight = Math.max(0, Math.min(1, (point.along - 850) / 200, (1600 - point.along) / 200));
+    const offset = -40 * weight;
+    return {x:point.x - dz / length * offset, z:point.z + dx / length * offset};
+  });
+}
 
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.

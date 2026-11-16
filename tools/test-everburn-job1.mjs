@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -115,6 +115,25 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(!measurement.timedOut, 'the measurement reaches its distance or the ember goes out');
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
   if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
+}
+// Measure a drivable line toward the first butte using the real car and sight timer.
+if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'scab-plates');
+  const route = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const line = platesCoverLine(route);
+  const drive = driveAlongRoad(duel, line, 1600, 18000, 30);
+  console.log('Plates cover approach:', JSON.stringify(drive));
+  assert.ok(drive.along >= 1600 && drive.distance < 10, 'the real car follows the cover line');
+  assert.ok(drive.longestFurnaceSightSeconds < 22.5, 'the shelter line reduces the measured exposure');
+  assert.equal(drive.longestFurnaceSight.seconds, drive.longestFurnaceSightSeconds);
+  process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
 {

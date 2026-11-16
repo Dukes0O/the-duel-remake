@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates shelter approach (16 November 2026)
+
+- Added a gradual line toward the first butte for the real Medium driver. It reached 1.6 km without a jolt and held 84.84 ember. Its longest uninterrupted furnace sighting fell from 22.5 to 7.5 seconds, from approximately 1,276 to 1,377 m on the driven line. This still exceeds six seconds and sends riders, so it is not the clean plates proof. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive and the car's real sight timer. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: try a gradual 40 m offset toward the shelter; this is a test drive, not a change to the way. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a drivable line that keeps each sighting at six seconds or less, then prove the clean drives and scenario.
+
 ## Plates exposure location (16 November 2026)
 
 - The real drive now records the start and end of its longest continuous furnace sighting. The existing 25 mph driver is exposed from 1,132 m to 1,386 m along the plates way for 22.5 seconds. It cannot be the clean drive: that 254 m gap takes over six seconds at this speed. No game event or sound cue was added.
