@@ -400,6 +400,11 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'the driver records actual jolts and their positions');
   assert.equal(eighth.jolts.length, (world.job.stepState.joltCount ?? 0) - joltsBeforeBridge,
     'the recorded jolts match the real pot state');
+  assert.ok(eighth.jolts.every(jolt => Array.isArray(jolt.riders) && jolt.riders.every(rider =>
+    typeof rider.id === 'string' && Number.isFinite(rider.distance) && Number.isFinite(rider.heightDifference))),
+    'each jolt records the real riders in contact with the car');
+  assert.ok(eighth.jolts.some(jolt => jolt.riders.some(rider => rider.distance <= 3.1 && rider.heightDifference < 3)),
+    'the recorded bridge jolt has a rider in contact on the same floor');
   assert.ok(Number.isFinite(eighth.peakSpeedPosition.x) && Number.isFinite(eighth.peakSpeedPosition.z), 'the driver records where its peak speed occurred');
   console.log('East Road 4 km drive:', JSON.stringify(eighth));
   const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500);

@@ -61,7 +61,11 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     lowestEmber = Math.min(lowestEmber, state.arena.worldJob.job.stepState.ember);
     const pot = state.arena.worldJob.job.stepState;
     if ((pot.joltCount ?? 0) > lastJoltCount) {
-      jolts.push({amount:pot.jolt, position:{x:car.x, z:car.z}, speedMph:Math.abs(state.speedMph)});
+      const riders = state.arena.worldJob.actors.filter(actor => actor.ramContact).map(actor => ({
+        id:actor.id, distance:Math.hypot(car.x - actor.position.x, car.z - actor.position.z),
+        heightDifference:Math.abs(car.y - actor.position.y),
+      }));
+      jolts.push({amount:pot.jolt, position:{x:car.x, z:car.z}, speedMph:Math.abs(state.speedMph), riders});
       lastJoltCount = pot.joltCount;
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);

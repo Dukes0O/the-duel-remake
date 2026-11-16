@@ -648,3 +648,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Codex decided: begin slowing 140 m before a live barricade and target 8 mph until it burns. Claude should review this driving choice and the recorded peak speed.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: the proof driver's full-speed barricade approach. The old `everburn-play` scenario still needs replacement or removal. Next: find the remaining jolt and improve the road drive, then measure the other routes before any balance decision.
+
+## Larger land, bridge jolt evidence (15 November 2026)
+
+- The Medium proof driver records the real riders in contact when a jolt occurs, including their distance and height difference. The bridge jolt of 16.902 occurred at (3219.85, 303.35), at 13.91 mph, with two riders within 3 m and 1.56 m in height. This identifies contact at the jolt, not which rider caused it. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The test checks the recorded contact against the actual job actors on the bridge drive. The car delivered 5.83 ember in 10.23 minutes, below the required 70. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: improve the bridge approach without changing the jolt rule, then measure the four arrival bands and times, camera, cover and scenario.
