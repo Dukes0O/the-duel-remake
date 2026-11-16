@@ -118,13 +118,15 @@ const page = {
     const trace = {events:[], frames:[], active:true};
     const snapshot = () => { const s = window.__theDig.simulation; return {time:performance.now(), elapsed:s.elapsed, mode:s.mode, lever:s.borer.lever}; };
     trace.listener = event => { if (event.code === 'Tab' || event.code === 'KeyW') trace.events.push({type:event.type, code:event.code, ...snapshot()}); };
-    document.addEventListener('keydown', trace.listener, true); document.addEventListener('keyup', trace.listener, true);
+    // The Dig stops Tab at document capture. Observe it on window first so the
+    // trace includes the actual event without changing the Dig's handling.
+    window.addEventListener('keydown', trace.listener, true); window.addEventListener('keyup', trace.listener, true);
     const frame = () => { if (!trace.active) return; trace.frames.push(snapshot()); requestAnimationFrame(frame); };
     window.__theDig.inputTrace = trace; requestAnimationFrame(frame); return true;
   })()`,
   stopInputTrace: `(() => {
     const trace = window.__theDig.inputTrace; trace.active = false;
-    document.removeEventListener('keydown', trace.listener, true); document.removeEventListener('keyup', trace.listener, true);
+    window.removeEventListener('keydown', trace.listener, true); window.removeEventListener('keyup', trace.listener, true);
     delete window.__theDig.inputTrace; return {events:trace.events, frames:trace.frames};
   })()`,
   pause: `(() => new Promise(resolve => setTimeout(resolve, 100)))()`,
