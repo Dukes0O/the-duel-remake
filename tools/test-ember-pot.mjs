@@ -101,6 +101,24 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const severe = stepCarry(carry, {loaded: true}, view(100, {severeHit: true}), DT);
   check(severe.state.jolt === 40, 'a severe fall or dead-stop crash can take 40');
 }
+// A wrecking head-on collision stops the car at a real solid in the real step.
+{
+  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-south');
+  const duel = start(), target = {x: wreck.x, z: wreck.z};
+  duel.state.armor = 1; duel.state.invulnerableSec = 0; duel.state.combat.shield = 0;
+  place(duel, {x: wreck.x - wreck.halfX - 20, z: wreck.z}, target, 180);
+  let beforeSpeed = 0, impactSpeed = 0, stoppedSpeed = Infinity;
+  for (let tick = 0; tick < 3 / DT; tick++) {
+    drive(duel, target, 180);
+    beforeSpeed = kmhOf(duel);
+    duel.step(DT);
+    if (duel.state.combatWrecking) { impactSpeed = beforeSpeed; stoppedSpeed = kmhOf(duel); break; }
+  }
+  const jolt = held(duel).jolt;
+  check(impactSpeed > 80 && stoppedSpeed < 1 && jolt > 15 && jolt <= 40,
+    `a solid stops the car from ${impactSpeed.toFixed(2)} km/h to ${stoppedSpeed.toFixed(2)} km/h and takes ${jolt} from the pot`);
+  console.log(`Solid crash: ${impactSpeed.toFixed(2)} to ${stoppedSpeed.toFixed(2)} km/h, pot jolt ${jolt.toFixed(2)}.`);
+}
 // Drive off the river bank and measure the actual landing and pot loss.
 {
   const points = RIVER_LAND.line.points, i = Math.floor(points.length * .2);

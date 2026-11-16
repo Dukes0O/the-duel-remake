@@ -1846,3 +1846,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-ember-pot.mjs` passed 33 checks. No game behavior, save, sound cue or race fingerprint changed. Integration is included.
 - Changed assertions: none. Codex decided: none. Removed: the well scenario's reference to the removed `everburn-play` harness.
 - Still needed: Y4's real dead-stop collision check and Y1's out-of-view rider recovery, then the requested final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y4: real dead-stop crash
+
+- The pot suite drives a car with low armour into the Boneyard wreck through the real game step. The collision wrecks and stops it from 170.27 km/h to zero, and the pot loses 40. This proves the severe loss comes from a real collision as well as the bank fall. The existing jolt cue is `world.ember.spark`.
+- Check: `node tools/test-ember-pot.mjs` passed 34 checks. No game behavior, save shape or race fingerprint changed. Integration was already included.
+- Changed assertions: none. Codex decided: none. Removed: nothing.
+- Still needed: finish Y1's out-of-view rider recovery and run the requested final checks. For Claude to run: the two long drivers and the lane tier. For Claude to draw: the pot transfer and forge fire.
