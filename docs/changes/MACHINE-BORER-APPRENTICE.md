@@ -137,6 +137,8 @@ V4: A survey now updates when ground on its line changes, including its face and
 - V3: the selected machine can survey and queue another face while Mabel is away. The board lists waiting work, and Mabel starts it after daylight. `node tools/test-machine-borer-apprentice.mjs` checks the queue on the real mesa.
 - V7: `node tools/test-machine-borer-freeze.mjs` passed for the stall, reverse, tilt and steering cases, and the error recovery guard.
 
+V5 restores the protected-ground check for straight and bent heaps. Both cuts lay spoil before reaching a reserved place, then refuse the deposit; every protected cell remains unchanged. A focused check passed. The first full borer run was stopped after a mistake in the new test was found; the test now checks the intended refusal.
+
 ## Changed assertions, for Claude to review
 
 - Waiting bore wording: replaced the old ?Pim is waiting? assertion with ?Bore 2: waiting. 120.0 m.? as directed in V3.

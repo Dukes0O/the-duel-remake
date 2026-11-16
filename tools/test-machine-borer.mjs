@@ -839,6 +839,24 @@ assert.ok(Math.abs(bentVolume / (Math.PI * 9 * bentMuck.distanceM * 1.25) - 1) <
   'A bent cut keeps its bulked volume in the bank.');
 assert.ok(Math.hypot(bentMuck.spoilBank.origin.x, bentMuck.spoilBank.origin.z) >= 12 - 1e-8,
   'The heap starts at least 12 m from the mouth on a bent cut.');
+// The reserved place lies on the original heap line, not on the bore face.
+// Check every ground cell intersecting it after both straight and bent cuts.
+for (const [label, steer] of [['straight', 0], ['bent', 1]]) {
+  const naturalHeight = (x, z) => z >= 6 ? 6 : 0;
+  const ground = createGroundEdit({region:{editable:true}, naturalHeight,
+    reservedShapes:[{x:20,z:0,radius:1,sentence:'Road.'}]});
+  const result = stepBorer(createBorerState(), {thrust:1, steer}, ground, 'topsoil', 80 / 3).state;
+  assert.ok(result.distanceM > 1 && result.spoilBank.far > 0,
+    `The ${label} heap starts before it reaches the protected place.`);
+  assert.equal(result.message, 'Road.', `The ${label} heap refuses the protected place.`);
+  assert.ok(ground.heightAt(15,0) > naturalHeight(15,0),
+    `The ${label} heap laid spoil before the refusal.`);
+  for (let x = 18; x <= 22; x++) for (let z = -2; z <= 2; z++) {
+    if (ground.refusal({x,z,radius:0.49}))
+      assert.equal(ground.heightAt(x,z), naturalHeight(x,z),
+        `The ${label} heap leaves protected cell ${x}, ${z} untouched.`);
+  }
+}
 const beforeReverse = pileVolume();
 stepBorer(muckCut, {thrust:-1}, muckGround, 'topsoil', 5);
 assert.equal(pileVolume(), beforeReverse, 'Returning through the tunnel creates no muck.');
