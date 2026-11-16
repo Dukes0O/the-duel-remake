@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## First plates butte (16 November 2026)
+
+- Added one ramp-free butte beside the plates way. The actual furnace sight rule finds hidden ground from 899 to 1,118 m along the route. It starts at the edge of the furnace's range, so it does not count as a stretch with open ground on both sides. The existing qualifying cover remains one stretch. More buttes and the clean drives are needed. The butte adds no game event or sound cue.
+- Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. The first butte's steep sides and clearance checks are in `test-scablands-hills.mjs`. `test-scablands-hills.mjs`, `test-scablands-solid.mjs`, and `test-rail-region.mjs` passed. `test-scablands-scene.mjs` failed at line 532: gate wear was not drawn over every non-glass gate material; the drawing was not changed in this round. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal.
+
 ## Plates sight at ten-metre intervals (16 November 2026)
 
 - The job test now samples the plates way every 10 m and reports its longest stretch in the furnace's sight. On the current land it runs from 899 m to 1,378 m, approximately 479 m; one covered stretch qualifies. The measurement uses the real way and furnace sight rule. No game event or sound cue was added.

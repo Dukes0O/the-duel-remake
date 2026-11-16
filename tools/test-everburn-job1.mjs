@@ -51,6 +51,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   console.log(`Plates longest open stretch: ${longestOpen.from.toFixed(0)} to ${longestOpen.to.toFixed(0)} m; ${stretches.length} qualifying covered stretches`);
   assert.ok(stretches.length >= 1,
   'the plates have at least one 150 m stretch hidden from the furnace with open ground on each side');
+  const firstCover = runs.find(run => run.visibility === 'hidden');
+  assert.ok(firstCover && firstCover.from < 910 && firstCover.to > 1100, 'the first butte hides the approach within range');
+  console.log(`First butte cover: ${firstCover.from.toFixed(0)} to ${firstCover.to.toFixed(0)} m`);
   const points = Array.from({length: 23}, (_, index) => ({along:index * 20}));
   const types = ['open', ...Array(9).fill('hidden'), 'out of range', ...Array(9).fill('hidden'), 'open', 'hidden', 'open'];
   assert.equal(coverStretches(points, point => types[point.along / 20]).length, 0,
