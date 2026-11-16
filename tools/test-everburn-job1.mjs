@@ -159,12 +159,16 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     {x:route.exit.x + 300, z:route.exit.z},
     {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
-  const townSpeed = (fastTrial ? 80 : 60) / 1.609344;
+  const safeTrial = process.env.EVERBURN_BED_SAFE_TRIAL === '1';
+  const townSpeed = (fastTrial ? 80 : safeTrial ? 48 : 60) / 1.609344;
   const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
-  assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
+  if (safeTrial) {
+    assert.ok(townDrive.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
+      'the safe-speed trial records the rider in contact');
+  } else assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
   assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the diagnostic records every pot jolt');
   const continuation = driveAlongRoad(duel, townLine, 800, 7200, townSpeed);
@@ -177,10 +181,15 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
       'the recorded ground losses add up to the actual change in the pot');
     assert.equal(continuation.jolts.length, 0, 'the faster car avoids the rider on this stretch');
     assert.ok(continuation.firstOut, 'the faster car loses the ember on the open ground');
+  } else if (safeTrial) {
+    assert.ok(townDrive.groundLoss['scab-plates'] - townDrive.jolts.reduce((sum, jolt) => sum + jolt.amount, 0) < 10,
+      'the safe-speed trial loses less than ten ember to cooling and rough ground');
+    assert.ok(Math.abs(Object.values(townDrive.groundLoss).reduce((sum, loss) => sum + loss, 0) - (emberBeforeTown - townDrive.ember)) < 0.001,
+      'the recorded ground losses add up to the actual change in the pot');
   } else assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
     'the rider is in contact at a recorded jolt on this line');
-  assert.equal(continuation.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
-    'the continuation records every pot jolt');
+  assert.equal(continuation.jolts.length + townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
+    'the two stretches record every pot jolt');
   process.exit(0);
 }
 // Test a gradual line around the first rider on the bed route.

@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed safe-speed trial (16 November 2026)
+
+- The real Medium car targets 48 km/h after the Steps. In the first 400 m it loses 18.506 ember, including a 15-point ram by ash rider 2 at 117.517 m. It reaches 800 m with 45.895 ember and no further jolts. The car briefly reaches 59.6 km/h when struck, so this is a diagnostic, not a clean delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_SAFE_TRIAL=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions, for Claude to review: the diagnostic now totals jolts across both continuation stretches rather than only the second, because the safe-speed trial is hit on the first. Existing clean-drive requirements are unchanged. Codex decided: none.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: avoid the rider at the plates' safe speed and complete the bed deliveries, then the salt pan, East Road, scenario and final checks.
+
 ## Bed ground-loss measurement (16 November 2026)
 
 - The proof driver records the actual pot's loss by the ground beneath the car on each simulation step. After the Steps, the 80 km/h trial loses 37.206 ember on scab plates in 400 m without a jolt; the pot goes out at 719.270 m. This includes ordinary cooling and rough-ground loss. It does not prove a delivery. The 50 km/h direct line toward town met ash rider 2 at 115 m, so that trial does not prove a clean drive either. No game event or sound cue was added.
