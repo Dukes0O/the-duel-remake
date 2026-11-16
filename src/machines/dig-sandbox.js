@@ -267,11 +267,18 @@ export function borerWatchingWords(sim) {
   return words;
 }
 
+/** The selected machine can survey the next face while Mabel is away. */
+export function digBoreSurveyPosition(sim) {
+  const actor = digSandboxMachineState(sim);
+  if (sim.activeMachine === 'borer') return actor.started ? null : actor;
+  return {x:actor.x, z:actor.z, y:sim.ground.heightAt(actor.x, actor.z), heading:actor.heading};
+}
+
 /** A survey belongs to the face where it was read. */
 export function canSendBorer(sim, survey) {
-  const b = sim.borer;
+  const b = digBoreSurveyPosition(sim);
   const person = sim.apprenticeTown.people[0];
-  if (sim.activeMachine !== 'borer' || b.started || !person || !canDelegate(sim.apprenticeTown, person.id, 'bore') ||
+  if (!b || !person || !canDelegate(sim.apprenticeTown, person.id, 'bore') ||
       !survey || !Number.isFinite(survey.distanceM) || survey.distanceM <= 0 || !Number.isFinite(survey.riseM) ||
       !['x','y','z','heading'].every(key => Number.isFinite(survey[key]) &&
         survey[key].toFixed(key === 'heading' ? 3 : 1) === b[key].toFixed(key === 'heading' ? 3 : 1))) return false;
@@ -289,8 +296,8 @@ export function sendBorer(sim, survey) {
   const id = `bore-${sim.boreOrders.length + 1}`;
   const order = createWorkOrder({id, targetId:id, targetKind:'bore',
     stages:[{kind:'bore', amount:survey.distanceM, workHours:survey.distanceM / 1800}]});
-  Object.assign(order, {personId:person.id, mouth:{x:sim.borer.x, y:sim.borer.y, z:sim.borer.z},
-    heading:sim.borer.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM});
+  Object.assign(order, {personId:person.id, mouth:{x:survey.x, y:survey.y, z:survey.z},
+    heading:survey.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM});
   return {...sim, boreOrders:[...sim.boreOrders, order]};
 }
 
@@ -314,6 +321,7 @@ export function boreBoard(sim) {
 export function boreBoardWords(row) {
   const title = `Bore ${row.id.replace(/^bore-/, '')}`;
   if (row.finished) return `${title}: ${row.name} finished ${row.done.toFixed(1)} m, ${row.offLevel.toFixed(1)} m off level.`;
+  if (!row.active) return `${title}: waiting. ${row.remaining.toFixed(1)} m.`;
   const time = row.minutes === null ? 'Time to daylight is unknown.' : `About ${Math.ceil(row.minutes)} minutes to daylight.`;
   return `${title}: ${row.name} ${row.active ? 'is cutting' : 'is waiting'}. ${row.done.toFixed(1)} m cut, ${row.remaining.toFixed(1)} m to go. Floor ${Math.abs(row.drift).toFixed(1)} m ${row.drift < 0 ? 'below' : 'above'} the line. ${row.stalls} stalls. ${time}`;
 }

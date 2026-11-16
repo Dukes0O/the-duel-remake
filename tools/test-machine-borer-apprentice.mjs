@@ -140,6 +140,21 @@ assert.equal(sendBorer(sent, line), sent, 'The same face cannot be sent twice.')
 const another = {...sent, borer:{...sent.borer, x:20}};
 const queued = sendBorer(another, {...line, x:20});
 assert.deepEqual(queued.boreOrders.map(order=>order.id), ['bore-1','bore-2']);
+// An excavator at another face can queue work while Mabel is already cutting.
+let working = stepDigSandbox({...sent, activeMachine:'excavator'}, {controls:{}}, 1);
+const excavator = {...working.haul.machines.excavator, x:20, z:0, heading:0};
+working = {...working, haul:{...working.haul, machines:{...working.haul.machines, excavator}}};
+const nextLine = {...line, x:20};
+assert.equal(canSendBorer(working, nextLine), true);
+working = sendBorer(working, nextLine);
+assert.deepEqual(working.boreOrders[1].mouth, {x:20,y:0,z:0});
+assert.match(boreBoardWords(boreBoard(working)[1]), /^Bore 2: waiting/);
+// Daylight completes the first order; the next fixed step moves her to the queued mouth.
+working = {...working, boreOrders:working.boreOrders.map((order,i)=>i ? order : {...order,status:'finished'})};
+working = stepDigSandbox(working, {controls:{}}, 1);
+assert.equal(working.activeBoreId, 'bore-2');
+assert.ok(working.borer.distanceM > 0);
+assert.ok(Math.abs(working.borer.x-20) < .01);
 console.log('Borer sending: teaching, survey, face, refusal and order queue passed.');
 
 const boardSim = {...queued, activeBoreId:'bore-1', boreStallSeconds:20,
@@ -154,7 +169,7 @@ assert.equal(workingRow.drift, 1);
 assert.equal(workingRow.stalls, 2);
 assert.ok(workingRow.minutes > 100 / .5 / 60);
 assert.match(boreBoardWords(workingRow), /Pim is cutting.*20.0 m cut.*100.0 m to go.*1.0 m above.*2 stalls.*minutes to daylight/);
-assert.match(boreBoardWords(waitingRow), /Pim is waiting/);
+assert.match(boreBoardWords(waitingRow), /^Bore 2: waiting\. 120\.0 m\.$/);
 const finishedRow = boreBoard({...boardSim, boreOrders:[{...boardSim.boreOrders[0], status:'finished',
   result:{distanceM:121, offLevelM:.4, stalls:3}}]})[0];
 assert.match(boreBoardWords(finishedRow), /Pim finished 121.0 m, 0.4 m off level/);
@@ -310,6 +325,15 @@ const mesaSurvey = {...borerSurvey(mesa.ground, mesa.borer), ...mouth};
 mesa = sendBorer(mesa, mesaSurvey);
 assert.equal(mesa.boreOrders.length, 1, 'The real mesa face accepts the survey.');
 mesa = {...mesa, activeMachine:'excavator'};
+mesa = stepDigSandbox(mesa, {controls:{}}, 1/60);
+const secondMouth = {x:x+20*Math.cos(mouth.heading), z:z-20*Math.sin(mouth.heading), heading:mouth.heading};
+secondMouth.y = mesa.ground.heightAt(secondMouth.x,secondMouth.z);
+mesa = {...mesa, haul:{...mesa.haul, machines:{...mesa.haul.machines,
+  excavator:{...mesa.haul.machines.excavator,...secondMouth}}}};
+const secondSurvey = {...borerSurvey(mesa.ground,secondMouth), ...secondMouth};
+assert.equal(canSendBorer(mesa,secondSurvey),true, 'The excavator can survey another real mesa face.');
+mesa = sendBorer(mesa,secondSurvey);
+assert.equal(mesa.boreOrders.length,2);
 const handGroundBase = createDigSandbox({playerId:'apprentice-mesa-hand'}).ground;
 const handGround = {...handGroundBase, refusal:shape=>borerLandRefusal(shape,handGroundBase),
   spoilRefusal:shape=>borerSpoilRefusal(shape,handGroundBase)};
@@ -323,7 +347,7 @@ for (let second=0; second<900 && mesa.boreOrders[0].status !== 'finished'; secon
   if (watchDaylight) mesa = {...mesa, activeMachine:'borer'};
   if (!watchDaylight) mesa = stepDigSandbox(mesa, {controls:{}}, 1);
   for (let frame=0; frame<60; frame++) {
-    if (watchDaylight) {
+    if (watchDaylight && mesa.boreOrders[0].status !== 'finished') {
       mesa = stepDigSandbox(mesa, {controls:{forward:-1}}, 1/60);
       daylightCalls.push(...mesa.events.filter(event => event.type === 'bore-daylight'));
       if (mesa.events.some(event => event.type === 'bore-daylight')) {
@@ -364,6 +388,10 @@ for (let distance=0; distance<=mesa.borer.distanceM; distance+=5) {
   assert.ok(Math.abs(mesa.ground.heightAt(px,pz) - handGround.heightAt(px,pz)) < .1,
     'The hand cut and sent cut leave the same ground.');
 }
+mesa = stepDigSandbox(mesa, {controls:{}}, 1);
+assert.equal(mesa.activeBoreId,'bore-2', 'The second bore starts after real daylight.');
+assert.ok(mesa.borer.distanceM > 0);
+assert.ok(Math.hypot(mesa.borer.x-secondMouth.x,mesa.borer.z-secondMouth.z) < 1);
 const closedAt = background.boreOrders[0].stages[0].completed;
 closeDigSandbox();
 assert.equal(background.boreOrders[0].stages[0].completed, closedAt, 'Closing does not advance an unfinished order.');

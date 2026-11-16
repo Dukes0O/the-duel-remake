@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine, teachBorerForCheck, toggleBoreLever, visitBore} from './dig-sandbox.js';
+import {boreBoard,boreBoardWords,borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digBoreSurveyPosition, digSandboxMachineState, stepDigSandbox, switchDigMachine, teachBorerForCheck, toggleBoreLever, visitBore} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -527,22 +527,25 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     host.querySelector('.the-dig-load').textContent=load;
     dial.hidden=sim.activeMachine!=='borer';
     const b=sim.borer;
-    if(sim.activeMachine==='borer' && !b.started && borerHasFace(sim.ground,b,b.heading)) {
-      const key=[b.x.toFixed(1),b.z.toFixed(1),b.y.toFixed(1),b.heading.toFixed(3)].join(':');
-      if(key!==surveyKey) {
-        const result=borerSurvey(sim.ground,b);surveyKey=key;
-        surveyLine=result && {...result,x:b.x,y:b.y,z:b.z,heading:b.heading,
-          heights:Array.from({length:81},(_,i)=>sim.ground.heightAt(b.x+Math.sin(b.heading)*result.distanceM*i/80,b.z+Math.cos(b.heading)*result.distanceM*i/80))};
-      }
-    } else if(!b.started) {surveyLine=null;surveyKey='';}
-    surveyPanel.hidden=sim.activeMachine!=='borer' || !surveyLine;
+    const surveyActor=sim.activeMachine==='borer' ? b : active;
+    const canSurvey=sim.activeMachine!=='borer' || !b.started;
+    const key=canSurvey ? [sim.activeMachine,surveyActor.x.toFixed(1),surveyActor.z.toFixed(1),
+      sim.activeMachine==='borer' ? surveyActor.y.toFixed(1) : '',surveyActor.heading.toFixed(3)].join(':') : '';
+    if(key!==surveyKey) {
+      surveyKey=key;
+      const position=canSurvey ? digBoreSurveyPosition(sim) : null;
+      const result=position && borerHasFace(sim.ground,position,position.heading) ? borerSurvey(sim.ground,position) : null;
+      surveyLine=result && {...result,x:position.x,y:position.y,z:position.z,heading:position.heading,
+        heights:Array.from({length:81},(_,i)=>sim.ground.heightAt(position.x+Math.sin(position.heading)*result.distanceM*i/80,position.z+Math.cos(position.heading)*result.distanceM*i/80))};
+    }
+    surveyPanel.hidden=!surveyLine;
     // Face and ground checks run only when the displayed survey or eligibility changes.
-    const offerKey=[surveyKey,sim.activeMachine,b.started,sim.boreOrders.length,sim.apprenticeTown.apprenticeships.length].join(':');
+    const offerKey=[surveyKey,sim.boreOrders.length,sim.apprenticeTown.apprenticeships.length].join(':');
     if (offerKey !== sendButton.dataset.offerKey) {
       sendButton.dataset.offerKey=offerKey;sendOffered=canSendBorer(sim,surveyLine);
     }
     sendButton.hidden=!sendOffered;
-    if(sendOffered)sendButton.textContent=`F: Send ${sim.apprenticeTown.people[0].name}`;
+    if(sendOffered)sendButton.textContent=`F: Send ${sim.apprenticeTown.people[0].name}${sim.boreOrders.some(order=>order.status!=='finished')?' here next':''}`;
     const board=boreBoard(sim), boardWords=board.map(boreBoardWords);
     borePanel.hidden=boardWords.length===0;
     boreWords.textContent=boardWords.length ? `Bore board. ${boardWords.join(' ')}` : '';

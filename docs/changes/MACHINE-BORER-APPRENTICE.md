@@ -130,7 +130,12 @@ V7: returning along a curved bore now places Mabel exactly at the last segment's
 - Build: `npm.cmd run build` passed. PowerShell blocked `npm.ps1` under its execution policy; the Windows command wrapper worked. Vite reported chunk-size and mixed-import warnings. The generated `dist` was removed.
 - The lane tier was not run, as A10 directs.
 
+- V3: the selected machine can survey and queue another face while Mabel is away. The board lists waiting work, and Mabel starts it after daylight. `node tools/test-machine-borer-apprentice.mjs` checks the queue on the real mesa.
+- V7: `node tools/test-machine-borer-freeze.mjs` passed for the stall, reverse, tilt and steering cases, and the error recovery guard.
+
 ## Changed assertions, for Claude to review
+
+- Waiting bore wording: replaced the old ?Pim is waiting? assertion with ?Bore 2: waiting. 120.0 m.? as directed in V3.
 
 - Older Mabel scenario: the bank growth assertion now reads filled heap cells instead of the removed bank cell list; new checks measure the 5 m crest and 0.7 m per metre side limit. Claude requested the heap measurement in V1.
 
