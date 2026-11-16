@@ -225,8 +225,10 @@ export function stepBorer(state, controls = {}, ground, material = null, dtSecon
   const thrust = clamp(Number.isFinite(controls.thrust) ? controls.thrust : 0, -1, 1);
   const steer = clamp(Number.isFinite(controls.steer) ? controls.steer : 0, -1, 1);
   const slopeInput = clamp(Number.isFinite(controls.slope) ? controls.slope : 0, -1, 1);
-  let next = {...state, segments:state.segments || [], spoilBank:state.spoilBank ?
-    {far:state.spoilBank.far, cells:state.spoilBank.cells.map(cell => ({...cell}))} : {far:-1.5, cells:[]}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
+  // Leave the bank alone until a cutting step needs to plan a deposit. This
+  // matters for the wider bank while Mabel is idle, stalled or travelling.
+  let next = {...state, segments:state.segments || [], spoilBank:state.spoilBank ||
+    {far:-1.5, cells:[]}}, carry = (state.stepCarrySeconds || 0) + dtSeconds;
   const events = [], step = 1 / 120;
   while (carry >= step - 1e-10) {
     carry -= step;

@@ -587,6 +587,13 @@ const pileVolume = () => muckGround.toSave().chunks.reduce((sum, chunk) =>
 const expectedMuck = Math.PI * 3 ** 2 * 40 * 1.25;
 assert.ok(Math.abs(pileVolume() / expectedMuck - 1) < 0.02, 'The pile contains the bulked bore volume.');
 assert.ok(muckCut.spoilBank.far > 6, 'The bank extends as the cut grows.');
+const bankBeforeIdle = muckCut.spoilBank;
+const idleBorer = stepBorer(muckCut, {thrust:0}, muckGround, 'topsoil', 1).state;
+assert.strictEqual(idleBorer.spoilBank, bankBeforeIdle, 'Waiting does not copy the bank.');
+const bankSnapshot = structuredClone(bankBeforeIdle);
+const nextMuckCut = stepBorer(muckCut, {thrust:1}, muckGround, 'topsoil', 1 / 60).state;
+assert.deepEqual(bankBeforeIdle, bankSnapshot, 'A new deposit leaves the previous bank state unchanged.');
+assert.notStrictEqual(nextMuckCut.spoilBank, bankBeforeIdle, 'A deposit gets its own bank state.');
 for (const cell of muckCut.spoilBank.cells) {
   assert.ok(muckGround.heightAt(cell.x, cell.z) - cell.base <= 5.00001, 'The bank stays at most five metres high.');
   assert.ok(cell.x >= 12 && Math.abs(cell.z) <= 1, 'The bank stays beside the mouth and away from the track.');
