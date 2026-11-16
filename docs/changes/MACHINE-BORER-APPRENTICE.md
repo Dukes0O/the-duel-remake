@@ -190,3 +190,14 @@ Run the older Mabel browser scenario to its end, the apprentice browser scenario
 On merge d480af408, the full `test-machine-borer` passed. Its real heap measured a maximum sampled cross slope of 0.6990 m per metre, a 4.7691 m crest and 0.616% volume error. Over 100 cutting steps it read 2,556 heights; the observed maximum was 67 cell fills in one 1/60-second step. The protected-ground and mesa checks passed.
 
 The lesson, apprentice, both scenario-expression, freeze, survey, town-apprentices, ground-edit, machine-roads, tunnels and scablands-scene tests each passed. The race replay fingerprints passed 297 checks and combat replay fingerprints passed 12. `npm.cmd run build` passed with Vite's chunk-size and mixed-import warnings. The lane tier was omitted as A10 directs. Browser scenarios were not run in this job.
+
+
+## V8: running survey and hill strip
+
+The Dig keeps the survey for the cut when Mabel starts, whether the player or Pim cuts. It shows the running floor, grade and distance with the hill strip, and shows the daylight sentence in their place when the bore is finished. A queued order carries its own survey. The existing face-survey cache still refreshes after edits along its line. Fixing a shadowed input also lets the hand cut pass the survey to the watching words. No new sound cue or race rule was added.
+
+`node tools/test-machine-borer-survey.mjs` passed on the final code, including real Dig hand and apprentice cuts, screen text, strip, daylight and the existing ground-edit refresh. `npm.cmd run build` passed on the final code, with Vite's mixed-import and chunk-size warnings; `dist` was removed. The full borer test was stopped before completion during the real mesa drive; before stopping it measured 0.6990 m per metre cross slope, 4.7691 m crest, 0.616% volume error, 2,556 height reads in 100 steps and at most 67 cell fills per step. It is not a full pass.
+
+Earlier in this round, before the final daylight-display adjustment, the lesson, survey, freeze, both scenario-expression, town-apprentices, ground-edit, machine-roads, tunnels and scablands-scene suites passed. The apprentice and race replay suites were stopped before completion. The previous complete replay fingerprints remain 297 race checks and 12 combat checks, but have not been rerun on V8. The latest added daylight assertion in the apprentice suite has not yet been run.
+
+For the next run: run the full borer and apprentice tests, the card's other final checks and both replay suites one at a time. The lane tier remains omitted as A10 directs. Claude must run both browser scenarios and check the restored screen in a visible window. No existing assertion changed for V8; no new design decision was needed.
