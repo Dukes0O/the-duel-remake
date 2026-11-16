@@ -398,7 +398,7 @@ tasks:
 
   - id: QA-ARENA-SHOVE-BASELINE
     title: "arena-shove stops: current baseline and candidate have identical src"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -408,7 +408,7 @@ tasks:
 
   - id: QA-DRIVE-LESSON-RUN-BOARD
     title: "drive-lesson-run expects an older lesson board"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
@@ -436,7 +436,7 @@ tasks:
 
   - id: QA-SKI-FINISH-TIMEOUT
     title: "ski-finish browser scenario times out after the slalom"
-    owner: "codex"
+    owner: "claude"
     lane: "TOOLS"
     size: "S"
     status: "ready"
