@@ -55,6 +55,11 @@ for (const delegated of [false, true]) {
   assert.match(text.textContent, /^Floor: .* Grade: .* m to go/);
   assert.equal(canvas.hidden, false);
   assert.ok(strokes > 0, 'The hill strip includes the cut.');
+  const firstText = text.textContent;
+  for (let i=0; i<180; i++)
+    dig = stepDigSandbox(dig, {borerSurvey:line, controls:{forward:1/3, directLever:true}}, 1/60);
+  updateBorerSurvey(panel, cache, displayedBorerSurvey(dig, null), dig.borer);
+  assert.notEqual(text.textContent, firstText, 'The running survey changes as the cut advances.');
   updateBorerSurvey(panel, cache, displayed, {...dig.borer, daylightMessage:'Daylight. She is through.'});
   assert.equal(text.textContent, 'Daylight. She is through.');
   assert.equal(canvas.hidden, true);
