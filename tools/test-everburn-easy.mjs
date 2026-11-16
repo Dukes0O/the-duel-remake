@@ -33,7 +33,7 @@ assert.equal(new Set(jobs.map(job => job.id)).size, jobs.length);
 const wrap = angle => Math.atan2(Math.sin(angle), Math.cos(angle));
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const spot = value => value?.position ?? value;
-const footProgress = new WeakMap(), defendMode = new WeakMap();
+const footProgress = new WeakMap(), defendMode = new WeakMap(), soupRoute = new WeakMap();
 
 function currentMarker(duel) {
   const arena = duel.state.arena, worldJob = arena.worldJob;
@@ -213,7 +213,7 @@ function moveTowardMarker(duel, target) {
   const toGoal = Math.hypot(target.x - car.x, target.z - car.z);
   // The East Road leads to Tin Town: a carry bound for the town follows it; any other goal is taken by the road net like a search.
   const toTown = Math.hypot(target.x - LAND.at('tin-town').x, target.z - LAND.at('tin-town').z);
-  const towardTown = jobStep?.kind === 'carry' && toTown < 60;
+  const towardTown = jobStep?.kind === 'carry' && jobStep.load !== 'hot-soup' && toTown < 60;
   const onTheRoad = towardTown && toGoal > 45;
   // A search, a rescue, a heist or a walk drives to a goal that a river, a cliff or a building bars by the road net (the map's own shortest way over the roads, with a straight run at each end of up to 1.5 km), the way a child follows the roads.
   const way = !towardTown && toGoal > 45 && jobStep?.kind !== 'chase' ? wayFor(duel, car, target) : null;
@@ -229,12 +229,12 @@ function moveTowardMarker(duel, target) {
   if (stuck.backing > 0) { duel.setInput({throttle: 0, brake: 1, steer: stuck.side, boost: false, interact: false}); return; }
   const dx = target.x - car.x, dz = target.z - car.z, gap = Math.hypot(dx, dz);
   const desired = Math.atan2(dx, dz), turn = wrap(desired - (car.heading + (state.headingError || 0)));
-  const speed = Math.abs(state.speedMph || 0);
+  const speed = jobStep?.load === 'hot-soup' ? (state.speedMph || 0) : Math.abs(state.speedMph || 0);
   // A driver that has to turn right round (the road, a search, a heist) drives a wide circle forward; it does not back all the way there in reverse.
-  const turnsAround = onTheRoad || ['explore', 'heist', 'rescue'].includes(jobStep?.kind);
+  const turnsAround = onTheRoad || jobStep?.load === 'hot-soup' || ['explore', 'heist', 'rescue'].includes(jobStep?.kind);
   const nearRescue = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'rescue' && gap < 14;
   const defending = state.arena.worldJob.job.steps[state.arena.worldJob.job.stepIndex]?.kind === 'defend';
-  const targetSpeed = nearRescue ? 0 : defending ? gap < 9 ? 4 : 20 : onTheRoad && toGoal < 250 ? 14 : gap < (turnsAround ? 40 : 10) ? 12 : 52;
+  const targetSpeed = jobStep?.load === 'hot-soup' && (soupRoute.get(duel)?.index ?? 0) < 2 ? 8 : nearRescue ? 0 : defending ? gap < 9 ? 4 : 20 : onTheRoad && toGoal < 250 ? 14 : gap < (turnsAround ? 40 : 10) ? 12 : 52;
   duel.setInput({throttle: speed < targetSpeed && (turnsAround || Math.abs(turn) < 1.35) ? 1 : 0,
     brake: speed > targetSpeed + 2 || (!turnsAround && Math.abs(turn) > 1.8) ? 1 : 0,
     steer: clamp(-turn * 2, -1, 1), boost: false, interact: false});
@@ -298,7 +298,19 @@ function playerInput(duel) {
   // Hot Soup's goal is across the Scablands and the town stands between the kitchen and it, so the driver follows the marked way, the safe
   // points in turn (go-live, 13 November 2026), as a child follows the road on the map. The other carries still drive straight at their goal.
   if (step.kind === 'carry' && step.load === 'hot-soup' && !state.onFoot) {
-    const next = step.safePoints?.[worldJob.job.stepState.safeIndex ?? 0];
+    const car = duel.course.groundAt(state.s, state.lateral);
+    const route = soupRoute.get(duel) ?? {index: 0, x: car.x, z: car.z};
+    // A restart puts the car back at the start, so follow the marked way again.
+    if (Math.hypot(car.x - route.x, car.z - route.z) > 15) route.index = 0;
+    route.x = car.x; route.z = car.z;
+    const safeIndex = worldJob.job.stepState.safeIndex ?? 0;
+    while (route.index < safeIndex) {
+      const point = step.safePoints[route.index], position = spot(point);
+      if (Math.hypot(car.x - position.x, car.z - position.z) > (point.radius ?? 5)) break;
+      route.index++;
+    }
+    soupRoute.set(duel, route);
+    const next = step.safePoints?.[route.index];
     if (next) target = spot(next);
   }
   const raiders = worldJob.actors.filter(actor => Number.isFinite(actor.health) &&
