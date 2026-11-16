@@ -679,7 +679,8 @@ test('standing results, new failures, passed entries and strict release',()=>{
   assert.deepEqual(result.nowPassing,[list[1]]);assert.deepEqual(result.remaining,[list[0],list[2]]);
   assert.equal(classifyNight([failures[0]],stages,list).status,'standing');
   assert.equal(classifyNight([failures[0]],stages,list,true).status,'failed');
-  assert.equal(classifyNight([],[],list).status,'passed');
+  assert.equal(classifyNight([],[],list).status,'failed');
+  assert.equal(classifyNight([],[],list).failures[0].error,'no stage ran');
   assert.equal(parseNightArguments(['--idle-awake','--no-push','--strict']).strict,true);
 });
 
@@ -739,6 +740,29 @@ test('an invalid, partial, unselected or crashed browser result clears no standi
     assert.deepEqual(result.nowPassing,[]);
     assert.equal(f.files.get(file),JSON.stringify(list));
   }
+});
+
+
+test('a copied source change after browser packet validation fails the stage and keeps its standing entries',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'broken #'},
+    {stage:'browser',name:'other',since:date,card:'QA',cause:'old'}];
+  const f=fixture({fail:'browser',browserPatch:{count:2,passed:1,failed:1,rows:[
+    {name:'smoke-extra',passed:false,error:'broken 42'},{name:'other',passed:true}]}});
+  f.deps.scenarioNames=async()=>['smoke-extra','other'];
+  f.deps.scenarioSelection=async()=>[{name:'smoke-extra'},{name:'other'}];
+  const git=f.deps.git;let browserChecks=0;
+  f.deps.git=async(args,cwd)=>{
+    if(cwd===root+'-copy/source'&&args[0]==='rev-parse'&&f.calls.includes('browser')&&++browserChecks===1)
+      return 'e'.repeat(40);
+    return git(args,cwd);
+  };
+  f.files.set(file,JSON.stringify(list));
+  const result=await runNight(opts(),f.deps);
+  assert.equal(result.status,'failed');
+  assert.ok(result.failures.some(row=>row.name==='browser'&&row.error==='Copied source changed.'));
+  assert.deepEqual(result.nowPassing,[]);
+  assert.equal(f.files.get(file),JSON.stringify(list));
 });
 
 test('weekday, Saturday and strict plans choose the expected browser scope',()=>{

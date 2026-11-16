@@ -270,6 +270,7 @@ async function previousGreen(date,dependencies) {
 export function classifyNight(failures, stages, standing, strict=false) {
   const normalize=message=>String(message??'').trim().replace(/\d+(?:\.\d+)?/g,'#');
   const fresh=[],known=[];
+  if(!stages.length) failures=[...failures,{name:'night',error:'no stage ran'}];
   for(const failure of failures) {
     const match=/^(full|browser): (.+)$/.exec(failure.name);
     const stageId=match?.[1]??failure.name, name=match?.[2]??failure.name;
@@ -469,6 +470,7 @@ export async function runNight(options,overrides={}) {
 
           }catch{}
         }
+        let browserResult;
         if(stage.id==='browser') {
           const actual=json(await dependencies.readText(stage.packet));
           const allNames=await dependencies.scenarioNames(copy.root);
@@ -478,10 +480,7 @@ export async function runNight(options,overrides={}) {
             new Set(selected).size!==selected.length || actual.passed!==actual.rows.filter(item=>item.passed).length ||
             actual.failed!==actual.rows.filter(item=>!item.passed).length ||
             result.exitCode!==(actual.failed?1:0))throw Error('Browser packet or child exit is incomplete or inconsistent.');
-          await assertCopy();
-          row.passedNames=actual.rows.filter(item=>item.passed).map(item=>item.name);
-          row.validatedFailures=actual.rows.filter(item=>!item.passed&&typeof item.error==='string'&&item.error.trim()&&!/timed? ?out|timeout|crash|terminated|refused/i.test(item.error)).map(item=>item.name);
-          row.failureMessages=Object.fromEntries(actual.rows.filter(item=>!item.passed).map(item=>['browser: '+item.name,item.error]));
+          browserResult=actual;
         }
         let frameError;
         if(stage.id==='frames') {
@@ -528,19 +527,40 @@ export async function runNight(options,overrides={}) {
           }catch(error){frameError=error;row.reportError=error.message;}
         }
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
-        if(result.exitCode!==0)throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
+        if(stage.id==='full'&&result.exitCode!==0) {
+          const actual=fullPacket(result.stdout);
+          if(actual?.schema===1&&actual.kind==='result'&&actual.tier==='full'&&actual.jobs===4&&
+            actual.exitCode===result.exitCode&&actual.notRun===0&&Array.isArray(actual.results)&&
+            actual.results.length===actual.total&&actual.passed===actual.results.filter(item=>item.passed).length&&
+            JSON.stringify(actual.failures)===JSON.stringify(actual.results.filter(item=>!item.passed).map(item=>item.label))&&
+            actual.failures.length&&actual.results.every(item=>typeof item.label==='string'&&typeof item.passed==='boolean'&&
+              Number.isSafeInteger(item.exitCode)&&item.passed===(item.exitCode===0))) {
+            await assertCopy();
+            row.error='Full tier suites failed.';
+            for(const name of actual.failures)failure('full: '+name,row.error);
+            row.finished=dependencies.now().toISOString();
+            continue;
+          }
+        }
+        if(result.exitCode!==0&&!(stage.id==='browser'&&browserResult.failed))throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser') {
           const actual=json(await dependencies.readText(stage.packet));
           const allNames=await dependencies.scenarioNames(copy.root);
           const selected=stage.args.includes('--changed-since') ? (await dependencies.scenarioSelection(copy.root,allNames,lastNight.source)).map(row=>row.name) : allNames;
-          validateBrowser(actual,selected);
+          if(!actual.failed)validateBrowser(actual,selected);
         }
         else validateCombat(json(result.stdout));
         await assertCopy();
-        row.passed=true;
-      }catch(error){row.error=error.message;for(const name of row.failureNames?.length?row.failureNames:[stage.id])failure(name,row.failureMessages?.[name]||error.message);}
+        if(browserResult) {
+          row.passedNames=browserResult.rows.filter(item=>item.passed).map(item=>item.name);
+          row.validatedFailures=browserResult.rows.filter(item=>!item.passed&&typeof item.error==='string'&&item.error.trim()&&!/timed? ?out|timeout|crash|terminated|refused/i.test(item.error)).map(item=>item.name);
+          for(const item of browserResult.rows.filter(item=>!item.passed))failure('browser: '+item.name,item.error);
+          if(browserResult.failed)row.error='Browser scenarios failed.';
+        }
+        row.passed=!browserResult?.failed;
+      }catch(error){row.error=error.message;failure(stage.id,error.message);}
       row.finished=dependencies.now().toISOString();
     }
   }catch(error){failure('context',error.message);}
