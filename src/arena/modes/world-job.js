@@ -29,6 +29,15 @@ export const worldJobPosition = (duel, actor) => {
   return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
 const position = worldJobPosition;
+// A conservative renderer-independent guarantee: the rider is well behind
+// the car and the land blocks the view. If unsure, leave it in the world.
+function riderHiddenBehindCar(duel, car, rider) {
+  const heading = worldPose(duel, duel.state).heading;
+  const dx = rider.x - car.x, dz = rider.z - car.z;
+  return dx * Math.sin(heading) + dz * Math.cos(heading) < -200 &&
+    !sees(car, rider, {heightAt:scablandsSurfaceHeightAt, actorFloors:true,
+      tunnels:duel.course.groundTunnels, eye:5, target:2, step:5});
+}
 // Keep sight work bounded and stagger the two road riders without using wall time.
 export function roadRiderSight(rider, dt, index, trace) {
   rider.sightWait ??= index * 0.125;
@@ -244,7 +253,8 @@ function updateJobActors(duel, worldJob, dt) {
       if (worldJob.furnaceRidersReturning) {
         rider.returningToPost = true;
         const car = position(duel, duel.state);
-        if (Math.hypot(car.x - rider.position.x, car.z - rider.position.z) >= 600) {
+        if (Math.hypot(car.x - rider.position.x, car.z - rider.position.z) >= 600 &&
+            riderHiddenBehindCar(duel, car, rider.position)) {
           worldJob.actors.splice(worldJob.actors.indexOf(rider), 1);
           (worldJob.furnaceRidersGone ??= []).push(actorDef.id);
           continue;

@@ -1803,3 +1803,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including a wreck tested through the real job step and all five delivery drives. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: distance-based removal of wrecked furnace riders.
 - Still needed: prevent visible live riders from disappearing or jumping to their posts, including the 20-second recovery for a stranded road rider; then Y2 to Y5 and the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: live furnace riders
+
+- A returning furnace rider remains in the world until it is at least 600 metres away, over 200 metres behind the car, and hidden by the land. Wrecks stay where they fell. The conservative sight check leaves riders in place whenever it cannot establish those conditions. No sound cue, save shape or race rule changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the five drives and real-step checks that riders in front remain and hidden riders leave. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions, for Claude to review: the former test expected removal at 600 metres alone; it now checks that a rider in front remains and that a rider hidden by the land behind the car is removed, as Y1 directs. Codex decided: use the card's conservative behind-car and blocked-sight option. Removed: distance alone as grounds for removing a live furnace rider.
+- Still needed: road rider recovery under Y1, Y2 to Y5, and the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.

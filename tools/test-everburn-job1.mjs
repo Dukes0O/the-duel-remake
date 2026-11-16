@@ -1207,6 +1207,7 @@ for (const reason of ['sight', 'town', 'time']) {
   if (reason === 'town') {
     const wall = step.riderSafeWall;
     car = {x:wall.x, z:wall.z, y:scablandsSurfaceHeightAt(wall.x, wall.z)};
+    state.headingError = Math.atan2(FURNACE_SKYLINE.x - car.x, FURNACE_SKYLINE.z - car.z);
   }
   world.sightStep = 1;
   stepWorldJob(duel, 0.11);
@@ -1216,7 +1217,24 @@ for (const reason of ['sight', 'town', 'time']) {
     assert.equal(riders.length, 2);
     assert.ok(riders.every(rider => rider.returningToPost && !rider.pursuing));
   }
-  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
+  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  state.headingError = -Math.PI / 2;
+  world.sightStep = 1;
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2,
+    'distant riders in front of the camera remain');
+  const remaining = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  let hiddenCar;
+  for (let angle = 0; angle < Math.PI * 2 && !hiddenCar; angle += Math.PI / 24) {
+    const candidate = {x:FURNACE_SKYLINE.x + 1800 * Math.sin(angle), z:FURNACE_SKYLINE.z + 1800 * Math.cos(angle)};
+    candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
+    if (remaining.every(rider => !sees(candidate, rider.position, {heightAt:scablandsSurfaceHeightAt,
+      actorFloors:true, eye:5, target:2, step:5}))) hiddenCar = {candidate, angle};
+  }
+  assert.ok(hiddenCar, 'the land provides a hidden return');
+  car = hiddenCar.candidate;
+  state.headingError = hiddenCar.angle;
   world.sightStep = 1;
   stepWorldJob(duel, 0.1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
