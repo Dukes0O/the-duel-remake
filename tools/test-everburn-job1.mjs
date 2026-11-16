@@ -285,6 +285,43 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   }
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
+// Cinder uses her crew model, stands on the ground and leaves view after the loaded car drives away.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  const source = new THREE.Group(), body = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial());
+  body.position.y = 1.4; body.name = 'cinder-near'; source.add(body);
+  const farModel = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
+  farModel.name = 'cinder-far'; source.add(farModel);
+  const requested = [];
+  const scene = createScablandsScene(duel.course, {openMarks:[], loadAsset:async path => {
+    requested.push(path); return {scene:path.endsWith('/crew/cinder.glb') ? source : new THREE.Group()};
+  }});
+  syncScene(scene.group, duel.state);
+  const figure = scene.group.getObjectByName('Cinder at the yard gate');
+  assert.equal(figure.visible, true);
+  assert.ok(figure.children.some(child => child.visible), 'the temporary figure is visible while loading');
+  await figure.userData.modelReady;
+  assert.ok(requested.includes('/assets/models/wasteland/crew/cinder.glb'));
+  assert.equal(figure.getObjectByName('Cinder crew model'), source);
+  figure.updateWorldMatrix(true, true);
+  assert.equal(farModel.visible, false, 'the distant detail does not overlap Cinder');
+  const bounds = new THREE.Box3().setFromObject(body);
+  assert.ok(Math.abs(bounds.min.y - scablandsSurfaceHeightAt(pickup.x, pickup.z)) < .05);
+  assert.ok(Math.abs(bounds.max.y - bounds.min.y - 1.7) < .001);
+  assert.ok(Math.hypot(pickup.x-step.braziers[0].position.x, pickup.z-step.braziers[0].position.z) >= 1.5);
+  assert.ok(Math.abs(wrapHeading(figure.rotation.y - Math.atan2(step.carStart.x-pickup.x, step.carStart.z-pickup.z))) < 1e-9);
+  assert.ok(figure.children.filter(child => child !== source).every(child => !child.visible));
+  duel.state.arena.worldJob.job.stepState.loaded = true;
+  const far = {x:pickup.x + 100, z:pickup.z};
+  const at = duel.course.nearest(far.x, far.z);
+  placeActor(duel, duel.state, {s:at.s, lateral:at.lateral, headingError:0}, 0);
+  syncScene(scene.group, duel.state);
+  assert.equal(figure.visible, false, 'Cinder is hidden once the loaded car is 60 m away');
+  scene.dispose();
+}
 // Start the Medium proof drive at the actual yard start and pick up the pot by driving to Cinder.
 {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});

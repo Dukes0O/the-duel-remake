@@ -582,6 +582,30 @@ export function createScablandsScene(course,options={}){
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
+  let cinderRequested=false;
+  function requestCinder(){
+    if(cinderRequested)return;
+    cinderRequested=true;
+    cinder.userData.modelReady=Promise.resolve().then(()=>loadAsset('/assets/models/wasteland/crew/cinder.glb')).then(asset=>{
+      if(retired||!asset?.scene)return;
+      const model=asset.scene;
+      let near=null;
+      model.traverse(node=>{
+        const detail=String(node.userData?.lod||node.name).toLowerCase();
+        if(/(^|[-_ ])far($|[-_ ])/.test(detail))node.visible=false;
+        if(/(^|[-_ ])near($|[-_ ])/.test(detail))near=node;
+      });
+      const visibleModel=near||model,box=new THREE.Box3().setFromObject(visibleModel),height=box.max.y-box.min.y;
+      if(!Number.isFinite(height)||height<=0)return;
+      model.scale.multiplyScalar(1.7/height);
+      model.updateMatrixWorld(true);
+      const feet=new THREE.Box3().setFromObject(visibleModel).min.y;
+      model.position.y-=feet;
+      model.name='Cinder crew model';
+      for(const child of [...cinder.children])child.visible=false;
+      cinder.add(model);
+    }).catch(error=>{cinder.userData.loadError=String(error?.message||error);});
+  }
   // A plain fire beside the delivery bay until the forge has its final drawing.
   const forgeFlameMaterial=createFlameMaterial(),forgeFlameGeometry=new THREE.PlaneGeometry(1,1);
   forgeFlameGeometry.translate(0,.5,0);
@@ -860,6 +884,10 @@ export function createScablandsScene(course,options={}){
       if(cinder.visible){
         const at=emberStep.pickup.place.position;
         cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
+        const start=emberStep.carStart;
+        if(start)cinder.rotation.y=Math.atan2(start.x-at.x,start.z-at.z);
+        requestCinder();
+        if(worldJob.job?.stepState?.loaded&&Math.hypot(here.x-at.x,here.z-at.z)>=60)cinder.visible=false;
       }
       if(emberStep){
         const spots=brazierSpotsFor(emberStep),key=JSON.stringify(spots);

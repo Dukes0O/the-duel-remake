@@ -504,3 +504,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Codex decided: the proof driver fires when an unburnt barricade is within 18 m and within the flamethrower's 15-degree half cone. This uses the real weapon and job state. Claude should review the drive.
 - Changed assertions: none. For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer, forge fire, barricades, smoke and Cinder figure.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the rest of the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, Cinder model (15 November 2026)
+
+- Cinder uses her crew model at the pickup, 1.7 m tall and facing the start. The temporary figure stays until it loads. After pickup she is hidden when the car is 60 m away. No new sound event was added.
+- `node tools/test-everburn-job1.mjs`: passed. The scene test uses a stubbed loader and checks the model, height, ground, facing, separation from the brazier and visibility. `git diff --check`: passed. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the temporary Cinder figure after her model loads. The old `everburn-play` scenario still needs replacement or removal. Next: the barricade drawing, then the smoke column and remaining steps.
