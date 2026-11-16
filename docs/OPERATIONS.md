@@ -126,7 +126,8 @@ git worktree remove as a substitute for this Recycle Bin policy.
 ## Release
 
 The Release Manager is the only role that updates the live folder. It first
-collects change notes into `README.md` and `VERIFICATION.md` and commits them
+collects the changes since the last release (from the merge commit messages, which carry
+each change note's essentials) into `README.md` and `VERIFICATION.md` and commits them
 on integration. It runs the full check on that final integration commit,
 checks that the live tree is clean, then fast-forwards `master`. It installs locked
 dependencies if needed and builds a release in `dist-next`. It checks the
