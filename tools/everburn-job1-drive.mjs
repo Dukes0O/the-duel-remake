@@ -72,7 +72,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
     duel.step(1 / 60);
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph,
-    ember:state.arena.worldJob.job.stepState.ember, lowestEmber, elapsedSeconds:ticks / 60, ticks};
+    ember:state.arena.worldJob.job.stepState.ember, lowestEmber, elapsedSeconds:ticks / 60,
+    position:{x:previous.x, z:previous.z}, ticks};
 }
 
 // Approach a camp fire, stop nearby and wait for the real scoop rule.

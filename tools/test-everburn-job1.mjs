@@ -370,6 +370,16 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(world.job.stepState.burntBarricades.includes(step.barriers[0].id), 'the car burns the camp barricade with its loaned flamethrower');
   assert.ok(fifth.lowestEmber > 0, `the ember stays alight past the camp: ${JSON.stringify(fifth)}`);
   console.log('East Road camp drive:', JSON.stringify(fifth));
+  const sixth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 3000);
+  assert.ok(sixth.along >= 3000, `the car follows the East Road for 3 km: ${JSON.stringify(sixth)}`);
+  assert.ok(sixth.driven >= 490 && sixth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(sixth)}`);
+  assert.ok(sixth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(sixth)}`);
+  console.log('East Road 3 km drive:', JSON.stringify(sixth));
+  const seventh = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 3500);
+  assert.ok(seventh.along >= 3500, `the car follows the East Road for 3.5 km: ${JSON.stringify(seventh)}`);
+  assert.ok(seventh.driven >= 490 && seventh.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(seventh)}`);
+  assert.ok(seventh.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(seventh)}`);
+  console.log('East Road 3.5 km drive:', JSON.stringify(seventh));
 
 }
 // The real job requests the gate only for a car approaching slowly.

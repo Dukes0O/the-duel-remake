@@ -536,3 +536,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: the proof driver burns the barricade before returning to the brazier. Claude should review the drive.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road beyond the camp (15 November 2026)
+
+- The Medium proof drive continues from the Halfway Camp to 3.5 km along the real East Road. The driver now records the car's actual position at the end of each stretch. This advances step 7a; arrival is not yet proved. No new game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. At 3 km the ember was 76.90, and at 3.5 km it was 72.46. The latter stretch covered 499.88 m in 31.75 seconds and stayed within 0.01 m of the road. Race fingerprints were not checked in this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
