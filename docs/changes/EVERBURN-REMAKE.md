@@ -1747,3 +1747,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Codex decided: the yard's next-up line also withholds the unfinished job, because it otherwise offers the same unavailable job. Removed: the offer to start an unremade next job.
 - For Claude to run: the two long drivers, lane tier and the older screen suite after its obsolete assertions are reviewed. For Claude to draw: the pot transfer and forge fire. The stranded rider's out-of-view recovery, X4, X8 and final checks remain.
 - Checks: `node tools/test-everburn-job1.mjs` passed, including all drives. `node tools/test-ember-screens.mjs` failed on its old one-open-job expectation as noted above. `git diff --check` passed. Integration was already included. The final replay and build checks remain.
+
+## X4: road rider sight checks
+
+- Road riders now cache sight between checks and take turns checking. The job still tests whether the car is in their road range every step. No sound cue or save shape changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the delivery drives, pursuit and loss-of-sight checks, and a ten-second count using the sight scheduler called by the job. Each rider makes at most 40 traces in ten seconds. The existing delivery measurements remain unchanged. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: tracing each road rider's sight every simulation step.
+- Still needed: the map discovery limit and its count test, the stranded rider's out-of-view recovery, X8 and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.

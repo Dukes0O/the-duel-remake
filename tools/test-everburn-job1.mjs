@@ -16,7 +16,7 @@ import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, samp
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid} from '../src/world/scablands-solids.js';
 import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
-import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets} from '../src/arena/modes/world-job.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE} from '../src/world/scablands.js';
@@ -86,6 +86,19 @@ assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:false, inVi
 ]);
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
+// Count the actual sight calls made by the same scheduler used in the job step.
+{
+  const riders = [{}, {}], counts = [0, 0], first = [];
+  for (let tick = 0; tick < 1200; tick++) {
+    riders.forEach((rider, index) => roadRiderSight(rider, 1 / 120, index, () => {
+      counts[index]++;
+      first[index] ??= tick;
+      return true;
+    }));
+  }
+  assert.ok(counts.every(count => count <= 40 && count >= 38), `sight traces: ${counts}`);
+  assert.notEqual(first[0], first[1], 'the riders trace at different times');
+}
 // The actual job step confines barricade riders to their road and returns them to post.
 {
   const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,

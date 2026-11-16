@@ -29,6 +29,16 @@ export const worldJobPosition = (duel, actor) => {
   return {x: at.x, y: duel.course.def.scablands ? feet : at.y, z: at.z};
 };
 const position = worldJobPosition;
+// Keep sight work bounded and stagger the two road riders without using wall time.
+export function roadRiderSight(rider, dt, index, trace) {
+  rider.sightWait ??= index * 0.125;
+  rider.sightWait -= Math.max(0, dt);
+  if (rider.sightWait <= 0) {
+    rider.roadVisible = trace();
+    rider.sightWait = 0.25;
+  }
+  return rider.roadVisible === true;
+}
 const EMPTY_HIT_TARGETS = [];
 // The drawn Pipe is 176 m long and follows the Salt Road at the named crossing.
 // Keep the car's floor in the question: the river bed below is not the deck.
@@ -265,8 +275,9 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const inRange = carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900 &&
       ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
       (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
-    const visible = inRange && sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
-      actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5});
+    const visible = inRange && roadRiderSight(rider, dt, step.waitingActors.indexOf(actorDef), () =>
+      sees(rider.position, car, {heightAt:scablandsSurfaceHeightAt,
+        actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}));
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
     if (!inRange || (rider.pursuing && rider.lostSightSeconds >= 5)) rider.returningToPost = true;
     if (!rider.pursuing && !visible) return;
