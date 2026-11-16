@@ -1,5 +1,18 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+
+## Clean plates drive to the forge (16 November 2026)
+
+- The seeded Medium car drives from pickup through the yard gate, follows the sheltered plates line, and stops at the forge with an alive ember. It takes no jolts or rams, stays at or below 50 km/h on the plates, and does not trigger the furnace. No game event or sound cue was added.
+
+| Way | Kilometres | Minutes | Rams | Scoops | Arrival |
+| --- | ---: | ---: | ---: | --- | ---: |
+| Plates, clean | 6.170 | 9.785 | 0 | None | 34.164 |
+
+- Check: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell. It also checks the straight-across drive. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: use the existing cautious gate approach and forge driver for this clean drive. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: complete the other clean drives and scenario.
+
 ## Plates approach near town (16 November 2026)
 
 - The seeded Medium car continues the clean plates line from 4.7 to 5.7 km at no more than 50 km/h, without a jolt or furnace warning. The pot holds 44.905 ember, 355 m from the town gate. This is not yet a drive to the forge. No game event or sound cue was added.

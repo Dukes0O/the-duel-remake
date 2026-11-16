@@ -233,10 +233,16 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
   trialDuel.state.countdown = 0;
   assert.ok(driveToCinder(trialDuel, definition.steps[0].pickup.place.position).loaded);
-  assert.ok(driveThroughYardGate(trialDuel, yardPlan().gate).along >= 20);
+  const trialExit = driveThroughYardGate(trialDuel, yardPlan().gate);
+  assert.ok(trialExit.along >= 20);
   const trialLine = platesCoverLine(route, -40);
-  assert.ok(driveAlongRoad(trialDuel, trialLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
-  assert.ok(drivePlatesShelter(trialDuel, trialLine, 2900).along >= 2900);
+  const trialOpening = driveAlongRoad(trialDuel, trialLine, 1200, 18000, 30.4, false, false, 0.1);
+  const trialShelter = drivePlatesShelter(trialDuel, trialLine, 2900);
+  assert.ok(trialOpening.along >= 1200 && trialShelter.along >= 2900);
+  assert.equal(trialOpening.jolts.length + trialShelter.jolts.length, 0, 'the opening avoids jolts');
+  assert.equal(trialOpening.abovePlatesLimitTicks + trialShelter.abovePlatesLimitTicks, 0, 'the opening stays within 50 km/h');
+  assert.ok(trialOpening.longestFurnaceSightSeconds <= 6 && trialShelter.longestFurnaceSightSeconds <= 6,
+    'the opening stays within six seconds of furnace sight');
   const trialCrossing = drivePlatesRoughGround(trialDuel, trialLine, 3600, 15);
   console.log('Plates intermediate crossing:', JSON.stringify(trialCrossing));
   assert.ok(trialCrossing.along >= 3600, 'the car reaches the far side on the intermediate line');
@@ -272,6 +278,29 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.equal(nearTown.abovePlatesLimitTicks, 0, 'the ground near town stays within 50 km/h');
   assert.ok(nearTown.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
     'the ground near town avoids the furnace warning');
+  const gate = definition.steps[0].riderSafeWall;
+  const car = trialDuel.course.worldAt(trialDuel.state.s, trialDuel.state.lateral);
+  const gateLine = [{x:car.x, z:car.z},
+    {x:gate.x - gate.through.x * 80, z:gate.z - gate.through.z * 80},
+    {x:gate.x - gate.through.x * 25, z:gate.z - gate.through.z * 25},
+    {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15}];
+  const gateDrive = driveAlongRoad(trialDuel, gateLine, pathLength(gateLine) - 1, 12000, 12, true);
+  console.log('Clean plates gate approach:', JSON.stringify(gateDrive));
+  assert.ok(gateDrive.along >= pathLength(gateLine) - 1, 'the clean plates car passes through the town gate');
+  assert.equal(gateDrive.jolts.length, 0, 'the gate approach avoids jolts');
+  assert.equal(trialDuel.state.arena.worldJob.tinTownGateRequested, true, 'the slow approach opens the gate');
+  const arrival = driveToForge(trialDuel, definition.steps[0].destination.position);
+  console.log('Clean plates forge arrival:', JSON.stringify(arrival));
+  assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'the clean plates car stops at the forge');
+  assert.ok(arrival.done && arrival.fire.ember >= 30 && arrival.fire.ember < 70, 'the clean plates drive arrives alive');
+  assert.equal(arrival.observedJoltCount, 0, 'the clean plates drive takes no jolts');
+  assert.ok(!trialDuel.state.arena.worldJob.skylineWarned, 'the furnace sends no riders on the clean drive');
+  const cleanStretches = [trialExit, trialOpening, trialShelter, trialCrossing, beyondCrossing, townward,
+    finalApproach, nearTown, gateDrive, arrival];
+  const measurement = {km:cleanStretches.reduce((sum, stretch) => sum + stretch.driven, 0) / 1000,
+    minutes:cleanStretches.reduce((sum, stretch) => sum + stretch.ticks, 0) / 3600,
+    rams:arrival.observedJoltCount, scoops:[], arrival:arrival.fire.ember};
+  console.log('Clean plates measurement:', JSON.stringify(measurement));
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
