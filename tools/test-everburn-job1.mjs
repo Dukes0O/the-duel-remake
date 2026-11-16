@@ -1394,8 +1394,8 @@ assert.equal(hud().target.id, 'cold-forge');
   assert.ok(ring?.visible, 'the delivery ring is drawn');
   assert.equal(ring.geometry.parameters.outerRadius * ring.scale.x, step.radius, 'the visible ring matches the trigger');
 }
-// Exercise the real job step with each brazier, including interrupted stops and an out ember.
-job.stepState = {...job.stepState, ember: 0, out: true};
+// Exercise each one-time scoop, including interrupted stops.
+job.stepState = {...job.stepState, ember: 10, out: false};
 for (const brazier of step.braziers) {
   const {x, z} = brazier.position;
   job = stepJob(job, view(x + 8.1, z), 3);
@@ -1471,5 +1471,26 @@ for (const [draw, size, view] of [[drawSmallMap, {width: 400, height: 280}, smal
   assert.equal(marks.length, visible.length);
 }
 assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
-assert.equal(job.stepState.relights, 1);
+assert.equal(job.stepState.relights, 0);
+// All scoops have been used, but an out pot can be relit repeatedly at any known brazier.
+for (const brazier of [...step.braziers, step.braziers[0]]) {
+  const {x, z} = brazier.position;
+  job.stepState = {...job.stepState, ember: 0, out: true};
+  const previousRelights = job.stepState.relights;
+  assert.equal(brazierArrow({out:true}, {x:x + 1, z, heading:0}, knowledge).id, brazier.id);
+  job = stepJob(job, view(x, z), 2.9);
+  assert.equal(job.stepState.out, true);
+  job = stepJob(job, view(x, z), 0.1);
+  assert.equal(job.stepState.ember, 25);
+  assert.equal(job.stepState.out, false);
+  assert.equal(job.stepState.relights, previousRelights + 1);
+  assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
+  assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
+}
+// Relighting at an unused brazier does not spend its separate scoop.
+job.stepState = {...job.stepState, ember: 0, out: true, scoopedBraziers: []};
+job = stepJob(job, view(yard.x, yard.z), 3);
+assert.deepEqual(job.stepState.scoopedBraziers, []);
+job = stepJob(job, view(yard.x, yard.z), 3);
+assert.deepEqual(job.stepState.scoopedBraziers, ['yard-brazier']);
 console.log('Hot Delivery pickup: start, stop, three lines and ember passed.');

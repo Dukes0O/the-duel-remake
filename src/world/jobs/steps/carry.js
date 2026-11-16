@@ -48,7 +48,7 @@ function stepEmberCarry(step, state, view, dt) {
   }
   if (step.braziers) {
     const used = state.scoopedBraziers ?? [];
-    const brazier = step.braziers.find(place => !used.includes(place.id) && gap(here, place) <= 8);
+    const brazier = step.braziers.find(place => (next.out || !used.includes(place.id)) && gap(here, place) <= 8);
     const stopping = brazier && Math.abs(view.speedKmh ?? 0) < 1;
     const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
     next.scoopBrazier = stopping ? brazier.id : null;
@@ -58,7 +58,7 @@ function stepEmberCarry(step, state, view, dt) {
       next.ember = Math.min(rule.start, next.ember + 25);
       next.out = false;
       next.relights = relights + (wasOut ? 1 : 0);
-      next.scoopedBraziers = [...used, brazier.id];
+      next.scoopedBraziers = wasOut ? used : [...used, brazier.id];
       next.scoopBrazier = null;
       next.scoopTime = 0;
       events.push({type: 'emberRelit', place: brazier.id});

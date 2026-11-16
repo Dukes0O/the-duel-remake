@@ -124,7 +124,10 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   state = scoop.state;
   check(!state.out && state.ember === 25 && state.relights === 1 && scoop.events.some(event => event.type === 'emberRelit'), 'three seconds stopped restores 25 and records a relight');
   state = stepCarry(carry, state, view, 3).state;
-  check(state.ember < 25 && state.relights === 1, 'the same brazier cannot be scooped twice');
+  check(state.ember > 25 && state.relights === 1 && state.scoopedBraziers.includes(brazier.id), 'relighting leaves the separate scoop available');
+  const afterScoop = state.ember;
+  state = stepCarry(carry, state, view, 3).state;
+  check(state.ember < afterScoop, 'the same brazier cannot be scooped twice');
 }
 
 // (f) pay by grade, and the screen's sentence.
