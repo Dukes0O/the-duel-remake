@@ -162,15 +162,18 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
       candidate.y = scablandsSurfaceHeightAt(candidate.x, candidate.z);
       const hidden = point => !sees(candidate, point, {heightAt:scablandsSurfaceHeightAt,
         actorFloors:true, eye:5, target:2, step:5});
-      if (hidden(stopped) && hidden(posts[0].start.position)) hiddenCar = {candidate, angle};
+      const road = ROAD_NET.road('east-road').points;
+      const roadDistance = Math.abs(nearestOnLine(road, candidate.x, candidate.z).along -
+        nearestOnLine(road, stopped.x, stopped.z).along);
+      if (roadDistance >= 600 && hidden(stopped) && hidden(posts[0].start.position)) hiddenCar = {candidate, angle};
     }
   }
   assert.ok(hiddenCar, 'the land provides a hidden road rider and post');
   car = hiddenCar.candidate;
   state.headingError = hiddenCar.angle;
-  for (let i = 0; i < 210 && camp.returnStuck; i++) tick(0.1);
+  tick(0.1);
   assert.ok(Math.hypot(camp.position.x - posts[0].start.position.x,
-    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns to its hidden post');
+    camp.position.z - posts[0].start.position.z) < 0.01, 'the hidden rider returns at 600 metres along the road without waiting 20 seconds');
   assert.equal(camp.returnStuck, false);
   assert.equal(camp.returningToPost, false);
 }

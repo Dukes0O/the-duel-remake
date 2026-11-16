@@ -1853,3 +1853,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-ember-pot.mjs` passed 34 checks. No game behavior, save shape or race fingerprint changed. Integration was already included.
 - Changed assertions: none. Codex decided: none. Removed: nothing.
 - Still needed: finish Y1's out-of-view rider recovery and run the requested final checks. For Claude to run: the two long drivers and the lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y1: road distance check
+
+- A stranded rider's road distance is calculated only while the rider and its post are hidden. The real job step now checks that a terrain-hidden rider resets immediately when the car is at least 600 metres away along the road, without waiting 20 seconds. No sound cue, save shape or race rule changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including all five delivery drives. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: none. Codex decided: none. Removed: road-distance calculations while the rider or its post is visible.
+- Still needed: Y1 must also recover a rider beside the car but outside the actual camera view. The existing terrain-only test cannot establish this; camera visibility must be handled without allowing the renderer to change race state. Then run the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.

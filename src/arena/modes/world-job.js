@@ -316,9 +316,9 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
       const hidden = riderHiddenBehindCar(duel, car, rider.position) &&
         riderHiddenBehindCar(duel, car, home);
       rider.returnHiddenSeconds = hidden ? (rider.returnHiddenSeconds ?? 0) + Math.max(0, dt) : 0;
-      const road = ROAD_NET.road('east-road').points;
-      const roadDistance = Math.abs(nearestOnLine(road, car.x, car.z).along -
-        nearestOnLine(road, rider.position.x, rider.position.z).along);
+      const road = hidden ? ROAD_NET.road('east-road').points : null;
+      const roadDistance = road ? Math.abs(nearestOnLine(road, car.x, car.z).along -
+        nearestOnLine(road, rider.position.x, rider.position.z).along) : 0;
       if (hidden && (roadDistance >= 600 || rider.returnHiddenSeconds >= 20)) {
         rider.position = {...home, y:scablandsSurfaceHeightAt(home.x, home.z)};
         rider.returnStuck = false;
