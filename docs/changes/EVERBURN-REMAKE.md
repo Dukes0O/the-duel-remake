@@ -1680,3 +1680,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including both unchanged bed drives and the real cold-rate check.
 - Changed assertions, for Claude to review: the measured bed-to-ordinary cooling ratio is 2.0 instead of 2.5, as Claude ruled. No new event or sound cue. Codex decided: none. Removed: the 2.5 bed factor.
 - For Claude to draw: the pot transfer and forge fire. For Claude to run: the memory-only browser scenario and the two long drivers. The older pot suite and final checks still need completion.
+
+## Legacy pot suite migration (16 November 2026)
+
+- `node tools/test-ember-pot.mjs` passed, 27 checks. Its focused real-car checks start with the pot collected; pickup and full delivery are exercised by `test-everburn-job1.mjs`.
+- Changed assertions, for Claude to review: an ordinary 40 km/h hit formerly took at least 50 and exactly 60; it now takes 15, under the Director's ordinary-hit cap. The real wreck hit formerly required a loss of at least 30; it now requires a positive loss no greater than the severe cap of 40 (allowing one tick of cold), because either ordinary or severe collision applies. The existing light-touch check remains. The earlier entries record the cold and scoop assertion changes.
+- Removed: the old automatic full-refill and marker drive, and the old road, short-cut and slow-driving delivery checks, which assumed the former route, pickup and gate. The remade job suite covers pickup, scooping, outage and deliveries on the larger land. Unused route helpers were removed. No game event or sound cue changed.
+- For Claude to run: the memory-only visual scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire. Codex decided: none.
