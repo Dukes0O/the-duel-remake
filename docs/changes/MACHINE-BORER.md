@@ -268,3 +268,9 @@ The fourth hand-drive record says the browser window was hidden for about four m
 ## Pace scenario repair
 
 The pace visibility recorder had the same name as the picture visibility measurement. It replaced that measurement, so the scenario could fail before reaching the daylight drive. The two now have distinct names. `node --check`, importing the scenario to parse its page expressions, and `git diff --check` passed. The browser scenario still needs Claude to run it; E3 and the final checks remain open. No assertions or race fingerprints changed.
+
+## Checks after the pace investigation
+
+At a3ad0f98b, `test-machine-borer` passed in 75.5 seconds. `test-ground-edit`, `test-machine-roads`, `test-tunnels`, `test-scablands-hills` (55 checks), and `test-scablands-scene` passed. The scenario passes `node --check` and its page expressions parse. `npm.cmd run build` passed with the existing mixed-import and chunk-size warnings; PowerShell's `npm` script was blocked by its execution policy. The build output was sent to the Recycle Bin. No assertions or race fingerprints changed.
+
+The rock pace is still not explained by the hand-drive evidence. At lever 0.33 the real-ground rules test measures 0.495 m per simulated second. The hand drive measured 126.9 m in 480 wall seconds; at that rule speed the same distance takes 256.4 simulated seconds. The record says the window was hidden for about four minutes, but does not establish whether that overlaps the measured stretch. The browser scenario records wall time, simulated time and visibility for Claude to compare. No speed was changed without that evidence. Claude must run the scenario and the lane tier; E3 remains open.
