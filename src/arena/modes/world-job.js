@@ -218,9 +218,28 @@ function updateJobActors(duel, worldJob, dt) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
   }
-  if (worldJob.skylineWarned) for (const actor of step?.furnaceRiders ?? []) {
-    updateJobActor(duel, worldJob, actor, 0);
-    pursueJobRider(duel, worldJob, actor, dt);
+  if (worldJob.skylineWarned) {
+    const elapsed = Math.max(0, dt);
+    worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;
+    worldJob.furnaceLostSightSeconds = worldJob.skylineSight?.visible ? 0 :
+      (worldJob.furnaceLostSightSeconds ?? 0) + elapsed;
+    if (worldJob.furnaceLostSightSeconds >= 10 || worldJob.ridersRetreating || worldJob.furnacePursuitSeconds >= 90)
+      worldJob.furnaceRidersReturning = true;
+    for (const actorDef of step?.furnaceRiders ?? []) {
+      if (worldJob.furnaceRidersGone?.includes(actorDef.id)) continue;
+      updateJobActor(duel, worldJob, actorDef, 0);
+      const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+      if (worldJob.furnaceRidersReturning) {
+        rider.returningToPost = true;
+        const car = position(duel, duel.state);
+        if (Math.hypot(car.x - rider.position.x, car.z - rider.position.z) >= 600) {
+          worldJob.actors.splice(worldJob.actors.indexOf(rider), 1);
+          (worldJob.furnaceRidersGone ??= []).push(actorDef.id);
+          continue;
+        }
+      }
+      pursueJobRider(duel, worldJob, actorDef, dt);
+    }
   }
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);

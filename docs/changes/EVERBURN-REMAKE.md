@@ -1709,3 +1709,11 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-everburn-job1.mjs` passed with all three scoops used, repeat relights, the arrow, and a separate unused scoop. `node tools/test-ember-pot.mjs` passed 31 checks. The delivery measurements remain unchanged. Race fingerprints were not rerun in this round.
 - Changed assertions, for Claude to review: the old pot check treated relighting as using the brazier's scoop; it now checks that the separate scoop remains available, then checks that it cannot be used twice, as X2 directs. The job test's initial relight count is now zero while it exercises three live-pot scoops. Codex decided: a relight restores the same 25 as before and leaves an unused scoop available, since Claude describes these as separate actions.
 - Removed: the restriction that barred relighting at an already used brazier. For Claude to run: the two long drivers and the lane tier as recorded above. For Claude to draw: the pot transfer and forge fire. X3 to X9 and the final checks remain.
+
+## X3: furnace riders return
+
+- After the horn, furnace riders return to the watch when the furnace has lost sight of the car for ten seconds, the car reaches Tin Town's protected wall, or 90 seconds have passed. They are removed when 600 metres from the car and do not reappear. No new sound cue or save shape was added; the horn remains `world.furnace.horn`.
+- Changed assertions, for Claude to review: the former pursuit check required a rider to reach within 30 metres after 18 seconds. It now checks that the rider has closed more than 30 metres after nine seconds; the new ten-second loss-of-sight rule can end that former pursuit. New checks cover all three return conditions and removal.
+- The road rider's stranded-return recovery is still to build. X4 to X9 and the final checks remain. Race fingerprints were not rerun in this round.
+- Codex decided: none. Removed: the assumption that furnace riders pursue indefinitely. For Claude to run: the two long drivers and the lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+- Check: `node tools/test-everburn-job1.mjs` passed, including all five deliveries and the new furnace return checks. Integration was already included.

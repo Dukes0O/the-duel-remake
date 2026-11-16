@@ -1082,14 +1082,54 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(starts.every(start => Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10));
   car = {x:FURNACE_SKYLINE.x + 300, z:FURNACE_SKYLINE.z};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  for (let i = 0; i < 180; i++) tick(0.1);
+  for (let i = 0; i < 90; i++) tick(0.1);
   for (const [index, rider] of riders.entries()) {
     assert.ok(rider.position.y < starts[index].y - 10, 'the rider comes down from the watch');
-    assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) < 30, 'the rider pursues the car');
+    assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
+      Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues the car');
   }
   tick(1);
   assert.equal(horns().length, 1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2);
+}
+// Furnace riders stop for lost sight, the town wall, or the horn's time limit.
+for (const reason of ['sight', 'town', 'time']) {
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {x:FURNACE_SKYLINE.x + 100, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.skylineWarned = true;
+  world.skylineSight = {visible:true};
+  world.sightStep = 1;
+  stepWorldJob(duel, 0);
+  for (const rider of world.actors.filter(actor => actor.id.startsWith('furnace-rider-'))) rider.position.x += 30;
+  world.skylineSight = {visible:reason !== 'sight'};
+  world.furnaceLostSightSeconds = reason === 'sight' ? 9.9 : 0;
+  world.furnacePursuitSeconds = reason === 'time' ? 89.9 : 0;
+  if (reason === 'town') {
+    const wall = step.riderSafeWall;
+    car = {x:wall.x, z:wall.z, y:scablandsSurfaceHeightAt(wall.x, wall.z)};
+  }
+  world.sightStep = 1;
+  stepWorldJob(duel, 0.11);
+  assert.equal(world.furnaceRidersReturning, true, `furnace riders return after ${reason}`);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  if (reason !== 'town') {
+    assert.equal(riders.length, 2);
+    assert.ok(riders.every(rider => rider.returningToPost && !rider.pursuing));
+  }
+  car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
+  world.sightStep = 1;
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
+    'removed furnace riders do not reappear');
 }
 // The mode creates the actual waiting vehicles, on the appropriate floor at each barricade.
 const waitingWorld = createWorldJob(definition);
