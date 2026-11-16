@@ -8,7 +8,7 @@ import {machineToolPosition} from '../src/machines/machine.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {scablandsGroundEdit,scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 
-const flags=enabled=>({enabled:name=>name==='wasteland-town'&&enabled});
+const flags=enabled=>({enabled:name=>name==='the-dig'&&enabled});
 const home=featureFlags=>yardHomeScreen({profile:{wasteland:{}},playerName:'Test',escapeHTML:value=>String(value),featureFlags});
 assert.doesNotMatch(home(flags(false)),/yard-the-dig|THE DIG/,'the yard must not show THE DIG when its switch is off');
 assert.match(home(flags(true)),/data-action="yard-the-dig">THE DIG/,'the enabled yard shows its entry');
