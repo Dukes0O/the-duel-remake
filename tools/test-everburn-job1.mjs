@@ -637,9 +637,31 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const crossings = [{id:'test-crossing', x:0, z:0}];
   let traces = 0;
   for (let frame = 0; frame < 1200; frame++) {
-    checkWayCrossings(schedule, frame * 1000 / 120, knowledge, result, crossings, LAND.yard, null, () => { traces++; return false; });
+    checkWayCrossings(schedule, frame / 120, knowledge, result, crossings, LAND.yard, null, () => { traces++; return false; });
   }
   assert.equal(traces, 20, 'ten seconds of screen updates make twenty crossing traces');
+}
+
+// Repeated screen updates and pauses do not advance discovery between simulation ticks.
+{
+  const crossings = [{id:'crossing', x:0, z:0}];
+  const result = {ways:[{id:'plates', crossings:[{id:'crossing'}]}]};
+  const drive = extraUpdates => {
+    const knowledge = createKnowledge(), schedule = {last:-Infinity}, snapshots = [];
+    for (let tick = 0; tick <= 1200; tick++) {
+      const seconds = tick / 120;
+      const car = {x:seconds, z:0};
+      for (let update = 0; update < (extraUpdates && tick % 37 === 0 ? 8 : 1); update++) {
+        checkWayCrossings(schedule, seconds, knowledge, result, crossings, car, null,
+          point => point.x >= 4 && point.x <= 5);
+      }
+      if (tick % 120 === 0) snapshots.push([...knowledge.ways.keys()]);
+    }
+    return snapshots;
+  };
+  const first = drive(false), second = drive(true);
+  assert.deepEqual(second, first, 'identical drives learn the same ways at each simulated second');
+  assert.ok(first[5].includes('plates'), 'the visible crossing is actually learned');
 }
 
 // Seeing a real crossing adds its way and length to the player's map knowledge.

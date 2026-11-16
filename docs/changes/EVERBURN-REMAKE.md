@@ -1817,3 +1817,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including the five drives, a visible rider held in place for 21 seconds and a rider and post hidden by the land. Integration was already included. Race fingerprints were not rerun in this round.
 - Changed assertions, for Claude to review: the old test expected a reset based on distance and direction alone. It now requires terrain to hide the rider and its destination, as Y1 directs. Codex decided: protect the destination as well as the rider from appearing in view. Removed: the five-second, distance-only recovery.
 - Still needed: detect a rider and post outside the actual camera view, including a rider beside the car, and test both Y1 thresholds; then Y2 to Y5 and the final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.
+
+## Y2: map discovery time
+
+- Crossing sight checks now use the job's simulation clock rather than wall time. Repeated screen updates while the simulation is paused do not advance the half-second interval. The screen still keeps its own performance clock for drawing measurements. No sound cue, save shape or race rule changed.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the five drives, the 10-second trace limit, and identical simulated drives with different numbers of repeated screen updates. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions: the sight scheduler test now supplies seconds rather than milliseconds; its 20-trace limit is unchanged. Codex decided: none. Removed: wall-clock timing for crossing discovery.
+- Still needed: finish Y1's out-of-view recovery, Y3 to Y5 and final checks. For Claude to run: the two long drivers and lane tier. For Claude to draw: the pot transfer and forge fire.

@@ -202,7 +202,7 @@ export function learnWayCrossings(knowledge, result, crossings, car, tunnels = n
 
 // Check crossing visibility at most twice per second for each job.
 export function checkWayCrossings(schedule, now, knowledge, result, crossings, car, tunnels = null, trace = sees) {
-  if (now - schedule.last < 500) return false;
+  if (now - schedule.last < 0.5) return false;
   schedule.last = now;
   return learnWayCrossings(knowledge, result, crossings, car, tunnels, trace);
 }
@@ -412,7 +412,7 @@ export function createWorldHud({host, app = null, picture = null}) {
         }
         let crossingChecks = crossingChecksOf.get(worldJob);
         if (!crossingChecks) crossingChecksOf.set(worldJob, crossingChecks = {last: -Infinity});
-        checkWayCrossings(crossingChecks, clock(), knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
+        checkWayCrossings(crossingChecks, state.stageTimeSec ?? 0, knowledge, result, land.marks.crossings, frame.car, duel.course.groundTunnels);
         learnDrivenWays(knowledge, result, frame.car);
         learnHotDeliveryDangers(knowledge, worldJob, frame.car);
       }
