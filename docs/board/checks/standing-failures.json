@@ -10,7 +10,7 @@
     "stage": "browser",
     "name": "arena-shove",
     "since": "2026-11-05",
-    "card": "QA-STANDING-BROWSER",
+    "card": "QA-ARENA-SHOVE-BASELINE",
     "cause": "Cannot read properties of undefined (reading 'commit')"
   },
   {
@@ -24,7 +24,7 @@
     "stage": "browser",
     "name": "drive-lesson-run",
     "since": "2026-11-05",
-    "card": "QA-STANDING-BROWSER",
+    "card": "QA-DRIVE-LESSON-RUN-BOARD",
     "cause": "Unowned corner choice did not respond: panorama-ridge"
   },
   {
@@ -45,7 +45,7 @@
     "stage": "browser",
     "name": "ski-finish",
     "since": "2026-11-05",
-    "card": "QA-STANDING-BROWSER",
+    "card": "QA-SKI-FINISH-TIMEOUT",
     "cause": "not yet known"
   }
 ]
