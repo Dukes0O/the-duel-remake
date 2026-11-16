@@ -350,13 +350,15 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(next.maxDistance < 20, `the car stays close to the road on the next stretch: ${JSON.stringify(next)}`);
   assert.ok(world.job.stepState.ember > 0, `the ember stays alight after 1 km: ${world.job.stepState.ember}; ${JSON.stringify(next)}`);
   console.log('East Road 1 km drive:', JSON.stringify(next));
-  const further = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 1500);
+  const further = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 1500, 7200, 50);
   assert.ok(further.along >= 1500, `the car follows the East Road for 1.5 km: ${JSON.stringify(further)}`);
   assert.ok(further.driven >= 490, `the real car travels the third stretch: ${JSON.stringify(further)}`);
   assert.ok(further.maxDistance < 20, `the car stays close to the road on the third stretch: ${JSON.stringify(further)}`);
   assert.equal(further.ember, world.job.stepState.ember, 'the drive records the real ember at the end of the stretch');
   assert.ok(further.ember > 0, `the ember stays alight after 1.5 km: ${JSON.stringify(further)}`);
   assert.ok(further.elapsedSeconds > 0, 'the drive records its elapsed time');
+  assert.ok(further.fastRoadSpeedTicks / further.ticks > 0.8,
+    `the car accelerates to road speed on the clear stretch: ${JSON.stringify(further)}`);
   console.log('East Road 1.5 km drive:', JSON.stringify(further));
   const fourth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 2000);
   assert.ok(fourth.along >= 2000, `the car follows the East Road for 2 km: ${JSON.stringify(fourth)}`);
