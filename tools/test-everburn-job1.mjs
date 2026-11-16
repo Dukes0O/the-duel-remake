@@ -506,6 +506,14 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   console.log('Plates first kilometre:', JSON.stringify(second));
   assert.ok(second.along >= 1000 && second.maxDistance < 10, 'the car follows the plates way for another 500 m');
   assert.ok(second.lowestEmber > 0, 'the ember stays alight through the first kilometre');
+  const third = driveAlongRoad(duel, route, 1500, 7200, 25);
+  console.log('Plates 1.5 km:', JSON.stringify(third));
+  assert.ok(third.along >= 1500 && third.maxDistance < 10, 'the car follows the plates way for the next 500 m');
+  assert.equal(third.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
+    'the plates drive records each actual jolt');
+  assert.ok(third.firstOut && third.firstOut.along >= 1000 && third.firstOut.along <= third.along,
+    'the drive records where the ember actually went out');
+  assert.ok(third.jolts.some(jolt => jolt.riders.length > 0), 'the drive records riders at a jolt');
 }
 // The real job requests the gate only for a car approaching slowly.
 {

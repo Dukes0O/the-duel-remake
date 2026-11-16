@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Larger land, plates rider contact (15 November 2026)
+
+- Extended the seeded Medium plates drive to 1.5 km and recorded where the actual ember first goes out. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The third 500 m took 44.32 seconds. Two jolts of 44.83 and 30.84 occurred with furnace riders in contact; the ember went out at 1,497.60 m. This drive does not prove the plates arrival band. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: complete the plates drive and investigate its rider contacts, then measure the other routes, camera, cover and scenario.
+
 ## Larger land, plates opening (15 November 2026)
 
 - A seeded Medium driver picks up the pot, leaves through the yard gate and follows the first kilometre of the plates way using the real car and job. It targets 25 mph, below the rough-ground threshold. No game event or sound was added.
