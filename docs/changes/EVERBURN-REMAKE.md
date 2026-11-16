@@ -1352,3 +1352,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_NO_SCOOP=1 EVERBURN_BED_DIRECT_TRIAL=1 EVERBURN_BED_TO_FORGE=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none; the forge checks are new. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. Next: avoid the bridge rider and prove the clean bed drives, then the salt pan, East Road, scenario and final checks.
+
+## Bed without a scoop, faster exit trial (16 November 2026)
+
+- The seeded car takes the Wash and Steps route, then targets 70 km/h on the rough exit. It reaches the forge after 9.609 km and 11.679 minutes, without a scoop or a jolt. The ember goes out 673 m beyond the Steps. This is not the clean bed proof: the car exceeds the plates' safe speed, and the same exit would put the scooped ember out too. The drive exceeds ten minutes; Claude's ground ruling is still needed. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_NO_SCOOP=1 EVERBURN_BED_MEDIUM_TRIAL=1 EVERBURN_BED_NO_SCOOP_FAST_EXIT=1 node tools/test-everburn-job1.mjs` passed in PowerShell. It also checks the straight-across outage at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a safe-speed exit that avoids the rider and prove both bed drives, then the salt pan, East Road, scenario and final checks.
