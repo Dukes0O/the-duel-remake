@@ -189,6 +189,25 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.equal(slowObstacle.jolts.length, 0, 'the slower car crosses without jolts');
   assert.ok(slowObstacle.longestFurnaceSightSeconds > 6 && slowDuel.state.arena.worldJob.skylineWarned,
     'the slower crossing still triggers the furnace, so it is not the clean drive');
+  // Try a gradual turn toward the far shelter, measuring the actual car and
+  // furnace timer rather than assuming that an offset is safe to drive.
+  const offsetDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  offsetDuel.state.wastelandGateDiscovered = true;
+  assert.ok(offsetDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  offsetDuel.state.countdown = 0;
+  assert.ok(driveToCinder(offsetDuel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(offsetDuel, yardPlan().gate).along >= 20);
+  const offsetLine = platesCoverLine(route, -60);
+  assert.ok(driveAlongRoad(offsetDuel, offsetLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
+  assert.ok(drivePlatesShelter(offsetDuel, offsetLine, 2900).along >= 2900);
+  const offsetCrossing = drivePlatesRoughGround(offsetDuel, offsetLine, 3600);
+  console.log('Plates offset crossing:', JSON.stringify(offsetCrossing));
+  assert.ok(offsetCrossing.along >= 3600, 'the car reaches the far side on the offset line');
+  assert.ok(offsetCrossing.jolts.length > 0 && offsetCrossing.jolts.every(jolt =>
+    jolt.groundHits.some(hit => hit.kind === 'climb')), 'the offset line hits steep ground');
+  assert.ok(offsetCrossing.longestFurnaceSightSeconds <= 6 && !offsetDuel.state.arena.worldJob.skylineWarned,
+    'the offset crossing stays out of the furnace warning');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.

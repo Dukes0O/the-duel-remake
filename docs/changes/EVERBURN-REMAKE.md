@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates offset crossing (16 November 2026)
+
+- The real Medium driver tried a gradual 60 m offset through the far crossing. The longest furnace sighting was 5.5 seconds and no warning was sent, but six steep-ground hits put the ember out. This is not a clean drive. The test driver can now measure a far offset without changing the earlier line. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: try a 60 m offset for this measurement. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: find a line through the far crossing that avoids both steep ground and the furnace warning, then finish the clean drives and scenario.
+
 ## Slower plates crossing (16 November 2026)
 
 - Added a cautious test driver for the rough ground. On a fresh seeded Medium drive it crossed from 2.9 to 3.6 km at a 15 mph target with no jolts and 62.057 ember remaining. The furnace saw the car continuously for 36 seconds and sent riders, so this is not the clean drive. No game event or sound cue was added.
