@@ -463,6 +463,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     'the forge drive records each real jolt');
   assert.ok(arrival.jolts.every(jolt => jolt.amount > 0 && Number.isFinite(jolt.position.x) && Number.isFinite(jolt.position.z)),
     'each forge approach jolt has its amount and position');
+  assert.equal(arrival.jolts.length, 0, `the car clears the gate before turning toward the forge: ${JSON.stringify(arrival)}`);
 
 }
 // The real job requests the gate only for a car approaching slowly.

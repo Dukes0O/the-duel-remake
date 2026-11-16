@@ -615,3 +615,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.
+
+## Larger land, clear the town gate (15 November 2026)
+
+- The Medium proof driver now drives through the middle of Tin Town's gate before turning toward the forge. This advances step 7a; it does not yet prove a bright arrival. No game event or sound cue was added.
+- `node tools/test-everburn-job1.mjs`: passed. The real car delivered with no jolt on the forge approach, with 22.15 ember, graded barely. Previously it struck a gate post and arrived with 6.46. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: the driver goes 12 m past the gate before turning toward the forge; Claude should review the drive.
+- For Claude to run: the browser scenario and final checks remain for the last round, including both long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the bright East Road arrival and balance, the other five drives, camera, cover and scenario.

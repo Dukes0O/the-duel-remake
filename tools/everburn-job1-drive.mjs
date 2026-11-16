@@ -127,13 +127,19 @@ export function driveToBrazier(duel, brazier, maxTicks = 3600) {
 // Drive into the forge bay and stop; the job itself decides whether delivery succeeds.
 export function driveToForge(duel, destination, maxTicks = 3600) {
   const state = duel.state, world = state.arena.worldJob;
+  const gate = world.definition.steps[0].riderSafeWall;
+  const throughGate = {x:gate.x + gate.through.x * 15, z:gate.z + gate.through.z * 15};
+  let clearedGate = false;
   let ticks = 0, distance = Infinity, stopping = false;
   let lastJoltCount = world.job.stepState.joltCount ?? 0;
   const jolts = [], startEmber = world.job.stepState.ember;
   for (; ticks < maxTicks && !world.job.done; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
     distance = Math.hypot(destination.x - car.x, destination.z - car.z);
-    const turn = wrapHeading(Math.atan2(destination.x - car.x, destination.z - car.z) - (car.heading + state.headingError));
+    const pastGate = (car.x - gate.x) * gate.through.x + (car.z - gate.z) * gate.through.z;
+    if (pastGate >= 12) clearedGate = true;
+    const target = clearedGate ? destination : throughGate;
+    const turn = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + state.headingError));
     if (distance < 5) stopping = true;
     const speed = Math.abs(state.speedMph);
     const limit = stopping ? 0 : distance > 20 ? 10 : 5;
