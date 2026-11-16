@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed ground-loss measurement (16 November 2026)
+
+- The proof driver records the actual pot's loss by the ground beneath the car on each simulation step. After the Steps, the 80 km/h trial loses 37.206 ember on scab plates in 400 m without a jolt; the pot goes out at 719.270 m. This includes ordinary cooling and rough-ground loss. It does not prove a delivery. The 50 km/h direct line toward town met ash rider 2 at 115 m, so that trial does not prove a clean drive either. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 EVERBURN_BED_FAST_TRIAL=1 node tools/test-everburn-job1.mjs` passed in PowerShell. The straight-across drive went out at 629.822 m. The lane tier, build and race fingerprints remain for the final round.
+- Changed assertions, for Claude to review: the existing fast-trial loss assertion now reads the current job state after the climb, instead of an earlier replaced state object; its threshold is unchanged. New checks reconcile measured ground losses with the actual pot change.
+- Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. Next: find a clean bed continuation at the ground's safe speed, then prove both bed deliveries, salt pan and East Road, followed by the scenario and final checks.
+
 ## Bed speed trial after the Steps (16 November 2026)
 
 - The actual car takes the same Steps route at 80 km/h after the climb. It avoids rider contact through 800 m, but the ember falls from 67.709 to 30.502 in the first 400 m and goes out at 719.270 m. This does not prove a clean delivery. At 60 km/h the rider still hits the car. No game event or sound cue was added.

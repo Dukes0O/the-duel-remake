@@ -2,7 +2,7 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
-import {riverDepthAt, RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
+import {riverDepthAt, RIVER_LAND, stepsWayFor, scablandsDriveAt} from '../src/world/scablands-regions.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
@@ -156,6 +156,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let firstOut = null;
   const jolts = [];
   let groundHits = [];
+  const groundLoss = {};
   let hitSignals = null;
   const stopRecording = duel.onChange((_state, event) => {
     if (event.scablandsHit?.player) groundHits.push({...event.scablandsHit});
@@ -239,7 +240,11 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     groundHits = [];
     const speedBefore = Math.abs(state.speedMph) * 1.609344;
+    const ground = scablandsDriveAt(car.x, car.z).id;
+    const emberBefore = pot.ember;
     duel.step(1 / 60);
+    const emberAfter = state.arena.worldJob.job.stepState.ember;
+    groundLoss[ground] = (groundLoss[ground] ?? 0) + emberBefore - emberAfter;
     hitSignals = {speedBeforeKmh:speedBefore, speedAfterKmh:Math.abs(state.speedMph) * 1.609344};
     const sightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
     if (sightSeconds > 0 && !sightStart) sightStart = {along:hit.along, x:car.x, z:car.z};
@@ -252,7 +257,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   stopRecording();
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }

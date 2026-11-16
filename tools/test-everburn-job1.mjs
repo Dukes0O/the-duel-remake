@@ -160,7 +160,7 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
     {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
   const fastTrial = process.env.EVERBURN_BED_FAST_TRIAL === '1';
   const townSpeed = (fastTrial ? 80 : 60) / 1.609344;
-  const emberBeforeTown = pot.ember;
+  const emberBeforeTown = duel.state.arena.worldJob.job.stepState.ember;
   const townDrive = driveAlongRoad(duel, townLine, 400, 7200, townSpeed);
   console.log('Steps toward town:', JSON.stringify(townDrive));
   assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
@@ -172,6 +172,9 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   assert.ok(continuation.along >= 800, 'the car reaches 800 m beyond the Steps');
   if (fastTrial) {
     assert.ok(emberBeforeTown - townDrive.ember > 30, 'the fast car loses more than 30 ember before the rider');
+    assert.ok(townDrive.groundLoss['scab-plates'] > 30, 'the actual pot loses over 30 on the plates');
+    assert.ok(Math.abs(Object.values(townDrive.groundLoss).reduce((sum, loss) => sum + loss, 0) - (emberBeforeTown - townDrive.ember)) < 0.001,
+      'the recorded ground losses add up to the actual change in the pot');
     assert.equal(continuation.jolts.length, 0, 'the faster car avoids the rider on this stretch');
     assert.ok(continuation.firstOut, 'the faster car loses the ember on the open ground');
   } else assert.ok(continuation.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
