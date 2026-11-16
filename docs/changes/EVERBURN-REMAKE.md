@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Separated plates cover (16 November 2026)
+
+- Added a check for the ruled requirement: three stretches of cover, each at least 150 m, with at least 100 m of visible ground between them. It uses the real furnace sight rule at 10 m intervals and excludes out-of-range ground. The existing stricter check remains unchanged. The measured stretches are 899 to 1,118 m, 1,388 to 3,115 m, and 3,355 to 3,585 m. The visible gaps are 250 m and 220 m. This does not yet prove the clean drive can cross the gaps without triggering riders. No game event or sound cue was added.
+- Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed, including checks that a short gap or an out-of-range gap cannot join cover. The straight drive went out at 629.8 m. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: the ruling requires open ground between stretches, not beyond the outer two. The earlier, stricter check is retained for comparison. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: prove the clean plates drive, then the other clean drives and scenario.
+
 ## Plates cover separation (16 November 2026)
 
 - The cover measurement now requires at least 100 m of visible ground on both sides of a covered stretch. Its test rejects an 80 m gap and accepts 100 m. No terrain or game event changed, and no sound cue was added.

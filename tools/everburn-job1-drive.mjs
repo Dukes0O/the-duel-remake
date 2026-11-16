@@ -26,6 +26,25 @@ export function coverStretches(samples, classify) {
     stretches[index + 1].to - stretches[index + 1].from >= 100);
 }
 
+// Find consecutive covered stretches separated by visible ground. Range gaps
+// cannot serve as separation, but the first and last cover may meet the range edge.
+export function separatedCover(samples, classify) {
+  const runs = sightStretches(samples, classify);
+  let best = [], current = [];
+  for (let i = 0; i < runs.length; i++) {
+    const run = runs[i];
+    if (run.visibility !== 'hidden' || run.to - run.from < 150) continue;
+    const gap = runs[i - 1];
+    if (!current.length || gap?.visibility !== 'open' || gap.to - gap.from < 100 || runs[i - 2] !== current.at(-1)) {
+      current = [run];
+    } else {
+      current.push(run);
+    }
+    if (current.length > best.length) best = [...current];
+  }
+  return best;
+}
+
 // Drive from the job's real starting position to Cinder and wait for the pot.
 // This is the shared opening for the six Medium proof drives.
 export function driveToCinder(duel, cinder, maxTicks = 1800) {

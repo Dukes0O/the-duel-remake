@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -45,6 +45,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   };
   const runs = sightStretches(samples, classify);
   const stretches = coverStretches(samples, classify);
+  const separated = separatedCover(samples, classify);
+  assert.ok(separated.length >= 3, 'three 150 m stretches have at least 100 m of visible ground between them');
+  console.log(`Separated plates cover: ${separated.map(run => `${run.from.toFixed(0)} to ${run.to.toFixed(0)} m`).join('; ')}`);
   const longestOpen = runs.filter(run => run.visibility === 'open')
     .reduce((longest, run) => run.to - run.from > longest.to - longest.from ? run : longest);
   assert.ok(longestOpen.to > longestOpen.from, 'the longest open stretch has a measurable length');
@@ -62,9 +65,20 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const types = ['open', ...Array(9).fill('hidden'), 'out of range', ...Array(9).fill('hidden'), 'open', 'hidden', 'open'];
   assert.equal(coverStretches(points, point => types[point.along / 20]).length, 0,
     'out-of-range gaps and short hidden runs cannot count as separate cover');
+  assert.equal(separatedCover(points, point => types[point.along / 20]).length, 1,
+    'out-of-range ground cannot separate two stretches of cover');
   const shortGap = ['open', 'open', 'open', 'open', 'open', ...Array(9).fill('hidden'), ...Array(7).fill('open')];
   assert.equal(coverStretches(points, point => shortGap[point.along / 20]).length, 0,
     'less than 100 m of open ground cannot separate cover');
+  assert.equal(separatedCover(points, point => shortGap[point.along / 20]).length, 1,
+    'a single covered stretch does not need open ground on both sides');
+  const pairedPoints = Array.from({length: 26}, (_, index) => ({along:index * 20}));
+  const paired = [...Array(9).fill('hidden'), ...Array(8).fill('open'), ...Array(9).fill('hidden')];
+  assert.equal(separatedCover(pairedPoints, point => paired[point.along / 20]).length, 2,
+    'two covered stretches separated by at least 100 m of open ground both count');
+  const narrow = [...Array(9).fill('hidden'), ...Array(5).fill('open'), ...Array(9).fill('hidden')];
+  assert.equal(separatedCover(pairedPoints.slice(0, narrow.length), point => narrow[point.along / 20]).length, 1,
+    'less than 100 m of open ground cannot separate two stretches');
   const clearGap = [...Array(6).fill('open'), ...Array(9).fill('hidden'), ...Array(8).fill('open')];
   assert.equal(coverStretches(points, point => clearGap[point.along / 20]).length, 1,
     '100 m of open ground on both sides separates a covered stretch');
