@@ -1565,3 +1565,10 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions, for Claude to review: the earlier trial drives and their route-specific assertions were removed under the Director's R2 ruling; the kept road and bed tests assert forge completion and pay for the actual ember band. The clean plates, salt-pan and straight-across acceptance checks remain.
 - Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
 - Removed: the unused bed bypass and climb-finding helpers, the bypass, hazard and detour trials, the superseded road, bed and plates trial drives, and their environment switches. Some unused optional trial arguments in the shared driver remain for the next cleanup. Next: finish that cleanup, write the scenario and run the final checks.
+
+## Driver cleanup (16 November 2026)
+
+- Removed the unused bridge-offset and stop-on-climb trial options, the unused plates-opening helper, and the adjustable bed offset. The retained deliveries use the same routes and speeds. No game event or sound cue was added.
+- Check: `node tools/test-everburn-job1.mjs` passed in one plain run, about one minute. It includes the road, both bed drives, plates, salt pan and straight-across outage.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and the two long drivers. For Claude to draw: the pot transfer and forge fire.
+- Removed: the unused trial options and helper named above. Next: write the scenario and run the final checks.

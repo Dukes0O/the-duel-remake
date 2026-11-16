@@ -20,7 +20,8 @@ export function platesCoverLine(route, farOffset = 0) {
 }
 
 // Use the same bed line and Steps exit as the land's end-to-end drive.
-export function bedStepsRoute(bedOffset = 27) {
+export function bedStepsRoute() {
+  const bedOffset = 27;
   const wash = RIVER_LAND.crossings.find(crossing => crossing.kind === 'wash');
   const steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');
   const points = RIVER_LAND.line.points.filter((point, index) =>
@@ -122,7 +123,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3, stopOnClimb = false, campBrakeDistance = 140, barrierSpeedMph = 8, bridgeOffset = 0) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35, gateApproach = false, crossPipe = false, brakeMargin = 3, campBrakeDistance = 140, barrierSpeedMph = 8) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
@@ -196,10 +197,6 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
         along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids,
         groundHits, hitSignals});
       lastJoltCount = pot.joltCount;
-      if (stopOnClimb && groundHits.some(impact => impact.kind === 'climb')) {
-        hit = nearestOnLine(points, car.x, car.z);
-        break;
-      }
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);
     if (gateDistance < nearestTownGate) {
@@ -211,13 +208,6 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     if (hit.along >= endAlong) break;
     if (Math.abs(state.speedMph) * 1.609344 >= 95) nearRoadTargetTicks++;
     let target = sliceLine(points, hit.along, hit.along + 45).at(-1);
-    if (bridgeOffset && hit.along > 3650 && hit.along < 4020) {
-      const ahead = sliceLine(points, hit.along + 45, hit.along + 55);
-      const dx = ahead.at(-1).x - target.x, dz = ahead.at(-1).z - target.z;
-      const length = Math.hypot(dx, dz);
-      const taper = Math.min(1, (hit.along - 3650) / 80, (4020 - hit.along) / 80);
-      target = {x:target.x + dz / length * bridgeOffset * taper, z:target.z - dx / length * bridgeOffset * taper};
-    }
     const turn = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + state.headingError));
     // The East Road is blocked at the camp and bridge. Use the loaned weapon
     // when a live barricade is in front of the car and within flame range.
@@ -284,20 +274,12 @@ export function drivePlatesRoughGround(duel, route, endAlong, targetSpeedMph = 1
   return driveAlongRoad(duel, route, endAlong, 18000, targetSpeedMph, false, false, 0.1);
 }
 
-// The plates have a 50 km/h rough-ground threshold. Keep the opening below it
-// and return the actual car and ember measurements for each stretch.
-export function drivePlatesOpening(duel, route) {
-  const first = driveAlongRoad(duel, route, 500, 7200, 25);
-  const second = driveAlongRoad(duel, route, 1000, 7200, 25);
-  return {first, second};
-}
-
 // Continue a measured route in short stretches so a stuck car cannot be
 // mistaken for an arrival. All times and ember values come from the drive.
-export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossPipe = false, stopOnClimb = false, barrierSpeedMph = 8, bridgeOffset = 0) {
+export function driveMeasuredStretches(duel, route, ends, targetSpeedMph, crossPipe = false, barrierSpeedMph = 8) {
   const stretches = [];
   for (const end of ends) {
-    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph, false, crossPipe, 3, stopOnClimb, 140, barrierSpeedMph, bridgeOffset);
+    const stretch = driveAlongRoad(duel, route, end, 7200, targetSpeedMph, false, crossPipe, 3, 140, barrierSpeedMph);
     stretches.push(stretch);
     if (stretch.along < end) break;
   }

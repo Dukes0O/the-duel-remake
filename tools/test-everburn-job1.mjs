@@ -245,9 +245,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const exit = driveThroughYardGate(duel, yardPlan().gate);
   const road = ROAD_NET.road('east-road').points;
   const opening = driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344);
-  const camp = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45, 40);
+  const camp = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40);
   const scoop = driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'));
-  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, false, 40);
+  const remaining = driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40);
   const gate = driveAlongRoad(duel, road, 7810, 12000, 25, true);
   const pot = duel.state.arena.worldJob.job.stepState;
   const scoops = [...(pot.scoopedBraziers || [])];
