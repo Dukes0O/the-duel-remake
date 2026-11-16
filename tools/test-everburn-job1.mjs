@@ -406,6 +406,14 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(eleventh.nearestTownGate <= Math.hypot(eleventh.position.x - step.riderSafeWall.x, eleventh.position.z - step.riderSafeWall.z) + 0.01, 'the driver measures the real car position against the town gate');
   console.log('East Road 5.5 km drive:', JSON.stringify(eleventh));
 
+  const approachTown = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 6500, 7200, 25);
+  assert.ok(approachTown.along >= 6500, `the car follows the East Road toward Tin Town: ${JSON.stringify(approachTown)}`);
+  assert.ok(approachTown.driven >= 990 && approachTown.maxDistance < 20, `the car drives the next kilometre close to the road: ${JSON.stringify(approachTown)}`);
+  assert.ok(approachTown.lowestEmber > 0, `the ember stays alight on the approach: ${JSON.stringify(approachTown)}`);
+  assert.ok(Math.abs(duel.state.speedMph) < 30, 'the driver can slow down for the town approach');
+  assert.ok(approachTown.nearestTownGate < eleventh.nearestTownGate, 'the car gets closer to the gate');
+  console.log('East Road 6.5 km drive:', JSON.stringify(approachTown));
+
 }
 // The real job requests the gate only for a car approaching slowly.
 {

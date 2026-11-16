@@ -41,7 +41,7 @@ export function driveThroughYardGate(duel, gate, maxTicks = 1800) {
 }
 
 // Follow the actual road with a target ahead of the car, rather than moving the car between points.
-export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
+export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSpeedMph = 35) {
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
@@ -73,8 +73,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200) {
       const angle = wrapHeading(Math.atan2(dx, dz) - (car.heading + state.headingError));
       if (Math.hypot(dx, dz) < 18 && Math.abs(angle) < Math.PI / 12) duel.fireWeapon('flamethrower');
     }
-    duel.setInput({throttle:Math.abs(state.speedMph) < 35 ? 0.8 : 0,
-      brake:Math.abs(state.speedMph) > 38 ? 1 : 0,
+    duel.setInput({throttle:Math.abs(state.speedMph) < targetSpeedMph ? 0.8 : 0,
+      brake:Math.abs(state.speedMph) > targetSpeedMph + 3 ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
   }
