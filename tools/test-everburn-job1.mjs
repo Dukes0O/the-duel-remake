@@ -226,6 +226,31 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
     jolt.groundHits.some(hit => hit.kind === 'climb')), 'the faster middle line hits steep ground');
   assert.ok(middleCrossing.longestFurnaceSightSeconds > 6 && middleDuel.state.arena.worldJob.skylineWarned,
     'the faster middle line still triggers the furnace');
+  // Try the remaining ground between the measured middle and far lines.
+  const trialDuel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  trialDuel.state.wastelandGateDiscovered = true;
+  assert.ok(trialDuel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  trialDuel.state.countdown = 0;
+  assert.ok(driveToCinder(trialDuel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(trialDuel, yardPlan().gate).along >= 20);
+  const trialLine = platesCoverLine(route, -40);
+  assert.ok(driveAlongRoad(trialDuel, trialLine, 1200, 18000, 30.4, false, false, 0.1).along >= 1200);
+  assert.ok(drivePlatesShelter(trialDuel, trialLine, 2900).along >= 2900);
+  const trialCrossing = drivePlatesRoughGround(trialDuel, trialLine, 3600, 15);
+  console.log('Plates intermediate crossing:', JSON.stringify(trialCrossing));
+  assert.ok(trialCrossing.along >= 3600, 'the car reaches the far side on the intermediate line');
+  assert.equal(trialCrossing.jolts.length, 0, 'the intermediate crossing avoids jolts');
+  assert.equal(trialCrossing.abovePlatesLimitTicks, 0, 'the intermediate crossing stays within 50 km/h');
+  assert.ok(trialCrossing.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
+    'the intermediate crossing avoids the furnace warning');
+  const beyondCrossing = drivePlatesShelter(trialDuel, trialLine, 4200);
+  console.log('Plates beyond the crossing:', JSON.stringify(beyondCrossing));
+  assert.ok(beyondCrossing.along >= 4200, 'the car reaches the ground beyond the crossing');
+  assert.equal(beyondCrossing.jolts.length, 0, 'the ground beyond the crossing avoids jolts');
+  assert.equal(beyondCrossing.abovePlatesLimitTicks, 0, 'the ground beyond the crossing stays within 50 km/h');
+  assert.ok(beyondCrossing.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
+    'the ground beyond the crossing avoids the furnace warning');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.
