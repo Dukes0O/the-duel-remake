@@ -111,6 +111,10 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const beganOut = lowestEmber <= 0;
   let firstOut = null;
   const jolts = [];
+  let groundHits = [];
+  const stopRecording = duel.onChange((_state, event) => {
+    if (event.scablandsHit?.player) groundHits.push({...event.scablandsHit});
+  });
   let lastJoltCount = state.arena.worldJob.job.stepState.joltCount ?? 0;
   const townGate = state.arena.worldJob.definition.steps[0].riderSafeWall;
   let nearestTownGate = Infinity, speedAtNearestTownGate = 0;
@@ -145,7 +149,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
         .map(solid => ({id:solid.id, kind:solid.kind, x:solid.x, z:solid.z,
           halfX:solid.halfX, halfZ:solid.halfZ, y:solid.y, height:solid.height}));
       jolts.push({amount:pot.jolt, position:{x:car.x, y:car.y, z:car.z},
-        along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids});
+        along:nearestOnLine(points, car.x, car.z).along, speedMph:Math.abs(state.speedMph), riders, nearbySolids,
+        groundHits});
       lastJoltCount = pot.joltCount;
     }
     const gateDistance = Math.hypot(car.x - townGate.x, car.z - townGate.z);
@@ -180,6 +185,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     duel.setInput({throttle:Math.abs(state.speedMph) < speedLimit ? 0.8 : 0,
       brake:Math.abs(state.speedMph) > speedLimit + brakeMargin ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
+    groundHits = [];
     duel.step(1 / 60);
     const sightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
     if (sightSeconds > 0 && !sightStart) sightStart = {along:hit.along, x:car.x, z:car.z};
@@ -189,6 +195,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       longestFurnaceSight = {start:sightStart, end:{along:hit.along, x:car.x, z:car.z}, seconds:sightSeconds};
     }
   }
+  stopRecording();
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
     position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, jolts, beganOut, firstOut,

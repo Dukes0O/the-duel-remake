@@ -169,6 +169,9 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.ok(obstacle.jolts.length > 0, 'the measurement records the jolts that prevent a clean drive');
   assert.ok(obstacle.jolts.every(jolt => Number.isFinite(jolt.along) && Number.isFinite(jolt.position.y) &&
     Array.isArray(jolt.nearbySolids)), 'each jolt records its real position and nearby job solids');
+  assert.deepEqual(obstacle.jolts.map(jolt => jolt.groundHits.map(hit => hit.kind)),
+    [['fall'], ['fall'], ['fall'], ['climb'], ['climb']],
+    'the ground reports three landings followed by two steep climbs at the jolts');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.

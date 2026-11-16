@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates ground hits (16 November 2026)
+
+- The proof driver now records the real ground-hit events on each jolt and removes its listener after each drive. The five jolts at 3,005 to 3,136 m were three falls of 2.55, 2.74 and 2.12 m, followed by two hits against ground too steep to climb. They were not rider contacts. The clean drive still goes out and is visible for 18 seconds; it is not proved. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive and the new ground-event checks. `git diff --check` passed. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: steer around the falls and steep ground while staying out of furnace sight, then complete the clean drives and scenario.
+
 ## Plates obstacle measurements (16 November 2026)
 
 - The real Medium drive continues from 2.9 to 3.6 km. Five 15-point jolts occur at 3,005, 3,011, 3,018, 3,134 and 3,136 m along the driven line. The job's solid grid reports no nearby solid and no rider is in contact at those moments. This does not establish what caused the jolts. The pot goes out at 3,136 m and the longest furnace sighting is 18 seconds, so the clean drive remains unproved. The driver now records each jolt's position, distance along the line, nearby solids and riders. No game event or sound cue was added.
