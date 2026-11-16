@@ -26,7 +26,7 @@ A7 has started. The simulation can give the player the lever on the active bore 
 
 A8 adds all three calls. Pim calls once after three short attempts to free a stall, if the bore is more than a metre off its surveyed line, or if Mabel finds an exit more than a metre up a face. Pim keeps trying after the stall call. Daylight is announced by name while any machine is selected. These messages appear on the Dig screen without extra land samples.
 
-A9 has started. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The scenario still needs to be written.
+A9 has started. A check-only setter teaches Pim through the existing lesson function, in the Dig's memory, so the browser scenario can skip the two long hand cuts. The browser scenario sends a surveyed bore, records the board 30 seconds apart while the excavator is selected, visits the working face, takes the lever for five seconds and hands it back. It records each measurement and both pictures before reporting all failures. It still needs Claude to run it in Chrome.
 
 ## Checks
 
@@ -47,6 +47,7 @@ A9 has started. A check-only setter teaches Pim through the existing lesson func
 - A8 high exit: `node tools/test-machine-borer-apprentice.mjs` checks a single call from Mabel's high-exit refusal on real editable ground.
 - A8 stall: `node tools/test-machine-borer-apprentice.mjs` checks three failed releases, one call and resumed cutting on real editable ground.
 - A9 check setup: `node tools/test-machine-borer-apprentice.mjs` passed, including the taught record and the unchanged original visit.
+- A9: `node tools/test-machine-borer-apprentice-scenario.mjs` passed. All page expressions parse; a simulated failed run keeps both pictures, records measurements and reports multiple failures together. The browser scenario itself has not run.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
