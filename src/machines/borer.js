@@ -51,6 +51,26 @@ export function borerSurvey(ground, state) {
   return null;
 }
 
+/** Cache a survey until the machine or ground along its line changes. */
+export function createBorerSurveyCache() {
+  let key = null, groundRevision = -1, result = null;
+  return (ground, position, positionKey) => {
+    if (!position) { key = positionKey; result = null; return null; }
+    const changedPosition = key !== positionKey;
+    const distance = result ? result.distanceM + 12 : 2012;
+    if (changedPosition || (ground.revision !== groundRevision &&
+        ground.changedAlongSince(groundRevision, position, distance))) {
+      const survey = borerHasFace(ground, position, position.heading) ? borerSurvey(ground, position) : null;
+      result = survey && {...survey, x:position.x, y:position.y, z:position.z, heading:position.heading,
+        heights:Array.from({length:81}, (_, i) => ground.heightAt(position.x + Math.sin(position.heading) * survey.distanceM * i / 80,
+          position.z + Math.cos(position.heading) * survey.distanceM * i / 80))};
+    }
+    key = positionKey;
+    groundRevision = ground.revision;
+    return result;
+  };
+}
+
 export function createBorerState({x = 0, y = 0, z = 0, heading = 0, name = 'Mabel'} = {}) {
   if (![x, y, z, heading].every(Number.isFinite)) throw new TypeError('The borer needs a finite position and heading.');
   return {x, y, z, heading, slope:0, name, started:false, distanceM:0, travelM:0, headSpeed:0,

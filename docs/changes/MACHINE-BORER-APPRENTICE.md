@@ -70,7 +70,11 @@ V1 updates the older Mabel scenario to measure the heap from filled ground cells
 
 V7: returning along a curved bore now places Mabel exactly at the last segment's end when she reaches the face. Curved cuts are stored as chords, which can add up to less than the distance travelled; without the correction she could start the next segment short of the face. If her work throws, the Dig logs the error, stops her lever, shows "Mabel has stopped. Back her up and try again." and continues its clock and other machines. Reversing selects the player's lever for an active order and allows a retry. This guard adds no sound cue.
 
+V4: A survey now updates when ground on its line changes, including its face and far-side look-ahead. Ground edits track their recent positions, so edits away from the surveyed line do not force a new survey. An idle survey reads no ground heights. No sound cue was added.
+
 ## Checks
+
+- V4: `node tools/test-machine-borer-survey.mjs` passed on the final code. It checks a stationary survey after a fill and a cut on its line, and checks that idle frames and nearby edits away from the line do not read ground heights again. `node tools/test-ground-edit.mjs` passed on the final code. `node tools/test-machine-borer.mjs` passed on an earlier version of the cache; rerun it on the final code with the final checks.
 
 - V7: `node tools/test-machine-borer-freeze.mjs` passed. Four real-ground cuts stall, reverse and continue past 12 m with up, down, left and right inputs, and their tunnel segments join. A separate curved-chord case fails without the face correction. An injected cutter error is logged once, stops Mabel, and leaves the clock and excavator working. The reported key durations alone did not stall at the test's starting position; the test holds W and S longer as needed to produce and clear the real stall. The exact reported hand-drive sequence still needs a visible play check.
 - V7: `node tools/test-machine-borer.mjs` passed, including the real heap and mesa checks. It started before the retry change that gives the player the lever after an active order faults; the focused V7 test ran after that change. The later integration merge brought in card notes only.

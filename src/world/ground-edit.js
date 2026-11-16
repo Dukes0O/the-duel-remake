@@ -32,6 +32,12 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   for (const shape of reservedShapes) validShape(shape);
   let chunks = new Map();
   const numericSeed = Number.isFinite(seed) ? seed | 0 : 1;
+  let revision = 0, loadedRevision = 0;
+  const editHistory = new Array(2048);
+  const markChanged = shape => {
+    revision++;
+    editHistory[revision % editHistory.length] = {revision, ...shape};
+  };
 
   const chunkKey = (cx, cz) => `${cx},${cz}`;
   function sampleAt(x, z, create = false) {
@@ -141,6 +147,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       result.volume += removed;
     }
     result.looseVolume = result.volume * BULKING;
+    if (result.volume > 0) markChanged(shape);
     return result;
   }
 
@@ -166,6 +173,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       chunk.delta[index] += each;
       chunk.material[index] = id;
     }
+    markChanged(shape);
     result.volumes[material] = compacted;
     result.volume = compacted;
     result.looseVolume = volume;
@@ -193,8 +201,23 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
       nextChunks.set(chunkKey(row.x, row.z), {x: row.x, z: row.z, delta: new Float32Array(row.delta), material: new Uint8Array(row.material)});
     }
     chunks = nextChunks;
+    loadedRevision = ++revision;
   }
 
-  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave, get chunkCount() { return chunks.size; },
+  return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave,
+    get revision() { return revision; },
+    changedAlongSince(since, position, distance) {
+      if (since < loadedRevision || revision - since > editHistory.length) return true;
+      const dx = Math.sin(position.heading), dz = Math.cos(position.heading);
+      for (let r = revision; r > since; r--) {
+        const edit = editHistory[r % editHistory.length];
+        if (!edit || edit.revision !== r) return true;
+        const x = edit.x - position.x, z = edit.z - position.z;
+        const along = clamp(x * dx + z * dz, 0, distance);
+        if (Math.hypot(x - dx * along, z - dz * along) <= edit.radius + 4) return true;
+      }
+      return false;
+    },
+    get chunkCount() { return chunks.size; },
     get saveByteLength() { return chunks.size * SAMPLE_COUNT * 5 + chunks.size * 8 + 16; }});
 }
