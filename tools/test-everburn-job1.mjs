@@ -212,6 +212,11 @@ if (process.env.EVERBURN_CLEAN_ROAD === '1') {
   assert.ok(opening.reachedAll, 'the driver reaches the camp approach');
   assert.ok(opening.stretches.some(stretch => stretch.peakSpeedMph * 1.609344 >= 100),
     'the real car reaches 100 km/h on the clear road');
+  const clearRoad = opening.stretches.slice(1);
+  const nearTarget = clearRoad.reduce((sum, stretch) => sum + stretch.nearRoadTargetTicks, 0);
+  const clearTicks = clearRoad.reduce((sum, stretch) => sum + stretch.ticks, 0);
+  console.log('Clear road speed:', JSON.stringify({nearTargetTicks:nearTarget, ticks:clearTicks}));
+  assert.ok(nearTarget / clearTicks > 0.9, 'the car holds at least 95 km/h for most of the clear road after accelerating');
   const campApproach = driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, false, 45);
   assert.ok(campApproach.along >= 2350, 'the driver reaches the camp');
   assert.ok(campApproach.peakSpeedMph * 1.609344 >= 100,

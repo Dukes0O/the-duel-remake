@@ -1448,3 +1448,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Checks: `EVERBURN_STRAIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the late-contact check and the straight-across outage at 629.822 m. `EVERBURN_CLEAN_ROAD=1 node tools/test-everburn-job1.mjs` still fails the unchanged one-ram limit: 7.911 km, 6.104 minutes, two rams, one Halfway scoop and 54.307 ember. Neither ram was on the final approach. The bright band is also missed. Race fingerprints, lane tier and build remain for the final round.
 - Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
 - Removed: the gap in the East Road proof's final-approach ram count. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.
+
+## East Road sustained-speed check (16 November 2026)
+
+- The clean-road driver now records how long the real car holds at least 95 km/h on its clear approach. After the first 500 m used for acceleration, it held that speed for all 3,223 measured ticks through 2 km, and reached 104.477 km/h. This is a tolerance around the 100 km/h target, not proof that every instant was at or above 100 km/h. No game event or sound cue was added.
+- Checks: `EVERBURN_CLEAN_ROAD=1 EVERBURN_CAMP_APPROACH_ONLY=1 node tools/test-everburn-job1.mjs` passed in PowerShell, including the straight-across outage at 629.822 m. The complete clean road run still fails: two rams, 54.307 ember and 6.104 minutes. The first ram is beside the Halfway brazier at 2.330 km; the second is on the bridge at 3.871 km. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none; the sustained-speed assertion is new. Codex decided: use 95 km/h as a measurement tolerance around the driver's 100 km/h target; Claude should review it.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: reliance on peak speed alone for the clear-road proof. Next: avoid a rider on the East Road, prove both clean bed drives, then finish the scenario and final checks.

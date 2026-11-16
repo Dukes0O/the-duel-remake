@@ -146,6 +146,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
+  let nearRoadTargetTicks = 0;
   let longestFurnaceSightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
   let sightStart = null, longestFurnaceSight = null;
   let pipePeakSpeedMph = 0;
@@ -224,6 +225,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
     hit = nearestOnLine(points, car.x, car.z);
     maxDistance = Math.max(maxDistance, hit.distance);
     if (hit.along >= endAlong) break;
+    if (Math.abs(state.speedMph) * 1.609344 >= 95) nearRoadTargetTicks++;
     const target = sliceLine(points, hit.along, hit.along + 45).at(-1);
     const turn = wrapHeading(Math.atan2(target.x - car.x, target.z - car.z) - (car.heading + state.headingError));
     // The East Road is blocked at the camp and bridge. Use the loaned weapon
@@ -267,7 +269,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   stopRecording();
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, nearRoadTargetTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut, groundLoss,
     pursuits, burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }
