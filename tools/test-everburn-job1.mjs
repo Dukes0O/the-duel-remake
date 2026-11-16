@@ -32,7 +32,7 @@ import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStep
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
-import {mapFailures} from './scenarios/everburn-job1.mjs';
+import {mapFailures, pictureFailures} from './scenarios/everburn-job1.mjs';
 
 // The visual handoff names all map faults, rather than accepting any open map.
 assert.deepEqual(mapFailures('start', {map:'WHAT YOU KNOW\nEast Road', mapWays:['East Road']}, true), []);
@@ -41,6 +41,10 @@ assert.deepEqual(mapFailures('start', {map:'Other routes', mapWays:['Plates', 'S
   'start: the starting map must list only the East Road',
 ]);
 assert.deepEqual(mapFailures('bridge', {map:null, mapWays:[]}), ['bridge: the large map is not open']);
+assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:true, inView:true, loaded:true, potInView:true}, {loaded:true, pot:true}), []);
+assert.deepEqual(pictureFailures('Cinder', {target:'Cinder', visible:false, inView:false, loaded:false, potInView:false}, {loaded:true, pot:true}), [
+  'Cinder: Cinder is not visible inside the picture', 'Cinder: the pot is not on the car', 'Cinder: the pot is not visible inside the picture',
+]);
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery');
 // The actual job step confines barricade riders to their road and returns them to post.

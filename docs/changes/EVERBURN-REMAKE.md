@@ -1622,3 +1622,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: the plain job test checks the scenario's map verdicts for a correct map, three simultaneous faults, and a closed map. All 32 page expressions parsed in a mock harness; Chrome was not run. The integration branch was already an ancestor of this lane.
 - Changed assertions: none; the map verdict checks are new. Codex decided: none. Removed: nothing.
 - For Claude to run: the visual scenario and the two long drivers. The older pot and line-audit suites and the incomplete lane tier still need attention as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## Pot in Cinder's picture
+
+- The visual scenario now measures whether the pot itself is visible in Cinder's picture, and reports that fault together with missing Cinder or an unloaded pot. The measurement is saved with the other picture data before the final failure.
+- Checks: `node tools/test-everburn-job1.mjs` passed, including the new combined-failure checks and the five delivery measurements above. `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The scenario still needs Claude's browser run; its actual framing has not been checked.
+- `test-ember-pot.mjs` still fails at its old East Road drive, which does not collect the pot. `test-everburn-line-audit.mjs` still expects the replaced opening line. Their old assertions were not changed and need Claude's review. The incomplete lane tier and other checks remain as recorded above. No game event, sound cue or race fingerprint changed in this pass.
+- Changed assertions: none. Codex decided: none. Removed: nothing.
