@@ -18,7 +18,7 @@ const frames = () => ({schema:1, mode:'night-simple', reports:[report('High'),re
 const full = () => ({schema:1,kind:'result',tier:'full',jobs:4,exitCode:0,passed:2,
   failures:[],notRun:0,total:2,results:[{label:'a',passed:true,exitCode:0},{label:'b',passed:true,exitCode:0}]});
 const browser = () => ({schema:1,count:1,passed:1,failed:0,rows:[{name:'smoke-extra',passed:true}]});
-function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,timingPatch={},timingMissing=false,browserPatch={}}={}) {
+function fixture({fail, missing, busy=false, change=false, copyChange=false, lastGreen=true, fullFailures=[],reportMutation=false,reportPatch={},otherMutation=false,partialFull=false,framePatch={},frameText,frameSuiteFail=false,timingPatch={},timingMissing=false,browserPatch={}}={}) {
   const files = new Map(), committedFiles = new Map(), calls = [], logs = [], metadata = [], copies = [], messages = [];
   const copyRoot=root+'-copy/source',reportName='docs/board/checks/full-tier.json';
   const sourceReport='original copied report\n';
@@ -92,8 +92,9 @@ function fixture({fail, missing, busy=false, change=false, copyChange=false, las
           assert.match(messages.at(-1),/laptop panel off.*Second screen only/);
           const packet=frames();Object.assign(packet.reports[0],framePatch);
           files.set(stage.packet,frameText??JSON.stringify(packet));
-          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:3,failed:0,timingMode:'timing-only',
-            rows:['frame-pacing','tremblant-snow','tremblant-views'].map(name=>({name,passed:true}))}));
+          const measuredFailure=frameSuiteFail;
+          files.set(stage.suitePacket,JSON.stringify({schema:1,count:3,passed:measuredFailure?2:3,failed:measuredFailure?1:0,timingMode:'timing-only',
+            rows:['frame-pacing','tremblant-snow','tremblant-views'].map((name,index)=>({name,passed:!measuredFailure||index!==0,...(measuredFailure&&index===0?{error:'High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.'}:{})}))}));
           if(!timingMissing)for(const recipe of stage.timingPackets) {
             const labels=recipe.name==='tremblant-snow'?['8 cars on the grid']:['8 cars on the grid','8 cars on Timber Straight'];
             const reports=['high','performance'].flatMap(quality=>labels.map(label=>({quality,label,course:recipe.name==='tremblant-snow'?'tremblant-snow':'tremblant-woods',cars:8,frames:120,
@@ -671,8 +672,8 @@ test('standing results, new failures, passed entries and strict release',()=>{
   const list=[{stage:'frames',name:'frames',since:'2026-11-05',card:'QA',cause:'slow'},
     {stage:'browser',name:'old',since:'2026-11-05',card:'QA',cause:'error'},
     {stage:'browser',name:'unrun',since:'2026-11-05',card:'QA',cause:'error'}];
-  const failures=[{name:'frames'},{name:'browser: new'}];
-  const stages=[{id:'frames',passed:false},{id:'browser',passed:false,passedNames:['old']}];
+  const failures=[{name:'frames',error:'slow'},{name:'browser: new',error:'new'}];
+  const stages=[{id:'frames',passed:false,measuredFailure:true},{id:'browser',passed:false,passedNames:['old']}];
   const result=classifyNight(failures,stages,list);
   assert.equal(result.status,'failed');assert.deepEqual(result.failures.map(row=>row.name),['browser: new','frames']);
   assert.deepEqual(result.nowPassing,[list[1]]);assert.deepEqual(result.remaining,[list[0],list[2]]);
@@ -683,9 +684,27 @@ test('standing results, new failures, passed entries and strict release',()=>{
 });
 
 
+test('standing causes match normalized messages only for completed failures',()=>{
+  const list=[{stage:'browser',name:'old',cause:'value # exceeded #'}];
+  const good={id:'browser',validatedFailures:['old']};
+  const failure={name:'browser: old',error:'  value 4.2 exceeded 10  '};
+  assert.equal(classifyNight([failure],[good],list).status,'standing');
+  const changed=classifyNight([{...failure,error:'different 4'}],[good],list);
+  assert.equal(changed.status,'failed');
+  assert.equal(changed.fresh[0].news,'a listed item failed in a new way');
+  assert.equal(changed.fresh[0].listedCause,list[0].cause);
+  for(const stage of [undefined,{id:'browser'},{id:'browser',validatedFailures:[]}])
+    assert.equal(classifyNight([failure],stage?[stage]:[],list).status,'failed');
+  const frame=[{stage:'frames',name:'frames',cause:'slow #'}];
+  for(const stage of [undefined,{id:'frames'},{id:'frames',measuredFailure:false}])
+    assert.equal(classifyNight([{name:'frames',error:'slow 3'}],stage?[stage]:[],frame).status,'failed');
+  assert.equal(classifyNight([{name:'frames',error:'slow 3'}],[{id:'frames',measuredFailure:true}],frame).status,'standing');
+});
+
 test('standing failures are published and passing entries are removed only after a completed check',async()=>{
-  const f=fixture({fail:'frames'}),file=root+'/docs/board/checks/standing-failures.json';
-  const list=[{stage:'frames',name:'frames',since:date,card:'QA',cause:'slow'},
+  const f=fixture({fail:'frames',framePatch:{p95:19},frameSuiteFail:true}),file=root+'/docs/board/checks/standing-failures.json';
+  const cause='High: real eight-car night frames require delivered p# <=# ms, finite world build <# ms and finite full first-race load.';
+  const list=[{stage:'frames',name:'frames',since:date,card:'QA',cause},
     {stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'old'}];
   f.files.set(file,JSON.stringify(list));
   const result=await runNight(opts(),f.deps);
@@ -697,6 +716,18 @@ test('standing failures are published and passing entries are removed only after
   assert.equal(release.status,'failed');assert.equal(strict.files.get(file),JSON.stringify(list));
 });
 
+
+test('browser failure messages are matched only after packet and exit validation',async()=>{
+  const file=root+'/docs/board/checks/standing-failures.json';
+  const list=[{stage:'browser',name:'smoke-extra',since:date,card:'QA',cause:'broken #'}];
+  const row=error=>({browserPatch:{passed:0,failed:1,rows:[{name:'smoke-extra',passed:false,error}]},fail:'browser'});
+  for(const [error,status] of [['broken 42','standing'],['broken elsewhere','failed'],['timeout 42','failed']]) {
+    const f=fixture(row(error));f.files.set(file,JSON.stringify(list));
+    const result=await runNight(opts(),f.deps);
+    assert.equal(result.status,status);
+    if(error==='broken elsewhere')assert.equal(result.failures[0].news,'a listed item failed in a new way');
+  }
+});
 
 test('an invalid, partial, unselected or crashed browser result clears no standing entry',async()=>{
   const file=root+'/docs/board/checks/standing-failures.json';

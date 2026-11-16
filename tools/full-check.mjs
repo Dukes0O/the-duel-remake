@@ -268,14 +268,22 @@ async function previousGreen(date,dependencies) {
 }
 // Only a completed, individually passing check clears a standing entry.
 export function classifyNight(failures, stages, standing, strict=false) {
-  const key=(stage,name)=>stage+'\0'+name;
-  const listed=new Set(standing.map(item=>key(item.stage,item.name)));
-  const isStanding=failure=>{
+  const normalize=message=>String(message??'').trim().replace(/\d+(?:\.\d+)?/g,'#');
+  const fresh=[],known=[];
+  for(const failure of failures) {
     const match=/^(full|browser): (.+)$/.exec(failure.name);
-    return listed.has(match?key(match[1],match[2]):key(failure.name,failure.name));
-  };
-  const fresh=failures.filter(item=>!isStanding(item));
-  const known=failures.filter(isStanding);
+    const stageId=match?.[1]??failure.name, name=match?.[2]??failure.name;
+    const listed=standing.find(item=>item.stage===stageId&&item.name===name);
+    const stage=stages.find(item=>item.id===stageId);
+    const valid=stageId==='frames'?stage?.measuredFailure===true:
+      stageId==='browser'?stage?.validatedFailures?.includes(name)===true:false;
+    if(listed&&valid&&normalize(failure.error)===normalize(listed.cause))known.push(failure);
+    else {
+      if(listed&&valid&&normalize(failure.error)!==normalize(listed.cause))
+        fresh.push({...failure,news:'a listed item failed in a new way',listedCause:listed.cause});
+      else fresh.push(failure);
+    }
+  }
   const nowPassing=standing.filter(item=>{
     const stage=stages.find(row=>row.id===item.stage);
     if(!stage)return false;
@@ -472,6 +480,8 @@ export async function runNight(options,overrides={}) {
             result.exitCode!==(actual.failed?1:0))throw Error('Browser packet or child exit is incomplete or inconsistent.');
           await assertCopy();
           row.passedNames=actual.rows.filter(item=>item.passed).map(item=>item.name);
+          row.validatedFailures=actual.rows.filter(item=>!item.passed&&typeof item.error==='string'&&item.error.trim()&&!/timed? ?out|timeout|crash|terminated|refused/i.test(item.error)).map(item=>item.name);
+          row.failureMessages=Object.fromEntries(actual.rows.filter(item=>!item.passed).map(item=>['browser: '+item.name,item.error]));
         }
         let frameError;
         if(stage.id==='frames') {
@@ -485,7 +495,28 @@ export async function runNight(options,overrides={}) {
                 Number.isFinite(report.worldBuildMs)&&report.worldBuildMs>=0&&
                 Number.isFinite(report.constructionMs)&&report.constructionMs>=0
                   ?[{quality:report.quality,p95:report.p95,worldBuildMs:report.worldBuildMs,constructionMs:report.constructionMs}]:[]);
-            validateFramePacket(frames,{warn:message=>row.warnings.push(message)});
+            try { validateFramePacket(frames,{warn:message=>row.warnings.push(message)}); }
+            catch(error) {
+              const adjusted=structuredClone(frames);
+              let over=false;
+              for(const report of adjusted?.reports??[]) {
+                if(Number.isFinite(report.p95)&&report.p95>18.5){report.p95=18.5;over=true;}
+                if(Number.isFinite(report.worldBuildMs)&&report.worldBuildMs>=1000){report.worldBuildMs=999;over=true;}
+              }
+              if(over) {
+                try {
+                  validateFramePacket(adjusted);
+                  const suite=json(await dependencies.readText(stage.suitePacket));
+                  const names=['frame-pacing','tremblant-snow','tremblant-views'];
+                  if(suite?.schema===1&&suite.timingMode==='timing-only'&&suite.count===3&&suite.rows?.length===3&&
+                    suite.rows.every((item,index)=>item.name===names[index]&&typeof item.passed==='boolean')&&
+                    suite.passed===suite.rows.filter(item=>item.passed).length&&suite.failed===suite.rows.filter(item=>!item.passed).length&&
+                    suite.rows[0].passed===false&&suite.rows[0].error===error.message&&suite.rows.slice(1).every(item=>item.passed)&&result.exitCode===1)
+                    row.measuredFailure=true;
+                }catch{}
+              }
+              throw error;
+            }
             const timing=json(await dependencies.readText(stage.suitePacket));
             if(timing.timingMode!=='timing-only')throw Error('Frame suite did not run timing-only mode.');
             validateBrowser(timing,['frame-pacing','tremblant-snow','tremblant-views']);
@@ -497,7 +528,7 @@ export async function runNight(options,overrides={}) {
           }catch(error){frameError=error;row.reportError=error.message;}
         }
         if(stage.id==='full')row.generatedReport=await consumeFullReport(dependencies,copy,source,originalFullReport,result,packet.evidence);
-        if(result.exitCode!==0)throw Error(result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
+        if(result.exitCode!==0)throw Error(row.measuredFailure?frameError.message:result.stderr.trim()||`Installed tool exited ${result.exitCode}. See ${stage.log}`);
         if(stage.id==='full')validateFull(fullPacket(result.stdout));
         else if(stage.id==='frames') {if(frameError)throw frameError;}
         else if(stage.id==='browser') {
@@ -509,7 +540,7 @@ export async function runNight(options,overrides={}) {
         else validateCombat(json(result.stdout));
         await assertCopy();
         row.passed=true;
-      }catch(error){row.error=error.message;for(const name of row.failureNames?.length?row.failureNames:[stage.id])failure(name,error.message);}
+      }catch(error){row.error=error.message;for(const name of row.failureNames?.length?row.failureNames:[stage.id])failure(name,row.failureMessages?.[name]||error.message);}
       row.finished=dependencies.now().toISOString();
     }
   }catch(error){failure('context',error.message);}
@@ -529,6 +560,7 @@ export async function runNight(options,overrides={}) {
 
   const morning=[`Full check ${options.date}: ${packet.status.toUpperCase()} (${source}).`,
     ...(result.fresh.length?[`New failures: ${result.fresh.map(row=>row.name).join(', ')}. First merge: ${firstMerge||attribution}`]:[]),
+    ...result.fresh.filter(row=>row.news).map(row=>`${row.name}: ${row.news}. Listed: ${row.listedCause} Actual: ${row.error}`),
     ...packet.nowPassing.map(row=>`Now passing: ${row.stage}: ${row.name}.`),
     ...packet.stages.map(row=>`${row.passed?'PASS':'FAIL'} ${row.id}: ${row.log}`),
     ...packet.stages.filter(row=>row.id==='frames').flatMap(row=>[

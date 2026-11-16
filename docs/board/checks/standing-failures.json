@@ -4,7 +4,7 @@
     "name": "frames",
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
-    "cause": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load."
+    "cause": "High: real eight-car night frames require delivered p# <=# ms, finite world build <# ms and finite full first-race load."
   },
   {
     "stage": "browser",
