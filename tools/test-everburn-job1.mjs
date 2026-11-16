@@ -384,6 +384,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(eighth.along >= 4000, `the car follows the East Road for 4 km: ${JSON.stringify(eighth)}`);
   assert.ok(eighth.driven >= 490 && eighth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(eighth)}`);
   assert.ok(eighth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(eighth)}`);
+  assert.deepEqual(eighth.burntDuringDrive, [step.barriers[1].id], 'the real flamethrower burns the bridge barricade on this stretch');
   assert.ok(Number.isFinite(eighth.peakSpeedPosition.x) && Number.isFinite(eighth.peakSpeedPosition.z), 'the driver records where its peak speed occurred');
   console.log('East Road 4 km drive:', JSON.stringify(eighth));
   const ninth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 4500);
@@ -391,6 +392,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(ninth.driven >= 490 && ninth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(ninth)}`);
   assert.ok(ninth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(ninth)}`);
   console.log('East Road 4.5 km drive:', JSON.stringify(ninth));
+  const tenth = driveAlongRoad(duel, ROAD_NET.road('east-road').points, 5000);
+  assert.ok(tenth.along >= 5000, `the car follows the East Road for 5 km: ${JSON.stringify(tenth)}`);
+  assert.ok(tenth.driven >= 490 && tenth.maxDistance < 20, `the car drives the next stretch close to the road: ${JSON.stringify(tenth)}`);
+  assert.ok(tenth.lowestEmber > 0, `the ember stays alight on the next stretch: ${JSON.stringify(tenth)}`);
+  assert.deepEqual(tenth.burntDuringDrive, [], 'the driver records that no barricade burned on this stretch');
+  console.log('East Road 5 km drive:', JSON.stringify(tenth));
 
 }
 // The real job requests the gate only for a car approaching slowly.

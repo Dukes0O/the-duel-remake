@@ -552,3 +552,11 @@ Nothing removed in this round. The old `everburn-play` scenario still needs to b
 - Changed assertions: none. Codex decided: none.
 - For Claude to run: the browser scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
 - Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
+
+## Larger land, East Road to five kilometres (15 November 2026)
+
+- The Medium proof drive follows the East Road to 5 km. Its driver records which barricades it burns on each stretch; the real flamethrower burns the bridge barricade between 3.5 and 4 km. The existing `weapon.flame.start` cue sounds. No new game event was added.
+- `node tools/test-everburn-job1.mjs`: passed. At 5 km the ember was 58.95; the last stretch covered 498.82 m in 31.68 seconds and stayed within 1.51 m of the road. `git diff --check`: passed. Race fingerprints were not checked this round.
+- Changed assertions: none. Codex decided: none.
+- For Claude to run: the scenario and final checks, including both long drivers, remain for the last round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Still to build: the East Road arrival proof, the other five drives, camera, cover and scenario.
