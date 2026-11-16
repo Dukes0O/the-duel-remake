@@ -132,7 +132,7 @@ export function canDelegate(town, personId, kind) {
 }
 
 /** Advance a delegated stage in short, repeatable pieces and return ground-edit steps. */
-export function advanceDelegatedWork(town, order, personId, elapsedMinutes, materials = {}, {steps = 10, easy = false} = {}) {
+export function advanceDelegatedWork(town, order, personId, elapsedMinutes, materials = {}, {steps = 10, easy = false, boreCut = null} = {}) {
   requireTown(town);
   if (!Number.isFinite(elapsedMinutes) || elapsedMinutes < 0) throw new TypeError('Work time must be zero or more minutes.');
   if (!Number.isSafeInteger(steps) || steps < 1) throw new TypeError('Work needs at least one step.');
@@ -140,6 +140,28 @@ export function advanceDelegatedWork(town, order, personId, elapsedMinutes, mate
   const stage = order.stages[order.stageIndex];
   const record = stage && skillFor(town, personId, stage.kind);
   if (!stage || !record) return {ok:false, advanced:0, edits:[], message:'That person has not learned this kind of work.'};
+  // The survey is an estimate, not proof that the cutter has reached daylight.
+  // A bore reports the real machine's distance; it does not use the town's
+  // accelerated clock or complete merely because it passed that estimate.
+  if (stage.kind === 'bore') {
+    if (!boreCut || !Number.isFinite(boreCut.metres) || boreCut.metres < 0 || typeof boreCut.daylight !== 'boolean')
+      throw new TypeError('A bore needs its measured cut and daylight result.');
+    if (elapsedMinutes === 0 && (boreCut.metres > 0 || boreCut.daylight))
+      throw new TypeError('A bore cannot advance without work time.');
+    const before = stage.completed;
+    stage.completed += boreCut.metres;
+    if (boreCut.daylight) {
+      order.stageIndex++;
+      order.status = order.stageIndex === order.stages.length ? 'finished' : 'ready';
+      order.scaffold = order.stageIndex;
+    } else if (boreCut.metres > 0) {
+      order.status = 'working';
+    }
+    const edits = boreCut.metres > 0 ? [{stageIndex:order.stageIndex - (boreCut.daylight ? 1 : 0),
+      from:before, to:stage.completed, units:boreCut.metres, accuracy:record.accuracy}] : [];
+    return {ok:true, advanced:boreCut.metres, edits, status:order.status,
+      message:order.status === 'finished' ? 'The work is finished.' : 'The work has moved ahead.'};
+  }
   if (elapsedMinutes === 0) return {ok:true, advanced:0, edits:[], status:order.status, message:'No work time has passed.'};
   const rate = easy ? Math.max(EASY_RATE_FLOOR, record.rate) : record.rate;
   const unitsPerMinute = stage.amount / workStageMinutes(stage.workHours) * rate;

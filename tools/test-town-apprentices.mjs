@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {advanceWork, advanceDelegatedWork, canDelegate, createTown, createWorkOrder, finishTeachingSession, startTeachingSession, updateTeachingSession} from '../src/town/index.js';
+import {recordBorerLesson} from '../src/town/town-apprentices.js';
 
 let checks = 0;
 function check(value, message) { assert.ok(value, message); checks++; }
@@ -50,5 +51,16 @@ check(town.book.at(-1).text === 'Ada learned trench from Bo.', 'a skilled appren
 const untrainedOrder = createWorkOrder({id:'untrained-trench', stages:[{kind:'bore', amount:20, workHours:20, ingredients:{}}]});
 const refused = advanceDelegatedWork(town, untrainedOrder, 'person-bo', 10);
 check(!refused.ok && untrainedOrder.stages[0].completed === 0, 'an apprentice cannot take an untaught kind of work');
+
+recordBorerLesson(town, 'person-bo', {errorM:0, stallsPer100M:0, pace:.8});
+const boreSkill = recordBorerLesson(town, 'person-bo', {errorM:0, stallsPer100M:0, pace:.8});
+const bore = createWorkOrder({id:'measured-bore', stages:[{kind:'bore', amount:10, workHours:1}]});
+assert.throws(() => advanceDelegatedWork(town, bore, 'person-bo', 1), /measured cut/); checks++;
+assert.throws(() => advanceDelegatedWork(town, bore, 'person-bo', 0, {}, {boreCut:{metres:1, daylight:false}}), /without work time/); checks++;
+const measured = advanceDelegatedWork(town, bore, 'person-bo', 1, {}, {boreCut:{metres:12, daylight:false}});
+check(measured.advanced === 12 && bore.stages[0].completed === 12 && bore.status === 'working', 'a bore follows the real cut past the survey estimate');
+check(boreSkill.rate === .8 && boreSkill.uses === 0, 'fixed simulation steps do not change the taught pace');
+advanceDelegatedWork(town, bore, 'person-bo', 1, {}, {boreCut:{metres:0, daylight:true}});
+check(bore.status === 'finished' && bore.stages[0].completed === 12, 'daylight finishes a bore even without a further cut');
 
 console.log(`TOWN-APPRENTICES: ${checks} checks passed.`);

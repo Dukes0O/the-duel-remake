@@ -8,6 +8,8 @@ A3 shows Pim riding along and records the survey, freeing a stall, holding the s
 
 A4 adds a send button and F key at a surveyed, accepted face for a taught apprentice. It queues a town work order with the mouth, heading, grade and distance. A face already in the queue cannot be sent twice with the same heading. This step does not yet advance the orders.
 
+A5 has started. The town's delegated-work function now accepts a bore's measured cutting distance and daylight result. It keeps the order open beyond the surveyed distance and finishes it only at daylight. It does not change the taught pace on each simulation step. The Dig still needs to drive Mabel and report her results to this function.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
@@ -15,6 +17,7 @@ A4 adds a send button and F key at a surveyed, accepted face for a taught appren
 - `node tools/test-town-apprentices.mjs`: passed, 16 checks.
 - A3: `node tools/test-machine-borer-apprentice.mjs` passed, including observations, grade limits, second-cut survey words and reset.
 - A4: `node tools/test-machine-borer-apprentice.mjs` passed, including missing teaching or survey, refused faces, line details and queue order.
+- A5 work-order support: `node tools/test-town-apprentices.mjs` passed, 21 checks, including measured distance, no work while time is stopped, and daylight completion.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
