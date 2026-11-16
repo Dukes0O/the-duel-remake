@@ -98,7 +98,7 @@ export function buildEverburn(land) {
     id:`ash-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     ...(index === 0 ? {scoopAmbush:'halfway-brazier'} : {}),
     start:place(`ash-rider-start-${index + 1}`,
-      roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 20)),
+      roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 25)),
   })));
   const furnaceRiders = path(...[-6, 6].map((offset, index) => Object.freeze({
     id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,

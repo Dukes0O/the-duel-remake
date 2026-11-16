@@ -1761,3 +1761,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Check: `node tools/test-everburn-job1.mjs` passed, including 1,200 screen updates over ten simulated seconds and exactly 20 crossing sight traces. All delivery measurements remain as in the table above. `git diff --check` passed. Integration is included. Race fingerprints were not rerun in this round.
 - Changed assertions: none. Codex decided: none. Removed: crossing visibility checks on every screen update.
 - Still needed: the stranded rider's out-of-view recovery, X8 and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire.
+
+## X8: rider posts
+
+- Both road riders now wait 25 metres beyond their barricades along the East Road. The existing ram cue remains `world.ember.spark`.
+- Check: `node tools/test-everburn-job1.mjs` passed, including the actual post positions and all delivery drives. Integration was already included. Race fingerprints were not rerun in this round.
+- Changed assertions, for Claude to review: the old check allowed a post within 21 metres of its barricade; it now requires 25 metres along the road, as Claude directed. Codex decided: none. Removed: the former 20-metre post offset.
+- Still needed: X8's Easy and Hard scoop timing, the stranded rider's out-of-view recovery, and the final checks. For Claude to run: the two long drivers and lane tier as recorded above. For Claude to draw: the pot transfer and forge fire. Easy halves hit loss; it does not slow cold.

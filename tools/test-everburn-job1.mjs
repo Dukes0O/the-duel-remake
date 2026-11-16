@@ -1201,7 +1201,12 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   assert.equal(actor.id, step.waitingActors[index].id);
   assert.equal(actor.renderCar, 'dusthawk_rally');
   assert.equal(actor.speed, 0);
-  assert.ok(Math.hypot(actor.position.x - barrier.position.x, actor.position.z - barrier.position.z) <= 21);
+  const road = ROAD_NET.road('east-road').points;
+  const barrierOnRoad = nearestOnLine(road, barrier.position.x, barrier.position.z);
+  const postOnRoad = nearestOnLine(road, actor.position.x, actor.position.z);
+  assert.ok(postOnRoad.distance < 0.01, 'the post is on the road');
+  assert.ok(Math.abs(postOnRoad.along - barrierOnRoad.along - 25) < 0.1,
+    'the post is 25 metres beyond its barricade');
   scablandsFloorsAt(actor.position.x, actor.position.z, floors);
   assert.equal(actor.position.y, floors[0]);
   assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
