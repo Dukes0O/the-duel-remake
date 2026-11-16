@@ -11,6 +11,41 @@ import {MACHINE_SOUND_CUES} from '../src/machines/view.js';
 import {DIG_MACHINE_TONES,SOUND_BANK} from '../src/sound-bank.js';
 import {page as digScenarioPage} from './scenarios/the-dig.mjs';
 
+const {gateDigKey, startTheDig} = await import('../src/machines/dig-game.js');
+for (const type of ['keydown', 'keyup']) {
+  for (const code of ['KeyW', 'KeyE', 'Space', 'KeyV', 'Escape', 'Digit1', 'KeyM']) {
+    let stopped = false;
+    gateDigKey({type, code, stopImmediatePropagation() { stopped = true; }});
+    assert.equal(stopped, code !== 'KeyM', `${type} ${code} reaches the game only for sound`);
+  }
+}
+// A failed renderer must leave neither the overlay nor either mapping listener behind.
+{
+  const originals = {document: globalThis.document, window: globalThis.window, localStorage: globalThis.localStorage};
+  const listeners = new Map(), nodes = [];
+  let reads = 0;
+  const makeNode = () => ({style:{}, append() {}, after() {}, remove() { this.removed = true; },
+    querySelector() { return makeNode(); }});
+  globalThis.document = {createElement: makeNode, body:{append(node) { nodes.push(node); }}};
+  globalThis.window = {addEventListener(type, fn) { listeners.set(type, fn); },
+    removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); }};
+  globalThis.localStorage = {getItem() { reads++; return null; }, setItem() {}};
+  try {
+    const failure = new Error('renderer failed');
+    await assert.rejects(startTheDig({createRenderer() { throw failure; }}), error => error === failure);
+    assert.equal(nodes[0].removed, true, 'failed start removes its host');
+    assert.equal(listeners.has('storage'), false, 'failed start removes its storage listener');
+    const before = reads;
+    const {saveMachineInput} = await import('../src/input-setup.js');
+    saveMachineInput({deviceId:'test', axes:{swing:0}}, globalThis.localStorage);
+    assert.equal(reads, before, 'failed start unsubscribes from mapping changes');
+  } finally {
+    for (const [name, value] of Object.entries(originals)) {
+      if (value === undefined) delete globalThis[name]; else globalThis[name] = value;
+    }
+  }
+}
+
 for (const cue of [...Object.values(MACHINE_SOUND_CUES), ...Object.keys(DIG_MACHINE_TONES)]) {
   assert.ok(SOUND_BANK[cue], `the Dig's machine cue ${cue} exists in the sound bank`);
   assert.equal(SOUND_BANK[cue].flag, 'the-dig', `${cue} is available with the Dig switch`);

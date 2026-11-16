@@ -14,6 +14,14 @@ export const page = {
   open: `(() => { document.querySelector('[data-action="yard-the-dig"]').click(); return true; })()`,
   loaded: `(() => !!document.querySelector('.the-dig-machine')?.textContent.includes('EXCAVATOR'))()`,
   controls: `(() => !document.querySelector('.the-dig-controls')?.hidden && document.querySelector('.the-dig-control-content')?.textContent.includes('Space digs'))()`,
+  modelReady: `(() => !!document.querySelector('.the-dig')?.digForCheck)()`,
+  modelFailed: `(() => document.querySelector('.the-dig').digForCheck.failed)()`,
+  excavated: `(() => document.querySelector('.the-dig').digForCheck.simulation.excavatedM3 > .3)()`,
+  loadedTruck: `(() => document.querySelector('.the-dig').digForCheck.simulation.loadedM3 > 0)()`,
+  truck: `(() => document.querySelector('.the-dig').digForCheck.simulation.activeMachine === 'dumpTruck')()`,
+  tipped: `(() => document.querySelector('.the-dig').digForCheck.simulation.tippedM3 > 0)()`,
+  trencher: `(() => document.querySelector('.the-dig').digForCheck.simulation.activeMachine === 'trencher')()`,
+  ditch: `(() => document.querySelector('.the-dig').digForCheck.simulation.trencher.cutVolumeM3 > 4)()`,
   borer: `(() => !!document.querySelector('.the-dig-machine')?.textContent.includes('MABEL'))()`,
   cut: `(() => parseFloat(document.querySelector('.the-dig-load')?.textContent) > 0)()`,
   returned: `(() => !document.querySelector('.the-dig') && window.__qaApp.isYardHomeActive())()`,
@@ -40,13 +48,36 @@ export async function run(context) {
   await context.waitFor(page.ready, 'isolated test game', 60000);
   await context.evaluate(page.enter);
   await context.waitFor(page.yard, 'The Dig button without the town', 60000);
+  await context.screenshot('the-dig-yard');
   const before = await context.evaluate(page.storage);
   await context.evaluate(page.open);
   await context.waitFor(page.loaded, 'excavator ready', 60000);
   assert.ok(await context.evaluate(page.controls), 'the opening view shows the excavator controls');
   await context.screenshot('the-dig-excavator-ready');
-  await hold(context, 'KeyD', 1000);
-  for (let i = 0; i < 7; i++) await press(context, 'KeyQ');
+  await context.waitFor(page.modelReady, 'machine yard loaded', 60000);
+  assert.equal(await context.evaluate(page.modelFailed), false, 'the machine and Dome models load');
+  await hold(context, 'KeyD', 2100); await context.screenshot('the-dig-swing-to-heap');
+  await hold(context, 'KeyS', 1100); await context.screenshot('the-dig-lowered');
+  await press(context, 'KeyC'); await context.screenshot('the-dig-cab');
+  await press(context, 'KeyC'); await context.screenshot('the-dig-work-view');
+  await press(context, 'KeyC');
+  await key(context, 'Space', 'keydown');
+  await context.waitFor(page.excavated, 'excavator dug dirt', 30000);
+  await key(context, 'Space', 'keyup'); await context.screenshot('the-dig-excavated');
+  await hold(context, 'KeyW', 700); await hold(context, 'KeyA', 4200); await context.screenshot('the-dig-swing-to-truck');
+  await press(context, 'KeyE'); await context.waitFor(page.loadedTruck, 'truck loaded from bucket', 10000);
+  await press(context, 'KeyQ'); await context.waitFor(page.truck, 'dump truck selected', 3000);
+  await context.screenshot('the-dig-truck-loaded');
+  await hold(context, 'KeyW', 1500); await press(context, 'Tab'); await key(context, 'Space', 'keydown');
+  await context.waitFor(page.tipped, 'truck tipped a heap', 30000);
+  await context.screenshot('the-dig-bed-lifted'); await key(context, 'Space', 'keyup');
+  await context.screenshot('the-dig-truck-tipped');
+  await press(context, 'KeyQ'); await context.waitFor(page.trencher, 'trencher selected', 3000);
+  await press(context, 'Tab'); await key(context, 'KeyW', 'keydown'); await key(context, 'Space', 'keydown');
+  await context.waitFor(page.ditch, 'trencher cut a ditch', 60000);
+  await key(context, 'Space', 'keyup'); await key(context, 'KeyW', 'keyup');
+  await context.screenshot('the-dig-trencher-ditch');
+  for (let i = 0; i < 5; i++) await press(context, 'KeyQ');
   await context.waitFor(page.borer, 'Mabel selected', 10000);
   await hold(context, 'KeyW', 90000);
   await press(context, 'Tab');
@@ -55,5 +86,6 @@ export async function run(context) {
   await context.screenshot('the-dig-borer-cut');
   await press(context, 'Escape');
   await context.waitFor(page.returned, 'back in the yard', 5000);
+  await context.screenshot('the-dig-returned-to-yard');
   assert.equal(await context.evaluate(page.storage), before, 'the saved profile is unchanged after operating the machines');
 }
