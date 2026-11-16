@@ -5,8 +5,9 @@ import {machineDefinition} from './content/machines.js';
 import {createGroundEdit} from '../world/ground-edit.js';
 import {createGroundTunnels} from '../world/ground-tunnels.js';
 import {HILLS} from '../world/scablands-height.js';
-import {borerCutLesson, createBorerState, stepBorer} from './borer.js';
-import {recordBorerLesson} from '../town/town-apprentices.js';
+import {borerCutLesson, borerHasFace, createBorerState, stepBorer} from './borer.js';
+import {canDelegate, recordBorerLesson} from '../town/town-apprentices.js';
+import {createWorkOrder} from '../town/town-work.js';
 import {resetScablandsGroundEdit, scablandsNaturalHeightAt, setScablandsGroundEdit} from '../world/scablands-ground.js';
 import {SCABLANDS_PLACES} from '../world/scablands.js';
 import {solidsNear} from '../world/scablands-solids.js';
@@ -171,7 +172,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     roadMemory[playerId] = roadWork;
     memory[playerId] = edit.toSave();
   }
-  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]}, borerWatching:{}, completedTunnels:[],tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
+  return {ground:edit,protectLand,easy, apprenticeTown:{people:[{id:'pim', name:'Pim'}], apprenticeships:[], borerLessons:[], book:[]}, borerWatching:{}, boreOrders:[], completedTunnels:[],tunnels:createGroundTunnels([], {heightAt:(x,z)=>edit.heightAt(x,z)}),playerId,haul,borer:createDigBorer(edit),trencher:createTrencherState(YARD.trencher),
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
@@ -241,6 +242,33 @@ export function borerWatchingWords(sim) {
   if (sim.apprenticeTown.apprenticeships.some(record => record.kind === 'bore'))
     words.push(`${name} can run her now. At a face, choose Send ${name}.`);
   return words;
+}
+
+/** A survey belongs to the face where it was read. */
+export function canSendBorer(sim, survey) {
+  const b = sim.borer;
+  const person = sim.apprenticeTown.people[0];
+  if (sim.activeMachine !== 'borer' || b.started || !person || !canDelegate(sim.apprenticeTown, person.id, 'bore') ||
+      !survey || !Number.isFinite(survey.distanceM) || survey.distanceM <= 0 || !Number.isFinite(survey.riseM) ||
+      !['x','y','z','heading'].every(key => Number.isFinite(survey[key]) &&
+        survey[key].toFixed(key === 'heading' ? 3 : 1) === b[key].toFixed(key === 'heading' ? 3 : 1))) return false;
+  if (sim.boreOrders.some(order => order.mouth.x === b.x && order.mouth.z === b.z && order.heading === b.heading)) return false;
+  const ground = sim.ground;
+  const refusal = sim.protectLand ? borerLandRefusal({x:b.x, z:b.z, radius:machineDefinition('borer').boreRadiusM}, ground)
+    : ground.refusal({x:b.x, z:b.z, radius:machineDefinition('borer').boreRadiusM});
+  return !refusal && borerHasFace(ground, b, b.heading);
+}
+
+/** Queue the town's work order, keeping the surveyed line in this visit only. */
+export function sendBorer(sim, survey) {
+  if (!canSendBorer(sim, survey)) return sim;
+  const person = sim.apprenticeTown.people[0];
+  const id = `bore-${sim.boreOrders.length + 1}`;
+  const order = createWorkOrder({id, targetId:id, targetKind:'bore',
+    stages:[{kind:'bore', amount:survey.distanceM, workHours:survey.distanceM / 1800}]});
+  Object.assign(order, {personId:person.id, mouth:{x:sim.borer.x, y:sim.borer.y, z:sim.borer.z},
+    heading:sim.borer.heading, grade:survey.riseM / survey.distanceM, metres:survey.distanceM});
+  return {...sim, boreOrders:[...sim.boreOrders, order]};
 }
 
 /** Apply one fixed simulation step. Actions and ground edits never run in rendering. */

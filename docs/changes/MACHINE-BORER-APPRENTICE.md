@@ -6,12 +6,15 @@ A2 is underway. The Dig holds Pim and the observed lessons in memory. The town a
 
 A3 shows Pim riding along and records the survey, freeing a stall, holding the surveyed grade for 50 m, and daylight from the current cut. On the second cut Pim reads the survey distance and rise. The observations reset for the next cut and require no extra ground samples.
 
+A4 adds a send button and F key at a surveyed, accepted face for a taught apprentice. It queues a town work order with the mouth, heading, grade and distance. A face already in the queue cannot be sent twice with the same heading. This step does not yet advance the orders.
+
 ## Checks
 
 - `node tools/test-machine-borer-lesson.mjs`: passed. Scripted clean, stalled, off-level and slow cuts, plus short and unfinished cuts.
 - `node tools/test-machine-borer-apprentice.mjs`: passed. Invalid cuts, two-cut means, later improvements, the Dig's Easy setting and limits, retaining a finished tunnel once, and freeing Mabel for a second cut.
 - `node tools/test-town-apprentices.mjs`: passed, 16 checks.
 - A3: `node tools/test-machine-borer-apprentice.mjs` passed, including observations, grade limits, second-cut survey words and reset.
+- A4: `node tools/test-machine-borer-apprentice.mjs` passed, including missing teaching or survey, refused faces, line details and queue order.
 - Remaining card checks, replay checks and build: not run yet.
 - Race fingerprints: not checked yet.
 
@@ -27,9 +30,11 @@ Mabel clears a daylight mouth by 12 m before she is ready for another cut. She c
 
 Holding the grade means 50 consecutive metres within 1 in 50 of the surveyed grade.
 
+A face already in the bore queue cannot be sent a second time with the same heading.
+
 ## Sound
 
-No new sound event in A1 or A3. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
+No new sound event in A1, A3 or A4. Existing stall and daylight cues remain `borer.stall` and `borer.daylight`.
 
 ## Removed
 

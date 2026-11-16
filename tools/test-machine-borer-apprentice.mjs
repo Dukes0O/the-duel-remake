@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import {borerCutLesson} from '../src/machines/borer.js';
-import {borerWatchingWords, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
+import {borerWatchingWords, canSendBorer, sendBorer, createDigSandbox, createDigSandboxForApp, importDigTunnels, rememberDigTunnel, stepDigSandbox, watchBorerCut} from '../src/machines/dig-sandbox.js';
 import {canDelegate, recordBorerLesson} from '../src/town/town-apprentices.js';
 
 const sim = createDigSandbox();
@@ -108,3 +108,29 @@ console.log('Borer watching words: survey, stall, grade, daylight and reset pass
 const secondCut = borerWatchingWords({...sim, borerWatching:watching,
   apprenticeTown:{...town, apprenticeships:[], borerLessons:[town.borerLessons[0]]}});
 assert.ok(secondCut.includes('Pim: The far side is 100 m on and 1.0 m higher.'));
+
+// Sending keeps a surveyed line in a normal town work order.
+const faceGround = {...sim.ground, heightAt:(x,z)=>z >= 1 && z <= 120 ? 10 : 0, refusal:()=>null};
+const sendStart = {...createDigSandbox({ground:faceGround}), activeMachine:'borer',
+  borer:{...sim.borer, x:0, y:0, z:0, heading:0}};
+const line = {x:0, y:0, z:0, heading:0, distanceM:120, riseM:6};
+assert.equal(canSendBorer(sendStart, line), false, 'An untaught apprentice cannot be sent.');
+recordBorerLesson(sendStart.apprenticeTown, 'pim', cut(0, 0, 1));
+recordBorerLesson(sendStart.apprenticeTown, 'pim', cut(0, 0, 1));
+assert.equal(canSendBorer(sendStart, null), false, 'A survey is required.');
+assert.equal(canSendBorer(sendStart, {...line, x:1}), false, 'A survey must belong to this face.');
+assert.equal(canSendBorer({...sendStart, ground:{...faceGround, refusal:()=> 'Blocked'}}, line), false);
+assert.equal(canSendBorer({...sendStart, ground:{...faceGround, heightAt:()=>0}}, line), false);
+assert.equal(canSendBorer(sendStart, line), true);
+const sent = sendBorer(sendStart, line);
+assert.equal(sent.boreOrders.length, 1);
+assert.deepEqual(sent.boreOrders[0].mouth, {x:0,y:0,z:0});
+assert.equal(sent.boreOrders[0].grade, .05);
+assert.equal(sent.boreOrders[0].stages[0].kind, 'bore');
+assert.equal(sent.boreOrders[0].stages[0].amount, 120);
+assert.equal(sent.boreOrders[0].personId, 'pim');
+assert.equal(sendBorer(sent, line), sent, 'The same face cannot be sent twice.');
+const another = {...sent, borer:{...sent.borer, x:20}};
+const queued = sendBorer(another, {...line, x:20});
+assert.deepEqual(queued.boreOrders.map(order=>order.id), ['bore-1','bore-2']);
+console.log('Borer sending: teaching, survey, face, refusal and order queue passed.');

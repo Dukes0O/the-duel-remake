@@ -7,7 +7,7 @@ import {machineControlsView} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, borerSurvey} from './borer.js';
-import {borerWatchingWords,borerYardControls,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
+import {borerWatchingWords,borerYardControls,canSendBorer,sendBorer,closeDigSandbox,createDigBorer,createDigSandboxForApp, createPendingDigActions, cycleDigCamera, digSandboxMachineState, stepDigSandbox, switchDigMachine} from './dig-sandbox.js';
 import {createGroundView,groundColour,GROUND_UV} from '../world/ground-view.js';
 import {createDigFx} from '../world/dig-fx.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../world/scablands-ground.js';
@@ -258,8 +258,10 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   dial.after(surveyPanel);
   const watchingPanel=document.createElement('section');watchingPanel.className='the-dig-survey';
   surveyPanel.after(watchingPanel);
+  const sendButton=document.createElement('button');sendButton.type='button';sendButton.hidden=true;watchingPanel.after(sendButton);
   let surveyLine=null, surveyKey='';
   const surveyDisplayCache={};
+  let sendOffered=false;
   document.body.append(host);
   const canvas=host.querySelector('canvas'),message=host.querySelector('.the-dig-message'),controlsPanel=host.querySelector('.the-dig-controls');
   let sim=createDigSandboxForApp(app),stopped=false,failed=false,lastTime=performance.now(),accumulator=0,soundAfter=0;
@@ -314,17 +316,19 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     return 'trench';
   };
   function keyboard(event,down){
-    if(['Tab','Escape','KeyQ','KeyC','Space','KeyW','KeyA','KeyS','KeyD','KeyI','KeyK','KeyJ','KeyL','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();
+    if(['Tab','Escape','KeyQ','KeyC','Space','KeyW','KeyA','KeyS','KeyD','KeyI','KeyK','KeyJ','KeyL','KeyE','KeyF','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();
     if(!down&&event.code==='Space')keys.Space=false;
     else if(down&&!event.repeat&&event.code==='Escape'){event.stopImmediatePropagation();stop();return;}
     else if(down&&!event.repeat&&event.code==='Tab'){event.stopImmediatePropagation();pending.push('mode');return;}
     else if(down&&!event.repeat&&event.code==='KeyQ'){event.stopImmediatePropagation();pending.push('machine');return;}
+    else if(down&&!event.repeat&&event.code==='KeyF'){event.stopImmediatePropagation();pending.push('send');return;}
     else if(down&&!event.repeat&&event.code==='KeyC'){event.stopImmediatePropagation();pending.push('camera');return;}
     if(down&&!event.repeat&&event.code==='KeyE'&&sim.activeMachine==='excavator')pending.push('load');
     keys[event.code]=down;
   }
   const onDown=e=>keyboard(e,true),onUp=e=>keyboard(e,false),onBlur=()=>{for(const key of Object.keys(keys))keys[key]=false;};
   document.addEventListener('keydown',onDown,true);document.addEventListener('keyup',onUp,true);window.addEventListener('blur',onBlur);
+  sendButton.addEventListener('click',()=>pending.push('send'));
   host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;});
   host.querySelector('.the-dig-close').addEventListener('click',stop);
   try{
@@ -391,6 +395,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       if(pending.consume('mode'))sim={...sim,mode:sim.mode==='drive'?'work':'drive'};
       if(pending.consume('machine'))sim=switchDigMachine(sim);
       if(pending.consume('camera'))sim=cycleDigCamera(sim);
+      if(pending.consume('send') && sendOffered)sim=sendBorer(sim,surveyLine);
       const roadMachine=!!sim.roadMachines[sim.activeMachine];
       let stepControls=sim.activeMachine==='borer'?borerYardControls(padKeys,pad,borerMapping,sim.mode):sim.activeMachine==='drill'?drillYardControls(padKeys,sim.mode):machineControlInput(padKeys,null,roadMachine||sim.activeMachine==='trencher'?'drive':sim.mode);
       if(roadMachine)stepControls=roadYardControls(sim.activeMachine,stepControls,padKeys);
@@ -523,6 +528,13 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       }
     } else if(!b.started) {surveyLine=null;surveyKey='';}
     surveyPanel.hidden=sim.activeMachine!=='borer' || !surveyLine;
+    // Face and ground checks run only when the displayed survey or eligibility changes.
+    const offerKey=[surveyKey,sim.activeMachine,b.started,sim.boreOrders.length,sim.apprenticeTown.apprenticeships.length].join(':');
+    if (offerKey !== sendButton.dataset.offerKey) {
+      sendButton.dataset.offerKey=offerKey;sendOffered=canSendBorer(sim,surveyLine);
+    }
+    sendButton.hidden=!sendOffered;
+    if(sendOffered)sendButton.textContent=`F: Send ${sim.apprenticeTown.people[0].name}`;
     watchingPanel.hidden=sim.activeMachine!=='borer';
     if (!watchingPanel.hidden) watchingPanel.textContent=borerWatchingWords(sim).join(' ');
     if(!surveyPanel.hidden) updateBorerSurvey(surveyPanel,surveyDisplayCache,surveyLine,{...b,daylightMessage:sim.daylightMessage});

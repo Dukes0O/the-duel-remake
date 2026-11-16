@@ -94,3 +94,5 @@ Also owed from MACHINE-BORER, Claude's to draw while this is built: the spoil ba
 - Mabel is free to start another cut after driving 12 m beyond a daylight mouth. Until then she can reverse back into the tunnel.
 
 - A held grade means 50 consecutive metres within 1 in 50 of the surveyed grade.
+
+- A face already in the bore queue cannot be sent a second time with the same heading.
