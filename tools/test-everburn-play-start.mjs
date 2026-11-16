@@ -89,7 +89,7 @@ for (const kmh of [45, 80]) {
     const emberBefore = world.job.stepState.ember;
     stepWorldJob(duel, 1 / 120);
     const hit = pushOutOfSolids(car.x, car.z, 1.3, world.solidGrid, scablandsSurfaceHeightAt(car.x, car.z)).hit;
-    assert.notEqual(hit?.id, 'hot-delivery-town-door', `${kmh} km/h: the gate opens before the car reaches it`);
+    assert.equal(hit, null, `${kmh} km/h: the road through the gate is clear of solids`);
     assert.equal(state.speedMph, kmh / 1.609344);
     assert.equal(world.job.stepState.joltCount ?? 0, 0);
     assert.ok(Math.abs(world.job.stepState.ember - (emberBefore - EMBER_RULE.coldPerSecond / 120)) < 1e-9,
