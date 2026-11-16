@@ -111,6 +111,7 @@ export async function run(context) {
     await picture('2-map-start','Scrapdome yard on the land',{map:true});
     await key(context,'m','KeyM',77);
     await place('pickup',0,5);
+    await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
     await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
     await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true});
     const road=pointAlong(EAST_ROAD.points, 400);
