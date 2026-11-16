@@ -1944,3 +1944,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - **What the lane tier found, and Claude's lesson from it:** seven older suites that no short round had run. The rule that
   would have caught them is now in `docs/CODEX_PLAYBOOK.md` section 7, and the lesson about a drawn moment that nobody sees
   in `docs/ART_LINE.md` ("Moments").
+
+## Hot Soup Easy drive from the moved start
+
+- Seed 1 reached (30.8, -28.9) at 2 s, then (6.1, -13.8) at 7 s, relative to Tin Town. It stayed near the blocks for 3,000 s; no spill or restart occurred. The driver mistook the next safe point for a town delivery and aimed along the East Road.
+- The Easy driver follows the safe points again after a restart, slows through the town corner and drives forward out of reverse. It no longer treats Hot Soup as a return to town. No game event or sound cue changed.
+- Checks passed: `test-everburn-play-start.mjs` (1,006), `test-everburn-easy.mjs --job hot-soup` (10/10), `test-ember-side-jobs.mjs` (221), and `test-everburn-job1.mjs`. Race fingerprints were not run.
+- Changed assertions: none. Codex decided: use 8 mph through the first two safe points. **Removed:** the East Road override for Hot Soup.
