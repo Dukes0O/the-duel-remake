@@ -258,6 +258,20 @@ if (process.env.EVERBURN_PLATES_COVER_ONLY === '1') {
   assert.equal(townward.abovePlatesLimitTicks, 0, 'the townward stretch stays within 50 km/h');
   assert.ok(townward.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
     'the townward stretch avoids the furnace warning');
+  const finalApproach = drivePlatesShelter(trialDuel, trialLine, 5200);
+  console.log('Plates final approach:', JSON.stringify(finalApproach));
+  assert.ok(finalApproach.along >= 5200, 'the car reaches the final approach toward town');
+  assert.equal(finalApproach.jolts.length, 0, 'the final approach avoids jolts');
+  assert.equal(finalApproach.abovePlatesLimitTicks, 0, 'the final approach stays within 50 km/h');
+  assert.ok(finalApproach.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
+    'the final approach avoids the furnace warning');
+  const nearTown = drivePlatesShelter(trialDuel, trialLine, 5700);
+  console.log('Plates near town:', JSON.stringify(nearTown));
+  assert.ok(nearTown.along >= 5700, 'the car reaches the ground near town');
+  assert.equal(nearTown.jolts.length, 0, 'the ground near town avoids jolts');
+  assert.equal(nearTown.abovePlatesLimitTicks, 0, 'the ground near town stays within 50 km/h');
+  assert.ok(nearTown.longestFurnaceSightSeconds <= 6 && !trialDuel.state.arena.worldJob.skylineWarned,
+    'the ground near town avoids the furnace warning');
   process.exit(0);
 }
 // Cold loss is read from the actual carry step on ordinary ground.

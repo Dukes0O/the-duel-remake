@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates approach near town (16 November 2026)
+
+- The seeded Medium car continues the clean plates line from 4.7 to 5.7 km at no more than 50 km/h, without a jolt or furnace warning. The pot holds 44.905 ember, 355 m from the town gate. This is not yet a drive to the forge. No game event or sound cue was added.
+- Check: `EVERBURN_PLATES_COVER_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive and real car, ground hit and furnace sight checks. Integration was merged before the check. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: drive through the town gate to the forge, then complete the other clean drives and scenario.
+
 ## Plates townward approach (16 November 2026)
 
 - The seeded Medium car continues the clean plates line from 4.2 to 4.7 km at no more than 50 km/h. It takes no jolts and receives no furnace warning; the real pot holds 53.092 ember at 4.7 km. This is not yet a drive to the forge. No game event or sound cue was added.
