@@ -244,3 +244,12 @@ test('saved progress scenarios always run and temporary player setup does not qu
   const rows = await suite.changedSelection(discovered, 'HEAD');
   assert.ok(rows.filter(row => row.reason === 'no area').length < 60);
 });
+
+test('warlord settlement and world job files select their scenario areas', () => {
+  const warlord=suite.SCENARIO_AREAS.find(row=>row.prefixes.includes('warlord-'));
+  assert.ok(warlord.paths.includes('src/arena/warlord-settlement.js'));
+  const everburn=suite.SCENARIO_AREAS.filter(row=>row.prefixes.some(prefix=>prefix.startsWith('everburn')));
+  assert.equal(everburn.length,2);
+  for(const row of everburn) for(const file of ['src/arena/modes/world-job.js','src/arena/arena-event.js'])
+    assert.ok(row.paths.includes(file));
+});
