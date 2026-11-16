@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Plates drive sight measurement (16 November 2026)
+
+- The scripted driver records the longest uninterrupted furnace sighting from the real job state. The existing 25 mph plates drive was visible for 22.5 seconds between 1 and 1.5 km and the furnace sent its warning. This is not the clean drive: it must cross open ground within six seconds and arrive alive without a ram. No game event or sound cue was added.
+- Checks: `EVERBURN_PLATES_SIGHT_ONLY=1 node tools/test-everburn-job1.mjs` passed. `EVERBURN_PLATES_ONLY=1 node tools/test-everburn-job1.mjs` failed at the existing assertion that a rider caused a jolt before 1.5 km; after the buttes the drive had no jolts at that point. The assertion was not changed. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: none. For Claude to run: the browser scenario and both long drivers remain for the final round. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: make and prove the clean plates drive, then the other clean drives and scenario.
+
 ## Separated plates cover (16 November 2026)
 
 - Added a check for the ruled requirement: three stretches of cover, each at least 150 m, with at least 100 m of visible ground between them. It uses the real furnace sight rule at 10 m intervals and excludes out-of-range ground. The existing stricter check remains unchanged. The measured stretches are 899 to 1,118 m, 1,388 to 3,115 m, and 3,355 to 3,585 m. The visible gaps are 250 m and 220 m. This does not yet prove the clean drive can cross the gaps without triggering riders. No game event or sound cue was added.

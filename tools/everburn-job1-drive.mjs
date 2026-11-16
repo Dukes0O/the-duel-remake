@@ -91,6 +91,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const state = duel.state;
   let hit, ticks = 0, maxDistance = 0, driven = 0, peakSpeedMph = 0, peakSpeedPosition, previous;
   let roadSpeedTicks = 0, fastRoadSpeedTicks = 0, abovePlatesLimitTicks = 0;
+  let longestFurnaceSightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
   let pipePeakSpeedMph = 0;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
   const beganOut = lowestEmber <= 0;
@@ -161,11 +162,13 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
       brake:Math.abs(state.speedMph) > speedLimit + 3 ? 1 : 0,
       steer:Math.max(-1, Math.min(1, -turn * 2))});
     duel.step(1 / 60);
+    longestFurnaceSightSeconds = Math.max(longestFurnaceSightSeconds, state.arena.worldJob.skylineSight?.seconds ?? 0);
   }
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
     position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, jolts, beganOut, firstOut,
-    burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)), ticks};
+    burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
+    longestFurnaceSightSeconds, ticks};
 }
 
 // The plates have a 50 km/h rough-ground threshold. Keep the opening below it
