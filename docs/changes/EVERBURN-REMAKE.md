@@ -1,5 +1,12 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed through the Steps (16 November 2026)
+
+- The seeded Medium proof now follows the existing land test's offset river line from Wash, under the bridge and up the Steps toward town. The real car takes the Wash scoop, passes beneath the bridge, and reaches the town side of the Steps with no jolts and 67.709 ember. This is an intermediate drive, not a delivery. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 node tools/test-everburn-job1.mjs` passed. The separate straight-across drive went out at 629.822 m. Integration is already included. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: removed the checks for distances to the Wash and South Ford because Claude identified the Steps as the intended exit; the new check drives the actual car under the bridge and up the Steps. Codex decided: none. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the helper that searched for gentle crossings. The old `everburn-play` scenario still needs replacement or removal. Next: continue this route to the forge, prove deliveries with and without the scoop, then the salt pan and East Road clean drives and scenario.
+
 ## Bed crossing distances (16 November 2026)
 
 - The proof now finds the Wash and South Ford from the actual bank impact using the game's river data. The Wash is 2,894 m away along the river, and the South Ford is 4,403 m away; their straight-line distances are 2,756 m and 4,228 m. Neither is a nearby exit from this impact. The clean bed delivery remains unproved. No game event or sound cue was added.

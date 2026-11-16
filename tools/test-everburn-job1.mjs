@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, gentleCrossingsFrom, driveToFirstClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, bedStepsRoute, driveToFirstClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -116,6 +116,45 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.ok(firstOut !== null && firstOut < 1500, 'the ember goes out before 1.5 km');
   if (process.env.EVERBURN_STRAIGHT_ONLY === '1') process.exit(0);
 }
+// Drive from the Wash along the land test's bed line toward the Steps.
+if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+  duel.state.countdown = 0;
+  assert.ok(driveToCinder(duel, definition.steps[0].pickup.place.position).loaded);
+  assert.ok(driveThroughYardGate(duel, yardPlan().gate).along >= 20);
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const line = bedRiderBypass(routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')}), 150, -195);
+  const wash = definition.steps[0].braziers.find(item => item.id === 'wash-brazier');
+  const approach = driveMeasuredStretches(duel, line, [500, 1000, 1500, 2000, 2500, 3000,
+    nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 28);
+  assert.ok(approach.reachedAll, 'the car reaches the Wash');
+  assert.ok(driveToBrazier(duel, wash).scooped, 'the car scoops at the Wash');
+  const route = bedStepsRoute();
+  const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const bedLine = [{x:car.x, z:car.z}, ...route.bed];
+  const ends = [];
+  for (let along = 500; along < pathLength(bedLine) - 50; along += 500) ends.push(along);
+  const drive = driveMeasuredStretches(duel, bedLine, ends, 60 / 1.609344);
+  const pot = duel.state.arena.worldJob.job.stepState;
+  console.log('Bed toward the Steps:', JSON.stringify({reached:drive.reachedAll, last:drive.stretches.at(-1),
+    length:pathLength(bedLine), ember:pot.ember, jolts:pot.joltCount ?? 0}));
+  assert.ok(drive.reachedAll, 'the car follows the river toward the Steps');
+  assert.ok(drive.stretches.some(stretch => stretch.passedUnderBridge), 'the car passes under the bridge on the bed');
+  assert.equal(pot.joltCount ?? 0, 0, 'the car reaches the Steps approach without a jolt');
+  const end = driveAlongRoad(duel, bedLine, pathLength(bedLine) - 25, 7200, 60 / 1.609344);
+  console.log('Steps approach:', JSON.stringify(end));
+  assert.ok(end.along >= pathLength(bedLine) - 25, 'the car reaches the end of the bed line');
+  const here = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  const climbLine = [{x:here.x, z:here.z}, route.steps, route.exit];
+  const climb = driveAlongRoad(duel, climbLine, pathLength(climbLine) - 25, 18000, 20 / 1.609344);
+  console.log('Steps climb:', JSON.stringify(climb));
+  assert.ok(climb.along >= pathLength(climbLine) - 25, 'the car climbs the Steps toward town');
+  assert.equal(pot.joltCount ?? 0, 0, 'the car climbs without a jolt');
+  process.exit(0);
+}
 // Test a gradual line around the first rider on the bed route.
 if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
@@ -167,14 +206,6 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
     'the real ground at the impact is steep');
   assert.ok(trial.emberAfter < trial.emberBefore, 'the slow impact still takes ember from the real pot');
   assert.ok(pot.ember > 0, 'the first impact leaves the pot lit for a route correction');
-  const crossings = gentleCrossingsFrom(climb.position);
-  console.log('Gentle crossings from the bank:', JSON.stringify(crossings));
-  assert.deepEqual(new Set(crossings.map(crossing => crossing.id)), new Set(['the-wash', 'south-ford']),
-    'both gentler crossings come from the real river');
-  assert.ok(crossings.every(crossing => Number.isFinite(crossing.alongRiver) && crossing.distance > 0),
-    'each crossing has a distance from the actual impact');
-  assert.ok(Math.abs(crossings[0].alongRiver) <= Math.abs(crossings[1].alongRiver),
-    'the nearer crossing along the river comes first');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.

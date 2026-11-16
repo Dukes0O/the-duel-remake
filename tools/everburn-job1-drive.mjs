@@ -2,7 +2,7 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {nearestOnLine, sliceLine, sampleLine} from '../src/world/scablands-ways.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {worldJobPosition} from '../src/arena/modes/world-job.js';
-import {riverDepthAt, RIVER_LAND} from '../src/world/scablands-regions.js';
+import {riverDepthAt, RIVER_LAND, stepsWayFor} from '../src/world/scablands-regions.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Move toward the shelter on the first exposed plates stretch, then return to
@@ -39,15 +39,23 @@ export function firstGroundClimb(drive) {
     .find(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')) ?? null;
 }
 
-// Locate the gentler river crossings from the actual impact, along the river
-// rather than in a straight line across its banks.
-export function gentleCrossingsFrom(position) {
-  const hit = RIVER_LAND.nearest(position.x, position.z);
-  if (!hit) return [];
-  return RIVER_LAND.crossings.filter(crossing => crossing.kind === 'wash' || crossing.kind === 'ford')
-    .map(crossing => ({id:crossing.id, alongRiver:crossing.along - hit.along,
-      distance:Math.hypot(crossing.x - position.x, crossing.z - position.z)}))
-    .sort((a, b) => Math.abs(a.alongRiver) - Math.abs(b.alongRiver));
+// Use the same bed line and Steps exit as the land's end-to-end drive.
+export function bedStepsRoute() {
+  const wash = RIVER_LAND.crossings.find(crossing => crossing.kind === 'wash');
+  const steps = RIVER_LAND.crossings.find(crossing => crossing.kind === 'steps');
+  const points = RIVER_LAND.line.points.filter((point, index) =>
+    RIVER_LAND.line.along[index] > steps.along - 50 && RIVER_LAND.line.along[index] < wash.along + 50).reverse();
+  const bed = points.map((point, index) => {
+    const a = points[Math.max(0, index - 1)], b = points[Math.min(points.length - 1, index + 1)];
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    return {x:point.x + (b.z - a.z) / length * 27, z:point.z - (b.x - a.x) / length * 27};
+  });
+  const way = stepsWayFor();
+  const onWay = across => ({x:way.x + way.nx * across, z:way.z + way.nz * across});
+  const town = LAND.at('tin-town', -25, 112);
+  const exit = [onWay(-150), onWay(150)].sort((a, b) =>
+    Math.hypot(a.x - town.x, a.z - town.z) - Math.hypot(b.x - town.x, b.z - town.z))[0];
+  return {wash, bed, steps: onWay(0), exit, town};
 }
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.
@@ -141,6 +149,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   let longestFurnaceSightSeconds = state.arena.worldJob.skylineSight?.seconds ?? 0;
   let sightStart = null, longestFurnaceSight = null;
   let pipePeakSpeedMph = 0;
+  const bridge = RIVER_LAND.crossings.find(crossing => crossing.kind === 'bridge');
+  let passedUnderBridge = false;
   let lowestEmber = state.arena.worldJob.job.stepState.ember;
   const beganOut = lowestEmber <= 0;
   let firstOut = null;
@@ -156,6 +166,8 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   const initiallyBurnt = new Set(state.arena.worldJob.job.stepState.burntBarricades || []);
   for (; ticks < maxTicks; ticks++) {
     const car = duel.course.worldAt(state.s, state.lateral);
+    if (Math.hypot(car.x - bridge.x, car.z - bridge.z) < 45 &&
+        scablandsSurfaceHeightAt(car.x, car.z) - worldJobPosition(duel, state).y > 4) passedUnderBridge = true;
     const pipe = LAND.at('the-pipe');
     if (crossPipe && Math.hypot(car.x - pipe.x, car.z - pipe.z) < 85) {
       pipePeakSpeedMph = Math.max(pipePeakSpeedMph, Math.abs(state.speedMph));
@@ -240,7 +252,7 @@ export function driveAlongRoad(duel, points, endAlong, maxTicks = 7200, targetSp
   stopRecording();
   return {along:hit.along, distance:hit.distance, maxDistance, driven, peakSpeedMph, peakSpeedPosition,
     ember:state.arena.worldJob.job.stepState.ember, lowestEmber, nearestTownGate, speedAtNearestTownGate, elapsedSeconds:ticks / 60,
-    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, jolts, beganOut, firstOut,
+    position:{x:previous.x, z:previous.z}, roadSpeedTicks, fastRoadSpeedTicks, abovePlatesLimitTicks, pipePeakSpeedMph, passedUnderBridge, jolts, beganOut, firstOut,
     burntDuringDrive:(state.arena.worldJob.job.stepState.burntBarricades || []).filter(id => !initiallyBurnt.has(id)),
     longestFurnaceSightSeconds, longestFurnaceSight, ticks};
 }
