@@ -32,7 +32,21 @@ import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStep
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
-import {mapFailures, pictureFailures} from './scenarios/everburn-job1.mjs';
+import {mapFailures, pictureFailures, drawFocusedPicture} from './scenarios/everburn-job1.mjs';
+
+{
+  assert.doesNotThrow(() => new Function(`return (${drawFocusedPicture.toString()})`), 'the focused view function parses for the page');
+  const camera = new THREE.PerspectiveCamera(50, 1, .1, 1000);
+  const scene = new THREE.Scene(), target = new THREE.Vector3(20, 3, -40);
+  let drawn = false;
+  drawFocusedPicture(camera, {render(actualScene, actualCamera) {
+    drawn = true;
+    assert.equal(actualScene, scene);
+    const projected = target.clone().add(new THREE.Vector3(0, 1, 0)).project(actualCamera);
+    assert.ok(Math.abs(projected.x) < .001 && Math.abs(projected.y) < .001, 'the focused target is at the centre when the picture is drawn');
+  }}, scene, target, {dx:12, dy:6, dz:15});
+  assert.ok(drawn, 'the focused picture is drawn without resetting the camera');
+}
 
 // The visual handoff names all map faults, rather than accepting any open map.
 assert.deepEqual(mapFailures('start', {map:'WHAT YOU KNOW\nEast Road', mapWays:['East Road']}, true), []);

@@ -27,6 +27,14 @@ export function pictureFailures(name, measurement, options = {}) {
   return failures;
 }
 
+// Draw the chosen view without running the game camera again.
+export function drawFocusedPicture(camera, renderer, scene, point, options) {
+  camera.position.set(point.x + (options.dx || 0), point.y + (options.dy || 8), point.z + (options.dz || 30));
+  camera.lookAt(point.x, point.y + (options.aimHeight || 1), point.z);
+  camera.updateMatrixWorld(true);
+  renderer.render(scene, camera);
+}
+
 // Every page expression is a self-contained function, checked before it is sent.
 const page = (context, fn, ...args) => {
   const source = `(${fn.toString()})(...${JSON.stringify(args)})`;
@@ -52,7 +60,7 @@ export async function run(context) {
   const persist = () => writeFile(join(context.outputDir, 'everburn-job1-measurements.json'), JSON.stringify(report, null, 2) + '\n');
   const picture = async (name, target, options = {}) => {
     try {
-      const measurement = await page(context, (target, options) => {
+      const measurement = await page(context, (target, options, focusSource) => {
         const app = window.__qaApp, duel = app.duel, state = duel.state, render = window.__render;
         const job = state.arena.worldJob, step = job.job.steps[0], camera = render.camera;
         const nodes = [];
@@ -67,9 +75,8 @@ export async function run(context) {
         };
         if (options.focus && node) {
           const p = pointFor(node);
-          camera.position.set(p.x + (options.dx || 0), p.y + (options.dy || 8), p.z + (options.dz || 30));
-          camera.lookAt(p.x, p.y + (options.aimHeight || 1), p.z);
-          camera.updateMatrixWorld(true); render.renderFrame();
+          const drawFocused = new Function(`return (${focusSource})`)();
+          drawFocused(camera, render.renderer, render.scene, p, options);
         }
         const visible = node && (() => { for (let p = node; p; p = p.parent) if (!p.visible) return false; return true; })();
         let projection = null;
@@ -96,7 +103,7 @@ export async function run(context) {
           projection:projection && {x:projection.x,y:projection.y,z:projection.z}, map:map?.innerText ?? null,
           mapWays:map ? [...map.querySelectorAll('.world-hud-way strong')].map(item => item.innerText) : [],
           namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null};
-      }, target, options);
+      }, target, options, drawFocusedPicture.toString());
       report.pictures.push({name, ...measurement});
       report.failures.push(...pictureFailures(name, measurement, options));
       if (options.map) report.failures.push(...mapFailures(name, measurement, options.startMap, options.metBarricade));

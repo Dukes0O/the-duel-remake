@@ -1636,3 +1636,10 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
 - Checks: `node tools/test-everburn-job1.mjs` passed in one plain run, including the map verdict and all six drives. `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. The plates delivery measured 31.381 at the forge; the final table above now records that result.
 - Changed assertions: none; the map checks are new. Codex decided: none. Removed: nothing.
 - For Claude to run: the memory-only browser scenario and the two long drivers. The two older failing suites and incomplete lane tier remain as recorded above. The scenario has not been run in Chrome.
+
+## Focused pictures (16 November 2026)
+
+- The visual scenario now draws its focused views after aiming the camera, without calling the game camera again. A test uses the real Three.js camera to check that the target is centred when the picture is drawn. The browser screenshot still needs Claude's visual check, including whether a later animation frame changes the view.
+- Checks: the plain `node tools/test-everburn-job1.mjs` passed, including all six drives and the focused-camera test; the added page function also parses with `new Function`. `node --check tools/scenarios/everburn-job1.mjs` and `git diff --check` passed. Integration is already an ancestor of this branch. No game event, sound cue, race fingerprint or existing assertion changed.
+- The old `test-ember-pot.mjs` still fails at its road drive, which predates pickup and the gate. `test-everburn-line-audit.mjs` still expects the old opening line. Their later checks also reflect old rules, and changing their assertions needs Claude's review. The lane tier remains incomplete as recorded above.
+- For Claude to run: the memory-only browser scenario, `test-everburn-easy.mjs`, `test-run-gas-medium.mjs`, and the complete lane tier. For Claude to draw: the pot transfer and forge fire. Codex decided: none. Removed: the focused view's extra game-camera render.
