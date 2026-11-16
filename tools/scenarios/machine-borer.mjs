@@ -115,6 +115,11 @@ const page = {
     }
   })()`,
   status: `(() => { const s = window.__theDig.simulation, b = s.borer; return {elapsed:s.elapsed, distance:b.distanceM, lever:b.lever, stalled:b.stalled, finished:b.finished, slope:b.slope, y:b.y, message:b.message}; })()`,
+  startVisibility: `(() => { const d=window.__theDig, start=performance.now();
+    const record=() => d.paceVisibility.events.push({wallSeconds:(performance.now()-start)/1000, hidden:document.hidden, elapsed:d.simulation.elapsed, distance:d.simulation.borer.distanceM});
+    d.paceVisibility={events:[],record}; document.addEventListener('visibilitychange',record); record(); return true; })()`,
+  visibility: `(() => window.__theDig.paceVisibility.events.slice())()`,
+  stopVisibility: `(() => { const d=window.__theDig; document.removeEventListener('visibilitychange',d.paceVisibility.record); delete d.paceVisibility; return true; })()`,
   farMouthOn: `(() => { window.__theDig.setCheckFarMouth(true); return true; })()`,
   farMouth: `(() => { const d=window.__theDig, b=d.simulation.borer, v=d.viewForCheck, s=d.simulation.tunnels.segments.at(-1);
     const dir={x:Math.sin(b.heading),y:0,z:Math.cos(b.heading)};
@@ -200,6 +205,7 @@ async function reachDaylight(context, initialFloor, surveyText, measurements, pe
       if (Date.now() >= nextReport) {
         const sample = {...b, wallSeconds:(Date.now() - startWall) / 1000};
         measurements.pace.push(sample);
+        measurements.paceVisibility = await context.evaluate(page.visibility);
         await persist();
         console.log(`Daylight drive: ${b.distance.toFixed(1)} m, ${b.elapsed.toFixed(1)} simulated seconds, ${sample.wallSeconds.toFixed(1)} wall seconds, lever ${b.lever.toFixed(3)}, stalled ${b.stalled}, ${b.message || 'cutting'}`);
         nextReport += 30000;
@@ -323,7 +329,14 @@ export async function run(context) {
     const inside = await picture(context, 'machine-borer-inside', 45);
     assert.equal(inside.headSpeed, 0, 'the head is stopped while reversing');
   } finally { await key(context, 'KeyS', 'keyup'); }
-  await reachDaylight(context, initialFloor, initialSurvey, measurements, persist);
+  await context.evaluate(page.startVisibility);
+  try {
+    await reachDaylight(context, initialFloor, initialSurvey, measurements, persist);
+  } finally {
+    measurements.paceVisibility = await context.evaluate(page.visibility);
+    await persist();
+    await context.evaluate(page.stopVisibility);
+  }
   measurements.farMouth = await context.evaluate(page.farMouth);
   await persist();
   assert.equal(measurements.farMouth.mouths, 2, 'daylight opens both surface mouths');
