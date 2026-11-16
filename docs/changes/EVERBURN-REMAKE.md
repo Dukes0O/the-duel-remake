@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed drive across the steep ground (16 November 2026)
+
+- The seeded Medium bed driver slows to a 12 mph target at 6.4 km and reaches 6.5 km without a jolt, with 64.698 ember. A longer trial reached 6.6 km without a steep-ground impact but took a 15-point rider ram at 6.563 km. This is not yet a delivery proof. No new event or sound cue was added.
+- Check: `EVERBURN_BED_BYPASS_ONLY=1 node tools/test-everburn-job1.mjs` passed, including the straight-across drive, which went out at 629.822 m. Race fingerprints, the lane tier and build remain for the final round.
+- Changed assertions: none. Codex decided: slow at 6.4 km to cross the steep ground. For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: nothing. The old `everburn-play` scenario still needs replacement or removal. Next: avoid the rider beyond 6.5 km and prove both bed deliveries.
+
+
 
 ## Bed drive to the rough crossing (16 November 2026)
 
