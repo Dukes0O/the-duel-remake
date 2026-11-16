@@ -156,13 +156,12 @@ if (process.env.EVERBURN_BED_STEPS_ONLY === '1') {
   const afterSteps = duel.course.worldAt(duel.state.s, duel.state.lateral);
   const gate = definition.steps[0].riderSafeWall;
   const townLine = [{x:afterSteps.x, z:afterSteps.z},
-    {x:route.exit.x, z:route.exit.z + 100},
+    {x:route.exit.x + 300, z:route.exit.z},
     {x:gate.x - gate.through.x * 180, z:gate.z - gate.through.z * 180}];
-  const townDrive = driveAlongRoad(duel, townLine, 250, 7200, 60 / 1.609344);
+  const townDrive = driveAlongRoad(duel, townLine, 400, 7200, 60 / 1.609344);
   console.log('Steps toward town:', JSON.stringify(townDrive));
-  assert.ok(townDrive.along >= 250, 'the car continues beyond the Steps');
-  assert.ok(townDrive.jolts.some(jolt => jolt.riders.some(rider => rider.id === 'ash-rider-2')),
-    'the actual rider is in contact at the post-Steps jolt');
+  assert.ok(townDrive.along >= 400, 'the car continues toward town beyond the Steps');
+  assert.equal(townDrive.jolts.length, 0, 'the car avoids rider contact and ground impacts beyond the Steps');
   assert.equal(townDrive.jolts.length, duel.state.arena.worldJob.job.stepState.joltCount,
     'the diagnostic records every pot jolt');
   process.exit(0);

@@ -1,5 +1,13 @@
 # EVERBURN-REMAKE, slice 1: the ember and the ground
 
+## Bed line beyond the Steps (16 November 2026)
+
+- The Medium proof takes a straight line out of the Steps before turning toward town. The actual car covers 400 m without a jolt and holds 52.888 ember after the Wash scoop. A longer trial met ash rider 2 at 477.7 m, so the clean delivery is not yet proved. No game event or sound cue was added.
+- Check: `EVERBURN_BED_STEPS_ONLY=1 node tools/test-everburn-job1.mjs` passed. The straight-across drive went out at 629.822 m. Race fingerprints, lane tier and build remain for the final round.
+- Changed assertions for Claude to review: the earlier 250 m diagnostic required rider contact; the revised route checks 400 m with no jolts. The earlier assertion described a fault on a different line, while the new assertion tests the clean route. Codex decided: leave the Steps straight for 300 m before turning toward town.
+- For Claude to run: the browser scenario and both long drivers at final handoff. For Claude to draw: the pot transfer and forge fire.
+- Removed: the earlier turn toward the rider. Next: avoid the rider beyond 400 m and finish the bed deliveries, the salt pan, East Road and scenario.
+
 ## Bed rider after the Steps (16 November 2026)
 
 - The real Medium car continues 250 m toward town after the clean Steps climb. Ash rider 2 is in contact at the first jolt, 33.6 m along that continuation, and the pot loses 15. At 250 m it holds 44.47. This is a hazard diagnostic, not a clean delivery; the rider must be avoided before the bed proof can pass. No game event or sound cue was added.
