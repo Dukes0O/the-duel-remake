@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {LAND} from '../src/world/scablands-names.js';
-import {EAST_ROAD} from '../src/world/scablands-road.js';
+import {EAST_ROAD, ROAD_NET} from '../src/world/scablands-road.js';
+import {yardPlan} from '../src/world/scablands-yard-look.js';
+import {driveToCinder, driveThroughYardGate, driveAlongRoad, driveMeasuredStretches,
+  driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {roadGraph, roadWay} from '../src/world/scablands-ways.js';
 import {pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
@@ -388,6 +391,20 @@ function playerInput(duel) {
   duel.setInput({interact: !!interact});
 }
 
+function driveHotDelivery(duel, definition) {
+  const step = definition.steps[0], road = ROAD_NET.road('east-road').points;
+  duel.state.countdown = 0;
+  if (!driveToCinder(duel, step.pickup.place.position).loaded) return 'collecting the pot';
+  if (driveThroughYardGate(duel, yardPlan().gate).along < 20) return 'leaving the yard';
+  if (!driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344).reachedAll) return 'following the East Road to the camp';
+  if (driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40).along < 2350) return 'passing the camp';
+  if (!driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier')).scooped) return 'collecting fire at the camp';
+  if (!driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40).reachedAll) return 'following the East Road to town';
+  if (driveAlongRoad(duel, road, 7810, 12000, 25, true).along < 7810) return 'approaching the town gate';
+  if (!driveToForge(duel, step.destination.position).done) return 'stopping in the forge bay or waiting for the forge';
+  return null;
+}
+
 function play(definition, seed) {
   const duel = new Duel({seed, featureFlags: flags});
   let raiderHits = 0;
@@ -398,15 +415,17 @@ function play(definition, seed) {
     car: 'falcone_f42', seed, cpuDifficulty: 'easy', opponents: [],
     weaponLoadout: ['bomb', 'crossbow', 'star'], arsenalRank: 9, job}), true,
   `${definition.name} starts in a real headless Duel`);
-  const limit = Math.ceil(MAX_SECONDS / DT);
-  for (let tick = 0; tick < limit && duel.state.status !== 'arena_result'; tick++) {
-    if (duel.state.status === 'racing') playerInput(duel);
+  const hotDelivery = definition.id === 'everburn-hot-delivery';
+  const waitingFor = hotDelivery ? driveHotDelivery(duel, definition) : null;
+  const limit = hotDelivery ? 240 : Math.ceil(MAX_SECONDS / DT);
+  for (let tick = 0; tick < limit && duel.state.status !== 'arena_result' && !waitingFor; tick++) {
+    if (!hotDelivery && duel.state.status === 'racing') playerInput(duel);
     else duel.setInput({throttle: 0, brake: 0, steer: 0, boost: false, interact: false});
     duel.step(DT);
   }
   const worldJob = duel.state.arena.worldJob;
   return {won: worldJob.job.done && duel.state.arena.result?.reason === 'job-complete',
-    seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
+    waitingFor, seconds: duel.state.stageTimeSec, failures: worldJob.job.events.filter(event =>
       ['spilled', 'restarted', 'waveRestarted', 'knockedDown'].includes(event.type)).length,
     stepIndex: worldJob.job.stepIndex, stepState: worldJob.job.stepState,
     onFoot: duel.state.onFoot, marker: worldJob.marker, waves: worldJob.clearedWaves,
@@ -438,7 +457,7 @@ for (const definition of jobs) {
   results.push({definition, finishes});
 }
 for (const entry of results) if (entry.result) console.log(`Sample ${entry.definition.name}, seed ${entry.seed}: ${JSON.stringify({
-  seconds: entry.result.seconds, stepIndex: entry.result.stepIndex, stepState: entry.result.stepState,
+  waitingFor: entry.result.waitingFor, seconds: entry.result.seconds, stepIndex: entry.result.stepIndex, stepState: entry.result.stepState,
   onFoot: entry.result.onFoot, marker: entry.result.marker, status: entry.result.duel.state.status,
   waves: entry.result.waves, actorCount: entry.result.actorCount, actors: entry.result.actors,
   footWeapons: entry.result.footWeapons, fighterInput: entry.result.fighterInput,

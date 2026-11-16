@@ -1920,3 +1920,8 @@ Changed assertions for Claude to review: the Director's R2 ruling replaced the e
   - Seed 10: (-0.029, 0.019).
 - Checks: the selected run exercised the filter and all ten attempts; its expected failure shows the old driver still needs teaching. `node --check tools/test-everburn-easy.mjs` and `git diff --check` passed. An unknown job was rejected. No game behavior, sound cue, assertion or race fingerprint changed. Codex decided: none. **Removed:** nothing.
 - Still needed: reuse the Hot Delivery proof drive for the Easy driver, then run its ten drives and the final checks. For Claude to run: the browser scenario and lane tier.
+
+- The Easy driver now uses the shared Hot Delivery proof drive: it collects the pot, follows the East Road, burns the barricades, collects fire at the camp, enters town slowly and waits at the forge through the hold. Failed drives report the stage and final car position. The other jobs retain their existing driver.
+- Check: `node tools/test-everburn-easy.mjs --job hot-delivery` passed 10/10 seeds, with the eight-of-ten requirement unchanged. No game rule, sound cue, assertion or race fingerprint changed. `world.forge.catch` remains at five seconds.
+- Changed assertions: none. Codex decided: none. **Removed:** the old direct-marker driver for Hot Delivery.
+- Still needed: final card checks, replay and world-signature suites, build and the full Easy suite. For Claude to run: the browser scenario and lane tier.
