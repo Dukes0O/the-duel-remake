@@ -30,6 +30,12 @@ export function bedRiderBypass(route, offset, laterOffset = 0) {
   });
 }
 
+// Report the first climb impact from the real simulation, so a proof drive can
+// distinguish steep ground from rider contact without inferring it from speed.
+export function firstGroundClimb(drive) {
+  return drive.stretches.flatMap(stretch => stretch.jolts)
+    .find(jolt => jolt.groundHits.some(hit => hit.kind === 'climb')) ?? null;
+}
 // Keep gaps outside the watcher's range separate from open ground: they cannot
 // prove that the car comes back into view between two places of cover.
 export function sightStretches(samples, classify) {

@@ -28,7 +28,7 @@ import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
-import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
+import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedRiderBypass, firstGroundClimb, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, drivePlatesOpening, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
 import {placeActor} from '../src/arena/arena-event.js';
 import {wrapHeading} from '../src/offroad-physics.js';
 import '../src/story/ember-lines.js';
@@ -152,6 +152,10 @@ if (process.env.EVERBURN_BED_BYPASS_ONLY === '1') {
   console.log('Bed rough crossing:', JSON.stringify({reached:crossing.reachedAll, jolts:crossingJolts, last:crossing.stretches.at(-1), ember:duel.state.arena.worldJob.job.stepState.ember}));
   assert.ok(crossing.reachedAll, 'the car reaches 7 km beyond the rough ground');
   assert.equal(duel.state.arena.worldJob.job.stepState.joltCount ?? 0, 0, 'the car crosses without a jolt');
+  const obstruction = driveMeasuredStretches(duel, line, [7100], 12);
+  const climb = firstGroundClimb(obstruction);
+  console.log('Bed obstruction beyond 7 km:', JSON.stringify({reached:obstruction.reachedAll, climb}));
+  assert.ok(!obstruction.reachedAll && climb && climb.riders.length === 0, 'the current line meets steep ground beyond 7 km');
   process.exit(0);
 }
 // Identify bed hazards from the real car before choosing a clean line.
