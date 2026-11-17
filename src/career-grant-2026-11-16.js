@@ -1,5 +1,5 @@
 import {backupCareer} from './career-backup.js';
-import {loadPlayers, savePlayers} from './progression.js';
+import {PLAYERS_KEY, loadPlayers, savePlayers} from './progression.js';
 import {rankForXp} from './notoriety.js';
 
 // One-time grant for Gratian's player, Spikey Ferns (Kyle, 16 November 2026: "he also should have his wasteland
@@ -24,7 +24,8 @@ export async function grantCareer({storage, backupStore, grant = GRANT} = {}) {
   const index = players.players.findIndex(player => player.id === grant.playerId ||
     player.name.trim().toLowerCase() === grant.playerName.toLowerCase());
   if (index < 0) {
-    storage.setItem(GRANT_MARKER_KEY, 'no-player');
+    // Only a players list that was really read can say Spikey Ferns is not here; otherwise try again next start.
+    if (storage.getItem(PLAYERS_KEY) !== null) storage.setItem(GRANT_MARKER_KEY, 'no-player');
     return {granted: false, reason: 'no-player'};
   }
   await backupCareer(storage, backupStore, 'before-career-grant');

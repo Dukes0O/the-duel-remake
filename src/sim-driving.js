@@ -3,6 +3,7 @@ import { DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority, TYRE_SLIP
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { enginePull, engineFitFor, autoShiftGear } from './engine-curve.js';
 import { offroadCapability, QUARRY_ROAD_CAR, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
+import { sampleMountainSupport } from './mountain-support.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
@@ -341,8 +342,19 @@ export function _drive(dt) {
   this._boundary(s);
 }
 
+// FREESTYLE-MOUNTAINS: a road car on the practice course standing on a quarry mountain (not on its ramps or flat ground).
+function onQuarryMountain(game, s) {
+  if (game.course.def?.practice !== true || offroadCapability(game.car) || !game.course.features?.mountains?.length) return false;
+  const p = game.course.worldAt(s.s, s.lateral);
+  return sampleMountainSupport(game.course, p.x, p.z) != null;
+}
+
 export function _terrainPose(actor = this.state) {
-  if (actor !== this.state || !offroadCapability(this.car) && this.course.def?.practice !== true) return;
+  if (actor !== this.state) return;
+  if (!offroadCapability(this.car)) {
+    // Off the mountain a road car is drawn as it always was (no ground pose kept).
+    if (!onQuarryMountain(this, actor)) { if (this.course.def?.practice === true) { actor.groundHeight = null; actor.terrainPitch = null; actor.terrainRoll = null; } return; }
+  }
   const point = this._supportAt(actor.s, actor.lateral), spec = this._vehicleSpec(actor);
   const heading = this.course.at(actor.s).heading + actor.headingError;
   const sample = (forward, side) => {
@@ -358,8 +370,10 @@ export function _terrainPose(actor = this.state) {
 export function _offroadStep(dt, offPreparedRoute) {
   const s = this.state;
   // FREESTYLE-MOUNTAINS: on the practice course a road car drives the quarry's slopes with QUARRY_ROAD_CAR's rules.
-  const capability = offroadCapability(this.car, { titanClimb: true }) ?? (this.course.def?.practice === true ? QUARRY_ROAD_CAR : null);
-  if (!capability || s.tumble) return;
+  const quarry = !offroadCapability(this.car) && this.course.def?.practice === true;
+  const capability = offroadCapability(this.car, { titanClimb: true }) ?? (quarry && (onQuarryMountain(this, s) ||
+    onQuarryMountain(this, { s: s.prevS, lateral: s.prevLateral })) ? QUARRY_ROAD_CAR : null);
+  if (!capability || s.tumble) { if (quarry && !s.tumble) this._terrainPose(); return; }
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {
     s.s = Number.isFinite(s.prevS) ? s.prevS : 0; s.lateral = Number.isFinite(s.prevLateral) ? s.prevLateral : 0;

@@ -19,7 +19,11 @@ the old code it fails with "mountain, 63 m from its top".
 speeds it downhill; no tipping and no climb limit, so nothing new can crash
 it. `_terrainPose` sets its drawn height, pitch and roll there, so it is drawn
 on the slope, not level inside it. The check measures the drawn height and
-the tilt.
+the tilt. Second review round: these rules apply only while the car is on a
+quarry mountain (`sampleMountainSupport`), so the playground's ramps and flat
+ground drive exactly as before; a Jesko's jump off the big-air ramp is
+identical on the old and new code (7.3 m, every sample). The grant keeps
+trying if the players list could not be read at start-up.
 
 **Removed.** The full-height oval wall around each quarry mountain for cars
 without off-road ability.
