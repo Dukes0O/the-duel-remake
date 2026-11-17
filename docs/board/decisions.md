@@ -14,6 +14,18 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle, 17 November 2026: earned cars race in most places; what the helicopter needs
+
+- "An earned car should be able to race in most places." No limit that differs by difficulty: that "is adding difficulty
+  without adding anything interesting". Perhaps one top of the line car must be flown to a top of the line course, "maybe
+  that's it" (card EARNED-CARS-ANYWHERE: the McMurtry Speirling).
+- Gratian is not excited about the helicopter at this point. Kyle expects two things to change that: the wildlife, and a
+  joystick ("that's gonna make a big impact on the fun of playing").
+- "It took me over 40 minutes to put out a forest fire yesterday, so that makes gameplay challenging." Not yet acted on:
+  the helicopter's story waits for Kyle's word.
+- Open, Kyle's own question: how a player is meant to discover the other courses from the air. The map shows many places;
+  the world cannot be a hundred kilometres.
+
 ## Kyle, 16 November 2026 (evening): rounds and slices are a guide, not a stop
 
 Said on seeing a Codex job stop several times on the Everburn's sixth slice: "at some point the rule was 3 turns, then I

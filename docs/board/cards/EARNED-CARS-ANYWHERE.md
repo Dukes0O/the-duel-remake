@@ -14,20 +14,29 @@ less: Kestrel One has to lift it.
 So a player who has just won a new car can race it on one course, and must fly it by helicopter to race it on another.
 For Gratian that is a reward that arrives locked. For the helicopter it is one of the reasons to fly.
 
-## The decision is Kyle's
+## Kyle decided (17 November 2026)
 
-This changes what the helicopter is for, and the helicopter's story waits for Kyle and Gratian (AGENTS.md rule 18). The
-ways it could go:
+"I kind of think an earned car should be able to race in most places." Gratian is not excited about the helicopter yet; a
+joystick and the wildlife would change that. A limit only on Medium and Hard "is adding difficulty without adding anything
+interesting", so there is no split by difficulty. "There might be one top of the line car that if you want to race it in a
+top of the line course, you have to fly it there. Maybe that's it."
 
-1. **Leave it.** The lift stays a job the player must do. Cost: the newest car is the hardest to use.
-2. **An earned car drives anywhere; flying it in pays.** The refusal goes. Setting a car down on a course by helicopter
-   earns something on that course instead (a first-race bonus, or the car's paint for that place). The flights keep a
-   reason and nothing is locked. Claude's pick.
-3. **Anywhere on Easy only.** The limit stays for Medium and Hard. Simple to say, and it splits one rule in two.
+## Settled design (Claude)
 
-No saved field would change shape under any of the three: where each car stands is already saved and would still be.
+- **Every car earned with medals races on any course, in any mode, from the moment it is earned.** The medal cars leave
+  the list of cars that travel only by air (`AIR_ONLY_CARS` in `src/heli/heli-jobs.js` is built from `MEDAL_CARS`). They no
+  longer wait at Tremblant Woods, and the pilot's map no longer shows them as cars to lift.
+- **One car is still flown: the McMurtry Speirling**, the top of the line. It stays on the list exactly as today. The two
+  Falcone cars on that list (Sirena and Vasca) are not medal cars and are not touched by this card.
+- **Nothing a player owns changes.** Where each car stands is already saved; a medal car that was set down somewhere keeps
+  that record, and the record is simply no longer asked. No saved field changes shape and nothing is migrated. A save
+  rolled back one release sees the old limit again and loses nothing.
+- **Words:** every line that tells a player a medal car must be flown (the garage, the menu's refusal, the pilot's map,
+  `docs/EARNED_CARS.md` "Travels only by air") is corrected. The 1,500 kg limit on an earned car's weight stays in the
+  document as the rule for a car that is flown.
+- No new game event, so no new sound cue.
 
-## Checks, when a way is chosen
+## Checks
 
 `tools/test-earned-cars-ui.mjs` and the helicopter's lift suites; one independent review, because it touches what a player
 owns.

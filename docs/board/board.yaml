@@ -15,12 +15,12 @@ tasks:
     details: "docs/board/cards/DIG-YARD-TOY.md"
 
   - id: EARNED-CARS-ANYWHERE
-    title: "Should an earned car race anywhere, or only where the helicopter set it down"
-    owner: "claude"
+    title: "A car earned with medals races anywhere; only the McMurtry is still flown (Kyle, 17 November)"
+    owner: "codex"
     lane: "SIM"
     size: "S"
-    status: "ready"
-    waiting_on: "kyle"
+    status: "building"
+    claimed_by: "Codex, lane earned-cars-anywhere, since 17 November 2026"
     needs: []
     locks: []
     details: "docs/board/cards/EARNED-CARS-ANYWHERE.md"
