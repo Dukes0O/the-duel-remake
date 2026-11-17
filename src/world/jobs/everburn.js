@@ -14,6 +14,7 @@ import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.j
 import {yardPlan} from '../scablands-yard-look.js';
 import {brandSites} from './brand-sites.js';
 import {BRAND_LINES} from './brand-rule.js';
+import {bellowsFootStart} from './bellows-rule.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -170,9 +171,9 @@ export function buildEverburn(land) {
         path:thiefPath}, path:thiefPath,
         targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
         targetHealth:20, reward:'flamethrower',
-        // SCABLANDS-LAND round 4: the car starts on open ground 163 m from the Boneyard, facing it. (It had no start of its own: the arena put it on the oval, which on
-        // the first land happened to be 163 m from the Boneyard and is 4.7 km away now.)
-        carStart:carStart(at('boneyard', 119, -112), boneyard), startLineId:'story.ember.auntie-solder.5',
+        carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
+        bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
+        startLineId:'story.ember.auntie-solder.5',
         sayNear:[{place:planeRow, radius:70, lineId:'story.ember.cinder.8'}],
         // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
         closing:['story.ember.cinder.22']})]}),

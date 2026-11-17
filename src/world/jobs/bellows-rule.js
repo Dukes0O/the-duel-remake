@@ -34,6 +34,15 @@ export const BELLOWS_LINES = Object.freeze({
   restart: "Cinder: He has reached the furnace. Again, from the Boneyard's edge.",
 });
 
+export function bellowsFootStart(car, farLamp) {
+  const dx = farLamp.x - car.x, dz = farLamp.z - car.z;
+  const distance = Math.hypot(dx, dz);
+  if (!(distance > 0)) throw new Error('The far lamp must be away from the bay.');
+  return Object.freeze({x: car.x + dx / distance * BELLOWS_RULE.footStartFromCarMetres,
+    z: car.z + dz / distance * BELLOWS_RULE.footStartFromCarMetres,
+    heading: Math.atan2(-dx, -dz)});
+}
+
 export function bellowsGrade(condition) {
   return condition >= BELLOWS_RULE.wholeFrom ? 'whole'
     : condition >= BELLOWS_RULE.patchFrom ? 'patch' : 'scorched';

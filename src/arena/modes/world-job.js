@@ -26,6 +26,9 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
+import {createFighter} from '../../onfoot.js';
+import {crewPerks} from '../../crew.js';
+import {resetFootWeaponUser} from '../../onfoot-weapons.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -172,7 +175,28 @@ export function initializeWorldJob(duel, definition) {
     state.s=pose.s;state.lateral=pose.lateral;state.prevS=pose.s;state.prevLateral=pose.lateral;
     state.speedMph=0;state.headingError=0;state.townGatePrompt='';
   }
+  initializeBellowsFootStart(duel, definition.steps[0]);
   return true;
+}
+
+// Only this job starts away from its parked car. The existing fighter checks
+// ground and solids and owns walking, weapons, knockdowns and getting back in.
+function initializeBellowsFootStart(duel, step) {
+  const start = step?.bellowsFootStart, state = duel.state;
+  if (!start) return;
+  const pose = duel.course.nearest(start.x, start.z);
+  const fighter = createFighter(duel.course, state, {...pose, yaw:start.heading});
+  const perks = crewPerks(state.crewId);
+  fighter.crewId = state.crewId || 'rook';
+  fighter.maxHealth = Math.round(fighter.health * (perks.healthMultiplier || 1));
+  fighter.health = fighter.maxHealth;
+  fighter.sprintMultiplier = perks.sprintMultiplier || 1;
+  fighter.bailTumbleSeconds = 0;
+  state.fighter = fighter;
+  state.onFoot = true;
+  state.fighterInput = {};
+  state.footPresentation = null;
+  resetFootWeaponUser(duel);
 }
 
 export function cleanupWorldJobLoan(duel) {

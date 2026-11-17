@@ -205,3 +205,50 @@ assert.equal(retry.stepState.bellows, 70);
 assert(!retry.requests.some(request => request.type === 'bellowsRestart'),
   'A third knock wins before the same step can restart at the furnace.');
 console.log('PASS Run Him Down: existing chase engine uses knocks, captions, collection and hold.');
+
+// Job 3.1: start through the real arena path, with memory-only saves. No
+// scripted walking is needed to prove the existing fighter can return to the car.
+const {App} = await import('../src/app.js');
+const {createFeatureFlags} = await import('../src/feature-flags.js');
+const {EVERBURN_JOBS} = await import('../src/world/jobs/everburn.js');
+const {stepFootTransition, fighterDistanceToCar} = await import('../src/onfoot-transition.js');
+const memory = new Map();
+globalThis.localStorage = {getItem:key => memory.get(key) ?? null,
+  setItem:(key, value) => memory.set(key, String(value)), removeItem:key => memory.delete(key)};
+globalThis.cancelAnimationFrame ??= () => {};
+const app = new App();
+app.audio.unlock = () => {};
+app.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+  'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+const savedBeforeStart = JSON.stringify([...memory]);
+const definition = EVERBURN_JOBS[2], town = EVERBURN_JOBS[1].steps[0];
+app.duel.state.wastelandGateDiscovered = true;
+assert.equal(app.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+  car:'falcone_f42', playerId:app.player.id, seed:1989, opponents:[], job:definition}), true);
+const duel = app.duel, playerState = duel.state;
+assert.equal(playerState.onFoot, true);
+assert(playerState.fighter && playerState.footTransition && playerState.footWeapons);
+const bay = duel.course.groundAt(playerState.s, playerState.lateral);
+const far = town.places.find(lamp => lamp.id === 'far').position;
+assert(Math.hypot(bay.x - town.carStart.x, bay.z - town.carStart.z) < 1e-6);
+assert(Math.abs(fighterDistanceToCar(duel) - BELLOWS_RULE.footStartFromCarMetres) < 1e-6);
+assert((playerState.fighter.x - bay.x) * (far.x - bay.x) +
+  (playerState.fighter.z - bay.z) * (far.z - bay.z) > 0,
+  'The player starts on the far lamp side of the bay.');
+assert.equal(playerState.speedMph, 0);
+assert.equal(JSON.stringify([...memory]), savedBeforeStart, 'The start writes no saved fields.');
+playerState.status = 'racing'; playerState.countdown = 0;
+const beforeWalk = {...playerState.fighter};
+playerState.fighterInput = {forward:1};
+stepFootTransition(duel, 1 / 120);
+assert(Math.hypot(playerState.fighter.x - beforeWalk.x,
+  playerState.fighter.z - beforeWalk.z) > 0, 'The normal fighter can walk from the starting point.');
+playerState.fighterInput = {};
+Object.assign(playerState.fighter, {x:bay.x, y:bay.y, z:bay.z,
+  s:playerState.s, lateral:playerState.lateral, groundY:bay.y});
+playerState.input.interact = true;
+for (let n = 0; n < 120 && playerState.onFoot; n++) stepFootTransition(duel, 1 / 120);
+assert.equal(playerState.onFoot, false, 'The normal hold-F transition returns the player to the car.');
+assert.equal(JSON.stringify([...memory]), savedBeforeStart);
+app.returnToMenu(); app.dispose?.();
+console.log('PASS Run Him Down: real arena starts the existing fighter 60 m from the parked bay car.');
