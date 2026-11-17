@@ -29,20 +29,41 @@ const near = (actual, expected, tolerance, message) => { assert.ok(Math.abs(actu
 globalThis.Path2D = class { constructor() { this.points = []; } moveTo(x, z) { this.points.push([x, z]); } lineTo(x, z) { this.points.push([x, z]); } closePath() {} };
 function recorder() {
   const texts = [], arcs = [], paths = [], rotations = [], translations = [], scales = [], images = [];
-  const state = {};
+  const state = {}, fills = [];
   const context = new Proxy({
     measureText: text => ({width: String(text).length * 7}),
+    fill: () => fills.push(state.fillStyle),
     fillText: (text, x, y) => texts.push({text: String(text), x, y}),
     arc: (x, y, r) => arcs.push({x, y, r, fill: state.fillStyle}),
     stroke: path => { if (path) paths.push({path, transform: {translate: translations.at(-1), scale: scales.at(-1)}, colour: state.strokeStyle, width: state.lineWidth}); },
     rotate: angle => rotations.push(angle), translate: (x, y) => translations.push([x, y]), scale: (x, y) => scales.push([x, y]),
     drawImage: (...args) => images.push(args),
   }, {get: (target, key) => key in target ? target[key] : key in state ? state[key] : (() => {}), set: (target, key, value) => (state[key] = value, true)});
-  return {context, texts, arcs, paths, rotations, translations, scales, images};
+  return {context, texts, arcs, paths, rotations, translations, scales, images, fills};
 }
 
 // ---- 1. The picture is made from the land's own data ---------------------------------------------------------------------------------------------
 const picture = createLandPicture({marks: landMarks({solids: SCABLANDS_SOLIDS})});
+// Horn to contact: the scout enters the real frame and close marks are painted over the player's arrow.
+{
+  const definition = EVERBURN_JOBS[0], job = createJob(definition);
+  job.stepState = {loaded:true, ember:100};
+  const scout = {id:definition.steps[0].scout.id, position:{x:60, z:0}};
+  const worldJob = {definition, job, actors:[scout]};
+  const state = {s:0, lateral:0, arena:{mode:'world-job', worldJob}};
+  const course = {worldAt:() => ({x:0, z:0, heading:Math.PI / 2})};
+  const frame = () => worldMapFrame({state, course, knowledge:createKnowledge(), picture, canvas:null});
+  check(frame().actors.length === 0, 'the scout is unmarked before its horn');
+  job.stepState.scoutWarned = true;
+  for (const distance of [250, 60, 10]) {
+    scout.position.x = distance;
+    const rec = recorder(), current = frame();
+    check(current.actors.some(mark => mark.kind === 'rider' && mark.position === scout.position), 'the warned scout enters the drawn map');
+    drawSmallMap(rec.context, current);
+    const arrow = rec.fills.lastIndexOf('#fff1d0'), rider = rec.fills.lastIndexOf('#ef9f75');
+    check(arrow >= 0 && rider > arrow, `the scout at ${distance} m is drawn above the car arrow`);
+  }
+}
 const clock = () => performance.now();
 const began = clock();
 const buildMs = picture.build();
