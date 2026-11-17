@@ -1,6 +1,9 @@
 const LABELS = Object.freeze({ swing: 'Swing', boom: 'Boom', arm: 'Arm', bucket: 'Bucket',
   forward: 'Drive forward', steer: 'Steer' });
 
+export const DIG_MACHINE_HELP = 'Press Q to choose another machine. Press Tab to change between driving and working.';
+export const DIG_MACHINE_NAMES = 'excavator, dump truck, trencher, drill rig, dozer, road roller, paver and Mabel the boring machine';
+
 export function machineControlsView({ mode = 'drive', active = null } = {}) {
   const work = mode === 'work';
   const items = work ? ['swing', 'boom', 'arm', 'bucket'] : ['forward', 'steer'];

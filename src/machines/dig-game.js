@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {machineDefinition} from './content/machines.js';
 import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
-import {machineControlsView} from './controls-view.js';
+import {machineControlsView, DIG_MACHINE_HELP} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, createBorerSurveyCache} from './borer.js';
@@ -272,9 +272,14 @@ function disposeScene(group){
   for(const mat of materials)mat.dispose();
 }
 
+/** Block Dig key presses from the game underneath, except the sound toggle. */
+export function gateDigKey(event) {
+  if (event.type === 'keydown' && event.code !== 'KeyM') event.stopImmediatePropagation();
+}
+
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
-export async function startTheDig({app,onExit=()=>{}}={}){
-  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">Tab: drive or work. Q: next machine. C: camera.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
+export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new THREE.WebGLRenderer(options)}={}){
+  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">${DIG_MACHINE_HELP} Press C to change the view.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   const dialStyle=document.createElement('style');dialStyle.textContent=BORER_DIAL_CSS;host.append(dialStyle);
   const dial=document.createElement('div');dial.className='the-dig-head';dial.hidden=true;
   dial.innerHTML='<span>Head speed</span><svg viewBox="0 0 80 46" role="img"><path d="M 6 40 A 34 34 0 0 1 74 40"/><path class="good" d="M 57 11 A 34 34 0 0 1 74 40"/><line x1="40" y1="40" x2="10" y2="40"/></svg><label>Thrust <meter min="0" max="1" value="0"></meter></label>';
@@ -309,7 +314,13 @@ export async function startTheDig({app,onExit=()=>{}}={}){
   const sun=new THREE.DirectionalLight(0xffddac,3.3);sun.position.set(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
   Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:1,far:240});sun.shadow.bias=-.00035;sun.shadow.normalBias=.03;scene.add(sun,sun.target);
   const camera=new THREE.PerspectiveCamera(55,1,.1,900);
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
+  let renderer;
+  try { renderer=createRenderer({canvas,antialias:true,alpha:false}); }
+  catch (error) {
+    window.removeEventListener('storage',onStorage);unsubscribeMapping();host.remove();closeDigSandbox();
+    throw error;
+  }
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   const world=new THREE.Group();scene.add(world);
   const dirtTexture=new THREE.TextureLoader().load('/assets/textures/ground-color.jpg');dirtTexture.colorSpace=THREE.SRGBColorSpace;dirtTexture.wrapS=dirtTexture.wrapT=THREE.RepeatWrapping;dirtTexture.anisotropy=8;
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
@@ -349,6 +360,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     return 'trench';
   };
   function keyboard(event,down){
+    gateDigKey(event);
     if(['Tab','Escape','KeyQ','KeyC','Space','KeyW','KeyA','KeyS','KeyD','KeyI','KeyK','KeyJ','KeyL','KeyE','KeyF','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))event.preventDefault();
     if(!down&&event.code==='Space')keys.Space=false;
     else if(down&&!event.repeat&&event.code==='Escape'){event.stopImmediatePropagation();stop();return;}
@@ -624,7 +636,7 @@ export async function startTheDig({app,onExit=()=>{}}={}){
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  return {stop,get simulation(){return sim;},get failed(){return failed;},host,
+  const result={stop,get simulation(){return sim;},get failed(){return failed;},host,
     requestCentreSample(){sampleCentre=true;},
     setCheckOverview(value){checkOverview=!!value;},
     setCheckFarMouth(value){checkFarMouth=!!value;},
@@ -643,4 +655,6 @@ export async function startTheDig({app,onExit=()=>{}}={}){
       }));
       return hit ? {x:hit.point.x,y:hit.point.y,z:hit.point.z,distance:hit.distance,mesh:hit.object.name} : null;
     },surfaceHeight:(x,z)=>scablandsSurfaceHeightAt(x,z,sim.ground),readyToWork:Math.hypot(sim.borer.x-createDigBorer(sim.ground).x,sim.borer.z-createDigBorer(sim.ground).z)>=31 && borerHasFace(sim.ground,sim.borer,sim.borer.heading),pixels:camera.userData.centrePixels,ground:nearGround,machine:machineViews.get('borer')?.body,lining:tunnelLining,portals};}};
+  host.digForCheck=result;
+  return result;
 }

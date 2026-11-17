@@ -1,20 +1,14 @@
 import * as THREE from 'three';
 import {drillMaterialAt} from './drill.js';
 
-// Short, distinct tones let the player hear the ground without reading the display.
-const DRILL_TONES = Object.freeze({
-  'drill-engine':[75, 'sawtooth', 0.18], 'drill-feed':[135, 'sawtooth', 0.12],
-  'drill-clay':[190, 'triangle', 0.1], 'drill-gravel':[310, 'square', 0.07],
-  'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
-  'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
-});
+import {DIG_MACHINE_TONES} from '../sound-bank.js';
 
 /** Play through the game's own mixer, with each sound limited independently. */
 export function createDrillSounds(audio) {
   const next = new Map(), voices = new Set();
   return {
     play(cue) {
-      const spec = DRILL_TONES[cue], ctx = audio?.context;
+      const spec = DIG_MACHINE_TONES[cue], ctx = audio?.context;
       if (!spec || !ctx || !audio.master || audio.muted || audio.paused || ctx.state !== 'running') return;
       const now = ctx.currentTime;
       if (now < (next.get(cue) ?? 0)) return;

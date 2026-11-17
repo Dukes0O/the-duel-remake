@@ -7,8 +7,87 @@ import {machineLoadVolume} from '../src/machines/tools.js';
 import {machineToolPosition} from '../src/machines/machine.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {scablandsGroundEdit,scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
+import {MACHINE_SOUND_CUES} from '../src/machines/view.js';
+import {DIG_MACHINE_TONES,SOUND_BANK} from '../src/sound-bank.js';
+import {page as digScenarioPage} from './scenarios/the-dig.mjs';
 
-const flags=enabled=>({enabled:name=>name==='wasteland-town'&&enabled});
+const {gateDigKey, startTheDig} = await import('../src/machines/dig-game.js');
+for (const type of ['keydown', 'keyup']) {
+  for (const code of ['KeyW', 'KeyE', 'Space', 'KeyV', 'Escape', 'Digit1', 'KeyM']) {
+    let stopped = false;
+    gateDigKey({type, code, stopImmediatePropagation() { stopped = true; }});
+    assert.equal(stopped, type === 'keydown' && code !== 'KeyM', `${type} ${code} follows the Dig input gate`);
+  }
+}
+{
+  const held = new Set();
+  let digOpen = false;
+  const send = (type, code) => {
+    let stopped = false;
+    const event = {type, code, stopImmediatePropagation() { stopped = true; }};
+    if (digOpen) gateDigKey(event);
+    if (!stopped) type === 'keydown' ? held.add(code) : held.delete(code);
+  };
+  send('keydown', 'KeyW');
+  assert.ok(held.has('KeyW'), 'the game sees a key held before the Dig opens');
+  digOpen = true;
+  send('keyup', 'KeyW');
+  assert.ok(!held.has('KeyW'), 'a release in the Dig clears the key held beneath');
+  send('keydown', 'KeyA');
+  assert.ok(!held.has('KeyA'), 'a key pressed in the Dig never reaches the game beneath');
+  send('keyup', 'KeyA');
+  assert.ok(!held.has('KeyA'), 'the game beneath still has no held key after release');
+}
+// A failed renderer must leave neither the overlay nor either mapping listener behind.
+{
+  const originals = {document: globalThis.document, window: globalThis.window, localStorage: globalThis.localStorage};
+  const listeners = new Map(), nodes = [];
+  let reads = 0;
+  const makeNode = () => ({style:{}, append() {}, after() {}, remove() { this.removed = true; },
+    querySelector() { return makeNode(); }});
+  globalThis.document = {createElement: makeNode, body:{append(node) { nodes.push(node); }}};
+  globalThis.window = {addEventListener(type, fn) { listeners.set(type, fn); },
+    removeEventListener(type, fn) { if (listeners.get(type) === fn) listeners.delete(type); }};
+  globalThis.localStorage = {getItem() { reads++; return null; }, setItem() {}};
+  try {
+    const failure = new Error('renderer failed');
+    await assert.rejects(startTheDig({createRenderer() { throw failure; }}), error => error === failure);
+    assert.equal(nodes[0].removed, true, 'failed start removes its host');
+    assert.equal(listeners.has('storage'), false, 'failed start removes its storage listener');
+    const before = reads;
+    const {saveMachineInput} = await import('../src/input-setup.js');
+    saveMachineInput({deviceId:'test', axes:{swing:0}}, globalThis.localStorage);
+    assert.equal(reads, before, 'failed start unsubscribes from mapping changes');
+  } finally {
+    for (const [name, value] of Object.entries(originals)) {
+      if (value === undefined) delete globalThis[name]; else globalThis[name] = value;
+    }
+  }
+}
+
+for (const cue of [...Object.values(MACHINE_SOUND_CUES), ...Object.keys(DIG_MACHINE_TONES)]) {
+  assert.ok(SOUND_BANK[cue], `the Dig's machine cue ${cue} exists in the sound bank`);
+  assert.equal(SOUND_BANK[cue].flag, 'the-dig', `${cue} is available with the Dig switch`);
+  assert.ok(SOUND_BANK[cue].file || SOUND_BANK[cue].layers?.length, `${cue} has sound to play`);
+}
+
+for (const expression of Object.values(digScenarioPage)) {
+  assert.doesNotThrow(() => new Function(`return ${expression};`), 'Dig browser expression parses');
+}
+
+// The simulation emits literal event names plus one cue per drill material.
+for (const file of ['borer.js', 'dig-sandbox.js', 'drill.js', 'roads.js']) {
+  const source = await readFile(new URL(`../src/machines/${file}`, import.meta.url), 'utf8');
+  for (const match of source.matchAll(/cue:\s*['"]([^'"]+)['"]/g))
+    assert.ok(DIG_MACHINE_TONES[match[1]], `${file} cue ${match[1]} has a playable recipe`);
+}
+const gameSource = await readFile(new URL('../src/machines/dig-game.js', import.meta.url), 'utf8');
+for (const match of gameSource.matchAll(/(?:drillSounds|roadSounds|borerSounds)\.play\(\s*['"]([^'"]+)['"]/g))
+  assert.ok(DIG_MACHINE_TONES[match[1]], `Dig player cue ${match[1]} has a playable recipe`);
+for (const material of ['clay', 'gravel', 'rock'])
+  assert.ok(DIG_MACHINE_TONES[`drill-${material}`], `${material} has a drill sound`);
+
+const flags=enabled=>({enabled:name=>name==='the-dig'&&enabled});
 const home=featureFlags=>yardHomeScreen({profile:{wasteland:{}},playerName:'Test',escapeHTML:value=>String(value),featureFlags});
 assert.doesNotMatch(home(flags(false)),/yard-the-dig|THE DIG/,'the yard must not show THE DIG when its switch is off');
 assert.match(home(flags(true)),/data-action="yard-the-dig">THE DIG/,'the enabled yard shows its entry');
