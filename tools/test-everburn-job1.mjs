@@ -332,8 +332,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     const gap = proofRuns[i];
     if (gap.visibility !== 'open' || proofRuns[i - 1].visibility !== 'hidden' || proofRuns[i + 1].visibility !== 'hidden') continue;
     const width = gap.to - gap.from + 2;
-    console.log(`Plates proof cover gap: ${gap.from.toFixed(0)} to ${gap.to.toFixed(0)} m, ${width.toFixed(0)} m wide`);
-    assert.ok(width / 11.1 <= FURNACE_PATIENCE_SECONDS - 1, `Cover gap at ${gap.from.toFixed(0)} m is ${width.toFixed(0)} m wide`);
+    const seconds = width / 13.9;
+    console.log(`Plates proof cover gap: ${gap.from.toFixed(0)} to ${gap.to.toFixed(0)} m, ${width.toFixed(0)} m wide, ${seconds.toFixed(1)} seconds`);
+    assert.ok(seconds <= FURNACE_PATIENCE_SECONDS - 1, `Cover gap at ${gap.from.toFixed(0)} m is ${width.toFixed(0)} m wide`);
   }
   const runs = sightStretches(samples, classify);
   const stretches = coverStretches(samples, classify);

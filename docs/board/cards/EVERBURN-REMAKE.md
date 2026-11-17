@@ -637,7 +637,7 @@ asked was stopping in the right spot three times. That is too near what Kyle rej
 7. **The first two kilometres** are one straight with nothing on it, a minute and a half at one speed.
 
 **Slice 5, the cures (Codex builds; rulings are Claude's):**
-The furnace waits eight seconds (was six): the gap between the plates' first two covers is 84 m, which took the whole six at 50 km/h.
+The furnace waits eight seconds (was six): the gap between the plates' first two covers is 84 m, which took the whole six at 50 km/h. At 50 km/h the widest gap takes 6.6 seconds; at 40 km/h it takes 8.3, so a driver must hold between about 42 and 50 km/h there. Claude's hand drive of the plates decides whether eight is enough.
 - **Cinder:** the hand-over counts within 12 m (was 8). Her brazier moves so that it is at least 6 m clear of the straight
   line from the job's start to the middle of the yard's gate and of the line from her to that gate. A check walks a ring of
   12 m round her and shows a car can stand on at least three quarters of it.
