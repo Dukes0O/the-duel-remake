@@ -13,3 +13,4 @@ Changed assertions: Easy unfinished reward -300 to 0; losing best base -300 to 0
 Changed assertions: Easy timeout balance before minus 300 to unchanged (two checks); Easy combat-test charge 300 to 0, reward -300 to 0, balance 200 to 500.
 Sound: no new event or cue.
 Removed: the ten-day closure and old buyback numbers. The Easy Duel loss charge and its old screen wording.
+Changed assertions: fire menu 7 to 2 days, 7,000 to 2,000 credits, reopen day 10 to 3; fixtures follow the shorter closure.
