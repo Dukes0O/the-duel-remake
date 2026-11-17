@@ -6,6 +6,10 @@ export const BRAND_RULE = Object.freeze({
   lampRadius: 2,
   lampSeconds: 2,
   standingSpeed: 0.1,
+  meetingRadius: 8,
+  stoppedKmh: 1,
+  endingSeconds: 9,
+  theftAtSeconds: 5,
   duskSeconds: 240,
   ashWaves: Object.freeze([1, 2]),
   smotherRadius: 2,
@@ -36,6 +40,17 @@ export const BRAND_RULE = Object.freeze({
     northAlleyNorth: 60,
   }),
   pay: Object.freeze({one: 100, two: 70, many: 50}),
+});
+
+export const BRAND_LINES = Object.freeze({
+  lamps: "Auntie Solder: The fire is in. Now the lamps. Three of them, dark a year.",
+  alleys: "Auntie Solder: You can't get that car down my alleys. You've legs, haven't you?",
+  brand: 'Cinder: Hold F to step out. Take a brand from the hearth.',
+  awake: 'Auntie Solder: Three lamps. Now we can see how bad it is.',
+  thief: "Auntie Solder: Thief! He's got my bellows!",
+  pump: 'Auntie Solder: They are at the pump lamp!',
+  tower: 'Auntie Solder: They are at the tower lamp!',
+  far: 'Auntie Solder: They are at the far lamp!',
 });
 
 const spot = value => value?.position ?? value;
@@ -136,6 +151,21 @@ export function brandSentence(brandsUsed) {
 // Ash impacts and lamp smothering are facts supplied by the job's opponents.
 export function stepBrand(step, state, view, dt) {
   const rule = BRAND_RULE;
+  // The existing caption queue owns the timing of Auntie's three sentences.
+  // The meeting is optional so rule fixtures can exercise the load directly.
+  if (step.meeting && !state.brandBriefed) {
+    const requests = [{type: 'marker', place: step.meeting}];
+    const stopped = !view.onFoot && Math.abs(view.speedKmh ?? 0) < rule.stoppedKmh;
+    if (!state.brandMeeting && stopped && distance(view.player?.position, spot(step.meeting)) <= rule.meetingRadius) {
+      requests.push(...['lamps', 'alleys', 'brand'].map(key => ({type: 'say', lineId: `brand.${key}`})));
+      return {state: {...state, brandMeeting: true}, complete: false, events: [], requests};
+    }
+    if (!state.brandMeeting || (state.lineQueue?.length ?? 0) > 0 || (state.lineRemaining ?? 0) > 0)
+      return {state, complete: false, events: [], requests};
+    state = {...state, brandBriefed: true};
+  }
+  // Once the town wakes, neither ash nor a burning brand can undo arrival.
+  if (state.townEnding) return stepBrandEnding(state, dt);
   const next = {...state, lamps: {...state.lamps},
     brandSeconds: state.brandSeconds ?? 0, brandsUsed: state.brandsUsed ?? 0,
     brandElapsed: state.brandElapsed ?? 0};
@@ -147,6 +177,8 @@ export function stepBrand(step, state, view, dt) {
     next.brandAsh = ash.state;
     events.push(...ash.events);
     requests.push(...ash.requests);
+    for (const event of ash.events) if (event.type === 'lampThreatened')
+      requests.push({type: 'say', lineId: `brand.${event.id}`});
   }
   const here = view.onFoot ? view.fighter?.position : null;
   const carried = next.brandsUsed > 0;
@@ -205,10 +237,30 @@ export function stepBrand(step, state, view, dt) {
     events.push({type: 'lit', id: lamp.id});
   }
   const unlit = lamps.filter(candidate => !next.lamps[candidate.id]);
+  if (step.townEnding && lamps.length > 0 && unlit.length === 0) {
+    return {state: {...next, townEnding: true, endingElapsed: 0}, complete: false,
+      events: [...events, {type: 'townWoke'}],
+      requests: [...requests, {type: 'say', lineId: 'brand.awake'}]};
+  }
   const nearest = places => places.reduce((best, place) =>
     distance(here, spot(place)) < distance(here, spot(best)) ? place : best, null);
   const marker = next.brandSeconds > 0 ? nearest(unlit)
     : nearest([step.hearth, ...lamps.filter(candidate => next.lamps[candidate.id])]);
   if (marker) requests.push({type: 'marker', place: marker});
   return {state: next, complete: lamps.length > 0 && unlit.length === 0, events, requests};
+}
+
+function stepBrandEnding(state, dt) {
+  const elapsed = Math.min(BRAND_RULE.endingSeconds, (state.endingElapsed ?? 0) + dt);
+  const events = [], requests = [];
+  const theft = !state.theftStarted && elapsed >= BRAND_RULE.theftAtSeconds;
+  if (theft) {
+    events.push({type: 'brandTheft'});
+    requests.push({type: 'say', lineId: 'brand.thief'});
+  }
+  const complete = elapsed >= BRAND_RULE.endingSeconds;
+  if (complete) events.push({type: 'brandArrived', brandsUsed: state.brandsUsed,
+    pay: brandPay(state.brandsUsed), sentence: brandSentence(state.brandsUsed)});
+  return {state: {...state, endingElapsed: elapsed, theftStarted: state.theftStarted || theft},
+    complete, events, requests};
 }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {BRAND_RULE, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
+import {BRAND_RULE, BRAND_LINES, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
@@ -208,3 +208,60 @@ assert(walkMetres >= BRAND_RULE.farWalkMin && walkMetres <= BRAND_RULE.farWalkMa
   `Far lamp alley length: ${walkMetres}`);
 assert.deepEqual(sites, brandSites(), 'Sites repeat without a random draw.');
 console.log(`PASS Light the Town: real lamp clearance and ${walkMetres.toFixed(1)} m alley route.`);
+
+// Job 2.1: the stop is made in the car, before a brand can be taken. The
+// existing caption sequencer says the three sentences once, in order.
+const meetingStep = {...step, meeting: hearth};
+const waiting = (state, view) => stepOnFoot(meetingStep, state, view, 0);
+assert.equal(waiting({}, foot(0)).state.brandMeeting, undefined);
+assert.equal(waiting({}, {player: hearth, speedKmh: 1}).state.brandMeeting, undefined);
+assert.equal(waiting({}, {player: {position: {x: 8.01, z: 0}}}).state.brandMeeting, undefined);
+const greeted = waiting({}, {player: {position: {x: 8, z: 0}}});
+assert.equal(greeted.state.brandMeeting, true);
+assert.deepEqual(greeted.requests.filter(request => request.type === 'say').map(request => request.lineId),
+  ['brand.lamps', 'brand.alleys', 'brand.brand']);
+assert.equal(waiting({...greeted.state, lineQueue: ['brand.brand']}, foot(0)).state.brandsUsed, undefined);
+assert.equal(waiting({...greeted.state, lineRemaining: .1}, foot(0)).state.brandsUsed, undefined);
+assert.equal(waiting(greeted.state, foot(0)).state.brandsUsed, 1);
+const meetingDef = {id: 'brand-meeting-check', captions: Object.fromEntries(
+  Object.entries(BRAND_LINES).map(([id, text]) => [`brand.${id}`, text])), steps: [meetingStep]};
+let meetingJob = createJob(meetingDef);
+const said = [];
+for (let tickIndex = 0; tickIndex < 12; tickIndex++) {
+  meetingJob = stepJob(meetingJob, {player: hearth, speedKmh: 0}, 1);
+  said.push(...meetingJob.requests.filter(request => request.type === 'say').map(request => request.lineId));
+}
+assert.deepEqual(said, ['brand.lamps', 'brand.alleys', 'brand.brand']);
+assert.equal(meetingJob.stepState.brandBriefed, true);
+assert.equal(meetingJob.stepState.brandsUsed, 0);
+assert.equal(meetingDef.captions[said[0]], BRAND_LINES.lamps);
+
+// Job 2.7: nine seconds from the third lamp, theft at five seconds, and
+// a single result containing the brands used before the engine clears state.
+const endingStep = {...step, townEnding: true};
+const endTick = (state, dt = 0) => stepOnFoot(endingStep, state,
+  foot(10, {smotheredLamps: ['pump'], brandAshed: true}), dt);
+const wake = stepOnFoot(endingStep, all, foot(10), 0);
+assert.equal(wake.complete, false);
+assert(wake.events.some(event => event.type === 'townWoke'));
+assert.deepEqual(wake.requests.filter(request => request.type === 'say'), [{type: 'say', lineId: 'brand.awake'}]);
+const beforeTheft = endTick(wake.state, 4.99);
+assert.equal(beforeTheft.events.length, 0);
+const theft = endTick(beforeTheft.state, .01);
+assert.equal(theft.complete, false);
+assert.deepEqual(theft.events, [{type: 'brandTheft'}]);
+assert.equal(theft.state.lamps.pump, true, 'Arrival freezes the lit lamps.');
+assert.equal(theft.state.brandSeconds, wake.state.brandSeconds);
+assert.equal(endTick(theft.state, 3.99).events.length, 0);
+const arrived = endTick(theft.state, 4);
+assert.equal(arrived.complete, true);
+assert.deepEqual(arrived.events, [{type: 'brandArrived', brandsUsed: 1, pay: 100,
+  sentence: 'You lit the town with one brand.'}]);
+let endingJob = {...createJob({id: 'brand-ending-check', steps: [endingStep]}), stepState: all};
+endingJob = stepJob(endingJob, foot(10), 0);
+endingJob = stepJob(endingJob, foot(10), 5);
+endingJob = stepJob(endingJob, foot(10), 4);
+assert.equal(endingJob.done, true);
+assert(endingJob.events.some(event => event.type === 'brandArrived' && event.pay === 100));
+assert.equal(endingJob.events.filter(event => event.type === 'done').length, 1);
+console.log('PASS Light the Town: stop, ordered briefing, nine-second ending, theft and result event.');
