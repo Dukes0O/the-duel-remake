@@ -11,5 +11,5 @@ Scout warning, stopped and home lines are captions only; the chase line and ride
 On 7a4c2fcb5 plus these changes, the new line, map and scout checks passed; the job suite then failed on the known bed without a scoop (0 fire, 2 rams).
 For Claude: recorded Rook lines, browser pictures and hand chase remain; the browser cannot run in this lane.
 Cinder and forge rings sit above the ground from 40 m; the ring checks passed on fc5c25194 plus this change.
-Remaining: scenario and final checks.
+The picture scenario now loads the pot before the rider views and includes both scout distances and the awake camp; 49 page expressions parsed in Node. Final checks remain.
 Removed: automatic camp pursuit while asleep and charging through a standing fence.
