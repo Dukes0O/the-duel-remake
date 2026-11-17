@@ -915,6 +915,92 @@ Within 40 m her driver says one line, once: "Get that fire to the forge and Bess
 **Order, if Kyle agrees:** the brazier and Bess (small); the glass on the plates; the salt riders (after the pan's
 seventeen sinking places are cured); the bed. Claude drives each by hand in the visible window, sound on, before the next.
 
+**Kyle, 17 November 2026, on being shown this:** "Let's build the design and get it off to the races." Building as slice 8
+(Codex, lane `everburn-ways`): the brazier and Bess, the glass, the salt riders, the bed, in that order.
+
+## Jobs 2 and 3 remade: one evening in Tin Town (Claude's design, 17 November 2026)
+
+Kyle, the same day: "I'd really like to get going with the next few pieces of the story too. we're stuck on the first
+run." Jobs 2 and 3 are designed together because the second is the reason for the third: the player sees the theft
+happen and runs for the car. The job ids and the saved shape stay as they are. Numbers are first guesses for Claude's drive.
+
+**What the story's verb is.** In every job of the Everburn the player carries fire or keeps it alive. Job 1: a pot on a
+car. Job 2: a brand in the hand. Job 3: getting back the thing that feeds the fire.
+
+### Job 2, "Light the Town" (was "Get Out and Walk")
+
+**The reason, met at a place.** The job starts where job 1 ended: the car in the bay, the ember small in the hearth.
+Auntie Solder stands at the forge, a figure, as Cinder stands at the yard. The player stops beside her. She says the
+town's three lamps have been dark for a year, the sun is going, and the alleys are too narrow for a car. During the job
+the sky goes from late afternoon to dusk.
+
+**The load, seen.** The player steps out and takes a brand from the hearth: a stick with fire on its end, seen in the
+hand, lighting the ground round the player. It burns for 90 seconds, shown as a bar. Burnt out, it is relit at the hearth
+or at any lamp already alight.
+
+**Something to do.** Three lamps, each a glass lantern on a post that stands on the ground and reads as a lamp at first
+sight: at the pump (60 m from the forge), on the gate tower's walkway (up a ladder), and at the far wall (150 m, through
+the alleys). A lamp is lit by holding the brand to it for two seconds.
+- **A lit lamp shows what the dark hid.** Its light falls on 25 m of ground. People come to their doors in it. It also
+  shows Ash Men who came over the wall at dusk with sacks of ash: one after the first lamp, two after the second.
+- **The Ash Men smother fire.** One goes for a lit lamp and one for the brand. A lamp takes one four seconds to smother;
+  the player is told ("Auntie Solder: They are at the pump lamp!") and sees it dim. A smothered lamp must be lit again.
+  Thrown ash that lands on the player puts the brand out.
+- **The player drives them off** with the brand itself (a swing within 2 m sends one running for the wall) or with
+  Cinder's Hand Flamer, lent at the start (6 m). Nobody dies on the screen; a burnt Ash Man drops the sack and goes over
+  the wall. A player who is knocked down gets up at the hearth with a fresh brand (on Easy, at the last lamp lit).
+- **Done when all three lamps are alight at once.**
+
+**A result that differs.** Paid by brands used: one brand 100 scrap, two 70, three or more 50.
+
+**The arrival.** With the third lamp the town's windows light, one cluster after another, and the people come out. Auntie:
+"Three lamps. Now we can see how bad it is." Then, in the new light, a man is seen running from the forge with the bellows
+on his back, out of the gate to a car. "Thief! He's got my bellows!" The job ends on that sight.
+
+**Sound cues:** `world.brand.catch` (a lamp or the brand lights), `world.brand.out`, `world.ash.throw`, `world.town.wake`.
+
+### Job 3, "Run Him Down"
+
+**It starts on foot,** in the town, at the moment job 2 ended, with the thief's car pulling away and the player's car 60 m
+off in the bay. The thief's lead is whatever the run to the car costs. The Boneyard is 3.5 km south-west by its road.
+
+**The load is on his car, and on the screen.** The bellows are seen strapped to the thief's roof and shown as a bar,
+"BELLOWS", whole at 100. **Fire spoils them.** Cinder says so once: "Not the flamethrower! Leather burns." Flame on his car
+takes 15 a second from the bellows. Ramming him, or pushing him into a wreck, is the way: three hard knocks (20 km/h or
+more of meeting speed) stop him.
+
+**On the road** he is as fast as the player's car less 5 km/h, so the player closes slowly, and he swerves to block. Twice
+he throws a sack of ash from his window: a grey cloud 30 m long lies on the road for six seconds and the player sees
+nothing inside it. Round it or through it blind.
+
+**In the Boneyard** he leaves the road and goes through the planes: under a wing, through a fuselage with both ends
+open, round the plane row. He knows the gaps and takes them at 60 km/h; a car that follows his line gets through, and one
+that cuts a corner meets a wreck. This is where a careful driver catches him.
+
+**The danger that ends it.** Old Smoke's furnace stands at the Boneyard's far end, the wing gap, and is seen there from
+the plane row with its smoke. Two riders come out from it to meet him when he is 400 m from it and ram the player. If he
+reaches the furnace the bellows are gone: the job starts again from the Boneyard's edge with him 150 m ahead.
+
+**The arrival.** Stopped, he climbs out and runs. The player stops beside his car and the bellows go onto the player's
+car, seen. The furnace sounds its horn, turns and rolls away out of the far end. Cinder: "He was taking the bellows to the
+furnace. There it goes, out the far end." The job holds nine seconds for that, as job 1 holds for the forge.
+
+**A result that differs.** Paid by the bellows: 80 or more 120 scrap ("Those are good bellows."), 40 to 79 80 ("They will
+patch."), under 40 50. The flamethrower is kept either way, as now.
+
+**Sound cues:** `world.thief.ash` (a sack bursts), `world.bellows.load`; the furnace's horn stands.
+
+### What these two need that the game does not have
+
+- Drawing, Claude's, in code: the lamp, the brand and its light, dusk over the Scablands, the windows, the ash cloud, the
+  bellows on a roof, Auntie Solder at the forge (her figure exists in the folk kit).
+- Rules, Codex's: the brand, lamps that can be smothered, Ash Men on foot who smother and flee, the thief's blocking and
+  his line through the planes, the bellows' bar, the furnace as the place that ends the chase.
+- Checked by rules without driving, then one scripted run of each job to prove it can be finished, then Claude's play by
+  hand with the sound on, then Kyle's.
+
+**Job 4, Slow Ride,** is next after these and is not designed here. Its lead-up is already in: Big Bess is met in job 1.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
