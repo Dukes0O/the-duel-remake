@@ -242,6 +242,20 @@ function updateJobActors(duel, worldJob, dt) {
     updateJobActor(duel, worldJob, step.scout, 0);
     const scout = worldJob.actors.find(actor => actor.id === step.scout.id);
     const car = position(duel, duel.state);
+    const dxCar = car.x - scout.position.x, dzCar = car.z - scout.position.z;
+    const carDistance = Math.hypot(dxCar, dzCar);
+    if (scout.health > 0 && !duel.state.onFoot && carDistance > 0 && carDistance <= 3 &&
+        Math.abs(car.y - scout.position.y) < 3) {
+      const pose = worldPose(duel, duel.state);
+      const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+      const vx = Math.sin(pose.heading) * playerSpeed - Math.sin(scout.heading) * (scout.speed || 0);
+      const vz = Math.cos(pose.heading) * playerSpeed - Math.cos(scout.heading) * (scout.speed || 0);
+      const closing = -(vx * dxCar + vz * dzCar) / carDistance;
+      if (closing > 0) {
+        worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, closing * 3.6);
+        stopScout(worldJob, scout);
+      }
+    }
     if (scout.health > 0 && !duel.state.onFoot && !worldJob.job.stepState.scoutWarned &&
         Math.hypot(car.x - scout.position.x, car.z - scout.position.z) <= step.scout.sightRadius &&
         roadRiderSight(scout, dt, 0, () => sees(scout.position, car, {heightAt:scablandsSurfaceHeightAt,

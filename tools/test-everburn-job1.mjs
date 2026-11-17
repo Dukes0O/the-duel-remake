@@ -129,6 +129,33 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.deepEqual(scout.position, wreckPosition, 'the wreck stays beside the road');
 }
 
+// A ram from behind stops the scout and uses the cars' meeting speed for the pot.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  let car = {...LAND.yard};
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, scoutWarned:true};
+  stepWorldJob(duel, 0);
+  const scout = world.actors.find(actor => actor.id === 'ash-scout');
+  scout.heading = 0;
+  scout.speed = 70 / 3.6;
+  car = {...scout.position, z:scout.position.z - 2};
+  state.speedMph = 85 / 1.609344;
+  state.headingError = 0;
+  stepWorldJob(duel, 0);
+  assert.equal(world.job.stepState.scoutStopped, true);
+  assert.equal(scout.health, 0);
+  stepWorldJob(duel, 0);
+  assert.ok(Math.abs(world.job.stepState.jolt - 2.1) < 1e-8, 'a 15 km/h meeting costs 2.1 fire');
+  const wreck = {...scout.position};
+  stepWorldJob(duel, 0.1);
+  assert.deepEqual(scout.position, wreck);
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
