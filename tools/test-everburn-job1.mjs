@@ -1753,6 +1753,8 @@ for (const [index, barrier] of step.barriers.entries()) {
 // The flame catches a fence edge in range and cone, but not a fence outside either boundary.
 {
   const origin = {x:0, z:0};
+  assert.equal(flameHitsSegment(origin, 0, [{x:-6, z:9.6}, {x:6, z:9.6}], 0.7), true, 'the flame reaches the near face');
+  assert.equal(flameHitsSegment(origin, 0, [{x:-6, z:10}, {x:6, z:10}], 0.7), false, 'the near face is out of reach');
   assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9}, {x:12, z:9}]), true);
   assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9.01}, {x:12, z:9.01}]), false);
   assert.equal(flameHitsSegment(origin, 0, [{x:3, z:6}, {x:12, z:6}]), false);
