@@ -822,6 +822,25 @@ Before Kyle is asked again: Claude drives every way by hand with the sound on, a
 or answered here. No further slice goes to Codex until Claude has done that and written what the job is meant to be on
 each way.
 
+**Claude's drive after Kyle's try (17 November 2026, afternoon): the East Road's chase only, so far.** Measured in the
+running game:
+
+- **Every Ash Men car is drawn at twice its depth below zero** (Kyle's 9, and why nobody saw a rider). The scout's place
+  in the rules was at height -2.05 m and its drawn car at -4.09 m; at its post, where the ground is at -0.23 m, it is
+  drawn 0.23 m into the ground. The bridge's rider (rules -1.51 m) is drawn 1.5 m under the deck. The camp's rider, on
+  ground at 0.03 m, shows. Claude chased the scout at 97 km/h, closed from 234 m to nothing and struck it, without once
+  seeing it; the small map did not mark it either. The chase works by the rules (it cost 5 of the fire on Easy and
+  stopped the scout) and cannot be played.
+- **The crowd** (Kyle's 1): the land has no sound bed of its own, so the game plays the arena's, which has the crowd in
+  it. The card of 14 November asked for a wind bed; it was never built.
+- **"A little closer: stop inside the ring."** works: Claude stopped short twice and was told each time.
+- **The salt pan's way leaves the yard to the south**, through the yard itself, not by the gate; Claude's follower could
+  not take it. Not driven: the plates, the salt pan, the river bed.
+- **By the job's own definition nobody acts on three of the four ways.** The only riders are the two at the East Road's
+  fences and the scout; the furnace's two riders come only after eight seconds in its sight on the plates. The salt pan
+  has wind and the river bed has cold, both of which a player feels only as a bar going down. That is Kyle's 12, and it
+  is the design's fault, not a bug: Claude wrote hazards for those ways and no opponents.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
