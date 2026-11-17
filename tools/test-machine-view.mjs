@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {readFileSync} from 'node:fs';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {machineDefinition} from '../src/machines/content/machines.js';
 import {createMachineState} from '../src/machines/machine.js';
 import {createMachineView, MACHINE_SOUND_CUES} from '../src/machines/view.js';
 import {MACHINE_CAMERA_MODES, updateMachineCamera} from '../src/machines/camera.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {createDrillView} from '../src/machines/drill-view.js';
+import {updateBorerCamera} from '../src/machines/dig-game.js';
 
 const definition = machineDefinition('excavator');
 const model = new THREE.Group();
@@ -60,6 +64,34 @@ updateMachineCamera(camera, definition, state, 'chase', {chaseOrbit:35 * Math.PI
 assert.ok(camera.position.distanceTo(straight.position) > 1, 'excavator chase view moves to one side');
 assert.equal(updateMachineCamera(camera, definition, state, 'unknown').mode, 'chase');
 assert.equal(state.x, before.x + 0.5, 'camera and view leave machine position unchanged');
+
+async function asset(name) {
+  const bytes = readFileSync(new URL(`../public/assets/models/wasteland/town/${name}.glb`, import.meta.url));
+  const loader = new GLTFLoader();
+  loader.register(() => ({name:'HEADLESS_TEXTURE', loadTexture:() => Promise.resolve(new THREE.Texture())}));
+  return (await loader.parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '')).scene;
+}
+const family = await asset('machines-1'), borer = await asset('borer');
+for (const id of ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', 'borer']) {
+  const def = machineDefinition(id);
+  const source = (id === 'borer' ? borer : family).getObjectByName(id === 'dumpTruck' ? 'dump-truck' : id === 'drill' ? 'trencher' : id);
+  assert.ok(source, `${id} model exists`);
+  let model = source.clone(true); model.position.set(0, 0, 0);
+  if (id === 'borer') {
+    model.scale.setScalar(.6); model.rotation.y = Math.PI; model.position.z = -15.45 * .6;
+    const wrapper = new THREE.Group(); wrapper.add(model); model = wrapper;
+  } else if (id === 'drill') model = createDrillView(model).root;
+  const machine = createMachineView({model, definition:def, parent:scene});
+  const posed = createMachineState(def, {x:4, z:8, heading:0.7});
+  machine.update(posed, 0); scene.updateMatrixWorld(true);
+  if (id === 'borer') updateBorerCamera(camera, posed, 1, {}, 0, true, machine.body);
+  else updateMachineCamera(camera, def, posed, 'cab', {body:machine.body});
+  const bounds = new THREE.Box3().setFromObject(machine.body);
+  assert.ok(camera.position.y > bounds.max.y, `${id} eye is above its model`);
+  const ahead = new THREE.Raycaster(camera.position, camera.getWorldDirection(new THREE.Vector3()), 0, 3);
+  assert.equal(ahead.intersectObject(machine.body, true).length, 0, `${id} cab view clears its model`);
+  machine.dispose();
+}
 view.dispose();
 assert.equal(view.root.parent, null);
 console.log('Machine view passed: named joints, load, effects, sound cues, read-only state and cab/chase/work cameras.');

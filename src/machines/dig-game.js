@@ -110,7 +110,14 @@ export function followBorerSlope(camera, target, state, distance = 8, ahead = -3
   camera.updateMatrixWorld();
 }
 // The head is the simulation origin; the model's tail is about 18 m behind it.
-export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false) {
+export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false, body = null) {
+  if (cameraIndex === 1 && body) {
+    updateMachineCamera(camera, machineDefinition('borer'), state, 'cab', {body});
+    // Rebuild the tunnel route when returning to the chase view.
+    delete camera.userData.borerTarget;
+    delete camera.userData.borerRoute;
+    return;
+  }
   const segments=state.segments || [], sin=Math.sin(state.heading), cos=Math.cos(state.heading);
   const hasFace = () => {
     const key = [state.x, state.y, state.z, state.heading, ground.revision].join(':');
@@ -553,7 +560,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const isBorer=sim.activeMachine==='borer';
       const y=isBorer?active.y:machineHeight(sim.ground,sim.activeMachine,active),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
-      if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
+      if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer',machineViews.get('borer')?.body);
       else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target,
         chaseOrbit:wide?35*Math.PI/180:0,body:mode==='cab'?machineViews.get(sim.activeMachine)?.body:null});
       previousCameraMachine=sim.activeMachine;
