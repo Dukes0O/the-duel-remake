@@ -78,10 +78,13 @@ export async function run(context){
   report.newPlayerBoard=board;
   report.captures.push(await context.screenshot('driving-lesson-new-player-board'));
   for(const choice of board.choices) {
-    const courseId=choice.courseId;
-    await click(context,`.drive-lesson-board [name="drive-lesson-course"][data-drive-course="${courseId}"]`);
-    const selected=await context.evaluate(`window.__qaApp.driveLessonCourse`);
-    if(selected!==courseId)throw Error('Unowned corner choice did not respond: '+courseId);
+    const courseId=choice.courseId,selector=`.drive-lesson-board [name="drive-lesson-course"][data-drive-course="${courseId}"]`;
+    // The board opens with its first corner already selected, and a radio that is already selected sends no change.
+    // That choice must still be the checked one; every other choice must move the app's course to itself.
+    const alreadySelected=await context.evaluate(`document.querySelector(${JSON.stringify(selector)}).checked`);
+    await click(context,selector);
+    const selected=await context.evaluate(`({course:window.__qaApp.driveLessonCourse,checked:document.querySelector(${JSON.stringify(selector)})?.checked})`);
+    if(!selected.checked||(!alreadySelected&&selected.course!==courseId))throw Error('Unowned corner choice did not respond: '+courseId);
   }
   await context.evaluate(`if(!window.__qaApp.selectPlayer(${JSON.stringify(report.owner.ownerId)}))throw Error('Could not return to lesson owner')`);
   await context.waitFor(`!!document.querySelector('.drive-lesson-board [data-drive-action="start:corner"]')`,'original owner board');
