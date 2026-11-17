@@ -171,3 +171,30 @@ export function stepBellowsEnding(state, facts, dt = 0) {
   }
   return {state: next, complete, events, requests};
 }
+
+// The existing chase step delegates here only for the bellows job. Physics
+// supplies the contact facts in view.bellows; health and marker proximity
+// cannot substitute for a knock. The arena also supplies measured road facts.
+export function stepBellowsChase(step, state, view, dt = 0) {
+  const target = (view.actors ?? []).find(actor => actor.id === step.targetId);
+  const marker = {type: 'marker', place: target?.position ?? step.path?.[0]};
+  const follow = speed => ({type: 'follow', actorId: step.targetId, path: step.path, speed});
+  if (!target) return {state, complete: false, events: [], requests: [marker, follow(0)]};
+
+  const car = view.carPosition ?? (!view.onFoot ? view.player?.position : null);
+  const carGapMetres = car && target.position
+    ? Math.hypot(car.x - target.position.x, car.z - target.position.z) : Infinity;
+  const facts = {...view.bellows, carGapMetres};
+  const load = stepBellowsLoad(state, facts, dt);
+  const pursuit = stepBellowsPursuit(load.state, facts, dt);
+  const ending = stepBellowsEnding(pursuit.state, {carGapMetres,
+    onFoot: view.onFoot === true, playerSpeedKmh: view.speedKmh ?? Infinity}, dt);
+  // A stopped thief stays stopped throughout collection and captions.
+  const speedKmh = ending.state.thiefStopped || !Number.isFinite(facts.playerTopSpeedKmh)
+    ? 0 : bellowsThiefSpeedKmh(facts.playerTopSpeedKmh, facts.inBoneyard === true);
+  const events = [...load.events, ...pursuit.events, ...ending.events];
+  const requests = [marker, follow(speedKmh / 3.6),
+    ...load.events.filter(event => event.type === 'say'),
+    ...pursuit.requests, ...ending.requests];
+  return {state: ending.state, complete: ending.complete, events, requests};
+}

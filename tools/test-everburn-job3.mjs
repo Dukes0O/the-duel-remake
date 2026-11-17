@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {BELLOWS_RULE, BELLOWS_LINES, bellowsPay, bellowsSentence,
   stepBellowsLoad, bellowsAshBox, stepBellowsAsh, bellowsThiefSpeedKmh,
   bellowsBlockingSide, stepBellowsPursuit, stepBellowsEnding} from '../src/world/jobs/bellows-rule.js';
@@ -147,3 +148,60 @@ assert.equal(lateCollection.complete, true);
 assert.equal(lateCollection.events.filter(event => event.type === 'bellowsArrived').length, 1);
 assert.deepEqual(end(Object.freeze(captured)), end(Object.freeze(captured)));
 console.log('PASS Run Him Down: theft escape, collection, furnace departure and nine-second ending.');
+
+// Exercise the ordinary job engine with snapshots, without a driver. The
+// bellows chase must not inherit the old health, contact or leash shortcuts.
+const chaseStep = {kind: 'chase', bellows: true, targetId: 'thief',
+  path: [{position: {x: 0, z: 0}}, {position: {x: 2000, z: 0}}]};
+const chaseView = {onFoot: false, speedKmh: 0, carPosition: {x: 0, z: 0},
+  player: {position: {x: 0, z: 0}},
+  actors: [{id: 'thief', health: 0, position: {x: 3, z: 0}}], contact: 'thief',
+  bellows: {...roadFacts, playerTopSpeedKmh: 200}};
+let chase = createJob({steps: [chaseStep]}, 17);
+const missing = stepJob(chase, {...chaseView, actors: []}, 100);
+assert.equal(missing.done, false);
+assert.equal(missing.stepState.bellows, undefined);
+assert.equal(missing.requests.find(request => request.type === 'follow').speed, 0);
+chase = stepJob(chase, chaseView);
+assert.equal(chase.done, false, 'Health zero and proximity cannot stop the thief.');
+assert.equal(chase.stepState.knocks, 0);
+assert.equal(chase.requests.find(request => request.type === 'follow').speed, 195 / 3.6);
+assert.equal(chase.requests.find(request => request.type === 'follow').actorId, 'thief');
+chase = stepJob(chase, {...chaseView, carPosition: {x: -10000, z: 0}});
+assert.equal(chase.failedStep, false, 'The bellows chase has no old distance leash.');
+const warning = stepJob(chase, {...chaseView,
+  bellows: {...chaseView.bellows, flameContact: true}}, 1);
+assert.equal(warning.stepState.bellows, 85);
+assert(warning.requests.some(request => request.type === 'say' && request.lineId === 'bellows.warning'));
+for (let knock = 0; knock < 3; knock++) {
+  chase = stepJob(chase, {...chaseView, bellows: {...chaseView.bellows, ...hard}});
+  assert.equal(chase.stepState.knocks, knock + 1);
+  if (knock < 2) chase = stepJob(chase, {...chaseView, carPosition: {x: -10, z: 0}});
+}
+assert.equal(chase.done, false);
+assert.equal(chase.stepState.bellowsLoaded, true);
+assert.equal(chase.requests.find(request => request.type === 'follow').speed, 0);
+assert(chase.requests.some(request => request.type === 'bellowsThiefFlee'));
+chase = stepJob(chase, chaseView, 9);
+assert.equal(chase.done, true);
+assert(chase.events.some(event => event.type === 'bellowsArrived' && event.knocks === 3));
+assert(chase.events.some(event => event.type === 'done'));
+assert.equal(chaseView.actors[0].health, 0, 'The rule never writes into an actor snapshot.');
+let retry = stepJob(createJob({steps: [chaseStep]}), {...chaseView,
+  bellows: {...chaseView.bellows, flameContact: true, furnaceMetres: 30}}, 2);
+assert.equal(retry.failedStep, false, 'Restarting the route must not reset the job state.');
+assert.equal(retry.stepState.bellows, 70);
+assert(retry.requests.some(request => request.type === 'bellowsRestart' && request.leadMetres === 150));
+assert(retry.requests.some(request => request.type === 'say' && request.lineId === 'bellows.warning'));
+assert(retry.stepState.lineQueue.includes('bellows.restart'), 'The warning stays ahead of the restart caption.');
+retry = stepJob(retry, chaseView, 2.2);
+assert(retry.requests.some(request => request.type === 'say' && request.lineId === 'bellows.restart'));
+const finalKnock = createJob({steps: [chaseStep]});
+finalKnock.stepState = {bellows: 70, knocks: 2};
+retry = stepJob(finalKnock, {...chaseView,
+  bellows: {...chaseView.bellows, ...hard, furnaceMetres: 30}});
+assert.equal(retry.stepState.thiefStopped, true);
+assert.equal(retry.stepState.bellows, 70);
+assert(!retry.requests.some(request => request.type === 'bellowsRestart'),
+  'A third knock wins before the same step can restart at the furnace.');
+console.log('PASS Run Him Down: existing chase engine uses knocks, captions, collection and hold.');
