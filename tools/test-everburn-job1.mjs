@@ -80,6 +80,30 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(scout.easySpeedKmh, 55);
 }
 
+// Both stops have the same ring, above the ground, from at least 40 m away.
+{
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0];
+  for (const loaded of [false, true]) {
+    const world = createWorldJob(definition), stop = loaded ? step.destination : step.pickup.place;
+    const at = stop.position, car = {x:at.x + 40, z:at.z, y:scablandsSurfaceHeightAt(at.x + 40, at.z)};
+    const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+      speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+    const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+      at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+    initializeWorldJob(duel, definition);
+    if (loaded) world.job.stepState = {loaded:true, ember:100};
+    stepWorldJob(duel, 0);
+    const marker = state.arena.markers.find(item => item.id === 'world-job-marker');
+    assert.equal(marker.kind, 'ring');
+    assert.equal(marker.radius, stop.radius);
+    for (let i = 0; i < 48; i++) {
+      const angle = i * Math.PI * 2 / 48;
+      assert.ok(marker.y >= scablandsSurfaceHeightAt(at.x + Math.cos(angle) * stop.radius,
+        at.z + Math.sin(angle) * stop.radius));
+    }
+  }
+}
+
 // The scout enters the job as the same kind of car as the other riders.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);

@@ -867,9 +867,22 @@ function applyRequests(duel, worldJob, requests) {
     if (request.type === 'marker') {
       worldJob.marker = request.place ?? null;
       const at = request.place?.position ?? request.place;
+      const radius = request.place?.radius ?? 4;
+      // Both Hot Delivery stops use the same floor ring. Raise it above the road
+      // across its whole edge, including the slight slope at Cinder's post.
+      const deliveryStop = worldJob.definition.id === 'everburn-hot-delivery' &&
+        (request.place?.id === 'cinder' || request.place?.id === 'cold-forge');
+      if (deliveryStop && at && worldJob.ringHeight?.place !== request.place) {
+        worldJob.ringHeight = {place:request.place, height:Math.max(scablandsSurfaceHeightAt(at.x, at.z),
+          ...Array.from({length:48}, (_, i) => {
+            const angle = i * Math.PI * 2 / 48;
+            return scablandsSurfaceHeightAt(at.x + Math.cos(angle) * radius, at.z + Math.sin(angle) * radius);
+          }))};
+      }
+      const height = deliveryStop && at ? worldJob.ringHeight.height : at?.y ?? 0;
       duel.state.arena.markers = at && Number.isFinite(at.x) && Number.isFinite(at.z)
-        ? [{kind: 'ring', id: 'world-job-marker', x: at.x, y: at.y ?? 0,
-          z: at.z, radius: request.place?.radius ?? 4}] : [];
+        ? [{kind: 'ring', id: 'world-job-marker', x: at.x, y: height,
+          z: at.z, radius}] : [];
     }
     else if (request.type === 'follow') worldJob.follow = {...request,
       actorId: request.actorId ?? worldJob.job.steps[worldJob.job.stepIndex]?.targetId};
