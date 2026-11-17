@@ -153,7 +153,8 @@ function fireFingerprint(extra = {}) {
 // HELI-PAY-CONTINUE re-recorded this (was 1400586788): it hashes the board's pay words.
 // HELI-COMPASS re-recorded it (was 2478802993): the fire's bearing and the wind's name are now the HEADING gauge's. Nothing else moved.
 // HELI-CHART-MIRROR re-recorded it (was 3467651565): the arrival points, so the flying area's west and east edges, are the mirror of before about the landing zone; only area.minX and area.maxX moved.
-const FIRE_SESSION_FINGERPRINT = 2968240257;
+// HELI-EDGE re-recorded it (was 2968240257): the view now carries the cruise countdown, the edge and the HEAD FOR heading; with those four fields left out the old pin comes back exactly.
+const FIRE_SESSION_FINGERPRINT = 2541734915;
 {
   same(fireFingerprint(), FIRE_SESSION_FINGERPRINT, 'with no rescue switch the fire session is as it was');
   same(fireFingerprint({rescueEnabled: false}), FIRE_SESSION_FINGERPRINT, 'and with the switch off');

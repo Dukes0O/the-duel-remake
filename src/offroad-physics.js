@@ -8,6 +8,10 @@ const CAPABILITIES = Object.freeze({
   rally: Object.freeze({ maxGrade: .95, risePerSec: 7, climbGain: 16, rockHeight: 1.15, tipSpeed: 15 }),
 });
 const TITAN_CLIMB = Object.freeze({ ...CAPABILITIES.monster, climbGain: Infinity, slopeGravityMphPerSec: GRAVITY_MPH_PER_SEC });
+// FREESTYLE-MOUNTAINS: a road car on the Freestyle quarry's mountains feels the slope (slower up, faster down) and
+// tilts with it, but never tips or meets a climb limit; it climbs as far as its speed and engine carry it.
+export const QUARRY_ROAD_CAR = Object.freeze({ maxGrade: Infinity, risePerSec: Infinity, climbGain: Infinity, rockHeight: 0, tipSpeed: Infinity,
+  slopeGravityMphPerSec: GRAVITY_MPH_PER_SEC });
 export const offroadCapability = (car, { titanClimb = false } = {}) =>
   car?.kind === 'monster' && titanClimb ? TITAN_CLIMB : CAPABILITIES[car?.kind] || null;
 export const wrapHeading = angle => Math.atan2(Math.sin(angle), Math.cos(angle));

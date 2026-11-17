@@ -162,7 +162,8 @@ function scenarioHashes(extra = {}) {
 // 3551929874): their views carry the rescue and fire bearings and the wind's name, now the HEADING gauge's. Nothing else moved.
 // HELI-CHART-MIRROR re-recorded all six (were 3266723423, 2071532041, 2249168172, 3614661767, 1879391574 and 1049849445): the arrival points, so the flying area's west and east edges, are the mirror of before about the landing zone;
 // field by field only area.minX and area.maxX moved.
-const BEFORE = {carJob: 2697990669, hiker: 3228745719, avalanche: 2735586122, hoist: 2484860221, supply: 129308216, fire: 194472035};
+// HELI-EDGE re-recorded all six (were 2697990669, 3228745719, 2735586122, 2484860221, 129308216 and 194472035): the view now carries the cruise countdown, the edge and the HEAD FOR heading; with those four fields left out the old pin comes back exactly.
+const BEFORE = {carJob: 1347228183, hiker: 796912116, avalanche: 2578544473, hoist: 4047209678, supply: 1477474397, fire: 2018531712};
 {
   same(scenarioHashes(), BEFORE, 'with no skin or wildlife switch the session is exactly what it was');
   same(scenarioHashes({skinsEnabled: false, wildlifeEnabled: false}), BEFORE, 'and with both switches off');
