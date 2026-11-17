@@ -397,6 +397,9 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  const furnaceRider = worldJob.definition.id === 'everburn-hot-delivery' &&
+    worldJob.job.steps[worldJob.job.stepIndex]?.furnaceRiders?.includes(actorDef);
+  const emberRider = roadRider || furnaceRider;
   const campRider = roadRider && actorDef.scoopAmbush;
   if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
     rider.speed = 0;
@@ -426,7 +429,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     }
     rider.speed = 0;
   }
-  if (roadRider && retreat && !worldJob.ridersRetreating) {
+  if (emberRider && retreat && !worldJob.ridersRetreating && !rider.returningToPost) {
     if (!rider.ramRetreat) return;
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
     const distance = Math.hypot(dx, dz);
@@ -516,7 +519,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   if (distance > 8) rider.ramContact = false;
   if (distance <= 3 || dt <= 0) {
     rider.speed = 0;
-    if (roadRider && dt > 0 && distance > 0 && !rider.ramContact && Math.abs(car.y - rider.position.y) < 3) {
+    if (emberRider && dt > 0 && distance > 0 && !rider.ramContact && Math.abs(car.y - rider.position.y) < 3) {
       const pose = worldPose(duel, duel.state);
       const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
       const closing = -playerSpeed * (Math.sin(pose.heading) * dx / distance + Math.cos(pose.heading) * dz / distance);
@@ -545,9 +548,9 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const pose = worldPose(duel, duel.state);
     const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
     const playerAlong = playerSpeed * (Math.sin(pose.heading) * dx / distance + Math.cos(pose.heading) * dz / distance);
-    const hitKmh = roadRider ? Math.max(0, closingSpeed - playerAlong) * 3.6 : rider.speed * 3.6 * 0.5;
+    const hitKmh = emberRider ? Math.max(0, closingSpeed - playerAlong) * 3.6 : rider.speed * 3.6 * 0.5;
     worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, hitKmh);
-    if (roadRider) rider.ramRetreat = {x:moved.x - dz / distance * 40, z:moved.z + dx / distance * 40, seconds:0};
+    if (emberRider) rider.ramRetreat = {x:moved.x - dz / distance * 40, z:moved.z + dx / distance * 40, seconds:0};
     shoveCar(duel, {x: dx / distance, z: dz / distance, metresPerSecond: 3});
   }
 }

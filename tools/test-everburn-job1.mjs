@@ -1931,6 +1931,45 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(fast.falls[0].drop > 2, 'the hit measures the real fall');
   assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
 }
+// Furnace riders use the road riders' meeting speed and back off after one hit.
+for (const meeting of ['rider-arrives', 'car-arrives']) {
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const point = LAND.between('yard', 'the-steps', .4);
+  const car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
+  world.skylineWarned = true;
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  const rider = riders[0];
+  riders[1].health = 0;
+  const separation = meeting === 'rider-arrives' ? -5 : 2;
+  state.headingError = 0;
+  rider.position = {x:car.x, z:car.z + separation,
+    y:scablandsSurfaceHeightAt(car.x, car.z + separation)};
+  if (meeting === 'car-arrives') state.speedMph = 20 / 1.609344;
+  stepWorldJob(duel, .2);
+  const expectedKmh = meeting === 'rider-arrives' ? 18 * 3.6 : 20;
+  assert.ok(Math.abs(world.riderHitKmh - expectedKmh) < .01,
+    `${meeting}: the full meeting speed reaches the ember rule`);
+  assert.equal(rider.ramContact, true);
+  assert.ok(rider.ramRetreat, `${meeting}: the rider backs off`);
+  const retreat = {...rider.ramRetreat};
+  assert.ok(Math.abs(Math.hypot(retreat.x - rider.position.x, retreat.z - rider.position.z) - 40) < .01);
+  const before = {...rider.position};
+  state.speedMph = 0;
+  stepWorldJob(duel, .1);
+  assert.equal(world.riderHitKmh, 0, `${meeting}: the same contact does not charge twice`);
+  assert.ok(Math.hypot(rider.position.x - retreat.x, rider.position.z - retreat.z) <
+    Math.hypot(before.x - retreat.x, before.z - retreat.z), `${meeting}: the rider moves away`);
+  assert.equal(world.job.stepState.joltCount, 1, `${meeting}: the pot pays for the hit once`);
+  stepWorldJob(duel, .1);
+  assert.equal(world.job.stepState.joltCount, 1, `${meeting}: backing off does not charge again`);
+}
 // The real watch traces the ground, resets when sight is lost, and sounds once after the sight limit.
 {
   const world = createWorldJob(definition), events = [];

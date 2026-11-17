@@ -2,13 +2,14 @@
 - Part A is built in faabfac06: yard fill 100, roadside fill 60, nearest-fire caption and Moss's greeting.
 - Part B rule foundation: a constant-speed closed light round, 40-second job clock, radius 30, and a SEEN count that fills in light and drains outside it or behind cover.
 - The horn is due at eight seconds. Tests cover circle edges, cover, unloading, equal fill/drain rates, loop closure and unequal segment lengths.
-- These new helpers are not wired into the job yet. B's land round, drawing, HUD, riders and scenario remain; C and D remain unbuilt. Switches, saves and pay are unchanged.
-- Checks PASS on faabfac06 plus this round's changes: test-everburn-job1 and git diff --check. Part A also passed test-ember-pot (38 checks).
+- B's furnace riders now use the road riders' full meeting speed, one cost per contact and the same 40 m back-off; returning home takes priority over backing off.
+- The light helpers are not wired yet. B's land round, drawing, HUD, five-second rider sight and renewed chases remain; C, D and E remain unbuilt. Switches, saves and pay are unchanged.
+- Checks PASS on ec2d2d51f plus this round's changes: test-everburn-job1, test-ember-pot (38 checks), isolated new ram checks and git diff --check.
 - Changed assertions for Claude: A1/A2 replaces +25 with yard fill 100 or roadside fill 60; a pot at least 60 takes no scoop. This round changes no existing assertion.
 - Changed assertion from A: bed drive fire 35 to 37 becomes 7 to 9 (measured 7.438721), since a pot above 60 no longer gains 25. Hard scoop fixtures start below 60.
 - Unchanged drives: bed fire 7.438721 or 14.242767 without the Wash stop, zero rams; East Road fire 18.448148, three rams.
-- Sound: existing world.ember.scoop and world.ember.out; captions have no voice. B will use existing world.furnace.horn; no new cue this round.
+- Sound: existing world.ember.scoop, world.ember.out and world.ember.spark for ram jolts; captions have no voice. B will use existing world.furnace.horn; no new cue this round.
 - Codex decided: A's outage names any nearest fire; repeatable relights stay separate from roadside scoops (already written on card). No new design decision this round.
-- Integration merge blocked by automatic approval: Git writes lane metadata beneath the forbidden live repository path. Approval requested; integration's pending changes are card/inbox text only.
-- For Claude: independent code/assertion review and the browser scenario after B to D. Final-only Easy drive, older related suites, replay/world signatures, lane tier and build are not yet run.
-- **Removed:** Part A removed the fixed +25 scoop. This rule foundation replaces nothing until B is wired into the job.
+- Integration merged at ec2d2d51f with no code conflict; only card/inbox text came in. A 25 m sight survey found disconnected exposed areas; B's light round still needs choosing and the gap-crossing proof.
+- For Claude: independent code/assertion review, the browser scenario after B to D, E's frame check and three pictures. Final-only Easy drive, older related suites, replay/world signatures, lane tier and build are not yet run.
+- **Removed:** A removed the fixed +25 scoop; B removed the furnace riders' half-speed ram estimate and their immediate pursuit after a hit.
