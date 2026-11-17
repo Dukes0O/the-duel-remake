@@ -12,7 +12,7 @@
 - Heli jobs (5,802), cable (106), and save (44 groups) passed on 874868c33 plus this change.
 - Heli hooks: 303 passed on b1516774a plus this change. Course eligibility is night-only; stopped early.
 - Heli mode (278), job clarity (1,530), missions (45 groups) and rescue view (210) passed on 98adfcae5 plus this change.
-- Changed assertions for Claude: medal-car refusals change from true away from their saved course to false before and after flight; menu refusal checks now use the McMurtry.
+- Changed assertions for Claude: medal-car refusal true to false; menu refusal uses McMurtry. Sirena customer-pool expectation changes from a filtered list that now wrongly includes 3 medal cars to the unchanged 6-car list.
 - Browser scenario covers four modes and the McMurtry; all seven page expressions parse. Claude must run it and the UI suite; independent review is needed.
-- Remaining: other affected suites, lane tier and build.
+- Sirena (9) and Koenigsegg UI (41) passed on 509d798b5 plus this change. Remaining: other affected suites, lane tier and build.
 - Removed: medal cars from the air-only list and the flight requirement words.
