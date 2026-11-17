@@ -34,8 +34,8 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
   const gate = yardPlan().gate, gatePoint = {x:LAND.yard.x + gate.x, z:LAND.yard.z + gate.z};
   const fire = step.braziers[0].position;
   const lineGap = (p, a, b) => Math.abs((b.x-a.x)*(a.z-p.z)-(a.x-p.x)*(b.z-a.z)) / Math.hypot(b.x-a.x, b.z-a.z);
-  assert.equal(step.pickup.radius, 12);
-  assert.equal(step.pickup.place.radius, 12);
+  assert.equal(step.pickup.radius, 6);
+  assert.equal(step.pickup.place.radius, 6);
   assert.ok(lineGap(fire, step.carStart, gatePoint) >= 6);
   assert.ok(lineGap(fire, pickup, gatePoint) >= 6);
   const grid = createJobSolidGrid();
@@ -43,14 +43,14 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
   grid.setBraziers([fire]);
   let clear = 0;
   for (let i = 0; i < 360; i++) {
-    const angle = i * Math.PI / 180, x = pickup.x + 12 * Math.sin(angle), z = pickup.z + 12 * Math.cos(angle);
+    const angle = i * Math.PI / 180, x = pickup.x + 6 * Math.sin(angle), z = pickup.z + 6 * Math.cos(angle);
     if (!pushOutOfSolids(x, z, 1, grid, scablandsSurfaceHeightAt(x, z)).hit) clear++;
   }
   assert.ok(clear >= 270, `at least three quarters of Cinder's ring is clear: ${clear}/360`);
   // Leave room around the whole car, not just its centre, at the hand-over boundary.
   let carClear = 0;
   for (let i = 0; i < 360; i++) {
-    const angle = i * Math.PI / 180, x = pickup.x + 12 * Math.sin(angle), z = pickup.z + 12 * Math.cos(angle);
+    const angle = i * Math.PI / 180, x = pickup.x + 6 * Math.sin(angle), z = pickup.z + 6 * Math.cos(angle);
     if (!pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit) carClear++;
   }
   assert.ok(carClear >= 270, `a car has room on at least three quarters of Cinder's ring: ${carClear}/360`);
@@ -65,9 +65,9 @@ const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `
   }
   const view = (distance, speedKmh = 0) => ({player:{position:{x:pickup.x + distance, z:pickup.z}}, speedKmh});
   const job = () => createJob(EVERBURN_JOBS[0], 19);
-  assert.equal(stepJob(job(), view(12.1), 0).stepState.pickingUp, undefined);
-  assert.equal(stepJob(job(), view(11.9, 10), 0).stepState.pickingUp, undefined);
-  assert.ok(stepJob(job(), view(11.9), 0).stepState.pickingUp);
+  assert.equal(stepJob(job(), view(6.1), 0).stepState.pickingUp, undefined);
+  assert.equal(stepJob(job(), view(5.9, 10), 0).stepState.pickingUp, undefined);
+  assert.ok(stepJob(job(), view(5.9), 0).stepState.pickingUp);
 }
 
 // Step the loaded job down the gate approach without driving or changing speed.
