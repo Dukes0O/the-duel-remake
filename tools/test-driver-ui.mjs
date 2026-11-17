@@ -54,6 +54,10 @@ try{
   const paint=createMenuScreen({app,choices,ui,root:{querySelectorAll:()=>[],querySelector:()=>({textContent:'',insertAdjacentHTML(){}}),addEventListener(){}},profile,text,credits,escapeHTML,time:String,coursePreview:{update:()=>({distanceKm:4,laps:2,biomes:[],map:{gates:[],branches:[]},showElevation:false,reliefMeters:0})}}).updateMenuCar;
   const root={querySelector:selector=>selector==='.driver-panel'?{setAttribute:(name,value)=>{same([name,value],['open',''],'post-action roster stays open');opened++;}}:null};
   const activate=dataset=>handleDriverAction({dataset},{app,refreshGarage:value=>{message=value;paint();},root,garageCar:choices.car,credits});
+  for(const cpuDifficulty of ['easy','medium','hard']){
+    Object.assign(choices,{mode:'duel',cpuDifficulty,startStage:0});paint();
+    check(cpuDifficulty==='easy'?textValues['entry-reward'].includes('LOSS 0 CR'):/LOSS \u2212[1-9]/.test(textValues['entry-reward']),`${cpuDifficulty} Duel shows its loss charge`);
+  }
   paint();same(ui['driver-select'].value,'club','old and new neutral profiles display Club Driver');
   same((ui['driver-select'].innerHTML.match(/<option\b/g)||[]).length,8,'menu lists every catalog driver');
   same((ui['driver-select'].innerHTML.match(/disabled/g)||[]).length,7,'locked menu choices cannot be selected');
