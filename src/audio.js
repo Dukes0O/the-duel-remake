@@ -364,7 +364,7 @@ export class EngineAudio {
     if (this._ambiencePromise) return this._ambiencePromise;
     this.ambienceStatus = 'loading';
     this._ambiencePromise = Promise.allSettled(
-      Object.entries(AMBIENCE).filter(([,def]) => !def.flag || this.flags.enabled(def.flag)).map(async ([biome, def]) => {
+      Object.entries(AMBIENCE).filter(([,def]) => def.file && (!def.flag || this.flags.enabled(def.flag))).map(async ([biome, def]) => {
         const response = await fetch(`/assets/audio/${def.file}`);
         if (!response.ok) throw Error(def.file);
         const buffer = await this.context.decodeAudioData(
@@ -396,6 +396,18 @@ export class EngineAudio {
     return this._ambiencePromise;
   }
 
+  _noiseAmbience(biome, def) {
+    const gain = this.context.createGain();
+    gain.gain.value = 0;
+    this._connect(gain, this.buses.ambience);
+    const layers = def.layers.map(recipe => {
+      const layer = this._noiseLayer(recipe.type, recipe.frequency, gain);
+      layer.gain.gain.value = recipe.volume;
+      return layer;
+    });
+    this.ambience[biome] = {gain, layers};
+  }
+
   _updateAmbience(st, environment, t) {
     const active =
       ['countdown', 'racing', 'ticket'].includes(st.status) && !st.paused;
@@ -412,6 +424,10 @@ export class EngineAudio {
       (1 - clamp(Number(environment.tunnel) || 0, 0, 1) * 0.88);
     const chosen = environment.course?.def.ambience ?? environment.biome;
     const bed = AMBIENCE[chosen];
+    // A job may be enabled after audio unlock. Build its wind from the existing
+    // noise buffer when first needed, without fetching a recording.
+    if (bed?.layers && !this.ambience[chosen] && (!bed.flag || this.flags.enabled(bed.flag)))
+      this._noiseAmbience(chosen, bed);
     const night = bed?.nightBiome ? clamp(((sampleCourseLightPath(environment.course,
       {distance:st.s})?.settings.nightAmount ?? (environment.night ? 1 : 0)) - bed.nightFrom) /
       (1-bed.nightFrom), 0, 1) : 0;

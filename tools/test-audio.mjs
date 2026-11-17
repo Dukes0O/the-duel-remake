@@ -9,6 +9,7 @@ import {measureLoudness} from './audio/measurements.mjs';
 import { App } from '../src/app.js';
 import { CARS, COURSE } from '../src/config.js';
 import {KOGANE_PASS} from '../src/circuits/kogane-pass.js';
+import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 
 let checks = 0,
   commands = 0;
@@ -457,6 +458,31 @@ check(
   Object.values(audio.ambience).every((layer) => layer.gain.gain.value === 0),
   'returning to menu fades the previous race ambience',
 );
+// The land requests its own bed even though it shares arena vehicle rules.
+{
+  const flags = audio.flags, environment = {biome:'arena', course:{def:SCABLANDS_VENUE}};
+  audio._updateAmbience(state(), environment, audio.context.currentTime);
+  check(!audio.ambience.scablands && audio.ambience.arena.gain.gain.value === 0,
+    'a hidden Scablands bed never falls back to the crowd');
+  audio.flags = {enabled:id => id === 'story-everburn'};
+  const before = audio.context.nodes.length;
+  audio._updateAmbience(state(), environment, audio.context.currentTime);
+  const wind = audio.ambience.scablands;
+  check(wind.gain.gain.value > 0 && audio.ambience.arena.gain.gain.value === 0,
+    'the Scablands plays wind and silences the arena');
+  const voices = audio.context.nodes.slice(before).filter(node => node.type === 'source');
+  check(voices.length === 2 && voices.every(node => node.loop && node.buffer === audio.noiseBuffer),
+    'the wind is two noise recipes using the existing buffer');
+  const nodes = audio.context.nodes.length;
+  audio._updateAmbience(state(), environment, audio.context.currentTime);
+  check(audio.context.nodes.length === nodes, 'the wind loops are reused');
+  audio._updateAmbience(state({paused:true}), environment, audio.context.currentTime);
+  check(wind.gain.gain.value === 0, 'the wind stops with pause');
+  audio._updateAmbience(state(), {biome:'arena'}, audio.context.currentTime);
+  check(audio.ambience.arena.gain.gain.value > 0 && wind.gain.gain.value === 0,
+    'the arena keeps its original crowd');
+  audio.flags = flags;
+}
 const ambientManifest = JSON.parse(
   fs.readFileSync(new URL('./audio/ambience-sources.json', import.meta.url)),
 );
