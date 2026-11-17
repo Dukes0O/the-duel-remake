@@ -2,6 +2,22 @@ const LABELS = Object.freeze({ swing: 'Swing', boom: 'Boom', arm: 'Arm', bucket:
   forward: 'Drive forward', steer: 'Steer' });
 
 export const DIG_MACHINE_HELP = 'Press Q to choose another machine. Press Tab to change between driving and working.';
+
+export const DIG_MACHINE_CONTROLS = Object.freeze({
+  excavator: {name: 'EXCAVATOR', words: 'A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.'},
+  dumpTruck: {name: 'DUMP TRUCK', words: 'Drive with W, A, S and D. Press Tab, then hold Space to tip the load.'},
+  trencher: {name: 'TRENCHER', words: 'Drive with W, A, S and D. Press Tab, then hold Space to lower the chain and cut a ditch while you drive.'},
+  drill: {name: 'DRILL RIG', words: 'Drive with W, A, S and D. Press Tab to lower or raise the mast. Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.'},
+  dozer: {name: 'DOZER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Press Q to choose another machine. Press C to change the view.'},
+  roller: {name: 'ROAD ROLLER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Press Q to choose another machine. Press C to change the view.'},
+  paver: {name: 'PAVER', words: 'Drive with W, A, S and D. Hold Space while driving to work the ground. Hold Shift to pave slowly and smoothly. Press Q to choose another machine. Press C to change the view.'},
+  borer: {name: 'MABEL', words: 'Hold W to push the thrust lever forward and S to pull it back; keep the head turning, and hold S at zero to reverse. Use A and D to turn, the up and down arrows to change slope, Tab to change mode and C to change view.'},
+});
+
+export function digMachineControls(machine) {
+  const {name, words} = DIG_MACHINE_CONTROLS[machine];
+  return `<h2>${name} CONTROLS</h2><p>${words}</p>`;
+}
 export const DIG_MACHINE_NAMES = 'excavator, dump truck, trencher, drill rig, dozer, road roller, paver and Mabel the boring machine';
 
 // MACHINE-ROADS removes this restriction when its models are ready.

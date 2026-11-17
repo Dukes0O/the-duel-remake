@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {yardThingsToTry} from '../src/yard-things-to-try.js';
 import {createDigSandbox, switchDigMachine} from '../src/machines/dig-sandbox.js';
 import {yardHomeScreen} from '../src/screen-yard-home.js';
-import {DIG_MACHINE_HELP, digMachineNames} from '../src/machines/controls-view.js';
+import {DIG_MACHINE_HELP, DIG_MACHINE_CONTROLS, digMachineControls, digMachineIds, digMachineNames} from '../src/machines/controls-view.js';
 
 const home = (dig, town) => yardHomeScreen({
   profile: {wasteland: {}}, playerName: 'Test', escapeHTML: String,
@@ -24,6 +24,11 @@ for (const town of [false, true]) {
   assert.equal(seen.includes('roller'), town);
   assert.equal(seen.includes('paver'), town);
   assert.ok(seen.includes('dozer'));
+}
+for (const id of digMachineIds(true)) {
+  const {name, words} = DIG_MACHINE_CONTROLS[id];
+  assert.ok(digMachineControls(id).includes(`<h2>${name} CONTROLS</h2>`));
+  assert.ok(digMachineControls(id).includes(words));
 }
 const rows = yardThingsToTry({wasteland:{xp:0}}, String, {dig:true, gear:true});
 assert.ok(rows.indexOf('THE DIG') < rows.indexOf('GETTING OUT'));
