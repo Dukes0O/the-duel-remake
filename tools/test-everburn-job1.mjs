@@ -62,6 +62,43 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(stopAt(5.9).requests[0].place.radius, 6);
 }
 
+// The camp rider sleeps until its fence burns or a Hard scoop wakes it.
+{
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const fence = step.barriers[0], road = ROAD_NET.road('east-road').points;
+  const point = nearestOnLine(road, fence.position.x, fence.position.z);
+  let car = sampleLine(road, 1).find(p => Math.abs(nearestOnLine(road, p.x, p.z).along - (point.along - 20)) < 1);
+  car = {...car, y:scablandsSurfaceHeightAt(car.x, car.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[0], post = {...rider.position};
+  for (let i = 0; i < 300; i++) stepWorldJob(duel, 0.1);
+  assert.equal(rider.pursuing, false);
+  assert.deepEqual(rider.position, post, 'the sleeping rider does not push against the fence');
+  const wash = LAND.at('the-wash');
+  for (let i = 0; i <= 100; i++) {
+    const share = i / 100;
+    car = {x:fence.position.x + (wash.x - fence.position.x) * share,
+      z:fence.position.z + (wash.z - fence.position.z) * share};
+    car.y = scablandsSurfaceHeightAt(car.x, car.z);
+    stepWorldJob(duel, 0.1);
+    assert.equal(rider.pursuing, false, 'the sleeping rider ignores a car turning toward the Wash');
+  }
+  const view = {player:{position:car}, speedKmh:0, difficulty:'medium',
+    thingsHit:[{kind:'barricade', id:fence.id, burnable:true, flame:true}]};
+  let result = stepCarry(step, {loaded:true, ember:100}, view, 0.1);
+  assert.equal(result.state.campAwake, true, 'burning the camp fence wakes the camp');
+  result = stepCarry(step, result.state, {...view, thingsHit:[]}, 0.1);
+  assert.equal(result.state.campAwake, true, 'the camp stays awake');
+  const scoop = {player:{position:step.braziers[1].position}, speedKmh:0, thingsHit:[]};
+  assert.notEqual(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'medium'}, 0.1).state.campAwake, true);
+  assert.equal(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'hard'}, 0.1).state.campAwake, true);
+}
+
 // A small final movement on Easy still carries the rider's full closing speed.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
@@ -71,7 +108,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const rider = world.actors[0];
   car = {...rider.position, x:rider.position.x + 5.02};
   for (let i = 0; i < 60 && !rider.ramContact; i++) stepWorldJob(duel, 1 / 60);
@@ -95,7 +132,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const rider = world.actors[0], start = {...rider.position};
   car = {...start, z:start.z + 2};
   rider.pursuing = true;
@@ -121,7 +158,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const rider = world.actors[0];
   car = {...rider.position, z:rider.position.z + 2};
   state.speedMph = 10;
@@ -148,7 +185,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const fence = step.barriers[0].position, rider = world.actors[0];
   const road = ROAD_NET.road('east-road').points;
   const post = nearestOnLine(road, fence.x, fence.z);
@@ -283,7 +320,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const [camp, bridge] = world.actors, posts = definition.steps[0].waitingActors;
   const tick = dt => stepWorldJob(duel, dt);
   car = {...posts[0].start.position, y:camp.position.y};
@@ -467,7 +504,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   initializeWorldJob(duel, definition);
   const lossAt = point => {
     car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
-    world.job.stepState = {loaded:true, ember:100};
+    world.job.stepState = {loaded:true, ember:100, campAwake:true};
     stepWorldJob(duel, 1);
     return 100 - world.job.stepState.ember;
   };
@@ -768,7 +805,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   Object.assign(waitingDuel, {emit:() => {}, _storyCallout:() => {}});
   waitingDuel.course.worldAt = () => car;
   const impact = ({lastKmh = 0, ram = 0, fall = false, fallKmh = 0, difficulty = 'medium'} = {}) => {
-    waitingWorld.job.stepState = {loaded:true, ember:100};
+    waitingWorld.job.stepState = {loaded:true, ember:100, campAwake:true};
     waitingWorld.lastKmh = lastKmh;
     waitingWorld.riderHitKmh = ram;
     waitingState.scablandsLongFall = fall;
@@ -1207,7 +1244,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const drawnDoor = scene.group.getObjectByName('Hot Delivery town gate door');
   syncScene(scene.group, state);
   assert.equal(drawnDoor.visible, true, 'the closed door is drawn');
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const tick = () => stepWorldJob(duel, 0.01);
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a distant car does not request the gate');
@@ -1399,7 +1436,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   placeActor(duel, state, {s:at.s, lateral:at.lateral,
     headingError:wrapHeading(heading - duel.course.at(at.s).heading)}, 25 / 1.609344);
   state.countdown = 0;
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   let passed = false, closest = Infinity, last;
   for (let i = 0; i < 900; i++) {
     duel.setInput({throttle:0.4, brake:0}); duel.step(1 / 60);
@@ -1419,7 +1456,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   let car = {x:pipe.x, z:pipe.z, y:scablandsSurfaceHeightAt(pipe.x, pipe.z)};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const tick = kmh => {state.speedMph = kmh / 1.609344; stepWorldJob(duel, 1 / 120); return world.pipeDeck;};
   assert.deepEqual(tick(40), {onDeck:true, tooFast:false});
   assert.deepEqual(tick(41), {onDeck:true, tooFast:true});
@@ -1448,7 +1485,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     placeActor(duel, state, {s:at.s, lateral:at.lateral,
       headingError:wrapHeading(heading - duel.course.at(at.s).heading)}, kmh / 1.609344);
     state.countdown = 0;
-    world.job.stepState = {loaded:true, ember:100};
+    world.job.stepState = {loaded:true, ember:100, campAwake:true};
     let maxAcross = 0, highestAir = 0;
     const falls = [];
     duel.onChange((s, event) => {
@@ -1485,7 +1522,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const tick = dt => { world.sightStep = 0; stepWorldJob(duel, dt); };
   const horns = () => events.filter(event => event.arenaTell?.cue === 'world.furnace.horn');
   assert.ok(SOUND_BANK['world.furnace.horn']?.layers.length);
@@ -1534,7 +1571,7 @@ for (const reason of ['sight', 'town', 'time']) {
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   world.skylineWarned = true;
   world.skylineSight = {visible:true};
   world.sightStep = 1;
@@ -1582,7 +1619,7 @@ for (const reason of ['sight', 'town', 'time']) {
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   world.skylineWarned = true;
   world.furnaceRidersReturning = true;
   world.sightStep = 1;
@@ -1618,7 +1655,7 @@ for (const reason of ['sight', 'town', 'time']) {
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   world.skylineWarned = true;
   world.skylineSight = {visible:true};
   world.sightStep = 1;
@@ -1665,7 +1702,7 @@ for (const index of [1]) {
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const rider = world.actors[index];
   for (let tick = 0; tick < 360 && !rider.ramContact; tick++) stepWorldJob(duel, 1 / 60);
   assert.ok(rider.ramContact, `rider ${index + 1} reaches the road in six seconds`);
@@ -1681,7 +1718,7 @@ for (const index of [1]) {
   waitingWorld.job.stepState = {};
   stepWorldJob(waitingDuel, 0.25);
   assert.deepEqual(rider.position, start, 'the rider waits before the pot is loaded');
-  waitingWorld.job.stepState = {loaded:true, ember:100};
+  waitingWorld.job.stepState = {loaded:true, ember:100, campAwake:true};
   stepWorldJob(waitingDuel, 0.25);
   assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) < 30);
   assert.ok(rider.speed > 0);
@@ -1694,7 +1731,7 @@ for (const index of [1]) {
   const cues = [];
   waitingDuel.course.worldAt = () => car;
   waitingDuel.emit = event => cues.push(event);
-  waitingWorld.job.stepState = {loaded:true, ember:100};
+  waitingWorld.job.stepState = {loaded:true, ember:100, campAwake:true};
   waitingState.speedMph = 0;
   stepWorldJob(waitingDuel, 0.2);
   assert.ok(waitingState.knock, 'the ram shoves the car');
@@ -1707,11 +1744,11 @@ for (const index of [1]) {
   assert.equal(waitingWorld.job.stepState.joltCount, 1, 'continued contact is one ram');
 }
 assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier', 'wash-brazier']);
-// The camp scoop calls its rider even when that rider is outside the usual pursuit range.
+// On Hard, the camp scoop wakes its rider for the rest of the job.
 {
   const world = createWorldJob(definition);
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
-    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'hard'};
   let car = {...step.braziers[0].position};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
@@ -1728,7 +1765,7 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   stepWorldJob(duel, 0.1);
   assert.equal(world.job.stepState.scoopBrazier, 'halfway-brazier');
   assert.ok(world.job.stepState.scoopTime < 3, 'the ambush begins during the scoop');
-  assert.equal(world.actors[0].pursuing, true);
+  assert.equal(world.job.stepState.campAwake, true);
   assert.notEqual(world.actors[1].pursuing, true);
 }
 // A loaded car crossing the 400 m line at the gate sends both riders home once.
@@ -1741,7 +1778,7 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:text => captions.push(text)};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   for (const rider of world.actors) rider.pursuing = true;
   stepWorldJob(duel, 0);
   assert.notEqual(world.ridersRetreating, true, 'outside 400 m the pursuit continues');
@@ -1825,7 +1862,7 @@ for (const [index, barrier] of step.barriers.entries()) {
     nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}),
     worldAt:() => car, groundAt:() => car}, emit:() => {}, _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
-  world.job.stepState = {loaded:true, ember:100};
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
   const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19), {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
   syncScene(scene.group, state);
   const drawings = scene.group.children.filter(node => node.name === 'Ash Men barricade');

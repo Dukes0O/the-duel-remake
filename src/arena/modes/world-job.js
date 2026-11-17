@@ -285,6 +285,12 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  const campRider = roadRider && actorDef.scoopAmbush;
+  if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
+    rider.speed = 0;
+    rider.pursuing = false;
+    return;
+  }
   if (roadRider && retreat && !worldJob.ridersRetreating) {
     if (!rider.ramRetreat) return;
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
