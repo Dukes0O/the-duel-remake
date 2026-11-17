@@ -18,7 +18,7 @@
     "name": "frame-pacing",
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
-    "cause": "Night frame reuse requires the same owned evidence leaf."
+    "cause": "The original simple frame stage failed; no second measurement is allowed."
   },
   {
     "stage": "browser",

@@ -216,7 +216,8 @@ async function measureNight(context, quality, courseId = 'harbour-lights', carId
 }
 export async function reuseNightFrames(context,{packetPath,priorPassed,
   readText=file=>readFile(file,'utf8'),writeText=writeFile}={}) {
-  const expected=resolve(context.outputDir,'..','..','frames','frame-pacing.json');
+  // The frames stage writes its packet and its report.json together in frames/frame-pacing/.
+  const expected=resolve(context.outputDir,'..','..','frames','frame-pacing','frame-pacing.json');
   if(typeof packetPath!=='string'||resolve(packetPath).toLowerCase()!==expected.toLowerCase())
     throw Error('Night frame reuse requires the same owned evidence leaf.');
   if(priorPassed!==true)throw Error('The original simple frame stage failed; no second measurement is allowed.');
