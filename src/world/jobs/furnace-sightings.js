@@ -23,6 +23,57 @@ export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeig
 
 export const FURNACE_PATIENCE_SECONDS = 8;
 
+// Hot Delivery's glass uses the job clock. Its closed round is supplied by the
+// named land plan; neither a renderer nor a wall clock advances these rules.
+export const FURNACE_GLASS = Object.freeze({
+  glassRadius: 30,
+  roundSeconds: 40,
+  captionMetres: 150,
+  lostRiderSightSeconds: 5,
+  crossingKmh: 50,
+  crossingSpareSeconds: 1,
+});
+
+export function glassOnRound(points, clockSeconds) {
+  if (points.length < 2) throw new RangeError('The glass needs a closed round.');
+  const lengths = points.map((point, index) => {
+    const next = points[(index + 1) % points.length];
+    return Math.hypot(next.x - point.x, next.z - point.z);
+  });
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  if (!(total > 0)) throw new RangeError('The glass round needs some length.');
+  const phase = ((clockSeconds % FURNACE_GLASS.roundSeconds) + FURNACE_GLASS.roundSeconds) % FURNACE_GLASS.roundSeconds;
+  let remaining = total * phase / FURNACE_GLASS.roundSeconds;
+  for (let index = 0; index < points.length; index++) {
+    const length = lengths[index];
+    if (length === 0) continue;
+    if (remaining < length) {
+      const from = points[index], to = points[(index + 1) % points.length];
+      const share = remaining / length;
+      return {x:from.x + (to.x - from.x) * share, z:from.z + (to.z - from.z) * share,
+        radius:FURNACE_GLASS.glassRadius};
+    }
+    remaining -= length;
+  }
+  return {...points[0], radius:FURNACE_GLASS.glassRadius};
+}
+
+// Sight and the moving patch are separate facts. Rock may hide a car even
+// inside the circle. A dark or unloaded pot never adds to the count.
+export function stepGlassSeen(state, {car, glass, loaded, visible}, dt) {
+  const illuminated = !!car && !!glass &&
+    Math.hypot(car.x - glass.x, car.z - glass.z) <= FURNACE_GLASS.glassRadius;
+  const seen = !!loaded && !!visible && illuminated;
+  const elapsed = Math.max(0, dt);
+  state.seenSeconds = Math.max(0, (state.seenSeconds ?? 0) + (seen ? elapsed : -elapsed));
+  state.inGlass = seen;
+  return state;
+}
+
+export function glassWarningDue(sight, warned) {
+  return !warned && sight.inGlass && sight.seenSeconds >= FURNACE_PATIENCE_SECONDS;
+}
+
 // Sound the warning once, after more than the allowed uninterrupted time in view.
 export function skylineWarningDue(sight, warned) {
   return !warned && sight.visible && sight.seconds > FURNACE_PATIENCE_SECONDS;

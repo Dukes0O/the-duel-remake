@@ -1,13 +1,14 @@
 # EVERBURN-REMAKE slice 8
-- Part A built: the yard fills to 100 on return, roadside scoops lift to 60, the outage names the nearest fire, and Moss greets once within 40 m.
-- Hidden switches, saved fields and pay unchanged. Parts B, C and D remain unbuilt.
-- Checks PASS: test-everburn-job1, test-ember-pot (38 checks), git diff --check, on d23e27ba7 plus the Part A changes in this commit.
-- Integration brought into this lane through d23e27ba7; only the card changed there.
-- Changed assertions for Claude: scoop +25 becomes fill-to-100 at the yard or fill-to-60 on the way (A1/A2); the Wash stop now accepts no scoop while fire is at least 60.
-- Changed assertion for Claude: unchanged bed drive fire 35?37 becomes 7?9 (measured 7.438721), because A2 no longer adds 25 to a pot above 60. Hard scoop fixtures start below 60.
-- Bed without the Wash stop: 14.242767 fire; both bed drives finish with zero rams. East Road: 18.448148 fire and three rams.
-- Sound: existing world.ember.scoop and world.ember.out; Moss and the nearest-fire message are captions only. No new cue in Part A.
-- Codex decided: use all three fires for the outage caption; preserve slice 7 repeatable relights and separate roadside scoops (written on card).
-- For Claude: independent code and assertion review; browser checks after the remaining parts and scenario work are complete. No browser run here.
-- Final-only checks not yet run: Easy Hot Delivery, older related suites, replay and world signatures, lane tier, build. Scenario updates remain with B?D.
-- **Removed:** the fixed +25 scoop rule. No scratch output is retained.
+- Part A is built in faabfac06: yard fill 100, roadside fill 60, nearest-fire caption and Moss's greeting.
+- Part B rule foundation: a constant-speed closed light round, 40-second job clock, radius 30, and a SEEN count that fills in light and drains outside it or behind cover.
+- The horn is due at eight seconds. Tests cover circle edges, cover, unloading, equal fill/drain rates, loop closure and unequal segment lengths.
+- These new helpers are not wired into the job yet. B's land round, drawing, HUD, riders and scenario remain; C and D remain unbuilt. Switches, saves and pay are unchanged.
+- Checks PASS on faabfac06 plus this round's changes: test-everburn-job1 and git diff --check. Part A also passed test-ember-pot (38 checks).
+- Changed assertions for Claude: A1/A2 replaces +25 with yard fill 100 or roadside fill 60; a pot at least 60 takes no scoop. This round changes no existing assertion.
+- Changed assertion from A: bed drive fire 35 to 37 becomes 7 to 9 (measured 7.438721), since a pot above 60 no longer gains 25. Hard scoop fixtures start below 60.
+- Unchanged drives: bed fire 7.438721 or 14.242767 without the Wash stop, zero rams; East Road fire 18.448148, three rams.
+- Sound: existing world.ember.scoop and world.ember.out; captions have no voice. B will use existing world.furnace.horn; no new cue this round.
+- Codex decided: A's outage names any nearest fire; repeatable relights stay separate from roadside scoops (already written on card). No new design decision this round.
+- Integration merge blocked by automatic approval: Git writes lane metadata beneath the forbidden live repository path. Approval requested; integration's pending changes are card/inbox text only.
+- For Claude: independent code/assertion review and the browser scenario after B to D. Final-only Easy drive, older related suites, replay/world signatures, lane tier and build are not yet run.
+- **Removed:** Part A removed the fixed +25 scoop. This rule foundation replaces nothing until B is wired into the job.

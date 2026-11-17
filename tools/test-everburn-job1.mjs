@@ -26,7 +26,8 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
-import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, furnaceSighting, stepSkylineSight} from '../src/world/jobs/furnace-sightings.js';
+import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
+  glassOnRound, stepGlassSeen, glassWarningDue} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -42,6 +43,43 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Slice 8B's clock and detection rules need no graphics or scripted drive.
+{
+  const round = [{x:0, z:0}, {x:100, z:0}, {x:100, z:100}, {x:0, z:100}];
+  assert.deepEqual(glassOnRound(round, 0), {x:0, z:0, radius:30});
+  assert.deepEqual(glassOnRound(round, 5), {x:50, z:0, radius:30});
+  assert.deepEqual(glassOnRound(round, 15), {x:100, z:50, radius:30});
+  assert.deepEqual(glassOnRound(round, 35), {x:0, z:50, radius:30});
+  assert.deepEqual(glassOnRound(round, 45), glassOnRound(round, 5));
+  assert.deepEqual(glassOnRound(round, -5), glassOnRound(round, 35));
+  assert.deepEqual(glassOnRound([round[0], ...round], 5), glassOnRound(round, 5),
+    'a repeated point does not make the light stop');
+  const unequal = [{x:0,z:0}, {x:300,z:0}, {x:300,z:100}, {x:0,z:100}];
+  assert.deepEqual(glassOnRound(unequal, 10), {x:200,z:0,radius:30},
+    'speed follows distance, rather than the number of points');
+  assert.throws(() => glassOnRound([], 0), RangeError);
+  assert.throws(() => glassOnRound([round[0], round[0]], 0), RangeError);
+  const glass = glassOnRound(round, 0), sight = {};
+  const facts = {car:{x:30,z:0}, glass, loaded:true, visible:true};
+  stepGlassSeen(sight, facts, 4);
+  assert.equal(sight.seenSeconds, 4, 'the circle includes its 30 m edge');
+  assert.equal(glassWarningDue(sight, false), false);
+  stepGlassSeen(sight, {...facts, visible:false}, 1);
+  assert.equal(sight.seenSeconds, 3, 'rock drains the count at the same rate');
+  stepGlassSeen(sight, {...facts, car:{x:30.01,z:0}}, 1);
+  assert.equal(sight.seenSeconds, 2, 'leaving the patch drains the count');
+  stepGlassSeen(sight, {...facts, loaded:false}, 1);
+  assert.equal(sight.seenSeconds, 1, 'a car without the load drains the count');
+  stepGlassSeen(sight, {...facts, glass:null}, 2);
+  assert.equal(sight.seenSeconds, 0, 'the count never becomes negative');
+  stepGlassSeen(sight, facts, FURNACE_PATIENCE_SECONDS);
+  assert.equal(glassWarningDue(sight, false), true, 'the horn is due at eight seconds');
+  assert.equal(glassWarningDue(sight, true), false, 'an active pursuit has no second horn');
+  stepGlassSeen(sight, facts, -2);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS, 'negative time cannot change the count');
+  assert.equal(FURNACE_GLASS.roundSeconds, 40);
+}
 
 // These proof drives represent a driver who already caught the scout.
 function stopScoutForProof(duel) {
