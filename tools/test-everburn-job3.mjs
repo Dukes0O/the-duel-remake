@@ -397,3 +397,60 @@ assert.equal(furnaceSighting(oldChase), null);
 applyBellowsFurnaceLeave(hornListener, oldChase, release);
 assert.equal(horns.length, 1);
 console.log('PASS Run Him Down: furnace waits, horns once at collection, leaves and disappears.');
+
+// Job 3.6: stopping the car releases one unarmed foot actor. The same
+// mover used by the other job raiders carries him away from the player.
+const {applyBellowsThiefFlee, stepWorldJob} = await import('../src/arena/modes/world-job.js');
+const escapeApp = new App(); escapeApp.audio.unlock = () => {};
+escapeApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+  'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+escapeApp.duel.state.wastelandGateDiscovered = true;
+assert(escapeApp.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+  car:'falcone_f42', playerId:escapeApp.player.id, seed:1989, opponents:[], job:definition}));
+const escapeDuel = escapeApp.duel, escapeState = escapeDuel.state;
+escapeState.onFoot = false;
+const escapeJob = escapeState.arena.worldJob;
+const carAt = escapeDuel.course.worldAt(escapeState.s, escapeState.lateral);
+const stoppedCar = {id:'thief', position:{x:carAt.x + 12, y:carAt.y, z:carAt.z}, heading:0,
+  health:20, renderCar:'dusthawk_rally'};
+escapeJob.actors = [stoppedCar];
+escapeJob.job = createJob({steps:[chaseStep]}, 1989);
+escapeJob.job.stepState = {thiefStopped:true, bellows:70, knocks:3};
+const savedBeforeEscape = JSON.stringify([...memory]);
+const raidCount = escapeState.raids?.zones.length ?? 0;
+assert.equal(applyBellowsThiefFlee(escapeDuel, escapeJob, {type:'follow'}), false);
+stepWorldJob(escapeDuel, 0);
+const runner = escapeJob.actors.find(actor => actor.bellowsThief);
+assert(runner, 'The ending request must reach the arena actor bridge.');
+assert.equal(runner.approachSpeed, BELLOWS_RULE.thiefRunMps);
+assert(Math.abs(Math.hypot(runner.x - stoppedCar.position.x,
+  runner.z - stoppedCar.position.z) - BELLOWS_RULE.thiefExitMetres) < 1e-6);
+assert.equal(runner.groundY, undefined, 'The foot mover owns his current floor.');
+const parkedBeforeEscape = JSON.stringify(stoppedCar.position);
+const beforeEscape = {x:runner.x, z:runner.z};
+assert.equal(applyBellowsThiefFlee(escapeDuel, escapeJob, {type:'bellowsThiefFlee'}), true);
+assert.equal(escapeJob.actors.filter(actor => actor.bellowsThief).length, 1);
+// Flat test ground isolates the existing foot mover from the unfinished wreck
+// route. No driving or walking controls are supplied to this rule snapshot.
+escapeDuel.course.def = {...escapeDuel.course.def, scablands:false};
+stepWorldJob(escapeDuel, .5);
+assert(Math.abs(Math.hypot(runner.x - beforeEscape.x,
+  runner.z - beforeEscape.z) - BELLOWS_RULE.thiefRunMps * .5) < 1e-6);
+assert(runner.x > beforeEscape.x, 'He runs away from the player.');
+assert.equal(JSON.stringify(stoppedCar.position), parkedBeforeEscape);
+assert.equal(escapeState.raids?.zones.length ?? 0, raidCount, 'He cannot join a shooting raid.');
+assert.equal(JSON.stringify([...memory]), savedBeforeEscape);
+
+const escapeDrawing = createBellowsView(escapeDuel.course);
+escapeDrawing.update(escapeState);
+assert.equal(escapeDrawing.figures.group.visible, true);
+assert(escapeDrawing.figures.group.children[0].count > 0, 'The fleeing actor is drawn.');
+const beforeEscapeDrawing = JSON.stringify(runner);
+escapeDrawing.update(escapeState);
+assert.equal(JSON.stringify(runner), beforeEscapeDrawing, 'Drawing never moves the thief.');
+escapeDrawing.update({arena:{mode:'race'}});
+assert.equal(escapeDrawing.figures.group.visible, false);
+assert.equal(escapeDrawing.figures.group.children[0].count, 0);
+escapeDrawing.dispose();
+escapeApp.returnToMenu(); escapeApp.dispose?.();
+console.log('PASS Run Him Down: stopped thief runs once through the existing foot mover and read-only figures.');

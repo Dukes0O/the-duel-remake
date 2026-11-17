@@ -1014,6 +1014,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, job 3 escape: the stopped thief steps out 3 m from his car, away from the player, then runs 60 m that way at 6 m/s through the existing job foot mover. Those distances and speed are named in `BELLOWS_RULE`. He stays outside shooting raid zones. No extra sound cue is added; collection still sounds `world.bellows.load` and the furnace horn.
+
 - Slice 9, job 3: the two sacks burst at 800 m and 1,600 m along the road from the town gate. Both distances are named in `BELLOWS_RULE.ashAtRoadMetres`. The nine-second ending starts when the thief stops, but results wait until the player has stopped beside him and collected the bellows. The player can still approach during that hold.
 - Slice 9, job 3 route needs Claude's decision: the Boneyard currently has three whole solid aircraft boxes, with no wing or fuselage opening. Their nearest edge gaps are 17 m (north/south), 41.43 m (north/east) and 67.97 m (east/south). None supplies a 6 to 9 m gap. A line through three such gaps needs the wreck drawing and solids changed together, or an agreed wider route. Do not claim that the existing wrecks prove the designed narrow route; the other chase rules can continue while this is decided.
 - Slice 9, job 2 theft: the runner takes the clear south alley toward the gate at 6 m/s, starting at five seconds. The ending shows the start of his escape, with a plain brown load on his back. He is still running when the nine-second ending closes; reaching the gate is not a new condition for finishing.

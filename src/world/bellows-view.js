@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createOnFootFigures} from '../onfoot-figures.js';
 import {BELLOWS_RULE as R} from './jobs/bellows-rule.js';
 
 // Plain load and ash for Claude to redraw. Only the job owns their state.
@@ -16,13 +17,16 @@ export function createBellowsView(course) {
   const ashMaterial = new THREE.MeshBasicMaterial({color: 0x77736e, side: THREE.DoubleSide,
     fog: false, transparent: false, depthWrite: true});
   const clouds = new Map();
-  group.add(load);
-  return {group, load, clouds,
+  const figures = createOnFootFigures({capacity:1});
+  group.add(load, figures.group);
+  return {group, load, clouds, figures,
     update(state) {
       const worldJob = state?.arena?.mode === 'world-job' ? state.arena.worldJob : null;
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
       group.visible = step?.bellows === true;
       load.visible = false;
+      figures.update(group.visible ? (worldJob.actors ?? []).filter(actor => actor.bellowsThief) : [],
+        {active:group.visible});
       const active = new Set();
       if (group.visible) {
         const carried = job.stepState ?? {};
@@ -57,6 +61,7 @@ export function createBellowsView(course) {
       }
     },
     dispose() {
+      figures.dispose();
       loadShape.dispose(); leather.dispose(); ashShape.dispose(); ashMaterial.dispose();
       clouds.clear(); group.clear(); group.visible = false;
     },

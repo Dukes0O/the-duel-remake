@@ -26,6 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
+import {BELLOWS_RULE} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
@@ -1012,9 +1013,38 @@ export function applyBellowsFurnaceLeave(duel, worldJob, request) {
   return true;
 }
 
+// The stopped driver becomes an ordinary foot actor, outside the raid zones.
+// He runs away from the player and cannot shoot or return to his parked car.
+export function applyBellowsThiefFlee(duel, worldJob, request) {
+  if (request.type !== 'bellowsThiefFlee') return false;
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (!step?.bellows || worldJob.actors.some(actor => actor.bellowsThief)) return true;
+  const car = worldJob.actors.find(actor => actor.id === step.targetId);
+  if (!car?.position) return true;
+  const player = position(duel, duel.state);
+  const dx = car.position.x - player.x, dz = car.position.z - player.z;
+  const gap = Math.hypot(dx, dz);
+  const forward = gap > 0 ? {x:dx / gap, z:dz / gap}
+    : {x:Math.sin(car.heading ?? 0), z:Math.cos(car.heading ?? 0)};
+  const x = car.position.x + forward.x * BELLOWS_RULE.thiefExitMetres;
+  const z = car.position.z + forward.z * BELLOWS_RULE.thiefExitMetres;
+  const pose = duel.course.nearest(x, z);
+  const actor = createRaidZones(duel.course, worldJob.raidSeed)[0].raiders[0];
+  Object.assign(actor, {id:`${step.targetId}-on-foot`, bellowsThief:true,
+    x, z, s:pose.s, lateral:pose.lateral, y:scablandsActorHeightAt(x, z, car.position.y),
+    yaw:Math.atan2(forward.x, forward.z),
+    approachSpeed:BELLOWS_RULE.thiefRunMps,
+    approachTarget:{x:x + forward.x * BELLOWS_RULE.thiefRunMetres,
+      z:z + forward.z * BELLOWS_RULE.thiefRunMetres}});
+  delete actor.groundY;
+  worldJob.actors.push(actor);
+  return true;
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
     if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
+    if (applyBellowsThiefFlee(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
       worldJob.marker = request.place ?? null;
