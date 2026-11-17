@@ -201,7 +201,8 @@ check('released sound-bank entries and other exports stay exact', () => {
     'F1 uses its own existing-sample voice while historical exports remain pinned');
   // The released cues themselves are pinned once, in test-p4-audio, which covers every cue this
   // snapshot did. This suite keeps the other bank exports and the F1 voice.
-  assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => key !== 'SOUND_BANK').map(([key, value]) =>
+  // DIG-YARD-TOY adds the machine-tone recipes as a new export.
+  assert.equal(hash(Object.fromEntries(Object.entries(bank).filter(([key]) => !['SOUND_BANK', 'DIG_MACHINE_TONES'].includes(key)).map(([key, value]) =>
     // The medal cars' engine voices (EARN-CAR-1, 2 and 3) are new entries;
     // LAB-LIVE-FIX adds the Speirling to this pin, with every earlier voice unchanged.
     // Skyline is new; its exact row is checked by test-audio. Keep this old hash.

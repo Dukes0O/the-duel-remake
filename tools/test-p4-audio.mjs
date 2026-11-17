@@ -44,7 +44,11 @@ const DEEP_CUES = ['deep.splash', 'deep.engine-muffle', 'deep.bubbles', 'deep.sa
   'deep.logged', 'deep.pearl', 'deep.whale', 'deep.cave',
   'deep.sonar', 'deep.liftbag', 'deep.lift-cancel', 'deep.raised', 'deep.squeak',
   // MACHINE-VIEW adds these four, behind wasteland-town.
-  'machine.engine', 'machine.hydraulic', 'machine.dig', 'machine.tip'];
+  'machine.engine', 'machine.hydraulic', 'machine.dig', 'machine.tip',
+  // DIG-YARD-TOY adds these machine tones behind the-dig.
+  'drill-engine', 'drill-feed', 'drill-clay', 'drill-gravel', 'drill-rock', 'drill-jam',
+  'drill-reverse', 'drill-water', 'dozer-blade', 'roller-ground', 'paver-surface',
+  'borer.stall', 'borer.call', 'borer.refuse', 'borer.breakthrough', 'borer.daylight'];
 const added = new Set(CUES);
 const hash = data => createHash('sha256').update(data).digest('hex');
 const hashObject = value => hash(JSON.stringify(value));

@@ -32,7 +32,10 @@ assert.ok(view.root.getObjectByName('machine-exhaust').visible);
 assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.dig));
 assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.engine));
 assert.ok(soundEvents.some(item => item.cue === MACHINE_SOUND_CUES.hydraulic), 'a moving joint is heard');
-for (const cue of Object.values(MACHINE_SOUND_CUES)) assert.ok(SOUND_BANK[cue], `${cue} exists in the sound bank, so playing it cannot stop the game`);
+for (const cue of Object.values(MACHINE_SOUND_CUES)) {
+  assert.ok(SOUND_BANK[cue], `${cue} exists in the sound bank, so playing it cannot stop the game`);
+  assert.equal(SOUND_BANK[cue].flag, 'the-dig', `${cue} is available when the Dig is enabled without the town`);
+}
 state.x += 0.5;
 view.update(state, 1 / 60);
 assert.ok(scene.getObjectByName('machine-track-marks').children.some(mark => mark.visible), 'moving tracks leave marks on the ground');

@@ -1,7 +1,12 @@
 ﻿import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {page} from './scenarios/machine-borer.mjs';
 
 for (const expression of Object.values(page)) assert.doesNotThrow(() => new Function(`return ${expression};`));
+for (const name of ['machine-borer', 'machine-borer-apprentice', 'machine-drill', 'machine-roads']) {
+  const source = readFileSync(new URL(`./scenarios/${name}.mjs`, import.meta.url), 'utf8');
+  assert.match(source, /menu-check\.html\?flags=wasteland-town,the-dig/, `${name} opens with the Dig enabled`);
+}
 const delta = Array(1024).fill(0);
 delta[1 * 32 + 1] = 0.3;
 delta[1 * 32 + 2] = 0.6;

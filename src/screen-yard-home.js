@@ -55,7 +55,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   const career = profile?.wasteland;
   const wallet = `<span class="yard-wallet">${Math.floor(career?.scrap || 0).toLocaleString()} SCRAP</span>`;
   const header = `<header class="yard-home-header"><div><p class="eyebrow">BEYOND THE RUSTWALL</p><h2 id="yard-home-title">SCRAPDOME YARD</h2><p>${escapeHTML(playerName)} · Your Wasteland home</p></div>${wallet}</header>`;
-  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${career?.discoveredGate && featureFlags?.enabled('warlord-cards') ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('wasteland-town')===true?button('THE DIG','yard-the-dig')+button('THE TOWN','yard-the-town'):''}</nav>`;
+  const nav = `<nav class="yard-home-nav" aria-label="Wasteland home">${button('CAREER', 'yard-career')}${button('TERRITORY MAP', 'yard-territory')}${button('ARMORY', 'yard-armory')}${button('CREW', 'yard-crew')}${career?.discoveredGate && featureFlags?.enabled('warlord-cards') ? button('STORY WALL','yard-cards') : ''}${arenaMarkup ? button('SCRAPDOME', 'yard-scrapdome') : ''}${featureFlags?.enabled('the-dig')===true?button('THE DIG','yard-the-dig'):''}${featureFlags?.enabled('wasteland-town')===true?button('THE TOWN','yard-the-town'):''}</nav>`;
   const intro = '<p>Win Mad Max Duel events to earn scrap and build territory hold. The yard is your place to prepare for the next fight.</p>';
   const claimed = Object.values(career?.territories || {}).filter(territory => territory.claimed).length;
   const canFight = !!arenaMarkup && warlordsAvailable;
@@ -75,7 +75,9 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
   else {
     const homeCopy = canFight ? `The Scrapdome is open. ${fightCopy}` :
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${featureFlags?.enabled('gear-find') ? yardThingsToTry(profile, escapeHTML) : ''}`;
+    const gear = featureFlags?.enabled('gear-find') === true;
+    const dig = featureFlags?.enabled('the-dig') === true;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${gear || dig ? yardThingsToTry(profile, escapeHTML, {gear, dig}) : ''}`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }

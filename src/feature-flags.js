@@ -18,7 +18,6 @@ export const FEATURE_STATES = Object.freeze({
   'tyre-slip': 'dev',
   // Engines that pull like real ones (docs/DRIVING_LESSONS.md 12.5): the pull follows revs and the gear. Off in the game.
   'engine-curve': 'dev',
-  'nissan-skyline': 'on',
   'driving-lessons': 'on',
   'lap-choice': 'on', 'snowmen': 'on', yeti: 'on', 'rival-voices': 'dev',
   'grand-prix': 'on', 'cpu-racecraft': 'on', 'grand-prix-career': 'on', 'snow-world': 'dev',
@@ -63,8 +62,8 @@ export const FEATURE_STATES = Object.freeze({
   'kogane-invitation': 'on',
   // WATER-FINISH: The Water Road, the Wasteland story (docs/story/wasteland-water-road.md). On in the game (1 November 2026, no Preview step); also needs the Hidden Road, the Scrapdome and the warlord cards.
   'water-road': 'on',
-  // MACHINE-HAUL: Wasteland Town systems are built behind this switch, off for players.
-  'wasteland-town': 'dev',
+  // The Dig stays off until its play pass.
+  'the-dig': 'dev',
   // Everburn story screens and Scablands jobs. Off for players since 14 November 2026: Kyle played it and found it not ready to be seen (docs/board/cards/EVERBURN-REMAKE.md says what must be true before it comes back).
   'story-everburn': 'dev',
   // RUN-GAS (docs/board/cards/RUN-GAS.md): the gas run on the story wall once Everburn job 6 is won, and the Ash Men's feud. Needs story-everburn. Off for players since 14 November 2026, with the story.

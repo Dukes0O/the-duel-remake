@@ -1,11 +1,5 @@
 // The head and conveyor run continuously while the machine is working.
-const TONES = Object.freeze({
-  'borer.stall':[85, 'square', 0.4],
-  'borer.call':[260, 'triangle', 0.6],
-  'borer.refuse':[180, 'triangle', 0.25],
-  'borer.breakthrough':[460, 'triangle', 0.45],
-  'borer.daylight':[360, 'triangle', 0.8],
-});
+import {DIG_MACHINE_TONES} from '../sound-bank.js';
 
 export function createBorerSounds(audio) {
   const loops = new Map(), voices = new Set();
@@ -40,7 +34,7 @@ export function createBorerSounds(audio) {
       loop('borer.muck', 65, movingMuck ? 0.025 : 0, 'triangle');
     },
     play(cue) {
-      const spec = TONES[cue], ctx = audio?.context;
+      const spec = DIG_MACHINE_TONES[cue], ctx = audio?.context;
       if (!spec || !ctx || !audio.master || audio.muted || audio.paused || ctx.state !== 'running') return;
       const [frequency, waveform, duration] = spec, now = ctx.currentTime;
       const oscillator = ctx.createOscillator(), gain = ctx.createGain();
