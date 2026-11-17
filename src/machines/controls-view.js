@@ -18,8 +18,6 @@ export function digMachineControls(machine) {
   const {name, words} = DIG_MACHINE_CONTROLS[machine];
   return `<h2>${name} CONTROLS</h2><p>${words}</p>`;
 }
-export const DIG_MACHINE_NAMES = 'excavator, dump truck, trencher, drill rig, dozer, road roller, paver and Mabel the boring machine';
-
 // MACHINE-ROADS removes this restriction when its models are ready.
 export function digMachineIds(town = false) {
   return ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', ...(town ? ['roller', 'paver'] : []), 'borer'];
