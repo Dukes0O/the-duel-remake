@@ -13,7 +13,7 @@
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {boneyardWrecks} from './boneyard-wrecks.js';
-import {tinTownGateSolids} from './tin-town-gate.js';
+import {tinTownGateSolids, tinTownDoorPose} from './tin-town-gate.js';
 import {tinTownSolids} from './tin-town-shacks.js';
 import {forgePlan} from './forge-look.js';
 import {everburnPropSolids} from './everburn-props.js';
@@ -217,8 +217,10 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       return found;
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
-    setTownGate(gate) {
-      this.townGate = gate ? [make({id:'hot-delivery-town-door', kind:'wall', x:gate.x, z:gate.z,
+    setTownGate(gate, progress = 0) {
+      const pose = gate && tinTownDoorPose(gate, progress);
+      this.townGate = gate ? [make({id:'hot-delivery-town-door', kind:'wall', x:pose.x, z:pose.z,
+        heading:pose.heading, base:scablandsSurfaceHeightAt(gate.x, gate.z),
         halfX:gate.opening / 2, halfZ:.25, height:3})] : [];
     },
     setBraziers(spots) { this.braziers = spots.map(brazierSolid); },

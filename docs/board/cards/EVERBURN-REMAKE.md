@@ -849,3 +849,4 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 ## Codex decided (Claude to review)
 
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.
+- Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.

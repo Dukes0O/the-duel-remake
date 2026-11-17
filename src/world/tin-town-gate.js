@@ -10,6 +10,18 @@ import {LAND} from './scablands-names.js';
 // The gate stands 25 m west and 62 m south of Tin Town's centre (src/world/scablands-names.js).
 const POST_WIDTH=2.1;
 const BEAM_TOP=7.64;
+export const TIN_TOWN_SWING_SECONDS = 1.5;
+
+// A single leaf turns about the right post. The rules and drawing share its pose.
+export function tinTownDoorPose(gate, progress = 0) {
+  const angle = Math.max(0, Math.min(1, progress)) * Math.PI / 2;
+  const localX = gate.opening / 2 * (1 - Math.cos(angle));
+  const localZ = gate.opening / 2 * Math.sin(angle);
+  const yaw = Math.atan2(gate.through.x, gate.through.z);
+  return {localX, localZ, angle, heading:yaw + angle,
+    x:gate.x + localX * Math.cos(yaw) + localZ * Math.sin(yaw),
+    z:gate.z - localX * Math.sin(yaw) + localZ * Math.cos(yaw)};
+}
 // The gate and its two posts for a land. The posts are boxes for the solids list: each is the smallest upright box round the
 // post (2.1 m square, turned to the gate's direction).
 export function tinTownGateFor(land){

@@ -4,10 +4,12 @@
 - Checks: `test-audio` (618) and `test-p4-audio` passed on cure 3; the arena's pinned hashes are unchanged.
 - Built cure 5: the weapon bar shows all four car slots; `test-combat-hud` passed before its commit.
 - Built cure 6: the exact relight instructions read the scoop's shared three-second rule; `test-world-hud` and `test-ember-pot` passed before its commit.
+- Built cure 7: the door swings for 1.5 seconds; its solid follows the drawing. `test-everburn-job1` passed on `316dde4d5` plus cure 7.
 - Integration: brought `integration/wasteland` in; already current at `01cfa107c`.
 - For Claude to run: updated `everburn-job1` pictures when all cures are complete; independent review.
 - Changed assertions: the old sound-bank projection excludes new `ambience.scablands`; its expected hash is unchanged. No switches or saved fields changed.
 - Changed assertions for Claude: `test-everburn-job1` visible chips with loan 1 to 4, without loan 0 to 4, as cure 5 asks; the loan is still checked in its real slot.
-- Sound: `ambience.scablands`, two looping noise layers under `story-everburn`; no new file.
+- Changed assertions for Claude: open door solids 0 to 1 at the swung position; immediate right-angle turn to a timed swing, proving cure 7. Gate shuts outside 20 m and opens on return.
+- Sound: `ambience.scablands`, two noise loops; `world.tintown.gate` starts each swing. No new file.
 - **Removed:** duplicate job-car ground offset; player arrow covering nearby riders on the map.
-- Still to build: cures 4, 7, 8, scenario pictures and final checks. Cure 6 keeps `world.ember.scoop`.
+- Still to build: cures 4, 8, scenario pictures and final checks. Cure 6 keeps `world.ember.scoop`.

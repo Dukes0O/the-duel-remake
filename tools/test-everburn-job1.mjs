@@ -1524,7 +1524,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   syncScene(scene.group, state);
   assert.equal(drawnDoor.visible, true, 'the closed door is drawn');
   world.job.stepState = {loaded:true, ember:100, campAwake:true};
-  const tick = () => stepWorldJob(duel, 0.01);
+  const tick = (seconds = .01) => stepWorldJob(duel, seconds);
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a distant car does not request the gate');
   car = {x:gate.x, z:gate.z + 10};
@@ -1533,16 +1533,39 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a person does not request the gate');
   state.onFoot = false;
-  tick(); tick();
+  tick();
   assert.equal(world.tinTownGateRequested, true);
-  assert.equal(world.solidGrid.townGate.length, 0, 'opening the door clears the job solid');
+  assert.equal(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id,
+    'the door still blocks the opening as it starts to swing');
+  const checkDoor = () => {
+    syncScene(scene.group, state);
+    scene.group.updateMatrixWorld(true);
+    const at = drawnDoor.getWorldPosition(new THREE.Vector3()), solid = world.solidGrid.townGate[0];
+    assert.ok(Math.hypot(at.x - solid.x, at.z - solid.z) < 1e-8, 'drawing and solid share the hinge');
+    assert.ok(Math.abs(at.y - 1.5 - solid.minY) < 1e-8);
+    assert.ok(Math.abs(solid.heading - Math.PI - drawnDoor.rotation.y) < 1e-8);
+    assert.equal(pushOutOfSolids(solid.x + .1, solid.z, 1, world.solidGrid).hit?.id, door.id,
+      'the moving leaf remains solid');
+  };
+  tick(.74); checkDoor();
+  assert.ok(Math.abs(drawnDoor.rotation.y - Math.PI / 4) < 1e-8, 'half open after .75 seconds');
+  tick(.75); checkDoor();
   assert.notEqual(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
-  syncScene(scene.group, state);
   assert.equal(drawnDoor.visible, true);
-  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the door swings clear');
-  scene.dispose();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the door swings clear after 1.5 seconds');
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
+  car = {x:gate.x, z:gate.z - 30};
+  tick(.75); checkDoor();
+  assert.ok(Math.abs(drawnDoor.rotation.y - Math.PI / 4) < 1e-8, 'the gate swings shut after the car leaves');
+  tick(.75); checkDoor();
+  assert.equal(drawnDoor.rotation.y, 0);
+  assert.equal(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 2);
+  car = {x:gate.x, z:gate.z + 10};
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the returning car opens it again');
+  scene.dispose();
 }
 // The real job records the delivered fire and sounds the forge when the ember lands.
 {

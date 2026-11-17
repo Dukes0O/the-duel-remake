@@ -23,6 +23,7 @@ import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.j
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
+import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -965,6 +966,20 @@ function finishWorldJob(duel, worldJob) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery') {
+    const gate = worldJob.job.steps[0].riderSafeWall, car = position(duel, state);
+    const open = !state.onFoot && Math.hypot(car.x - gate.x, car.z - gate.z) <= 20;
+    if (open && !worldJob.tinTownGateRequested) worldJob.tinTownGateRequested = true;
+    if (open !== (worldJob.tinTownGateOpening ?? false)) {
+      worldJob.tinTownGateOpening = open;
+      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
+        cue:'world.tintown.gate', position:car}});
+    }
+    const progress = worldJob.tinTownGateProgress ?? 0;
+    const travel = Math.max(0, dt) / TIN_TOWN_SWING_SECONDS;
+    worldJob.tinTownGateProgress = open ? Math.min(1, progress + travel) : Math.max(0, progress - travel);
+    worldJob.solidGrid.setTownGate(gate, worldJob.tinTownGateProgress);
+  }
   if (worldJob.arrivalHold) {
     const hold = worldJob.arrivalHold;
     worldJob.clockSec = state.stageTimeSec;
@@ -1003,14 +1018,6 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
-    const gate = currentStep.riderSafeWall;
-    if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
-        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20) {
-      worldJob.tinTownGateRequested = true;
-      worldJob.solidGrid.setTownGate(null);
-      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
-        cue:'world.tintown.gate', position:car}});
-    }
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
     if (worldJob.pipeDeck.tooFast && !worldJob.pipeSlip && !state.knock) {
       // Slide toward the nearer edge; free-body motion and the land handle the fall.
