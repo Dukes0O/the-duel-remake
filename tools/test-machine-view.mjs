@@ -48,6 +48,16 @@ for (const mode of MACHINE_CAMERA_MODES) {
   assert.equal(result.mode, mode);
   assert.ok(Number.isFinite(camera.position.x) && Number.isFinite(camera.position.y) && Number.isFinite(camera.position.z));
 }
+const obstruction = new THREE.Mesh(new THREE.BoxGeometry(4, 8, 10), new THREE.MeshBasicMaterial());
+obstruction.position.set(state.x, 4, state.z); obstruction.updateMatrixWorld(true);
+updateMachineCamera(camera, definition, state, 'cab', {body:obstruction});
+const ray = new THREE.Raycaster(camera.position, camera.getWorldDirection(new THREE.Vector3()), 0, 3);
+assert.equal(ray.intersectObject(obstruction).length, 0, 'cab view clears the posed machine');
+assert.ok(camera.position.y > 8, 'cab eye rises above the model');
+const straight = new THREE.PerspectiveCamera();
+updateMachineCamera(straight, definition, state, 'chase');
+updateMachineCamera(camera, definition, state, 'chase', {chaseOrbit:35 * Math.PI / 180});
+assert.ok(camera.position.distanceTo(straight.position) > 1, 'excavator chase view moves to one side');
 assert.equal(updateMachineCamera(camera, definition, state, 'unknown').mode, 'chase');
 assert.equal(state.x, before.x + 0.5, 'camera and view leave machine position unchanged');
 view.dispose();

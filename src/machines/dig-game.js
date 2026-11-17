@@ -537,7 +537,8 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const y=isBorer?active.y:machineHeight(sim.ground,sim.activeMachine,active),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
       if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
-      else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});
+      else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target,
+        chaseOrbit:wide?35*Math.PI/180:0,body:mode==='cab'?machineViews.get(sim.activeMachine)?.body:null});
       previousCameraMachine=sim.activeMachine;
       sun.position.set(active.x+SUN_OFFSET.x,y+SUN_OFFSET.y,active.z+SUN_OFFSET.z);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
     }
