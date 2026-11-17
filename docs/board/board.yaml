@@ -4,11 +4,11 @@ tasks:
   # From the audit of 9 November 2026 (docs/board/audit-2026-11-09.md): this week's seven small items.
   - id: DIG-YARD-TOY
     title: "Release the Dig as a toy in the Scrapdome yard, on its own switch"
-    owner: "codex"
+    owner: "claude"
     lane: "UI"
     size: "S"
     status: "building"
-    claimed_by: "Codex, lane dig-yard-toy: slice 1 merged 16 November 2026 with the switch off; slice 2 (cures from Claude's play) building"
+    claimed_by: "Claude: slices 1 and 2 merged 16 November 2026 with the switch off; owed: the pale ring at a heap's foot, a frame check in the Dig yard, Kyle's try"
     needs: []
     locks: []
     flag: "the-dig"

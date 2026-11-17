@@ -14,6 +14,19 @@ export function updateMachineCamera(camera, definition, state, mode = 'chase', l
     const yaw = heading + (definition.cabTurnsWith ? state.jointAngles?.[definition.cabTurnsWith] ?? 0 : 0);
     const eye = definition.cabEye ?? [0, 2.25, 0.35], s = Math.sin(yaw), c = Math.cos(yaw);
     camera.position.set(state.x + eye[0] * c + eye[2] * s, ground + eye[1], state.z + eye[2] * c - eye[0] * s);
+    // The old fixed cab eye can lie inside the model, especially the trencher's cover.
+    // Use the posed body, including its moving parts, to place the eye above and ahead.
+    if (look.body) {
+      const bounds = new THREE.Box3().setFromObject(look.body);
+      if (!bounds.isEmpty()) {
+        const front = Math.max(bounds.min.x * s, bounds.max.x * s) +
+          Math.max(bounds.min.z * c, bounds.max.z * c);
+        const advance = Math.max(0, front + 0.25 - camera.position.x * s - camera.position.z * c);
+        camera.position.x += s * advance;
+        camera.position.z += c * advance;
+        camera.position.y = Math.max(camera.position.y, bounds.max.y + 0.25);
+      }
+    }
     target = new THREE.Vector3(camera.position.x + s * 10, camera.position.y - 1.2, camera.position.z + c * 10);
   } else if (selected === 'work') {
     const tool = Object.values(definition.tools ?? {})[0];
@@ -30,7 +43,8 @@ export function updateMachineCamera(camera, definition, state, mode = 'chase', l
     target = new THREE.Vector3(state.x + sin * ahead, ground + 1.6, state.z + cos * ahead);
     const distance = Math.max(5, Math.min(24, Number.isFinite(look.distance) ? look.distance : 8));
     const height = Number.isFinite(look.height) ? look.height : 3.5;
-    camera.position.set(state.x - sin * distance, ground + height, state.z - cos * distance);
+    const yaw = heading + (Number.isFinite(look.chaseOrbit) ? look.chaseOrbit : 0);
+    camera.position.set(state.x - Math.sin(yaw) * distance, ground + height, state.z - Math.cos(yaw) * distance);
   }
   camera.lookAt(target);
   camera.updateMatrixWorld();

@@ -77,7 +77,7 @@ export function yardHomeScreen({profile, playerName, escapeHTML, panel = 'home',
       arenaMarkup ? 'The Scrapdome is open. Warlord fights are coming later.' : 'Warlord fights and the arena are coming later.';
     const gear = featureFlags?.enabled('gear-find') === true;
     const dig = featureFlags?.enabled('the-dig') === true;
-    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${gear || dig ? yardThingsToTry(profile, escapeHTML, {gear, dig}) : ''}`;
+    content = `<div class="yard-home-intro">${intro}<p>${homeCopy}</p>${storyButton}</div>${gear || dig ? yardThingsToTry(profile, escapeHTML, {gear, dig, town:featureFlags?.enabled('wasteland-town') === true}) : ''}`;
   }
   return `<section class="yard-home-panel" role="dialog" aria-modal="true" aria-labelledby="yard-home-title" data-yard-panel="${panel}">${header}${nav}<div class="yard-home-content">${content}</div><p class="yard-home-message" role="status">${escapeHTML(message)}</p><footer>${panel === 'home' ? '' : button('BACK TO YARD', 'yard-home')}${button('RETURN TO MAIN MENU', 'yard-menu')}</footer></section>`;
 }

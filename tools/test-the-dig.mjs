@@ -124,11 +124,19 @@ let high=createDigSandbox({seed:417});
 const highResult=stepDigSandbox(high,{action:'dig'},dt);
 assert.equal(highResult.excavatedM3,0,'Space does not dig while the bucket is above the ground');
 assert.match(highResult.lastMessage,/Lower the boom/,'the raised bucket gives a plain lowering instruction');
+const repeated=stepDigSandbox(highResult,{action:'dig'},dt);
+assert.ok(repeated.events.some(event=>event.type==='machine-message' && event.message===highResult.lastMessage), 'The same instruction is emitted again.');
 high={...high,haul:{...high.haul,machines:{...high.haul.machines,
   excavator:{...high.haul.machines.excavator,load:{topsoil:machineDefinition('excavator').tools.bucket.capacityM3}}}}};
 const fullResult=stepDigSandbox(high,{action:'dig'},dt);
 assert.equal(fullResult.excavatedM3,0,'a full bucket takes no more soil');
 assert.match(fullResult.lastMessage,/bucket is full/,'a full bucket tells the player to load it');
+let truckSide=createDigSandbox({seed:417});
+for(let i=0;i<126;i++)truckSide=stepDigSandbox(truckSide,{controls:{swing:-1}},dt);
+for(let i=0;i<54;i++)truckSide=stepDigSandbox(truckSide,{controls:{boom:-1}},dt);
+for(let i=0;i<150;i++)truckSide=stepDigSandbox(truckSide,{action:'dig'},dt);
+assert.ok(truckSide.excavatedM3<.1,'the truck-side cut removes only a little ground');
+assert.equal(truckSide.lastMessage,'The bucket has reached the bottom here. Press A or D to swing to fresh dirt.');
 const work=machineControlInput({},null,'work');
 const beforeDigTip=tipNow(sim);
 const heightBeforeDig=sim.ground.heightAt(beforeDigTip.x,beforeDigTip.z);
@@ -163,6 +171,7 @@ const truck=machineToolPosition(machineDefinition('dumpTruck'),sim.haul.machines
 sim={...sim,mode:'work'};
 let highestBed=0;for(let i=0;i<100;i++){sim=stepDigSandbox(sim,{controls:{},action:'tip'},dt);highestBed=Math.max(highestBed,sim.haul.machines.dumpTruck.bedAngle);}
 assert.ok(sim.tippedM3>0,'the loaded truck tips a real heap');
+assert.equal(sim.lastMessage,'The load is tipped. Fill the truck again.');
 assert.ok(highestBed>=.4,'the bed really lifts while tipping');
 assert.notEqual(sim.ground.heightAt(truck.x,truck.z),truckHeight,'tipped material lands behind the truck and changes the ground');
 const retained=machineLoadVolume(sim.haul.machines.excavator)+machineLoadVolume(sim.haul.machines.dumpTruck);

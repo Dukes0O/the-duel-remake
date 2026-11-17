@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {machineDefinition} from './content/machines.js';
 import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
-import {machineControlsView, DIG_MACHINE_HELP} from './controls-view.js';
+import {DIG_MACHINE_HELP, DIG_MACHINE_CONTROLS, digMachineControls, digMachineIds} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, createBorerSurveyCache} from './borer.js';
@@ -32,7 +32,6 @@ const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
-const MACHINE_IDS=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
 
 /** Reuse a parked machine's ground height until it or the ground changes. */
@@ -111,7 +110,14 @@ export function followBorerSlope(camera, target, state, distance = 8, ahead = -3
   camera.updateMatrixWorld();
 }
 // The head is the simulation origin; the model's tail is about 18 m behind it.
-export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false) {
+export function updateBorerCamera(camera, state, cameraIndex, ground, dt, reset = false, body = null) {
+  if (cameraIndex === 1 && body) {
+    updateMachineCamera(camera, machineDefinition('borer'), state, 'cab', {body});
+    // Rebuild the tunnel route when returning to the chase view.
+    delete camera.userData.borerTarget;
+    delete camera.userData.borerRoute;
+    return;
+  }
   const segments=state.segments || [], sin=Math.sin(state.heading), cos=Math.cos(state.heading);
   const hasFace = () => {
     const key = [state.x, state.y, state.z, state.heading, ground.revision].join(':');
@@ -219,19 +225,43 @@ const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;colo
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
 // A finer window keeps steep faces faithful to the surface used by the Dig.
+// A coarse corner must clear every edited one-metre corner in its neighbouring cells.
+export function digUnderlayHeight(x, z, ground, cell, base, lift = 0) {
+  const inside = [0, -0.0001].some(dx => [0, -0.0001].some(dz => ground.hasChunkAt(x + dx, z + dz)));
+  if (!inside) return base(x, z);
+  let lowest = Infinity;
+  for (let dz = -cell; dz <= cell; dz++) for (let dx = -cell; dx <= cell; dx++)
+    lowest = Math.min(lowest, ground.heightAt(x + dx, z + dz));
+  return Math.min(base(x, z), lowest - 0.3 - lift);
+}
 export function createDigNearGround(material, ground) {
   // A tunnel camera sees the underside of the land.
   material.side = THREE.DoubleSide;
-  return createNearGround({material, heightAt:(x,z)=>scablandsSurfaceHeightAt(x,z,ground),
+  // Neighbouring corners share most of their one-metre samples. Keep those
+  // samples until an edit reaches them, including when the window moves.
+  const samples = new Map();
+  const sampledGround = {...ground, heightAt(x, z) {
+    const key = `${x},${z}`, previous = samples.get(key);
+    if (previous && (previous.revision === ground.revision ||
+        !ground.changedAlongSince(previous.revision, {x, z, heading:0}, 0))) {
+      previous.revision = ground.revision;
+      return previous.height;
+    }
+    const height = ground.heightAt(x, z);
+    if (samples.size >= 200000) samples.clear();
+    samples.set(key, {height, revision:ground.revision});
+    return height;
+  }};
+  return createNearGround({material, heightAt:(x,z)=>digUnderlayHeight(x,z,sampledGround,2,(a,b)=>scablandsSurfaceHeightAt(a,b,ground),.025),
     name:'Dig near ground', grid:{cellX:2,cellZ:2,cellsX:192,cellsZ:192,lift:.025}});
 }
-function staticYard(scene,groundMaterial){
+export function staticYard(scene,groundMaterial,ground){
   const floorGeometry=new THREE.PlaneGeometry(800,800,800,800);floorGeometry.rotateX(-Math.PI/2);
   const position=floorGeometry.attributes.position,uv=floorGeometry.attributes.uv;
   floorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
   for(let i=0;i<position.count;i++){
     const x=position.getX(i),z=position.getZ(i);
-    position.setY(i,scablandsNaturalHeightAt(x,z));uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
+    position.setY(i,digUnderlayHeight(x,z,ground,1,scablandsNaturalHeightAt));uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
     const color=groundColour(x,z,0);floorGeometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
   }
   floorGeometry.computeVertexNormals();const floor=new THREE.Mesh(floorGeometry,groundMaterial);floor.name='Scablands natural ground';floor.receiveShadow=true;scene.add(floor);
@@ -243,6 +273,35 @@ function staticYard(scene,groundMaterial){
     pipe.rotation.x=Math.PI/2;pipe.position.set(-20+along*.46,scablandsNaturalHeightAt(-20,4)+.24+row*.4,4);pipe.castShadow=true;yard.add(pipe);
   }
   scene.add(yard);
+  floor.userData.refreshGround = ({minX,maxX,minZ,maxZ}) => {
+    for (let row=Math.max(0,Math.floor(minZ+399)); row<=Math.min(800,Math.ceil(maxZ+401)); row++)
+      for (let col=Math.max(0,Math.floor(minX+399)); col<=Math.min(800,Math.ceil(maxX+401)); col++) {
+        const i=row*801+col, x=position.getX(i), z=position.getZ(i);
+        position.setY(i,digUnderlayHeight(x,z,ground,1,scablandsNaturalHeightAt));
+      }
+    position.needsUpdate=true;
+    // Only faces touching changed corners can change their neighbours' normals.
+    const normals=floorGeometry.attributes.normal, index=floorGeometry.index;
+    const minRow=Math.max(0,Math.floor(minZ+398)), maxRow=Math.min(800,Math.ceil(maxZ+402));
+    const minCol=Math.max(0,Math.floor(minX+398)), maxCol=Math.min(800,Math.ceil(maxX+402));
+    const a=new THREE.Vector3(), b=new THREE.Vector3(), c=new THREE.Vector3(), sum=new THREE.Vector3(), cross=new THREE.Vector3();
+    let count=0;
+    for(let row=minRow;row<=maxRow;row++) for(let col=minCol;col<=maxCol;col++) {
+      const vertex=row*801+col; sum.set(0,0,0);
+      for(let r=Math.max(0,row-1);r<=Math.min(799,row);r++) for(let q=Math.max(0,col-1);q<=Math.min(799,col);q++) {
+        const face=(r*800+q)*6;
+        for(let t=0;t<6;t+=3) {
+          const ia=index.getX(face+t), ib=index.getX(face+t+1), ic=index.getX(face+t+2);
+          if(ia!==vertex && ib!==vertex && ic!==vertex) continue;
+          a.fromBufferAttribute(position,ia); b.fromBufferAttribute(position,ib); c.fromBufferAttribute(position,ic);
+          cross.subVectors(c,b).cross(a.sub(b)); sum.add(cross);
+        }
+      }
+      sum.normalize(); normals.setXYZ(vertex,sum.x,sum.y,sum.z); count++;
+    }
+    normals.needsUpdate=true;
+    return count;
+  };
   return floor;
 }
 
@@ -279,7 +338,7 @@ export function gateDigKey(event) {
 
 /** Starts the page-only sandbox. All digging and driving are fixed-step simulation work. */
 export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new THREE.WebGLRenderer(options)}={}){
-  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">${DIG_MACHINE_HELP} Press C to change the view.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${machineControlsView({mode:'work'})}<p>A and D swing. W and S raise and lower the boom. I and K move the arm. J and L curl the bucket. Space digs. E empties the bucket.</p></div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
+  const host=document.createElement('div');host.className='the-dig';host.innerHTML=`<style>${css}</style><canvas aria-label="The Dig machine yard"></canvas><section class="the-dig-hud"><h1>THE DIG</h1><p class="the-dig-machine"></p><p class="the-dig-load"></p><p class="the-dig-hint">${DIG_MACHINE_HELP} Press C to change the view.</p><p class="the-dig-message" role="status"></p></section><section class="the-dig-controls"><div class="the-dig-control-content">${digMachineControls('excavator')}</div><button type="button" data-dismiss>Hide controls</button></section><button type="button" class="the-dig-close">Escape · Yard</button>`;
   const dialStyle=document.createElement('style');dialStyle.textContent=BORER_DIAL_CSS;host.append(dialStyle);
   const dial=document.createElement('div');dial.className='the-dig-head';dial.hidden=true;
   dial.innerHTML='<span>Head speed</span><svg viewBox="0 0 80 46" role="img"><path d="M 6 40 A 34 34 0 0 1 74 40"/><path class="good" d="M 57 11 A 34 34 0 0 1 74 40"/><line x1="40" y1="40" x2="10" y2="40"/></svg><label>Thrust <meter min="0" max="1" value="0"></meter></label>';
@@ -308,7 +367,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const unsubscribeMapping=onMachineInputChange(refreshMapping);
   const onStorage=event=>{if(event.key===MACHINE_INPUT_STORAGE_KEY || event.key===null)refreshMapping();};
   window.addEventListener('storage',onStorage);
-  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false, checkFarMouth=false;
+  let shownMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false, checkFarMouth=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xb2cde0,0x714226,1.65));
   const sun=new THREE.DirectionalLight(0xffddac,3.3);sun.position.set(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -326,7 +385,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   const {look:groundLook,hills:hillField,photos:groundPhotos}=createDigGroundLook(riverField);
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}),{made:true});
-  const yardFloor=staticYard(world,groundMaterial);
+  const yardFloor=staticYard(world,groundMaterial,sim.ground);
   const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const nearGround=createDigNearGround(nearMaterial,sim.ground);
   nearGround.follow(0,18);world.add(nearGround.mesh);
@@ -338,7 +397,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const roadSounds=createRoadSounds(app?.audio);
   const borerSounds=createBorerSounds(app?.audio);
   const roadView=createRoadWorkView(world,(x,z)=>sim.ground.heightAt(x,z),yardFloor,true);
-  let controlsMachine=null, originalControls=controlsPanel.querySelector('.the-dig-control-content').innerHTML;
+  let controlsMachine=null;
   const effects=createDigFx({group:world,seed:1});
   const machineViews=new Map();let modelAsset=null, drillView=null, borerHead=null, borerDirt=null, beltTime=0;
   const borerSparks=createSparks(24);borerSparks.name='Borer face sparks';borerSparks.visible=false;world.add(borerSparks);
@@ -377,7 +436,10 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   sendButton.addEventListener('click',()=>pending.push('send'));
   visitButton.addEventListener('click',()=>pending.push('visit'));
   leverButton.addEventListener('click',()=>pending.push('lever'));
-  host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;});
+  // The machine's own keys are on the right-hand panel. The left line repeats them only once that panel has been hidden.
+  let hintWords='';
+  const fillHint=(words=hintWords)=>{hintWords=words;host.querySelector('.the-dig-hint').textContent=`${controlsPanel.hidden&&words?words+' ':''}${DIG_MACHINE_HELP} Press C to change the view.`;};
+  host.querySelector('[data-dismiss]').addEventListener('click',()=>{controlsPanel.hidden=true;fillHint();});
   host.querySelector('.the-dig-close').addEventListener('click',stop);
   try{
     const [machineAsset,domeAsset,borerAsset]=await Promise.all([new GLTFLoader().loadAsync(MODEL),new GLTFLoader().loadAsync(DOME),new GLTFLoader().loadAsync(BORER_MODEL)]);
@@ -386,7 +448,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
     if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
-    for(const id of MACHINE_IDS){
+    for(const id of digMachineIds(sim.town)){
       let root;
       if(id==='borer'){
         const model=machineRoot(borerAsset,'borer');
@@ -522,16 +584,12 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     cuttingsView.update(sim.drill.hole);
     if(controlsMachine!==sim.activeMachine){
       controlsMachine=sim.activeMachine;
-      controlsPanel.querySelector('.the-dig-control-content').innerHTML=controlsMachine==='drill'
-        ? '<h2>DRILL RIG CONTROLS</h2><p>Drive with W, A, S and D. Press Tab to lower or raise the mast.</p><p>Hold Space to feed the drill. Add W for a harder feed. Hold S to reverse the bit.</p>'
-        : controlsMachine==='borer'
-          ? '<h2>MABEL CONTROLS</h2><p>Hold W to push the thrust lever forward and S to pull it back; keep the head turning, and hold S at zero to reverse.</p><p>Use A and D to turn, the up and down arrows to change slope, Tab to change mode and C to change view.</p>'
-        : sim.roadMachines[controlsMachine]
-          ? `<h2>${LABELS[controlsMachine].toUpperCase()} CONTROLS</h2><p>Drive with W, A, S and D. Hold Space while driving to work the ground.</p>${controlsMachine==='paver'?'<p>Hold Shift to pave slowly and smoothly.</p>':''}<p>Press Q to choose another machine. Press C to change the view.</p>`
-          : originalControls;
+      const words = DIG_MACHINE_CONTROLS[controlsMachine].words;
+      controlsPanel.querySelector('.the-dig-control-content').innerHTML=digMachineControls(controlsMachine);
+      fillHint(words);
     }
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
-    for(const id of MACHINE_IDS){
+    for(const id of digMachineIds(sim.town)){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
       if(view){view.update({...state,y:id==='borer'?state.y:machineHeight(sim.ground,id,state)},elapsed,id===sim.activeMachine?frameEvents:[]);
         if(id==='borer')poseBorerSlope(view,state);
@@ -541,8 +599,9 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       const isBorer=sim.activeMachine==='borer';
       const y=isBorer?active.y:machineHeight(sim.ground,sim.activeMachine,active),mode=MODES[sim.cameraIndex]||'chase',wide=sim.activeMachine==='excavator';
       const toolId=Object.keys(definition.tools??{})[0],target=toolId&&definition.tools[toolId].joint?machineToolPosition(definition,active,toolId):null;
-      if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer');
-      else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target});
+      if(isBorer) updateBorerCamera(camera,active,sim.cameraIndex,sim.ground,elapsed,previousCameraMachine!=='borer',machineViews.get('borer')?.body);
+      else updateMachineCamera(camera,definition,{...active,y},mode,{distance:wide?17:13,height:wide?9:6,ahead:wide?4:1,target,
+        chaseOrbit:wide?35*Math.PI/180:0,body:mode==='cab'?machineViews.get(sim.activeMachine)?.body:null});
       previousCameraMachine=sim.activeMachine;
       sun.position.set(active.x+SUN_OFFSET.x,y+SUN_OFFSET.y,active.z+SUN_OFFSET.z);sun.target.position.set(active.x,y,active.z);sun.target.updateMatrixWorld();
     }
@@ -560,7 +619,10 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       camera.lookAt(active.x+150*forwardX,active.y+12,active.z+150*forwardZ);
       nearGround.follow(active.x+150*forwardX,active.z+150*forwardZ);
     } else nearGround.follow(active.x,active.z);
-    if(groundView.update()) for(const bounds of groundView.changedBounds) nearGround.refreshBounds(bounds);
+    if(groundView.update()) for(const bounds of groundView.changedBounds) {
+      const expanded={minX:bounds.minX-2,maxX:bounds.maxX+2,minZ:bounds.minZ-2,maxZ:bounds.maxZ+2};
+      nearGround.refreshBounds(expanded); yardFloor.userData.refreshGround(expanded);
+    }
     effects.update(elapsed);
     const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
@@ -605,10 +667,10 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
     dial.querySelector('svg').setAttribute('aria-label',`Head speed ${Math.round(headSpeed*100)} percent.`);
-    if(sim.lastMessage&&sim.lastMessage!==lastMachineMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
+    const machineNotice=frameEvents.find(event=>event.type==='machine-message');
+    if(machineNotice){shownMessage=machineNotice.message;messageUntil=now+4000;}
     const boreNotice=frameEvents.find(event=>event.type==='bore-call'||event.type==='bore-daylight');
     if(boreNotice){shownMessage=boreNotice.message;messageUntil=now+8000;}
-    lastMachineMessage=sim.lastMessage;
     if(now<messageUntil)message.textContent=shownMessage;
     else if(!failed&&sim.activeMachine==='excavator'){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');
