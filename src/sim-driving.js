@@ -352,8 +352,12 @@ function onQuarryMountain(game, s) {
 export function _terrainPose(actor = this.state) {
   if (actor !== this.state) return;
   if (!offroadCapability(this.car)) {
-    // Off the mountain a road car is drawn as it always was (no ground pose kept).
-    if (!onQuarryMountain(this, actor)) { if (this.course.def?.practice === true) { actor.groundHeight = null; actor.terrainPitch = null; actor.terrainRoll = null; } return; }
+    // Off the mountain a road car is drawn as it always was: the pose the mountain gave it is dropped, anything else kept.
+    if (!onQuarryMountain(this, actor)) {
+      if (actor._quarryPose) { actor._quarryPose = false; actor.groundHeight = null; actor.terrainPitch = null; actor.terrainRoll = null; }
+      return;
+    }
+    actor._quarryPose = true;
   }
   const point = this._supportAt(actor.s, actor.lateral), spec = this._vehicleSpec(actor);
   const heading = this.course.at(actor.s).heading + actor.headingError;
