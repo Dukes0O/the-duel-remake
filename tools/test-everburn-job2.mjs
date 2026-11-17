@@ -18,6 +18,17 @@ import {brandThiefPose} from '../src/world/jobs/brand-rule.js';
 import * as THREE from 'three';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+import {pageFunctions, pageSource} from './scenarios/everburn-job2.mjs';
+
+for (const name of Object.keys(pageFunctions)) {
+  assert.doesNotThrow(() => new Function(`return ${pageSource(name)}`));
+}
+for (const scene of ['start', 'brand', 'opponent', 'ending']) {
+  const source = pageSource('scene', scene);
+  assert.doesNotThrow(() => new Function(`return ${source}`));
+  assert(!source.includes('import('), 'Browser scenes use only the bundled app and renderer.');
+}
+console.log('PASS Light the Town: every browser page expression parses in its own function.');
 
 // Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
