@@ -357,7 +357,7 @@ bucket.
 - When a fire is lost the course burns on that play day: burn day 0.
 - Closed while `days since burn < 3`, counted in play days. It reopens by
   itself on day 3, free.
-- **Buyback price:** `10,000 − 1,000 × days since burn` credits: 10,000 on
+- **Buyback price:** `3,000 − 1,000 × days since burn` credits: 3,000 on
   the day it burns, 1,000 on day 2. The player must have the whole price
   (it is a purchase, not a repair). Buying back reopens it at once.
 - Never lost: the course stays owned, its records, ghosts, podiums and
