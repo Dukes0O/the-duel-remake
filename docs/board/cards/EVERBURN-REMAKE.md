@@ -864,6 +864,57 @@ way where the drawn ground stands 0.3 to 0.9 m above the car; the cure changes t
 them) are design, Claude's, not built. 8 the size of a scoop and 14 taking the job again are unchanged.
 Not shown by anything yet: whether solid cars can trap a player; nobody has heard the wind.
 
+## Someone on every way (Claude's design, 17 November 2026; shown to Kyle before any building)
+
+Kyle's 12 was the design's fault: three ways had a cost and nobody on them. The rule from now on: **on every way the
+player meets someone who wants the fire, sees that someone before being hurt, and can do something about it.** A bar going
+down is never the only thing that happens. Every number below is a first guess that Claude's own drive sets.
+
+**The plates: hide from the furnace's glass (Kyle's 6).** The furnace's watch flashes a mirror across the plates. A patch
+of bright light, 60 m wide, walks over the ground on a fixed round of about forty seconds, and the player sees it coming.
+- In the patch, a mark on the screen ("SEEN") fills in eight seconds and empties in cover. The buttes are the cover.
+- Full: the horn, and the two furnace riders come down, drawn on the small map from that moment. They ram to take fire by
+  the ember rule. The player may fight them with any of the four weapons, or lose them: five seconds out of their sight
+  behind a butte and they go home.
+- What the player does: watch the light, dash from butte to butte, 50 km/h on the rock.
+
+**The salt pan: race the salt riders to the Pipe.** Two Ash Men keep a lean-to at the salt works in the middle of the pan
+and watch for a glow. Cinder's reason holds: they take any fire they find.
+- They see the pot at 700 m (the pan is flat and the pot glows). A horn, and both set out to cut the car off.
+- On the pan they are as fast as the player; they gain only when the player turns or slows. They ram by the ember rule.
+- They will not drive onto the Pipe. The player must reach it far enough ahead to brake to 40 km/h for the crossing.
+  A lead of about four seconds is enough; less, and the last ram comes at the Pipe's mouth.
+- A player who passes wide of the salt works (about 1 km longer, in the wind) is seen later and starts the race ahead.
+- What the player does: choose the line across the pan, hold speed, judge the braking for the Pipe with two cars behind.
+
+**The river bed: the cold is seen, and the bridge is passed from below.** No rider goes down into the bed; that stands.
+- **Cold mist** lies in the bed's hollows, drawn, in patches 30 to 50 m long. The pot cools five times as fast in a patch
+  and at the plain rate outside (in place of two and a half times everywhere). The player steers round the patches;
+  some stretches leave only a narrow dry line by the bank.
+- **Under the Girder Bridge** the Ash Men on the deck tip ash to smother the fire. A horn as the car comes within 300 m;
+  then ash falls in each of the three gaps between the piers in turn, two seconds each, in a fixed order. Driving through
+  falling ash takes 20 from the pot. The player watches one round and goes through the gap that has just emptied.
+- **Out at the Steps** the car comes up under the furnace's glass for the last 800 m, by the plates' rule.
+- What the player does: read the mist, time the bridge, then one dash in the open.
+
+**The East Road (Kyle's 5).** By slice 6b a burning fence wakes its rider, who comes out through it. Kyle saw nobody, and
+the riders' cars were drawn under the ground then. Claude drives it again now that they are drawn rightly, before anything
+is changed there.
+
+**Big Bess (Kyle's 10).** She waits by the Boneyard road for the next job, and a player who comes near should learn that.
+Within 40 m her driver says one line, once: "Get that fire to the forge and Bess has a load to haul." Nothing else.
+
+**The brazier (Kyle's 2 and 8).** 25 is too little for a pot that has gone out 2.6 km from the yard.
+- The yard's brazier fills the pot to 100, as often as the player comes back. The cost is the drive.
+- A brazier on the way lifts the pot to 60 if it is lower, once each.
+- A dead pot is told which brazier is nearest and how far, in the middle of the screen, once.
+
+**Sound cues to make:** the glass's horn stands; the salt riders' horn (`world.salt.horn`); ash falling
+(`world.bridge.ash`); mist has none.
+
+**Order, if Kyle agrees:** the brazier and Bess (small); the glass on the plates; the salt riders (after the pan's
+seventeen sinking places are cured); the bed. Claude drives each by hand in the visible window, sound on, before the next.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
