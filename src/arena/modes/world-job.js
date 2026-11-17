@@ -6,7 +6,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue, stepGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -1068,11 +1068,12 @@ export function stepWorldJob(duel, dt) {
     worldJob.sightStep = (sightStep + 1) % 30;
     const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt, scablandsSurfaceHeightAt, duel.course.groundTunnels, sightStep === 0);
     worldJob.skylineSight = sight;
-    if (skylineWarningDue(sight, worldJob.skylineWarned)) {
-      worldJob.skylineWarned = true;
+    if (skylineWarningDue(sight, !glassPursuitReady(worldJob, currentStep.furnaceRiders ?? []))) {
+      beginGlassPursuit(worldJob);
       for (const actor of currentStep.furnaceRiders ?? []) {
         updateJobActor(duel, worldJob, actor, 0);
-        worldJob.actors.find(item => item.id === actor.id).pursuing = true;
+        const rider = worldJob.actors.find(item => item.id === actor.id);
+        if (rider.health > 0) rider.pursuing = true;
       }
       duel.emit({arenaTell: {id: 'furnace-warning', targetId: 'player', seconds: 0,
         cue: 'world.furnace.horn', position: car}});

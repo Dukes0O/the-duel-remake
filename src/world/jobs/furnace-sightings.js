@@ -77,6 +77,24 @@ export function glassWarningDue(sight, warned) {
   return !warned && sight.inGlass && sight.seenSeconds >= FURNACE_PATIENCE_SECONDS;
 }
 
+// A returning pair must finish leaving before another horn can call them.
+// Wrecks stay in the world; only the riders who went home can return.
+export function glassPursuitReady(state, riders) {
+  if (state.ridersRetreating) return false;
+  if (!state.skylineWarned) return true;
+  const gone = rider => state.furnaceRidersGone?.includes(rider.id);
+  return !!state.furnaceRidersReturning && riders.some(gone) &&
+    riders.every(rider => gone(rider) || state.actors?.some(actor => actor.id === rider.id && actor.health <= 0));
+}
+
+export function beginGlassPursuit(state) {
+  state.skylineWarned = true;
+  state.furnaceRidersReturning = false;
+  state.furnaceRidersGone = [];
+  state.furnaceLostSightSeconds = 0;
+  state.furnacePursuitSeconds = 0;
+}
+
 // Either rider can keep the chase alive. Once both lose the car, the same
 // job clock counts five seconds before they return. The watch is irrelevant.
 export function stepGlassPursuit(state, riderVisible, dt) {

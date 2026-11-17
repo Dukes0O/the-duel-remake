@@ -27,7 +27,7 @@ import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
-  glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
+  glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -45,6 +45,30 @@ import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // Slice 8B's clock and detection rules need no graphics or scripted drive.
+{
+  const riders = [{id:'furnace-rider-1'}, {id:'furnace-rider-2'}], state = {};
+  assert.equal(glassPursuitReady(state, riders), true);
+  beginGlassPursuit(state);
+  assert.equal(glassPursuitReady(state, riders), false, 'the horn cannot restart an active chase');
+  stepGlassPursuit(state, false, FURNACE_GLASS.lostRiderSightSeconds);
+  assert.equal(glassPursuitReady(state, riders), false, 'returning is not yet home');
+  state.furnaceRidersGone.push(riders[0].id);
+  assert.equal(glassPursuitReady(state, riders), false, 'one rider still returning prevents another chase');
+  state.actors = [{id:riders[1].id, health:0}];
+  assert.equal(glassPursuitReady(state, riders), true, 'the surviving rider can come back while the wreck stays');
+  state.actors = [];
+  state.furnaceRidersGone.push(riders[1].id);
+  assert.equal(glassPursuitReady(state, riders), true, 'both riders can be called again after going home');
+  beginGlassPursuit(state);
+  assert.deepEqual(state.furnaceRidersGone, []);
+  assert.equal(state.furnaceRidersReturning, false);
+  assert.equal(state.furnacePursuitSeconds, 0);
+  assert.equal(state.furnaceLostSightSeconds, 0);
+  stepGlassPursuit(state, false, 4.9);
+  assert.equal(state.furnaceRidersReturning, false, 'a renewed chase gets its own full sight-loss count');
+  state.ridersRetreating = true;
+  assert.equal(glassPursuitReady(state, riders), false, 'the safe town cannot call out a fresh pair');
+}
 {
   const state = {skylineSight:{visible:true, seenSeconds:8}};
   stepGlassPursuit(state, false, 4.9);
@@ -2065,6 +2089,19 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   assert.equal(horns().length, 1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
     'both hidden riders can leave once their five-second return begins');
+  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  tick(FURNACE_PATIENCE_SECONDS);
+  assert.equal(horns().length, 1, 'returning home alone does not sound another horn');
+  tick(.1);
+  assert.equal(horns().length, 2, 'fresh detection calls the pair down again');
+  const renewed = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  assert.equal(renewed.length, 2);
+  assert.ok(renewed.every(rider => rider.pursuing && !rider.returningToPost));
+  assert.ok(renewed.every(rider => !riders.includes(rider)), 'returned actors are replaced at their posts');
+  assert.equal(world.furnaceRidersReturning, false);
+  assert.equal(world.furnacePursuitSeconds, .1, 'only the new chase tick is counted');
+  assert.equal(world.furnaceLostSightSeconds, 0);
 }
 // Furnace riders stop for lost sight, the town wall, or the horn's time limit.
 for (const reason of ['sight', 'town', 'time']) {

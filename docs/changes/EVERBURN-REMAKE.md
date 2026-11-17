@@ -3,8 +3,8 @@
 - Part B rule foundation: a constant-speed closed light round, 40-second job clock, radius 30, and a SEEN count that fills in light and drains outside it or behind cover.
 - The horn is due at eight seconds. Tests cover circle edges, cover, unloading, equal fill/drain rates, loop closure and unequal segment lengths.
 - B's riders use full meeting speed, one cost per contact and 40 m back-off. Either rider's own sight keeps pursuit alive; five seconds without both turns them home and clears SEEN. Returning takes priority.
-- B's light helpers still need the land round, drawing, HUD and horn connection; renewed chases remain. C, D and E remain unbuilt. Switches, saves and pay are unchanged.
-- Checks PASS on 9237b57c3 plus this round's changes: test-everburn-job1, focused rider checks and git diff --check. Prior round: test-ember-pot (38 checks).
+- B's returned riders can answer another horn with fresh timers; a returning rider waits for its partner, while a wreck stays and its surviving partner can return. The land round, drawing, HUD and light-to-horn connection remain, as do C, D and E. Switches, saves and pay are unchanged.
+- Checks PASS: test-everburn-job1 and git diff --check on a7eb1805b plus this round's changes. Prior round: test-ember-pot (38 checks). This round adds rule and engine checks for another horn and fresh actors after return.
 - Changed assertions for Claude: A1/A2 replaces +25 with yard fill 100 or roadside fill 60; a pot at least 60 takes no scoop. B3 replaces the ten-second watch-loss fixture (9.9) with five-second rider loss (4.9).
 - B3 replaces the nine-second descent check (over 10 m down) with pursuit before the five-second loss: over 30 m closer after three seconds, then return. Hidden riders are gone after return (2 to 0).
 - Changed assertion from A: bed drive fire 35 to 37 becomes 7 to 9 (measured 7.438721), since a pot above 60 no longer gains 25. Hard scoop fixtures start below 60.
@@ -13,4 +13,4 @@
 - Codex decided: A's outage names any nearest fire; repeatable relights stay separate from roadside scoops (already written on card). No new design decision this round.
 - Integration merged at ec2d2d51f with no code conflict; only card/inbox text came in. A 25 m sight survey found disconnected exposed areas; B's light round still needs choosing and the gap-crossing proof. This round's integration merge reports already up to date.
 - For Claude: independent code/assertion review, the browser scenario after B to D, E's frame check and three pictures. Final-only Easy drive, older related suites, replay/world signatures, lane tier and build are not yet run.
-- **Removed:** A removed the fixed +25 scoop; B removed the half-speed ram estimate, immediate pursuit after a hit and ten-second watch-based pursuit-loss rule.
+- **Removed:** A removed the fixed +25 scoop; B removed the half-speed ram estimate, immediate pursuit after a hit, ten-second watch-based pursuit-loss rule and permanent one-chase limit.
