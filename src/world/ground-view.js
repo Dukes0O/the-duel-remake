@@ -81,7 +81,9 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
         minX = Math.min(minX, x); maxX = Math.max(maxX, x);
         minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
       }
-      if (maxX >= 0) changedBounds.push({minX: row.x * SIDE + minX - 1, maxX: row.x * SIDE + maxX + 1,
+      if (!mesh) changedBounds.push({minX:row.x * SIDE, maxX:(row.x + 1) * SIDE,
+        minZ:row.z * SIDE, maxZ:(row.z + 1) * SIDE});
+      else if (maxX >= 0) changedBounds.push({minX: row.x * SIDE + minX - 1, maxX: row.x * SIDE + maxX + 1,
         minZ: row.z * SIDE + minZ - 1, maxZ: row.z * SIDE + maxZ + 1});
       if (!mesh) {
         mesh = new THREE.Mesh(makeChunk(row, groundEdit.heightAt), ownedMaterial);

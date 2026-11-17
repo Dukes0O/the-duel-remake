@@ -9,4 +9,5 @@
 - No new game event or sound cue. The switch stays `dev`.
 - Removed: duplicated machine availability and panel control text; MACHINE-ROADS removes the temporary restriction.
 - The Dig scenario pictures each offered machine in its second view; page expressions parse. Claude must run it in a browser.
-- Still to build: ground layers, Mabel camera and real-model view checks. Run remaining card checks, lane tier and build at the end.
+- Ground layers now sit below edited chunks in the Dig; heap and cut ray checks pass. `test-ground-view` and `test-the-dig` pass on the current lane changes.
+- Still to build: Mabel camera and real-model view checks. Run remaining card checks, lane tier and build at the end.

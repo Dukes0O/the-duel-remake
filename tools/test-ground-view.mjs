@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import {createGroundEdit} from '../src/world/ground-edit.js';
 import {createGroundView} from '../src/world/ground-view.js';
 import {createDigFx} from '../src/world/dig-fx.js';
+import {createDigNearGround, staticYard} from '../src/machines/dig-game.js';
+import {scablandsNaturalHeightAt} from '../src/world/scablands-ground.js';
 
 const edits = createGroundEdit({region: {id: 'test', editable: true}, naturalHeight: () => 10});
 const group = new THREE.Group(), view = createGroundView({group, groundEdit: edits});
@@ -28,3 +30,32 @@ assert.equal(effects.particleCount, 0, 'the effect releases particles after thei
 effects.dispose(); view.dispose();
 assert.equal(group.children.length, 0, 'disposing the view and effects removes their meshes');
 console.log('Ground view: sparse fine meshes, material colour, seam skirts, incremental refresh and seeded dig effects pass.');
+
+// Use the same three meshes as the Dig, including an edit after they exist.
+{
+  const ground=createGroundEdit({region:{id:'yard',editable:true},naturalHeight:scablandsNaturalHeightAt});
+  const scene=new THREE.Scene(), material=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+  const floor=staticYard(scene,material,ground), near=createDigNearGround(material,ground);
+  scene.add(near.mesh); near.follow(0,0);
+  const overlay=new THREE.Group(); scene.add(overlay);
+  const drawn=createGroundView({group:overlay,groundEdit:ground,material});
+  ground.fill({x:5,z:5,radius:3},'topsoil',80);
+  ground.cut({x:-5,z:-5,radius:3},scablandsNaturalHeightAt(-5,-5)-2);
+  drawn.update();
+  for(const b of drawn.changedBounds) {
+    const expanded={minX:b.minX-2,maxX:b.maxX+2,minZ:b.minZ-2,maxZ:b.maxZ+2};
+    near.refreshBounds(expanded); floor.userData.refreshGround(expanded);
+  }
+  scene.updateMatrixWorld(true);
+  let checked=0;
+  for(const row of ground.toSave().chunks) for(let z=0;z<32;z++) for(let x=0;x<32;x++) {
+    if(Math.abs(row.delta[z*32+x])<=.08) continue;
+    const wx=row.x*32+x+.5,wz=row.z*32+z+.5;
+    const ray=new THREE.Raycaster(new THREE.Vector3(wx,100,wz),new THREE.Vector3(0,-1,0));
+    const hit=ray.intersectObjects([floor,near.mesh,overlay],true)[0];
+    assert.ok(hit?.object.name.startsWith('Scablands edited ground'),`edited ground is visible at ${wx}, ${wz}`);
+    checked++;
+  }
+  assert.ok(checked>10,'heap and cut both provide changed cells');
+  drawn.dispose(); near.dispose(); floor.geometry.dispose(); material.dispose();
+}

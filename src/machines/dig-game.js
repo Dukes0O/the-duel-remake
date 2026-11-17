@@ -218,19 +218,28 @@ const css=`.the-dig{position:fixed;inset:0;z-index:10000;background:#6e604d;colo
 
 function material(color,roughness=1){return new THREE.MeshStandardMaterial({color,roughness});}
 // A finer window keeps steep faces faithful to the surface used by the Dig.
+// A coarse corner must clear every edited one-metre corner in its neighbouring cells.
+export function digUnderlayHeight(x, z, ground, cell, base, lift = 0) {
+  const inside = [0, -0.0001].some(dx => [0, -0.0001].some(dz => ground.hasChunkAt(x + dx, z + dz)));
+  if (!inside) return base(x, z);
+  let lowest = Infinity;
+  for (let dz = -cell; dz <= cell; dz++) for (let dx = -cell; dx <= cell; dx++)
+    lowest = Math.min(lowest, ground.heightAt(x + dx, z + dz));
+  return Math.min(base(x, z), lowest - 0.3 - lift);
+}
 export function createDigNearGround(material, ground) {
   // A tunnel camera sees the underside of the land.
   material.side = THREE.DoubleSide;
-  return createNearGround({material, heightAt:(x,z)=>scablandsSurfaceHeightAt(x,z,ground),
+  return createNearGround({material, heightAt:(x,z)=>digUnderlayHeight(x,z,ground,2,(a,b)=>scablandsSurfaceHeightAt(a,b,ground),.025),
     name:'Dig near ground', grid:{cellX:2,cellZ:2,cellsX:192,cellsZ:192,lift:.025}});
 }
-function staticYard(scene,groundMaterial){
+export function staticYard(scene,groundMaterial,ground){
   const floorGeometry=new THREE.PlaneGeometry(800,800,800,800);floorGeometry.rotateX(-Math.PI/2);
   const position=floorGeometry.attributes.position,uv=floorGeometry.attributes.uv;
   floorGeometry.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(position.count*3),3));
   for(let i=0;i<position.count;i++){
     const x=position.getX(i),z=position.getZ(i);
-    position.setY(i,scablandsNaturalHeightAt(x,z));uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
+    position.setY(i,digUnderlayHeight(x,z,ground,1,scablandsNaturalHeightAt));uv.setXY(i,x*GROUND_UV,z*GROUND_UV);
     const color=groundColour(x,z,0);floorGeometry.attributes.color.setXYZ(i,color.r,color.g,color.b);
   }
   floorGeometry.computeVertexNormals();const floor=new THREE.Mesh(floorGeometry,groundMaterial);floor.name='Scablands natural ground';floor.receiveShadow=true;scene.add(floor);
@@ -242,6 +251,14 @@ function staticYard(scene,groundMaterial){
     pipe.rotation.x=Math.PI/2;pipe.position.set(-20+along*.46,scablandsNaturalHeightAt(-20,4)+.24+row*.4,4);pipe.castShadow=true;yard.add(pipe);
   }
   scene.add(yard);
+  floor.userData.refreshGround = ({minX,maxX,minZ,maxZ}) => {
+    for (let row=Math.max(0,Math.floor(minZ+399)); row<=Math.min(800,Math.ceil(maxZ+401)); row++)
+      for (let col=Math.max(0,Math.floor(minX+399)); col<=Math.min(800,Math.ceil(maxX+401)); col++) {
+        const i=row*801+col, x=position.getX(i), z=position.getZ(i);
+        position.setY(i,digUnderlayHeight(x,z,ground,1,scablandsNaturalHeightAt));
+      }
+    position.needsUpdate=true; floorGeometry.computeVertexNormals();
+  };
   return floor;
 }
 
@@ -325,7 +342,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const riverField=createRiverField({halfWidth:SCABLANDS_LAYOUT.halfWidth,halfDepth:SCABLANDS_LAYOUT.halfDepth});
   const {look:groundLook,hills:hillField,photos:groundPhotos}=createDigGroundLook(riverField);
   const groundMaterial=groundLook.apply(new THREE.MeshStandardMaterial({map:dirtTexture,vertexColors:true,roughness:1}),{made:true});
-  const yardFloor=staticYard(world,groundMaterial);
+  const yardFloor=staticYard(world,groundMaterial,sim.ground);
   const nearMaterial=groundLook.apply(new THREE.MeshStandardMaterial({color:0x76624b,roughness:1}));
   const nearGround=createDigNearGround(nearMaterial,sim.ground);
   nearGround.follow(0,18);world.add(nearGround.mesh);
@@ -556,7 +573,10 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
       camera.lookAt(active.x+150*forwardX,active.y+12,active.z+150*forwardZ);
       nearGround.follow(active.x+150*forwardX,active.z+150*forwardZ);
     } else nearGround.follow(active.x,active.z);
-    if(groundView.update()) for(const bounds of groundView.changedBounds) nearGround.refreshBounds(bounds);
+    if(groundView.update()) for(const bounds of groundView.changedBounds) {
+      const expanded={minX:bounds.minX-2,maxX:bounds.maxX+2,minZ:bounds.minZ-2,maxZ:bounds.maxZ+2};
+      nearGround.refreshBounds(expanded); yardFloor.userData.refreshGround(expanded);
+    }
     effects.update(elapsed);
     const name=sim.activeMachine==='borer'?sim.borer.name:LABELS[sim.activeMachine],load=sim.activeMachine==='borer'?`${sim.borer.distanceM.toFixed(1)} m cut.`:sim.roadMachines[sim.activeMachine] ? 'Hold Space while driving to work.' : sim.activeMachine==='drill'?sim.drill.hole ? `${sim.drill.hole.depth.toFixed(1)} m deep, in ${drillMaterialAt(sim.drill.hole.site,sim.drill.hole.depth)}.` : 'Ready to drill.' : sim.activeMachine==='trencher'?`${sim.trencher.cutVolumeM3.toFixed(1)} m³ cut · ${sim.trencher.ridgeLooseVolumeM3.toFixed(1)} m³ in the ridge`:
       sim.activeMachine==='excavator'?`${Object.values(sim.haul.machines.excavator.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in bucket · ${Object.values(sim.haul.machines.dumpTruck.load).reduce((a,b)=>a+b,0).toFixed(1)} m³ in truck`:
