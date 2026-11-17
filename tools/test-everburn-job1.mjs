@@ -1604,16 +1604,43 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
   car = {x:gate.x, z:gate.z - 30};
-  tick(.75); checkDoor();
-  assert.ok(Math.abs(drawnDoor.rotation.y - Math.PI / 4) < 1e-8, 'the gate swings shut after the car leaves');
-  tick(.75); checkDoor();
-  assert.equal(drawnDoor.rotation.y, 0);
-  assert.equal(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
-  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 2);
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the gate stays open after the car leaves the 20 m area');
+  state.onFoot = true;
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'getting out of the car leaves the gate open');
+  assert.notEqual(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
+  state.onFoot = false;
   car = {x:gate.x, z:gate.z + 10};
   tick(1.5); checkDoor();
-  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the returning car opens it again');
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the returning car finds the gate still open');
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1,
+    'leaving, getting out and returning never start another swing');
   scene.dispose();
+}
+// A stopped car in the gateway is not pushed by the opening leaf.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  const world = duel.state.arena.worldJob, gate = step.riderSafeWall;
+  world.job.stepState = {loaded:true, ember:100};
+  duel.state.countdown = 0;
+  // On the approach side of the closed leaf, inside the gateway and clear of its solid.
+  const at = duel.course.nearest(gate.x, gate.z + 3);
+  placeActor(duel, duel.state, {s:at.s, lateral:at.lateral,
+    headingError:wrapHeading(-duel.course.at(at.s).heading)}, 0);
+  const before = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  for (let i = 0; i < 100; i++) {
+    stepWorldJob(duel, 1 / 60);
+    duel._staticContacts(duel.state, true);
+    const after = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    assert.ok(Math.hypot(after.x - before.x, after.z - before.z) < 1e-8,
+      'the opening door never moves a car standing in the gateway');
+    if (i === 20) duel.state.onFoot = true;
+  }
+  assert.equal(world.tinTownGateProgress, 1, 'the swing finishes even when the driver gets out');
 }
 // The real job records the delivered fire and sounds the forge when the ember lands.
 {

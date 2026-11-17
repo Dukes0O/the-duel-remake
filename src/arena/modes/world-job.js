@@ -994,15 +994,14 @@ export function stepWorldJob(duel, dt) {
       worldJob.job.steps[0]?.riderSafeWall) {
     const gate = worldJob.job.steps[0].riderSafeWall, car = position(duel, state);
     const open = !state.onFoot && Math.hypot(car.x - gate.x, car.z - gate.z) <= 20;
-    if (open && !worldJob.tinTownGateRequested) worldJob.tinTownGateRequested = true;
-    if (open !== (worldJob.tinTownGateOpening ?? false)) {
-      worldJob.tinTownGateOpening = open;
+    if (open && !worldJob.tinTownGateRequested) {
+      worldJob.tinTownGateRequested = true;
       duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
         cue:'world.tintown.gate', position:car}});
     }
     const progress = worldJob.tinTownGateProgress ?? 0;
     const travel = Math.max(0, dt) / TIN_TOWN_SWING_SECONDS;
-    worldJob.tinTownGateProgress = open ? Math.min(1, progress + travel) : Math.max(0, progress - travel);
+    worldJob.tinTownGateProgress = worldJob.tinTownGateRequested ? Math.min(1, progress + travel) : progress;
     worldJob.solidGrid.setTownGate(gate, worldJob.tinTownGateProgress);
   }
   if (worldJob.arrivalHold) {
