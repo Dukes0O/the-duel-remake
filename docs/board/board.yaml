@@ -17,7 +17,8 @@ tasks:
     owner: "codex"
     lane: "UI"
     size: "S"
-    status: "ready"
+    status: "building"
+    claimed_by: "Codex, lane dig-yard-toy: slice 1 merged 16 November 2026 with the switch off; slice 2 (cures from Claude's play) building"
     needs: []
     locks: []
     flag: "the-dig"

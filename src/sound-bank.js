@@ -41,7 +41,22 @@ const noise = (frequency, duration, volume, type = 'bandpass') => ({
   volume,
   type,
 });
+// The Dig's short machine sounds share their recipes with the players that synthesize them.
+export const DIG_MACHINE_TONES = Object.freeze({
+  'drill-engine':[75, 'sawtooth', 0.18], 'drill-feed':[135, 'sawtooth', 0.12],
+  'drill-clay':[190, 'triangle', 0.1], 'drill-gravel':[310, 'square', 0.07],
+  'drill-rock':[490, 'square', 0.09], 'drill-jam':[95, 'square', 0.35],
+  'drill-reverse':[220, 'triangle', 0.22], 'drill-water':[620, 'sine', 0.4],
+  'dozer-blade':[110, 'sawtooth', 0.18], 'roller-ground':[75, 'triangle', 0.18],
+  'paver-surface':[165, 'square', 0.18],
+  'borer.stall':[85, 'square', 0.4], 'borer.call':[260, 'triangle', 0.6],
+  'borer.refuse':[180, 'triangle', 0.25], 'borer.breakthrough':[460, 'triangle', 0.45],
+  'borer.daylight':[360, 'triangle', 0.8],
+});
+
 export const SOUND_BANK = {
+  ...Object.fromEntries(Object.entries(DIG_MACHINE_TONES).map(([name, [frequency, type, duration]]) =>
+    [name, cue('vehicle', {flag: 'the-dig', layers: [tone(frequency, duration, 0.06, type)]})])),
   // The Deep adapter lazy-loads these only during a submerged visit.
   // The helicopter (docs/HELICOPTER.md): radio lines, rotor and cable sounds, behind its switch.
   ...HELI_CUES,
@@ -59,13 +74,13 @@ export const SOUND_BANK = {
   'deep.cave': cue('ambience', {flag: 'the-deep', file: 'deep/cave.ogg', volume: .4, loop: true, priority: 30, limit: 1}),
   // DEEP-GO-LIVE: quiet story sounds, synthesized by the Deep adapter.
   // MACHINE-VIEW: machines reuse the bank's own recipes: a low diesel, a hiss of oil, earth and a load sliding.
-  'machine.engine': cue('vehicle', {flag: 'wasteland-town', volume: .3, limit: 1,
+  'machine.engine': cue('vehicle', {flag: 'the-dig', volume: .3, limit: 1,
     layers: [noise(150, .75, .5, 'lowpass'), tone(52, .75, .35, 'sawtooth')]}),
-  'machine.hydraulic': cue('vehicle', {flag: 'wasteland-town', volume: .14, limit: 1,
+  'machine.hydraulic': cue('vehicle', {flag: 'the-dig', volume: .14, limit: 1,
     layers: [{...noise(1500, .7, .4), endFrequency: 1900, attack: .08}, tone(115, .7, .18, 'triangle', 0, 135)]}),
-  'machine.dig': cue('impacts', {flag: 'wasteland-town', volume: .28, limit: 2,
+  'machine.dig': cue('impacts', {flag: 'the-dig', volume: .28, limit: 2,
     layers: [noise(340, .24, .5, 'lowpass'), tone(70, .16, .3, 'triangle', 0, 42)]}),
-  'machine.tip': cue('impacts', {flag: 'wasteland-town', volume: .32, limit: 1,
+  'machine.tip': cue('impacts', {flag: 'the-dig', volume: .32, limit: 1,
     layers: [{...noise(380, 1.5, .7, 'lowpass'), endFrequency: 110, attack: .15}]}),
   'deep.sonar': cue('vehicle', {flag: 'the-deep', volume: .22, limit: 1,
     layers: [tone(960, .4, .6), tone(960, .55, .18, 'sine', .28)]}),

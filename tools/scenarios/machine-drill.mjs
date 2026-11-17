@@ -9,7 +9,7 @@ async function press(context, code) {
 
 // Run with the browser harness and its isolated, memory-only profile.
 export async function run(context) {
-  await context.navigate('/tools/menu-check.html?flags=wasteland-town');
+  await context.navigate('/tools/menu-check.html?flags=wasteland-town,the-dig');
   await context.waitFor('!!window.__qaApp&&!!Object.getOwnPropertyDescriptor(window,"localStorage")?.value&&window.name.startsWith("__duel_qa_tab_v2:")', 'isolated test game', 60000);
   await context.evaluate(`(() => {
     const app=window.__qaApp; app.stop();
