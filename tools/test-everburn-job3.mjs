@@ -206,6 +206,37 @@ assert(!retry.requests.some(request => request.type === 'bellowsRestart'),
   'A third knock wins before the same step can restart at the furnace.');
 console.log('PASS Run Him Down: existing chase engine uses knocks, captions, collection and hold.');
 
+// Job 3.3: the gauge reads the load before boarding, during the chase and
+// through collection. It must never change the rule state it presents.
+const {worldHudModel, drawBellowsGauge} = await import('../src/world/world-hud.js');
+for (const onFoot of [true, false]) {
+  for (const condition of [undefined, 100, 79, 40, 0]) {
+    const ruleState = Object.freeze(condition === undefined ? {} : {bellows: condition, bellowsLoaded: true});
+    const job = Object.freeze({steps: [chaseStep], stepIndex: 0, stepState: ruleState});
+    const worldJob = Object.freeze({job, actors: chaseView.actors});
+    const before = JSON.stringify(worldJob);
+    const hud = worldHudModel({worldJob, onFoot});
+    assert.deepEqual(hud.bellows, {value: condition ?? 100, max: 100});
+    assert.equal(JSON.stringify(worldJob), before);
+    const removed = [], properties = {}, attributes = {};
+    const gauge = {style: {setProperty: (name, value) => { properties[name] = value; }},
+      classList: {remove: (...names) => removed.push(...names)},
+      setAttribute: (name, value) => { attributes[name] = value; }};
+    const bar = {style: {}}, label = {}, note = {};
+    drawBellowsGauge(hud.bellows, gauge, bar, label, note);
+    assert.equal(label.textContent, 'BELLOWS');
+    assert.equal(bar.style.width, `${(condition ?? 100).toFixed(1)}%`);
+    assert.equal(note.textContent, `${condition ?? 100} / 100`);
+    assert.equal(attributes['aria-label'], bellowsSentence(condition ?? 100));
+    assert.deepEqual(removed, ['is-out', 'is-losing', 'is-flashing']);
+    assert.equal(properties['--ember-glow'], ((condition ?? 100) / 100).toFixed(2));
+  }
+}
+assert.equal(worldHudModel().bellows, null);
+assert.equal(worldHudModel({worldJob: {job: {steps: [{kind:'chase'}], stepIndex:0,
+  stepState: {bellows: 50}}}}).bellows, null);
+console.log('PASS Run Him Down: bellows gauge shows the rule load and clears ember styles without changing rules.');
+
 // Job 3.1: start through the real arena path, with memory-only saves. No
 // scripted walking is needed to prove the existing fighter can return to the car.
 const {App} = await import('../src/app.js');

@@ -7,6 +7,7 @@ import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
+import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -173,6 +174,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
       value: job.stepState.brandSeconds ?? 0, max: BRAND_RULE.burnSeconds,
       out: !(job.stepState.brandSeconds > 0), brandsUsed: job.stepState.brandsUsed,
     } : null,
+    bellows: step?.bellows ? {
+      value: job.stepState.bellows ?? BELLOWS_RULE.start, max: BELLOWS_RULE.start,
+    } : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -184,6 +188,16 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
 }
 
 const STYLE_ID = 'world-hud-style';
+export function drawBellowsGauge(bellows, gauge, bar, label, note) {
+  const share = Math.max(0, Math.min(1, bellows.value / bellows.max));
+  bar.style.width = `${(share * 100).toFixed(1)}%`;
+  gauge.style.setProperty('--ember-glow', share.toFixed(2));
+  gauge.classList.remove('is-out', 'is-losing', 'is-flashing');
+  label.textContent = 'BELLOWS';
+  note.textContent = `${Math.ceil(bellows.value)} / ${bellows.max}`;
+  gauge.setAttribute('aria-label', bellowsSentence(bellows.value));
+}
+
 function drawBrandGauge(brand, gauge, bar, label, note) {
   const share = Math.max(0, Math.min(1, brand.value / brand.max));
   bar.style.width = `${(share * 100).toFixed(1)}%`;
@@ -454,7 +468,8 @@ export function createWorldHud({host, app = null, picture = null}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       // The ember gauge: a glowing bar that dims as the ember falls, flashes when a jolt takes ember, and says OUT at 0.
-      emberGauge.hidden = !model.ember && !model.brand;
+      emberGauge.hidden = !model.ember && !model.brand && !model.bellows;
+      if (model.bellows) drawBellowsGauge(model.bellows, emberGauge, emberBar, emberLabel, emberNote);
       if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);
       if (model.ember) {
         const share = Math.max(0, Math.min(1, model.ember.value / model.ember.max));
