@@ -1263,7 +1263,10 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'say' && event.lineId) sayLine(duel, worldJob, event.lineId, event.urgent);
     // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
     // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
-    if ((event.type === 'emberOut' || event.type === 'bessGreeting') && event.text) duel._storyCallout(event.text, EMBER_CAPTION_SECONDS, true);
+    if ((event.type === 'emberOut' || event.type === 'bessGreeting' || event.type === 'bridgeAshWarning') && event.text) duel._storyCallout(event.text, EMBER_CAPTION_SECONDS, true);
+    if (event.type === 'bridgeAshWarning' || event.type === 'bridgeAshFall') duel.emit({arenaTell:{
+      id:'bridge-ash', seconds:0, cue:event.type === 'bridgeAshWarning' ? 'world.ashmen.horn' : 'world.bridge.ash',
+      position:{...currentStep.bridgeAsh}}});
     if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,

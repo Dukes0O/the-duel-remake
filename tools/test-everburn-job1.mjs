@@ -29,6 +29,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
   furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {BRIDGE_ASH, bridgeAshFall, stepBridgeAsh} from '../src/world/jobs/ember-rule.js';
 import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome,
   BED_MIST, bedMistFor, bedColdFactor, inBedMist, bedMistCorners} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
@@ -45,6 +46,42 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Bridge ash follows the carry clock and charges once per fall, on the bed only.
+{
+  const plan = EVERBURN_JOBS[0].steps[0].bridgeAsh;
+  assert.equal(plan.gaps.length, 3);
+  assert.ok(SOUND_BANK['world.bridge.ash'].layers.length);
+  const away = {x:plan.x - plan.exitX * 301, z:plan.z - plan.exitZ * 301};
+  const facts = {car:away, loaded:true, inBed:true};
+  assert.equal(stepBridgeAsh({}, plan, facts, 1).state.started, undefined);
+  assert.equal(stepBridgeAsh({}, plan, {...facts, car:plan, inBed:false}, 1).state.started, undefined);
+  assert.equal(stepBridgeAsh({}, plan, {...facts, car:plan, loaded:false}, 1).state.started, undefined);
+  const car = plan.gaps[0];
+  const first = stepBridgeAsh({}, plan, {...facts, car}, .1);
+  assert.equal(first.loss, 20);
+  assert.equal(first.events[0].text, "Rook: They're on the bridge with ash. Watch the gaps and go through the one that has just emptied.");
+  assert.equal(first.events.filter(event => event.type === 'bridgeAshFall').length, 1);
+  assert.equal(stepBridgeAsh(first.state, plan, {...facts, car}, .1).loss, 0);
+  assert.equal(stepBridgeAsh(first.state, plan, {...facts, car, inBed:false}, .1).loss, 0);
+  for (let fall = 0; fall < 7; fall++) {
+    const state = {started:true, elapsed:fall * BRIDGE_ASH.fallSeconds};
+    assert.equal(bridgeAshFall(state, plan).fall, fall);
+    const under = plan.gaps[fall % 3];
+    const hit = stepBridgeAsh(state, plan, {...facts, car:under}, .01);
+    assert.equal(hit.loss, 20);
+    assert.equal(stepBridgeAsh(hit.state, plan, {...facts, car:under}, .01).loss, 0);
+    const other = plan.gaps[(fall + 1) % 3];
+    assert.equal(stepBridgeAsh(state, plan, {...facts, car:other}, .01).loss, 0);
+  }
+  const boundary = stepBridgeAsh({started:true, elapsed:1.9}, plan, {...facts, car:plan.gaps[1]}, .1);
+  assert.equal(boundary.events.filter(event => event.type === 'bridgeAshFall').length, 1);
+  const beyond = {x:plan.x + plan.exitX * 100.01, z:plan.z + plan.exitZ * 100.01};
+  const done = stepBridgeAsh(first.state, plan, {...facts, car:beyond}, .1);
+  assert.equal(done.state.done, true);
+  assert.equal(bridgeAshFall(done.state, plan), null);
+  assert.equal(stepBridgeAsh(done.state, plan, {...facts, car}, 1).loss, 0);
+}
 
 // Cold is a place the player can steer around. The land seed fixes the patches.
 {
@@ -186,6 +223,21 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(patch.visible, true);
   const mist = scene.group.getObjectByName('Cold mist in the river bed');
   assert.equal(mist.visible, true);
+  const ashColumn = scene.group.getObjectByName('Ash falling under the Girder Bridge');
+  assert.equal(ashColumn.visible, false);
+  world.job.stepState.bridgeAsh = {started:true, elapsed:2};
+  syncScene(scene.group, state);
+  assert.equal(ashColumn.visible, true);
+  const ashPlan = world.job.steps[0].bridgeAsh, ashGap = ashPlan.gaps[1], floors = [];
+  assert.equal(ashColumn.position.x, ashGap.x);
+  assert.equal(ashColumn.position.z, ashGap.z);
+  const floorCount = scablandsFloorsAt(ashGap.x, ashGap.z, floors);
+  assert.equal(ashColumn.position.y - ashColumn.scale.y / 2, floors[floorCount - 1],
+    'the ash reaches the bed below the deck');
+  const heldAsh = ashColumn.position.clone();
+  animateScene(scene.group, 200);
+  syncScene(scene.group, state);
+  assert.deepEqual(ashColumn.position, heldAsh, 'drawing cannot advance the fall');
   assert.equal(mist.children.length, world.job.steps[0].bedMist.length);
   for (const [index, sheet] of mist.children.entries()) {
     const corners = bedMistCorners(world.job.steps[0].bedMist[index]);
@@ -214,6 +266,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   syncScene(scene.group, state);
   assert.equal(patch.visible, false);
   assert.equal(mist.visible, false);
+  assert.equal(ashColumn.visible, false);
   scene.dispose();
 }
 

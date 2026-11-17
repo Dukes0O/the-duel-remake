@@ -7,6 +7,66 @@
 import {makeRng} from '../../rng.js';
 
 export const MPH_TO_KMH = 1.609344;
+export const BRIDGE_ASH = Object.freeze({
+  warningMetres:300, pastMetres:100, fallSeconds:2, loss:20,
+  deckHalfLength:88, pierShare:.62, pierHalfWidth:1.7, deckHalfWidth:7,
+  drawHeight:8, drawOpacity:.55,
+});
+
+// The western abutment and the three piers bound three openings. The
+// eastern bank remains open. The road supplies the deck's actual direction.
+export function bridgeAshPlan(bridge, road, steps) {
+  const hit = road.nearest(bridge.x, bridge.z);
+  const a = hit.road.points[hit.index], b = hit.road.points[hit.index + 1];
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  const tx = (b.x - a.x) / length, tz = (b.z - a.z) / length;
+  const toward = Math.hypot(steps.x - bridge.x, steps.z - bridge.z);
+  const edge = BRIDGE_ASH.deckHalfLength, pier = edge * BRIDGE_ASH.pierShare;
+  const half = BRIDGE_ASH.pierHalfWidth;
+  const spans = [[-edge, -pier - half], [-pier + half, -half], [half, pier - half]];
+  return {x:bridge.x, z:bridge.z, tx, tz,
+    exitX:(steps.x - bridge.x) / toward, exitZ:(steps.z - bridge.z) / toward,
+    gaps:spans.map(([from, to]) => ({
+      x:bridge.x + tx * (from + to) / 2, z:bridge.z + tz * (from + to) / 2,
+      halfLength:(to - from) / 2,
+    }))};
+}
+
+export function bridgeAshFall(state, plan) {
+  if (!state?.started || state.done) return null;
+  const fall = Math.floor(state.elapsed / BRIDGE_ASH.fallSeconds);
+  return {...plan.gaps[fall % plan.gaps.length], tx:plan.tx, tz:plan.tz,
+    halfWidth:BRIDGE_ASH.deckHalfWidth, fall};
+}
+
+export function stepBridgeAsh(previous, plan, {car, loaded, inBed}, dt) {
+  const state = {...previous}, events = [];
+  if (!plan || !car || !loaded || state.done) return {state, events, loss:0};
+  if (!state.started) {
+    if (!inBed || Math.hypot(car.x - plan.x, car.z - plan.z) > BRIDGE_ASH.warningMetres)
+      return {state, events, loss:0};
+    state.started = true;
+    state.elapsed = 0;
+    events.push({type:'bridgeAshWarning',
+      text:"Rook: They're on the bridge with ash. Watch the gaps and go through the one that has just emptied."});
+    events.push({type:'bridgeAshFall'});
+  }
+  if ((car.x - plan.x) * plan.exitX + (car.z - plan.z) * plan.exitZ > BRIDGE_ASH.pastMetres) {
+    state.done = true;
+    return {state, events, loss:0};
+  }
+  const oldFall = Math.floor(state.elapsed / BRIDGE_ASH.fallSeconds);
+  state.elapsed += Math.max(0, dt);
+  const ash = bridgeAshFall(state, plan);
+  for (let fall = oldFall + 1; fall <= ash.fall; fall++) events.push({type:'bridgeAshFall'});
+  const dx = car.x - ash.x, dz = car.z - ash.z;
+  const under = inBed && Math.abs(dx * ash.tx + dz * ash.tz) <= ash.halfLength &&
+    Math.abs(dx * ash.tz - dz * ash.tx) <= ash.halfWidth;
+  const hit = dt > 0 && under && state.hitFall !== ash.fall;
+  if (hit) state.hitFall = ash.fall;
+  return {state, events, loss:hit ? BRIDGE_ASH.loss : 0};
+}
+
 export const BED_MIST = Object.freeze({
   seed:1989, seedSalt:0x4d495354, lengthMin:30, lengthMax:50,
   lengthShare:.29, halfWidth:20, sideMetres:28, plainCold:1, mistCold:5,

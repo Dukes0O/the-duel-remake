@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
-import {scablandsSurfaceHeightAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
+import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
 import {createGroundView} from './ground-view.js';
 import {createNearGround,nearGroundHeightAt,NEAR_GROUND} from './near-ground.js';
@@ -15,7 +15,7 @@ import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting, hotDeliveryGlass, FURNACE_GLASS} from './jobs/furnace-sightings.js';
-import {BED_MIST, bedMistCorners} from './jobs/ember-rule.js';
+import {BED_MIST, bedMistCorners, BRIDGE_ASH, bridgeAshFall} from './jobs/ember-rule.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
@@ -473,6 +473,13 @@ export function createScablandsScene(course,options={}){
   const mistMaterial = new THREE.MeshBasicMaterial({color:0xdde5e5, transparent:true,
     opacity:.55, depthWrite:false, side:THREE.DoubleSide});
   let mistPatches = null;
+  const ashColumn = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial({color:0x98948e, transparent:true,
+      opacity:BRIDGE_ASH.drawOpacity, depthWrite:false}));
+  ashColumn.name = 'Ash falling under the Girder Bridge';
+  ashColumn.visible = false;
+  group.add(ashColumn);
+  const ashFloors = [];
   let yard=null;
   let retired=false;
   let townDraw=null;
@@ -902,6 +909,17 @@ export function createScablandsScene(course,options={}){
       }
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      const ash = emberStep?.bridgeAsh && !worldJob.job.done ?
+        bridgeAshFall(worldJob.job.stepState.bridgeAsh, emberStep.bridgeAsh) : null;
+      ashColumn.visible = Boolean(ash);
+      if (ash) {
+        const count = scablandsFloorsAt(ash.x, ash.z, ashFloors);
+        const bottom = ashFloors[count - 1];
+        const height = count > 1 ? ashFloors[0] - bottom : BRIDGE_ASH.drawHeight;
+        ashColumn.position.set(ash.x, bottom + height / 2, ash.z);
+        ashColumn.rotation.y = Math.atan2(ash.tx, ash.tz);
+        ashColumn.scale.set(ash.halfWidth * 2, height, ash.halfLength * 2);
+      }
       mist.visible = Boolean(emberStep && !worldJob.job.done);
       if (mist.visible && mistPatches !== emberStep.bedMist) {
         for (const sheet of [...mist.children]) { sheet.geometry.dispose(); mist.remove(sheet); }

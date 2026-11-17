@@ -650,6 +650,8 @@ export const SOUND_BANK = {
     layers: [tone(165, .7, .35, 'sawtooth', 0, 158), tone(247, .7, .2, 'triangle', 0, 237)]}),
   'world.furnace.horn': cue('impacts', {priority: 85, limit: 1, volume: .6,
     layers: [tone(110, 1.4, .35, 'sawtooth', 0, 105), tone(165, 1.4, .2, 'triangle', 0, 158)]}),
+  'world.bridge.ash': cue('impacts', {flag:'story-everburn', priority:70, limit:1, volume:.5,
+    layers:[noise(800, 1.8, .3, 'lowpass'), tone(70, .4, .1, 'triangle', 0, 40)]}),
   'world.tintown.gate': cue('impacts', {priority: 70, limit: 1, volume: .5,
     layers: [{...noise(400, 1, .3, 'lowpass'), endFrequency:180}, tone(90, 1, .15, 'triangle', 0, 55)]}),
   'world.forge.catch': cue('impacts', {priority: 75, limit: 1, volume: .5,
