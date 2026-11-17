@@ -107,12 +107,14 @@ export async function run(context) {
     await context.waitFor(`window.__qaApp.visualReady`,'group home drawn',120000);
     const offered=await context.evaluate(`!!window.__qaApp.heliSession.skiBoard()?.group`);
     if(!offered)continue;
+    // SKI-FINISH: each flight is a long run of the helicopter's own steps inside one browser call, and one call may take
+    // 60 s at most. The three legs are flown in separate calls so none of them can outrun that limit on a busy laptop.
     report.group=await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession,events=a._heliEvents.bind(a);window.__finishRadio=[];
       a._heliEvents=es=>{for(const e of es)if(e.type==='radio')window.__finishRadio.push({event:e,heli:s.view().heli});events(es);};
-      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));window.__skiQa.toSummit();
-      // SKI-FINISH: the leg ends beside Devils Playground; fill up at the pickup pump before the summit climb, as a pilot does.
-      window.__skiQa.toPad('pickup');if(!s.buyFuel().ok)throw Error('no fuel at the pickup pump');window.__skiQa.toPad('summit');
-      return {taken,view:s.view(),radio:window.__finishRadio};})()`);
+      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));window.__skiQa.toSummit();return {taken};})()`);
+    // The leg ends beside Devils Playground; fill up at the pickup pump before the summit climb, as a pilot does.
+    await context.evaluate(`(()=>{const s=window.__qaApp.heliSession;window.__skiQa.toPad('pickup');if(!s.buyFuel().ok)throw Error('no fuel at the pickup pump');})()`);
+    Object.assign(report.group,await context.evaluate(`(()=>{const s=window.__qaApp.heliSession;window.__skiQa.toPad('summit');return {view:s.view(),radio:window.__finishRadio};})()`));
     await context.waitFor(`window.__qaApp.visualReady`,'group summit drawn',300000);
     await sleep(500);report.group.screen=await context.evaluate(`document.body.innerText`);
     if (!report.group.radio.some(row => row.event.line === 'ski.radio.thin-air') || !report.group.screen.includes('Lighten up: burn fuel or leave some behind.')) throw Error('Thin-air event must reach the visible radio text');
