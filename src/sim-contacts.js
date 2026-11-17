@@ -393,6 +393,12 @@ export function _staticContacts(car, player, journeyColliders = null) {
     const impactMph = Math.max(0, Math.abs(car.speedMph) * incoming +
       Math.max(0, -(car.pushVelocity || 0) * pushNormal) / DRIVE.mphToWorld -
       alongPush * alongNormal / DRIVE.mphToWorld);
+    if (player && obstacle.jobActor) {
+      const rider = obstacle.jobActor, world = this.state.arena.worldJob;
+      const riderToward = (Math.sin(rider.heading || 0) * nx + Math.cos(rider.heading || 0) * nz) * (rider.speed || 0);
+      (world.carContacts ??= []).push({actor:rider, nx, nz,
+        kmh:Math.max(0, impactMph * DRIVE.mphToWorld + riderToward) * 3.6});
+    }
     if (!journeyColliders && obstacle.canFall && this.course.fallenFenceIds && impactMph * 1.609344 > 25) {
       this.course.fallenFenceIds.add(obstacle.id);
       car.speedMph *= .92;
@@ -508,7 +514,13 @@ export function _staticContacts(car, player, journeyColliders = null) {
         this._crash(obstacle.kind || 'rock', Math.sign(nx), impactMph, zone);
       else if (impactMph > 4) this._scrape(zone, impactMph);
     }
+    const beforeSolidMph = car.speedMph;
     car.speedMph *= Math.max(.08, 1 - incoming * .94);
+    if (player && obstacle.jobActor?.health > 0 && (obstacle.jobActor.ramContact || obstacle.jobActor.ramRetreat)) {
+      // Pursuit already charged this meeting. Keep the physical stop, without a second pot jolt.
+      const world = this.state.arena.worldJob;
+      world.riderContactShedKmh = (world.riderContactShedKmh || 0) + Math.abs(beforeSolidMph - car.speedMph) * 1.609344;
+    }
     if (!player) { car.contactCooldown = 1.2; car.headingError = clamp((car.headingError || 0) - Math.sign(car.lateral) * .25, -.65, .65); }
   }
   car.offRoad = !this._surface(car.s, car.lateral).mainRoad;

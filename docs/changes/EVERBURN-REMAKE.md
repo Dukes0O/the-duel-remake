@@ -1,5 +1,5 @@
 # EVERBURN-REMAKE slice 7
-- Built cures 1, 2, 3, 5, 6, 7: car height once, visible map marks, wind, four weapons, relight instructions, a solid door swinging for 1.5 seconds.
+- Built cures 1 to 7: Cinder and rider solids, one charge per rider meeting, car height once, visible map marks, wind, four weapons, relight instructions, a solid door swinging for 1.5 seconds.
 - Earlier checks passed: scene (`a36c38615`), map (cure 2), audio 618 and p4-audio (cure 3, arena hashes unchanged), combat HUD (cure 5), world HUD and ember pot (cure 6).
 - Cure 7: `test-everburn-job1` passed on `316dde4d5` plus the gate change committed as `ae6685ee9`; no rule numbers changed. Cure 8: scene survey passed on `ae6685ee9` plus this survey.
 - Integration: already current at `01cfa107c`; no switch, save or pay change. For Claude to run: updated scenario pictures after remaining work; independent review.
@@ -11,5 +11,5 @@
 - Salt-pan offset +6: 3854.18/2686.43/-2449.97/.372; 3859.18/2691.17/-2451.55/.421; 4104.12/2923.59/-2528.89/.365; 4109.12/2928.33/-2530.47/.495; 4114.12/2933.08/-2532.05/.387; 4444.05/3246.13/-2636.22/.363; 4449.05/3250.87/-2637.80/.659; 4454.05/3255.62/-2639.38/.883; 4459.05/3260.36/-2640.95/.585.
 - Unresolved: Kyle's plates spot is not reproduced by this survey. Salt-pan gaps involve interpolation of the coarse drawing over narrower height changes; changing the terrain mesh needs visual review, so the report leaves that cure.
 - Sound: `ambience.scablands`, two noise loops; `world.tintown.gate` starts each swing; relighting keeps `world.ember.scoop`. No new file or event.
-- **Removed:** duplicate car ground offset, map arrow covering nearby riders, instant door teleport and solid removal.
-- Next: cure 4 (Cinder and rider solids), scenario pictures, integration merge, final Easy drive, older suites, lane tier and build. No final gate has run yet.
+- **Removed:** duplicate car ground offset, map arrow covering nearby riders, instant door teleport and solid removal, pass-through Cinder and rider cars.
+- Cure 4: `test-everburn-job1` passed on `8c1443f25` plus this change, including real swept rider contact, one charge, wrecks, Cinder and the clear ring/gate exit. No assertions changed; existing collision and spark cues. Next: scenario, integration merge, final Easy drive, older suites, lane tier and build.

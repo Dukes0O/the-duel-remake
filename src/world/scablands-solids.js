@@ -202,19 +202,32 @@ export function brazierSolid(spot, index) {
 // Each job owns its temporary solids and its query result. The fixed grid never changes.
 export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
-  return {
+  const grid = {
+    people: [],
+    cars: [],
     braziers: [],
     barricades: [],
     yard: [],
     townGate: [],
-    near(ax, az, bx, bz, pad) {
+    near(ax, az, bx, bz, pad, includeCars = true) {
       found.length = 0;
       for (const solid of baseGrid.near(ax, az, bx, bz, pad)) found.push(solid);
       for (const solid of this.braziers) found.push(solid);
       for (const solid of this.barricades) found.push(solid);
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
+      for (const solid of this.people) found.push(solid);
+      if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
+    },
+    setPeople(people) {
+      this.people = people.map(({id, position}) => make({id, kind:'person', shape:'ellipse',
+        x:position.x, z:position.z, halfX:.45, halfZ:.45, height:1.8}));
+    },
+    setCars(actors) {
+      this.cars = actors.map(actor => ({...make({id:`job-car-${actor.id}`, kind:'vehicle',
+        x:actor.position.x, z:actor.position.z, base:actor.position.y, halfX:.95, halfZ:2.2,
+        heading:actor.heading ?? 0, height:1.6, verticalClearance:true}), jobActor:actor}));
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
     setTownGate(gate, progress = 0) {
@@ -229,6 +242,9 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
         x:position.x, z:position.z, base:position.y, halfX:6, halfZ:0.7, heading, height:2, verticalClearance:true}));
     },
   };
+  // Job movers must not collide with their own car. Player sweeps read the full list.
+  grid.movers = {near:(ax, az, bx, bz, pad) => grid.near(ax, az, bx, bz, pad, false)};
+  return grid;
 }
 
 // ---- A round thing against the solids ----------------------------------------------------------------------------------------------------------

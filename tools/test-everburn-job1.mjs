@@ -1374,6 +1374,52 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.equal(actual.y, scablandsSurfaceHeightAt(actual.x, actual.z));
   }
   assert.equal(makeDuel(EVERBURN_JOBS[1]).state.arena.worldJob.solidGrid?.yard?.length ?? 0, 0);
+  const cinder = definition.steps[0].pickup.figure.position;
+  assert.equal(pushOutOfSolids(cinder.x + .1, cinder.z, 1, grid).hit?.id, 'hot-delivery-cinder');
+  const ring = definition.steps[0].pickup.place.position;
+  for (let ahead = -6; ahead <= 40; ahead += 1) {
+    const x = ring.x + Math.sin(plan.gate.bearing) * ahead;
+    const z = ring.z + Math.cos(plan.gate.bearing) * ahead;
+    assert.equal(pushOutOfSolids(x, z, 1, grid).hit, null, 'the pickup ring and gate exit stay clear');
+  }
+  const world = duel.state.arena.worldJob, rider = world.actors[0];
+  assert.ok(grid.cars.some(solid => solid.jobActor === rider));
+  assert.equal(grid.movers.near(rider.position.x, rider.position.z, rider.position.x, rider.position.z, 2)
+    .some(solid => solid.jobActor), false, 'a rider never pushes itself out of its own car');
+  for (const health of [100, 0]) {
+    rider.health = health;
+    grid.setCars([rider]);
+    assert.equal(pushOutOfSolids(rider.position.x + .1, rider.position.z, 1, grid, rider.position.y).hit?.jobActor, rider,
+      'a waiting car and its wreck stay solid');
+  }
+
+  // Sweep the real player into a stopped rider, without a scripted drive.
+  {
+    const d = makeDuel(definition), w = d.state.arena.worldJob, a = w.actors[0];
+    const at = roadPointFrom(ROAD_NET.road('east-road'), LAND.yard.x, LAND.yard.z, 500);
+    a.position = {x:at.x, y:scablandsSurfaceHeightAt(at.x, at.z), z:at.z};
+    a.heading = 0;
+    w.solidGrid.setCars([a]);
+    w.job.stepState = {loaded:true, ember:100};
+    const from = d.course.nearest(at.x, at.z - 12), to = d.course.nearest(at.x, at.z + 12);
+    placeActor(d, d.state, {s:to.s, lateral:to.lateral,
+      headingError:wrapHeading(-d.course.at(to.s).heading)}, 30 / 1.609344);
+    d.state.prevS = from.s; d.state.prevLateral = from.lateral;
+    w.lastKmh = 30;
+    d._staticContacts(d.state, true);
+    const end = d.course.worldAt(d.state.s, d.state.lateral);
+    assert.ok(end.z < at.z - 2.2, 'the sweep stops before the rider instead of crossing it');
+    assert.ok(w.carContacts?.some(hit => hit.actor === a));
+    stepWorldJob(d, 0);
+    assert.equal(w.job.stepState.joltCount, 1, 'solid contact and the ram charge once together');
+    placeActor(d, d.state, {s:to.s, lateral:to.lateral,
+      headingError:wrapHeading(-d.course.at(to.s).heading)}, 30 / 1.609344);
+    d.state.prevS = from.s; d.state.prevLateral = from.lateral;
+    w.lastKmh = 30;
+    d._staticContacts(d.state, true);
+    stepWorldJob(d, 0);
+    assert.equal(w.job.stepState.joltCount, 1, 'continued solid contact does not repeat the ram');
+  }
   const run = (target, bearing) => {
     const d = makeDuel(definition), direction = {x:Math.sin(bearing), z:Math.cos(bearing)};
     const start = {x:target.x - direction.x * 14, z:target.z - direction.z * 14};
@@ -1390,6 +1436,8 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(run(wall, wallBearing) < 0, 'the car stops at a wall sheet');
   const tower = plan.solids.find(solid => solid.id === 'yard-gate-tower-a');
   assert.ok(run(tower, plan.gate.bearing) < 0, 'the car stops at a gate tower');
+  assert.ok(run(cinder, plan.gate.bearing) < 0, 'the real car cannot drive through Cinder');
+
   assert.equal(plan.openings.length, 6);
   for (const opening of plan.openings) {
     const target = {x:Math.sin(opening.bearing) * plan.radius, z:Math.cos(opening.bearing) * plan.radius};
