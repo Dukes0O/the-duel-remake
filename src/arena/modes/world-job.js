@@ -253,7 +253,7 @@ function updateJobActors(duel, worldJob, dt) {
       const closing = -(vx * dxCar + vz * dzCar) / carDistance;
       if (closing > 0) {
         worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, closing * 3.6);
-        stopScout(worldJob, scout);
+        stopScout(duel, worldJob, scout);
       }
     }
     if (scout.health > 0 && !duel.state.onFoot && !worldJob.job.stepState.scoutWarned &&
@@ -261,6 +261,7 @@ function updateJobActors(duel, worldJob, dt) {
         roadRiderSight(scout, dt, 0, () => sees(scout.position, car, {heightAt:scablandsSurfaceHeightAt,
           actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}))) {
       worldJob.job.stepState.scoutWarned = true;
+      sayLine(duel, worldJob, 'scout.warning', true);
       duel.emit({arenaTell:{id:'ash-scout-warning', targetId:'player', seconds:0,
         cue:'world.ashmen.horn', position:scout.position}});
     }
@@ -296,6 +297,7 @@ function updateJobActors(duel, worldJob, dt) {
         if (approach < 2) worldJob.job.stepState.scoutApproach++;
         else {
           worldJob.job.stepState.scoutHome = true;
+          sayLine(duel, worldJob, 'scout.home', true);
           worldJob.job.stepState.campAwake = true;
           scout.speed = 0;
         }
@@ -332,7 +334,7 @@ function updateJobActors(duel, worldJob, dt) {
 }
 
 // A stopped scout remains as a wreck beside the road for the rest of the job.
-function stopScout(worldJob, scout) {
+function stopScout(duel, worldJob, scout) {
   const road = ROAD_NET.road('east-road');
   const onRoad = nearestOnLine(road.points, scout.position.x, scout.position.z);
   const ahead = roadPointFrom(road, onRoad.x, onRoad.z, 1);
@@ -346,6 +348,7 @@ function stopScout(worldJob, scout) {
   scout.health = 0;
   scout.speed = 0;
   worldJob.job.stepState.scoutStopped = true;
+  sayLine(duel, worldJob, 'scout.stopped', true);
 }
 
 // The waiting cars begin pursuit when the loaded pot comes close to their post.
@@ -1077,7 +1080,7 @@ export function stepWorldJob(duel, dt) {
       continue;
     }
     if (actor && hit.flame && actor.id === currentStep?.scout?.id && actor.health > 0) {
-      stopScout(worldJob, actor);
+      stopScout(duel, worldJob, actor);
     } else if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
   }
   const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);

@@ -7,6 +7,8 @@ On e2f2659c8 plus the ram change, `node tools/test-everburn-job1.mjs` passed; th
 Earlier checks: the same suite passed for the camp, scout post, warning, run and flame; `test-p4-audio.mjs` passed outside the sandbox.
 Changed assertion, for Claude: camp scoop wake uses Hard instead of Medium and checks persistent waking, as the three wakings require. Rider setups specify a burnt fence for immediate charges; their assertions are unchanged.
 After scout home: job suite scout rule passed; the bed driver alerts the scout, takes two rams and arrives with 9.51 fire after a scoop; without a scoop it runs out and the suite fails. Claude must rule on proof drives.
-For Claude: browser pictures and hand chase remain; the browser cannot run in this lane.
-Remaining: player lines, small map, rings, scenario, and final checks.
+Scout warning, stopped and home lines are captions only; the chase line and rider mark appear while applicable.
+On 7a4c2fcb5 plus these changes, the new line, map and scout checks passed; the job suite then failed on the known bed without a scoop (0 fire, 2 rams).
+For Claude: recorded Rook lines, browser pictures and hand chase remain; the browser cannot run in this lane.
+Remaining: rings, scenario, and final checks.
 Removed: automatic camp pursuit while asleep and charging through a standing fence.

@@ -4,6 +4,7 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {gasRunPaths} from '../src/world/jobs/gas-run.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {stepCarry} from '../src/world/jobs/steps/carry.js';
+import {worldJobMapData} from '../src/route-map.js';
 import {worldHudModel, worldMapFrame, worldMapWays, waysMarkup, brazierArrow, learnWayCrossings, checkWayCrossings, learnDrivenWays, learnHotDeliveryDangers, moveMapCaption} from '../src/world/world-hud.js';
 import {createHudScreen, presentJumpHeight} from '../src/screen-hud.js';
 import {createCombatHud} from '../src/combat-hud.js';
@@ -99,13 +100,14 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // A loaded car in the scout's sight sounds its horn once.
 {
-  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), events = [];
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), events = [], captions = [];
   const post = definition.steps[0].scout.start.position;
   let car = {...post, x:post.x + 10, y:scablandsSurfaceHeightAt(post.x + 10, post.z)};
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
     speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
-    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:text => captions.push(text)};
+  state.arena.mode = 'world-job';
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100};
   const start = {...post};
@@ -113,6 +115,9 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(world.job.stepState.scoutWarned, true);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.ashmen.horn').length, 1);
   assert.equal(SOUND_BANK['world.ashmen.horn'].flag, 'story-everburn');
+  assert.equal(captions.filter(text => text === "Rook: That's their scout. If he reaches the camp, they'll be waiting for you. Catch him.").length, 1);
+  assert.equal(worldHudModel({worldJob:world, player:car}).line, 'Catch the scout before the camp.');
+  assert.ok(worldJobMapData(duel.course, state).marks.some(mark => mark.kind === 'rider' && mark.position === world.actors.find(actor => actor.id === 'ash-scout').position));
   const scout = world.actors.find(actor => actor.id === 'ash-scout');
   assert.ok(Math.hypot(scout.position.x - start.x, scout.position.z - start.z) > 10,
     'the warned scout leaves its post');
@@ -121,6 +126,8 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   state.worldJobThingsHit = [{id:scout.id, actorId:scout.id, kind:'vehicle', flame:true}];
   stepWorldJob(duel, 0.1);
   assert.equal(world.job.stepState.scoutStopped, true, 'a flame stops the scout');
+  assert.equal(captions.filter(text => text === "Rook: He's done. The camp is asleep. Burn the fence before they wake.").length, 1);
+  assert.notEqual(worldHudModel({worldJob:world, player:car}).line, 'Catch the scout before the camp.');
   assert.equal(scout.health, 0, 'the scout becomes a wreck');
   assert.ok(Math.abs(nearestOnLine(ROAD_NET.road('east-road').points, scout.position.x, scout.position.z).distance - 8) < 0.1,
     'the wreck leaves the road');
@@ -158,17 +165,18 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // A scout that reaches the camp goes around the standing fence and wakes its rider.
 {
-  const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition), captions = [];
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
     speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
-    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:() => {}};
+    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:text => captions.push(text)};
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100, scoutWarned:true};
   stepWorldJob(duel, 0);
   const scout = world.actors.find(actor => actor.id === 'ash-scout');
   for (let i = 0; i < 1200 && !world.job.stepState.scoutHome; i++) stepWorldJob(duel, 0.1);
   assert.equal(world.job.stepState.scoutHome, true, 'the scout reaches home');
+  assert.equal(captions.filter(text => text === "Rook: He's home. The camp is awake.").length, 1);
   assert.equal(world.job.stepState.campAwake, true, 'the scout wakes the camp');
   assert.ok(Math.hypot(scout.position.x - step.scout.camp.position.x, scout.position.z - step.scout.camp.position.z) < 0.1);
   const home = {...scout.position};
