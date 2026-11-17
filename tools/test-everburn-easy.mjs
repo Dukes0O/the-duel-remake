@@ -419,11 +419,12 @@ function driveHotDelivery(duel, definition) {
   if (!record(driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344)).reachedAll) return 'following the East Road to the camp';
   if (record(driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40)).along < 2350) return 'passing the camp';
   if (!record(driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'))).scooped) return 'collecting fire at the camp';
-  const scoops = [...(duel.state.arena.worldJob.job.stepState.scoopedBraziers ?? [])];
+  const deliveryState = {...duel.state.arena.worldJob.job.stepState};
+  const scoops = [...(deliveryState.scoopedBraziers ?? [])];
   if (!record(driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40)).reachedAll) return 'following the East Road to town';
   if (record(driveAlongRoad(duel, road, 7810, 12000, 25, true)).along < 7810) return 'approaching the town gate';
   if (!record(driveToForge(duel, step.destination.position)).done) return 'stopping in the forge bay or waiting for the forge';
-  console.log(`Easy East Road, seed ${duel.seed}: fire ${duel.state.arena.worldJob.emberResult?.ember}, rams ${rams}, jolts ${jolts}, scoops ${scoops.join(", ") || "none"}`);
+  console.log(`Easy East Road, seed ${duel.seed}: fire ${duel.state.arena.worldJob.emberResult?.ember}, rams ${rams}, jolts ${jolts}, scoops ${scoops.join(", ") || "none"}, scout stopped ${!!deliveryState.scoutStopped}, scout home ${!!deliveryState.scoutHome}, camp awake ${!!deliveryState.campAwake}`);
   return null;
 }
 
