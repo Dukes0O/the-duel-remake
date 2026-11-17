@@ -249,6 +249,23 @@ for (const awake of [false, true]) {
   assert.equal(captions.filter(text => text === line).length, 1, 'the stopping line is said once');
 }
 
+// Damage already applied outside the hit list also stops the scout once.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), captions = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  stepWorldJob(duel, 0);
+  world.actors.find(actor => actor.id === 'ash-scout').health = 0;
+  stepWorldJob(duel, 0.1);
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutStopped, true);
+  assert.equal(captions.filter(text => text === "Rook: He's done. The camp is asleep. Burn the fence before they wake.").length, 1);
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
