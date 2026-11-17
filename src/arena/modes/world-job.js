@@ -282,15 +282,18 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
     const distance = Math.hypot(dx, dz);
     rider.speed = 0;
-    if (distance > 0 && dt > 0) {
+    if (distance > 3 && !retreat.stopped && dt > 0) {
       const travel = Math.min(distance, 18 * dt), before = rider.position;
       rider.heading = Math.atan2(dx, dz);
       const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
         {radius:1.3, grid:worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      retreat.stillSeconds = moved.blocked === 'solid' && rider.speed < 0.01
+        ? (retreat.stillSeconds ?? 0) + dt : 0;
+      if (retreat.stillSeconds >= 1) retreat.stopped = true;
     }
-    if (distance === 0 && retreat.seconds >= 8) {
+    if (retreat.seconds >= 8) {
       rider.ramRetreat = null;
       rider.ramContact = false;
     }
@@ -306,7 +309,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const floors = [];
     scablandsFloorsAt(car.x, car.z, floors);
     const nearFence = Math.hypot(car.x - barrier.x, car.z - barrier.z) <= 150;
-    const inRange = (nearFence || (carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900)) &&
+    const inRange = ((!rider.pursuing && nearFence) || (carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900)) &&
       ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
       (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
     const visible = inRange && roadRiderSight(rider, dt, step.waitingActors.indexOf(actorDef), () =>

@@ -60,10 +60,36 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   const contact = {...rider.position};
   for (let i = 0; i < 479; i++) stepWorldJob(duel, 1 / 60);
   assert.equal(world.job.stepState.joltCount, 1, 'the rider cannot ram twice inside eight seconds');
-  assert.ok(Math.abs(Math.hypot(rider.position.x - contact.x, rider.position.z - contact.z) - 40) < 1e-6,
-    'the rider backs off forty metres before charging again');
+  assert.ok(Math.hypot(rider.position.x - contact.x, rider.position.z - contact.z) >= 37,
+    'the rider backs off to within three metres of its forty metre target');
   assert.ok(Math.abs(world.job.stepState.ember - (100 - 7.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
     'Easy halves the capped ram once');
+}
+
+// A solid behind the rammed rider cannot hold it in retreat forever.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car;
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[0], start = {...rider.position};
+  car = {...start, z:start.z + 2};
+  rider.pursuing = true;
+  const wall = {id:'retreat-wall', shape:'box', x:start.x - 10, z:start.z, y:start.y,
+    halfX:1, halfZ:10, heading:0, height:10, minY:start.y - 10, maxY:start.y + 10};
+  world.solidGrid = createJobSolidGrid(createSolidGrid([wall]));
+  state.speedMph = 10; state.headingError = Math.PI;
+  stepWorldJob(duel, 0.01);
+  assert.ok(rider.ramRetreat, 'the rider rams before retreating toward the wall');
+  for (let i = 0; i < 79; i++) stepWorldJob(duel, 0.1);
+  assert.ok(rider.ramRetreat.stopped, 'the rider stops driving away after standing against the solid');
+  assert.ok(rider.ramRetreat, 'the rider waits for the full eight seconds');
+  stepWorldJob(duel, 0.11);
+  assert.equal(rider.ramRetreat, null, 'the rider can charge again after eight seconds');
 }
 
 // A moving car can also close the last gap to a rider.
@@ -134,6 +160,24 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   car = {...car, y:scablandsSurfaceHeightAt(car.x, car.z)};
   stepWorldJob(duel, 0.1);
   assert.equal(rider.pursuing, true, 'the rider charges on sight');
+  // The fence radius starts a chase but cannot extend a chase beyond the road.
+  const roadPoint = sampleLine(road, 1).find(p => Math.hypot(p.x - fence.x, p.z - fence.z) < 2);
+  assert.ok(roadPoint, 'the fence has a road point');
+  let offRoad;
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.01) {
+    const candidate = {x:roadPoint.x + 140 * Math.cos(angle), z:roadPoint.z + 140 * Math.sin(angle)};
+    if (nearestOnLine(road, candidate.x, candidate.z).distance >= 139.9) { offRoad = candidate; break; }
+  }
+  assert.ok(offRoad, 'the road has a point 140 metres away');
+  const barrier = world.job.steps[world.job.stepIndex].barriers[0];
+  const savedFence = barrier.position;
+  barrier.position = {x:offRoad.x + 100, z:offRoad.z};
+  car = {...offRoad, y:scablandsSurfaceHeightAt(offRoad.x, offRoad.z)};
+  rider.pursuing = true;
+  stepWorldJob(duel, 0.1);
+  assert.equal(rider.pursuing, false, 'a chasing rider gives up outside the road limit');
+  barrier.position = savedFence;
+
 }
 
 // Completing Hot Delivery does not offer a story job that is still being made.
@@ -1189,7 +1233,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     // While the job holds, the crane keeps the job's own count and nothing else (reviewers found twice that it could run ahead of the job on
     // the scene's clock: through a pause, and whenever the count stood still). So the scene's clock alone moves nothing, paused or not.
     animateScene(scene.group, 2);
-    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the jobâ€™s count stands still');
+    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the job’s count stands still');
     state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 4);
     assert.ok(where(pot).distanceTo(from) < 1e-6, 'a paused game holds the crane still');
     state.paused = false;
