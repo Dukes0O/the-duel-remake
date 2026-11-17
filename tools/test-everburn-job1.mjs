@@ -1653,7 +1653,7 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
 }
 // The bridge rider can reach a stopped car before the fence with the real land mover and solids.
-for (const index of [1]) {
+for (const index of [0, 1]) {
   const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
     opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   const fence = step.barriers[index].position;
@@ -1664,7 +1664,15 @@ for (const index of [1]) {
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100};
   const rider = world.actors[index];
-  for (let tick = 0; tick < 360 && !rider.ramContact; tick++) stepWorldJob(duel, 1 / 60);
+  let previousDistance = Math.hypot(rider.position.x - car.x, rider.position.z - car.z);
+  for (let tick = 0; tick < 360 && !rider.ramContact; tick++) {
+    stepWorldJob(duel, 1 / 60);
+    if (index === 0 && (tick + 1) % 30 === 0 && !rider.ramContact) {
+      const distance = Math.hypot(rider.position.x - car.x, rider.position.z - car.z);
+      assert.ok(distance < previousDistance, 'the camp rider moves closer every half second');
+      previousDistance = distance;
+    }
+  }
   assert.ok(rider.ramContact, `rider ${index + 1} reaches the road in six seconds`);
 }
 // A loaded pot near a post draws that post's rider; the other remains waiting.

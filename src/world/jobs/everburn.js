@@ -105,9 +105,10 @@ export function buildEverburn(land) {
   const ashRiders = path(...[ashBarricade1, ashBarricade2].map((barrier, index) => Object.freeze({
     id:`ash-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     ...(index === 0 ? {scoopAmbush:'halfway-brazier'} : {}),
-    ...(index === 1 ? {heading:riderPost(barrier, 5).heading} : {}),
+    heading:index === 0 ? barrier.heading + Math.PI : riderPost(barrier, 5).heading,
     start:place(`ash-rider-start-${index + 1}`, index === 0
-      ? roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 25) : riderPost(barrier, 5)),
+      ? {x:barrier.position.x - 10 * Math.cos(barrier.heading), z:barrier.position.z + 10 * Math.sin(barrier.heading)}
+      : riderPost(barrier, 5)),
   })));
   const furnaceRiders = path(...[-6, 6].map((offset, index) => Object.freeze({
     id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
