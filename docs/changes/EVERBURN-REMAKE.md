@@ -1,16 +1,16 @@
 # EVERBURN-REMAKE slice 6b
 
-The camp rider sleeps until its fence burns or a Hard scoop wakes it. Once awake, it waits past the standing fence and charges within its road limits.
+The camp sleeps until its fence burns, the scout arrives, or a Hard scoop wakes it; awake it charges within its road limits.
 The scout sounds `world.ashmen.horn`, runs to camp, and wakes its rider; flame or a ram stops it as a wreck.
-The ram uses the cars' closing speed for the existing `world.ember.spark` hit; 15 km/h costs 2.1 fire on Medium.
-On e2f2659c8 plus the ram change, `node tools/test-everburn-job1.mjs` passed; the bed arrived with 35.86 fire and no rams.
-Earlier checks: the same suite passed for the camp, scout post, warning, run and flame; `test-p4-audio.mjs` passed outside the sandbox.
-Changed assertion, for Claude: camp scoop wake uses Hard instead of Medium and checks persistent waking, as the three wakings require. Rider setups specify a burnt fence for immediate charges; their assertions are unchanged.
-After scout home: job suite scout rule passed; the bed driver alerts the scout, takes two rams and arrives with 9.51 fire after a scoop; without a scoop it runs out and the suite fails. Claude must rule on proof drives.
-Scout warning, stopped and home lines are captions only; the chase line and rider mark appear while applicable.
-On 7a4c2fcb5 plus these changes, the new line, map and scout checks passed; the job suite then failed on the known bed without a scoop (0 fire, 2 rams).
-For Claude: recorded Rook lines, browser pictures and hand chase remain; the browser cannot run in this lane.
-Cinder and forge rings sit above the ground from 40 m; the ring checks passed on fc5c25194 plus this change.
-On 84af267e9, the picture scenario page expressions parsed in Node; browser pictures remain for Claude.
-On 84af267e9, Easy Hot Delivery finished 10/10: 68.16 fire, 3 rams, halfway scoop; the test did not report the scout; its output now includes scout and camp state. Final checks remain.
+The ram uses closing speed and `world.ember.spark`; a 15 km/h meeting costs 2.1 fire on Medium.
+Rook's three new scout lines are captions only; the chase line and map mark appear while it runs.
+Cinder and forge rings are drawn above the road from 40 m. The loaded picture scenario parses in Node.
+On e069cde4f, Easy Hot Delivery passed 10/10: scout stopped, camp awake, 68.16 fire and 3 rams.
+On e069cde4f plus this test change, the scooped bed without scout arrived with 35.86 fire and no rams; without a scoop: 14.24 and no rams.
+The existing bed drive alerts the scout: with a scoop it arrives with 9.51 fire and 2 rams; without one it runs out. The job suite fails there.
+Claude must decide what the proof drives do about the scout. The original failing assertion remains.
+The 1,430 m chase takes 73.5 s at 70 km/h or 93.6 s at 55; catching a 250 m head start needs 82.2 or 64.6 km/h respectively, on a straight ideal run.
+Earlier rule and ring checks passed; audio passed outside the sandbox. Final checks and measured table remain.
+Changed assertion, for Claude: camp scoop wake uses Hard instead of Medium and checks persistent waking; charge setups use a burnt fence. No tolerance was loosened.
+For Claude: decide the proof drives, record the three Rook lines, take the browser pictures and drive the chase by hand.
 Removed: automatic camp pursuit while asleep and charging through a standing fence.

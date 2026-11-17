@@ -810,11 +810,12 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
 }
 // Measure the Steps route using the real car and job state.
 {
-  for (const scoopAtWash of [true, false]) {
+  for (const {scoopAtWash, scoutAbsent} of [{scoopAtWash:true, scoutAbsent:true}, {scoopAtWash:false, scoutAbsent:true}, {scoopAtWash:true, scoutAbsent:false}, {scoopAtWash:false, scoutAbsent:false}]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
     duel.state.wastelandGateDiscovered = true;
     assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
+      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19,
+        steps:scoutAbsent ? definition.steps.map((item, index) => index === 0 ? {...item, scout:null} : item) : definition.steps}}));
     duel.state.countdown = 0;
     const step = definition.steps[0];
     assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
@@ -863,8 +864,13 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
       rams:[...stretches.flatMap(item => item.jolts), ...(scoop?.jolts ?? []), ...arrival.jolts].filter(jolt => jolt.riders.length).length,
       jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (scoop?.jolts.length ?? 0) + arrival.jolts.length,
-      scoops, ember:arrival.fire?.ember ?? pot.ember, done:arrival.done, result:duel.state.arena.worldJob.emberResult};
-    console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
+      scoops, ember:arrival.fire?.ember ?? pot.ember, campAwake:!!pot.campAwake, scoutHome:!!pot.scoutHome,
+      done:arrival.done, result:duel.state.arena.worldJob.emberResult};
+    console.log(scoutAbsent ? `Bed without scout${scoopAtWash ? ' with scoop' : ''} delivery:` : scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
+    if (scoutAbsent) {
+      assert.equal(result.rams, 0, 'the sleeping camp does not ram the bed car');
+      if (scoopAtWash) assert.ok(result.ember >= 35 && result.ember <= 37, 'the scooped bed delivery keeps about 36 fire');
+    }
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
     const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
     const pay = result.result.relights > 0 ? Math.min(rule.pay[grade], rule.pay.afterRelight) : rule.pay[grade];
