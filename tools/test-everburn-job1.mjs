@@ -1632,6 +1632,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   placeActor(duel, duel.state, {s:at.s, lateral:at.lateral,
     headingError:wrapHeading(-duel.course.at(at.s).heading)}, 0);
   const before = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  duel._staticContacts(duel.state, true);
+  const parked = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  assert.ok(Math.hypot(parked.x - before.x, parked.z - before.z) < 1e-8,
+    'the full car fits in the gateway before the door starts moving');
   for (let i = 0; i < 100; i++) {
     stepWorldJob(duel, 1 / 60);
     duel._staticContacts(duel.state, true);
