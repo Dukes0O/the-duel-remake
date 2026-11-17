@@ -30,6 +30,9 @@ export const FURNACE_GLASS = Object.freeze({
   roundSeconds: 40,
   captionMetres: 150,
   lostRiderSightSeconds: 5,
+  riderEye: 1.5,
+  riderSightStep: 5,
+  pursuitSeconds: 90,
   crossingKmh: 50,
   crossingSpareSeconds: 1,
 });
@@ -72,6 +75,22 @@ export function stepGlassSeen(state, {car, glass, loaded, visible}, dt) {
 
 export function glassWarningDue(sight, warned) {
   return !warned && sight.inGlass && sight.seenSeconds >= FURNACE_PATIENCE_SECONDS;
+}
+
+// Either rider can keep the chase alive. Once both lose the car, the same
+// job clock counts five seconds before they return. The watch is irrelevant.
+export function stepGlassPursuit(state, riderVisible, dt) {
+  if (state.furnaceRidersReturning) return state;
+  const elapsed = Math.max(0, dt);
+  state.furnacePursuitSeconds = (state.furnacePursuitSeconds ?? 0) + elapsed;
+  state.furnaceLostSightSeconds = riderVisible ? 0 :
+    (state.furnaceLostSightSeconds ?? 0) + elapsed;
+  if (state.furnaceLostSightSeconds >= FURNACE_GLASS.lostRiderSightSeconds ||
+      state.ridersRetreating || state.furnacePursuitSeconds >= FURNACE_GLASS.pursuitSeconds) {
+    state.furnaceRidersReturning = true;
+    if (state.skylineSight) state.skylineSight.seenSeconds = 0;
+  }
+  return state;
 }
 
 // Sound the warning once, after more than the allowed uninterrupted time in view.

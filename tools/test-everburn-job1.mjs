@@ -27,7 +27,7 @@ import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
-  glassOnRound, stepGlassSeen, glassWarningDue} from '../src/world/jobs/furnace-sightings.js';
+  glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -45,6 +45,21 @@ import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // Slice 8B's clock and detection rules need no graphics or scripted drive.
+{
+  const state = {skylineSight:{visible:true, seenSeconds:8}};
+  stepGlassPursuit(state, false, 4.9);
+  assert.equal(state.furnaceRidersReturning, undefined);
+  stepGlassPursuit(state, true, .1);
+  assert.equal(state.furnaceLostSightSeconds, 0, 'either rider seeing the car resets the count');
+  stepGlassPursuit(state, false, 4.9);
+  stepGlassPursuit(state, false, -.1);
+  assert.equal(state.furnaceLostSightSeconds, 4.9, 'negative time does not advance the count');
+  stepGlassPursuit(state, false, .1);
+  assert.equal(state.furnaceRidersReturning, true, 'five seconds without either rider ends pursuit');
+  assert.equal(state.skylineSight.seenSeconds, 0, 'going home resets SEEN');
+  stepGlassPursuit(state, true, 1);
+  assert.equal(state.furnaceRidersReturning, true, 'returning riders finish going home');
+}
 {
   const round = [{x:0, z:0}, {x:100, z:0}, {x:100, z:100}, {x:0, z:100}];
   assert.deepEqual(glassOnRound(round, 0), {x:0, z:0, radius:30});
@@ -1932,6 +1947,38 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
 }
 // Furnace riders use the road riders' meeting speed and back off after one hit.
+{
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const point = LAND.between('yard', 'the-steps', .4);
+  const car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
+  world.skylineWarned = true;
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  const cacheSight = values => riders.forEach((rider, index) => {
+    rider.roadVisible = values[index];
+    rider.sightWait = .25;
+  });
+  world.skylineSight = {visible:false, seenSeconds:8};
+  world.sightStep = 1;
+  world.furnaceLostSightSeconds = 4.9;
+  cacheSight([false, true]);
+  stepWorldJob(duel, .1);
+  assert.equal(world.furnaceLostSightSeconds, 0, 'the second rider keeps the chase alive without the watch');
+  assert.equal(world.furnaceRidersReturning, undefined);
+  world.skylineSight = {visible:true, seenSeconds:8};
+  world.sightStep = 1;
+  world.furnaceLostSightSeconds = 4.9;
+  cacheSight([false, false]);
+  stepWorldJob(duel, .1);
+  assert.equal(world.furnaceRidersReturning, true, 'the watch cannot keep a blind pair in pursuit');
+  assert.equal(world.skylineSight.seenSeconds, 0);
+}
 for (const meeting of ['rider-arrives', 'car-arrives']) {
   const world = createWorldJob(definition);
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
@@ -2003,21 +2050,21 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   assert.ok(starts.every(start => Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10));
   car = {x:FURNACE_SKYLINE.x + 300, z:FURNACE_SKYLINE.z};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  for (let i = 0; i < 90; i++) tick(0.1);
+  for (let i = 0; i < 30; i++) tick(0.1);
   for (const [index, rider] of riders.entries()) {
-    assert.ok(rider.position.y < starts[index].y - 10, 'the rider comes down from the watch');
     assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
-      Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues the car');
+      Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues before losing sight');
   }
   for (let i = 0; i < 90; i++) tick(0.1);
   assert.equal(world.skylineSight.visible, false, 'the furnace cannot see the car at this position');
-  assert.equal(world.furnaceRidersReturning, true, 'the riders give up after ten seconds out of furnace sight');
+  assert.equal(world.furnaceRidersReturning, true, 'the riders give up after five seconds out of both riders sight');
   for (const rider of riders) {
     assert.equal(rider.returningToPost, true, 'the rider is returning instead of reaching the car');
   }
   tick(1);
   assert.equal(horns().length, 1);
-  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
+    'both hidden riders can leave once their five-second return begins');
 }
 // Furnace riders stop for lost sight, the town wall, or the horn's time limit.
 for (const reason of ['sight', 'town', 'time']) {
@@ -2036,7 +2083,11 @@ for (const reason of ['sight', 'town', 'time']) {
   stepWorldJob(duel, 0);
   for (const rider of world.actors.filter(actor => actor.id.startsWith('furnace-rider-'))) rider.position.x += 30;
   world.skylineSight = {visible:reason !== 'sight'};
-  world.furnaceLostSightSeconds = reason === 'sight' ? 9.9 : 0;
+  world.furnaceLostSightSeconds = reason === 'sight' ? 4.9 : 0;
+  for (const rider of world.actors.filter(actor => actor.id.startsWith('furnace-rider-'))) {
+    rider.roadVisible = reason !== 'sight';
+    rider.sightWait = .25;
+  }
   world.furnacePursuitSeconds = reason === 'time' ? 89.9 : 0;
   if (reason === 'town') {
     const wall = step.riderSafeWall;

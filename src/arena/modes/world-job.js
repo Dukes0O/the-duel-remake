@@ -6,7 +6,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue, stepGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -331,12 +331,19 @@ function updateJobActors(duel, worldJob, dt) {
     }
   }
   if (worldJob.skylineWarned) {
-    const elapsed = Math.max(0, dt);
-    worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;
-    worldJob.furnaceLostSightSeconds = worldJob.skylineSight?.visible ? 0 :
-      (worldJob.furnaceLostSightSeconds ?? 0) + elapsed;
-    if (worldJob.furnaceLostSightSeconds >= 10 || worldJob.ridersRetreating || worldJob.furnacePursuitSeconds >= 90)
-      worldJob.furnaceRidersReturning = true;
+    const car = position(duel, duel.state);
+    let riderVisible = false;
+    for (const [index, actorDef] of (step?.furnaceRiders ?? []).entries()) {
+      if (worldJob.furnaceRidersGone?.includes(actorDef.id)) continue;
+      updateJobActor(duel, worldJob, actorDef, 0);
+      const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
+      if (rider.health <= 0 || worldJob.furnaceRidersReturning) continue;
+      const visible = roadRiderSight(rider, dt, index, () => sees(rider.position, car,
+        {heightAt:scablandsSurfaceHeightAt, actorFloors:true, tunnels:duel.course.groundTunnels,
+          eye:FURNACE_GLASS.riderEye, step:FURNACE_GLASS.riderSightStep}));
+      riderVisible ||= visible;
+    }
+    stepGlassPursuit(worldJob, riderVisible, dt);
     for (const actorDef of step?.furnaceRiders ?? []) {
       if (worldJob.furnaceRidersGone?.includes(actorDef.id)) continue;
       updateJobActor(duel, worldJob, actorDef, 0);

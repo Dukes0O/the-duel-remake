@@ -2,14 +2,15 @@
 - Part A is built in faabfac06: yard fill 100, roadside fill 60, nearest-fire caption and Moss's greeting.
 - Part B rule foundation: a constant-speed closed light round, 40-second job clock, radius 30, and a SEEN count that fills in light and drains outside it or behind cover.
 - The horn is due at eight seconds. Tests cover circle edges, cover, unloading, equal fill/drain rates, loop closure and unequal segment lengths.
-- B's furnace riders now use the road riders' full meeting speed, one cost per contact and the same 40 m back-off; returning home takes priority over backing off.
-- The light helpers are not wired yet. B's land round, drawing, HUD, five-second rider sight and renewed chases remain; C, D and E remain unbuilt. Switches, saves and pay are unchanged.
-- Checks PASS on ec2d2d51f plus this round's changes: test-everburn-job1, test-ember-pot (38 checks), isolated new ram checks and git diff --check.
-- Changed assertions for Claude: A1/A2 replaces +25 with yard fill 100 or roadside fill 60; a pot at least 60 takes no scoop. This round changes no existing assertion.
+- B's riders use full meeting speed, one cost per contact and 40 m back-off. Either rider's own sight keeps pursuit alive; five seconds without both turns them home and clears SEEN. Returning takes priority.
+- B's light helpers still need the land round, drawing, HUD and horn connection; renewed chases remain. C, D and E remain unbuilt. Switches, saves and pay are unchanged.
+- Checks PASS on 9237b57c3 plus this round's changes: test-everburn-job1, focused rider checks and git diff --check. Prior round: test-ember-pot (38 checks).
+- Changed assertions for Claude: A1/A2 replaces +25 with yard fill 100 or roadside fill 60; a pot at least 60 takes no scoop. B3 replaces the ten-second watch-loss fixture (9.9) with five-second rider loss (4.9).
+- B3 replaces the nine-second descent check (over 10 m down) with pursuit before the five-second loss: over 30 m closer after three seconds, then return. Hidden riders are gone after return (2 to 0).
 - Changed assertion from A: bed drive fire 35 to 37 becomes 7 to 9 (measured 7.438721), since a pot above 60 no longer gains 25. Hard scoop fixtures start below 60.
 - Unchanged drives: bed fire 7.438721 or 14.242767 without the Wash stop, zero rams; East Road fire 18.448148, three rams.
-- Sound: existing world.ember.scoop, world.ember.out and world.ember.spark for ram jolts; captions have no voice. B will use existing world.furnace.horn; no new cue this round.
+- Sound: existing world.ember.scoop, world.ember.out and world.ember.spark for ram jolts; captions have no voice. B uses existing world.furnace.horn; no new cue this round.
 - Codex decided: A's outage names any nearest fire; repeatable relights stay separate from roadside scoops (already written on card). No new design decision this round.
-- Integration merged at ec2d2d51f with no code conflict; only card/inbox text came in. A 25 m sight survey found disconnected exposed areas; B's light round still needs choosing and the gap-crossing proof.
+- Integration merged at ec2d2d51f with no code conflict; only card/inbox text came in. A 25 m sight survey found disconnected exposed areas; B's light round still needs choosing and the gap-crossing proof. This round's integration merge reports already up to date.
 - For Claude: independent code/assertion review, the browser scenario after B to D, E's frame check and three pictures. Final-only Easy drive, older related suites, replay/world signatures, lane tier and build are not yet run.
-- **Removed:** A removed the fixed +25 scoop; B removed the furnace riders' half-speed ram estimate and their immediate pursuit after a hit.
+- **Removed:** A removed the fixed +25 scoop; B removed the half-speed ram estimate, immediate pursuit after a hit and ten-second watch-based pursuit-loss rule.
