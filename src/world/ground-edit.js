@@ -205,6 +205,7 @@ export function createGroundEdit({region, seed = 1, naturalHeight, reservedShape
   }
 
   return Object.freeze({seed:numericSeed, heightAt, materialAt, cut, fill, refusal, toSave, loadSave,
+    hasChunkAt(x, z) { return chunks.has(chunkKey(Math.floor(x / CHUNK_METRES), Math.floor(z / CHUNK_METRES))); },
     get revision() { return revision; },
     changedAlongSince(since, position, distance) {
       if (since < loadedRevision || revision - since > editHistory.length) return true;

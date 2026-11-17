@@ -237,12 +237,12 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       Object.assign(shader.uniforms, uniforms);
       if (tracks) Object.assign(shader.uniforms, {uTracks: tracks.texture, uTracksBox: tracks.box});
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;\n#ifdef GROUND_MADE\nattribute float aMade;\nvarying float vMade;\n#endif')
+        .replace('#include <common>', '#include <common>\nvarying vec3 vGroundPos;\nvarying vec3 vGroundNormal;\n#ifdef GROUND_MADE\nattribute float aMade;\nattribute float aSoil;\nvarying float vMade;\nvarying float vSoil;\n#endif')
         .replace('#include <project_vertex>', `#include <project_vertex>
           vGroundPos=(modelMatrix*vec4(transformed,1.0)).xyz;
           vGroundNormal=mat3(modelMatrix)*objectNormal;
           #ifdef GROUND_MADE
-          vMade=aMade;
+          vMade=aMade;vSoil=aSoil;
           #endif`);
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', `#include <common>
@@ -251,7 +251,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           ${areaCode}${tunnelCapable ? `\n          ${tunnelDeclarations}` : ''}
           varying vec3 vGroundPos;varying vec3 vGroundNormal;
           #ifdef GROUND_MADE
-          varying float vMade;
+          varying float vMade;varying float vSoil;
           #endif
           vec3 gGlow;${photosOn ? 'vec2 gRelief;' : ''}
           ${CELLS}
@@ -420,7 +420,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           // Ground a machine has heaped or dug a little way is earth, however steep its side: a heap's flank and a ditch's wall
           // are not the bare rock of a scarp. A cut of metres (a road into a hill) is through rock and keeps the rock's look.
           #ifdef GROUND_MADE
-          float gEarth=max(smoothstep(.03,.15,vMade),smoothstep(.03,.15,-vMade)*(1.0-smoothstep(1.5,3.0,-vMade)));
+          float gEarth=max(smoothstep(.0003,.003,vMade),smoothstep(.0003,.003,-vMade)*(1.0-smoothstep(1.5,3.0,-vMade)));
           #else
           float gEarth=0.0;
           #endif
@@ -445,7 +445,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           // Made ground. Where the ground has been filled it is tipped spoil: loose broken rock, darker and coarser than any
           // ground that has lain a thousand years, with pale dust on the lumps, tip lines down its sides, and none of the
           // plain's cracks or the hills' beds. Where it has been cut it is fresh: darker, and damp at the foot of the cut.
-          float gFill=smoothstep(.04,.5,vMade),gCut=smoothstep(.04,.6,-vMade);
+          float gFill=smoothstep(.01,.3,vMade),gCut=smoothstep(.02,.5,-vMade);
           if(gFill>.01){
             vec3 gSpoil=vec3(.215,.18,.15)*(.55+.9*gFine.g)*(.78+.44*gMid.b);
             float gLump=smoothstep(.52,.74,texture2D(uGroundNoise,gq*.83+7.1).r);
@@ -455,6 +455,9 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
             vec2 gDown=normalize(vGroundNormal.xz+vec2(1e-4,0.0));
             float gTip=smoothstep(.45,.8,texture2D(uGroundNoise,vec2(dot(gq,vec2(-gDown.y,gDown.x))*.22,dot(gq,gDown)*.02)).b);
             gSpoil*=1.0-.3*gTip*smoothstep(.01,.06,gSlope);
+            // Heaped earth is the ground's own soil turned over: darker and duller than the ground it lies on, not the grey
+            // broken rock that comes out of a tunnel. vSoil is 1 where the heap is topsoil or clay (src/world/ground-view.js).
+            gSpoil=mix(gSpoil,gc*vec3(.6,.57,.54)*(.75+.5*gFine.g)*(1.0-.25*gClod),vSoil);
             gc=mix(gc,gSpoil,gFill*.94);
           }
           if(gCut>.01)gc=mix(gc,gc*vec3(.6,.58,.57),gCut*.85);
@@ -471,7 +474,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-6-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
+    material.customProgramCacheKey = () => `ground-look-9-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
     material.needsUpdate = true;
     return material;
   }

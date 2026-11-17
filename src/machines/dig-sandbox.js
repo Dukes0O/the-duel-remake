@@ -1,3 +1,4 @@
+import {digMachineIds} from './controls-view.js';
 import {createMachineHaul, operateMachineHaul, stepMachineHaul} from './haul.js';
 import {machineToolPosition} from './machine.js';
 import {machineLoadVolume} from './tools.js';
@@ -145,11 +146,11 @@ const suppliedGroundWork = new WeakMap();
 
 /** Use the player's current difficulty for this visit, without reading a save. */
 export function createDigSandboxForApp(app) {
-  return createDigSandbox({playerId:app?.player?.id ?? 'player', easy:app?.cpuDifficulty === 'easy'});
+  return createDigSandbox({playerId:app?.player?.id ?? 'player', easy:app?.cpuDifficulty === 'easy', town:(app?._switches?.() ?? app?.duel?.featureFlags)?.enabled('wasteland-town') === true});
 }
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false, town = true} = {}) {
   const edit = ground || newGround(seed);
   const memory = globalThis.__theDigGroundMemory ??= {};
   const saved = memory[playerId];
@@ -176,7 +177,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
-    cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
+    town,cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
 
@@ -200,7 +201,7 @@ export function importDigTunnels(sim, segments = []) {
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
+  const ids=digMachineIds(sim.town);
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
   return {...sim,activeMachine,mode:activeMachine==='excavator' || (activeMachine==='borer' && sim.boreOrders.some(order => order.id === sim.activeBoreId && order.status !== 'finished'))?'work':'drive',daylightMessage:'', borePlayerAtLever:false};
 }
@@ -562,9 +563,17 @@ function fixedStep(sim,input) {
       }
       advanced=operateMachineHaul(advanced,{action:input.action,dtSeconds:STEP});
       const operation=advanced.lastOperation;
-      if(input.action==='dig')next={...next,excavatedM3:next.excavatedM3+(operation?.movedVolumeM3||0)};
+      if(input.action==='dig'){
+        next={...next,excavatedM3:next.excavatedM3+(operation?.movedVolumeM3||0)};
+        if(operation?.groundResult?.ok && operation.movedVolumeM3<0.00001)
+          next={...next,lastMessage:'The bucket has reached the bottom here. Press A or D to swing to fresh dirt.'};
+      }
       if(input.action==='load')next={...next,loadedM3:next.loadedM3+(operation?.movedVolumeM3||0)};
-      if(input.action==='tip')next={...next,tippedM3:next.tippedM3+(operation?.movedVolumeM3||0)};
+      if(input.action==='tip'){
+        next={...next,tippedM3:next.tippedM3+(operation?.movedVolumeM3||0)};
+        if(operation?.movedVolumeM3>0 && machineLoadVolume(advanced.machines.dumpTruck)<1e-5)
+          next={...next,lastMessage:'The load is tipped. Fill the truck again.'};
+      }
       if(operation?.groundResult?.reason)events.push({type:'cut-refused',reason:operation.groundResult.reason});
       if(operation?.refused&&operation.groundResult?.reason)events.push({type:'cut-refused',reason:operation.groundResult.reason});
       if(input.action==='dig'&&operation?.movedVolumeM3>0){
@@ -588,7 +597,13 @@ function fixedStep(sim,input) {
 export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   if(!Number.isFinite(dtSeconds)||dtSeconds<0)throw new TypeError('Sandbox time must be non-negative.');
   let carry=sim.fixedCarry+dtSeconds,next={...sim,events:[]};
-  while(carry+1e-10>=STEP){next=fixedStep(next,input);carry-=STEP;}
+  while(carry+1e-10>=STEP){
+    const previousMessage=next.lastMessage;
+    next=fixedStep({...next,lastMessage:''},input);
+    if(next.lastMessage) next.events.push({type:'machine-message',message:next.lastMessage});
+    else next.lastMessage=previousMessage;
+    carry-=STEP;
+  }
   next.fixedCarry=carry;next.elapsed=sim.elapsed+dtSeconds;
   if (next.roadWork !== sim.roadWork) {
     suppliedGroundWork.set(next.ground, next.roadWork);

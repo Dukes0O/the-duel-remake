@@ -96,7 +96,22 @@ try.** Nobody has heard it: the play window is muted. What a player meets:
 Checks: `node tools/test-the-dig.mjs` and `tools/test-dig-yard-switches.mjs` extended for each cure; the Dig scenario
 takes one picture of each offered machine in its second view (for Claude to run). No scripted drive.
 
+### Slice 2 merged (16 November 2026, night)
+
+Built by Codex, reviewed and confirmed. All seven cures are in. Claude's pictures of the merged Dig: the opening view shows
+the boom and the bucket; each machine's panel names it and its keys, and the left line no longer repeats them; the second
+views look over the machines; the roller and the paver are not offered; the tip and the stalled dig each have their line;
+spread earth on flat ground is drawn as earth. Still to do, Claude's:
+
+- **A heap's foot and a ditch's ridges still have a pale ring.** Thirty minutes went on it without the cause. Ruled out by
+  experiment in the running Dig: the other two ground layers (hidden, the ring stays), the made-ground branch of the
+  land's drawing (the made value forced to zero, it stays), the rock-on-slope mix (switched off for made ground, it
+  stays), and the sun (switched off, the ring stays bright while the heap's body goes dark, so the ring is colour and the
+  body's paleness is light). It carries the plain's crack pattern. Next thing to try: draw the edited ground with a plain
+  brown material and add the land's drawing back one part at a time.
+- **The road roller and the paver have no models** (MACHINE-ROADS). When they have, that card removes the rule that hides them.
+
 ### Before the switch goes on
 
-Slice 2 merged; Claude plays the Dig again and judges the dug ground by picture; one frame check on Performance in the Dig
+The pale ring cured or accepted by Claude; one frame check on Performance in the Dig
 yard with the laptop alone; Kyle's own try on the private address. Then Claude decides (rule 18).

@@ -80,6 +80,8 @@ export async function run(context) {
   await press(context, 'KeyE'); await context.waitFor(page.loadedTruck, 'truck loaded from bucket', 10000);
   await press(context, 'KeyQ'); await context.waitFor(page.truck, 'dump truck selected', 3000);
   await picture(context, 'the-dig-truck-loaded');
+  await press(context, 'KeyC'); await picture(context, 'the-dig-truck-cab');
+  await press(context, 'KeyC'); await press(context, 'KeyC');
   await hold(context, 'KeyW', 1500); await press(context, 'Tab'); await key(context, 'Space', 'keydown');
   await context.waitFor(page.tipped, 'truck tipped a heap', 30000);
   await picture(context, 'the-dig-bed-lifted'); await key(context, 'Space', 'keyup');
@@ -89,8 +91,17 @@ export async function run(context) {
   await context.waitFor(page.ditch, 'trencher cut a ditch', 60000);
   await key(context, 'Space', 'keyup'); await key(context, 'KeyW', 'keyup');
   await picture(context, 'the-dig-trencher-ditch');
-  for (let i = 0; i < 5; i++) await press(context, 'KeyQ');
+  await press(context, 'KeyC'); await picture(context, 'the-dig-trencher-cab');
+  await press(context, 'KeyC'); await press(context, 'KeyC');
+  for (const name of ['drill', 'dozer']) {
+    await press(context, 'KeyQ');
+    await press(context, 'KeyC'); await picture(context, `the-dig-${name}-cab`);
+    await press(context, 'KeyC'); await press(context, 'KeyC');
+  }
+  await press(context, 'KeyQ');
   await context.waitFor(page.borer, 'Mabel selected', 10000);
+  await press(context, 'KeyC'); await picture(context, 'the-dig-mabel-cab');
+  await press(context, 'KeyC');
   await holdUntil(context, 'KeyW', page.atFace, 'Mabel reaches the rock', 90000);
   await press(context, 'Tab');
   await holdUntil(context, 'KeyW', page.cut, 'Mabel cut rock', 60000);

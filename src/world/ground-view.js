@@ -12,22 +12,26 @@ export function groundColour(x, z, turned = 0) {
 function makeChunk(row, heightAt) {
   // `made` is how far each corner stands above (filled) or below (cut) the ground as it was, in metres, smoothed over its
   // neighbours. The land's drawing uses it to draw spoil and fresh cuts (src/world/scablands-ground-look.js, GROUND_MADE).
-  const positions = [], colours = [], uvs = [], indices = [], made = [], skirtSources = [];
+  // `soils` is 1 where that ground is topsoil or clay and 0 where it is gravel or rock, smoothed the same way.
+  const positions = [], colours = [], uvs = [], indices = [], made = [], soils = [], skirtSources = [];
   const x0 = row.x * SIDE, z0 = row.z * SIDE;
   for (let z = 0; z <= SIDE; z++) for (let x = 0; x <= SIDE; x++) {
     const wx = x0 + x, wz = z0 + z, index = Math.min(SIDE - 1, z) * SIDE + Math.min(SIDE - 1, x);
-    let turned=0, change=0;
+    let turned=0, change=0, soil=0;
     for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
       const sx=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,z)+dz));
       const sz=Math.max(0,Math.min(SIDE-1,Math.min(SIDE-1,x)+dx));
       turned+=Math.min(1,Math.abs(row.delta[sz*SIDE+sx])*1.5)/9;
       change+=row.delta[sz*SIDE+sx]/9;
+      // Topsoil and clay (the first two ground materials) are earth; gravel and rock are not.
+      soil+=(row.material[sz*SIDE+sx]<=1?1:0)/9;
     }
     const colour = groundColour(wx, wz, turned);
     positions.push(wx, heightAt(wx, wz) + .035, wz);
     colours.push(colour.r, colour.g, colour.b);
     uvs.push(wx*GROUND_UV,wz*GROUND_UV);
     made.push(change);
+    soils.push(soil);
     if (x < SIDE && z < SIDE) {
       const a = z * (SIDE + 1) + x, b = a + 1, c = a + SIDE + 1, d = c + 1;
       indices.push(a, c, b, b, c, d);
@@ -43,6 +47,7 @@ function makeChunk(row, heightAt) {
         colours.push(colours[source * 3], colours[source * 3 + 1], colours[source * 3 + 2]);
         uvs.push(uvs[source*2],uvs[source*2+1]);
         made.push(made[source]);
+        soils.push(soils[source]);
         skirtSources.push(source);
       }
       indices.push(a, base, b, b, base, base + 1);
@@ -53,6 +58,7 @@ function makeChunk(row, heightAt) {
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   geometry.setAttribute('aMade', new THREE.Float32BufferAttribute(made, 1));
+  geometry.setAttribute('aSoil', new THREE.Float32BufferAttribute(soils, 1));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   // The skirt is lit and coloured as the ground at its top edge, not as a wall: where a chunk's edge shows as a lip above the
@@ -77,6 +83,19 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
     const rows = groundEdit.toSave().chunks, live = new Set();
     changedBounds = [];
     let changed = 0;
+    // A corner can sample the neighbouring chunk. Rebuild only neighbours of
+    // changed edge samples, so their shared vertices keep the same height.
+    const refresh = new Set();
+    for (const row of rows) {
+      const previous = snapshots.get(`${row.x},${row.z}`);
+      for (let i = 0; i < row.delta.length; i++) {
+        if (row.delta[i] === (previous?.delta[i] ?? 0)) continue;
+        const x = i % SIDE, z = Math.floor(i / SIDE);
+        const xs = x <= 1 ? [-1, 0] : x >= SIDE - 1 ? [0, 1] : [0];
+        const zs = z <= 1 ? [-1, 0] : z >= SIDE - 1 ? [0, 1] : [0];
+        for (const dx of xs) for (const dz of zs) refresh.add(`${row.x + dx},${row.z + dz}`);
+      }
+    }
     for (const row of rows) {
       const key = `${row.x},${row.z}`;
       live.add(key);
@@ -89,13 +108,15 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
         minX = Math.min(minX, x); maxX = Math.max(maxX, x);
         minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
       }
-      if (maxX >= 0) changedBounds.push({minX: row.x * SIDE + minX - 1, maxX: row.x * SIDE + maxX + 1,
+      if (!mesh) changedBounds.push({minX:row.x * SIDE, maxX:(row.x + 1) * SIDE,
+        minZ:row.z * SIDE, maxZ:(row.z + 1) * SIDE});
+      else if (maxX >= 0) changedBounds.push({minX: row.x * SIDE + minX - 1, maxX: row.x * SIDE + maxX + 1,
         minZ: row.z * SIDE + minZ - 1, maxZ: row.z * SIDE + maxZ + 1});
       if (!mesh) {
         mesh = new THREE.Mesh(makeChunk(row, groundEdit.heightAt), ownedMaterial);
         mesh.name = `Scablands edited ground ${key}`; mesh.receiveShadow = true; mesh.userData.chunk = {x: row.x, z: row.z};
         meshes.set(key, mesh); group.add(mesh); changed++;
-      } else if (!same(row, snapshots.get(key))) {
+      } else if (refresh.has(key) || !same(row, snapshots.get(key))) {
         const geometry = makeChunk(row, groundEdit.heightAt), old = mesh.geometry;
         mesh.geometry = geometry; old.dispose(); changed++;
       }
