@@ -8,7 +8,7 @@
 // is not drawn; a way is the player's choice.
 import {SCABLANDS_SOLIDS} from './scablands-scene.js';
 import {createLandPicture, landMarks, REGION_COLOURS} from './scablands-picture.js';
-import {furnaceSighting} from './jobs/furnace-sightings.js';
+import {furnaceSighting, hotDeliveryGlass} from './jobs/furnace-sightings.js';
 import {sightOutline, sees, WATCH, holderOf} from './scablands-ways.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsHeightAt} from './scablands-height.js';
@@ -302,6 +302,7 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   drawSights(ctx, view, knowledge);
   drawRoads(ctx, view, marks, {casing: 8.5, line: 4.6});
   drawLandmarks(ctx, view, frame.landmarkLines);
+  drawGlassRing(ctx, view, hotDeliveryGlass(frame.worldJob));
   const margin = 40, visible = (x, z) => { const at = toScreen(view, x, z); return at.x > -margin && at.y > -margin && at.x < width + margin && at.y < height + margin; };
   // What is written on the map is written where there is room: not over the scale bar, the compass, the car or another name.
   const boxes = [{left: 0, right: 150, top: height - 30, bottom: height}, {left: width - 44, right: width, top: 0, bottom: 46}, {left: width / 2 - 26, right: width / 2 + 26, top: height / 2 - 26, bottom: height / 2 + 26}];
@@ -338,6 +339,18 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   }
   drawFrame(ctx, view, {north: true, bar: 500});
   return marker;
+}
+
+export function drawGlassRing(ctx, view, glass) {
+  if (!glass) return;
+  const at = toScreen(view, glass.x, glass.z);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(at.x, at.y, glass.radius * view.scale, 0, Math.PI * 2);
+  ctx.strokeStyle = '#fff4bc';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
 }
 // The north mark and a bar with the length it stands for.
 function drawFrame(ctx, view, {north, bar}) {

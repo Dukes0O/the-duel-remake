@@ -35,6 +35,9 @@ export const FURNACE_GLASS = Object.freeze({
   pursuitSeconds: 90,
   crossingKmh: 50,
   crossingSpareSeconds: 1,
+  drawSegments: 48,
+  drawRings: 6,
+  drawLift: .08,
   // Turning points stay in the watch's sight. Between them the moving beam
   // passes behind rock; the same land sight rule blocks exposure there.
   roundMarks: Object.freeze([
@@ -53,6 +56,14 @@ export const FURNACE_GLASS = Object.freeze({
 export function furnaceGlassRound(land = LAND) {
   return FURNACE_GLASS.roundMarks.map(mark =>
     land.between(mark.from, mark.to, mark.share, 0, -mark.north));
+}
+
+const platesGlassRound = furnaceGlassRound();
+// Every view reads the same job clock, including while paused. No view owns time.
+export function hotDeliveryGlass(worldJob) {
+  if (worldJob?.definition?.id !== 'everburn-hot-delivery' ||
+      worldJob.job?.done || worldJob.settled) return null;
+  return glassOnRound(platesGlassRound, worldJob.clockSec ?? 0);
 }
 
 export function glassOnRound(points, clockSeconds) {

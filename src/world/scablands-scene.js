@@ -14,7 +14,7 @@ import {GROUND_AREAS,riverDepthAt} from './scablands-regions.js';
 import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
-import {furnaceSighting} from './jobs/furnace-sightings.js';
+import {furnaceSighting, hotDeliveryGlass, FURNACE_GLASS} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
@@ -454,6 +454,18 @@ export function createScablandsScene(course,options={}){
   const followsOpenMarks=!Object.hasOwn(options,'openMarks');
   let openMarks=options.openMarks??getScablandsOpenMarks();
   const group=new THREE.Group();group.name='The Scablands';
+  // Rings give the light enough ground samples to follow the slopes between rocks.
+  const glassGrid = new THREE.RingGeometry(0, FURNACE_GLASS.glassRadius,
+    FURNACE_GLASS.drawSegments, FURNACE_GLASS.drawRings);
+  glassGrid.rotateX(-Math.PI / 2);
+  const glassLocal = glassGrid.attributes.position.array.slice();
+  const glassPatch = new THREE.Mesh(glassGrid, new THREE.MeshBasicMaterial({
+    color:0xfff4bc, transparent:true, opacity:.48, depthWrite:false,
+    polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2,
+  }));
+  glassPatch.name = "The furnace's glass on the ground";
+  glassPatch.visible = false;
+  group.add(glassPatch);
   let yard=null;
   let retired=false;
   let townDraw=null;
@@ -823,6 +835,17 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      const glass = hotDeliveryGlass(worldJob);
+      glassPatch.visible = !!glass;
+      if (glass) {
+        const vertices = glassGrid.attributes.position;
+        for (let index = 0; index < vertices.count; index++) {
+          const x = glass.x + glassLocal[index * 3], z = glass.z + glassLocal[index * 3 + 2];
+          vertices.setXYZ(index, x, group.userData.drawnGroundHeightAt(x, z) + FURNACE_GLASS.drawLift, z);
+        }
+        vertices.needsUpdate = true;
+        glassGrid.computeBoundingSphere();
+      }
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;

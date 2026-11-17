@@ -13,7 +13,7 @@ import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
-import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
+import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, drawGlassRing, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
@@ -27,7 +27,7 @@ import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
-  furnaceGlassRound, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
+  furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -43,6 +43,49 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// The ground and map read the same circle without advancing the job clock.
+{
+  const world = createWorldJob(EVERBURN_JOBS[0]);
+  world.clockSec = 7;
+  const before = JSON.stringify(world), glass = hotDeliveryGlass(world);
+  assert.deepEqual(glass, glassOnRound(furnaceGlassRound(), 7));
+  assert.equal(JSON.stringify(world), before, 'reading the light leaves the job unchanged');
+  const view = smallView(glass), arcs = [];
+  const ctx = {save(){}, restore(){}, beginPath(){}, stroke(){}, arc(...args){arcs.push(args);}};
+  drawGlassRing(ctx, view, glass);
+  const at = toScreen(view, glass.x, glass.z);
+  assert.deepEqual(arcs[0], [at.x, at.y, glass.radius * view.scale, 0, Math.PI * 2]);
+  world.job.done = true;
+  assert.equal(hotDeliveryGlass(world), null);
+  drawGlassRing(ctx, view, null);
+  assert.equal(arcs.length, 1, 'a finished job draws no ring');
+  const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19),
+    {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+  world.job.done = false;
+  const state = {arena:{mode:'world-job', worldJob:world}};
+  syncScene(scene.group, state);
+  const patch = scene.group.getObjectByName("The furnace's glass on the ground");
+  assert.equal(patch.visible, true);
+  const vertices = patch.geometry.attributes.position;
+  for (let index = 0; index < vertices.count; index++) {
+    const x = vertices.getX(index), z = vertices.getZ(index);
+    assert.ok(Math.hypot(x - glass.x, z - glass.z) <= glass.radius + .001);
+    assert.ok(Math.abs(vertices.getY(index) - scene.group.userData.drawnGroundHeightAt(x, z) - FURNACE_GLASS.drawLift) < .001,
+      'the bright sheet follows the drawn ground');
+  }
+  const positions = vertices.array.slice();
+  animateScene(scene.group, 200);
+  syncScene(scene.group, state);
+  assert.deepEqual(vertices.array, positions, 'animation time cannot move the job light');
+  world.clockSec += 3;
+  syncScene(scene.group, state);
+  assert.notDeepEqual(vertices.array, positions, 'the job clock moves the sheet');
+  world.job.done = true;
+  syncScene(scene.group, state);
+  assert.equal(patch.visible, false);
+  scene.dispose();
+}
 
 // The land round crosses both the direct way's exposed ground and the
 // cover-to-cover line's openings. This checks geometry, without driving.
