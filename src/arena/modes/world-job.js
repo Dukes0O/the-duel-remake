@@ -148,6 +148,7 @@ export function initializeWorldJob(duel, definition) {
   if (definition.steps[0]?.brand) {
     worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     worldJob.solidGrid.setBrandLamps(definition.steps[0].places ?? []);
+    if (definition.steps[0].auntie) worldJob.solidGrid.setPeople([definition.steps[0].auntie]);
   }
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);

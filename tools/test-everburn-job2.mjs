@@ -10,6 +10,8 @@ import {worldHudModel} from '../src/world/world-hud.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {createBrandLamps} from '../src/world/brand-lamps.js';
+import {createBrandAuntie} from '../src/world/brand-auntie.js';
+import * as THREE from 'three';
 
 // Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
@@ -347,3 +349,52 @@ assert.equal(lampView.group.visible, false);
 lampView.dispose();
 assert.equal(lampView.group.children.length, 0);
 console.log('PASS Light the Town: solid posts, grounded lanterns and readable lit state.');
+
+// Job 2.1: the shipped figure is placed at the forge, grounded, facing the
+// stop ring, solid to the fighter and absent in other jobs. Shared art survives.
+assert.deepEqual(actualStep.auntie, sites.auntie);
+const auntieAt = sites.auntie.position;
+assert.equal(pushOutOfSolids(auntieAt.x, auntieAt.z, .45, SOLID_GRID).hit, null);
+assert(Math.hypot(auntieAt.x - actualStep.meeting.position.x,
+  auntieAt.z - actualStep.meeting.position.z) <= BRAND_RULE.meetingRadius);
+lampGrid.setPeople([sites.auntie]);
+assert.equal(pushOutOfSolids(auntieAt.x, auntieAt.z, .4, lampGrid).hit.id, sites.auntie.id);
+const folk = new THREE.Group(), auntieSource = new THREE.Group();
+auntieSource.name = 'auntie-solder_root';
+auntieSource.position.set(-4.95, 0, 0);
+const bone = new THREE.Bone();
+const figure = new THREE.SkinnedMesh(new THREE.BoxGeometry(.5, 2, .4),
+  new THREE.MeshStandardMaterial());
+figure.position.y = 1;
+figure.geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(
+  new Array(figure.geometry.attributes.position.count * 4).fill(0), 4));
+figure.geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(
+  Array.from({length: figure.geometry.attributes.position.count * 4}, (_, i) => i % 4 === 0 ? 1 : 0), 4));
+auntieSource.add(bone, figure);
+figure.bind(new THREE.Skeleton([bone]));
+folk.add(auntieSource);
+const auntieView = createBrandAuntie();
+auntieView.install(folk);
+const auntieJob = {job: actualJob}, auntieBefore = JSON.stringify(auntieJob);
+auntieView.update(auntieJob);
+assert.equal(auntieView.group.visible, true);
+assert.equal(auntieSource.visible, false, 'Only one Auntie is drawn during the job.');
+assert.equal(auntieView.group.position.y, auntieAt.y);
+const bounds = new THREE.Box3().setFromObject(auntieView.group);
+assert(Math.abs(bounds.min.y - auntieAt.y) < 1e-6);
+assert(Math.abs(bounds.max.y - bounds.min.y - BRAND_RULE.auntieHeight) < 1e-6);
+const copy = auntieView.group.children[0];
+const copiedBody = copy.children.find(node => node.isSkinnedMesh);
+assert.notEqual(copiedBody.skeleton.bones[0], bone);
+assert.equal(copiedBody.skeleton.bones[0].parent, copy);
+assert.equal(copiedBody.geometry, figure.geometry, 'The shipped body is reused.');
+assert.equal(JSON.stringify(auntieJob), auntieBefore);
+auntieView.update(null);
+assert.equal(auntieView.group.visible, false);
+assert.equal(auntieSource.visible, true);
+auntieView.update(auntieJob);
+auntieView.dispose();
+assert.equal(auntieView.group.children.length, 0);
+assert.equal(auntieSource.visible, true);
+figure.skeleton.dispose();figure.geometry.dispose();figure.material.dispose();
+console.log('PASS Light the Town: grounded folk figure, independent skeleton and solid Auntie.');

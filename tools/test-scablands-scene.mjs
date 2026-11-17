@@ -22,6 +22,12 @@ import {HOT_DELIVERY_WAYS, routeFor, sampleLine, pathLength} from '../src/world/
 import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
+function addFolkFixture(root,path){
+  if(path!==SCABLANDS_ASSETS.folk)return;
+  const auntie=new THREE.Group();auntie.name='auntie-solder_root';
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.5,2,.4),new THREE.MeshStandardMaterial());
+  body.position.y=1;auntie.add(body);root.add(auntie);
+}
 const loaded=[];
 const scene=createScablandsScene(course,{loadAsset:async path=>{
   loaded.push(path);const root=new THREE.Group();root.name=path;
@@ -44,13 +50,23 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
       }
     }
   }
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await scene.ready,true,'all placed art loads');
 assert.ok(Math.abs(scene.group.getObjectByName('Shared body part 11').material.color.r-.42)<.001,
   'a material shared by many parts is tinted once, not once for every part');
 assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
+
+const townLampJob=EVERBURN_JOBS.find(job=>job.id==='everburn-get-out-and-walk');
+const townAuntie=scene.group.getObjectByName('Auntie Solder at the forge');
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:townLampJob,
+  job:{stepIndex:0,steps:townLampJob.steps,stepState:{}},actors:[]}}});
+assert.equal(townAuntie.visible,true,'the scene shows Auntie for Light the Town');
+assert.equal(townAuntie.children.length,1,'the scene installs the folk figure');
+assert.equal(townAuntie.position.x,townLampJob.steps[0].auntie.position.x);
+syncScene(scene.group,{});
+assert.equal(townAuntie.visible,false,'Auntie leaves the forge drawing outside job 2');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
 
@@ -687,7 +703,7 @@ const renamed=createScablandsScene(course,{loadAsset:async path=>{
       const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({emissive:0xff8020,emissiveIntensity:2}));
       vent.name=loaderName(ventName);part.add(vent);}
   }
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await renamed.ready,true,'the art loads when parts carry the loader\'s names');
 const renamedRig=renamed.group.getObjectByName("Old Smoke's moving furnace rig");
@@ -704,13 +720,13 @@ const worn=createScablandsScene(course,{loadAsset:async path=>{
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace){
     for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-    return {scene:root};
+    addFolkFixture(root,path);return {scene:root};
   }
   const steel=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'plain steel',color:0x808080}));steel.name='steel';
   const lamp=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'forge lamp glass lit',color:0xffaa44,emissive:0xff8820,emissiveIntensity:2}));lamp.name='lamp';
   const person=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'person cloth',color:0x806040}));person.name='person';
   root.add(path===SCABLANDS_ASSETS.folk?person:steel,...(path===SCABLANDS_ASSETS.folk?[]:[lamp]));
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await worn.ready,true,'the worn scene loads');
 const inverseOf=material=>{const shader={uniforms:{},vertexShader:'#include <common>\n#include <project_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>'};
@@ -753,7 +769,7 @@ const wellScene=createScablandsScene(course,{loadAsset:async path=>{
     const lamp=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),new THREE.MeshStandardMaterial({name:'lamp amber',color:0xd87624,emissive:0xd87624,emissiveIntensity:1.5}));lamp.name='ash-men-lamp-1-amber-lens';lamp.position.set(3,4,0);root.add(lamp);
   }
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await wellScene.ready,true,'the well scene loads');
 const wellLod=wellScene.group.getObjectByName('The Everburn detail LOD');
@@ -801,7 +817,7 @@ const wreckScene=createScablandsScene(course,{loadAsset:async path=>{
   if(path===SCABLANDS_ASSETS.boneyard)return realParse(path);
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await wreckScene.ready,true,'the Boneyard scene with its real model loads');
 wreckScene.group.updateMatrixWorld(true);
@@ -848,7 +864,7 @@ const propScene=createScablandsScene(course,{loadAsset:async path=>{
   if(path===SCABLANDS_ASSETS.kit)return realParse(path);
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await propScene.ready,true,'the scene with the real kit loads');
 propScene.group.updateMatrixWorld(true);

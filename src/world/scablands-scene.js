@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
@@ -21,6 +22,7 @@ import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.j
 import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
 import {createForge} from './forge-look.js';
 import {createBrandLamps} from './brand-lamps.js';
+import {createBrandAuntie} from './brand-auntie.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -588,6 +590,7 @@ export function createScablandsScene(course,options={}){
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
   const brandLamps=createBrandLamps();group.add(brandLamps.group);
+  const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   let cinderRequested=false;
   function requestCinder(){
     if(cinderRequested)return;
@@ -652,7 +655,8 @@ export function createScablandsScene(course,options={}){
         const source=vehiclePart[key]?findPart(asset.scene,vehiclePart[key]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         // The people carry their own look, and the two trucks their own wear.
-        const model=source.clone(true);
+        const model=key==='folk'?cloneSkeleton(source):source.clone(true);
+        if(key==='folk')brandAuntie.install(model);
         // The well's flame is drawn in code (src/world/everburn-fire.js); the model's own flame solids are not drawn.
         if(key==='everburn'){
           const solids=[];model.traverse(node=>{if(/flame/i.test(node.name))solids.push(node);});
@@ -826,6 +830,7 @@ export function createScablandsScene(course,options={}){
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
+      brandAuntie.update(worldJob);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -962,7 +967,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

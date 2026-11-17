@@ -18,6 +18,8 @@ export function brandSites(land = LAND) {
   })});
   const hearthAt = forgePlan(land).hearth;
   const hearth = place('town-hearth', hearthAt);
+  const auntie = place('town-auntie-solder', {x: hearthAt.x + BRAND_RULE.auntieEast,
+    z: hearthAt.z + BRAND_RULE.auntieSouth});
   const lamps = Object.freeze([
     place('pump', {x: pump.x, z: pump.z + rule.pumpSouth}),
     // Ladders in the folk kit are scenery. The fighter has no ladder action.
@@ -39,5 +41,5 @@ export function brandSites(land = LAND) {
     const scale = BRAND_RULE.wallEntryInset / Math.hypot(dx, dz);
     return place(`town-wall-${index}`, {x: sheet.x + dx * scale, z: sheet.z + dz * scale});
   }));
-  return Object.freeze({hearth, lamps, farWalk, ashEntries, towerAtFoot: true});
+  return Object.freeze({hearth, auntie, lamps, farWalk, ashEntries, towerAtFoot: true});
 }

@@ -248,11 +248,13 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   const hearth = place('hearth', 0, 0);
   const lamps = [place('pump', 20, 0), place('tower', 40, 0), place('far', 60, 0)];
   const job = {id: 'test-town-brand', steps: [{kind: 'onfoot', brand: true, hearth,
-    places: lamps, ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
+    places: lamps, auntie: place('town-auntie-solder', 5, 5), ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
   const {app} = start({job});
   const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
   assert.equal(worldJob.solidGrid.brandLamps.length, 3, 'The arena installs the three solid lamp posts.');
   assert.equal(worldJob.solidGrid.brandLamps[0].x, lamps[0].position.x);
+  assert.equal(worldJob.solidGrid.people[0].id, 'town-auntie-solder');
+  assert.equal(worldJob.solidGrid.people[0].x, 5);
   const ashTells = [];
   const originalEmit = duel.emit.bind(duel);
   duel.emit = event => { if (event.arenaTell) ashTells.push(event.arenaTell); originalEmit(event); };
