@@ -12,7 +12,7 @@ export function groundColour(x, z, turned = 0) {
 function makeChunk(row, heightAt) {
   // `made` is how far each corner stands above (filled) or below (cut) the ground as it was, in metres, smoothed over its
   // neighbours. The land's drawing uses it to draw spoil and fresh cuts (src/world/scablands-ground-look.js, GROUND_MADE).
-  const positions = [], colours = [], uvs = [], indices = [], made = [];
+  const positions = [], colours = [], uvs = [], indices = [], made = [], skirtSources = [];
   const x0 = row.x * SIDE, z0 = row.z * SIDE;
   for (let z = 0; z <= SIDE; z++) for (let x = 0; x <= SIDE; x++) {
     const wx = x0 + x, wz = z0 + z, index = Math.min(SIDE - 1, z) * SIDE + Math.min(SIDE - 1, x);
@@ -43,6 +43,7 @@ function makeChunk(row, heightAt) {
         colours.push(colours[source * 3], colours[source * 3 + 1], colours[source * 3 + 2]);
         uvs.push(uvs[source*2],uvs[source*2+1]);
         made.push(made[source]);
+        skirtSources.push(source);
       }
       indices.push(a, base, b, b, base, base + 1);
     }
@@ -54,6 +55,13 @@ function makeChunk(row, heightAt) {
   geometry.setAttribute('aMade', new THREE.Float32BufferAttribute(made, 1));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
+  // The skirt is lit and coloured as the ground at its top edge, not as a wall: where a chunk's edge shows as a lip above the
+  // coarse ground it must not read as a pale kerb of rock. Each skirt corner takes its top corner's own direction.
+  const normals = geometry.getAttribute('normal'), top = (SIDE + 1) * (SIDE + 1);
+  for (let i = top; i < normals.count; i++) {
+    const source = skirtSources[i - top];
+    normals.setXYZ(i, normals.getX(source), normals.getY(source), normals.getZ(source));
+  }
   return geometry;
 }
 

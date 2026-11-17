@@ -417,6 +417,13 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
               gc*=1.0-min(1.0,gCrack)*.7*smoothstep(.1,.6,gRim);
             }
           }` : ''}
+          // Ground a machine has heaped or dug a little way is earth, however steep its side: a heap's flank and a ditch's wall
+          // are not the bare rock of a scarp. A cut of metres (a road into a hill) is through rock and keeps the rock's look.
+          #ifdef GROUND_MADE
+          float gEarth=max(smoothstep(.03,.15,vMade),smoothstep(.03,.15,-vMade)*(1.0-smoothstep(1.5,3.0,-vMade)));
+          #else
+          float gEarth=0.0;
+          #endif
           // Rock with strata wherever the ground is steep.
           vec3 gRock=uGroundRock*(.62+.7*gFine.g);
           float gLayer=vGroundPos.y*.21+gBig.b*2.6+gMid.r*1.9+gFine.g*.7;
@@ -429,7 +436,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           gRock*=1.0-.5*mix(.1,1.0-smoothstep(.0,.09,gj.y),gSeeJ)*smoothstep(.03,.08,gSlope);
           float gScree=smoothstep(.02,.05,gSlope)*(1.0-smoothstep(.07,.14,gSlope));
           gRock=mix(gRock,vec3(.46,.4,.33)*(.7+.6*gGrit.r),gScree*.5);
-          ${photosOn ? `float gSteep=smoothstep(.025,.075,gSlope);if(gSteep>.004){${photo('plates', 'gRock', 'gSteep', 1, true)}}` : ''}gc=mix(gc,gRock,smoothstep(.025,.075,gSlope));
+          ${photosOn ? `float gSteep=smoothstep(.025,.075,gSlope);if(gSteep>.004){${photo('plates', 'gRock', 'gSteep', 1, true)}}` : ''}gc=mix(gc,gRock,smoothstep(.025,.075,gSlope)*(1.0-gEarth));
           // Gravel and stones, thicker near rock.
           float gStones=smoothstep(.74,.82,gGrit.g)*(.25+.75*max(gMid.r,smoothstep(.08,.3,gSlope)));
           gc=mix(gc,uGroundStone*(.7+.9*gGrit.r),gStones*.75*(1.0-wPan*.8-wSand*.7));
@@ -438,7 +445,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
           // Made ground. Where the ground has been filled it is tipped spoil: loose broken rock, darker and coarser than any
           // ground that has lain a thousand years, with pale dust on the lumps, tip lines down its sides, and none of the
           // plain's cracks or the hills' beds. Where it has been cut it is fresh: darker, and damp at the foot of the cut.
-          float gFill=smoothstep(.2,1.1,vMade),gCut=smoothstep(.2,1.4,-vMade);
+          float gFill=smoothstep(.04,.5,vMade),gCut=smoothstep(.04,.6,-vMade);
           if(gFill>.01){
             vec3 gSpoil=vec3(.215,.18,.15)*(.55+.9*gFine.g)*(.78+.44*gMid.b);
             float gLump=smoothstep(.52,.74,texture2D(uGroundNoise,gq*.83+7.1).r);
@@ -464,7 +471,7 @@ export function createGroundLook({rock = GROUND_COLOURS.rock, stone = 0x302b26, 
       if (photosOn) shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
           normal=normalize((viewMatrix*vec4(normalize(normalize(vGroundNormal)+vec3(gRelief.x,0.0,gRelief.y)),0.0)).xyz);`);
     };
-    material.customProgramCacheKey = () => `ground-look-5-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
+    material.customProgramCacheKey = () => `ground-look-6-${regionsOn ? 'regions' : 'plain'}-${riverHole && regionsOn ? 'hole' : 'whole'}${photosOn ? '-photos' : ''}${tunnelCapable ? '-tunnel-mouths' : ''}${tracks ? '-tracks' : ''}`;
     material.needsUpdate = true;
     return material;
   }
