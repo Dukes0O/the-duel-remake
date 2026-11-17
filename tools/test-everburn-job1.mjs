@@ -11,7 +11,7 @@ import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
-import {LAND} from '../src/world/scablands-names.js';
+import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
@@ -27,7 +27,7 @@ import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
-  glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
+  furnaceGlassRound, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -43,6 +43,47 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// The land round crosses both the direct way's exposed ground and the
+// cover-to-cover line's openings. This checks geometry, without driving.
+{
+  const round = furnaceGlassRound(), closed = [...round, round[0]];
+  for (const point of round) assert.ok(stepSkylineSight({}, point, 0).visible,
+    'the light turns on ground visible from the watch');
+  const moved = createLand(movedTable(LAND.table, 'tin-town', 100, 50));
+  const movedRound = furnaceGlassRound(moved);
+  assert.notDeepEqual(movedRound, round, 'the round follows the named land');
+  assert.deepEqual(movedRound, FURNACE_GLASS.roundMarks.map(mark =>
+    moved.between(mark.from, mark.to, mark.share, 0, -mark.north)));
+  const route = routeFor(HOT_DELIVERY_WAYS.find(way => way.id === 'scab-plates').legs,
+    {start:LAND.yard, destination:LAND.at('tin-town')});
+  for (const line of [route, platesCoverLine(route, -40)]) {
+    const samples = sampleLine(line, 2).filter(point => point.along <= 3600);
+    const visible = point => stepSkylineSight({}, point, 0).visible;
+    const exposed = samples.filter(visible);
+    for (const point of exposed) assert.ok(nearestOnLine(closed, point.x, point.z).distance <= FURNACE_GLASS.glassRadius,
+      `the light crosses exposed ground at ${point.along.toFixed(0)} m`);
+    const gaps = sightStretches(samples, point => visible(point) ? 'open' : 'hidden')
+      .filter(run => run.visibility === 'open');
+    assert.ok(gaps.length > 0, 'there is exposed ground to cross');
+    const widest = gaps.reduce((a, b) => b.to - b.from > a.to - a.from ? b : a);
+    const crossingSeconds = (widest.to - widest.from + 2) / (FURNACE_GLASS.crossingKmh / 3.6);
+    const gap = exposed.filter(point => point.along >= widest.from && point.along <= widest.to);
+    // Two rounds include any dark interval that crosses the clock's wrap.
+    const tick = .01;
+    let dark = 0, longestDark = 0;
+    for (let index = 0; index < FURNACE_GLASS.roundSeconds * 2 / tick; index++) {
+      const glass = glassOnRound(round, index * tick);
+      const lit = gap.some(point => Math.hypot(point.x - glass.x, point.z - glass.z) <= glass.radius);
+      dark = lit ? 0 : dark + tick;
+      longestDark = Math.max(longestDark, dark);
+    }
+    // Discount the two sample edges instead of claiming unmeasured time.
+    assert.ok(longestDark - 2 * tick >= crossingSeconds + FURNACE_GLASS.crossingSpareSeconds,
+      'the widest cover gap can be crossed between passes with a second to spare');
+    console.log(`Glass crossing: ${(widest.to - widest.from + 2).toFixed(0)} m, ${crossingSeconds.toFixed(2)} s at 50 km/h, ${(longestDark - 2 * tick).toFixed(2)} s clear`);
+  }
+}
 
 // Slice 8B's clock and detection rules need no graphics or scripted drive.
 {

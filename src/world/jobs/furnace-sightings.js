@@ -35,7 +35,25 @@ export const FURNACE_GLASS = Object.freeze({
   pursuitSeconds: 90,
   crossingKmh: 50,
   crossingSpareSeconds: 1,
+  // Turning points stay in the watch's sight. Between them the moving beam
+  // passes behind rock; the same land sight rule blocks exposure there.
+  roundMarks: Object.freeze([
+    Object.freeze({from:'yard', to:'the-steps', share:.38, north:0}),
+    Object.freeze({from:'yard', to:'the-steps', share:.45, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.035, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.105, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.025, north:40}),
+    Object.freeze({from:'yard', to:'the-steps', share:.45, north:50}),
+    Object.freeze({from:'yard', to:'the-steps', share:.44, north:90}),
+    Object.freeze({from:'yard', to:'the-steps', share:.42, north:90}),
+    Object.freeze({from:'yard', to:'the-steps', share:.43, north:40}),
+  ]),
 });
+
+export function furnaceGlassRound(land = LAND) {
+  return FURNACE_GLASS.roundMarks.map(mark =>
+    land.between(mark.from, mark.to, mark.share, 0, -mark.north));
+}
 
 export function glassOnRound(points, clockSeconds) {
   if (points.length < 2) throw new RangeError('The glass needs a closed round.');
