@@ -43,6 +43,13 @@ import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
+// These proof drives represent a driver who already caught the scout.
+function stopScoutForProof(duel) {
+  duel.state.worldJobThingsHit = [{id:'ash-scout', actorId:'ash-scout', kind:'vehicle', flame:true}];
+  stepWorldJob(duel, 0);
+  assert.equal(duel.state.arena.worldJob.job.stepState.scoutStopped, true);
+}
+
 // Cinder's road ring, figure and brazier share the gate line and remain clear of its solids.
 {
   const carry = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery').steps[0];
@@ -274,6 +281,39 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
     }
   }
   assert.ok(rider.ramContact, 'the rider reaches the car within six seconds');
+}
+
+// After a lost chase, compare the camp's rams on the road to the Wash.
+{
+  const definition = EVERBURN_JOBS[0];
+  const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
+  const line = routeFor(way.legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const wash = LAND.at('the-wash');
+  const end = nearestOnLine(line, wash.x, wash.z).along;
+  const points = sampleLine(line, 1);
+  const counts = [];
+  for (const kmh of [30, 70]) {
+    const world = createWorldJob(definition);
+    const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+      speedMph:kmh / 1.609344, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+    let car = points[0], heading = 0;
+    const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+      at:() => ({heading}), worldAt:() => ({...car, heading})}, emit:() => {}, _storyCallout:() => {}};
+    initializeWorldJob(duel, definition);
+    world.job.stepState = {loaded:true, ember:100, scoutWarned:true, scoutHome:true, campAwake:true};
+    for (let distance = 0; distance < end; distance += kmh / 3.6 * 0.1) {
+      const index = Math.min(points.length - 2, Math.floor(distance));
+      const a = points[index], b = points[index + 1], share = distance - index;
+      car = {x:a.x + (b.x - a.x) * share, z:a.z + (b.z - a.z) * share};
+      car.y = scablandsSurfaceHeightAt(car.x, car.z);
+      heading = Math.atan2(b.x - a.x, b.z - a.z);
+      stepWorldJob(duel, 0.1);
+    }
+    counts.push(world.job.stepState.joltCount ?? 0);
+  }
+  console.log('Lost chase rams at 30 and 70 km/h:', counts.join(', '));
+  assert.ok(counts[0] >= 1, 'the camp rams the slow car at least once');
+  assert.ok(counts[1] <= 1, 'the camp rams the fast car at most once');
 }
 
 // A small final movement on Easy still carries the rider's full closing speed.
@@ -784,6 +824,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   duel.state.countdown = 0;
   const step = definition.steps[0];
   assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
+  stopScoutForProof(duel);
   const startClock = duel.state.arena.worldJob.clockSec;
   const exit = driveThroughYardGate(duel, yardPlan().gate);
   const road = ROAD_NET.road('east-road').points;
@@ -800,7 +841,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
     rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts].filter(jolt => jolt.riders.length > 0).length,
     jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + scoop.jolts.length + arrival.jolts.length,
-    scoops, ember:arrival.fire?.ember ?? pot.ember, result:duel.state.arena.worldJob.emberResult};
+    scoops, ember:arrival.fire?.ember ?? pot.ember, campAwake:!!pot.campAwake, result:duel.state.arena.worldJob.emberResult};
   console.log('East Road delivery:', JSON.stringify(result));
   assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
   const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
@@ -810,15 +851,15 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
 }
 // Measure the Steps route using the real car and job state.
 {
-  for (const {scoopAtWash, scoutAbsent} of [{scoopAtWash:true, scoutAbsent:true}, {scoopAtWash:false, scoutAbsent:true}, {scoopAtWash:true, scoutAbsent:false}, {scoopAtWash:false, scoutAbsent:false}]) {
+  for (const scoopAtWash of [true, false]) {
     const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true, 'story-everburn':true}});
     duel.state.wastelandGateDiscovered = true;
     assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
-      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19,
-        steps:scoutAbsent ? definition.steps.map((item, index) => index === 0 ? {...item, scout:null} : item) : definition.steps}}));
+      cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
     duel.state.countdown = 0;
     const step = definition.steps[0];
     assert.ok(driveToCinder(duel, step.pickup.place.position).loaded);
+    stopScoutForProof(duel);
     const startClock = duel.state.arena.worldJob.clockSec;
     const yard = driveThroughYardGate(duel, yardPlan().gate);
     const way = HOT_DELIVERY_WAYS.find(item => item.id === 'river-bed');
@@ -866,8 +907,8 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
       jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (scoop?.jolts.length ?? 0) + arrival.jolts.length,
       scoops, ember:arrival.fire?.ember ?? pot.ember, campAwake:!!pot.campAwake, scoutHome:!!pot.scoutHome,
       done:arrival.done, result:duel.state.arena.worldJob.emberResult};
-    console.log(scoutAbsent ? `Bed without scout${scoopAtWash ? ' with scoop' : ''} delivery:` : scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
-    if (scoutAbsent) {
+    console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
+    {
       assert.equal(result.rams, 0, 'the sleeping camp does not ram the bed car');
       if (scoopAtWash) assert.ok(result.ember >= 35 && result.ember <= 37, 'the scooped bed delivery keeps about 36 fire');
     }
@@ -888,6 +929,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}));
   trialDuel.state.countdown = 0;
   assert.ok(driveToCinder(trialDuel, definition.steps[0].pickup.place.position).loaded);
+  stopScoutForProof(trialDuel);
   const trialExit = driveThroughYardGate(trialDuel, yardPlan().gate);
   assert.ok(trialExit.along >= 20);
   const trialLine = platesCoverLine(route, -40);
@@ -955,7 +997,8 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     finalApproach, nearTown, gateDrive, arrival];
   const measurement = {km:cleanStretches.reduce((sum, stretch) => sum + stretch.driven, 0) / 1000,
     minutes:cleanStretches.reduce((sum, stretch) => sum + stretch.ticks, 0) / 3600,
-    rams:arrival.observedJoltCount, scoops:[], arrival:arrival.fire.ember};
+    rams:arrival.observedJoltCount, scoops:[], arrival:arrival.fire.ember,
+    campAwake:!!trialDuel.state.arena.worldJob.job.stepState.campAwake};
   console.log('Clean plates measurement:', JSON.stringify(measurement));
 }
 const step = definition.steps[0], pickup = step.pickup.place.position;
@@ -1347,6 +1390,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
   duel.state.countdown = 0;
   assert.ok(driveToCinder(duel, pickup).loaded, 'the salt-pan driver collects the actual pot');
+  stopScoutForProof(duel);
   const yardExit = driveThroughYardGate(duel, yardPlan().gate);
   assert.ok(yardExit.along >= 20, 'the salt-pan driver leaves through the gate');
   const way = HOT_DELIVERY_WAYS.find(item => item.id === 'salt-pan');
@@ -1396,7 +1440,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     rams:stretches.flatMap(item => item.jolts).filter(jolt => jolt.riders.length > 0).length,
     jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (arrival?.jolts.length || 0),
     scoops:pot.scoopedBraziers || [], arrival:arrival?.done ? arrival.fire.ember : null,
-    ember:pot.ember, pipePeakKmh, reachedAll:remaining.reachedAll, last:remaining.stretches.at(-1), forge:arrival};
+    ember:pot.ember, campAwake:!!pot.campAwake, pipePeakKmh, reachedAll:remaining.reachedAll, last:remaining.stretches.at(-1), forge:arrival};
   console.log('Salt-pan measurement:', JSON.stringify(measurement));
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the real pot');
   assert.equal(measurement.jolts, arrival?.observedJoltCount ?? pot.joltCount ?? 0,
