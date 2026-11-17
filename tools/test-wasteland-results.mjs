@@ -36,3 +36,12 @@ test('a racing streak does not promise a scrap-career streak bonus', () => {
   assert.doesNotMatch(html, /Streak bonus earned/);
   assert.match(html, /SCRAP EARNED/);
 });
+
+test('Easy Duel losses show no charge on either results screen', () => {
+  for (const status of ['stage_result', 'gameover']) {
+    const s = {...state({won: false, creditCharge: 0, creditBreakdown: {base: 0}}), mode: 'duel', status};
+    const html = render(s);
+    assert.doesNotMatch(html, /loss charge|LOSS CHARGE|loss costs/i);
+    assert.match(html, /saved credits are safe/i);
+  }
+});
