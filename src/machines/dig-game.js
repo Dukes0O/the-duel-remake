@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {machineDefinition} from './content/machines.js';
 import {createMachineView, MACHINE_SOUND_CUES} from './view.js';
 import {updateMachineCamera} from './camera.js';
-import {machineControlsView, DIG_MACHINE_HELP} from './controls-view.js';
+import {machineControlsView, DIG_MACHINE_HELP, digMachineIds} from './controls-view.js';
 import {machineControlInput} from '../input-contexts.js';
 import {loadMachineInput, onMachineInputChange, MACHINE_INPUT_STORAGE_KEY} from '../input-setup.js';
 import {borerHasFace, createBorerSurveyCache} from './borer.js';
@@ -32,7 +32,6 @@ const MODEL='/assets/models/wasteland/town/machines-1.glb';
 const DOME='/assets/models/wasteland/scrapdome/yard.glb';
 const BORER_MODEL='/assets/models/wasteland/town/borer.glb';
 const MODES=['chase','cab','work'];
-const MACHINE_IDS=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
 const LABELS={excavator:'Excavator',dumpTruck:'Dump truck',trencher:'Trencher',drill:'Drill rig',dozer:'Dozer',roller:'Road roller',paver:'Paver'};
 
 /** Reuse a parked machine's ground height until it or the ground changes. */
@@ -386,7 +385,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     const dome=domeAsset.scene;dome.name='Scrapdome';dome.position.set(0,0,0);world.add(dome);
     const parkedDozer=machineAsset.scene.getObjectByName('dozer')?.clone(true);
     if(parkedDozer){parkedDozer.name='Parked dozer';parkedDozer.position.set(-24,scablandsNaturalHeightAt(-24,12),12);parkedDozer.rotation.y=.5;parkedDozer.traverse(node=>{if(node.isMesh){node.castShadow=true;dullMetal(node);}});world.add(parkedDozer);}
-    for(const id of MACHINE_IDS){
+    for(const id of digMachineIds(sim.town)){
       let root;
       if(id==='borer'){
         const model=machineRoot(borerAsset,'borer');
@@ -531,7 +530,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
           : originalControls;
     }
     const active=digSandboxMachineState(sim),definition=machineDefinition(sim.activeMachine==='dumpTruck'?'dumpTruck':sim.activeMachine);
-    for(const id of MACHINE_IDS){
+    for(const id of digMachineIds(sim.town)){
       const state=digSandboxMachineState(sim,id),view=machineViews.get(id);
       if(view){view.update({...state,y:id==='borer'?state.y:machineHeight(sim.ground,id,state)},elapsed,id===sim.activeMachine?frameEvents:[]);
         if(id==='borer')poseBorerSlope(view,state);

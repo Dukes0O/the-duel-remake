@@ -1,3 +1,4 @@
+import {digMachineIds} from './controls-view.js';
 import {createMachineHaul, operateMachineHaul, stepMachineHaul} from './haul.js';
 import {machineToolPosition} from './machine.js';
 import {machineLoadVolume} from './tools.js';
@@ -145,11 +146,11 @@ const suppliedGroundWork = new WeakMap();
 
 /** Use the player's current difficulty for this visit, without reading a save. */
 export function createDigSandboxForApp(app) {
-  return createDigSandbox({playerId:app?.player?.id ?? 'player', easy:app?.cpuDifficulty === 'easy'});
+  return createDigSandbox({playerId:app?.player?.id ?? 'player', easy:app?.cpuDifficulty === 'easy', town:(app?._switches?.() ?? app?.duel?.featureFlags)?.enabled('wasteland-town') === true});
 }
 
 /** Make the free yard simulation. This module has no DOM, renderer or career-save access. */
-export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false} = {}) {
+export function createDigSandbox({seed = 1, ground = null, playerId = 'player', protectLand = !ground, easy = false, town = true} = {}) {
   const edit = ground || newGround(seed);
   const memory = globalThis.__theDigGroundMemory ??= {};
   const saved = memory[playerId];
@@ -176,7 +177,7 @@ export function createDigSandbox({seed = 1, ground = null, playerId = 'player', 
     drill:createDrillRigState(seed,{x:YARD.trencher.x+8,z:YARD.trencher.z}),
     roadWork, roadMachines:Object.fromEntries(['dozer','roller','paver'].map((kind,index)=>
       [kind,createRoadMachineState(kind,{x:40+index*6,z:10})])),activeMachine:'excavator',
-    cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
+    town,cameraIndex:0,mode:'work',fixedCarry:0,elapsed:0,events:[],lastMessage:'',dirty:false,
     excavatedM3:0,loadedM3:0,tippedM3:0};
 }
 
@@ -200,7 +201,7 @@ export function importDigTunnels(sim, segments = []) {
 export function closeDigSandbox() { resetScablandsGroundEdit(); }
 
 export function switchDigMachine(sim) {
-  const ids=['excavator','dumpTruck','trencher','drill','dozer','roller','paver','borer'];
+  const ids=digMachineIds(sim.town);
   const activeMachine=ids[(ids.indexOf(sim.activeMachine)+1)%ids.length];
   return {...sim,activeMachine,mode:activeMachine==='excavator' || (activeMachine==='borer' && sim.boreOrders.some(order => order.id === sim.activeBoreId && order.status !== 'finished'))?'work':'drive',daylightMessage:'', borePlayerAtLever:false};
 }

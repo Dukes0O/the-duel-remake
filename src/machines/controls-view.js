@@ -4,6 +4,18 @@ const LABELS = Object.freeze({ swing: 'Swing', boom: 'Boom', arm: 'Arm', bucket:
 export const DIG_MACHINE_HELP = 'Press Q to choose another machine. Press Tab to change between driving and working.';
 export const DIG_MACHINE_NAMES = 'excavator, dump truck, trencher, drill rig, dozer, road roller, paver and Mabel the boring machine';
 
+// MACHINE-ROADS removes this restriction when its models are ready.
+export function digMachineIds(town = false) {
+  return ['excavator', 'dumpTruck', 'trencher', 'drill', 'dozer', ...(town ? ['roller', 'paver'] : []), 'borer'];
+}
+
+export function digMachineNames(town = false) {
+  const names = {excavator:'excavator', dumpTruck:'dump truck', trencher:'trencher', drill:'drill rig',
+    dozer:'dozer', roller:'road roller', paver:'paver', borer:'Mabel the boring machine'};
+  const list = digMachineIds(town).map(id => names[id]);
+  return `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`;
+}
+
 export function machineControlsView({ mode = 'drive', active = null } = {}) {
   const work = mode === 'work';
   const items = work ? ['swing', 'boom', 'arm', 'bucket'] : ['forward', 'steer'];
