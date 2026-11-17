@@ -1,0 +1,37 @@
+// Job 2's places come from the town that is drawn, not a second town layout.
+// The route is a clear way through its alleys, not a movement system. The
+// existing fighter still owns every step, collision and choice of direction.
+import {LAND} from '../scablands-names.js';
+import {tinTownLayout} from '../tin-town-shacks.js';
+import {forgePlan} from '../forge-look.js';
+import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
+import {BRAND_RULE} from './brand-rule.js';
+
+export function brandSites(land = LAND) {
+  const slots = tinTownLayout(land).clusters.flatMap(cluster => cluster.slots);
+  const pump = slots.find(slot => slot.kind === 'T');
+  const tower = slots.find(slot => slot.kind === 'W');
+  if (!pump || !tower) throw new Error('Light the Town needs both town towers.');
+  const rule = BRAND_RULE.sites;
+  const place = (id, point) => Object.freeze({id, position: Object.freeze({
+    x: point.x, y: scablandsSurfaceHeightAt(point.x, point.z), z: point.z,
+  })});
+  const hearthAt = forgePlan(land).hearth;
+  const hearth = place('town-hearth', hearthAt);
+  const lamps = Object.freeze([
+    place('pump', {x: pump.x, z: pump.z + rule.pumpSouth}),
+    // Ladders in the folk kit are scenery. The fighter has no ladder action.
+    place('tower', {x: tower.x + rule.towerEast, z: tower.z}),
+    place('far', {x: pump.x - rule.farWest, z: pump.z - rule.farNorth}),
+  ]);
+  const farWalk = Object.freeze([
+    place('hearth-front', {x: hearthAt.x, z: hearthAt.z + rule.hearthApproachSouth}),
+    place('forge-alley', land.at('tin-town', rule.firstAlleyEast, rule.firstAlleySouth)),
+    place('inner-alley', land.at('tin-town', rule.firstAlleyEast, -rule.innerAlleyNorth)),
+    place('west-alley', land.at('tin-town', -rule.westAlleyWest, -rule.westAlleyNorth)),
+    place('north-alley', land.at('tin-town', -rule.westAlleyWest, -rule.northAlleyNorth)),
+    place('far-alley', {x: lamps[2].position.x, z: land.at('tin-town').z - rule.northAlleyNorth}),
+    lamps[2],
+  ]);
+  return Object.freeze({hearth, lamps, farWalk, towerAtFoot: true});
+}

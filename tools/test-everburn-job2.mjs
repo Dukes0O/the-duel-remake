@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import {BRAND_RULE, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {brandSites} from '../src/world/jobs/brand-sites.js';
+import {SCABLANDS_SOLIDS, SOLID_GRID, pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 
 // Rule snapshots, never a walking driver. The real layout and opponents follow
 // in later rounds; these checks cover the brand and the lamp-lighting action.
@@ -170,3 +173,38 @@ const integratedAsh = stepOnFoot(ashStep,
 assert.equal(integratedAsh.state.brandSeconds, 0);
 assert(integratedAsh.events.some(event => event.type === 'brandOut'));
 console.log('PASS Light the Town: Ash Men waves, smothering, ash tells, dodging and permanent retreat.');
+
+// Job 2.3: actual town places, ground-level tower access and a clear alley
+// route of the specified length. Geometry samples do not move a player.
+const sites = brandSites();
+assert.equal(sites.towerAtFoot, true);
+assert.deepEqual(sites.lamps.map(lamp => lamp.id), ['pump', 'tower', 'far']);
+for (const lamp of sites.lamps) {
+  const {x, y, z} = lamp.position;
+  assert.equal(y, scablandsSurfaceHeightAt(x, z));
+  for (const solid of SCABLANDS_SOLIDS) {
+    const dx = x - solid.x, dz = z - solid.z;
+    const cos = Math.cos(solid.heading), sin = Math.sin(solid.heading);
+    const lx = dx * cos - dz * sin, lz = dx * sin + dz * cos;
+    // A bounding box is conservative for a round post too.
+    const gap = Math.hypot(Math.max(0, Math.abs(lx) - solid.halfX),
+      Math.max(0, Math.abs(lz) - solid.halfZ));
+    assert(gap >= BRAND_RULE.lampClearance, `${lamp.id} too near ${solid.id}: ${gap}`);
+  }
+}
+let walkMetres = 0;
+for (let index = 1; index < sites.farWalk.length; index++) {
+  const a = sites.farWalk[index - 1].position, b = sites.farWalk[index].position;
+  const length = Math.hypot(b.x - a.x, b.z - a.z);
+  walkMetres += length;
+  for (let part = 0; part <= Math.ceil(length * 4); part++) {
+    const share = part / Math.ceil(length * 4);
+    const x = a.x + (b.x - a.x) * share, z = a.z + (b.z - a.z) * share;
+    assert.equal(pushOutOfSolids(x, z, .4, SOLID_GRID).hit, null,
+      `The far lamp alley must fit the existing fighter at ${x}, ${z}.`);
+  }
+}
+assert(walkMetres >= BRAND_RULE.farWalkMin && walkMetres <= BRAND_RULE.farWalkMax,
+  `Far lamp alley length: ${walkMetres}`);
+assert.deepEqual(sites, brandSites(), 'Sites repeat without a random draw.');
+console.log(`PASS Light the Town: real lamp clearance and ${walkMetres.toFixed(1)} m alley route.`);

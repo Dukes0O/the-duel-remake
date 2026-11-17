@@ -19,6 +19,22 @@ export const BRAND_RULE = Object.freeze({
   wallRadius: 2,
   ashWalkMps: 4.5,
   recoveryOffset: 1,
+  lampClearance: 1.5,
+  farWalkMin: 120,
+  farWalkMax: 160,
+  sites: Object.freeze({
+    pumpSouth: 5,
+    towerEast: 5,
+    farWest: 53,
+    farNorth: 6,
+    hearthApproachSouth: 2.8,
+    firstAlleyEast: 20,
+    firstAlleySouth: 7,
+    innerAlleyNorth: 20,
+    westAlleyWest: 26,
+    westAlleyNorth: 34,
+    northAlleyNorth: 60,
+  }),
   pay: Object.freeze({one: 100, two: 70, many: 50}),
 });
 
