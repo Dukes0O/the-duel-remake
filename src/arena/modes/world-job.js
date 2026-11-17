@@ -145,6 +145,10 @@ export function initializeWorldJob(duel, definition) {
     worldJob.solidGrid.setPeople([{id:'hot-delivery-cinder', position:definition.steps[0].pickup.figure.position}]);
   }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
+  if (definition.steps[0]?.brand) {
+    worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
+    worldJob.solidGrid.setBrandLamps(definition.steps[0].places ?? []);
+  }
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
   syncJobCarSolids(worldJob);

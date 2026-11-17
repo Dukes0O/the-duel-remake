@@ -251,6 +251,8 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
     places: lamps, ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
   const {app} = start({job});
   const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
+  assert.equal(worldJob.solidGrid.brandLamps.length, 3, 'The arena installs the three solid lamp posts.');
+  assert.equal(worldJob.solidGrid.brandLamps[0].x, lamps[0].position.x);
   const ashTells = [];
   const originalEmit = duel.emit.bind(duel);
   duel.emit = event => { if (event.arenaTell) ashTells.push(event.arenaTell); originalEmit(event); };

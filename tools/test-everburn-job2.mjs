@@ -8,6 +8,8 @@ import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {worldHudModel} from '../src/world/world-hud.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
+import {createJobSolidGrid} from '../src/world/scablands-solids.js';
+import {createBrandLamps} from '../src/world/brand-lamps.js';
 
 // Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
@@ -306,3 +308,42 @@ assert.equal(hud({...hudState, townEnding: true, theftStarted: true}).line, BRAN
 assert.equal(hud({...hudState, townEnding: true}).target, null);
 assert.equal(JSON.stringify(hudState), hudBefore, 'The HUD only reads job state.');
 console.log('PASS Light the Town: real definition, clear wall entries, brand gauge and lamp guidance.');
+
+// Job 2.3: the drawing and temporary collision posts share their dimensions.
+const lampGrid = createJobSolidGrid({near: () => []});
+lampGrid.setBrandLamps(sites.lamps);
+assert.equal(lampGrid.brandLamps.length, 3);
+for (const [index, solid] of lampGrid.brandLamps.entries()) {
+  const at = sites.lamps[index].position;
+  assert.equal(solid.x, at.x);
+  assert.equal(solid.z, at.z);
+  assert.equal(solid.halfX, BRAND_RULE.postRadius);
+  const pushed = pushOutOfSolids(at.x + .01, at.z, .4, lampGrid);
+  assert.equal(pushed.hit.id, solid.id);
+  assert(Math.hypot(pushed.x - at.x, pushed.z - at.z) >= BRAND_RULE.postRadius + .4 - 1e-8);
+}
+const lampView = createBrandLamps();
+const lampWorldJob = {job: {...actualJob, stepState: {lamps: {pump: true}}}};
+const lampStateBefore = JSON.stringify(lampWorldJob);
+lampView.update(lampWorldJob);
+assert.equal(lampView.group.visible, true);
+assert.equal(lampView.group.children.length, 3);
+for (const [index, lamp] of lampView.group.children.entries()) {
+  assert.equal(lamp.position.y, sites.lamps[index].position.y);
+  const [post, box, glow] = lamp.children;
+  assert.equal(post.geometry.parameters.radiusTop, lampGrid.brandLamps[index].halfX);
+  assert.equal(post.geometry.parameters.height, BRAND_RULE.postHeight);
+  assert.equal(box.position.y, BRAND_RULE.postHeight);
+  assert.equal(glow.distance, BRAND_RULE.lanternLightRadius);
+  assert.equal(glow.intensity > 0, index === 0);
+}
+lampWorldJob.job.stepState.lamps.pump = false;
+lampView.update(lampWorldJob);
+assert.equal(lampView.group.children[0].children[2].intensity, 0);
+lampWorldJob.job.stepState.lamps.pump = true;
+assert.equal(JSON.stringify(lampWorldJob), lampStateBefore);
+lampView.update(null);
+assert.equal(lampView.group.visible, false);
+lampView.dispose();
+assert.equal(lampView.group.children.length, 0);
+console.log('PASS Light the Town: solid posts, grounded lanterns and readable lit state.');

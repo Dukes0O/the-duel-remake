@@ -20,6 +20,7 @@ import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlow
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
 import {createForge} from './forge-look.js';
+import {createBrandLamps} from './brand-lamps.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -586,6 +587,7 @@ export function createScablandsScene(course,options={}){
   // The braziers and their smoke are shown while the ember carry step is on.
   const braziers=createBraziers(3);group.add(braziers.group);let brazierKey='';
   const cinder=createCinderFigure();group.add(cinder);
+  const brandLamps=createBrandLamps();group.add(brandLamps.group);
   let cinderRequested=false;
   function requestCinder(){
     if(cinderRequested)return;
@@ -823,6 +825,7 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      brandLamps.update(worldJob);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -959,7 +962,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
