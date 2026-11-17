@@ -5,9 +5,11 @@ import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
 import {SCABLANDS_SOLIDS, SOLID_GRID, pushOutOfSolids} from '../src/world/scablands-solids.js';
 import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {worldHudModel} from '../src/world/world-hud.js';
+import {tinTownFence} from '../src/world/tin-town-shacks.js';
 
-// Rule snapshots, never a walking driver. The real layout and opponents follow
-// in later rounds; these checks cover the brand and the lamp-lighting action.
+// Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
 const places = ['pump', 'tower', 'far'].map((id, index) =>
   ({id, position: {x: 60 + index * 40, y: 0, z: 0}}));
@@ -265,3 +267,42 @@ assert.equal(endingJob.done, true);
 assert(endingJob.events.some(event => event.type === 'brandArrived' && event.pay === 100));
 assert.equal(endingJob.events.filter(event => event.type === 'done').length, 1);
 console.log('PASS Light the Town: stop, ordered briefing, nine-second ending, theft and result event.');
+
+// The real job uses these rules and the town's fence, with no saved fields or
+// story switch added. It stays unavailable until all of its checks pass.
+const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-get-out-and-walk');
+const actualStep = definition.steps[0];
+assert.equal(definition.name, 'Light the Town');
+assert.equal(actualStep.brand, true);
+assert.equal(actualStep.townEnding, true);
+assert.equal(actualStep.lentWeapon, 'cinders-hand-flamer');
+assert.deepEqual(actualStep.places, sites.lamps);
+assert.deepEqual(actualStep.hearth, sites.hearth);
+assert.equal(actualStep.carStart.x, actualStep.meeting.position.x);
+assert.equal(actualStep.carStart.z, actualStep.meeting.position.z);
+assert(sites.ashEntries.length > 0);
+assert.equal(sites.ashEntries.length, tinTownFence().length);
+for (const [index, entry] of sites.ashEntries.entries()) {
+  const sheet = tinTownFence()[index];
+  assert(Math.abs(Math.hypot(entry.position.x - sheet.x, entry.position.z - sheet.z) - BRAND_RULE.wallEntryInset) < 1e-8);
+  assert.equal(pushOutOfSolids(entry.position.x, entry.position.z, .4, SOLID_GRID).hit, null);
+}
+assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), false);
+const actualJob = createJob(definition);
+const hud = (state, player = sites.hearth.position) => worldHudModel({
+  worldJob: {definition, job: {...actualJob, stepState: state}}, player, onFoot: true,
+});
+assert.equal(hud({}).target.id, 'cold-forge');
+assert.equal(hud({}).brand, null);
+const hudState = {brandBriefed: true, brandsUsed: 1, brandSeconds: 45, lamps: {pump: true}};
+const hudBefore = JSON.stringify(hudState);
+assert.equal(hud(hudState, sites.lamps[1].position).target.id, 'tower');
+assert.notEqual(hud(hudState, sites.lamps[0].position).target.id, 'pump');
+assert.deepEqual(hud(hudState).brand, {value: 45, max: 90, out: false, brandsUsed: 1});
+assert.equal(hud({...hudState, brandSeconds: 0}, sites.lamps[0].position).target.id, 'pump');
+assert.equal(hud({...hudState, brandSeconds: 0}).brand.out, true);
+assert.equal(hud({...hudState, townEnding: true}).line, BRAND_LINES.awake);
+assert.equal(hud({...hudState, townEnding: true, theftStarted: true}).line, BRAND_LINES.thief);
+assert.equal(hud({...hudState, townEnding: true}).target, null);
+assert.equal(JSON.stringify(hudState), hudBefore, 'The HUD only reads job state.');
+console.log('PASS Light the Town: real definition, clear wall entries, brand gauge and lamp guidance.');

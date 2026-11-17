@@ -2,7 +2,7 @@
 // The route is a clear way through its alleys, not a movement system. The
 // existing fighter still owns every step, collision and choice of direction.
 import {LAND} from '../scablands-names.js';
-import {tinTownLayout} from '../tin-town-shacks.js';
+import {tinTownLayout, tinTownFence} from '../tin-town-shacks.js';
 import {forgePlan} from '../forge-look.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {BRAND_RULE} from './brand-rule.js';
@@ -33,5 +33,11 @@ export function brandSites(land = LAND) {
     place('far-alley', {x: lamps[2].position.x, z: land.at('tin-town').z - rule.northAlleyNorth}),
     lamps[2],
   ]);
-  return Object.freeze({hearth, lamps, farWalk, towerAtFoot: true});
+  const centre = land.at('tin-town');
+  const ashEntries = Object.freeze(tinTownFence(land).map((sheet, index) => {
+    const dx = centre.x - sheet.x, dz = centre.z - sheet.z;
+    const scale = BRAND_RULE.wallEntryInset / Math.hypot(dx, dz);
+    return place(`town-wall-${index}`, {x: sheet.x + dx * scale, z: sheet.z + dz * scale});
+  }));
+  return Object.freeze({hearth, lamps, farWalk, ashEntries, towerAtFoot: true});
 }

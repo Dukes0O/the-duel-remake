@@ -12,6 +12,8 @@ import {tinTownGateFor} from '../tin-town-gate.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.js';
 import {yardPlan} from '../scablands-yard-look.js';
+import {brandSites} from './brand-sites.js';
+import {BRAND_LINES} from './brand-rule.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
@@ -51,9 +53,8 @@ export function buildEverburn(land) {
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));
   // The Scablands' five named places, as the jobs define them (the big map marks and names them in every job).
   const SCABLANDS_PLACES = Object.freeze({yardGate: yard, tinTown, everburn: well, deadMall: mall, boneyard});
-  const forge = place('cold-forge', at('tin-town', 25, 14), 8), lamps = [
-    place('forge-lamp-1', at('tin-town', 18, 8), 3), place('forge-lamp-2', at('tin-town', 25, 10), 3), place('forge-lamp-3', at('tin-town', 32, 8), 3),
-  ];
+  const forge = place('cold-forge', at('tin-town', 25, 14), 8);
+  const townLights = brandSites(land);
 
   // Old Smoke's path: from the well round the open flats (leg 1, left door), through the Boneyard past the planes and up to
   // Tin Town's gate (leg 2, right door), then home along the road with the player behind it (leg 3, rear door, from the place
@@ -155,16 +156,13 @@ export function buildEverburn(land) {
           {place:ashBarricade1, radius:60, lineId:'story.ember.cinder.3'},
           {place:tinTown, radius:170, lineId:'story.ember.auntie-solder.1'}],
         unlock:'tin-town', lentWeapon:'flamethrower'})]}),
-    Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Get Out and Walk', kind:'on-foot',
-      resultLineId:'story.ember.auntie-solder.4',
-      easy:Object.freeze({markerRadius:3, knockedDownRecovery:'last-marker'}), lineId:'story.ember.auntie-solder.3',
-      steps:[step('onfoot',{what:'Get out and light the three lamps at the cold forge.', places:lamps.map((lamp,index)=>Object.freeze({...lamp, action:'light',
-        ...(index === 0 ? {lineId:'story.ember.cinder.6'} : {})})),
-        // The car starts inside Tin Town's gate on open ground (18 m in from the gate's posts, 30 m from the town's own model),
-        // facing the forge, not in the alley at the town's centre where the camera stood behind a pillar.
-        carStart:carStart(at('tin-town', -18, 44), forge),
-        radius:3, lentWeapon:'cinders-hand-flamer', requiresExit:true, returnToCar:tinTown,
-        unlock:'tin-town-notice-board', startLineId:'story.ember.auntie-solder.3', afterStartLineId:['story.ember.cinder.5']})]}),
+    Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Light the Town', kind:'on-foot',
+      captions:Object.freeze(Object.fromEntries(Object.entries(BRAND_LINES).map(([id, text]) => [`brand.${id}`, text]))),
+      easy:Object.freeze({knockedDownRecovery:'last-marker'}),
+      steps:[step('onfoot',{what:'Carry the brand to a dark lamp.', brand:true, townEnding:true,
+        meeting:forge, hearth:townLights.hearth, places:townLights.lamps, ashEntries:townLights.ashEntries,
+        farWalk:townLights.farWalk, carStart:carStart(forge.position, townLights.hearth),
+        lentWeapon:'cinders-hand-flamer', requiresExit:true, unlock:'tin-town-notice-board'})]}),
     Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
       resultLineId:'story.ember.cinder.10',
       easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',

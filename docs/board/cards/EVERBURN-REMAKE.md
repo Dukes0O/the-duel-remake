@@ -1014,6 +1014,7 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, job 2 guidance: "Stop beside Auntie Solder at the forge.", "Take a brand from the hearth.", "Carry the brand to a dark lamp.", "Hold still to light the lamp.", "Relight the brand at the hearth or a lit lamp." and "The brand is out." The arrow selects the nearest dark lamp while the brand burns and the nearest fire when it is out. Ash Men enter one metre inside a sheet of the town's own fence, clear of its solid.
 - Slice 9, job 2: the tower lamp stands at the watchtower's foot. The existing fighter has no ladder action; the town's ladders are scenery. Lamp sites come from the water-tower and watchtower slots in `tinTownLayout`; a clear 159.8 m alley route reaches the far lamp.
 - Slice 9, job 2: standing to light a lamp means a fighter speed of at most 0.1 m/s, kept as `BRAND_RULE.standingSpeed`. Additional result sentences are "You lit the town with two brands." and "You lit the town with N brands.", with the count in place of N.
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.

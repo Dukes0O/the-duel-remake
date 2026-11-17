@@ -24,6 +24,7 @@ export const BRAND_RULE = Object.freeze({
   ashWalkMps: 4.5,
   recoveryOffset: 1,
   lampClearance: 1.5,
+  wallEntryInset: 1,
   farWalkMin: 120,
   farWalkMax: 160,
   sites: Object.freeze({

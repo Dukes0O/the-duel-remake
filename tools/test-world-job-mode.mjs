@@ -74,7 +74,7 @@ globalThis.cancelAnimationFrame ??= () => {};
   REMADE_EVERBURN_JOBS.push(EVERBURN_JOBS[1].id);
   try {
     const nextScreen=arenaResultsScreen(app.duel.state,{metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
-    assert.match(nextScreen.actions,/NEXT JOB: GET OUT AND WALK/,'first win names the next job');
+    assert.match(nextScreen.actions,/NEXT JOB: LIGHT THE TOWN/,'first win names the next job');
     assert.match(nextScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
   } finally { REMADE_EVERBURN_JOBS.pop(); }
   const failedScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-failed'},worldJob:arena.worldJob}},

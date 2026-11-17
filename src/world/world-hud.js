@@ -6,6 +6,7 @@ import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
+import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -23,6 +24,25 @@ const markerOf = (value, places) => {
 
 function nextFind(step, found) {
   return (step?.finds ?? []).find(item => !found.includes(item.id)) ?? null;
+}
+
+// Presentation reads the same lamp state as the rules. Choosing an arrow here
+// never lights a lamp, moves a fighter or changes the brand's remaining time.
+export function brandHudStep(step, state = {}, player = null) {
+  if (!state.brandBriefed) return {target: step.meeting, line: 'Stop beside Auntie Solder at the forge.'};
+  if (state.townEnding) return {target: null, line: state.theftStarted ? BRAND_LINES.thief : BRAND_LINES.awake};
+  const burning = state.brandSeconds > 0;
+  const lamps = step.places ?? [];
+  const candidates = burning ? lamps.filter(lamp => !state.lamps?.[lamp.id])
+    : [step.hearth, ...lamps.filter(lamp => state.lamps?.[lamp.id])];
+  const here = pointOf(player);
+  const gap = place => finitePoint(here) && finitePoint(place)
+    ? Math.hypot(pointOf(place).x - here.x, pointOf(place).z - here.z) : Infinity;
+  const target = candidates.filter(Boolean).reduce((best, place) => !best || gap(place) < gap(best) ? place : best, null);
+  const line = state.lightingLamp ? 'Hold still to light the lamp.'
+    : burning ? 'Carry the brand to a dark lamp.'
+      : state.brandsUsed > 0 ? 'Relight the brand at the hearth or a lit lamp.' : 'Take a brand from the hearth.';
+  return {target, line};
 }
 
 export function worldHudStep(step, {actors = [], inventory = [], found = [], stepState = {}} = {}, places = SCABLANDS_PLACES) {
@@ -92,6 +112,11 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
     found, stepState: job?.stepState}, places);
+  if (step?.brand) {
+    const brand = brandHudStep(step, job.stepState, player);
+    next.line = brand.line;
+    next.target = markerOf(brand.target, places);
+  }
   const position = markerOf(player, places);
   const target = next.target;
   const nearbyFence = step?.ember && job?.stepState?.loaded && finitePoint(player) &&
@@ -144,6 +169,10 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
     ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
+    brand: step?.brand && job.stepState.brandsUsed > 0 ? {
+      value: job.stepState.brandSeconds ?? 0, max: BRAND_RULE.burnSeconds,
+      out: !(job.stepState.brandSeconds > 0), brandsUsed: job.stepState.brandsUsed,
+    } : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -155,6 +184,17 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
 }
 
 const STYLE_ID = 'world-hud-style';
+function drawBrandGauge(brand, gauge, bar, label, note) {
+  const share = Math.max(0, Math.min(1, brand.value / brand.max));
+  bar.style.width = `${(share * 100).toFixed(1)}%`;
+  gauge.style.setProperty('--ember-glow', share.toFixed(2));
+  gauge.classList.toggle('is-out', brand.out);
+  gauge.classList.remove('is-losing', 'is-flashing');
+  label.textContent = 'BRAND';
+  note.textContent = brand.out ? 'The brand is out.' : `${Math.ceil(brand.value)} s`;
+  gauge.setAttribute('aria-label', brand.out ? 'The brand is out.' : `The brand has ${Math.ceil(brand.value)} seconds of fire left.`);
+}
+
 const BIG_MAP = Object.freeze({width: 1400, height: 1000});
 // The picture of the land is made in slices, a frame at a time, from the first frame of a job: 10 ms a frame while the countdown
 // runs (the car stands still), 4 ms a frame once the car is driving.
@@ -414,7 +454,8 @@ export function createWorldHud({host, app = null, picture = null}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       // The ember gauge: a glowing bar that dims as the ember falls, flashes when a jolt takes ember, and says OUT at 0.
-      emberGauge.hidden = !model.ember;
+      emberGauge.hidden = !model.ember && !model.brand;
+      if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);
       if (model.ember) {
         const share = Math.max(0, Math.min(1, model.ember.value / model.ember.max));
         emberBar.style.width = `${(share * 100).toFixed(1)}%`;
