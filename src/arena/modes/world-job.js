@@ -299,6 +299,23 @@ function updateJobActors(duel, worldJob, dt) {
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
 }
 
+// A stopped scout remains as a wreck beside the road for the rest of the job.
+function stopScout(worldJob, scout) {
+  const road = ROAD_NET.road('east-road');
+  const onRoad = nearestOnLine(road.points, scout.position.x, scout.position.z);
+  const ahead = roadPointFrom(road, onRoad.x, onRoad.z, 1);
+  const dx = ahead.x - onRoad.x, dz = ahead.z - onRoad.z;
+  const length = Math.hypot(dx, dz);
+  if (length > 0) {
+    const moved = stepMover(scout.position, {x:onRoad.x + dz / length * 8, z:onRoad.z - dx / length * 8},
+      {radius:1.3, grid:worldJob.solidGrid, height:scout.position.y});
+    scout.position = {x:moved.x, y:moved.y, z:moved.z};
+  }
+  scout.health = 0;
+  scout.speed = 0;
+  worldJob.job.stepState.scoutStopped = true;
+}
+
 // The waiting cars begin pursuit when the loaded pot comes close to their post.
 // They use the land's mover, including its floor and solid checks.
 function pursueJobRider(duel, worldJob, actorDef, dt) {
@@ -1027,7 +1044,9 @@ export function stepWorldJob(duel, dt) {
       if (actor?.furnace && furnaceHit(actor.furnace, hit.door, 'weapon')) syncFurnaceActor(actor);
       continue;
     }
-    if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
+    if (actor && hit.flame && actor.id === currentStep?.scout?.id && actor.health > 0) {
+      stopScout(worldJob, actor);
+    } else if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
   }
   const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);
   const contact = targetActor && Math.hypot(point.x - targetActor.position.x, point.z - targetActor.position.z) <=

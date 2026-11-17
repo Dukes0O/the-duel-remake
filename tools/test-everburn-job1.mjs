@@ -118,6 +118,15 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
     'the warned scout leaves its post');
   assert.ok(nearestOnLine(ROAD_NET.road('east-road').points, scout.position.x, scout.position.z).distance < 0.1,
     'the scout joins the road');
+  state.worldJobThingsHit = [{id:scout.id, actorId:scout.id, kind:'vehicle', flame:true}];
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutStopped, true, 'a flame stops the scout');
+  assert.equal(scout.health, 0, 'the scout becomes a wreck');
+  assert.ok(Math.abs(nearestOnLine(ROAD_NET.road('east-road').points, scout.position.x, scout.position.z).distance - 8) < 0.1,
+    'the wreck leaves the road');
+  const wreckPosition = {...scout.position};
+  for (let i = 0; i < 10; i++) stepWorldJob(duel, 0.1);
+  assert.deepEqual(scout.position, wreckPosition, 'the wreck stays beside the road');
 }
 
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
