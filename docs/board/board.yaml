@@ -14,6 +14,17 @@ tasks:
     flag: "the-dig"
     details: "docs/board/cards/DIG-YARD-TOY.md"
 
+  - id: EARNED-CARS-ANYWHERE
+    title: "Should an earned car race anywhere, or only where the helicopter set it down"
+    owner: "claude"
+    lane: "SIM"
+    size: "S"
+    status: "ready"
+    waiting_on: "kyle"
+    needs: []
+    locks: []
+    details: "docs/board/cards/EARNED-CARS-ANYWHERE.md"
+
   - id: LESSONS-V2-FINISH
     title: "Claude drives the second-version lessons; pictures to Kyle"
     owner: "claude"
@@ -550,7 +561,8 @@ tasks:
     owner: "claude"
     lane: "TOOLS"
     size: "M"
-    status: "ready"
+    status: "building"
+    claimed_by: "Claude with a Sonnet helper, since 16 November 2026: four checks cured on the helper's branch, ski-finish and the frame items in a second round"
     needs: []
     details: "docs/board/cards/QA-STANDING-BROWSER.md"
 
