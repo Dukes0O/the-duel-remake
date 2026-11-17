@@ -14,7 +14,7 @@ import {heliOf, missionsOf, fireOf, setMissions, setFire, putOutFire, loseFire, 
 import {HELI_DESTINATIONS} from './heli-jobs.js';
 import {compassBearing} from './heli-flight.js';
 import {placeOfCourse} from './pilot-map-data.js';
-import {courseClosed, burnStage} from '../course-closures.js';
+import {CLOSURE, courseClosed, burnStage, daysSinceBurn} from '../course-closures.js';
 
 // The regrowth stage each piece of Sarah's news belongs to (section 8.4).
 const NEWS_FOR_STAGE = Object.freeze({black: 'reopen', shoots: 'shoots', fireweed: 'fireweed'});
@@ -165,7 +165,9 @@ export function createFireRun({getSave, commit, emit, world, playerName = 'Playe
   // whose news came days late hears only its latest stage. One line a visit.
   function burnNews() {
     for (const courseId of Object.keys(heliOf(getSave()).burnt ?? {}).sort()) {
-      const news = NEWS_FOR_STAGE[burnStage(getSave(), courseId, day(), flag)];
+      const stage = burnStage(getSave(), courseId, day(), flag);
+      const days = daysSinceBurn(getSave(), courseId, day());
+      const news = NEWS_FOR_STAGE[stage] ?? (stage === 'closed' && days >= CLOSURE.closedDays ? 'reopen' : null);
       const heard = heliOf(getSave()).burnt[courseId].heard;
       if (!news || BURN_NEWS.indexOf(news) <= BURN_NEWS.indexOf(heard)) continue;
       commit(hearBurnNews(getSave(), courseId, news, flag));

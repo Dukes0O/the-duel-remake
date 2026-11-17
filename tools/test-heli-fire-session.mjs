@@ -260,9 +260,17 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
     const events = [...session.start(), ...session.step({})];
     return {events, heard: heliOf(session.profile).burnt['tremblant-woods'].heard, session};
   };
-  const closed = visit(12);
-  same(lines(closed.events).filter(line => line.startsWith('heli.radio.burn.')), [], 'closed (day 4 of the burn): no news yet');
+  const closed = visit(10);
+  same(lines(closed.events).filter(line => line.startsWith('heli.radio.burn.')), [], 'closed (day 2 of the burn): no news yet');
   same(closed.heard, undefined, 'and nothing heard');
+  for (const count of [11, 13]) {
+    const reopened = visit(count);
+    same(lines(reopened.events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'],
+      `open on day ${count - 8}: reopening news`);
+    same(reopened.heard, 'reopen', 'reopening news saved as heard');
+    const next = newSession(reopened.session.profile);
+    same(lines([...next.start(), ...next.step({})]).filter(line => line.startsWith('heli.radio.burn.')), [], 'reopening news is not repeated');
+  }
   const black = visit(18);
   same(lines(black.events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'], 'reopened (day 10): "The burnt woods are open again"');
   same(black.heard, 'reopen', 'saved as heard');
