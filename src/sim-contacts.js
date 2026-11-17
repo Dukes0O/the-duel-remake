@@ -271,7 +271,11 @@ export function _supportAt(distance, lateral, actor = this.state) {
     ? scablandsActorFeet(actor) : undefined;
   const ground = this.course.groundAt(distance, lateral, height);
   const capability = actor === this.state ? offroadCapability(this.car) : null;
-  if (!capability) return ground;
+  // FREESTYLE-MOUNTAINS (Kyle, 16 November 2026: Gratian's Koenigsegg crashed far from the Freestyle quarry's mountains
+  // and in mid-air above them): in the playground every car drives on the mountains' real surface, as the off-road
+  // trucks do; they are ground there, not walls.
+  const quarry = this.course.def?.practice === true && actor === this.state;
+  if (!capability && !quarry) return ground;
   // Surface obstacles must not lift an underground car back onto the hill.
   const tunnels = this.course.groundTunnels;
   if (tunnels && Number.isFinite(height)) {
@@ -283,6 +287,7 @@ export function _supportAt(distance, lateral, actor = this.state) {
     const mountain = sampleMountainSupport(this.course, ground.x, ground.z);
     if (mountain != null) ground.y = Math.max(ground.y, mountain);
   }
+  if (!capability) return ground;
   for (const obstacle of this._obstacles(distance - 5, distance + 5)) {
     const height = rockSupportHeight(obstacle, ground.x, ground.z, capability);
     if (height != null) ground.y = Math.max(ground.y, height);
@@ -349,8 +354,10 @@ export function _staticContacts(car, player, journeyColliders = null) {
       if (this._brokenSceneryIds?.has(sceneryIdentity(obstacle))) continue;
       if(obstacle.snowmanId && (this._brokenSnowmanIds?.has(obstacle.snowmanId) ||
         Math.hypot(end.x-start.x,end.z-start.z)<.0001))continue;
-      if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
-        || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) continue;
+      if (capability && obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight) continue;
+      // A mountain the car drives on is no wall (FREESTYLE-MOUNTAINS: every car in the playground).
+      if ((capability || this.course.def.practice === true && player) && obstacle.kind === 'mountain' && !obstacle.tunnelCover &&
+        this.course.features.mountains?.includes(obstacle)) continue;
       const cactus = obstacle.kind === 'tree' && obstacle.theme === 'desert';
       if (cactus && this._fallenCactusIds?.has(obstacle.id)) continue;
       // Older/custom courses without measurements keep their scale-aware shell.
