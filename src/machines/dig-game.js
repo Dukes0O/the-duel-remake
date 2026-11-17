@@ -279,7 +279,28 @@ export function staticYard(scene,groundMaterial,ground){
         const i=row*801+col, x=position.getX(i), z=position.getZ(i);
         position.setY(i,digUnderlayHeight(x,z,ground,1,scablandsNaturalHeightAt));
       }
-    position.needsUpdate=true; floorGeometry.computeVertexNormals();
+    position.needsUpdate=true;
+    // Only faces touching changed corners can change their neighbours' normals.
+    const normals=floorGeometry.attributes.normal, index=floorGeometry.index;
+    const minRow=Math.max(0,Math.floor(minZ+398)), maxRow=Math.min(800,Math.ceil(maxZ+402));
+    const minCol=Math.max(0,Math.floor(minX+398)), maxCol=Math.min(800,Math.ceil(maxX+402));
+    const a=new THREE.Vector3(), b=new THREE.Vector3(), c=new THREE.Vector3(), sum=new THREE.Vector3(), cross=new THREE.Vector3();
+    let count=0;
+    for(let row=minRow;row<=maxRow;row++) for(let col=minCol;col<=maxCol;col++) {
+      const vertex=row*801+col; sum.set(0,0,0);
+      for(let r=Math.max(0,row-1);r<=Math.min(799,row);r++) for(let q=Math.max(0,col-1);q<=Math.min(799,col);q++) {
+        const face=(r*800+q)*6;
+        for(let t=0;t<6;t+=3) {
+          const ia=index.getX(face+t), ib=index.getX(face+t+1), ic=index.getX(face+t+2);
+          if(ia!==vertex && ib!==vertex && ic!==vertex) continue;
+          a.fromBufferAttribute(position,ia); b.fromBufferAttribute(position,ib); c.fromBufferAttribute(position,ic);
+          cross.subVectors(c,b).cross(a.sub(b)); sum.add(cross);
+        }
+      }
+      sum.normalize(); normals.setXYZ(vertex,sum.x,sum.y,sum.z); count++;
+    }
+    normals.needsUpdate=true;
+    return count;
   };
   return floor;
 }
@@ -346,7 +367,7 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
   const unsubscribeMapping=onMachineInputChange(refreshMapping);
   const onStorage=event=>{if(event.key===MACHINE_INPUT_STORAGE_KEY || event.key===null)refreshMapping();};
   window.addEventListener('storage',onStorage);
-  let shownMessage='',lastMachineMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false, checkFarMouth=false;
+  let shownMessage='',messageUntil=0, muckUntil=0, borerFxAfter=0, previousCameraMachine='', sampleCentre=false, checkOverview=false, checkFarMouth=false;
   const keys=Object.create(null),pending=createPendingDigActions(),scene=new THREE.Scene();scene.background=new THREE.Color(0xb4a286);scene.fog=new THREE.Fog(0xb4a286,90,260);
   scene.add(new THREE.HemisphereLight(0xb2cde0,0x714226,1.65));
   const sun=new THREE.DirectionalLight(0xffddac,3.3);sun.position.set(SUN_OFFSET.x,SUN_OFFSET.y,SUN_OFFSET.z);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
@@ -643,10 +664,10 @@ export async function startTheDig({app,onExit=()=>{},createRenderer=options=>new
     dial.querySelector('meter').value=sim.borer.lever || 0;
     dial.querySelector('line').setAttribute('transform',`rotate(${headSpeed*180} 40 40)`);
     dial.querySelector('svg').setAttribute('aria-label',`Head speed ${Math.round(headSpeed*100)} percent.`);
-    if(sim.lastMessage&&sim.lastMessage!==lastMachineMessage){shownMessage=sim.lastMessage;messageUntil=now+4000;}
+    const machineNotice=frameEvents.find(event=>event.type==='machine-message');
+    if(machineNotice){shownMessage=machineNotice.message;messageUntil=now+4000;}
     const boreNotice=frameEvents.find(event=>event.type==='bore-call'||event.type==='bore-daylight');
     if(boreNotice){shownMessage=boreNotice.message;messageUntil=now+8000;}
-    lastMachineMessage=sim.lastMessage;
     if(now<messageUntil)message.textContent=shownMessage;
     else if(!failed&&sim.activeMachine==='excavator'){
       const tip=machineToolPosition(machineDefinition('excavator'),digSandboxMachineState(sim,'excavator'),'bucket');

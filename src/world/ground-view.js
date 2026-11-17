@@ -77,6 +77,19 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
     const rows = groundEdit.toSave().chunks, live = new Set();
     changedBounds = [];
     let changed = 0;
+    // A corner can sample the neighbouring chunk. Rebuild only neighbours of
+    // changed edge samples, so their shared vertices keep the same height.
+    const refresh = new Set();
+    for (const row of rows) {
+      const previous = snapshots.get(`${row.x},${row.z}`);
+      for (let i = 0; i < row.delta.length; i++) {
+        if (row.delta[i] === (previous?.delta[i] ?? 0)) continue;
+        const x = i % SIDE, z = Math.floor(i / SIDE);
+        const xs = x <= 1 ? [-1, 0] : x >= SIDE - 1 ? [0, 1] : [0];
+        const zs = z <= 1 ? [-1, 0] : z >= SIDE - 1 ? [0, 1] : [0];
+        for (const dx of xs) for (const dz of zs) refresh.add(`${row.x + dx},${row.z + dz}`);
+      }
+    }
     for (const row of rows) {
       const key = `${row.x},${row.z}`;
       live.add(key);
@@ -97,7 +110,7 @@ export function createGroundView({group, groundEdit, material = null} = {}) {
         mesh = new THREE.Mesh(makeChunk(row, groundEdit.heightAt), ownedMaterial);
         mesh.name = `Scablands edited ground ${key}`; mesh.receiveShadow = true; mesh.userData.chunk = {x: row.x, z: row.z};
         meshes.set(key, mesh); group.add(mesh); changed++;
-      } else if (!same(row, snapshots.get(key))) {
+      } else if (refresh.has(key) || !same(row, snapshots.get(key))) {
         const geometry = makeChunk(row, groundEdit.heightAt), old = mesh.geometry;
         mesh.geometry = geometry; old.dispose(); changed++;
       }

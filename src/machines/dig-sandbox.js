@@ -597,7 +597,13 @@ function fixedStep(sim,input) {
 export function stepDigSandbox(sim,input={},dtSeconds=STEP) {
   if(!Number.isFinite(dtSeconds)||dtSeconds<0)throw new TypeError('Sandbox time must be non-negative.');
   let carry=sim.fixedCarry+dtSeconds,next={...sim,events:[]};
-  while(carry+1e-10>=STEP){next=fixedStep(next,input);carry-=STEP;}
+  while(carry+1e-10>=STEP){
+    const previousMessage=next.lastMessage;
+    next=fixedStep({...next,lastMessage:''},input);
+    if(next.lastMessage) next.events.push({type:'machine-message',message:next.lastMessage});
+    else next.lastMessage=previousMessage;
+    carry-=STEP;
+  }
   next.fixedCarry=carry;next.elapsed=sim.elapsed+dtSeconds;
   if (next.roadWork !== sim.roadWork) {
     suppliedGroundWork.set(next.ground, next.roadWork);

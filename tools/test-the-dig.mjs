@@ -124,6 +124,8 @@ let high=createDigSandbox({seed:417});
 const highResult=stepDigSandbox(high,{action:'dig'},dt);
 assert.equal(highResult.excavatedM3,0,'Space does not dig while the bucket is above the ground');
 assert.match(highResult.lastMessage,/Lower the boom/,'the raised bucket gives a plain lowering instruction');
+const repeated=stepDigSandbox(highResult,{action:'dig'},dt);
+assert.ok(repeated.events.some(event=>event.type==='machine-message' && event.message===highResult.lastMessage), 'The same instruction is emitted again.');
 high={...high,haul:{...high.haul,machines:{...high.haul.machines,
   excavator:{...high.haul.machines.excavator,load:{topsoil:machineDefinition('excavator').tools.bucket.capacityM3}}}}};
 const fullResult=stepDigSandbox(high,{action:'dig'},dt);

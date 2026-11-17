@@ -226,6 +226,8 @@ import * as THREE from 'three';
       const x=position.getX(j)+near.centreX, z=position.getZ(j)+near.centreZ;
       if (x>=bounds.minX && x<=bounds.maxX && z>=bounds.minZ && z<=bounds.maxZ)
         assert.ok(Math.abs(position.getY(j) - (digUnderlayHeight(x,z,ground,2,(a,b)=>ground.heightAt(a,b),.025)+.025)) < .02);
+      if (![0,-.0001].some(dx=>[0,-.0001].some(dz=>ground.hasChunkAt(x+dx,z+dz))))
+        assert.ok(Math.abs(position.getY(j) - (ground.heightAt(x,z)+.025)) < .02, 'Unedited near ground follows the natural surface.');
     }
   }
   assert.ok(borer.distanceM > 0.8, 'Mabel cuts during the 100 steps.');
