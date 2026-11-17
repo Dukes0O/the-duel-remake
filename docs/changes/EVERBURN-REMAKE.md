@@ -8,5 +8,6 @@ Changed assertions for Claude: bridge road offset 0 to 5 m, along fence +25 to -
 Cap tests use 58 and 150 km/h in place of 28 and 100; severe and fall cap tests use 150 in place of 81 and 50. The caps are unchanged.
 Camp trials: 12 m or 50 m before on either side and shoulder at 12 m either interrupt the Easy scoop or cause 3 bed rams; 20, 30 and 45 m trials also failed the bed, 60 and 75 m the Hard scoop.
 Cinder assertions: figure gate-relative (-8, 9) to (-16, 4), brazier (-8, 20) to (-22, 8), pickup radius 12 to 6 m, ring at (-16, 0); the card moves them.
-For Claude: camp post, scout, pictures and final checks remain; the existing driver stops outside the new pickup ring and this job forbids teaching it. World signatures are not checked yet. Browser pictures cannot run in this lane.
+Pictures now include Cinder from the start and both riders from 60 m before their fences; the browser cannot run here. The new page function parses in Node.
+For Claude: camp post, scout and final checks remain; `test-everburn-job1` still fails at the pickup driver, which stops outside the new ring. World signatures are not checked yet.
 Sound: no new event yet. Removed: old bridge post, centre-line-only flame check and old hit-cost rate.

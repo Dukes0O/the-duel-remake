@@ -1,8 +1,9 @@
 // Memory-only visual handoff for Hot Delivery. Claude runs this on Performance.
 import {writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {EAST_ROAD} from '../../src/world/scablands-road.js';
+import {EAST_ROAD, roadPointFrom} from '../../src/world/scablands-road.js';
 import {pointAlong} from '../../src/world/scablands-road-geometry.js';
+import {LAND} from '../../src/world/scablands-names.js';
 
 export function mapFailures(name, measurement, start = false, metBarricade = false) {
   if (measurement.map === null) return [`${name}: the large map is not open`];
@@ -154,10 +155,27 @@ export async function run(context) {
     await wait(context, 'window.__qaApp?.duel.state.arena?.mode==="world-job" && window.__qaApp.duel.state.status==="racing"', 'Hot Delivery', 90000);
     await wait(context, `(() => { let land; window.__render.scene.traverse(node => { if (node.name === 'The Scablands') land=node; }); return land?.userData.assetStatus === 'ready'; })()`, 'Scablands art', 120000);
     await page(context, () => { window.__qaApp.duel.state.cpuDifficulty='medium'; window.__qaApp.advance(0.2); });
+    await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
+    await picture('yard-cinder-ring-from-start','Cinder at the yard gate');
     await picture('1-yard-start','Scrapdome yard on the land');
     await key(context,'m','KeyM',77);
     await picture('2-map-start','Scrapdome yard on the land',{map:true,startMap:true});
     await key(context,'m','KeyM',77);
+    for (const [index, name] of ['safe-road', 'girder-bridge'].entries()) {
+      const fence = LAND.at(name), road = roadPointFrom(EAST_ROAD, fence.x, fence.z, -60);
+      await page(context, (index, road) => {
+        const app = window.__qaApp, duel = app.duel, state = duel.state, job = state.arena.worldJob;
+        const rider = job.actors[index], post = job.job.steps[0].waitingActors[index].start.position;
+        rider.position = {...rider.position, x:post.x, z:post.z};
+        rider.pursuing = false;
+        const pose = duel.course.nearest(road.x, road.z);
+        state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral; state.speedMph = 0;
+        const angle = Math.atan2(post.x - road.x, post.z - road.z) - duel.course.at(pose.s).heading;
+        state.headingError = Math.atan2(Math.sin(angle), Math.cos(angle));
+        app.onFrame?.(state, 0); window.__render.renderFrame();
+      }, index, road);
+      await picture(`rider-${index + 1}-from-road`, `World job actor: ash-rider-${index + 1}`);
+    }
     await place('pickup',0,5);
     await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
     await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
@@ -192,7 +210,7 @@ export async function run(context) {
     await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
-  for (const name of ['1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
+  for (const name of ['yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
     '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }
