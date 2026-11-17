@@ -1,9 +1,9 @@
 # EVERBURN-REMAKE slice 7
 - Built cures 1 to 7: Cinder and rider solids, one charge per rider meeting, car height once, visible map marks, wind, four weapons, relight instructions, a solid door swinging for 1.5 seconds.
-- Earlier checks passed: scene (`a36c38615`), map (cure 2), audio 618 and p4-audio (cure 3, arena hashes unchanged), combat HUD (cure 5), world HUD and ember pot (cure 6).
-- Cure 7: `test-everburn-job1` passed on `316dde4d5` plus the gate change committed as `ae6685ee9`; no rule numbers changed. Cure 8: scene survey passed on `ae6685ee9` plus this survey.
+- Checks on `699b46a85`: job1 passed; Easy Hot Delivery 10/10 alive, fire 53.2348 and four rams each; lane 162/179 passed, 16 decoder permission failures and one missing-gate guard fault. All replay and world signatures unchanged; size passed.
+- Final fixes on `699b46a85` plus this commit: gate guard for steps without a gate; affected/failed reruns 51/52 passed, remaining historical sound projection corrected and 36/36 passed separately. Build passed. Older crew, ember-save and feature-switch checks passed; no real save used.
 - Integration: already current at `01cfa107c`; no switch, save or pay change. For Claude to run: scenario `everburn-job1` on Performance (60 m scout, 40 m bridge rider, pot aboard, cars above ground); independent review.
-- Changed assertions: old sound-bank projection excludes new `ambience.scablands`, retaining its expected hash; visible weapon chips with loan 1 to 4, without loan 0 to 4, retaining the real loan-slot check.
+- Changed assertions for Claude: p4 cue projection and wave1 AMBIENCE projection now exclude only new `ambience.scablands`/`scablands`; expected hashes unchanged. Visible weapon chips with loan 1 to 4, without loan 0 to 4; real loan-slot check retained.
 - Changed assertions: open door solids 0 to 1 at the swung position; instant quarter-turn becomes a timed swing. Decision: same 20 m car trigger, shut outside that area, reopen on return.
 - Cure 8 survey: every way from its job origin to the forge, at intervals no greater than 5 m, offsets -6/0/+6 m; actual drawn triangles (nearGroundHeightAt on the plain). No gaps above .3 m on East Road, plates or bed; 17 on salt-pan below, as along/x/z/gap in metres.
 - Salt-pan offset -6: 3854.18/2690.22/-2438.58/.793; 3859.18/2694.96/-2440.16/.707; 3864.17/2699.71/-2441.74/.423; 4469.04/3273.63/-2632.73/.324.
@@ -12,4 +12,4 @@
 - Unresolved: Kyle's plates spot is not reproduced by this survey. Salt-pan gaps involve interpolation of the coarse drawing over narrower height changes; changing the terrain mesh needs visual review, so the report leaves that cure.
 - Sound: `ambience.scablands`, two noise loops; `world.tintown.gate` starts each swing; relighting keeps `world.ember.scoop`. No new file or event.
 - **Removed:** duplicate car ground offset, map arrow covering nearby riders, instant door teleport and solid removal, pass-through Cinder and rider cars.
-- Cure 4: `test-everburn-job1` passed on `8c1443f25` plus this change, including real swept rider contact, one charge, wrecks, Cinder and the clear ring/gate exit. No assertions changed; existing collision and spark cues. Scenario: 49 page expressions parse with `new Function`; picture requirements pass. Next: integration merge, final Easy drive, older suites, lane tier and build.
+- Cure 4 checks include swept rider contact, one charge, wrecks, Cinder and the clear ring/gate exit; existing collision and spark cues. Scenario: 49 page expressions parse with `new Function`; picture requirements pass. Optional Blender-output check stopped when it launched Blender; not part of the lane tier or a required short suite.

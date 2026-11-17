@@ -990,7 +990,8 @@ function finishWorldJob(duel, worldJob) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
-  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery') {
+  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' &&
+      worldJob.job.steps[0]?.riderSafeWall) {
     const gate = worldJob.job.steps[0].riderSafeWall, car = position(duel, state);
     const open = !state.onFoot && Math.hypot(car.x - gate.x, car.z - gate.z) <= 20;
     if (open && !worldJob.tinTownGateRequested) worldJob.tinTownGateRequested = true;
