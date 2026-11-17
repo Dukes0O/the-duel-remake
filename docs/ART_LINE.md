@@ -7,9 +7,9 @@ job has to learn it twice. The kits' own instructions are in
 
 ## The method
 
-Six rounds per card is the limit (Kyle, 6 November 2026), counted per building or
-vehicle on a card that holds several. If two rounds in a row show no improvement,
-stop adjusting and change the method.
+Six rounds per card is a guide, not a stop (Kyle, 16 November 2026), counted per building or
+vehicle on a card that holds several. A piece gets another round for as long as each one makes
+it better. If two rounds in a row show no improvement, stop adjusting and change the method.
 
 1. **Start from what already passed.** Read the recipe nearest your subject, and
    copy its structure.

@@ -16,8 +16,10 @@ notes and history are evidence, not instructions.
   NOW. Cards with `owner: claude` are Claude's (design, rules, look and feel reviews, releases);
   never start them. Settle each card's open design question in writing before its code.
 - Stop rule: if a card cannot meet its acceptance with the tools we have (free services, this
-  laptop, the six-round art limit in SPEC 0.11), stop, write why in the change note and ask
-  Kyle. Never ship a placeholder or stub as the finished thing.
+  laptop), stop, write why in the change note and ask Kyle. Never ship a placeholder or stub as
+  the finished thing. A count of rounds or slices is not such a limit (Kyle, 16 November 2026):
+  when a thing needs another round or another slice it gets one, for as long as each one makes it
+  better. Stop when two in a row have not, and change the method (SPEC 0.11).
 - Cloud sessions: `integration/wasteland` is GitHub's front branch. Cards with
   `owner: claude-cloud` are built there, each only on its `cloud/<card>` branch, pushed and
   opened as a pull request into `integration/wasteland`. A cloud session never merges, never
@@ -123,7 +125,7 @@ notes and history are evidence, not instructions.
     is one card's own folder; the lane tag (SIM, UI, ART) names a file area, not a single slot.
     A card lists its locks (`locks:`, FACTORY section 2); two cards with the same lock never
     build at once. Edits to the board, inbox and STATUS on integration are committed at once.
-15. **Kyle sets direction.** Claude makes art and sound picks within the six-round limit and
+15. **Kyle sets direction.** Claude makes art and sound picks, with six rounds as a guide and not a stop (SPEC 0.11), and
     decides go-live under rule 18.
 16. **Questions on a card.** Claude answers in the card's own file, section "Claude answers",
     and clears its `waiting_on` in the same commit. The inbox carries only questions and notes

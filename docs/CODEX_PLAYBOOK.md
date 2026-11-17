@@ -3,7 +3,7 @@
 Read SPEC section 0, AGENTS.md and docs/FACTORY.md first. Factory rules 11–15
 win over older gate, queue and lane instructions. Use docs/README.md and the
 current board to find a card. Kyle sets direction and says “go live”; Claude
-chooses art and sound within the six-round limit.
+chooses art and sound, with six rounds as a guide and not a stop.
 
 ## 1. The short version
 
@@ -76,7 +76,7 @@ replaced or explicitly dropped; being idle is not permission to remove one.
    --jobs 4 and npm run build once in the lane. Keep the original result and
    build log pinned to that clean commit. Fix a real failure in the lane.
 5. Get one clear review. Use additional required save/art helpers only when
-   rule 6 or the card calls for them. Claude judges art within six rounds (SPEC 0.11).
+   rule 6 or the card calls for them. Claude judges art, six rounds being a guide and not a stop (SPEC 0.11).
    Daytime builds do not add full, frame, browser or balance checks; the full
    check owns those checks. `tools/full-check.mjs` uses a detached source copy;
    builders keep merging and only its frame step requires a quiet laptop.
