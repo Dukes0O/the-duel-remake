@@ -1,15 +1,15 @@
 # EVERBURN-REMAKE slice 7
-- Built: job cars use their floor height once; close rider map marks stay visible; the land requests wind.
-- Checks: `test-scablands-scene` passed before `a36c38615`; `test-scablands-map` passed on cure 2.
-- Checks: `test-audio` (618) and `test-p4-audio` passed on cure 3; the arena's pinned hashes are unchanged.
-- Built cure 5: the weapon bar shows all four car slots; `test-combat-hud` passed before its commit.
-- Built cure 6: the exact relight instructions read the scoop's shared three-second rule; `test-world-hud` and `test-ember-pot` passed before its commit.
-- Built cure 7: the door swings for 1.5 seconds; its solid follows the drawing. `test-everburn-job1` passed on `316dde4d5` plus cure 7.
-- Integration: brought `integration/wasteland` in; already current at `01cfa107c`.
-- For Claude to run: updated `everburn-job1` pictures when all cures are complete; independent review.
-- Changed assertions: the old sound-bank projection excludes new `ambience.scablands`; its expected hash is unchanged. No switches or saved fields changed.
-- Changed assertions for Claude: `test-everburn-job1` visible chips with loan 1 to 4, without loan 0 to 4, as cure 5 asks; the loan is still checked in its real slot.
-- Changed assertions for Claude: open door solids 0 to 1 at the swung position; immediate right-angle turn to a timed swing, proving cure 7. Gate shuts outside 20 m and opens on return.
-- Sound: `ambience.scablands`, two noise loops; `world.tintown.gate` starts each swing. No new file.
-- **Removed:** duplicate job-car ground offset; player arrow covering nearby riders on the map.
-- Still to build: cures 4, 8, scenario pictures and final checks. Cure 6 keeps `world.ember.scoop`.
+- Built cures 1, 2, 3, 5, 6, 7: car height once, visible map marks, wind, four weapons, relight instructions, a solid door swinging for 1.5 seconds.
+- Earlier checks passed: scene (`a36c38615`), map (cure 2), audio 618 and p4-audio (cure 3, arena hashes unchanged), combat HUD (cure 5), world HUD and ember pot (cure 6).
+- Cure 7: `test-everburn-job1` passed on `316dde4d5` plus the gate change committed as `ae6685ee9`; no rule numbers changed. Cure 8: scene survey passed on `ae6685ee9` plus this survey.
+- Integration: already current at `01cfa107c`; no switch, save or pay change. For Claude to run: updated scenario pictures after remaining work; independent review.
+- Changed assertions: old sound-bank projection excludes new `ambience.scablands`, retaining its expected hash; visible weapon chips with loan 1 to 4, without loan 0 to 4, retaining the real loan-slot check.
+- Changed assertions: open door solids 0 to 1 at the swung position; instant quarter-turn becomes a timed swing. Decision: same 20 m car trigger, shut outside that area, reopen on return.
+- Cure 8 survey: every way from its job origin to the forge, at intervals no greater than 5 m, offsets -6/0/+6 m; actual drawn triangles (nearGroundHeightAt on the plain). No gaps above .3 m on East Road, plates or bed; 17 on salt-pan below, as along/x/z/gap in metres.
+- Salt-pan offset -6: 3854.18/2690.22/-2438.58/.793; 3859.18/2694.96/-2440.16/.707; 3864.17/2699.71/-2441.74/.423; 4469.04/3273.63/-2632.73/.324.
+- Salt-pan offset 0: 3854.18/2688.33/-2444.28/.580; 3859.18/2693.07/-2445.85/.562; 3864.17/2697.81/-2447.43/.361; 4094.12/2916/-2520.04/.350.
+- Salt-pan offset +6: 3854.18/2686.43/-2449.97/.372; 3859.18/2691.17/-2451.55/.421; 4104.12/2923.59/-2528.89/.365; 4109.12/2928.33/-2530.47/.495; 4114.12/2933.08/-2532.05/.387; 4444.05/3246.13/-2636.22/.363; 4449.05/3250.87/-2637.80/.659; 4454.05/3255.62/-2639.38/.883; 4459.05/3260.36/-2640.95/.585.
+- Unresolved: Kyle's plates spot is not reproduced by this survey. Salt-pan gaps involve interpolation of the coarse drawing over narrower height changes; changing the terrain mesh needs visual review, so the report leaves that cure.
+- Sound: `ambience.scablands`, two noise loops; `world.tintown.gate` starts each swing; relighting keeps `world.ember.scoop`. No new file or event.
+- **Removed:** duplicate car ground offset, map arrow covering nearby riders, instant door teleport and solid removal.
+- Next: cure 4 (Cinder and rider solids), scenario pictures, integration merge, final Easy drive, older suites, lane tier and build. No final gate has run yet.
