@@ -28,8 +28,8 @@ and SPEC text about test tiers, merge order and when heavy checks run.
 4. **Release.** A full-tier pass that covers the release commit (AGENTS rule
    19), real saves never touched, no rollback build kept. Claude decides
    go-live (AGENTS rule 18, Kyle, 15 October).
-5. **Kyle sets direction.** Art and sound picks are Claude's within the
-   six-round limit (SPEC 0.11). Kyle can overrule anything.
+5. **Kyle sets direction.** Art and sound picks are Claude's, with six
+   rounds as a guide and not a stop (SPEC 0.11). Kyle can overrule anything.
 6. **Work in progress limits.** At most six build lanes at once across all
    lines, no more than three of them course lanes, each test run `--jobs 4`
    or fewer. The laptop has 20 threads; the full check's frame step runs alone. A world
@@ -89,7 +89,7 @@ flowchart LR
 | C1 reference and reuse | Photos or descriptions of the real place (landforms, trees, buildings, road edges, light) and a reuse list: which existing kits, models, textures and sounds fit, from `public/assets/`, `C:/Users/kyleb/dev/art-library/` and other courses. New art only where nothing fits | Claude |
 | C2 rough road | `src/circuits/<id>.js` drives end to end with existing kits; drive-through check clean; `test-circuits.mjs` passes; a lap feels right on the keyboard (Claude drives it) | Claude |
 | C3 pace | Field pace and the reference lap file; computer drivers finish without crashes on every difficulty | Tests |
-| C4 scenery | Reused kits placed first; new models as Blender recipes, at most six rounds, one comparison sheet per round under `docs/board/looks/<id>/` | Claude, on pictures |
+| C4 scenery | Reused kits placed first; new models as Blender recipes, about six rounds (a guide, SPEC 0.11), one comparison sheet per round under `docs/board/looks/<id>/` | Claude, on pictures |
 | C5 landmark, water, sound | The signature landmark, the lake or water body (fire bucket), burnable forest decision, ambient sound cues | Claude |
 | C6 finishing pass | Claude drives every sector on Casual and Pro; pictures to Kyle | Claude |
 | C7 release | Switch on behind `dev`, full check including frames, then live with the next batch | Release Manager |
@@ -121,7 +121,7 @@ flowchart LR
 |---|---|---|
 | V0 packet | `docs/cars/<id>.md`: what the car is, class, top speed and acceleration targets against the current cars, price or earn rule, sound character | Claude |
 | V1 photos and donor | At least six reference photos (front, rear, sides, three-quarter, interior glimpse) noted by source; the closest existing model or recipe to start from | Claude |
-| V2 shape | Blender recipe; side, front, top and three-quarter compared against the photos on one sheet; at most six rounds | Claude, against photos |
+| V2 shape | Blender recipe; side, front, top and three-quarter compared against the photos on one sheet; about six rounds (a guide, SPEC 0.11) | Claude, against photos |
 | V3 detail | Lights, wheels, mirrors, paint options, damage and dirt; triangle and texture budgets met | Claude |
 | V4 handling | Car numbers in config; lap times against two current cars on two courses inside the packet targets; replay fingerprints of other cars unchanged | Tests |
 | V5 sound | Engine and shift sounds from the sound catalog recipe; loudness matched | Claude, by listening tool numbers |

@@ -14,6 +14,21 @@ Never "fix" these. A card that would change one must say so and ask Claude first
   (restored by FUN-TITAN-LAUNCH).
 
 
+## Kyle, 16 November 2026 (evening): rounds and slices are a guide, not a stop
+
+Said on seeing a Codex job stop several times on the Everburn's sixth slice: "at some point the rule was 3 turns, then I
+said it could increase to something more, like 6, but it ended up being taken as a hard rule. if we need more slices, then
+we need more slices. there comes a time when another slice wastes time, but I think we're improving with the
+photorealistic multi-turn cuts and builds. it's turning out nicely. We just need to make sure the game play remains
+engaging."
+
+- No count of rounds or slices stops a card. A card gets another for as long as each one makes the thing better; it stops
+  when two in a row have not, and then the method changes (SPEC 0.11, AGENTS.md "Stop rule").
+- The look built in several rounds is going the right way.
+- What every round is for is play that stays engaging. Claude judges that by playing by hand before Kyle tries a thing.
+- What stopped Codex that evening was not this rule (Claude's note): Claude's own script ran each job for eight starts
+  and ended it after three starts with no commit, and four times Codex rightly stopped to ask for a design ruling.
+
 ## Kyle, 14 November 2026: the Scablands (after playing the Everburn, and on seeing the land rebuilt)
 
 - The Everburn's first two jobs are not fit to be seen and Gratian must not find them. Both
