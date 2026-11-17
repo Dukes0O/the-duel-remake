@@ -16,7 +16,7 @@ import {westScarpTrial} from '../src/world/scablands-tunnel-trial.js';
 import {createRiverDraw} from '../src/world/scablands-draw.js';
 import {RIVER_LAND, riverGorgeDepthAt} from '../src/world/scablands-regions.js';
 import {raiderHasClearShot, targetFor, stepRaiderSearch, stepRaiderAim, campSightChange, stepRaiders} from '../src/raiders.js';
-import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE} from '../src/world/jobs/furnace-sightings.js';
+import {stepSkylineSight, stepRidgeSight, skylineWarningDue, FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS} from '../src/world/jobs/furnace-sightings.js';
 import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
 
@@ -264,14 +264,14 @@ test('the skyline furnace counts only clear time in range', () => {
   assert.equal(stepSkylineSight(sight, {x: car.x + 2000, z: car.z}, 1, flat).visible, false);
 });
 
-test('the furnace warning needs more than six continuous seconds and sounds once', () => {
+test('the furnace warning needs more than the allowed continuous time and sounds once', () => {
   const car = {x: FURNACE_SKYLINE.x + 100, z: FURNACE_SKYLINE.z};
   const flat = () => 0;
   const wall = x => x > FURNACE_SKYLINE.x + 40 && x < FURNACE_SKYLINE.x + 60 ? 20 : 0;
-  let sight = stepSkylineSight({}, car, 6, flat);
+  let sight = stepSkylineSight({}, car, FURNACE_PATIENCE_SECONDS, flat);
   assert.equal(skylineWarningDue(sight, false), false);
   sight = stepSkylineSight(sight, car, 1, wall);
-  sight = stepSkylineSight(sight, car, 5, flat);
+  sight = stepSkylineSight(sight, car, FURNACE_PATIENCE_SECONDS - 1, flat);
   assert.equal(skylineWarningDue(sight, false), false);
   sight = stepSkylineSight(sight, car, 1.1, flat);
   assert.equal(skylineWarningDue(sight, false), true);

@@ -1,17 +1,16 @@
-# EVERBURN-REMAKE, slice 5
+﻿# EVERBURN-REMAKE, slice 5
 
-- Cinder takes the pot within 12 m; her brazier is clear of the gate. Fences burn along their drawn length, with a key 4 hint within 40 m.
-- Wrong message cause: weapon start triggered Rook without checking danger. He now waits until fences and riders are clear.
-- Gate cause: its solid door opened only below 30 km/h. It opens on approach at any speed; its existing gate cue sounds.
-- Rider cause: Easy contact used clipped final movement and halved it. Rams now use closing speed; riders charge, then retreat 40 m for eight seconds. Existing cue: `world.ember.spark`.
-- Yard helpers now approach Cinder and the gate on the gateway centre line. The job test passes the yard exit and the East Road arrives alive with 41.00 fire and three rams; the later river-bed route fails with zero fire and three rams.
-- On bbfe1514e plus these helper changes: Easy Hot Delivery finishes 10/10; its existing check does not report final fire. Fourteen ember, Everburn, world-job and arsenal suites passed.
-- Changed assertions for Claude: pickup 8.1/7.9 m to 12.1/11.9 m; brazier offset 7 to 20 m and distance from Cinder under 3 m to at least 6 m; gate opens above 30 km/h. Gate check strengthened from no door to no solid. These follow Claude's rulings.
-- Codex decided: none. **Removed:** the old hand-over radius, brazier position, centre-point fence target, slow-only gate and clipped rider contact speed.
-- On ed27fe6b8: lane 132/135; job1 failed on the river-bed, scablands-size expected the old brazier place, and combat balance timed out but passed alone (34/34). With this change scablands-size passes 9/9; its brazier offset assertion changes from 7 to 20 m under Claude's ruling.
-- On ed27fe6b8: race replays 297, combat replays 12 and world composition 63 passed; build passed. Lane left convoy-tanker-art, everburn-easy, field-battle, first-person-polish, old-smoke and run-gas-medium to the night; Easy had already run as above.
-- Road riders now start within 150 m of their fence or 120 m of themselves; an existing chase continues under the prior road and sight limits.
-- At 494f2b9e3 the Medium bed arrived with 35.597 fire and no rams; with this fix it arrived with 35.862 and no rams. Medium East Road: 40.998 and three rams. Easy East Road: all ten seeds arrived with 63.561 and three rams each.
-- Job1 still fails: the plates shelter drive spends 6.5 s in furnace sight, above its unchanged 6 s limit. The earlier bed failure is fixed. Easy Hot Delivery passed 10/10 with these changes.
-- Still needed: resolve the plates failure, audit older named suites, run the changed-file tier and build. Integration was already an ancestor at 494f2b9e3.
-- For Claude: run the browser scenario. No browser check has run here.
+- Cinder accepts the pot within 12 m; her brazier clears the exit. The full drawn fence can burn; key 4 is hinted within 40 m.
+- Wrong message: a weapon start called Rook without checking danger. Gate: the solid door opened only below 30 km/h. Rider: Easy contact used clipped movement and halved it.
+- Rook waits for danger to clear; the gate opens on approach; rams use closing speed and riders retreat 40 m for eight seconds. Existing cues: `world.tintown.gate`, `world.ember.spark`.
+- Road riders start within 150 m of their fence or 120 m of themselves; the yard helpers follow the gate centre line.
+- Furnace warning now follows more than eight seconds in view; existing cue: `world.furnace.horn`.
+- BLOCKED: the proof cover line has a 92 m open gap at 1,282 to 1,372 m, sampled every 2 m. At 40 km/h it takes 8.29 s; the required limit is 7 s. Claude must decide how to meet that limit.
+- This working change on a5ecbad64: scablands-hills 56/56; everburn-job1 stops at the new gap check. Changed-file tier and build not rerun after this change.
+- On a5ecbad64: changed-file tier 47/48, job1 failed at the old six-second sight limit; race replays 297, combat replays 12, world composition 63 and build passed. Combat balance timed out under load and passed alone 34/34.
+- Bed Medium before at 494f2b9e3: 35.597 fire, zero rams; after: 35.862, zero rams. East Road Medium: 40.998, three rams; Easy: 10/10, each 63.561 and three rams.
+- Earlier ember-lines, ember-pot, everburn-line-audit, arsenal-core and world-jobs passed. Older-suite audit incomplete; field-battle, old-smoke and run-gas-medium are night-only.
+- Changed assertions for Claude: pickup 8.1/7.9 to 12.1/11.9 m; brazier offset 7 to 20 m and Cinder clearance under 3 to at least 6 m; gate speed and solid checks follow the rulings.
+- Furnace assertions: job1 opening and shelter limit 6 to 8 s and horn tick 6 to 8 s; scablands-hills warning tick 6 to 8 s and post-cover tick 5 to 7 s, per Claude's ruling.
+- Codex decided: none. For Claude: decide the cover gap, then run the browser scenario; it cannot run in this lane.
+- **Removed:** old hand-over radius, brazier position, centre-point fence target, slow-only gate, clipped rider contact and six-second furnace limit.

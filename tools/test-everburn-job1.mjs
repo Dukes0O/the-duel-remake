@@ -25,7 +25,7 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
-import {FURNACE_SKYLINE, furnaceSighting, stepSkylineSight} from '../src/world/jobs/furnace-sightings.js';
+import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, furnaceSighting, stepSkylineSight} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
@@ -327,6 +327,14 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     if (Math.hypot(point.x - FURNACE_SKYLINE.x, point.z - FURNACE_SKYLINE.z) > WATCH.furnace.range) return 'out of range';
     return stepSkylineSight({}, point, 0).visible ? 'open' : 'hidden';
   };
+  const proofRuns = sightStretches(sampleLine(platesCoverLine(route, -40), 2).filter(point => point.along <= 3600), classify);
+  for (let i = 1; i < proofRuns.length - 1; i++) {
+    const gap = proofRuns[i];
+    if (gap.visibility !== 'open' || proofRuns[i - 1].visibility !== 'hidden' || proofRuns[i + 1].visibility !== 'hidden') continue;
+    const width = gap.to - gap.from + 2;
+    console.log(`Plates proof cover gap: ${gap.from.toFixed(0)} to ${gap.to.toFixed(0)} m, ${width.toFixed(0)} m wide`);
+    assert.ok(width / 11.1 <= FURNACE_PATIENCE_SECONDS - 1, `Cover gap at ${gap.from.toFixed(0)} m is ${width.toFixed(0)} m wide`);
+  }
   const runs = sightStretches(samples, classify);
   const stretches = coverStretches(samples, classify);
   const separated = separatedCover(samples, classify);
@@ -592,8 +600,8 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   assert.equal(trialOpening.jolts.length + trialShelter.jolts.length, 0, 'the opening avoids jolts');
   assert.equal(trialOpening.abovePlatesLimitTicks + trialShelter.abovePlatesLimitTicks, 0, 'the opening stays within 50 km/h');
   console.log('Plates opening furnace sight:', JSON.stringify({opening:trialOpening.longestFurnaceSightSeconds, shelter:trialShelter.longestFurnaceSightSeconds, openingAt:trialOpening.longestFurnaceSight, shelterAt:trialShelter.longestFurnaceSight}));
-  assert.ok(trialOpening.longestFurnaceSightSeconds <= 6 && trialShelter.longestFurnaceSightSeconds <= 6,
-    'the opening stays within six seconds of furnace sight');
+  assert.ok(trialOpening.longestFurnaceSightSeconds <= FURNACE_PATIENCE_SECONDS && trialShelter.longestFurnaceSightSeconds <= FURNACE_PATIENCE_SECONDS,
+    'the opening stays within the furnace sight limit');
   const trialCrossing = drivePlatesRoughGround(trialDuel, trialLine, 3600, 15);
   console.log('Plates intermediate crossing:', JSON.stringify(trialCrossing));
   assert.ok(trialCrossing.along >= 3600, 'the car reaches the far side on the intermediate line');
@@ -1387,7 +1395,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(fast.falls[0].drop > 2, 'the hit measures the real fall');
   assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
 }
-// The real watch traces the ground, resets when sight is lost, and sounds once after six seconds.
+// The real watch traces the ground, resets when sight is lost, and sounds once after the sight limit.
 {
   const world = createWorldJob(definition), events = [];
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
@@ -1408,7 +1416,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(world.skylineSight.seconds, 0);
   car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  tick(6);
+  tick(FURNACE_PATIENCE_SECONDS);
   assert.equal(horns().length, 0);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
   tick(0.1);
