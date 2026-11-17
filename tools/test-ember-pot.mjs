@@ -87,7 +87,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const view = (hitKmh, extra = {}) => ({player: {position: {x: 300, z: 300}}, speedKmh: 0, hitKmh, safeKmh: Infinity, difficulty: 'medium', ...extra});
   const quiet = stepCarry(carry, {loaded: true}, view(0), DT).state.ember, touched = stepCarry(carry, {loaded: true}, view(7), DT).state.ember, hard = stepCarry(carry, {loaded: true}, view(40), DT).state.ember;
   check(Math.abs(touched - quiet) < 1e-9, 'a touch that sheds 7 km/h takes nothing');
-  check(Math.abs(quiet - hard - 15) < 1e-9, 'an ordinary hit that sheds 40 km/h takes at most 15');
+  check(Math.abs(quiet - hard - 9.6) < 1e-9, 'an ordinary hit that sheds 40 km/h takes 9.6');
   // Real: drive at a Boneyard wreck (a solid) at 100 km/h from 89 m off. SCABLANDS-LAND round 4, slice 2b: the junk cars of the old oval are gone, and a solid is hit now.
   const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-south'), duel = start(), junk = {x: wreck.x, z: wreck.z};
   place(duel, {x: wreck.x - wreck.halfX - 89, z: wreck.z}, junk, 100);
@@ -98,7 +98,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
     before = step.ember; jolts = step.joltCount ?? 0;
   }, until: d => (held(d).joltCount ?? 0) > 0});
   check(jolts > 0 && Math.abs(held(duel).jolt - 15) < 1e-9, `a real wreck hit takes exactly 15 from the pot (jolt ${held(duel).jolt}, total drop ${drop.toFixed(3)})`);
-  const severe = stepCarry(carry, {loaded: true}, view(100, {severeHit: true}), DT);
+  const severe = stepCarry(carry, {loaded: true}, view(150, {severeHit: true}), DT);
   check(severe.state.jolt === 40, 'a severe fall or dead-stop crash can take 40');
 }
 // A wrecking head-on collision stops the car at a real solid in the real step.
@@ -181,9 +181,12 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   const input = {kmh: 120, lostKmh: 30, safeKmh: 50, dt: 1};
   const medium = emberLoss(EMBER_RULE, {...input, difficulty: 'medium'}), easy = emberLoss(EMBER_RULE, {...input, difficulty: 'easy'});
   check(Math.abs(easy.rough * 2 - medium.rough) < 1e-9 && Math.abs(easy.hit * 2 - medium.hit) < 1e-9 && easy.cold === medium.cold, 'Easy halves rough ground and hits and leaves cold alone');
-  check(Math.abs(medium.cold - 100 / 900) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && medium.hit === 15, 'cold takes 100 in fifteen minutes, rough ground takes 0.003 per metre per km/h over its safe speed, and a hit is capped at 15');
-  const severe = emberLoss(EMBER_RULE, {...input, lostKmh: 100, severeHit: true, difficulty: 'medium'});
-  const severeEasy = emberLoss(EMBER_RULE, {...input, lostKmh: 100, severeHit: true, difficulty: 'easy'});
+  check(Math.abs(medium.cold - 100 / 900) < 1e-9 && Math.abs(medium.rough - .003 * 70 * (120 / 3.6)) < 1e-9 && Math.abs(medium.hit - 6.6) < 1e-9, 'cold takes 100 in fifteen minutes, rough ground takes 0.003 per metre per km/h over its safe speed, and a 30 km/h hit takes 6.6');
+  for (const [speed, expected] of [[8, 0], [15, 2.1], [30, 6.6], [58, 15]]) {
+    check(Math.abs(emberLoss(EMBER_RULE, {lostKmh:speed}).hit - expected) < 1e-9, `${speed} km/h takes ${expected}`);
+  }
+  const severe = emberLoss(EMBER_RULE, {...input, lostKmh: 150, severeHit: true, difficulty: 'medium'});
+  const severeEasy = emberLoss(EMBER_RULE, {...input, lostKmh: 150, severeHit: true, difficulty: 'easy'});
   check(severe.hit === 40 && severeEasy.hit === 20, 'a severe hit is capped at 40, or 20 on Easy');
   check(emberLoss(EMBER_RULE, {kmh: 200, safeKmh: Infinity, dt: 1}).rough === 0, 'a ground that is safe at any speed takes nothing at 200 km/h');
 }
