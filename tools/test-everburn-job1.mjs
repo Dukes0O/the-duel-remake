@@ -97,6 +97,23 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.ok(worldJobHitTargets(duel).some(target => target.actorId === scout.id));
 }
 
+// A loaded car in the scout's sight sounds its horn once.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), events = [];
+  const post = definition.steps[0].scout.start.position;
+  let car = {...post, x:post.x + 10, y:scablandsSurfaceHeightAt(post.x + 10, post.z)};
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  for (let i = 0; i < 10; i++) stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutWarned, true);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.ashmen.horn').length, 1);
+  assert.equal(SOUND_BANK['world.ashmen.horn'].flag, 'story-everburn');
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);

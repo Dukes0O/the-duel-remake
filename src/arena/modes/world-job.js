@@ -238,7 +238,19 @@ function updateJobActors(duel, worldJob, dt) {
     pursueJobRider(duel, worldJob, actor, dt);
   }
   // The scout is a job rider, so it uses the same actor and hit-target path.
-  if (step?.scout && worldJob.job.stepState.loaded) updateJobActor(duel, worldJob, step.scout, 0);
+  if (step?.scout && worldJob.job.stepState.loaded) {
+    updateJobActor(duel, worldJob, step.scout, 0);
+    const scout = worldJob.actors.find(actor => actor.id === step.scout.id);
+    const car = position(duel, duel.state);
+    if (scout.health > 0 && !duel.state.onFoot && !worldJob.job.stepState.scoutWarned &&
+        Math.hypot(car.x - scout.position.x, car.z - scout.position.z) <= step.scout.sightRadius &&
+        roadRiderSight(scout, dt, 0, () => sees(scout.position, car, {heightAt:scablandsSurfaceHeightAt,
+          actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}))) {
+      worldJob.job.stepState.scoutWarned = true;
+      duel.emit({arenaTell:{id:'ash-scout-warning', targetId:'player', seconds:0,
+        cue:'world.ashmen.horn', position:scout.position}});
+    }
+  }
   if (worldJob.skylineWarned) {
     const elapsed = Math.max(0, dt);
     worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;
