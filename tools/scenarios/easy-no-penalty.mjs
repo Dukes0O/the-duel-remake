@@ -1,5 +1,6 @@
-﻿// Memory-only visual check for the Easy Duel results screen.
+// Memory-only visual check for the Easy Duel results screen.
 const ready = `(() => !!window.__qaApp && !!window.__render &&
+  !document.querySelector('#start-engine')?.disabled &&
   !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value)()`;
 const showLoss = `(() => {
   const app = window.__qaApp;
