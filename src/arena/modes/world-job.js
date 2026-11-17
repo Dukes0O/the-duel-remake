@@ -270,15 +270,23 @@ function updateJobActors(duel, worldJob, dt) {
 // They use the land's mover, including its floor and solid checks.
 function pursueJobRider(duel, worldJob, actorDef, dt) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
-  if (!rider || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  if (!rider) return;
+  const retreat = rider.ramRetreat;
+  if (retreat) {
+    retreat.seconds += Math.max(0, dt);
+    if (retreat.seconds >= 8) {
+      rider.ramRetreat = null;
+      rider.ramContact = false;
+    }
+  }
+  if (!worldJob.job.stepState.loaded || duel.state.onFoot) return;
   // A wreck stays where it fell, even if it was already returning to its post.
   if (rider.health <= 0) return;
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
-  if (roadRider && rider.ramRetreat && !worldJob.ridersRetreating) {
-    const retreat = rider.ramRetreat;
-    retreat.seconds += Math.max(0, dt);
+  if (roadRider && retreat && !worldJob.ridersRetreating) {
+    if (!rider.ramRetreat) return;
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
     const distance = Math.hypot(dx, dz);
     rider.speed = 0;
@@ -293,10 +301,6 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         ? (retreat.stillSeconds ?? 0) + dt : 0;
       if (retreat.stillSeconds >= 1) retreat.stopped = true;
     }
-    if (retreat.seconds >= 8) {
-      rider.ramRetreat = null;
-      rider.ramContact = false;
-    }
     return;
   }
   if (roadRider && !worldJob.ridersRetreating && !rider.returningToPost) {
@@ -309,7 +313,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const floors = [];
     scablandsFloorsAt(car.x, car.z, floors);
     const nearFence = Math.hypot(car.x - barrier.x, car.z - barrier.z) <= 150;
-    const inRange = ((!rider.pursuing && nearFence) || (carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900)) &&
+    const inRange = carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900 &&
       ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
       (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
     const visible = inRange && roadRiderSight(rider, dt, step.waitingActors.indexOf(actorDef), () =>

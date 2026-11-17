@@ -57,10 +57,10 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   for (let i = 0; i < 60 && !rider.ramContact; i++) stepWorldJob(duel, 1 / 60);
   assert.ok(rider.ramContact, 'the rider reaches the stopped car');
   assert.ok(Math.abs(world.riderHitKmh - 18) < 1e-6, 'the clipped last movement keeps the closing speed');
-  const contact = {...rider.position};
+  const target = {...rider.ramRetreat};
   for (let i = 0; i < 479; i++) stepWorldJob(duel, 1 / 60);
   assert.equal(world.job.stepState.joltCount, 1, 'the rider cannot ram twice inside eight seconds');
-  assert.ok(Math.hypot(rider.position.x - contact.x, rider.position.z - contact.z) >= 37,
+  assert.ok(Math.hypot(rider.position.x - target.x, rider.position.z - target.z) <= 3,
     'the rider backs off to within three metres of its forty metre target');
   assert.ok(Math.abs(world.job.stepState.ember - (100 - 7.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
     'Easy halves the capped ram once');
@@ -114,6 +114,9 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(rider.ramContact, true, 'the approaching car makes contact');
   assert.ok(Math.abs(world.riderHitKmh - 16.09344) < 1e-6, 'the car contributes its closing speed');
   assert.ok(rider.ramRetreat, 'the rider backs off after contact');
+  world.ridersRetreating = true;
+  for (let i = 0; i < 81; i++) stepWorldJob(duel, 0.1);
+  assert.equal(rider.ramRetreat, null, 'the ram retreat expires while riders return home');
 }
 
 // A rider sees the loaded car near its fence even beyond the old 120 m limit.
@@ -176,6 +179,11 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   rider.pursuing = true;
   stepWorldJob(duel, 0.1);
   assert.equal(rider.pursuing, false, 'a chasing rider gives up outside the road limit');
+  rider.returningToPost = false;
+  for (let i = 0; i < 200; i++) {
+    stepWorldJob(duel, 0.1);
+    assert.equal(rider.pursuing, false, 'a waiting rider never starts outside the road limit');
+  }
   barrier.position = savedFence;
 
 }
@@ -1233,7 +1241,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     // While the job holds, the crane keeps the job's own count and nothing else (reviewers found twice that it could run ahead of the job on
     // the scene's clock: through a pause, and whenever the count stood still). So the scene's clock alone moves nothing, paused or not.
     animateScene(scene.group, 2);
-    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the job’s count stands still');
+    assert.ok(where(pot).distanceTo(from) < 1e-6, 'the crane does not move while the jobâ€™s count stands still');
     state.paused = true; syncScene(scene.group, state); animateScene(scene.group, 4);
     assert.ok(where(pot).distanceTo(from) < 1e-6, 'a paused game holds the crane still');
     state.paused = false;
