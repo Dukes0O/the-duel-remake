@@ -16,6 +16,8 @@ import {createBrandAshView} from '../src/world/brand-ash-view.js';
 import {createBrandThief} from '../src/world/brand-thief.js';
 import {brandThiefPose} from '../src/world/jobs/brand-rule.js';
 import * as THREE from 'three';
+import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
+import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // Rule snapshots, never a walking driver.
 const hearth = {id: 'hearth', position: {x: 0, y: 0, z: 0}};
@@ -541,3 +543,60 @@ thiefView.dispose();
 assert.equal(thiefPartsDisposed, 2);
 assert.equal(thiefView.group.children.length, 0);
 console.log('PASS Light the Town: timed thief, clear route, carried bellows and cleanup.');
+
+// Job 2.7: the completed rule result reaches the normal payment and screen.
+// Profiles here are plain objects; this check never opens player storage.
+for (const [brandsUsed, pay, sentence] of [
+  [1, 100, 'You lit the town with one brand.'],
+  [2, 70, 'You lit the town with two brands.'],
+  [3, 50, 'You lit the town with 3 brands.'],
+  [7, 50, 'You lit the town with 7 brands.'],
+]) {
+  const completed = stepOnFoot(actualStep, {
+    brandBriefed: true, townEnding: true, endingElapsed: BRAND_RULE.endingSeconds,
+    theftStarted: true, brandsUsed,
+  }, {}, 0);
+  assert.equal(completed.complete, true);
+  const arrived = completed.events.find(event => event.type === 'brandArrived');
+  assert.deepEqual(arrived, {type: 'brandArrived', brandsUsed, pay, sentence});
+  const brandResult = {brandsUsed: arrived.brandsUsed, pay: arrived.pay, sentence: arrived.sentence};
+  const finishedArena = {version: 1, venueId: 'scablands', mode: 'world-job', phase: 'over',
+    participants: [{id: 'player', kind: 'player'}],
+    result: {placings: ['player'], winnerId: 'player', reason: 'job-complete'},
+    worldJob: {definition: actualJob, brandResult, job: {steps: actualJob.steps, stepIndex: actualJob.steps.length}}};
+  for (const [difficulty, factor] of [['easy', 1], ['medium', 1.2], ['hard', 1.4]])
+    assert.deepEqual(arenaReward(finishedArena, difficulty),
+      {base: pay, placing: 0, wrecks: 0, factor, total: Math.round(pay * factor)});
+  const profile = {credits: 123, kept: 'unchanged', wasteland: {
+    version: 1, discoveredGate: true, scrap: 10, settledResults: [],
+    territories: {kettle: {hold: 0, claimed: false}}, kept: 'unchanged',
+  }};
+  const beforeProfile = JSON.stringify(profile);
+  const request = {runId: `town-${brandsUsed}`, ownerPlayerId: 'test-player',
+    activePlayerId: 'test-player', cpuDifficulty: 'easy', arena: finishedArena};
+  const paid = settleArenaResult(profile, request);
+  assert.equal(paid.awarded, true);
+  assert.equal(paid.scrapEarned, pay);
+  assert.equal(paid.profile.wasteland.scrap, 10 + pay);
+  assert.equal(paid.holdAdded, 0);
+  assert.equal(JSON.stringify(profile), beforeProfile, 'Settlement leaves its input alone.');
+  assert.deepEqual(Object.keys(paid.profile), Object.keys(profile));
+  assert.deepEqual(Object.keys(paid.profile.wasteland), Object.keys(profile.wasteland));
+  assert.equal(paid.profile.credits, 123);
+  assert.equal(paid.profile.kept, 'unchanged');
+  assert.equal(paid.profile.wasteland.kept, 'unchanged');
+  const duplicate = settleArenaResult(paid.profile, request);
+  assert.equal(duplicate.awarded, false);
+  assert.equal(duplicate.profile, paid.profile);
+  assert.equal(duplicate.scrapEarned, 0);
+  const unfinishedArena = {...finishedArena, phase: 'active'};
+  assert.equal(settleArenaResult(profile, {...request, arena: unfinishedArena}).awarded, false);
+  const screen = arenaResultsScreen({arena: finishedArena},
+    {metric: () => '', action: () => '', escapeHTML: String});
+  assert.equal(screen.description.split(sentence).length - 1, 1);
+  const lost = arenaResultsScreen({arena: {...finishedArena,
+    result: {winnerId: 'raiders', reason: 'job-failed'}}},
+  {metric: () => '', action: () => '', escapeHTML: String});
+  assert.equal(lost.description.includes(sentence), false);
+}
+console.log('PASS Light the Town: brand payment, result sentence, unchanged save shape and one payment per run.');
