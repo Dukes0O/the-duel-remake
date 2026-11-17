@@ -29,6 +29,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
   furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
@@ -43,6 +44,52 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Salt riders lead a moving car, rather than steering to where it was.
+{
+  const rider = {x:0, z:0};
+  const cases = [
+    {car:{x:100, z:0}, velocity:{x:0, z:10}, speed:20},
+    {car:{x:100, z:0}, velocity:{x:-10, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:-20, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:0, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:9.999999999, z:0}, speed:10},
+  ];
+  for (const {car, velocity, speed} of cases) {
+    const aim = saltIntercept(rider, car, velocity, speed);
+    assert.ok(aim.seconds >= 0 && aim.seconds !== null);
+    assert.ok(Math.abs(Math.hypot(aim.x, aim.z) - speed * aim.seconds) <
+      Math.max(1, speed * aim.seconds) * 1e-12, 'both arrive at the same point at the same time');
+    const shift = {x:731, z:-948};
+    const moved = saltIntercept(shift, {x:car.x + shift.x, z:car.z + shift.z}, velocity, speed);
+    assert.equal(moved.seconds, aim.seconds, 'the rule follows the land, without a fixed origin');
+    assert.ok(Math.abs(moved.x - shift.x - aim.x) < 1e-9);
+    assert.ok(Math.abs(moved.z - shift.z - aim.z) < 1e-9);
+  }
+  assert.equal(saltIntercept(rider, {x:100, z:0}, {x:-20, z:0}, 10).seconds,
+    100 / 30, 'choose the first of two future meetings');
+  for (const velocity of [{x:10, z:0}, {x:20, z:0}, {x:0, z:20}]) {
+    assert.deepEqual(saltIntercept(rider, {x:100, z:0}, velocity, 10),
+      {x:100, z:0, seconds:null}, 'without a future meeting chase the current place');
+  }
+  assert.deepEqual(saltIntercept(rider, {x:100, z:0}, {x:0, z:0}, 0),
+    {x:100, z:0, seconds:null});
+  assert.equal(saltIntercept(rider, rider, {x:20, z:0}, 10).seconds, 0);
+  for (const top of [40, 80, 120]) {
+    assert.equal(saltRiderSpeed(top, 'medium'), top / 3.6);
+    assert.equal(saltRiderSpeed(top, 'hard'), top / 3.6);
+    assert.equal(saltRiderSpeed(top, 'easy'), (top - 5) / 3.6);
+  }
+  assert.equal(saltRiderSpeed(3, 'easy'), 0);
+  const chase = {car:{x:100, z:0}, rider:{x:200, z:0}, pipeMouth:rider,
+    onPan:true, chaseSeconds:119.9};
+  assert.equal(saltRidersTurnHome(chase), false);
+  assert.equal(saltRidersTurnHome({...chase, onPan:false}), true);
+  assert.equal(saltRidersTurnHome({...chase, chaseSeconds:SALT_RIDERS.chaseSeconds}), true);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:60, z:0}}), true);
+  assert.equal(saltRidersTurnHome({...chase, rider:{x:0, z:60}}), true);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:60.01, z:0}}), false);
+}
 
 // The job counts light exposure, not all time in the watch's view.
 {

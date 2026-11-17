@@ -9,6 +9,52 @@ export const EMBER_SCOOP = Object.freeze({seconds:3, radius:8, stoppedKmh:1, yar
 
 export const BESS_GREETING_RADIUS = 40;
 export const EMBER_CAPTION_SECONDS = 3;
+export const SALT_RIDERS = Object.freeze({
+  sightMetres:700,
+  pipeClearMetres:60,
+  chaseSeconds:120,
+  easySlowerKmh:5,
+});
+
+// Solve |car + velocity * t - rider| = riderSpeed * t. Pick the first
+// meeting in the future. With no meeting, aim at the car's present place.
+// Speeds are metres per second; the caller supplies the car's own pan limit.
+export function saltIntercept(rider, car, velocity, riderSpeed) {
+  const dx = car.x - rider.x, dz = car.z - rider.z;
+  const a = velocity.x ** 2 + velocity.z ** 2 - riderSpeed ** 2;
+  const b = 2 * (dx * velocity.x + dz * velocity.z);
+  const c = dx ** 2 + dz ** 2;
+  let seconds = null;
+  if (c === 0) seconds = 0;
+  else if (riderSpeed > 0) {
+    if (a === 0) {
+      if (b < 0) seconds = -c / b;
+    } else {
+      const discriminant = b * b - 4 * a * c;
+      if (discriminant >= 0) {
+        // This form avoids cancellation when one root is much larger.
+        const q = -.5 * (b + (b < 0 ? -1 : 1) * Math.sqrt(discriminant));
+        const first = q / a, second = q === 0 ? -b / (2 * a) : c / q;
+        const future = [first, second].filter(time => Number.isFinite(time) && time >= 0);
+        if (future.length) seconds = Math.min(...future);
+      }
+    }
+  }
+  return seconds === null ? {x:car.x, z:car.z, seconds:null}
+    : {x:car.x + velocity.x * seconds, z:car.z + velocity.z * seconds, seconds};
+}
+
+export function saltRiderSpeed(panTopKmh, difficulty) {
+  return Math.max(0, panTopKmh - (difficulty === 'easy' ? SALT_RIDERS.easySlowerKmh : 0)) / 3.6;
+}
+
+// The Pipe's near end is a boundary for riders, even while the car is still
+// on the pan. Returning is final for this chase and never reset by sight.
+export function saltRidersTurnHome({car, rider, pipeMouth, onPan, chaseSeconds}) {
+  const near = point => Math.hypot(point.x - pipeMouth.x, point.z - pipeMouth.z) <= SALT_RIDERS.pipeClearMetres;
+  return !onPan || chaseSeconds >= SALT_RIDERS.chaseSeconds || near(car) || near(rider);
+}
+
 export const BRAZIER_NAMES = Object.freeze({
   'yard-brazier': "Cinder's brazier",
   'halfway-brazier': 'the Halfway Camp',
