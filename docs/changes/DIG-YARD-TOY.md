@@ -1,13 +1,12 @@
 # DIG-YARD-TOY slice 2
 
-- The Dig offers the right machines, shared controls, clear cab views, an angled excavator view and open yard activities first.
-- Tip and stalled-dig messages explain what happened. Cause: the truck-side cut converges on a grid point and moves almost no soil.
-- The Dig's floor and near ground stay below edited chunks; heap and ditch rays meet the edited surface first. The switch remains `dev`.
-- On 24e6bac3b: Dig, yard switches, machine view, gear, ground view, borer freeze, apprentice, survey, input and roads passed; all scenario page expressions parse.
-- Lane on 24e6bac3b: 63 of 65 passed, including Mabel, replay and world guards. Review evidence passed outside the sandbox after FFmpeg was denied.
-- Scablands size timing failed twice: 439 ms in the lane and 450 ms alone, against 400 ms. Claude must investigate; no tolerance changed.
-- After removing the unused name list: yard switches, machine input and gear checks passed; production build passed.
-- Claude to run: Dig browser scenario, play and sound review, and the required frame check. Four long suites were left to the night by the runner.
-- Changed assertion for Claude: Dig-only machine names now omit roller and paver; town still has all eight. The near-ground expectation now uses the lowered underlay; tolerance stays 0.02 m.
-- No new game event or sound cue. Nothing is saved.
-- Removed: duplicated availability, panel text and the unused machine name list; MACHINE-ROADS removes the temporary restriction.
+- Shared controls, machine choice, clear views, yard order and honest digging and tipping messages are in; the switch stays `dev`.
+- Truck-side cause: the cut converges on a grid point and moves almost no soil.
+- Dig underlays clear edited ground; local floor normals and neighbouring chunk edges refresh. Scablands also refreshes edited neighbours at shared edges.
+- Repeated machine messages are emitted again. Rays cover changed-cell centres, corners and a chunk border; natural near-ground comparison is restored.
+- On 298f07618: Dig, ground view and Mabel passed; changed-file tier 241/247 passed. Five FFmpeg failures passed outside the sandbox; full-check hit the known PowerShell restriction.
+- Build passed on 298f07618. Earlier Scablands timing was 439 ms under load and 450 ms alone; it passed alone now at 293 ms (limit 400 ms).
+- Claude: run the Dig browser scenario, play and sound review, frame check and the full-check copy test. Seven long suites await night.
+- Changed assertions: Dig-only machine names omit roller and paver; town retains both. The 0.02 m natural-ground check is restored outside edited chunks.
+- No new game event sound cue. Nothing is saved.
+- Removed: duplicated availability and control text, the unused machine name list, full-floor normal refresh and stale shared edges. MACHINE-ROADS removes the temporary restriction.
