@@ -773,6 +773,23 @@ integration (no rams, about 36 fire) when the scout is stopped or absent. The ca
 **For Claude to run:** pictures of the scout at its post from the road at 250 m and at 60 m, and of the camp awake with
 the rider at the fence's end; then a hand drive of the chase.
 
+**Slice 6b merged 16 November 2026, late night (built by Codex in fourteen rounds, reviewed; hidden).** As designed above.
+Measured after it, with the proof drives starting from a caught scout, fire at arrival and rams: Medium East Road 26 and
+4 (the camp wakes when its fence burns, and its rider now fights), river bed with the scoop 36 and 0, without it 14 and
+0, plates 33 and 0, salt pan 47 and 0; Easy East Road 68 and 3, its driver stopping the scout. A lost chase costs a car
+turning for the Wash two rams at 30 km/h and one at 70. The chase from the rules: the scout's run is 1,430 m, 73.5 s at
+70 km/h and 93.6 s at 55; with its 250 m lead a car must hold about 82 km/h to catch it on Medium and 65 on Easy.
+Rook's four scout lines are captions; no voice is recorded for them.
+
+**Owed before Kyle's try, Claude's (the screen locked on the night of 16 November before any of it could be done):**
+- **Drive the chase by hand**, on Easy and on Medium. To answer: can the scout be seen and understood from 250 m (in a
+  still picture it is too small to make out; the horn and Rook's line carry it); is 82 km/h a fair speed to ask; does a
+  knock from behind read as a win; is the camp asleep a real reward.
+- **Is the East Road now too hard on Medium?** 26, "barely alive", where it was 41 before the camp's rider could fight. The
+  scripted driver does not fight back. If a hand cannot do better, move the rider's eight-second wait or its speed.
+- The plates (is the furnace's eight seconds enough), the Pipe and the river bed by hand.
+- A frame check on Performance with the laptop alone on one screen. Nobody has heard the job.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
