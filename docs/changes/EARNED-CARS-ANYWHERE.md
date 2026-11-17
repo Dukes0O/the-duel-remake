@@ -11,7 +11,8 @@
 - Memory-only old-profile, newly earned Enzo and four race modes passed on 874868c33 plus this change.
 - Heli jobs (5,802), cable (106), and save (44 groups) passed on 874868c33 plus this change.
 - Heli hooks: 303 passed on b1516774a plus this change. Course eligibility is night-only; stopped early.
-- Remaining: other affected suites, lane tier, build, browser scenario and independent review.
+- Heli mode (278), job clarity (1,530), missions (45 groups) and rescue view (210) passed on 98adfcae5 plus this change.
 - Changed assertions for Claude: medal-car refusals change from true away from their saved course to false before and after flight; menu refusal checks now use the McMurtry.
-- Air-only list drops medal cars; garage and result wording replaces flight or garage-only text with racing anywhere. UI suite requires Claude to run.
+- Browser scenario covers four modes and the McMurtry; all seven page expressions parse. Claude must run it and the UI suite; independent review is needed.
+- Remaining: other affected suites, lane tier and build.
 - Removed: medal cars from the air-only list and the flight requirement words.
