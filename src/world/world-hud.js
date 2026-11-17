@@ -6,6 +6,7 @@ import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
+import {FURNACE_PATIENCE_SECONDS} from './jobs/furnace-sightings.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -144,6 +145,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
     ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
+    seen: worldJob?.definition?.storyId === 'everburn' && worldJob.definition.number === 1 &&
+      !job?.done && !worldJob.settled && (worldJob.skylineSight?.seenSeconds ?? 0) > 0
+      ? {value: Math.min(worldJob.skylineSight.seenSeconds, FURNACE_PATIENCE_SECONDS), max: FURNACE_PATIENCE_SECONDS} : null,
     arrow: bearing,
     places: places.map(place => ({id: place.id, name: place.name, x: place.x, z: place.z})),
     finds: finds.map(item => {
@@ -335,6 +339,12 @@ export function createWorldHud({host, app = null, picture = null}) {
       <aside class="world-hud-ways" aria-label="Ways to the job's place"></aside></div>
       </section>`;
   host.append(root);
+  const seenGauge = doc.createElement('div');
+  seenGauge.className = 'world-hud-seen';
+  seenGauge.hidden = true;
+  seenGauge.innerHTML = '<b>SEEN</b><progress aria-label="Seen by the furnace"></progress>';
+  root.append(seenGauge);
+  const seenMeter = seenGauge.querySelector('progress');
   const line = root.querySelector('.world-hud-line'), compass = root.querySelector('.world-hud-compass i');
   const prompt = root.querySelector('.world-hud-prompt'), progress = root.querySelector('.world-hud-progress');
   const truckBar = root.querySelector('.world-hud-truck'), truckLabel = truckBar.querySelector('span'), truckMeter = truckBar.querySelector('progress');
@@ -414,6 +424,11 @@ export function createWorldHud({host, app = null, picture = null}) {
       truckBar.hidden=!model.truck;
       if(model.truck){const label=`BIG BESS ${Math.ceil(model.truck.value)} / ${model.truck.max}`;truckLabel.textContent=label;truckMeter.max=model.truck.max;truckMeter.value=model.truck.value;truckMeter.setAttribute('aria-label',label);}
       // The ember gauge: a glowing bar that dims as the ember falls, flashes when a jolt takes ember, and says OUT at 0.
+      seenGauge.hidden = !model.seen;
+      if (model.seen) {
+        seenMeter.max = model.seen.max;
+        seenMeter.value = model.seen.value;
+      }
       emberGauge.hidden = !model.ember;
       if (model.ember) {
         const share = Math.max(0, Math.min(1, model.ember.value / model.ember.max));

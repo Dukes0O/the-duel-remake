@@ -12,6 +12,8 @@
 .world-hud-truck progress{width:100%;height:8px;accent-color:#e69a38}
 /* EVERBURN-REMAKE: the ember gauge stands just above the speed readout at the lower right, clear of the weapon bar (bottom centre), the rear-view mirror (top) and the caption strip. */
 .world-hud-ember{--ember-glow:1;position:absolute;right:35px;bottom:262px;width:240px;box-sizing:border-box;padding:6px 10px 7px;background:#171711dc;border:1px solid #e4d4b255;border-left:3px solid #e69a38;border-radius:3px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:3px 9px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#f3c36e}
+.world-hud-seen{position:absolute;left:50%;top:100px;transform:translateX(-50%);padding:8px 12px;display:flex;align-items:center;gap:12px;background:#171711dc;border:1px solid #e4d4b2;color:#fff2c4;font-size:14px}
+.world-hud-seen progress{width:160px;height:14px;accent-color:#fff2c4}
 .world-hud-ember-bar{height:14px;background:#0c0b0a;border:1px solid #5b4a35;border-radius:2px;overflow:hidden}
 .world-hud-ember-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#8a2a08,#e8631a 55%,#ffb347);box-shadow:0 0 calc(18px*var(--ember-glow)) calc(4px*var(--ember-glow)) #ff7a2aa0;filter:brightness(calc(.45 + .75*var(--ember-glow)))}
 .world-hud-ember em{font-style:normal;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}

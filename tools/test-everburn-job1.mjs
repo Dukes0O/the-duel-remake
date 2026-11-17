@@ -46,6 +46,28 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
 
 // Slice 8B's clock and detection rules need no graphics or scripted drive.
 {
+  const world = createWorldJob(EVERBURN_JOBS[0]);
+  const model = () => worldHudModel({worldJob:world}).seen;
+  assert.equal(model(), null, 'SEEN is hidden before the first light exposure');
+  world.skylineSight = {seenSeconds:0};
+  assert.equal(model(), null, 'an empty SEEN bar is hidden');
+  world.skylineSight.seenSeconds = 0.01;
+  assert.deepEqual(model(), {value:0.01, max:FURNACE_PATIENCE_SECONDS}, 'the first exposure shows SEEN');
+  world.skylineSight.seenSeconds = 4;
+  assert.deepEqual(model(), {value:4, max:FURNACE_PATIENCE_SECONDS});
+  world.skylineSight.seenSeconds = 12;
+  assert.deepEqual(model(), {value:8, max:FURNACE_PATIENCE_SECONDS}, 'the drawn bar stops at full');
+  assert.equal(world.skylineSight.seenSeconds, 12, 'drawing never changes the rule count');
+  world.job.done = true;
+  assert.equal(model(), null, 'finishing the job hides SEEN');
+  world.job.done = false;
+  world.settled = true;
+  assert.equal(model(), null, 'settling the job hides SEEN');
+  world.settled = false;
+  world.definition = EVERBURN_JOBS[2];
+  assert.equal(model(), null, 'another job has no Hot Delivery SEEN bar');
+}
+{
   const riders = [{id:'furnace-rider-1'}, {id:'furnace-rider-2'}], state = {};
   assert.equal(glassPursuitReady(state, riders), true);
   beginGlassPursuit(state);
