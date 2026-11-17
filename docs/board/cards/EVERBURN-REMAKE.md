@@ -663,11 +663,53 @@ added to the bullets above:
 - **The furnace waits eight seconds**, one named number (the line at the head of this slice says why).
 - **Measured after the cures:** Easy East Road arrives 10 of 10 with 64 of 100 fire and three rams; Medium East Road with 41
   and three rams; the river bed with 36 and no rams, as before the slice.
-- **Still owed before Kyle's try:** Claude's hand drive of the East Road again (the fence, the riders, the gate), then of
-  the plates (is eight seconds enough for a hand at 42 to 50 km/h), the Pipe and the bed; a frame check on Performance;
-  nobody has heard the job. Then slice 6.
+- **Still owed before Kyle's try:** slice 6; Claude's hand drive of the plates (is eight seconds enough for a hand at 42
+  to 50 km/h), the Pipe and the bed; a frame check on Performance; nobody has heard the job.
 
-**Slice 6, designed, built after slice 5: the scout.** One Ash Men rider waits beside the road 900 m from the yard. When the
+**Claude's second drive by hand, after slice 5 (16 November 2026, night; East Road, Easy, visible window, muted).**
+Delivered, "barely alive", 8 of 100 and 50 scrap. That number is not the job's: four bumps were my own blind bursts in tight
+places. What the drive showed:
+
+- **Holding up by hand:** the pot handed over from the road at 9.8 m; the way out clear of the brazier; "Burn the fence: get
+  close and press 4." at both fences; a ram on a standing car (7.5 on Easy), the rider backing off and coming again; Tin
+  Town's gate open at 80 km/h; the forge, the crane and the result.
+- **1. The riders are held by their own fences.** Measured: at the Halfway Camp the rider stood 2.3 m behind its fence and
+  slid along it for more than twenty seconds before it got round the end. At the Girder Bridge it could not get round at
+  all, sat hidden behind the fence, and rammed in the same moment the fence burnt.
+- **2. The flame on the screen reaches further than its rule.** At 9.6 m the drawn flame touched the bridge's fence and
+  nothing burnt; at 8.3 m it burnt. The fence is 1.4 m thick and the rule measures to its middle line.
+- **3. A touch at a walking pace costs as much as a crash.** The fire lost in a hit is 1.5 for each km/h, so it reaches its
+  cap of 15 (7.5 on Easy) five km/h above the free speed. Three touches on the gate's post at about 15 km/h took 23.
+- **4. "Drive to Cinder and stop" sends the player to the wrong place.** Her own point is behind the end of the gate's
+  tower: a car stopped beside her must swing 4 m sideways in 8 m to get out, with the pot aboard. Stopping on the road
+  abreast of her works, and the start, that point and the gate lie on one straight line, but nothing says so.
+- **5. A car that stops a step short is told nothing.** 12.15 m from Cinder (reach 12) and 8.2 m from the forge (reach 8):
+  the job's line did not change either time. The forge has a red ring on the ground; I did not see one at Cinder.
+- **6. Nothing to do on the long straights** still (finding 7 of the first drive): slice 6's scout.
+- Not driven by hand yet: the plates and the furnace's eight seconds, the Pipe, the river bed. Nobody has heard the job.
+
+**Slice 6 (settled; Codex builds): the cures of the second drive, then the scout.**
+- **A rider waits where it can charge.** Each road rider's post is on the yard's side of its fence, 12 m before it and
+  15 m to the side of the road, facing the road. At the bridge the post is on the approach before the bridge, where there
+  is ground to stand on. Rule check: from its post each rider reaches a car standing on the road 30 m before the fence
+  within six seconds, with every solid in place.
+- **The flame burns what it touches.** A fence is hit when the flame reaches its near face: the distance to the fence's
+  line less half its depth (0.7 m). `FLAME_RULES` do not change. Rule check at 9.6 m (burns) and 10.0 m (does not).
+- **A hit costs by its speed.** 0.3 for each km/h above the free 8 km/h, in place of 1.5; the caps stay (15, 40 for a
+  severe hit, half on Easy). A 15 km/h touch costs 2.1, a 30 km/h knock 6.6, and the cap is reached at 58 km/h. This is a
+  design number of Claude's: report the measured table again (each way, Medium and Easy) so that Claude sees what it did
+  to the spread.
+- **Cinder stands by the road.** She stands 4 m to the left of the line from the start through the middle of the gate,
+  16 m inside the gate, with her brazier behind her and at least 6 m clear of the way out. The stop is a ring on the road
+  beside her, radius 6, drawn as the forge's ring is drawn. The hand-over counts inside the ring.
+- **A step short is told.** Standing still within 6 m outside either ring, the job's line reads "A little closer: stop
+  inside the ring." In Tin Town, from the gate on, the line reads "Stop in the ring at the forge."
+- **Then the scout**, as designed below.
+- Checks: rule checks for each, without driving; the card's one scripted drive stays `test-everburn-easy --job
+  hot-delivery`. Pictures for Claude to run: the yard with Cinder and her ring from the start, each rider at its post seen
+  from the road 60 m before its fence.
+
+**The scout (designed 16 November, part of slice 6).** One Ash Men rider waits beside the road 900 m from the yard. When the
 loaded car comes within 250 m in its sight it sounds its horn and runs for the Halfway Camp at 70 km/h. If it gets there
 first, the camp's rider is already out on the road and comes at the player before the fence. If the player catches it
 (a burst, or a ram that costs a jolt), the camp is caught asleep and its rider starts ten seconds late. That gives the long
