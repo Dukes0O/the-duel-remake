@@ -1768,6 +1768,26 @@ for (const [index, barrier] of step.barriers.entries()) {
   world.job.stepState.burntBarricades = [fence.id];
   assert.equal(line(0), step.what);
 }
+// A stopped car just outside either delivery ring gets the same useful direction.
+{
+  const world = createWorldJob(definition);
+  const line = (place, distance, speedKmh = 0, onFoot = false) => worldHudModel({worldJob:world,
+    player:{x:place.position.x + distance, z:place.position.z}, speedKmh, onFoot}).line;
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15), 'A little closer: stop inside the ring.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 6.1), 'Drive to Cinder and stop.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15, 2), 'Drive to Cinder and stop.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15, 0, true), 'Drive to Cinder and stop.');
+  world.job.stepState = {loaded:true, ember:80};
+  world.tinTownGateRequested = true;
+  const gate = step.riderSafeWall;
+  assert.equal(worldHudModel({worldJob:world, player:{x:gate.x - gate.through.x, z:gate.z - gate.through.z}, speedKmh:2}).line, step.what);
+  assert.equal(worldHudModel({worldJob:world, player:{x:gate.x + gate.through.x, z:gate.z + gate.through.z}, speedKmh:2}).line, 'Stop in the ring at the forge.');
+  assert.equal(line(step.destination, step.radius + 0.2), 'A little closer: stop inside the ring.');
+  assert.equal(line(step.destination, step.radius + 6.1), 'Stop in the ring at the forge.');
+  assert.equal(line(step.destination, step.radius + 0.2, 2), 'Stop in the ring at the forge.');
+  world.arrivalHold = {};
+  assert.equal(line(step.destination, step.radius + 0.2), 'Delivered. The forge takes the fire.');
+}
 // Fire the real car flamethrower at each named barricade and step the job.
 {
   const world = createWorldJob(definition);
