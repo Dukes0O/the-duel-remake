@@ -403,18 +403,18 @@ const second = flightToPanorama();
 assert.equal(second.fingerprint, first.fingerprint, 'the same flight every run'); checks++;
 console.log(`  headless flight fingerprint: ${first.fingerprint.slice(0, 80)}...`);
 
-// EARN-FINISH: every earned car (docs/EARNED_CARS.md section 4.2) waits at Tremblant Woods, is
-// carried by the same flight, and races only where it was set down. The Bolide (1,450 kg) can
+// EARN-FINISH: medal cars remain liftable and race anywhere before and after a flight.
+// The Bolide (1,450 kg) can
 // touch down a little over the gentle line with this scripted pilot; it is still delivered clean.
 for (const [carId, options] of [['ferrari_enzo', {}], ['mclaren_f1', {}], ['bugatti_bolide', {gentle: false}]]) {
   const before = freshProfile(carId);
   const at = (profile, courseId) => airOnlyNote({enabled: true, profile, carId, courseId}) === null;
   ok(at(before, 'tremblant-woods'), `${carId}: waits at Tremblant Woods`);
-  ok(!at(before, 'pacific-canyon') && !at(before, 'tremblant-snow') && !at(before, 'panorama-ridge'), `${carId}: refused everywhere else`);
+  ok(at(before, 'pacific-canyon') && at(before, 'tremblant-snow') && at(before, 'panorama-ridge'), `${carId}: races everywhere before the flight`);
   ok(airOnlyNote({enabled: false, profile: before, carId, courseId: 'pacific-canyon'}) === null, `${carId}: no note with the switch off`);
   const flown = flightToPanorama(carId, options);
   ok(at(flown.profile, 'panorama-ridge'), `${carId}: races at Panorama Ridge once set down there`);
-  ok(!at(flown.profile, 'tremblant-woods') && !at(flown.profile, 'pacific-canyon'), `${carId}: no longer at Tremblant Woods or anywhere else`);
+  ok(at(flown.profile, 'tremblant-woods') && at(flown.profile, 'pacific-canyon'), `${carId}: still races everywhere after the flight`);
 }
 
 // Import guard: src/heli is reached only through its named hooks, and its
