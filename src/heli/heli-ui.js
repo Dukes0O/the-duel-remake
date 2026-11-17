@@ -367,11 +367,12 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
 export function edgePrompt(view, destination = null) {
   if (view?.cruiseOffered) {
     const to = escape(destination ?? 'there');
-    if (Number.isFinite(view.cruiseShort)) return `<div class="heli-prompt" role="status">Not enough fuel to fly to ${to}: it needs ${view.cruiseShort} kg and you have ${Math.floor(view.heli?.fuelKg ?? 0)} kg. Land and fill up.</div>`;
-    if (Number.isFinite(view.cruiseIn)) return `<div class="heli-prompt" role="status">Flying to ${to} in ${Math.ceil(view.cruiseIn)}. Press <kbd>ENTER</kbd> to go now.</div>`;
+    if (view.cruiseShort === 0) return `<div class="heli-prompt" role="status">There is no leg from here to ${to}. Choose another place.</div>`;
+    if (Number.isFinite(view.cruiseShort)) return `<div class="heli-prompt" role="status">Not enough fuel to fly to ${to}: it needs ${view.cruiseShort} kg and you have <span class="heli-live-fuel">${Math.floor(view.heli?.fuelKg ?? 0)}</span> kg. Land and fill up.</div>`;
+    if (Number.isFinite(view.cruiseIn)) return `<div class="heli-prompt" role="status">Flying to ${to} in <span class="heli-live-cruise">${Math.ceil(view.cruiseIn)}</span>. Press <kbd>ENTER</kbd> to go now.</div>`;
     return `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${to}.</div>`;
   }
-  if (view?.heldAtEdge) return `<div class="heli-prompt" role="status">This is the edge of the flying area. Choose where to fly: FLY TO on the right, or the pilot's map (<kbd>N</kbd>).</div>`;
+  if (view?.heldAtEdge) return `<div class="heli-prompt" role="status">This is the edge of the flying area. Choose where to fly: FLY TO on the right${view.secrets !== undefined ? `, or the pilot's map (<kbd>N</kbd>)` : ''}.</div>`;
   return '';
 }
 
@@ -390,7 +391,9 @@ export function pumpLabel(fuelKg, {credits = 0, refuels = 0} = {}) {
   return {text: `BUY ${kg.toFixed(1)} KG · ${Math.ceil(kg * HELI_MONEY.creditsPerKg)} CR`, disabled: false};
 }
 
-const PUMP_LABEL = /<span class="heli-pump-label">[^<]*<\/span>/;
+// Words that change while the panel stands (the pump's label, the cruise countdown and the fuel in the tank): updated in
+// place, so the panel's buttons are never rebuilt under the mouse.
+const LIVE_WORDS = /<span class="(heli-pump-label|heli-live-[a-z]+)">([^<]*)<\/span>/g;
 
 // The instructor's board on the home pad, or the lesson running now.
 // driving (DRIVE-LESSON-HELIPAD): {rows, notes} from the app, the same Driving rows the menu's
@@ -572,11 +575,12 @@ export function createHeliUi({host, app, onMenu = null}) {
       if (skiHost) lastSki = set(skiHost, skiBox, lastSki);
       lastTop = set(top, instrumentsMarkup(view, {cameraIndex: app.heliCamera || 0, credits: app.profile?.credits}), lastTop);
       const controlsHtml = controlsMarkup(view, {credits: app.profile?.credits ?? 0, refuels: tank?.refuels ?? 0});
-      if (controlsHtml.replace(PUMP_LABEL, '') === lastControls.replace(PUMP_LABEL, '')) {
-        // Same span, new words: a press on the label is never lost.
-        const span = controls.querySelector('.heli-pump-label');
-        const words = controlsHtml.match(PUMP_LABEL)?.[0].replace(/<[^>]+>/g, '');
-        if (span && words !== undefined && span.textContent !== words) span.textContent = words;
+      if (controlsHtml.replace(LIVE_WORDS, '$1') === lastControls.replace(LIVE_WORDS, '$1')) {
+        // Same spans, new words: a press on the panel is never lost.
+        for (const [, name, words] of controlsHtml.matchAll(LIVE_WORDS)) {
+          const span = controls.querySelector('.' + name);
+          if (span && span.textContent !== words) span.textContent = words;
+        }
         lastControls = controlsHtml;
       } else lastControls = set(controls, controlsHtml, lastControls);
       lastNotices = set(notices, shown.map(item => `<p>${escape(item.text)}</p>`).join(''), lastNotices);

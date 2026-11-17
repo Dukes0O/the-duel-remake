@@ -2,7 +2,7 @@
 import { DRIVE, BOOST, launchScale, boostLaunch, steeringYawAuthority, TYRE_SLIP, tyreSlipSteering, stepTyreSlip, tyreSlipGrip, tyreSlipScrub, tyreSlipAngle } from './config.js';
 import { stepDrift, breakDrift } from './drift-scoring.js';
 import { enginePull, engineFitFor, autoShiftGear } from './engine-curve.js';
-import { offroadCapability, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
+import { offroadCapability, QUARRY_ROAD_CAR, wrapHeading, limitClimb, slopeSpeedDelta, terrainAttitude } from './offroad-physics.js';
 import { clamp } from './sim-common.js';
 import { onHiddenRoad } from './hidden-road.js';
 import { arenaFloorSpeed } from './arena/venues.js';
@@ -342,7 +342,7 @@ export function _drive(dt) {
 }
 
 export function _terrainPose(actor = this.state) {
-  if (actor !== this.state || !offroadCapability(this.car)) return;
+  if (actor !== this.state || !offroadCapability(this.car) && this.course.def?.practice !== true) return;
   const point = this._supportAt(actor.s, actor.lateral), spec = this._vehicleSpec(actor);
   const heading = this.course.at(actor.s).heading + actor.headingError;
   const sample = (forward, side) => {
@@ -356,7 +356,9 @@ export function _terrainPose(actor = this.state) {
 }
 
 export function _offroadStep(dt, offPreparedRoute) {
-  const s = this.state, capability = offroadCapability(this.car, { titanClimb: true });
+  const s = this.state;
+  // FREESTYLE-MOUNTAINS: on the practice course a road car drives the quarry's slopes with QUARRY_ROAD_CAR's rules.
+  const capability = offroadCapability(this.car, { titanClimb: true }) ?? (this.course.def?.practice === true ? QUARRY_ROAD_CAR : null);
   if (!capability || s.tumble) return;
   const before = this._supportAt(s.prevS, s.prevLateral), after = this._supportAt(s.s, s.lateral);
   if (![before.y, after.y, s.s, s.lateral].every(Number.isFinite)) {

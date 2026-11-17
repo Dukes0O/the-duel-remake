@@ -1150,7 +1150,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       return Object.freeze({to: destination, name: placesNow()[destination]?.name ?? destination, heading: compassBearing(goal.x - heli.x, goal.z - heli.z),
         km: km === null ? null : Math.round(km * 10) / 10});
     }
-    const ski = skiGoal(), goal = ski ?? zoneTarget();
+    const ski = skiGoal();
+    // A fire, rescue or recovery here has its own line on screen; HEAD FOR does not point elsewhere.
+    if (!ski && specialGoal()) return null;
+    const goal = ski ?? zoneTarget();
     return Object.freeze({to: destination, name: ski ? SKI_PAD_LABELS[ski.pad] : 'the landing pad', heading: compassBearing(goal.x - heli.x, goal.z - heli.z),
       km: Math.round(Math.hypot(goal.x - heli.x, goal.z - heli.z) / 100) / 10});
   }
@@ -1873,11 +1876,14 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         if (heli.z === a.minZ || heli.z === a.maxZ) heli.vz = 0;
         if (heli.y === top) heli.vy = Math.min(0, heli.vy);
         const away = !!destination && destination !== site.courseId;
-        heldAtEdge = !away;
+        heldAtEdge = !away && challenge?.id !== 'headings';
         if (away && !cruiseOffered) {
           cruiseOffered = true; cruiseIn = HELI_SESSION.cruiseWait; cruiseShort = null;
           emit({type: 'cruiseOffered', to: destination});
           emit({type: 'radio', line: 'heli.radio.cruise.ready'});
+        } else if (away && cruiseIn !== null && (lesson || (challenge && challenge.id !== 'altitude'))) {
+          // A lesson or a Lab challenge (but the altitude flight, which is a cruise) waits for ENTER, as before.
+          cruiseIn = null;
         } else if (away && cruiseIn !== null && (cruiseIn -= dt) <= 0) {
           cruiseIn = null;
           api.acceptCruise();
@@ -2002,7 +2008,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (phase !== 'flying' || !cruiseOffered || !destination) return false;
       const fuel = legFuelKg(site.courseId, destination, dflag);
       if (fuel === null || heli.fuelKg < fuel) {
-        cruiseIn = null; cruiseShort = fuel;
+        cruiseIn = null; cruiseShort = fuel ?? 0;
         emit({type: 'cruiseRefused', to: destination, needKg: fuel});
         emit({type: 'radio', line: 'heli.radio.cruise.refused'});
         return false;

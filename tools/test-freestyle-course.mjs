@@ -54,18 +54,19 @@ try{
     const c=duel.course,k=c.features.mountains[1],st=duel.state,crashes=[];duel.onChange((_,ev)=>{if(ev?.crash)crashes.push(ev.crash);});
     Object.assign(st,{s:k.s,prevS:k.s,lateral:k.off-160,prevLateral:k.off-160,speedMph:70,gear:3});
     if(air){const g=duel._supportAt(st.s,st.lateral).y;Object.assign(st,{airborne:true,airHeight:air,prevAirHeight:air,_jumpY:g+air,_verticalSpeed:2});}
-    let closest=Infinity,below=-Infinity,climbed=0;
+    let closest=Infinity,below=-Infinity,climbed=0,pitched=0;
     for(let i=0;i<10/dt&&!crashes.length;i++){
       const p=c.worldAt(st.s,st.lateral),want=Math.atan2(k.x-p.x,k.z-p.z),have=c.at(st.s).heading+(st.headingError||0);
       duel.setInput({throttle:1,steer:Math.max(-1,Math.min(1,-wrap(want-have)*3))});duel.step(dt);
       const q=c.worldAt(st.s,st.lateral),surface=sampleMountainSupport(c,q.x,q.z);closest=Math.min(closest,Math.hypot(q.x-k.x,q.z-k.z));
-      if(surface!=null){below=Math.max(below,surface-((st.groundHeight??duel._supportAt(st.s,st.lateral).y)+(st.airHeight||0)));climbed=Math.max(climbed,surface-c.groundAt(st.s,st.lateral).y);}
+      if(surface!=null){below=Math.max(below,surface-((st.groundHeight??c.groundAt(st.s,st.lateral).y)+(st.airHeight||0)));pitched=Math.max(pitched,Math.abs(st.terrainPitch||0));climbed=Math.max(climbed,surface-c.groundAt(st.s,st.lateral).y);}
     }
-    return {crashes,closest,below,climbed};
+    return {crashes,closest,below,climbed,pitched};
   };
   const ground=driveAt('koenigsegg_jesko',0);
   check(!ground.crashes.length&&ground.closest<10,`the Jesko drives onto the quarry mountain with no crash (${ground.crashes[0]??'none'}, ${ground.closest.toFixed(0)} m from its top)`);
-  check(ground.climbed>20&&ground.below<=.01,`it rides the real surface, up ${ground.climbed.toFixed(1)} m, never inside it (${ground.below.toFixed(2)} m)`);
+  check(ground.climbed>20&&ground.below<=.01,`it rides the real surface as it is drawn, up ${ground.climbed.toFixed(1)} m, never inside it (${ground.below.toFixed(2)} m)`);
+  check(ground.pitched>.15,`and tilts with the slope (${(ground.pitched*180/Math.PI).toFixed(0)} degrees)`);
   const flying=driveAt('koenigsegg_jesko',20);
   check(!flying.crashes.length,`jumping toward the mountain, no crash in the air (${flying.crashes[0]??'none'})`);
   const truck=driveAt('titan_monster',0);

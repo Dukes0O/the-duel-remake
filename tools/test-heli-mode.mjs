@@ -216,7 +216,7 @@ for (const id of Object.keys(HELI_DESTINATIONS)) {
   run(session, 4, () => ({lift: 1}));
   session.setDestination('panorama-ridge');
   const area = session.view().area;
-  run(session, 60, () => ({lift: 1}), v => v.heli.y > area.ceiling);
+  run(session, 60, () => ({lift: 1}), v => v.heli.y >= area.ceiling);
   ok(session.cruiseOffered, 'offered');
   ok(!session.acceptCruise(), 'refused with 100 kg for a 120 kg leg');
   ok(session.takeEvents().some(e => e.type === 'cruiseRefused' && e.needKg === 120), 'the refusal says what the leg needs');
