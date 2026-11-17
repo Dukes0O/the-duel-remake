@@ -79,6 +79,8 @@ const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.e
   3: 'story.ember.cinder.19'});
 // The pot's cues (src/sound-bank.js), by the carry step's event.
 const EMBER_CUES = Object.freeze({emberJolt: 'world.ember.spark', emberOut: 'world.ember.out', emberRelit: 'world.ember.scoop'});
+const BRAND_CUES = Object.freeze({brandCatch: 'world.brand.catch', lit: 'world.brand.catch',
+  brandOut: 'world.brand.out', ashThrow: 'world.ash.throw', townWoke: 'world.town.wake'});
 const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
@@ -1059,6 +1061,19 @@ function finishWorldJob(duel, worldJob) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  // The town's ending clock belongs to its rule. Freeze combat and foot motion
+  // through the arena's existing hold path, while continuing captions and actors.
+  if (worldJob.job.stepState.townEnding) {
+    worldJob.clockSec = state.stageTimeSec;
+    const next = stepJob(worldJob.job, {}, dt);
+    worldJob.job = next;
+    applyRequests(duel, worldJob, next.requests);
+    updateJobActors(duel, worldJob, dt);
+    const arrived = next.events.find(event => event.type === 'brandArrived');
+    if (arrived) worldJob.brandResult = {brandsUsed: arrived.brandsUsed, pay: arrived.pay, sentence: arrived.sentence};
+    if (next.done) return finishWorldJob(duel, worldJob);
+    return null;
+  }
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' &&
       worldJob.job.steps[0]?.riderSafeWall) {
     const gate = worldJob.job.steps[0].riderSafeWall, car = position(duel, state);
@@ -1317,6 +1332,11 @@ export function stepWorldJob(duel, dt) {
     // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
     // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
     if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
+    if (currentStep?.brand && BRAND_CUES[event.type]) {
+      const lamp = currentStep.places?.find(place => place.id === event.id);
+      duel.emit({arenaTell: {id: 'town-brand', targetId: 'player', seconds: 0,
+        cue: BRAND_CUES[event.type], position: {...(event.position ?? lamp?.position ?? point)}}});
+    }
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
         sentence: emberSentence(currentStep.ember, event.ember, event.relights)};

@@ -251,6 +251,9 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
     places: lamps, ashEntries: [place('west', -100, 0), place('east', 100, 0)]}]};
   const {app} = start({job});
   const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
+  const ashTells = [];
+  const originalEmit = duel.emit.bind(duel);
+  duel.emit = event => { if (event.arenaTell) ashTells.push(event.arenaTell); originalEmit(event); };
   worldJob.job.stepState = {brandsUsed: 1, brandSeconds: 90, lamps: {pump: true}};
   state.onFoot = true;
   state.fighter = {x: 20, y: 0, z: 0, speed: 0, s: state.s,
@@ -283,6 +286,8 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   Object.assign(thrower, {x: 20, y: 0, z: 1, approachTarget: null});
   stepWorldJob(duel, 0);
   assert.equal(worldJob.job.stepState.brandAsh.men[thrower.id].fleeing, undefined);
+  assert.equal(ashTells.filter(tell => tell.cue === 'world.ash.throw').length, 1);
+  assert.equal(ashTells.find(tell => tell.cue === 'world.ash.throw').position.x, state.fighter.x);
   state.footWeapons.selected = 'hand-flamer'; state.fighter.flaming = true;
   Object.assign(thrower, {x: 20, y: 0, z: -1});
   stepWorldJob(duel, 0);
@@ -312,4 +317,56 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   app.returnToMenu(); app.dispose?.();
 }
 
-console.log('PASS world-job: real Duel inputs, fire, F out/in, saved loadout cleanup, and town Ash Men movement and recovery');
+// The town's ending uses the arena hold path even while the player is on foot.
+// These are rule snapshots, not a second scripted walk through the job.
+{
+  const place = (id, x) => ({id, position: {x, y: 0, z: 0}});
+  const lamps = [place('pump', 20), place('tower', 40), place('far', 60)];
+  const {app} = start({job: {id: 'test-brand-ending', captions: {
+    'brand.awake': 'Auntie Solder: Three lamps. Now we can see how bad it is.',
+    'brand.thief': "Auntie Solder: Thief! He's got my bellows!",
+  }, steps: [{kind: 'onfoot', brand: true, townEnding: true,
+    hearth: place('hearth', 0), places: lamps}]}});
+  const duel = app.duel, state = duel.state, worldJob = state.arena.worldJob;
+  const tells = [], captions = [];
+  const emit = duel.emit.bind(duel), callout = duel._storyCallout.bind(duel);
+  duel.emit = event => { if (event.arenaTell) tells.push(event.arenaTell); emit(event); };
+  duel._storyCallout = (...args) => { captions.push(args[0]); callout(...args); };
+  state.onFoot = true;
+  state.fighter = {x: 0, y: 0, z: 0, speed: 0, s: state.s,
+    maxHealth: 100, health: 100, yaw: 0, pitch: 0};
+  stepWorldJob(duel, 0);
+  assert.equal(tells.at(-1).cue, 'world.brand.catch');
+  state.fighter.x = 10;
+  worldJob.job.stepState.brandSeconds = .1;
+  stepWorldJob(duel, .1);
+  assert.equal(tells.at(-1).cue, 'world.brand.out');
+  state.fighter.x = 0;
+  stepWorldJob(duel, 0);
+  assert.equal(tells.at(-1).cue, 'world.brand.catch');
+  state.fighter.x = 60;
+  worldJob.job.stepState.lamps = {pump: true, tower: true};
+  stepWorldJob(duel, 2);
+  assert.equal(worldJob.job.stepState.townEnding, true);
+  assert.deepEqual(tells.slice(-2).map(tell => tell.cue), ['world.brand.catch', 'world.town.wake']);
+  assert.equal(tells.at(-2).position.x, 60, 'the lamp catches at its own position');
+  const held = {x: state.fighter.x, y: state.fighter.y, z: state.fighter.z, s: state.s, lateral: state.lateral};
+  state.fighter.speed = 4; state.fighter.flaming = true;
+  duel.setInput({throttle: 1, interact: true});
+  state.fighterInput.fire = true;
+  for (let tick = 0; tick < 1081 && state.status === 'racing'; tick++) duel.step(dt);
+  assert.equal(state.status, 'arena_result');
+  assert.deepEqual({x: state.fighter.x, y: state.fighter.y, z: state.fighter.z,
+    s: state.s, lateral: state.lateral}, held, 'holding movement and F cannot leave the ending');
+  assert.equal(state.fighter.flaming, false);
+  assert.equal(state.onFoot, true);
+  assert.equal(worldJob.brandResult.brandsUsed, 2);
+  assert.equal(worldJob.brandResult.pay, 70);
+  assert.equal(worldJob.brandResult.sentence, 'You lit the town with two brands.');
+  assert.equal(captions.filter(text => text.includes('Three lamps.')).length, 1);
+  assert.equal(captions.filter(text => text.includes('Thief!')).length, 1);
+  assert.equal(tells.filter(tell => tell.cue === 'world.town.wake').length, 1);
+  app.returnToMenu(); app.dispose?.();
+}
+
+console.log('PASS world-job: real Duel inputs, fire, F out/in, saved loadout cleanup, town Ash Men, sound cues and ending hold');
