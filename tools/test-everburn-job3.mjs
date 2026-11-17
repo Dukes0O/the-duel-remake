@@ -283,3 +283,46 @@ assert.equal(playerState.onFoot, false, 'The normal hold-F transition returns th
 assert.equal(JSON.stringify([...memory]), savedBeforeStart);
 app.returnToMenu(); app.dispose?.();
 console.log('PASS Run Him Down: real arena starts the existing fighter 60 m from the parked bay car.');
+
+// Jobs 3.2, 3.3 and 3.6: the same load moves between roofs; opaque ash uses
+// the rule's road box, expires and cannot leave a drawing in another job.
+const {createBellowsView} = await import('../src/world/bellows-view.js');
+const THREE = await import('three');
+const drawing = createBellowsView({groundAt: () => ({x: 10, y: 2, z: 20}),
+  nearest: () => ({s: 1, lateral: 2}), at: () => ({heading: .4})});
+const loadState = {s: 1, lateral: 2, headingError: .2, onFoot: true,
+  arena: {mode: 'world-job', worldJob: {actors: [{id: 'thief',
+    position: {x: 100, y: 3, z: 200}, heading: .7}],
+    job: {steps: [chaseStep], stepIndex: 0, stepState: {clouds: [cloud]}}}}};
+const beforeDrawing = JSON.stringify(loadState);
+drawing.update(loadState);
+assert.equal(drawing.group.visible, true);
+assert.equal(drawing.load.visible, true);
+assert.deepEqual(drawing.load.position.toArray(), [100, 3 + BELLOWS_RULE.roofLoadLift, 200]);
+assert.equal(drawing.load.rotation.y, .7);
+const drawnAsh = drawing.clouds.get('first');
+assert.deepEqual(drawnAsh.scale.toArray(), [cloud.width, BELLOWS_RULE.ashHeightMetres, cloud.length]);
+assert.deepEqual(drawnAsh.position.toArray(), [cloud.x, 2 + BELLOWS_RULE.ashHeightMetres / 2, cloud.z]);
+assert.equal(drawnAsh.rotation.y, cloud.yaw);
+assert.equal(drawnAsh.material.transparent, false);
+assert.equal(drawnAsh.material.side, THREE.DoubleSide);
+assert.equal(drawnAsh.material.depthWrite, true);
+assert.equal(JSON.stringify(loadState), beforeDrawing, 'Drawing must not write any job fact.');
+drawing.update(loadState);
+assert.equal(drawing.clouds.get('first'), drawnAsh, 'A living cloud reuses its mesh.');
+loadState.arena.worldJob.job.stepState = {bellowsLoaded: true, clouds: [{...cloud, remaining: 0}]};
+drawing.update(loadState);
+assert.deepEqual(drawing.load.position.toArray(), [10, 2 + BELLOWS_RULE.roofLoadLift, 20]);
+assert(Math.abs(drawing.load.rotation.y - .6) < 1e-9);
+assert.equal(drawing.clouds.size, 0);
+assert.equal(drawnAsh.parent, null);
+drawing.update({arena: {mode: 'race'}});
+assert.equal(drawing.group.visible, false);
+assert.equal(drawing.load.visible, false);
+const released = [];
+for (const resource of [drawing.load.geometry, drawing.load.material, drawnAsh.geometry, drawnAsh.material])
+  resource.addEventListener('dispose', () => released.push(resource));
+drawing.dispose();
+assert.equal(new Set(released).size, 4);
+assert.equal(drawing.group.children.length, 0);
+console.log('PASS Run Him Down: roof transfer, opaque road ash, read-only drawing and cleanup.');
