@@ -9,6 +9,8 @@ export const BELLOWS_RULE = Object.freeze({
   meetingReleaseMetres: 8,
   roadSpeedBelowPlayerKmh: 5,
   blockingBehindMetres: 30,
+  blockingSideMps: 2,
+  thiefRadiusMetres: 1.3,
   boneyardSpeedKmh: 60,
   gapMinMetres: 6,
   gapMaxMetres: 9,
@@ -88,6 +90,32 @@ export function bellowsThiefSpeedKmh(playerTopSpeedKmh, inBoneyard) {
 export function bellowsBlockingSide(playerAlongMetres, playerLateralMetres) {
   return playerAlongMetres <= 0 && playerAlongMetres >= -BELLOWS_RULE.blockingBehindMetres
     ? Math.sign(playerLateralMetres) : 0;
+}
+
+// Keep the block on the road's current segment. The ordinary actor mover
+// still resolves the resulting point against ground and solids.
+export function bellowsBlockingMove(from, proposed, segmentStart, segmentEnd, player, roadWidth, dt) {
+  if (!player || !(dt > 0) || !(roadWidth > BELLOWS_RULE.thiefRadiusMetres * 2)) return proposed;
+  const dx = segmentEnd.x - segmentStart.x, dz = segmentEnd.z - segmentStart.z;
+  const length = Math.hypot(dx, dz);
+  if (!(length > 0)) return proposed;
+  const fx = dx / length, fz = dz / length, rx = fz, rz = -fx;
+  const along = (player.x - from.x) * fx + (player.z - from.z) * fz;
+  const side = bellowsBlockingSide(along,
+    (player.x - from.x) * rx + (player.z - from.z) * rz);
+  if (!side) return proposed;
+  const limit = roadWidth / 2 - BELLOWS_RULE.thiefRadiusMetres;
+  const playerAcross = (player.x - segmentStart.x) * rx + (player.z - segmentStart.z) * rz;
+  const across = (proposed.x - segmentStart.x) * rx + (proposed.z - segmentStart.z) * rz;
+  const desired = Math.max(-limit, Math.min(limit, playerAcross));
+  // Rotating an already aligned pair can leave a fraction of a coordinate's
+  // rounding unit. Do not turn that into sideways movement.
+  const rounding = Number.EPSILON * Math.max(1, Math.abs(player.x), Math.abs(player.z),
+    Math.abs(proposed.x), Math.abs(proposed.z));
+  if (Math.abs(desired - across) <= rounding) return proposed;
+  const travel = BELLOWS_RULE.blockingSideMps * dt;
+  const shift = Math.max(-travel, Math.min(travel, desired - across));
+  return {...proposed, x:proposed.x + rx * shift, z:proposed.z + rz * shift};
 }
 
 // The arena reports actual flame contact and impact speed. A health number,

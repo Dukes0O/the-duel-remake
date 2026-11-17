@@ -26,7 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
-import {BELLOWS_RULE} from '../../world/jobs/bellows-rule.js';
+import {BELLOWS_RULE, bellowsBlockingMove} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
@@ -641,6 +641,11 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   }
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
   // pushed out of a building. Every stopping place must be clear of solids.
+  const chaseStep = worldJob.job.steps[worldJob.job.stepIndex];
+  if (chaseStep?.bellows && actor.id === chaseStep.targetId && !duel.state.onFoot && travel > 0) {
+    actor.position = bellowsBlockingMove(before, actor.position, path[Math.max(0, index - 1)], target,
+      position(duel, duel.state), chaseStep.roadWidthMetres, dt);
+  }
   if (duel.course.def.scablands && actor.position && !actor.train) {
     const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: before.y});
     actor.position.x = at.x; actor.position.z = at.z; actor.position.y = at.y;

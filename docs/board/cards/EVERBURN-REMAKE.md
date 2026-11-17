@@ -1014,6 +1014,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, job 3 blocking: sideways movement is at most 2 m/s, toward the passing car's position, bounded by the road width less the thief's 1.3 m collision radius. Both numbers are named in `BELLOWS_RULE`. The existing actor mover still resolves ground and solids. The thief does not react to the player walking; the 30 m rule applies to the player's car.
+
 - Slice 9, job 3 escape: the stopped thief steps out 3 m from his car, away from the player, then runs 60 m that way at 6 m/s through the existing job foot mover. Those distances and speed are named in `BELLOWS_RULE`. He stays outside shooting raid zones. No extra sound cue is added; collection still sounds `world.bellows.load` and the furnace horn.
 
 - Slice 9, job 3: the two sacks burst at 800 m and 1,600 m along the road from the town gate. Both distances are named in `BELLOWS_RULE.ashAtRoadMetres`. The nine-second ending starts when the thief stops, but results wait until the player has stopped beside him and collected the bellows. The player can still approach during that hold.

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {BELLOWS_RULE, BELLOWS_LINES, bellowsPay, bellowsSentence,
   stepBellowsLoad, bellowsAshBox, stepBellowsAsh, bellowsThiefSpeedKmh,
-  bellowsBlockingSide, stepBellowsPursuit, stepBellowsEnding} from '../src/world/jobs/bellows-rule.js';
+  bellowsBlockingSide, bellowsBlockingMove, stepBellowsPursuit, stepBellowsEnding} from '../src/world/jobs/bellows-rule.js';
 
 // Job 3.2: speed, attempted passes and each sack's six-second road-width box.
 assert.equal(bellowsThiefSpeedKmh(200, false), 195);
@@ -19,6 +19,30 @@ assert.equal(aged[0].remaining, 1);
 assert.equal(cloud.remaining, 6);
 assert.deepEqual(stepBellowsAsh(aged, 1), []);
 console.log('PASS Run Him Down: road speed, passing side and ash box lifetime.');
+
+// Blocking reads the attempted pass in the road's frame, at any heading.
+// These are one-step facts, without scripted controls or a driving route.
+for (const heading of [0, .7, Math.PI / 2, Math.PI]) {
+  const f = {x:Math.sin(heading), z:Math.cos(heading)};
+  const r = {x:f.z, z:-f.x};
+  const point = (along, across) => ({x:100 + f.x * along + r.x * across,
+    z:200 + f.z * along + r.z * across});
+  for (const side of [-1, 1]) {
+    const from = Object.freeze(point(50, 0)), proposed = Object.freeze(point(51, 0));
+    const moved = bellowsBlockingMove(from, proposed, point(0, 0), point(100, 0), point(30, side * 4), 12, .5);
+    assert(Math.abs((moved.x - proposed.x) * r.x + (moved.z - proposed.z) * r.z - side) < 1e-9);
+    assert(Math.abs((moved.x - proposed.x) * f.x + (moved.z - proposed.z) * f.z) < 1e-9);
+    for (const along of [19.9, 50.1]) assert.deepEqual(
+      bellowsBlockingMove(from, proposed, point(0, 0), point(100, 0), point(along, side * 4), 12, .5), proposed);
+    const edge = bellowsBlockingMove(from, proposed, point(0, 0), point(100, 0), point(30, side * 40), 12, 10);
+    assert(Math.abs((edge.x - proposed.x) * r.x + (edge.z - proposed.z) * r.z - side * (6 - BELLOWS_RULE.thiefRadiusMetres)) < 1e-9);
+    const aligned = point(51, side * 4);
+    assert.deepEqual(bellowsBlockingMove(point(50, side * 4), aligned, point(0, 0), point(100, 0), point(30, side * 4), 12, 1), aligned);
+    for (const [player, width, dt] of [[null, 12, 1], [point(30, 4), 12, 0], [point(30, 4), 2, 1]])
+      assert.deepEqual(bellowsBlockingMove(from, proposed, point(0, 0), point(100, 0), player, width, dt), proposed);
+  }
+}
+console.log('PASS Run Him Down: blocking follows either passing side within the road and the 30 m approach.');
 
 // Job 3.3 and 3.6: snapshots of contacts and loads, never a driving script.
 const tick = (state = {}, facts = {}, dt = 0) => stepBellowsLoad(state, facts, dt);
@@ -452,5 +476,22 @@ escapeDrawing.update({arena:{mode:'race'}});
 assert.equal(escapeDrawing.figures.group.visible, false);
 assert.equal(escapeDrawing.figures.group.children[0].count, 0);
 escapeDrawing.dispose();
+// The actor bridge applies blocking only to the remade thief. Use flat ground
+// to isolate steering from the still undecided Boneyard route.
+const blockingPath = [{position:{x:carAt.x - 4, z:carAt.z - 50}},
+  {position:{x:carAt.x - 4, z:carAt.z + 100}}];
+const blockingStep = {...chaseStep, path:blockingPath, roadWidthMetres:12,
+  actor:{id:'thief', path:blockingPath}};
+for (const [remade, onFoot, expectedShift] of [[true, false, 1], [false, false, 0], [true, true, 0]]) {
+  escapeState.onFoot = onFoot;
+  escapeJob.job = createJob({steps:[{...blockingStep, bellows:remade}]});
+  escapeJob.actors = [{id:'thief', health:20, renderCar:'dusthawk_rally', pathIndex:1,
+    position:{x:carAt.x - 4, y:carAt.y, z:carAt.z + 20}}];
+  escapeJob.follow = {actorId:'thief', speed:10};
+  stepWorldJob(escapeDuel, .5);
+  assert(Math.abs(escapeJob.actors[0].position.x - (carAt.x - 4) - expectedShift) < 1e-9);
+}
+assert.equal(JSON.stringify([...memory]), savedBeforeEscape);
 escapeApp.returnToMenu(); escapeApp.dispose?.();
 console.log('PASS Run Him Down: stopped thief runs once through the existing foot mover and read-only figures.');
+console.log('PASS Run Him Down: arena mover blocks a driving pass only in the remade chase.');
