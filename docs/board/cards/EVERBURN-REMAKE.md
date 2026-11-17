@@ -918,6 +918,12 @@ seventeen sinking places are cured); the bed. Claude drives each by hand in the 
 **Kyle, 17 November 2026, on being shown this:** "Let's build the design and get it off to the races." Building as slice 8
 (Codex, lane `everburn-ways`): the brazier and Bess, the glass, the salt riders, the bed, in that order.
 
+**The sinking (Kyle's 11), cause measured by Claude, 17 November 2026.** The near ground is drawn in cells of 23.3 m by
+16.7 m, flat between corners. Where the land bends sharply inside a cell, at the foot of a hill, the drawn ground stands
+above the height the car rides on: 0.44 to 0.83 m at the three places on the salt pan's way, under 0.03 m 20 m either
+side. The cure is slice 8's part E: such a cell is drawn eight times as fine, as a scarp's cell already is. Its cost in
+frame time is Claude's to check before it merges.
+
 ## Jobs 2 and 3 remade: one evening in Tin Town (Claude's design, 17 November 2026)
 
 Kyle, the same day: "I'd really like to get going with the next few pieces of the story too. we're stuck on the first
