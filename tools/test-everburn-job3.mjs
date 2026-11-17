@@ -70,4 +70,12 @@ for (const [condition, pay, sentence] of [
 const before = Object.freeze({bellows: 90, knocks: 1});
 assert.deepEqual(tick(before, hard), tick(before, hard));
 assert.deepEqual(before, {bellows: 90, knocks: 1});
+// Flame costs depend on elapsed contact time, not how many frames are drawn.
+let partitioned = {};
+for (let frame = 0; frame < 120; frame++)
+  partitioned = tick(partitioned, {flameContact: true}, 1 / 120).state;
+assert(Math.abs(partitioned.bellows - tick({}, {flameContact: true}, 1).state.bellows) < 1e-9);
+assert.equal(tick({}, {flameContact: true}, 0).state.bellows, 100);
+const softWall = tick({}, {...wall, solidImpactKmh: 1}).state;
+assert.equal(tick(softWall, wall).state.knocks, 0, 'Leaning against a solid is one meeting too.');
 console.log('PASS Run Him Down: load, warning, separate meetings, three knocks and result boundaries.');
