@@ -398,24 +398,6 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-REVIEW-EVIDENCE-MIDNIGHT.md"
 
-  - id: QA-ARENA-SHOVE-BASELINE
-    title: "arena-shove stops: current baseline and candidate have identical src"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    details: "docs/board/cards/QA-ARENA-SHOVE-BASELINE.md"
-
-
-  - id: QA-DRIVE-LESSON-RUN-BOARD
-    title: "drive-lesson-run expects an older lesson board"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    details: "docs/board/cards/QA-DRIVE-LESSON-RUN-BOARD.md"
 
   - id: QA-WAVE1-AUDIO-FLIGHT
     title: "Check the moving weapon flight sound alone"
@@ -435,15 +417,6 @@ tasks:
     status: "ready"
     needs: []
     details: "docs/board/cards/QA-TEMP-CLEANUP.md"
-
-  - id: QA-SKI-FINISH-TIMEOUT
-    title: "ski-finish browser scenario times out after the slalom"
-    owner: "claude"
-    lane: "TOOLS"
-    size: "S"
-    status: "ready"
-    needs: []
-    details: "docs/board/cards/QA-SKI-FINISH-TIMEOUT.md"
 
 
   - id: QA-TIMING-UNDER-LOAD
@@ -562,7 +535,7 @@ tasks:
     lane: "TOOLS"
     size: "M"
     status: "building"
-    claimed_by: "Claude with a Sonnet helper, since 16 November 2026: four checks cured on the helper's branch, ski-finish and the frame items in a second round"
+    claimed_by: "Claude, since 16 November 2026: five browser checks cured and merged; left are deep-frames (it must leave the nightly browser step and join the frame stage) and the frame stage itself (the screens)"
     needs: []
     details: "docs/board/cards/QA-STANDING-BROWSER.md"
 

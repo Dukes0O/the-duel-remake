@@ -463,7 +463,7 @@ test('concurrent source commit keeps its new committed STATUS during publication
 });
 test('Night browser frame row reuses the same leaf without measuring, and failed/missing originals fail',async()=>{
   const outputDir=root+'/.evidence/'+date+'/FAC-03/night-owned/browser/frame-pacing';
-  const packetPath=root+'/.evidence/'+date+'/FAC-03/night-owned/frames/frame-pacing.json';
+  const packetPath=root+'/.evidence/'+date+'/FAC-03/night-owned/frames/frame-pacing/frame-pacing.json';
   let measurements=0,writes=0;
   const context={outputDir,evaluate:()=>{measurements++;throw Error('must not measure');},
     command:()=>{measurements++;throw Error('must not render');},navigate:()=>{measurements++;throw Error('must not navigate');}};

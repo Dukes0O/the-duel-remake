@@ -709,7 +709,17 @@ places. What the drive showed:
   hot-delivery`. Pictures for Claude to run: the yard with Cinder and her ring from the start, each rider at its post seen
   from the road 60 m before its fence.
 
-**The scout (designed 16 November, part of slice 6).** One Ash Men rider waits beside the road 900 m from the yard. When the
+**Slice 6 was cut in two the same night (Claude).** Codex traced the river bed's proof drive with the camp's rider freed:
+the bed's way follows the East Road to within 28 m of the Halfway Camp's fence before it turns off for the Wash, so a
+rider that can charge meets the bed's driver on the road three times (at 110, 72 and 28 m before the fence) and the pot
+arrives out. The bed was only ever free of riders because the camp's rider was held by its own fence. So the camp is one
+piece of design: where its rider waits, whom it chases, where the bed's way leaves the road, what the scout changes.
+**Slice 6a** (Codex, finishing): the flame's reach, a hit's cost by speed, Cinder by the road with her ring, the lines for
+a step short, the Girder Bridge's rider on the shoulder. The camp's rider stays at its old post, still held by its
+fence, which is a known fault until 6b. **Slice 6b** (Claude designs first, with the map and pictures of the camp and
+the Wash in hand): the camp and the scout.
+
+**The scout (designed 16 November; now part of slice 6b).** One Ash Men rider waits beside the road 900 m from the yard. When the
 loaded car comes within 250 m in its sight it sounds its horn and runs for the Halfway Camp at 70 km/h. If it gets there
 first, the camp's rider is already out on the road and comes at the player before the fence. If the player catches it
 (a burst, or a ram that costs a jolt), the camp is caught asleep and its rider starts ten seconds late. That gives the long
