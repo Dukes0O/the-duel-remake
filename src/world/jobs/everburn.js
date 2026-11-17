@@ -109,6 +109,17 @@ export function buildEverburn(land) {
     start:place(`ash-rider-start-${index + 1}`, index === 0
       ? roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 25) : riderPost(barrier, 5)),
   })));
+  // The scout's post is eight metres to the right of the East Road, facing town.
+  const scoutRoad = roadPointFrom(eastRoad, land.yard.x, land.yard.z, 900);
+  const scoutAhead = roadPointFrom(eastRoad, land.yard.x, land.yard.z, 901);
+  const scoutDx = scoutAhead.x - scoutRoad.x, scoutDz = scoutAhead.z - scoutRoad.z;
+  const scoutLength = Math.hypot(scoutDx, scoutDz);
+  const scout = Object.freeze({id:'ash-scout', renderCar:'dusthawk_rally', health:100,
+    heading:Math.atan2(scoutDx, scoutDz),
+    start:place('ash-scout-start', {x:scoutRoad.x + scoutDz / scoutLength * 8,
+      z:scoutRoad.z - scoutDx / scoutLength * 8}),
+    roadStart:place('ash-scout-road', scoutRoad), camp:ashRiders[0].start,
+    sightRadius:250, speedKmh:70, easySpeedKmh:55});
   const furnaceRiders = path(...[-6, 6].map((offset, index) => Object.freeze({
     id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     start:place(`furnace-rider-start-${index + 1}`, at('furnace-watch', offset, 0)),
@@ -131,7 +142,7 @@ export function buildEverburn(land) {
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', pickupAt, 6), figure:place('cinder-figure', cinderAt), radius:6, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.0}), burnable:true, spillLineId:'story.ember.cinder.4',
-        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders,
+        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders, scout,
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},

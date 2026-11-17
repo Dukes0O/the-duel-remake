@@ -62,6 +62,23 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(stopAt(5.9).requests[0].place.radius, 6);
 }
 
+// The scout's post and speeds are tied to the East Road.
+{
+  const scout = EVERBURN_JOBS[0].steps[0].scout, road = ROAD_NET.road('east-road');
+  const post = nearestOnLine(road.points, scout.start.position.x, scout.start.position.z);
+  const roadStart = nearestOnLine(road.points, scout.roadStart.position.x, scout.roadStart.position.z);
+  const yard = nearestOnLine(road.points, LAND.yard.x, LAND.yard.z);
+  assert.ok(Math.abs(roadStart.along - yard.along - 900) < 0.01);
+  assert.ok(Math.abs(post.distance - 8) < 0.01);
+  assert.ok(Math.abs(post.along - roadStart.along) < 0.01);
+  const ahead = roadPointFrom(road, roadStart.x, roadStart.z, 1);
+  assert.ok(Math.sin(scout.heading) * (ahead.x - roadStart.x) + Math.cos(scout.heading) * (ahead.z - roadStart.z) > 0.99);
+  assert.equal(scout.health, 100);
+  assert.equal(scout.sightRadius, 250);
+  assert.equal(scout.speedKmh, 70);
+  assert.equal(scout.easySpeedKmh, 55);
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
