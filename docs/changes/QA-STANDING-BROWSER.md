@@ -20,7 +20,7 @@ Run alone in a visible window on 16 November 2026, then again after each cure. N
 - `test-full-check.mjs`: the fixture's frame packet path is now `frames/frame-pacing/frame-pacing.json`, the real place.
 
 ## Checks
-Scenarios touched, alone. Lane tier `--changed --since 7acd93c3c`, `test-full-check`, `test-board` and `test-repo-hygiene`: see below the hand-over line in the merge commit.
+Each scenario touched, alone (`arsenal-wave1-audio` once). Lane tier `--changed --since 7acd93c3c` on the commit before this note: 312 passed, 0 failed (11 long suites left to the night). `test-full-check` 53 passed, `test-board` and `test-repo-hygiene` passed. Timeouts stay unmatched in the standing list on purpose: a timeout usually means a busy laptop, and `test-full-check` pins that.
 
 ## Removed
 Standing entries `arena-shove`, `drive-lesson-run`, `ski-finish`; the one-call group flight.
