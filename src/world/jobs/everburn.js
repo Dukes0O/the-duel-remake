@@ -32,9 +32,10 @@ export function buildEverburn(land) {
   const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
   const gatePoint = at('yard', gate.x, gate.z);
   const gateStart = at('yard', gate.x - forward.x * 40, gate.z - forward.z * 40);
-  const yardBrazierAt = at('yard', gate.x - forward.x * 8 - forward.z * 20, gate.z - forward.z * 8 + forward.x * 20);
-  // Cinder stays beside the gate; the brazier is clear of both approaches.
-  const cinderAt = at('yard', gate.x - forward.x * 8 - forward.z * 9, gate.z - forward.z * 8 + forward.x * 9);
+  // The stop, Cinder and her brazier share the road's line through the gate.
+  const pickupAt = at('yard', gate.x - forward.x * 16, gate.z - forward.z * 16);
+  const cinderAt = {x:pickupAt.x - forward.z * 4, z:pickupAt.z + forward.x * 4};
+  const yardBrazierAt = {x:cinderAt.x - forward.x * 6 - forward.z * 4, z:cinderAt.z - forward.z * 6 + forward.x * 4};
   const beside = (from, toward) => {
     const dx = toward.x - from.x, dz = toward.z - from.z, length = Math.hypot(dx, dz) || 1;
     return {x:from.x + dz / length * 9, z:from.z - dx / length * 9};
@@ -128,7 +129,7 @@ export function buildEverburn(land) {
       steps:[step('carry',{what:"Carry Cinder's ember pot to Tin Town.", load:'everburn-ember-pot', origin:yard, destination:forge, radius:forge.radius, stopAtDestination:true,
         arrivalHold:Object.freeze({seconds:9, catchAt:5}),
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
-        pickup:Object.freeze({place:place('cinder', cinderAt, 12), radius:12, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
+        pickup:Object.freeze({place:place('cinder', pickupAt, 6), figure:place('cinder-figure', cinderAt), radius:6, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
         safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.0}), burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders,
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),

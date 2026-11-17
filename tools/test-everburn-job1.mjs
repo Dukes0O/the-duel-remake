@@ -42,6 +42,26 @@ import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
+// Cinder's road ring, figure and brazier share the gate line and remain clear of its solids.
+{
+  const carry = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery').steps[0];
+  const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const relative = point => ({along:(point.x - LAND.yard.x - gate.x) * forward.x + (point.z - LAND.yard.z - gate.z) * forward.z,
+    left:-(point.x - LAND.yard.x - gate.x) * forward.z + (point.z - LAND.yard.z - gate.z) * forward.x});
+  const grid = createJobSolidGrid(); grid.setYard(yardPlan().solids);
+  for (const [point, along, left] of [[carry.pickup.place.position, -16, 0], [carry.pickup.figure.position, -16, 4],
+    [carry.braziers[0].position, -22, 8]]) {
+    const measured = relative(point);
+    assert.ok(Math.abs(measured.along - along) < 1e-8 && Math.abs(measured.left - left) < 1e-8);
+    assert.equal(pushOutOfSolids(point.x, point.z, 1, grid, scablandsSurfaceHeightAt(point.x, point.z)).hit, null);
+  }
+  const ring = carry.pickup.place.position;
+  const stopAt = distance => stepCarry(carry, {}, {player:{position:{x:ring.x + distance, z:ring.z}}, speedKmh:0}, 0);
+  assert.equal(stopAt(5.9).state.pickingUp, true);
+  assert.equal(stopAt(6.1).state.pickingUp, undefined);
+  assert.equal(stopAt(5.9).requests[0].place.radius, 6);
+}
+
 // A small final movement on Easy still carries the rider's full closing speed.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
@@ -1886,14 +1906,17 @@ assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSp
   const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
   const relative = point => ({along:(point.x - LAND.yard.x - gate.x) * forward.x + (point.z - LAND.yard.z - gate.z) * forward.z,
     left:-(point.x - LAND.yard.x - gate.x) * forward.z + (point.z - LAND.yard.z - gate.z) * forward.x});
-  const start = relative(step.carStart), cinder = relative(pickup), fire = relative(step.braziers[0].position);
+  const start = relative(step.carStart), ring = relative(pickup), cinder = relative(step.pickup.figure.position), fire = relative(step.braziers[0].position);
   assert.ok(Math.abs(start.along + 40) < 1e-9 && Math.abs(start.left) < 1e-9);
   assert.ok(Math.abs(step.carStart.heading - gate.bearing) < 1e-9);
-  assert.ok(Math.abs(fire.along + 8) < 1e-9 && Math.abs(fire.left - 20) < 1e-9);
-  assert.ok(Math.abs(cinder.along + 8) < 1e-9 && Math.abs(cinder.left - 9) < 1e-9);
+  assert.ok(Math.abs(fire.along + 22) < 1e-9 && Math.abs(fire.left - 8) < 1e-9);
+  assert.ok(Math.abs(cinder.along + 16) < 1e-9 && Math.abs(cinder.left - 4) < 1e-9);
+  assert.ok(Math.abs(ring.along + 16) < 1e-9 && Math.abs(ring.left) < 1e-9);
+  assert.equal(step.pickup.radius, 6);
+  assert.equal(step.pickup.place.radius, 6);
   const grid = createJobSolidGrid();
   grid.setYard(yardPlan().solids);
-  for (const point of [step.carStart, pickup, step.braziers[0].position]) {
+  for (const point of [step.carStart, pickup, step.pickup.figure.position, step.braziers[0].position]) {
     assert.equal(pushOutOfSolids(point.x, point.z, 1, grid, scablandsSurfaceHeightAt(point.x, point.z)).hit, null);
   }
 }
