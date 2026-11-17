@@ -4,6 +4,7 @@
 import {LAND} from '../scablands-names.js';
 import {tinTownLayout, tinTownFence} from '../tin-town-shacks.js';
 import {forgePlan} from '../forge-look.js';
+import {tinTownGateFor} from '../tin-town-gate.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {BRAND_RULE} from './brand-rule.js';
 
@@ -41,5 +42,11 @@ export function brandSites(land = LAND) {
     const scale = BRAND_RULE.wallEntryInset / Math.hypot(dx, dz);
     return place(`town-wall-${index}`, {x: sheet.x + dx * scale, z: sheet.z + dz * scale});
   }));
-  return Object.freeze({hearth, auntie, lamps, farWalk, ashEntries, towerAtFoot: true});
+  const gate = tinTownGateFor(land).gate;
+  const theftPath = Object.freeze([farWalk[0],
+    place('thief-bay', land.at('tin-town', rule.thiefAlleyEast, rule.thiefAlleySouth)),
+    place('thief-south-alley', land.at('tin-town', rule.thiefAlleyEast, rule.thiefGateApproachSouth)),
+    place('thief-gate-approach', {x: gate.x, z: land.at('tin-town').z + rule.thiefGateApproachSouth}),
+    place('thief-gate', gate)]);
+  return Object.freeze({hearth, auntie, lamps, farWalk, ashEntries, theftPath, towerAtFoot: true});
 }

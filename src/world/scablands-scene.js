@@ -25,6 +25,7 @@ import {createBrandLamps} from './brand-lamps.js';
 import {createBrandAuntie} from './brand-auntie.js';
 import {createCarriedBrand} from './brand-carried.js';
 import {createBrandAshView} from './brand-ash-view.js';
+import {createBrandThief} from './brand-thief.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -595,6 +596,7 @@ export function createScablandsScene(course,options={}){
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   const brandAshView=createBrandAshView();group.add(brandAshView.group);
+  const brandThief=createBrandThief();group.add(brandThief.group);
   let cinderRequested=false;
   function requestCinder(){
     if(cinderRequested)return;
@@ -837,6 +839,7 @@ export function createScablandsScene(course,options={}){
       brandAuntie.update(worldJob);
       carriedBrand.update(state);
       brandAshView.update(worldJob);
+      brandThief.update(worldJob);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -973,7 +976,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

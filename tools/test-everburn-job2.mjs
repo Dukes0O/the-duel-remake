@@ -13,6 +13,8 @@ import {createBrandLamps} from '../src/world/brand-lamps.js';
 import {createBrandAuntie} from '../src/world/brand-auntie.js';
 import {createCarriedBrand} from '../src/world/brand-carried.js';
 import {createBrandAshView} from '../src/world/brand-ash-view.js';
+import {createBrandThief} from '../src/world/brand-thief.js';
+import {brandThiefPose} from '../src/world/jobs/brand-rule.js';
 import * as THREE from 'three';
 
 // Rule snapshots, never a walking driver.
@@ -492,3 +494,50 @@ ashViewDrawing.dispose();
 assert.equal(disposedAshParts, 4);
 assert.equal(ashViewDrawing.group.children.length, 0);
 console.log('PASS Light the Town: visible foot opponents, timed ash arc, landing warning and cleanup.');
+
+// Job 2.7: the theft is visible only from the rule's fifth second. The runner
+// follows clear ground toward the gate with the stolen bellows on his back.
+const theftStep = {...actualStep, theftPath: sites.theftPath};
+assert.equal(brandThiefPose(theftStep, {endingElapsed: 4.99}), null);
+const theftStart = {theftStarted: true, endingElapsed: BRAND_RULE.theftAtSeconds};
+const startPose = brandThiefPose(theftStep, theftStart);
+assert.equal(startPose.x, sites.theftPath[0].position.x);
+assert.equal(startPose.z, sites.theftPath[0].position.z);
+const secondPose = brandThiefPose(theftStep, {...theftStart, endingElapsed: 6});
+assert(Math.abs(Math.hypot(secondPose.x - startPose.x, secondPose.z - startPose.z) -
+  BRAND_RULE.thiefRunMps) < 1e-8);
+for (let index = 1; index < sites.theftPath.length; index++) {
+  const a = sites.theftPath[index - 1].position, b = sites.theftPath[index].position;
+  const samples = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) * 4);
+  for (let sample = 0; sample <= samples; sample++) {
+    const share = sample / samples;
+    const x = a.x + (b.x - a.x) * share, z = a.z + (b.z - a.z) * share;
+    assert.equal(pushOutOfSolids(x, z, .4, SOLID_GRID).hit, null,
+      `The thief's route must clear the town's solids at ${x}, ${z}.`);
+  }
+}
+const thiefView = createBrandThief();
+const theftWorld = {job: {steps: [theftStep], stepIndex: 0, stepState: theftStart}};
+const beforeTheftDraw = JSON.stringify(theftWorld);
+thiefView.update(theftWorld);
+assert.equal(thiefView.group.visible, true);
+assert.equal(thiefView.figures.group.visible, true);
+const theftLoad = thiefView.group.children[1];
+assert.equal(theftLoad.geometry.parameters.width, BRAND_RULE.thiefLoadWidth);
+assert.equal(theftLoad.position.y, scablandsSurfaceHeightAt(startPose.x, startPose.z) + BRAND_RULE.thiefLoadLift);
+const loadPosition = theftLoad.position.clone();
+thiefView.update(theftWorld);
+assert.deepEqual(theftLoad.position, loadPosition, 'A paused ending holds the runner still.');
+assert.equal(JSON.stringify(theftWorld), beforeTheftDraw, 'The drawing cannot change the job.');
+theftWorld.job.stepState = {...theftStart, endingElapsed: 6};
+thiefView.update(theftWorld);
+assert.notDeepEqual(theftLoad.position, loadPosition);
+thiefView.update(null);
+assert.equal(thiefView.group.visible, false);
+let thiefPartsDisposed = 0;
+theftLoad.geometry.addEventListener('dispose', () => thiefPartsDisposed++);
+theftLoad.material.addEventListener('dispose', () => thiefPartsDisposed++);
+thiefView.dispose();
+assert.equal(thiefPartsDisposed, 2);
+assert.equal(thiefView.group.children.length, 0);
+console.log('PASS Light the Town: timed thief, clear route, carried bellows and cleanup.');

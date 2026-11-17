@@ -161,7 +161,7 @@ export function buildEverburn(land) {
       easy:Object.freeze({knockedDownRecovery:'last-marker'}),
       steps:[step('onfoot',{what:'Carry the brand to a dark lamp.', brand:true, townEnding:true,
         meeting:forge, auntie:townLights.auntie, hearth:townLights.hearth, places:townLights.lamps, ashEntries:townLights.ashEntries,
-        farWalk:townLights.farWalk, carStart:carStart(forge.position, townLights.hearth),
+        farWalk:townLights.farWalk, theftPath:townLights.theftPath, carStart:carStart(forge.position, townLights.hearth),
         lentWeapon:'cinders-hand-flamer', requiresExit:true, unlock:'tin-town-notice-board'})]}),
     Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
       resultLineId:'story.ember.cinder.10',

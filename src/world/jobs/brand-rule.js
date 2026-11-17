@@ -13,6 +13,12 @@ export const BRAND_RULE = Object.freeze({
   stoppedKmh: 1,
   endingSeconds: 9,
   theftAtSeconds: 5,
+  thiefRunMps: 6,
+  thiefLoadWidth: 0.55,
+  thiefLoadHeight: 0.75,
+  thiefLoadDepth: 0.3,
+  thiefLoadLift: 1.1,
+  thiefLoadBehind: 0.3,
   duskSeconds: 240,
   ashWaves: Object.freeze([1, 2]),
   smotherRadius: 2,
@@ -60,9 +66,31 @@ export const BRAND_RULE = Object.freeze({
     westAlleyWest: 26,
     westAlleyNorth: 34,
     northAlleyNorth: 60,
+    thiefAlleyEast: 20,
+    thiefAlleySouth: 7,
+    thiefGateApproachSouth: 30,
   }),
   pay: Object.freeze({one: 100, two: 70, many: 50}),
 });
+
+// The ending clock owns the runner's progress. Drawing it twice cannot move it.
+export function brandThiefPose(step, state) {
+  const path = step?.theftPath;
+  if (!step?.brand || !state?.theftStarted || !path?.length) return null;
+  const travelled = Math.max(0, state.endingElapsed - BRAND_RULE.theftAtSeconds) * BRAND_RULE.thiefRunMps;
+  let remaining = travelled;
+  for (let index = 1; index < path.length; index++) {
+    const a = path[index - 1].position, b = path[index].position;
+    const length = Math.hypot(b.x - a.x, b.z - a.z);
+    if (remaining <= length || index === path.length - 1) {
+      const share = length > 0 ? Math.min(1, remaining / length) : 1;
+      return {x: a.x + (b.x - a.x) * share, z: a.z + (b.z - a.z) * share,
+        yaw: Math.atan2(b.x - a.x, b.z - a.z), steps: travelled};
+    }
+    remaining -= length;
+  }
+  return null;
+}
 
 export const BRAND_LINES = Object.freeze({
   lamps: "Auntie Solder: The fire is in. Now the lamps. Three of them, dark a year.",
