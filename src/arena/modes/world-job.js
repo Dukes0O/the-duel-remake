@@ -18,7 +18,7 @@ import {wrapHeading} from '../../offroad-physics.js';
 import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
 import {ROAD_NET, roadPointFrom} from '../../world/scablands-road.js';
 import {nearestOnLine, sees} from '../../world/scablands-ways.js';
-import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
+import {MPH_TO_KMH, emberSentence, EMBER_CAPTION_SECONDS} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
@@ -1244,6 +1244,7 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'say' && event.lineId) sayLine(duel, worldJob, event.lineId, event.urgent);
     // The ember (src/world/jobs/ember-rule.js): a jolt, the pot going out, a fresh scoop, and the grade at arrival. The sounds are the
     // bank's own cues, played through the arena tell event; the grade is kept for the pay and the results screen.
+    if ((event.type === 'emberOut' || event.type === 'bessGreeting') && event.text) duel._storyCallout(event.text, EMBER_CAPTION_SECONDS, true);
     if (EMBER_CUES[event.type]) duel.emit({arenaTell: {id: 'ember-pot', targetId: 'player', seconds: 0, cue: EMBER_CUES[event.type], position: {...point}}});
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,

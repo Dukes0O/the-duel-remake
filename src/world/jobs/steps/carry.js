@@ -1,4 +1,4 @@
-import {emberLoss, emberGrade, emberPay, EMBER_SCOOP} from '../ember-rule.js';
+import {emberLoss, emberGrade, emberPay, EMBER_SCOOP, BESS_GREETING_RADIUS, BRAZIER_NAMES} from '../ember-rule.js';
 
 const spot = value => value?.position ?? value ?? {};
 const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
@@ -9,19 +9,23 @@ const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (
 function stepEmberCarry(step, state, view, dt) {
   const rule = step.ember, here = view.player?.position ?? {};
   const events = [], requests = [];
+  if (step.bessGreeting && !state.bessGreeted && gap(here, step.bessGreeting) <= BESS_GREETING_RADIUS) {
+    state = {...state, bessGreeted:true};
+    events.push({type: 'bessGreeting', text: 'Moss: Get that fire to the forge and Bess has a load to haul.'});
+  }
   // The pickup is a job phase: cold and jolts start only after Cinder has spoken.
   if (step.pickup && !state.loaded) {
     const place = step.pickup.place;
     if (!state.pickingUp) {
       const stopped = Math.abs(view.speedKmh ?? 0) < 1;
       if (stopped && gap(here, place) <= step.pickup.radius) {
-        return {state: {...state, pickingUp: true}, complete: false, events: [],
+        return {state: {...state, pickingUp: true}, complete: false, events,
           requests: [{type: 'marker', place}, ...step.pickup.lines.map(lineId => ({type: 'say', lineId}))]};
       }
     } else if ((state.lineQueue?.length ?? 0) === 0 && (state.lineRemaining ?? 0) <= 0) {
       state = {...state, loaded: true, ember: rule.start};
     }
-    if (!state.loaded) return {state, complete: false, events: [], requests: [{type: 'marker', place}]};
+    if (!state.loaded) return {state, complete: false, events, requests: [{type: 'marker', place}]};
   }
   const burnt = new Set(state.burntBarricades ?? []);
   if (step.burnable) for (const hit of view.thingsHit ?? []) {
@@ -42,13 +46,14 @@ function stepEmberCarry(step, state, view, dt) {
     if (loss.hit > 0) { next.jolt = loss.hit; next.joltCount++; events.push({type: 'emberJolt', amount: loss.hit}); }
     if (next.ember <= 0) {
       next.out = true; next.rate = 0;
-      events.push({type: 'emberOut'});
+      const nearest = step.braziers?.reduce((best, place) => !best || gap(here, place) < gap(here, best) ? place : best, null);
+      events.push({type: 'emberOut', ...(nearest ? {text: `The pot is out. The nearest fire is at ${BRAZIER_NAMES[nearest.id]}, ${Math.round(gap(here, nearest))} m.`} : {})});
       requests.push({type: 'say', lineId: step.spillLineId});
     }
   }
   if (step.braziers) {
     const used = state.scoopedBraziers ?? [];
-    const brazier = step.braziers.find(place => (next.out || !used.includes(place.id)) && gap(here, place) <= EMBER_SCOOP.radius);
+    const brazier = step.braziers.find(place => (next.out || (place.id === 'yard-brazier' ? next.ember < EMBER_SCOOP.yardFill : next.ember < EMBER_SCOOP.roadFill && !used.includes(place.id))) && gap(here, place) <= EMBER_SCOOP.radius);
     const stopping = brazier && Math.abs(view.speedKmh ?? 0) < EMBER_SCOOP.stoppedKmh;
     const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
     next.scoopBrazier = stopping ? brazier.id : null;
@@ -57,10 +62,10 @@ function stepEmberCarry(step, state, view, dt) {
       next.campAwake = true;
     if (stopping && scoopTime >= EMBER_SCOOP.seconds) {
       const wasOut = next.out;
-      next.ember = Math.min(rule.start, next.ember + 25);
+      next.ember = brazier.id === 'yard-brazier' ? EMBER_SCOOP.yardFill : EMBER_SCOOP.roadFill;
       next.out = false;
       next.relights = relights + (wasOut ? 1 : 0);
-      next.scoopedBraziers = wasOut ? used : [...used, brazier.id];
+      next.scoopedBraziers = wasOut || used.includes(brazier.id) ? used : [...used, brazier.id];
       next.scoopBrazier = null;
       next.scoopTime = 0;
       events.push({type: 'emberRelit', place: brazier.id});

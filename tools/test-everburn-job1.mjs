@@ -299,8 +299,8 @@ for (const awake of [false, true]) {
   result = stepCarry(step, result.state, {...view, thingsHit:[]}, 0.1);
   assert.equal(result.state.campAwake, true, 'the camp stays awake');
   const scoop = {player:{position:step.braziers[1].position}, speedKmh:0, thingsHit:[]};
-  assert.notEqual(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'medium'}, 0.1).state.campAwake, true);
-  assert.equal(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'hard'}, 0.1).state.campAwake, true);
+  assert.notEqual(stepCarry(step, {loaded:true, ember:50}, {...scoop, difficulty:'medium'}, 0.1).state.campAwake, true);
+  assert.equal(stepCarry(step, {loaded:true, ember:50}, {...scoop, difficulty:'hard'}, 0.1).state.campAwake, true);
 }
 
 // A warned rider waits beyond the standing fence, then reaches a car on the road.
@@ -920,7 +920,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
       nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 80 / 1.609344);
     assert.ok(approach.reachedAll, 'the car reaches the Wash');
     const scoop = scoopAtWash ? driveToBrazier(duel, wash) : null;
-    if (scoopAtWash) assert.ok(scoop.scooped, 'the car scoops at the Wash');
+    if (scoopAtWash) assert.ok(scoop.scooped || scoop.ember >= 60, 'the Wash lifts a low pot or leaves a pot at 60 or more alone');
     const route = bedStepsRoute();
     const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
     const bedLine = [{x:car.x, z:car.z}, ...route.bed];
@@ -961,7 +961,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
     {
       assert.equal(result.rams, 0, 'the sleeping camp does not ram the bed car');
-      if (scoopAtWash) assert.ok(result.ember >= 35 && result.ember <= 37, 'the scooped bed delivery keeps about 36 fire');
+      if (scoopAtWash) assert.ok(result.ember >= 7 && result.ember <= 9, 'the unchanged Wash stop leaves about 8 fire because a pot above 60 takes no scoop');
     }
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
     const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
@@ -2139,6 +2139,7 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   assert.equal(world.job.stepState.scoopBrazier, 'yard-brazier');
   assert.notEqual(world.actors[0].pursuing, true);
   car = {...step.braziers[1].position};
+  world.job.stepState.ember = 50;
   // Let the rider finish returning to its post after the yard visit.
   world.actors[0].position = {...step.waitingActors[0].start.position};
   stepWorldJob(duel, 0.1);
@@ -2423,19 +2424,18 @@ assert.equal(hud().target.id, 'cold-forge');
 job.stepState = {...job.stepState, ember: 10, out: false};
 for (const brazier of step.braziers) {
   const {x, z} = brazier.position;
+  job.stepState = {...job.stepState, ember:10};
   job = stepJob(job, view(x + 8.1, z), 3);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
   job = stepJob(job, view(x, z), 2);
   job = stepJob(job, view(x, z, -2), 1);
   job = stepJob(job, view(x, z), 2);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
-  const before = job.stepState.ember;
-  const wasOut = job.stepState.out;
   job = stepJob(job, view(x, z), 1);
-  assert.ok(Math.abs(job.stepState.ember - Math.min(100, before - (wasOut ? 0 : step.ember.coldPerSecond) + 25)) < 1e-9);
+  assert.equal(job.stepState.ember, brazier.id === 'yard-brazier' ? 100 : 60);
   assert.equal(job.stepState.out, false);
   assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
-  job = stepJob(job, view(x, z), 4);
+  job = stepJob(job, view(x + 20, z), 4);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
 }
 // Map knowledge starts with the yard, then keeps each brazier seen within 400 m.
@@ -2506,16 +2506,57 @@ for (const brazier of [...step.braziers, step.braziers[0]]) {
   job = stepJob(job, view(x, z), 2.9);
   assert.equal(job.stepState.out, true);
   job = stepJob(job, view(x, z), 0.1);
-  assert.equal(job.stepState.ember, 25);
+  assert.equal(job.stepState.ember, brazier.id === 'yard-brazier' ? 100 : 60);
   assert.equal(job.stepState.out, false);
   assert.equal(job.stepState.relights, previousRelights + 1);
   assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
   assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
 }
-// Relighting at an unused brazier does not spend its separate scoop.
+// The yard can fill the pot again after a relight without charging another relight.
 job.stepState = {...job.stepState, ember: 0, out: true, scoopedBraziers: []};
 job = stepJob(job, view(yard.x, yard.z), 3);
 assert.deepEqual(job.stepState.scoopedBraziers, []);
 job = stepJob(job, view(yard.x, yard.z), 3);
 assert.deepEqual(job.stepState.scoopedBraziers, ['yard-brazier']);
 console.log('Hot Delivery pickup: start, stop, three lines and ember passed.');
+
+// Slice 8A: the yard fills on every visit; roadside scoops wait until below 60.
+{
+  const base = {loaded:true, ember:20, relights:0, scoopedBraziers:[]};
+  const yard = step.braziers[0], camp = step.braziers[1];
+  const at = place => ({player:{position:place.position}, speedKmh:0});
+  let first = stepCarry(step, base, at(yard), 3);
+  assert.equal(first.state.ember, 100);
+  const again = stepCarry(step, {...first.state, ember:45}, at(yard), 3);
+  assert.equal(again.state.ember, 100);
+  assert.equal(again.state.relights, 0);
+  for (const fire of [60, 75]) {
+    const waiting = stepCarry(step, {...base, ember:fire}, at(camp), 0);
+    assert.equal(waiting.state.ember, fire);
+    assert.deepEqual(waiting.state.scoopedBraziers, []);
+    assert.equal(waiting.state.scoopBrazier, null);
+  }
+  first = stepCarry(step, base, at(camp), 3);
+  assert.equal(first.state.ember, 60);
+  assert.deepEqual(first.state.scoopedBraziers, [camp.id]);
+  assert.equal(stepCarry(step, {...first.state, ember:10}, at(camp), 3).state.ember < 10, true);
+  const relit = stepCarry(step, {...first.state, ember:0, out:true}, at(camp), 3);
+  assert.equal(relit.state.ember, 60);
+  assert.equal(relit.state.relights, 1);
+  for (const [place, name] of step.braziers.map((place, index) => [place, ["Cinder's brazier", 'the Halfway Camp', 'the Wash camp'][index]])) {
+    const near = {player:{position:{x:place.position.x + 10, z:place.position.z}}, speedKmh:0};
+    const out = stepCarry(step, {...base, ember:0.01}, near, 1);
+    assert.equal(out.events.find(event => event.type === 'emberOut').text,
+      `The pot is out. The nearest fire is at ${name}, 10 m.`);
+    assert.equal(stepCarry(step, out.state, near, 1).events.some(event => event.type === 'emberOut'), false);
+  }
+  const bess = step.bessGreeting;
+  const outside = {player:{position:{x:bess.x + 40.1, z:bess.z}}};
+  assert.equal(stepCarry(step, base, outside, 0).state.bessGreeted, undefined);
+  const inside = {player:{position:{x:bess.x + 40, z:bess.z}}};
+  assert.equal(stepCarry(step, {}, inside, 0).events[0].type, 'bessGreeting', 'Moss also greets a car before pickup');
+  const greeting = stepCarry(step, base, inside, 0);
+  assert.equal(greeting.events.find(event => event.type === 'bessGreeting').text,
+    'Moss: Get that fire to the forge and Bess has a load to haul.');
+  assert.equal(stepCarry(step, greeting.state, inside, 0).events.some(event => event.type === 'bessGreeting'), false);
+}

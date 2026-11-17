@@ -1,0 +1,13 @@
+# EVERBURN-REMAKE slice 8
+- Part A built: the yard fills to 100 on return, roadside scoops lift to 60, the outage names the nearest fire, and Moss greets once within 40 m.
+- Hidden switches, saved fields and pay unchanged. Parts B, C and D remain unbuilt.
+- Checks PASS: test-everburn-job1, test-ember-pot (38 checks), git diff --check, on d23e27ba7 plus the Part A changes in this commit.
+- Integration brought into this lane through d23e27ba7; only the card changed there.
+- Changed assertions for Claude: scoop +25 becomes fill-to-100 at the yard or fill-to-60 on the way (A1/A2); the Wash stop now accepts no scoop while fire is at least 60.
+- Changed assertion for Claude: unchanged bed drive fire 35?37 becomes 7?9 (measured 7.438721), because A2 no longer adds 25 to a pot above 60. Hard scoop fixtures start below 60.
+- Bed without the Wash stop: 14.242767 fire; both bed drives finish with zero rams. East Road: 18.448148 fire and three rams.
+- Sound: existing world.ember.scoop and world.ember.out; Moss and the nearest-fire message are captions only. No new cue in Part A.
+- Codex decided: use all three fires for the outage caption; preserve slice 7 repeatable relights and separate roadside scoops (written on card).
+- For Claude: independent code and assertion review; browser checks after the remaining parts and scenario work are complete. No browser run here.
+- Final-only checks not yet run: Easy Hot Delivery, older related suites, replay and world signatures, lane tier, build. Scenario updates remain with B?D.
+- **Removed:** the fixed +25 scoop rule. No scratch output is retained.

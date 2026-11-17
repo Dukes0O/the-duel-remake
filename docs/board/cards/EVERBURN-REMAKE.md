@@ -1008,5 +1008,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 8A: the middle-screen outage caption names the nearest of all three fires, including undiscovered fires. The small chip still uses map knowledge as before.
+- Slice 8A: the repeatable relights from slice 7 stay. An out pot gets 100 at the yard or 60 on the way; relighting leaves a roadside fire's separate one-time scoop available. Moss can greet the car before pickup too.
+
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.
 - Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.

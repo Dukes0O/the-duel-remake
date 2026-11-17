@@ -5,7 +5,15 @@
 // (src/world/scablands-regions.js: any speed on a road, the salt pan and the sand, 90 km/h on the flats, 80 in the river bed, 50 on
 // the scab plates), and the carry step reads it for the point the car is on.
 export const MPH_TO_KMH = 1.609344;
-export const EMBER_SCOOP = Object.freeze({seconds:3, radius:8, stoppedKmh:1});
+export const EMBER_SCOOP = Object.freeze({seconds:3, radius:8, stoppedKmh:1, yardFill:100, roadFill:60});
+
+export const BESS_GREETING_RADIUS = 40;
+export const EMBER_CAPTION_SECONDS = 3;
+export const BRAZIER_NAMES = Object.freeze({
+  'yard-brazier': "Cinder's brazier",
+  'halfway-brazier': 'the Halfway Camp',
+  'wash-brazier': 'the Wash camp',
+});
 
 export const EMBER_RULE = Object.freeze({
   start: 100,
