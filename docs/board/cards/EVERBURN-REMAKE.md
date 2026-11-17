@@ -841,6 +841,17 @@ running game:
   has wind and the river bed has cold, both of which a player feels only as a bar going down. That is Kyle's 12, and it
   is the design's fault, not a bug: Claude wrote hazards for those ways and no opponents.
 
+**Claude's drive of the river bed's way (17 November 2026, afternoon; Easy, visible window).** East Road to the camp,
+south at the crossroads, the Boneyard road to the Wash, down the bed and out by the Steps: 5.4 km driven after the camp.
+- The camp slept and let the car turn south unharmed, as slice 6b intends.
+- **Nobody came within 400 m at any point after the camp.** The pot fell from 62 at the Wash to 35 and then to nothing in
+  the bed, with six jolts at the Steps. Nothing happened on the screen but a bar going down.
+- Out, the chip beside the speed reads "OUT: back to the brazier" with an arrow and "2663 m". It is small, it points
+  2.6 km back the way the player came, and nothing says what to do on arriving. Kyle's 2 stands.
+- START AGAIN is on the pause screen. Kyle's 14 is about a finished job, which is not offered again.
+- A mistake of Claude's own tool cost an hour: its follower kept the first road it was given. Fixed in the tool's notes.
+- Still not driven by hand: the plates and the salt pan. By the job's definition they have no opponents either.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
