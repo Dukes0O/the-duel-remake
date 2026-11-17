@@ -291,6 +291,29 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     rider.pursuing = false;
     return;
   }
+  // A warned camp takes a position just beyond the standing fence before charging.
+  const campFence = campRider && worldJob.job.steps[worldJob.job.stepIndex].barriers[0];
+  const campFenceStanding = campFence && !worldJob.job.stepState.burntBarricades?.includes(campFence.id);
+  if (campFenceStanding && worldJob.job.stepState.scoopBrazier !== actorDef.scoopAmbush &&
+      !rider.pursuing && !retreat && !worldJob.ridersRetreating && !rider.returningToPost) {
+    const ends = barricadeEnds(campFence.position, campFence.heading);
+    const side = Math.hypot(rider.position.x - ends[0].x, rider.position.z - ends[0].z) <=
+      Math.hypot(rider.position.x - ends[1].x, rider.position.z - ends[1].z) ? -1 : 1;
+    const target = {x:campFence.position.x + Math.cos(campFence.heading) * side * 10,
+      z:campFence.position.z - Math.sin(campFence.heading) * side * 10};
+    const dx = target.x - rider.position.x, dz = target.z - rider.position.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance > 0.1 && dt > 0) {
+      const before = rider.position, travel = Math.min(distance, 18 * dt);
+      rider.heading = Math.atan2(dx, dz);
+      const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
+        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+      rider.position = {x:moved.x, y:moved.y, z:moved.z};
+      rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      return;
+    }
+    rider.speed = 0;
+  }
   if (roadRider && retreat && !worldJob.ridersRetreating) {
     if (!rider.ramRetreat) return;
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
@@ -328,7 +351,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
     if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
     const nearRider = Math.hypot(car.x - rider.position.x, car.z - rider.position.z) <= 120;
-    if (!rider.pursuing && (!visible || (!nearFence && !nearRider))) return;
+    if (!rider.pursuing && (!visible || (!nearFence && (!nearRider || campFenceStanding)))) return;
   }
   if (worldJob.ridersRetreating || rider.returningToPost) {
     rider.pursuing = false;
