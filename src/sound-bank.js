@@ -407,6 +407,10 @@ export const SOUND_BANK = {
     cutoff: 4200,
     loop: true,
   }),
+  'ambience.scablands': cue('ambience', {
+    flag: 'story-everburn', biome: 'scablands', gain: .2, loop: true,
+    layers: [noise(330, 2, .65, 'lowpass'), noise(1700, 2, .18, 'bandpass')],
+  }),
   'ambience.kogane': cue('ambience', {flag: 'kogane-pass', biome: 'kogane',
     file: 'ambience-kogane.flac', gain: .14, cutoff: 7000, loop: true,
     nightBiome: 'kogane-night', nightFrom: .55}),

@@ -17,6 +17,9 @@ import {animateScene,syncScene} from '../src/scene-systems.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {FURNACE_SKYLINE,FURNACE_LEAVING} from '../src/world/jobs/furnace-sightings.js';
 import {TIN_TOWN_CENTRE} from '../src/world/tin-town-shacks.js';
+import {placeWorldJobVehicle} from '../src/vehicle-grounding.js';
+import {HOT_DELIVERY_WAYS, routeFor, sampleLine, pathLength} from '../src/world/scablands-ways.js';
+import {scablandsActorHeightAt} from '../src/world/scablands-ground.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
 const loaded=[];
@@ -50,6 +53,48 @@ assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
+
+// The renderer's actual placement path uses the mover's floor once, on low land and a deck.
+{
+  const car = new THREE.Group(); scene.group.add(car);
+  const deck = LAND.place('girder-bridge');
+  const low = {x:911.2699526550076, z:628.4080807737456};
+  assert.ok(Math.abs(scablandsSurfaceHeightAt(low.x, low.z) + 2) < .01);
+  for (const spot of [low, deck]) {
+    const at = {...spot, y:scablandsSurfaceHeightAt(spot.x, spot.z)};
+    const actor = {position:at, hasFloorHeight:true};
+    placeWorldJobVehicle(car, actor, course);
+    assert.ok(Math.abs(car.getWorldPosition(new THREE.Vector3()).y - at.y) < .05,
+      'a job car stands at its own floor height');
+  }
+  scene.group.remove(car);
+}
+// Survey the actual job ways without driving. At decks, retain the actor's previous
+// floor; the gorge drawing below a bridge is not ground above the car on its deck.
+{
+  const step = EVERBURN_JOBS[0].steps[0], gaps = [];
+  for (const way of HOT_DELIVERY_WAYS) {
+    const route = routeFor(way.legs, {start:step.origin.position, destination:step.destination.position});
+    const samples = sampleLine(route, 5);
+    assert.ok(samples.length >= Math.ceil(pathLength(route) / 5) + 1);
+    for (const offset of [-6, 0, 6]) {
+      let feet;
+      for (let index = 0; index < samples.length; index++) {
+        const point = samples[index], before = samples[Math.max(0, index - 1)], after = samples[Math.min(samples.length - 1, index + 1)];
+        const dx = after.x - before.x, dz = after.z - before.z, length = Math.hypot(dx, dz) || 1;
+        const x = point.x + dz / length * offset, z = point.z - dx / length * offset;
+        feet = scablandsActorHeightAt(x, z, feet);
+        // This scene query uses nearGroundHeightAt on the plain and the actual
+        // river ribbon triangles where the plain is cut away.
+        const drawn = scene.group.userData.drawnGroundHeightAt(x, z), gap = drawn - feet;
+        assert.ok(Number.isFinite(feet) && Number.isFinite(drawn));
+        if (gap > .3) gaps.push({way:way.id, along:+point.along.toFixed(2), offset,
+          x:+x.toFixed(2), z:+z.toFixed(2), gap:+gap.toFixed(3)});
+      }
+    }
+  }
+  console.log('Hot Delivery ground above car by more than .3 m:', JSON.stringify(gaps));
+}
 // SCABLANDS-LAND round 4, slice 2b: the solids are everything drawn that stands taller than a wheel (src/world/scablands-solids.js), built from the same
 // data that draws it; tools/test-scablands-solid.mjs reads the real models and drives at each kind. The old table's 18 boxes (a box for each place, the
 // wrecks, six clusters and two posts) are replaced; the places that draw nothing (the Dry Dam, the Ships and the Iron Line's station) have no solid now.

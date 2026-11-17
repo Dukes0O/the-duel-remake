@@ -17,7 +17,7 @@ import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting} from './jobs/furnace-sightings.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
-import {createTinTownGate,TIN_TOWN_GATE} from './tin-town-gate.js';
+import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
 import {createForge} from './forge-look.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
@@ -873,9 +873,9 @@ export function createScablandsScene(course,options={}){
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
       townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
-      const doorOpen=worldJob?.tinTownGateRequested===true;
-      townDoor.rotation.y=doorOpen?Math.PI/2:0;
-      townDoor.position.set(doorOpen?TIN_TOWN_GATE.opening/2:0,1.5,doorOpen?TIN_TOWN_GATE.opening/2:0);
+      const doorPose=tinTownDoorPose(TIN_TOWN_GATE,worldJob?.tinTownGateProgress??0);
+      townDoor.rotation.y=doorPose.angle;
+      townDoor.position.set(doorPose.localX,1.5,doorPose.localZ);
       braziers.group.visible=Boolean(emberStep);
       braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
       barricades.forEach((rig,index)=>{

@@ -23,6 +23,7 @@ import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.j
 import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
+import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -137,10 +138,12 @@ export function initializeWorldJob(duel, definition) {
   }
   if (definition.id === 'everburn-hot-delivery') {
     worldJob.solidGrid.setTownGate(definition.steps[0].riderSafeWall);
+    worldJob.solidGrid.setPeople([{id:'hot-delivery-cinder', position:definition.steps[0].pickup.figure.position}]);
   }
   worldJob.raidSeed = duel.seed ^ 0x51ab1e;
   worldJob.actors = [];
   for (const actor of definition.steps[0]?.waitingActors ?? []) updateJobActor(duel, worldJob, actor, 0);
+  syncJobCarSolids(worldJob);
   state.worldJobThingsHit = [];
   if (definition.steps[0]?.faceOriginToPlace && definition.steps[0]?.origin && definition.steps[0]?.place?.position) {
     const target = definition.steps[0].place.position;
@@ -217,6 +220,27 @@ export function prepareWorldJobControls(duel) {
   return true;
 }
 
+function syncJobCarSolids(worldJob) {
+  if (worldJob.definition.id !== 'everburn-hot-delivery') return;
+  worldJob.solidGrid?.setCars(worldJob.actors.filter(actor => actor.renderCar && actor.position));
+}
+
+// The swept car contact and a rider's pursuit share one meeting and one ram cost.
+function takeJobCarContacts(duel, worldJob) {
+  for (const hit of worldJob.carContacts ?? []) {
+    const rider = hit.actor;
+    if (rider.health <= 0 || rider.ramContact || rider.ramRetreat) continue;
+    rider.ramContact = true;
+    worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, hit.kmh);
+    if (rider.id === worldJob.job.steps[worldJob.job.stepIndex]?.scout?.id) {
+      stopScout(duel, worldJob, rider);
+    } else {
+      rider.ramRetreat = {x:rider.position.x - hit.nz * 40, z:rider.position.z + hit.nx * 40, seconds:0};
+    }
+  }
+  worldJob.carContacts = [];
+}
+
 function updateJobActors(duel, worldJob, dt) {
   const step = worldJob.job.steps[worldJob.job.stepIndex];
   updateJobActor(duel, worldJob, step?.actor, dt);
@@ -291,7 +315,7 @@ function updateJobActors(duel, worldJob, dt) {
         const before = scout.position, share = Math.min(1, travel / distance);
         scout.heading = Math.atan2(dx, dz);
         const moved = stepMover(before, {x:before.x + dx * share, z:before.z + dz * share},
-          {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+          {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:before.y});
         scout.position = {x:moved.x, y:moved.y, z:moved.z};
         scout.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
       }
@@ -331,6 +355,7 @@ function updateJobActors(duel, worldJob, dt) {
       pursueJobRider(duel, worldJob, actorDef, dt);
     }
   }
+  syncJobCarSolids(worldJob);
   // FIELD-BATTLE-ASH: an escort step may also carry the furnace that hunts the escorted truck.
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
 }
@@ -344,7 +369,7 @@ function stopScout(duel, worldJob, scout) {
   const length = Math.hypot(dx, dz);
   if (length > 0) {
     const moved = stepMover(scout.position, {x:onRoad.x + dz / length * 8, z:onRoad.z - dx / length * 8},
-      {radius:1.3, grid:worldJob.solidGrid, height:scout.position.y});
+      {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:scout.position.y});
     scout.position = {x:moved.x, y:moved.y, z:moved.z};
   }
   scout.health = 0;
@@ -394,7 +419,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
       const before = rider.position, travel = Math.min(distance, 18 * dt);
       rider.heading = Math.atan2(dx, dz);
       const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
-        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+        {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
       return;
@@ -410,7 +435,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
       const travel = Math.min(distance, 18 * dt), before = rider.position;
       rider.heading = Math.atan2(dx, dz);
       const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
-        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+        {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
       retreat.stillSeconds = moved.blocked === 'solid' && rider.speed < 0.01
@@ -471,7 +496,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
       rider.heading = Math.atan2(dx, dz);
       const travel = Math.min(distance, 18 * dt), before = rider.position;
       const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
-        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+        {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
     }
@@ -509,7 +534,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const travel = Math.min(distance - 3, pursuitSpeed * dt);
   const before = rider.position;
   const moved = stepMover(before, {x: before.x + dx / distance * travel, z: before.z + dz / distance * travel},
-    {radius: 1.3, grid: worldJob.solidGrid, height: before.y});
+    {radius: 1.3, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: before.y});
   rider.position = {x: moved.x, y: moved.y, z: moved.z};
   rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
   const remaining = Math.hypot(car.x - moved.x, car.z - moved.z);
@@ -570,7 +595,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
   // pushed out of a building. Every stopping place must be clear of solids.
   if (duel.course.def.scablands && actor.position && !actor.train) {
-    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid, height: before.y});
+    const at = stepMover(before, actor.position, {radius: 1.3, grade: TRUCK_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: before.y});
     actor.position.x = at.x; actor.position.z = at.z; actor.position.y = at.y;
     actor.hasFloorHeight = true;
     if (at.blocked) arrived = false;
@@ -944,7 +969,7 @@ function moveJobRaiders(duel, worldJob, dt) {
     actor.yaw = Math.atan2(dx, dz);
     // A raider on foot obeys the ground and the solids a person does: ground steeper than 40 degrees is not climbed and a building is walked round.
     if (scablands) {
-      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid, height: actor.y});
+      const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
     }
   }
@@ -965,6 +990,20 @@ function finishWorldJob(duel, worldJob) {
 export function stepWorldJob(duel, dt) {
   const state = duel.state, worldJob = state.arena?.worldJob;
   if (!worldJob || worldJob.settled || state.arena.result) return null;
+  if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' &&
+      worldJob.job.steps[0]?.riderSafeWall) {
+    const gate = worldJob.job.steps[0].riderSafeWall, car = position(duel, state);
+    const open = !state.onFoot && Math.hypot(car.x - gate.x, car.z - gate.z) <= 20;
+    if (open && !worldJob.tinTownGateRequested) {
+      worldJob.tinTownGateRequested = true;
+      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
+        cue:'world.tintown.gate', position:car}});
+    }
+    const progress = worldJob.tinTownGateProgress ?? 0;
+    const travel = Math.max(0, dt) / TIN_TOWN_SWING_SECONDS;
+    worldJob.tinTownGateProgress = worldJob.tinTownGateRequested ? Math.min(1, progress + travel) : progress;
+    worldJob.solidGrid.setTownGate(gate, worldJob.tinTownGateProgress);
+  }
   if (worldJob.arrivalHold) {
     const hold = worldJob.arrivalHold;
     worldJob.clockSec = state.stageTimeSec;
@@ -1003,14 +1042,6 @@ export function stepWorldJob(duel, dt) {
   const currentStep = worldJob.job.steps[worldJob.job.stepIndex];
   if (duel.course.def.scablands && worldJob.definition.id === 'everburn-hot-delivery' && currentStep?.ember && !worldJob.job.done) {
     const car = player === state ? point : position(duel, state);
-    const gate = currentStep.riderSafeWall;
-    if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
-        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20) {
-      worldJob.tinTownGateRequested = true;
-      worldJob.solidGrid.setTownGate(null);
-      duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
-        cue:'world.tintown.gate', position:car}});
-    }
     worldJob.pipeDeck = pipeDeckSpeed(car, Math.abs(state.speedMph || 0) * MPH_TO_KMH);
     if (worldJob.pipeDeck.tooFast && !worldJob.pipeSlip && !state.knock) {
       // Slide toward the nearer edge; free-body motion and the land handle the fall.
@@ -1117,14 +1148,16 @@ export function stepWorldJob(duel, dt) {
     position: position(duel, actor), health: actor.armor}))];
   // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, the speed the ground under it is safe at (its region, src/world/scablands-regions.js), and the speed it shed in
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
+  takeJobCarContacts(duel, worldJob);
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
-  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh) : 0, state.scablandsHitKmh || 0, worldJob.riderHitKmh || 0);
+  const hitKmh = Math.max(Number.isFinite(worldJob.lastKmh) ? Math.max(0, worldJob.lastKmh - kmh - (worldJob.riderContactShedKmh || 0)) : 0, state.scablandsHitKmh || 0, worldJob.riderHitKmh || 0);
   const severeHit = state.scablandsLongFall === true ||
     (worldJob.lastKmh > 80 && kmh < 1 && worldJob.lastKmh - kmh > 80);
   state.scablandsHitKmh = 0;
   state.scablandsLongFall = false;
   worldJob.riderHitKmh = 0;
+  worldJob.riderContactShedKmh = 0;
   worldJob.lastKmh = kmh;
   const ground = scablandsDriveAt(point.x, point.z);
   if (currentStep?.ember && worldJob.job.stepState?.loaded && ground.id === 'river-bed' && !worldJob.bedColdSaid) {

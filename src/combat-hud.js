@@ -12,6 +12,8 @@ import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {convoyPrompt} from './convoy-prompt.js';
 
 const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
+export const combatSlotHidden = (slot, id, loanButton) =>
+  slot === 3 ? loanButton !== (id === 'flamethrower') : loanButton;
 // Rectangles include the pointer below the label. Stable actor order keeps
 // stacked names predictable when several cars share one screen position.
 export function stackOpponentLabels(labels, width, height, gap = 6) {
@@ -342,14 +344,10 @@ export function createCombatHud({root, app, projectOpponents = () => [], project
     const ufo = combat.cooldowns.ufo <= 0 && state.status === 'racing' ? ufoDestination(app.duel) : null;
     const arsenal = arsenalEnabled(app.duel);
     const lockout = arsenal ? carEffect(state, 'disabled') : null;
-    const worldJob = state.arena?.mode === 'world-job' ? state.arena.worldJob : null;
-    const loanSlotIndex = worldJob?.activeLoan === 'flamethrower'
-      ? state.weaponLoadout?.lastIndexOf('flamethrower') : -1;
     for (const button of buttons) {
       const slot=Number(button.dataset.combatSlot);
       const id=state.weaponLoadout?.[slot]||WEAPON_IDS[slot];
-      button.hidden = slot === 3 && ((button === loanSlot) !== (id === 'flamethrower'));
-      if (worldJob && (slot !== loanSlotIndex || id !== 'flamethrower')) button.hidden = true;
+      button.hidden = combatSlotHidden(slot, id, button === loanSlot);
       if (button === loanSlot) {
         if (button.hidden) button.remove();
         else if (!button.isConnected) slotBar.append(button);

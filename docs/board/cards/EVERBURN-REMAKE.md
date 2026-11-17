@@ -852,6 +852,18 @@ south at the crossroads, the Boneyard road to the Wash, down the bed and out by 
 - A mistake of Claude's own tool cost an hour: its follower kept the first road it was given. Fixed in the tool's notes.
 - Still not driven by hand: the plates and the salt pan. By the job's definition they have no opponents either.
 
+**Slice 7 merged 17 November 2026 (built by Codex on 6.1 Sol, reviewed; hidden): the faults of Kyle's try.** Against his
+fourteen: 1 the land has its own wind and the arena's crowd no longer plays there; 3 and 7 Cinder and the Ash Men's cars
+are solid, a meeting charged once; 4 all four weapons show; 9 every job car is drawn at its own height and the scout is
+marked on the small map from its horn; 2 a dead pot within 60 m of a brazier is told "Stop beside the fire for three
+seconds to relight the pot."; 13 Tin Town's gate swings open over a second and a half and stays open. Easy East Road now
+arrives 10 of 10 with 53 fire and four rams (68 and three before the cars were solid).
+**Still open:** 11 the sinking: a survey kept in the suite finds no place on the plates and seventeen on the salt pan's
+way where the drawn ground stands 0.3 to 0.9 m above the car; the cure changes the land's drawing and waits for Claude.
+5, 6, 10 and 12 (nobody chases, the furnace and the lookout do nothing, Big Bess does nothing, three ways with nobody on
+them) are design, Claude's, not built. 8 the size of a scoop and 14 taking the job again are unchanged.
+Not shown by anything yet: whether solid cars can trap a player; nobody has heard the wind.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
@@ -860,3 +872,4 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 ## Codex decided (Claude to review)
 
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.
+- Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.

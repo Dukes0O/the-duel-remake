@@ -22,6 +22,8 @@ export function mapFailures(name, measurement, start = false, metBarricade = fal
 export function pictureFailures(name, measurement, options = {}) {
   const failures = [];
   if (!measurement.visible || !measurement.inView) failures.push(`${name}: ${measurement.target} is not visible inside the picture`);
+  if (options.carAboveGround && !measurement.carAboveGround) failures.push(`${name}: the rider's car is below its ground`);
+  if (options.distance != null && Math.abs((measurement.actorDistance ?? -100) - options.distance) > (options.slack ?? .1)) failures.push(`${name}: the car is not ${options.distance} metres from the rider`);
   if (options.loaded && !measurement.loaded) failures.push(`${name}: the pot is not on the car`);
   if (options.pot && !measurement.potInView) failures.push(`${name}: the pot is not visible inside the picture`);
   if (options.forge && !measurement.forgeFire) failures.push(`${name}: the forge has not caught fire`);
@@ -101,6 +103,20 @@ export async function run(context) {
         });
         const at = duel.course.worldAt(state.s, state.lateral);
         const ground = duel.course.groundAt(state.s, state.lateral);
+        const jobActor = job.actors.find(actor => target === `World job actor: ${actor.id}`);
+        let carAboveGround = false;
+        if (node && jobActor) {
+          const drawn = pointFor(node);
+          let top = -Infinity;
+          node.traverse(part => {
+            if (!part.isMesh || !part.visible || !part.geometry) return;
+            part.geometry.computeBoundingBox();
+            const bounds = part.geometry.boundingBox?.clone().applyMatrix4(part.matrixWorld);
+            if (bounds) top = Math.max(top, bounds.max.y);
+          });
+          carAboveGround = Math.abs(drawn.y - jobActor.position.y) <= .05 && top > jobActor.position.y + .5;
+        }
+        const actorDistance = jobActor ? Math.hypot(at.x - jobActor.position.x, at.z - jobActor.position.z) : null;
         const aboveCar = !!node && pointFor(node).y > ground.y + 1.5;
         const map = document.querySelector('.world-hud-map:not([hidden])');
         const inPicture = [];
@@ -115,7 +131,7 @@ export async function run(context) {
           projection:projection && {x:projection.x,y:projection.y,z:projection.z}, map:map?.innerText ?? null,
           mapWays:map ? [...map.querySelectorAll('.world-hud-way strong')].map(item => item.innerText) : [],
           namedInView:[...new Set(inPicture)], forgeFire:job.forgeFire ?? null,
-          aboveCar, holdElapsed:job.arrivalHold?.elapsed ?? null};
+          aboveCar, carAboveGround, actorDistance, holdElapsed:job.arrivalHold?.elapsed ?? null};
       }, target, options, drawFocusedPicture.toString());
       report.pictures.push({name, ...measurement});
       report.failures.push(...pictureFailures(name, measurement, options));
@@ -168,32 +184,36 @@ export async function run(context) {
     // The riders only exist after the pot has been collected.
     for (const distance of [250, 60]) {
       const road = pointAlong(EAST_ROAD.points, 900 - distance);
-      await page(context, road => {
+      await page(context, (road, distance) => {
         const app=window.__qaApp, duel=app.duel, state=duel.state;
         const scout=state.arena.worldJob.actors.find(actor => actor.id === 'ash-scout');
         if (!scout) throw Error('The scout is missing');
+        const dx=road.x-scout.position.x, dz=road.z-scout.position.z, length=Math.hypot(dx,dz);
+        road={x:scout.position.x+dx/length*distance,z:scout.position.z+dz/length*distance};
         const pose=duel.course.nearest(road.x,road.z);
         state.s=state.prevS=pose.s; state.lateral=state.prevLateral=pose.lateral; state.speedMph=0;
         const angle=Math.atan2(scout.position.x-road.x,scout.position.z-road.z)-duel.course.at(pose.s).heading;
         state.headingError=Math.atan2(Math.sin(angle),Math.cos(angle));
         app.onFrame?.(state,0); window.__render.renderFrame();
-      }, road);
-      await picture(`scout-post-from-${distance}m`, 'World job actor: ash-scout', {loaded:true});
+      }, road, distance);
+      await picture(`scout-post-from-${distance}m`, 'World job actor: ash-scout', {loaded:true,carAboveGround:true,distance,slack:5});
     }
     for (const [index, name] of ['safe-road', 'girder-bridge'].entries()) {
-      const fence = LAND.at(name), road = roadPointFrom(EAST_ROAD, fence.x, fence.z, -60);
-      await page(context, (index, road) => {
+      const fence = LAND.at(name), distance = index === 1 ? 40 : 60, road = roadPointFrom(EAST_ROAD, fence.x, fence.z, -distance);
+      await page(context, (index, road, distance) => {
         const app = window.__qaApp, duel = app.duel, state = duel.state, job = state.arena.worldJob;
         const rider = job.actors[index], post = job.job.steps[0].waitingActors[index].start.position;
         rider.position = {...rider.position, x:post.x, z:post.z};
         rider.pursuing = false;
+        const dx=road.x-post.x, dz=road.z-post.z, length=Math.hypot(dx,dz);
+        road={x:post.x+dx/length*distance,z:post.z+dz/length*distance};
         const pose = duel.course.nearest(road.x, road.z);
         state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral; state.speedMph = 0;
         const angle = Math.atan2(post.x - road.x, post.z - road.z) - duel.course.at(pose.s).heading;
         state.headingError = Math.atan2(Math.sin(angle), Math.cos(angle));
         app.onFrame?.(state, 0); window.__render.renderFrame();
-      }, index, road);
-      await picture(`rider-${index + 1}-from-road`, `World job actor: ash-rider-${index + 1}`, {loaded:true});
+      }, index, road, distance);
+      await picture(`rider-${index + 1}-from-road`, `World job actor: ash-rider-${index + 1}`, {loaded:true,carAboveGround:true,distance});
     }
     // Wake the camp while the car is far away, then view the waiting rider from the road.
     await place('pickup',0,5);

@@ -1252,13 +1252,14 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
       world.activeLoan = 'flamethrower';
       hud.update(duel.state);
       const visible = [...slots,loan].filter(button => !button.hidden);
-      assert.equal(visible.length, 1);
-      assert.equal(visible[0].dataset.combatWeapon, 'flamethrower');
-      assert.equal(Number(visible[0].dataset.combatSlot), index);
+      assert.equal(visible.length, 4);
+      const borrowed = visible.find(button => Number(button.dataset.combatSlot) === index);
+      assert.equal(borrowed.dataset.combatWeapon, 'flamethrower');
+      assert.equal(Number(borrowed.dataset.combatSlot), index);
     }
     world.activeLoan = null;
     hud.update(duel.state);
-    assert.equal([...slots,loan].filter(button => !button.hidden).length, 0);
+    assert.equal([...slots,loan].filter(button => !button.hidden).length, 4);
     duel.state.arena = null;
     duel.state.weaponLoadout = ['crossbow','tesla','decoy','nitro'];
     hud.update(duel.state);
@@ -1373,6 +1374,52 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     assert.equal(actual.y, scablandsSurfaceHeightAt(actual.x, actual.z));
   }
   assert.equal(makeDuel(EVERBURN_JOBS[1]).state.arena.worldJob.solidGrid?.yard?.length ?? 0, 0);
+  const cinder = definition.steps[0].pickup.figure.position;
+  assert.equal(pushOutOfSolids(cinder.x + .1, cinder.z, 1, grid).hit?.id, 'hot-delivery-cinder');
+  const ring = definition.steps[0].pickup.place.position;
+  for (let ahead = -6; ahead <= 40; ahead += 1) {
+    const x = ring.x + Math.sin(plan.gate.bearing) * ahead;
+    const z = ring.z + Math.cos(plan.gate.bearing) * ahead;
+    assert.equal(pushOutOfSolids(x, z, 1, grid).hit, null, 'the pickup ring and gate exit stay clear');
+  }
+  const world = duel.state.arena.worldJob, rider = world.actors[0];
+  assert.ok(grid.cars.some(solid => solid.jobActor === rider));
+  assert.equal(grid.movers.near(rider.position.x, rider.position.z, rider.position.x, rider.position.z, 2)
+    .some(solid => solid.jobActor), false, 'a rider never pushes itself out of its own car');
+  for (const health of [100, 0]) {
+    rider.health = health;
+    grid.setCars([rider]);
+    assert.equal(pushOutOfSolids(rider.position.x + .1, rider.position.z, 1, grid, rider.position.y).hit?.jobActor, rider,
+      'a waiting car and its wreck stay solid');
+  }
+
+  // Sweep the real player into a stopped rider, without a scripted drive.
+  {
+    const d = makeDuel(definition), w = d.state.arena.worldJob, a = w.actors[0];
+    const at = roadPointFrom(ROAD_NET.road('east-road'), LAND.yard.x, LAND.yard.z, 500);
+    a.position = {x:at.x, y:scablandsSurfaceHeightAt(at.x, at.z), z:at.z};
+    a.heading = 0;
+    w.solidGrid.setCars([a]);
+    w.job.stepState = {loaded:true, ember:100};
+    const from = d.course.nearest(at.x, at.z - 12), to = d.course.nearest(at.x, at.z + 12);
+    placeActor(d, d.state, {s:to.s, lateral:to.lateral,
+      headingError:wrapHeading(-d.course.at(to.s).heading)}, 30 / 1.609344);
+    d.state.prevS = from.s; d.state.prevLateral = from.lateral;
+    w.lastKmh = 30;
+    d._staticContacts(d.state, true);
+    const end = d.course.worldAt(d.state.s, d.state.lateral);
+    assert.ok(end.z < at.z - 2.2, 'the sweep stops before the rider instead of crossing it');
+    assert.ok(w.carContacts?.some(hit => hit.actor === a));
+    stepWorldJob(d, 0);
+    assert.equal(w.job.stepState.joltCount, 1, 'solid contact and the ram charge once together');
+    placeActor(d, d.state, {s:to.s, lateral:to.lateral,
+      headingError:wrapHeading(-d.course.at(to.s).heading)}, 30 / 1.609344);
+    d.state.prevS = from.s; d.state.prevLateral = from.lateral;
+    w.lastKmh = 30;
+    d._staticContacts(d.state, true);
+    stepWorldJob(d, 0);
+    assert.equal(w.job.stepState.joltCount, 1, 'continued solid contact does not repeat the ram');
+  }
   const run = (target, bearing) => {
     const d = makeDuel(definition), direction = {x:Math.sin(bearing), z:Math.cos(bearing)};
     const start = {x:target.x - direction.x * 14, z:target.z - direction.z * 14};
@@ -1389,6 +1436,8 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(run(wall, wallBearing) < 0, 'the car stops at a wall sheet');
   const tower = plan.solids.find(solid => solid.id === 'yard-gate-tower-a');
   assert.ok(run(tower, plan.gate.bearing) < 0, 'the car stops at a gate tower');
+  assert.ok(run(cinder, plan.gate.bearing) < 0, 'the real car cannot drive through Cinder');
+
   assert.equal(plan.openings.length, 6);
   for (const opening of plan.openings) {
     const target = {x:Math.sin(opening.bearing) * plan.radius, z:Math.cos(opening.bearing) * plan.radius};
@@ -1523,7 +1572,7 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   syncScene(scene.group, state);
   assert.equal(drawnDoor.visible, true, 'the closed door is drawn');
   world.job.stepState = {loaded:true, ember:100, campAwake:true};
-  const tick = () => stepWorldJob(duel, 0.01);
+  const tick = (seconds = .01) => stepWorldJob(duel, seconds);
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a distant car does not request the gate');
   car = {x:gate.x, z:gate.z + 10};
@@ -1532,16 +1581,70 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   tick();
   assert.notEqual(world.tinTownGateRequested, true, 'a person does not request the gate');
   state.onFoot = false;
-  tick(); tick();
+  tick();
   assert.equal(world.tinTownGateRequested, true);
-  assert.equal(world.solidGrid.townGate.length, 0, 'opening the door clears the job solid');
+  assert.equal(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id,
+    'the door still blocks the opening as it starts to swing');
+  const checkDoor = () => {
+    syncScene(scene.group, state);
+    scene.group.updateMatrixWorld(true);
+    const at = drawnDoor.getWorldPosition(new THREE.Vector3()), solid = world.solidGrid.townGate[0];
+    assert.ok(Math.hypot(at.x - solid.x, at.z - solid.z) < 1e-8, 'drawing and solid share the hinge');
+    assert.ok(Math.abs(at.y - 1.5 - solid.minY) < 1e-8);
+    assert.ok(Math.abs(solid.heading - Math.PI - drawnDoor.rotation.y) < 1e-8);
+    assert.equal(pushOutOfSolids(solid.x + .1, solid.z, 1, world.solidGrid).hit?.id, door.id,
+      'the moving leaf remains solid');
+  };
+  tick(.74); checkDoor();
+  assert.ok(Math.abs(drawnDoor.rotation.y - Math.PI / 4) < 1e-8, 'half open after .75 seconds');
+  tick(.75); checkDoor();
   assert.notEqual(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
-  syncScene(scene.group, state);
   assert.equal(drawnDoor.visible, true);
-  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the door swings clear');
-  scene.dispose();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the door swings clear after 1.5 seconds');
   assert.ok(SOUND_BANK['world.tintown.gate']?.layers.length);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1);
+  car = {x:gate.x, z:gate.z - 30};
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the gate stays open after the car leaves the 20 m area');
+  state.onFoot = true;
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'getting out of the car leaves the gate open');
+  assert.notEqual(pushOutOfSolids(gate.x, gate.z, 1, world.solidGrid).hit?.id, door.id);
+  state.onFoot = false;
+  car = {x:gate.x, z:gate.z + 10};
+  tick(1.5); checkDoor();
+  assert.equal(drawnDoor.rotation.y, Math.PI / 2, 'the returning car finds the gate still open');
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.tintown.gate').length, 1,
+    'leaving, getting out and returning never start another swing');
+  scene.dispose();
+}
+// A stopped car in the gateway is not pushed by the opening leaf.
+{
+  const duel = new Duel({seed:19, featureFlags:{'hidden-road':true, arsenal:true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.equal(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:19,
+    cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
+  const world = duel.state.arena.worldJob, gate = step.riderSafeWall;
+  world.job.stepState = {loaded:true, ember:100};
+  duel.state.countdown = 0;
+  // On the approach side of the closed leaf, inside the gateway and clear of its solid.
+  const at = duel.course.nearest(gate.x, gate.z + 3);
+  placeActor(duel, duel.state, {s:at.s, lateral:at.lateral,
+    headingError:wrapHeading(-duel.course.at(at.s).heading)}, 0);
+  const before = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  duel._staticContacts(duel.state, true);
+  const parked = duel.course.worldAt(duel.state.s, duel.state.lateral);
+  assert.ok(Math.hypot(parked.x - before.x, parked.z - before.z) < 1e-8,
+    'the full car fits in the gateway before the door starts moving');
+  for (let i = 0; i < 100; i++) {
+    stepWorldJob(duel, 1 / 60);
+    duel._staticContacts(duel.state, true);
+    const after = duel.course.worldAt(duel.state.s, duel.state.lateral);
+    assert.ok(Math.hypot(after.x - before.x, after.z - before.z) < 1e-8,
+      'the opening door never moves a car standing in the gateway');
+    if (i === 20) duel.state.onFoot = true;
+  }
+  assert.equal(world.tinTownGateProgress, 1, 'the swing finishes even when the driver gets out');
 }
 // The real job records the delivered fire and sounds the forge when the ember lands.
 {

@@ -319,7 +319,6 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   for (const place of marks.places) if (visible(place.x, place.z)) { const at = toScreen(view, place.x, place.z), r = Math.max(8, place.flatRadius * view.scale); names.push({at, string: shortName(place.name), rank: 1, tries: [[0, -(r + 12)], [0, r + 14], [r + 50, 0], [-(r + 50), 0]], options: {size: 16, spacing: 1}}); }
   names.sort((a, b) => a.rank - b.rank);
   for (const item of names) nameAt(ctx, boxes, item.string, item.at.x, item.at.y, item.tries, item.options, view, item.rank <= 2);
-  drawActors(ctx, view, actors, 5);
   let marker = null;
   if (target) {
     marker = edgeMarker(view, target, car);
@@ -327,6 +326,9 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
     else drawEdgeMarker(ctx, marker, 8);
   }
   drawCarArrow(ctx, width / 2, height / 2, car.heading ?? 0, 13);
+  // At 60 m a rider is only ten pixels from the car. Keep its mark above the
+  // car's thirteen-pixel arrow so the last part of a scout chase stays visible.
+  drawActors(ctx, view, actors, 5);
   // On the map a place already carries its name; a mark on the edge, or a point that is no place, says what it is and how far (km).
   if (marker && (!marker.onMap || !namesAPlace(marks, target))) {
     const label = marker.onMap ? `${target.name.toUpperCase()}` : `${target.name.toUpperCase()}  ${marker.km.toFixed(1)} km`;

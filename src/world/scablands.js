@@ -54,6 +54,7 @@ export const SCABLANDS_LIGHT = Object.freeze({
 export const SCABLANDS_VENUE = Object.freeze({
   trialLight:SCABLANDS_LIGHT,
   id:'scablands', venue:true, layoutVersion:1, theme:'arena', stage:32,
+  ambience:'scablands',
   name:'The Scablands', lengthU:3288, closed:true, laps:1, kind:'arena',
   arena:true, townGate:Object.freeze({id:'scrapdome-gate',x:0,z:-92,radius:32,
     prompt:'Drive up to the Scrapdome gate to go inside.'}), scrapdome:SCABLANDS_LAYOUT,

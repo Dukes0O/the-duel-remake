@@ -58,7 +58,7 @@ import {createEmberPot} from './world/ember-pot.js';
 import {setSaltFlatsHeatEnabled} from './arena/venues/salt-flats.js';
 import { environmentKey } from './environment-key.js';
 import { createRenderWarmup, compileWarmupPipeline, compileWarmupScene, compileWarmupLighting, guardLightingWarmup, isRenderWarmupEnabled, preparationKey } from './render-warmup.js';
-import { placeGroundedVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
+import { placeGroundedVehicle, placeWorldJobVehicle, vehicleGroundPoint, vehicleGroundSlope, applyVehicleTerrainPose } from './vehicle-grounding.js';
 import { createFrameMetrics } from './frame-metrics.js';
 import { createRearView } from './rear-view.js';
 import { createRoadsideDebris } from './roadside-debris.js';
@@ -1044,9 +1044,7 @@ export function attachRenderer(host, app) {
     for(const entry of worldJobVehicles){
       const actor=jobActors.find(item=>item.id===entry.id);entry.mesh.visible=!menu&&!!actor;
       if(!entry.mesh.visible)continue;
-      const near=course.nearest(actor.position.x,actor.position.z,st.s);
-      const ground=course.groundAt(near.s,near.lateral);
-      entry.mesh.position.set(actor.position.x,ground.y+(actor.position.y||0),actor.position.z);
+      placeWorldJobVehicle(entry.mesh,actor,course,st.s);
       if(Number.isFinite(entry.previousX))entry.mesh.rotation.y=Math.atan2(
         actor.position.x-entry.previousX,entry.previousZ-actor.position.z);
       entry.previousX=actor.position.x;entry.previousZ=actor.position.z;
