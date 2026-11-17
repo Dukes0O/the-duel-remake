@@ -2068,3 +2068,22 @@ Kyle played the Everburn's first two jobs by hand and found them not fit to be s
 The 13 November release proved only that each job could be finished by a script. That was the wrong proof for a new world, and the card now asks for a play by hand, by Claude and then by Kyle, before either switch is on.
 Checks on 45d463106: the smoke set and replay guards 9 of 9 (four in one run; five rerun alone after a quote mark in the switch check's message was mended), `test-feature-flags` 129, `test-ember-side-jobs` 216, `test-run-gas` 1116, `test-field-battle` 796, `test-board` 640, hygiene pass; replay fingerprints unchanged. Build 26.11.14 14:19 UTC made in the live folder, served on port 5188 and read: both switches are `dev` in the built script. The game on port 5174 serves that build. No full tier, browser scenario or frame check was run: the only code change turns two switches off.
 Saves: nothing is wiped. Everburn progress and scrap stay in the save and are not shown while the switches are off.
+
+
+## Release, 17 November 2026 (Claude, Release Manager)
+
+HELI-EDGE (Kyle, 16 November: Summit Run could not be reached; the helicopter went off the map and
+stopped; show the headings): the flying area's edge always holds the helicopter; with a place chosen the
+cruise starts by itself after 3 s (not in a Lab challenge other than the altitude flight); HEAD FOR beside
+HEADING. Flown by hand in a visible Chrome (memory-only save) to Summit Run. FREESTYLE-MOUNTAINS (Gratian's
+Koenigsegg crashed far from the quarry mountains and in mid-air): on the practice course every car drives
+on the mountains' real surface, with slope gravity and tilt while on one; ramps and flat ground unchanged
+(a Jesko's big-air jump identical, every sample). CAREER-GRANT: Spikey Ferns to notoriety rank 9 and
+20,000 more scrap, once, at start-up after a saved copy. Five heli fingerprints re-recorded with reasons
+(four hash the view's new fields, old pins return with them left out; the autopilot pin's three leg-end
+samples stand on the edge, 163 of 166 unchanged). One review: points fixed and confirmed; save review of
+the grant confirmed. Lane tier, build, browser scenarios ski-drop-trip and heli-jobs.
+
+Full tier 672/672 on c3795328c (the release commit's code; notes and inbox only since), alone, 6,606 s.
+Driving physics files changed (sim-contacts, sim-crash, sim-driving, offroad-physics), so the full tier ran.
+No save shape change.

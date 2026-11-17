@@ -6,6 +6,19 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
 
 ### What players get now
 
+- **Summit Run can be reached from the air, and you can see which way to go.**
+  Beside HEADING a new HEAD FOR gauge shows the heading to turn to and how far
+  it is, "320, Summit Run · 15.6 km" (once there, the landing pad or the ski
+  pad). The edge of the flying area now holds the helicopter in instead of
+  letting it fly off over empty land; with a place chosen the cruise there
+  starts by itself after 3 seconds (ENTER goes at once), and with none the
+  screen says to choose one in FLY TO or on the pilot's map.
+- **The Freestyle quarry's mountains are solid ground for every car.** The
+  Koenigsegg and the other road cars no longer crash into an invisible wall
+  far from a mountain or in mid-air above it: they drive up its real slopes
+  as the Titan does, slowing as they climb.
+- **Spikey Ferns' Wasteland career:** notoriety rank 9 and 20,000 more scrap,
+  added once when the game next starts (a copy of the career is saved first).
 - **The Everburn story is off again.** It was in the game for one night (13 November). Kyle
   played its first two jobs on 14 November and found them not ready to be seen, so the story and
   the gas runs are hidden until they are rebuilt. Progress already saved in it is kept.
