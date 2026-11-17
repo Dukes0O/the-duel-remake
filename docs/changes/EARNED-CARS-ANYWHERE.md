@@ -1,18 +1,16 @@
 # EARNED-CARS-ANYWHERE
-- Medal cars race anywhere; the other three air-only cars and customer-job pool stay unchanged.
-- Before: the pilot map listed owned medal cars at their saved locations.
+- Medal cars race anywhere; the McMurtry and both Falcones still travel by air. Customer jobs keep the same cars.
+- Before: the pilot map showed owned medal cars at their saved locations.
 - Before: the garage said Kestrel One brought medal cars to Tremblant Woods.
 - Before: the menu and race entry refused medal cars away from their saved locations.
 - Before: customer lift jobs excluded medal cars; a player could lift their own car.
-- Before: the helicopter save kept car locations; an own-car lift and cable load existed only in the session.
-- A reopened session places the owned car at its last saved location; no save shape or migration changes.
-- Results now say the car is ready anywhere. No new game event or sound cue.
-- Focused air-only, customer-pool and McMurtry wording checks passed before this commit.
-- Memory-only old-profile, newly earned Enzo and four race modes passed on 874868c33 plus this change.
-- Heli jobs (5,802), cable (106), and save (44 groups) passed on 874868c33 plus this change.
-- Heli hooks: 303 passed on b1516774a plus this change. Course eligibility is night-only; stopped early.
-- Heli mode (278), job clarity (1,530), missions (45 groups) and rescue view (210) passed on 98adfcae5 plus this change.
-- Changed assertions for Claude: medal-car refusal true to false; menu refusal uses McMurtry. Sirena customer-pool expectation changes from a filtered list that now wrongly includes 3 medal cars to the unchanged 6-car list.
-- Browser scenario covers four modes and the McMurtry; all seven page expressions parse. Claude must run it and the UI suite; independent review is needed.
-- Sirena (9) and Koenigsegg UI (41) passed on 509d798b5 plus this change. Remaining: other affected suites, lane tier and build.
+- Before: the helicopter save kept locations; own-car jobs and cable loads existed only in the session.
+- Reopening returns an interrupted lift to the last saved location. No save shape or migration changes. Independent save review: no defect.
+- Results say the car is ready anywhere. No new game event or sound cue.
+- On ae39ab522: focused earned-car, UI, heli, lift, save, Lab and lesson checks passed; old-profile and four-mode checks passed. Build passed after test-only fixes.
+- Lane on ae39ab522: 99 passed, 4 failed, 1 stopped after exceeding three minutes. Replay passed. Eifel and review evidence could not start FFmpeg; map and cup had old assertions.
+- After the lane: map (572 checks) and the native cup admission check passed with the updated assertions.
+- Claude: run the browser scenario, course eligibility and track-kit checks; resolve the FFmpeg failures. Review the changed assertions.
+- Assertions: medal refusal and map marker true to false; Enzo cup refusal to entry; McMurtry retains refusal and marker. Air-only list drops three medal cars; customer pool stays six.
+- UI assertions replace flight and garage wording with the new sentences; Enzo refusal checks use McMurtry; obsolete refusal count is removed because all owned fleet cars now start.
 - Removed: medal cars from the air-only list and the flight requirement words.
