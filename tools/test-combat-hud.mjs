@@ -1,8 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {armorPresentation, combatHudEnabled, combatHudVisible, damageZoneFromChange,
+import {armorPresentation, combatSlotHidden, combatHudEnabled, combatHudVisible, damageZoneFromChange,
   fallbackOpponentPosition, footCarDirection, footAmmoPresentation,
   footActionPresentation} from '../src/combat-hud.js';
+
+test('every real car slot is visible, with one button for a borrowed flamethrower', () => {
+  for (const loadout of [['crossbow','tesla','decoy','flamethrower'], ['crossbow','tesla','decoy','nitro']]) {
+    for (let slot = 0; slot < 4; slot++) {
+      const buttons = [false, ...(slot === 3 ? [true] : [])];
+      assert.equal(buttons.filter(loan => !combatSlotHidden(slot, loadout[slot], loan)).length, 1);
+    }
+  }
+});
 
 test('combat HUD requires saved gate discovery and an active combat race', () => {
   const state = {mode: 'wasteland', status: 'racing', combat: {}, wastelandGateDiscovered: true};

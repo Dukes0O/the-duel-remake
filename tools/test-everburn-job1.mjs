@@ -1252,13 +1252,14 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
       world.activeLoan = 'flamethrower';
       hud.update(duel.state);
       const visible = [...slots,loan].filter(button => !button.hidden);
-      assert.equal(visible.length, 1);
-      assert.equal(visible[0].dataset.combatWeapon, 'flamethrower');
-      assert.equal(Number(visible[0].dataset.combatSlot), index);
+      assert.equal(visible.length, 4);
+      const borrowed = visible.find(button => Number(button.dataset.combatSlot) === index);
+      assert.equal(borrowed.dataset.combatWeapon, 'flamethrower');
+      assert.equal(Number(borrowed.dataset.combatSlot), index);
     }
     world.activeLoan = null;
     hud.update(duel.state);
-    assert.equal([...slots,loan].filter(button => !button.hidden).length, 0);
+    assert.equal([...slots,loan].filter(button => !button.hidden).length, 4);
     duel.state.arena = null;
     duel.state.weaponLoadout = ['crossbow','tesla','decoy','nitro'];
     hud.update(duel.state);
