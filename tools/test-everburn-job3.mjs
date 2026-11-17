@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {BELLOWS_RULE, BELLOWS_LINES, bellowsPay, bellowsSentence,
   stepBellowsLoad, bellowsAshBox, stepBellowsAsh, bellowsThiefSpeedKmh,
-  bellowsBlockingSide} from '../src/world/jobs/bellows-rule.js';
+  bellowsBlockingSide, stepBellowsPursuit, stepBellowsEnding} from '../src/world/jobs/bellows-rule.js';
 
 // Job 3.2: speed, attempted passes and each sack's six-second road-width box.
 assert.equal(bellowsThiefSpeedKmh(200, false), 195);
@@ -79,3 +79,71 @@ assert.equal(tick({}, {flameContact: true}, 0).state.bellows, 100);
 const softWall = tick({}, {...wall, solidImpactKmh: 1}).state;
 assert.equal(tick(softWall, wall).state.knocks, 0, 'Leaning against a solid is one meeting too.');
 console.log('PASS Run Him Down: load, warning, separate meetings, three knocks and result boundaries.');
+
+// Job 3.2 and 3.5: rules snapshots cross sack marks and reach the furnace.
+const roadFacts = {roadMetres: 0, roadWidthMetres: 28, furnaceMetres: 1000,
+  sackPoints: [{x: 10, z: 20, heading: 1}, {x: 30, z: 40, heading: 2}]};
+const pursue = (state, facts = {}, dt = 0) => stepBellowsPursuit(state, {...roadFacts, ...facts}, dt);
+assert.equal(pursue({}, {roadMetres: 799.99}).state.clouds.length, 0);
+let pursuit = pursue({}, {roadMetres: 800});
+assert.deepEqual(pursuit.state.sacksThrown, [0]);
+assert.deepEqual(pursuit.events, [{type: 'thiefAsh', id: 'thief-ash-0'}]);
+assert.equal(pursuit.state.clouds[0].width, 28);
+const firstSack = pursuit.state;
+pursuit = pursue(firstSack, {roadMetres: 800}, 6);
+assert.deepEqual(pursuit.events, []);
+assert.deepEqual(pursuit.state.clouds, []);
+assert.equal(firstSack.clouds[0].remaining, 6, 'Stepping must not age the earlier snapshot.');
+pursuit = pursue(pursuit.state, {roadMetres: 1600});
+assert.deepEqual(pursuit.state.sacksThrown, [0, 1]);
+assert.equal(pursuit.state.clouds[0].x, 30);
+assert.equal(pursue({}, {roadMetres: 2000}).state.clouds.length, 2);
+assert.equal(pursue({}, {furnaceMetres: 400.01}).requests.length, 0);
+pursuit = pursue(pursuit.state, {furnaceMetres: 400});
+assert.deepEqual(pursuit.requests, [{type: 'bellowsRiders'}]);
+assert.equal(pursue(pursuit.state, {furnaceMetres: 100}).requests.length, 0);
+assert.equal(pursue(pursuit.state, {furnaceMetres: 30.01}).events.length, 0);
+const loadedChase = {...pursuit.state, bellows: 37, knocks: 2, meetingHeld: true, solidHeld: true};
+const restarted = pursue(loadedChase, {furnaceMetres: 30});
+assert.equal(restarted.state.bellows, 37);
+assert.equal(restarted.state.knocks, 2);
+assert.equal(restarted.state.ridersStarted, true);
+assert.deepEqual(restarted.state.sacksThrown, [0, 1]);
+assert.deepEqual(restarted.state.clouds, []);
+assert.equal(restarted.state.meetingHeld, false);
+assert.equal(restarted.state.solidHeld, false);
+assert.deepEqual(restarted.requests, [{type: 'say', lineId: 'bellows.restart'},
+  {type: 'bellowsRestart', leadMetres: 150}]);
+assert.equal(pursue({...loadedChase, thiefStopped: true}, {furnaceMetres: 0}).requests.length, 0);
+console.log('PASS Run Him Down: two sacks, furnace riders and restart preserve the load.');
+
+// Job 3.6: the player must collect the bellows; proximity while walking or
+// driving through the circle cannot bank the load or send the furnace away.
+const endingFacts = {onFoot: false, playerSpeedKmh: 0, carGapMetres: 8};
+const end = (state, facts = {}, dt = 0) => stepBellowsEnding(state, {...endingFacts, ...facts}, dt);
+assert.equal(end({}).complete, false);
+const captured = {thiefStopped: true, bellows: 70, knocks: 3};
+for (const facts of [{onFoot: true}, {playerSpeedKmh: 1}, {playerSpeedKmh: -1}, {carGapMetres: 8.01}]) {
+  const waiting = end(captured, facts, 9);
+  assert.equal(waiting.complete, false);
+  assert.equal(waiting.state.bellowsLoaded, undefined);
+  assert.deepEqual(waiting.requests, [{type: 'bellowsThiefFlee'}]);
+}
+let ending = end(captured, {}, 0);
+assert.equal(ending.complete, false);
+assert.deepEqual(ending.events, [{type: 'bellowsLoaded'}]);
+assert.deepEqual(ending.requests, [{type: 'bellowsThiefFlee'}, {type: 'bellowsFurnaceLeave'},
+  {type: 'say', lineId: 'story.ember.cinder.22'}]);
+ending = end(ending.state, {}, 8.99);
+assert.equal(ending.complete, false);
+assert.deepEqual(ending.requests, []);
+ending = end(ending.state, {}, .01);
+assert.equal(ending.complete, true);
+assert.deepEqual(ending.events, [{type: 'bellowsArrived', bellows: 70, knocks: 3,
+  pay: 80, sentence: 'The bellows will patch.'}]);
+assert.deepEqual(end(ending.state, {}, 10).events, []);
+const lateCollection = end(end(captured, {carGapMetres: 100}, 20).state);
+assert.equal(lateCollection.complete, true);
+assert.equal(lateCollection.events.filter(event => event.type === 'bellowsArrived').length, 1);
+assert.deepEqual(end(Object.freeze(captured)), end(Object.freeze(captured)));
+console.log('PASS Run Him Down: theft escape, collection, furnace departure and nine-second ending.');

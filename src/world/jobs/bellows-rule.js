@@ -17,6 +17,7 @@ export const BELLOWS_RULE = Object.freeze({
   carStartLeadMetres: 250,
   ashLengthMetres: 30,
   ashSeconds: 6,
+  ashAtRoadMetres: Object.freeze([800, 1600]),
   ridersFromFurnaceMetres: 400,
   furnaceReachMetres: 30,
   restartLeadMetres: 150,
@@ -106,4 +107,67 @@ export function stepBellowsLoad(state, facts, dt = 0) {
     events.push({type: 'thiefStopped'});
   }
   return {state: next, events};
+}
+
+// Road progress and furnace distance are measured by the chase, not the scene.
+// Crossings, rather than a narrow distance window, keep sacks repeatable even
+// when one rules step crosses both marks. A restart cannot throw them again.
+export function stepBellowsPursuit(state, facts, dt = 0) {
+  const next = {...state, clouds: stepBellowsAsh(state.clouds ?? [], dt),
+    sacksThrown: [...(state.sacksThrown ?? [])]};
+  const events = [], requests = [];
+  if (state.thiefStopped) return {state: next, events, requests};
+  for (const [index, metres] of BELLOWS_RULE.ashAtRoadMetres.entries()) {
+    if (next.sacksThrown.includes(index) || !(facts.roadMetres >= metres)) continue;
+    const point = facts.sackPoints?.[index];
+    if (!point) throw new Error('The thief needs a road point for each sack.');
+    const cloud = bellowsAshBox(`thief-ash-${index}`, point, facts.roadWidthMetres);
+    next.clouds.push(cloud);
+    next.sacksThrown.push(index);
+    events.push({type: 'thiefAsh', id: cloud.id});
+  }
+  if (!state.ridersStarted && facts.furnaceMetres <= BELLOWS_RULE.ridersFromFurnaceMetres) {
+    next.ridersStarted = true;
+    requests.push({type: 'bellowsRiders'});
+  }
+  if (facts.furnaceMetres <= BELLOWS_RULE.furnaceReachMetres) {
+    // Reset only the chase meetings and position. Fire damage and earned knocks
+    // remain facts of this attempt, as do the two sacks already thrown.
+    next.meetingHeld = false;
+    next.solidHeld = false;
+    next.clouds = [];
+    events.push({type: 'bellowsRestart'});
+    requests.push({type: 'say', lineId: 'bellows.restart'},
+      {type: 'bellowsRestart', leadMetres: BELLOWS_RULE.restartLeadMetres});
+  }
+  return {state: next, events, requests};
+}
+
+// Stopping the thief starts the hold. The player can still approach his car;
+// results wait for the load even when that approach takes longer than the hold.
+// Actor motion, the roof load and the horn follow these one-time requests.
+export function stepBellowsEnding(state, facts, dt = 0) {
+  const events = [], requests = [];
+  if (!state.thiefStopped) return {state, complete: false, events, requests};
+  const next = {...state, endingElapsed: Math.min(BELLOWS_RULE.endingSeconds,
+    (state.endingElapsed ?? 0) + Math.max(0, dt))};
+  if (!state.thiefFled) {
+    next.thiefFled = true;
+    requests.push({type: 'bellowsThiefFlee'});
+  }
+  if (!state.bellowsLoaded && facts.onFoot === false &&
+      Math.abs(facts.playerSpeedKmh) < BELLOWS_RULE.stoppedKmh &&
+      facts.carGapMetres <= BELLOWS_RULE.loadRadiusMetres) {
+    next.bellowsLoaded = true;
+    events.push({type: 'bellowsLoaded'});
+    requests.push({type: 'bellowsFurnaceLeave'},
+      {type: 'say', lineId: 'story.ember.cinder.22'});
+  }
+  const complete = next.bellowsLoaded === true && next.endingElapsed >= BELLOWS_RULE.endingSeconds;
+  if (complete && !state.bellowsArrived) {
+    next.bellowsArrived = true;
+    events.push({type: 'bellowsArrived', bellows: state.bellows,
+      knocks: state.knocks, pay: bellowsPay(state.bellows), sentence: bellowsSentence(state.bellows)});
+  }
+  return {state: next, complete, events, requests};
 }
