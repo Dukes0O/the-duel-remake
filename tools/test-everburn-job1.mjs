@@ -62,8 +62,8 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(world.job.stepState.joltCount, 1, 'the rider cannot ram twice inside eight seconds');
   assert.ok(Math.hypot(rider.position.x - target.x, rider.position.z - target.z) <= 3,
     'the rider backs off to within three metres of its forty metre target');
-  assert.ok(Math.abs(world.job.stepState.ember - (100 - 7.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
-    'Easy halves the capped ram once');
+  assert.ok(Math.abs(world.job.stepState.ember - (100 - 1.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
+    'Easy halves the 18 km/h ram once');
 }
 
 // A solid behind the rammed rider cannot hold it in retreat forever.
@@ -726,10 +726,11 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
 {
   const view = {player:{position:definition.steps[0].carStart}, speedKmh:0, safeKmh:Infinity, hitKmh:28, difficulty:'medium'};
   const hit = changes => stepCarry(definition.steps[0], {loaded:true, ember:100}, {...view, ...changes}, 0);
-  assert.equal(hit({}).state.jolt, 15, 'a ram that would cost 42 is capped at 15');
-  assert.equal(hit({difficulty:'easy'}).state.jolt, 7.5, 'Easy halves the capped hit');
-  assert.equal(hit({severeHit:true, hitKmh:100}).state.jolt, 40, 'a severe fall or crash is capped at 40');
-  assert.equal(hit({severeHit:true, hitKmh:100, difficulty:'easy'}).state.jolt, 20);
+  assert.equal(hit({}).state.jolt, 6, 'a 28 km/h ram costs 6');
+  assert.equal(hit({hitKmh:58}).state.jolt, 15, 'a 58 km/h ram reaches the cap');
+  assert.equal(hit({hitKmh:58, difficulty:'easy'}).state.jolt, 7.5, 'Easy halves the capped hit');
+  assert.equal(hit({severeHit:true, hitKmh:150}).state.jolt, 40, 'a severe fall or crash is capped at 40');
+  assert.equal(hit({severeHit:true, hitKmh:150, difficulty:'easy'}).state.jolt, 20);
 }
 // Process impacts through the world job, including the previous-speed crash threshold.
 {
@@ -752,12 +753,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     stepWorldJob(waitingDuel, 0);
     return waitingWorld.job.stepState.jolt;
   };
-  assert.equal(impact({ram:28}), 15, 'the real job caps a 42-point ram');
-  assert.equal(impact({ram:28, difficulty:'easy'}), 7.5);
+  assert.equal(impact({ram:28}), 6, 'the real job charges for an 18 km/h excess');
+  assert.equal(impact({ram:28, difficulty:'easy'}), 3);
   assert.equal(impact({lastKmh:80}), 15, '80 km/h is not over the crash threshold');
-  assert.equal(impact({lastKmh:81}), 40, 'a crash to rest from over 80 km/h has the higher cap');
-  assert.equal(impact({fall:true, fallKmh:50}), 40, 'a long fall has the higher cap');
-  assert.equal(impact({fallKmh:50}), 15, 'a shorter fall keeps the ordinary cap');
+  assert.equal(impact({lastKmh:150}), 40, 'a crash to rest from over 80 km/h has the higher cap');
+  assert.equal(impact({fall:true, fallKmh:150}), 40, 'a long fall has the higher cap');
+  assert.equal(impact({fallKmh:150}), 15, 'a shorter fall keeps the ordinary cap');
   waitingDuel._scrape = () => {};
   waitingDuel._callout = () => {};
   for (const [drop, long] of [[2.9, false], [3.1, true]]) {
