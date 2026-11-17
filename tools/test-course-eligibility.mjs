@@ -56,6 +56,21 @@ try{
     same(app.duel.state.mode,event.practice||event.stuntTrial||['chase','drift','checkpoint'].includes(event.kind)?'duel':'timetrial','objective-only modes remain enforced without vehicle forcing');
     app.restart();same(app.duel.state.car,car,'restart preserves any chosen vehicle');same(app.duel.state.stageIndex,startStage,'restart preserves the course');app.returnToMenu();
   }
+  // The McMurtry still needs to be flown to every course away from its saved position.
+  app.profile.unlockedCars=[...app.profile.unlockedCars,'mcmurtry_speirling'];
+  app.profile.heli={...app.profile.heli,carsAt:{mcmurtry_speirling:'tremblant-woods'}};app._saveProfile();
+  for(const [startStage,event]of COURSE.entries()){
+    const refused=event.id!=='tremblant-woods';
+    same(app._airOnlyRefused('mcmurtry_speirling',event.id),refused,`McMurtry at ${event.id}: only its saved course permits entry`);
+    if(refused){
+      check(!app.startCampaign({car:'mcmurtry_speirling',startStage}),`McMurtry is refused at ${event.id}`);
+      same(app.courseAccessMessage,`The ${CARS.mcmurtry_speirling.name} travels only by air. Fly it here from the helipad first.`,'the refusal explains how to bring the car');
+      same(app.duel.state.status,'menu','a refused start stays on the menu');
+    }else{
+      check(app.startCampaign({car:'mcmurtry_speirling',startStage}),'McMurtry starts where it was set down');
+      same(app.duel.state.car,'mcmurtry_speirling','the race uses the McMurtry');app.returnToMenu();
+    }
+  }
   // An old helicopter position must not restrict any Jesko mode on any course.
   app.profile={...app.profile,heli:{...foundAll.heli,carsAt:{koenigsegg_jesko:'panorama-ridge'}}};app._saveProfile();
   check(app._switches().enabled('helicopter'),'the helicopter is on for the Jesko regression');

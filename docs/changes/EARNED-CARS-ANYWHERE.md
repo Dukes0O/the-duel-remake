@@ -9,8 +9,9 @@
 - Results say the car is ready anywhere. No new game event or sound cue.
 - On ae39ab522: focused earned-car, UI, heli, lift, save, Lab and lesson checks passed; old-profile and four-mode checks passed. Build passed after test-only fixes.
 - Lane on ae39ab522: 99 passed, 4 failed, 1 stopped after exceeding three minutes. Replay passed. Eifel and review evidence could not start FFmpeg; map and cup had old assertions.
-- After the lane: map (572 checks) and the native cup admission check passed with the updated assertions.
-- Claude: run the browser scenario, course eligibility and track-kit checks; resolve the FFmpeg failures. Review the changed assertions.
+- After the lane: map (572 checks) and the native cup admission check passed.
+- Review fix on fb0deaab5 plus test changes: McMurtry refusal is checked on every course, with its exact explanation and menu state; heli hooks 305 and course eligibility 5,679 passed.
+- Claude: run the browser scenario, earned-cars UI and track-kit checks; resolve the FFmpeg failures. Review the changed assertions.
 - Assertions: medal refusal and map marker true to false; Enzo cup refusal to entry; McMurtry retains refusal and marker. Air-only list drops three medal cars; customer pool stays six.
 - UI assertions replace flight and garage wording with the new sentences; Enzo refusal checks use McMurtry; obsolete refusal count is removed because all owned fleet cars now start.
 - Removed: medal cars from the air-only list and the flight requirement words.

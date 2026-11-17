@@ -11,7 +11,7 @@ import {HELI_CUES} from '../src/heli/heli-audio.js';
 import {heliOf, carAt} from '../src/heli/heli-save.js';
 import {heliCameraPose, HELI_CAMERA_VIEWS} from '../src/heli/heli-camera.js';
 import {screenMarkup} from '../src/screen-menu.js';
-import {COURSE} from '../src/config.js';
+import {CARS, COURSE} from '../src/config.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -179,6 +179,8 @@ try {
     const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'panorama-ridge', carName: 'McMurtry Sp\u00e9irling'});
     const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'mcmurtry_speirling'});
     ok(!started && app.courseAccessMessage === note, 'the menu note and the refusal say the same thing');
+    ok(note === `The ${CARS.mcmurtry_speirling.name} travels only by air. Fly it here from the helipad first.`, 'the refusal explains how to bring the car');
+    ok(app.duel.state.status === 'menu', 'a refused start stays on the menu');
     ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
     ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'falcone_f42', courseId: 'panorama-ridge'}) === null, 'no note for other cars');
     ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
