@@ -8,4 +8,5 @@
 - Changed assertion for Claude: machine list depends on the town switch because unfinished road models are hidden in the Dig alone.
 - No new game event or sound cue. The switch stays `dev`.
 - Removed: duplicated machine availability and panel control text; MACHINE-ROADS removes the temporary restriction.
-- Still to build: ground layers, Mabel camera and real-model view checks, and browser scenario. Run remaining card checks, lane tier and build at the end.
+- The Dig scenario pictures each offered machine in its second view; page expressions parse. Claude must run it in a browser.
+- Still to build: ground layers, Mabel camera and real-model view checks. Run remaining card checks, lane tier and build at the end.
