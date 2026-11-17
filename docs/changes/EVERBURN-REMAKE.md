@@ -6,6 +6,6 @@ Changed assertions for Claude: bridge road offset 0 to 5 m and fence along +25 t
 Cap test speeds 28/100 to 58/150 km/h and severe/fall speeds 81/50 to 150 reflect the lower rate; caps remain unchanged.
 Cinder figure gate-relative (-8, 9) to (-16, 4), brazier (-8, 20) to (-22, 8), pickup radius 12 to 6 m and ring to (-16, 0); boundary 12.1/11.9 to 6.1/5.9 m; play-start ring clearance sampled at 6 instead of 12 m. Facing now uses the figure.
 Checks on 0993bdef1: job1, Easy Hot Delivery 10/10 and world composition pass; older ember, Everburn, arsenal, Scablands, world job, gas and town checks run so far pass. Play-start passes with this change.
-Measurements so far: Medium East Road 40.91 fire, 3 rams, camp scoop; bed 35.86, 0 rams, Wash scoop; salt pan 47.44, 0 rams, 0 jolts, no scoop. Easy East Road 69.29 fire, 3 rams, camp scoop. Complete the table with jolts and plates.
-Old Smoke is night-only. Remaining older suites, complete table, lane tier and build are outstanding. Claude must run the browser scenario. No new event or sound cue.
+Measurements (fire / rams / jolts / scoops): Medium East Road 40.91 / 3 / 3 / camp; bed 35.86 / 0 / 0 / Wash; plates 33.35 / 0 / 0 / none; salt pan 47.44 / 0 / 0 / none. Easy East Road 69.29 / 3 / 3 / camp (10 seeds).
+Old Smoke is night-only. Remaining older suites, lane tier and build are outstanding. Claude must run the browser scenario. No new event or sound cue.
 Removed: old bridge post, centre-line-only flame check, old hit rate and the camp's temporary post and reach check.
