@@ -585,6 +585,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
     rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts].filter(jolt => jolt.riders.length > 0).length,
+    jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + scoop.jolts.length + arrival.jolts.length,
     scoops, ember:arrival.fire?.ember ?? pot.ember, result:duel.state.arena.worldJob.emberResult};
   console.log('East Road delivery:', JSON.stringify(result));
   assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
@@ -647,6 +648,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     const result = {kilometres:(yard.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + (scoop?.driven ?? 0) + arrival.driven) / 1000,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
       rams:[...stretches.flatMap(item => item.jolts), ...(scoop?.jolts ?? []), ...arrival.jolts].filter(jolt => jolt.riders.length).length,
+      jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (scoop?.jolts.length ?? 0) + arrival.jolts.length,
       scoops, ember:arrival.fire?.ember ?? pot.ember, done:arrival.done, result:duel.state.arena.worldJob.emberResult};
     console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
