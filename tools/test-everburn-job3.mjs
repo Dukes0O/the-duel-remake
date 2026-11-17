@@ -355,3 +355,45 @@ assert.equal(heard.length, 2);
 assert.equal(JSON.stringify(audioJob), beforeAudio);
 assert.deepEqual(parked, {x:1, y:2, z:3});
 console.log('PASS Run Him Down: sack and loading sounds use bank recipes and read-only event positions.');
+
+// Job 3.5 and 3.6: the furnace waits at the wing gap until collection.
+// Stopping the thief, waiting, or reading the scene cannot release it.
+const {furnaceSighting, FURNACE_LEAVING} = await import('../src/world/jobs/furnace-sightings.js');
+const {applyBellowsFurnaceLeave} = await import('../src/arena/modes/world-job.js');
+const furnaceJob = {definition:{storyId:'everburn', number:3}, clockSec:0,
+  job:{steps:[chaseStep], stepIndex:0, stepState:{}}};
+const waiting = furnaceSighting(furnaceJob);
+assert.equal(waiting.x, FURNACE_LEAVING.from.x);
+assert.equal(waiting.z, FURNACE_LEAVING.from.z);
+furnaceJob.wonAtSec = 0;
+furnaceJob.clockSec = 100;
+furnaceJob.job.stepState.thiefStopped = true;
+const beforeSighting = JSON.stringify(furnaceJob);
+assert.deepEqual(furnaceSighting(furnaceJob), waiting);
+assert.equal(JSON.stringify(furnaceJob), beforeSighting);
+const horns = [];
+const hornListener = {emit:event => horns.push(event)};
+assert.equal(applyBellowsFurnaceLeave(hornListener, furnaceJob, {type:'follow'}), false);
+const release = {type:'bellowsFurnaceLeave'};
+assert.equal(applyBellowsFurnaceLeave(hornListener, furnaceJob, release), true);
+assert.equal(furnaceJob.bellowsLeavingAtSec, 100);
+assert.equal(horns.length, 1);
+assert.equal(horns[0].arenaTell.cue, 'world.furnace.horn');
+assert.equal(horns[0].arenaTell.position.x, waiting.x);
+assert.equal(horns[0].arenaTell.position.z, waiting.z);
+assert.deepEqual(furnaceSighting(furnaceJob), waiting);
+furnaceJob.clockSec += FURNACE_LEAVING.seconds / 2;
+applyBellowsFurnaceLeave(hornListener, furnaceJob, release);
+assert.equal(horns.length, 1);
+assert.equal(furnaceJob.bellowsLeavingAtSec, 100);
+const halfway = furnaceSighting(furnaceJob);
+assert.equal(halfway.x, (FURNACE_LEAVING.from.x + FURNACE_LEAVING.to.x) / 2);
+assert.equal(halfway.z, (FURNACE_LEAVING.from.z + FURNACE_LEAVING.to.z) / 2);
+furnaceJob.clockSec += FURNACE_LEAVING.seconds / 2;
+assert.deepEqual(furnaceSighting(furnaceJob), {hidden:true});
+const oldChase = {...furnaceJob, clockSec:0, wonAtSec:undefined,
+  job:{steps:[{kind:'chase'}], stepIndex:0, stepState:{}}};
+assert.equal(furnaceSighting(oldChase), null);
+applyBellowsFurnaceLeave(hornListener, oldChase, release);
+assert.equal(horns.length, 1);
+console.log('PASS Run Him Down: furnace waits, horns once at collection, leaves and disappears.');

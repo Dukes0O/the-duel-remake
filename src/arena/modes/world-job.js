@@ -7,7 +7,7 @@ import {gearDirection} from '../../crew-gear/contacts.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
+import {FURNACE_LEAVING, pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -999,8 +999,22 @@ function brandCombatView(state, worldJob) {
   return {brandSwing, handFlamerHits};
 }
 
+// Only collection releases the waiting furnace. Repeated requests cannot
+// restart its departure or sound its horn again.
+export function applyBellowsFurnaceLeave(duel, worldJob, request) {
+  if (request.type !== 'bellowsFurnaceLeave') return false;
+  const step = worldJob.job.steps[worldJob.job.stepIndex];
+  if (!step?.bellows || Number.isFinite(worldJob.bellowsLeavingAtSec)) return true;
+  worldJob.bellowsLeavingAtSec = worldJob.clockSec ?? 0;
+  const at = FURNACE_LEAVING.from;
+  duel.emit({arenaTell: {id:'bellows-furnace-leave', targetId:'player', seconds:0,
+    cue:'world.furnace.horn', position:{...at, y:scablandsSurfaceHeightAt(at.x, at.z)}}});
+  return true;
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
+    if (applyBellowsFurnaceLeave(duel, worldJob, request)) continue;
     if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
       worldJob.marker = request.place ?? null;

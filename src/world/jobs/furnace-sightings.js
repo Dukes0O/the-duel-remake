@@ -111,8 +111,12 @@ export function furnaceSighting(worldJob) {
     return over ? {hidden: true} : {x: FURNACE_SKYLINE.x, z: FURNACE_SKYLINE.z, heading: 0};
   }
   if (definition.number === 3) {
-    if (!Number.isFinite(worldJob.wonAtSec)) return null;
-    const t = clock - worldJob.wonAtSec, leaving = FURNACE_LEAVING;
+    const bellows = job?.steps?.[job.stepIndex]?.bellows === true;
+    const leavingAt = bellows ? worldJob.bellowsLeavingAtSec : worldJob.wonAtSec;
+    if (!Number.isFinite(leavingAt)) return bellows
+      ? {...FURNACE_LEAVING.from, heading: Math.atan2(FURNACE_LEAVING.to.x - FURNACE_LEAVING.from.x,
+        FURNACE_LEAVING.to.z - FURNACE_LEAVING.from.z)} : null;
+    const t = clock - leavingAt, leaving = FURNACE_LEAVING;
     if (t < 0) return null;
     if (t >= leaving.seconds) return {hidden: true};
     const s = t / leaving.seconds, dx = leaving.to.x - leaving.from.x, dz = leaving.to.z - leaving.from.z;
