@@ -763,7 +763,7 @@ export function settleRace(profile, result = {}) {
   const finishingPay = won ? distanceFinishingPay(base, COURSE[result.stageIndex],
     result.laps, result.mode, result.lapChoiceEnabled === true) : 0;
   const breakdown = {
-    base: grandPrix ? positionPay : won ? finishingPay : combatRace ? 0 : -Math.round(base * 0.5),
+    base: grandPrix ? positionPay : won ? finishingPay : combatRace || (result.mode === 'duel' && cpu === 'easy') ? 0 : -Math.round(base * 0.5),
     clean: won && result.clean === true ? Math.round(base * 0.1) : 0,
     personalBest: personalBestStatus === 'improved' ? Math.round(base * 0.2) : 0,
     streak: won && streak >= 3 ? Math.round(base * 0.2) : 0,
@@ -794,7 +794,7 @@ export function settleRace(profile, result = {}) {
     (breakdown.combat || 0);
   breakdown.manual = result.difficulty === 'pro' ? (grandPrix ? positionPay : finishingPay) + recurringBonus : 0;
   if (separateCareer) for (const name of Object.keys(breakdown)) breakdown[name] = 0;
-  const charge = grandPrix || won || combatRace ? 0 : Math.min(profile.credits, -breakdown.base),
+  const charge = grandPrix || won || combatRace ? 0 : Math.min(profile.credits, Math.max(0, -breakdown.base)),
     bonus = recurringBonus + breakdown.manual + breakdown.milestones + (breakdown.medal || 0);
   const grossReward = (grandPrix ? positionPay : won ? finishingPay : -charge) + bonus + (breakdown.snowmen || 0);
   const pendingFines =

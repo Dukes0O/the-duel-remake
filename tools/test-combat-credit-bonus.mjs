@@ -56,15 +56,16 @@ test('timeout and abandonment pay no combat bonus and never debit the combat wal
   }
 });
 
-test('flag-off and ordinary races keep the old loss charge and reward shape', () => {
+test('flag-off combat retains its charge and Easy Duel losses are free', () => {
   for (const result of [
     finish({combatRewardsEnabled: false, won: false}),
     finish({mode: 'duel', won: false}),
   ]) {
     const settled = settleRace(wallet(500), result);
-    assert.equal(settled.charge, 300);
-    assert.equal(settled.reward, -300);
-    assert.equal(settled.profile.credits, 200);
+    const charge = result.mode === 'duel' ? 0 : 300;
+    assert.equal(settled.charge, charge);
+    assert.equal(settled.reward, -charge || 0);
+    assert.equal(settled.profile.credits, 500 - charge);
     assert.equal(Object.hasOwn(settled.breakdown, 'combat'), false);
   }
 });

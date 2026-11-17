@@ -22,7 +22,7 @@ const burnt = {'tremblant-woods': {day: 4, boughtBack: false}};
 
 // Switch off: the menu is exactly as before, whatever the save says.
 {
-  const profile = owner(9000, 7, burnt), plain = owner(9000, 7, {});
+  const profile = owner(9000, 5, burnt), plain = owner(9000, 7, {});
   same(courseAccessPanel(profile, 0, ''), courseAccessPanel(plain, 0, ''), 'switch off: a burnt save draws the same menu');
   same(courseAccessPanel(profile, 0, '', {forestFire: false}), courseAccessPanel(plain, 0, ''), 'switch off when passed');
   same(courseAccessPanel(plain, 0, '', {forestFire: true}), courseAccessPanel(plain, 0, ''), 'switch on, nothing burnt: the same menu');
@@ -31,12 +31,12 @@ const burnt = {'tremblant-woods': {day: 4, boughtBack: false}};
 
 // Switch on, closed: soot, days left, the price and the button.
 {
-  const markup = courseAccessPanel(owner(9000, 7, burnt), 0, '', {forestFire: true});
+  const markup = courseAccessPanel(owner(9000, 5, burnt), 0, '', {forestFire: true});
   const card = cardOf(markup, 'Tremblant Woods');
   check(/class="course-access-card[^"]*course-burnt"/.test(card), 'the card is darkened with soot');
   check(card.includes('>CLOSED<'), 'labelled closed');
-  check(card.includes('Closed: burnt in a forest fire.') && card.includes('Reopens in 7 play days.'), 'the closed lines');
-  check(card.includes('data-course-buyback="tremblant-woods"') && card.includes('BUY BACK · 7,000 CR'), 'the buyback button at 7,000');
+  check(card.includes('Closed: burnt in a forest fire.') && card.includes('Reopens in 2 play days.'), 'the closed lines');
+  check(card.includes('data-course-buyback="tremblant-woods"') && card.includes('BUY BACK · 2,000 CR'), 'the buyback button at 2,000');
   check(!card.includes('data-course-select'), 'a closed course cannot be selected');
   const snow = cardOf(markup, 'Tremblant Snow'), plainSnow = cardOf(courseAccessPanel(owner(9000, 7, {}), 0, ''), 'Tremblant Snow');
   same(snow, plainSnow, 'Tremblant Snow stays as it is');
@@ -44,20 +44,20 @@ const burnt = {'tremblant-woods': {day: 4, boughtBack: false}};
 
 // Short of the price: the button is disabled and says how much is missing.
 {
-  const card = cardOf(courseAccessPanel(owner(6550, 7, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
-  check(!card.includes('data-course-buyback') && card.includes('disabled') && card.includes('BUY BACK · 7,000 CR'), 'disabled when short');
+  const card = cardOf(courseAccessPanel(owner(1550, 5, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
+  check(!card.includes('data-course-buyback') && card.includes('disabled') && card.includes('BUY BACK · 2,000 CR'), 'disabled when short');
   check(card.includes('You need 450 more credits.'), 'says what is missing');
-  const one = cardOf(courseAccessPanel(owner(999, 13, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
+  const one = cardOf(courseAccessPanel(owner(999, 6, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
   check(one.includes('Reopens in 1 play day.') && one.includes('You need 1 more credit.') && one.includes('you need 1 more credit"'), 'singular day and credit, also for screen readers');
 }
 
 // Reopening day and later.
 {
-  const reopened = cardOf(courseAccessPanel(owner(0, 14, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
-  check(reopened.includes('Reopened after the fire.') && reopened.includes('data-course-select="tremblant-woods"'), 'reopened by itself on day 10');
+  const reopened = cardOf(courseAccessPanel(owner(0, 7, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
+  check(reopened.includes('Reopened after the fire.') && reopened.includes('data-course-select="tremblant-woods"'), 'reopened by itself on day 3');
   check(!/class="course-access-card[^"]*course-burnt"/.test(reopened), 'no soot once open');
-  const later = cardOf(courseAccessPanel(owner(0, 15, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
-  same(later, cardOf(courseAccessPanel(owner(0, 15, {}), 0, ''), 'Tremblant Woods'), 'the day after, a normal card');
+  const later = cardOf(courseAccessPanel(owner(0, 8, burnt), 0, '', {forestFire: true}), 'Tremblant Woods');
+  same(later, cardOf(courseAccessPanel(owner(0, 8, {}), 0, ''), 'Tremblant Woods'), 'the day after, a normal card');
   const bought = cardOf(courseAccessPanel(owner(0, 7, {'tremblant-woods': {day: 4, boughtBack: true}}), 0, '', {forestFire: true}), 'Tremblant Woods');
   check(bought.includes('data-course-select="tremblant-woods"') && !bought.includes('Reopened'), 'bought back: a normal card');
 }

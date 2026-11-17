@@ -245,7 +245,7 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
   ok(!fireOf(profile) && days >= 3 && days <= 6, `a fire left alone is lost on play day ${days}`);
   const today = heliOf(profile).playDay.count;
   same(heliOf(profile).burnt['tremblant-woods'], {day: today, boughtBack: false}, 'the course burns that play day');
-  ok(courseClosed(profile, 'tremblant-woods', undefined, on) && buybackPrice(profile, 'tremblant-woods', undefined, on) === 10_000, 'closed, 10,000 to buy back');
+  ok(courseClosed(profile, 'tremblant-woods', undefined, on) && buybackPrice(profile, 'tremblant-woods', undefined, on) === 3_000, 'closed, 3,000 to buy back');
   same([missionsOf(profile).call, missionsOf(profile).count], [null, 0], 'the mission ends with no pay');
   ok(!courseClosed(profile, 'tremblant-snow', undefined, on), 'Tremblant Snow stays open');
 }
@@ -260,9 +260,17 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
     const events = [...session.start(), ...session.step({})];
     return {events, heard: heliOf(session.profile).burnt['tremblant-woods'].heard, session};
   };
-  const closed = visit(12);
-  same(lines(closed.events).filter(line => line.startsWith('heli.radio.burn.')), [], 'closed (day 4 of the burn): no news yet');
+  const closed = visit(10);
+  same(lines(closed.events).filter(line => line.startsWith('heli.radio.burn.')), [], 'closed (day 2 of the burn): no news yet');
   same(closed.heard, undefined, 'and nothing heard');
+  for (const count of [11, 13]) {
+    const reopened = visit(count);
+    same(lines(reopened.events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'],
+      `open on day ${count - 8}: reopening news`);
+    same(reopened.heard, 'reopen', 'reopening news saved as heard');
+    const next = newSession(reopened.session.profile);
+    same(lines([...next.start(), ...next.step({})]).filter(line => line.startsWith('heli.radio.burn.')), [], 'reopening news is not repeated');
+  }
   const black = visit(18);
   same(lines(black.events).filter(line => line.startsWith('heli.radio.burn.')), ['heli.radio.burn.reopen'], 'reopened (day 10): "The burnt woods are open again"');
   same(black.heard, 'reopen', 'saved as heard');
@@ -308,7 +316,7 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
     const stage = COURSE.findIndex(course => course.id === 'tremblant-woods');
     const burnt = app => {
       app.profile = {...app.profile, credits: 12_000, courses: {version: 1, unlocked: ['pacific-canyon', 'tremblant-woods']},
-        heli: {...heliOf(app.profile), playDay: {last: '2026-10-20', count: 9}, burnt: {'tremblant-woods': {day: 6, boughtBack: false}}}};
+        heli: {...heliOf(app.profile), playDay: {last: '2026-10-20', count: 9}, burnt: {'tremblant-woods': {day: 8, boughtBack: false}}}};
       app._saveProfile();
     };
     const app = makeApp(true);
@@ -316,7 +324,7 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
     ok(app.startCampaign({startStage: stage, car: 'falcone_f42'}) === false, 'a closed course refuses the race');
     same(app.courseAccessMessage, 'Tremblant Woods is closed after a forest fire.', 'with the reason');
     const bought = app.buyBackCourse('tremblant-woods');
-    same([bought.ok, bought.price, app.profile.credits], [true, 7_000, 5_000], 'bought back on play day 3 for 7,000');
+    same([bought.ok, bought.price, app.profile.credits], [true, 2_000, 10_000], 'bought back one play day after the burn for 2,000');
     ok(app.startCampaign({startStage: stage, car: 'falcone_f42'}) !== false, 'then the race starts');
     app.returnToMenu();
     const offApp = makeApp(false);
@@ -338,7 +346,7 @@ function check(name, fn) { fn(); console.log('PASS ' + name); }
       const ready = createRendererReadiness({app: menu, ui, choices, profile: () => menu.profile, isDisposed: () => false,
         importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
       await ready.ensureRenderer();
-      same(line.textContent, 'Tremblant Woods is closed after a forest fire. It reopens in 7 play days, or buy it back in Your Courses.',
+      same(line.textContent, 'Tremblant Woods is closed after a forest fire. It reopens in 2 play days, or buy it back in Your Courses.',
         'the line under START says the course is closed, for how long, and where to buy it back');
       ok(ui['start-engine'].disabled, 'and START is closed');
       menu.buyBackCourse('tremblant-woods');
