@@ -268,7 +268,9 @@ test('moving a place in a copy of the table moves everything that belongs to it,
           const dx = ahead.x - road.x, dz = ahead.z - road.z, length = Math.hypot(dx, dz);
           road.x += dz / length * 8; road.z -= dx / length * 8;
         }
-        near({x: b.get(id)[0], z: b.get(id)[1]}, road, id); continue;
+        assert.ok(Math.hypot(b.get(id)[0] - road.x, b.get(id)[1] - road.z) < 0.01,
+          `${moved}: ${id} follows the road within one centimetre`);
+        continue;
       }
       if (id === 'cinder' || id === 'cinder-figure' || id === 'yard-brazier') {
         const gate = yardPlan(net.roads).gate, forward = {x: Math.sin(gate.bearing), z: Math.cos(gate.bearing)};

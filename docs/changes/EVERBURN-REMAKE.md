@@ -1,16 +1,14 @@
 # EVERBURN-REMAKE slice 6b
-
-The camp sleeps until its fence burns, the scout arrives, or a Hard scoop wakes it; awake it charges within its road limits.
-The scout sounds `world.ashmen.horn`, runs to camp, and wakes its rider; flame or a ram stops it as a wreck.
-A ram uses closing speed and `world.ember.spark`; a 15 km/h meeting costs 2.1 fire on Medium.
-Rook's three new scout lines are captions only; the chase line and map mark appear while it runs.
-Cinder and forge rings are drawn above the road from 40 m. The loaded picture scenario parses in Node.
-On e069cde4f, Easy Hot Delivery passed 10/10: scout stopped, camp awake, 68.16 fire and 3 rams.
-The proof drives now start with the scout stopped, as Claude ruled. The river bed arrived with 35.86 fire and no rams with a scoop, 14.24 without.
-The rule check for a lost chase counted 2 rams at 30 km/h and 1 at 70 km/h. Job suite passed with these changes.
-The 1,430 m chase takes 73.5 s at 70 km/h or 93.6 s at 55; a 250 m head start needs 82.2 or 64.6 km/h to catch, on a straight ideal run.
-Changed assertion, for Claude: camp scoop wake uses Hard instead of Medium and checks persistent waking; charge setups use a burnt fence. No tolerance was loosened.
-On 1bbe0abc7 the job suite passed; focused suites passed, including audio outside the sandbox. Size passes after its road-position check was corrected.
-Changed assertion, for Claude: the scout road points now must be 900 m along the moved road and 8 m right, rather than move in a straight share.
-Final lane tier and build remain. For Claude: record the three Rook lines, take the browser pictures and drive the chase by hand.
+Camp sleeps until the fence burns, the scout arrives, or a Hard scoop wakes it; awake it charges within road limits.
+The scout sounds `world.ashmen.horn`, runs to camp and wakes its rider; flame or a ram leaves a wreck. Ram cue: `world.ember.spark`.
+Rook's three scout lines are captions; the chase line and map mark appear while it runs. Both delivery rings show from 40 m.
+On e069cde4f Easy Hot Delivery passed 10/10: scout stopped, camp awake, 68.16 fire, 3 rams.
+On 1bbe0abc7 the job suite passed: lost chase rams 2 at 30 km/h and 1 at 70; proof drives start with scout stopped.
+Medium fire / rams / camp awake: East Road 25.57 / 4 / yes; bed with scoop 35.86 / 0 / no, without 14.24 / 0 / no; plates 33.35 / 0 / no; salt 47.44 / 0 / no.
+A 1,430 m chase takes 73.5 s at 70 or 93.6 s at 55 km/h; catching a 250 m lead takes 82.2 or 64.6 km/h, on a straight ideal run.
+On be2116098 lane tier 127/144; 15 ffmpeg sandbox failures and P4 passed outside; size passed alone, then its known timing limit was 470 ms under load.
+On be2116098 the build, focused job suites, course signatures and replays passed; replay fingerprints: 297 checks, combat 12. Scenario strings parsed.
+Changed assertions for Claude: scoop waking Medium to Hard; charge setup uses burnt fence; scout post follows the moved road at 900 m and 8 m right, not a straight share. No tolerance loosened.
+The final size check strengthened scout placement to 1 cm and passed it; its known timing check took 441 ms. Other results cover the prior commit.
+For Claude: review assertions, record the three Rook lines, take the loaded browser pictures and drive the chase by hand.
 Removed: automatic camp pursuit while asleep and charging through a standing fence.
