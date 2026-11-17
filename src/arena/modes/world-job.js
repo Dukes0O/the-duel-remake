@@ -2,7 +2,8 @@ import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
-import {initializeCrewGear} from '../../crew-gear/signature.js';
+import {initializeCrewGear, signatureFor} from '../../crew-gear/signature.js';
+import {gearDirection} from '../../crew-gear/contacts.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
@@ -24,6 +25,7 @@ import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
+import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
 
 export const worldJobPosition = (duel, actor) => {
   const at = duel.course.worldAt(actor.s, actor.lateral);
@@ -889,8 +891,73 @@ function settleBattle(worldJob) {
   if (worldJob.battleEnding !== 'won') worldJob.definition = {...worldJob.definition, shares: worldJob.definition.arrivedShares};
 }
 
+// Light the Town reuses a factory raider and the ordinary job foot mover.
+// These actors stay out of the roadside rocket zones: their rule throws ash.
+function applyBrandRequest(duel, worldJob, request) {
+  if (request.type === 'spawnBrandAsh') {
+    if (worldJob.actors.some(actor => actor.id === request.id)) return true;
+    const at = request.from.position ?? request.from;
+    const actor = createRaidZones(duel.course, worldJob.raidSeed + worldJob.spawnedWaves++)[0].raiders[0];
+    const ground = duel.course.nearest(at.x, at.z);
+    Object.assign(actor, {id: request.id, brandAsh: true, x: at.x, z: at.z,
+      y: scablandsActorHeightAt(at.x, at.z, at.y), s: ground.s, lateral: ground.lateral,
+      approachSpeed: BRAND_RULE.ashWalkMps});
+    delete actor.groundY;
+    worldJob.actors.push(actor);
+    return true;
+  }
+  if (request.type === 'moveBrandAsh') {
+    const actor = worldJob.actors.find(item => item.brandAsh && item.id === request.id);
+    if (actor) actor.approachTarget = {...(request.place.position ?? request.place)};
+    return true;
+  }
+  if (request.type === 'removeBrandAsh') {
+    worldJob.actors = worldJob.actors.filter(actor => !actor.brandAsh || actor.id !== request.id);
+    return true;
+  }
+  if (request.type === 'brandRecovery') {
+    const fighter = duel.state.onFoot && duel.state.fighter;
+    if (!fighter) return true;
+    const at = request.place.position ?? request.place;
+    const x = at.x + BRAND_RULE.recoveryOffset, z = at.z;
+    const ground = duel.course.nearest(x, z, fighter.s);
+    const y = scablandsActorHeightAt(x, z, at.y);
+    Object.assign(fighter, {x, y, z, s: ground.s, lateral: ground.lateral,
+      groundY: y, airHeight: 0, verticalSpeed: 0, speed: 0,
+      knockedDown: false, knockdownRemaining: 0, health: fighter.maxHealth,
+      locomotion: 'idle', jumpHeld: false});
+    delete fighter.boardingAnchor;
+    fighter.respawns++;
+    return true;
+  }
+  return false;
+}
+
+function brandCombatView(state, worldJob) {
+  const fighter = state.onFoot && state.fighter;
+  const attacking = !!fighter && !fighter.knockedDown && state.fighterInput?.fire === true;
+  const swing = attacking && state.footWeapons?.selected === 'wrench';
+  const brandSwing = swing && !worldJob.brandSwingHeld;
+  worldJob.brandSwingHeld = swing;
+  const handFlamerHits = [];
+  if (attacking && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
+    const direction = gearDirection(fighter), gear = signatureFor('cinder');
+    for (const actor of worldJob.actors) {
+      if (!actor.brandAsh) continue;
+      const dx = actor.x - fighter.x, dz = actor.z - fighter.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance > 0 && distance <= BRAND_RULE.handFlamerRadius &&
+          Math.abs(actor.y - fighter.y) < 2 &&
+          (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2))
+        handFlamerHits.push(actor.id);
+    }
+  }
+  return {brandSwing, handFlamerHits};
+}
+
 function applyRequests(duel, worldJob, requests) {
   for (const request of requests) {
+    if (applyBrandRequest(duel, worldJob, request)) continue;
     if (request.type === 'marker') {
       worldJob.marker = request.place ?? null;
       const at = request.place?.position ?? request.place;
@@ -972,6 +1039,8 @@ function moveJobRaiders(duel, worldJob, dt) {
       const at = stepMover(from, actor, {radius: .4, grade: FOOT_GRADE, grid: worldJob.solidGrid?.movers ?? worldJob.solidGrid, height: actor.y});
       actor.x = at.x; actor.z = at.z; actor.y = at.y;
     }
+    // A brand opponent receives a fresh movement decision each rule step.
+    if (actor.brandAsh) actor.approachTarget = null;
   }
 }
 
@@ -1165,6 +1234,9 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold air lies in the river bed. The pot cools fast down here.', 3);
   }
   const view = {player: playerView, onFoot: !!state.onFoot,
+    ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
+    ashMen: currentStep?.brand ? actors.filter(actor =>
+      worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],
     speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
     carPosition: position(duel, state),

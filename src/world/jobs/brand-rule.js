@@ -17,6 +17,8 @@ export const BRAND_RULE = Object.freeze({
   swingRadius: 2,
   handFlamerRadius: 6,
   wallRadius: 2,
+  ashWalkMps: 4.5,
+  recoveryOffset: 1,
   pay: Object.freeze({one: 100, two: 70, many: 50}),
 });
 
