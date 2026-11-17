@@ -563,9 +563,17 @@ function fixedStep(sim,input) {
       }
       advanced=operateMachineHaul(advanced,{action:input.action,dtSeconds:STEP});
       const operation=advanced.lastOperation;
-      if(input.action==='dig')next={...next,excavatedM3:next.excavatedM3+(operation?.movedVolumeM3||0)};
+      if(input.action==='dig'){
+        next={...next,excavatedM3:next.excavatedM3+(operation?.movedVolumeM3||0)};
+        if(operation?.groundResult?.ok && operation.movedVolumeM3<0.00001)
+          next={...next,lastMessage:'The bucket has reached the bottom here. Press A or D to swing to fresh dirt.'};
+      }
       if(input.action==='load')next={...next,loadedM3:next.loadedM3+(operation?.movedVolumeM3||0)};
-      if(input.action==='tip')next={...next,tippedM3:next.tippedM3+(operation?.movedVolumeM3||0)};
+      if(input.action==='tip'){
+        next={...next,tippedM3:next.tippedM3+(operation?.movedVolumeM3||0)};
+        if(operation?.movedVolumeM3>0 && machineLoadVolume(advanced.machines.dumpTruck)<1e-5)
+          next={...next,lastMessage:'The load is tipped. Fill the truck again.'};
+      }
       if(operation?.groundResult?.reason)events.push({type:'cut-refused',reason:operation.groundResult.reason});
       if(operation?.refused&&operation.groundResult?.reason)events.push({type:'cut-refused',reason:operation.groundResult.reason});
       if(input.action==='dig'&&operation?.movedVolumeM3>0){
