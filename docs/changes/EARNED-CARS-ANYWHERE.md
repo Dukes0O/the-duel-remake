@@ -8,7 +8,8 @@
 - A reopened session places the owned car at its last saved location; no save shape or migration changes.
 - Results now say the car is ready anywhere. No new game event or sound cue.
 - Focused air-only, customer-pool and McMurtry wording checks passed before this commit.
-- Focused memory-only race and old-profile check passed on d92248c82 (test added in this commit).
-- Remaining: earn-and-race check, affected suites and outdated assertions, lane tier, build, browser scenario and independent review.
-- Changed assertions: pending review and tests.
+- Memory-only old-profile, newly earned Enzo and four race modes passed on 874868c33 plus this change.
+- Heli jobs (5,802), cable (106), and save (44 groups) passed on 874868c33 plus this change.
+- Remaining: other affected suites, lane tier, build, browser scenario and independent review.
+- Changed assertions for Claude: air-only list drops medal cars; garage and result wording says race anywhere (old wording required flight or said garage only). UI suite requires Claude to run.
 - Removed: medal cars from the air-only list and the flight requirement words.

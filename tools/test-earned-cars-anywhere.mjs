@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
 import {COURSE} from '../src/config.js';
 import {createFeatureFlags} from '../src/feature-flags.js';
-import {createProfile, createPlayerRegistry, loadPlayers, PLAYERS_KEY} from '../src/progression.js';
+import {createProfile, createPlayerRegistry, loadPlayers, normalizeProfile, settleRace, PLAYERS_KEY} from '../src/progression.js';
 import {AIR_ONLY_CARS, JOB_CARS, airOnlyNote} from '../src/heli/heli-jobs.js';
 import {ownTestCourses} from './career-fixture.mjs';
 
@@ -26,6 +26,20 @@ try {
   app.duel.featureFlags = createFeatureFlags({storage: null, qa: true, overrides: {'earned-cars': true, helicopter: true}});
   ownTestCourses(app);
   const stage = COURSE.findIndex(course => course.id === 'pacific-canyon');
+  const almost = normalizeProfile({...createProfile(), medals: {version: 1, cars: {
+    falcone_f42: {duel: [1, 1, 1], grandprix: [1, 1, 0]}
+  }}});
+  const earned = settleRace(almost, {runId: 'sixth-medal', stageIndex: stage, car: 'falcone_f42',
+    mode: 'grandprix', grandPrixCareerEnabled: true, completed: true, won: true, position: 1,
+    fieldSize: 8, laps: 3, seed: 1989, timeSec: 300, driverId: 'club', difficulty: 'casual',
+    cpuDifficulty: 'hard', earnedCarsEnabled: true});
+  assert.deepEqual(earned.earnedCars, ['ferrari_enzo']);
+  app.profile = earned.profile;
+  for (const mode of ['duel', 'timetrial', 'grandprix', 'wasteland']) {
+    assert.equal(app.startCampaign({car: 'ferrari_enzo', startStage: stage, mode}), true, `newly earned Enzo starts ${mode}`);
+    app.returnToMenu();
+  }
+  app.profile = loaded;
   for (const car of cars) for (const mode of ['duel', 'timetrial', 'grandprix', 'wasteland']) {
     assert.equal(app.startCampaign({car, startStage: stage, mode}), true, `${car} starts ${mode} away from its saved location`);
     assert.equal(app.duel.state.car, car);
