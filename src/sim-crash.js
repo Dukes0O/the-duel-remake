@@ -122,6 +122,7 @@ export function _practiceRecoveryPose(car, others, crashSite = null) {
   car=crashSite?{...car,...crashSite}:car;
   const origin = this.course.worldAt(car.s, car.lateral), heading = origin.heading + (car.headingError || 0);
   const spec = this._vehicleSpec(actor), capability = actor === this.state ? offroadCapability(this.car) : null;
+  const quarry = this.course.def.practice === true && actor === this.state;
   // Freestyle has no validated lap interval. Search a bounded physical area
   // around the impact instead of wrapping/clamping to a distant road gate.
   for (const radius of crashSite ? [0, 2, 4, 8, 12] : [0, 4, 8, 12, 20, 32, 48]) for (let spoke = 0; spoke < (radius ? 16 : 1); spoke++) {
@@ -138,8 +139,9 @@ export function _practiceRecoveryPose(car, others, crashSite = null) {
         heading: otherPoint.heading + (other.headingError || 0) }, heading, spec);
     })) continue;
     if (this._obstacles(pose.s - 5, pose.s + 5).some(obstacle => {
-      if (capability && (obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight
-        || obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle))) return false;
+      if (capability && obstacle.kind === 'rock' && rockHeight(obstacle) <= capability.rockHeight) return false;
+      // FREESTYLE-MOUNTAINS: in the playground every car drives on the mountains, so they do not block a recovery spot.
+      if ((capability || quarry) && obstacle.kind === 'mountain' && !obstacle.tunnelCover && this.course.features.mountains?.includes(obstacle)) return false;
       if (obstacle.kind === 'tree' && this._fallenCactusIds?.has(obstacle.id)) return false;
       return sweepObstacle(point, point, obstacle, heading, spec);
     })) continue;
