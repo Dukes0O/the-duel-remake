@@ -156,6 +156,26 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.deepEqual(scout.position, wreck);
 }
 
+// A scout that reaches the camp goes around the standing fence and wakes its rider.
+{
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, scoutWarned:true};
+  stepWorldJob(duel, 0);
+  const scout = world.actors.find(actor => actor.id === 'ash-scout');
+  for (let i = 0; i < 1200 && !world.job.stepState.scoutHome; i++) stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutHome, true, 'the scout reaches home');
+  assert.equal(world.job.stepState.campAwake, true, 'the scout wakes the camp');
+  assert.ok(Math.hypot(scout.position.x - step.scout.camp.position.x, scout.position.z - step.scout.camp.position.z) < 0.1);
+  const home = {...scout.position};
+  for (let i = 0; i < 10; i++) stepWorldJob(duel, 0.1);
+  assert.deepEqual(scout.position, home, 'the scout stays behind the fence');
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);

@@ -270,8 +270,18 @@ function updateJobActors(duel, worldJob, dt) {
       const camp = nearestOnLine(road.points, step.barriers[0].position.x, step.barriers[0].position.z);
       const speed = (duel.state.cpuDifficulty === 'easy' ? step.scout.easySpeedKmh : step.scout.speedKmh) / 3.6;
       const travel = Math.max(0, speed * dt);
-      const target = onRoad.distance > 0.1 ? onRoad : roadPointFrom(road, onRoad.x, onRoad.z,
-        Math.min(travel, Math.max(0, camp.along - onRoad.along)));
+      const fence = step.barriers[0];
+      // Leave the road before the fence and go around its end, using the same solids as other riders.
+      if (worldJob.job.stepState.scoutApproach == null && camp.along - onRoad.along <= 18.001)
+        worldJob.job.stepState.scoutApproach = 0;
+      const approach = worldJob.job.stepState.scoutApproach;
+      const forward = {x:Math.sin(fence.heading), z:Math.cos(fence.heading)};
+      const side = {x:Math.cos(fence.heading), z:-Math.sin(fence.heading)};
+      const corner = along => ({x:fence.position.x + side.x * 10 + forward.x * along,
+        z:fence.position.z + side.z * 10 + forward.z * along});
+      const target = approach == null ? (onRoad.distance > 0.1 ? onRoad : roadPointFrom(road, onRoad.x, onRoad.z,
+        Math.min(travel, Math.max(0, camp.along - 18 - onRoad.along)))) :
+        [corner(-8), corner(8), step.scout.camp.position][approach];
       const dx = target.x - scout.position.x, dz = target.z - scout.position.z;
       const distance = Math.hypot(dx, dz);
       if (distance > 0 && travel > 0) {
@@ -281,6 +291,14 @@ function updateJobActors(duel, worldJob, dt) {
           {radius:1.3, grid:worldJob.solidGrid, height:before.y});
         scout.position = {x:moved.x, y:moved.y, z:moved.z};
         scout.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      }
+      if (approach != null && Math.hypot(target.x - scout.position.x, target.z - scout.position.z) < 0.1) {
+        if (approach < 2) worldJob.job.stepState.scoutApproach++;
+        else {
+          worldJob.job.stepState.scoutHome = true;
+          worldJob.job.stepState.campAwake = true;
+          scout.speed = 0;
+        }
       }
     }
   }
