@@ -27,7 +27,7 @@ H1 finishing pass is still changing.
 | New courses (Kyle, 14 October) | Every new course gets a lake or other body of water somewhere; a course with enough trees can burn |
 | Growth | Over your next few flights; faster uphill and with the wind |
 | Days | Play days, not calendar days: a week away burns nothing |
-| Neglect | The course burns and closes 10 play days, never lost; buyback 10,000 credits, 1,000 less each play day, free on day 10 |
+| Neglect | The course burns and closes 3 play days, never lost; buyback 3,000 credits, 1,000 less each play day, free on day 3 |
 | Coming back | Black trees and grey ground, then green shoots, then pink fireweed |
 | Art cost | Start with one course that can burn |
 | Bucket damage | A dented bucket leaks and carries less until repaired |
@@ -44,7 +44,7 @@ pour. A big ring on the ground shows where the water will land. Fire grows
 uphill and downwind between drops, so you hit the hot edge first. When the
 last cell goes out, Roger thanks you, 6,300 credits land and the firefighter
 badge is yours. Leave it long enough and the woods burn: the course closes
-for 10 play days, you can buy it back early, and when it reopens it is black,
+for 3 play days, you can buy it back early, and when it reopens it is black,
 then green, then pink with fireweed.
 
 ## 3. The mission engine
@@ -355,10 +355,10 @@ bucket.
 ### 8.1 Closing and buying back
 
 - When a fire is lost the course burns on that play day: burn day 0.
-- Closed while `days since burn < 10`, counted in play days. It reopens by
-  itself on day 10, free.
+- Closed while `days since burn < 3`, counted in play days. It reopens by
+  itself on day 3, free.
 - **Buyback price:** `10,000 − 1,000 × days since burn` credits: 10,000 on
-  the day it burns, 1,000 on day 9. The player must have the whole price
+  the day it burns, 1,000 on day 2. The player must have the whole price
   (it is a purchase, not a repair). Buying back reopens it at once.
 - Never lost: the course stays owned, its records, ghosts, podiums and
   leaderboard times stay, and every course stays on the menu as it is.
@@ -376,7 +376,7 @@ The course's card stays where it is, its picture darkened with a soot tint
 (drawn in the page, no new art), with:
 
 - "Closed: burnt in a forest fire."
-- "Reopens in 7 play days." (singular "1 play day")
+- "Reopens in 2 play days." (singular "1 play day")
 - A button "Buy back: 3,000 credits", or, when short, the same button
   disabled with "You need 450 more credits."
 
@@ -403,7 +403,7 @@ The look follows the play days since the burn, also after a buyback:
 
 | Days since burn | Stage | Look |
 | --- | --- | --- |
-| 0 to 9 | Closed | Black trunks, grey ash ground; thin smoke wisps on days 0 to 2 |
+| 0 to 9 | First burnt stage | Black trunks, grey ash ground; thin smoke wisps on days 0 to 2 |
 | 10 to 19 | Black | Black trunks, grey ash ground |
 | 20 to 34 | Shoots | Black trunks, green shoots through the ash |
 | 35 to 59 | Fireweed | Black trunks, green ground, pink fireweed patches |
@@ -668,7 +668,7 @@ passes, FIRE-VIEW may draw plain stand-ins in dev builds only.
   and thinner from higher; the aim ring's centre agrees with the parcels to
   within 2 m; damage states, leaks and repairs.
 - `tools/test-course-closures.mjs`: closed days, buyback price each day, free
-  on day 10, stages by day, scars, switch off opens everything, per player.
+  on day 3, stages by day, scars, switch off opens everything, per player.
 - `tools/test-heli-save.mjs` (extended) with the save checker and fixture 11;
   unknown keys survive.
 - `tools/test-heli-fire-session.mjs`: a headless mission flown by script:

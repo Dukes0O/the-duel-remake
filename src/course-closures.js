@@ -1,5 +1,5 @@
 // A course burnt in a forest fire (docs/HELI_FIRE.md section 8): closed for
-// 10 play days, bought back early for 10,000 credits less 1,000 a play day,
+// 3 play days, bought back early for 3,000 credits less 1,000 a play day,
 // and its regrowth by play days since the burn. Pure, and outside src/heli/
 // so the course menu and the race start can read it; it imports nothing
 // from the helicopter. It reads profile.heli as stored: heli-save.js keeps
@@ -7,11 +7,14 @@
 // switch); off, nothing is closed and nothing is drawn burnt, whatever the
 // save says.
 
-export const CLOSURE = Object.freeze({closedDays: 10, buybackStart: 10_000, buybackPerDay: 1_000, healedDay: 60, scarHealedDay: 40});
+export const CLOSURE = Object.freeze({closedDays: 3, buybackStart: 3_000, buybackPerDay: 1_000, healedDay: 60, scarHealedDay: 40});
+
+// The visual stages keep their original ten-day opening stage.
+const BURNT_LOOK_DAYS = 10;
 
 // Days since the burn at which each stage of the burnt course starts.
 export const BURN_STAGES = Object.freeze([
-  Object.freeze({stage: 'closed', from: 0}), Object.freeze({stage: 'black', from: 10}),
+  Object.freeze({stage: 'closed', from: 0}), Object.freeze({stage: 'black', from: BURNT_LOOK_DAYS}),
   Object.freeze({stage: 'shoots', from: 20}), Object.freeze({stage: 'fireweed', from: 35}),
   Object.freeze({stage: 'healed', from: CLOSURE.healedDay}),
 ]);
@@ -60,7 +63,7 @@ export function buybackPrice(profile, courseId, today = playDayOf(profile), {ena
 
 // The burnt look a course is drawn with: 'closed', 'black', 'shoots',
 // 'fireweed', or null for the normal course. A course bought back early
-// looks black until its closed days would have ended.
+// looks black until the first visual stage would have ended.
 export function burnStage(profile, courseId, today = playDayOf(profile), {enabled} = {}) {
   if (enabled !== true) return null;
   const entry = burnEntry(profile, courseId);
