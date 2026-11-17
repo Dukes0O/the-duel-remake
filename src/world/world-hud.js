@@ -87,7 +87,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
 
-export function worldHudModel({worldJob, player = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
+export function worldHudModel({worldJob, player = null, speedKmh = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
     found, stepState: job?.stepState}, places);
@@ -97,6 +97,19 @@ export function worldHudModel({worldJob, player = null, found = [], onFoot = fal
     (step.barriers ?? []).some(barrier => !(job.stepState.burntBarricades ?? []).includes(barrier.id) &&
       Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
   if (nearbyFence && !job.stepState.out) next.line = 'Burn the fence: get close and press 4.';
+  if (step?.ember && step.pickup && finitePoint(player) && !onFoot) {
+    const loaded = job.stepState.loaded;
+    const ring = loaded ? step.destination : step.pickup.place;
+    const radius = loaded ? step.radius : step.pickup.radius;
+    const distance = Math.hypot(pointOf(player).x - pointOf(ring).x, pointOf(player).z - pointOf(ring).z);
+    const gate = step.riderSafeWall, at = pointOf(player);
+    const throughGate = gate && worldJob.tinTownGateRequested &&
+      (at.x - gate.x) * gate.through.x + (at.z - gate.z) * gate.through.z >= 0;
+    if (loaded && !job.stepState.out && throughGate) next.line = 'Stop in the ring at the forge.';
+    // Not while Cinder is already handing the pot over: the stop was made, and she finishes wherever the car then stands.
+    if (!job.stepState.out && !job.stepState.pickingUp && speedKmh !== null && Math.abs(speedKmh) < 1 && distance > radius && distance <= radius + 6)
+      next.line = 'A little closer: stop inside the ring.';
+  }
   const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
   const at=pointOf(player);
   const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8
@@ -373,7 +386,7 @@ export function createWorldHud({host, app = null, picture = null}) {
       if (landCanvas && landCanvas.update()) lastSmall = -Infinity;
       const actor = state.onFoot && state.fighter ? state.fighter : state;
       const point = duel.course?.worldAt?.(actor.s, actor.lateral);
-      const model = worldHudModel({worldJob: state.arena.worldJob, player: point, onFoot:state.onFoot,
+      const model = worldHudModel({worldJob: state.arena.worldJob, player: point, speedKmh:(state.speedMph ?? 0) * 1.609344, onFoot:state.onFoot,
         found: profile?.world?.found ?? []});
       line.textContent = model.line;
       prompt.textContent = model.prompt;

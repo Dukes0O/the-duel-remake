@@ -719,6 +719,12 @@ a step short, the Girder Bridge's rider on the shoulder. The camp's rider stays 
 fence, which is a known fault until 6b. **Slice 6b** (Claude designs first, with the map and pictures of the camp and
 the Wash in hand): the camp and the scout.
 
+**Slice 6a merged 16 November 2026, night (built by Codex, reviewed; hidden).** Measured after it, fire at arrival and rams:
+Medium East Road 41 and 3, river bed 36 and 0, plates 33 and 0, salt pan 47 and 0; Easy East Road 69 and 3. The spread
+between the ways is as before; the new cost of a hit shows only in slow touches. Two things the pictures did not show,
+for slice 6b: **no ring can be seen on the ground beside Cinder from the start** (33 m away), and **neither rider can be
+seen from the road 60 m before its fence** in the scenario's pictures (they were taken before the pot was aboard).
+
 **Slice 6b, designed 16 November 2026, night (Claude; Codex builds after 6a): the camp sleeps unless it is woken.**
 
 Measured first, without driving: the Halfway Camp is the crossroads. The first fence stands on the very point where the
@@ -752,6 +758,8 @@ What makes this worth playing is one question the player can answer by driving: 
   - when the scout reaches the camp: "He's home. The camp is awake."
   - the job's line while the scout runs: "Catch the scout before the camp."
 - **The small map** shows the scout as the riders are shown, once it has sounded its horn.
+- **Cinder's ring is seen from the start:** a ring on the road that a driver can see from 40 m, drawn the way the forge's
+  is. If the forge's ring is only drawn close to, both are drawn from 40 m.
 - The Girder Bridge's rider is as slice 6a leaves it: awake, on the shoulder, free to charge. The bridge is the fight the
   East Road cannot avoid; the camp is the one a good driver can make easy.
 

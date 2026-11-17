@@ -885,7 +885,7 @@ export function createScablandsScene(course,options={}){
       });
       cinder.visible=worldJob?.definition?.id==='everburn-hot-delivery'&&Boolean(emberStep?.pickup);
       if(cinder.visible){
-        const at=emberStep.pickup.place.position;
+        const at=(emberStep.pickup.figure??emberStep.pickup.place).position;
         cinder.position.set(at.x,scablandsSurfaceHeightAt(at.x,at.z),at.z);
         const start=emberStep.carStart;
         if(start)cinder.rotation.y=Math.atan2(start.x-at.x,start.z-at.z);

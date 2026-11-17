@@ -11,7 +11,7 @@ import {arenaPauseScreen} from '../src/screen-arena.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
-import {ROAD_NET} from '../src/world/scablands-road.js';
+import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
@@ -42,6 +42,26 @@ import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
+// Cinder's road ring, figure and brazier share the gate line and remain clear of its solids.
+{
+  const carry = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery').steps[0];
+  const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const relative = point => ({along:(point.x - LAND.yard.x - gate.x) * forward.x + (point.z - LAND.yard.z - gate.z) * forward.z,
+    left:-(point.x - LAND.yard.x - gate.x) * forward.z + (point.z - LAND.yard.z - gate.z) * forward.x});
+  const grid = createJobSolidGrid(); grid.setYard(yardPlan().solids);
+  for (const [point, along, left] of [[carry.pickup.place.position, -16, 0], [carry.pickup.figure.position, -16, 4],
+    [carry.braziers[0].position, -22, 8]]) {
+    const measured = relative(point);
+    assert.ok(Math.abs(measured.along - along) < 1e-8 && Math.abs(measured.left - left) < 1e-8);
+    assert.equal(pushOutOfSolids(point.x, point.z, 1, grid, scablandsSurfaceHeightAt(point.x, point.z)).hit, null);
+  }
+  const ring = carry.pickup.place.position;
+  const stopAt = distance => stepCarry(carry, {}, {player:{position:{x:ring.x + distance, z:ring.z}}, speedKmh:0}, 0);
+  assert.equal(stopAt(5.9).state.pickingUp, true);
+  assert.equal(stopAt(6.1).state.pickingUp, undefined);
+  assert.equal(stopAt(5.9).requests[0].place.radius, 6);
+}
+
 // A small final movement on Easy still carries the rider's full closing speed.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
@@ -62,8 +82,8 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(world.job.stepState.joltCount, 1, 'the rider cannot ram twice inside eight seconds');
   assert.ok(Math.hypot(rider.position.x - target.x, rider.position.z - target.z) <= 3,
     'the rider backs off to within three metres of its forty metre target');
-  assert.ok(Math.abs(world.job.stepState.ember - (100 - 7.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
-    'Easy halves the capped ram once');
+  assert.ok(Math.abs(world.job.stepState.ember - (100 - 1.5 - 479 / 60 * definition.steps[0].ember.coldPerSecond)) < 0.1,
+    'Easy halves the 18 km/h ram once');
 }
 
 // A solid behind the rammed rider cannot hold it in retreat forever.
@@ -515,7 +535,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     cpuDifficulty:'medium', opponents:[], job:{...definition, seed:19}}), true);
   duel.state.countdown = 0;
   const pickup = definition.steps[0].pickup.place.position;
-  assert.ok(driveToCinder(duel, pickup).loaded);
+  const pickupDrive = driveToCinder(duel, pickup);
+  assert.ok(pickupDrive.loaded);
+  assert.ok(pickupDrive.distance <= 3, 'the driver stops near the centre of the pickup ring');
   const exit = driveThroughYardGate(duel, yardPlan().gate);
   assert.ok(exit.along >= 20);
   const state = duel.state, pot = state.arena.worldJob.job.stepState;
@@ -563,6 +585,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const result = {kilometres:(exit.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + scoop.driven + arrival.driven) / 1000,
     minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
     rams:[...stretches.flatMap(item => item.jolts), ...scoop.jolts, ...arrival.jolts].filter(jolt => jolt.riders.length > 0).length,
+    jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + scoop.jolts.length + arrival.jolts.length,
     scoops, ember:arrival.fire?.ember ?? pot.ember, result:duel.state.arena.worldJob.emberResult};
   console.log('East Road delivery:', JSON.stringify(result));
   assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
@@ -625,6 +648,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     const result = {kilometres:(yard.driven + stretches.reduce((sum, item) => sum + item.driven, 0) + (scoop?.driven ?? 0) + arrival.driven) / 1000,
       minutes:(duel.state.arena.worldJob.clockSec - startClock) / 60,
       rams:[...stretches.flatMap(item => item.jolts), ...(scoop?.jolts ?? []), ...arrival.jolts].filter(jolt => jolt.riders.length).length,
+      jolts:stretches.reduce((sum, item) => sum + item.jolts.length, 0) + (scoop?.jolts.length ?? 0) + arrival.jolts.length,
       scoops, ember:arrival.fire?.ember ?? pot.ember, done:arrival.done, result:duel.state.arena.worldJob.emberResult};
     console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
@@ -726,10 +750,11 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
 {
   const view = {player:{position:definition.steps[0].carStart}, speedKmh:0, safeKmh:Infinity, hitKmh:28, difficulty:'medium'};
   const hit = changes => stepCarry(definition.steps[0], {loaded:true, ember:100}, {...view, ...changes}, 0);
-  assert.equal(hit({}).state.jolt, 15, 'a ram that would cost 42 is capped at 15');
-  assert.equal(hit({difficulty:'easy'}).state.jolt, 7.5, 'Easy halves the capped hit');
-  assert.equal(hit({severeHit:true, hitKmh:100}).state.jolt, 40, 'a severe fall or crash is capped at 40');
-  assert.equal(hit({severeHit:true, hitKmh:100, difficulty:'easy'}).state.jolt, 20);
+  assert.equal(hit({}).state.jolt, 6, 'a 28 km/h ram costs 6');
+  assert.equal(hit({hitKmh:58}).state.jolt, 15, 'a 58 km/h ram reaches the cap');
+  assert.equal(hit({hitKmh:58, difficulty:'easy'}).state.jolt, 7.5, 'Easy halves the capped hit');
+  assert.equal(hit({severeHit:true, hitKmh:150}).state.jolt, 40, 'a severe fall or crash is capped at 40');
+  assert.equal(hit({severeHit:true, hitKmh:150, difficulty:'easy'}).state.jolt, 20);
 }
 // Process impacts through the world job, including the previous-speed crash threshold.
 {
@@ -752,12 +777,13 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     stepWorldJob(waitingDuel, 0);
     return waitingWorld.job.stepState.jolt;
   };
-  assert.equal(impact({ram:28}), 15, 'the real job caps a 42-point ram');
-  assert.equal(impact({ram:28, difficulty:'easy'}), 7.5);
+  assert.equal(impact({ram:28}), 6, 'the real job charges for an 18 km/h excess');
+  assert.equal(impact({ram:28, difficulty:'easy'}), 3);
   assert.equal(impact({lastKmh:80}), 15, '80 km/h is not over the crash threshold');
-  assert.equal(impact({lastKmh:81}), 40, 'a crash to rest from over 80 km/h has the higher cap');
-  assert.equal(impact({fall:true, fallKmh:50}), 40, 'a long fall has the higher cap');
-  assert.equal(impact({fallKmh:50}), 15, 'a shorter fall keeps the ordinary cap');
+  assert.ok(Math.abs(impact({lastKmh:81}) - 21.9) < 1e-9, 'just over 80 km/h is a severe crash: it passes the ordinary cap of 15');
+  assert.equal(impact({lastKmh:150}), 40, 'a crash to rest from over 80 km/h has the higher cap');
+  assert.equal(impact({fall:true, fallKmh:150}), 40, 'a long fall has the higher cap');
+  assert.equal(impact({fallKmh:150}), 15, 'a shorter fall keeps the ordinary cap');
   waitingDuel._scrape = () => {};
   waitingDuel._callout = () => {};
   for (const [drop, long] of [[2.9, false], [3.1, true]]) {
@@ -1082,7 +1108,8 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(Math.abs(bounds.min.y - scablandsSurfaceHeightAt(pickup.x, pickup.z)) < .05);
   assert.ok(Math.abs(bounds.max.y - bounds.min.y - 1.7) < .001);
   assert.ok(Math.hypot(pickup.x-step.braziers[0].position.x, pickup.z-step.braziers[0].position.z) >= 1.5);
-  assert.ok(Math.abs(wrapHeading(figure.rotation.y - Math.atan2(step.carStart.x-pickup.x, step.carStart.z-pickup.z))) < 1e-9);
+  const cinderPosition = step.pickup.figure.position;
+  assert.ok(Math.abs(wrapHeading(figure.rotation.y - Math.atan2(step.carStart.x-cinderPosition.x, step.carStart.z-cinderPosition.z))) < 1e-9);
   assert.ok(figure.children.filter(child => child !== source).every(child => !child.visible));
   duel.state.arena.worldJob.job.stepState.loaded = true;
   const far = {x:pickup.x + 100, z:pickup.z};
@@ -1621,12 +1648,27 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   const road = ROAD_NET.road('east-road').points;
   const barrierOnRoad = nearestOnLine(road, barrier.position.x, barrier.position.z);
   const postOnRoad = nearestOnLine(road, actor.position.x, actor.position.z);
-  assert.ok(postOnRoad.distance < 0.01, 'the post is on the road');
-  assert.ok(Math.abs(postOnRoad.along - barrierOnRoad.along - 25) < 0.1,
-    'the post is 25 metres beyond its barricade');
+  assert.ok(Math.abs(postOnRoad.distance - (index === 0 ? 0 : 5)) < 0.1, 'the post is on its assigned side of the road');
+  assert.ok(Math.abs(postOnRoad.along - barrierOnRoad.along - (index === 0 ? 25 : -12)) < 0.1,
+    'the post is at its assigned distance from the barricade');
   scablandsFloorsAt(actor.position.x, actor.position.z, floors);
   assert.equal(actor.position.y, floors[0]);
   assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
+}
+// The bridge rider can reach a stopped car before the fence with the real land mover and solids.
+for (const index of [1]) {
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const fence = step.barriers[index].position;
+  const target = roadPointFrom(ROAD_NET.road('east-road'), fence.x, fence.z, -30);
+  const car = {...target, y:scablandsSurfaceHeightAt(target.x, target.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[index];
+  for (let tick = 0; tick < 360 && !rider.ramContact; tick++) stepWorldJob(duel, 1 / 60);
+  assert.ok(rider.ramContact, `rider ${index + 1} reaches the road in six seconds`);
 }
 // A loaded pot near a post draws that post's rider; the other remains waiting.
 {
@@ -1738,6 +1780,8 @@ for (const [index, barrier] of step.barriers.entries()) {
 // The flame catches a fence edge in range and cone, but not a fence outside either boundary.
 {
   const origin = {x:0, z:0};
+  assert.equal(flameHitsSegment(origin, 0, [{x:-6, z:9.6}, {x:6, z:9.6}], 0.7), true, 'the flame reaches the near face');
+  assert.equal(flameHitsSegment(origin, 0, [{x:-6, z:10}, {x:6, z:10}], 0.7), false, 'the near face is out of reach');
   assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9}, {x:12, z:9}]), true);
   assert.equal(flameHitsSegment(origin, 0, [{x:0, z:9.01}, {x:12, z:9.01}]), false);
   assert.equal(flameHitsSegment(origin, 0, [{x:3, z:6}, {x:12, z:6}]), false);
@@ -1749,6 +1793,26 @@ for (const [index, barrier] of step.barriers.entries()) {
   assert.equal(line(40.1), step.what);
   world.job.stepState.burntBarricades = [fence.id];
   assert.equal(line(0), step.what);
+}
+// A stopped car just outside either delivery ring gets the same useful direction.
+{
+  const world = createWorldJob(definition);
+  const line = (place, distance, speedKmh = 0, onFoot = false) => worldHudModel({worldJob:world,
+    player:{x:place.position.x + distance, z:place.position.z}, speedKmh, onFoot}).line;
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15), 'A little closer: stop inside the ring.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 6.1), 'Drive to Cinder and stop.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15, 2), 'Drive to Cinder and stop.');
+  assert.equal(line(step.pickup.place, step.pickup.radius + 0.15, 0, true), 'Drive to Cinder and stop.');
+  world.job.stepState = {loaded:true, ember:80};
+  world.tinTownGateRequested = true;
+  const gate = step.riderSafeWall;
+  assert.equal(worldHudModel({worldJob:world, player:{x:gate.x - gate.through.x, z:gate.z - gate.through.z}, speedKmh:2}).line, step.what);
+  assert.equal(worldHudModel({worldJob:world, player:{x:gate.x + gate.through.x, z:gate.z + gate.through.z}, speedKmh:2}).line, 'Stop in the ring at the forge.');
+  assert.equal(line(step.destination, step.radius + 0.2), 'A little closer: stop inside the ring.');
+  assert.equal(line(step.destination, step.radius + 6.1), 'Stop in the ring at the forge.');
+  assert.equal(line(step.destination, step.radius + 0.2, 2), 'Stop in the ring at the forge.');
+  world.arrivalHold = {};
+  assert.equal(line(step.destination, step.radius + 0.2), 'Delivered. The forge takes the fire.');
 }
 // Fire the real car flamethrower at each named barricade and step the job.
 {
@@ -1848,14 +1912,17 @@ assert.ok(Math.hypot(pickup.x - brazierSpotsFor(step)[0].x, pickup.z - brazierSp
   const gate = yardPlan().gate, forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
   const relative = point => ({along:(point.x - LAND.yard.x - gate.x) * forward.x + (point.z - LAND.yard.z - gate.z) * forward.z,
     left:-(point.x - LAND.yard.x - gate.x) * forward.z + (point.z - LAND.yard.z - gate.z) * forward.x});
-  const start = relative(step.carStart), cinder = relative(pickup), fire = relative(step.braziers[0].position);
+  const start = relative(step.carStart), ring = relative(pickup), cinder = relative(step.pickup.figure.position), fire = relative(step.braziers[0].position);
   assert.ok(Math.abs(start.along + 40) < 1e-9 && Math.abs(start.left) < 1e-9);
   assert.ok(Math.abs(step.carStart.heading - gate.bearing) < 1e-9);
-  assert.ok(Math.abs(fire.along + 8) < 1e-9 && Math.abs(fire.left - 20) < 1e-9);
-  assert.ok(Math.abs(cinder.along + 8) < 1e-9 && Math.abs(cinder.left - 9) < 1e-9);
+  assert.ok(Math.abs(fire.along + 22) < 1e-9 && Math.abs(fire.left - 8) < 1e-9);
+  assert.ok(Math.abs(cinder.along + 16) < 1e-9 && Math.abs(cinder.left - 4) < 1e-9);
+  assert.ok(Math.abs(ring.along + 16) < 1e-9 && Math.abs(ring.left) < 1e-9);
+  assert.equal(step.pickup.radius, 6);
+  assert.equal(step.pickup.place.radius, 6);
   const grid = createJobSolidGrid();
   grid.setYard(yardPlan().solids);
-  for (const point of [step.carStart, pickup, step.braziers[0].position]) {
+  for (const point of [step.carStart, pickup, step.pickup.figure.position, step.braziers[0].position]) {
     assert.equal(pushOutOfSolids(point.x, point.z, 1, grid, scablandsSurfaceHeightAt(point.x, point.z)).hit, null);
   }
 }
@@ -1874,9 +1941,9 @@ assert.equal(frame().target.id, 'cinder');
 assert.deepEqual(frame().actors, []);
 job = stepJob(job, view(pickup.x, pickup.z, 10), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 12.1, pickup.z), 1);
+job = stepJob(job, view(pickup.x + 6.1, pickup.z), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 11.9, pickup.z), .1);
+job = stepJob(job, view(pickup.x + 5.9, pickup.z), .1);
 const lines = job.requests.filter(request => request.type === 'say').map(request => request.lineId);
 for (let i = 0; i < 100 && !job.stepState.loaded; i++) {
   job = stepJob(job, view(pickup.x, pickup.z), .1);

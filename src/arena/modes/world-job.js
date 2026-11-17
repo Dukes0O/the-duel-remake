@@ -420,7 +420,7 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
     const named = actorDef.start?.position ?? actorDef.start;
     const start = named ?? actorDef.path?.[0]?.position ?? actorDef.path?.[0];
     if (!start) return;
-    actor = {id: actorDef.id, position: {...start}, health: actorDef.health ?? 100,
+    actor = {id: actorDef.id, position: {...start}, ...(Number.isFinite(actorDef.heading) ? {heading:actorDef.heading} : {}), health: actorDef.health ?? 100,
       pathProgress: 0, speed: 0, renderCar: actorDef.renderCar ?? null, stretchHealth: actorDef.health ?? 100,
       ...(named && (actorDef.path?.length ?? 0) > 1 ? {pathIndex: 1, pathProgress: 1 / (actorDef.path.length - 1)} : {}),
       ...(actorDef.id === FURNACE_ID ? {startedAtSec: worldJob.clockSec ?? 0} : {})};
@@ -1158,7 +1158,7 @@ export function worldJobHitTargets(duel) {
     if (worldJob.job.stepState.burntBarricades?.includes(barrier.id)) continue;
     const at = barrier.position ?? barrier;
     targets.push({id: barrier.id, kind: 'barricade', position: at,
-      segment: barricadeEnds(at, barrier.heading), burnable: true});
+      segment: barricadeEnds(at, barrier.heading), halfDepth: 0.7, burnable: true});
   }
   return targets;
 }
