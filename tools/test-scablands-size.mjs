@@ -259,6 +259,17 @@ test('moving a place in a copy of the table moves everything that belongs to it,
         }
         near({x: b.get(id)[0], z: b.get(id)[1]}, road, id); continue;
       }
+      // The scout follows the East Road as it bends when a place moves.
+      if (id === 'ash-scout-start' || id === 'ash-scout-road') {
+        const yard = movedLand.yard;
+        const road = roadPointFrom(east, yard.x, yard.z, 900);
+        if (id === 'ash-scout-start') {
+          const ahead = roadPointFrom(east, yard.x, yard.z, 901);
+          const dx = ahead.x - road.x, dz = ahead.z - road.z, length = Math.hypot(dx, dz);
+          road.x += dz / length * 8; road.z -= dx / length * 8;
+        }
+        near({x: b.get(id)[0], z: b.get(id)[1]}, road, id); continue;
+      }
       if (id === 'cinder' || id === 'cinder-figure' || id === 'yard-brazier') {
         const gate = yardPlan(net.roads).gate, forward = {x: Math.sin(gate.bearing), z: Math.cos(gate.bearing)};
         const along = id === 'yard-brazier' ? -22 : -16;
