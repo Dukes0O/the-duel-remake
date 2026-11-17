@@ -1,14 +1,14 @@
 # Build status
 
-Observed at: 2026-11-17T05:52:13.868Z
+Observed at: 2026-11-17T07:54:40.499Z
 
-Observation commit: 295541186b2019e98227a4b3a22fd312139a9313
+Observation commit: f67a80c47eb94098b66acba612f18632eafa8442
 
 This snapshot applies only to the observation commit and source state shown below. A later commit, including a metadata commit, does not inherit its full-run result.
 
-Integration HEAD: 295541186b2019e98227a4b3a22fd312139a9313
+Integration HEAD: f67a80c47eb94098b66acba612f18632eafa8442
 
-Integration source: clean (only the full-tier evidence ledger is excluded).
+Integration source: dirty (only the full-tier evidence ledger is excluded).
 
 Live commit: not checked
 
@@ -38,7 +38,7 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/car-art-bully | 11 | unknown | false | false | unknown |
 | codex/crew-story-join | 11 | unknown | true | false | unknown |
 | codex/mule-rails | 11 | unknown | true | false | unknown |
-| codex/perf-high-night | 32 | unknown | false | false | unknown |
+| codex/perf-high-night | 33 | unknown | false | false | unknown |
 | codex/qa-arena-shove-baseline | 11 | unknown | true | false | unknown |
 | codex/qa-drive-lesson-run-board | 11 | unknown | true | false | unknown |
 | codex/qa-ski-finish-timeout | 11 | unknown | true | false | unknown |
@@ -57,7 +57,6 @@ Age is whole days since the last branch commit. Removal candidates are suggestio
 | codex/ww-art-rail | 10 | unknown | true | false | unknown |
 | codex/ww-art-whites | 10 | unknown | true | false | unknown |
 | codex/ww-boss | 11 | unknown | true | false | unknown |
-| lane/everburn-slice6 | 0 | false | true | true | C:/Users/kyleb/.codex/worktrees/wasteland-integration/everburn-slice6 |
 | lane/lab-formula-closed | 7 | true | true | false | C:/Users/kyleb/.codex/worktrees/wasteland-integration/lab-formula-closed |
 
 ## Unmerged branches for idle review
@@ -68,7 +67,7 @@ These branches stay in place. Uncommitted changes may be newer than the last com
 | --- | --- | --- | ---: | --- | --- |
 | codex/bowl-art-rex | unknown | 2026-11-05T13:45:30-07:00 | 11 | last commit 2026-11-05T13:45:30-07:00 | docs/board/cards/BOWL-ART-REX.md, docs/board/looks/bowl-art-rex/round-1-review.md, docs/board/looks/bowl-art-rex/round-1.jpg, docs/board/looks/bowl-art-rex/round-4-review.md, docs/board/looks/bowl-art-rex/round-4.jpg |
 | codex/car-art-bully | unknown | 2026-11-05T21:10:43-07:00 | 11 | last commit 2026-11-05T21:10:43-07:00 | docs/WASTELAND_ART.md, docs/board/looks/car-art-bully/round-1-review.md, docs/board/looks/car-art-bully/round-1.jpg, docs/board/looks/car-art-bully/round-5-review.md, docs/board/looks/car-art-bully/round-5.jpg |
-| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 32 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
+| codex/perf-high-night | PERF-HARBOUR-AO-HALF | 2026-10-15T00:10:54-07:00 | 33 | last commit 2026-10-15T00:10:54-07:00 | docs/changes/PERF-HIGH-NIGHT.md, src/ambient-shading.js, tools/full-check.mjs, tools/scenarios/frame-pacing.mjs, tools/test-full-check.mjs |
 | codex/town-art-works | unknown | 2026-11-09T11:01:51-07:00 | 7 | last commit 2026-11-09T11:01:51-07:00 | docs/board/looks/town-art-works-sawmill/round-1-review.md, docs/board/looks/town-art-works-sawmill/round-1.jpg, docs/board/looks/town-art-works-sawmill/round-2-review.md, docs/board/looks/town-art-works-sawmill/round-2.jpg, docs/board/looks/town-art-works-sawmill/round-3.jpg |
 | codex/tunnel-trial | unknown | 2026-11-05T15:01:02-07:00 | 11 | last commit 2026-11-05T15:01:02-07:00 | docs/board/cards/TUNNEL-TRIAL.md, docs/changes/TUNNEL-TRIAL.md, src/app.js, src/course.js, src/feature-flags.js |
 | codex/wild-art-city | unknown | 2026-11-05T21:24:09-07:00 | 11 | last commit 2026-11-05T21:24:09-07:00 | docs/board/looks/wild-art-city/round-1-review.md, docs/board/looks/wild-art-city/round-1.jpg, docs/board/looks/wild-art-city/round-2-review.md, docs/board/looks/wild-art-city/round-2.jpg, docs/changes/WILD-ART-CITY.md |
@@ -82,30 +81,30 @@ Targets are advisory. Change compares with the previous status observation when 
 
 | Item | Current | Change | Target |
 | --- | ---: | ---: | ---: |
-| Build `dist/` | 712,092,227 B | +0 B | 250,000,000 B |
+| Build `dist/` | 717,348,338 B | +5,256,111 B | 250,000,000 B |
 | Wasteland models | 429,707,888 B | +0 B | 60,000,000 B |
 | Largest runtime file | 28,308,656 B | +0 B | 8,000,000 B |
 | Largest ordinary tracked file | 2,288,190 B | +0 B | 2,000,000 B |
 | Largest review sheet | 498,906 B | +0 B | 500,000 B |
 | Review `looks/` | 87,297,071 B | +0 B | 20,000,000 B |
-| Added bytes in last merge | 3,875,853 B | +2,990,674 B | 5,000,000 B |
+| Added bytes in last merge | 1,107,662 B | -2,768,191 B | 5,000,000 B |
 | All `public/` | 708,776,788 B | +0 B | unavailable |
-| Git objects | 1,459,211,264 B | +3,714,048 B | unavailable |
+| Git objects | 1,459,759,104 B | +547,840 B | unavailable |
 | Lane folders | 0 | +0 | unavailable |
 
 ## Backups
 
 Local branch refs preserve committed history in this repository; they are not a separate off-machine backup.
 
-- Local master: 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a
+- Local master: f67a80c47eb94098b66acba612f18632eafa8442
 - Local main: missing
-- Local integration/wasteland: 295541186b2019e98227a4b3a22fd312139a9313
+- Local integration/wasteland: f67a80c47eb94098b66acba612f18632eafa8442
 
 Local rollback build (dist-previous): not checked. Manifest presence does not verify the full rollback build.
 
 Remote-tracking refs are cached locally; no fetch or remote verification was performed.
 
-- Remote origin/master: matches local; cached commit 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a.
+- Remote origin/master: behind local; cached commit 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a.
 - Remote origin/main: missing; cached commit missing.
 - Remote origin/integration/wasteland: behind local; cached commit 68afaba8cff5c9f5a00c31a2d5be18c87aa4bb6a.
 
