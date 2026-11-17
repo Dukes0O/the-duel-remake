@@ -14,5 +14,12 @@ reaches its top with no crash, never sinks below the surface and climbs over
 20 m; a 20 m jump toward it does not crash; the Titan climbs it. Run against
 the old code it fails with "mountain, 63 m from its top".
 
+**After review.** A road car on the quarry also gets `QUARRY_ROAD_CAR`
+(`offroad-physics.js`) in `_offroadStep`: slope gravity slows it uphill and
+speeds it downhill; no tipping and no climb limit, so nothing new can crash
+it. `_terrainPose` sets its drawn height, pitch and roll there, so it is drawn
+on the slope, not level inside it. The check measures the drawn height and
+the tilt.
+
 **Removed.** The full-height oval wall around each quarry mountain for cars
 without off-road ability.

@@ -31,4 +31,15 @@ cruise offer; the last sample of each of three legs now stands on the edge
 samples are identical (compared line by line against the old code). Nothing
 is loosened: each is a re-recorded value with its reason beside it.
 
-**Removed.** Flying on past the edge with a destination chosen.
+**After review** (one independent review, nothing blocking): no countdown
+while a Lab challenge other than the altitude flight is on (ENTER as before;
+lessons already clear the destination); HEAD FOR is hidden beside a fire,
+rescue or recovery goal, which have their own line; at the edge in the Lab's
+headings challenge no bar; the bar names the pilot's map only when it is on;
+the countdown and fuel figures update in place so the panel's buttons are not
+rebuilt under the mouse (`LIVE_WORDS` replaces `PUMP_LABEL`); a leg with no
+fuel figure says there is no leg. Measured: Summit Run's flat ceiling (314 m)
+is below its highest ground (817 m) only with the rescue switch off, which the
+game never has; with it on the ceiling stands 300 m over the ground.
+
+**Removed.** Flying on past the edge with a destination chosen; `PUMP_LABEL`.
