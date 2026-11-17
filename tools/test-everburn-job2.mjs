@@ -11,6 +11,7 @@ import {tinTownFence} from '../src/world/tin-town-shacks.js';
 import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {createBrandLamps} from '../src/world/brand-lamps.js';
 import {createBrandAuntie} from '../src/world/brand-auntie.js';
+import {createCarriedBrand} from '../src/world/brand-carried.js';
 import * as THREE from 'three';
 
 // Rule snapshots, never a walking driver.
@@ -398,3 +399,48 @@ assert.equal(auntieView.group.children.length, 0);
 assert.equal(auntieSource.visible, true);
 figure.skeleton.dispose();figure.geometry.dispose();figure.material.dispose();
 console.log('PASS Light the Town: grounded folk figure, independent skeleton and solid Auntie.');
+
+// Job 2.2: the load stays with the existing fighter, remains a dark stick
+// after burnout, and casts light only while carried and burning.
+const brandView = createCarriedBrand();
+const brandState = {onFoot: true, fighter: {x: 10, y: 3, z: 20, yaw: 0, pitch: 0},
+  arena: {mode: 'world-job', worldJob: {job: {...actualJob,
+    stepState: {brandsUsed: 1, brandSeconds: 90}}}}};
+const brandBefore = JSON.stringify(brandState);
+brandView.update(brandState);
+assert.equal(brandView.group.visible, true);
+const [brandStick, brandFlame, brandLight] = brandView.group.children;
+assert.equal(brandStick.geometry.parameters.height, BRAND_RULE.brandLength);
+assert.deepEqual(brandView.group.position.toArray(), [10 - BRAND_RULE.brandHandSide,
+  3 + BRAND_RULE.brandHandHeight, 20 + BRAND_RULE.brandHandForward]);
+assert.equal(brandFlame.visible, true);
+assert.equal(brandLight.intensity, BRAND_RULE.brandLightIntensity);
+assert.equal(brandLight.distance, BRAND_RULE.brandLightRadius);
+assert.equal(JSON.stringify(brandState), brandBefore, 'The load view only reads the fighter and job.');
+brandState.fighter.yaw = Math.PI / 2;
+brandView.update(brandState);
+assert(Math.abs(brandView.group.position.x - (10 + BRAND_RULE.brandHandForward)) < 1e-8);
+assert(Math.abs(brandView.group.position.z - (20 + BRAND_RULE.brandHandSide)) < 1e-8);
+brandState.arena.worldJob.job.stepState.brandSeconds = 0;
+brandView.update(brandState);
+assert.equal(brandView.group.visible, true);
+assert.equal(brandFlame.visible, false);
+assert.equal(brandLight.intensity, 0);
+for (const hidden of [
+  {...brandState, onFoot: false},
+  {...brandState, fighter: {...brandState.fighter, knockedDown: true}},
+  {...brandState, arena: {mode: 'race'}},
+  {...brandState, arena: {mode: 'world-job', worldJob: {job: {...actualJob, stepState: {}}}}},
+  null,
+]) {
+  brandView.update(hidden);
+  assert.equal(brandView.group.visible, false);
+  assert.equal(brandLight.intensity, 0);
+}
+let disposedBrandParts = 0;
+for (const part of [brandStick.geometry, brandStick.material, brandFlame.geometry, brandFlame.material])
+  part.addEventListener('dispose', () => disposedBrandParts++);
+brandView.dispose();
+assert.equal(disposedBrandParts, 4);
+assert.equal(brandView.group.children.length, 0);
+console.log('PASS Light the Town: carried brand, flame, ground light, burnout and cleanup.');

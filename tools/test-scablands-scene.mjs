@@ -687,6 +687,14 @@ assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.user
   assert.ok(lowered<=scablandsSurfaceHeightAt(0,0)-.3,'the coarse ground stays under the land after an edit');
   resetScablandsGroundEdit();scene.group.userData.updateGroundView();
 }
+const townBrand=scene.group.getObjectByName('Carried town brand');
+syncScene(scene.group,{onFoot:true,fighter:{...townLampJob.steps[0].hearth.position,yaw:0},
+  arena:{mode:'world-job',worldJob:{definition:townLampJob,
+    job:{stepIndex:0,steps:townLampJob.steps,stepState:{brandsUsed:1,brandSeconds:90}},actors:[]}}});
+assert.equal(townBrand.visible,true,'the scene shows the carried load');
+assert.equal(townBrand.getObjectByName('Brand flame').visible,true,'the carried brand burns');
+syncScene(scene.group,{});
+assert.equal(townBrand.visible,false,'the brand leaves the scene outside job 2');
 scene.dispose();
 assert.equal(scene.group.children.length,0,'disposing the scene releases its presentation graph');
 // EVERBURN-WELL-ART: the game's model loader renames parts (a space becomes an underscore, a full stop is dropped).

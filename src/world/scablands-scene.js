@@ -23,6 +23,7 @@ import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.j
 import {createForge} from './forge-look.js';
 import {createBrandLamps} from './brand-lamps.js';
 import {createBrandAuntie} from './brand-auntie.js';
+import {createCarriedBrand} from './brand-carried.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -591,6 +592,7 @@ export function createScablandsScene(course,options={}){
   const cinder=createCinderFigure();group.add(cinder);
   const brandLamps=createBrandLamps();group.add(brandLamps.group);
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
+  const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
   let cinderRequested=false;
   function requestCinder(){
     if(cinderRequested)return;
@@ -831,6 +833,7 @@ export function createScablandsScene(course,options={}){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
+      carriedBrand.update(state);
       const delivered=worldJob?.definition?.id==='everburn-hot-delivery'?worldJob.forgeFire:null;
       if(delivered&&!forgeGiven){
         forgeGiven=true;
@@ -967,7 +970,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
