@@ -1,4 +1,4 @@
-﻿# EASY-NO-PENALTY
+# EASY-NO-PENALTY
 
 Before: Duel loss charges up to 300 Easy, 500 Medium, 750 Hard credits (integration/wasteland 494f2b9e3).
 Before: Fire closed a course for 10 play days; buyback began at 10,000 credits, falling 1,000 per play day.
@@ -12,5 +12,6 @@ Changed assertions: menu 7 days/7,000/450 short to 2 days/2,000/450 short; day 2
 Changed assertions: helicopter purchase 7,000/5,000 balance to 2,000/10,000; save purchase 10,000 to 3,000, for the lower buyback.
 Changed assertions: Easy unfinished reward -300 to 0; losing best base -300 to 0, charge 100 to 0, balance 270 to 370, reward 170 to 270, because Easy losses are free.
 Changed assertions: Easy timeout balance before minus 300 to unchanged (two checks); Easy combat-test charge 300 to 0, reward -300 to 0, balance 200 to 500, because Easy losses are free.
+Changed assertions: milestone loss charge 100/base -300 to 0/balance 270 to 370; drift and checkpoint Easy loss reward/base -300 to 0 and balance before minus 300 to unchanged, because Easy losses are free.
 Sound: no new event or cue.
 Removed: the Easy Duel loss charge, the ten-day closure and their old screen and documentation wording.
