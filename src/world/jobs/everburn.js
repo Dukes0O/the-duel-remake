@@ -94,11 +94,19 @@ export function buildEverburn(land) {
       heading:Math.atan2(after.x - before.x, after.z - before.z)});
   };
   const ashBarricade1 = barricade('ash-men-barricade-1', 'ash-barricade-1'), ashBarricade2 = barricade('ash-men-barricade-2', 'ash-barricade-2');
+  const riderPost = (barrier, side) => {
+    const road = roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, -12);
+    const ahead = roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, -11);
+    const dx = ahead.x - road.x, dz = ahead.z - road.z, length = Math.hypot(dx, dz);
+    return {x:road.x + dz / length * side, z:road.z - dx / length * side,
+      heading:Math.atan2(-dz * side, dx * side)};
+  };
   const ashRiders = path(...[ashBarricade1, ashBarricade2].map((barrier, index) => Object.freeze({
     id:`ash-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     ...(index === 0 ? {scoopAmbush:'halfway-brazier'} : {}),
-    start:place(`ash-rider-start-${index + 1}`,
-      roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 25)),
+    ...(index === 1 ? {heading:riderPost(barrier, 5).heading} : {}),
+    start:place(`ash-rider-start-${index + 1}`, index === 0
+      ? roadPointFrom(eastRoad, barrier.position.x, barrier.position.z, 25) : riderPost(barrier, 5)),
   })));
   const furnaceRiders = path(...[-6, 6].map((offset, index) => Object.freeze({
     id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,

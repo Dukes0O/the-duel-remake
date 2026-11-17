@@ -11,7 +11,7 @@ import {arenaPauseScreen} from '../src/screen-arena.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
 import {LAND} from '../src/world/scablands-names.js';
-import {ROAD_NET} from '../src/world/scablands-road.js';
+import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
 import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
@@ -1621,12 +1621,27 @@ for (const [index, actor] of waitingWorld.actors.entries()) {
   const road = ROAD_NET.road('east-road').points;
   const barrierOnRoad = nearestOnLine(road, barrier.position.x, barrier.position.z);
   const postOnRoad = nearestOnLine(road, actor.position.x, actor.position.z);
-  assert.ok(postOnRoad.distance < 0.01, 'the post is on the road');
-  assert.ok(Math.abs(postOnRoad.along - barrierOnRoad.along - 25) < 0.1,
-    'the post is 25 metres beyond its barricade');
+  assert.ok(Math.abs(postOnRoad.distance - (index === 0 ? 0 : 5)) < 0.1, 'the post is on its assigned side of the road');
+  assert.ok(Math.abs(postOnRoad.along - barrierOnRoad.along - (index === 0 ? 25 : -12)) < 0.1,
+    'the post is at its assigned distance from the barricade');
   scablandsFloorsAt(actor.position.x, actor.position.z, floors);
   assert.equal(actor.position.y, floors[0]);
   assert.equal(pushOutOfSolids(actor.position.x, actor.position.z, 1, undefined, actor.position.y).hit, null);
+}
+// The bridge rider can reach a stopped car before the fence with the real land mover and solids.
+for (const index of [1]) {
+  const world = createWorldJob(definition), state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const fence = step.barriers[index].position;
+  const target = roadPointFrom(ROAD_NET.road('east-road'), fence.x, fence.z, -30);
+  const car = {...target, y:scablandsSurfaceHeightAt(target.x, target.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const rider = world.actors[index];
+  for (let tick = 0; tick < 360 && !rider.ramContact; tick++) stepWorldJob(duel, 1 / 60);
+  assert.ok(rider.ramContact, `rider ${index + 1} reaches the road in six seconds`);
 }
 // A loaded pot near a post draws that post's rider; the other remains waiting.
 {
