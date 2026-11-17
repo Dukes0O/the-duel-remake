@@ -137,6 +137,7 @@ export function buildEverburn(land) {
       captions:Object.freeze({
         'scout.warning':"Rook: That's their scout. If he reaches the camp, they'll be waiting for you. Catch him.",
         'scout.stopped':"Rook: He's done. The camp is asleep. Burn the fence before they wake.",
+        'scout.stopped.awake':"Rook: He's done, but the camp is already awake.",
         'scout.home':"Rook: He's home. The camp is awake.",
       }),
       easy:Object.freeze({markerRadius:18}), lineId:'story.ember.cinder.1',

@@ -213,6 +213,40 @@ function stopScoutForProof(duel) {
   const home = {...scout.position};
   for (let i = 0; i < 10; i++) stepWorldJob(duel, 0.1);
   assert.deepEqual(scout.position, home, 'the scout stays behind the fence');
+  const beforeCaptions = captions.length, health = scout.health;
+  state.worldJobThingsHit = [{id:scout.id, actorId:scout.id, kind:'vehicle', flame:true}];
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutStopped, undefined);
+  assert.equal(world.job.stepState.campAwake, true);
+  assert.equal(scout.health, health);
+  assert.deepEqual(scout.position, home);
+  assert.equal(captions.length, beforeCaptions, 'a flame at home says nothing');
+}
+
+// A burnt fence changes the stopping line; other weapons stop the scout too.
+for (const awake of [false, true]) {
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition), captions = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  stepWorldJob(duel, 0);
+  if (awake) {
+    const fence = definition.steps[0].barriers[0];
+    state.worldJobThingsHit = [{kind:'barricade', id:fence.id, burnable:true, flame:true}];
+    stepWorldJob(duel, 0.1);
+    assert.equal(world.job.stepState.campAwake, true);
+  }
+  state.worldJobThingsHit = [{id:'ash-scout', actorId:'ash-scout', kind:'vehicle', damage:100}];
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.job.stepState.scoutStopped, true);
+  const line = awake ? "Rook: He's done, but the camp is already awake." :
+    "Rook: He's done. The camp is asleep. Burn the fence before they wake.";
+  assert.equal(captions.filter(text => text === line).length, 1);
+  stepWorldJob(duel, 0.1);
+  assert.equal(captions.filter(text => text === line).length, 1, 'the stopping line is said once');
 }
 
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
@@ -1993,6 +2027,8 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   assert.equal(world.job.stepState.scoopBrazier, 'halfway-brazier');
   assert.ok(world.job.stepState.scoopTime < 3, 'the ambush begins during the scoop');
   assert.equal(world.job.stepState.campAwake, true);
+  stepWorldJob(duel, 0.1);
+  assert.equal(world.actors[0].pursuing, true, 'the camp rider chases during the Hard scoop');
   assert.notEqual(world.actors[1].pursuing, true);
 }
 // A loaded car crossing the 400 m line at the gate sends both riders home once.
