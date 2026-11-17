@@ -237,6 +237,8 @@ function updateJobActors(duel, worldJob, dt) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
   }
+  // The scout is a job rider, so it uses the same actor and hit-target path.
+  if (step?.scout && worldJob.job.stepState.loaded) updateJobActor(duel, worldJob, step.scout, 0);
   if (worldJob.skylineWarned) {
     const elapsed = Math.max(0, dt);
     worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;

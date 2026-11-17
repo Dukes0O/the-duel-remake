@@ -79,6 +79,24 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(scout.easySpeedKmh, 55);
 }
 
+// The scout enters the job as the same kind of car as the other riders.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => LAND.yard}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  assert.equal(world.actors.some(actor => actor.id === 'ash-scout'), false);
+  world.job.stepState = {loaded:true, ember:100};
+  stepWorldJob(duel, 0.1);
+  const scout = world.actors.find(actor => actor.id === 'ash-scout');
+  assert.equal(scout.health, 100);
+  assert.equal(scout.renderCar, definition.steps[0].scout.renderCar);
+  assert.equal(scout.heading, definition.steps[0].scout.heading);
+  assert.ok(worldJobHitTargets(duel).some(target => target.actorId === scout.id));
+}
+
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.
 {
   const definition = EVERBURN_JOBS[0], step = definition.steps[0], world = createWorldJob(definition);
@@ -1827,15 +1845,16 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:text => captions.push(text)};
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100, campAwake:true};
-  for (const rider of world.actors) rider.pursuing = true;
+  const riders = step.waitingActors.map(def => world.actors.find(actor => actor.id === def.id));
+  for (const rider of riders) rider.pursuing = true;
   stepWorldJob(duel, 0);
   assert.notEqual(world.ridersRetreating, true, 'outside 400 m the pursuit continues');
   car = {...car, z:wall.z + wall.radius - 1};
-  for (const rider of world.actors) rider.position.x += 30;
-  const before = world.actors.map(rider => ({...rider.position}));
+  for (const rider of riders) rider.position.x += 30;
+  const before = riders.map(rider => ({...rider.position}));
   stepWorldJob(duel, 0.1);
   assert.equal(world.ridersRetreating, true);
-  for (const [index, rider] of world.actors.entries()) {
+  for (const [index, rider] of riders.entries()) {
     const home = step.waitingActors[index].start.position;
     assert.equal(rider.pursuing, false);
     assert.ok(Math.hypot(rider.position.x-home.x, rider.position.z-home.z) <
