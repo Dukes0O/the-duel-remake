@@ -8,5 +8,6 @@ Scout post data follows the East Road: 900 m from its start, 8 m right, 250 m si
 Checks: `test-everburn-job1.mjs` passed on the working tree based on cba378d9e, including the post actor check; the existing retreat setup selects its two riders by ID. Its assertions are unchanged.
 Scout detects the loaded car with rider sight and sounds `world.ashmen.horn` once; the cue is gated by `story-everburn`.
 Checks on a0fffc8d4 plus this change: `test-everburn-job1.mjs` passed; `test-p4-audio.mjs` passed outside the sandbox (FFmpeg was blocked inside).
-For Claude: browser pictures and hand chase remain. Scout running, stopping and camp waking are not built yet.
+The warned scout now joins and follows the East Road using the rider mover. On befd5ed2a plus this change, `test-everburn-job1.mjs` passed; the bed arrived with 35.86 fire and no rams.
+For Claude: browser pictures and hand chase remain. Scout stopping and camp waking are not built yet.
 Removed: automatic camp pursuit while asleep and charging through a standing fence. Remaining work: scout behavior, lines, map and rings.

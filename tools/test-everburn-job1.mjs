@@ -108,10 +108,16 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
     at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
   initializeWorldJob(duel, definition);
   world.job.stepState = {loaded:true, ember:100};
+  const start = {...post};
   for (let i = 0; i < 10; i++) stepWorldJob(duel, 0.1);
   assert.equal(world.job.stepState.scoutWarned, true);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.ashmen.horn').length, 1);
   assert.equal(SOUND_BANK['world.ashmen.horn'].flag, 'story-everburn');
+  const scout = world.actors.find(actor => actor.id === 'ash-scout');
+  assert.ok(Math.hypot(scout.position.x - start.x, scout.position.z - start.z) > 10,
+    'the warned scout leaves its post');
+  assert.ok(nearestOnLine(ROAD_NET.road('east-road').points, scout.position.x, scout.position.z).distance < 0.1,
+    'the scout joins the road');
 }
 
 // The camp rider sleeps until its fence burns or a Hard scoop wakes it.

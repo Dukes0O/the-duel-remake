@@ -16,7 +16,7 @@ import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
 import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
-import {ROAD_NET} from '../../world/scablands-road.js';
+import {ROAD_NET, roadPointFrom} from '../../world/scablands-road.js';
 import {nearestOnLine, sees} from '../../world/scablands-ways.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
@@ -249,6 +249,25 @@ function updateJobActors(duel, worldJob, dt) {
       worldJob.job.stepState.scoutWarned = true;
       duel.emit({arenaTell:{id:'ash-scout-warning', targetId:'player', seconds:0,
         cue:'world.ashmen.horn', position:scout.position}});
+    }
+    if (worldJob.job.stepState.scoutWarned && scout.health > 0 && !worldJob.job.stepState.scoutHome) {
+      const road = ROAD_NET.road('east-road');
+      const onRoad = nearestOnLine(road.points, scout.position.x, scout.position.z);
+      const camp = nearestOnLine(road.points, step.barriers[0].position.x, step.barriers[0].position.z);
+      const speed = (duel.state.cpuDifficulty === 'easy' ? step.scout.easySpeedKmh : step.scout.speedKmh) / 3.6;
+      const travel = Math.max(0, speed * dt);
+      const target = onRoad.distance > 0.1 ? onRoad : roadPointFrom(road, onRoad.x, onRoad.z,
+        Math.min(travel, Math.max(0, camp.along - onRoad.along)));
+      const dx = target.x - scout.position.x, dz = target.z - scout.position.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance > 0 && travel > 0) {
+        const before = scout.position, share = Math.min(1, travel / distance);
+        scout.heading = Math.atan2(dx, dz);
+        const moved = stepMover(before, {x:before.x + dx * share, z:before.z + dz * share},
+          {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+        scout.position = {x:moved.x, y:moved.y, z:moved.z};
+        scout.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      }
     }
   }
   if (worldJob.skylineWarned) {
