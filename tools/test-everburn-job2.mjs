@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {BRAND_RULE, brandPay, brandSentence} from '../src/world/jobs/brand-rule.js';
+import {BRAND_RULE, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 
@@ -93,3 +93,80 @@ for (const lamp of places) job = stepJob(job, foot(lamp.position.x), 2);
 assert.equal(job.done, true);
 assert(job.events.some(event => event.type === 'done'));
 console.log('PASS Light the Town: brand, lamp lighting, recovery requests, dusk and pay.');
+
+// Job 2.4: waves come from the farthest wall, once per first/second distinct
+// lamp, even after a lamp is smothered and relit. Existing actors own movement.
+const ashStep = {...step, ashEntries: [
+  {id: 'west', position: {x: -100, y: 0, z: 0}},
+  {id: 'east', position: {x: 200, y: 0, z: 0}},
+]};
+const ashView = {...foot(60), lamps: {pump: true}, brandSeconds: 90};
+const ashTick = (state, view = ashView, dt = 0) => stepBrandAsh(ashStep, state, view, dt);
+const firstWave = ashTick({});
+assert.equal(firstWave.requests.length, 1);
+assert.equal(firstWave.requests[0].from.id, 'west');
+assert.equal(firstWave.requests[0].type, 'spawnBrandAsh');
+assert.equal(ashTick(firstWave.state).requests.length, 0);
+const secondWave = ashTick(firstWave.state, {...ashView, lamps: {pump: true, tower: true}});
+assert.equal(secondWave.requests.length, 2);
+assert.equal(Object.keys(secondWave.state.men).length, 3);
+assert.equal(Object.values(secondWave.state.men).filter(man => man.role === 'smother').length, 1);
+const darkAgain = ashTick(secondWave.state, {...ashView, lamps: {}});
+assert.equal(ashTick(darkAgain.state, {...ashView, lamps: {pump: true, tower: true, far: true}}).requests.length, 0);
+assert.equal(firstWave.state.men['town-ash-0-0'].lamp, undefined);
+
+// Four seconds must be spent continuously beside the nearest lit lamp.
+const smotherView = {...ashView, ashMen: [{id: 'town-ash-0-0', position: places[0].position}]};
+const threat = ashTick(firstWave.state, smotherView, 3);
+assert.deepEqual(threat.events, [{type: 'lampThreatened', id: 'pump'}]);
+assert.deepEqual(threat.smotheredLamps, []);
+assert.deepEqual(ashTick(threat.state, smotherView, 1).smotheredLamps, ['pump']);
+const steppedAway = ashTick(threat.state, {...smotherView, ashMen: [
+  {id: 'town-ash-0-0', position: {x: 63, y: 0, z: 0}},
+]}, 1);
+assert.deepEqual(ashTick(steppedAway.state, smotherView, 1).smotheredLamps, []);
+
+// Ash aims at the player's position at release. The one-second tell permits
+// a dodge; a landing exactly two metres away still puts the brand out.
+const throwView = {...ashView, ashMen: [{id: 'town-ash-1-0', position: {x: 68, y: 0, z: 0}}]};
+const thrown = ashTick(secondWave.state, throwView);
+assert.equal(thrown.events[0].type, 'ashThrow');
+assert.equal(thrown.brandAshed, false);
+assert.equal(ashTick(thrown.state, throwView, .99).brandAshed, false);
+assert.equal(ashTick(thrown.state, throwView, 1).brandAshed, true);
+assert.equal(ashTick(thrown.state, {...throwView, ...foot(62)}, 1).brandAshed, true);
+assert.equal(ashTick(thrown.state, {...throwView, ...foot(62.01)}, 1).brandAshed, false);
+const landed = ashTick(thrown.state, throwView, 1);
+assert.equal(ashTick(landed.state, throwView, 3.99).events.length, 0);
+assert.equal(ashTick(landed.state, throwView, 4).events[0].type, 'ashThrow');
+assert.equal(ashTick(secondWave.state, {...throwView, ...foot(59.99)}).events.length, 0);
+
+// Job 2.5: a burning swing at two metres or a confirmed Hand Flamer hit at
+// six metres causes permanent retreat. Neither damages or kills a fighter.
+const swingView = {...ashView, ...foot(58), brandSwing: true, ashMen: smotherView.ashMen};
+const fleeing = ashTick(firstWave.state, swingView);
+assert.equal(fleeing.state.men['town-ash-0-0'].fleeing, true);
+assert.deepEqual(fleeing.events, [{type: 'ashFled', id: 'town-ash-0-0'}]);
+assert.equal(ashTick(firstWave.state, {...swingView, brandSeconds: 0}).state.men['town-ash-0-0'].fleeing, undefined);
+assert.equal(ashTick(firstWave.state, {...swingView, ...foot(57.99)}).state.men['town-ash-0-0'].fleeing, undefined);
+const flamerView = {...smotherView, ...foot(54), handFlamerHits: ['town-ash-0-0']};
+assert.equal(ashTick(firstWave.state, flamerView).state.men['town-ash-0-0'].fleeing, true);
+assert.equal(ashTick(firstWave.state, {...flamerView, ...foot(53.99)}).state.men['town-ash-0-0'].fleeing, undefined);
+const overWall = ashTick(fleeing.state, {...ashView, ashMen: [
+  {id: 'town-ash-0-0', position: {x: 200, y: 0, z: 0}},
+]});
+assert.deepEqual(overWall.requests, [{type: 'removeBrandAsh', id: 'town-ash-0-0'}]);
+assert.deepEqual(ashTick(overWall.state, smotherView).requests, []);
+assert.equal(fleeing.state.men['town-ash-0-0'].gone, undefined);
+
+// The existing onfoot step consumes smothering and ash impacts directly.
+const integratedSmother = stepOnFoot(ashStep,
+  {...taken.state, lamps: {pump: true}, brandAsh: threat.state},
+  {...smotherView, ...foot(10)}, 1);
+assert.equal(integratedSmother.state.lamps.pump, false);
+assert(integratedSmother.events.some(event => event.type === 'lampSmothered'));
+const integratedAsh = stepOnFoot(ashStep,
+  {...taken.state, lamps: {}, brandAsh: thrown.state}, throwView, 1);
+assert.equal(integratedAsh.state.brandSeconds, 0);
+assert(integratedAsh.events.some(event => event.type === 'brandOut'));
+console.log('PASS Light the Town: Ash Men waves, smothering, ash tells, dodging and permanent retreat.');

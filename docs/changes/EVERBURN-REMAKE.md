@@ -3,10 +3,10 @@
 - Foot enemies today: job 5 requests an alarm wave; job 6 requests defence waves. world-job.js creates both with createRaidZones and moves their existing raiders.
 - Foot start: initializeWorldJob runs after foot initialization and can create the existing fighter at a safe course position without changing saves or the arena start.
 - Job 1's ending: arrivalHold freezes driving, updates actors, plays the forge catch at five seconds, and finishes at nine seconds.
-- Built this round: opt-in brand rules through the existing onfoot step, burning and relighting, continuous lamp lighting, dusk, recovery requests and result pay/sentences. No job definition or switch changed.
-- Checks on this commit's code (parent 7d004b069): test-everburn-job2, test-world-jobs and test-world-job-mode passed. No older assertion changed.
+- Built through this round: brand load, lamp lighting, dusk, recovery requests and pay; Ash Men decisions now feed the existing onfoot step (waves, smothering, aimed ash with a warning, and permanent retreat). No job definition or switch changed.
+- Checks on this round code (parent 44073e466): test-everburn-job2, test-world-jobs and test-world-job-mode passed. Older assertions and replay fingerprints are unchanged; replay guards await the final round.
 - Codex decided: standing means at most 0.1 m/s; extra result sentences are "You lit the town with two brands." and "You lit the town with N brands." with the count in place of N.
-- Sound events reserved: brandCatch and lit use world.brand.catch; brandOut uses world.brand.out. Recipes and arena wiring remain to build, with world.ash.throw and world.town.wake.
-- Next: job 2's real lamp sites, Auntie, Ash Men, recovery wiring, HUD, plain drawing and ending; then job 3 in separate commits. Neither job is ready to offer.
+- Sound events: brandCatch and lit use world.brand.catch; brandOut uses world.brand.out; ashThrow will use world.ash.throw. Recipes and arena wiring remain, including world.town.wake.
+- Next: connect Ash Men requests to the existing raider factory and mover; real lamp sites, Auntie, recovery wiring, HUD, plain drawing and ending; then job 3 in separate commits. Neither job is ready to offer.
 - For Claude to run after completion: both browser scenarios and the independent code/pay review. Scenarios, scripted runs, older suites, integration merge, lane tier, replay guards and build remain for later rounds.
 - **Removed:** Nothing yet; the old three lamps 7 m apart at the forge and their old step text will go when job 2's new definition is connected in this card.
