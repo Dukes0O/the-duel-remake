@@ -326,3 +326,32 @@ drawing.dispose();
 assert.equal(new Set(released).size, 4);
 assert.equal(drawing.group.children.length, 0);
 console.log('PASS Run Him Down: roof transfer, opaque road ash, read-only drawing and cleanup.');
+
+// Job 3.7: the actual arena event bridge selects procedural bank recipes,
+// places each sound, and leaves the rule snapshots untouched.
+const {playBellowsEvent} = await import('../src/arena/modes/world-job.js');
+const {SOUND_BANK} = await import('../src/sound-bank.js');
+const heard = [];
+const listener = {emit:event => heard.push(event)};
+const audioJob = Object.freeze({job:Object.freeze({stepState:Object.freeze({clouds:Object.freeze([cloud])})})});
+const parked = Object.freeze({x:1, y:2, z:3});
+const beforeAudio = JSON.stringify(audioJob);
+const ashEvent = Object.freeze({type:'thiefAsh', id:'first'});
+assert.equal(playBellowsEvent(listener, audioJob, chaseStep, ashEvent, parked), true);
+assert.equal(playBellowsEvent(listener, audioJob, chaseStep, {type:'bellowsLoaded'}, parked), true);
+assert.deepEqual(heard.map(event => event.arenaTell), [
+  {id:'first', targetId:'player', seconds:0, cue:'world.thief.ash',
+    position:{x:cloud.x, y:parked.y, z:cloud.z}},
+  {id:'bellows-load', targetId:'player', seconds:0, cue:'world.bellows.load', position:{...parked}},
+]);
+for (const cueId of ['world.thief.ash', 'world.bellows.load']) {
+  const recipe = SOUND_BANK[cueId];
+  assert(recipe.layers.length > 0);
+  assert(!recipe.files?.length, 'These cues must use bank recipes without new audio files.');
+}
+assert.equal(playBellowsEvent(listener, audioJob, {kind:'chase'}, ashEvent, parked), false);
+assert.equal(playBellowsEvent(listener, audioJob, chaseStep, {type:'say'}, parked), false);
+assert.equal(heard.length, 2);
+assert.equal(JSON.stringify(audioJob), beforeAudio);
+assert.deepEqual(parked, {x:1, y:2, z:3});
+console.log('PASS Run Him Down: sack and loading sounds use bank recipes and read-only event positions.');

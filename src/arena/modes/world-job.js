@@ -84,6 +84,19 @@ const FURNACE_HIT_LINES = Object.freeze({1: 'story.ember.cinder.18', 2: 'story.e
 const EMBER_CUES = Object.freeze({emberJolt: 'world.ember.spark', emberOut: 'world.ember.out', emberRelit: 'world.ember.scoop'});
 const BRAND_CUES = Object.freeze({brandCatch: 'world.brand.catch', lit: 'world.brand.catch',
   brandOut: 'world.brand.out', ashThrow: 'world.ash.throw', townWoke: 'world.town.wake'});
+const BELLOWS_CUES = Object.freeze({thiefAsh: 'world.thief.ash', bellowsLoaded: 'world.bellows.load'});
+
+// A sack sounds where it burst; collecting the load sounds at the parked car.
+// Reading an event never advances the chase or changes the cloud's lifetime.
+export function playBellowsEvent(duel, worldJob, step, event, carPosition) {
+  const cue = step?.bellows && BELLOWS_CUES[event.type];
+  if (!cue) return false;
+  const cloud = event.type === 'thiefAsh'
+    ? worldJob.job.stepState.clouds?.find(candidate => candidate.id === event.id) : null;
+  const position = cloud ? {x:cloud.x, y:carPosition.y, z:cloud.z} : {...carPosition};
+  duel.emit({arenaTell: {id:event.id ?? 'bellows-load', targetId:'player', seconds:0, cue, position}});
+  return true;
+}
 const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
 const FURNACE_LOG_LIMIT = 80;
@@ -1366,6 +1379,7 @@ export function stepWorldJob(duel, dt) {
       duel.emit({arenaTell: {id: 'town-brand', targetId: 'player', seconds: 0,
         cue: BRAND_CUES[event.type], position: {...(event.position ?? lamp?.position ?? point)}}});
     }
+    playBellowsEvent(duel, worldJob, currentStep, event, view.carPosition);
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
         sentence: emberSentence(currentStep.ember, event.ember, event.relights)};

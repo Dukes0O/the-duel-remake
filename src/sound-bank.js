@@ -663,6 +663,10 @@ export const SOUND_BANK = {
     layers: [{...noise(1800, .6, .45, 'bandpass'), endFrequency: 500, attack: .05}]}),
   'world.town.wake': cue('impacts', {priority: 75, limit: 1, volume: .5,
     layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency: 1800, attack: .25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
+  'world.thief.ash': cue('impacts', {priority: 70, limit: 2, volume: .5,
+    layers: [{...noise(1800, .8, .45, 'bandpass'), endFrequency: 350, attack: .05}]}),
+  'world.bellows.load': cue('impacts', {priority: 75, limit: 1, volume: .5,
+    layers: [noise(450, .2, .35, 'lowpass'), tone(110, .25, .2, 'triangle', .05, 75)]}),
   'arena.toll-gate': cue('impacts', {
     priority: 85,
     limit: 1,
