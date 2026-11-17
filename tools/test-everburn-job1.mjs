@@ -18,7 +18,7 @@ import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, samp
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {FORGE, forgePlan, createForge} from '../src/world/forge-look.js';
-import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
+import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS, RIVER_LAND} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers, flameHitsSegment} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
@@ -29,7 +29,8 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
   furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome} from '../src/world/jobs/ember-rule.js';
+import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome,
+  BED_MIST, bedMistFor, bedColdFactor, inBedMist, bedMistCorners} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
@@ -44,6 +45,43 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Cold is a place the player can steer around. The land seed fixes the patches.
+{
+  const patches = EVERBURN_JOBS[0].steps[0].bedMist;
+  assert.deepEqual(patches, bedMistFor(RIVER_LAND));
+  assert.notDeepEqual(patches, bedMistFor(RIVER_LAND, BED_MIST.seed + 1));
+  const span = Math.abs(RIVER_LAND.crossings.find(c => c.id === 'the-wash').along -
+    RIVER_LAND.crossings.find(c => c.id === 'the-steps').along);
+  const covered = patches.reduce((sum, patch) => sum + patch.length, 0) / span;
+  assert.ok(covered >= .25 && covered <= 1 / 3, 'a quarter to a third of the bed has mist');
+  for (const patch of patches) {
+    assert.ok(patch.length >= 30 && patch.length <= 50);
+    assert.equal(scablandsDriveAt(patch.x, patch.z).id, 'river-bed');
+    assert.equal(bedColdFactor(patch, patches), 5);
+    assert.ok(inBedMist(patch, patch));
+    assert.equal(bedMistCorners(patch).length, 4);
+    // A five-metre lane on the opposite side remains dry and free of solids.
+    for (let along = -patch.length / 2; along <= patch.length / 2; along += 1)
+      for (const across of [-2.5, 0, 2.5]) {
+        const offset = -patch.offset + across;
+        const centre = {x:patch.x - patch.tz * patch.offset, z:patch.z + patch.tx * patch.offset};
+        const point = {x:centre.x + patch.tx * along + patch.tz * offset,
+          z:centre.z + patch.tz * along - patch.tx * offset};
+        assert.equal(bedColdFactor(point, patches), 1, `${patch.id} leaves a dry lane`);
+        assert.equal(scablandsDriveAt(point.x, point.z).id, 'river-bed');
+        const pushed = pushOutOfSolids(point.x, point.z, .01, undefined,
+          scablandsSurfaceHeightAt(point.x, point.z));
+        assert.equal(pushed.hit, null, `${patch.id} leaves a solid-free lane`);
+      }
+    const step = EVERBURN_JOBS[0].steps[0];
+    const carry = (point, region = 'river-bed') => stepCarry(step, {loaded:true, ember:100},
+      {player:{position:point}, groundRegion:region}, 1).state.ember;
+    assert.ok(Math.abs((100 - carry(patch)) / step.ember.coldPerSecond - 5) < 1e-9);
+    assert.ok(Math.abs((100 - carry(patch, 'road')) / step.ember.coldPerSecond - 1) < 1e-9,
+      'a deck above mist does not cool like the bed');
+  }
+}
 
 // Salt riders lead a moving car, rather than steering to where it was.
 {
@@ -146,6 +184,18 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   syncScene(scene.group, state);
   const patch = scene.group.getObjectByName("The furnace's glass on the ground");
   assert.equal(patch.visible, true);
+  const mist = scene.group.getObjectByName('Cold mist in the river bed');
+  assert.equal(mist.visible, true);
+  assert.equal(mist.children.length, world.job.steps[0].bedMist.length);
+  for (const [index, sheet] of mist.children.entries()) {
+    const corners = bedMistCorners(world.job.steps[0].bedMist[index]);
+    const vertices = sheet.geometry.attributes.position;
+    for (let i = 0; i < corners.length; i++) {
+      assert.ok(Math.abs(vertices.getX(i) - corners[i].x) < .001);
+      assert.ok(Math.abs(vertices.getZ(i) - corners[i].z) < .001);
+      assert.ok(Math.abs(vertices.getY(i) - scene.group.userData.drawnGroundHeightAt(corners[i].x, corners[i].z) - BED_MIST.drawLift) < .001);
+    }
+  }
   const vertices = patch.geometry.attributes.position;
   for (let index = 0; index < vertices.count; index++) {
     const x = vertices.getX(index), z = vertices.getZ(index);
@@ -163,6 +213,7 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   world.job.done = true;
   syncScene(scene.group, state);
   assert.equal(patch.visible, false);
+  assert.equal(mist.visible, false);
   scene.dispose();
 }
 
@@ -1056,9 +1107,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   state.speedMph = 80 / 1.609344;
   world.lastKmh = 80;
   const bedLoss = lossAt(bed);
-  assert.ok(Math.abs(bedLoss / ordinaryLoss - 2.0) < 1e-9, 'the bed cools twice as fast with no rough loss at 80 km/h');
+  assert.ok(Math.abs(bedLoss / ordinaryLoss - 1.0) < 1e-9, 'the dry bed cools at the plain rate at 80 km/h');
   lossAt(bed);
-  assert.equal(captions.filter(text => text === 'Cold air lies in the river bed. The pot cools fast down here.').length, 1);
+  assert.equal(captions.filter(text => text === 'Cold mist lies in the hollows. Steer round it.').length, 1);
   state.speedMph = 0;
 
 
@@ -1066,9 +1117,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const routes = worldMapWays({worldJob:world, car:normal, target:LAND.at('tin-town')});
   const map = () => waysMarkup(routes, 'Tin Town', knowledge, {hotDelivery:true});
   learnHotDeliveryDangers(knowledge, world, normal);
-  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe|Cold air lies/i);
+  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe|Cold mist lies/i);
   learnHotDeliveryDangers(knowledge, world, bed);
-  assert.match(map(), /Cold air lies in the river bed\. The pot cools fast down here\./);
+  assert.match(map(), /Cold mist lies in the hollows\. Steer round it\./);
   lossAt(pan);
   learnHotDeliveryDangers(knowledge, world, car);
   assert.match(map(), /The wind on the salt pan cools the ember faster\./);
@@ -1223,7 +1274,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
     {
       assert.equal(result.rams, 0, 'the sleeping camp does not ram the bed car');
-      if (scoopAtWash) assert.ok(result.ember >= 7 && result.ember <= 9, 'the unchanged Wash stop leaves about 8 fire because a pot above 60 takes no scoop');
+      if (scoopAtWash) assert.ok(result.ember >= 14 && result.ember <= 15, 'the unchanged bed drive leaves about 14.5 fire with plain cooling outside mist');
     }
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
     const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';

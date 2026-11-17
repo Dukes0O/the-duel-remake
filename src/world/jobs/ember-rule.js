@@ -4,7 +4,57 @@
 // hard hit takes a lot at once. At 0 the pot is out and must be relit at a brazier. How fast a ground is safe is the ground's own
 // (src/world/scablands-regions.js: any speed on a road, the salt pan and the sand, 90 km/h on the flats, 80 in the river bed, 50 on
 // the scab plates), and the carry step reads it for the point the car is on.
+import {makeRng} from '../../rng.js';
+
 export const MPH_TO_KMH = 1.609344;
+export const BED_MIST = Object.freeze({
+  seed:1989, seedSalt:0x4d495354, lengthMin:30, lengthMax:50,
+  lengthShare:.29, halfWidth:20, sideMetres:28, plainCold:1, mistCold:5,
+  drawLift:.35,
+});
+
+// The river's own measured line supplies the hollows. Each patch occupies
+// one side of the bed, leaving its middle and opposite side open.
+export function bedMistFor(river, seed = BED_MIST.seed) {
+  const start = river.crossings.find(item => item.id === 'the-wash').along;
+  const end = river.crossings.find(item => item.id === 'the-steps').along;
+  const from = Math.min(start, end), span = Math.abs(end - start);
+  const count = Math.max(1, Math.round(span * BED_MIST.lengthShare /
+    ((BED_MIST.lengthMin + BED_MIST.lengthMax) / 2)));
+  const length = span * BED_MIST.lengthShare / count;
+  const rng = makeRng(seed ^ BED_MIST.seedSalt);
+  return Array.from({length:count}, (_, index) => {
+    const along = from + span * (index + .5) / count;
+    let i = 1;
+    while (i < river.line.along.length - 1 && river.line.along[i] < along) i++;
+    const a = river.line.points[i - 1], b = river.line.points[i];
+    const distance = river.line.along[i] - river.line.along[i - 1];
+    const tx = (b.x - a.x) / distance, tz = (b.z - a.z) / distance;
+    const offset = (rng.chance(.5) ? -1 : 1) * BED_MIST.sideMetres;
+    const share = (along - river.line.along[i - 1]) / distance;
+    return Object.freeze({id:`bed-mist-${index + 1}`, along, length, offset,
+      x:a.x + (b.x - a.x) * share + tz * offset,
+      z:a.z + (b.z - a.z) * share - tx * offset,
+      tx, tz, halfWidth:BED_MIST.halfWidth});
+  });
+}
+
+export function inBedMist(point, patch) {
+  const dx = point.x - patch.x, dz = point.z - patch.z;
+  return Math.abs(dx * patch.tx + dz * patch.tz) <= patch.length / 2 &&
+    Math.abs(dx * patch.tz - dz * patch.tx) <= patch.halfWidth;
+}
+
+export function bedMistCorners(patch) {
+  return [[-1,-1], [-1,1], [1,1], [1,-1]].map(([along, across]) => ({
+    x:patch.x + patch.tx * along * patch.length / 2 + patch.tz * across * patch.halfWidth,
+    z:patch.z + patch.tz * along * patch.length / 2 - patch.tx * across * patch.halfWidth,
+  }));
+}
+
+export function bedColdFactor(point, patches) {
+  return patches.some(patch => inBedMist(point, patch)) ? BED_MIST.mistCold : BED_MIST.plainCold;
+}
 export const EMBER_SCOOP = Object.freeze({seconds:3, radius:8, stoppedKmh:1, yardFill:100, roadFill:60});
 
 export const BESS_GREETING_RADIUS = 40;

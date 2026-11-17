@@ -296,7 +296,7 @@ export function waysMarkup(result, targetName, knowledge, {hotDelivery = false} 
     const dangers = [...knowledge.barricades.values()].map(item => `A barricade of the ${item.who}.`);
     if (knowledge.sights.size) dangers.push('The furnace watches the land.');
     if (knowledge.hotDeliveryDangers?.has('salt-pan')) dangers.push('The wind on the salt pan cools the ember faster.');
-    if (knowledge.hotDeliveryDangers?.has('river-bed')) dangers.push('Cold air lies in the river bed. The pot cools fast down here.');
+    if (knowledge.hotDeliveryDangers?.has('river-bed')) dangers.push('Cold mist lies in the hollows. Steer round it.');
     if (knowledge.hotDeliveryDangers?.has('pipe')) dangers.push('Cross the Pipe at 40 km/h or less.');
     const learnt = dangers.length ? `<ul class="world-hud-learnt">${dangers.map(line => `<li>${escapeText(line)}</li>`).join('')}</ul>` : '';
     return `<h3>WHAT YOU KNOW</h3><ol>${items}</ol>${learnt}`;

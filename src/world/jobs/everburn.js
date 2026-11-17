@@ -6,7 +6,8 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
-import {EMBER_RULE} from './ember-rule.js';
+import {EMBER_RULE, bedMistFor} from './ember-rule.js';
+import {riverFor} from '../scablands-regions.js';
 import {bessRest} from '../boneyard-wrecks.js';
 import {LAND} from '../scablands-names.js';
 import {tinTownGateFor} from '../tin-town-gate.js';
@@ -148,7 +149,8 @@ export function buildEverburn(land) {
         arrivalHold:Object.freeze({seconds:9, catchAt:5}),
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', pickupAt, 6), figure:place('cinder-figure', cinderAt), radius:6, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
-        bessGreeting:bessRest(land), safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.0}), burnable:true, spillLineId:'story.ember.cinder.4',
+        bessGreeting:bessRest(land), safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5}),
+        bedMist:Object.freeze(bedMistFor(riverFor(land))), burnable:true, spillLineId:'story.ember.cinder.4',
         barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders, scout,
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).

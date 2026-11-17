@@ -9,6 +9,7 @@
 import {SCABLANDS_SOLIDS} from './scablands-scene.js';
 import {createLandPicture, landMarks, REGION_COLOURS} from './scablands-picture.js';
 import {furnaceSighting, hotDeliveryGlass} from './jobs/furnace-sightings.js';
+import {bedMistCorners} from './jobs/ember-rule.js';
 import {sightOutline, sees, WATCH, holderOf} from './scablands-ways.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsHeightAt} from './scablands-height.js';
@@ -303,6 +304,14 @@ export function drawSmallMap(ctx, frame, {width = SMALL_MAP.width, height = SMAL
   drawRoads(ctx, view, marks, {casing: 8.5, line: 4.6});
   drawLandmarks(ctx, view, frame.landmarkLines);
   drawGlassRing(ctx, view, hotDeliveryGlass(frame.worldJob));
+  const job = frame.worldJob?.job;
+  if (frame.worldJob?.definition?.id === 'everburn-hot-delivery' && !job?.done)
+    for (const patch of job.steps[job.stepIndex]?.bedMist ?? []) {
+      const points = bedMistCorners(patch).map(point => toScreen(view, point.x, point.z));
+      ctx.beginPath();
+      points.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+      ctx.closePath(); ctx.fillStyle = '#dde5e58c'; ctx.fill();
+    }
   const margin = 40, visible = (x, z) => { const at = toScreen(view, x, z); return at.x > -margin && at.y > -margin && at.x < width + margin && at.y < height + margin; };
   // What is written on the map is written where there is room: not over the scale bar, the compass, the car or another name.
   const boxes = [{left: 0, right: 150, top: height - 30, bottom: height}, {left: width - 44, right: width, top: 0, bottom: 46}, {left: width / 2 - 26, right: width / 2 + 26, top: height / 2 - 26, bottom: height / 2 + 26}];

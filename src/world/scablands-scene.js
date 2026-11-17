@@ -15,6 +15,7 @@ import {createDigFx} from './dig-fx.js';
 import {registerSceneSystem} from '../scene-systems.js';
 import {OLD_SMOKE,furnaceGlowingDoor} from './jobs/old-smoke.js';
 import {furnaceSighting, hotDeliveryGlass, FURNACE_GLASS} from './jobs/furnace-sightings.js';
+import {BED_MIST, bedMistCorners} from './jobs/ember-rule.js';
 import {createTheWhitesScene} from './the-whites-scene.js';
 import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlowMaterial,createSparks,createCinderArc,createGroundShade,createDustTrail} from './scrap-look.js';
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
@@ -466,6 +467,12 @@ export function createScablandsScene(course,options={}){
   glassPatch.name = "The furnace's glass on the ground";
   glassPatch.visible = false;
   group.add(glassPatch);
+  const mist = new THREE.Group();
+  mist.name = 'Cold mist in the river bed';
+  group.add(mist);
+  const mistMaterial = new THREE.MeshBasicMaterial({color:0xdde5e5, transparent:true,
+    opacity:.55, depthWrite:false, side:THREE.DoubleSide});
+  let mistPatches = null;
   let yard=null;
   let retired=false;
   let townDraw=null;
@@ -895,6 +902,21 @@ export function createScablandsScene(course,options={}){
       }
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
+      mist.visible = Boolean(emberStep && !worldJob.job.done);
+      if (mist.visible && mistPatches !== emberStep.bedMist) {
+        for (const sheet of [...mist.children]) { sheet.geometry.dispose(); mist.remove(sheet); }
+        mistPatches = emberStep.bedMist;
+        for (const patch of mistPatches ?? []) {
+          const points = bedMistCorners(patch);
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(points.flatMap(point =>
+            [point.x, group.userData.drawnGroundHeightAt(point.x, point.z) + BED_MIST.drawLift, point.z]), 3));
+          geometry.setIndex([0,1,2,0,2,3]);
+          const sheet = new THREE.Mesh(geometry, mistMaterial);
+          sheet.name = patch.id;
+          mist.add(sheet);
+        }
+      }
       townDoor.visible=worldJob?.definition?.id==='everburn-hot-delivery';
       const doorPose=tinTownDoorPose(TIN_TOWN_GATE,worldJob?.tinTownGateProgress??0);
       townDoor.rotation.y=doorPose.angle;

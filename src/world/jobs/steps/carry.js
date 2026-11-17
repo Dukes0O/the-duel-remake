@@ -1,4 +1,4 @@
-import {emberLoss, emberGrade, emberPay, EMBER_SCOOP, BESS_GREETING_RADIUS, BRAZIER_NAMES} from '../ember-rule.js';
+import {emberLoss, emberGrade, emberPay, EMBER_SCOOP, BESS_GREETING_RADIUS, BRAZIER_NAMES, bedColdFactor} from '../ember-rule.js';
 
 const spot = value => value?.position ?? value ?? {};
 const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
@@ -39,7 +39,9 @@ function stepEmberCarry(step, state, view, dt) {
   while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
   const next = {...state, burntBarricades: [...burnt], safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
   if (!out) {
-    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, severeHit: view.severeHit, safeKmh: view.safeKmh, difficulty: view.difficulty, coldFactor: step.coldRegions?.[view.groundRegion] ?? 1, dt});
+    const coldFactor = view.groundRegion === 'river-bed' && step.bedMist
+      ? bedColdFactor(here, step.bedMist) : step.coldRegions?.[view.groundRegion] ?? 1;
+    const loss = emberLoss(rule, {kmh: view.speedKmh ?? 0, lostKmh: view.hitKmh ?? 0, severeHit: view.severeHit, safeKmh: view.safeKmh, difficulty: view.difficulty, coldFactor, dt});
     next.ember = Math.max(0, Math.min(rule.start, ember - loss.total));
     // How fast the pot is losing ember from rough ground and hits, per second (cold alone is slower than 1).
     next.rate = dt > 0 ? (loss.rough + loss.hit) / dt : 0;

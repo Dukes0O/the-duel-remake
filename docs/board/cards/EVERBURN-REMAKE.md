@@ -1014,6 +1014,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 8C cannot meet the race-to-the-Pipe proof on the current way. From the yard the Salt Road crosses the Pipe before entering the pan, then continues by the Ridge to Tin Town. The pan is on the Pipe's far side, as `groundAreas` says. A post in the middle of that pan cannot catch an outbound car before a crossing it has already passed. Claude must choose a changed way or a different finish for this chase. Salt actor, lean-to and horn work waits; the pure interception rules stay ready. Slice 8D continues.
+
 - Slice 8A: the middle-screen outage caption names the nearest of all three fires, including undiscovered fires. The small chip still uses map knowledge as before.
 - Slice 8A: the repeatable relights from slice 7 stay. An out pot gets 100 at the yard or 60 on the way; relighting leaves a roadside fire's separate one-time scoop available. Moss can greet the car before pickup too.
 

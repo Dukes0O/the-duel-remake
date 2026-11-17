@@ -1181,7 +1181,7 @@ export function stepWorldJob(duel, dt) {
   const ground = scablandsDriveAt(point.x, point.z);
   if (currentStep?.ember && worldJob.job.stepState?.loaded && ground.id === 'river-bed' && !worldJob.bedColdSaid) {
     worldJob.bedColdSaid = true;
-    duel._storyCallout('Cold air lies in the river bed. The pot cools fast down here.', 3);
+    duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
   const view = {player: playerView, onFoot: !!state.onFoot,
     speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
