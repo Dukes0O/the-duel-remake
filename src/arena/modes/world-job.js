@@ -6,7 +6,7 @@ import {initializeCrewGear} from '../../crew-gear/signature.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
-import {pathShare, stepSkylineSight, stepRidgeSight, skylineWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
+import {pathShare, stepSkylineSight, stepRidgeSight, hotDeliveryGlass, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit, FURNACE_GLASS} from '../../world/jobs/furnace-sightings.js';
 import {AMBUSH_WEAR_METRES, AMBUSH_WEAR_PER_SECOND, AMBUSH_RUN_DOWN_METRES, AMBUSH_RUN_DOWN_MPS, REST_HEALTH_MINIMUM} from '../../world/jobs/steps/escort.js';
 import {nearestIronLineDistance, sampleIronLine} from '../../world/iron-line.js';
 import {captionRecord} from '../../story/story-lines.js';
@@ -1068,7 +1068,15 @@ export function stepWorldJob(duel, dt) {
     worldJob.sightStep = (sightStep + 1) % 30;
     const sight = stepSkylineSight(worldJob.skylineSight ?? {}, car, dt, scablandsSurfaceHeightAt, duel.course.groundTunnels, sightStep === 0);
     worldJob.skylineSight = sight;
-    if (skylineWarningDue(sight, !glassPursuitReady(worldJob, currentStep.furnaceRiders ?? []))) {
+    const glass = hotDeliveryGlass(worldJob);
+    stepGlassSeen(sight, {car, glass, visible:sight.visible,
+      loaded:!!worldJob.job.stepState.loaded}, dt);
+    if (!worldJob.glassSaid && scablandsDriveAt(car.x, car.z).id === 'scab-plates' &&
+        Math.hypot(car.x - glass.x, car.z - glass.z) <= FURNACE_GLASS.captionMetres) {
+      worldJob.glassSaid = true;
+      duel._storyCallout("Rook: That light is the furnace's glass. Stay out of it, or get behind rock.", EMBER_CAPTION_SECONDS);
+    }
+    if (glassWarningDue(sight, !glassPursuitReady(worldJob, currentStep.furnaceRiders ?? []))) {
       beginGlassPursuit(worldJob);
       for (const actor of currentStep.furnaceRiders ?? []) {
         updateJobActor(duel, worldJob, actor, 0);

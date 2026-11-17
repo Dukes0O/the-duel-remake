@@ -44,6 +44,38 @@ import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 
+// The job counts light exposure, not all time in the watch's view.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const captions = [], events = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {...hotDeliveryGlass(world)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event),
+    _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const tick = dt => {world.sightStep = 0; stepWorldJob(duel, dt);};
+  const line = "Rook: That light is the furnace's glass. Stay out of it, or get behind rock.";
+  assert.equal(scablandsDriveAt(car.x, car.z).id, 'scab-plates');
+  tick(2);
+  assert.equal(world.skylineSight.seenSeconds, 2);
+  assert.equal(captions.filter(text => text === line).length, 1);
+  tick(1);
+  assert.equal(captions.filter(text => text === line).length, 1, 'Rook says the warning once');
+  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  tick(1);
+  assert.equal(world.skylineSight.visible, true);
+  assert.equal(world.skylineSight.seenSeconds, 2, 'clear sight outside the light drains SEEN');
+  tick(10);
+  assert.equal(world.skylineSight.seenSeconds, 0);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 0,
+    'ten seconds in view outside the light cannot sound the horn');
+}
+
 // The ground and map read the same circle without advancing the job clock.
 {
   const world = createWorldJob(EVERBURN_JOBS[0]);
@@ -2147,12 +2179,12 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   stepWorldJob(duel, .1);
   assert.equal(world.job.stepState.joltCount, 1, `${meeting}: backing off does not charge again`);
 }
-// The real watch traces the ground, resets when sight is lost, and sounds once after the sight limit.
+// The real watch and moving glass share the eight-second rule and can call the pair again.
 {
   const world = createWorldJob(definition), events = [];
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
     opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
-  let car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  let car = {...hotDeliveryGlass(world)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
@@ -2166,12 +2198,12 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
   tick(0.1);
   assert.equal(world.skylineSight.seconds, 0);
-  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car = {...hotDeliveryGlass(world)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  tick(FURNACE_PATIENCE_SECONDS);
+  tick(3.9);
   assert.equal(horns().length, 0);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
-  tick(0.1);
+  tick(0.2);
   assert.equal(horns().length, 1);
   const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
   assert.equal(riders.length, 2);
@@ -2195,9 +2227,9 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   assert.equal(horns().length, 1);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
     'both hidden riders can leave once their five-second return begins');
-  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car = {...hotDeliveryGlass(world)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  tick(FURNACE_PATIENCE_SECONDS);
+  tick(FURNACE_PATIENCE_SECONDS - .1);
   assert.equal(horns().length, 1, 'returning home alone does not sound another horn');
   tick(.1);
   assert.equal(horns().length, 2, 'fresh detection calls the pair down again');
@@ -2207,7 +2239,7 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
   assert.ok(renewed.every(rider => !riders.includes(rider)), 'returned actors are replaced at their posts');
   assert.equal(world.furnaceRidersReturning, false);
   assert.equal(world.furnacePursuitSeconds, .1, 'only the new chase tick is counted');
-  assert.equal(world.furnaceLostSightSeconds, 0);
+  assert.equal(world.furnaceLostSightSeconds, .1, 'the distant patch starts the new riders sight-loss clock');
 }
 // Furnace riders stop for lost sight, the town wall, or the horn's time limit.
 for (const reason of ['sight', 'town', 'time']) {
