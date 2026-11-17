@@ -1,5 +1,25 @@
 import assert from 'node:assert/strict';
 import {worldHudModel, worldHudStep} from '../src/world/world-hud.js';
+import {EMBER_SCOOP, EMBER_RULE} from '../src/world/jobs/ember-rule.js';
+import {stepCarry} from '../src/world/jobs/steps/carry.js';
+
+{
+  const fire = {id:'test-fire', position:{x:0,z:0}};
+  const step = {kind:'carry', ember:EMBER_RULE, destination:{position:{x:100,z:0}}, braziers:[fire]};
+  const worldJob = {job:{steps:[step], stepIndex:0, stepState:{loaded:true, ember:0, out:true}}};
+  const model = (x, speedKmh = 0) => worldHudModel({worldJob, player:{x,z:0}, speedKmh});
+  assert.equal(model(60).line, 'Stop beside the fire for three seconds to relight the pot.');
+  assert.notEqual(model(60.01).line, model(60).line);
+  const view = {player:{position:{x:0,z:0}}, speedKmh:0};
+  worldJob.job.stepState = stepCarry(step, worldJob.job.stepState, view, EMBER_SCOOP.seconds - .01).state;
+  assert.equal(worldJob.job.stepState.out, true);
+  assert.equal(model(0).line, 'Relighting: hold still.');
+  assert.equal(model(0, 2).line, 'Stop beside the fire for three seconds to relight the pot.');
+  assert.equal(model(20).line, 'Stop beside the fire for three seconds to relight the pot.');
+  worldJob.job.stepState = stepCarry(step, worldJob.job.stepState, view, .01).state;
+  assert.equal(worldJob.job.stepState.out, false);
+  assert.notEqual(model(0).line, 'Relighting: hold still.');
+}
 
 const place = (id, x, z, name = id) => ({id, name, position: {x, z}});
 const target = place('tin-town', 10, 0, 'Tin Town');

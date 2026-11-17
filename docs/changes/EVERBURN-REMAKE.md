@@ -3,10 +3,11 @@
 - Checks: `test-scablands-scene` passed before `a36c38615`; `test-scablands-map` passed on cure 2.
 - Checks: `test-audio` (618) and `test-p4-audio` passed on cure 3; the arena's pinned hashes are unchanged.
 - Built cure 5: the weapon bar shows all four car slots; `test-combat-hud` passed before its commit.
+- Built cure 6: the exact relight instructions read the scoop's shared three-second rule; `test-world-hud` and `test-ember-pot` passed before its commit.
 - Integration: brought `integration/wasteland` in; already current at `01cfa107c`.
 - For Claude to run: updated `everburn-job1` pictures when all cures are complete; independent review.
 - Changed assertions: the old sound-bank projection excludes new `ambience.scablands`; its expected hash is unchanged. No switches or saved fields changed.
 - Changed assertions for Claude: `test-everburn-job1` visible chips with loan 1 to 4, without loan 0 to 4, as cure 5 asks; the loan is still checked in its real slot.
 - Sound: `ambience.scablands`, two looping noise layers under `story-everburn`; no new file.
 - **Removed:** duplicate job-car ground offset; player arrow covering nearby riders on the map.
-- Still to build: cures 4, 6, 7, 8 and final checks.
+- Still to build: cures 4, 7, 8, scenario pictures and final checks. Cure 6 keeps `world.ember.scoop`.

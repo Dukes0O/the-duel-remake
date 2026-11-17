@@ -1,4 +1,4 @@
-import {emberLoss, emberGrade, emberPay} from '../ember-rule.js';
+import {emberLoss, emberGrade, emberPay, EMBER_SCOOP} from '../ember-rule.js';
 
 const spot = value => value?.position ?? value ?? {};
 const gap = (a, b) => Math.hypot((a?.x ?? 0) - (spot(b).x ?? 0), (a?.z ?? 0) - (spot(b).z ?? 0));
@@ -48,14 +48,14 @@ function stepEmberCarry(step, state, view, dt) {
   }
   if (step.braziers) {
     const used = state.scoopedBraziers ?? [];
-    const brazier = step.braziers.find(place => (next.out || !used.includes(place.id)) && gap(here, place) <= 8);
-    const stopping = brazier && Math.abs(view.speedKmh ?? 0) < 1;
+    const brazier = step.braziers.find(place => (next.out || !used.includes(place.id)) && gap(here, place) <= EMBER_SCOOP.radius);
+    const stopping = brazier && Math.abs(view.speedKmh ?? 0) < EMBER_SCOOP.stoppedKmh;
     const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
     next.scoopBrazier = stopping ? brazier.id : null;
     next.scoopTime = scoopTime;
     if (view.difficulty === 'hard' && stopping && brazier.id === step.waitingActors?.[0]?.scoopAmbush)
       next.campAwake = true;
-    if (stopping && scoopTime >= 3) {
+    if (stopping && scoopTime >= EMBER_SCOOP.seconds) {
       const wasOut = next.out;
       next.ember = Math.min(rule.start, next.ember + 25);
       next.out = false;

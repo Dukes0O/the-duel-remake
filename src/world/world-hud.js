@@ -5,6 +5,7 @@ import {HOT_DELIVERY_WAYS, WATCH, routeFor, roadWay, describeWay, sees, nearestO
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
 import {scablandsDriveAt} from './scablands-regions.js';
+import {EMBER_SCOOP} from './jobs/ember-rule.js';
 
 const pointOf = value => value?.position ?? value;
 const finitePoint = value => Number.isFinite(pointOf(value)?.x) && Number.isFinite(pointOf(value)?.z);
@@ -112,6 +113,19 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   }
   if (step?.scout && job.stepState.scoutWarned && !job.stepState.scoutStopped && !job.stepState.scoutHome && !job.stepState.out)
     next.line = 'Catch the scout before the camp.';
+  if (step?.ember && job.stepState.out && finitePoint(player)) {
+    const nearFire = step.braziers?.some(brazier =>
+      Math.hypot(pointOf(player).x - pointOf(brazier).x, pointOf(player).z - pointOf(brazier).z) <= 60);
+    if (nearFire) {
+      const seconds = EMBER_SCOOP.seconds === 3 ? 'three' : String(EMBER_SCOOP.seconds);
+      next.line = `Stop beside the fire for ${seconds} seconds to relight the pot.`;
+      if (job.stepState.scoopBrazier && job.stepState.scoopTime > 0 &&
+          speedKmh !== null && Math.abs(speedKmh) < EMBER_SCOOP.stoppedKmh &&
+          step.braziers.some(brazier => brazier.id === job.stepState.scoopBrazier &&
+            Math.hypot(pointOf(player).x - pointOf(brazier).x, pointOf(player).z - pointOf(brazier).z) <= EMBER_SCOOP.radius))
+        next.line = 'Relighting: hold still.';
+    }
+  }
   const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
   const at=pointOf(player);
   const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8
