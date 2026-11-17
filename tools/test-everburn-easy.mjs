@@ -405,15 +405,22 @@ function playerInput(duel) {
 
 function driveHotDelivery(duel, definition) {
   const step = definition.steps[0], road = ROAD_NET.road('east-road').points;
+  let rams = 0;
+  const record = result => {
+    const parts = result.stretches ?? [result];
+    rams += parts.flatMap(part => part.jolts ?? []).filter(jolt => jolt.riders.length > 0).length;
+    return result;
+  };
   duel.state.countdown = 0;
   if (!driveToCinder(duel, step.pickup.place.position).loaded) return 'collecting the pot';
   if (driveThroughYardGate(duel, yardPlan().gate).along < 20) return 'leaving the yard';
-  if (!driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344).reachedAll) return 'following the East Road to the camp';
-  if (driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40).along < 2350) return 'passing the camp';
-  if (!driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier')).scooped) return 'collecting fire at the camp';
-  if (!driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40).reachedAll) return 'following the East Road to town';
-  if (driveAlongRoad(duel, road, 7810, 12000, 25, true).along < 7810) return 'approaching the town gate';
-  if (!driveToForge(duel, step.destination.position).done) return 'stopping in the forge bay or waiting for the forge';
+  if (!record(driveMeasuredStretches(duel, road, [500, 1000, 1500, 2000], 100 / 1.609344)).reachedAll) return 'following the East Road to the camp';
+  if (record(driveAlongRoad(duel, road, 2350, 7200, 100 / 1.609344, false, false, 3, 45, 40)).along < 2350) return 'passing the camp';
+  if (!record(driveToBrazier(duel, step.braziers.find(place => place.id === 'halfway-brazier'))).scooped) return 'collecting fire at the camp';
+  if (!record(driveMeasuredStretches(duel, road, [2500, 3000, 3500, 4000, 4500, 5000, 5500, 6500, 7000, 7600], 100 / 1.609344, false, 40)).reachedAll) return 'following the East Road to town';
+  if (record(driveAlongRoad(duel, road, 7810, 12000, 25, true)).along < 7810) return 'approaching the town gate';
+  if (!record(driveToForge(duel, step.destination.position)).done) return 'stopping in the forge bay or waiting for the forge';
+  console.log(`Easy East Road, seed ${duel.seed}: fire ${duel.state.arena.worldJob.emberResult?.ember}, rams ${rams}`);
   return null;
 }
 

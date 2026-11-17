@@ -248,13 +248,13 @@ test('moving a place in a copy of the table moves everything that belongs to it,
       // EVERBURN-REMAKE job 1 (16 November 2026): the Halfway Camp's brazier stands 9 m to one side of the way from the camp to Tin Town, so it
       // turns about the camp a little when either place moves. It belongs to the camp: it stays 9 m from it, on that same side of that way.
       // Four more things of the job stand by a road's own line, which bends as a place moves, and each is checked against that line here: an Ash
-      // rider waits on the East Road 25 m past his barricade; Cinder and the yard's brazier stand 8 m inside the yard's east gate, 9 m and 7 m to its side.
+      // rider waits on the East Road 25 m past his barricade; Cinder and the yard's brazier stand 8 m inside the yard's east gate, 9 m and 20 m to its side.
       // Each must be within 1 m of the place worked out here from the moved land.
       const rider = /^ash-rider-start-([12])$/.exec(id);
       if (rider) { const barrier = b.get(`ash-men-barricade-${rider[1]}`); near({x: b.get(id)[0], z: b.get(id)[1]}, roadPointFrom(east, barrier[0], barrier[1], 25), id); continue; }
       if (id === 'cinder' || id === 'yard-brazier') {
-        // 8 m back from the gate along the road's own direction there, and 9 m (Cinder) or 7 m (the brazier) to the same side of it.
-        const gate = yardPlan(net.roads).gate, forward = {x: Math.sin(gate.bearing), z: Math.cos(gate.bearing)}, side = id === 'cinder' ? 9 : 7;
+        // 8 m back from the gate along the road's own direction there, and 9 m (Cinder) or 20 m (the brazier) to the same side of it.
+        const gate = yardPlan(net.roads).gate, forward = {x: Math.sin(gate.bearing), z: Math.cos(gate.bearing)}, side = id === 'cinder' ? 9 : 20;
         near({x: b.get(id)[0], z: b.get(id)[1]}, movedLand.at('yard', gate.x - forward.x * 8 - forward.z * side, gate.z - forward.z * 8 + forward.x * side), id);
         continue;
       }

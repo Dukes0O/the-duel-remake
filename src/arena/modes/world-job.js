@@ -1,3 +1,4 @@
+import {barricadeEnds} from '../../world/jobs/barricade.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -269,12 +270,39 @@ function updateJobActors(duel, worldJob, dt) {
 // They use the land's mover, including its floor and solid checks.
 function pursueJobRider(duel, worldJob, actorDef, dt) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
-  if (!rider || !worldJob.job.stepState.loaded || duel.state.onFoot) return;
+  if (!rider) return;
+  const retreat = rider.ramRetreat;
+  if (retreat) {
+    retreat.seconds += Math.max(0, dt);
+    if (retreat.seconds >= 8) {
+      rider.ramRetreat = null;
+      rider.ramContact = false;
+    }
+  }
+  if (!worldJob.job.stepState.loaded || duel.state.onFoot) return;
   // A wreck stays where it fell, even if it was already returning to its post.
   if (rider.health <= 0) return;
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  if (roadRider && retreat && !worldJob.ridersRetreating) {
+    if (!rider.ramRetreat) return;
+    const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
+    const distance = Math.hypot(dx, dz);
+    rider.speed = 0;
+    if (distance > 3 && !retreat.stopped && dt > 0) {
+      const travel = Math.min(distance, 18 * dt), before = rider.position;
+      rider.heading = Math.atan2(dx, dz);
+      const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
+        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+      rider.position = {x:moved.x, y:moved.y, z:moved.z};
+      rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      retreat.stillSeconds = moved.blocked === 'solid' && rider.speed < 0.01
+        ? (retreat.stillSeconds ?? 0) + dt : 0;
+      if (retreat.stillSeconds >= 1) retreat.stopped = true;
+    }
+    return;
+  }
   if (roadRider && !worldJob.ridersRetreating && !rider.returningToPost) {
     const road = ROAD_NET.road('east-road').points;
     const carOnRoad = nearestOnLine(road, car.x, car.z);
@@ -284,6 +312,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const ground = scablandsDriveAt(car.x, car.z);
     const floors = [];
     scablandsFloorsAt(car.x, car.z, floors);
+    const nearFence = Math.hypot(car.x - barrier.x, car.z - barrier.z) <= 150;
     const inRange = carOnRoad.distance <= 120 && Math.abs(carOnRoad.along - post.along) <= 900 &&
       ground.id !== 'river-bed' && ground !== SCABLANDS_DRIVE.steps &&
       (floors.length < 2 || Math.abs(car.y - floors[0]) < 3);
@@ -292,7 +321,8 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}));
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
     if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
-    if (!rider.pursuing && !visible) return;
+    const nearRider = Math.hypot(car.x - rider.position.x, car.z - rider.position.z) <= 120;
+    if (!rider.pursuing && (!visible || (!nearFence && !nearRider))) return;
   }
   if (worldJob.ridersRetreating || rider.returningToPost) {
     rider.pursuing = false;
@@ -340,10 +370,24 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const dx = car.x - rider.position.x, dz = car.z - rider.position.z;
   const distance = Math.hypot(dx, dz);
   const scoopAmbush = actorDef.scoopAmbush && worldJob.job.stepState.scoopBrazier === actorDef.scoopAmbush;
-  if (!rider.pursuing && distance > 120 && !scoopAmbush) return;
+  if (!rider.pursuing && !roadRider && distance > 120 && !scoopAmbush) return;
   rider.pursuing = true;
   if (distance > 8) rider.ramContact = false;
-  if (distance <= 3 || dt <= 0) { rider.speed = 0; return; }
+  if (distance <= 3 || dt <= 0) {
+    rider.speed = 0;
+    if (roadRider && dt > 0 && distance > 0 && !rider.ramContact && Math.abs(car.y - rider.position.y) < 3) {
+      const pose = worldPose(duel, duel.state);
+      const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+      const closing = -playerSpeed * (Math.sin(pose.heading) * dx / distance + Math.cos(pose.heading) * dz / distance);
+      if (closing > 0) {
+        rider.ramContact = true;
+        worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, closing * 3.6);
+        rider.ramRetreat = {x:rider.position.x - dz / distance * 40, z:rider.position.z + dx / distance * 40, seconds:0};
+        shoveCar(duel, {x:dx / distance, z:dz / distance, metresPerSecond:3});
+      }
+    }
+    return;
+  }
   rider.heading = Math.atan2(dx, dz);
   const pursuitSpeed = roadRider && duel.state.cpuDifficulty === 'easy' ? 5 : 18;
   const travel = Math.min(distance - 3, pursuitSpeed * dt);
@@ -355,9 +399,14 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const remaining = Math.hypot(car.x - moved.x, car.z - moved.z);
   if (!rider.ramContact && remaining <= 3.001 && rider.speed > 0 && Math.abs(car.y - moved.y) < 3) {
     rider.ramContact = true;
-    // The next job step treats the impact as a speed loss, using the same
-    // ember rule and sound as other hits. Contact must break before another ram.
-    worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, rider.speed * 3.6 * 0.5);
+    // Undo only the last step's distance clipping, while retaining any solid's obstruction.
+    const closingSpeed = travel > 0 ? rider.speed * pursuitSpeed * dt / travel : 0;
+    const pose = worldPose(duel, duel.state);
+    const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+    const playerAlong = playerSpeed * (Math.sin(pose.heading) * dx / distance + Math.cos(pose.heading) * dz / distance);
+    const hitKmh = roadRider ? Math.max(0, closingSpeed - playerAlong) * 3.6 : rider.speed * 3.6 * 0.5;
+    worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, hitKmh);
+    if (roadRider) rider.ramRetreat = {x:moved.x - dz / distance * 40, z:moved.z + dx / distance * 40, seconds:0};
     shoveCar(duel, {x: dx / distance, z: dz / distance, metresPerSecond: 3});
   }
 }
@@ -827,7 +876,7 @@ export function stepWorldJob(duel, dt) {
     const car = player === state ? point : position(duel, state);
     const gate = currentStep.riderSafeWall;
     if (!worldJob.tinTownGateRequested && !state.onFoot && gate &&
-        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20 && Math.abs(state.speedMph || 0) * MPH_TO_KMH < 30) {
+        Math.hypot(car.x - gate.x, car.z - gate.z) <= 20) {
       worldJob.tinTownGateRequested = true;
       worldJob.solidGrid.setTownGate(null);
       duel.emit?.({arenaTell:{id:'tin-town-gate', targetId:'player', seconds:0,
@@ -1109,7 +1158,7 @@ export function worldJobHitTargets(duel) {
     if (worldJob.job.stepState.burntBarricades?.includes(barrier.id)) continue;
     const at = barrier.position ?? barrier;
     targets.push({id: barrier.id, kind: 'barricade', position: at,
-      radius: 2, burnable: true});
+      segment: barricadeEnds(at, barrier.heading), burnable: true});
   }
   return targets;
 }

@@ -23,6 +23,27 @@ export function flameCpuAim(distance, angleRadians) {
     distance <= FLAME_RULES.range + EPS && distance >= 0 &&
     Math.abs(angleRadians) <= FLAME_RULES.halfConeRadians + EPS;
 }
+// Clip the fence segment to the flame cone, then test the nearest remaining point against its range.
+export function flameHitsSegment(at, heading, ends) {
+  const sin = Math.sin(heading), cos = Math.cos(heading);
+  const local = ends.map(p => {
+    const dx = p.x - at.x, dz = p.z - at.z;
+    return {x: dx * cos - dz * sin, z: dx * sin + dz * cos};
+  });
+  const a = local[0], dx = local[1].x - a.x, dz = local[1].z - a.z;
+  const slope = Math.tan(FLAME_RULES.halfConeRadians);
+  let lo = 0, hi = 1;
+  for (const [start, delta] of [[a.z, dz], [slope * a.z - a.x, slope * dz - dx],
+    [slope * a.z + a.x, slope * dz + dx]]) {
+    if (Math.abs(delta) < EPS) { if (start < -EPS) return false; continue; }
+    const crossing = -start / delta;
+    if (delta > 0) lo = Math.max(lo, crossing); else hi = Math.min(hi, crossing);
+    if (lo > hi + EPS) return false;
+  }
+  const lengthSquared = dx * dx + dz * dz;
+  const nearest = lengthSquared ? Math.max(lo, Math.min(hi, -(a.x * dx + a.z * dz) / lengthSquared)) : lo;
+  return Math.hypot(a.x + nearest * dx, a.z + nearest * dz) <= FLAME_RULES.range + EPS;
+}
 function insideCone(duel, owner, actor) {
   const at = point(duel, owner), target = point(duel, actor);
   const dx = target.x - at.x, dz = target.z - at.z;
@@ -100,8 +121,9 @@ export function stepFlamethrowers(duel, dt, {damageCar = defaultDamage,
         const dx = thing.position.x - at.x, dz = thing.position.z - at.z;
         const angle = Math.atan2(Math.sin(Math.atan2(dx, dz) - heading),
           Math.cos(Math.atan2(dx, dz) - heading));
-        if (Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
-            Math.abs(angle) <= FLAME_RULES.halfConeRadians &&
+        if ((thing.segment ? flameHitsSegment(at, heading, thing.segment) :
+            Math.hypot(dx, dz) <= FLAME_RULES.range + (thing.radius || 0) &&
+            Math.abs(angle) <= FLAME_RULES.halfConeRadians) &&
             Math.abs((thing.position.y || 0) - at.y) < 3) {
           burst.worldJobHits.push(thing.id);
           reportWorldJobThingHit(duel, {...thing, damage: thing.kind === 'furnace-vent' ? 1 : undefined,

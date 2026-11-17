@@ -25,6 +25,7 @@ import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
 import {createYard} from './scablands-yard-look.js';
 import {barricadeShape,barricadeSurface} from './ash-men-look.js';
+import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
@@ -618,7 +619,7 @@ export function createScablandsScene(course,options={}){
   const barricades=[0,1].map(index=>{
     const rig=new THREE.Group();rig.name='Ash Men barricade';
     for(const burnt of [false,true]){
-      const geometry=barricadeShape({length:12,height:2,depth:1.4,seed:index+1,burnt});
+      const geometry=barricadeShape({length:BARRICADE_LENGTH,height:2,depth:1.4,seed:index+1,burnt});
       // The drawing's stakes extend beyond its box. Fit the standing drawing to the solid's depth.
       if(!burnt){geometry.computeBoundingBox();const box=geometry.boundingBox;
         geometry.translate(0,0,-(box.min.z+box.max.z)/2);geometry.scale(1,1,1.4/(box.max.z-box.min.z));}
