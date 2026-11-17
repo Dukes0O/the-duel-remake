@@ -4,6 +4,16 @@ export {vehicleGroundPoint, TIRE_CLEARANCE} from './vehicle-surface.js';
 
 const point=new THREE.Vector3(),inverse=new THREE.Matrix4(),local=new THREE.Matrix4();
 
+// Job movers with a floor carry a world height, including on and beneath decks.
+// Older job actors carry an offset above the course instead.
+export function placeWorldJobVehicle(vehicle, actor, course, hint = 0) {
+  const at = actor.position;
+  const near = course.nearest(at.x, at.z, hint);
+  const y = actor.hasFloorHeight && Number.isFinite(at.y)
+    ? at.y : course.groundAt(near.s, near.lateral).y + (at.y || 0);
+  vehicle.position.set(at.x, y, at.z);
+}
+
 // Measure intact wheel geometry once per instance. Imported source bounding
 // boxes can include rotated empty space below the actual tires. Translating the
 // entire car preserves the cabin/body/wheel relationship and damage coordinates.

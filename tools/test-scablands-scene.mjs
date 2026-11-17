@@ -17,6 +17,7 @@ import {animateScene,syncScene} from '../src/scene-systems.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {FURNACE_SKYLINE,FURNACE_LEAVING} from '../src/world/jobs/furnace-sightings.js';
 import {TIN_TOWN_CENTRE} from '../src/world/tin-town-shacks.js';
+import {placeWorldJobVehicle} from '../src/vehicle-grounding.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
 const loaded=[];
@@ -50,6 +51,22 @@ assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
+
+// The renderer's actual placement path uses the mover's floor once, on low land and a deck.
+{
+  const car = new THREE.Group(); scene.group.add(car);
+  const deck = LAND.place('girder-bridge');
+  const low = {x:911.2699526550076, z:628.4080807737456};
+  assert.ok(Math.abs(scablandsSurfaceHeightAt(low.x, low.z) + 2) < .01);
+  for (const spot of [low, deck]) {
+    const at = {...spot, y:scablandsSurfaceHeightAt(spot.x, spot.z)};
+    const actor = {position:at, hasFloorHeight:true};
+    placeWorldJobVehicle(car, actor, course);
+    assert.ok(Math.abs(car.getWorldPosition(new THREE.Vector3()).y - at.y) < .05,
+      'a job car stands at its own floor height');
+  }
+  scene.group.remove(car);
+}
 // SCABLANDS-LAND round 4, slice 2b: the solids are everything drawn that stands taller than a wheel (src/world/scablands-solids.js), built from the same
 // data that draws it; tools/test-scablands-solid.mjs reads the real models and drives at each kind. The old table's 18 boxes (a box for each place, the
 // wrecks, six clusters and two posts) are replaced; the places that draw nothing (the Dry Dam, the Ships and the Iron Line's station) have no solid now.
