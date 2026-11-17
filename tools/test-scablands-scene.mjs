@@ -693,8 +693,18 @@ syncScene(scene.group,{onFoot:true,fighter:{...townLampJob.steps[0].hearth.posit
     job:{stepIndex:0,steps:townLampJob.steps,stepState:{brandsUsed:1,brandSeconds:90}},actors:[]}}});
 assert.equal(townBrand.visible,true,'the scene shows the carried load');
 assert.equal(townBrand.getObjectByName('Brand flame').visible,true,'the carried brand burns');
+const townAsh=scene.group.getObjectByName('Town Ash Men');
+const townAshAt=townLampJob.steps[0].hearth.position;
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:townLampJob,
+  job:{stepIndex:0,steps:townLampJob.steps,stepState:{brandAsh:{men:{'town-ash-1-0':{
+    ash:{position:townAshAt,remaining:.5}}}}}},
+  actors:[{id:'town-ash-1-0',brandAsh:true,...townAshAt,yaw:0}]}}});
+assert.equal(townAsh.visible,true,'town foot opponents are connected to the scene');
+assert.equal(townAsh.getObjectByName('fighter-plates').count,12);
+assert.equal(townAsh.children[1].visible,true,'the scene shows the ash warning');
 syncScene(scene.group,{});
 assert.equal(townBrand.visible,false,'the brand leaves the scene outside job 2');
+assert.equal(townAsh.visible,false,'town opponents leave the scene outside job 2');
 scene.dispose();
 assert.equal(scene.group.children.length,0,'disposing the scene releases its presentation graph');
 // EVERBURN-WELL-ART: the game's model loader renames parts (a space becomes an underscore, a full stop is dropped).

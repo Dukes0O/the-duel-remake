@@ -12,6 +12,7 @@ import {createJobSolidGrid} from '../src/world/scablands-solids.js';
 import {createBrandLamps} from '../src/world/brand-lamps.js';
 import {createBrandAuntie} from '../src/world/brand-auntie.js';
 import {createCarriedBrand} from '../src/world/brand-carried.js';
+import {createBrandAshView} from '../src/world/brand-ash-view.js';
 import * as THREE from 'three';
 
 // Rule snapshots, never a walking driver.
@@ -444,3 +445,50 @@ brandView.dispose();
 assert.equal(disposedBrandParts, 4);
 assert.equal(brandView.group.children.length, 0);
 console.log('PASS Light the Town: carried brand, flame, ground light, burnout and cleanup.');
+
+// Job 2.4: opponents outside the rocket zones are drawn at the ordinary foot
+// mover's positions. The warning follows the rule's second, including pauses.
+const ashViewDrawing = createBrandAshView();
+const drawingActor = {id: 'town-ash-1-0', brandAsh: true, x: 10, y: 3, z: 20, yaw: 0};
+const drawingWorld = {actors: [drawingActor, {...drawingActor, id: 'other', brandAsh: false}],
+  job: {...actualJob, stepState: {brandAsh: {men: {[drawingActor.id]: {
+    ash: {position: {x: 18, y: 4, z: 20}, remaining: 1},
+  }}}}}};
+const drawingBefore = JSON.stringify(drawingWorld);
+ashViewDrawing.update(drawingWorld);
+assert.equal(ashViewDrawing.group.visible, true);
+assert.equal(ashViewDrawing.figures.group.visible, true);
+assert.equal(ashViewDrawing.figures.meshes.plates.count, 12, 'Only the town opponent is drawn.');
+const ashMatrix = new THREE.Matrix4();
+ashViewDrawing.figures.meshes.plates.getMatrixAt(0, ashMatrix);
+assert(Math.abs(ashMatrix.elements[12] - drawingActor.x) < 1e-6);
+assert(Math.abs(ashMatrix.elements[13] - (drawingActor.y + 1.12)) < 1e-6);
+const warningDrawing = ashViewDrawing.group.children[1];
+const [ashBall, ashMark] = warningDrawing.children;
+assert.equal(warningDrawing.visible, true);
+assert.deepEqual(ashBall.position.toArray(), [10, 3 + BRAND_RULE.ashReleaseHeight, 20]);
+assert.deepEqual(ashMark.position.toArray(), [18, 4 + BRAND_RULE.ashMarkLift, 20]);
+assert.equal(ashMark.geometry.parameters.outerRadius, BRAND_RULE.ashRadius);
+ashViewDrawing.update(drawingWorld);
+assert.deepEqual(ashBall.position.toArray(), [10, 3 + BRAND_RULE.ashReleaseHeight, 20], 'A pause holds the throw.');
+assert.equal(JSON.stringify(drawingWorld), drawingBefore, 'Drawing cannot change ash or fighters.');
+const drawingThrow = drawingWorld.job.stepState.brandAsh.men[drawingActor.id];
+drawingThrow.ash.remaining = .5;
+ashViewDrawing.update(drawingWorld);
+assert.equal(ashBall.position.x, 14);
+assert.equal(ashBall.position.y, (3 + BRAND_RULE.ashReleaseHeight + 4) / 2 + BRAND_RULE.ashArcHeight);
+drawingThrow.ash = null;
+ashViewDrawing.update(drawingWorld);
+assert.equal(warningDrawing.visible, false);
+drawingWorld.actors = [];
+ashViewDrawing.update(drawingWorld);
+assert.equal(ashViewDrawing.figures.group.visible, false, 'Fled opponents leave no figure.');
+ashViewDrawing.update(null);
+assert.equal(ashViewDrawing.group.visible, false);
+let disposedAshParts = 0;
+for (const part of [ashBall.geometry, ashBall.material, ashMark.geometry, ashMark.material])
+  part.addEventListener('dispose', () => disposedAshParts++);
+ashViewDrawing.dispose();
+assert.equal(disposedAshParts, 4);
+assert.equal(ashViewDrawing.group.children.length, 0);
+console.log('PASS Light the Town: visible foot opponents, timed ash arc, landing warning and cleanup.');
