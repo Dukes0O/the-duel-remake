@@ -24,17 +24,6 @@ tasks:
     flag: "the-dig"
     details: "docs/board/cards/DIG-YARD-TOY.md"
 
-  - id: EARNED-CARS-ANYWHERE
-    title: "A car earned with medals races anywhere; only the McMurtry is still flown (Kyle, 17 November)"
-    owner: "codex"
-    lane: "SIM"
-    size: "S"
-    status: "building"
-    claimed_by: "Codex, lane earned-cars-anywhere, since 17 November 2026"
-    needs: []
-    locks: []
-    details: "docs/board/cards/EARNED-CARS-ANYWHERE.md"
-
   - id: LESSONS-V2-FINISH
     title: "Claude drives the second-version lessons; pictures to Kyle"
     owner: "claude"

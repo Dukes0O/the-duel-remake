@@ -11,7 +11,7 @@ import {HELI_CUES} from '../src/heli/heli-audio.js';
 import {heliOf, carAt} from '../src/heli/heli-save.js';
 import {heliCameraPose, HELI_CAMERA_VIEWS} from '../src/heli/heli-camera.js';
 import {screenMarkup} from '../src/screen-menu.js';
-import {COURSE} from '../src/config.js';
+import {CARS, COURSE} from '../src/config.js';
 
 let checks = 0;
 const ok = (value, label) => { assert.ok(value, label); checks++; };
@@ -171,17 +171,19 @@ try {
   {
     const {airOnlyNote} = await import('../src/heli/heli-jobs.js');
     const app = makeApp(true);
-    app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])],
+    app.profile = {...app.profile, credits: 1_000_000, unlockedCars: [...new Set([...app.profile.unlockedCars, 'mcmurtry_speirling'])],
       courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
       heli: {version: 1, carsAt: {}}};
     app._saveProfile();
     const stage = id => COURSE.findIndex(item => item.id === id);
-    const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'ferrari_enzo', courseId: 'panorama-ridge', carName: 'Ferrari Enzo'});
-    const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'ferrari_enzo'});
+    const note = airOnlyNote({enabled: true, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'panorama-ridge', carName: 'McMurtry Sp\u00e9irling'});
+    const started = app.startCampaign({startStage: stage('panorama-ridge'), car: 'mcmurtry_speirling'});
     ok(!started && app.courseAccessMessage === note, 'the menu note and the refusal say the same thing');
-    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'ferrari_enzo', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
+    ok(note === `The ${CARS.mcmurtry_speirling.name} travels only by air. Fly it here from the helipad first.`, 'the refusal explains how to bring the car');
+    ok(app.duel.state.status === 'menu', 'a refused start stays on the menu');
+    ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'tremblant-woods'}) === null, 'no note where the car is');
     ok(airOnlyNote({enabled: true, profile: app.profile, carId: 'falcone_f42', courseId: 'panorama-ridge'}) === null, 'no note for other cars');
-    ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'ferrari_enzo', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
+    ok(airOnlyNote({enabled: false, profile: app.profile, carId: 'mcmurtry_speirling', courseId: 'panorama-ridge'}) === null, 'no note with the switch off');
   }
 
   // The menu line under START: the note replaces it, and when the note goes
@@ -189,7 +191,7 @@ try {
   {
     const {createRendererReadiness} = await import('../src/screen-readiness.js');
     const app = makeApp(true);
-    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'ferrari_enzo'])],
+    app.profile = {...app.profile, unlockedCars: [...new Set([...app.profile.unlockedCars, 'mcmurtry_speirling'])],
       courses: {...app.profile.courses, unlocked: [...new Set([...(app.profile.courses?.unlocked || []), 'tremblant-woods', 'panorama-ridge'])]},
       heli: {version: 1, carsAt: {}}};
     app._saveProfile();
@@ -198,8 +200,8 @@ try {
     const ui = {view3d: {dataset: {}, classList: {add() {}}}, 'renderer-loading': {hidden: false, lastChild: {textContent: ''}},
       'renderer-error': {hidden: true, querySelector: () => ({textContent: ''})},
       'start-engine': {disabled: false, parentElement: {querySelector: () => line}}};
-    const choices = {car: 'ferrari_enzo', startStage: stage('panorama-ridge')};
-    app.menuCar = 'ferrari_enzo';
+    const choices = {car: 'mcmurtry_speirling', startStage: stage('panorama-ridge')};
+    app.menuCar = 'mcmurtry_speirling';
     const ready = createRendererReadiness({app, ui, choices, profile: () => app.profile, isDisposed: () => false,
       importRenderer: async () => ({attachRenderer: () => ({prepareVehicle(key) { ui.view3d.dataset.vehicleKey = key; ui.view3d.dataset.vehicleAsset = 'ready'; }, dispose() {}})})});
     await ready.ensureRenderer();

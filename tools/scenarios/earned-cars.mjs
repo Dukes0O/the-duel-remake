@@ -2,20 +2,20 @@
 // section 5): the medal sheet in the garage and the new-medal line on the
 // results screen, at 1280 x 720. Saves are memory-only. Run:
 //   node tools/browser-harness.mjs scenario earned-cars
-const entry = '/tools/menu-check.html?flags=earned-cars,grand-prix-career';
+const entry = '/tools/menu-check.html?flags=earned-cars,grand-prix-career,helicopter';
 const NEW_MEDAL = 'NEW MEDAL · GOLD · FALCONE F42 · DUEL · HARD · +375 CR';
 
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   await context.navigate(entry);
-  await context.waitFor(`document.readyState==='complete' && !!window.__qaApp &&
+  await context.waitFor(`(() => document.readyState==='complete' && !!window.__qaApp &&
     document.querySelector('#view3d')?.dataset.vehicleAsset==='ready' && !document.querySelector('#start-engine')?.disabled &&
-    !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value`, 'memory-only menu ready', 90_000);
+    !!Object.getOwnPropertyDescriptor(window, 'localStorage')?.value)()`, 'memory-only menu ready', 90_000);
   // A player with a few medals already on the starter's sheet.
   await context.evaluate(`(() => { const app = window.__qaApp; app.audio.setMuted?.(true);
     app.profile = {...app.profile, medals: {version: 1, cars: {falcone_f42: {duel: [3, 1, 0], grandprix: [1, 0, 0]}}}};
     app._saveProfile(); document.querySelector('[data-action="garage"]').click(); })()`);
-  await context.waitFor(`!!document.querySelector('.garage-panel .medal-panel')`, 'garage medal sheet', 20_000);
+  await context.waitFor(`(() => !!document.querySelector('.garage-panel .medal-panel'))()`, 'garage medal sheet', 20_000);
   const garage = await context.evaluate(`(() => { const panel = document.querySelector('.garage-panel'), sheet = panel.querySelector('.medal-panel');
     sheet.scrollIntoView({block: 'center'}); const a = panel.getBoundingClientRect(), b = sheet.getBoundingClientRect();
     return {text: sheet.textContent, inside: b.left >= a.left - 1 && b.right <= a.right + 1, wide: sheet.scrollWidth <= sheet.clientWidth + 1}; })()`);
@@ -24,7 +24,7 @@ export async function run(context) {
   if (!garage.inside || !garage.wide) throw Error('The medal sheet spills outside the garage panel.');
   await new Promise(resolve => setTimeout(resolve, 400));
   await context.screenshot('earned-garage-sheet');
-  await context.evaluate(`document.querySelector('[data-action="garage-close"]').click()`);
+  await context.evaluate(`(() => document.querySelector('[data-action="garage-close"]').click())()`);
   // A Hard Rival Duel win fills the empty gold box.
   const result = await context.evaluate(`(() => { const app = window.__qaApp;
     if (!app.startCampaign({startStage: 0, mode: 'duel', car: 'falcone_f42', cpuDifficulty: 'hard', seed: 1989})) throw Error('The race did not start');
@@ -43,4 +43,21 @@ export async function run(context) {
   if (JSON.stringify(result.saved) !== JSON.stringify([3, 1, 1])) throw Error(`Saved sheet: ${JSON.stringify(result.saved)}`);
   await new Promise(resolve => setTimeout(resolve, 400));
   await context.screenshot('earned-results-medal');
+  const access = await context.evaluate(`(() => { const app = window.__qaApp;
+    app.returnToMenu();
+    app.profile = {...app.profile, unlockedCars: [...app.profile.unlockedCars, 'ferrari_enzo', 'mcmurtry_speirling'],
+      heli: {version: 1, carsAt: {ferrari_enzo: 'tremblant-woods', mcmurtry_speirling: 'tremblant-woods'}}};
+    // Saved to the page's memory-only store, so that the game's own refresh of the player keeps it.
+    if (!app._saveProfile()) throw Error('Could not save the memory-only profile');
+    const starts = {};
+    for (const mode of ['duel', 'timetrial', 'grandprix', 'wasteland']) {
+      starts[mode] = app.startCampaign({startStage: 0, mode, car: 'ferrari_enzo', seed: 1989});
+      if (starts[mode]) app.returnToMenu();
+    }
+    const refused = app._airOnlyRefused('mcmurtry_speirling', 'pacific-canyon');
+    return {starts, refused, message: app.courseAccessMessage, location: app.profile.heli?.carsAt?.ferrari_enzo}; })()`);
+  if (Object.values(access.starts).some(started => !started)) throw Error(`Earned car race starts: ${JSON.stringify(access.starts)}`);
+  if (!access.refused || access.message !== 'The McMurtry Spéirling travels only by air. Fly it here from the helipad first.')
+    throw Error(`McMurtry refusal: ${JSON.stringify(access)}`);
+  if (access.location !== 'tremblant-woods') throw Error('The saved car location changed.');
 }

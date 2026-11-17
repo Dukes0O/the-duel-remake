@@ -156,11 +156,16 @@ test('native App cup admission and saved continuation do not bypass car transpor
       assert.equal(app.startCup('mountain').ok,true,'the Jesko enters the owned Mountain Cup away from its saved position');
       assert.equal(app.profile.cups.active.car,'koenigsegg_jesko');
       assert.equal(app.abandonCup().ok,true);
-      app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'ferrari_enzo']};app._saveProfile();
+      app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'ferrari_enzo'],heli:{...app.profile.heli,carsAt:{...app.profile.heli.carsAt,ferrari_enzo:'panorama-ridge'}}};app._saveProfile();
       app.setRaceSettings({car:'ferrari_enzo'});
-      const refusal=app.startCup('night');assert.equal(refusal.ok,false);
+      assert.equal(app.startCup('mountain').ok,true,'the Enzo enters the owned Mountain Cup away from its saved position');
+      assert.equal(app.profile.cups.active.car,'ferrari_enzo');
+      assert.equal(app.abandonCup().ok,true);
+      app.profile={...app.profile,unlockedCars:[...app.profile.unlockedCars,'mcmurtry_speirling'],heli:{...app.profile.heli,carsAt:{...app.profile.heli.carsAt,mcmurtry_speirling:'panorama-ridge'}}};app._saveProfile();
+      app.setRaceSettings({car:'mcmurtry_speirling'});
+      const refusal=app.startCup('mountain');assert.equal(refusal.ok,false);
       assert.match(refusal.reason,/travels only by air/);
-      assert.equal(app.profile.cups.active,null,'unlocking a medal car cannot place it at Harbour');
+      assert.equal(app.profile.cups.active,null,'the McMurtry cannot start the cup away from its saved location');
     });
   }finally{COURSE.splice(0,COURSE.length,...before);}
 });

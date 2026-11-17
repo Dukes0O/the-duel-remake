@@ -27,12 +27,9 @@ cards are in section 9; Kyle's answers are in section 10.
   difficulty, but not the mode, so an old Grand Prix win cannot be told from
   a Duel win. The Grand Prix podium set (P4-CAREER) counts only from the day
   it shipped for the same reason.
-- **Medal cars travel only by air** (`docs/HELICOPTER.md` section 5).
-  `AIR_ONLY_CARS` in `src/heli/heli-jobs.js` holds medal cars and the restored
-  Sirena. With the helicopter on, they race only where last set down. Medal
-  cars start at Tremblant Woods; the Sirena starts at Pacific Canyon.
-  Kyle, 25 October 2026: the Jesko races everywhere again, in every mode.
-  Kestrel One lifts at most 1,500 kg.
+- **Medal cars race anywhere** as soon as they are earned, in every mode.
+  The McMurtry Speirling and the Falcone Sirena and Vasca still travel only
+  by air. Kestrel One lifts at most 1,500 kg.
 - **A Grand Prix in a car outside the road class** (the Jesko, the Titan)
   fills the field with copies of the player's own car (`chooseCars` in
   `src/race-field.js`), so an earned car's model is drawn eight times.
@@ -41,8 +38,8 @@ cards are in section 9; Kyle's answers are in section 10.
 
 - T-013: "Earned cars: medal sheets (wins, difficulty levels, Duel and Grand
   Prix)". Builds on how the Koenigsegg unlocks. Touches saves.
-- 25 October: the Jesko leaves the air-only list. Medal cars and the restored
-  Sirena keep the fly-it-there rule. This replaces the 14 October Jesko rule.
+- 17 November: medal cars race anywhere. The McMurtry Speirling and the two
+  Falcone cars keep the fly-it-there rule. The Jesko also races anywhere.
 - Keep it small and fun for a parent and a child taking turns on one
   keyboard. Existing saves never lose a car or credits.
 - 14 October, on this packet: the three cars are confirmed (Ferrari Enzo,
@@ -151,11 +148,8 @@ keyboard work as today: pick your player, then race.
 - **Arrives fully tuned,** like the Jesko (`factoryMaxed: true`). There is
   nothing to upgrade, so no credits are ever spent on it, and a save rolled
   back one release loses nothing that cannot come back (section 6.4).
-- **Travels only by air.** Every earned car joins `AIR_ONLY_CARS`. With the
-  `helicopter` switch on it waits at Tremblant Woods and races only where
-  Kestrel One last set it down. So every earned car weighs **1,500 kg or
-  less** (its real weight, if lighter). That rules out heavy cars such as the
-  Bugatti Chiron (about 2,000 kg) until a bigger lift exists.
+- **Races anywhere.** Each medal car can race on any course as soon as it is
+  earned. A car flown by Kestrel One must weigh **1,500 kg or less**.
 - **Real name, original model.** Like the Jesko: the real car's name, an
   original model built in code from the maker's public pictures, used as a
   viewing reference only. No downloaded model, texture, badge or logo.
@@ -198,8 +192,7 @@ keyboard work as today: pick your player, then race.
 - **Locked earned car page:** the unlock card says "EARNED, NOT BOUGHT", the
   car's line, "Win medals with any of your cars", a progress bar of medals
   (and gold for car 3), and "Unlocks the moment you reach it. No credits."
-  With the `helicopter` switch on it adds "Kestrel One brings it to
-  Tremblant Woods."
+  It adds "Race it on any course as soon as you earn it."
 - **Owned earned car:** the Jesko's fully tuned note, worded "MEDAL REWARD ·
   arrives fully tuned. No upgrades needed."
 - The Jesko's own card and progress stay exactly as today.
@@ -213,9 +206,8 @@ keyboard work as today: pick your player, then race.
 - **New car earned** (Claude, 28 October 2026, replacing the two small
   lines): its own card under the medal line. "NEW CAR EARNED", the car's name
   large (the size of the race time), and a line under it: "Earned with 6
-  medals. Kestrel One will bring it to Tremblant Woods." with the helicopter
-  on, "Earned with 6 medals. In your garage now." with it off (the Bolide
-  reads "24 medals, 6 of them gold"). The headline takes the Grand Prix size
+  medals. It is in your garage and ready to race anywhere." The Bolide reads
+  "24 medals, 6 of them gold". The headline takes the Grand Prix size
   so the Unlock button stays on screen at 1280 x 720.
 - **Sound:** the existing `interface.bonus` cue, once per results screen,
   when the medal line or the car card shows. No new sound.
@@ -353,8 +345,8 @@ car goes into the game.
 2. **EARN-SCREEN** (Codex, UI, M; locks `busy-game-files`; needs
    EARN-MEDALS). The switch passed into settlement, the garage panel, list
    labels and locked page, the results lines and cue, the menu, hiding
-   earned cars with the switch off, and `AIR_ONLY_CARS` covering every
-   earned car.
+   earned cars with the switch off, and `AIR_ONLY_CARS` excluding every
+   medal car.
 3. **EARN-CAR-1, EARN-CAR-2, EARN-CAR-3** (Codex, ART, M each; lock
    `sound-bank` for the engine voice; need EARN-SCREEN). One car each: the
    model, its stats, its config entry with its medal rule, its engine voice

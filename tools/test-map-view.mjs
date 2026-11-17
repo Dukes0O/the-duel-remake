@@ -156,9 +156,10 @@ try {
   equal(burnt.places.find(place => place.id === 'panorama-ridge').state, 'burnt', 'a burnt course is black');
   const found = mapModel({view: {...app.heliView(), secrets: {...app.heliView().secrets, found: ['panorama-ridge-night']}}, profile: profile()});
   equal(found.found[0].place, 'panorama-ridge', 'a found secret is pinned by its course');
-  const withCar = mapModel({view: app.heliView(), profile: {...profile(), unlockedCars: [...profile().unlockedCars, 'koenigsegg_jesko', 'ferrari_enzo'],
-    heli: {...profile().heli, carsAt: {koenigsegg_jesko: 'panorama-ridge', ferrari_enzo: 'panorama-ridge'}}}});
-  ok(withCar.places.find(place => place.id === 'panorama-ridge').cars.some(car => car.id === 'ferrari_enzo'), 'a medal car shows where it stands');
+  const withCar = mapModel({view: app.heliView(), profile: {...profile(), unlockedCars: [...profile().unlockedCars, 'koenigsegg_jesko', 'ferrari_enzo', 'mcmurtry_speirling'],
+    heli: {...profile().heli, carsAt: {koenigsegg_jesko: 'panorama-ridge', ferrari_enzo: 'panorama-ridge', mcmurtry_speirling: 'panorama-ridge'}}}});
+  ok(!withCar.places.some(place => place.cars.some(car => car.id === 'ferrari_enzo')), 'a medal car has no air-only marker');
+  ok(withCar.places.find(place => place.id === 'panorama-ridge').cars.some(car => car.id === 'mcmurtry_speirling'), 'the McMurtry still shows where it stands');
   ok(!withCar.places.some(place => place.cars.some(car => car.id === 'koenigsegg_jesko')), 'the Jesko has no air-only marker even with a saved position');
   ok(!model.places.some(place => place.cars.length), 'and none without owning one');
   // Today's jobs.
