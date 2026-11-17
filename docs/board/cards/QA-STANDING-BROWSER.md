@@ -50,6 +50,33 @@ known", so the first night reports each as failing in a new way until its real m
 
 Each scenario run alone after its cure; the lane tier only for game files that changed.
 
+## Done on 16 November 2026 (a Sonnet helper, two rounds; Claude reran two of them beside other work)
+
+None of the five faults was in the game.
+
+| Item | What it was | What was done |
+| --- | --- | --- |
+| `arena-shove` | the check read a value that is missing once the old baseline is retired | a guard; passes (202 pictures). Card QA-ARENA-SHOVE-BASELINE closed |
+| `drive-lesson-run` | the check expected a click on the corner that is already selected to change the course | that corner must stay checked, every other must move the course. Card QA-DRIVE-LESSON-RUN-BOARD closed |
+| `ski-finish` | each helicopter leg ran 44 to 47 s inside one browser call (60 s limit): a step reads the ground at 85 points and a flight is up to 108,000 steps | each leg is flown in pieces of 6,000 steps; passes beside other work. Card QA-SKI-FINISH-TIMEOUT closed |
+| `p4-audio` | not updated since earned cars were released on 3 November (the medal and the earned car differ from the unpaid replay) | both fields allowed; a failure now names the fields. Its 128-frame gap did not recur alone and stays on the standing list (QA-P4-AUDIO-FRAME-GAP) |
+| `arsenal-wave1-audio` | passes alone; plays real-time sound and fails when the laptop is busy (rule 3) | nothing changed (QA-WAVE1-AUDIO-FLIGHT) |
+| `frame-pacing` | read the frame stage's result from the wrong file path | the path, and the fixture in `tools/test-full-check.mjs`, corrected |
+
+## Left on this card
+
+- **`deep-frames`** throws unless it has a visible window, and the nightly browser step has none and runs four browsers at
+  once. Claude's ruling: it leaves that step and runs in the frame stage. That needs the frame stage's own list of three
+  names (`tools/full-check.mjs`, three places) and a check of the deep-frames result, so it is a small job of its own.
+- **The frame stage** read High 34.3 and 35.1 ms and Performance 18.2 and 35.3 ms on two nights. Readings near 33 to 35 ms
+  are two refreshes of the screen: the known sign that the laptop was not set to one screen (rule 8), not a slow game.
+  To rule: whether the stage should say "not valid: more than one screen" and not count as a failure on such a night.
+- The nightly check leaves a failure that names a timeout off the standing list on purpose (a timeout usually means a busy
+  laptop); `tools/test-full-check.mjs` pins that. Unchanged.
+
 ## Claude answers
 
-(none yet)
+Changed assertions reviewed 16 November 2026, nothing loosened: `drive-lesson-run` (the already selected corner must stay
+checked; every other choice still must move the course), `p4-audio` (two result fields join the ones the unpaid replay
+cannot write; every other field still must match), `ski-finish` (the thin-air radio line is read right after the piece of
+flight that said it), `test-full-check` (the fixture's file path, to match where the frame stage writes).

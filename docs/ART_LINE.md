@@ -286,6 +286,19 @@ the game.
   A sign is its own `slab`.
 - `metallicFactor` at most 0.3, since nothing is there to reflect.
 
+### Ground that a machine has changed
+
+- **Dug ground that reads as paper** (pale patches with hard straight edges) was three grounds drawn in one place: the
+  yard floor, the coarse near ground and the fine edited chunks, and only the chunks know what was heaped or cut. Where
+  either of the other two stood above them the player saw the wrong one. Measure it in the running game with a ray
+  straight down over every changed cell and name the mesh it meets first; cure it by keeping the other grounds below the
+  edited ground inside every edited chunk. (The Dig, 16 November 2026.)
+- **Every heap was drawn as a tunnel's spoil**, grey broken rock, because the drawing of made ground was written for
+  Mabel. A heap of topsoil or clay is the ground's own earth turned over, darker and duller. The chunk carries which
+  it is (`aSoil` in `src/world/ground-view.js`). (16 November 2026.)
+- **Tell colour from light before changing a colour.** Switch the sun off in the running game: what stays pale is colour,
+  what goes dark was only lit. A heap's body turned out to be light and its pale ring colour. (16 November 2026.)
+
 ### Moments (a thing that happens, not a thing that stands)
 
 - **A drawn moment that no player sees.** Hot Delivery's hand-over and the

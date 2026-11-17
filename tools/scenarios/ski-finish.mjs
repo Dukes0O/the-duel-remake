@@ -35,7 +35,27 @@ export function keyboardDriver(zone, {practice = false, explore = false, rotatio
 }
 
 const sleep = ms => new Promise(done=>setTimeout(done,ms));
+// A flight is made of the helicopter's own steps, and one browser call may take 60 s at most, so no call flies more than
+// FLIGHT_STEPS of them; the scenario calls again until the flight is finished and says so if it never is.
+const FLIGHT_STEPS = 6000, FLIGHT_PIECES = 40;
 export async function run(context) {
+  // The thin-air radio line stays on the screen for a few seconds, and the screen is only drawn between pieces, so look
+  // for its text soon after the piece in which the helicopter said it (the group flight below).
+  const THIN_AIR_TEXT = 'Lighten up: burn fuel or leave some behind.';
+  let thinAirOnScreen = false;
+  const lookForThinAir = async () => {
+    if (thinAirOnScreen || !await context.evaluate(`window.__finishRadio?.some(row=>row.event.line==='ski.radio.thin-air')`)) return;
+    await sleep(400);
+    thinAirOnScreen = await context.evaluate(`document.body.innerText.includes(${JSON.stringify(THIN_AIR_TEXT)})`);
+  };
+  const fly = async (call, what, look) => {
+    for (let piece = 0; piece < FLIGHT_PIECES; piece++) {
+      const done = await context.evaluate(`!!window.__skiQa.${call.replace('LIMIT', FLIGHT_STEPS)}`);
+      if (look) await look();
+      if (done) return;
+    }
+    throw Error(`${what} was not finished after ${FLIGHT_PIECES} pieces of ${FLIGHT_STEPS} helicopter steps`);
+  };
   const difficulty = process.env.DUEL_SKI_FINISH_DIFFICULTY === 'pro' ? 'pro' : 'casual';
   const photo = process.env.DUEL_SKI_FINISH_PHOTO === '1';
   const detail = process.env.DUEL_SKI_FINISH_DETAIL === '1' || photo;
@@ -55,7 +75,9 @@ export async function run(context) {
       heli:{version:1,fuelKg:400,lessons:{liftoff:true,hover:true,landing:true,carry:true},refuels:3}};a._saveProfile();
     a.setRaceSettings({difficulty:${JSON.stringify(difficulty)}});if(!a.visitHeli())throw Error('no visit');${helper(skiZone('slalom').line,skiZone('slalom').pickup,SKI_PADS,GUIDE)};})()`);
   await context.waitFor(`window.__qaApp.duel.state.status==='heli'&&window.__qaApp.visualReady`,'home',120000);
-  await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();const paint=()=>{a.onFrame?.(a.duel.state);window.__finishPaint=requestAnimationFrame(paint);};paint();if(!a.heliSession.takeSkiDrop().ok)throw Error('no drop');window.__skiQa.toSummit();window.__skiQa.toPad('devils');})()`);
+  await context.evaluate(`(()=>{const a=window.__qaApp;a.stop();const paint=()=>{a.onFrame?.(a.duel.state);window.__finishPaint=requestAnimationFrame(paint);};paint();if(!a.heliSession.takeSkiDrop().ok)throw Error('no drop');})()`);
+  await fly('toSummit(LIMIT)', 'The climb to the summit');
+  await fly(`toPad('devils',LIMIT)`, 'The flight to Devils Playground');
   await context.waitFor(`window.__qaApp.visualReady`,'Summit drawn',300000);
   report.drop = await context.evaluate(`window.__qaApp.heliSession.view().ski`);
   for (const id of difficulty === 'pro' ? ['slalom'] : photo?['aerials']:detail?['moguls','aerials','powder']:['slalom','gs','moguls','aerials','powder']) {
@@ -65,8 +87,9 @@ export async function run(context) {
       const rotation = attempt==='spin'?360:attempt==='tumble'?180:0;
       // SKI-FINISH: every run ends at the pickup pad's pump; fill up there before the next flight, as a pilot does.
       await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession;if(s.phase==='skiing')s.leaveSkiRun();
-        if(s.view().ski?.pump?.atPump)s.buyFuel();
-        window.__skiQa.toPad(${JSON.stringify(zone.pad)});const r=s.skiStepOut(${JSON.stringify(id)});if(!r.ok)throw Error(JSON.stringify(r));if(s.view().ski.run.difficulty!==${JSON.stringify(difficulty)})throw Error('Ski difficulty did not reach the live session');
+        if(s.view().ski?.pump?.atPump)s.buyFuel();})()`);
+      await fly(`toPad(${JSON.stringify(zone.pad)},LIMIT)`, 'The flight to the ' + id + ' pad');
+      await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession;const r=s.skiStepOut(${JSON.stringify(id)});if(!r.ok)throw Error(JSON.stringify(r));if(s.view().ski.run.difficulty!==${JSON.stringify(difficulty)})throw Error('Ski difficulty did not reach the live session');
         window.__finishDrive=(${keyboardDriver.toString()})(${JSON.stringify(zone)},{practice:${practice},explore:${id==='powder'},rotation:${rotation},closeYeti:${detail},straight:${attempt==='straight'}});
         window.__finishEvents=[];window.__finishAir=false;window.__finishLastKeys={};window.__finishRecovery=[];
         const original=s.step.bind(s);window.__finishOriginal=original;
@@ -109,13 +132,16 @@ export async function run(context) {
     if(!offered)continue;
     report.group=await context.evaluate(`(()=>{const a=window.__qaApp,s=a.heliSession,events=a._heliEvents.bind(a);window.__finishRadio=[];
       a._heliEvents=es=>{for(const e of es)if(e.type==='radio')window.__finishRadio.push({event:e,heli:s.view().heli});events(es);};
-      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));window.__skiQa.toSummit();
-      // SKI-FINISH: the leg ends beside Devils Playground; fill up at the pickup pump before the summit climb, as a pilot does.
-      window.__skiQa.toPad('pickup');if(!s.buyFuel().ok)throw Error('no fuel at the pickup pump');window.__skiQa.toPad('summit');
-      return {taken,view:s.view(),radio:window.__finishRadio};})()`);
+      const taken=s.takeSkiGroup();if(!taken.ok)throw Error(JSON.stringify(taken));return {taken};})()`);
+    await fly('toSummit(LIMIT)', 'The climb to the summit', lookForThinAir);
+    // The leg ends beside Devils Playground; fill up at the pickup pump before the summit climb, as a pilot does.
+    await fly(`toPad('pickup',LIMIT)`, 'The flight to the pickup pad', lookForThinAir);
+    await context.evaluate(`(()=>{if(!window.__qaApp.heliSession.buyFuel().ok)throw Error('no fuel at the pickup pump');})()`);
+    await fly(`toPad('summit',LIMIT)`, 'The flight to the summit pad', lookForThinAir);
+    Object.assign(report.group,await context.evaluate(`(()=>{const s=window.__qaApp.heliSession;return {view:s.view(),radio:window.__finishRadio};})()`));
     await context.waitFor(`window.__qaApp.visualReady`,'group summit drawn',300000);
     await sleep(500);report.group.screen=await context.evaluate(`document.body.innerText`);
-    if (!report.group.radio.some(row => row.event.line === 'ski.radio.thin-air') || !report.group.screen.includes('Lighten up: burn fuel or leave some behind.')) throw Error('Thin-air event must reach the visible radio text');
+    if (!report.group.radio.some(row => row.event.line === 'ski.radio.thin-air') || !(thinAirOnScreen || report.group.screen.includes(THIN_AIR_TEXT))) throw Error('Thin-air event must reach the visible radio text');
     await context.screenshot('group-summit');await save();break;
   }
 }

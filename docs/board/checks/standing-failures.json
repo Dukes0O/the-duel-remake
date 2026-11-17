@@ -8,13 +8,6 @@
   },
   {
     "stage": "browser",
-    "name": "arena-shove",
-    "since": "2026-11-05",
-    "card": "QA-ARENA-SHOVE-BASELINE",
-    "cause": "Cannot read properties of undefined (reading 'commit')"
-  },
-  {
-    "stage": "browser",
     "name": "deep-frames",
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
@@ -22,30 +15,16 @@
   },
   {
     "stage": "browser",
-    "name": "drive-lesson-run",
-    "since": "2026-11-05",
-    "card": "QA-DRIVE-LESSON-RUN-BOARD",
-    "cause": "Unowned corner choice did not respond: panorama-ridge"
-  },
-  {
-    "stage": "browser",
     "name": "frame-pacing",
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
-    "cause": "Night frame reuse requires the same owned evidence leaf."
+    "cause": "The original simple frame stage failed; no second measurement is allowed."
   },
   {
     "stage": "browser",
     "name": "p4-audio",
     "since": "2026-11-05",
-    "card": "QA-STANDING-BROWSER",
-    "cause": "not yet known"
-  },
-  {
-    "stage": "browser",
-    "name": "ski-finish",
-    "since": "2026-11-05",
-    "card": "QA-SKI-FINISH-TIMEOUT",
-    "cause": "not yet known"
+    "card": "QA-P4-AUDIO-FRAME-GAP",
+    "cause": "Browser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#} Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#}\n    at demand (<anonymous>:#:#)\n    at close (<anonymous>:#:#)"
   }
 ]

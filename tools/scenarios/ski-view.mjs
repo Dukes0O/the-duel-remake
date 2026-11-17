@@ -21,21 +21,22 @@ export const HELPERS = (line, pickup, pads, guide) => `(window.__skiQa={
   pilot(view,target,{speed=12,sink=4}={}){const h=view.heli,fx=Math.sin(h.heading),fz=Math.cos(h.heading),rx=-fz,rz=fx;
     const dx=target.x-h.x,dz=target.z-h.z,d=Math.hypot(dx,dz),want=Math.min(speed,d*.4),wx=d>.01?dx/d*want:0,wz=d>.01?dz/d*want:0,ex=wx-h.vx,ez=wz-h.vz,c=v=>this.clamp(v,-1,1);
     return {pitch:c((ex*fx+ez*fz)*.25),roll:c((ex*rx+ez*rz)*.25),lift:c(Math.max(-sink,Math.min(sink,target.y-h.y))*.3-h.vy*.3),yaw:0};},
-  fly(seconds,controls,until){const s=window.__qaApp.heliSession;
-    for(let i=0;i<Math.round(seconds*120);i++){const events=s.step(controls(s.view()));window.__qaApp._heliEvents(events);
+  // limit: at most this many helicopter steps in one call; false means the flight is not finished, so call again.
+  fly(seconds,controls,until,limit=Infinity){const s=window.__qaApp.heliSession;
+    for(let i=0;i<Math.round(seconds*120);i++){if(i>=limit)return false;const events=s.step(controls(s.view()));window.__qaApp._heliEvents(events);
       if(events.some(e=>e.type==='crashed'))throw Error('crashed');if(until(s.view()))return true;}
     throw Error('the flight took too long');},
-  toSummit(){const s=window.__qaApp.heliSession;
-    this.fly(120,v=>this.pilot(v,{x:v.heli.x-300,z:v.heli.z+300,y:100},{speed:30,sink:8}),v=>v.cruiseOffered);
+  toSummit(limit=Infinity){const s=window.__qaApp.heliSession;
+    if(!this.fly(120,v=>this.pilot(v,{x:v.heli.x-300,z:v.heli.z+300,y:100},{speed:30,sink:8}),v=>v.cruiseOffered,limit))return false;
     if(!s.acceptCruise())throw Error('no cruise');
-    this.fly(10,()=>({lift:0}),v=>v.phase==='flying'&&v.courseId==='summit-run');},
-  toPad(name){const pad=${JSON.stringify(pads)}[name];
-    this.fly(900,v=>{const h=v.heli,d=Math.hypot(pad.x-h.x,pad.z-h.z)||1,ux=(pad.x-h.x)/d,uz=(pad.z-h.z)/d;let top=-Infinity;
+    return this.fly(10,()=>({lift:0}),v=>v.phase==='flying'&&v.courseId==='summit-run');},
+  toPad(name,limit=Infinity){const pad=${JSON.stringify(pads)}[name];
+    if(!this.fly(900,v=>{const h=v.heli,d=Math.hypot(pad.x-h.x,pad.z-h.z)||1,ux=(pad.x-h.x)/d,uz=(pad.z-h.z)/d;let top=-Infinity;
       for(let k=0;k<=16;k++)top=Math.max(top,this.highest(h.x+ux*k*25,h.z+uz*k*25));
       const y=d>150?Math.min(top+110,this.ground(h.x,h.z)+285):pad.y+40;
       if(h.y<y-12)return this.pilot(v,{x:h.x,z:h.z,y},{speed:1,sink:8});return this.pilot(v,{x:pad.x,z:pad.z,y},{speed:18,sink:8});},
-      v=>Math.hypot(v.heli.x-pad.x,v.heli.z-pad.z)<3&&Math.hypot(v.heli.vx,v.heli.vz)<.6);
-    this.fly(120,v=>this.pilot(v,{x:pad.x,z:pad.z,y:pad.y-2},{speed:2,sink:2.5}),v=>v.heli.onGround);},
+      v=>Math.hypot(v.heli.x-pad.x,v.heli.z-pad.z)<3&&Math.hypot(v.heli.vx,v.heli.vz)<.6,limit))return false;
+    return this.fly(120,v=>this.pilot(v,{x:pad.x,z:pad.z,y:pad.y-2},{speed:2,sink:2.5}),v=>v.heli.onGround,limit);},
   // The skier: steer for the planned line a little ahead, tuck where it runs straight, then skid to a stop in the pickup.
   skier(){const line=${JSON.stringify(line)},pickup=${JSON.stringify(pickup)},g=${JSON.stringify(guide)},cum=[0];
     for(let i=1;i<line.length;i++)cum.push(cum[i-1]+Math.hypot(line[i].x-line[i-1].x,line[i].z-line[i-1].z));
