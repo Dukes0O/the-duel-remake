@@ -237,7 +237,22 @@ export function digUnderlayHeight(x, z, ground, cell, base, lift = 0) {
 export function createDigNearGround(material, ground) {
   // A tunnel camera sees the underside of the land.
   material.side = THREE.DoubleSide;
-  return createNearGround({material, heightAt:(x,z)=>digUnderlayHeight(x,z,ground,2,(a,b)=>scablandsSurfaceHeightAt(a,b,ground),.025),
+  // Neighbouring corners share most of their one-metre samples. Keep those
+  // samples until an edit reaches them, including when the window moves.
+  const samples = new Map();
+  const sampledGround = {...ground, heightAt(x, z) {
+    const key = `${x},${z}`, previous = samples.get(key);
+    if (previous && (previous.revision === ground.revision ||
+        !ground.changedAlongSince(previous.revision, {x, z, heading:0}, 0))) {
+      previous.revision = ground.revision;
+      return previous.height;
+    }
+    const height = ground.heightAt(x, z);
+    if (samples.size >= 200000) samples.clear();
+    samples.set(key, {height, revision:ground.revision});
+    return height;
+  }};
+  return createNearGround({material, heightAt:(x,z)=>digUnderlayHeight(x,z,sampledGround,2,(a,b)=>scablandsSurfaceHeightAt(a,b,ground),.025),
     name:'Dig near ground', grid:{cellX:2,cellZ:2,cellsX:192,cellsZ:192,lift:.025}});
 }
 export function staticYard(scene,groundMaterial,ground){

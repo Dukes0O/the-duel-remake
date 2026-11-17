@@ -12,7 +12,7 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {RIVER_LAND} from '../src/world/scablands-regions.js';
 import {scablandsNaturalHeightAt,scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
 import {createBorerSounds} from '../src/machines/borer-sounds.js';
-import {createDigGroundLook, createDigNearGround, createMachineHeightCache, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
+import {createDigGroundLook, createDigNearGround, digUnderlayHeight, createMachineHeightCache, followBorerSlope, poseBorerSlope, updateBorerCamera, updateBorerSurvey} from '../src/machines/dig-game.js';
 import {loadMachineInput, onMachineInputChange, saveMachineInput} from '../src/input-setup.js';
 import * as THREE from 'three';
 
@@ -225,7 +225,7 @@ import * as THREE from 'three';
     for (const bounds of view.changedBounds) for (let j=0; j<position.count; j++) {
       const x=position.getX(j)+near.centreX, z=position.getZ(j)+near.centreZ;
       if (x>=bounds.minX && x<=bounds.maxX && z>=bounds.minZ && z<=bounds.maxZ)
-        assert.ok(Math.abs(position.getY(j) - (ground.heightAt(x,z)+.025)) < .02);
+        assert.ok(Math.abs(position.getY(j) - (digUnderlayHeight(x,z,ground,2,(a,b)=>ground.heightAt(a,b),.025)+.025)) < .02);
     }
   }
   assert.ok(borer.distanceM > 0.8, 'Mabel cuts during the 100 steps.');

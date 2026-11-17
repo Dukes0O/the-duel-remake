@@ -10,4 +10,6 @@
 - Removed: duplicated machine availability and panel control text; MACHINE-ROADS removes the temporary restriction.
 - The Dig scenario pictures each offered machine in its second view; page expressions parse. Claude must run it in a browser.
 - Ground layers now sit below edited chunks in the Dig; heap and cut ray checks pass. `test-ground-view` and `test-the-dig` pass on the current lane changes.
-- Real machine models pass the cab clearance ray check, including Mabel. Remaining checks and browser play are pending.
+- On b14365aad: real-model camera, Dig, switches, gear, ground, apprentice, borer-freeze, survey, roads and input checks pass; scenario strings parse.
+- Ground sample caching keeps the 100-step Mabel check under its existing limit: 4,196 of 6,000 samples.
+- Changed assertion for Claude: near-ground vertices now match the lowered underlay rather than ground height plus 0.025 m; the 0.02 m tolerance is unchanged.
