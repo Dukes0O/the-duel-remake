@@ -14,6 +14,12 @@ import {ESCORT_START_BEHIND_METRES, ESCORT_START_RIGHT_METRES} from '../src/worl
 import {BIG_MACHINE_BOXES, SCABLANDS_SOLIDS} from '../src/world/scablands-scene.js';
 import {scablandsRoadDistance} from '../src/world/scablands-ground.js';
 import {LAND} from '../src/world/scablands-names.js';
+import {yardPlan} from '../src/world/scablands-yard-look.js';
+import {createJobSolidGrid, pushOutOfSolids} from '../src/world/scablands-solids.js';
+import {scablandsSurfaceHeightAt} from '../src/world/scablands-ground.js';
+import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
+import {EMBER_RULE} from '../src/world/jobs/ember-rule.js';
+import {createWorldJob, initializeWorldJob, stepWorldJob} from '../src/arena/modes/world-job.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {facingChaseView, insideMachine, machineLift, easeMachineLift, machineLookBlend, MACHINE_CLEARANCE_METRES} from '../src/world-job-camera.js';
 import '../src/story/ember-lines.js';
@@ -21,6 +27,75 @@ import '../src/story/ember-lines.js';
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); checks++; };
 const near = (a, b, tolerance, message) => check(Math.abs(a - b) <= tolerance, `${message} (got ${a}, wanted ${b})`);
+
+// Cinder's hand-over and the brazier's clearance use the actual job and yard solids.
+{
+  const step = EVERBURN_JOBS[0].steps[0], pickup = step.pickup.place.position;
+  const gate = yardPlan().gate, gatePoint = {x:LAND.yard.x + gate.x, z:LAND.yard.z + gate.z};
+  const fire = step.braziers[0].position;
+  const lineGap = (p, a, b) => Math.abs((b.x-a.x)*(a.z-p.z)-(a.x-p.x)*(b.z-a.z)) / Math.hypot(b.x-a.x, b.z-a.z);
+  assert.equal(step.pickup.radius, 12);
+  assert.equal(step.pickup.place.radius, 12);
+  assert.ok(lineGap(fire, step.carStart, gatePoint) >= 6);
+  assert.ok(lineGap(fire, pickup, gatePoint) >= 6);
+  const grid = createJobSolidGrid();
+  grid.setYard(yardPlan().solids);
+  grid.setBraziers([fire]);
+  let clear = 0;
+  for (let i = 0; i < 360; i++) {
+    const angle = i * Math.PI / 180, x = pickup.x + 12 * Math.sin(angle), z = pickup.z + 12 * Math.cos(angle);
+    if (!pushOutOfSolids(x, z, 1, grid, scablandsSurfaceHeightAt(x, z)).hit) clear++;
+  }
+  assert.ok(clear >= 270, `at least three quarters of Cinder's ring is clear: ${clear}/360`);
+  // Leave room around the whole car, not just its centre, at the hand-over boundary.
+  let carClear = 0;
+  for (let i = 0; i < 360; i++) {
+    const angle = i * Math.PI / 180, x = pickup.x + 12 * Math.sin(angle), z = pickup.z + 12 * Math.cos(angle);
+    if (!pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit) carClear++;
+  }
+  assert.ok(carClear >= 270, `a car has room on at least three quarters of Cinder's ring: ${carClear}/360`);
+  // A stopped car can collect the pot on the gate's centre line and leave straight ahead.
+  const forward = {x:Math.sin(gate.bearing), z:Math.cos(gate.bearing)};
+  const stop = {x:gatePoint.x - 12 * forward.x, z:gatePoint.z - 12 * forward.z};
+  assert.ok(Math.hypot(stop.x - pickup.x, stop.z - pickup.z) < step.pickup.radius);
+  for (let along = -12; along <= 12; along += .25) {
+    const x = gatePoint.x + along * forward.x, z = gatePoint.z + along * forward.z;
+    assert.equal(pushOutOfSolids(x, z, 2, grid, scablandsSurfaceHeightAt(x, z)).hit, null,
+      `the centre line through the yard gate is clear at ${along} m`);
+  }
+  const view = (distance, speedKmh = 0) => ({player:{position:{x:pickup.x + distance, z:pickup.z}}, speedKmh});
+  const job = () => createJob(EVERBURN_JOBS[0], 19);
+  assert.equal(stepJob(job(), view(12.1), 0).stepState.pickingUp, undefined);
+  assert.equal(stepJob(job(), view(11.9, 10), 0).stepState.pickingUp, undefined);
+  assert.ok(stepJob(job(), view(11.9), 0).stepState.pickingUp);
+}
+
+// Step the loaded job down the gate approach without driving or changing speed.
+for (const kmh of [45, 80]) {
+  const definition = EVERBURN_JOBS[0], gate = definition.steps[0].riderSafeWall;
+  const world = createWorldJob(definition), events = [];
+  const state = {arena:{mode:'world-job', worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:kmh / 1.609344, stageTimeSec:0, input:{}, cpuDifficulty:'easy'};
+  let car = {x:gate.x, z:gate.z + 200};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => ({...car, y:scablandsSurfaceHeightAt(car.x, car.z)})},
+    emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  state.speedMph = kmh / 1.609344;
+  world.job.stepState = {loaded:true, ember:100};
+  world.lastKmh = kmh;
+  for (let z = gate.z + 200; z >= gate.z - 10; z -= kmh / 3.6 / 120) {
+    car = {x:gate.x, z};
+    const emberBefore = world.job.stepState.ember;
+    stepWorldJob(duel, 1 / 120);
+    const hit = pushOutOfSolids(car.x, car.z, 1.3, world.solidGrid, scablandsSurfaceHeightAt(car.x, car.z)).hit;
+    assert.equal(hit, null, `${kmh} km/h: the road through the gate is clear of solids`);
+    assert.equal(state.speedMph, kmh / 1.609344);
+    assert.equal(world.job.stepState.joltCount ?? 0, 0);
+    assert.ok(Math.abs(world.job.stepState.ember - (emberBefore - EMBER_RULE.coldPerSecond / 120)) < 1e-9,
+      `${kmh} km/h: the gate approach costs only ordinary cooling`);
+  }
+}
 
 // ---- 1. The start check -------------------------------------------------------------------------------------------------------------
 const CHASE_BACK = 8.7; // the chase camera's own distance behind the car (src/render3d.js)

@@ -98,7 +98,7 @@ is watched.
 - **Two barricades stand across the road**, each with Ash Men waiting. Cinder lends the
   flamethrower to burn them. The Ash Men want the fire; they ram, and every ram is a jolt. The
   player may burn them, outrun them on the road, or leave the road and nurse the pot over rock.
-- **The furnace on the skyline watches the scab field.** More than six seconds in the open under
+- **The furnace on the skyline watches the scab field.** More than eight seconds in the open under
   it and its horn sounds and two riders come down. That makes Cinder's warning true.
 - Within 120 m of Tin Town's wall the Ash Men turn back. Auntie Solder says why.
 
@@ -233,7 +233,7 @@ the player has driven them or seen who is there. A player who reads the ground f
 - **The East Road's two barricades** each have Ash Men waiting. Cinder lends the flamethrower to
   burn a barricade. The riders ram; the player may burn them, outrun them or turn off the road.
 - **The furnace stands on the high ground north of the Steps** and watches the plates. More than
-  six seconds in the open in its sight and its horn sounds and two riders come down. The scarps
+  eight seconds in the open in its sight and its horn sounds and two riders come down. The scarps
   give cover now and the mesas will give more (SCABLANDS-LAND slice 2c). From the East Road it
   is seen on the skyline for two kilometres: Old Smoke is seen long before he is fought.
 - **The Pipe** is crossed at 40 km/h or less. Faster, and the car is off it; the fall is a hit
@@ -637,6 +637,7 @@ asked was stopping in the right spot three times. That is too near what Kyle rej
 7. **The first two kilometres** are one straight with nothing on it, a minute and a half at one speed.
 
 **Slice 5, the cures (Codex builds; rulings are Claude's):**
+The furnace waits eight seconds (was six): the gap between the plates' first two covers is 84 m, which took the whole six at 50 km/h. At 50 km/h the widest gap takes 6.6 seconds; at 40 km/h it takes 8.3, so a driver must hold between about 42 and 50 km/h there. Claude's hand drive of the plates decides whether eight is enough.
 - **Cinder:** the hand-over counts within 12 m (was 8). Her brazier moves so that it is at least 6 m clear of the straight
   line from the job's start to the middle of the yard's gate and of the line from her to that gate. A check walks a ring of
   12 m round her and shows a car can stand on at least three quarters of it.
@@ -653,6 +654,18 @@ asked was stopping in the right spot three times. That is too near what Kyle rej
 - **Checks:** rule checks for each cure, without driving. The card's one scripted drive stays the East Road on Easy
   (`test-everburn-easy --job hot-delivery`), which must still arrive alive with both riders ramming.
 - **Sound:** no new event. A ram already has its cue.
+
+**Slice 5 merged 16 November 2026, evening (built by Codex, reviewed twice, hidden).** What the reviews and Claude's rulings
+added to the bullets above:
+- **Riders keep to their road.** A waiting road rider starts a chase only when the loaded car is within 120 m of the road
+  and 900 m along of the rider's post, in sight, and within 150 m of that rider's own fence or 120 m of the rider itself.
+  After a ram it backs off toward a point 40 m away and may charge again eight seconds after the ram, wherever it then is.
+- **The furnace waits eight seconds**, one named number (the line at the head of this slice says why).
+- **Measured after the cures:** Easy East Road arrives 10 of 10 with 64 of 100 fire and three rams; Medium East Road with 41
+  and three rams; the river bed with 36 and no rams, as before the slice.
+- **Still owed before Kyle's try:** Claude's hand drive of the East Road again (the fence, the riders, the gate), then of
+  the plates (is eight seconds enough for a hand at 42 to 50 km/h), the Pipe and the bed; a frame check on Performance;
+  nobody has heard the job. Then slice 6.
 
 **Slice 6, designed, built after slice 5: the scout.** One Ash Men rider waits beside the road 900 m from the yard. When the
 loaded car comes within 250 m in its sight it sounds its horn and runs for the Halfway Camp at 70 km/h. If it gets there
