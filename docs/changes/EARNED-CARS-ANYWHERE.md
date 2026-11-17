@@ -1,0 +1,13 @@
+# EARNED-CARS-ANYWHERE
+- Medal cars race anywhere; the other three air-only cars and customer-job pool stay unchanged.
+- Before: the pilot map listed owned medal cars at their saved locations.
+- Before: the garage said Kestrel One brought medal cars to Tremblant Woods.
+- Before: the menu and race entry refused medal cars away from their saved locations.
+- Before: customer lift jobs excluded medal cars; a player could lift their own car.
+- Before: the helicopter save kept car locations; an own-car lift and cable load existed only in the session.
+- A reopened session places the owned car at its last saved location; no save shape or migration changes.
+- Results now say the car is ready anywhere. No new game event or sound cue.
+- Focused air-only, customer-pool and McMurtry wording checks passed before this commit.
+- Remaining: card checks, affected suites, lane tier, build, browser scenario and independent review.
+- Changed assertions: pending review and tests.
+- Removed: medal cars from the air-only list and the flight requirement words.
