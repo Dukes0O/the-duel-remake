@@ -16,7 +16,7 @@ import {DRIVE} from '../../config.js';
 import {worldPose} from '../arena-floor.js';
 import {wrapHeading} from '../../offroad-physics.js';
 import {scablandsDriveAt, RIVER_LAND, DRIVE as SCABLANDS_DRIVE} from '../../world/scablands-regions.js';
-import {ROAD_NET} from '../../world/scablands-road.js';
+import {ROAD_NET, roadPointFrom} from '../../world/scablands-road.js';
 import {nearestOnLine, sees} from '../../world/scablands-ways.js';
 import {MPH_TO_KMH, emberSentence} from '../../world/jobs/ember-rule.js';
 import {stepMover, FOOT_GRADE, TRUCK_GRADE} from '../../world/scablands-movers.js';
@@ -237,6 +237,75 @@ function updateJobActors(duel, worldJob, dt) {
     updateJobActor(duel, worldJob, actor, dt);
     pursueJobRider(duel, worldJob, actor, dt);
   }
+  // The scout is a job rider, so it uses the same actor and hit-target path.
+  if (step?.scout && worldJob.job.stepState.loaded) {
+    updateJobActor(duel, worldJob, step.scout, 0);
+    const scout = worldJob.actors.find(actor => actor.id === step.scout.id);
+    if (scout.health <= 0 && !worldJob.job.stepState.scoutHome && !worldJob.job.stepState.scoutStopped)
+      stopScout(duel, worldJob, scout);
+    const car = position(duel, duel.state);
+    const dxCar = car.x - scout.position.x, dzCar = car.z - scout.position.z;
+    const carDistance = Math.hypot(dxCar, dzCar);
+    if (scout.health > 0 && !worldJob.job.stepState.scoutHome && !duel.state.onFoot && carDistance > 0 && carDistance <= 3 &&
+        Math.abs(car.y - scout.position.y) < 3) {
+      const pose = worldPose(duel, duel.state);
+      const playerSpeed = (duel.state.speedMph || 0) * DRIVE.mphToWorld;
+      const vx = Math.sin(pose.heading) * playerSpeed - Math.sin(scout.heading) * (scout.speed || 0);
+      const vz = Math.cos(pose.heading) * playerSpeed - Math.cos(scout.heading) * (scout.speed || 0);
+      const closing = -(vx * dxCar + vz * dzCar) / carDistance;
+      if (closing > 0) {
+        worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, closing * 3.6);
+        stopScout(duel, worldJob, scout);
+      }
+    }
+    if (scout.health > 0 && !duel.state.onFoot && !worldJob.job.stepState.scoutWarned &&
+        Math.hypot(car.x - scout.position.x, car.z - scout.position.z) <= step.scout.sightRadius &&
+        roadRiderSight(scout, dt, 0, () => sees(scout.position, car, {heightAt:scablandsSurfaceHeightAt,
+          actorFloors:true, tunnels:duel.course.groundTunnels, eye:1.5, step:5}))) {
+      worldJob.job.stepState.scoutWarned = true;
+      sayLine(duel, worldJob, 'scout.warning', true);
+      duel.emit({arenaTell:{id:'ash-scout-warning', targetId:'player', seconds:0,
+        cue:'world.ashmen.horn', position:scout.position}});
+    }
+    if (worldJob.job.stepState.scoutWarned && scout.health > 0 && !worldJob.job.stepState.scoutHome) {
+      const road = ROAD_NET.road('east-road');
+      const onRoad = nearestOnLine(road.points, scout.position.x, scout.position.z);
+      const camp = nearestOnLine(road.points, step.barriers[0].position.x, step.barriers[0].position.z);
+      const speed = (duel.state.cpuDifficulty === 'easy' ? step.scout.easySpeedKmh : step.scout.speedKmh) / 3.6;
+      const travel = Math.max(0, speed * dt);
+      const fence = step.barriers[0];
+      // Leave the road before the fence and go around its end, using the same solids as other riders.
+      if (worldJob.job.stepState.scoutApproach == null && camp.along - onRoad.along <= 18.001)
+        worldJob.job.stepState.scoutApproach = 0;
+      const approach = worldJob.job.stepState.scoutApproach;
+      const forward = {x:Math.sin(fence.heading), z:Math.cos(fence.heading)};
+      const side = {x:Math.cos(fence.heading), z:-Math.sin(fence.heading)};
+      const corner = along => ({x:fence.position.x + side.x * 10 + forward.x * along,
+        z:fence.position.z + side.z * 10 + forward.z * along});
+      const target = approach == null ? (onRoad.distance > 0.1 ? onRoad : roadPointFrom(road, onRoad.x, onRoad.z,
+        Math.min(travel, Math.max(0, camp.along - 18 - onRoad.along)))) :
+        [corner(-8), corner(8), step.scout.camp.position][approach];
+      const dx = target.x - scout.position.x, dz = target.z - scout.position.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance > 0 && travel > 0) {
+        const before = scout.position, share = Math.min(1, travel / distance);
+        scout.heading = Math.atan2(dx, dz);
+        const moved = stepMover(before, {x:before.x + dx * share, z:before.z + dz * share},
+          {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+        scout.position = {x:moved.x, y:moved.y, z:moved.z};
+        scout.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      }
+      if (approach != null && Math.hypot(target.x - scout.position.x, target.z - scout.position.z) < 0.1) {
+        if (approach < 2) worldJob.job.stepState.scoutApproach++;
+        else {
+          worldJob.job.stepState.scoutHome = true;
+          sayLine(duel, worldJob, 'scout.home', true);
+          worldJob.job.stepState.campAwake = true;
+          scout.speed = 0;
+        }
+      }
+    }
+  }
   if (worldJob.skylineWarned) {
     const elapsed = Math.max(0, dt);
     worldJob.furnacePursuitSeconds = (worldJob.furnacePursuitSeconds ?? 0) + elapsed;
@@ -266,6 +335,24 @@ function updateJobActors(duel, worldJob, dt) {
   if (step?.furnaceActor) updateBattleFurnace(duel, worldJob, step, dt);
 }
 
+// A stopped scout remains as a wreck beside the road for the rest of the job.
+function stopScout(duel, worldJob, scout) {
+  const road = ROAD_NET.road('east-road');
+  const onRoad = nearestOnLine(road.points, scout.position.x, scout.position.z);
+  const ahead = roadPointFrom(road, onRoad.x, onRoad.z, 1);
+  const dx = ahead.x - onRoad.x, dz = ahead.z - onRoad.z;
+  const length = Math.hypot(dx, dz);
+  if (length > 0) {
+    const moved = stepMover(scout.position, {x:onRoad.x + dz / length * 8, z:onRoad.z - dx / length * 8},
+      {radius:1.3, grid:worldJob.solidGrid, height:scout.position.y});
+    scout.position = {x:moved.x, y:moved.y, z:moved.z};
+  }
+  scout.health = 0;
+  scout.speed = 0;
+  worldJob.job.stepState.scoutStopped = true;
+  sayLine(duel, worldJob, worldJob.job.stepState.campAwake ? 'scout.stopped.awake' : 'scout.stopped', true);
+}
+
 // The waiting cars begin pursuit when the loaded pot comes close to their post.
 // They use the land's mover, including its floor and solid checks.
 function pursueJobRider(duel, worldJob, actorDef, dt) {
@@ -285,6 +372,35 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const car = position(duel, duel.state);
   const roadRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.waitingActors?.includes(actorDef);
+  const campRider = roadRider && actorDef.scoopAmbush;
+  if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
+    rider.speed = 0;
+    rider.pursuing = false;
+    return;
+  }
+  // A warned camp takes a position just beyond the standing fence before charging.
+  const campFence = campRider && worldJob.job.steps[worldJob.job.stepIndex].barriers[0];
+  const campFenceStanding = campFence && !worldJob.job.stepState.burntBarricades?.includes(campFence.id);
+  if (campFenceStanding && worldJob.job.stepState.scoopBrazier !== actorDef.scoopAmbush &&
+      !rider.pursuing && !retreat && !worldJob.ridersRetreating && !rider.returningToPost) {
+    const ends = barricadeEnds(campFence.position, campFence.heading);
+    const side = Math.hypot(rider.position.x - ends[0].x, rider.position.z - ends[0].z) <=
+      Math.hypot(rider.position.x - ends[1].x, rider.position.z - ends[1].z) ? -1 : 1;
+    const target = {x:campFence.position.x + Math.cos(campFence.heading) * side * 10,
+      z:campFence.position.z - Math.sin(campFence.heading) * side * 10};
+    const dx = target.x - rider.position.x, dz = target.z - rider.position.z;
+    const distance = Math.hypot(dx, dz);
+    if (distance > 0.1 && dt > 0) {
+      const before = rider.position, travel = Math.min(distance, 18 * dt);
+      rider.heading = Math.atan2(dx, dz);
+      const moved = stepMover(before, {x:before.x + dx / distance * travel, z:before.z + dz / distance * travel},
+        {radius:1.3, grid:worldJob.solidGrid, height:before.y});
+      rider.position = {x:moved.x, y:moved.y, z:moved.z};
+      rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      return;
+    }
+    rider.speed = 0;
+  }
   if (roadRider && retreat && !worldJob.ridersRetreating) {
     if (!rider.ramRetreat) return;
     const dx = retreat.x - rider.position.x, dz = retreat.z - rider.position.z;
@@ -322,7 +438,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     rider.lostSightSeconds = visible ? 0 : (rider.lostSightSeconds ?? 0) + Math.max(0, dt);
     if (rider.pursuing && (!inRange || rider.lostSightSeconds >= 5)) rider.returningToPost = true;
     const nearRider = Math.hypot(car.x - rider.position.x, car.z - rider.position.z) <= 120;
-    if (!rider.pursuing && (!visible || (!nearFence && !nearRider))) return;
+    if (!rider.pursuing && (!visible || (!nearFence && (!nearRider || campFenceStanding)))) return;
   }
   if (worldJob.ridersRetreating || rider.returningToPost) {
     rider.pursuing = false;
@@ -753,9 +869,22 @@ function applyRequests(duel, worldJob, requests) {
     if (request.type === 'marker') {
       worldJob.marker = request.place ?? null;
       const at = request.place?.position ?? request.place;
+      const radius = request.place?.radius ?? 4;
+      // Both Hot Delivery stops use the same floor ring. Raise it above the road
+      // across its whole edge, including the slight slope at Cinder's post.
+      const deliveryStop = worldJob.definition.id === 'everburn-hot-delivery' &&
+        (request.place?.id === 'cinder' || request.place?.id === 'cold-forge');
+      if (deliveryStop && at && worldJob.ringHeight?.place !== request.place) {
+        worldJob.ringHeight = {place:request.place, height:Math.max(scablandsSurfaceHeightAt(at.x, at.z),
+          ...Array.from({length:48}, (_, i) => {
+            const angle = i * Math.PI * 2 / 48;
+            return scablandsSurfaceHeightAt(at.x + Math.cos(angle) * radius, at.z + Math.sin(angle) * radius);
+          }))};
+      }
+      const height = deliveryStop && at ? worldJob.ringHeight.height : at?.y ?? 0;
       duel.state.arena.markers = at && Number.isFinite(at.x) && Number.isFinite(at.z)
-        ? [{kind: 'ring', id: 'world-job-marker', x: at.x, y: at.y ?? 0,
-          z: at.z, radius: request.place?.radius ?? 4}] : [];
+        ? [{kind: 'ring', id: 'world-job-marker', x: at.x, y: height,
+          z: at.z, radius}] : [];
     }
     else if (request.type === 'follow') worldJob.follow = {...request,
       actorId: request.actorId ?? worldJob.job.steps[worldJob.job.stepIndex]?.targetId};
@@ -965,7 +1094,14 @@ export function stepWorldJob(duel, dt) {
       if (actor?.furnace && furnaceHit(actor.furnace, hit.door, 'weapon')) syncFurnaceActor(actor);
       continue;
     }
-    if (actor && Number.isFinite(hit.damage)) actor.health = Math.max(0, actor.health - hit.damage);
+    const activeScout = actor && actor.id === currentStep?.scout?.id &&
+      !worldJob.job.stepState.scoutHome && !worldJob.job.stepState.scoutStopped;
+    if (activeScout && hit.flame && actor.health > 0) {
+      stopScout(duel, worldJob, actor);
+    } else if (actor && Number.isFinite(hit.damage)) {
+      actor.health = Math.max(0, actor.health - hit.damage);
+      if (activeScout && actor.health <= 0) stopScout(duel, worldJob, actor);
+    }
   }
   const targetActor = worldJob.actors.find(actor => actor.id === worldJob.job.steps[worldJob.job.stepIndex]?.targetId);
   const contact = targetActor && Math.hypot(point.x - targetActor.position.x, point.z - targetActor.position.z) <=

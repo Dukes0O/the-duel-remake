@@ -110,6 +110,8 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     if (!job.stepState.out && !job.stepState.pickingUp && speedKmh !== null && Math.abs(speedKmh) < 1 && distance > radius && distance <= radius + 6)
       next.line = 'A little closer: stop inside the ring.';
   }
+  if (step?.scout && job.stepState.scoutWarned && !job.stepState.scoutStopped && !job.stepState.scoutHome && !job.stepState.out)
+    next.line = 'Catch the scout before the camp.';
   const gate=worldJob?.definition?.kind==='town-drive'?worldJob.definition.layout?.gate:null;
   const at=pointOf(player);
   const townGatePrompt=gate&&finitePoint(player)&&Math.hypot(at.x-gate.x,at.z-gate.z)<=gate.halfWidth+8

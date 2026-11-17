@@ -53,6 +53,8 @@ function stepEmberCarry(step, state, view, dt) {
     const scoopTime = stopping ? (state.scoopBrazier === brazier.id ? (state.scoopTime ?? 0) : 0) + dt : 0;
     next.scoopBrazier = stopping ? brazier.id : null;
     next.scoopTime = scoopTime;
+    if (view.difficulty === 'hard' && stopping && brazier.id === step.waitingActors?.[0]?.scoopAmbush)
+      next.campAwake = true;
     if (stopping && scoopTime >= 3) {
       const wasOut = next.out;
       next.ember = Math.min(rule.start, next.ember + 25);
@@ -63,6 +65,10 @@ function stepEmberCarry(step, state, view, dt) {
       next.scoopTime = 0;
       events.push({type: 'emberRelit', place: brazier.id});
     }
+  }
+  // The camp stays awake for this job once its fence burns or a Hard scoop alerts it.
+  if (step.waitingActors?.[0]?.scoopAmbush && burnt.has(step.barriers?.[0]?.id)) {
+    next.campAwake = true;
   }
   if (next.out) {
     // The nearest place a fresh scoop can be taken: the yard gate always, the halfway camp once passed.

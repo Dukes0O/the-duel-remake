@@ -161,6 +161,25 @@ export async function run(context) {
     await key(context,'m','KeyM',77);
     await picture('2-map-start','Scrapdome yard on the land',{map:true,startMap:true});
     await key(context,'m','KeyM',77);
+    await place('pickup',0,5);
+    await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
+    await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
+    await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true,pot:true});
+    // The riders only exist after the pot has been collected.
+    for (const distance of [250, 60]) {
+      const road = pointAlong(EAST_ROAD.points, 900 - distance);
+      await page(context, road => {
+        const app=window.__qaApp, duel=app.duel, state=duel.state;
+        const scout=state.arena.worldJob.actors.find(actor => actor.id === 'ash-scout');
+        if (!scout) throw Error('The scout is missing');
+        const pose=duel.course.nearest(road.x,road.z);
+        state.s=state.prevS=pose.s; state.lateral=state.prevLateral=pose.lateral; state.speedMph=0;
+        const angle=Math.atan2(scout.position.x-road.x,scout.position.z-road.z)-duel.course.at(pose.s).heading;
+        state.headingError=Math.atan2(Math.sin(angle),Math.cos(angle));
+        app.onFrame?.(state,0); window.__render.renderFrame();
+      }, road);
+      await picture(`scout-post-from-${distance}m`, 'World job actor: ash-scout', {loaded:true});
+    }
     for (const [index, name] of ['safe-road', 'girder-bridge'].entries()) {
       const fence = LAND.at(name), road = roadPointFrom(EAST_ROAD, fence.x, fence.z, -60);
       await page(context, (index, road) => {
@@ -174,12 +193,31 @@ export async function run(context) {
         state.headingError = Math.atan2(Math.sin(angle), Math.cos(angle));
         app.onFrame?.(state, 0); window.__render.renderFrame();
       }, index, road);
-      await picture(`rider-${index + 1}-from-road`, `World job actor: ash-rider-${index + 1}`);
+      await picture(`rider-${index + 1}-from-road`, `World job actor: ash-rider-${index + 1}`, {loaded:true});
     }
+    // Wake the camp while the car is far away, then view the waiting rider from the road.
     await place('pickup',0,5);
-    await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
-    await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
-    await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true,pot:true});
+    await page(context, () => {
+      const app=window.__qaApp, job=app.duel.state.arena.worldJob;
+      job.job.stepState.campAwake=true;
+      for (let i=0; i<100; i++) app.advance(0.1);
+    });
+    const campRoad=roadPointFrom(EAST_ROAD, LAND.at('safe-road').x, LAND.at('safe-road').z, -60);
+    await page(context, road => {
+      const app=window.__qaApp, duel=app.duel, state=duel.state;
+      const rider=state.arena.worldJob.actors.find(actor => actor.id === 'ash-rider-1');
+      const pose=duel.course.nearest(road.x,road.z);
+      state.s=state.prevS=pose.s; state.lateral=state.prevLateral=pose.lateral; state.speedMph=0;
+      const angle=Math.atan2(rider.position.x-road.x,rider.position.z-road.z)-duel.course.at(pose.s).heading;
+      state.headingError=Math.atan2(Math.sin(angle),Math.cos(angle));
+      app.onFrame?.(state,0); window.__render.renderFrame();
+    }, campRoad);
+    await picture('camp-awake-at-fence-end','World job actor: ash-rider-1',{loaded:true});
+    await page(context, () => {
+      const job=window.__qaApp.duel.state.arena.worldJob;
+      job.job.stepState.campAwake=false;
+      job.actors.find(actor => actor.id === 'ash-rider-1').position={...job.job.steps[0].waitingActors[0].start.position};
+    });
     const road=pointAlong(EAST_ROAD.points, 400);
     await page(context, road => {
       const app=window.__qaApp, duel=app.duel, state=duel.state, pose=duel.course.nearest(road.x,road.z);
@@ -210,7 +248,7 @@ export async function run(context) {
     await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
-  for (const name of ['yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
+  for (const name of ['yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
     '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }
