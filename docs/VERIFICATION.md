@@ -2084,6 +2084,11 @@ on the mountains' real surface, with slope gravity and tilt while on one; ramps 
 samples stand on the edge, 163 of 166 unchanged). One review: points fixed and confirmed; save review of
 the grant confirmed. Lane tier, build, browser scenarios ski-drop-trip and heli-jobs.
 
+Also in this release, merged since the last one and on in the game: EASY-NO-PENALTY (Kyle said yes on 9 November; a
+Duel lost on Easy charges nothing; a burnt course closes for 3 play days and its buy-back starts at 3,000), checked
+at its merge. Everything else merged since 14 November is behind switches that stay off (story-everburn,
+scablands-runs, scablands-realism, the-dig, wasteland-town, titan-bowl).
+
 Full tier 672/672 on c3795328c (the release commit's code; notes and inbox only since), alone, 6,606 s.
 Driving physics files changed (sim-contacts, sim-crash, sim-driving, offroad-physics), so the full tier ran.
 No save shape change.

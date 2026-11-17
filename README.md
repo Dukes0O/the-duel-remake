@@ -17,6 +17,10 @@ A 3D browser arcade racer with two-lap circuits, gravel shortcuts, mountain clim
   Koenigsegg and the other road cars no longer crash into an invisible wall
   far from a mountain or in mid-air above it: they drive up its real slopes
   as the Titan does, slowing as they climb.
+- **Losing a Duel on Easy costs nothing.** The menu says "LOSS 0 CR" on Easy
+  and the results screen says your credits are safe (Medium and Hard are
+  unchanged). A burnt course now closes for 3 play days instead of 10, and
+  buying it back starts at 3,000 credits instead of 10,000.
 - **Spikey Ferns' Wasteland career:** notoriety rank 9 and 20,000 more scrap,
   added once when the game next starts (a copy of the career is saved first).
 - **The Everburn story is off again.** It was in the game for one night (13 November). Kyle
