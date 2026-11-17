@@ -1935,9 +1935,9 @@ assert.equal(frame().target.id, 'cinder');
 assert.deepEqual(frame().actors, []);
 job = stepJob(job, view(pickup.x, pickup.z, 10), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 12.1, pickup.z), 1);
+job = stepJob(job, view(pickup.x + 6.1, pickup.z), 1);
 assert.equal(job.stepState.pickingUp, undefined);
-job = stepJob(job, view(pickup.x + 11.9, pickup.z), .1);
+job = stepJob(job, view(pickup.x + 5.9, pickup.z), .1);
 const lines = job.requests.filter(request => request.type === 'say').map(request => request.lineId);
 for (let i = 0; i < 100 && !job.stepState.loaded; i++) {
   job = stepJob(job, view(pickup.x, pickup.z), .1);
