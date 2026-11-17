@@ -64,7 +64,10 @@ try.** Nobody has heard it: the play window is muted. What a player meets:
 6. **The Dig is the last of five rows in "Things to try"**, below three rows a new player cannot open yet, in a box that
    shows two rows at a time.
 7. **Dug ground reads as paper**: pale patches with hard straight edges, and the heap is a sharp pyramid with one
-   mirror-bright face. (Claude's, a drawing job; not in slice 2.)
+   mirror-bright face. Measured the same evening by rays sent straight down in the running Dig: the Dig draws three
+   grounds in one place, and over half of the filled cells and three of eight cut cells the coarse near ground or the yard
+   floor stood above the edited ground, which is the only one drawn as spoil and fresh cut. With the other two hidden the
+   heap is a dark mound and the ditch is a ditch. So the cure is in code and is the seventh bullet of slice 2.
 
 ### Slice 2, the cures (settled, Codex builds)
 
@@ -83,6 +86,11 @@ try.** Nobody has heard it: the play window is muted. What a player meets:
 - **The excavator's first view stands behind and 35 degrees to one side**, so that the boom, the bucket and the ground
   under it are in the picture when the bucket is lowered ahead. The other machines keep their first view.
 - **"Things to try" lists open rows first**, and THE DIG first among them.
+- **Over made ground only the edited ground is seen.** Inside the square of every edited chunk the yard floor and the
+  near ground lie at least 0.3 m below the edited ground, along a heap's sides and a ditch's walls too. Check, without a
+  browser: a ray straight down over every cell changed by more than 0.08 m meets the edited ground first. Claude's part,
+  merged with this note: a heap's flank and a shallow ditch's wall are drawn as earth, not as a scarp's bare rock
+  (`src/world/scablands-ground-look.js`), and a chunk's skirt is lit as ground (`src/world/ground-view.js`).
 - No new game event, so no new sound cue. Nothing saved.
 
 Checks: `node tools/test-the-dig.mjs` and `tools/test-dig-yard-switches.mjs` extended for each cure; the Dig scenario
@@ -90,5 +98,5 @@ takes one picture of each offered machine in its second view (for Claude to run)
 
 ### Before the switch goes on
 
-Slice 2 merged; Claude draws the dug ground (finding 7) and plays the Dig again; one frame check on Performance in the Dig
+Slice 2 merged; Claude plays the Dig again and judges the dug ground by picture; one frame check on Performance in the Dig
 yard with the laptop alone; Kyle's own try on the private address. Then Claude decides (rule 18).
