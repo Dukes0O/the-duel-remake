@@ -790,6 +790,38 @@ Rook's four scout lines are captions; no voice is recorded for them.
 - The plates (is the furnace's eight seconds enough), the Pipe and the river bed by hand.
 - A frame check on Performance with the laptop alone on one screen. Nobody has heard the job.
 
+## Kyle's try of Hot Delivery (17 November 2026): not worth playing yet
+
+Kyle played it on the private address, by a way other than the bridge. In his words, with what each one means:
+
+1. "The same crowd is cheering in the background as in the titan monster arena and scrapdome. it makes no sense to have a
+   crowd cheering and whistling." The job still plays the arena's crowd. Claude never heard it: every hand drive was muted.
+2. "if the flame goes out, and you return to the brazier, there's no way to refill it - or at least no obvious way."
+3. "You can drive right through her." Cinder is not solid.
+4. "the other weapons aren't displayed although they're available. only 4 - flamethrower is displayed."
+5. "After burning the ashman's wall, are they supposed to chase after me?" Nothing came.
+6. "furnace and the lookout can see my car, but big deal? they don't do anything about it."
+7. "this ashman doesn't seem to care that I've merged my car with his." A rider's car is not solid and did not react
+   (his picture shows his car standing inside it beside a stop ring).
+8. "seems that you can get a tiny refill of ember, but only 25 and that won't make it to tin town."
+9. "The initial scout that sees me coming out from the starting point is 2/3 buried into the ground and you can't attack it."
+10. "I think I found furnace or is that old bess in the boneyard. does she do anything?" Big Bess stands by the road and
+    does nothing in this job.
+11. "I sank into the ground" on the dark plates (his picture shows only the pot's handle above the ground) "but came back
+    up the other side."
+12. "There was no opposition from any one during the run. there was nothing. I chose a different route than across the
+    bridge. Was totally risk free and uneventful."
+13. "The gate mechanics into Tin Town were kind of just binary - open and close, but didn't swing."
+14. "Seems like you can't redo a run. maybe that's fine for now."
+
+**What this says about how it was built (Claude).** Two hand drives covered the East Road only, with the sound off, and
+found six and seven things; Kyle found fourteen in one try by another way with the sound on. The scripted checks reported
+riders ramming and a spread between the ways; a player met nobody. Item 12 is the one that matters most: away from the
+East Road the job is still a drive with nothing in it, which is what Kyle said of the first version on 14 November.
+Before Kyle is asked again: Claude drives every way by hand with the sound on, and each of the fourteen is either cured
+or answered here. No further slice goes to Codex until Claude has done that and written what the job is meant to be on
+each way.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in
