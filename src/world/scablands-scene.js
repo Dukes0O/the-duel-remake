@@ -910,7 +910,7 @@ export function createScablandsScene(course,options={}){
       // Place each brazier at the carry step's named position.
       const emberStep=stepNow?.ember?stepNow:null;
       const ash = emberStep?.bridgeAsh && !worldJob.job.done ?
-        bridgeAshFall(worldJob.job.stepState.bridgeAsh, emberStep.bridgeAsh) : null;
+        bridgeAshFall(worldJob.job.stepState?.bridgeAsh, emberStep.bridgeAsh) : null;
       ashColumn.visible = Boolean(ash);
       if (ash) {
         const count = scablandsFloorsAt(ash.x, ash.z, ashFloors);

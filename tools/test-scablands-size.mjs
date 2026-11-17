@@ -21,6 +21,8 @@ import {gasRunPaths, gasRunWreck} from '../src/world/jobs/gas-run.js';
 import {furnaceMarks} from '../src/world/jobs/furnace-sightings.js';
 import {roadNet, EAST_ROAD, roadPointFrom} from '../src/world/scablands-road.js';
 import {riverFor, stepsWayFor} from '../src/world/scablands-regions.js';
+import {nearestOnLine} from '../src/world/scablands-ways.js';
+import {BED_MIST} from '../src/world/jobs/ember-rule.js';
 import {tinTownGateFor} from '../src/world/tin-town-gate.js';
 import {tinTownLayout, tinTownRoads} from '../src/world/tin-town-shacks.js';
 import {boneyardWrecks, bessRest} from '../src/world/boneyard-wrecks.js';
@@ -238,8 +240,33 @@ test('moving a place in a copy of the table moves everything that belongs to it,
     const raid = positions.get('ash-men-raid-2'), out = positions.get('bridge-out');
     assert.ok(raid && out, `${moved}: the second ambush exists`);
     near({x: raid[0], z: raid[1]}, {x: (out[0] + town.x) / 2, z: (out[1] + town.z) / 2}, 'second ambush');
+    // A changed river length can need another sheet. Check every sheet's
+    // coverage and river binding rather than treating sheets as named places.
+    const patches = after.jobs[0].steps[0].bedMist;
+    const wash = river.crossings.find(crossing => crossing.id === 'the-wash').along;
+    const steps = river.crossings.find(crossing => crossing.id === 'the-steps').along;
+    assert.ok(Math.abs(patches.reduce((sum, patch) => sum + patch.length, 0) /
+      Math.abs(wash - steps) - BED_MIST.lengthShare) < 1e-12, `${moved}: mist keeps its bed coverage`);
+    for (const [index, patch] of patches.entries()) {
+        const id = patch.id;
+        assert.equal(id, `bed-mist-${index + 1}`);
+        assert.ok(patch.length >= BED_MIST.lengthMin && patch.length <= BED_MIST.lengthMax);
+        const centre = {x:patch.x - patch.tz * patch.offset, z:patch.z + patch.tx * patch.offset};
+        const hit = nearestOnLine(river.line.points, centre.x, centre.z);
+        assert.ok(hit.distance < 1e-6, `${moved}: ${id} stays at its offset from the river`);
+        const expected = Math.min(wash, steps) + Math.abs(wash - steps) * (index + .5) / patches.length;
+        assert.ok(Math.abs(hit.along - expected) < 1e-6, `${moved}: ${id} follows its measured hollow`);
+        const p = river.line.points[hit.index], q = river.line.points[hit.index + 1];
+        const length = Math.hypot(q.x - p.x, q.z - p.z);
+        assert.ok(Math.abs(patch.tx - (q.x - p.x) / length) < 1e-6 &&
+          Math.abs(patch.tz - (q.z - p.z) / length) < 1e-6, `${moved}: ${id} turns with the bed`);
+        assert.equal(Math.abs(patch.offset), BED_MIST.sideMetres);
+        const original = before.jobs[0].steps[0].bedMist[index];
+        if (original) assert.equal(patch.offset, original.offset, `${moved}: ${id} keeps its seeded side`);
+    }
     const a = positionsOf(before), b = positionsOf(after);
-    assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), `${moved}: the same things exist`);
+    for (const map of [a, b]) for (const id of map.keys()) if (id.startsWith('bed-mist-')) map.delete(id);
+    assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), `${moved}: the same named things exist`);
     let withIt = 0, shares = 0;
     for (const [id, [x, z]] of a) {
       // Slice 2b: the places a job lines up on the East Road 150 m either side of the Girder Bridge are points of the road (a curve that bends as a place moves), as the

@@ -29,7 +29,7 @@ import {yardPlan} from '../src/world/scablands-yard-look.js';
 import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
   furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
-import {BRIDGE_ASH, bridgeAshFall, stepBridgeAsh} from '../src/world/jobs/ember-rule.js';
+import {BRIDGE_ASH, bridgeAshFall, stepBridgeAsh, EMBER_RULE} from '../src/world/jobs/ember-rule.js';
 import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome,
   BED_MIST, bedMistFor, bedColdFactor, inBedMist, bedMistCorners} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
@@ -81,6 +81,18 @@ import {arenaResultsScreen} from '../src/screen-arena.js';
   assert.equal(done.state.done, true);
   assert.equal(bridgeAshFall(done.state, plan), null);
   assert.equal(stepBridgeAsh(done.state, plan, {...facts, car}, 1).loss, 0);
+  const step = {ember:{...EMBER_RULE, coldPerSecond:0}, bridgeAsh:plan,
+    destination:{x:1e6, z:1e6}};
+  const view = {player:{position:plan.gaps[1]}, carPosition:plan.gaps[0],
+    groundRegion:'road', carGroundRegion:'river-bed', onFoot:true};
+  const loaded = {loaded:true, ember:100};
+  const hit = stepCarry(step, loaded, view, .1);
+  assert.equal(hit.state.ember, 80, 'ash takes twenty from the loaded car while its driver is elsewhere');
+  assert.equal(stepCarry(step, hit.state, view, .1).state.ember, 80, 'the same fall costs only once');
+  assert.equal(stepCarry(step, loaded, {...view, carGroundRegion:'road'}, .1).state.ember, 100,
+    'the bed warning cannot start from the car on the deck');
+  const empty = stepCarry(step, {...hit.state, ember:0, out:true}, view, 1);
+  assert.ok(empty.state.bridgeAsh.elapsed > hit.state.bridgeAsh.elapsed, 'an out pot does not stop the ash clock');
 }
 
 // Cold is a place the player can steer around. The land seed fixes the patches.

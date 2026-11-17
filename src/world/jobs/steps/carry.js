@@ -39,7 +39,8 @@ function stepEmberCarry(step, state, view, dt) {
   while (safeIndex < (step.safePoints ?? []).length && gap(here, step.safePoints[safeIndex]) <= (spot(step.safePoints[safeIndex]).radius ?? 5)) safeIndex++;
   const next = {...state, burntBarricades: [...burnt], safeIndex, ember, relights, out, rate: 0, jolt: state.jolt ?? 0, joltCount: state.joltCount ?? 0};
   const ash = stepBridgeAsh(state.bridgeAsh, step.bridgeAsh,
-    {car:here, loaded:true, inBed:view.groundRegion === 'river-bed'}, dt);
+    {car:view.carPosition ?? here, loaded:true,
+      inBed:(view.carGroundRegion ?? view.groundRegion) === 'river-bed'}, dt);
   next.bridgeAsh = ash.state;
   events.push(...ash.events);
   if (!out) {

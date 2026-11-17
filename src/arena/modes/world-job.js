@@ -1183,10 +1183,11 @@ export function stepWorldJob(duel, dt) {
     worldJob.bedColdSaid = true;
     duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
+  const carriedCar = position(duel, state);
   const view = {player: playerView, onFoot: !!state.onFoot,
     speedKmh: kmh, hitKmh, severeHit, safeKmh: ground.safeKmh, groundRegion: ground.id,
     fighter: state.fighter ? {...state.fighter, position: point} : null,
-    carPosition: position(duel, state),
+    carPosition: carriedCar, carGroundRegion:state.onFoot ? scablandsDriveAt(carriedCar.x, carriedCar.z).id : ground.id,
     actors, crashSize: state.lastCrashSize || 0,
     thingsHit,
     carrying: worldJob.carrying, inventory: worldJob.inventory ?? [], lamps: worldJob.job.steps[worldJob.job.stepIndex]?.lamps ?? [],
