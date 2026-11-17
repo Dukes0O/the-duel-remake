@@ -719,11 +719,51 @@ a step short, the Girder Bridge's rider on the shoulder. The camp's rider stays 
 fence, which is a known fault until 6b. **Slice 6b** (Claude designs first, with the map and pictures of the camp and
 the Wash in hand): the camp and the scout.
 
-**The scout (designed 16 November; now part of slice 6b).** One Ash Men rider waits beside the road 900 m from the yard. When the
-loaded car comes within 250 m in its sight it sounds its horn and runs for the Halfway Camp at 70 km/h. If it gets there
-first, the camp's rider is already out on the road and comes at the player before the fence. If the player catches it
-(a burst, or a ram that costs a jolt), the camp is caught asleep and its rider starts ten seconds late. That gives the long
-straight a chase with a reason. Cue: the scout's horn, `world.ashmen.horn` (the furnace's horn recipe, higher and shorter).
+**Slice 6b, designed 16 November 2026, night (Claude; Codex builds after 6a): the camp sleeps unless it is woken.**
+
+Measured first, without driving: the Halfway Camp is the crossroads. The first fence stands on the very point where the
+Boneyard road leaves the East Road for the Wash (both at 2000.8, 1198.8, 2,332 m along the East Road), and the camp's
+brazier is 9 m from the fence. So the East Road's driver and the river bed's driver both come to the camp; one burns the
+fence and goes on, the other turns south beside it. The Wash and its own brazier are 1,250 m down that road.
+
+What makes this worth playing is one question the player can answer by driving: **is the camp awake when I get there?**
+
+- **The camp's rider sleeps at its post behind the fence.** Asleep, it chases nobody and no longer pushes against its own
+  fence. A car may drive up, turn south for the Wash, and go, unharmed: the river bed stays the way that nobody sees.
+- **Three things wake it:** its fence burning (it comes out through the burnt fence at once, as the bridge's rider did on
+  Claude's drive); the scout reaching the camp; and, on Hard only as today, a loaded car stopping to scoop at the camp's
+  brazier.
+- **Awake with its fence standing** (the scout got home), it waits at the end of its fence, on the fence's line and 4 m
+  beyond its end, and charges any loaded car that comes within 150 m of the fence on the East Road. It keeps to its road:
+  it gives up when the car is more than 120 m from the East Road, so a driver who turns for the Wash is hit once at most
+  if the turn is taken briskly. After a ram it backs off and may charge again eight seconds later, as built.
+- **The scout** waits beside the East Road 900 m from the yard, on the right, its car facing the town. When the loaded
+  car comes within 250 m in its sight it sounds its horn once (`world.ashmen.horn`: the furnace's horn recipe, higher and
+  shorter) and runs for the camp along the road, 1,430 m, at 70 km/h (55 on Easy). It is a rider like the others: the
+  same mover, sight and solids, everything from seed and inputs.
+- **Stopping the scout:** a flame that touches it, or a ram. A ram from behind costs little, because the fire lost in a
+  hit goes by the speed at which the two cars meet and both are going the same way: at 15 km/h faster than the scout it
+  costs 2.1. A stopped scout pulls off the road and stays there, a wreck for the rest of the job.
+- **If the scout reaches the camp** it stops behind the fence and the camp's rider is awake from that moment.
+- **What the player is told** (captions through the job's line system, in Rook's voice where a voice exists; if a new line
+  needs a recorded voice to pass the line audit, say so and stop):
+  - when the horn sounds: "That's their scout. If he reaches the camp, they'll be waiting for you. Catch him."
+  - when the scout is stopped: "He's done. The camp is asleep. Burn the fence before they wake."
+  - when the scout reaches the camp: "He's home. The camp is awake."
+  - the job's line while the scout runs: "Catch the scout before the camp."
+- **The small map** shows the scout as the riders are shown, once it has sounded its horn.
+- The Girder Bridge's rider is as slice 6a leaves it: awake, on the shoulder, free to charge. The bridge is the fight the
+  East Road cannot avoid; the camp is the one a good driver can make easy.
+
+**Checks (rules, without driving):** asleep, the rider never starts a chase for a car that drives to the crossroads and
+turns south, nor for one that stands 20 m before the fence for thirty seconds; each of the three wakings; the awake rider's
+reach from the fence's end (a car standing on the road 30 m before the fence, within six seconds, its distance falling
+every half second); the scout sees, sounds once and runs; a flame and a ram each stop it, and the ram's cost is the
+ember rule's own at the meeting speed; the scout home wakes the camp. The river bed's proof drive arrives as on
+integration (no rams, about 36 fire) when the scout is stopped or absent. The card's one scripted drive stays
+`test-everburn-easy --job hot-delivery`; whether its driver catches the scout is reported, not taught.
+**For Claude to run:** pictures of the scout at its post from the road at 250 m and at 60 m, and of the camp awake with
+the rider at the fence's end; then a hand drive of the chase.
 
 ## Saved progress
 
