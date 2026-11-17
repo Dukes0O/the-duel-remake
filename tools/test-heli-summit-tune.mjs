@@ -176,7 +176,9 @@ function autopilotFingerprint(extra = {}) {
 // Worked out from the autopilot as it stood before this card.
 // HELI-CHART-MIRROR re-recorded it (was 1475763491): the autopilot leaves and arrives on the gauge's side now, so the sampled
 // flights follow new lines; this suite's clearance checks on the same flights pass.
-const AUTOPILOT_PIN = 2297298912;
+// HELI-EDGE re-recorded it (was 2297298912): the edge now holds the helicopter while the cruise is offered, so each leg's last
+// sample stands on the edge (under 0.1 m from before, that axis's speed 0); the other 163 of 166 samples are unchanged.
+const AUTOPILOT_PIN = 615741178;
 if (want('pin')) {
   for (const extra of [{}, {summitRunEnabled: false}, {summitRunEnabled: true}])
     same(autopilotFingerprint(extra), AUTOPILOT_PIN, `autopilot flights on today's courses are what they were (${JSON.stringify(extra)})`);

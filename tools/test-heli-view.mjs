@@ -9,7 +9,7 @@ import {createResultsScreen} from '../src/screen-results.js';
 import assert from 'node:assert/strict';
 import {createHeliState, heliReadout, stepHeli} from '../src/heli/heli-flight.js';
 import {flatGround} from '../src/heli/heli-ground.js';
-import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare, landedArrival, arrivalMarkup} from '../src/heli/heli-ui.js';
+import {instrumentReadings, instrumentsMarkup, controlsMarkup, noticeText, pumpLabel, lessonsMarkup, holdShare, landedArrival, arrivalMarkup, headForGauge, edgePrompt} from '../src/heli/heli-ui.js';
 import {createProfile, normalizeProfile} from '../src/progression.js';
 import {buyFuel} from '../src/heli/heli-save.js';
 import {SUMMIT_PADS} from '../src/ski/runs/summit-zones.js';
@@ -295,6 +295,17 @@ for (const [fuelKg, credits, refuels] of [[300, 1000, 2], [300.64, 1000, 2], [12
   ok(failing.update({heli, loads: []}) !== undefined && !failing.group.visible, 'after a failed load nothing hangs in the air');
   ok(failing.modelStatus === 'error' && /missing file/.test(failing.modelError), 'a failed load is reported, never replaced with a stand-in');
   view.dispose();
+}
+
+// HELI-EDGE: HEAD FOR beside HEADING, and the words at the edge of the flying area.
+{
+  ok(headForGauge({name: 'Summit Run', heading: 320.2, km: 15.6}).includes('<span>HEAD FOR</span><strong>320</strong><small>Summit Run · 15.6 km</small>'), 'HEAD FOR: heading and where it leads');
+  ok(headForGauge({name: 'the landing pad', heading: 4.4, km: 0.3}).includes('<strong>004</strong>'), 'three figures, as the HEADING gauge');
+  ok(headForGauge(null) === '', 'nowhere chosen: no gauge');
+  ok(edgePrompt({cruiseOffered: true, cruiseIn: 2.2}, 'Summit Run').includes('Flying to Summit Run in 3. Press <kbd>ENTER</kbd> to go now.'), 'the countdown');
+  ok(edgePrompt({cruiseOffered: true, cruiseIn: null, cruiseShort: 160, heli: {fuelKg: 140.6}}, 'Summit Run').includes('it needs 160 kg and you have 140 kg. Land and fill up.'), 'a refused leg says the fuel');
+  ok(edgePrompt({heldAtEdge: true}).includes("Choose where to fly: FLY TO on the right, or the pilot's map"), 'nowhere chosen at the edge: where to choose');
+  ok(edgePrompt({}) === '', 'inside the area: nothing');
 }
 
 console.log(`test-heli-view: ${checks} checks passed`);

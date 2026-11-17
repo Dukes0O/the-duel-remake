@@ -264,6 +264,14 @@ export function cameraName(view, index = 0) {
   return views[((index % views.length) + views.length) % views.length];
 }
 
+// HELI-EDGE (Kyle, 16 November 2026: "you should also be able to see the headings where you are trying to fly to"):
+// beside HEADING, the heading to turn to and where it leads: the place chosen, or here the ski pad or landing pad.
+export function headForGauge(toward) {
+  if (!toward || !Number.isFinite(toward.heading)) return '';
+  const heading = String(Math.round(toward.heading) % 360).padStart(3, '0'), far = Number.isFinite(toward.km) ? ` · ${toward.km} km` : '';
+  return gauge('HEAD FOR', heading, `${escape(toward.name)}${far}`);
+}
+
 // credits: the player's credits, shown in the status row (HELI-PAY-CONTINUE); left out, the row is as it was.
 export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) {
   const r = instrumentReadings(view?.readout);
@@ -272,7 +280,7 @@ export function instrumentsMarkup(view, {cameraIndex = 0, credits = null} = {}) 
     ${gauge('ALTITUDE', r.altitude, r.altitudeM)}${gauge('HEIGHT', r.height, r.heightM)}
     ${gauge('AIRSPEED', r.airspeed, r.airspeedMs)}${gauge('CLIMB', r.climb, r.climbMs)}
     ${horizon(r.pitch, r.roll)}
-    ${gauge('HEADING', r.heading)}${gauge('ROTOR', r.rotor, '', r.lowRotor)}
+    ${gauge('HEADING', r.heading)}${headForGauge(view.toward)}${gauge('ROTOR', r.rotor, '', r.lowRotor)}
     ${gauge('FUEL', r.fuel, r.fuelTime, r.lowFuel)}${gauge('WEIGHT', r.weight, `most here ${r.maxLift}`, r.heavy)}
   </div>
   <div class="heli-status">
@@ -351,7 +359,20 @@ export function controlsMarkup(view, {credits = 0, refuels = 0} = {}) {
   // MAP-VIEW: with the pilot's map on, the route panel also opens it (the view carries `secrets` only then).
   const mapButton = view.secrets !== undefined ? `<button type="button" class="heli-map-open" data-heli-map="open">PILOT'S MAP <kbd>${MAP_KEY}</kbd></button>` : '';
   return `<div class="heli-route" role="group" aria-label="Fly to"><span>FLY TO</span>${buttons}${mapButton}${pump}${truckTarget}</div>
-    ${view.cruiseOffered ? `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${escape(destination)}.</div>` : ''}${challengeMarkup(view)}`;
+    ${edgePrompt(view, destination ?? view.toward?.name)}${challengeMarkup(view)}`;
+}
+
+// HELI-EDGE: at the edge of the flying area. With a place chosen, the cruise leg's countdown (or why it cannot go);
+// with none, where to choose one.
+export function edgePrompt(view, destination = null) {
+  if (view?.cruiseOffered) {
+    const to = escape(destination ?? 'there');
+    if (Number.isFinite(view.cruiseShort)) return `<div class="heli-prompt" role="status">Not enough fuel to fly to ${to}: it needs ${view.cruiseShort} kg and you have ${Math.floor(view.heli?.fuelKg ?? 0)} kg. Land and fill up.</div>`;
+    if (Number.isFinite(view.cruiseIn)) return `<div class="heli-prompt" role="status">Flying to ${to} in ${Math.ceil(view.cruiseIn)}. Press <kbd>ENTER</kbd> to go now.</div>`;
+    return `<div class="heli-prompt" role="status">Clear of the area. Press <kbd>ENTER</kbd> to cruise to ${to}.</div>`;
+  }
+  if (view?.heldAtEdge) return `<div class="heli-prompt" role="status">This is the edge of the flying area. Choose where to fly: FLY TO on the right, or the pilot's map (<kbd>N</kbd>).</div>`;
+  return '';
 }
 
 // What the pump offers, matching heli-save's buyFuel: the first tank is

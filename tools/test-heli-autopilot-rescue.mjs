@@ -137,7 +137,8 @@ function newSession(profile, {rescue = true, summit = false, mode = 'assisted'} 
 // HELI-COMPASS re-recorded it (was 2449056266): the view's fire bearing is now the HEADING gauge's (212 became 148); nothing else moved.
 // HELI-CHART-MIRROR re-recorded it (was 3493369388): arrivals now come in on the gauge's side, so the area's west and east
 // edges, the arrival heading and the approach flown from there moved (position within 2 m, fuel within 5 kg). Nothing else moved.
-const OFF_PIN = 1704110696;
+// HELI-EDGE re-recorded it (was 1704110696): the view now carries the cruise countdown, the edge and the HEAD FOR heading; with those four fields left out the old pin comes back exactly.
+const OFF_PIN = 1813862149;
 for (const extra of [{}, {rescueEnabled: false}, {rescueEnabled: 'yes'}, {summitRunEnabled: false}, {summitRunEnabled: 'yes', rescueEnabled: 1}])
   assert.equal(offFingerprint(extra), OFF_PIN, `the switch-off flights are unchanged (${JSON.stringify(extra)})`), checks++;
 same(offFacts, {lake: true, cruise: true, arrived: true, jobTaken: true}, 'and those flights really flew: the lake, the cruise leg, the approach, a job');

@@ -36,7 +36,7 @@ import {planSurvey, createSurveyRun, stepSurvey, surveyPercent, canReport, surve
 import {surveyJobOf, surveyTitle, finishSurvey} from './heli-jobs.js';
 import {cameraViewsFor} from './heli-camera.js';
 import {cruiseSeconds} from './heli-fire.js';
-import {fuelPadAt, placeOfCourse} from './pilot-map-data.js';
+import {fuelPadAt, placeOfCourse, mapDistanceKm} from './pilot-map-data.js';
 import {SECRET_SIGNS, SPOT, TABLE_ID, TABLE_CALL, TABLE_FOUND_TEXT, createSpotter, stepSpotter, noteFound, noteSeen, legPassesTable, claimTable,
   createTableWorld, mapOf} from './map-secrets.js';
 import {sampleCourse, detectCorners, nameFeatures, namedPieces} from '../track-analysis.js';
@@ -60,6 +60,9 @@ export const HELI_SESSION = Object.freeze({
   arrivalUnder: 20,
   departAhead: 200,
   fadeSeconds: 1.5,
+  // HELI-EDGE (Kyle, 16 November 2026: "it just goes off the map and stops"): at the edge of the flying area with a
+  // destination chosen, the helicopter holds there and the cruise leg starts by itself after this many seconds.
+  cruiseWait: 3,
   crashSeconds: 3,
   parkingDistance: 25,
   // A second parking spot, at least this far from the first, for a
@@ -261,6 +264,9 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
   let tableWorld = null;
   let site = null, world = null, heli = null, phase = 'idle', timer = 0;
   let destination = null, cruiseOffered = false, cruiseTo = null;
+  // HELI-EDGE: seconds until the cruise leg starts by itself (null when it will not), the fuel a refused leg needs, and
+  // whether the edge is holding the helicopter in with no destination chosen.
+  let cruiseIn = null, cruiseShort = null, heldAtEdge = false;
   // The cars on this course: the player's own and a customer's. A load is
   // {own, job}: job is the id of the job it belongs to, or null.
   let loads = [];
@@ -510,7 +516,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const job = syncJobCar();
     if (job && !kept?.job) { const waiting = waitingJobCar(courseId); if (waiting) loads.push(waiting); }
     phase = 'flying';
-    cruiseOffered = false;
+    cruiseOffered = false; cruiseIn = null; cruiseShort = null; heldAtEdge = false;
     cruiseTo = null;
     offer = null;
     layCrates();
@@ -632,7 +638,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     // Any later change of destination (a job taken or dropped) is the pilot's own: the heading flight keeps nothing to give back.
     challengeDestination = null;
     destination = courseId;
-    cruiseOffered = false;
+    cruiseOffered = false; cruiseIn = null; cruiseShort = null;
     if (autopilot.engaged) setAutopilotTarget(autopilot, autopilotGoal());
   }
 
@@ -1129,8 +1135,26 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
     const pads = skiPadsToFly();
     if (!pads.length) return null;
     const pad = nearestPad(pads, heli.x, heli.z);
-    return {x: pad.x, z: pad.z, groundY: SKI_PADS[pad.name].y};
+    return {x: pad.x, z: pad.z, groundY: SKI_PADS[pad.name].y, pad: pad.name};
   }
+  // HELI-EDGE (Kyle, 16 November 2026: "you should also be able to see the headings where you are trying to fly to"):
+  // the compass heading and distance to where she is going: toward the place chosen (the way out of this area, and
+  // the map's distance to it), or here to the ski pad or the landing pad. Null with nowhere to go, and in the Lab's
+  // headings challenge, which is about finding the way without it.
+  function towardNow() {
+    if (phase !== 'flying' || !heli || !site || !destination || challenge?.id === 'headings') return null;
+    if (destination !== site.courseId) {
+      if (!bearing(site.courseId, destination, dflag)) return null;
+      const goal = departureTarget(), from = placeOfCourse(site.courseId)?.id, to = placeOfCourse(destination)?.id;
+      const km = from && to ? mapDistanceKm(from, to) : null;
+      return Object.freeze({to: destination, name: placesNow()[destination]?.name ?? destination, heading: compassBearing(goal.x - heli.x, goal.z - heli.z),
+        km: km === null ? null : Math.round(km * 10) / 10});
+    }
+    const ski = skiGoal(), goal = ski ?? zoneTarget();
+    return Object.freeze({to: destination, name: ski ? SKI_PAD_LABELS[ski.pad] : 'the landing pad', heading: compassBearing(goal.x - heli.x, goal.z - heli.z),
+      km: Math.round(Math.hypot(goal.x - heli.x, goal.z - heli.z) / 100) / 10});
+  }
+  const SKI_PAD_LABELS = Object.freeze({devils: 'Devils Playground', summit: 'the summit pad', pickup: 'the pickup pad'});
   // The lodge's pump beside the pickup pad while a ski flight is in hand: every run ends there, so the way home is
   // filled there, at the home pump's price (the Summit rescues' trucks work the same way).
   let skiPumpStand = null;
@@ -1836,25 +1860,32 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
         if (skiFlight?.kind === 'group' && skiFlight.skied && groupAboard && onHome()) deliverSkiGroup();
         else if (skiFlight?.kind === 'drop' && skiFlight.skied && onHome()) { endSkiFlight(); aim(null); emit({type: 'skiDropDone'}); }
       }
-      // The flying area: a destination elsewhere offers the cruise leg;
-      // with none the edge holds the helicopter in.
-      const a = areaNow();
-      if (!insideArea(a, heli.x, heli.y, heli.z, world.ground)) {
-        if (destination && destination !== site.courseId) {
-          if (!cruiseOffered) {
-            cruiseOffered = true;
-            emit({type: 'cruiseOffered', to: destination});
-            emit({type: 'radio', line: 'heli.radio.cruise.ready'});
-          }
-        } else {
-          heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ);
-          const top = ceilingAt(a, heli.x, heli.z, world.ground);
-          heli.y = Math.min(heli.y, top);
-          if (heli.x === a.minX || heli.x === a.maxX) heli.vx = 0;
-          if (heli.z === a.minZ || heli.z === a.maxZ) heli.vz = 0;
-          if (heli.y === top) heli.vy = Math.min(0, heli.vy);
+      // The flying area. Its edge always holds the helicopter in: beyond it the world is not drawn (HELI-EDGE, Kyle,
+      // 16 November 2026: "it just goes off the map and stops"). With a destination elsewhere the edge offers the
+      // cruise leg, which starts by itself after cruiseWait seconds (ENTER starts it at once); with none the view says
+      // to choose one. A helicopter standing on the edge counts as at it, so the offer does not flicker.
+      const a = areaNow(), top = ceilingAt(a, heli.x, heli.z, world.ground);
+      const atEdge = heli.x <= a.minX || heli.x >= a.maxX || heli.z <= a.minZ || heli.z >= a.maxZ || heli.y >= top;
+      if (atEdge) {
+        heli.x = clamp(heli.x, a.minX, a.maxX); heli.z = clamp(heli.z, a.minZ, a.maxZ);
+        heli.y = Math.min(heli.y, top);
+        if (heli.x === a.minX || heli.x === a.maxX) heli.vx = 0;
+        if (heli.z === a.minZ || heli.z === a.maxZ) heli.vz = 0;
+        if (heli.y === top) heli.vy = Math.min(0, heli.vy);
+        const away = !!destination && destination !== site.courseId;
+        heldAtEdge = !away;
+        if (away && !cruiseOffered) {
+          cruiseOffered = true; cruiseIn = HELI_SESSION.cruiseWait; cruiseShort = null;
+          emit({type: 'cruiseOffered', to: destination});
+          emit({type: 'radio', line: 'heli.radio.cruise.ready'});
+        } else if (away && cruiseIn !== null && (cruiseIn -= dt) <= 0) {
+          cruiseIn = null;
+          api.acceptCruise();
         }
-      } else if (cruiseOffered) cruiseOffered = false;
+      } else {
+        heldAtEdge = false;
+        if (cruiseOffered) { cruiseOffered = false; cruiseIn = null; cruiseShort = null; }
+      }
       return api.takeEvents();
     },
     // H: hook the load under the hook, or let it go. A clean release in a
@@ -1971,6 +2002,7 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       if (phase !== 'flying' || !cruiseOffered || !destination) return false;
       const fuel = legFuelKg(site.courseId, destination, dflag);
       if (fuel === null || heli.fuelKg < fuel) {
+        cruiseIn = null; cruiseShort = fuel;
         emit({type: 'cruiseRefused', to: destination, needKg: fuel});
         emit({type: 'radio', line: 'heli.radio.cruise.refused'});
         return false;
@@ -2522,6 +2554,10 @@ export function createHeliSession({profile, enabled = false, loadCourse, persist
       const fireInfo = fire?.view(heli) ?? null;
       return Object.freeze({
         phase, courseId: site?.courseId ?? null, destination: challenge?.id === 'headings' ? null : destination, cruiseOffered, autopilot: autopilot.engaged,
+        // HELI-EDGE: the cruise leg's countdown, a refused leg's fuel, the edge holding her in with nowhere chosen, and
+        // the heading and distance to where she is going.
+        cruiseIn: cruiseOffered && cruiseIn !== null ? Math.max(0, cruiseIn) : null, cruiseShort: cruiseOffered ? cruiseShort : null,
+        heldAtEdge: phase === 'flying' && heldAtEdge, toward: towardNow(),
         heli: heli ? Object.freeze({...heli}) : null,
         // load: the car on the cable, else the player's own car, else any
         // other car here. loads: every car on this course.
