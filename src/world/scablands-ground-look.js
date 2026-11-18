@@ -587,6 +587,7 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null, gate = null} = {}
   if (gateStudy) uniforms.uRoadGate = {value: new THREE.Vector4(gate.x, gate.z, gate.through.x, gate.through.z)};
   // Gate-local distances are metres. The road ribbon’s aRoad.x is normalized by its half width.
   const gateSurface = gateStudy ? `
+          float lampPool = 0.0;
           vec2 gateOffset = vRoadPos.xz - uRoadGate.xy;
           float approach = -dot(gateOffset, uRoadGate.zw);
           float acrossGate = dot(gateOffset, vec2(uRoadGate.w, -uRoadGate.z));
@@ -599,10 +600,13 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null, gate = null} = {}
             // Metre-scale gaps between tyre impressions must survive the chase camera's mip levels.
             float broken = .02 + .98 * smoothstep(.38, .62, rWide.g) * (.76 + .24 * rFine.g);
             rut = mix(rut, exp(-wheel * wheel) * broken, widthFade * roadFade);
-            vec2 lampDistance = vec2(acrossGate / 3.25, approach / 4.45);
+            vec2 lampDistance = vec2(acrossGate / 3.65, approach / 5.5);
             float lamp = max(0.0, 1.0 - dot(lampDistance, lampDistance));
-            totalEmissiveRadiance += vec3(.054, .026, .008) * lamp * lamp * (.72 + .28 * rFine.r);
+            lampPool = lamp * lamp;
           }` : '';
+  const gateLight = gateStudy ? `
+          // The light falls on the photographed gravel and the dark impressions worn into it.
+          totalEmissiveRadiance += lampPool * rc * vec3(1.2, .85, .46);` : '';
   function apply(material) {
     if (!material?.isMeshStandardMaterial || material.userData.roadLook) return material;
     material.userData.roadLook = true;
@@ -635,7 +639,7 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null, gate = null} = {}
           vec2 rq=vRoadPos.xz,rDx=dFdx(rq),rDy=dFdy(rq);float rFar=smoothstep(.012,.09,max(fwidth(rq.x),fwidth(rq.y)));
           rc*=clamp(mix(vec3(1.0),gPhotoCol(uRoadPhoto,rq,${size},rDx,rDy,rFar)/uRoadPhotoMean,.92),.2,2.4);
           rRelief=gPhotoRel(uRoadPhotoN,rq,${size},rDx,rDy,rFar);` : ''}
-          diffuseColor.rgb=rc;
+          diffuseColor.rgb=rc;${gateLight}
           // The edge is uneven and wears away into the ground.
           float rEdge=1.04+.1*rWide.g+.06*rFine.r;
           diffuseColor.a*=1.0-smoothstep(rEdge,rEdge+.13,rau);`);
@@ -643,7 +647,7 @@ export function createRoadLook({dirt = 0x6e5d47, photo = null, gate = null} = {}
           normal=normalize((viewMatrix*vec4(normalize(normalize(vRoadNormal)+vec3(rRelief.x,0.0,rRelief.y)),0.0)).xyz);`);
     };
     const programKey = photo ? 'road-look-1-photo' : 'road-look-1';
-    material.customProgramCacheKey = () => gateStudy ? programKey + '-tin-gate' : programKey;
+    material.customProgramCacheKey = () => gateStudy ? programKey + '-tin-gate-2' : programKey;
     material.needsUpdate = true;
     return material;
   }
