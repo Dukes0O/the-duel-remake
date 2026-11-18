@@ -1,0 +1,12 @@
+# EVERBURN-REMAKE slice 11
+- Point 1 built: slow launch, road-gap pace, three-second recovery and sacks aimed at a nearby pursuing car. Both jobs remain hidden.
+- Checks on 0496c6d86 plus this commit: job 3 rule suite passes; launch regression failed first (195 instead of 40 km/h); diff check passes.
+- Rules proof: Medium closes to 60 m at 1,200.9 m after walking 60 m at the existing walk speed; a stationary car is 347.1 m behind at 25 seconds.
+- Changed assertions for Claude: road pace 195 to 180 and 125 to 117 km/h (point 1); chase launch 195 to 40 km/h (point 1).
+- Changed evidence for Claude: two fixed sack points become the pursuing car's current road point; the second sack fixture still proves x=30, now supplied at the throw.
+- Codex decided: shaken means 70% of the player's top speed; the Boneyard stays at 60 km/h. Sacks burst on the road beside the pursuing car.
+- Sound: sacks retain world.thief.ash; no new game event or cue.
+- Integration brought into this lane: already up to date at 0496c6d86.
+- Pending: points 2 to 6, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
+- For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all six fixes.
+- **Removed:** top-speed-minus-five pace and fixed-place sack targets.
