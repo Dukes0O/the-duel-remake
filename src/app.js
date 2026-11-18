@@ -233,6 +233,7 @@ export class App {
       if(event.driftBanked||event.driftChainLost)this.driftNotice={type:event.driftBanked?'banked':'lost',...(event.driftBanked||event.driftChainLost),expiresAt:state.stageTimeSec+2};
       if(event.checkpointRushEvent)this.checkpointNotice={...event.checkpointRushEvent,expiresAt:state.stageTimeSec+2.5};
       if(event.ticket)this._settlePoliceTicket(event.ticket,state);
+      if (event.talkOpened) this._clearHiddenRoadInput();
       if (event.talkRadio) this._storyRadioNow().click();
       if(event.arenaResult)this._settleArenaResult(event.arenaResult,state);
       if(event.arenaResult)this._waterArenaSettled(state); // WATER-HOOKS: Vesper speaks after the Baron falls
@@ -467,7 +468,7 @@ export class App {
         this._stepAccumulator = Math.max(0, this._stepAccumulator - SIMULATION_STEP);continue;
       }
       if(this.duel.state.status==='racing'&&!this.duel.state.paused)this._markActiveRace(this.duel.state);
-      this._applyInput(SIMULATION_STEP);
+      if (!activeTalkStep(this.duel.state)) this._applyInput(SIMULATION_STEP);
       this.duel.step(SIMULATION_STEP);
       this.labLap.step(this.duel.state,this.duel.course); // LAB-VIEW: reads the race, never writes it
       this._updateGhost(this.duel.state);this._updateLapTelemetry(this.duel.state);

@@ -1417,6 +1417,7 @@ export function stepWorldJob(duel, dt) {
     const next = stepJob(worldJob.job, {talkAction: worldJob.talkAction, talkFacts: worldJob.talkFacts}, 0);
     worldJob.talkAction = null;
     worldJob.job = next;
+    if (!before) duel.emit({talkOpened: true});
     const screen = next.stepState.screen;
     const chosen = next.events.find(event => event.type === 'talkChoice');
     worldJob.storySpeaker = screen?.line && !screen.line.radio ? screen.line.speaker : null;

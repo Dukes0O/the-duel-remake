@@ -37,6 +37,7 @@ import {createHudScreen, presentJumpHeight, nitroHudLabel} from './screen-hud.js
 import {createCombatHud, combatHudEnabled} from './combat-hud.js';
 import {createWorldHud} from './world/world-hud.js';
 import './world/world-hud.css';
+import './story/talk-view.css';
 import {createHiddenRoadUi} from './hidden-road-ui.js';
 import './hidden-road-ui.css';
 import {WEAPONS, ufoDestination} from './combat.js';

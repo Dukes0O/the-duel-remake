@@ -46,6 +46,8 @@ import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
+import {mountTalkView, talkCameraPose} from './story/talk-view.js';
 import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount } from './world-job-camera.js';
 import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
@@ -180,6 +182,26 @@ export function attachRenderer(host, app) {
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', 'The Duel three-dimensional racing scene');
   const scene = new THREE.Scene();
+  let talkView, talkPersonId, talkPerson, talkWorld, heldWorldSeconds, nextHeadLookup = 0;
+  const talkHead = new THREE.Vector3(), talkProjection = new THREE.Vector3();
+  function speakerHead(step, speaker, now) {
+    if (!speaker) return null;
+    if (speaker !== talkPersonId || world !== talkWorld) {
+      talkPersonId = speaker;
+      talkWorld = world;
+      talkPerson = null;
+      nextHeadLookup = 0;
+    }
+    if (!talkPerson?.parent && now >= nextHeadLookup) {
+      talkPerson = scene.getObjectByName('story-bubble-' + speaker);
+      nextHeadLookup = now + 200;
+    }
+    if (talkPerson?.parent) return talkPerson.getWorldPosition(talkHead);
+    // Jobs using existing figures can author the head's world point until
+    // the rigged figure supplies its animated story-bubble anchor.
+    const fixed = step.anchors?.[speaker];
+    return fixed ? talkHead.set(fixed.x, fixed.y, fixed.z) : null;
+  }
   const coachView = new THREE.Group();coachView.name = 'Coach braking and apex guides';
   scene.add(coachView);
   const driveLessonView=new THREE.Group();driveLessonView.name='Driving lesson cones and red board';scene.add(driveLessonView);
@@ -672,9 +694,12 @@ export function attachRenderer(host, app) {
       clearTrackSnapshot();
     }
     const diagnosticTime = Number.isFinite(presentation.presentationSeconds);
-    const presentationSeconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
+    const speaking = activeTalkStep(app.duel.state);
+    const seconds = diagnosticTime ? presentation.presentationSeconds : now/1000;
+    heldWorldSeconds = speaking ? (heldWorldSeconds ?? seconds) : null;
+    const presentationSeconds = heldWorldSeconds ?? seconds;
     drawingSeconds=presentationSeconds;
-    const ambientNow = diagnosticTime ? presentationSeconds*1000 : now;
+    const ambientNow = presentationSeconds * 1000;
     lastPresentationSeconds = presentationSeconds; lastSaltHeatEnabled = false;
     const phaseProbe=measure&&app.frameDiagnostics?.active?app.frameDiagnostics:null;
     const updateStarted=phaseProbe?phaseProbe.now():0;
@@ -682,7 +707,7 @@ export function attachRenderer(host, app) {
     if(!capture)frameMetrics.suspend();
     const dt = Math.min(.05, Math.max(.001, (now - previousT) / 1000)); previousT = now;
     const st = app.duel.state, menu = st.status === 'menu', next = menu ? app.getMenuCourse(app.menuStage||0) : app.duel.deepRuntime?.raceCourse??app.duel.course;
-    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused&&!st.deepJourney?.controlsLocked;
+    const moving = (st.status === 'racing'||st.status==='exploring') && !st.paused && !speaking && !st.deepJourney?.controlsLocked;
     updateCoach(next,st);updateDriveLesson(next,st);
     if (!next) {rearView.hide();frameMetrics.suspend();adaptiveResolution.reset();return;}
     wantTerrain(next);
@@ -1039,9 +1064,24 @@ export function attachRenderer(host, app) {
       raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
       firstPersonView = false;
     }
+    const talk = townStep?.kind === 'talk' && st.status === 'racing' && !st.paused ? townJob.stepState.screen : null;
+    let head = null;
+    if (talk) {
+      const lastSpeaker = talk.history.findLast(line => !line.radio && line.speaker !== 'you')?.speaker;
+      head = speakerHead(townStep, lastSpeaker ?? townStep.focus, now);
+      if (head) {
+        const listener = st.onFoot && st.fighter ? st.fighter : player.position;
+        const pose = talkCameraPose(listener, head, st.onFoot);
+        camera.position.copy(pose.position);
+        lookTarget.copy(pose.target);
+        raiseCameraOutOfSolids(camera.position, solidsNear(camera.position.x, camera.position.z, camera.position.x, camera.position.z));
+        firstPersonView = false;
+        player.visible = true;
+      }
+    }
     ready = true; camera.lookAt(lookTarget); camera.updateProjectionMatrix();
     if(!menu&&!st.onFoot&&!st.catastrophic&&!deepPose&&!heliPose&&!rampCamera&&!journeyView.camera&&!spurCamera&&
-        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&['chase','wide'].includes(app.cameraMode||'chase')){
+        !yardHomePose&&!app.inspectionCamera&&!landingBlend&&!forgeHold&&!talk&&['chase','wide'].includes(app.cameraMode||'chase')){
       camera.updateMatrixWorld();
       cameraBodyTarget.copy(player.position);cameraBodyTarget.y+=tall?1.65:1.05;
       cameraBodyProjection.copy(cameraBodyTarget).project(camera);
@@ -1050,6 +1090,20 @@ export function attachRenderer(host, app) {
         lookTarget.copy(aim);camera.lookAt(lookTarget);camera.updateMatrixWorld();
       }
     }
+    if (talk) {
+      camera.updateMatrixWorld();
+      let projected = null;
+      if (head && talk.line && !talk.line.radio) {
+        if (talk.line.speaker === 'you') {
+          talkProjection.copy(st.onFoot && st.fighter ? st.fighter : player.position);
+          talkProjection.y += st.onFoot ? 1.65 : 1.1;
+        } else talkProjection.copy(head);
+        talkProjection.project(camera);
+        projected = {x: .5 + talkProjection.x * .5, y: .5 - talkProjection.y * .5};
+      }
+      talkView ??= mountTalkView(host.parentElement, (action, screen) => app.duel.talkInput(action, screen));
+      talkView.update(talk, projected);
+    } else talkView?.update(null);
     lighting.followCamera(camera,st.onFoot&&st.fighter?st.fighter:pp,presentationSeconds);
     const visualGap=s=>app.duel.relativeS?app.duel.relativeS(s,st.s)-st.s:s-st.s;
     const lessonGhost=app.getDriveLessonGhost?.();
@@ -1123,8 +1177,8 @@ export function attachRenderer(host, app) {
       for(const lamp of police.userData.brakeLights||[])lamp.material.emissiveIntensity=pursuit.braking?4:1.4;
       lamps.children.forEach((lamp, i) => { lamp.visible = Math.floor(ambientNow / 130) % 2 === i; });
     }
-    effects.update({ p: pp, course, drawnShift, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
-    const effectDt = st.paused ? 0 : dt;
+    effects.update({ p: pp, course, drawnShift, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused || speaking ? 0 : dt, now:ambientNow });
+    const effectDt = st.paused || speaking ? 0 : dt;
     explosion.update(effectPoint(pp,st),st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     crashPoseState=st;
     combatEffects?.update({state:effectsField?st:null,course,dt:effectDt,
@@ -1193,7 +1247,7 @@ export function attachRenderer(host, app) {
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?presentationSeconds:st.totalTimeSec);
     lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
     animateScene(world,presentationSeconds);
-    syncScene(world,menu?{crushedProps:[]}:st,st.paused?0:dt);
+    syncScene(world,menu?{crushedProps:[]}:st,st.paused||speaking?0:dt);
     {
       const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
       // Once the pot is handed over at the forge it is the crane's to draw (src/world/forge-look.js), so it leaves the car.
@@ -1370,6 +1424,7 @@ export function attachRenderer(host, app) {
     },
     dispose() {
     clearTrackSnapshot();
+    talkView?.dispose();
     if(disposed)return;roadRoof.dispose();yetiView.dispose();yetiAssets.dispose();disposed=true;stopDeepEvents();deepView.dispose();heliView.dispose();wildlifeView.dispose();mapWorld.dispose();skiView.dispose();burntLook.dispose();snowmenView?.dispose();snowmenView=null;avalancheView?.dispose();avalancheView=null;preparedTrackKits?.dispose();preparedTrackKits=null;preloadTerrain.dispose();preloadChannel.port1.close();stopCrashEvents();lighting.stop();cancelAnimationFrame(raf);window.removeEventListener('resize',resize);document.removeEventListener('visibilitychange',visibility);
     if(readinessClaimed)app.releaseVisualReadiness?.(readinessOwner);
     if(window.__render===debugApi)delete window.__render;

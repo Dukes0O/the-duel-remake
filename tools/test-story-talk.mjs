@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {App} from '../src/app.js';
+import {pageFunctions, pageSource} from './scenarios/story-talk.mjs';
+import {speechPlacement, talkCameraPose} from '../src/story/talk-view.js';
 import {Duel} from '../src/game.js';
 import {startTalk, actOnTalk, talkScreen} from '../src/story/talk.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
@@ -94,4 +97,45 @@ assert.equal(world.job.talkResult.id, 'gift');
 assert.equal(world.job.stepIndex, 2);
 duel.step(.02);
 assert(duel.state.stageTimeSec > frozen[2]);
+// Keyboard state must cross the mode boundary safely even if the old driving
+// key was held on entry and released under the speech bubble.
+const memory = new Map();
+globalThis.localStorage = {getItem: k => memory.get(k) ?? null, setItem: (k, v) => memory.set(k, String(v))};
+globalThis.window = new EventTarget();
+window.location = {search: ''};
+globalThis.Element = class {};
+globalThis.cancelAnimationFrame = () => {};
+const app = new App();
+app.audio.unlock = () => {};
+app.duel.featureFlags = duel.featureFlags;
+app.profile = {...app.profile, wasteland: {...app.profile.wasteland, version: 1, discoveredGate: true}};
+app.duel.state.wastelandGateDiscovered = true;
+const oneChoice = {kind: 'talk', scene: {choices: [{id: 'leave', words: 'Go.'}]}};
+assert.equal(app.duel.startArenaEvent({...args, job: {steps: [oneChoice, fixture.steps[2]]}}), true);
+app.duel.state.countdown = 0;
+app.duel.step(.01);
+function key(type, code) {
+  window.dispatchEvent(Object.assign(new Event(type, {cancelable: true}), {code, repeat: false}));
+}
+key('keydown', 'KeyW');
+app._applyInput(.02);
+assert.equal(app.duel.state.input.throttle, 1);
+app.duel.step(.02);
+assert(!app.keys.KeyW && app.duel.state.input.throttle === 0, 'entry clears car and keyboard input');
+key('keyup', 'KeyW');
+const appWorld = app.duel.state.arena.worldJob;
+assert(app.duel.talkInput(select(0), appWorld.job.stepState.screen));
+app.duel.step(.02);
+app._applyInput(.02);
+assert.equal(app.duel.state.input.throttle, 0, 'the car does not drive after leaving the conversation');
+app.dispose();
+
+for (const [x, y] of [[0, 0], [320, 200], [100, 150]]) {
+  const p = speechPlacement({x, y}, 320, 200, 160, 44);
+  assert(p.left >= 0 && p.left + 160 <= 320 && p.top >= 0 && p.top + 44 <= 200);
+  assert(Math.abs(p.left + p.tail - Math.max(10, Math.min(310, x))) <= 4);
+}
+const shot = talkCameraPose({x: 0, y: 0, z: 0}, {x: 0, y: 1.6, z: 4}, true);
+assert(shot.position.z < 0 && shot.position.x > 0 && shot.target.z === 4);
+for (const name of Object.keys(pageFunctions)) pageSource(name);
 console.log('Story talk passed. Dialogue order, questions, hidden effects, branch selection and frozen world verified.');
