@@ -60,6 +60,7 @@ import {WARLORDS, BUILT_WARLORD_IDS} from './warlords.js';
 import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
+import {activeTalkStep} from './world/jobs/steps/talk.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
@@ -547,6 +548,7 @@ export class Duel {
           !['pit', 'salt-flats'].includes(venueId) || !Number.isSafeInteger(arsenalRank) ||
           arsenalRank < 12)) || !venue || !rules ||
         !Array.isArray(opponents) || mode === 'world-job' && !Array.isArray(job?.steps) ||
+        (mode === 'world-job' && job.steps.some(step => step?.kind === 'talk') && !this.featureFlags.enabled('story-choices')) ||
         (mode === 'convoy-raid' && (!this.featureFlags.enabled('convoy-raid') ||
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
         opponents.length < (ambush || mode === 'world-job' ? 0 : 1) || opponents.length > maxOpponents ||
@@ -695,7 +697,7 @@ export class Duel {
     }
     if (s.arena) {
       if (s.status === 'racing') {
-        stepArenaJunk(this, dt);
+        if (!activeTalkStep(s)) stepArenaJunk(this, dt);
         stepArenaEvent(this, dt);
       }
       return;
@@ -894,6 +896,14 @@ export class Duel {
     this._callout(text, seconds);
     this.onStoryCaption?.(text, urgent, this.state, fixedTime ? seconds : undefined);
   }
+  // Accept one action for the displayed screen. A click from an old bubble cannot answer a new question.
+  talkInput(action, screen) {
+    const world = this.state.arena?.worldJob;
+    if (this.state.paused || !screen || !activeTalkStep(this.state) || world.job.stepState.screen !== screen || world.talkAction) return false;
+    world.talkAction = action;
+    return true;
+  }
+
   setInput(partial) {
     if(this.state.deepJourney?.controlsLocked)partial={throttle:0,brake:0,steer:0,boost:false,shiftUp:false,shiftDown:false,interact:false};
     const input = this.state.input;
