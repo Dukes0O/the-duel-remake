@@ -22,6 +22,7 @@ export const BRAND_RULE = Object.freeze({
   duskSeconds: 240,
   ashWaves: Object.freeze([1, 2]),
   smotherRadius: 2,
+  lampWarningMetres: 15,
   smotherSeconds: 4,
   throwRange: 8,
   throwSeconds: 5,
@@ -106,6 +107,8 @@ export const BRAND_LINES = Object.freeze({
   brand: 'Cinder: Hold F to step out. Take a brand from the hearth.',
   awake: 'Auntie Solder: Three lamps. Now we can see how bad it is.',
   thief: "Auntie Solder: Thief! He's got my bellows!",
+  wallFirst: "Auntie Solder: One's over the wall!",
+  wallSecond: 'Auntie Solder: Two more over the wall!',
   pump: 'Auntie Solder: They are at the pump lamp!',
   tower: 'Auntie Solder: They are at the tower lamp!',
   far: 'Auntie Solder: They are at the far lamp!',
@@ -137,6 +140,7 @@ export function stepBrandAsh(step, state, view, dt = 0) {
       next.men[id] = {role: wave === 0 ? 'smother' : 'throw', throwWait: 0};
       requests.push({type: 'spawnBrandAsh', id, from});
     }
+    events.push({type: 'ashOverWall', lineId: wave === 0 ? 'brand.wallFirst' : 'brand.wallSecond'});
     wave++;
   }
   next.wave = wave;
@@ -163,8 +167,12 @@ export function stepBrandAsh(step, state, view, dt = 0) {
     if (man.role === 'smother') {
       const lamp = nearest(lamps.filter(candidate => view.lamps?.[candidate.id]), at);
       if (lamp && man.lamp !== lamp.id) {
-        events.push({type: 'lampThreatened', id: lamp.id});
         man.smotherSeconds = 0;
+      }
+      if (lamp && man.warnedLamp !== lamp.id &&
+          distance(at, spot(lamp)) <= BRAND_RULE.lampWarningMetres) {
+        events.push({type: 'lampThreatened', id: lamp.id});
+        man.warnedLamp = lamp.id;
       }
       man.lamp = lamp?.id ?? null;
       man.smotherSeconds = lamp && distance(at, spot(lamp)) <= BRAND_RULE.smotherRadius
@@ -237,6 +245,8 @@ export function stepBrand(step, state, view, dt) {
     requests.push(...ash.requests);
     for (const event of ash.events) if (event.type === 'lampThreatened')
       requests.push({type: 'say', lineId: `brand.${event.id}`});
+    else if (event.type === 'ashOverWall')
+      requests.push({type: 'say', lineId: event.lineId});
   }
   const here = view.onFoot ? view.fighter?.position : null;
   const carried = next.brandsUsed > 0;

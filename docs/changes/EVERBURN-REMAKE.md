@@ -7,6 +7,8 @@
 - Codex decided: shaken means 70% of the player's top speed; the Boneyard stays at 60 km/h. Sacks burst on the road beside the pursuing car.
 - Sound: sacks retain world.thief.ash; no new game event or cue.
 - Integration brought into this lane: already up to date at 0496c6d86.
-- Pending: points 2 to 6, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
+- Point 4 built: wall-crossing captions and lamp warnings only within 15 m; repeated steps do not repeat the warning. Captions add no sound cue.
+- Point 4 check on 75a15ae79 plus this change: job 2 rules pass, including browser-expression parsing; new wall-warning check failed first; no older assertion changed.
+- Pending: points 2, 3, 5 and 6, older related suites, Easy walk and drive, replay/world guards, lane tier, build and independent review.
 - For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all six fixes.
-- **Removed:** top-speed-minus-five pace and fixed-place sack targets.
+- **Removed:** top-speed-minus-five pace, fixed-place sack targets and distant lamp-arrival warnings.

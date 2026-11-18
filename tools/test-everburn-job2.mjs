@@ -134,6 +134,29 @@ const ashStep = {...step, ashEntries: [
 const ashView = {...foot(60), lamps: {pump: true}, brandSeconds: 90};
 const ashTick = (state, view = ashView, dt = 0) => stepBrandAsh(ashStep, state, view, dt);
 const firstWave = ashTick({});
+// Slice 11.4: wall crossings and lamp arrivals are separate warnings.
+const wallSay = stepOnFoot(ashStep, {...taken.state, lamps:{pump:true}}, foot(60));
+assert(wallSay.requests.some(request => request.type === 'say' && request.lineId === 'brand.wallFirst'));
+assert.equal(BRAND_LINES.wallFirst, "Auntie Solder: One's over the wall!");
+assert.equal(BRAND_LINES.wallSecond, 'Auntie Solder: Two more over the wall!');
+const warningAt = (state, x, lamps = ashView.lamps) => ashTick(state,
+  {...ashView, lamps, ashMen:[{id:'town-ash-0-0', position:{x,y:0,z:0}}]});
+const distantWarning = warningAt(firstWave.state, -70);
+assert.deepEqual(distantWarning.events, [], 'Choosing a lamp 130 m away must not warn of arrival.');
+const outsideWarning = warningAt(distantWarning.state, 44.99);
+assert.deepEqual(outsideWarning.events, []);
+const nearWarning = warningAt(outsideWarning.state, 45);
+assert.deepEqual(nearWarning.events, [{type:'lampThreatened',id:'pump'}]);
+assert.deepEqual(warningAt(nearWarning.state, 46).events, [], 'Do not repeat the same lamp warning.');
+const otherLamp = warningAt(nearWarning.state, 85, {tower:true});
+assert.deepEqual(otherLamp.events, [{type:'ashOverWall',lineId:'brand.wallSecond'},
+  {type:'lampThreatened',id:'tower'}]);
+assert.deepEqual(warningAt(otherLamp.state, 100, {}).events, [], 'A dark lamp is not threatened.');
+const secondWallSay = stepOnFoot(ashStep, {...taken.state, lamps:{pump:true,tower:true},
+  brandAsh:firstWave.state}, foot(60));
+assert(secondWallSay.requests.some(request => request.type === 'say' && request.lineId === 'brand.wallSecond'));
+assert(!secondWallSay.requests.some(request => request.lineId === 'brand.wallFirst'));
+console.log('PASS slice 11.4: wall warnings and one arrival warning within 15 m of each lit target.');
 assert.equal(firstWave.requests.length, 1);
 assert.equal(firstWave.requests[0].from.id, 'west');
 assert.equal(firstWave.requests[0].type, 'spawnBrandAsh');
