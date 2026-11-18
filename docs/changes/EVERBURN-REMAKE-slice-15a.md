@@ -8,8 +8,8 @@ Hand Flamer now reads barrel flame state for `weapon.flame.start`, `.loop`, `.en
 Finding 4 measured: `sim-driving.js:204` requests `world.ground.scab-plates`, which borrows `vehicle.crash.recorded` (`sound-bank.js:642`); `sim-scablands.js:38` also requests it.
 At (5960,62), 15 m west of the gate, four real Duel steps crossing the road edge produced two such cues: armour 121 throughout, damage zones 0, impactTimer 0 s throughout.
 Ground transitions/refusals now use existing suspension thump `vehicle.landing`; solid/car crash routing and every damage rule stay unchanged. Finding 3 is not reproduced; no exit-rule change.
-Checks: lamp suites job2/world-hud/combat-hud/scablands-scene pass; P4 audio historical pins pass; real audio/PCM on review-fix commit passes 721 checks; Easy job2 10/10, one brand each. Final lane/build and older suites pending.
-Changed assertions, for Claude to review: card lists radius 2 to 3.5, walking lights, zero metres to `0.0`, excluding only the new hiss from the historical bank pin, browser pictures 4 to 5 for lighting.
+Checks on 55804f3ac plus listed uncommitted catch fixture: lane 117/117, build pass, replay fingerprints 297 unchanged; all 23 searched older suites pass; Easy job2 10/10 (one brand each), audio 721, Old Smoke 4402, Field Battle 4954, ember-save 117. Earlier partial concurrent gate yielded; this full gate completed.
+Changed assertions, for Claude to review: card lists lamp radius/walking/distance, new-hiss historical-bank exclusion, browser pictures 4 to 5, and retained Old Smoke catch checks updated to stop-and-collect (no furnace chase assertion changes).
 For Claude to run: existing browser `everburn-job2` (page expressions parse in Node), then the job by hand with sound. Independent code review confirmed all fixes.
-Codex decided: see card for measured cause, bounded three-cue admission and why finding 3 has no proposed cure.
-Removed: `standingSpeed`, its speed gate and ìHold still to light the lamp.î CPU crews still use the old flamer tone, so its bank cue remains.
+Codex decided: measured ground cue, three-cue flame admission and no exit-rule cure, on the card. Final catch-fixture and evidence commit is blocked by automatic approval review until Claude records assertion approval.
+Removed: `standingSpeed`, its speed gate and ‚ÄúHold still to light the lamp.‚Äù CPU crews still use the old flamer tone, so its bank cue remains.
