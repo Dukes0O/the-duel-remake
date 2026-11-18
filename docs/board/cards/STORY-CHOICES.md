@@ -29,3 +29,10 @@ Kyle reads 1 to 4 before any card for Codex is written. After that each scene be
 - A choice shows its cost before it is made, and its consequence when it lands ("because you gave Rell the ember").
 - Chance may decide an outcome, from the save's own seed, and the player is told it was chance.
 - Every chapter can be lost, and the player can see how.
+
+## The design, first draft (Claude, 18 November 2026)
+
+`docs/story/five-cold-nights.md` holds items 1 to 5: the form (a hearth to keep, a road to run, people who remember),
+the ledger, the first act's map of choices (five nights, four endings), the second night written in full with every
+line and branch, and what is reused. It ends with three things for Kyle to rule on. **Waiting for Kyle to read it.**
+Nothing is built from it yet. Still owed after his reading: the other four nights written in full, as the second is.
