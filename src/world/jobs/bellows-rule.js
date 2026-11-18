@@ -82,8 +82,8 @@ export const BELLOWS_LINES = Object.freeze({
   restart: "Cinder: He has reached the furnace, and they have had their hands on the bellows. He is slowing. Again, from the Boneyard's edge.",
 });
 
-// These are the wrecks' actual axis-aligned solid boxes, not their drawn
-// headings. Round the east wreck's south end, the north wreck's north end,
+// These are the wrecks' bounds (an axis-aligned box round each whole aircraft;
+// a wreck is solid only in the parts inside it), not their drawn headings. Round the east wreck's south end, the north wreck's north end,
 // then the south wreck's south end. The actor follows every corner exactly.
 export function bellowsWreckRoute(wrecks, entry, exit) {
   const box = id => {

@@ -184,8 +184,10 @@ export function stepBrandAsh(step, state, view, dt = 0) {
     const man = next.men[actor.id] = {...next.men[actor.id]};
     if (man.gone) continue;
     const at = spot(actor), playerGap = distance(at, here);
+    // The flamer's reach is measured over the ground, as its cone is (the arena checks the difference in height on its own).
+    const flatGap = at && here ? Math.hypot(at.x - here.x, at.z - here.z) : Infinity;
     const hit = view.onFoot && ((view.brandSwing && view.brandSeconds > 0 && playerGap <= BRAND_RULE.swingRadius) ||
-      ((view.handFlamerHits ?? []).includes(actor.id) && playerGap <= BRAND_RULE.handFlamerRadius));
+      ((view.handFlamerHits ?? []).includes(actor.id) && flatGap <= BRAND_RULE.handFlamerRadius));
     if (hit && !man.fleeing) {
       man.fleeing = true;
       man.wall = nearest(entries, at);

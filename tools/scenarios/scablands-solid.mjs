@@ -12,6 +12,11 @@ import {SCARPS} from '../../src/world/scablands-scarps.js';
 
 const QUALITY = 'performance';
 const solid = id => SCABLANDS_SOLIDS.find(row => row.id === id);
+// Whether (x, z) is within `slack` metres of a solid's turned box.
+const withinBox = (solid, x, z, slack) => {
+  const c = Math.cos(solid.heading), s = Math.sin(solid.heading), dx = x - solid.x, dz = z - solid.z;
+  return Math.abs(dx * c - dz * s) <= solid.halfX + slack && Math.abs(dx * s + dz * c) <= solid.halfZ + slack;
+};
 // A solid's face that looks into clear ground for `reach` metres: {x, z (its middle), nx, nz (the way out), tx, tz}, or null.
 function openFace(row, reach = 30) {
   const c = Math.cos(row.heading), s = Math.sin(row.heading), ex = {x: c, z: -s}, ez = {x: s, z: c};
@@ -20,7 +25,9 @@ function openFace(row, reach = 30) {
     let clear = true;
     for (let metres = 3; metres <= reach && clear; metres += 3) {
       const x = face.x + n.x * metres, z = face.z + n.z * metres;
-      clear = !solidsNear(x, z, x, z, 3).some(other => other !== row) && riverDepthAt(x, z) < .5;
+      // `solidsNear` answers every solid in the grid cells round the point; a wreck is several boxes close together, so each
+      // is measured: only a box within 3 m of the point bars the face.
+      clear = !solidsNear(x, z, x, z, 3).some(other => other !== row && withinBox(other, x, z, 3)) && riverDepthAt(x, z) < .5;
     }
     if (clear) return face;
   }

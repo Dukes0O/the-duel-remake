@@ -131,6 +131,9 @@ assert.equal(bellowsThiefSpeedKmh(200,true,120,'medium',true),60);
 // Each arrival at the furnace slows his next pass through the wrecks by 10 km/h, never under 30.
 for (const [arrivals, kmh] of [[0,60],[1,50],[2,40],[3,30],[9,30]]) assert.equal(bellowsThiefSpeedKmh(200,true,120,'medium',false,arrivals),kmh);
 const pace = result => result.requests.find(request=>request.type==='follow').speed*3.6;
+// And the chase itself asks for that pace: after two arrivals he is followed through the wrecks at 40 km/h.
+assert(Math.abs(pace(reachTick({launchEnded:true,furnaceArrivals:2},120,0,60,1/60,{inBoneyard:true}))-40)<1e-9);
+assert(Math.abs(pace(reachTick({launchEnded:true},120,0,60,1/60,{inBoneyard:true}))-60)<1e-9);
 assert(Math.abs(pace(reachTick({},120,0,20,89.99))-15)<1e-9);
 assert.equal(pace(reachTick({},120,0,20,90)),180);
 const launched=reachTick({},120,0,20.01,0);

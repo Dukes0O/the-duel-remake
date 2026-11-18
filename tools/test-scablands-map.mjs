@@ -96,7 +96,8 @@ check(buildMs < 5000, 'the picture is made in a few seconds at the most even on 
   // The plan of each place is its solid boxes, each inside the place's own neighbourhood.
   for (const place of marks.places.slice(1)) check(place.plan.every(box => Math.hypot(box.x - place.x, box.z - place.z) < 400), `${place.name}'s plan stands round it`);
   check(marks.places.find(item => item.id === 'tin-town').plan.length >= 8 && ['north', 'east', 'south'].every(id => marks.places.find(item => item.id === 'boneyard').plan.some(box => box.id === `boneyard-wreck-${id}`)) &&
-    marks.places.find(item => item.id === 'boneyard').plan.every(box => /^boneyard-wreck-(north|east|south)(-\d+)?$/.test(box.id)),
+    marks.places.find(item => item.id === 'boneyard').plan.every(box => /^boneyard-wreck-(north|east|south)(-\d+)?$/.test(box.id)) &&
+    marks.places.find(item => item.id === 'boneyard').plan.length === 15,
     "Tin Town's plan has its clusters, gate posts and town; the Boneyard's has its three wrecks, each in the parts it is solid in");
   // The raster knows the roads: along every road, the cell under the road or one beside it is ground of the kind a road is.
   for (const road of ROAD_NET.roads) {

@@ -920,6 +920,9 @@ wreckScene.dispose();
     assert.deepEqual(fitted.parts.map(part=>[part.u,part.w,part.halfU,part.halfW,part.height]),wreck.parts.map(row=>[...row]),`${wreck.part}: the solid parts in the table are what tools/measure-boneyard-wrecks.mjs gives`);
     const solids=SCABLANDS_SOLIDS.filter(row=>row.id===`boneyard-wreck-${wreck.id}`||row.id.startsWith(`boneyard-wreck-${wreck.id}-`));
     assert.equal(solids.length,wreck.parts.length,`${wreck.part} has a solid for each part`);
+    // Every part lies inside the wreck's bounds, which routes keep clear of.
+    for(const solid of solids){const cos=Math.abs(Math.cos(solid.heading)),sin=Math.abs(Math.sin(solid.heading)),ex=cos*solid.halfX+sin*solid.halfZ,ez=sin*solid.halfX+cos*solid.halfZ;
+      assert.ok(solid.x-ex>=wreck.x-wreck.size[0]/2&&solid.x+ex<=wreck.x+wreck.size[0]/2&&solid.z-ez>=wreck.z-wreck.size[2]/2&&solid.z+ez<=wreck.z+wreck.size[2]/2,`${solid.id} lies inside its wreck's bounds`);}
     const inside=(x,z,slack)=>solids.some(solid=>{const cos=Math.cos(solid.heading),sin=Math.sin(solid.heading),dx=x-solid.x,dz=z-solid.z;
       return Math.abs(dx*cos-dz*sin)<=solid.halfX+slack&&Math.abs(dx*sin+dz*cos)<=solid.halfZ+slack;});
     let atCarHeight=0,outside=0;const cells=new Set();

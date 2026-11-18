@@ -1388,6 +1388,26 @@ road far from the furnace; the car caught a gate post on the way out and nothing
 17 seconds once he was caught, which may be too easy with a fast car; his pass through the wrecks and the furnace's
 cost are not yet driven by hand, because he was stopped on the road; the roof load is a plain box.
 
+## The review of Claude's own evening changes, cured (17 November 2026, night): merged, hidden
+
+A separate Claude reviewer read Claude's changes of the evening (the wrecks' solid parts, job 3's start, furnace and ash,
+job 2's flamer aim and ending view). Its faults and their cures:
+- **The flamer's reach was still measured with height in the rule** (`brand-rule.js`), so an Ash Man a step below the
+  walker could stand inside the cone and not be burned back. The reach is over the ground now, as the cone is. Check: a
+  walker 5.8 m away over the ground and 1.9 m above the man burns him back (`test-everburn-job2`).
+- **The solids scenario's picture of an open face looked only at whole-wreck bounds**, so it could aim at a face with
+  another part against it. It measures each neighbouring box now; all 14 views pass.
+- **No check held the parts inside their wreck or pinned how many there are.** `test-scablands-scene` now checks every
+  part lies inside its wreck's bounds; `test-scablands-map` checks the Boneyard's plan is 15 parts of the three wrecks
+  (a tighter check than before, nothing loosened).
+- **The slower pass through the wrecks was checked only in the speed function.** `test-everburn-job3` now checks the
+  chase itself asks for 40 km/h after two arrivals at the furnace and 60 km/h after none.
+- A comment in `bellows-rule.js` called the wreck's bounds its solid boxes; corrected.
+Checks on the working tree over `b1d6c1afd`: the four suites above, the browser scenario `scablands-solid` (14 views),
+the lane tier for the changed files (82 suites, pass; the long suites it left to the night are `test-everburn-easy`,
+`test-field-battle`, `test-first-person-polish`, `test-old-smoke`, `test-run-gas-medium`), and the build.
+**Removed:** nothing.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

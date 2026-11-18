@@ -68,7 +68,6 @@ assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
   state.fighter.pitch=.6;
   assert.deepEqual(brandCombatView(state,world).handFlamerHits,['ahead'],'looking up changes nothing either');
 }
-
 // Use the normal weapon step: no flame, rocket or repair on a brand click.
 closeWorld.actors[0].z=2;
 const toolDuel=new Duel({featureFlags:createFeatureFlags({storage:null,qa:true,
@@ -301,6 +300,13 @@ assert.equal(ashTick(firstWave.state, {...swingView, ...foot(57.99)}).state.men[
 const flamerView = {...smotherView, ...foot(54), handFlamerHits: ['town-ash-0-0']};
 assert.equal(ashTick(firstWave.state, flamerView).state.men['town-ash-0-0'].fleeing, true);
 assert.equal(ashTick(firstWave.state, {...flamerView, ...foot(53.99)}).state.men['town-ash-0-0'].fleeing, undefined);
+// The rule's own test of the flamer's reach is over the ground too (a review of the cure found it still counted height):
+// a walker 5.8 m from the man over the ground and 1.9 m above him burns him back.
+{
+  const man = places[0].position, raised = foot(54);
+  const view = {...flamerView, fighter:{...raised.fighter, position:{x:man.x + 5.8, y:man.y + 1.9, z:man.z}}};
+  assert.equal(ashTick(firstWave.state, view).state.men['town-ash-0-0'].fleeing, true);
+}
 const overWall = ashTick(fleeing.state, {...ashView, ashMen: [
   {id: 'town-ash-0-0', position: {x: 200, y: 0, z: 0}},
 ]});
