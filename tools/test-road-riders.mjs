@@ -382,13 +382,17 @@ async function crewPresentation() {
     advance(sim,DT);
     syncScene(scene.group,state,DT);
     effects.update({state,course:duel.course,dt:DT});
-    assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-smoke')?.visible);
+    assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-explosion')?.visible);
     assert.equal(legs.count,RULE.crewPerCar*8);
     const boot=()=>{const p=new THREE.Matrix4(),q=new THREE.Matrix4();legs.getMatrixAt(4,p);legs.getMatrixAt(5,q);
       return new THREE.Vector3().setFromMatrixPosition(p).sub(new THREE.Vector3().setFromMatrixPosition(q));};
     const offset=boot();
-    advance(sim,.24);
-    syncScene(scene.group,state,.24);
+    for(let frame=0;frame<15;frame++) {
+      duel.step(DT);
+      syncScene(scene.group,state,DT);
+      effects.update({state,course:duel.course,dt:DT});
+    }
+    assert.ok(effects.group.getObjectByName('combat-vfx-wreck-5-smoke')?.visible);
     assert.ok(boot().distanceTo(offset)>.01,'the shared foot rig articulates while its crew runs');
     const retreating=state.opponents[3];
     retreating.roadRider.fightToEnd=false;
