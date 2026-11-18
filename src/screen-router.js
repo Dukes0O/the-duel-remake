@@ -360,6 +360,11 @@ root.addEventListener('click',e => {
       app.leaveWorldJob?.();lastScreen=null;renderState(app.duel.state);return;
     } if(app.returnToYard())lastScreen=null; return;
     // Opening a presentation screen must not mark story notes read or save a profile.
+    case 'yard-ledger':
+      if (app.wastelandUnlocked() && app._switches().enabled('story-choices') && openYardPanel('ledger')) {
+        app.audio?._playCue?.('story.ledger.open');
+      }
+      return;
     case 'yard-cards': if(app.wastelandUnlocked() && app._switches().enabled('warlord-cards')){openYardPanel('cards');root.querySelector('.water-road-wall [data-water-step]')?.scrollIntoView({block:'nearest'});} return;
     case 'yard-home': openYardPanel('home'); return;
     case 'yard-menu': if(app.isYardHomeActive()){yardPanel='home';app.requestNavigation('menu');lastScreen=null;renderState(app.duel.state);} return;
