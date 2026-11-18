@@ -1167,7 +1167,11 @@ export function brandCombatView(state, worldJob) {
   worldJob.brandSwingHeld = attacking;
   const handFlamerHits = [];
   if (attacking && !swing && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
-    const direction = gearDirection(fighter), gear = signatureFor('cinder');
+    // The aim is judged on the flat: a man is within reach by his distance over the ground and within the cone by the
+    // way the walker faces. The view is tilted down about 22 degrees when nothing moves it, and a cone 17.5 degrees
+    // either side measured in three dimensions against a flat distance could then never hold anyone (Claude's hand play,
+    // 17 November 2026). The difference in height is checked on its own below.
+    const yaw = fighter.yaw || 0, direction = {x: Math.sin(yaw), z: Math.cos(yaw)}, gear = signatureFor('cinder');
     for (const actor of worldJob.actors) {
       if (!actor.brandAsh) continue;
       const dx = actor.x - fighter.x, dz = actor.z - fighter.z;

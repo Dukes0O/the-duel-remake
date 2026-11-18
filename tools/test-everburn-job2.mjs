@@ -56,6 +56,19 @@ brandCombatView(closeState,closeWorld);
 closeState.fighterInput.fire=true;
 assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
 
+// Claude's hand play, 17 November: the flamer reaches a man by the flat distance and the way the walker faces, whatever
+// the tilt of the view. At the view's own resting tilt (about -0.39) a man 5 m dead ahead is burned back; one 30 degrees
+// to the side is not; one at 6.5 m is not.
+{
+  const world = {actors:[{id:'ahead',brandAsh:true,x:0,y:0,z:5},{id:'aside',brandAsh:true,x:2.5,y:0,z:4.33},
+    {id:'far',brandAsh:true,x:0,y:0,z:6.5}],job:{steps:[{brand:true}],stepIndex:0,stepState:{brandSeconds:90}}};
+  const state = {status:'racing',onFoot:true,fighter:{x:0,y:0,z:0,yaw:0,pitch:-.39,flaming:true},
+    fighterInput:{fire:true},footWeapons:{selected:'hand-flamer'},arena:{mode:'world-job',worldJob:world}};
+  assert.deepEqual(brandCombatView(state,world),{brandSwing:false,handFlamerHits:['ahead']});
+  state.fighter.pitch=.6;
+  assert.deepEqual(brandCombatView(state,world).handFlamerHits,['ahead'],'looking up changes nothing either');
+}
+
 // Use the normal weapon step: no flame, rocket or repair on a brand click.
 closeWorld.actors[0].z=2;
 const toolDuel=new Duel({featureFlags:createFeatureFlags({storage:null,qa:true,

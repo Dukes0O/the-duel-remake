@@ -1176,6 +1176,79 @@ untouched. Checks: lane tier 41 of 41, build, browser scenario `everburn-job2`. 
 scenario's picture (its head first read as an orange bucket and was darkened; not yet seen again), the lamp only in a
 test scene. Dusk, the lit windows and the people coming out are still to draw.
 
+## Claude's second hand play of job 2 (17 November 2026, evening; visible window, real keys and mouse)
+
+Played from the forge bay to two lit lamps and a meeting with an Ash Man at the pump lamp. What works by hand: the
+briefing, stepping out, the brand at the hearth, the marker ("PUMP LAMP 63 m") and the town map, both lamps lit by
+standing, Auntie's two warnings at the right moments, the hint for the flamer and the brand, the drawn lamp with its
+pool of light, the brand in the player's view (it was out of view at 0.65 m forward; it is held at 1 m forward now).
+
+**Cured at once by Claude, with a check (to be confirmed by the next review):** the Hand Flamer could never burn an Ash
+Man back when the view was at its resting tilt. The aim compared a direction in three dimensions (tilted 22 degrees
+down) with a flat distance, and the flamer's cone is 17.5 degrees either side, so a man dead ahead at 5 m was outside
+it. A lamp was smothered while Claude stood 5 m away with the flamer burning. The aim is now judged on the flat.
+
+**Faults for slice 13, before Kyle tries it:**
+1. Holding F does nothing for the first twelve seconds, while the prompt "HOLD F TO GET OUT" is shown, because the
+   briefing is still being said. Let the player step out at once and let the lines go on.
+2. Cinder's "Hold F to step out. Take a brand from the hearth." is shown after the brand has been taken.
+3. The marker points straight at the first lamp through the forge's crane, and a walker who follows it stands against
+   the crane's foot. The marker should lead round the forge (the alley route the Ash Men already use).
+4. The pump lamp and the far lamp stand on open ground outside the last shacks, the far lamp about 60 m out on the
+   plates. They are to stand among the shacks, where a lamp lights something.
+5. No flame is seen when the Hand Flamer is fired on foot in this job, so a miss and a hit look the same.
+6. The Hand Flamer shows "AMMO 4" and then "AMMO" with a dash; what it holds and what a click costs is not clear on
+   the screen.
+7. The same wrong aim is in the crew gear's own test of the flamer against cars (`src/crew-gear/signature.js`,
+   about line 106): to be looked at there too.
+
+**Third hand play, the same evening: job 2 finished by hand.** Two lamps lit, the first Ash Man burned back with the
+flamer at 4 m while he stood smothering the far lamp (the lamp stayed lit), the brand put out by the two throwers, both
+burned back at arm's length, the brand relit at a lamp, the smothered lamp relit, the third lamp reached by the alleys,
+the ending and the results: two brands, 70 scrap, about four minutes. The flamer's cure holds. Further faults for slice
+13:
+8. **The ending is not seen.** The view stays where the player stood, here facing the fence a metre from the tower
+   lamp, while Auntie speaks and the thief runs. The hold needs a view of its own over the town (as job 1's hold has at
+   the forge): the windows lighting, then the thief running from the forge to the gate.
+9. The results say "You made it back to the yard.", which is not what happened.
+10. A line from another mode, "That road is mine. Keep moving.", is shown when an Ash Man is close.
+11. The two throwers, once the brand is out, stand face to face with the player and do nothing more.
+12. A lit lamp keeps its red ring, at the ending too.
+13. Fault 3 again, and it cost a brand's worth of time: the marker led straight into a shack on the way to the tower
+    lamp, 88 m short of it.
+14. It is bright noon at the ending; dusk is still to draw (Claude's).
+The Ash Men are the blocky raider figures; beside the drawn lamp and brand they read as toys (Claude's, an art round).
+A note on the tool: a mouse press made while the pause screen is still fading does not reach the game, which made
+several of Claude's shots miss; the hand-drive tool now waits and presses clear of the captions.
+
+## Claude's hand drive of job 3 (17 November 2026, evening; visible window, real keys): not finished, faults found
+
+Played from the start on foot to one knock on the thief in the Boneyard, then held fast and stopped. What works by
+hand: Auntie's cry, the bellows bar, the Hand Flamer lent on foot, the thief on the map with his distance, the road at
+175 km/h, the message when he reaches the furnace, a hard knock counted at 21 km/h.
+
+**Faults, for slice 13 and for Claude's design, before Kyle tries it:**
+1. **An unseen wall in the Boneyard.** The car was held at about (4256, 2997) on open ground, with nothing drawn in
+   front of it, twice. The wrecks' solids are three whole boxes, each as wide as an aircraft with both wings, and the
+   wrecks drawn there have less than that. The thief's line rounds the corners of those unseen boxes. A solid must be
+   where something is drawn and nowhere else: the boxes are to follow the fuselage, tail and wing that are drawn.
+2. **The way to the car.** On foot the marker "YOUR CAR 60 m" points through the shacks. Claude stood against a wall
+   36 m from the car while the thief drew 1.9 km ahead. The same fault as job 2's marker.
+3. **The way out of town.** From the forge bay the car met the town's fence before it found the gate. Nothing shows
+   the driver the gate; the route's first point is beyond the fence.
+4. **Late to the road.** A player who takes a minute to reach the car and the gate never meets the thief on the road:
+   he is in the Boneyard first. His slow start (40 km/h for 25 seconds) is too short for a player on foot among
+   shacks. He should not leave the gate's mouth until the player's car has moved.
+5. **The restart is a loop** (Claude's design, to be changed). When he reaches the furnace the player's car is put at
+   the Boneyard's edge and he sets off again, and he reaches the furnace again about 25 seconds later, and again. Kyle
+   asked for no loops (11 November). To be redesigned: what the furnace does with the bellows when he arrives, so that
+   reaching it is an ending that is worse, not a turn of a wheel.
+6. After the restart he stood 7 m from the car, not 150 m ahead, and the first knock was a tap at 21 km/h on a
+   standing car.
+7. The weapons shown in the car are UFO jump, bomb storm, crossbow and star shield: none of them belongs to a chase
+   for a pair of leather bellows, and three of them spoil the bellows.
+Not driven: his blocking and his sacks on the road, the furnace's riders, the second and third knocks, the ending.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the
