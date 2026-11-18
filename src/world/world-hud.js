@@ -8,6 +8,7 @@ import {scablandsDriveAt} from './scablands-regions.js';
 import {EMBER_SCOOP} from './jobs/ember-rule.js';
 import {BRAND_RULE, BRAND_LINES} from './jobs/brand-rule.js';
 import {BELLOWS_RULE, bellowsSentence} from './jobs/bellows-rule.js';
+import {GAS_LOAD_RULE} from './jobs/gas-load-rule.js';
 import {FURNACE_PATIENCE_SECONDS} from './jobs/furnace-sightings.js';
 
 const pointOf = value => value?.position ?? value;
@@ -167,7 +168,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     wave: step?.kind==='defend' ? {value:worldJob?.job?.stepState?.wave??0,max:step.waveCount??3} : null,
     well: step?.kind==='defend' ? {value:worldJob?.places?.[step.placeId]?.health??step.health??100,max:step.health??100} : null,
     // RUN-GAS: the escorted truck's health, while a step has raids on her road.
-    truck: step?.kind==='escort'&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
+    truck: step?.kind==='escort'&&!step.gasLoad&&step.ambushes?.length ? {value:worldJob?.actors?.find(item=>item.id===step.actorId)?.health??step.health??100,max:step.health??100} : null,
+    gas: step?.gasLoad ? {value: job.stepState.gas ?? GAS_LOAD_RULE.start, max: GAS_LOAD_RULE.start,
+      holes: job.stepState.holes ?? GAS_LOAD_RULE.startHoles} : null,
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
     ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
@@ -192,6 +195,17 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
 }
 
 const STYLE_ID = 'world-hud-style';
+export function drawGasGauge(gas, gauge, bar, label, note) {
+  const share = Math.max(0, Math.min(1, gas.value / gas.max));
+  bar.style.width = `${(share * 100).toFixed(1)}%`;
+  gauge.style.setProperty('--ember-glow', share.toFixed(2));
+  gauge.classList.remove('is-out', 'is-losing', 'is-flashing');
+  label.textContent = 'GAS';
+  const holes = `${gas.holes} ${gas.holes === 1 ? 'hole' : 'holes'} open.`;
+  note.textContent = `${Math.ceil(gas.value)} / ${gas.max}. ${holes}`;
+  gauge.setAttribute('aria-label', `Gas is ${Math.ceil(gas.value)} out of ${gas.max}. ${holes}`);
+}
+
 export function drawBellowsGauge(bellows, gauge, bar, label, note) {
   const share = Math.max(0, Math.min(1, bellows.value / bellows.max));
   bar.style.width = `${(share * 100).toFixed(1)}%`;
@@ -483,7 +497,8 @@ export function createWorldHud({host, app = null, picture = null}) {
         seenMeter.max = model.seen.max;
         seenMeter.value = model.seen.value;
       }
-      emberGauge.hidden = !model.ember && !model.brand && !model.bellows;
+      emberGauge.hidden = !model.ember && !model.brand && !model.bellows && !model.gas;
+      if (model.gas) drawGasGauge(model.gas, emberGauge, emberBar, emberLabel, emberNote);
       if (model.bellows) drawBellowsGauge(model.bellows, emberGauge, emberBar, emberLabel, emberNote);
       if (model.brand) drawBrandGauge(model.brand, emberGauge, emberBar, emberLabel, emberNote);
       if (model.ember) {

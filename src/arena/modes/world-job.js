@@ -1037,6 +1037,7 @@ function clearAmbush(duel, worldJob, key) {
 
 // RUN-GAS: every raider of an ambush still standing within 30 m of the escorted truck wears her health down each second.
 function wearEscort(worldJob, step, difficulty, dt) {
+  if (step.gasLoad) return;
   const truck = worldJob.actors.find(actor => actor.id === step.actorId);
   if (!truck?.position || !(truck.health > 0)) return;
   const rate = AMBUSH_WEAR_PER_SECOND[difficulty] ?? AMBUSH_WEAR_PER_SECOND.medium;

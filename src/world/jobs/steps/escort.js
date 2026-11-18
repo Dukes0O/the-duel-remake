@@ -1,5 +1,5 @@
 import {pathShare} from '../furnace-sightings.js';
-import {gasLoadMeeting} from '../gas-load-rule.js';
+import {GAS_LOAD_RULE, gasLoadMeeting} from '../gas-load-rule.js';
 
 // Raids on an escort (docs/board/cards/RUN-GAS.md, "Raids on an escort"). A step may carry `ambushes`: [{id, place, count}].
 //   - When the truck comes within AMBUSH_ALERT_METRES of an ambush's place, its raiders appear (a spawnWave request).
@@ -102,13 +102,14 @@ function stepAmbushes(step, state, view, truck, requests) {
 
 export function stepEscort(step, state, view, dt = 0) {
   if (step.gasLoad) {
+    state = {gas: GAS_LOAD_RULE.start, holes: GAS_LOAD_RULE.startHoles, ...state};
     const meeting = gasLoadMeeting(step, state, view);
     if (meeting) return meeting;
     state = {...state, gasLoaded: true};
   }
   const actors = view.actors ?? [];
   const truck = actors.find(actor => actor.id === step.actorId);
-  if (truck && (truck.health ?? 1) <= 0) {
+  if (!step.gasLoad && truck && (truck.health ?? 1) <= 0) {
     // Rests are counted for the stretch she is on (the place she is heading for), so a run can never loop for ever (RUN-GAS).
     const stretch = String(truck.pathIndex ?? 1);
     if (!state.rested) return { state: { rested: true, restLeft: step.restSeconds ?? 0, stretchRests: {...(state.stretchRests ?? {}), [stretch]: (state.stretchRests?.[stretch] ?? 0) + 1} }, events: [{ type: 'rest', actorId: step.actorId }], requests: [{ type: 'say', lineId: step.restLineId }, { type: 'follow', path: step.path, speed: 0 }] };

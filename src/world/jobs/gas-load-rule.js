@@ -1,5 +1,7 @@
 // Slow Ride's numbers and meeting. State lasts for this job only.
 export const GAS_LOAD_RULE = Object.freeze({
+  start: 100,
+  startHoles: 0,
   speedKmh: 32,
   carStartBehindMetres: 60,
   carStartSideMetres: 0,
