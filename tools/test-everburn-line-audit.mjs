@@ -9,8 +9,9 @@ import {LAND} from '../src/world/scablands-names.js';
 // These lines have no existing event at their written moment. The allow-list may only shrink.
 const notYet = new Set(['story.ember.cinder.7', 'story.ember.moss.2']);
 // The remade pickup replaces this opening, but the story keeps its line ID.
-const replaced = new Set(['story.ember.cinder.2']);
-const sources = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/arena/modes/world-job.js']
+const replaced = new Set(['story.ember.cinder.2', 'story.ember.auntie-solder.3',
+  'story.ember.cinder.5', 'story.ember.cinder.6', 'story.ember.auntie-solder.4', 'story.ember.cinder.9']);
+const sources = ['src/world/jobs/everburn.js', 'src/world/jobs/gas-run.js', 'src/world/jobs/bellows-rule.js', 'src/arena/modes/world-job.js']
   .map(path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')).join('\n');
 const referenced = new Set([...sources.matchAll(/['"](story\.ember\.[a-z0-9.-]+)['"]/g)].map(match => match[1]));
 for (const id of replaced) assert.ok(EMBER_CAPTIONS[id]?.text, `replaced line ${id} remains available`);
@@ -30,8 +31,9 @@ function checkLineIds(value, key = '') {
 for (const job of [...EVERBURN_JOBS, ...EVERBURN_SIDE_JOBS]) checkLineIds(job);
 
 
-function heard(definition, views) {
+function heard(definition, views, initial = {}) {
   let job = createJob(definition, 1), lines = [];
+  job.stepState = {...initial};
   for (const [view, ticks] of views) for (let i=0; i<ticks; i++) {
     job = stepJob(job, view, .1);
     lines.push(...job.requests.filter(request => request.type === 'say').map(request => request.lineId));
@@ -60,11 +62,14 @@ for (const [index, {x, z}, id] of [[0,LAND.at('ash-barricade-1'),'story.ember.ci
 const pickup = EVERBURN_JOBS[0].steps[0].pickup;
 const one = heard(EVERBURN_JOBS[0], [[{player:{position:pickup.place.position},speedKmh:0,actors:[]}, 150]]);
 assert.deepEqual(one.lines.slice(0,3), pickup.lines, 'job 1 pickup lines play in order');
-const two = heard(EVERBURN_JOBS[1], [[far, 70]]);
-assert.ok(two.lines.indexOf('story.ember.auntie-solder.3') >= 0 && two.lines.indexOf('story.ember.cinder.5') > two.lines.indexOf('story.ember.auntie-solder.3'), 'job 2 start lines play in order');
-const lamp=EVERBURN_JOBS[1].steps[0].places[0];
-const lit=heard(EVERBURN_JOBS[1], [[{...far,onFoot:true,fighter:{position:lamp.position}},100]]);
-assert.ok(lit.lines.includes('story.ember.cinder.6'), 'first lamp lights Cinder line');
+const townStep=EVERBURN_JOBS[1].steps[0];
+const two=heard(EVERBURN_JOBS[1],[[{...far,player:{position:townStep.meeting.position},speedKmh:0},100]]);
+assert.deepEqual(two.lines.slice(0,3),['brand.lamps','brand.alleys','brand.brand'], 'job 2 briefing plays the three designed lines in order');
+const lamp=townStep.places[0];
+const lit=heard(EVERBURN_JOBS[1],[[{...far,onFoot:true,speedKmh:0,
+  fighter:{position:lamp.position}},25]],{brandBriefed:true,brandSeconds:90,brandsUsed:1});
+assert.equal(lit.job.stepState.lamps[lamp.id],true,'the first lamp takes a burning brand held for two seconds');
+assert.ok(!lit.lines.includes('story.ember.cinder.6'),'the replaced first-lamp caption is no longer requested');
 const heist=EVERBURN_JOBS[4].steps[0];
 const taken=heard(EVERBURN_JOBS[4], [[far,30],[{...far,onFoot:true,fighter:{position:heist.zone.position},thingsHit:[{id:heist.takeId}]},60]]);
 assert.ok(taken.lines.includes('story.ember.cinder.13'), 'taking the key requests its line');

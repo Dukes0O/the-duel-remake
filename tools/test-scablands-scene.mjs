@@ -449,9 +449,9 @@ assert.equal(sightingState(1,hot).arena.worldJob.actors.length,0,'job 1: no furn
 // Job 3: until the thief is caught the furnace keeps its place; then it rolls from the Boneyard's far end 200 m west for 20 s and is gone.
 const run={stepIndex:0,steps:EVERBURN_JOBS[2].steps,done:false};
 syncScene(scene.group,sightingState(3,run,{clockSec:40}));
-assert.ok(rigAt().distanceTo(restAt)<.001&&rig.visible,'job 3: before the catch the furnace stays where it was');
-const rolling=seconds=>{syncScene(scene.group,sightingState(3,run,{clockSec:100+seconds,wonAtSec:100}));return rigAt();};
-assert.ok(Math.hypot(rolling(0).x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001,'job 3: it starts at the far end of the Boneyard as the thief is caught');
+assert.ok(Math.hypot(rigAt().x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001&&rig.visible,'job 3: the furnace waits at the wing gap from the start');
+const rolling=seconds=>{syncScene(scene.group,sightingState(3,run,{clockSec:100+seconds,bellowsLeavingAtSec:100}));return rigAt();};
+assert.ok(Math.hypot(rolling(0).x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001,'job 3: it starts at the far end of the Boneyard when the bellows are collected');
 assert.ok(Math.abs(rig.rotation.y-Math.atan2(FURNACE_LEAVING.to.x-FURNACE_LEAVING.from.x,FURNACE_LEAVING.to.z-FURNACE_LEAVING.from.z))<.001,'job 3: it faces the way it rolls');
 assert.ok(Math.hypot(rolling(10).x-(FURNACE_LEAVING.from.x+FURNACE_LEAVING.to.x)/2,rigAt().z-(FURNACE_LEAVING.from.z+FURNACE_LEAVING.to.z)/2)<.001,'job 3: halfway through the 20 seconds it is halfway along');
 assert.ok(rolling(19.9).x<FURNACE_LEAVING.to.x+2&&rig.visible,'job 3: it is still rolling just before 20 seconds');

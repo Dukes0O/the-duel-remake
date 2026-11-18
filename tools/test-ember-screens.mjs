@@ -14,6 +14,9 @@ const ok = (value, label) => { assert.ok(value, label); checks++; };
 const same = (actual, expected, label) => { assert.deepEqual(actual, expected, label); checks++; };
 const count = (text, pattern) => (text.match(pattern) || []).length;
 let profile = createProfile();
+// Keep the locked-job guard checks with an explicit, temporary unremade list.
+const actualRemade = [...REMADE_EVERBURN_JOBS];
+REMADE_EVERBURN_JOBS.splice(0,REMADE_EVERBURN_JOBS.length,EVERBURN_JOBS[0].id);
 
 // Nothing leaks through when the Everburn feature or the save is unavailable.
 import '../src/story/ember-ui.js';
@@ -47,7 +50,7 @@ try {
   same(remade.steps.filter(step => step.state === 'open').map(step => step.id), [EMBER_JOBS[1]], 'only the remade next job opens');
   same(count(emberWallMarkup(remade), /data-ember-step=/g), 1, 'the remade next job has one wall button');
   ok(emberWallMarkup(remade).includes(`data-ember-step="${EMBER_JOBS[1]}"`), 'the wall button starts the remade job');
-  ok(resultFor(EVERBURN_JOBS[0]).actions.includes('ember-next-job:NEXT JOB: GET OUT AND WALK|'), 'result offers the remade next job');
+  ok(resultFor(EVERBURN_JOBS[0]).actions.includes('ember-next-job:NEXT JOB: LIGHT THE TOWN|'), 'result offers the remade next job');
 } finally {
   REMADE_EVERBURN_JOBS.pop();
 }
@@ -87,4 +90,12 @@ same(ended.step, 'done', 'all six jobs finish the story');
 same(ended.ended, true, 'the end mark is shown after completion');
 same(count(emberWallMarkup(ended), /data-ember-step=/g), 0, 'finished story has no job button');
 
+REMADE_EVERBURN_JOBS.splice(0,REMADE_EVERBURN_JOBS.length,...actualRemade);
+let evening = markEmberRead(createProfile()).profile;
+for (let index=0;index<2;index++) {
+  evening=markEmberJob(evening,EMBER_JOBS[index]).profile;
+  const next=emberStoryProps(evening,{available:true});
+  same(next.steps.filter(step=>step.state==='open').map(step=>step.id),[EMBER_JOBS[index+1]],'the remade evening opens one next job in story order');
+  ok(resultFor(EVERBURN_JOBS[index]).actions.includes(`NEXT JOB: ${EVERBURN_JOBS[index+1].name.toUpperCase()}`),'the result offers the next remade evening job');
+}
 console.log(`test-ember-screens: ${checks} checks passed`);

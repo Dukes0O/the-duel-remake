@@ -67,16 +67,16 @@ globalThis.cancelAnimationFrame ??= () => {};
   assert.match(wonScreen.description,/A live ember\./,'results use the existing story completion line');
   assert.match(wonScreen.metrics,/SCRAP EARNED/,'won job results show scrap');
   assert.doesNotMatch(wonScreen.metrics,/HOLD|WRECKS|PLACE/,'world job results omit arena metrics');
-  // Only remade jobs are offered (EVERBURN-REMAKE, 16 November 2026) and job 2 is not remade: the first win offers the yard and no next job.
-  assert.doesNotMatch(wonScreen.actions,/NEXT JOB|ember-next-job/,'first win offers no job that is not remade');
-  assert.match(wonScreen.actions,/data-action="arena-yard" data-primary="true"/,'and the yard is the primary action');
-  // With job 2 counted as remade, the first win names it and wires it, as before.
-  REMADE_EVERBURN_JOBS.push(EVERBURN_JOBS[1].id);
+  // The checked evening now offers job 2 as the next primary action.
+  assert.match(wonScreen.actions,/NEXT JOB: LIGHT THE TOWN/,'first win names the remade next job');
+  assert.match(wonScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
+  // Keep proving that an unremade job cannot be offered.
+  const remadeIndex=REMADE_EVERBURN_JOBS.indexOf(EVERBURN_JOBS[1].id);
+  REMADE_EVERBURN_JOBS.splice(remadeIndex,1);
   try {
-    const nextScreen=arenaResultsScreen(app.duel.state,{metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
-    assert.match(nextScreen.actions,/NEXT JOB: LIGHT THE TOWN/,'first win names the next job');
-    assert.match(nextScreen.actions,/data-action="ember-next-job" data-primary="true"/,'next job is the primary wired action');
-  } finally { REMADE_EVERBURN_JOBS.pop(); }
+    const lockedScreen=arenaResultsScreen(app.duel.state,{metric:()=>'',action:label=>label,escapeHTML:String});
+    assert.doesNotMatch(lockedScreen.actions,/NEXT JOB/,'an unremade next job stays locked');
+  } finally { REMADE_EVERBURN_JOBS.splice(remadeIndex,0,EVERBURN_JOBS[1].id); }
   const failedScreen=arenaResultsScreen({...app.duel.state,arena:{...arena,result:{winnerId:'raiders',reason:'job-failed'},worldJob:arena.worldJob}},
     {metric:(label,value)=>`<m>${label}:${value}</m>`,action:(label,verb,primary=false)=>`<button data-action="${verb}"${primary?' data-primary="true"':''}>${label}</button>`,escapeHTML:String});
   assert.match(failedScreen.actions,/TRY AGAIN/,'failed job offers a retry');

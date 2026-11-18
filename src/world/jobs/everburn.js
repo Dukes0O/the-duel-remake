@@ -19,7 +19,7 @@ import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
-export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery'];
+export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery', 'everburn-get-out-and-walk', 'everburn-run-him-down'];
 
 export function buildEverburn(land) {
   const {at, between} = land;
@@ -193,8 +193,8 @@ export function buildEverburn(land) {
         bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
         startLineId:'story.ember.auntie-solder.5',
         sayNear:[{place:planeRow, radius:70, lineId:'story.ember.cinder.8'}],
-        // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
-        closing:['story.ember.cinder.22']})]}),
+        // Collection requests Cinder's line while the bellows rule times its hold.
+      })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
       // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
       resultLine:'The gas is in Tin Town and the forge is lit.',

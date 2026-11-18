@@ -308,7 +308,7 @@ for (const [index, entry] of sites.ashEntries.entries()) {
   assert(Math.abs(Math.hypot(entry.position.x - sheet.x, entry.position.z - sheet.z) - BRAND_RULE.wallEntryInset) < 1e-8);
   assert.equal(pushOutOfSolids(entry.position.x, entry.position.z, .4, SOLID_GRID).hit, null);
 }
-assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), false);
+assert.equal(REMADE_EVERBURN_JOBS.includes(definition.id), true);
 const actualJob = createJob(definition);
 const hud = (state, player = sites.hearth.position) => worldHudModel({
   worldJob: {definition, job: {...actualJob, stepState: state}}, player, onFoot: true,

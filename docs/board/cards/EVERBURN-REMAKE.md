@@ -1016,6 +1016,9 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, job 3 guidance: "Stop the thief and bring back the bellows." The old generic closing-caption setting is removed from this job because collection already requests Cinder's line 22 and that setting paused the new nine-second ending. The load rule times the hold while the line is shown; Cinder's line 10 remains on the results screen.
+
+
 - Slice 9, job 3 restart: the 150 m lead is measured along the thief's clear wreck line. The player's car returns to the line's plane-row start, facing the first turn. If the player is still on foot, the existing fighter returns beside that car and remains on foot. The bellows, knocks, armour, riders and sacks already thrown are kept. Placement itself has no new sound; Cinder's designed restart caption explains it.
 
 - Slice 9, job 3 wide way: the measured alternative goes outside the whole wreck field, 100 m beyond its east, north and west box edges, then to the wing gap. It shares the thief line's endpoints and is 399.7 m longer. The thief rounds the east wreck's south end, north wreck's north end, then south wreck's south end, each 2.5 m clear; its road entry is the Tin Road's own Boneyard end.
