@@ -91,6 +91,10 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
 // Survey the actual job ways without driving. At decks, retain the actor's previous
 // floor; the gorge drawing below a bridge is not ground above the car on its deck.
 {
+  // Claude's fallback for a river rebuild over budget has a fixed contact cap.
+  const contactAllowance=(distance,plain,gorge)=>distance>=77&&distance<=83?
+    Math.min(.2,Math.max(.05,Math.max(0,plain-(gorge??plain))/2)):.05;
+  assert.equal(contactAllowance(80,1,0),.2,'Even a larger seam cannot grant more than .2 m.');
   const step = EVERBURN_JOBS[0].steps[0], gaps = [];
   const field=createRiverField(SCABLANDS_LAYOUT),floors=[];
   for (const way of HOT_DELIVERY_WAYS) {
@@ -113,7 +117,7 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
         const shift=scene.group.userData.drawnFeet.shift(x,z,feet), gap=drawn-feet-shift;
         assert.ok(Number.isFinite(feet) && Number.isFinite(drawn));
         const count=scablandsFloorsAt(x,z,floors),onLand=Math.abs(feet-floors[count-1])<.001;
-        const allowance=distance>=77&&distance<=83?Math.max(.05,Math.max(0,plain-(gorge??plain))/2):.05;
+        const allowance=contactAllowance(distance,plain,gorge);
         if (onLand && Math.abs(gap) > allowance+1e-6) gaps.push({way:way.id, along:+point.along.toFixed(2), offset,
           x:+x.toFixed(2), z:+z.toFixed(2), gap:+gap.toFixed(3)});
       }
