@@ -48,6 +48,7 @@ export function speechPlacement(point, width, height, bubbleWidth, bubbleHeight)
 
 export function mountTalkView(stage, send) {
   const doc = stage.ownerDocument, win = doc.defaultView;
+  const gameCanvas = stage.querySelector('#view3d canvas');
   const create = (tag, cls, words) => {
     const node = doc.createElement(tag);
     node.className = cls;
@@ -159,8 +160,13 @@ export function mountTalkView(stage, send) {
     held = -1;
     if (current) preview(-1);
   }
+  function releaseGameCapture() {
+    // Chromium can grant a walking click after the conversation has already opened.
+    if (current && gameCanvas && doc.pointerLockElement === gameCanvas) doc.exitPointerLock();
+  }
   const events = new AbortController();
   const capture = {capture: true, signal: events.signal};
+  doc.addEventListener('pointerlockchange', releaseGameCapture, {signal: events.signal});
   win.addEventListener('keydown', key, capture);
   win.addEventListener('keyup', key, capture);
   win.addEventListener('blur', clearHeld, capture);
@@ -227,7 +233,7 @@ export function mountTalkView(stage, send) {
       if (opening) {
         stage.append(root);
         restoreFocus = doc.activeElement;
-        if (doc.pointerLockElement) doc.exitPointerLock();
+        releaseGameCapture();
         root.focus({preventScroll: true});
       }
       draw(page);
