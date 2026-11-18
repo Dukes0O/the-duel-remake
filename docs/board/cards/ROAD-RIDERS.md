@@ -20,6 +20,12 @@ A **rider** in a world job is today a marker that is driven off by a touch (`src
 - **It gives up:** at a quarter of its health it breaks off and drives home smoking, unless the job says it is one
   that fights to the end.
 - **It can wreck the player.** A wrecked player's car ends the fight as lost; the job says what losing costs.
+- **Riders can box the player in** (Kyle, 18 November: "there's just too many cars, they've surrounded you, you have
+  to give up the ember"). When the riders named for it have the player's car held, front, back and sides, at under
+  10 km/h for three seconds, the fight stops and the job is told "surrounded". What happens next is the job's: a
+  talk, with handing the cargo down, breaking out, or holding on for a friend. This card gives the holding and the
+  signal; five riders or more must be able to do it to a car that drives straight, and a car that keeps moving and
+  turning must be able to stay out of it.
 - **Three difficulties,** from the game's own Easy, Medium and Hard: how well it aims, how hard it presses, how much
   it takes. On Easy a careful ten-year-old wins a fight of three riders more often than not.
 - Every number is one named constant in a new rule file `src/world/jobs/rider-rule.js`.
@@ -31,7 +37,8 @@ nothing that passes today changes.
 
 - New `tools/test-road-riders.mjs`, stepping real Duels without graphics: a rider closes and rams; contact costs both
   cars armour and asks for the crash sound; each car weapon hurts a rider 30 m dead ahead; a rider at a quarter health
-  breaks off; three riders can wreck a car that does nothing, on every difficulty; the same seed and inputs give the
+  breaks off; three riders can wreck a car that does nothing, on every difficulty; five riders box in a car that
+  drives straight and the job hears "surrounded" once; a car that weaves at speed is not boxed in for a minute; the same seed and inputs give the
   same fight.
 - One scripted fight (the card's one): a plain driver on Easy beats three riders at the Wash at least 7 times in 10,
   and on Hard fewer than 5.

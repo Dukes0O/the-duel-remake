@@ -2,13 +2,13 @@
 
 The first chapter a player can test: **Night 2, Strangers at the gate**, exactly as written in
 `docs/story/five-cold-nights.md`, section 4. That section is the specification: every line, every question, every
-choice, every price and every "later". Codex's card, in two slices. Needs STORY-LEDGER and STORY-TALK; slice B needs
+thought, every choice, and for each choice what is plain to see, what is only a thought and what is kept out of sight. Codex's card, in two slices. Needs STORY-LEDGER and STORY-TALK; slice B needs
 ROAD-RIDERS. Behind `story-choices` (`dev`). Kyle tries it only after Claude has played every branch by hand.
 
 ## How a player reaches it
 
 With the switch on, the Story Wall shows "Five Cold Nights" and offers Night 2. For now it starts from the example in
-the design: 4 embers, the Ash Men Watching, the Word on the road 0 (Night 1 is not built yet; say so on the wall in one
+the design, with people from STORY-PEOPLE once they exist and today's figures until then: 4 embers, the Ash Men Watching, the Word on the road 0 (Night 1 is not built yet; say so on the wall in one
 line). The test page gets a button that makes a temporary player ready for it.
 
 ## Slice A: the talk, the four answers, and everything on foot
@@ -42,7 +42,10 @@ each lead where section 4 says.
 ## What stays fixed
 
 - The words are the design's. A line that does not fit the screen is reported, not shortened.
-- Every effect on the ledger is the one in section 4's tables. The price shown is the price charged.
+- Every effect on the ledger is the one in section 4's tables. The screen shows only the column "Plain to see" and the
+  thought; nothing from "Kept out of sight" appears before it happens, and no notice says that luck was thrown.
+- A consequence is tied back in a person's line, as section 4 writes it (Dace on the scout, Cinder on the fourth
+  night), never by a notice.
 - Nothing here touches the remade jobs 1 to 4 or anything saved before.
 
 ## Checks

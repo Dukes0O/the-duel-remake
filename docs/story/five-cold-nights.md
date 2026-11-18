@@ -29,7 +29,8 @@ stranger: it is the ember itself that keeps a family through the night. People c
 brings the next dangerous run closer. That is Kyle's own example, and it is the heart of the design.
 
 **People remember.** The game keeps a short ledger (section 2): who you helped, who you turned away, what you promised,
-what you are owed. Later scenes read it, and say so on screen: "Because you gave Rell an ember on the second night."
+what you are owed. Later scenes read it. And when something comes back, somebody who knows tells you where it began:
+"That's Rell's boy riding with them. You shut your gate on him."
 
 **People open the land.** In a Zelda game a new tool opens a new part of the map. Here friends do. The Walkers know the
 South Ford. The Deck Folk keep a watch that can see riders coming. A friend is a road, a warning or a pair of hands on
@@ -52,7 +53,10 @@ goes grey in the end." He shares none. Every choice in this story asks how much 
 
 ## 2. The ledger: what the game remembers
 
-Five things. The player can read all of them at any time, on a page of the Story Wall called **What people remember**.
+Five things. The game keeps all of them. The player sees only what a person standing there would know: the stocks, what
+was promised and owed, and what people have said and done to your face. That is the page of the Story Wall called
+**What people remember**. The Word on the road, the step of a feud and every throw of luck are kept out of sight, and
+are learned the way anybody learns them: from what happens next.
 
 | What | How it is shown | What moves it |
 | --- | --- | --- |
@@ -64,20 +68,39 @@ Five things. The player can read all of them at any time, on a page of the Story
 
 **The rules that go with it.**
 
-- **A price is shown before a choice is made.** "Embers 4 to 3. They will owe you a watch."
-- **Asking is free.** Before deciding, the player may ask questions. Each answer shows something useful: a road, a
-  risk, the odds. Talking to people is how a player learns what a choice will cost.
-- **A consequence names its cause.** When something comes back, the screen says why: "Because nobody watched the fence
-  on the second night."
-- **Luck is used rarely and told honestly.** Only where a person could truly go either way. The odds are given in
-  words (Unlikely, Could go either way, Likely) to a player who asked. Afterwards the screen says that luck decided.
-  The throw comes from the save, so loading the game again does not change it, and Kyle's Dace and Gratian's Dace
-  may be different boys.
+Kyle, 18 November 2026, on the first draft, which showed a price beside every choice: "I don't like the idea of binary
+prices being presented ... this allows the mystery and the risk and the uncertainty of the game to be more compelling.
+If you have incomplete information, what happens if you deny the ember? Well, you might just have to find that out."
+
+- **People speak in talk bubbles, and the player thinks in thought bubbles.** The person you are talking to has a bubble
+  over the head, in the world, with the view turned to that person. The player's own doubts appear as thought bubbles.
+  There is no panel of text and no list of prices.
+- **A choice shows what you would know, and no more.** The writer of each choice sets one of three:
+  - *Plain.* A cost anybody could see. An ember leaves the store and the count on the screen falls. The bridge means
+    the Ash Men.
+  - *Hinted.* A thought of the player's own: "If I give one, that's three nights. I might run short." Or only a
+    wondering: "I wonder what becomes of them if I don't."
+  - *Hidden.* Nothing at all. You find out.
+- **First consequences are usually plain, later ones usually hidden.** What a choice costs now can be seen. What it
+  sets going is hinted sometimes and not at all at other times. The mix is chosen scene by scene, so that a player
+  never learns to expect the hint.
+- **Asking costs nothing:** no ember and no time. Before deciding, the player may ask the person questions. An answer
+  may show a road, a need or a tell, such as a boy who keeps looking at the store. It never gives a number.
+- **A consequence is tied back to its choice, later, by somebody who knows.** Not by a notice on the screen. When the
+  Ash Men come by the footpaths, Cinder says whose feet found those paths. The game keeps, for every consequence, the
+  choice it came from, so the line can always be written. Once somebody has said it, the page shows it too: "The
+  Walkers ride with the Ash Men. It began the night you shut the gate."
+- **Luck is used rarely and is never announced.** Only where a person could truly go either way. The player may notice
+  a tell, and is given no odds. The throw comes from the save, so loading the game again does not change it, and
+  Kyle's Dace and Gratian's Dace may be different boys.
+- **A trap is real.** Sometimes there are too many of them (section 5, "The surround"). Then the choice is what to
+  give up.
 - **Bad luck opens something to do.** A theft is a chase. A betrayal is a fight. No outcome is a closed door.
 - **The hearth can go cold, and that is not the end of the game.** It is the worst ending of the act, and the next act
   begins from it (section 3). Nothing a player has earned elsewhere is touched.
 
-**The ledger after one way through the second night** (the chapter in section 4):
+**What the game holds after one way through the second night** (the chapter in section 4). The player's page shows the
+first two rows and the mark. The rest is kept out of sight:
 
 | | |
 | --- | --- |
@@ -203,25 +226,32 @@ breath shows.
 >
 > **Auntie Solder:** *(on the radio)* And we have four nights of fire. I'm only saying. I'm not saying anything.
 
-### You may ask before you answer. Asking is free
+### You may ask before you answer. Asking costs nothing
 
 | You ask | The answer | What it shows you |
 | --- | --- | --- |
 | "Why not take a light from our hearth?" | **Rell:** A light's no good to us. There's nothing to burn out here, not a stick. It's the ember we need. It burns the night through. | Why an ember given is an ember gone |
 | "Where are you going?" | **Rell:** The south pans, over the Girder Bridge. If the Ash Men still hold it, round by the South Ford. We know the ford. Nobody else bothers to. | A road: the Walkers can take Bess over the South Ford on Day 3, if they are Friendly |
-| "Who's the boy staring at my hearth?" | **Rell:** Dace. My sister's boy. He's quick, he's hungry and he's fourteen. I watch him. **Dace:** I wasn't staring. I was looking. | The luck in tonight: "Dace could go either way." It also lets you have a word with him |
-| "Dace. A word." *(only after the question above)* | **You:** It's four embers between a whole town and the cold. **Dace:** Four? Is that all? I thought you were rich. | His odds change from Could go either way to Unlikely |
+| "Who's the boy staring at my hearth?" | **Rell:** Dace. My sister's boy. He's quick, he's hungry and he's fourteen. I watch him. **Dace:** I wasn't staring. I was looking. | A tell: the boy keeps looking at the store. It also lets you have a word with him |
+| "Dace. A word." *(only after the question above)* | **You:** It's four embers between a whole town and the cold. **Dace:** Four? Is that all? I thought you were rich. | Out of the player's sight: it makes Dace less likely to steal tonight |
 
 ### The decision
 
-The screen shows each price before you choose.
+Two thought bubbles come first. They are the player's own doubts, not the answer.
 
-| | You say | The price, as shown |
-| --- | --- | --- |
-| 1 | "Take one. No terms." | Embers 4 to 3. Rell's people will remember it. Word of it will travel |
-| 2 | "One ember, for two nights' watch on our fence." | Embers 4 to 3. They will owe you a watch |
-| 3 | "Not an ember. Come inside. Share ours." | Embers stay 4. Eleven more people inside the fence, and the hearth feeds them: one more ember every second night. Auntie Solder will have opinions |
-| 4 | "I can't. Four embers, four nights." | Embers stay 4. They camp cold |
+> *If I give one, that's three nights. And Bess isn't back yet.*
+>
+> *I wonder what happens to eleven people out there if I don't.*
+
+Then the four things you can say. Beside each is what the player can see, what is only a thought, and what the game
+keeps to itself.
+
+| | You say | Plain to see | Your thought, if any | Kept out of sight |
+| --- | --- | --- | --- | --- |
+| 1 | "Take one. No terms." | The count falls from 4 to 3 | *Kindness travels. I wonder who else is on that road.* | Word spreads. Dace may steal tonight |
+| 2 | "One ember, for two nights' watch on our fence." | The count falls from 4 to 3. The watch is the bargain you spoke aloud | None | The watch will see a scout tonight |
+| 3 | "Not an ember. Come inside. Share ours." | The count stays at 4. Eleven more people at your hearth | *Eleven more mouths. Auntie will have something to say.* | The hearth will burn faster from now on |
+| 4 | "I can't. Four embers, four nights." | The count stays at 4 | *I wonder where they'll go.* | Clinker comes for them tonight |
 
 ### 1. "Take one. No terms."
 
@@ -242,7 +272,8 @@ and Dace asleep against the fence with a stick across his knees.
 
 > **Dace:** I was keeping watch. Nobody asked. I fell asleep at the end. That bit doesn't count.
 
-Mark: "Dace kept a watch nobody asked for." The screen: *Luck was kind tonight. Dace could have gone either way.*
+Mark: "Dace kept a watch nobody asked for." Nothing on the screen says that luck was thrown. The player has met one
+Dace, and does not know there was another.
 
 *If luck is unkind*, you wake to Auntie Solder.
 
@@ -270,7 +301,7 @@ your gate, alone.
 > whatever you ask, once.
 
 Embers 1. The Walkers: Friendly, and they owe you a great favour, which can be called in on the last night.
-The screen: *Luck was unkind tonight. Dace could have gone either way.*
+Nothing on the screen says that luck was thrown.
 
 ### 2. "One ember, for two nights' watch on our fence."
 
@@ -294,10 +325,13 @@ with his count.
 
 - *If you stop him,* the Ash Men never get the count and the feud stays where it was.
   > **Dace:** Did you see him run? I saw him first. Say I saw him first.
-- *If he gets over the wall,* the Ash Men go from Watching to Raiding. The screen: *The Ash Men have counted your lamps.*
+- *If he gets over the wall,* the Ash Men go from Watching to Raiding, out of the player's sight. Dace says the plain part.
+  > **Dace:** He was counting your lamps. He's gone to tell somebody how many.
 
-On every other branch this scout comes and goes unseen and the feud rises the same way. The game tells you on Day 3:
-*Because nobody watched the fence on the second night.*
+On every other branch this scout comes and goes unseen and the feud rises the same way. Nobody knows it that night.
+It is tied back on the fourth night, when the Ash Men come straight for the weakest lamp.
+
+> **Cinder:** They knew which lamp. Somebody counted. Nobody was on our fence the night those people came, were they?
 
 ### 3. "Not an ember. Come inside. Share ours."
 
@@ -383,6 +417,15 @@ About fifteen minutes: three or four minutes of talk, and one or two short piece
 - **Your car can be wrecked.** You walk home or a friend tows you. The next run leaves late.
 - **A promise can be broken.** The people you broke it to drop a word, and they say so to your face.
 - **A lamp can be smothered, a store raided, a friend lost to the Ash Men.**
+- **The surround.** A trap is real. On a road, with the pot or with Bess, riders can box you in: too many cars, no
+  gap. Clinker walks up to your window.
+
+  > **Clinker:** Hand it down. The pot. Then you drive home with all your wheels.
+
+  You can hand it down: the ember is gone, and it is burning in Old Smoke's furnace from that night. You can try to
+  break out: lose, and the car is wrecked and the ember goes all the same. Or, if somebody owes you and is near
+  enough, you can hold on for them. An ember the Ash Men took has its own consequences later, and they are tied back:
+  their furnace runs hotter, they come a night sooner, and on the last night Old Smoke tells you whose ember lit his fire.
 - **The hearth can go cold.** That is ending 4, and the story goes on from it.
 - **What never happens:** a screen that says the game is over, a save wiped, a person killed in front of a child.
   People leave, and may come back changed.
@@ -540,10 +583,13 @@ Kyle: "Something that can allow a player to redo this story a few times and get 
 
 Nothing is built until Kyle has read this. Then, in this order, each as its own card with its own checks:
 
-1. **The talk screen.** A face, a name, one line at a time, free questions, then choices with their prices. Number keys.
+1. **Talk and thought bubbles.** The person speaks in a bubble over the head; the player's doubts and choices are
+   thought bubbles; questions cost nothing; no prices are listed. Number keys.
+   **And people worth talking to:** figures that turn to you, stand like people and can be told apart.
 2. **The ledger, as the one ledger for the Wasteland** (section 7). Saved with the player, never changing anything
    saved before it: it reads what older stories saved and writes only its own. The rules that read and write it. The
-   page "What people remember". The "Because" line.
+   page "What people remember", which shows only what the player would know. For every consequence, the choice it came
+   from, so that somebody can say it later.
 3. **Riders who fight.** Kyle's finding: "the cars don't fight back." Riders on the road use what the arena's
    opponents already do: they ram, they shoot, they can be wrecked, and they can wreck you.
 4. **Night 2,** exactly as written in section 4, as the first playable chapter. Claude plays it by hand, every branch,
@@ -595,7 +641,7 @@ text: leaving the well, the crossing, and the last kilometre to the gate. About 
 >
 > **Moss:** Bess does twenty miles an hour, downhill, with a tailwind. Keep them off us.
 
-The map of the Scablands opens. Four ways are drawn on it, each with its price beside it.
+The map of the Scablands opens. Four ways are drawn on it, each with what is known of it beside it.
 
 ### You may ask before you choose. Asking is free
 
@@ -608,10 +654,10 @@ The map of the Scablands opens. Four ways are drawn on it, each with its price b
 
 ### The decision
 
-| | The way | The price, as shown |
+| | The way | What you know before you choose |
 | --- | --- | --- |
-| 1 | The Girder Bridge | Short. The Ash Men's ground. A toll or a fight. Their feud moves with what you do |
-| 2 | The long road, by the ships | Long. Riders, by the feud. The Deck Folk are on it |
+| 1 | The Girder Bridge | Short. The Ash Men's ground. A toll or a fight |
+| 2 | The long road, by the ships | Long. There will be riders. Somebody lives on those ships |
 | 3 | The South Ford, by night | Only with the Walkers. No riders. Bess will weep gas the whole way |
 | 4 | Under the mesa | No run today. Embers 3 to 2 tonight and none baked. A road under the Ash Men from tomorrow, for good |
 
@@ -706,7 +752,7 @@ the Ash Men may find the cut. Then, the next day, in the middle of whatever you 
 
 > **Dace:** There's grey men at the mouth. I've shut her down. I'm in the dark with a spanner. No hurry. Some hurry.
 
-The three answers, and their prices, are in section 8: go yourself, send friends, or tell him to cut his way out.
+The three answers, and what each costs, are in section 8: go yourself, send friends, or tell him to cut his way out.
 
 ### How the day closes, on every way that brought gas home
 

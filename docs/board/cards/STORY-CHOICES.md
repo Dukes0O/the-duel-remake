@@ -46,6 +46,12 @@ recommendations meanwhile. Day 3 is written in full as section 12. Owed next: Ni
 talk screen, the ledger, riders who fight).
 
 **Kyle, 18 November 2026:** "ok, if we build something I can test, and you say it's night 2, then write the cards for
-Codex." Written the same day: STORY-LEDGER, STORY-TALK, ROAD-RIDERS, STORY-NIGHT-2 (Codex) and STORY-FACES (Claude).
+Codex." Written the same day: STORY-LEDGER, STORY-TALK, ROAD-RIDERS, STORY-NIGHT-2 (Codex) and STORY-FACES (Claude), since replaced by STORY-PEOPLE (Codex).
 WORLD-FAULTS-18-NOV runs alongside. Order: the ledger and the talk screen together; then Night 2's slice A; the riders
 after the world's faults; then Night 2's slice B. Claude plays every branch by hand before Kyle tries it.
+
+**Kyle, 18 November 2026, later:** the person talked to has a talk bubble; the player weighs a choice in thought
+bubbles; no list of prices. A cost anybody could see may be plain; later consequences are hinted sometimes and hidden
+at other times; a hidden one is tied back to its choice later, in somebody's line. Traps with real loss: surrounded,
+the ember must be given up, and the story goes on from that. Codex refines the people. Written into the design
+(section 2's rules, section 4, section 5) and into the cards the same day.
