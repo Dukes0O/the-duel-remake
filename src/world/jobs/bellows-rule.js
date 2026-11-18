@@ -29,7 +29,7 @@ export const BELLOWS_RULE = Object.freeze({
   blockingSideMps: 2,
   thiefRadiusMetres: 1.3,
   boneyardSpeedKmh: 60,
-  wreckEndClearanceMetres: 2.5,
+  wreckEndClearanceMetres: 5,
   wreckTurnDegrees: 40,
   wreckTurnCount: 3,
   wideRouteMarginMetres: 100,

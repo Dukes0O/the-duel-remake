@@ -870,10 +870,10 @@ for(const wreck of BONEYARD_WRECKS){
     const positions=mesh.geometry.attributes.position;
     for(let index=0;index<positions.count;index++){corner.fromBufferAttribute(positions,index).applyMatrix4(mesh.matrixWorld);all.expandByPoint(corner);if(!gear)notGear.expandByPoint(corner);if(engine)pods.expandByPoint(corner);}});
   footprints.set(wreck.id,all);
-  const solid=SCABLANDS_SOLIDS.find(row=>row.id===`boneyard-wreck-${wreck.id}`),ground=scablandsSurfaceHeightAt(wreck.x,wreck.z);
-  assert.ok(solid,`${wreck.part} has its own solid`);
-  assert.ok(all.min.x>=solid.center[0]-solid.size[0]/2&&all.max.x<=solid.center[0]+solid.size[0]/2&&all.min.z>=solid.center[2]-solid.size[2]/2&&all.max.z<=solid.center[2]+solid.size[2]/2,
-    `${wreck.part} lies inside its solid (x ${all.min.x.toFixed(1)} to ${all.max.x.toFixed(1)}, z ${all.min.z.toFixed(1)} to ${all.max.z.toFixed(1)})`);
+  const ground=scablandsSurfaceHeightAt(wreck.x,wreck.z);
+  // The whole aircraft lies inside the wreck's bounds, which routes keep clear of. Where it is solid is checked below.
+  assert.ok(all.min.x>=wreck.x-wreck.size[0]/2&&all.max.x<=wreck.x+wreck.size[0]/2&&all.min.z>=wreck.z-wreck.size[2]/2&&all.max.z<=wreck.z+wreck.size[2]/2,
+    `${wreck.part} lies inside its bounds (x ${all.min.x.toFixed(1)} to ${all.max.x.toFixed(1)}, z ${all.min.z.toFixed(1)} to ${all.max.z.toFixed(1)})`);
   assert.ok(Math.abs(notGear.min.y-ground)<.12,`${wreck.part} rests on the ground (lowest part ${(notGear.min.y-ground).toFixed(2)} m from it)`);
   if(!Number.isFinite(pods.min.y))continue;
   if(wreck.roll===0)assert.ok(pods.min.y>=ground-.15,`${wreck.part}'s engine pods are sunk no deeper than a hand (${(ground-pods.min.y).toFixed(2)} m)`);
@@ -891,12 +891,40 @@ const lineDistance=(line,solid)=>{let closest=Infinity;for(let index=0;index<lin
 const roads={boneyardRoad:GAS_RUN_PATHS.boneyard.map(place=>[place.position.x,place.position.z]),longRoad:GAS_RUN_PATHS.long.map(place=>[place.position.x,place.position.z]),
   furnacePath:EVERBURN_JOBS[5].steps[1].path.map(place=>[(place.position??place).x,(place.position??place).z])};
 for(const wreck of BONEYARD_WRECKS){
-  const solid=SCABLANDS_SOLIDS.find(row=>row.id===`boneyard-wreck-${wreck.id}`);
+  // The roads keep 8 m from the wreck's bounds, and so from every solid part inside them.
+  const solid={center:[wreck.x,0,wreck.z],size:wreck.size};
   for(const [name,line] of Object.entries(roads))assert.ok(lineDistance(line,solid)>=8,`${wreck.part} keeps 8 m from the ${name} (${lineDistance(line,solid).toFixed(1)} m)`);
   const bessBox=footprints.get(wreck.id);
   assert.ok(Math.hypot(Math.max(bessBox.min.x-BESS_REST.x,BESS_REST.x-bessBox.max.x,0),Math.max(bessBox.min.z-BESS_REST.z,BESS_REST.z-bessBox.max.z,0))>=5,`Big Bess's resting place is 5 m clear of the ${wreck.part}`);
 }
 wreckScene.dispose();
+// A wreck is solid where it is drawn at car height and nowhere else (Kyle and Claude, 17 November 2026: one box round the
+// whole aircraft stopped a car on open ground between a wing and the nose). The table's parts are what the model gives;
+// every sample of the model at car height lies inside a solid part; and the parts cover little that is empty.
+{
+  const {wreckSamples,fitWreckParts,WRECK_BAND}=await import('./measure-boneyard-wrecks.mjs');
+  const measured=await wreckSamples();
+  for(const wreck of BONEYARD_WRECKS){
+    const samples=measured.get(wreck.id),fitted=fitWreckParts(samples);
+    assert.equal(fitted.axis,wreck.axis,`${wreck.part}: the fuselage's direction in the table is the model's`);
+    assert.deepEqual(fitted.parts.map(part=>[part.u,part.w,part.halfU,part.halfW,part.height]),wreck.parts.map(row=>[...row]),`${wreck.part}: the solid parts in the table are what tools/measure-boneyard-wrecks.mjs gives`);
+    const solids=SCABLANDS_SOLIDS.filter(row=>row.id===`boneyard-wreck-${wreck.id}`||row.id.startsWith(`boneyard-wreck-${wreck.id}-`));
+    assert.equal(solids.length,wreck.parts.length,`${wreck.part} has a solid for each part`);
+    const inside=(x,z,slack)=>solids.some(solid=>{const cos=Math.cos(solid.heading),sin=Math.sin(solid.heading),dx=x-solid.x,dz=z-solid.z;
+      return Math.abs(dx*cos-dz*sin)<=solid.halfX+slack&&Math.abs(dx*sin+dz*cos)<=solid.halfZ+slack;});
+    let atCarHeight=0,outside=0;const cells=new Set();
+    for(const [x,y,z] of samples.samples){if(y<WRECK_BAND.low||y>WRECK_BAND.high)continue;atCarHeight++;cells.add(`${Math.floor(x)},${Math.floor(z)}`);if(!inside(wreck.x+x,wreck.z+z,.01))outside++;}
+    assert.ok(atCarHeight>500&&outside===0,`${wreck.part}: every sample at car height lies inside a solid part (${outside} of ${atCarHeight} outside)`);
+    // Solid ground with nothing drawn on it: square metres inside a part that hold no sample, as a share of the parts' area.
+    const area=solids.reduce((sum,solid)=>sum+solid.halfX*solid.halfZ*4,0),old=wreck.size[0]*wreck.size[2];
+    assert.ok(area<old*.6,`${wreck.part}: its solid parts cover ${area.toFixed(0)} square metres, under six tenths of the old box (${old})`);
+    assert.ok(cells.size>=area*.45,`${wreck.part}: at least 45 of every 100 square metres that are solid have something drawn at car height (${cells.size} of ${area.toFixed(0)})`);
+  }
+  // The place where Claude's car was held on 17 November, north-east of the north wreck's nose, is open ground now.
+  const north=BONEYARD_WRECKS.find(wreck=>wreck.id==='north');
+  assert.ok(!SCABLANDS_SOLIDS.some(solid=>{if(!solid.id.startsWith('boneyard-wreck-'))return false;const cos=Math.cos(solid.heading),sin=Math.sin(solid.heading),dx=north.x+19.5-solid.x,dz=north.z-9-solid.z;
+    return Math.abs(dx*cos-dz*sin)<=solid.halfX+1&&Math.abs(dx*sin+dz*cos)<=solid.halfZ+1;}),'a car a metre wide stands free 19.5 m east and 9 m north of the north wreck');
+}
 // Fix 7: the well is not alone on its disc. Eight to twelve props cut from the real kit model stand in one cluster, clear of
 // the raiders' way in, their hold, the furnace's parking place and the car's start at the well, each on the ground.
 const propScene=createScablandsScene(course,{loadAsset:async path=>{

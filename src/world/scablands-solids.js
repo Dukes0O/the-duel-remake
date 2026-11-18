@@ -13,7 +13,7 @@
 import {SALT_RIDERS} from './jobs/ember-rule.js';
 import {LAND} from './scablands-names.js';
 import {scablandsSurfaceHeightAt} from './scablands-ground.js';
-import {boneyardWrecks} from './boneyard-wrecks.js';
+import {boneyardWrecks, wreckSolidParts} from './boneyard-wrecks.js';
 import {tinTownGateSolids, tinTownDoorPose} from './tin-town-gate.js';
 import {tinTownSolids} from './tin-town-shacks.js';
 import {forgePlan} from './forge-look.js';
@@ -138,8 +138,9 @@ export function scablandsSolids(land = LAND) {
   rows.push({id: 'everburn-well', placeId: 'everburn', kind: 'post', shape: 'ellipse', x: well.x, z: well.z, halfX: WELL_POST.radius, halfZ: WELL_POST.radius,
     heading: 0, height: WELL_POST.height, base: well.height});
   const boneyard = land.place('boneyard');
-  for (const wreck of boneyardWrecks(land)) rows.push({id: `boneyard-wreck-${wreck.id}`, placeId: 'boneyard', kind: 'wreck', x: wreck.x, z: wreck.z,
-    halfX: wreck.size[0] / 2, halfZ: wreck.size[2] / 2, heading: 0, height: wreck.size[1], base: boneyard.height});
+  // A wreck is solid where it is drawn at car height, in turned boxes that follow its fuselage and wings (src/world/boneyard-wrecks.js).
+  for (const wreck of boneyardWrecks(land)) for (const part of wreckSolidParts(wreck))
+    rows.push({...part, placeId: 'boneyard', kind: 'wreck', base: boneyard.height});
   for (const part of tinTownGateSolids(land)) rows.push({...part, placeId: 'tin-town'});
   for (const part of tinTownSolids(land)) rows.push({...part, placeId: 'tin-town'});
   // The forge's hearth, its anvil and the crane's tower (src/world/forge-look.js).

@@ -1249,6 +1249,25 @@ hand: Auntie's cry, the bellows bar, the Hand Flamer lent on foot, the thief on 
    for a pair of leather bellows, and three of them spoil the bellows.
 Not driven: his blocking and his sacks on the road, the furnace's riders, the second and third knocks, the ending.
 
+## The Boneyard's wrecks are solid where they are drawn (Claude, 17 November 2026, evening): merged
+
+Kyle saw it too: the planes' boxes were too wide. Each wreck was one box round the whole aircraft (38 by 23 m, 33 by
+30 m, 20 by 38 m). Measured from the model at the height a car meets it (0.25 to 2.2 m): the two level wrecks are a
+fuselage about 5 m wide with low wings 21 m across, and the one rolled onto a wing touches the ground only at that
+wingtip. `tools/measure-boneyard-wrecks.mjs` fits turned boxes to what is drawn; the table in
+`src/world/boneyard-wrecks.js` holds them (seven parts for each level wreck, one for the rolled one), and the solid
+area falls from 874, 990 and 760 square metres to 443, 444 and 40. A car now passes under the rolled wreck and between a
+wing and a nose. The wreck's old box stays in the table as its bounds, which roads and the thief's line keep clear of;
+the thief's line passes 5 m clear of them (it was 2.5 m), because the check sweeps a square round the car against
+turned boxes. The map draws each wreck in its parts.
+**Changed assertions, reviewed by Claude; none is loosened:** "each wreck lies inside its solid" becomes "each wreck
+lies inside its bounds", with new checks that the table is what the tool measures, that every drawn sample at car
+height lies inside a solid part, that the parts cover under six tenths of the old box and are at least 45 parts in 100
+filled, and that the place where Claude's car was held is open; the roads' 8 m is kept from the bounds; the map's count
+of three Boneyard solids becomes "every Boneyard solid is a part of one of the three wrecks"; the pot's two checks of a
+real solid drive at the north wreck's wings in place of the south wreck, which no longer has a broad face on the ground.
+Checks: lane tier for the changed files, build. Not yet driven by hand since the change.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the

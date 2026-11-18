@@ -89,7 +89,8 @@ const field = [{x: tinTown.x, z: tinTown.z}];
   check(Math.abs(touched - quiet) < 1e-9, 'a touch that sheds 7 km/h takes nothing');
   check(Math.abs(quiet - hard - 9.6) < 1e-9, 'an ordinary hit that sheds 40 km/h takes 9.6');
   // Real: drive at a Boneyard wreck (a solid) at 100 km/h from 89 m off. SCABLANDS-LAND round 4, slice 2b: the junk cars of the old oval are gone, and a solid is hit now.
-  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-south'), duel = start(), junk = {x: wreck.x, z: wreck.z};
+  // The north wreck's first part is its wings, a face 22 m wide across the car's way (the south wreck touches the ground only at a wingtip).
+  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-north'), duel = start(), junk = {x: wreck.x, z: wreck.z};
   place(duel, {x: wreck.x - wreck.halfX - 89, z: wreck.z}, junk, 100);
   let before = null, drop = 0, jolts = 0;
   run(duel, [junk], 100, {seconds: 6, onTick: d => {
@@ -103,7 +104,7 @@ const field = [{x: tinTown.x, z: tinTown.z}];
 }
 // A wrecking head-on collision stops the car at a real solid in the real step.
 {
-  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-south');
+  const wreck = SCABLANDS_SOLIDS.find(solid => solid.id === 'boneyard-wreck-north');
   const duel = start(), target = {x: wreck.x, z: wreck.z};
   duel.state.armor = 1; duel.state.invulnerableSec = 0; duel.state.combat.shield = 0;
   place(duel, {x: wreck.x - wreck.halfX - 20, z: wreck.z}, target, 180);
