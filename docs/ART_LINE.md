@@ -227,6 +227,12 @@ the game.
 
 ### Placement and export
 
+- **Two ground layers can share the wrong shader.** A material that changes the
+  fragment shader in `onBeforeCompile` needs a distinct Three.js program cache
+  key. Otherwise drawing the near ground first can make the coarse horizon cover
+  the car. Compare the compiled program IDs and the pixels under the car with
+  the horizon visible and hidden. On Tin Road the coarse layer stood 1.388 m
+  above the car's support. (WORLD-FAULTS-18-NOV, 18 November 2026.)
 - **An empty render sheet or a tiny prop:** an exported glTF is Y-up, but a
   Blender render scene is Z-up. Convert camera positions and targets with the
   same game-to-Blender transform as the model before judging framing; inspect

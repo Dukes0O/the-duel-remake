@@ -63,14 +63,18 @@ Baseline `e0ca217d6`, Falcone F42, seed 1989, real Run Him Down Duel at 120 Hz.
    60.41 km/h with zero hits. The two posts measure 2.10 × 2.10 m in both the mesh and grid.
    Each fence measures 14.12 × 0.20 m in the mesh but 14.00 × 0.30 m in
    `src/world/tin-town-gate.js:53`, extending the collider 5 cm on each face.
-   The fence thickness does not explain a hold in the middle of the gate.
+   Both solid posts match the drawing vertically from 0 to 7 m. Each fence's
+   0 to 3.20 m grid height fits its −0.062 to 3.510 m drawn envelope. The
+   fence thickness does not explain a hold in the middle of the gate.
 3. On the first straight the thief's velocity and rule heading are both 0°, but the view
    turns the nose to 180°. On the next authored stretch a −32.89° heading draws at −147.11°.
    `src/arena/modes/world-job.js:825` already uses the true displacement.
    `src/render3d.js:1079` reverses its Z component and also turns a stationary actor to 0°.
 4. The coarse horizon can cover a car on Tin Road, 1,611 m along the road at
    (5098.29, 1666.11). Its triangle is at 19.243 m, 1.388 m above the car's
-   adjusted ground height (17.855 m). The ribbon is at 18.245 m. A survey every
+   adjusted ground height (17.855 m). The actual Falcone F42 measures 1.370 m
+   from the bottom of its tyres to its highest visible vertex. The ribbon is at
+   18.245 m. A survey every
    2 m covered 3,921 East Road, 1,619 Tin Road and 1,562 Boneyard Road positions.
    The coarse layer's highest offsets on those lines are −0.042, +1.388 and
    +0.541 m. Three.js generates **identical full WebGL program cache keys** for
@@ -115,7 +119,9 @@ Baseline `e0ca217d6`, Falcone F42, seed 1989, real Run Him Down Duel at 120 Hz.
 9. In `src/app.js:2873` an unlocked pointer event outside the canvas is discarded.
    A 400 px horizontal move in one event is clamped to 300 px. At the 0.0022 radians/px
    turn rate in `src/onfoot.js:177`, this loses 12.61° of turn. Four 100 px events inside
-   the canvas keep all 50.42°. The view stops following an unlocked pointer over the edge.
+   the canvas keep all 50.42°. Driving the real app listener and foot-look rule
+   returned 0°, 37.82° and 50.42° respectively for an outside event, one inside
+   event and four inside events.
 10. No independent reproduction of the grey flash. The overlapping horizon in finding 4
     is a possible source of an abruptly visible surface. Its colour and any link to the
     flash need a visual reproduction.
@@ -125,12 +131,19 @@ Baseline `e0ca217d6`, Falcone F42, seed 1989, real Run Him Down Duel at 120 Hz.
 | Trigger | What moves and why | Source on the measured revision |
 | --- | --- | --- |
 | Bellows thief reaches the furnace | Car and, if on foot, fighter move to the Boneyard entrance to repeat the chase. Earned knocks are retained. | `src/arena/modes/world-job.js:1244` |
-| Player's car finishes its wreck timer | The arena places the repaired car at a clear spawn slot at 12 mph and signals a respawn with a sound and shimmer. | `src/arena/arena-event.js:138`, `:422` |
+| Player's car finishes its wreck timer | The arena places the repaired car at a clear spawn slot at 12 mph and signals a respawn with a sound and shimmer. The HUD counts down while wrecked. | `src/arena/arena-event.js:138`, `:422` |
 | Fighter finishes the normal knockdown timer | The fighter gets up beside the player's parked car. | `src/onfoot.js:131`, `:201` |
-| Light the Town recovers a knocked-down fighter | The fighter moves to a clear place by the last lit lamp or starting lamp. | `src/arena/modes/world-job.js:1146` |
+| Light the Town recovers a knocked-down fighter | On Easy the fighter returns beside the last lit lamp if one exists. Otherwise the fighter returns to the hearth. | `src/arena/modes/world-job.js:1146` |
 | The Iron Line boards, rides or leaves the train | Boarding places the fighter on the roof plate. Each tick carries the rider along the train. Dismount sets the ground height. Driving uses the train's position. | `src/arena/modes/world-job.js:1751`, `:1774`, `:1790` |
 
 The car and fighter spawns at the start are in `src/arena/modes/world-job.js:219` and `:235`.
 Ordinary door entry and exit are player-controlled (`src/onfoot-transition.js:153`).
 World bounds clamp lateral movement at the venue edge (`src/arena/arena-floor.js`).
 The furnace's own restart resets its actor (`src/arena/modes/world-job.js:933`).
+
+### Browser check at the measured hollow
+
+The laptop scenario `scablands-land` places the real player car at (5098.29, 1666.11)
+and saves the frame. It compares the two compiled WebGL program IDs and checks the
+pixels around the car with the horizon visible, the horizon hidden and the car hidden.
+Run it alongside `everburn-job3`. Claude reviews the picture, the sound and the restart.
