@@ -34,6 +34,7 @@ export const BRAND_RULE = Object.freeze({
   ashMarkWidth: 0.1,
   ashMarkLift: 0.04,
   swingRadius: 2,
+  toolsWarningMetres: 12,
   handFlamerRadius: 6,
   wallRadius: 2,
   ashWalkMps: 4.5,
@@ -114,11 +115,21 @@ export const BRAND_LINES = Object.freeze({
   pump: 'Auntie Solder: They are at the pump lamp!',
   tower: 'Auntie Solder: They are at the tower lamp!',
   far: 'Auntie Solder: They are at the far lamp!',
+  tools: 'Cinder: Burn him back with the flamer. Up close, the same click swings the brand.',
 });
 
 const spot = value => value?.position ?? value;
 const distance = (a, b) => a && b
   ? Math.hypot(a.x - b.x, (a.y ?? 0) - (b.y ?? 0), a.z - b.z) : Infinity;
+
+// Shared by weapon dispatch and the job bridge so a swing cannot also shoot.
+export function brandSwingReady(state) {
+  const world = state.arena?.mode === 'world-job' && state.arena.worldJob;
+  const job = world?.job, fighter = state.onFoot && state.fighter;
+  return state.status === 'racing' && !state.paused && !!fighter && !fighter.knockedDown &&
+    job?.steps[job.stepIndex]?.brand === true && job.stepState?.brandSeconds > 0 &&
+    world.actors.some(actor => actor.brandAsh && distance(actor, fighter) <= BRAND_RULE.swingRadius);
+}
 
 // Decisions for the existing job raiders. The arena supplies their positions
 // and moves them with its normal foot mover; this rule never moves a fighter.
@@ -128,6 +139,11 @@ export function stepBrandAsh(step, state, view, dt = 0) {
   const next = {...state, seen: [...(state.seen ?? [])], men: {...state.men}};
   const requests = [], events = [], smotheredLamps = [];
   let brandAshed = false;
+  if (!next.toolsExplained && view.onFoot && (view.ashMen ?? []).some(actor =>
+      distance(spot(actor), here) <= BRAND_RULE.toolsWarningMetres)) {
+    next.toolsExplained = true;
+    requests.push({type: 'say', lineId: 'brand.tools'});
+  }
   const nearest = (places, from) => places.reduce((best, place) =>
     distance(spot(place), from) < distance(spot(best), from) ? place : best, null);
   for (const lamp of lamps) if (view.lamps?.[lamp.id] && !next.seen.includes(lamp.id)) next.seen.push(lamp.id);

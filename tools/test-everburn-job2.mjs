@@ -19,6 +19,67 @@ import * as THREE from 'three';
 import {arenaReward, settleArenaResult} from '../src/arena/arena-settlement.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
 import {pageFunctions, pageSource} from './scenarios/everburn-job2.mjs';
+import {brandSwingReady} from '../src/world/jobs/brand-rule.js';
+import {brandCombatView} from '../src/arena/modes/world-job.js';
+import {Duel} from '../src/game.js';
+import {createFeatureFlags} from '../src/feature-flags.js';
+import {stepFootWeapons} from '../src/onfoot-weapons.js';
+
+// Slice 11, point 6: the same click chooses the brand by reach, never by slot.
+const closeWorld = {actors:[{id:'close',brandAsh:true,x:0,y:0,z:2}],
+  job:{steps:[{brand:true}],stepIndex:0,stepState:{brandSeconds:90}}};
+const closeState = {status:'racing',onFoot:true,fighter:{x:0,y:0,z:0,flaming:true},
+  fighterInput:{fire:true},arena:{mode:'world-job',worldJob:closeWorld}};
+for (const selected of ['wrench','rpg','hand-flamer']) {
+  closeState.footWeapons={selected};
+  closeWorld.brandSwingHeld=false;
+  assert.equal(brandSwingReady(closeState),true);
+  assert.deepEqual(brandCombatView(closeState,closeWorld),{brandSwing:true,handFlamerHits:[]});
+  assert.equal(brandCombatView(closeState,closeWorld).brandSwing,false);
+}
+closeWorld.actors[0].z=2.01;
+assert.equal(brandSwingReady(closeState),false);
+
+// Use the normal weapon step: no flame, rocket or repair on a brand click.
+closeWorld.actors[0].z=2;
+const toolDuel=new Duel({featureFlags:createFeatureFlags({storage:null,qa:true,
+  overrides:{arsenal:true,'crew-gear':true}})});
+toolDuel.startCampaign({mode:'wasteland',car:'falcone_f42',driverId:'club',crewId:'cinder',
+  discoveredGate:true,arsenalRank:30,opponentCount:0,cpuDifficulty:'easy'});
+Object.assign(toolDuel.state,{status:'racing',onFoot:true,fighter:{x:0,y:0,z:0,yaw:0,pitch:0,
+  health:100},fighterInput:{fire:true},arena:{mode:'world-job',worldJob:closeWorld}});
+for (const selected of ['hand-flamer','rpg','wrench']) {
+  toolDuel.state.footWeapons.selected=selected;
+  toolDuel.state.fighter.flaming=true;
+  const ammo=toolDuel.state.footWeapons.ammo;
+  stepFootWeapons(toolDuel,1/120);
+  assert.equal(toolDuel.state.fighter.flaming,false);
+  assert.equal(toolDuel.state.footWeapons.ammo,ammo);
+  assert.equal(toolDuel.state.footWeapons.repairing,false);
+  assert.equal(toolDuel.state.fighterInput.fire,true,'The job still sees the attack.');
+}
+toolDuel.state.footWeapons.selected='hand-flamer';
+closeWorld.actors[0].z=3;
+stepFootWeapons(toolDuel,1/120);
+assert.equal(toolDuel.state.fighter.flaming,true,'Farther away the same attack fires the flamer.');
+closeWorld.actors[0].z=2;
+closeWorld.job.stepState.brandSeconds=0;
+assert.equal(brandSwingReady(closeState),false);
+closeWorld.job.stepState.brandSeconds=90;
+closeState.fighter.knockedDown=true;
+assert.equal(brandSwingReady(closeState),false);
+closeState.fighter.knockedDown=false;
+closeState.status='countdown';
+assert.equal(brandSwingReady(closeState),false);
+
+const hintStep={brand:true,places:[],ashEntries:[]};
+const hintView={onFoot:true,fighter:{position:{x:0,y:0,z:0}},
+  ashMen:[{id:'near',position:{x:0,y:0,z:12}}]};
+const hint=stepBrandAsh(hintStep,{},hintView);
+assert(hint.requests.some(request=>request.type==='say'&&request.lineId==='brand.tools'));
+assert(!stepBrandAsh(hintStep,hint.state,hintView).requests.some(request=>request.lineId==='brand.tools'));
+assert(!stepBrandAsh(hintStep,{}, {...hintView,ashMen:[{position:{x:0,y:0,z:12.01}}]}).state.toolsExplained);
+console.log('PASS slice 11.6: any slot swings within 2 m, consumes no shot, and explains both tools once within 12 m.');
 
 for (const name of Object.keys(pageFunctions)) {
   assert.doesNotThrow(() => new Function(`return ${pageSource(name)}`));

@@ -26,7 +26,7 @@ import {createJobSolidGrid} from '../../world/scablands-solids.js';
 import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
-import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
+import {BRAND_RULE, brandSwingReady} from '../../world/jobs/brand-rule.js';
 import {brandAshAim, brandRecoveryPose} from '../../world/jobs/brand-sites.js';
 import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
@@ -1115,14 +1115,14 @@ export function applyBrandRequest(duel, worldJob, request) {
   return false;
 }
 
-function brandCombatView(state, worldJob) {
+export function brandCombatView(state, worldJob) {
   const fighter = state.onFoot && state.fighter;
   const attacking = !!fighter && !fighter.knockedDown && state.fighterInput?.fire === true;
-  const swing = attacking && state.footWeapons?.selected === 'wrench';
+  const swing = attacking && brandSwingReady(state);
   const brandSwing = swing && !worldJob.brandSwingHeld;
   worldJob.brandSwingHeld = swing;
   const handFlamerHits = [];
-  if (attacking && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
+  if (attacking && !swing && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
     const direction = gearDirection(fighter), gear = signatureFor('cinder');
     for (const actor of worldJob.actors) {
       if (!actor.brandAsh) continue;
