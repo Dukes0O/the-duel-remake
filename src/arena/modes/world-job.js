@@ -1131,7 +1131,7 @@ export function brandCombatView(state, worldJob) {
   const attacking = !!fighter && !fighter.knockedDown && state.fighterInput?.fire === true;
   const swing = attacking && brandSwingReady(state);
   const brandSwing = swing && !worldJob.brandSwingHeld;
-  worldJob.brandSwingHeld = swing;
+  worldJob.brandSwingHeld = attacking;
   const handFlamerHits = [];
   if (attacking && !swing && fighter.flaming && state.footWeapons?.selected === 'hand-flamer') {
     const direction = gearDirection(fighter), gear = signatureFor('cinder');

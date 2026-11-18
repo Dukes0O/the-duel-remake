@@ -8,9 +8,9 @@
 - Before point 2: RPG, car bolts/bombs/harpoons report sweeps but do no thief/load damage; car flame costs 15 load/s for its first contact step only. Hand flamer, marksman, sticky bombs, cannon and turret miss this separate actor; wrench repairs, grapple moves, smoke hides and shock disables. Rocket pods and other arsenal effects also target opponents. Hard meetings alone earn knocks.
 - Point 2 on 3ef3421b9 plus this commit: loaned hand flamer; reported blasts cost 40, bolts 20, other hits 10; no weapon earns knocks; first hit warns. Native shots carry their kind; separate same-step shots count once each. Both flame cones reach the load; car flame continues through its burst.
 - Checks this commit: job 2, job 3, combat-projectiles and polish-flame pass; point 2 loan check failed before. Arena checks prove aimed hand flame and two distinct shots; no existing assertion changed this round. Diff check passes.
-- Found in world-job-mode: line 294 fails, held attack swings again when a new Ash Man enters reach. This is in point 6's range-based latch, untouched this round; fix next without changing the assertion.
+- Held-click fix: world-job-mode line 294 failed before; world-job-mode and job 2 now pass. Hold state tracks the attack press through range changes; no existing assertion changed.
 - Sound: world.thief.ash and world.bellows.load retained; hand flame uses crew.flamer.start/stop; car flame uses weapon.flame.start/loop/end. Warnings remain captions; no new event cue.
 - Integration merge: already current at 0496c6d86. Final lane tier/build not run yet.
-- Pending: remaining weapon paths (crew shots and rocket pods), point 3, held-click fault, related suites, Easy walk/drive, replay/world guards, lane tier, build and independent review.
+- Pending: remaining weapon paths (crew shots and rocket pods), point 3, related suites, Easy walk/drive, replay/world guards, lane tier, build and independent review.
 - For Claude to run: everburn-job2 and everburn-job3 browser scenarios after all fixes.
 - **Removed:** top-speed-minus-five pace, fixed sack targets, distant warnings, shared entries, overlapping steps, wrench-only brand use and bellows immunity to native weapon hits.

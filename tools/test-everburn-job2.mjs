@@ -39,6 +39,14 @@ for (const selected of ['wrench','rpg','hand-flamer']) {
 }
 closeWorld.actors[0].z=2.01;
 assert.equal(brandSwingReady(closeState),false);
+brandCombatView(closeState,closeWorld);
+closeWorld.actors[0].z=2;
+assert.equal(brandCombatView(closeState,closeWorld).brandSwing,false,
+  'Holding the same click through a change of range never swings again.');
+closeState.fighterInput.fire=false;
+brandCombatView(closeState,closeWorld);
+closeState.fighterInput.fire=true;
+assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
 
 // Use the normal weapon step: no flame, rocket or repair on a brand click.
 closeWorld.actors[0].z=2;
