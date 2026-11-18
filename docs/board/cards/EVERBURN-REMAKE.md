@@ -1007,7 +1007,63 @@ patch."), under 40 50. The flamethrower is kept either way, as now.
 - Checked by rules without driving, then one scripted run of each job to prove it can be finished, then Claude's play by
   hand with the sound on, then Kyle's.
 
-**Job 4, Slow Ride,** is next after these and is not designed here. Its lead-up is already in: Big Bess is met in job 1.
+**Job 4, Slow Ride,** is designed in the next section. Its lead-up is already in: Big Bess is met in job 1.
+
+## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
+
+Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the
+player in the Boneyard with the bellows; job 4 starts there. Big Bess has been drawing gas from the wing tanks of the
+wrecked planes, and she is the one load in the story that cannot hurry.
+
+**What the player does:** open the road ahead of Bess and keep the Ash Men off her tank, both at once, with one car.
+Bess does 32 km/h and cannot leave the road. The player's car is four times as fast, so the choice all the way is where
+to be: ahead at the next block, or beside her.
+
+1. **The meeting.** The car starts 60 m from Bess at the plane row, in sight of her. The player drives up and stops in a
+   ring beside Moss (as at Cinder). A hose runs from a plane's wing to her tank and is dropped as the lines are said:
+   "Moss: Forge is lit and the bellows are home. All she wants now is gas, and Bess is full of it." / "Moss: Ash Men
+   would sooner see it soak into the sand. They'll block the road and go for her tank." / "Moss: Go ahead and open the
+   road. I can't stop her and start her for nothing." Then his line that exists ("Bess does twenty miles an hour...").
+2. **The road.** The Tin Road, Boneyard to Tin Town's south gate, 3.2 km, about six minutes at her pace. The old way
+   round by the Wash and the bridge (about 9 km, a quarter of an hour at her pace) goes: name it on the Removed line.
+3. **The load on the screen.** A bar, "GAS", 100 at the start, beside a count of open holes. It is Bess's tank, and it
+   replaces her health in this job.
+4. **Three blocks**, at about a quarter, a half and three quarters of the road, each seen from 300 m and marked on the
+   small map from the start. The first is a timber barricade: flame burns it away in four seconds (job 1's burning
+   fence). The second is an Ash Men's car parked across the road with its driver in it: one hard knock (20 km/h) and he
+   drives off. The third is a barricade with a rider waiting behind it. If Bess reaches a block that still stands she
+   stops 25 m short and waits, and starting her again takes eight seconds after it is gone.
+5. **Four raids.** When Bess passes 15%, 40%, 65% and 90% of the road, two Ash Men riders (one on Easy) set out from a
+   named point 400 m to one side, with their horn, marked on the small map. A rider who reaches her rides alongside and
+   opens a hole in the tank every three seconds, three holes at most. Each open hole loses 0.5 gas a second (half that
+   on Easy). A rider is driven off by a ram or by flame, as riders are now, and does not come back.
+6. **Fire and a leaking tank.** While any hole is open, the player's flame within 8 m of Bess costs 15 gas at once
+   (a flash along her side, cue `world.gas.flash`) and is said once: "Moss: Not near the tank when she's weeping!" So a
+   rider at her side is rammed off; flame is for the blocks and for riders still on their way in.
+7. **Plugging.** Moss plugs every hole in six seconds, but only while Bess stands still. She stops by herself for it
+   when two holes are open ("She needs a minute. Hold on.", which exists) and at a standing block. A run with no stop is
+   the best run.
+8. **Old Smoke watches.** The furnace paces her on the high ground between 30% and 70% of the road, as now, with Moss's
+   line that exists. It does nothing more in this job: it is learning where the gas goes, which is the reason for job 6.
+9. **What can end it.** Gas at 0: "Moss: She's dry. Back to the planes." The job starts again from the last block
+   cleared, with the gas she had there.
+10. **The arrival.** Bess stops at the forge's tank inside the south gate. A nine-second hold as in job 1: the hose
+    goes on, the forge's fire rises to full, the three lamps of job 2 burn brighter, Auntie's line that exists; and from
+    the high ground the furnace's horn, once, as it turns away. Pay by gas delivered: 80 or more 150 scrap, 40 to 79
+    100, under 40 60, with one sentence each ("Bess came in full.", "Bess came in most of the way full.", "Bess came in
+    nearly dry.").
+11. **Sound cues:** `world.bess.leak` (a hole opens), `world.bess.plug` (holes plugged), `world.gas.flash`, the Ash
+    Men's horn and the furnace's horn that exist. All from the sound bank's recipes.
+
+**Against the nine lines:** a reason before the drive (1); the load on the screen (3); something to do besides arrive
+(4 to 7), a danger that can end it (9) and a result that differs (10); a solid world (Bess, blocks and riders are
+solid); minutes of land (2); the map shows Bess, the blocks and the riders; the arrival is an event (10); the sounds
+belong to the road. Art that reads at first sight is Claude's: the hose, the holes and their spray, the flash, the
+blocks.
+
+**How it is built:** rules by Codex in the escort step that exists, each number one named constant in a rule file of
+the job's own; checked by rules without driving, then one scripted run on Easy; then Claude's drive by hand, then
+Kyle's. It stays hidden with the rest of the story.
 
 ## Saved progress
 
