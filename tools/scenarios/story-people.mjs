@@ -36,6 +36,8 @@ export const pageFunctions = {
   },
   stage(shot, eye, changes, action) {
     const app = window.__qaApp, d = app.duel, state = d.state, world = state.arena.worldJob;
+    app.stop();
+    app.footCameraMode='first-person';
     world.storySpeaker = shot === 'rell-speaking' ? 'rell' : null;
     world.job.stepState.brandBriefed = true;
     world.job.stepState.dusk = 1;
@@ -60,16 +62,19 @@ export const pageFunctions = {
     api.renderFrame();
     const land = scene.getObjectByName('The Scablands');
     const feet = land.userData.drawnGroundHeightAt(eye.x,eye.z);
-    camera.position.set(eye.x,feet+1.62,eye.z);
     const actor = scene.getObjectByName('story-person-' + subject);
     const crown = scene.getObjectByName('story-bubble-' + subject);
     if (!actor?.visible || !crown) throw Error(shot + ': missing subject.');
     const point = crown.getWorldPosition(camera.position.clone());
-    camera.fov=72;
-    camera.updateProjectionMatrix();
-    camera.lookAt(point.x,point.y-(shot==='gate-group'?0.4:0.36),point.z);
-    camera.updateMatrixWorld(true);
-    api.renderer.render(scene,camera);
+    const fighter = window.__qaApp.duel.state.fighter;
+    const distance = Math.hypot(point.x-eye.x,point.z-eye.z);
+    fighter.yaw = Math.atan2(point.x-eye.x,point.z-eye.z);
+    fighter.pitch = Math.atan2(point.y-(shot==='gate-group'?.4:.36)-feet-1.62,distance);
+    // The ongoing Three.js frame and the screenshot now use the same real
+    // first-person camera, even if another animation frame intervenes.
+    api.renderFrame();
+    if (camera.fov!==72 || Math.hypot(camera.position.x-eye.x,camera.position.z-eye.z)>.15)
+      throw Error(shot+' did not use the fighter’s first-person camera.');
     const projected = point.clone().project(camera);
     if (Math.abs(projected.x)>1 || Math.abs(projected.y)>1 || Math.abs(projected.z)>1)
       throw Error(shot + ': the crown is outside the image.');
