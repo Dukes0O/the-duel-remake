@@ -131,6 +131,10 @@ the land.
 
 ## Order of work
 
+**Browser scenarios (Claude, 18 November 2026).** Each remade job and each remade side job brings its own browser
+scenario, as jobs 1 to 4 did (`everburn-job1` to `-job4`). The scenarios written for the old jobs are corrected or
+removed under QA-NIGHT-18-NOV; none is kept waiting for a job that has not been remade.
+
 **Changed by Kyle, 14 November 2026: the larger land comes first.** Kyle asked whether the
 Scablands should be expanded before the jobs are remade, so that there is a larger canvas to
 work on. He is right: slices 2, 3 and 5 below put barricades, raiders, a gate, a bay and solid

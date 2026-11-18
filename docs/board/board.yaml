@@ -538,6 +538,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-STANDING-BROWSER.md"
 
+  - id: QA-NIGHT-18-NOV
+    title: "The full check of 18 November failed on 31 things: cure each by its cause"
+    owner: "claude"
+    lane: "TOOLS"
+    size: "M"
+    status: "building"
+    claimed_by: "Claude, since 18 November 2026, with a Sonnet helper on the laptop for the browser scenarios"
+    needs: []
+    details: "docs/board/cards/QA-NIGHT-18-NOV.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
