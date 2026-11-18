@@ -14,7 +14,7 @@ import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.j
 import {yardPlan} from '../scablands-yard-look.js';
 import {brandSites} from './brand-sites.js';
 import {BRAND_LINES} from './brand-rule.js';
-import {BELLOWS_RULE, bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
+import {BELLOWS_RULE, BELLOWS_LINES, bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
 import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
@@ -128,9 +128,7 @@ export function buildEverburn(land) {
     start:place(`furnace-rider-start-${index + 1}`, at('furnace-watch', offset, 0)),
   })));
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
-  // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
-  const thiefPath = path(boneyard, planeRow, wingGap);
-  // Kept on job 3 alone until its arena facts and riders are connected. The
+  // Job 3 follows the town road, then its own line around the wrecks. The
   // road and wreck line share the Tin Road's real Boneyard endpoint.
   const bellowsRoad = net.road('tin-road');
   const bellowsWrecks = bellowsWreckRoute(boneyardWrecks(land), bellowsRoad.points[0], wingGap.position);
@@ -142,6 +140,7 @@ export function buildEverburn(land) {
     roadWidthMetres:bellowsRoad.halfWidth * 2,
     wideExtraMetres:bellowsWrecks.wideExtraMetres,
   });
+  const thiefPath = path(...bellowsRoute.road, ...bellowsRoute.wrecks.slice(1));
   const bellowsRiders = path(...[-1, 1].map((side, index) => Object.freeze({
     id:`bellows-furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     start:place(`bellows-rider-post-${index + 1}`, {
@@ -185,11 +184,11 @@ export function buildEverburn(land) {
         lentWeapon:'cinders-hand-flamer', requiresExit:true, unlock:'tin-town-notice-board'})]}),
     Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
       resultLineId:'story.ember.cinder.10',
-      easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
-      steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
+      captions:Object.freeze({'bellows.warning':BELLOWS_LINES.warning, 'bellows.restart':BELLOWS_LINES.restart}),
+      lineId:'story.ember.auntie-solder.5',
+      steps:[step('chase',{what:'Stop the thief and bring back the bellows.', bellows:true, targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
         path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
-        targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
-        targetHealth:20, reward:'flamethrower',
+        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
         bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
         startLineId:'story.ember.auntie-solder.5',
