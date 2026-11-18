@@ -6,6 +6,9 @@ import { EngineAudio, combatAudioSpace } from '../src/audio.js';
 import {SOUND_BANK, CAR_VOICES} from '../src/sound-bank.js';
 import {measureCue, wavBytes} from './audio/render-lab-cues.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
+import {Duel} from '../src/game.js';
+import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
+import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import { App } from '../src/app.js';
 import { CARS, COURSE } from '../src/config.js';
 import {KOGANE_PASS} from '../src/circuits/kogane-pass.js';
@@ -316,6 +319,41 @@ const { audio, context } = await makeAudio();
   st.fighter.flaming = true; audio.update(st);
   audio.setPaused(true);
   check(!audio.worldHandFlamerVoice, 'pause clears the Hand Flamer loop');
+}
+// Finding 4 and finding 3: two real Duel steps across the ground edge west of the town gate.
+{
+  const duel = new Duel({seed: 1989, featureFlags: {'hidden-road': true, 'story-everburn': true, arsenal: true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert(duel.startArenaEvent({venueId: 'scablands', mode: 'world-job', car: 'falcone_f42', seed: 1989,
+    opponents: [], job: EVERBURN_JOBS.find(job => job.id === 'everburn-get-out-and-walk')}));
+  const {audio} = await makeAudio();
+  const requests = [], play = audio._playCue.bind(audio), events = [];
+  audio._playCue = (id, options) => {requests.push(id); return play(id, options);};
+  duel.onChange((st, event) => {events.push(event); audio.event(event, st, duel.course);});
+  const st = duel.state, armor = st.armor, damage = {...st.damageZones};
+  st.countdown = 0; st.status = 'racing';
+  let maxImpact = 0;
+  for (const offset of [-10, -15, -10, -15]) {
+    const pose = duel.course.nearest(TIN_TOWN_GATE.x + offset, TIN_TOWN_GATE.z);
+    Object.assign(st, {s: pose.s, lateral: pose.lateral, speedMph: 10, gear: 1, airborne: false, _jumpY: null});
+    st.stageTimeSec += 1;
+    duel.step(1 / 120);
+    maxImpact = Math.max(maxImpact, st.impactTimer);
+  }
+  console.log('Finding 4/3 real gate ground steps:', JSON.stringify({events: events.filter(event => event.groundChanged || event.scablandsHit || event.crash),
+    requests, maxImpact, armorBefore: armor, armorAfter: st.armor, damage: st.damageZones}));
+  check(events.some(event => event.groundChanged?.id === 'scab-plates'), 'real Duel crosses the scab-plate edge beside the gate');
+  check(maxImpact === 0 && st.armor === armor && JSON.stringify(st.damageZones) === JSON.stringify(damage), 'gate ground transitions neither start impactTimer nor take damage');
+  check(requests.filter(id => id === 'vehicle.landing').length === 2 && !requests.includes('world.ground.scab-plates'), 'ground transition plays suspension thump instead of the borrowed crash');
+  requests.length = 0;
+  audio.event({scablandsHit: {kind: 'climb', impactMph: 20, player: true, cue: 'world.ground.scab-plates'}}, st, duel.course);
+  check(requests.includes('vehicle.landing') && !requests.includes('world.ground.scab-plates'), 'ground-only refusal also plays the suspension thump');
+  const crashes = [];
+  const recorded = audio._recordedImpact.bind(audio);
+  audio.cueBuffers['vehicle.crash.recorded'] = audio.noiseBuffer;
+  audio._recordedImpact = (id, ...args) => {crashes.push(id); return recorded(id, ...args);};
+  audio.event({crash: true, strength: .5}, st, duel.course);
+  check(crashes.includes('vehicle.crash.recorded'), 'solid and car crash route stays unchanged');
 }
 // The actual output curve keeps quiet gain and leaves headroom for large hits.
 const outputCurve = audio.output.curve;

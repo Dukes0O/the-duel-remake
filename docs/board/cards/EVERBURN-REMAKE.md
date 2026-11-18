@@ -1731,3 +1731,9 @@ tone as the Hand Flamer's sound in a job, if nothing else plays it.
 - Walking at 4.5 m/s for two seconds inside the circle: dark becomes lit; the standing-speed requirement is removed.
 - Lamp and hearth rows at zero metres: numeric 0 becomes displayed `0.0`, with the new `atLamp` state (true / false).
 - `test-p4-audio`: exclude only the new `world.lamp.lighting` cue from the historical bank projection; its pinned hash stays unchanged.
+
+### Codex decided (Claude to review), slice 15a
+- The gate's measured ground-only crash is a road-to-scab-plates sound transition, not an impact: at (5960, 62), 15 m west of the gate, four real Duel steps alternating with (5965, 62) requested the borrowed crash twice. `sim-driving.js:204` emits it; `sound-bank.js:642` borrows `vehicle.crash.recorded`; `sim-scablands.js:38` asks for the same cue on a ground refusal. Route both ground-only requests in audio to the existing low suspension thump, `vehicle.landing`. Solid and car collisions keep their path and every damage rule stays as it was.
+- Finding 3 is not reproduced by that ground: `impactTimer` stayed 0 seconds on every step, armour stayed 121, all four damage zones stayed 0. The sound transition cannot start or renew the exit blocker. No change to the exit rule is justified by this measurement; Claude still needs Kyle's failing place and moment.
+- The three recorded flame cues alone receive a world-job Hand Flamer admission past `arsenal`. Audio reads `fighter.flaming`; no flame direction, drawing or hit code changes. CPU crews still use the old tone, so it remains in the bank.
+- The lighting bar uses the existing action-row and armour-track styles inside `combat-hud.js`, with its placement numbers in `BRAND_RULE`; no extra CSS file is needed.
