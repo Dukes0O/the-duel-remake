@@ -40,6 +40,7 @@ import {saltLeanToShape} from './salt-lean-to-look.js';
 import {BARRICADE_LENGTH} from './jobs/barricade.js';
 import {createEverburnProps} from './everburn-props.js';
 import {createBraziers,brazierSpotsFor,createCinderFigure} from './ember-pot.js';
+import {createGasLoadView} from './gas-load-view.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {scablandsSolids,SCABLANDS_SOLIDS} from './scablands-solids.js';
 import {SCARPS, SCARP, preparedScarps} from './scablands-scarps.js';
@@ -638,6 +639,7 @@ export function createScablandsScene(course,options={}){
     saltShelter.add(lean);
   }
   const cinder=createCinderFigure();group.add(cinder);
+  const gasLoadView=createGasLoadView();group.add(gasLoadView.group);
   const brandLamps=createBrandLamps();group.add(brandLamps.group);
   const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
   const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
@@ -997,6 +999,7 @@ export function createScablandsScene(course,options={}){
       townDoor.position.set(doorPose.localX,1.5,doorPose.localZ);
       braziers.group.visible=Boolean(emberStep);
       braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
+      gasLoadView.update(worldJob,group.userData.drawnGroundHeightAt);
       barricades.forEach((rig,index)=>{
         const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
         rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);

@@ -6,6 +6,7 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES} from './gas-load-rule.js';
 import {EMBER_RULE, SALT_RIDERS, bedMistFor, bridgeAshPlan} from './ember-rule.js';
 import {riverFor} from '../scablands-regions.js';
 import {bessRest} from '../boneyard-wrecks.js';
@@ -67,14 +68,13 @@ export function buildEverburn(land) {
   // reaches the place in front of the gate, the gate burns (old-smoke.js). The furnace does not drive through the gate: it stops
   // 82 m south of the gate's centre, in front of it, and turns west along the outside of the fence.
   const furnaceGate = place('tin-town-gate-front', at('tin-town', -25, 82), 18);
-  // Slow Ride follows the Boneyard Road and the East Road (SCABLANDS-LAND round 4, slice 2b): from the Boneyard over the Wash to the halfway camp, then over
-  // the Girder Bridge to Tin Town. Big Bess obeys the ground, and the dry river's banks are too steep for her: the straight lines between the places crossed them.
-  // The bridge's deck is 14 m wide with a solid truss each side, so the road is lined up on it 150 m before and after, on the East Road's own line.
   const bridgeAt = at('girder-bridge');
   const bridgeIn = place('bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12), bridgeOut = place('bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12);
   const furnaceBridgeIn = place('furnace-bridge-in', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 150), 12), furnaceBridgeOut = place('furnace-bridge-out', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, -150), 12);
-  // She sets out from where she stands in the Boneyard (the wrecks are solid: the straight way west from its middle runs through the south wreck) and leaves it by the west edge of the wreck field.
-  const slowRidePath = path(place('boneyard', at('boneyard', 40, -42), 18), place('boneyard-west-edge', at('boneyard', -110, -80), 12), place('the-wash', at('the-wash'), 12), safeRoad, bridgeIn, place('girder-bridge', roadPointFrom(eastRoad, bridgeAt.x, bridgeAt.z, 10), 12), bridgeOut, place('tin-town', at('tin-town', -27, 2), 18));
+  // Bess starts at the plane row's clear road entry. Her existing mover
+  // follows every point of the land's own Tin Road to the south gate.
+  const slowRidePath = path(...net.road('tin-road').points.map((point, index) => place(`bess-tin-road-${index}`, point)));
+  const bessMeeting = place('moss-meeting', escortCarStart(slowRidePath, 0, GAS_LOAD_RULE.meetingSideMetres), GAS_LOAD_RULE.meetingRadiusMetres);
   const furnaceRunBack = place('furnace-run-3', between('dead-mall', 'everburn', .485, 5.62, -18.9));
   // The well's post is solid. Start and finish outside it, on the sides reached by the two road pieces.
   const furnaceStart = place('furnace-well-start', at('everburn', -5, -10), 18);
@@ -215,15 +215,16 @@ export function buildEverburn(land) {
         // Collection requests Cinder's line while the bellows rule times its hold.
       })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
+      captions:GAS_LOAD_LINES,
       // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
       resultLine:'The gas is in Tin Town and the forge is lit.',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
-      steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:9,
+      steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', gasLoad:true, meeting:bessMeeting,
+        hoseFrom:place('bess-plane-wing', at('boneyard', 13, -32)), actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:GAS_LOAD_RULE.speedKmh / 3.6,
         path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),
-        // The car starts 10 m behind her and 6 m to her right, facing along her road (it was the Boneyard's own spawn, 165 m off).
-        carStart:escortCarStart(slowRidePath),
-        speed:9, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
+        carStart:escortCarStart(slowRidePath, GAS_LOAD_RULE.carStartBehindMetres, GAS_LOAD_RULE.carStartSideMetres),
+        speed:GAS_LOAD_RULE.speedKmh / 3.6, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
         // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. Both stand on her road: the first three
         // quarters of the way from the Boneyard to the halfway camp (past the Wash), the second three quarters of the way from the camp to Tin
         // Town (past the bridge). The flamethrower is lent, as in job 1.
@@ -232,7 +233,7 @@ export function buildEverburn(land) {
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
-        reward:'scrap', startLineId:'story.ember.moss.1', closing:['story.ember.auntie-solder.6']})]}),
+        reward:'scrap', closing:['story.ember.auntie-solder.6']})]}),
     Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
       resultLineId:'story.ember.old-smoke.1',
       easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'story.ember.cinder.11',

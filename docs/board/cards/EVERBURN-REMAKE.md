@@ -1194,6 +1194,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 12, Slow Ride meeting: Bess starts at the Tin Road's Boneyard endpoint (23 m east, 4 m south of the named Boneyard), clear of the wrecks. Moss's stop ring is 6 m to her right, with a 6 m radius and the car stopped below 1 km/h. The car starts 60 m behind her on that road's line. The hose starts at the north wreck's east wing (13 m east, 32 m north of the Boneyard). This keeps her moving on the land's road from the first metre. No extra player sentence is added.
+
 - Slice 9, story wall: job 2 is "Light the Town" and its note is "Take a brand from the hearth. Light the three town lamps and drive off the Ash Men." Ash Men choose clear alley waypoints against the existing solids, then use the existing foot mover. They do not gain any speed, range or shorter smothering time.
 
 
