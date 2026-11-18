@@ -1,5 +1,5 @@
 import {pathShare} from '../furnace-sightings.js';
-import {GAS_LOAD_RULE, gasLoadMeeting, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart} from '../gas-load-rule.js';
+import {GAS_LOAD_RULE, gasLoadMeeting, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart, gasLoadResult} from '../gas-load-rule.js';
 
 // Raids on an escort (docs/board/cards/RUN-GAS.md, "Raids on an escort"). A step may carry `ambushes`: [{id, place, count}].
 //   - When the truck comes within AMBUSH_ALERT_METRES of an ambush's place, its raiders appear (a spawnWave request).
@@ -141,6 +141,16 @@ export function stepEscort(step, state, view, dt = 0) {
   // count as a successful escort.
   const requests = [{ type: 'follow', path: step.path, speed: step.speed }, { type: 'marker', place: step.destination }];
   if (!truck) return {state, complete: false, requests};
+  if (step.gasLoad) {
+    const restart = gasLoadRestart(step, state);
+    if (restart) return restart;
+  }
+  if (step.gasLoad && (truck.atDestination === true || truck.atDestination === undefined && truck.pathProgress >= 1)) {
+    const result = state.gasArrivalResult ?? gasLoadResult(state.gas);
+    requests[0].speed = 0;
+    return {state:{...state, gasArrivalResult:result}, complete:true, requests,
+      events:state.gasArrivalResult ? [] : [{type:'gasArrived', ...result}]};
+  }
   let blockEvents = [];
   if (step.gasLoad) {
     const blocks = gasLoadBlocks(step, state, view, pathShare(truck.position, truck.pathIndex, step.path).metres, dt);

@@ -1432,6 +1432,7 @@ export function stepWorldJob(duel, dt) {
     const hold = worldJob.arrivalHold;
     worldJob.clockSec = state.stageTimeSec;
     hold.elapsed = Math.min(hold.seconds, hold.elapsed + dt);
+    if (hold.gasLoad) worldJob.forgeGasShare = hold.elapsed / hold.seconds;
     if (!hold.caught && hold.elapsed + 1e-9 >= hold.catchAt) {
       hold.caught = true;
       duel.emit({arenaTell:{id:'forge-catch', targetId:'player', seconds:0,
@@ -1439,6 +1440,7 @@ export function stepWorldJob(duel, dt) {
     }
     updateJobActors(duel, worldJob, dt);
     if (hold.elapsed + 1e-9 >= hold.seconds) {
+      if (hold.gasLoad) worldJob.forgeGasShare = 1;
       worldJob.job = hold.completedJob;
       return finishWorldJob(duel, worldJob);
     }
@@ -1716,6 +1718,13 @@ export function stepWorldJob(duel, dt) {
     if (event.type === 'bellowsArrived') {
       worldJob.bellowsResult = {bellows:event.bellows, knocks:event.knocks, pay:event.pay, sentence:event.sentence};
     }
+    if (currentStep?.gasLoad && event.type === 'gasArrived') {
+      worldJob.gasResult = {gas:event.gas, pay:event.pay, sentence:event.sentence};
+      worldJob.forgeGasShare = 0;
+      sayLine(duel, worldJob, currentStep.gasArrivalLineId);
+      duel.emit({arenaTell:{id:'gas-arrival', targetId:'player', seconds:0,
+        cue:'world.furnace.horn', position:{...currentStep.destination.position}}});
+    }
     if (event.type === 'emberArrived') {
       worldJob.emberResult = {ember: event.ember, relights: event.relights, grade: event.grade, pay: event.pay,
         sentence: emberSentence(currentStep.ember, event.ember, event.relights)};
@@ -1729,10 +1738,10 @@ export function stepWorldJob(duel, dt) {
     }
     if (event.type === 'done') {
       if (currentStep?.arrivalHold) {
-        worldJob.arrivalHold = {elapsed:0, ...currentStep.arrivalHold,
+        worldJob.arrivalHold = {elapsed:0, ...currentStep.arrivalHold, gasLoad:currentStep.gasLoad === true,
           position:{...currentStep.destination.position}, completedJob:next};
         worldJob.job = {...next, done:false, stepIndex:previousStep,
-          stepState:{...previousStepState, loaded:true, ember:worldJob.emberResult?.ember}};
+          stepState:{...previousStepState, loaded:true, ...(currentStep.gasLoad ? {gas:worldJob.gasResult.gas} : {ember:worldJob.emberResult?.ember})}};
         state.speedMph = 0; state.pushVelocity = 0;
         return null;
       }

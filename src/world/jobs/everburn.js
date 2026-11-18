@@ -247,8 +247,7 @@ export function buildEverburn(land) {
       })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
       captions:Object.freeze({...GAS_LOAD_LINES, 'gas.flash':GAS_FLASH_LINE, 'gas.dry':GAS_DRY_LINE}),
-      // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
-      resultLine:'The gas is in Tin Town and the forge is lit.',
+      resultLineId:'story.ember.auntie-solder.6',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
       steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', gasLoad:true, meeting:bessMeeting,
@@ -261,7 +260,8 @@ export function buildEverburn(land) {
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.
-        reward:'scrap', closing:['story.ember.auntie-solder.6']})]}),
+        arrivalHold:Object.freeze({seconds:GAS_LOAD_RULE.arrivalSeconds, catchAt:GAS_LOAD_RULE.arrivalCatchSeconds}),
+        gasArrivalLineId:'story.ember.auntie-solder.6', reward:'scrap'})]}),
     Object.freeze({id:'everburn-key-under-mall', storyId:'everburn', number:5, name:'The Key Under the Mall', kind:'heist',
       resultLineId:'story.ember.old-smoke.1',
       easy:Object.freeze({lampRange:10, alarmIsFailure:false, walkSpeed:1}), lineId:'story.ember.cinder.11',

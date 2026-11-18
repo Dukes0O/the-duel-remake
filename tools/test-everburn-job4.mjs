@@ -4,7 +4,7 @@ import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js
 import {furnaceSighting, FURNACE_PACING} from '../src/world/jobs/furnace-sightings.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart} from '../src/world/jobs/gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids, gasLoadFlash, gasLoadPlug, gasLoadCheckpoint, gasLoadRestart, gasLoadResult} from '../src/world/jobs/gas-load-rule.js';
 import {burnBarricades} from '../src/world/jobs/barricade.js';
 import {createKnowledge, jobFacts, learn} from '../src/world/scablands-map.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
@@ -421,3 +421,64 @@ for (const share of [.301, .5, .699]) {
 }
 assert.deepEqual(step.sayAtShare, [{share:FURNACE_PACING.fromShare, lineId:'story.ember.moss.4'}]);
 console.log('Slow Ride: existing Old Smoke pacing and Moss caption retained.');
+
+const dryAtArrival = stepEscort(step, {gasLoaded:true, gas:0},
+  {actors:[{...truck, atDestination:true}]}, .1);
+assert.ok(dryAtArrival.events.some(event => event.type === 'restarted'));
+assert.equal(dryAtArrival.complete, false, 'A dry tank restarts even at arrival.');
+
+// Arrival freezes the delivered gas, then uses job 1's existing hold.
+assert.deepEqual(step.arrivalHold, {seconds:9, catchAt:5});
+for (const [gas, pay, sentence] of [[100,150,'Bess came in full.'], [80,150,'Bess came in full.'],
+  [79.99,100,'Bess came in most of the way full.'], [40,100,'Bess came in most of the way full.'],
+  [39.99,60,'Bess came in nearly dry.']]) {
+  assert.deepEqual(gasLoadResult(gas), {gas, pay, sentence});
+}
+const arrivalSounds = [];
+duel.onChange((_state, event) => {if (event.arenaTell?.cue === 'world.furnace.horn') arrivalSounds.push(event.arenaTell);});
+world.job.stepState = {gasLoaded:true, gas:82, holes:0, clearedBlocks:step.blocks.map(block => block.id)};
+raidTruck.position = {...step.destination.position};
+raidTruck.pathIndex = step.path.length;
+raidTruck.atDestination = raidTruck.reachedEnd = true;
+duel.step(.01);
+if (!world.arrivalHold) duel.step(.01);
+assert.equal(world.arrivalHold.elapsed, 0);
+assert.equal(world.job.done, false);
+assert.deepEqual(world.gasResult, {gas:82, pay:150, sentence:'Bess came in full.'});
+assert.equal(world.forgeGasShare, 0);
+assert.equal(arrivalSounds.length, 1);
+for (let count = 0; count < 8; count++) duel.step(1);
+assert.equal(world.settled, false, 'Eight seconds cannot end the hold.');
+assert.ok(Math.abs(world.forgeGasShare - 8 / 9) < 1e-8);
+assert.equal(world.gasResult.gas, 82, 'Arrival freezes gas before the hold.');
+duel.step(1);
+assert.equal(world.settled, true);
+assert.equal(world.forgeGasShare, 1);
+assert.equal(arrivalSounds.length, 1, 'The furnace sounds once at arrival.');
+console.log('Slow Ride: gas grade boundaries, frozen delivery, shared nine-second hold and one arrival horn passed.');
+
+const {arenaReward, settleArenaResult} = await import('../src/arena/arena-settlement.js');
+const {arenaResultsScreen} = await import('../src/screen-arena.js');
+for (const gas of [100,80,79.99,40,39.99]) {
+  const gasResult = gasLoadResult(gas);
+  const arena = {version:1, venueId:'scablands', mode:'world-job', phase:'over',
+    participants:[{id:'player', kind:'player'}],
+    result:{placings:['player'], winnerId:'player', reason:'job-complete'},
+    worldJob:{definition, gasResult, job:{steps:definition.steps, stepIndex:definition.steps.length}}};
+  for (const [difficulty, factor] of [['easy',1], ['medium',1.2], ['hard',1.4]]) {
+    assert.deepEqual(arenaReward(arena, difficulty),
+      {base:gasResult.pay, placing:0, wrecks:0, factor, total:Math.round(gasResult.pay * factor)});
+  }
+  const profile = {credits:123, wasteland:{version:1, discoveredGate:true, scrap:10,
+    settledResults:[], territories:{kettle:{hold:0, claimed:false}}}};
+  const before = JSON.stringify(profile);
+  const request = {runId:`gas-${gas}`, ownerPlayerId:'test-player', activePlayerId:'test-player', cpuDifficulty:'easy', arena};
+  const paid = settleArenaResult(profile, request);
+  assert.equal(paid.scrapEarned, gasResult.pay);
+  assert.equal(paid.profile.wasteland.scrap, 10 + gasResult.pay);
+  assert.equal(JSON.stringify(profile), before);
+  assert.deepEqual(Object.keys(paid.profile.wasteland), Object.keys(profile.wasteland));
+  assert.equal(settleArenaResult(paid.profile, request).awarded, false);
+  assert.ok(arenaResultsScreen({arena}, {metric:()=>'', action:()=>'', escapeHTML:String}).description.includes(gasResult.sentence));
+}
+console.log('Slow Ride: reward by gas, existing difficulty factors, single settlement, unchanged save keys and results sentences passed.');

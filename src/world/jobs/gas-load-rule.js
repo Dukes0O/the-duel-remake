@@ -19,6 +19,13 @@ export const GAS_LOAD_RULE = Object.freeze({
   flashGas: 15,
   flashCooldownSeconds: 2,
   flashVisibleSeconds: .35,
+  arrivalSeconds: 9,
+  arrivalCatchSeconds: 5,
+  fullGas: 80,
+  mostGas: 40,
+  fullPay: 150,
+  mostPay: 100,
+  lowPay: 60,
   start: 100,
   startHoles: 0,
   speedKmh: 32,
@@ -191,4 +198,11 @@ export function gasLoadRestart(step, state) {
     flashCooldown:0, flashVisible:0, stoppedBlock:null, blockRestartLeft:0},
     complete:false, requests:[{type:'follow', path:step.path, speed:0}, {type:'say', lineId:'gas.dry'}],
     events:[{type:'restarted', actorId:step.actorId, place, pathIndex}]};
+}
+
+// The delivered reading is frozen before the shared arrival hold begins.
+export function gasLoadResult(gas) {
+  if (gas >= GAS_LOAD_RULE.fullGas) return {gas, pay:GAS_LOAD_RULE.fullPay, sentence:'Bess came in full.'};
+  if (gas >= GAS_LOAD_RULE.mostGas) return {gas, pay:GAS_LOAD_RULE.mostPay, sentence:'Bess came in most of the way full.'};
+  return {gas, pay:GAS_LOAD_RULE.lowPay, sentence:'Bess came in nearly dry.'};
 }
