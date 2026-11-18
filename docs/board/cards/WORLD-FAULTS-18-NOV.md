@@ -131,7 +131,7 @@ Baseline `e0ca217d6`, Falcone F42, seed 1989, real Run Him Down Duel at 120 Hz.
 | Trigger | What moves and why | Source on the measured revision |
 | --- | --- | --- |
 | Bellows thief reaches the furnace | Car and, if on foot, fighter move to the Boneyard entrance to repeat the chase. Earned knocks are retained. | `src/arena/modes/world-job.js:1244` |
-| Player's car finishes its wreck timer | The arena places the repaired car at a clear spawn slot at 12 mph and signals a respawn with a sound and shimmer. The HUD counts down while wrecked. | `src/arena/arena-event.js:138`, `:422` |
+| Player's car finishes its wreck timer | The arena places the repaired car at a clear spawn slot at 12 mph and signals a respawn with a sound and shimmer. The world job shows the wreck message during its timer. | `src/arena/arena-event.js:138`, `:422` |
 | Fighter finishes the normal knockdown timer | The fighter gets up beside the player's parked car. | `src/onfoot.js:131`, `:201` |
 | Light the Town recovers a knocked-down fighter | On Easy the fighter returns beside the last lit lamp if one exists. Otherwise the fighter returns to the hearth. | `src/arena/modes/world-job.js:1146` |
 | The Iron Line boards, rides or leaves the train | Boarding places the fighter on the roof plate. Each tick carries the rider along the train. Dismount sets the ground height. Driving uses the train's position. | `src/arena/modes/world-job.js:1751`, `:1774`, `:1790` |
@@ -171,3 +171,17 @@ at (5098.29, 1666.11). Nobody has listened to the thump yet.
 
 Findings 6 and 7 (a rammed rider takes no damage; the crossbow does not choose a job's cars) belong to ROAD-RIDERS,
 which can start now and should begin from the measurements above.
+
+### Slice 2 measurements before the fixes
+
+At `38e2498a3`, the real Job 3 Falcone, seed 1989, drove from 12 m inside along a line through the gate centre, at 120 Hz. Both signs of 15° and 30° cleared all solids, crossing at 10.00 or 20.41 km/h. At both speeds, −45° hit `tin-town-gate-post-left` 29 times and `tin-town-gate-post-right` 54 times. +45° reversed those IDs with the same counts. Both 10 km/h drivers advanced only 5.40 m along their line past the gate in ten seconds. No fence or other solid was hit. The first 45° contact occurred at z=58.56, 3.44 m inside the gate. The post is 2.10 m square, but `src/collision.js:44` expands its box along the post axes only. In the car's sideways axis the diagonal leaves 1.42 m clear even at closest approach. The missing car axes admit a false corner contact.
+
+The previous-caption/furnace probe again moved the parked car from (6025,14) to (4263,3044) in one 1/120 s step while the old line remained. `src/world/jobs/bellows-rule.js:324` inspects only the thief. In Job 2 `src/world/jobs/brand-rule.js:326` orders a return on the first knockdown tick, before a reading interval. A normal fighter has three seconds down before returning beside the car (`src/onfoot.js:199`), with no destination in the health display. The world-job HUD says “WRECKED / RECOVERING”, and `src/screen-arena.js:34` suppresses the arena countdown. Train boarding and leaving the train use the player's controls.
+
+The real mouse binding and fighter still turned 37.82° from one 400 px move, 50.42° from four 100 px moves and 0° outside the unlocked picture. `src/app.js:2879` clips each event independently. A refused capture is swallowed at `src/app.js:2864`; the HUD has no capture state.
+
+### Slice 2 results
+
+- All twelve angled exits cleared both posts and both fence sheets. Each 10 km/h pass crossed at 10.004 km/h and each 20 km/h pass at 20.406 km/h. All advanced 10 m beyond the gate with zero accepted contacts. The real geometry and opening keep their measured dimensions.
+- Job 3 held the parked car when the thief reached the furnace. An outward crossing on foot or in the car starts Cinder's existing 7.50 s reason. The car then moved once to (4263,3044). A last-minute urgent line did not take its place. The Job 2 fighter returned once to the hearth at 2.858 s or the last Easy lamp at 2.750 s. Ordinary knockdown and wreck recovery now name the destination.
+- The actual mouse binding and fighter turned 50.42° from one 400 px event or four 100 px events, and 0° outside the unlocked picture. A click requests capture. The HUD gives the release key when held and explains where the player can still look after refusal. The browser behavior and grey flash remain for Claude's hand play.

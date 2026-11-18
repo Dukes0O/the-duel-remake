@@ -278,12 +278,6 @@ export class App {
         this._footPointer={lookX:0,lookY:0,fire:false,aim:false};
         if(event.fighterEntered && typeof document!=='undefined' &&
             document.pointerLockElement) document.exitPointerLock();
-        // Capture the mouse as soon as the fighter steps out, so the mouse
-        // looks around without a first click. The F press that got him out
-        // still counts as a user action; if the browser refuses, a click works.
-        if(event.fighterExited && typeof document!=='undefined' && !document.pointerLockElement){
-          try{document.querySelector('#view3d canvas')?.requestPointerLock?.()?.catch?.(()=>{});}catch{}
-        }
         this._resetKeyboardInput();
         this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,interact:false});
       }
@@ -2826,6 +2820,13 @@ export class App {
     d.setInput({throttle,brake,steer,boost:false});
   }
 
+  get footMouseHint() {
+    if (!this.duel.state.onFoot || this.duel.state.paused || !['racing','exploring','countdown'].includes(this.duel.state.status)) return '';
+    if (this._footPointer.capture === 'held') return 'Esc frees the mouse';
+    if (this._footPointer.capture === 'refused') return 'Mouse capture unavailable. Move over the picture to look.';
+    return 'Click the picture to capture the mouse.';
+  }
+
   _bindKeys() {
     if (typeof window === 'undefined') return;
     this._inputEvents=new AbortController();const signal=this._inputEvents.signal;
@@ -2860,8 +2861,14 @@ export class App {
       const canvas = e.target.closest('#view3d canvas');
       if (!canvas) return;
       e.preventDefault();
-      if (!document.pointerLockElement) {
-        try { canvas.requestPointerLock?.()?.catch?.(() => {}); } catch {}
+      const pointer = this._footPointer;
+      if (!document.pointerLockElement && pointer.capture !== 'requesting') {
+        pointer.capture = 'requesting';
+        const refused = () => { if (pointer.capture === 'requesting') pointer.capture = 'refused'; };
+        try {
+          if (canvas.requestPointerLock) canvas.requestPointerLock()?.catch?.(refused);
+          else refused();
+        } catch { refused(); }
       }
       if (e.button === 0) this._footPointer.fire = true;
       if (e.button === 2) this._footPointer.aim = true;
@@ -2875,10 +2882,10 @@ export class App {
           !['racing', 'countdown', 'exploring'].includes(this.duel.state.status)) return;
       // Canvas movement remains usable before the first click and when the
       // browser refuses pointer lock. Menus and the rest of the page stay inert.
-      if (document.pointerLockElement == null &&
-          !(e.target instanceof Element && e.target.closest('#view3d canvas'))) return;
-      this._footPointer.lookX += Math.max(-300, Math.min(300, e.movementX || 0));
-      this._footPointer.lookY += Math.max(-300, Math.min(300, e.movementY || 0));
+      const picture = document.pointerLockElement ?? e.target;
+      if (!(picture instanceof Element && picture.closest('#view3d canvas'))) return;
+      if (Number.isFinite(e.movementX)) this._footPointer.lookX += e.movementX;
+      if (Number.isFinite(e.movementY)) this._footPointer.lookY += e.movementY;
     }, {signal});
     window.addEventListener('contextmenu',e=>{
       if(this.duel.state.onFoot && e.target instanceof Element &&
@@ -2886,11 +2893,17 @@ export class App {
     },{signal});
     // Headless tests provide a window without a document; pointer lock needs both.
     if(typeof document!=='undefined')document.addEventListener('pointerlockchange',()=>{
-      if(document.pointerLockElement || !this.duel.state.onFoot)return;
+      if (!this.duel.state.onFoot) return;
+      if (document.pointerLockElement?.closest?.('#view3d canvas')) { this._footPointer.capture = 'held'; return; }
+      if (this._footPointer.capture !== 'held') return;
+      this._footPointer.capture = null;
       this._footPointer.fire=this._footPointer.aim=false;
       this._footPointerReleasedAt=performance.now();
       if(!this.duel.state.paused)this.togglePause();
     },{signal});
+    if (typeof document !== 'undefined') document.addEventListener('pointerlockerror', () => {
+      if (this._footPointer.capture === 'requesting') this._footPointer.capture = 'refused';
+    }, {signal});
     window.addEventListener('blur', () => {
       this.keys = {};
       this.heliSession?.cancelHook();

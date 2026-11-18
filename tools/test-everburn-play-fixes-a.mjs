@@ -107,9 +107,9 @@ const update=createHudScreen({app:{duel,player:{name:'Test'}},ui,text:(id,value)
 const hud=duel.state; hud.status='racing'; hud.stageTimeSec=0;
 duel._storyCallout('A spoken story line', 2.2); update(hud);
 assert.equal(ui['callout-text'].textContent,'A spoken story line');
-hud.stageTimeSec=1; hud.crashFlash=1; hud.combatWrecking=true; update(hud);
-assert.equal(ui['callout-text'].textContent,'WRECKED / RECOVERING');
-assert.equal(ui['callout-kicker'].textContent,'ARMOR GONE. RECOVERY IN PROGRESS.');
+hud.stageTimeSec=1; hud.crashFlash=1; hud.combatWrecking=true; hud.combatWreckTimer=2.9; update(hud);
+assert.equal(ui['callout-text'].textContent,'Car wrecked. Returning to open ground in 3 s.');
+assert.equal(ui['callout-kicker'].textContent,'');
 assert.equal(classes.get('crash-callout'),true);
 hud.stageTimeSec=4; update(hud); hud.crashFlash=0; hud.combatWrecking=false; update(hud);
 assert.equal(ui['callout-text'].textContent,'A spoken story line');
@@ -129,6 +129,20 @@ assert.equal(ui['callout-text'].textContent,'');
 hud.stageTimeSec=7; hud.crashFlash=1; hud.catastrophic=true; update(hud);
 assert.equal(ui['callout-text'].textContent,'CATASTROPHIC IMPACT'); assert.equal(classes.get('crash-callout'),true);
 hud.catastrophic=false; hud.crashFlash=0;
+// With no crash flash, a forced return still takes the screen immediately. Its reason survives an urgent queued line.
+duel._storyCallout('The other job line.', 2.2);
+const rule = hud.arena.worldJob.job.stepState;
+rule.returnNotice = {text:'Cinder: A return is due.', remaining:4};
+hud.stageTimeSec=8; update(hud); duel._storyCallout('A different urgent line.', 2.2, true);
+hud.stageTimeSec=11.99; update(hud);
+assert.equal(ui['callout-text'].textContent, rule.returnNotice.text);
+assert.equal(ui['race-callout'].hidden, false);
+assert.equal(ui['callout-kicker'].textContent, '');
+delete rule.returnNotice;
+hud.onFoot = true; hud.fighter = {knockedDown:true};
+update(hud);
+assert.equal(ui['callout-text'].textContent,'Knocked down. Getting up beside your car.');
+hud.onFoot = false; hud.fighter = null; update(hud);
 // A race and a Scrapdome event are exactly as before: a collision says COLLISION with its kicker.
 for (const kind of ['race','scrapdome']) {
   const other=new Duel({seed:9,featureFlags:{'hidden-road':true}}), otherUi=new Proxy({}, {get:(target,key)=>target[key] ??= node()}), otherClasses=new Map();

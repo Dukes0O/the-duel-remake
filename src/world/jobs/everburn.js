@@ -246,7 +246,7 @@ export function buildEverburn(land) {
         roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower', lentWeapon:'cinders-hand-flamer',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
         // The way out of the town for the driver's arrow (src/world/world-hud.js), while the car is still inside the fence.
-        townGate:Object.freeze({...place('town-gate', tinTownGateFor(land).gate), through:tinTownGateFor(land).gate.through,
+        townGate:Object.freeze({...place('town-gate', southGate), through:southGate.through, opening:southGate.opening,
           // The town's own extent (its wall entries): the arrow is for a car inside it only.
           box:Object.freeze({minX:Math.min(...townLights.ashEntries.map(entry => entry.position.x)), maxX:Math.max(...townLights.ashEntries.map(entry => entry.position.x)),
             minZ:Math.min(...townLights.ashEntries.map(entry => entry.position.z)), maxZ:Math.max(...townLights.ashEntries.map(entry => entry.position.z))})}),

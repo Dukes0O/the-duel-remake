@@ -1634,7 +1634,7 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold mist lies in the hollows. Steer round it.', 3);
   }
   const carriedCar = position(duel, state);
-  const view = {player: playerView, onFoot: !!state.onFoot,
+  const view = {player: playerView, onFoot: !!state.onFoot, combatWrecking:state.combatWrecking === true,
     ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? [],
       playerFlaming:state.onFoot ? state.fighter?.flaming === true && state.footWeapons?.selected === 'hand-flamer' :
         (state.combat?.flameBursts ?? []).some(burst => burst.ownerId === 'player')} : {}),

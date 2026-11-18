@@ -39,19 +39,27 @@ Object.assign(inputApp, {
   _keyboardThrottle: {reset() {}}, togglePause() { this.duel.state.paused = true; }
 });
 inputApp._bindKeys();
-const mouse = (type, button, movementX = 0, movementY = 0) => {
+const mouse = (type, button, movementX = 0, movementY = 0, target = canvas) => {
   const event = new Event(type, {cancelable: true});
-  Object.defineProperty(event, 'target', {value: canvas});
+  Object.defineProperty(event, 'target', {value: target});
   Object.assign(event, {button, movementX, movementY});
   window.dispatchEvent(event);
+  return event;
 };
 try {
+  const outside = new Element(); outside.closest = () => null;
+  assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
+  assert(!mouse('mousedown', 0, 0, 0, outside).defaultPrevented);
+  mouse('mousemove', 0, 400, 400, outside);
+  assert.equal(inputApp._footPointer.lookX, 0);
+  assert.equal(requests, 0);
   mouse('mousemove', 0, 12, -7);
   check(inputApp._footPointer.lookX === 12 && inputApp._footPointer.lookY === -7,
     'mouse look works over the live canvas before locking or firing a round');
   mouse('mousedown', 2);
   check(requests === 1 && inputApp._footPointer.aim && !inputApp._footPointer.fire,
     'right-click alone activates aim and tries to capture the mouse without shooting');
+  assert.match(inputApp.footMouseHint, /unavailable.*picture/);
   mouse('mousedown', 0);
   check(inputApp._footPointer.aim && inputApp._footPointer.fire,
     'left-click fires while the right mouse button remains held');
@@ -62,6 +70,32 @@ try {
   check(!inputApp._footPointer.aim && inputApp._footPointer.fire,
     'releasing aim preserves the held fire button');
   mouse('mouseup', 0);
+  const measured = (pixels, target) => {
+    inputApp._footPointer.lookX = inputApp._footPointer.lookY = 0;
+    for (const delta of pixels) mouse('mousemove', 0, delta, -delta, target);
+    return [inputApp._footPointer.lookX, inputApp._footPointer.lookY];
+  };
+  assert.deepEqual(measured([400], canvas), [400,-400]);
+  assert.deepEqual(measured([100,100,100,100], canvas), [400,-400]);
+  let pending = 0; canvas.requestPointerLock = () => { pending++; };
+  mouse('mousedown', 0); mouse('mousedown', 2);
+  assert.equal(pending, 1, 'Clicks during the same pending request keep the original gesture.');
+  document.dispatchEvent(new Event('pointerlockerror'));
+  assert.match(inputApp.footMouseHint, /unavailable.*picture/);
+  mouse('mousedown', 0);
+  assert.equal(pending, 2);
+  document.pointerLockElement = canvas;
+  document.dispatchEvent(new Event('pointerlockchange'));
+  assert.equal(inputApp.footMouseHint, 'Esc frees the mouse');
+  assert.deepEqual(measured([400], outside), [400,-400]);
+  document.exitPointerLock = () => { document.pointerLockElement = null; document.dispatchEvent(new Event('pointerlockchange')); };
+  window.dispatchEvent(key('Escape'));
+  assert.equal(document.pointerLockElement, null);
+  assert.equal(inputApp.duel.state.paused, true);
+  assert.equal(inputApp.footMouseHint, '');
+  assert.equal(inputApp._footPointer.fire || inputApp._footPointer.aim, false);
+  inputApp.duel.state.paused = false;
+  assert.equal(inputApp.footMouseHint, 'Click the picture to capture the mouse.');
   inputApp.duel.state.paused = true;
   const look = inputApp._footPointer.lookX;
   mouse('mousedown', 2); mouse('mousemove', 0, 9, 9);
