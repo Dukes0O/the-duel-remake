@@ -1,7 +1,7 @@
 Cars and chase cameras now follow the drawn ground through render3d.js; applyVehicleTerrainPose places cars, placeWorldJobVehicle places job cars, and shadows and the pot follow their parent.
 Machines: scablands-scene.js uses placeRig for Big Bess and the furnace; their shade, dust and fire follow the rig. The accepted windbreak is in 173751c1d; its focused check passed.
 Walkers: combat-scene.js supplies rigged-fighter.js and onfoot-figures.js; render3d.js supplies the camera. Cinder and his ring share one root. brand-thief.js supplies the walking thief and his load.
-Effects: effects.js uses support and tire contacts; combat-scene.js places owner effects. brand-carried.js, brand-ash-view.js and bellows-view.js use the same helper for hands, marks, loads and clouds.
+Effects: effects.js uses support and tire contacts; combat-scene.js and combat-effects.js shift bursts, roof charges and physical effects; render3d.js shifts explosion inputs. Regression failed at physical y=2 before, passes at drawn y=2.8; 13 combat-effects and 180 effects checks pass. brand-carried.js, brand-ash-view.js and bellows-view.js use the same helper for hands, marks, loads and clouds.
 The near mesh is cut away inside river distance 80 m; the gorge extends to 92 m and overlaps outside, where the higher mesh is seen. Drawing fault: up to .365383497 m at (3103.127,-276.104), including a .199501277 m step near (2650.79,2221.98); the helper blends across 77 to 83 m without changing either mesh or drawnGroundHeightAt.
 East road largest changes at .5/.05 m steps: .011923131 at (5975,83.641603) / .001289483 at (5975,83.343497).
 Plates largest changes: .148869267 at (2961.129117,-247.018544) / .021954071 at (2962.996328,-247.174307).

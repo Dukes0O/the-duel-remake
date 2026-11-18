@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {actorForTarget} from './arsenal/targeting.js';
 import {flipbookFrameUVInto} from './combat-vfx-atlas.js';
 
 const PATHS = Object.freeze({
@@ -81,7 +82,7 @@ function makeImpactFlash(group, resources, name) {
   return {mesh};
 }
 
-function showImpactFlash(slot, position, age, size) {
+function showImpactFlashUnshifted(slot, position, age, size) {
   const mesh = slot.mesh;
   mesh.visible = age < .2;
   if (!mesh.visible) return;
@@ -90,7 +91,7 @@ function showImpactFlash(slot, position, age, size) {
   mesh.material.opacity = 1;
 }
 
-function show(slot, position, {age = 0, duration = 1, size = 1,
+function showUnshifted(slot, position, {age = 0, duration = 1, size = 1,
   startFrame = 0, frameCount = 64, alpha = 1, rise = 0} = {}) {
   const phase = Math.max(0, Math.min(1, age / duration));
   const frame = Math.min(frameCount - 1,
@@ -289,8 +290,22 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     return true;
   }
 
+  let drawnShift;
+  function effectShift(position,owner,object) {
+    return (owner?drawnShift?.forActor?.(owner):undefined)??
+      drawnShift?.(position.x,position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:undefined,object)??0;
+  }
+  function show(slot,position,options) {
+    showUnshifted(slot,position,options);
+    if(!options?.alreadyDrawn)slot.mesh.position.y+=effectShift(position,options?.owner,slot.mesh);
+  }
+  function showImpactFlash(slot,position,age,size) {
+    showImpactFlashUnshifted(slot,position,age,size);
+    slot.mesh.position.y+=effectShift(position,undefined,slot.mesh);
+  }
   function update({state, course, dt = 0, crashEnabled = false,
-    resolveCrashTyres = null}) {
+    resolveCrashTyres = null, drawnShift:shift}) {
+    drawnShift=shift;
     const ready = resources.available && resources.ready &&
       state?.status !== 'menu';
     const enabled = ready &&
@@ -321,6 +336,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
     bursts.forEach((entry, index) => {
       const burst = combat?.bursts[index];
       const age = burst?.age ?? Infinity;
+      const owner=burst?.ownerId?actorForTarget({state},burst.ownerId):undefined;
       if (!burst || !['blast', 'spark'].includes(burst.kind) ||
           age >= (burst.kind === 'spark' ? .35 : 1.4)) {
         hide(entry.explosion);
@@ -331,13 +347,13 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       if (burst.kind === 'spark') {
         hide(entry.explosion);
         hide(entry.smoke);
-        show(entry.impact, burst, {age, duration: .35, size: 3.5,
+        show(entry.impact, burst, {owner,age, duration: .35, size: 3.5,
           startFrame: 3, frameCount: 4});
       } else {
         hide(entry.impact);
-        show(entry.explosion, burst, {age, duration: 1.4,
+        show(entry.explosion, burst, {owner,age, duration: 1.4,
           size: 7 + Math.min(age, 1) * 8, startFrame: 5});
-        if (age > .12) show(entry.smoke, burst, {age: age - .12,
+        if (age > .12) show(entry.smoke, burst, {owner,age: age - .12,
           duration: 1.28, size: 8 + Math.min(age, 1) * 7, rise: 2 + age * 2,
           alpha: .7});
         else hide(entry.smoke);
@@ -349,7 +365,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
         hide(slot);
         return;
       }
-      show(slot, projectile, {age: projectile.age, duration: .14,
+      show(slot, projectile, {owner:projectile.ownerId?actorForTarget({state},projectile.ownerId):undefined,age: projectile.age, duration: .14,
         size: projectile.kind === 'bomb' ? 3 : 2.2,
         startFrame: projectile.age < .05 ? 0 : 1, frameCount: 2});
     });
@@ -365,7 +381,7 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
           z: ground.z - Math.cos(heading) * 2};
         const phase = (state.stageTimeSec + index * .37) % 1.35;
         entry.smoke.mesh.material.color.setHex(0x242424);
-        show(entry.smoke, exhaust, {age: phase, duration: 1.35,
+        show(entry.smoke, exhaust, {owner:actor,age: phase, duration: 1.35,
           size: 2.4, rise: .8 + phase, alpha: .7});
         hide(entry.fire);
         return;
@@ -380,10 +396,10 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       }
       const ground = course.groundAt(actor.s, actor.lateral);
       const phase = (state.stageTimeSec + index * 0.37) % 1.35;
-      show(entry.smoke, ground, {age: phase, duration: 1.35,
+      show(entry.smoke, ground, {owner:actor,age: phase, duration: 1.35,
         size: 4.2 + (0.3 - fraction) * 4,
         rise: 2.6 + phase * 1.2, alpha: 0.54});
-      if (fraction < 0.1) show(entry.fire, ground, {
+      if (fraction < 0.1) show(entry.fire, ground, {owner:actor,
         age: (state.stageTimeSec * 1.8 + index * 0.43) % 1.35,
         duration: 1.35, startFrame: 8, size: 3.2, rise: 1.55,
         alpha: 0.82,
@@ -407,12 +423,12 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       const site = actor.combatWreckSite || actor;
       const ground = course.groundAt(site.s, site.lateral);
       const age = entry.age;
-      show(entry.fire, ground, {age, duration: 3.5, size: 8,
+      show(entry.fire, ground, {owner:actor,age, duration: 3.5, size: 8,
         startFrame: 8, rise: 2});
-      if (age < 1.4) show(entry.explosion, ground, {age,
+      if (age < 1.4) show(entry.explosion, ground, {owner:actor,age,
         duration: 1.4, size: 10 + age * 7, startFrame: 5, rise: 2});
       else hide(entry.explosion);
-      if (age > .2) show(entry.smoke, ground, {age: age - .2,
+      if (age > .2) show(entry.smoke, ground, {owner:actor,age: age - .2,
         duration: 3.3, size: 9 + Math.min(age, 2) * 4,
         rise: 3 + Math.min(age, 2) * 2, alpha: .8});
       else hide(entry.smoke);
@@ -428,11 +444,11 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       const {car, index} = wreck;
       const ground = course.groundAt(car.s, car.lateral);
       const time = state.stageTimeSec || 0;
-      show(entry.smoke, ground, {age: (time * .55 + index * .37) % 2.4,
+      show(entry.smoke, ground, {owner:car,age: (time * .55 + index * .37) % 2.4,
         duration: 2.4, size: car.wrecked.exploded ? 6.5 : 4.5,
         rise: 2.2 + ((time * .55 + index * .37) % 2.4) * .9, alpha: .6});
       // A blown-up hulk keeps a low glow of flame under its smoke.
-      if (car.wrecked.exploded) show(entry.fire, ground, {
+      if (car.wrecked.exploded) show(entry.fire, ground, {owner:car,
         age: (time * 1.3 + index * .29) % 1.35, duration: 1.35, startFrame: 8,
         size: 2.4, rise: .9, alpha: .75});
       else hide(entry.fire);
@@ -504,6 +520,8 @@ export function createCombatEffects({loadTexture, crashPresentation = false} = {
       if (!resolved) { hide(leftSlot); hide(rightSlot); continue; }
       const severity = actor.knock.severity === 'launched' ? 1.35 :
         actor.knock.severity === 'smashed' ? 1.18 : 1;
+      knockSmokeOptions.alreadyDrawn=!!resolveCrashTyres;
+      knockSmokeOptions.owner=actor;
       knockSmokeOptions.size = 2 * severity;
       knockSmokeOptions.age = .25 + ((state.stageTimeSec || 0) * 1.7 +
         actorIndex * .19) % .42;

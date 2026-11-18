@@ -42,9 +42,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
 }){
   const group=new THREE.Group();
   let drawnShift;
+  const shiftEffect=(object,owner)=>{
+    object.position.y+=(owner?drawnShift?.forActor?.(owner):undefined)??
+      drawnShift?.(object.position.x,object.position.z,owner?.groundHeight,owner?.airborne?owner._jumpY:undefined,object)??0;
+  };
   const point=(duel,actor)=>{
     const at=physicalPoint(duel,actor);
-    at.y+=drawnShift?.(at.x,at.z,actor.groundHeight,actor.airborne?actor._jumpY:undefined)??0;
+    at.y+=drawnShift?.forActor?.(actor)??drawnShift?.(at.x,at.z,actor.groundHeight,actor.airborne?actor._jumpY:undefined)??0;
     return at;
   };
   group.name='Wasteland weapons and shockwaves';
@@ -233,6 +237,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
         view.smokeCloud.update(hazard, null, vehicles.smokeTexture);
         smokeClouds.push({...hazard, y: ground.y});
       }
+      shiftEffect(view.holder);
+      if(view.smoke.visible)smokeClouds[smokeClouds.length-1].y=view.holder.position.y-.025;
       view.oilMaterial.opacity=.9*hazard.opacity;
 
     });
@@ -320,7 +326,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     if (seconds - last >= .24) {
       const nearest = duel.course.nearest?.(x, z);
       const ground = nearest ? duel.course.groundAt(nearest.s, nearest.lateral) : at;
-      flameScorch.stamp({x, y: ground.y, z, heading, size: body ? 1.1 : range * .32}, seconds);
+      flameScorch.stamp({x, y: ground.y+(drawnShift?.(x,z)??0), z, heading, size: body ? 1.1 : range * .32}, seconds);
       flameScorchTimes.set(view, seconds);
     }
   }
@@ -373,11 +379,13 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       view.marker.visible = view.shell.visible = !!shell;
       if (!shell) return;
       view.marker.position.set(shell.x, shell.y + .08, shell.z);
+      shiftEffect(view.marker);
       view.marker.scale.setScalar(shell.radius);
       const part = Math.min(1, shell.age / shell.lifetime);
       view.shell.position.set(shell.from.x + (shell.x - shell.from.x) * part,
         shell.from.y + (shell.y - shell.from.y) * part + 16 * part * (1 - part),
         shell.from.z + (shell.z - shell.from.z) * part);
+      shiftEffect(view.shell);
       view.shell.rotation.set(0, Math.atan2(shell.x - shell.from.x, shell.z - shell.from.z),
         Math.PI / 2 - Math.atan2(16 * (1 - 2 * part) + shell.y - shell.from.y,
           Math.hypot(shell.x - shell.from.x, shell.z - shell.from.z)));
@@ -389,7 +397,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       if (owner) {
         const at = teslaChargePoint(duel,charge,owner), positions = view.arcs.geometry.attributes.position;
         view.arcs.scale.setScalar(charge.crewShock ? .55 : 1);
-        view.arcs.position.set(at.x, at.y + .5, at.z);
+        view.arcs.position.set(at.x, at.y + .5, at.z);shiftEffect(view.arcs,owner);
         for (let arc = 0; arc < 12; arc++) {
           const angle = arc * Math.PI / 6 + charge.age * 11;
           const length = 2.1 + .8 * Math.sin(charge.age * 80 + arc * 3);
@@ -403,6 +411,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       view.pulse.visible = !!pulse;
       if (pulse) {
         view.pulse.position.set(pulse.x, pulse.y - COMBAT_TUNING.pointHeight + .1, pulse.z);
+        shiftEffect(view.pulse);
         view.pulse.scale.setScalar(pulse.radius * Math.min(1, .15 + pulse.age / pulse.lifetime));
       }
     });
@@ -699,7 +708,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       g.visible=!!p;
       if(!p)return;
       const at=duel.course.groundAt(p.s,p.lateral??0);
-      g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4,at.z);
+      g.position.set(at.x,at.y+2+Math.sin(p.age*3)*.4+(drawnShift?.(at.x,at.z,undefined,undefined,g)??0),at.z);
       const repair=p.kind==='armor';
       box.visible=!repair;
       armorCross.visible=repair;
@@ -717,7 +726,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const p=c.projectiles[i];
       g.visible=!!p;
       if(!p){rocket.visible=false;return;}
-      g.position.set(p.x,p.y,p.z);
+      g.position.set(p.x,p.y,p.z);shiftEffect(g,p.ownerId?actorForTarget(duel,p.ownerId):undefined);
       bomb.visible=p.kind==='bomb'||(p.crewGearShot&&p.kind!=='marksman');
       arrow.visible=p.kind==='crossbow'||p.kind==='harpoon'||p.kind==='marksman';
       rocket.visible=p.kind==='rpg'||p.kind==='rocket-pod';
@@ -746,7 +755,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     const turret=s.crewGear?.turret;
     crewTurret.visible=active&&duel.featureFlags?.enabled('crew-gear')===true&&!!turret;
     if(crewTurret.visible){
-      crewTurret.position.set(turret.x,turret.y,turret.z);
+      crewTurret.position.set(turret.x,turret.y,turret.z);shiftEffect(crewTurret,s);
       const target=turret.targetId?actorForTarget(duel,turret.targetId):null;
       if(target){const at=point(duel,target);turretHead.rotation.y=Math.atan2(at.x-turret.x,at.z-turret.z);}
       turretBase.rotation.y=s.stageTimeSec*.3;
@@ -767,7 +776,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const turret = enabled && crew?.turret, fighter = enabled && crew?.fighter;
       view.turret.visible = !!turret;
       if (turret) {
-        view.turret.position.set(turret.x, turret.y, turret.z);
+        view.turret.position.set(turret.x, turret.y, turret.z);shiftEffect(view.turret,s.opponents[index]);
         const target = actorForTarget(duel, turret.targetId);
         if (target) {
           const at = target === s && s.onFoot && s.fighter || point(duel, target);
@@ -794,7 +803,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     if (chargeTarget) {
       const roof = duel.course.groundAt(chargeTarget.s, chargeTarget.lateral);
       boardingCharge.position.set(roof.x,
-        roof.y + (chargeTarget.airHeight || 0) + duel._vehicleSpec(chargeTarget).height + .11,
+        roof.y + (chargeTarget.airHeight || 0) + duel._vehicleSpec(chargeTarget).height + .11 +
+          (drawnShift?.forActor?.(chargeTarget)??drawnShift?.(roof.x,roof.z,chargeTarget.groundHeight,undefined,boardingCharge)??0),
         roof.z);
       boardingCharge.rotation.y = roof.heading + (chargeTarget.headingError || 0);
       chargeLamp.visible = Math.floor((s.stageTimeSec || 0) * 10) % 2 === 0;
@@ -805,7 +815,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       const b=c.bursts[i];
       g.visible=!!b&&!(useAtlas&&(b.kind==='blast'||b.kind==='spark'));
       if(!b)return;
-      g.position.set(b.x,b.y,b.z);
+      g.position.set(b.x,b.y,b.z);shiftEffect(g,b.ownerId?actorForTarget(duel,b.ownerId):undefined);
       const warp=b.kind==='ufo',star=b.kind==='star',fade=Math.max(0,1-b.age/1.4),size=b.kind==='blast'?1:0.45;
       saucer.visible=warp;
       saucer.position.y=10+b.age*4;

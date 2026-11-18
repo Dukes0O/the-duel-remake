@@ -366,14 +366,17 @@ export function attachRenderer(host, app) {
   let worldBuildCount=0,firstWorldFrame=false,worldReadyStarted=0;
   let drawingSeconds=0;
   const cameraFeetRig={userData:{}};
+  const actorMeshes=new WeakMap();
   const drawnShift=(x,z,support,airborneFeet,object)=>{
     const feet=world?.userData?.drawnFeet;
     return feet?(object?feet.shiftFor(object,drawingSeconds,x,z,support,airborneFeet):feet.shift(x,z,support,airborneFeet)):0;
   };
+  drawnShift.forActor=actor=>world?.userData?.drawnFeet?actorMeshes.get(actor)?.userData.scablandsFeet?.value:0;
+  const effectPoint=(at,actor)=>({...at,y:at.y+(drawnShift.forActor(actor)??drawnShift(at.x,at.z))});
   const carShift=(x,z,actor,object)=>drawnShift(x,z,actor?.groundHeight,actor?.airborne?scablandsActorFeet(actor,actor.groundHeight):undefined,object);
   const applyVehicleTerrainPose=(mesh,course,actor)=>{
     applyPhysicalVehicleTerrainPose(mesh,course,actor);
-    if(course.def?.scablands)mesh.position.y+=carShift(mesh.position.x,mesh.position.z,actor,mesh);
+    if(course.def?.scablands){actorMeshes.set(actor,mesh);mesh.position.y+=carShift(mesh.position.x,mesh.position.z,actor,mesh);}
   };
   let preparedTrackKits = null, preparedTrackKitKey = null, snowmenView=null, avalancheView=null;
   const hasSnowmen=next=>snowmenEnabled(next,app._switches?.()??app.duel.featureFlags);
@@ -1109,10 +1112,10 @@ export function attachRenderer(host, app) {
     }
     effects.update({ p: pp, course, drawnShift, state: menu ? { ...st, speedMph: 0, offRoad: false, roughness: 0, impactTimer: 0 } : st, dt: st.paused ? 0 : dt, now:ambientNow });
     const effectDt = st.paused ? 0 : dt;
-    explosion.update(pp,st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
+    explosion.update(effectPoint(pp,st),st.combatWrecking?{...st,catastrophic:false}:st,effectDt);
     crashPoseState=st;
     combatEffects?.update({state:effectsField?st:null,course,dt:effectDt,
-      crashEnabled:crashEffectsEnabled,resolveCrashTyres});
+      crashEnabled:crashEffectsEnabled,resolveCrashTyres,drawnShift});
     const measureCombatWarmup=effectsField&&!combatEffectsWarmupMeasured&&
       combatEffects?.available;
     const combatWarmupStart=measureCombatWarmup?performance.now():0;
@@ -1128,7 +1131,7 @@ export function attachRenderer(host, app) {
       renderer.domElement.style.visibility='hidden';
       rearView.hide();frameMetrics.suspend();return;
     }
-    combatPlayerExplosion?.update(pp,
+    combatPlayerExplosion?.update(effectPoint(pp,st),
       {catastrophic:!useCombatAtlas&&!!st.combatWrecking,status:st.status},effectDt);
     if (!menu && st.arena && updateArenaTells([{mesh: player, actor: st}, {mesh: rival, actor: st.rival},
       ...extraOpponents.map(({mesh}, index) => ({mesh, actor: opponents[index + 1]}))],
@@ -1136,7 +1139,7 @@ export function attachRenderer(host, app) {
     updateArenaMarkers(arenaMarkers, !menu ? st.arena?.markers : null, diagnosticTime?presentationSeconds:performance.now() / 1000);
     opponentExplosions?.forEach((effect, index) => {
       const actor = st.opponents?.[index];
-      effect.update(actor ? course.groundAt(actor.s, actor.lateral) : pp,
+      effect.update(actor ? effectPoint(course.groundAt(actor.s, actor.lateral),actor) : pp,
         {catastrophic:!useCombatAtlas&&!!actor?.combatWrecking, status:st.status}, effectDt);
     });
     combatScene.update(app.duel,{player,rival:convoy?null:rival,extraOpponents,camera,drawnShift,

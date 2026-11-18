@@ -435,3 +435,24 @@ test('flag-off Wasteland retains its procedural combat burst presentation', () =
     scene.dispose();
   }
 });
+
+
+test('Scablands bursts, roof charge and atlas follow drawing shifts without changing rules', async () => {
+  const {createCombatEffects}=await import('../src/combat-effects.js');
+  const procedural=createCombatScene(),source=loader(),atlas=createCombatEffects({loadTexture:source.loadTexture});
+  const current=state({bursts:[{id:71,kind:'blast',x:40,y:2,z:60,age:0}]});
+  current.boarding={phase:'charge',targetId:'player'};
+  const duel={state:current,course,featureFlags:{enabled:id=>id==='crew-gear'},_vehicleSpec:()=>({height:2})};
+  const before=JSON.stringify(current),drawnShift=()=>.8;
+  drawnShift.forActor=()=>.6;
+  try {
+    procedural.update(duel,{drawnShift});
+    const burst=procedural.group.children.find(child=>child.position.x===40&&child.position.z===60);
+    assert.equal(burst?.position.y,2.8,'A ground burst adds the shift at its hit place.');
+    assert.ok(Math.abs(procedural.group.getObjectByName('crew-boarding-charge').position.y-3.71)<1e-9,
+      'The roof charge uses the owning car shift.');
+    atlas.update({state:current,course,dt:0,drawnShift});
+    assert.equal(atlas.group.getObjectByName('combat-vfx-burst-0-explosion').position.y,2.8,'The atlas uses the same shifted hit place.');
+    assert.equal(JSON.stringify(current),before,'Effects do not edit physical positions.');
+  } finally {procedural.dispose();atlas.dispose();}
+});
