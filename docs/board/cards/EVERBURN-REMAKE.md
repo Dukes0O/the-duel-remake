@@ -1537,6 +1537,11 @@ with a check. Also cured from it: the evening keeps the sun as far off as by day
 place's light may set that distance to keep its shadows whole); the two glows are drawn without haze; the windows'
 texture is disposed with the scene; the raid line's comment says it follows the small map. It confirmed that a course
 which passes no evening is lit exactly as before, and that the raid line is said once and only in job 4.
+It then confirmed those cures on the commit, and found two small faults in what had been added after its read, both
+cured in the next commit: the gate arrow could show for a car on the ground west of the fence (it is now for a car
+inside the town's own extent, with no 140 m limit), and the block's line could show before the meeting with Moss, when
+flame on a block counts for nothing. Still open from it: whether flat ground shows stripes when the evening's sun is
+9 to 13 degrees up, to be judged from a picture with the realism switch on.
 
 **Changed assertions (Claude's review, rule 18): nothing is loosened.** `test-everburn-job4`: the block's burn time
 follows the rule's number (2.5 s, was 4 s pinned as four one-second steps), with a new check that it opens within one

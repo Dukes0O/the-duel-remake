@@ -1095,6 +1095,11 @@ console.log('PASS Run Him Down: arena keeps the earned load and knocks through s
   assert.equal(hudAt({x: gate.x, z: gate.z - TOWN_GATE_ARROW.pastMetres - .1}).target.id, 'town-gate');
   assert.notEqual(hudAt({x: gate.x, z: gate.z - TOWN_GATE_ARROW.pastMetres + .1}).target.id, 'town-gate', 'At the gate the arrow goes back to the thief.');
   assert.notEqual(hudAt({x: gate.x, z: gate.z + 30}).target.id, 'town-gate', 'Outside the town the arrow is on the thief.');
+  // Ground west of the fence, north of the gate's line, is not the town (the review of slice 14), and the far corner
+  // of the town is (it lay beyond a 140 m limit that is gone).
+  const box = chase.townGate.box;
+  assert.notEqual(hudAt({x: box.minX - 20, z: gate.z - 60}).target.id, 'town-gate', 'West of the fence the arrow is on the thief.');
+  assert.equal(hudAt({x: box.maxX - 5, z: box.minZ + 80}).target.id, 'town-gate', 'In the far corner of the town the arrow leads to the gate.');
   assert.notEqual(hudAt({x: chase.carStart.x, z: chase.carStart.z}, true).target?.id, 'town-gate', 'On foot the arrow to the car leads, not the gate.');
   assert.notEqual(hudAt({x: chase.carStart.x, z: chase.carStart.z}, false, {thiefStopped: true}).target?.id, 'town-gate');
   console.log('PASS Run Him Down: the arrow leads out by the town gate while the car is inside the fence.');

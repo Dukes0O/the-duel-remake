@@ -632,11 +632,12 @@ assert.equal(drawing.group.children.length, 0);
 // Within 40 m of a block that still stands the screen says how to open it and how near to come (17 November 2026:
 // Claude flamed one from 11 m for five seconds, and the flame reaches 9 m).
 {
-  const block = step.blocks[0], state = {gas: 100, holes: 0, burntBarricades: []};
+  const block = step.blocks[0], state = {gas: 100, holes: 0, burntBarricades: [], gasLoaded: true};
   const hudAt = (player, stepState = state, onFoot = false) => worldHudModel({worldJob: {definition, job: {stepIndex: 0, steps: [step], stepState}, actors: []}, player, onFoot});
   const near = {x: block.position.x + 20, z: block.position.z}, far = {x: block.position.x + 41, z: block.position.z};
   assert.equal(hudAt(near).line, 'Burn the block: get within 9 m and hold 4.');
   assert.notEqual(hudAt(far).line, 'Burn the block: get within 9 m and hold 4.');
   assert.notEqual(hudAt(near, {...state, burntBarricades: [block.id]}).line, 'Burn the block: get within 9 m and hold 4.');
+  assert.notEqual(hudAt(near, {...state, gasLoaded: false}).line, 'Burn the block: get within 9 m and hold 4.', 'Not before the meeting with Moss.');
   console.log('PASS Slow Ride: the screen says how to open a block that stands near.');
 }

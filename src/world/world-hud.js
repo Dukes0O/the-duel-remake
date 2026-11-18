@@ -111,7 +111,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
 
-export const TOWN_GATE_ARROW = Object.freeze({pastMetres: 2, withinMetres: 140});
+export const TOWN_GATE_ARROW = Object.freeze({pastMetres: 2});
 export function worldHudModel({worldJob, player = null, speedKmh = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
@@ -125,8 +125,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
   // leads to the gate (it pointed at the thief through the fence, and Claude's car met a gate post; 17 November 2026).
   if (step?.bellows && step.townGate && !onFoot && finitePoint(player) && !job.stepState?.thiefStopped) {
     const gate = pointOf(step.townGate), at = pointOf(player), through = step.townGate.through ?? {x: 0, z: -1};
-    const inside = (at.x - gate.x) * through.x + (at.z - gate.z) * through.z;
-    if (inside > TOWN_GATE_ARROW.pastMetres && Math.hypot(at.x - gate.x, at.z - gate.z) <= TOWN_GATE_ARROW.withinMetres) {
+    const inside = (at.x - gate.x) * through.x + (at.z - gate.z) * through.z, box = step.townGate.box;
+    // Inside the town's own extent and on the town's side of the gate (ground west of the fence is not the town).
+    if (inside > TOWN_GATE_ARROW.pastMetres && box && at.x >= box.minX && at.x <= box.maxX && at.z >= box.minZ && at.z <= box.maxZ) {
       next.target = {id: 'town-gate', name: 'the town gate', x: gate.x, z: gate.z};
       next.line = 'Out by the town gate, then after him.';
     }
@@ -138,8 +139,9 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
       Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
   if (nearbyFence && !job.stepState.out) next.line = 'Burn the fence: get close and press 4.';
   // Slow Ride's blocks burn the same way, and the flame reaches 9 m: say so while one stands near (Claude flamed one
-  // from 11 m for five seconds and nothing told him it was out of reach).
-  const nearbyBlock = step?.gasLoad && finitePoint(player) && !onFoot &&
+  // from 11 m for five seconds and nothing told him it was out of reach). Not before the meeting with Moss: until then
+  // flame on a block counts for nothing.
+  const nearbyBlock = step?.gasLoad && job.stepState?.gasLoaded && finitePoint(player) && !onFoot &&
     (step.barriers ?? []).some(barrier => !(job.stepState?.burntBarricades ?? []).includes(barrier.id) &&
       Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
   if (nearbyBlock) next.line = 'Burn the block: get within 9 m and hold 4.';
