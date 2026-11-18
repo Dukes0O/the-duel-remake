@@ -1733,10 +1733,7 @@ burned only when the barrel is aimed no more than 30 degrees over his head or un
 level and aimed up.
 
 One separate Claude review (read only). Its real fault, cured: the tilt was first judged against a man's chest, so a
-level barrel could not burn a man nearer than 1.07 m; it is judged against the whole man now. Also cured from it: the
-view from overhead cannot show a tilt, so in a job of the Scablands the walker looks level there (`levelView`; the
-review's confirmation found that the flag was dropped on its way into the Duel, cured in `setFighterInput`, and that
-it should not level the arenas' weapons, so the app sets it in these jobs only); a burst from the barrel burns the ground only where its middle is within 1.6 m of it, level or tilted.
+level barrel could not burn a man nearer than 1.07 m; it is judged against the whole man now. Also cured from it: a burst from the barrel burns the ground only where its middle is within 1.6 m of it, level or tilted.
 
 Art pick (Claude): the soft edge is in the flame's one shader, so every burst in the game has it (the car's
 flamethrower and the crews' flamers too). Their sectors had the same hard sides. The fade is kept to the outer part so
@@ -1747,6 +1744,8 @@ Changed assertions, reviewed (nothing loosened; each follows Kyle's finding 8): 
 burns him, 34 degrees up does not, 52 degrees down does not. `tools/test-everburn-job3.mjs` gained the same two for the
 thief.
 
-Left, small: smoke and embers rise along a tilted burst's own up and not straight up; `worldJob.wonAtSec` and the
+Left, small: in the view from overhead the barrel's tilt shows only by the reticle and by the burst itself (a cure that
+held the look level there needed the game's two most widely used files for one word each, which is not worth a whole
+tier; it gets its own small card if a player meets it); smoke and embers rise along a tilted burst's own up and not straight up; `worldJob.wonAtSec` and the
 branch of `furnaceSighting` that read it have no user since job 3 was remade (the janitor removes them with their
 check); no suite drives Slow Ride on Medium (the old case went with the old job; Easy is driven).

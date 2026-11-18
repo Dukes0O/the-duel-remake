@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import {BRAND_RULE, BRAND_LINES, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
 import {HAND_FLAME, handFlameAimsAt, handFlameMuzzle} from '../src/world/jobs/hand-flame.js';
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
-import {applyFootLook} from '../src/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
 import {brandWaysFor} from '../src/world/jobs/brand-ways.js';
@@ -80,9 +79,6 @@ assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
   // The review of 18 November: the tilt is judged against the whole man (his head lies 2 degrees above the eye's level at
   // 5 m, his feet 18 degrees below), so a level barrel burns a man at any distance, arm's length included.
   for(const metres of [.5,.9,1.05,2])assert.equal(handFlameAimsAt({x:0,y:0,z:0,pitch:0},{x:0,y:0,z:metres}),true,'a level barrel burns a man '+metres+' m off');
-  // The view from overhead cannot show a tilt, so the walker looks level there whatever the mouse did.
-  const looker={yaw:0,pitch:.5};applyFootLook(looker,{lookX:0,lookY:-200,levelView:true});assert.equal(looker.pitch,0);
-  applyFootLook(looker,{lookX:0,lookY:-100});assert.ok(looker.pitch>.2,'in the view from the eyes the mouse still tilts the view');
   const mouth=handFlameMuzzle({x:10,y:2,z:20,yaw:0,pitch:0});
   assert.ok(Math.abs(mouth.x-(10-HAND_FLAME.muzzleRightMetres))<1e-9&&Math.abs(mouth.y-(2+HAND_FLAME.eyeMetres-HAND_FLAME.muzzleBelowMetres))<1e-9&&
     Math.abs(mouth.z-(20+HAND_FLAME.muzzleAheadMetres))<1e-9,'the mouth of the barrel is ahead of the eye, to the right and below it');
@@ -111,18 +107,6 @@ toolDuel.state.footWeapons.selected='hand-flamer';
 closeWorld.actors[0].z=3;
 stepFootWeapons(toolDuel,1/120);
 assert.equal(toolDuel.state.fighter.flaming,true,'Farther away the same attack fires the flamer.');
-// The review of 18 November: the level look reaches the walker through the Duel's own input (it was dropped on the way).
-{
-  const before={...toolDuel.state.fighterInput},fighter=toolDuel.state.fighter;
-  fighter.pitch=.5;
-  assert.equal(toolDuel.setFighterInput({lookY:-40,levelView:true}),true);
-  assert.equal(toolDuel.state.fighterInput.levelView,true,'the Duel keeps the level look it is given');
-  applyFootLook(fighter,toolDuel.state.fighterInput);
-  assert.equal(fighter.pitch,0,'the walker looks level in the view from overhead');
-  toolDuel.setFighterInput({lookY:0,levelView:false});
-  assert.equal(toolDuel.state.fighterInput.levelView,false);
-  Object.assign(toolDuel.state.fighterInput,before);fighter.pitch=0;
-}
 closeWorld.actors[0].z=2;
 closeWorld.job.stepState.brandSeconds=0;
 assert.equal(brandSwingReady(closeState),false);
