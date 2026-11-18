@@ -187,3 +187,28 @@ export function prepareBrandWays(step, grid = SOLID_GRID) {
   const from = step.hearth.position ?? step.hearth;
   for (const place of [step.hearth, ...step.places]) ways.aim(from, place.id);
 }
+
+// The way back to the car on foot in Run Him Down (EVERBURN-REMAKE job 3), which starts among the shacks 60 m from the
+// car: the same squares, with the parked car as the one place. `around` are the town's wall entries (its extent). Made
+// again only if the car has moved. Only for a car that stands inside the town: the squares cover everything between
+// the town and the places asked for, so a car parked a kilometre down the road would make hundreds of thousands of them
+// and stop the game for seconds (found by the review of slice 14); out there the arrow points straight, as it always did.
+const carWays = new WeakMap(), townBoxes = new WeakMap();
+export function townCarWay(step, grid, car, around) {
+  if (!step || !grid || !Number.isFinite(car?.x) || !Number.isFinite(car?.z) || !around?.length) return null;
+  let box = townBoxes.get(around);
+  if (!box) {
+    const points = around.map(spot);
+    box = {minX: Math.min(...points.map(p => p.x)), maxX: Math.max(...points.map(p => p.x)),
+      minZ: Math.min(...points.map(p => p.z)), maxZ: Math.max(...points.map(p => p.z))};
+    townBoxes.set(around, box);
+  }
+  if (car.x < box.minX || car.x > box.maxX || car.z < box.minZ || car.z > box.maxZ) return null;
+  const key = `${Math.round(car.x * 2)},${Math.round(car.z * 2)}`;
+  let kept = carWays.get(step);
+  if (!kept || kept.grid !== grid || kept.key !== key) {
+    kept = {grid, key, ways: createBrandWays({places: [{id: 'car', position: {x: car.x, z: car.z}}], around, grid, reach: () => 3})};
+    carWays.set(step, kept);
+  }
+  return kept.ways;
+}

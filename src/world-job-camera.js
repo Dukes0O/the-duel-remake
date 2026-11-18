@@ -69,6 +69,20 @@ export function forgeHoldView(car, plan, groundAt) {
   return {position: {x, y: groundAt(x, z) + 3.6, z}, target: {x: tx, y: groundAt(tx, tz) + 3, z: tz}};
 }
 
+// How far the evening has come on in Light the Town, 0 (day) to 1 (dusk), for the light and the windows; 0 in every other
+// job. The job's own clock brings it on over four minutes; each lamp first lit brings it on at least a quarter, so that a
+// quick player also sees the light go; and the ending takes it to dusk in two and a half seconds, when the windows light.
+export const TOWN_EVENING = Object.freeze({perLamp: .25, endingSeconds: 2.5});
+export function townEveningAmount(state) {
+  const job = state?.arena?.mode === 'world-job' ? state.arena.worldJob?.job : null, step = job?.steps?.[job.stepIndex];
+  if (!step?.brand) return 0;
+  const rule = job.stepState ?? {};
+  const before = Math.max(0, Math.min(1, Math.max(rule.dusk ?? 0, (rule.brandAsh?.seen?.length ?? 0) * TOWN_EVENING.perLamp)));
+  if (!rule.townEnding) return before;
+  const share = Math.max(0, Math.min(1, (rule.endingElapsed ?? 0) / TOWN_EVENING.endingSeconds));
+  return before + (1 - before) * share * share * (3 - 2 * share);
+}
+
 // The standing view while the town wakes (EVERBURN-REMAKE job 2). Claude's hand play of 17 November ended a metre from a lamp
 // post, facing the fence, while Auntie spoke and the thief ran unseen. The view stands high and back from the middle of the
 // three lamps, the hearth and the gate, on the side from which the one farthest off the middle of the picture is nearest to
@@ -76,7 +90,7 @@ export function forgeHoldView(car, plan, groundAt) {
 // (Claude's hand play of the same night), so at the theft the view cuts to a second standpoint: beside the thief's way,
 // 20 m along it and 12 m to the side away from the hearth, 2.5 m up, turning with him as he runs past with the bellows
 // on his back. `step` gives the hearth, the lamps (`places`) and the thief's path; `thief` is where he is now, or null.
-export const TOWN_ENDING_VIEW = Object.freeze({backMetres: 80, upMetres: 24, lookUpMetres: 2, bearings: 24,
+export const TOWN_ENDING_VIEW = Object.freeze({backMetres: 72, upMetres: 20, lookUpMetres: 2, bearings: 24,
   thiefAlongMetres: 20, thiefSideMetres: 12, thiefUpMetres: 2.5, thiefLookUpMetres: 1.2});
 // Where the near view of the thief's run stands, on the ground plan.
 export function townThiefStand(step) {

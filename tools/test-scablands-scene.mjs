@@ -645,8 +645,19 @@ const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
   }
   assert.ok(smoke.children.every(puff=>puff.userData.fade<=.56),'the plumes are light');
   assert.ok(data.fence.length>20,`the fence runs round the outside of the ring (${data.fence.length} sheets)`);
-  const meshes=[];town.traverse(node=>{if(node.isMesh)meshes.push(node);});
-  assert.ok(meshes.length>=1&&meshes.length<=12,`the whole town is at most 12 draw calls (${meshes.length})`);
+  // The lit windows (Light the Town's ending, 17 November 2026) are meshes of their own, one for each cluster, hidden until
+  // the town wakes; they are counted apart from the town that always stands, whose limit is unchanged.
+  const windowGlow=data.windowGlow.filter(Boolean);
+  assert.ok(windowGlow.length>=1&&windowGlow.length<=data.clusters.length,`the lit windows are at most one mesh for each cluster (${windowGlow.length})`);
+  assert.ok(windowGlow.every(mesh=>!mesh.visible&&mesh.material.opacity===0),'the windows are dark until the town wakes');
+  data.lightWindows(.3);
+  assert.deepEqual(windowGlow.map(mesh=>mesh.visible),windowGlow.map((mesh,index)=>index===0),'the first cluster lights first');
+  data.lightWindows(30);
+  assert.ok(windowGlow.every(mesh=>mesh.visible&&mesh.material.opacity===1),'every cluster is alight in the end');
+  data.lightWindows(null);
+  assert.ok(windowGlow.every(mesh=>!mesh.visible),'and all are dark again in any other job');
+  const meshes=[];town.traverse(node=>{if(node.isMesh&&!windowGlow.includes(node))meshes.push(node);});
+  assert.ok(meshes.length>=1&&meshes.length<=12,`the town that always stands is at most 12 draw calls (${meshes.length})`);
   assert.ok(data.triangles<60000,`the town is under 60,000 triangles (${Math.round(data.triangles)})`);
   const glowing=material=>material.emissive.getHex()!==0&&material.emissiveIntensity>0;
   assert.ok(meshes.every(mesh=>Boolean(mesh.material.userData.scrapWear)===!glowing(mesh.material))&&meshes.some(mesh=>glowing(mesh.material)),'the wear is drawn over everything that does not glow, and some lamps glow');

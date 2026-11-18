@@ -209,6 +209,37 @@ try {
     pass.dispose(); pass.dispose();
     equal(counts.map(count => count()), materials.map(() => 1), 'every GTAO shader material releases exactly once');
   }
+  {
+    // The evening of Light the Town (17 November 2026): `evening` mixes the day toward dusk for that job only. Passing
+    // none, or 0, is the day exactly; the day's own settings object is never written to; and when the job is over the
+    // light comes back to the day.
+    const read = f => ({sun: f.lighting.sun.intensity, hemi: f.hemi.intensity, fogNear: f.scene.fog.near, fogFar: f.scene.fog.far,
+      fog: f.scene.fog.color.toArray(), exposure: f.renderer.toneMappingExposure, bloom: f.bloom.strength,
+      top: f.sky.material.uniforms.top.value.toArray(), sunColour: f.lighting.sun.color.toArray()});
+    const plain = fixture(), zero = fixture(), dusk = fixture(), arena = course('arena');
+    const before = JSON.stringify(resolveLightingSettings('arena', {mood: undefined, night: false, tunnel: false}));
+    plain.lighting.apply({course: arena, blend: 1});
+    zero.lighting.apply({course: arena, blend: 1, evening: 0});
+    equal(read(zero), read(plain), 'no evening is the day exactly');
+    equal(zero.host.dataset.evening, '0', 'the page says no evening');
+    dusk.lighting.apply({course: arena, blend: 1, evening: 1});
+    const day = read(plain), late = read(dusk);
+    check(late.sun < day.sun * .5 && late.hemi < day.hemi, 'at dusk the sun and the sky give less light');
+    check(late.top[2] < day.top[2] && late.fog.some((value, index) => Math.abs(value - day.fog[index]) > .01), 'at dusk the sky and the haze have changed colour');
+    equal(dusk.host.dataset.evening, '1.00', 'the page says how far the evening has come');
+    dusk.lighting.apply({course: arena, blend: 1, evening: .5});
+    const half = read(dusk);
+    check(half.sun < day.sun && half.sun > late.sun, 'half way the sun is between day and dusk');
+    dusk.lighting.apply({course: arena, blend: 1});
+    // A colour brought back from dusk can differ in its last binary place, so this one is compared to twelve decimals.
+    vector(Object.values(read(dusk)).flat(), Object.values(day).flat(), 'with the job over the light is the day again');
+    equal(JSON.stringify(resolveLightingSettings('arena', {mood: undefined, night: false, tunnel: false})), before, 'the day\u2019s own settings are not written to');
+    const tunnel = fixture(), inTunnel = course('arena', 'day', true);
+    const tunnelPlain = fixture();
+    tunnelPlain.lighting.apply({course: inTunnel, blend: 1, tunnel: true});
+    tunnel.lighting.apply({course: inTunnel, blend: 1, tunnel: true, evening: 1});
+    equal(read(tunnel), read(tunnelPlain), 'a tunnel keeps its own light');
+  }
 } finally {
   THREE.TextureLoader.prototype.load = originalLoader;
 }

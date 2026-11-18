@@ -12,7 +12,8 @@ import {convoyValveArmor} from './arena/modes/convoy-raid.js';
 import {convoyPrompt} from './convoy-prompt.js';
 import {brandHudStep} from './world/world-hud.js';
 import {BRAND_RULE} from './world/jobs/brand-rule.js';
-import {brandWaysFor, prepareBrandWays} from './world/jobs/brand-ways.js';
+import {brandWaysFor, prepareBrandWays, townCarWay} from './world/jobs/brand-ways.js';
+import {brandSites} from './world/jobs/brand-sites.js';
 
 export function footBrandDirection(state) {
   const worldJob = state?.arena?.mode === 'world-job' && state.arena.worldJob;
@@ -114,14 +115,22 @@ export function fallbackOpponentPosition(course, player, opponent, index) {
   };
 }
 
+let keptTownEntries = null;
+const townEntries = () => keptTownEntries ??= brandSites().ashEntries;
 export function footCarDirection(course, state) {
   const fighter = state?.fighter;
   if (!fighter) return {distance: 0, angle: 0};
   const car = course?.groundAt?.(state.s, state.lateral || 0);
   if (!car) return {distance: 0, angle: 0};
-  const dx = car.x - fighter.x, dz = car.z - fighter.z;
+  // Run Him Down starts on foot among Tin Town's shacks: there the arrow leads by a way that can be walked, as the
+  // lamps' arrow does (it pointed through a shack, and Claude stood against a wall 36 m from the car).
+  const world = state.arena?.mode === 'world-job' ? state.arena.worldJob : null, step = world?.job?.steps?.[world.job.stepIndex];
+  const grid = world?.solidGrid?.movers ?? world?.solidGrid;
+  const way = step?.bellows && grid ? townCarWay(step, grid, car, townEntries())?.aim(fighter, 'car') : null;
+  const toward = way ?? car;
+  const dx = toward.x - fighter.x, dz = toward.z - fighter.z;
   const bearing = Math.atan2(dx, dz) - (fighter.yaw || 0);
-  return {distance: Math.round(Math.hypot(dx, dz)),
+  return {distance: Math.round(way ? way.metres : Math.hypot(dx, dz)),
     angle: Math.round(Math.atan2(Math.sin(bearing), Math.cos(bearing)) * 180 / Math.PI)};
 }
 

@@ -1480,6 +1480,77 @@ figures that do not read as toys. Then Kyle's try.
 **Removed:** the far lamp's hand-set walk (`farWalk`, six site numbers, `farWalkMin`, `farWalkMax`), the ending
 view's 1.2 s turn.
 
+## Slice 14: the evening, the windows and the lamps' glow drawn; job 4's first hand drive; two cures in job 3 (Claude, 17 November 2026, night): hidden
+
+**Job 2, the evening (Claude's drawing, two rounds by pictures from the game).**
+- **The light goes.** During Light the Town the place's own daylight is mixed toward the golden look and then the dusk
+  look that the courses already use (`eveningOver` in `src/scene-lighting.js`, asked for with `evening` from 0 to 1;
+  every other course and job passes nothing and is unchanged). The amount comes from the job's own clock (four
+  minutes), is at least a quarter for each lamp first lit, and goes to dusk in 2.5 s at the ending
+  (`townEveningAmount` in `src/world-job-camera.js`). Round 1 was too dark to read from the overview; the dusk share
+  is 0.66 now.
+- **The windows light**, one cluster after another, 0.55 s apart, when the third lamp is lit: each window is one soft
+  warm patch on its wall, bright in the pane and fading out, added to what is behind it (`lightWindows` in
+  `src/world/tin-town-shacks.js`; one hidden mesh for each cluster, at most six more draw calls while lit).
+- **A lit lamp has a glow** round its lantern that always faces the view, so that it is seen from across the town.
+- **Round 3, with the laptop free of other jobs.** From the overview the lit windows could hardly be seen: every
+  shack's windows were on its front, and the fronts all face south or east. Every shack now has a shuttered window in
+  its back wall too (seen by day as well), and the overview stands 72 m back and 20 m up. In the picture the far
+  clusters now show rows of warm windows against the dusk, lighting one cluster after another.
+- Ash Men figures are still the blocky raiders.
+
+**The reviewer's last point on slice 13, cured:** a lamp put out and relit with a man still beside it is warned of
+again. The list of lamps that have a man at them is now the whole memory for warnings (the per-man note is removed).
+
+**Job 3, four cures.** The Hand Flamer against the thief on foot is judged on the flat (and its flame drawn so). The
+arrow to the car leads by a way that can be walked while the car stands inside the town (`townCarWay`); check: a walker
+following it from the job's start reaches the car in 58 m (60 m straight). While the car is inside the fence the
+driver's arrow leads to the town gate ("Out by the town gate, then after him."), and to the thief once through it.
+Cinder's "There it goes, out the far end" is said only when he is stopped among the wrecks; on the road she says "He
+was taking the bellows to the furnace. Hear that horn? It is leaving without them."
+
+**Job 4, Claude's first hand drive (visible window, real keys): finished, 91 gas, "Bess came in full.", 150 scrap, about
+seven minutes.** The meeting with Moss, the drive ahead, the three blocks, a rider rammed off before he reached her, a
+rider left alone while Claude was a kilometre ahead (three holes, a stop for plugging, 7 gas lost in half a minute),
+the block rider driven off by the flame.
+Cured at once:
+- **A block took two bursts.** One burst of the flamethrower is 3 s and the wait after it 9 s; the block needed 4 s,
+  so 11 s were spent at each. It burns in 2.5 s now, inside one burst.
+- **A raid was a dot on the small map and a horn.** Moss now says it once: "Riders, coming in from the west!" (north,
+  east, south or west by the compass on the screen).
+- **Nothing said a block was out of the flame's reach.** Within 40 m of a standing block the screen's line is now
+  "Burn the block: get within 9 m and hold 4."
+**Second hand drive, with these cures:** each block opened by one burst; the riders' lines said ("from the east",
+"from the west"); 60 gas at the forge, because Claude's own driving loop left the car standing at the third block
+while Bess drove on alone with two raids. Bess arrived and the job ended with the player 750 m away.
+Faults still open in job 4: the arrival has still not been watched by Claude (two driving loops ran past it, and a
+forced set-up stopped the game's loop; thirty minutes spent, rule 4), and it is to be decided whether the job may end
+with the player far from Bess; Moss is a peg figure standing on the road; the car's other weapons (UFO jump, bomb storm, crossbow) do not
+belong to this job; 91 gas on a first run with one rider left alone may be too easy, for Kyle's try to say.
+**An older fault seen on the way:** the compass ring beside the small map turns its needle the other way north to
+south from the map (a goal at larger z points up at the ring's N; the map has north toward smaller z). Not changed here.
+
+**The independent review of this slice (the same separate Claude reviewer) found one serious fault, cured:** the way to
+the car was worked out for wherever the car stood, and with the car a kilometre down the road its squares ran to
+hundreds of thousands and the game would have stood still for seconds; it is made only for a car inside the town now,
+with a check. Also cured from it: the evening keeps the sun as far off as by day and changes only its direction (a
+place's light may set that distance to keep its shadows whole); the two glows are drawn without haze; the windows'
+texture is disposed with the scene; the raid line's comment says it follows the small map. It confirmed that a course
+which passes no evening is lit exactly as before, and that the raid line is said once and only in job 4.
+
+**Changed assertions (Claude's review, rule 18): nothing is loosened.** `test-everburn-job4`: the block's burn time
+follows the rule's number (2.5 s, was 4 s pinned as four one-second steps), with a new check that it opens within one
+burst; a raid's start also carries Moss's line. `test-scablands-scene`: the lit windows' meshes are counted apart
+from the town that always stands, whose limit of 12 draw calls is unchanged, with new checks that they are dark until
+the ending and light in turn. `test-everburn-job2`: the relit lamp's warning. `test-everburn-job3`: at the collection the line is the
+road's unless he is among the wrecks (`test-ember-lines` now says where he is stopped). `test-forge-hold-camera`: the
+overview at 72 m and 20 m. New: the evening in `test-scene-lighting` and `test-forge-hold-camera`.
+**Checks, on the working tree over `7be761c36`:** the lane tier for the changed files (119 of 119); after it, by name,
+every suite that reads a file changed since (fail 0), with `test-frame-metrics`, `test-scene-presentation`,
+`test-lighting-integration`, `test-board` and `test-repo-hygiene`; `npm run build`. Left to the night: the long
+suites, and every browser scenario (shared lighting and renderer files changed).
+**Removed:** the per-man note of a lamp warned of (`warnedLamp`); the tilted aim in job 3's test of the Hand Flamer.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

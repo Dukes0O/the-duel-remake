@@ -891,6 +891,9 @@ export function createScablandsScene(course,options={}){
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
       brandLamps.update(worldJob);
       brandAuntie.update(worldJob);
+      // The town's windows light when the third lamp is lit (Light the Town's ending), and are dark in every other job.
+      {const townJob=worldJob?.job,townStep=townJob?.steps?.[townJob.stepIndex];
+        tinTownShacks.userData.lightWindows(townStep?.brand&&townJob.stepState?.townEnding?townJob.stepState.endingElapsed??0:null);}
       const drawnShift=(x,z,support,airborneFeet,object)=>object?
         group.userData.drawnFeet.shiftFor(object,clock,x,z,support,airborneFeet):group.userData.drawnFeet.shift(x,z,support,airborneFeet);
       carriedBrand.update(state,drawnShift);
@@ -1088,7 +1091,7 @@ export function createScablandsScene(course,options={}){
     }
     barricadeMaterial.map?.dispose();gasLoadView.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
-    things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
+    things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();tinTownShacks.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();
     group.traverse(node=>{if(node.geometry)geometries.add(node.geometry);for(const material of [].concat(node.material||[]))materials.add(material);});
     for(const geometry of geometries)geometry.dispose();

@@ -111,6 +111,7 @@ export function worldHudStep(step, {actors = [], inventory = [], found = [], ste
   return {kind: step.kind, line, target: markerOf(target, places)};
 }
 
+export const TOWN_GATE_ARROW = Object.freeze({pastMetres: 2, withinMetres: 140});
 export function worldHudModel({worldJob, player = null, speedKmh = null, found = [], onFoot = false, places = SCABLANDS_PLACES} = {}) {
   const job = worldJob?.job, step = job?.steps?.[job.stepIndex] ?? null;
   const next = worldHudStep(step, {actors: worldJob?.actors, inventory: worldJob?.inventory,
@@ -120,12 +121,28 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     next.line = brand.line;
     next.target = markerOf(brand.target, places);
   }
+  // Run Him Down starts inside Tin Town's fence with the thief beyond it: until the car is through the gate the arrow
+  // leads to the gate (it pointed at the thief through the fence, and Claude's car met a gate post; 17 November 2026).
+  if (step?.bellows && step.townGate && !onFoot && finitePoint(player) && !job.stepState?.thiefStopped) {
+    const gate = pointOf(step.townGate), at = pointOf(player), through = step.townGate.through ?? {x: 0, z: -1};
+    const inside = (at.x - gate.x) * through.x + (at.z - gate.z) * through.z;
+    if (inside > TOWN_GATE_ARROW.pastMetres && Math.hypot(at.x - gate.x, at.z - gate.z) <= TOWN_GATE_ARROW.withinMetres) {
+      next.target = {id: 'town-gate', name: 'the town gate', x: gate.x, z: gate.z};
+      next.line = 'Out by the town gate, then after him.';
+    }
+  }
   const position = markerOf(player, places);
   const target = next.target;
   const nearbyFence = step?.ember && job?.stepState?.loaded && finitePoint(player) &&
     (step.barriers ?? []).some(barrier => !(job.stepState.burntBarricades ?? []).includes(barrier.id) &&
       Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
   if (nearbyFence && !job.stepState.out) next.line = 'Burn the fence: get close and press 4.';
+  // Slow Ride's blocks burn the same way, and the flame reaches 9 m: say so while one stands near (Claude flamed one
+  // from 11 m for five seconds and nothing told him it was out of reach).
+  const nearbyBlock = step?.gasLoad && finitePoint(player) && !onFoot &&
+    (step.barriers ?? []).some(barrier => !(job.stepState?.burntBarricades ?? []).includes(barrier.id) &&
+      Math.hypot(pointOf(player).x - pointOf(barrier).x, pointOf(player).z - pointOf(barrier).z) <= 40);
+  if (nearbyBlock) next.line = 'Burn the block: get within 9 m and hold 4.';
   if (step?.ember && step.pickup && finitePoint(player) && !onFoot) {
     const loaded = job.stepState.loaded;
     const ring = loaded ? step.destination : step.pickup.place;
@@ -175,7 +192,7 @@ export function worldHudModel({worldJob, player = null, speedKmh = null, found =
     // EVERBURN-REMAKE: the ember in Cinder's pot (src/world/jobs/ember-rule.js), while a carry step holds one.
     ember: step?.ember && (!step.pickup || job.stepState.loaded) ? {value: job.stepState.ember ?? step.ember.start, max: step.ember.start, out: job.stepState.out === true,
       rate: job.stepState.rate ?? 0, jolts: job.stepState.joltCount ?? 0, relights: job.stepState.relights ?? 0} : null,
-    brand: step?.brand && job.stepState.brandsUsed > 0 && !job.stepState.townEnding ? {
+    brand: step?.brand && job.stepState?.brandsUsed > 0 && !job.stepState.townEnding ? {
       value: job.stepState.brandSeconds ?? 0, max: BRAND_RULE.burnSeconds,
       out: !(job.stepState.brandSeconds > 0), brandsUsed: job.stepState.brandsUsed,
     } : null,

@@ -165,7 +165,7 @@ export function stepEscort(step, state, view, dt = 0) {
     const plug = gasLoadPlug(step, flash.state, blocks.speed, dt);
     state = plug.state;
     requests[0].speed = plug.speed;
-    requests.push(...flash.requests, ...plug.requests);
+    requests.push(...raids.requests, ...flash.requests, ...plug.requests);
     blockEvents = [...blocks.events, ...raids.events, ...flash.events, ...plug.events];
   }
   const ambushState = stepAmbushes(step, state, view, truck, requests);

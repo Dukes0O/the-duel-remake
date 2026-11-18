@@ -1,4 +1,4 @@
-# The current plan (written 16 November 2026, afternoon)
+# The current plan (written 16 November 2026; the Everburn rows brought up to date 17 November, night)
 
 This page replaces every earlier run plan. The rules are in `AGENTS.md`. Kyle's direction is in
 `docs/board/decisions.md`: draw in code before building model files, a boss needs a reason, a new world or story stays
@@ -19,7 +19,7 @@ of each day now goes into play and pictures.
 
 | Work | Card | Where it stands |
 | --- | --- | --- |
-| Hot Delivery, the Everburn's first job, remade | EVERBURN-REMAKE | Slices 5, 6a and 6b merged 16 November, hidden: the cures of Claude's two hand drives, the camp that sleeps unless it is woken, and the scout whose chase decides it. **Owed before Kyle's try, Claude's:** a hand drive of the chase on Easy and Medium (is 82 km/h fair, can the scout be seen), whether the East Road on Medium is now too hard (26 at arrival, was 41), the plates, the Pipe and the bed by hand, a frame check. Rook's four scout lines are captions with no recorded voice. Job 2 is designed only after Kyle's try |
+| The Everburn's first four jobs, remade | EVERBURN-REMAKE | All on integration, hidden (17 November). **Job 1, Hot Delivery:** someone on every way, the car no longer sinks. Owed, Claude's: a hand drive of each way with sound, then Kyle's second try. **Job 2, Light the Town:** remade and played to its end by hand three times; slice 13 cured the hand plays' faults and slice 14 drew the evening, the windows and the lamps' glow. Owed: Ash Men figures that do not read as toys; then Kyle's try. **Job 3, Run Him Down:** finished by hand once. Owed: the gate shown to the driver, Cinder's line only at the furnace, a hand drive of the pass through the wrecks; then Kyle's try. **Job 4, Slow Ride:** finished by hand once (91 gas). Owed: a look at the arrival, Moss and the hose drawn; then Kyle's try. Nothing is switched on before Kyle has tried it. Codex's allowance was out on the night of 17 November (back about 08:40 on the 18th): Claude built slices 13 and 14 |
 | The Dig as a toy in the Scrapdome yard | DIG-YARD-TOY | Slices 1 and 2 merged 16 November, switch `the-dig` off. Claude played it and its seven findings are cured. Owed, Claude's: a pale ring at a heap's foot (cause not found; the card says what was ruled out), one frame check in the Dig yard, then Kyle's try. The roller and the paver are left out until MACHINE-ROADS has their models |
 | The nightly check's known failures | QA-STANDING-BROWSER | A Sonnet helper found none of five was in the game: four checks cured on its branch (arena-shove, drive-lesson-run, p4-audio, and arsenal-wave1-audio passes alone). ski-finish still timed out on a busy laptop and is with the helper again, with frame-pacing's wrong file path and deep-frames leaving the nightly browser step. Not merged yet. The frame stage's 34 ms readings are two refreshes of the screen (the screens were not set to one) |
 | No credit loss for an Easy defeat | EASY-NO-PENALTY | **Merged 16 November.** Reaches the live game with the next release. Claude still owes the check of whether an earned car has a limit on where it drives |
@@ -27,9 +27,9 @@ of each day now goes into play and pictures.
 | The Lab: a compelling place to learn | LAB-LOOK | Next: the three weak pictures listed under round 13 on the card; then the challenges in the 3D world |
 | The machines drawn | MACHINE-ROADS, MACHINE-DRILL | The rules are merged; Claude draws the machines and the worked ground |
 
-**Waiting for Kyle's word, do not start:** Everburn job 2; the apprentice's slice 2 (bores and apprentices kept in the
-save); RUN-FIRE-LINE (a future idea); everything in "when a boss comes out" (`docs/FEUDS_AND_RUNS.md`), which waits for a
-job Kyle calls worth playing.
+**Waiting for Kyle's word, do not start:** the apprentice's slice 2 (bores and apprentices kept in the save); RUN-FIRE-LINE
+(a future idea); the Cockpit's "Background" view; everything in "when a boss comes out" (`docs/FEUDS_AND_RUNS.md`), which
+waits for a job Kyle calls worth playing.
 
 Nothing on integration is released since 14 November. `story-everburn`, `scablands-runs` and `scablands-realism` are
 `dev`; `titan-bowl`, `wasteland-town`, `menu-front-door` and `deep-vasca` stay off.

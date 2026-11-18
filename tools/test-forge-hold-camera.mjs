@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {forgeHoldView, townEndingMiddle, townEndingView, townThiefStand, TOWN_ENDING_VIEW} from '../src/world-job-camera.js';
+import {forgeHoldView, townEndingMiddle, townEndingView, townThiefStand, townEveningAmount, TOWN_ENDING_VIEW} from '../src/world-job-camera.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {brandThiefPose, BRAND_RULE} from '../src/world/jobs/brand-rule.js';
 import {SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
@@ -35,8 +35,8 @@ raiseCameraOutOfSolids(clear, [{x: 1, y: 0, z: 2, halfX: 1, halfZ: 1, height: 5,
 assert.equal(clear.y, 2, 'clear camera positions stay unchanged');
 console.log('Forge hold camera geometry and solid clearance passed.');
 
-// Job 2's ending is seen from over the town (Claude's hand play of 17 November ended facing a fence). The view stands 80 m
-// from the middle of the three lamps, the hearth and the gate, 24 m up; every lamp, the hearth and the gate lie in front
+// Job 2's ending is seen from over the town (Claude's hand play of 17 November ended facing a fence). The view stands 72 m
+// from the middle of the three lamps, the hearth and the gate, 20 m up; every lamp, the hearth and the gate lie in front
 // of it within a cone of 40 degrees either side; and it stands in no solid. (Changed with the third lamp's move to the
 // radio mast: the view was 62 m beyond the middle of the hearth and the gate, on the side away from the far lamp, which
 // with the new places left the pump lamp behind it.)
@@ -73,4 +73,19 @@ console.log('Forge hold camera geometry and solid clearance passed.');
   }
   const path = step.theftPath.map(at), hearthAway = Math.hypot(stand.x - hearth.x, stand.z - hearth.z);
   assert.ok(hearthAway > Math.hypot(path[1].x - hearth.x, path[1].z - hearth.z), 'the near view stands on the side away from the hearth');
+}
+
+// The evening is Light the Town's alone: 0 in every other job and with no job, a quarter for each lamp first lit, and
+// dusk two and a half seconds into the ending.
+{
+  const state = (step, stepState) => ({arena: {mode: 'world-job', worldJob: {job: {stepIndex: 0, steps: [step], stepState}}}});
+  for (const other of [{bellows: true}, {gasLoad: true}, {ember: {}}, {kind: 'reach'}]) assert.equal(townEveningAmount(state(other, {dusk: .9, townEnding: true, endingElapsed: 9})), 0);
+  assert.equal(townEveningAmount({}), 0);
+  assert.equal(townEveningAmount({arena: {mode: 'duel'}}), 0);
+  assert.equal(townEveningAmount(state({brand: true}, {})), 0);
+  assert.equal(townEveningAmount(state({brand: true}, {dusk: .3})), .3);
+  assert.equal(townEveningAmount(state({brand: true}, {dusk: .1, brandAsh: {seen: ['pump', 'mast']}})), .5);
+  assert.equal(townEveningAmount(state({brand: true}, {dusk: .4, townEnding: true, endingElapsed: 2.5})), 1);
+  assert.equal(townEveningAmount(state({brand: true}, {dusk: 3})), 1);
+  console.log('The evening belongs to Light the Town alone.');
 }

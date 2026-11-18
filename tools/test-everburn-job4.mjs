@@ -121,11 +121,16 @@ const first = step.blocks[0];
 assert.equal(blockTick(first.metres - 30, 1).speed, 5, 'The mover is capped before the stop.');
 assert.equal(blockTick(first.metres - 25, .1).speed, 0);
 assert.equal(blocks.stoppedBlock, first.id);
-for (let second = 0; second < 3; second++) {
-  const out = blockTick(first.metres - 25, 1, {thingsHit:[flame(first.id), flame(first.id)]});
+// The block burns in GAS_LOAD_RULE.blockBurnSeconds of flame (2.5 s since Claude's hand drive of 17 November 2026; it
+// was 4 s, more than one 3 s burst of the flamethrower gives). Half a second at a time: no burn before the last half.
+const halves = Math.round(GAS_LOAD_RULE.blockBurnSeconds / .5);
+assert.equal(halves * .5, GAS_LOAD_RULE.blockBurnSeconds);
+assert.ok(GAS_LOAD_RULE.blockBurnSeconds < 3, 'One burst of the flamethrower (3 s) opens a block.');
+for (let half = 0; half < halves - 1; half++) {
+  const out = blockTick(first.metres - 25, .5, {thingsHit:[flame(first.id), flame(first.id)]});
   assert.equal(out.events.length, 0, 'Multiple flame contacts cannot burn faster.');
 }
-const burnt = blockTick(first.metres - 25, 1, {thingsHit:[flame(first.id)]});
+const burnt = blockTick(first.metres - 25, .5, {thingsHit:[flame(first.id)]});
 assert.deepEqual(burnt.events, [{type:'burn', id:first.id}]);
 assert.equal(burnt.speed, 0);
 for (let second = 0; second < 7; second++) assert.equal(blockTick(first.metres - 25, 1).speed, 0);
@@ -178,7 +183,9 @@ console.log('Slow Ride: blocks, burn times, hard knocks, map and moving-off chec
   Object.assign(flameDuel.state,{s:pose.s,lateral:pose.lateral,speedMph:0,
     headingError:first.heading-flameDuel.course.at(pose.s).heading});
   assert.ok(flameDuel.fireWeapon('flamethrower'), 'The loaned car flamethrower fires.');
-  for (let tick = 0; tick < 2400 && !flameWorld.job.stepState.burntBarricades?.includes(first.id); tick++) {
+  // One burst, held from within reach, opens the block: 300 ticks of 0.01 s are the burst's 3 seconds.
+  let ticksToBurn = 0;
+  for (let tick = 0; tick < 2400 && !flameWorld.job.stepState.burntBarricades?.includes(first.id); tick++, ticksToBurn++) {
     const heat = flameWorld.job.stepState.barrierHeat?.[first.id] ?? 0;
     if (heat < GAS_LOAD_RULE.blockBurnSeconds)
       assert.ok(!flameWorld.job.stepState.burntBarricades?.includes(first.id));
@@ -188,10 +195,11 @@ console.log('Slow Ride: blocks, burn times, hard knocks, map and moving-off chec
   assert.ok(flameWorld.job.stepState.burntBarricades?.includes(first.id),
     `Live flame burns the timber block (heat ${flameWorld.job.stepState.barrierHeat?.[first.id] ?? 0}).`);
   const heat = flameWorld.job.stepState.barrierHeat[first.id];
-  assert.ok(heat >= 4 && heat < 4.02, 'Removal needs four seconds of actual flame contact.');
+  assert.ok(heat >= GAS_LOAD_RULE.blockBurnSeconds && heat < GAS_LOAD_RULE.blockBurnSeconds + .02, 'Removal needs the seconds of flame contact that the rule names.');
+  assert.ok(ticksToBurn <= 300, `The block opens within the first burst (${ticksToBurn} ticks).`);
   assert.ok(!flameWorld.solidGrid.barricades.some(barrier => barrier.id === first.id));
 }
-console.log('Slow Ride: sustained live flame removes its block at four seconds of contact.');
+console.log(`Slow Ride: live flame removes its block at ${GAS_LOAD_RULE.blockBurnSeconds} seconds of contact, within one burst.`);
 
 // Step the existing simulation at staged contacts. This is no drive route.
 const duel = new Duel({seed:7, featureFlags:{'hidden-road':true, arsenal:true}});
@@ -243,8 +251,16 @@ for (const [index, raid] of step.gasRaids.entries()) {
   assert.equal(raid.side, index % 2 ? -1 : 1);
   // Each post is named and on clear ground. Check all rider starts too.
   assert.ok(raid.place.id);
-  assert.deepEqual(raidTick(raid.share).events, [{type:'gasRaid', id:raid.id}]);
-  assert.equal(raidTick(raid.share).events.length, 0, 'Each horn sounds once.');
+  const setOut = raidTick(raid.share);
+  assert.deepEqual(setOut.events, [{type:'gasRaid', id:raid.id}]);
+  // Moss says once where the riders come from, by the compass (north is toward smaller z, east toward larger x).
+  const said = setOut.requests.filter(request => request.type === 'say').map(request => request.lineId);
+  const dx = raid.place.position.x - truck.position.x, dz = raid.place.position.z - truck.position.z;
+  assert.deepEqual(said, [`gas.raid.${Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'east' : 'west') : (dz > 0 ? 'south' : 'north')}`]);
+  assert.ok(definition.captions[said[0]].startsWith('Moss: Riders, coming in from the '));
+  const again = raidTick(raid.share);
+  assert.equal(again.events.length, 0, 'Each horn sounds once.');
+  assert.equal(again.requests.filter(request => request.type === 'say').length, 0, 'And Moss says it once.');
 }
 raidView.actors = step.gasRaiders.map(def => ({id:def.id, health:100,
   position:{...truck.position}}));
@@ -612,3 +628,15 @@ for (const resource of drawingResources) resource.addEventListener('dispose', ()
 drawing.dispose();
 assert.equal(released, drawingResources.size, 'Leaving the scene releases every tank, hose and meeting drawing resource once.');
 assert.equal(drawing.group.children.length, 0);
+
+// Within 40 m of a block that still stands the screen says how to open it and how near to come (17 November 2026:
+// Claude flamed one from 11 m for five seconds, and the flame reaches 9 m).
+{
+  const block = step.blocks[0], state = {gas: 100, holes: 0, burntBarricades: []};
+  const hudAt = (player, stepState = state, onFoot = false) => worldHudModel({worldJob: {definition, job: {stepIndex: 0, steps: [step], stepState}, actors: []}, player, onFoot});
+  const near = {x: block.position.x + 20, z: block.position.z}, far = {x: block.position.x + 41, z: block.position.z};
+  assert.equal(hudAt(near).line, 'Burn the block: get within 9 m and hold 4.');
+  assert.notEqual(hudAt(far).line, 'Burn the block: get within 9 m and hold 4.');
+  assert.notEqual(hudAt(near, {...state, burntBarricades: [block.id]}).line, 'Burn the block: get within 9 m and hold 4.');
+  console.log('PASS Slow Ride: the screen says how to open a block that stands near.');
+}

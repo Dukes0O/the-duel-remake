@@ -4,7 +4,7 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { createAtmosphericSky, SUN_OFFSET } from './atmosphere.js';
 import { resolveLightingSettings, circuitLighting } from './lighting-moods.js';
 import { createLocalLighting } from './local-lighting.js';
-import { sampleCourseLightPath } from './light-path.js';
+import { sampleCourseLightPath, lightPathLook } from './light-path.js';
 import { createVehicleNightLighting } from './vehicles.js';
 
 // One owner for scene lights, the sky and environment targets. The renderer
@@ -63,6 +63,35 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
   const sunOffset = new THREE.Vector3(SUN_OFFSET.x, SUN_OFFSET.y, SUN_OFFSET.z);
   const targetSun = new THREE.Vector3();
   const colour = value => Array.isArray(value) ? lightColor.setRGB(value[0], value[1], value[2]) : lightColor.set(value);
+  // An evening that comes on during a job (Light the Town, EVERBURN-REMAKE job 2): the place's own light of day with the
+  // golden look and then the dusk look mixed over it by `amount` (0 is the day, 1 is dusk). The sun goes low and red
+  // and then out, the sky deepens, and the lamps the player lights are what the ground is seen by.
+  const EVENING = Object.freeze({goldenBy: .55, duskFrom: .4, goldenShare: .9, duskShare: .66,
+    colours: ['fog', 'top', 'horizon', 'ground', 'sunColor', 'cloudTint'],
+    scalars: ['sun', 'hemi', 'env', 'fogNear', 'fogFar', 'exposure', 'bloom', 'sunStrength', 'cloudCover']});
+  const evening = {sunOffset: {x: 0, y: 0, z: 0}}, eveningColours = Object.fromEntries(EVENING.colours.map(key => [key, [0, 0, 0]]));
+  const eased = value => { const t = Math.max(0, Math.min(1, value)); return t * t * (3 - 2 * t); };
+  function eveningOver(day, amount, theme) {
+    const golden = lightPathLook('golden', theme), dusk = lightPathLook('dusk', theme);
+    const toGolden = eased(amount / EVENING.goldenBy) * EVENING.goldenShare;
+    const toDusk = eased((amount - EVENING.duskFrom) / (1 - EVENING.duskFrom)) * EVENING.duskShare;
+    const mixed = (from, a, b) => { const first = from + (a - from) * toGolden; return first + (b - first) * toDusk; };
+    for (const key of Object.keys(day)) evening[key] = day[key];
+    for (const key of EVENING.scalars) evening[key] = mixed(day[key], golden[key], dusk[key]);
+    for (const key of EVENING.colours) {
+      const from = colour(day[key]), out = eveningColours[key], r = from.r, g = from.g, b = from.b;
+      out[0] = mixed(r, golden[key][0], dusk[key][0]); out[1] = mixed(g, golden[key][1], dusk[key][1]); out[2] = mixed(b, golden[key][2], dusk[key][2]);
+      evening[key] = out;
+    }
+    const sunFrom = day.sunOffset ?? SUN_OFFSET;
+    evening.sunOffset = evening.sunPlace ??= {x: 0, y: 0, z: 0};
+    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] = mixed(sunFrom[axis], golden.sunOffset[axis], dusk.sunOffset[axis]);
+    // Only the sun's direction changes: it stays as far off as by day, because a place's light may set that distance to
+    // keep its whole shadow box inside the sun's light (the Scablands' is 320 m; the looks' own are about 130 m).
+    const far = Math.hypot(sunFrom.x, sunFrom.y, sunFrom.z), now = Math.hypot(evening.sunOffset.x, evening.sunOffset.y, evening.sunOffset.z) || 1;
+    for (const axis of ['x', 'y', 'z']) evening.sunOffset[axis] *= far / now;
+    return evening;
+  }
 
   const paletteFields = ['fog','top','horizon','cloudTint','ground','sunColor'];
   const paletteComponents = ['r','g','b'], dryPaletteKey = new Float64Array(18);
@@ -83,7 +112,7 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
 
   return {
     sun,
-    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter }) {
+    apply({ course: next, theme = next.def.theme, mood, blend = 1, tunnel = false, distance = 0, raceLength = next.raceLength, menu = false, winter, evening: eveningAmount = 0 }) {
       if (stopped) return;
       if (course !== next) trialLight = next.def.trialLight && useTrialLight() ? next.def.trialLight : null;
       course = next;
@@ -93,7 +122,9 @@ export function createSceneLighting({ scene, renderer, bloom, host, useTrialLigh
       pathSample = sampleCourseLightPath(course, sampleInputs, sampleBuffer);
       let baseSettings = pathSample?.settings || resolveLightingSettings(theme, { mood, night, tunnel });
       if (!pathSample && !night && !tunnel && mood !== 'overcast') baseSettings = circuitLighting(baseSettings, trialLight || course.def.light);
-      const settings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
+      const daySettings = winter ? winter(baseSettings,{course,distance}) : baseSettings;
+      const settings = eveningAmount > 0 && !pathSample && !tunnel ? eveningOver(daySettings, eveningAmount, theme) : daySettings;
+      host.dataset.evening = eveningAmount > 0 ? eveningAmount.toFixed(2) : '0';
       const amount = pathSample ? 1 : blend;
       if (winter && !activeWinter) {
         winterDryPalette = {key:hasDryPalette ? dryPaletteKey.slice() : null,colours:{

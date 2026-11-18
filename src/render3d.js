@@ -46,7 +46,7 @@ import { createAmbientShading } from './ambient-shading.js';
 import { styleGhostVehicle } from './ghost-vehicle.js';
 import { renderedGroundHeight } from './rendered-ground.js';
 import { constrainTunnelCamera, constrainScablandsCamera, raiseScablandsCamera, clearCameraSightline, selectCameraAim, scablandsLandingCamera, raiseCameraOutOfSolids } from './camera-clearance.js';
-import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView } from './world-job-camera.js';
+import { facingChaseView, machineLift, easeMachineLift, machineLookBlend, forgeHoldView, townEndingView, townEveningAmount } from './world-job-camera.js';
 import { brandThiefPose } from './world/jobs/brand-rule.js';
 import { createVehicleAttachmentRegistry,createRoadRoofOwner } from './vehicle-attachments.js';
 import {createYetiAssets,createYetiView} from './yeti-view.js';
@@ -828,7 +828,7 @@ export function attachRenderer(host, app) {
     // WATER-SCREENS: the water works show the Water Road's progress (null while the story is off: nothing loads).
     yardPresentation?.setWaterStage?.(app.waterYardStage?.() ?? null);
     lighting.apply({course, theme: course.themeAt(distance), mood: app.lightingMood,
-        winter:winterEnabled(course)?winterLightingSettings:undefined,
+        winter:winterEnabled(course)?winterLightingSettings:undefined, evening: menu ? 0 : townEveningAmount(st),
       blend: 1 - Math.exp(-dt * 1.1), tunnel: !!course.tunnelAt(distance,lateral), distance,
       raceLength: menu ? course.length * Math.max(1, course.def.laps || 1) : app.duel.raceLength,
       menu});

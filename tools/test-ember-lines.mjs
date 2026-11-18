@@ -129,7 +129,8 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   assert.ok(!start.heard.includes('story.ember.cinder.22') && !start.job.done,
     'job 3: health loss alone cannot collect the bellows');
   start.job.stepState.knocks=2;
-  const caught=lineIdsHeard(start.job,()=>({...thief(),bellows:{carContact:true,meetingKmh:20}}),1);
+  // Stopped among the wrecks (`inBoneyard`), where the furnace is seen going; on the road Cinder has another line.
+  const caught=lineIdsHeard(start.job,()=>({...thief(),bellows:{carContact:true,meetingKmh:20,inBoneyard:true}}),1);
   assert.equal(caught.heard.filter(id=>id==='story.ember.cinder.22').length,1,
     'job 3: Cinder says it once at collection after the third knock');
   assert.equal(caught.job.done,false,'job 3: the nine-second hold is still running');

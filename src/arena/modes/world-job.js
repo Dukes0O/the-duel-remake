@@ -4,7 +4,6 @@ import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
 import {initializeCrewGear, signatureFor} from '../../crew-gear/signature.js';
-import {gearDirection} from '../../crew-gear/contacts.js';
 import {clearScablandsTownLayout, scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet, scablandsFloorsAt} from '../../world/scablands-ground.js';
 import {OLD_SMOKE, oldSmokeVentTargets, createFurnace, stepFurnace, furnaceHit, furnaceHealth,
   furnaceNextDoor, furnaceFallBack, furnaceRested} from '../../world/jobs/old-smoke.js';
@@ -116,7 +115,8 @@ export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
   const weaponHits = thingsHit.filter(hit => (hit.actorId ?? hit.id) === step.targetId && !hit.flame);
   const fighter = duel.state.onFoot && duel.state.fighter;
   const gear = signatureFor('cinder');
-  const direction = fighter && gearDirection(fighter);
+  // On the flat, as in Light the Town: a walker looking down at the ground still burns the man in front of him.
+  const direction = fighter && {x: Math.sin(fighter.yaw || 0), z: Math.cos(fighter.yaw || 0)};
   const dx = fighter ? thief.position.x - fighter.x : 0;
   const dz = fighter ? thief.position.z - fighter.z : 0;
   const distance = Math.hypot(dx, dz);

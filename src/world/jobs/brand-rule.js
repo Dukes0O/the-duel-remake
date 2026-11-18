@@ -177,7 +177,8 @@ export function stepBrandAsh(step, state, view, dt = 0) {
   const brandOut = view.brandSeconds <= 0;
   const soughtLamps = new Set();
   // A lamp's warning is said once while any man is at it, however many of them come (two throwers arriving together
-  // made Auntie say it twice; found by the review of slice 13).
+  // made Auntie say it twice), and again when a man comes to it after every man had left it or after it had gone dark
+  // and been relit (both found by the review of slice 13). The list of lamps with a man at them is the whole memory.
   const warnedBefore = new Set(state.lampsWarned ?? []), atLamps = new Set();
   for (const actor of view.ashMen ?? []) {
     if (!next.men[actor.id]) continue;
@@ -211,9 +212,7 @@ export function stepBrandAsh(step, state, view, dt = 0) {
         man.smotherSeconds = 0;
       }
       if (lamp && distance(at, spot(lamp)) <= BRAND_RULE.lampWarningMetres) {
-        if (man.warnedLamp !== lamp.id && !warnedBefore.has(lamp.id) && !atLamps.has(lamp.id))
-          events.push({type: 'lampThreatened', id: lamp.id});
-        man.warnedLamp = lamp.id;
+        if (!warnedBefore.has(lamp.id) && !atLamps.has(lamp.id)) events.push({type: 'lampThreatened', id: lamp.id});
         atLamps.add(lamp.id);
       }
       man.lamp = lamp?.id ?? null;
@@ -229,7 +228,7 @@ export function stepBrandAsh(step, state, view, dt = 0) {
       }
     } else {
       // Back to the brand: whatever he had begun at a lamp is dropped.
-      if (man.role === 'throw' && man.lamp) { man.lamp = null; man.smotherSeconds = 0; man.warnedLamp = null; }
+      if (man.role === 'throw' && man.lamp) { man.lamp = null; man.smotherSeconds = 0; }
       man.throwWait = Math.max(0, man.throwWait - dt);
       if (man.ash) {
         man.ash = {...man.ash, remaining: man.ash.remaining - dt};

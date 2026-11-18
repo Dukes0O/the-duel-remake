@@ -372,8 +372,13 @@ for (const facts of [{onFoot: true}, {playerSpeedKmh: 1}, {playerSpeedKmh: -1}, 
 let ending = end(captured, {}, 0);
 assert.equal(ending.complete, false);
 assert.deepEqual(ending.events, [{type: 'bellowsLoaded'}]);
+// Stopped on the road, the furnace is only heard leaving; among the wrecks it is seen (17 November 2026: "There it goes,
+// out the far end" was said on the road too, of a furnace two kilometres away).
 assert.deepEqual(ending.requests, [{type: 'bellowsThiefFlee'}, {type: 'bellowsFurnaceLeave'},
+  {type: 'say', lineId: 'bellows.road'}]);
+assert.deepEqual(end(captured, {inBoneyard: true}, 0).requests, [{type: 'bellowsThiefFlee'}, {type: 'bellowsFurnaceLeave'},
   {type: 'say', lineId: 'story.ember.cinder.22'}]);
+assert.ok(BELLOWS_LINES.road.startsWith('Cinder: He was taking the bellows to the furnace.'));
 ending = end(ending.state, {}, 8.99);
 assert.equal(ending.complete, false);
 assert.deepEqual(ending.requests, [{type: 'say', lineId: 'bellows.patch'}]);
@@ -1035,3 +1040,80 @@ assert.deepEqual(paidWorld.bellowsResult,{bellows:63,knocks:3,pay:80,sentence:'T
 assert.equal(paidWorld.job.done,true);
 paidApp.returnToMenu(); paidApp.dispose?.();
 console.log('PASS Run Him Down: arena keeps the earned load and knocks through step completion.');
+
+// The walk to the car (17 November 2026): the chase starts on foot among Tin Town's shacks, and the arrow to the car
+// used to point through one of them. With the job's solids the arrow follows a way that can be walked: a walker the size
+// of the player who steps toward the arrow's aim arrives at the car, in no more than 1.35 times the straight line plus
+// 10 m, and the metres shown at the start are within 15 % of that walk.
+{
+  const {createJobSolidGrid, pushOutOfSolids} = await import('../src/world/scablands-solids.js');
+  const {scablandsSurfaceHeightAt} = await import('../src/world/scablands-ground.js');
+  const {townCarWay} = await import('../src/world/jobs/brand-ways.js');
+  const {brandSites} = await import('../src/world/jobs/brand-sites.js');
+  const {footCarDirection} = await import('../src/combat-hud.js');
+  const {EVERBURN_JOBS: jobs} = await import('../src/world/jobs/everburn.js');
+  const chase = jobs.find(job => job.id === 'everburn-run-him-down').steps[0];
+  const grid = createJobSolidGrid(), car = chase.carStart, start = chase.bellowsFootStart;
+  const ways = townCarWay(chase, grid.movers, car, brandSites().ashEntries);
+  let at = {x: start.x, z: start.z}, metres = 0, said = null;
+  for (let tick = 0; tick < 4000 && Math.hypot(at.x - car.x, at.z - car.z) > 3; tick++) {
+    const aim = ways.aim(at, 'car');
+    assert.ok(aim, `A way to the car is shown from ${at.x.toFixed(1)}, ${at.z.toFixed(1)}.`);
+    said ??= aim.metres;
+    const gap = Math.hypot(aim.x - at.x, aim.z - at.z), pace = Math.min(.25, gap);
+    const x = at.x + (aim.x - at.x) / gap * pace, z = at.z + (aim.z - at.z) / gap * pace;
+    const stood = pushOutOfSolids(x, z, .34, grid.movers, scablandsSurfaceHeightAt(x, z));
+    metres += Math.hypot(stood.x - at.x, stood.z - at.z);
+    at = {x: stood.x, z: stood.z};
+  }
+  const straight = Math.hypot(start.x - car.x, start.z - car.z);
+  assert.ok(Math.hypot(at.x - car.x, at.z - car.z) <= 3, 'The walker reaches the car.');
+  assert.ok(metres <= straight * 1.35 + 10, `The walk to the car is ${metres.toFixed(0)} m for ${straight.toFixed(0)} m straight.`);
+  assert.ok(Math.abs(said - metres) <= metres * .15 + 4, `The arrow says ${said.toFixed(0)} m for a walk of ${metres.toFixed(0)} m.`);
+  // The screen's own arrow uses that way: at the start it is not the straight line, which a shack stands in.
+  const course = {groundAt: () => ({x: car.x, y: 0, z: car.z})};
+  const world = {solidGrid: grid, job: {stepIndex: 0, steps: [chase], stepState: {}}};
+  const arrow = footCarDirection(course, {onFoot: true, fighter: {x: start.x, y: 0, z: start.z, yaw: 0}, arena: {mode: 'world-job', worldJob: world}});
+  const first = ways.aim(start, 'car');
+  assert.equal(arrow.distance, Math.round(first.metres));
+  assert.equal(arrow.angle, Math.round(Math.atan2(first.x - start.x, first.z - start.z) * 180 / Math.PI));
+  assert.notEqual(arrow.angle, Math.round(Math.atan2(car.x - start.x, car.z - start.z) * 180 / Math.PI));
+  console.log(`PASS Run Him Down: the arrow leads the walker to the car by a way of ${metres.toFixed(0)} m (${straight.toFixed(0)} m straight).`);
+}
+
+// The way out of town (17 November 2026): while the car is inside Tin Town's fence and the thief is beyond it, the
+// arrow leads to the gate; through the gate it is on the thief again; on foot it is never the gate.
+{
+  const {worldHudModel: hudModel, TOWN_GATE_ARROW} = await import('../src/world/world-hud.js');
+  const {EVERBURN_JOBS: jobs} = await import('../src/world/jobs/everburn.js');
+  const chase = jobs.find(job => job.id === 'everburn-run-him-down').steps[0], gate = chase.townGate.position;
+  const thief = {id: chase.targetId, position: {x: gate.x - 200, y: 0, z: gate.z + 900}};
+  const hudAt = (player, onFoot = false, stepState = {}) => hudModel({worldJob: {job: {stepIndex: 0, steps: [chase], stepState}, actors: [thief]}, player, onFoot});
+  const inBay = hudAt({x: chase.carStart.x, z: chase.carStart.z});
+  assert.equal(inBay.target.id, 'town-gate');
+  assert.equal(inBay.line, 'Out by the town gate, then after him.');
+  assert.equal(hudAt({x: gate.x, z: gate.z - TOWN_GATE_ARROW.pastMetres - .1}).target.id, 'town-gate');
+  assert.notEqual(hudAt({x: gate.x, z: gate.z - TOWN_GATE_ARROW.pastMetres + .1}).target.id, 'town-gate', 'At the gate the arrow goes back to the thief.');
+  assert.notEqual(hudAt({x: gate.x, z: gate.z + 30}).target.id, 'town-gate', 'Outside the town the arrow is on the thief.');
+  assert.notEqual(hudAt({x: chase.carStart.x, z: chase.carStart.z}, true).target?.id, 'town-gate', 'On foot the arrow to the car leads, not the gate.');
+  assert.notEqual(hudAt({x: chase.carStart.x, z: chase.carStart.z}, false, {thiefStopped: true}).target?.id, 'town-gate');
+  console.log('PASS Run Him Down: the arrow leads out by the town gate while the car is inside the fence.');
+}
+
+// The way to the car is worked out only for a car inside the town (the review of slice 14: with the car a kilometre down
+// the road the squares ran to hundreds of thousands and the game stood still for seconds).
+{
+  const {townCarWay} = await import('../src/world/jobs/brand-ways.js');
+  const {brandSites} = await import('../src/world/jobs/brand-sites.js');
+  const {createJobSolidGrid} = await import('../src/world/scablands-solids.js');
+  const {EVERBURN_JOBS: jobs} = await import('../src/world/jobs/everburn.js');
+  const chase = jobs.find(job => job.id === 'everburn-run-him-down').steps[0], entries = brandSites().ashEntries, grid = createJobSolidGrid();
+  const road = chase.bellowsRoute.road.map(place => place.position ?? place);
+  for (const far of [road[Math.floor(road.length / 2)], road.at(-1)]) {
+    const began = performance.now();
+    assert.equal(townCarWay(chase, grid.movers, far, entries), null, 'No town way for a car out on the road.');
+    assert.ok(performance.now() - began < 50, 'And asking costs nothing.');
+  }
+  assert.ok(townCarWay(chase, grid.movers, chase.carStart, entries));
+  console.log('PASS Run Him Down: the walkable way to the car is made only inside the town.');
+}

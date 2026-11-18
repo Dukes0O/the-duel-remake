@@ -80,6 +80,9 @@ export const BELLOWS_LINES = Object.freeze({
   scorched: "Cinder: Scorched. Auntie can sew. Keep the flamethrower. You've earned it.",
   warning: 'Cinder: Not the flamethrower! Leather burns.',
   restart: "Cinder: He has reached the furnace, and they have had their hands on the bellows. He is slowing. Again, from the Boneyard's edge.",
+  // Said when the bellows are taken back on the road, out of sight of the furnace ("There it goes, out the far end"
+  // was said there too, of a furnace two kilometres away; Claude's hand drive, 17 November 2026).
+  road: 'Cinder: He was taking the bellows to the furnace. Hear that horn? It is leaving without them.',
 });
 
 // These are the wrecks' bounds (an axis-aligned box round each whole aircraft;
@@ -350,8 +353,9 @@ export function stepBellowsEnding(state, facts, dt = 0) {
       facts.carGapMetres <= BELLOWS_RULE.loadRadiusMetres) {
     next.bellowsLoaded = true;
     events.push({type: 'bellowsLoaded'});
+    // Among the wrecks the furnace is seen going; on the road it is only heard.
     requests.push({type: 'bellowsFurnaceLeave'},
-      {type: 'say', lineId: 'story.ember.cinder.22'});
+      {type: 'say', lineId: facts.inBoneyard ? 'story.ember.cinder.22' : 'bellows.road'});
   }
   if (next.bellowsLoaded && next.endingElapsed >= BELLOWS_RULE.closingAtSeconds && !state.bellowsClosing) {
     next.bellowsClosing = true;
@@ -385,7 +389,7 @@ export function stepBellowsChase(step, state, view, dt = 0) {
   state = {...state, chaseElapsed, launchEnded};
   const load = stepBellowsLoad(state, facts, dt);
   const pursuit = stepBellowsPursuit(load.state, facts, dt);
-  const ending = stepBellowsEnding(pursuit.state, {carGapMetres,
+  const ending = stepBellowsEnding(pursuit.state, {carGapMetres, inBoneyard: facts.inBoneyard === true,
     onFoot: view.onFoot === true, playerSpeedKmh: view.speedKmh ?? Infinity}, dt);
   // A stopped thief stays stopped throughout collection and captions.
   const speedKmh = ending.state.thiefStopped || !Number.isFinite(facts.playerTopSpeedKmh)

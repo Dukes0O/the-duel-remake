@@ -6,7 +6,7 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, GAS_FLASH_LINE, GAS_DRY_LINE} from './gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, GAS_RAID_LINES, GAS_FLASH_LINE, GAS_DRY_LINE} from './gas-load-rule.js';
 import {EMBER_RULE, SALT_RIDERS, bedMistFor, bridgeAshPlan} from './ember-rule.js';
 import {riverFor} from '../scablands-regions.js';
 import {bessRest} from '../boneyard-wrecks.js';
@@ -245,13 +245,15 @@ export function buildEverburn(land) {
         path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
         roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower', lentWeapon:'cinders-hand-flamer',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
+        // The way out of the town for the driver's arrow (src/world/world-hud.js), while the car is still inside the fence.
+        townGate:Object.freeze({...place('town-gate', tinTownGateFor(land).gate), through:tinTownGateFor(land).gate.through}),
         bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[0].position),
         startLineId:'story.ember.auntie-solder.5',
         sayNear:[{place:planeRow, radius:70, lineId:'story.ember.cinder.8'}],
         // Collection requests Cinder's line while the bellows rule times its hold.
       })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
-      captions:Object.freeze({...GAS_LOAD_LINES, 'gas.flash':GAS_FLASH_LINE, 'gas.dry':GAS_DRY_LINE}),
+      captions:Object.freeze({...GAS_LOAD_LINES, ...GAS_RAID_LINES, 'gas.flash':GAS_FLASH_LINE, 'gas.dry':GAS_DRY_LINE}),
       resultLineId:'story.ember.auntie-solder.6',
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.

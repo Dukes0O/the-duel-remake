@@ -318,6 +318,14 @@ assert.equal(ashTick(secondWave.state, {...throwView, ...foot(59.99)}).events.le
   const left = ashTick(arrived.state, {...together, brandSeconds: 90});
   assert.deepEqual(left.state.lampsWarned, []);
   assert.deepEqual(ashTick(left.state, together).events.filter(event => event.type === 'lampThreatened'), [{type: 'lampThreatened', id: 'tower'}]);
+  // A lamp put out and relit with a man still beside it is warned of again (the reviewer's case: before, the man who
+  // had warned of it once never did again, and he smothered the relit lamp unannounced).
+  const beside = {...ashView, lamps: {pump: true}, ashMen: [{id: 'town-ash-0-0', position: places[0].position}]};
+  const first = ashTick(firstWave.state, beside);
+  assert.deepEqual(first.events, [{type: 'lampThreatened', id: 'pump'}]);
+  const dark = ashTick(first.state, {...beside, lamps: {}});
+  assert.deepEqual(dark.events, []);
+  assert.deepEqual(ashTick(dark.state, beside).events, [{type: 'lampThreatened', id: 'pump'}]);
   // No lamp alight and no brand: a thrower keeps by the player.
   assert.deepEqual(moves(ashTick(secondWave.state, {...outView, lamps: {}})), [['town-ash-1-0', undefined], ['town-ash-1-1', undefined]]);
 }

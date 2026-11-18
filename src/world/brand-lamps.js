@@ -7,14 +7,29 @@ import {createTownLamp} from './town-lamp-look.js';
 
 // `surface` is the scrap surface the scene already has (or a function that answers it), so that three lamps do not
 // make three pictures of their own.
+export const BRAND_LAMP_GLOW = Object.freeze({metres: 3.4, opacity: .6});
 export function createBrandLamps({surface = null} = {}) {
   const group = new THREE.Group();
   group.name = 'Light the Town lamps';
   group.visible = false;
   const lamps = [];
   let places = null, seconds = 0;
+  // A lit lamp is seen from across the town by the glow round its lantern: one soft round patch that always faces the
+  // view, added to what is behind it (the ending is watched from 80 m, where the lantern itself is a few pixels).
+  const glowMap = (() => {
+    const size = 32, data = new Uint8Array(size * size * 4);
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      const away = Math.min(1, Math.hypot((x + .5) / size * 2 - 1, (y + .5) / size * 2 - 1)), value = Math.pow(1 - away, 2.4), index = (y * size + x) * 4;
+      data[index] = data[index + 1] = data[index + 2] = Math.round(value * 255); data[index + 3] = 255;
+    }
+    const map = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    map.magFilter = map.minFilter = THREE.LinearFilter; map.needsUpdate = true;
+    return map;
+  })();
+  const glowMaterials = [];
   function clear() {
     for (const lamp of lamps) lamp.look.dispose();
+    for (const material of glowMaterials.splice(0)) material.dispose();
     lamps.length = 0;
     group.clear();
   }
@@ -40,8 +55,17 @@ export function createBrandLamps({surface = null} = {}) {
           glow.position.set(look.lantern.x * Math.cos(turn) + look.lantern.z * Math.sin(turn), look.lantern.y,
             look.lantern.z * Math.cos(turn) - look.lantern.x * Math.sin(turn));
           lamp.add(glow);
+          const haloMaterial = new THREE.SpriteMaterial({map: glowMap, color: 0xffa24a, blending: THREE.AdditiveBlending,
+            transparent: true, opacity: 0, depthWrite: false, fog: false});
+          glowMaterials.push(haloMaterial);
+          const halo = new THREE.Sprite(haloMaterial);
+          halo.name = `Glow of the town lamp: ${place.id}`;
+          halo.position.copy(glow.position);
+          halo.scale.setScalar(BRAND_LAMP_GLOW.metres);
+          halo.visible = false;
+          lamp.add(halo);
           group.add(lamp);
-          lamps.push({id: place.id, look, glow, lit: false});
+          lamps.push({id: place.id, look, glow, halo, lit: false});
         });
       }
       for (const lamp of lamps) {
@@ -49,6 +73,8 @@ export function createBrandLamps({surface = null} = {}) {
         lamp.brightness = step.gasLoad ? GAS_LOAD_RULE.lampBeforeGasShare + (1 - GAS_LOAD_RULE.lampBeforeGasShare) * (worldJob.forgeGasShare ?? 0) : 1;
         lamp.look.setLit(lamp.lit, seconds, lamp.brightness);
         lamp.glow.intensity = lamp.lit ? 10 * lamp.brightness : 0;
+        lamp.halo.visible = lamp.lit;
+        lamp.halo.material.opacity = lamp.lit ? BRAND_LAMP_GLOW.opacity * lamp.brightness : 0;
       }
     },
     // The scene's own clock: the flame's flicker and the half second a lamp takes to come up.
@@ -56,6 +82,6 @@ export function createBrandLamps({surface = null} = {}) {
       seconds = now;
       if (group.visible) for (const lamp of lamps) lamp.look.setLit(lamp.lit, now, lamp.brightness);
     },
-    dispose() { clear(); },
+    dispose() { clear(); glowMap.dispose(); },
   };
 }

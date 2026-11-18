@@ -229,11 +229,14 @@ function assembly(){
   return {put,box,strut,lists,get triangles(){return triangles;}};
 }
 
+export const TOWN_WINDOWS=Object.freeze({clusterGapSeconds:.55,riseSeconds:.5,glowWidth:1.9,glowHeight:1.5});
 export function createTinTownShacks(){
   const plan=tinTownLayout(),group=new THREE.Group();group.name='Tin Town shacks';
   const out=assembly(),{put,box,strut}=out,random=mulberry(0x7157a9);
   const pick=list=>list[Math.floor(random()*list.length)];
   const shacks=[],feet=[],specials={},chimneys=[];
+  // The panes behind the shutters, one list for each cluster: they light when the town wakes (see `lightWindows` below).
+  const panes=plan.clusters.map(()=>[]);let paneCluster=0;
   const landAt=(x,z)=>height(x,z);
   const foot=(x,z)=>{const y=landAt(x,z)-.05;feet.push({x,y,z});return y;};
 
@@ -260,8 +263,20 @@ export function createTinTownShacks(){
       const offset=doorAt>=0?-front/2+.75+window*front*.4:front/2-.75-window*front*.4;
       if(Math.abs(offset-doorAt)<1.2)continue;
       let [wx,wy,wz]=at(offset,1.55,.03);box('frame',.7,.55,.1,PALETTE.dark,wx,wy,wz,turn);
+      {const pane=new THREE.PlaneGeometry(TOWN_WINDOWS.glowWidth,TOWN_WINDOWS.glowHeight),[gx,gy,gz]=at(offset,1.55,.13);
+        pane.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(gx,gy,gz),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,turn[1],0)),new THREE.Vector3(1,1,1)));
+        pane.deleteAttribute('normal');panes[paneCluster].push(pane);}
       [wx,wy,wz]=at(offset,1.95,.09);box('frame',.78,.26,.05,PALETTE.plank,wx,wy,wz,[0,turn[1],(variant+window)%2?.6:0]);
     }
+    // One shuttered window in the back wall as well, so that a shack shows a window, and at dusk a light, from the side
+    // away from its door too (the town's fronts all face south or east; from the north and west it showed bare sheet).
+    {const backTurn=[0,Math.atan2(-n.x,-n.z),0],offset=(variant%2?1:-1)*Math.max(0,front/2-1.1);
+      const atBack=(lift,push)=>[x-n.x*(sx/2+push)+t.x*offset,y+lift,z-n.z*(sz/2+push)+t.z*offset];
+      let [wx,wy,wz]=atBack(1.55,.03);box('frame',.7,.55,.1,PALETTE.dark,wx,wy,wz,backTurn);
+      [wx,wy,wz]=atBack(1.95,.09);box('frame',.78,.26,.05,PALETTE.plank,wx,wy,wz,[0,backTurn[1],variant%2?.6:0]);
+      const pane=new THREE.PlaneGeometry(TOWN_WINDOWS.glowWidth,TOWN_WINDOWS.glowHeight),[gx,gy,gz]=atBack(1.55,.13);
+      pane.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(gx,gy,gz),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,backTurn[1],0)),new THREE.Vector3(1,1,1)));
+      pane.deleteAttribute('normal');panes[paneCluster].push(pane);}
     for(let patch=0;patch<1+variant%2;patch++){
       const offset=(patch?-1:1)*(front/2-.7)*(doorAt>0?-1:1),[px,py,pz]=at(offset,.7+patch*1.1+random()*.3,.045);
       box('sheet',.9+random()*.4,.7+random()*.4,.05,pick(PALETTE.patch),px,py,pz,turn);
@@ -276,6 +291,7 @@ export function createTinTownShacks(){
 
   // One slot: a stack of shacks on four scaffold legs, each leg standing on the ground at its own point.
   const buildSlot=(cluster,slot)=>{
+    paneCluster=plan.clusters.indexOf(cluster);
     const {x,z,levels,size,cell,facing}=slot,h=size[2],n=cluster.turned?{x:facing,z:0}:{x:0,z:facing};
     const halfW=cell.w/2+.3,halfD=cell.d/2+.3,corners=[[-halfW,-halfD],[halfW,-halfD],[-halfW,halfD],[halfW,halfD]];
     const heights=corners.map(([cx,cz])=>landAt(x+cx,z+cz)),base=Math.max(...heights)+DECK_LIFT,top=base+(levels-1)*LEVEL+h+.4;
@@ -418,7 +434,34 @@ export function createTinTownShacks(){
     if(kind==='lamp')merged.deleteAttribute('color');
     const mesh=new THREE.Mesh(merged,materials[kind]);mesh.name=`Tin Town shacks, ${materials[kind].name}`;mesh.castShadow=kind!=='cloth';mesh.receiveShadow=true;group.add(mesh);
   }
-  group.userData={shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,watchtower:specials.watchtower,chimneys,triangles:out.triangles};
+  // The windows of the town, dark until it wakes. `lightWindows(seconds)` is given the seconds since the third lamp was lit
+  // (null before): the clusters light one after another, 0.55 s apart, each coming up in half a second.
+  // Each window's light is one soft patch on the wall: the pane bright in its middle (the size of the window), fading to
+  // nothing at the patch's edge, added to what is behind it, so that it reads as lamplight through a shutter from across
+  // the town and does not look like a painted square close by.
+  const glowMap=(()=>{
+    const size=32,data=new Uint8Array(size*size*4),paneU=.58/TOWN_WINDOWS.glowWidth,paneV=.43/TOWN_WINDOWS.glowHeight;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+      const u=Math.abs((x+.5)/size*2-1),v=Math.abs((y+.5)/size*2-1);
+      const out=Math.max(0,Math.max((u-paneU)/(1-paneU),(v-paneV)/(1-paneV))),soft=Math.hypot(Math.max(0,u-paneU)/(1-paneU),Math.max(0,v-paneV)/(1-paneV));
+      const value=out<=0?1:Math.pow(Math.max(0,1-soft),2.2)*.5,index=(y*size+x)*4;
+      data[index]=data[index+1]=data[index+2]=Math.round(value*255);data[index+3]=255;
+    }
+    const map=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);map.magFilter=map.minFilter=THREE.LinearFilter;map.needsUpdate=true;return map;
+  })();
+  const windowGlow=panes.map((list,index)=>{
+    if(!list.length)return null;
+    const merged=mergeGeometries(list);for(const geometry of list)geometry.dispose();
+    const mesh=new THREE.Mesh(merged,new THREE.MeshBasicMaterial({name:'lit windows',map:glowMap,color:new THREE.Color(1.7,.82,.26),transparent:true,opacity:0,
+      blending:THREE.AdditiveBlending,side:THREE.DoubleSide,depthWrite:false,fog:false}));
+    mesh.name=`Tin Town lit windows, cluster ${index+1}`;mesh.visible=false;group.add(mesh);return mesh;
+  });
+  const lightWindows=seconds=>windowGlow.forEach((mesh,index)=>{
+    if(!mesh)return;
+    const t=seconds==null?0:Math.max(0,Math.min(1,(seconds-index*TOWN_WINDOWS.clusterGapSeconds)/TOWN_WINDOWS.riseSeconds)),amount=t*t*(3-2*t);
+    mesh.visible=amount>0;mesh.material.opacity=amount;
+  });
+  group.userData={lightWindows,windowGlow,dispose:()=>glowMap.dispose(),shacks,feet,fence,clusters:plan.clusters.map(cluster=>({index:cluster.index,rect:cluster.rect,shacks:cluster.shacks})),tower:specials.tower,pole:specials.pole,watchtower:specials.watchtower,chimneys,triangles:out.triangles};
   return group;
 }
 

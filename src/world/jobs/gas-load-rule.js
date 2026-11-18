@@ -45,7 +45,9 @@ export const GAS_LOAD_RULE = Object.freeze({
   meetingRadiusMetres: 6,
   stoppedKmh: 1,
   blockShares: Object.freeze([.25, .5, .75]),
-  blockBurnSeconds: 4,
+  // One burst of the car's flamethrower lasts 3 seconds and is followed by a wait of 9: a block that needed 4 seconds
+  // took two bursts and 11 seconds at the block (Claude's hand drive, 17 November 2026). It opens within one burst now.
+  blockBurnSeconds: 2.5,
   blockStopMetres: 25,
   // She counts as stopped at a block within this much of her stopping place (the mover can leave a hair of distance).
   blockStopSlackMetres: .01,
@@ -107,6 +109,22 @@ export function gasLoadMeeting(step, state, view) {
   return {state, complete: false, requests};
 }
 
+// When a raid sets out Moss says where from, by the small map's north (in Claude's hand drive a raid was a dot on that
+// map and a horn, and a driver looking at the road ahead knew nothing of it).
+export const GAS_RAID_LINES = Object.freeze({
+  'gas.raid.north': 'Moss: Riders, coming in from the north!',
+  'gas.raid.east': 'Moss: Riders, coming in from the east!',
+  'gas.raid.south': 'Moss: Riders, coming in from the south!',
+  'gas.raid.west': 'Moss: Riders, coming in from the west!',
+});
+export function gasRaidLineId(raid, truck) {
+  const from = raid.place?.position ?? raid.place, at = truck?.position ?? truck;
+  const dx = (from?.x ?? 0) - (at?.x ?? 0), dz = (from?.z ?? 0) - (at?.z ?? 0);
+  // North is toward smaller z on the land's map, east toward larger x. (The compass ring beside the map turns its needle
+  // the other way north to south, an older fault noted on the card.)
+  return Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'gas.raid.east' : 'gas.raid.west') : (dz > 0 ? 'gas.raid.south' : 'gas.raid.north');
+}
+
 // Raiders are ordinary car actors. Only the tank and the raid clocks live here.
 export function gasLoadRaids(step, state, view, truck, share, dt) {
   const seconds = Math.max(0, dt), requests = [], events = [];
@@ -114,6 +132,7 @@ export function gasLoadRaids(step, state, view, truck, share, dt) {
   for (const raid of step.gasRaids ?? []) if (share >= raid.share && !raids.includes(raid.id)) {
     raids.push(raid.id);
     events.push({type:'gasRaid', id:raid.id});
+    requests.push({type:'say', lineId:gasRaidLineId(raid, truck)});
   }
   const clocks = {...state.holeClocks};
   let holes = state.holes ?? GAS_LOAD_RULE.startHoles;
