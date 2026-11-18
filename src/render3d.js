@@ -1247,7 +1247,7 @@ export function attachRenderer(host, app) {
     if(!st.paused)chickens.update(menu?{status:'menu',s:172,collectedFlocks:[]}:st,menu?presentationSeconds:st.totalTimeSec);
     lastSaltHeatEnabled = setSaltFlatsHeatEnabled(world,presentation.saltHeatEnabled !== false);
     animateScene(world,presentationSeconds);
-    syncScene(world,menu?{crushedProps:[]}:st,st.paused||speaking?0:dt);
+    syncScene(world,menu?{crushedProps:[]}:st,effectDt,st.paused?0:dt);
     {
       const worldJob=!menu&&st.arena?.mode==='world-job'?st.arena.worldJob:null,carry=worldJob?.job?.steps?.[worldJob.job.stepIndex],held=worldJob?.job?.stepState;
       // Once the pot is handed over at the forge it is the crane's to draw (src/world/forge-look.js), so it leaves the car.

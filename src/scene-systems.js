@@ -23,10 +23,11 @@ export function animateScene(world, seconds) {
   for (const system of lifecycle.systems) system.animate?.(seconds);
 }
 
-export function syncScene(world, state, dt = 0) {
+// The world can be held for a conversation while a speaker turns and gestures.
+export function syncScene(world, state, dt = 0, presentationDt = dt) {
   const lifecycle = worlds.get(world);
   if (!lifecycle || lifecycle.disposed) return;
-  for (const system of lifecycle.systems) system.sync?.(state, dt);
+  for (const system of lifecycle.systems) system.sync?.(state, dt, presentationDt);
 }
 
 export function disposeSceneSystems(world) {

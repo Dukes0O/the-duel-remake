@@ -27,6 +27,8 @@ const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landma
 // EVERBURN-REMAKE adds Cinder's pot cues, made in code. Exactly those three are left out; the pinned hash below is unchanged.
 // EVERBURN-REMAKE job 1 (16 November 2026) adds the furnace's horn, Tin Town's gate and the forge catching, left out of the old pin too.
 const EMBER_CUES = new Set(['world.lamp.lighting', 'world.ember.spark', 'world.ember.out', 'world.ember.scoop', 'world.furnace.horn', 'world.ashmen.horn', 'world.tintown.gate', 'world.forge.catch', 'ambience.scablands',
+  // Five Cold Nights adds three composed conversation cues to the same Wasteland bank.
+  'story.talk.line', 'story.thought', 'story.talk.choose',
   'world.gas.flash', 'world.bess.plug', 'world.bess.leak', 'world.bridge.ash', 'world.salt.horn', 'world.brand.catch', 'world.brand.out', 'world.ash.throw', 'world.town.wake', 'world.thief.ash', 'world.bellows.load']);
 // SCABLANDS-LAND round 4, slice 2a: one cue for each ground of the Scablands, new cues left out of the old pin as the ember's three were.
 const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'scab-plates', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));

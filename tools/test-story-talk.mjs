@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {App} from '../src/app.js';
 import {pageFunctions, pageSource} from './scenarios/story-talk.mjs';
 import {speechPlacement, talkCameraPose} from '../src/story/talk-view.js';
+import {registerSceneSystem, syncScene} from '../src/scene-systems.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
 import {Duel} from '../src/game.js';
 import {startTalk, actOnTalk, talkScreen} from '../src/story/talk.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
@@ -137,5 +139,15 @@ for (const [x, y] of [[0, 0], [320, 200], [100, 150]]) {
 }
 const shot = talkCameraPose({x: 0, y: 0, z: 0}, {x: 0, y: 1.6, z: 4}, true);
 assert(shot.position.z < 0 && shot.position.x > 0 && shot.target.z === 4);
+for (const cue of ['story.talk.line', 'story.thought', 'story.talk.choose']) {
+  assert.equal(SOUND_BANK[cue].flag, 'story-choices');
+  assert(SOUND_BANK[cue].layers.length > 0);
+}
+const sceneClock = {}, received = [];
+registerSceneSystem(sceneClock, {sync: (state, dt, presentationDt) => received.push([dt, presentationDt])});
+syncScene(sceneClock, {}, .02);
+syncScene(sceneClock, {}, 0, .02);
+syncScene(sceneClock, {}, 0, 0);
+assert.deepEqual(received, [[.02, .02], [0, .02], [0, 0]], 'the speaker can gesture in a held world, and both clocks respect pause');
 for (const name of Object.keys(pageFunctions)) pageSource(name);
 console.log('Story talk passed. Dialogue order, questions, hidden effects, branch selection and frozen world verified.');
