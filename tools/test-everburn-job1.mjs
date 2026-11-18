@@ -263,6 +263,14 @@ for (const reason of ['ridge-car', 'ridge-rider', 'off-pan', 'time']) {
       actor.position.z - step.saltRiders[index].start.position.z) <= 1)), reason);
   stepWorldJob(duel, 0);
   assert.equal(events.filter(event => event.arenaTell?.cue === 'world.salt.horn').length, 1);
+  for (const [index, rider] of riders.entries()) rider.position = {...step.saltRiders[index].start.position};
+  car = {...step.saltPost.position};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  stepWorldJob(duel, .1);
+  const homes = riders.map(rider => ({...rider.position}));
+  for (let i = 0; i < 20; i++) stepWorldJob(duel, .1);
+  assert.ok(riders.every(rider => !rider.pursuing && rider.speed === 0), 'finished salt riders stay home');
+  assert.deepEqual(riders.map(rider => rider.position), homes, 'a nearby car cannot restart salt pursuit');
 }
 
 // The job counts light exposure, not all time in the watch's view.

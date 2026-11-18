@@ -436,6 +436,11 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
   const furnaceRider = worldJob.definition.id === 'everburn-hot-delivery' &&
     worldJob.job.steps[worldJob.job.stepIndex]?.furnaceRiders?.includes(actorDef);
   const saltRider = worldJob.job.steps[worldJob.job.stepIndex]?.saltRiders?.includes(actorDef);
+  if (saltRider && worldJob.saltDone && !rider.returningToPost) {
+    rider.pursuing = false;
+    rider.speed = 0;
+    return;
+  }
   const emberRider = roadRider || furnaceRider || saltRider;
   const campRider = roadRider && actorDef.scoopAmbush;
   if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
