@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Big Bess · Wasteland vehicle register</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --paper: #ece8da; --ink: #20251f; --border: #aaa898;
+      --olive: #545c4c; --amber: #e6ae69;
+      --sans: "Arial Narrow", "Liberation Sans Narrow", Arial, sans-serif;
+      --mono: "Courier New", monospace;
+    }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: Arial, sans-serif; }
+    main { margin: 0 auto; padding: clamp(16px, 3vw, 48px); max-width: 1536px; }
+    header { border-top: 4px solid var(--ink); border-bottom: 1px solid var(--border);
+      padding: 12px 0; display: flex; justify-content: space-between; align-items: baseline; }
+    .mast { font: 800 19px var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+    .register, dt, legend, .tag { font: 700 13px var(--mono); letter-spacing: .035em; }
+    .intro { display: flex; gap: 32px; align-items: end; justify-content: space-between; padding: 26px 0 26px; }
+    h1 { font: 900 clamp(68px, 8vw, 128px)/.86 var(--sans); letter-spacing: -.065em; white-space: nowrap; margin: 0; }
+    .intro p { font: italic clamp(20px, 2vw, 29px)/1.18 Georgia, serif; color: var(--olive); margin: 0 0 2px; }
+    .folio { background: #202823; color: #f3eddf; }
+    .rail { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px;
+      gap: 16px; border-bottom: 1px solid #434c42; flex-wrap: wrap; }
+    fieldset { border: 0; margin: 0; padding: 0; }
+    legend { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+    .choices { display: flex; flex-wrap: wrap; gap: 4px; }
+    .choice { position: relative; }
+    .choice input { position: absolute; left: 9px; top: 9px; width: 1px; height: 1px; opacity: 0; }
+    .choice label { display: block; cursor: pointer; padding: 8px 13px;
+      border: 1px solid #748076; border-radius: 2px; font: 600 15px var(--sans); }
+    .choice input:checked + label { background: var(--amber); border-color: var(--amber); color: var(--ink); }
+    .choice input:focus-visible + label { outline: 3px solid white; outline-offset: 2px; }
+    .tag { color: #d8decd; }
+    figure { margin: 0; }
+    .view { display: none; }
+    .view.illustration { display: block; }
+    .folio:has(#cab:checked) .illustration, .folio:has(#road:checked) .illustration { display: none; }
+    .folio:has(#cab:checked) .view.cab, .folio:has(#road:checked) .view.road { display: block; }
+    .viewport { position: relative; overflow: hidden; aspect-ratio: 16 / 9; background: #44443a; }
+    /* Each crop reuses a retained review-sheet image. No duplicate art or remote fonts. */
+    .viewport img { position: absolute; height: auto; max-width: none; display: block; }
+    .illustration img { width: 100%; left: 0; top: -12.88889%; }
+    .cab img, .road img { width: 212.765957%; }
+    .cab img { left: -4.255319%; top: -154.609929%; }
+    .road img { left: -108.510638%; top: -39.716312%; }
+    figcaption { padding: 12px 18px 14px; border-top: 1px solid #434c42; font-size: 14px; line-height: 1.5; }
+    figcaption strong { color: var(--amber); }
+    .notes { display: grid; grid-template-columns: 1.12fr 1fr; gap: 6%; border-bottom: 3px solid var(--ink); padding: 20px 0; }
+    .notes p { font: 19px/1.4 Georgia, serif; max-width: 48ch; margin: 0; }
+    dl { display: flex; justify-content: space-between; column-gap: 14px; margin: 0; align-self: center; }
+    dt { color: var(--olive); }
+    dd { margin: 4px 0 0; font: 700 clamp(19px, 2vw, 30px) var(--sans); }
+    @media (max-width: 640px) {
+      .intro { display: block; padding: 22px 0 18px; }
+      .intro p { margin-top: 14px; }
+      .rail { gap: 8px; padding: 11px 10px; }
+      .tag { display: none; }
+      .choice label { font-size: 14px; padding: 7px 10px; }
+      .notes { grid-template-columns: 1fr; gap: 17px; }
+      .notes p { font-size: 17px; }
+    }
+    @media print {
+      @page { size: 1120px 1080px; margin: 0; }
+      main { padding: 30px; }
+      h1 { font-size: 96px; }
+      .rail { display: block; }
+      .tag { display: none; }
+      .choices { flex-direction: row; }
+      .folio { display: block; }
+      .viewport { height: 596.25px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header><span class="mast">The Wasteland</span><span class="register">Vehicle register</span></header>
+    <div class="intro"><h1>Big Bess</h1><p>Tin Town’s gas hauler</p></div>
+    <section class="folio" aria-label="Vehicle views">
+      <div class="rail">
+        <fieldset>
+          <legend>Vehicle view</legend>
+          <div class="choices">
+            <span class="choice"><input type="radio" name="view" id="illustration" checked><label for="illustration">Illustration</label></span>
+            <span class="choice"><input type="radio" name="view" id="cab"><label for="cab">Cab detail</label></span>
+            <span class="choice"><input type="radio" name="view" id="road"><label for="road">Gate approach</label></span>
+          </div>
+        </fieldset>
+        <span class="tag" aria-hidden="true">Select a view</span>
+      </div>
+      <div class="gallery">
+        <figure class="view illustration">
+          <div class="viewport"><img src="../../../docs/board/looks/wasteland-art-direction/round-2.jpg" alt="Painted and rusted tanker driving through Tin Town’s gate at dusk."></div>
+          <figcaption><strong>Story Wall illustration.</strong> An original generated still of the gas truck at Tin Town’s south gate.</figcaption>
+        </figure>
+        <figure class="view cab">
+          <div class="viewport"><img src="../../../docs/board/looks/wasteland-art-direction/round-1.jpg" alt="The production Big Bess model parked by the gate, showing the cab, tank and wheels."></div>
+          <figcaption><strong>Production model.</strong> The truck’s photo-carved mesh and original materials under the offline study light.</figcaption>
+        </figure>
+        <figure class="view road">
+          <div class="viewport"><img src="../../../docs/board/looks/wasteland-art-direction/round-1.jpg" alt="The truck seen from the approach road with the lit gate beyond it."></div>
+          <figcaption><strong>Gate trial.</strong> An offline view at the driving camera’s 55° vertical field of view.</figcaption>
+        </figure>
+      </div>
+    </section>
+    <section class="notes" aria-label="Vehicle details">
+      <p>Big Bess carries the gas load through the Scablands. A pair of rear axles supports the long tank behind her cab.</p>
+      <dl><div><dt>Length</dt><dd>8.0 m</dd></div><div><dt>Width</dt><dd>2.80 m</dd></div><div><dt>Axles</dt><dd>Three</dd></div></dl>
+    </section>
+  </main>
+</body>
+</html>
