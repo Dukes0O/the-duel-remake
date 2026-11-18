@@ -13,6 +13,7 @@ import {createFeatureFlags} from '../src/feature-flags.js';
 import {worldPose} from '../src/arena/arena-floor.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {arenaActor, arenaParticipant} from '../src/combat-teams.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
 import {applyArmorDamage} from '../src/combat-armor.js';
 import {fireWeapon} from '../src/combat-weapons.js';
 import {setCarEffect, carEffect} from '../src/arsenal/car-effects.js';
@@ -417,7 +418,9 @@ async function crewPresentation() {
     const first=output.panner.pan.value, firstLevel=output.level.gain.value;
     advance(sim,.35);
     audio._updateRiderNotes(state,duel.course);
-    const position=duel.course.groundAt(retreating.s,retreating.lateral), expected=combatAudioSpace({hitPosition:position,combatHit:true},state,duel.course);
+    const ground=duel.course.groundAt(retreating.s,retreating.lateral);
+    const position={...ground,y:ground.y+COMBAT_TUNING.pointHeight+(retreating.airHeight||0)};
+    const expected=combatAudioSpace({hitPosition:position,combatHit:true},state,duel.course);
     assert.equal(output.panner.pan.value,expected.pan);assert.equal(output.level.gain.value,expected.gain);
     assert.ok(first!==expected.pan||firstLevel!==expected.gain,'the retreating source changes pan or level');
     assert.ok(SOUND_BANK['rider.breaks-off'].layers.every(layer=>layer.endFrequency<layer.frequency));
