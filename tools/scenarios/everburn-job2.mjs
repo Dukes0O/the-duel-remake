@@ -140,7 +140,7 @@ export async function run(context) {
       if (which === 'opponent' && measured.opponents < 1)
         report.failures.push('opponent: no Ash Man has entered.');
       if (which === 'lighting' && (!measured.lighting?.includes('LIGHTING THE MAST LAMP') ||
-          measured.lightingFill !== 'scaleX(0.50)' || !measured.lampRow?.includes('AT THE LAMP') || !measured.ring))
+          Number(/^scaleX\(([\d.]+)\)$/.exec(measured.lightingFill ?? '')?.[1]) !== .5 || !measured.lampRow?.includes('AT THE LAMP') || !measured.ring))
         report.failures.push('lighting: the half-filled bar, lamp row and ground ring must be shown together.');
       if (which === 'ending' && (!measured.theftStarted || Object.values(measured.lamps).filter(Boolean).length !== 3))
         report.failures.push('ending: the thief and three lit lamps must be present.');
