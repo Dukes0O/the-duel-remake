@@ -1749,3 +1749,31 @@ held the look level there needed the game's two most widely used files for one w
 tier; it gets its own small card if a player meets it); smoke and embers rise along a tilted burst's own up and not straight up; `worldJob.wonAtSec` and the
 branch of `furnaceSighting` that read it have no user since job 3 was remade (the janitor removes them with their
 check); no suite drives Slow Ride on Medium (the old case went with the old job; Easy is driven).
+
+
+## Kyle's try of job 3, and his verdict on the story (18 November 2026)
+
+Kyle played Run Him Down on the frozen test copy (the build of 728166901, before slice 15). The story as a whole he
+rejected; his words and direction are in `docs/board/decisions.md`, "The story is rebuilt around choices". **No more
+slices of jobs 2 to 4 as designed.** What is built stays hidden and is reused where the new design wants it.
+
+Slice 15 is closed as it stands: part B is merged; part A (the lamp, the engine on foot, the Hand Flamer's sound, the
+ground's thump) is merged after Claude's browser check, because those cures serve any walk in the wasteland. The figures,
+job 4's arrival and the other items listed as owed on this card are dropped with the jobs they belonged to.
+
+His findings in the world itself, each to be measured before it is cured (card WORLD-FAULTS-18-NOV):
+
+1. The crash sound when the ground changes level, in job 3 as in job 2 (slice 15 part A's cure is general; confirm it here).
+2. The mouse and the Hand Flamer's aim drift apart as play goes on.
+3. Driving out of Tin Town's gate: "the hitbox on the gate way overextends, and I'm stuck slowly trying to get out of the
+   gate, even though there's no obstacle in front of me."
+4. "The bellows thief drives sideways" (his first picture: the thief's car stands across its own direction of travel).
+5. Grey boxes or patches that fill the screen for a moment; and his second picture, the car sunk under the ground where
+   the ground changes on the road, with only its wing showing.
+6. Twice the game moved him without warning: approaching the Boneyard ("suddenly the screen just put me right inside
+   it"), and when the thief reached the furnace ("my frame reset me again in the starting place of the Boneyard").
+7. "There is no real crash mechanics at play when I hit the Ash Men's cars. They kind of bonk out of the way with no
+   crash sound."
+8. "My weapons don't do anything": the crossbow "just shoots into the distance missing the target."
+9. The thief on foot can be driven through: "a transparent item just like the way the buildings were."
+10. The job ended with no sign of why.

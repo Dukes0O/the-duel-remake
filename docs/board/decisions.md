@@ -1694,6 +1694,32 @@ things manually, or automate something that could bring ROI without constant man
   embers are getting low. Nothing is to be built from this now.
 - To reverse: Kyle says so.
 
+## The story is rebuilt around choices (Kyle, 18 November 2026)
+
+Kyle tried jobs 2 and 3 of the remade Everburn and rejected the story a second time (the first was 14 November). His
+words: "the most extremely uninteresting, boring, the weapons don't work, the cars don't fight back, I keep getting
+reset ... There's no challenge. There's no reward because there's no challenge ... It's not clear how you could fail."
+
+His direction:
+- "This whole thing needs rewriting as a choose your own adventure. Like a serious choose your own adventure." The
+  branches may be written ahead ("we can pre-author the directions that you can go").
+- A decision changes something later in the story. His example: the people who come for the ember. Share it, or do not.
+  Sharing may make an ally, or bring them back to take it; word may spread until many come asking; the embers run out
+  sooner and force another run for more, and that run is dangerous.
+- "There should be more dialogue ... There's no interaction with people."
+- "With no risk, there's no reward." A player can fail, and can see how.
+- "We need a massive storyline overhaul, and I think that's probably the most important thing." Claude designs it.
+  Codex, working in its cloud, builds mechanics and graphics once they are defined.
+
+What follows from it (Claude):
+- No more slices of jobs 2 to 4 as designed. EVERBURN-REMAKE keeps what is built, hidden, as parts to reuse.
+- The design is card STORY-CHOICES (Claude's). It shows the map of choices and one chapter worked in full before
+  anything is built, and Kyle reads it first.
+- The faults of the world itself that he met the same day (card WORLD-FAULTS-18-NOV) are cured whatever the story
+  becomes, because any story is played in that world.
+
+To reverse: nothing is deleted by this decision; the remade jobs stay behind their switch.
+
 ## The night check is sized by the day's merges (Kyle, 18 November 2026)
 
 Kyle, after a morning spent sorting the 31 failures of the first night check to finish in six days: "Maybe we need to

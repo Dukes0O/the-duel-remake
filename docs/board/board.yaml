@@ -558,6 +558,26 @@ tasks:
     locks: []
     details: "docs/board/cards/QA-NIGHT-SIZED.md"
 
+  - id: STORY-CHOICES
+    title: "The story rebuilt around choices: the form, the ledger, the map of choices, one chapter in full (Kyle, 18 November)"
+    owner: "claude"
+    lane: "SIM"
+    size: "L"
+    status: "building"
+    claimed_by: "Claude (design lead), since 18 November 2026: design only until Kyle has read it"
+    needs: []
+    details: "docs/board/cards/STORY-CHOICES.md"
+
+  - id: WORLD-FAULTS-18-NOV
+    title: "Faults of the Scablands from Kyle's try: the gate's solid, the sideways thief, the sunk car, sudden moves, crashes, the crossbow"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"
