@@ -6,6 +6,7 @@ import { EngineAudio, combatAudioSpace } from '../src/audio.js';
 import {SOUND_BANK, CAR_VOICES} from '../src/sound-bank.js';
 import {measureCue, wavBytes} from './audio/render-lab-cues.mjs';
 import {measureLoudness} from './audio/measurements.mjs';
+import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
 import {Duel} from '../src/game.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
@@ -75,6 +76,7 @@ class Param {
   }
   setValueAtTime(value, time) {
     assert(Number.isFinite(time));
+    (this.events ??= []).push({value, time});
     this.value = value;
   }
   setTargetAtTime(value, time, constant) {
@@ -83,6 +85,7 @@ class Param {
     this.value = value;
   }
   linearRampToValueAtTime(value, time) {
+    (this.ramps ??= []).push({value, time});
     this.setValueAtTime(value, time);
   }
   exponentialRampToValueAtTime(value, time) {
@@ -247,13 +250,17 @@ const state = (overrides = {}) => ({
 });
 const { audio, context } = await makeAudio();
 {
-  const {audio} = await makeAudio();
+  const {audio, context} = await makeAudio();
   const count = {brandSeconds: 80, lightingLamp: 'mast', lightingSeconds: .1};
   const st = state({onFoot: true, arena: {mode: 'world-job', worldJob: {job: {
     steps: [{brand: true}], stepIndex: 0, stepState: count}}}});
   audio.update(st);
   const hiss = audio.lampLightingVoice;
   check(!!hiss, 'lamp lighting starts the bank hiss');
+  const hissFilter = context.nodes.findLast(node => node.type === 'lowpass' && node.frequency.events?.[0]?.value === 450);
+  check(hissFilter?.frequency.events.at(-1).value === 1800, 'lamp hiss filter rises from 450 to 1800 Hz');
+  const hissGain = context.nodes.findLast(node => node.gain?.ramps?.some(ramp => ramp.value === .18 * .25));
+  check(hissGain?.gain.ramps[0].time === context.currentTime + BRAND_RULE.lampSeconds * .9, 'quiet lamp hiss rises through the lighting count');
   count.lightingSeconds = 1; audio.update(st);
   check(audio.lampLightingVoice === hiss, 'lamp hiss sustains without stacking');
   count.lightingLamp = null; count.lightingSeconds = 0; audio.update(st);
@@ -284,6 +291,21 @@ const { audio, context } = await makeAudio();
   st.onFoot = true; st.input.throttle = 0; audio.update(st, environment);
   check(audio.wind.gain.gain.value === 0 && audio.tires.gain.gain.value === 0 &&
     audio.samples.squeal.gain.gain.value === 0, 'parked car tyres and wind are silent on foot');
+  for (const looseSurface of [false, true]) for (const tyreSlipRules of [false, true]) {
+    const coasting = {...st, speedMph: 15, slipAngle: .5, tyreSlip: 1, tyreSlipRules};
+    context.advance(.1); audio.update(coasting, {...environment, looseSurface});
+    check([audio.wind, audio.tires, audio.gravel].every(layer => layer.gain.gain.value === 0) &&
+      audio.samples.squeal.gain.gain.value === 0, 'coasting car wind and all tyre layers are silent on foot with either tyre rule');
+  }
+  st.fighter.x = 30;
+  audio.event({shift: 0}, st, environment.course);
+  check(audio.shiftVoice.gain.gain.ramps.every(ramp => ramp.value === 0), 'recorded engine shift is silent at 30 m');
+  delete audio.samples.shift;
+  let fallbackScale = null;
+  const play = audio._playCue.bind(audio);
+  audio._playCue = (id, options) => {if (id === 'engine.shift-fallback') fallbackScale = options.scale; return play(id, options);};
+  audio.event({shift: 0}, st, environment.course);
+  check(fallbackScale === 0, 'synthetic shift follows engine distance too');
 }
 // Finding 2: the audio must follow actual barrel flame, even with all switches off.
 {

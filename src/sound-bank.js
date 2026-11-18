@@ -667,7 +667,8 @@ export const SOUND_BANK = {
     layers: [{...noise(600, 1.2, .4, 'lowpass'), endFrequency:1800, attack:.25}, tone(180, .9, .12, 'triangle', .1, 300)]}),
   // Light the Town reuses the bank's filtered-noise and oscillator recipes.
   'world.lamp.lighting': cue('impacts', {priority: 60, limit: 1, volume: .18,
-    layers: [{...noise(450, BRAND_RULE.lampSeconds, .25, 'lowpass'), endFrequency: 1800, attack: .2}]}),
+    layers: [{...noise(450, BRAND_RULE.lampSeconds, .25, 'lowpass'),
+      rise: {endFrequency: 1800, seconds: BRAND_RULE.lampSeconds * .9}}]}),
   'world.brand.catch': cue('impacts', {priority: 70, limit: 2, volume: .5,
     layers: [{...noise(600, .5, .4, 'lowpass'), endFrequency: 1800, attack: .12}, tone(220, .4, .12, 'triangle', .05, 440)]}),
   'world.brand.out': cue('impacts', {priority: 78, limit: 1, volume: .6,

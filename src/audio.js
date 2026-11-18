@@ -45,7 +45,7 @@ export const FOOT_ENGINE_SOUND = Object.freeze({fullMetres: 5, silentMetres: 30}
 const GROUND_THUMP_CUE = 'vehicle.landing';
 const groundSound = cue => cue === 'world.ground.scab-plates' ? GROUND_THUMP_CUE : cue;
 function footEngineGain(state, course) {
-  if (!state.onFoot || !state.fighter) return 1;
+  if (!state?.onFoot || !state.fighter) return 1;
   const car = course?.worldAt?.(state.s, state.lateral || 0);
   if (!car) return 1;
   const distance = Math.hypot(state.fighter.x - car.x, state.fighter.z - car.z);
@@ -693,6 +693,7 @@ export class EngineAudio {
     destination = this._cueOutput || this.buses?.interface || this.master,
     onEnd = null,
     delay = 0,
+    rise = null,
   ) {
     const ctx = this.context,
       start = ctx.currentTime + delay;
@@ -702,9 +703,13 @@ export class EngineAudio {
     source.buffer = this.noiseBuffer;
     filter.type = type;
     filter.frequency.value = frequency;
+    if (rise) {
+      filter.frequency.setValueAtTime(frequency, start);
+      filter.frequency.exponentialRampToValueAtTime(rise.endFrequency, start + rise.seconds);
+    }
     filter.Q.value = 0.65;
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(volume, start + 0.005);
+    gain.gain.linearRampToValueAtTime(volume, start + (rise ? rise.seconds : 0.005));
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
     source.connect(filter);
     filter.connect(gain);
@@ -743,6 +748,7 @@ export class EngineAudio {
         destination,
         onEnd,
         layer.delay || 0,
+        layer.rise ?? null,
       );
     return this._tone(
       layer.frequency,
@@ -1376,6 +1382,7 @@ export class EngineAudio {
     this.lastUpdateTime = t;
     const racing =
       (st.status === 'racing' || st.status === 'exploring') && !st.paused;
+    const driving = racing && !st.onFoot;
     const impacting = st.impactTimer > 0;
     const running =
       (racing && !impacting) || (st.status === 'countdown' && !st.paused);
@@ -1464,7 +1471,7 @@ export class EngineAudio {
       0.1,
     );
     this.wind.gain.gain.setTargetAtTime(
-      racing ? speed * speed * 0.085 : 0,
+      driving ? speed * speed * 0.085 : 0,
       t,
       0.12,
     );
@@ -1675,7 +1682,7 @@ export class EngineAudio {
         0.08,
       );
       sample.gain.gain.setTargetAtTime(
-        racing && grounded && !looseSurface && !impacting ? squeal * 0.4 : 0,
+        driving && grounded && !looseSurface && !impacting ? squeal * 0.4 : 0,
         t,
         0.075,
       );
@@ -1693,7 +1700,7 @@ export class EngineAudio {
       0.09,
     );
     this.tires.gain.gain.setTargetAtTime(
-      racing && grounded ? Math.max(impactGrind, roadBed + roadScrub) : 0,
+      driving && grounded ? Math.max(impactGrind, roadBed + roadScrub) : 0,
       t,
       0.065,
     );
@@ -1703,7 +1710,7 @@ export class EngineAudio {
       0.1,
     );
     this.gravel.gain.gain.setTargetAtTime(
-      racing && grounded && looseSurface
+      driving && grounded && looseSurface
         ? Math.min(
             0.23,
             speed * (0.055 + (st.roughness || 0) * 0.14) + slip * 0.035,
@@ -1957,12 +1964,12 @@ export class EngineAudio {
       if (this.samples.shift)
         this.shiftVoice = this._sample(
           this.samples.shift,
-          0.5 * this.carVoice.accent,
+          0.5 * this.carVoice.accent * footEngineGain(state, course),
           this.carVoice.pitch,
           this.buses?.engine || this.vehicleBus,
           0.16,
         );
-      else this._playCue('engine.shift-fallback');
+      else this._playCue('engine.shift-fallback', {scale: footEngineGain(state, course)});
     }
     // A new medal or an earned car on the results screen (docs/EARNED_CARS.md 5.2).
     if (ev.medalEarned) this._playCue('interface.bonus');
