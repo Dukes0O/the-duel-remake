@@ -1357,6 +1357,37 @@ browser scenarios `everburn-job4` and `everburn-job3`. The four pictures are aim
 **Not done, Claude's:** the hand drive; Moss is a plain stand-in figure; the hose, the holes and the flash are plain.
 **Sound:** new `world.bess.leak`, `world.bess.plug`, `world.gas.flash`, from the bank's recipes.
 
+## Job 3 after Claude's hand drives: the start, the furnace and the ash (Claude, 17 November 2026, evening): merged, hidden
+
+Codex's quota was spent, so Claude made these changes to the rules of job 3 in `src/world/jobs/bellows-rule.js`.
+- **The start.** The thief creeps away from the gate at 15 km/h until the player's car first passes 20 km/h or 90
+  seconds pass, and then runs as before. (He left at 40 km/h for 25 seconds, and was in the Boneyard before a player on
+  foot among the shacks had reached the car. Standing still was tried first: he starts in the gateway, the car's only
+  way out, so he creeps instead.)
+- **The furnace is no loop.** Each time he reaches it the bellows lose 25 and his next pass through the wrecks is 10
+  km/h slower (60, 50, 40, never under 30). Reaching it is worse each time and the chase ends within a few passes.
+  Cinder: "He has reached the furnace, and they have had their hands on the bellows. He is slowing. Again, from the
+  Boneyard's edge." This replaces design point 5's free restart.
+- **The ash.** One sack is in the air at a time, and it lands up to 45 m ahead of the pursuing car along the road, 8 m
+  short of the thief, so that the car drives into it. (Both burst at once at the car's own place.)
+
+**Claude's second hand drive, with these rules: job 3 finished by hand.** On foot by the alleys to the car while he
+crept to 150 m off; out of the gate; the road at 190 km/h, closing from 700 m to 56 m by 1.9 km; his ash; three rams at
+1.9, 2.2 and 2.5 km; the bellows whole; 120 scrap; about 100 seconds. The scripted run on Easy: ten of ten, three
+knocks, the bellows at 100, the first knock at 1,732 m. (Its walker stood still for ever at the first corner of its path,
+2 m short, because it stops 2 m from whatever it walks toward and counted a corner as reached only from 0.6 m; the
+script now counts it from 2.4 m. The game was not at fault: Claude walked the same alley by hand.)
+
+**Changed assertions, reviewed by Claude; none is loosened:** his pace before the car moves, 40 km/h becoming 15, and
+the end of that wait, 25 seconds becoming 90; the bellows after an arrival at the furnace, unchanged before and 25 less
+now; both sacks thrown in one step becoming one at a time, and the cloud's place moving from the car's own road point
+to 45 m ahead of it.
+
+**Faults still open in job 3:** Cinder's "There it goes, out the far end" is said wherever he is stopped, also on the
+road far from the furnace; the car caught a gate post on the way out and nothing shows the gate; three knocks came in
+17 seconds once he was caught, which may be too easy with a fast car; his pass through the wrecks and the furnace's
+cost are not yet driven by hand, because he was stopped on the road; the roof load is a plain box.
+
 ## Saved progress
 
 A player who took Everburn jobs while the switches were on keeps that progress and the scrap in

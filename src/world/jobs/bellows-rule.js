@@ -14,9 +14,13 @@ export const BELLOWS_RULE = Object.freeze({
   stopKnocks: 3,
   // Road riders release their meeting latch beyond eight metres as well.
   meetingReleaseMetres: 8,
-  launchSpeedKmh: 40,
+  // He creeps out of the gate and down the road, the bellows not yet lashed, until the player's car first goes faster than
+  // `launchPlayerSpeedKmh` or `launchSeconds` have passed; then he runs (Claude's hand drive, 17 November: at 40 km/h for
+  // 25 seconds he was in the Boneyard before a player on foot among the shacks had reached the car). He does not stand
+  // still, because he starts in the gateway, which is the car's only way out.
+  launchSpeedKmh: 15,
   launchPlayerSpeedKmh: 20,
-  launchSeconds: 25,
+  launchSeconds: 90,
   closeGapMetres: 120,
   farGapMetres: 400,
   closeSpeedShare: 0.9,
@@ -25,10 +29,20 @@ export const BELLOWS_RULE = Object.freeze({
   shakenSeconds: 3,
   shakenSpeedShare: 0.7,
   sackBehindMetres: 60,
+  // The ash lands ahead of the pursuing car, so that the car drives into it: this far ahead, but short of the thief by
+  // `sackShortOfThiefMetres`. One sack is in the air at a time (Claude's hand drive, 17 November: both burst at once, at
+  // the car's own place, and at 190 km/h the car was already past them).
+  sackAheadMetres: 45,
+  sackShortOfThiefMetres: 8,
   blockingBehindMetres: 30,
   blockingSideMps: 2,
   thiefRadiusMetres: 1.3,
   boneyardSpeedKmh: 60,
+  // Each time he reaches the furnace its crew has had its hands on the bellows, and he is slower on his next pass through
+  // the wrecks: it ends within three passes and each is worse (no loop: Kyle, 11 November).
+  furnaceArrivalLoss: 25,
+  wreckPassSlowerKmh: 10,
+  boneyardSlowestKmh: 30,
   wreckEndClearanceMetres: 5,
   wreckTurnDegrees: 40,
   wreckTurnCount: 3,
@@ -65,7 +79,7 @@ export const BELLOWS_LINES = Object.freeze({
   patch: "Cinder: They will patch. Keep the flamethrower. You've earned it.",
   scorched: "Cinder: Scorched. Auntie can sew. Keep the flamethrower. You've earned it.",
   warning: 'Cinder: Not the flamethrower! Leather burns.',
-  restart: "Cinder: He has reached the furnace. Again, from the Boneyard's edge.",
+  restart: "Cinder: He has reached the furnace, and they have had their hands on the bellows. He is slowing. Again, from the Boneyard's edge.",
 });
 
 // These are the wrecks' actual axis-aligned solid boxes, not their drawn
@@ -164,9 +178,13 @@ export function stepBellowsAsh(clouds, dt) {
     .filter(cloud => cloud.remaining > 0);
 }
 
+// How fast he threads the wrecks on this pass: 60 km/h the first time, 10 less after each arrival at the furnace, never under 30.
+export const bellowsBoneyardSpeedKmh = (arrivals = 0) => Math.max(BELLOWS_RULE.boneyardSlowestKmh,
+  BELLOWS_RULE.boneyardSpeedKmh - BELLOWS_RULE.wreckPassSlowerKmh * Math.max(0, arrivals));
+
 export function bellowsThiefSpeedKmh(playerTopSpeedKmh, inBoneyard,
-  behindMetres = BELLOWS_RULE.closeGapMetres, difficulty = 'medium', shaken = false) {
-  if (inBoneyard) return BELLOWS_RULE.boneyardSpeedKmh;
+  behindMetres = BELLOWS_RULE.closeGapMetres, difficulty = 'medium', shaken = false, arrivals = 0) {
+  if (inBoneyard) return bellowsBoneyardSpeedKmh(arrivals);
   const rule = BELLOWS_RULE;
   const close = difficulty === 'easy' ? rule.easyCloseSpeedShare : rule.closeSpeedShare;
   const share = Math.max(0, Math.min(1,
@@ -284,8 +302,12 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
     if (next.sacksThrown.includes(index) || !(facts.roadMetres >= metres)) continue;
     if (facts.inBoneyard || facts.onFoot || !(facts.behindMetres >= 0 &&
         facts.behindMetres <= BELLOWS_RULE.sackBehindMetres)) continue;
-    const point = facts.sackPoint;
-    if (!point) throw new Error('The thief needs the pursuing car’s road point for his sack.');
+    // One sack at a time: the next waits until the last cloud has settled.
+    if (next.clouds.length > 0) continue;
+    const car = facts.sackPoint;
+    if (!car) throw new Error('The thief needs the pursuing car’s road point for his sack.');
+    const lead = Math.max(0, Math.min(BELLOWS_RULE.sackAheadMetres, facts.behindMetres - BELLOWS_RULE.sackShortOfThiefMetres));
+    const point = {...car, x: car.x + Math.sin(car.heading) * lead, z: car.z + Math.cos(car.heading) * lead};
     const cloud = bellowsAshBox(`thief-ash-${index}`, point, facts.roadWidthMetres);
     next.clouds.push(cloud);
     next.sacksThrown.push(index);
@@ -297,7 +319,9 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
   }
   if (facts.furnaceMetres <= BELLOWS_RULE.furnaceReachMetres) {
     // Reset only the chase meetings and position. Fire damage and earned knocks
-    // remain facts of this attempt, as do the two sacks already thrown.
+    // remain facts of this attempt, as do the two sacks already thrown. Each arrival costs the bellows and slows his next pass.
+    next.furnaceArrivals = (state.furnaceArrivals ?? 0) + 1;
+    next.bellows = Math.max(0, (state.bellows ?? BELLOWS_RULE.start) - BELLOWS_RULE.furnaceArrivalLoss);
     next.meetingHeld = false;
     next.solidHeld = false;
     next.clouds = [];
@@ -364,7 +388,7 @@ export function stepBellowsChase(step, state, view, dt = 0) {
     onFoot: view.onFoot === true, playerSpeedKmh: view.speedKmh ?? Infinity}, dt);
   // A stopped thief stays stopped throughout collection and captions.
   const speedKmh = ending.state.thiefStopped || !Number.isFinite(facts.playerTopSpeedKmh)
-    ? 0 : facts.inBoneyard ? BELLOWS_RULE.boneyardSpeedKmh
+    ? 0 : facts.inBoneyard ? bellowsBoneyardSpeedKmh(ending.state.furnaceArrivals)
     : !launchEnded ? BELLOWS_RULE.launchSpeedKmh
     : bellowsThiefSpeedKmh(facts.playerTopSpeedKmh, false, facts.behindMetres,
       view.difficulty, ending.state.shakenRemaining > 0);

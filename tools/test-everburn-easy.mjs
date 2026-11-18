@@ -382,7 +382,9 @@ function driveBellows(duel, step) {
   duel.setInput({throttle:0,brake:1,steer:0,interact:false});
   if (state.onFoot) {
     drive.walk ??= townFootpath(state.fighter,car);
-    while (drive.walk.length>1 && Math.hypot(drive.walk[0].x-state.fighter.x,drive.walk[0].z-state.fighter.z)<.6) drive.walk.shift();
+    // The walker stops 2 m short of whatever it walks toward, so a corner of the path counts as reached from 2.4 m
+    // (at .6 m it stood still for ever at the first corner; found on 17 November when the path first had a corner).
+    while (drive.walk.length>1 && Math.hypot(drive.walk[0].x-state.fighter.x,drive.walk[0].z-state.fighter.z)<2.4) drive.walk.shift();
     if (Math.hypot(state.fighter.x-car.x,state.fighter.z-car.z)<2) {
       duel.setFighterInput({});
       duel.setInput({interact:!state.footTransition?.needsRelease});

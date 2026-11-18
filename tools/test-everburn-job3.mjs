@@ -91,7 +91,9 @@ const reachTick = (state, thief, car, speedKmh, dt, extra = {}) => stepBellowsCh
     carPosition:{x:car,z:0}, actors:[{id:'thief',position:{x:thief,z:0}}],
     bellows:{roadMetres:thief, behindMetres:thief-car, playerTopSpeedKmh:200,
       furnaceMetres:10000, ...extra}}, dt);
-assert.equal(reachTick({},250,0,0,0).requests.find(r=>r.type==='follow').speed,40/3.6);
+// He creeps away at 15 km/h until the player's car moves (Claude's hand drive, 17 November: at 40 km/h he was in the
+// Boneyard before a player on foot among the shacks had reached the car).
+assert.equal(reachTick({},250,0,0,0).requests.find(r=>r.type==='follow').speed,15/3.6);
 const reachStart = EVERBURN_JOBS[2].steps[0];
 const startGate = reachStart.path[0].position;
 const startGap = Math.hypot(startGate.x-reachStart.carStart.x,startGate.z-reachStart.carStart.z);
@@ -112,7 +114,11 @@ for(let frame=0;frame<1500;frame++) {
   waitingState=result.state;
   waitingThief+=result.requests.find(r=>r.type==='follow').speed/60;
 }
+assert(Math.abs(waitingThief-15/3.6*25)<.1,'With the car still standing he is about 104 m down the road after 25 seconds.');
 assert(waitingThief-waitingCar<=400,'A stationary car must still see him after 25 seconds.');
+// After ninety seconds he goes whether or not the car has moved, at the pace of a car far behind.
+for(let frame=1500;frame<5400;frame++) waitingState=reachTick(waitingState,waitingThief,waitingCar,0,1/60).state;
+assert.equal(reachTick(waitingState,500,0,0,1/60).requests.find(r=>r.type==='follow').speed*3.6,100);
 console.log(`PASS slice 11.1: Medium closes at ${caughtAt.toFixed(1)} m; stationary gap ${(waitingThief-waitingCar).toFixed(1)} m.`);
 
 // Exact pace boundaries, launch latch and three-second recovery.
@@ -122,9 +128,11 @@ for (const [gap, difficulty, expected] of [
 ]) assert.equal(bellowsThiefSpeedKmh(200,false,gap,difficulty),expected);
 assert.equal(bellowsThiefSpeedKmh(200,false,120,'medium',true),140);
 assert.equal(bellowsThiefSpeedKmh(200,true,120,'medium',true),60);
+// Each arrival at the furnace slows his next pass through the wrecks by 10 km/h, never under 30.
+for (const [arrivals, kmh] of [[0,60],[1,50],[2,40],[3,30],[9,30]]) assert.equal(bellowsThiefSpeedKmh(200,true,120,'medium',false,arrivals),kmh);
 const pace = result => result.requests.find(request=>request.type==='follow').speed*3.6;
-assert.equal(pace(reachTick({},120,0,20,24.99)),40);
-assert.equal(pace(reachTick({},120,0,20,25)),180);
+assert(Math.abs(pace(reachTick({},120,0,20,89.99))-15)<1e-9);
+assert.equal(pace(reachTick({},120,0,20,90)),180);
 const launched=reachTick({},120,0,20.01,0);
 assert.equal(pace(launched),180);
 assert.equal(pace(reachTick(launched.state,120,0,0,0)),180);
@@ -141,12 +149,19 @@ const sackFacts={roadMetres:1700,behindMetres:60,roadWidthMetres:28,
   furnaceMetres:1000,sackPoint:{x:1633,z:12,heading:.7}};
 for(const extra of [{behindMetres:60.01},{behindMetres:-.01},{onFoot:true},{inBoneyard:true}])
   assert.deepEqual(stepBellowsPursuit({}, {...sackFacts,...extra}).state.sacksThrown,[]);
-const lateSacks=stepBellowsPursuit({},sackFacts);
+// One sack at a time, and it lands 45 m ahead of the car along the road (short of the thief by 8 m), so that the car
+// drives into it (Claude's hand drive, 17 November: both burst at once at the car's own place).
+const oneSack=stepBellowsPursuit({},sackFacts);
+assert.deepEqual(oneSack.state.sacksThrown,[0]);
+assert.equal(oneSack.state.clouds.length,1);
+assert.deepEqual(stepBellowsPursuit(oneSack.state,sackFacts,5.9).state.sacksThrown,[0],'The second waits for the first cloud to settle.');
+const lateSacks=stepBellowsPursuit(oneSack.state,sackFacts,6);
 assert.deepEqual(lateSacks.state.sacksThrown,[0,1]);
-for(const box of lateSacks.state.clouds) {
-  assert.equal(box.x,1633); assert.equal(box.z,12); assert.equal(box.yaw,.7);
+for(const box of [...oneSack.state.clouds,...lateSacks.state.clouds]) {
+  assert(Math.abs(box.x-(1633+Math.sin(.7)*45))<1e-9); assert(Math.abs(box.z-(12+Math.cos(.7)*45))<1e-9); assert.equal(box.yaw,.7);
   assert.equal(box.remaining,6); assert.equal(box.width,28); assert.equal(box.length,30);
 }
+assert(Math.abs(stepBellowsPursuit({},{...sackFacts,behindMetres:20}).state.clouds[0].x-(1633+Math.sin(.7)*12))<1e-9,'A car close behind him gets the ash 8 m short of him.');
 console.log('PASS slice 11.1: launch latch, pace boundaries, recovery and sacks aimed at a nearby car.');
 
 // Job 3.4: prove whole segments clear, rather than sampling points or driving.
@@ -311,8 +326,10 @@ assert.deepEqual(pursuit.state.clouds, []);
 assert.equal(firstSack.clouds[0].remaining, 6, 'Stepping must not age the earlier snapshot.');
 pursuit = pursue(pursuit.state, {roadMetres: 1600, sackPoint:{x:30,z:40,heading:2}});
 assert.deepEqual(pursuit.state.sacksThrown, [0, 1]);
-assert.equal(pursuit.state.clouds[0].x, 30);
-assert.equal(pursue({}, {roadMetres: 2000}).state.clouds.length, 2);
+// The cloud lands 45 m ahead of the car along the road's heading (the car is 60 m behind him here).
+assert(Math.abs(pursuit.state.clouds[0].x - (30 + Math.sin(2) * 45)) < 1e-9);
+assert(Math.abs(pursuit.state.clouds[0].z - (40 + Math.cos(2) * 45)) < 1e-9);
+assert.equal(pursue({}, {roadMetres: 2000}).state.clouds.length, 1, 'One sack is in the air at a time.');
 assert.equal(pursue({}, {furnaceMetres: 400.01}).requests.length, 0);
 pursuit = pursue(pursuit.state, {furnaceMetres: 400});
 assert.deepEqual(pursuit.requests, [{type: 'bellowsRiders'}]);
@@ -320,7 +337,12 @@ assert.equal(pursue(pursuit.state, {furnaceMetres: 100}).requests.length, 0);
 assert.equal(pursue(pursuit.state, {furnaceMetres: 30.01}).events.length, 0);
 const loadedChase = {...pursuit.state, bellows: 37, knocks: 2, meetingHeld: true, solidHeld: true};
 const restarted = pursue(loadedChase, {furnaceMetres: 30});
-assert.equal(restarted.state.bellows, 37);
+// The furnace's crew has had its hands on them: each arrival takes 25 from the bellows (it was a restart that cost nothing
+// and could turn for ever; Claude's redesign of 17 November).
+assert.equal(restarted.state.bellows, 12);
+assert.equal(restarted.state.furnaceArrivals, 1);
+assert.equal(pursue({...restarted.state, bellows: 12}, {furnaceMetres: 30}).state.bellows, 0, 'The bellows never go below 0.');
+assert.equal(pursue({...restarted.state}, {furnaceMetres: 30}).state.furnaceArrivals, 2);
 assert.equal(restarted.state.knocks, 2);
 assert.equal(restarted.state.ridersStarted, true);
 assert.deepEqual(restarted.state.sacksThrown, [0, 1]);
@@ -383,7 +405,7 @@ assert.equal(missing.requests.find(request => request.type === 'follow').speed, 
 chase = stepJob(chase, chaseView);
 assert.equal(chase.done, false, 'Health zero and proximity cannot stop the thief.');
 assert.equal(chase.stepState.knocks, 0);
-assert.equal(chase.requests.find(request => request.type === 'follow').speed, 40 / 3.6);
+assert.equal(chase.requests.find(request => request.type === 'follow').speed, BELLOWS_RULE.launchSpeedKmh / 3.6, 'He waits at the gate.');
 assert.equal(chase.requests.find(request => request.type === 'follow').actorId, 'thief');
 chase = stepJob(chase, {...chaseView, carPosition: {x: -10000, z: 0}});
 assert.equal(chase.failedStep, false, 'The bellows chase has no old distance leash.');
@@ -409,7 +431,8 @@ assert.equal(chaseView.actors[0].health, 0, 'The rule never writes into an actor
 let retry = stepJob(createJob({steps: [chaseStep]}), {...chaseView,
   bellows: {...chaseView.bellows, flameContact: true, furnaceMetres: 30}}, 2);
 assert.equal(retry.failedStep, false, 'Restarting the route must not reset the job state.');
-assert.equal(retry.stepState.bellows, 70);
+// Two seconds of flame take 30, and the arrival at the furnace 25 more.
+assert.equal(retry.stepState.bellows, 45);
 assert(retry.requests.some(request => request.type === 'bellowsRestart' && request.leadMetres === 150));
 assert(retry.requests.some(request => request.type === 'say' && request.lineId === 'bellows.warning'));
 assert(retry.stepState.lineQueue.includes('bellows.restart'), 'The warning stays ahead of the restart caption.');
