@@ -901,12 +901,12 @@ for (let segment = 1; segment < actualStep.farWalk.length - 1; segment++) {
   }
 }
 console.log('PASS review: opposing Ash Men and a fleeing man pass through every town alley within 30 seconds.');
-for (const fleeing of [false,true]) {
+for (const [fleeing, yieldingFirst] of [[false,false],[false,true],[true,false],[true,true]]) {
   const actors = [{id:'a',brandAsh:true,x:0,z:-1,approachTarget:{x:0,z:5}},
     {id:'b',brandAsh:true,x:0,z:1,approachTarget:{x:0,z:-5}}]
     .map(actor => ({...actor,approachSpeed:BRAND_RULE.ashWalkMps}));
-  // Put the yielding man first to prove that array order does not choose priority.
-  if (!fleeing) actors.reverse();
+  // Neither actor order may choose who has the way.
+  if (yieldingFirst !== fleeing) actors.reverse();
   moveJobRaiders({course:{def:{scablands:false}}},{actors,
     job:{stepState:{brandAsh:{men:{b:{fleeing}}}}}},.3);
   const yielding = actors.find(actor => actor.id === (fleeing?'a':'b'));
