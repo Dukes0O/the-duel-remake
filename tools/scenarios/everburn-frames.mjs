@@ -1,6 +1,6 @@
 // EVERBURN-PLAY-FIXES, fourth round: frame timing in the Scablands at its busiest view, a tool for Claude (modelled on convoy-frames.mjs
-// and deep-frames.mjs). Job 4 (Slow Ride, the gas run) with Big Bess, the raiders of her first ambush and Old Smoke's furnace all in
-// sight, on Performance, memory-only saves. Zero player input: the car stands behind Big Bess while the game runs for 120 delivered
+// and deep-frames.mjs). Job 4 (Slow Ride, the gas run) with Big Bess, the raiders of the second raid on her and Old Smoke's furnace all in
+// sight, on Performance, memory-only saves. (Slow Ride was remade: its raids are the road's four raid points in src/world/jobs/gas-load-rule.js.) Zero player input: the car stands behind Big Bess while the game runs for 120 delivered
 // frames. The pass line is the one every frame check has: delivered p95 of 18.5 ms or less (AGENTS.md rule 8). Run it alone, headed
 // (`node tools/run-browser-scenarios.mjs --scenarios everburn-frames --jobs 1 --headed`), with the laptop's own screen off and nothing else using the
 // graphics card; a run with company is not counted. The report is `everburn-frames.json` in the scenario's output folder.
@@ -11,11 +11,12 @@ import {summarizeNightFrames} from './frame-pacing.mjs';
 const QUALITY = 'performance';
 const P95_LIMIT_MS = 18.5;
 const DONE_BEFORE_JOB_4 = ['hot-delivery', 'get-out-and-walk', 'run-him-down'];
-// Big Bess is put 11 m past the first ambush on her road (SCABLANDS-LAND round 4, slice 2a: the ambush is where the job's data puts it, 2,183 m of
-// her 7,074 m road, which is just past 30 per cent, where the furnace begins to pace her on the high ground (src/world/jobs/furnace-sightings.js)).
-// The raiders of that ambush stand on the road behind her (they give up 60 m beyond it). The car is then put behind her, at the first distance
-// from which she, the raiders and the furnace are all in one picture.
-const PAST_AMBUSH_METRES = 11;
+// Big Bess is put 45 per cent of the way along her road: past the second raid (40 per cent, GAS_LOAD_RULE.raidShares), so that two raids have
+// come and their raiders stand on her, and inside the stretch from 30 to 70 per cent where the furnace paces her on the high ground
+// (src/world/jobs/furnace-sightings.js). The game then runs for 45 seconds so that the raiders drive to her. The car is then put behind her, at
+// the first distance from which she, the raiders and the furnace are all in one picture.
+const BESS_ROAD_SHARE = .45;
+const RAIDERS_ARRIVE_SECONDS = 45;
 
 const click = (context, selector) => context.evaluate(`(() => {
   const button = document.querySelector(${JSON.stringify(selector)});
@@ -26,7 +27,7 @@ const click = (context, selector) => context.evaluate(`(() => {
 export async function run(context) {
   await context.command('Emulation.setDeviceMetricsOverride', {width: 1280, height: 720, deviceScaleFactor: 1, mobile: false});
   const report = {card: 'EVERBURN-PLAY-FIXES', recipe: 'everburn-frames', quality: QUALITY, limitMs: P95_LIMIT_MS, passed: false,
-    method: 'Job 4 on Performance, memory-only saves, zero player input. Big Bess is put 11 m past her first ambush, the car 14 to 44 m behind her and 6 m to one side, ' +
+    method: 'Job 4 on Performance, memory-only saves, zero player input. Big Bess is put 45 per cent of the way along her road with two raids on her, the car 14 to 44 m behind her and 6 m to one side, ' +
       'aimed at the middle of her, the raiders and the furnace. 120 delivered requestAnimationFrame intervals once all three stand in the picture.',
     headed: context.headed === true, launchMode: context.launchMode ?? null};
   const persist = () => writeFile(join(context.outputDir, 'everburn-frames.json'), JSON.stringify(report, null, 2) + '\n');
@@ -58,21 +59,19 @@ export async function run(context) {
       const q = window.__everburnFrames, view = document.querySelector('#view3d');
       q.firstLoadMs = performance.now() - q.started; q.worldBuildMs = Number(view.dataset.worldBuildMs);
     })()`);
-    // The job puts Big Bess on her road in its first ticks. Then she is put 197 m down it, and the raiders of her first ambush appear.
+    // The job puts Big Bess on her road in its first ticks. Then she is put 45 per cent of the way down it, and the raiders of the raids behind her appear.
     await context.evaluate('window.__qaApp.advance(0.5)');
     report.placed = await context.evaluate(`(() => {
       const a = window.__qaApp, s = a.duel.state, job = s.arena.worldJob, step = job.job.steps[0];
       const bess = job.actors.find(actor => actor.id === 'big-bess');
       if (!bess) throw Error('Big Bess is not on her road yet');
+      // Moss's meeting and the road blocks are skipped (as everburn-job4 does): the tank is loaded, so the raids start by the road's shares.
+      job.job.stepState = {...job.job.stepState, gasLoaded: true, clearedBlocks: step.blocks.map(block => block.id)};
       const points = step.path.map(place => place.position ?? place);
-      // The first ambush stands on her road; its metres are the length of road to the point of it nearest the ambush (slice 2b: her road has several legs, it goes by the Wash).
-      const ambush = step.ambushes[0].place.position; let metres = ${PAST_AMBUSH_METRES}, along = 0, bestGap = Infinity;
-      for (let leg = 1; leg < points.length; leg++) {
-        const a = points[leg - 1], b = points[leg], dx = b.x - a.x, dz = b.z - a.z, size = Math.hypot(dx, dz), t = Math.max(0, Math.min(1, ((ambush.x - a.x) * dx + (ambush.z - a.z) * dz) / (size * size)));
-        const gap = Math.hypot(ambush.x - a.x - dx * t, ambush.z - a.z - dz * t);
-        if (gap < bestGap) { bestGap = gap; metres = along + size * t + ${PAST_AMBUSH_METRES}; }
-        along += size;
-      }
+      // Her road has many legs (the Tin Road to the south gate); her place is a share of its whole length.
+      let total = 0;
+      for (let leg = 1; leg < points.length; leg++) total += Math.hypot(points[leg].x - points[leg - 1].x, points[leg].z - points[leg - 1].z);
+      const metres = total * ${BESS_ROAD_SHARE};
       let left = metres, index = 1;
       while (index < points.length - 1 && left > Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z)) {
         left -= Math.hypot(points[index].x - points[index - 1].x, points[index].z - points[index - 1].z); index++;
@@ -82,7 +81,7 @@ export async function run(context) {
       bess.stretchHealth = bess.health;
       return {bess: bess.position, metres};
     })()`);
-    await context.evaluate('window.__qaApp.advance(1.5)');
+    await context.evaluate(`(() => {const a = window.__qaApp; for (let i = 0; i < ${RAIDERS_ARRIVE_SECONDS} * 4; i++) a.advance(0.25);})()`);
     // The car is put behind her and to one side, and aimed at the middle of Big Bess, the raiders and the furnace, at the first distance
     // behind her from which all three stand inside the picture.
     const seen = await context.evaluate(`(() => {
@@ -93,11 +92,13 @@ export async function run(context) {
       const visible = node => {for (let p = node; p; p = p.parent) if (!p.visible) return false; return true;};
       const at = node => {node.updateWorldMatrix(true, false); const e = node.matrixWorld.elements; return {x: e[12], y: e[13], z: e[14]};};
       const bessActor = job.actors.find(actor => actor.id === 'big-bess'), bessRig = rigs['Big Bess moving rig'], furnaceRig = rigs["Old Smoke's moving furnace rig"];
-      const raiders = job.actors.filter(actor => actor.ambushKey && (actor.health ?? 1) > 0).map(r => ({x: r.x ?? r.position?.x, z: r.z ?? r.position?.z}));
+      const raiders = job.actors.filter(actor => actor.id.startsWith('bess-raid-') && actor.id.includes('-rider-') && (actor.health ?? 1) > 0 && Math.hypot(actor.position.x - bessActor.position.x, actor.position.z - bessActor.position.z) < 60)
+        .map(r => ({x: r.position.x, y: r.position.y ?? 0, z: r.position.z}));
       if (!bessRig || !furnaceRig || !raiders.length) throw Error('Big Bess, the furnace or the raiders are missing: ' + JSON.stringify({bess: !!bessRig, furnace: !!furnaceRig, raiders: raiders.length}));
       const path = job.job.steps[0].path.map(place => place.position ?? place), forward = (() => {
         const to = path[bessActor.pathIndex], from = path[bessActor.pathIndex - 1], length = Math.hypot(to.x - from.x, to.z - from.z);
         return {x: (to.x - from.x) / length, z: (to.z - from.z) / length};})();
+      // The land has hills now: every height below is the actor's own, not a flat 0.
       const bess = bessActor.position, furnace = at(furnaceRig);
       const targets = [bess, furnace, ...raiders], aim = {x: targets.reduce((n, t) => n + t.x, 0) / targets.length, z: targets.reduce((n, t) => n + t.z, 0) / targets.length};
       let result = null;
@@ -105,11 +106,16 @@ export async function run(context) {
         const car = {x: bess.x - forward.x * behind - forward.z * side, z: bess.z - forward.z * behind + forward.x * side};
         const pose = d.course.nearest(car.x, car.z);
         s.s = s.prevS = pose.s; s.lateral = s.prevLateral = pose.lateral; s.speedMph = 0; s.yawVelocity = 0; s.pushVelocity = 0;
+        // The car stands on the ground that is drawn there (the land has hills now), as everburn-job1 puts it.
+        s.airborne = false; s.airHeight = 0; s.groundHeight = d.course.groundAt(pose.s, pose.lateral).y;
         const heading = Math.atan2(aim.x - car.x, aim.z - car.z), base = d.course.at(pose.s).heading;
         s.headingError = Math.atan2(Math.sin(heading - base), Math.cos(heading - base));
-        a.onFrame?.(s, 0); api.renderFrame(); api.camera.updateMatrixWorld(true);
-        const found = {behind, side, bessInView: inView(bess.x, 2, bess.z), furnaceInView: inView(furnace.x, furnace.y + 3, furnace.z),
-          raidersInView: raiders.filter(r => inView(r.x, 1, r.z)).length};
+        a.onFrame?.(s, 0);
+        // The game's camera glides to a new place over many frames (as everburn-job1 notes): draw until it has arrived.
+        for (let frame = 0; frame < 150; frame++) api.renderFrame();
+        api.camera.updateMatrixWorld(true);
+        const found = {behind, side, bessInView: inView(bess.x, (bess.y ?? 0) + 2, bess.z), furnaceInView: inView(furnace.x, furnace.y + 3, furnace.z),
+          raidersInView: raiders.filter(r => inView(r.x, r.y + 1, r.z)).length};
         result = found;
         if (found.bessInView && found.furnaceInView && found.raidersInView === raiders.length) break;
       }
