@@ -29,6 +29,7 @@ import {stepMover, FOOT_GRADE} from '../src/world/scablands-movers.js';
 import {EVERBURN_PROP_FORM, createEverburnProps, EVERBURN_PROPS} from '../src/world/everburn-props.js';
 import {girderBridgeGeometry, pipeGeometry} from '../src/world/scablands-draw.js';
 import {tinTownFence} from '../src/world/tin-town-shacks.js';
+import {SALT_RIDERS} from '../src/world/jobs/ember-rule.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {fieldBattleJob} from '../src/world/jobs/gas-run.js';
 import {SCABLANDS_ASSETS} from '../src/world/scablands-scene.js';
@@ -821,4 +822,22 @@ test('realism objects respect the actor floor in both course and job grids', () 
     assert.equal(pushOutOfSolids(x, z, .4, grid, bed).hit?.id, 'bed-rock');
     assert.equal(pushOutOfSolids(x, z, .4, grid, deck).hit?.id, 'pole');
   }
+});
+
+
+test('salt lean-to windbreak blocks the back and leaves the front open', () => {
+  const grid = createJobSolidGrid(createSolidGrid([]));
+  const point = {x: 100, z: 200};
+  grid.setShelter(point);
+  const wall = grid.shelter.find(solid => solid.id === 'salt-windbreak');
+  assert.ok(wall);
+  assert.equal(grid.shelter.filter(solid => solid.kind === 'post').length, 4);
+  assert.equal(wall.kind, 'wall');
+  assert.equal(wall.z, point.z - SALT_RIDERS.shelterHalfZ - .15);
+  assert.equal(wall.x - wall.halfX, point.x - SALT_RIDERS.shelterHalfX + .3);
+  assert.equal(wall.x + wall.halfX, point.x + SALT_RIDERS.shelterHalfX - .3);
+  assert.equal(wall.halfZ * 2, .5);
+  assert.equal(wall.height, 1.26);
+  assert.equal(pushOutOfSolids(wall.x, wall.z, .4, grid).hit?.id, wall.id);
+  assert.equal(pushOutOfSolids(point.x, point.z + SALT_RIDERS.shelterHalfZ, .4, grid).hit, null);
 });

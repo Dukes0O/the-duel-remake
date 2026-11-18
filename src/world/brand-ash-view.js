@@ -27,11 +27,11 @@ export function createBrandAshView() {
     return {warning, ash, mark};
   });
   return {group, figures,
-    update(worldJob) {
+    update(worldJob, drawnShift) {
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
       group.visible = step?.brand === true;
       const actors = group.visible ? (worldJob.actors ?? []).filter(actor => actor.brandAsh) : [];
-      figures.update(actors, {active: group.visible});
+      figures.update(actors, {active: group.visible, drawnShift});
       for (let index = 0; index < capacity; index++) {
         const actor = actors[index], ash = job?.stepState?.brandAsh?.men?.[actor?.id]?.ash;
         const view = warnings[index];
@@ -39,11 +39,12 @@ export function createBrandAshView() {
         if (!view.warning.visible) continue;
         const share = THREE.MathUtils.clamp(1 - ash.remaining / R.throwWarningSeconds, 0, 1);
         const target = ash.position;
+        const sourceShift=figures.drawnShiftAt(index),targetShift=drawnShift?.(target.x,target.z,target.y,undefined,view.mark)??0;
         view.ash.position.set(THREE.MathUtils.lerp(actor.x, target.x, share),
-          THREE.MathUtils.lerp(actor.y + R.ashReleaseHeight, target.y, share) +
+          THREE.MathUtils.lerp(actor.y + sourceShift + R.ashReleaseHeight, target.y + targetShift, share) +
             Math.sin(share * Math.PI) * R.ashArcHeight,
           THREE.MathUtils.lerp(actor.z, target.z, share));
-        view.mark.position.set(target.x, target.y + R.ashMarkLift, target.z);
+        view.mark.position.set(target.x, target.y + targetShift + R.ashMarkLift, target.z);
       }
     },
     dispose() {

@@ -245,6 +245,8 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       const {shelterHalfX:x, shelterHalfZ:z, shelterPostWidth:width, shelterHeight:height} = SALT_RIDERS;
       this.shelter = [-x, x].flatMap(dx => [-z, z].map(dz => make({id:`salt-post-${dx}-${dz}`, kind:'post',
         x:point.x + dx, z:point.z + dz, halfX:width / 2, halfZ:width / 2, height})));
+      this.shelter.push(make({id:'salt-windbreak', kind:'wall', x:point.x, z:point.z - z - .15,
+        halfX:x - .3, halfZ:.25, height:1.26}));
     },
     setYard(solids) { this.yard = solids.map(solid => make(solid)); },
     setTownGate(gate, progress = 0) {

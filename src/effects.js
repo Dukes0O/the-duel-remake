@@ -127,7 +127,7 @@ export function createDrivingEffects() {
     opacity[i] = type === 0 ? .28 * strength : .95;
   }
 
-  function update({ p, state, dt, now = 0, course = null }) {
+  function update({ p, state, dt, now = 0, course = null, drawnShift }) {
     if (!(dt > 0) || !p || !state) return;
     dt = Math.min(dt, .06);
     emitted=false;marksAdded=false;chipsAdded=false;
@@ -140,7 +140,9 @@ export function createDrivingEffects() {
     const speed = Math.abs(state.speedMph || 0), direction = state.speedMph < 0 ? -1 : 1, moving = speed > 9 && activeDrive;
     const heading = (p.heading || 0) + (state.headingError || 0) + (state.slipAngle || 0);
     const fx = Math.sin(heading), fz = Math.cos(heading), rx = Math.cos(heading), rz = -Math.sin(heading);
-    const ground = Number.isFinite(state.groundHeight)?state.groundHeight:p.y || 0, vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
+    const support = Number.isFinite(state.groundHeight)?state.groundHeight:p.y || 0;
+    const ownerShift=drawnShift?.forActor?.(state);
+    const ground = support+(ownerShift??drawnShift?.(p.x,p.z,support,undefined,group)??0), vehicle = CARS[state.car] || {}, monster = vehicle.kind === 'monster', rally = vehicle.kind === 'rally';
     const roughness = Math.max(monster ? .65 : .2, state.roughness || 0);
     const airborne = !!state.airborne || !!state.tumble || (state.airHeight || 0) > .08;
     const dirt = !!state.offRoad || !!course?.def.arena || !!course?.def.offroad;
@@ -158,7 +160,7 @@ export function createDrivingEffects() {
       const point = vehicleGroundPoint(course, distance, lateral), surface = course.surfaceAt(distance, lateral);
       // Follow the same visible surface as the tires, including flattened
       // shortcut joins. Decals need only a small lift to avoid depth flicker.
-      return { x: point.x, y: point.y + (surface.road ? .009 : .026), z: point.z };
+      return { x: point.x, y: point.y + (ownerShift??drawnShift?.(point.x,point.z,point.y)??0) + (surface.road ? .009 : .026), z: point.z };
     };
     const roadContactAt = (distance, lateral) => {
       const center = surfacePoint(distance, lateral), front = surfacePoint(distance + .4, lateral), back = surfacePoint(distance - .4, lateral);
