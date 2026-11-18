@@ -175,7 +175,8 @@ function attemptMovement(course, car, fighter, dx, dz, feetY, airborne) {
 export function applyFootLook(fighter, input) {
   // Mouse right turns right: the camera's right is (-cos yaw, sin yaw).
   fighter.yaw -= (Number(input.lookX) || 0) * .0022;
-  fighter.pitch = clamp(fighter.pitch - (Number(input.lookY) || 0) * .0022,
+  // levelView: the caller's view cannot show a tilt (the view from overhead), so the walker looks level.
+  fighter.pitch = input.levelView === true ? 0 : clamp(fighter.pitch - (Number(input.lookY) || 0) * .0022,
     -1.25, 1.25);
 }
 

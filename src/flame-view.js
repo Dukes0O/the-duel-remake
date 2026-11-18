@@ -23,7 +23,8 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * at;
 }`;
 // Shares of the sector's half angle and of its reach from which the burst begins to thin.
-export const FLAME_SOFT = Object.freeze({side: .55, end: .7});
+// Kept to the outer part, so that the drawn burst still shows nearly all of the ground that burns.
+export const FLAME_SOFT = Object.freeze({side: .7, end: .85});
 const fragment = `
 #define FLAME_SOFT_SIDE ${FLAME_SOFT.side.toFixed(2)}
 #define FLAME_SOFT_END ${FLAME_SOFT.end.toFixed(2)}

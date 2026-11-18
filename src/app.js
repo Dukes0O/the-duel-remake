@@ -2666,7 +2666,9 @@ export class App {
     }
     if (context === 'foot') {
       this._resetKeyboardInput();
-      const foot=footControlInput(this.keys,pad,this._footPointer);
+      // In the view from overhead the walker's tilt cannot be seen, so the view is held level there: a mouse that had
+      // drifted up would otherwise aim the Hand Flamer over a man's head with nothing on screen to show it.
+      const foot={...footControlInput(this.keys,pad,this._footPointer),levelView:this.footCameraMode==='overhead'};
       this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
         interact:foot.interact});
       this.duel.setFighterInput(foot);

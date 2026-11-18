@@ -313,10 +313,12 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
   const flameLightSources = [];
   let flameScorchTimes = new WeakMap();
   let flameRaceState = null;
-  // A tilted burst whose middle is higher than this above the ground leaves no burn on it.
-  const FLAME_SCORCH_REACH_METRES = 1.2;
+  // A burst from a barrel whose middle is higher than this above the ground leaves no burn on it. A level burst from a
+  // standing walker's barrel is 1.3 m up and does burn the ground under it.
+  const FLAME_SCORCH_REACH_METRES = 1.6;
   // pitch: how far the burst is tilted up (radians), for a flame that follows a barrel; the burst turns to the heading first.
-  function presentFlame(view, {active, at, heading = 0, pitch = 0, seconds, camera, quality, age,
+  // followsBarrel: the burst starts at a barrel's mouth, well above the ground, so it burns the ground only where it comes down to it.
+  function presentFlame(view, {active, at, heading = 0, pitch = 0, followsBarrel = false, seconds, camera, quality, age,
     range = FLAME_RULES.range, coneHalfAngle, body = false}, duel) {
     if (active) {
       view.group.position.set(at.x, at.y, at.z); view.group.rotation.set(-pitch, heading, 0, 'YXZ');
@@ -331,8 +333,8 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
     if (seconds - last >= .24) {
       const nearest = duel.course.nearest?.(x, z);
       const ground = nearest ? duel.course.groundAt(nearest.s, nearest.lateral) : at;
-      // A burst aimed over the ground leaves no burn on it.
-      if (pitch !== 0 && centreY - ground.y > FLAME_SCORCH_REACH_METRES) return;
+      // A burst from a barrel that passes over the ground leaves no burn on it.
+      if (followsBarrel && centreY - ground.y > FLAME_SCORCH_REACH_METRES) return;
       flameScorch.stamp({x, y: ground.y+(drawnShift?.(x,z)??0), z, heading, size: body ? 1.1 : range * .32}, seconds);
       flameScorchTimes.set(view, seconds);
     }
@@ -784,7 +786,7 @@ export function createCombatScene(attachments = createVehicleAttachmentRegistry(
       active: active && duel.featureFlags?.enabled('crew-gear') === true &&
         s.onFoot && fighter?.flaming === true && cinderHalfAngle > 0,
       at: fighter && (muzzle ? {x: muzzle.x, y: muzzle.y + flameLift, z: muzzle.z} : {x: fighter.x, y: fighter.y + .85 + flameLift, z: fighter.z}),
-      heading: fighter?.yaw, pitch: muzzle ? fighter.pitch || 0 : 0, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
+      heading: fighter?.yaw, pitch: muzzle ? fighter.pitch || 0 : 0, followsBarrel: !!muzzle, range: cinderGear.range, coneHalfAngle: cinderHalfAngle}, duel);
     cpuGearViews.forEach((view, index) => {
       const crew = s.opponents?.[index]?.cpuCrew;
       const enabled = active && duel.featureFlags?.enabled('cpu-crews') === true;
