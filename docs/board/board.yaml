@@ -548,6 +548,16 @@ tasks:
     needs: []
     details: "docs/board/cards/QA-NIGHT-18-NOV.md"
 
+  - id: QA-NIGHT-SIZED
+    title: "The night check sizes itself from the day's merges: none, partial or full (Kyle, 18 November)"
+    owner: "codex"
+    lane: "TOOLS"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/QA-NIGHT-SIZED.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"

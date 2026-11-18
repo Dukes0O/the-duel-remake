@@ -186,15 +186,18 @@ export function tinTownSolids(land=LAND){
 
 // ---- Drawing ----------------------------------------------------------------------------------------------------------
 // Colours from tintown.glb's own materials (linear values, as the file stores them), so that the new shacks match the old.
+// The table is made when the shacks are first drawn, not when this file is loaded: the rules load this file for the shacks' places
+// (scablands-solids.js), and a colour made at load would carry Three.js into every bundle of the rules (QA-NIGHT-18-NOV).
 const color=(r,g,b,k=.84)=>new THREE.Color().setRGB(r*k,g*k,b*k);
-const PALETTE={
+let PALETTE=null;
+const makePalette=()=>({
   // Rust and orange sheet, like the old Tin Town model's oxide scale, with one steel sheet in six.
   sheet:[color(.31,.105,.045),color(.44,.17,.055),color(.36,.13,.05),color(.3,.18,.08),color(.24,.22,.18),color(.4,.15,.05)],
   // Patches: one in four is grey-blue sheet.
   patch:[color(.15,.19,.21),color(.24,.19,.13),color(.36,.31,.22),color(.14,.18,.2),color(.31,.105,.045),color(.46,.36,.22),color(.44,.17,.055),color(.3,.18,.08)],
   iron:color(.075,.078,.07,1),girder:color(.17,.15,.13),plank:color(.24,.19,.13),dark:color(.018,.016,.014,1),
   tank:color(.26,.1,.05),cloth:[color(.46,.36,.22),color(.5,.14,.07),color(.16,.2,.22),color(.36,.31,.22),color(.34,.4,.28)],
-};
+});
 
 function stripOfSheet(width,high){
   // A zig-zag strip standing up: a rib every 0.2 m, 3.5 cm out and in. Faces +Z.
@@ -231,6 +234,7 @@ function assembly(){
 
 export const TOWN_WINDOWS=Object.freeze({clusterGapSeconds:.55,riseSeconds:.5,glowWidth:1.9,glowHeight:1.5});
 export function createTinTownShacks(){
+  PALETTE??=makePalette();
   const plan=tinTownLayout(),group=new THREE.Group();group.name='Tin Town shacks';
   const out=assembly(),{put,box,strut}=out,random=mulberry(0x7157a9);
   const pick=list=>list[Math.floor(random()*list.length)];

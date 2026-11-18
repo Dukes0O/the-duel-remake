@@ -29,6 +29,7 @@ import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE, brandSwingReady} from '../../world/jobs/brand-rule.js';
 import {brandAshAim, brandRecoveryPose} from '../../world/jobs/brand-sites.js';
 import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
+import {handFlameAimsAt} from '../../world/jobs/hand-flame.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
@@ -115,7 +116,8 @@ export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
   const weaponHits = thingsHit.filter(hit => (hit.actorId ?? hit.id) === step.targetId && !hit.flame);
   const fighter = duel.state.onFoot && duel.state.fighter;
   const gear = signatureFor('cinder');
-  // On the flat, as in Light the Town: a walker looking down at the ground still burns the man in front of him.
+  // By heading, as in Light the Town: a walker looking down at the ground still burns the man in front of him. The barrel's
+  // tilt is judged on its own (src/world/jobs/hand-flame.js): aimed at the sky, the flame burns nobody.
   const direction = fighter && {x: Math.sin(fighter.yaw || 0), z: Math.cos(fighter.yaw || 0)};
   const dx = fighter ? thief.position.x - fighter.x : 0;
   const dz = fighter ? thief.position.z - fighter.z : 0;
@@ -123,7 +125,8 @@ export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
   const handFlame = fighter?.flaming && duel.state.footWeapons?.selected === 'hand-flamer' &&
     distance > 0 && distance <= gear.range &&
     Math.abs((thief.position.y ?? 0) - fighter.y) < BELLOWS_RULE.handFlameHeightMetres &&
-    (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2);
+    (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2) &&
+    handFlameAimsAt(fighter, {x: thief.position.x, y: thief.position.y ?? fighter.y, z: thief.position.z});
   return {bellows:{weaponHits, ...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
     playerTopSpeedKmh:surface.speedLimit * MPH_TO_KMH,
     flameContact:!!handFlame || thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
@@ -1170,7 +1173,8 @@ export function brandCombatView(state, worldJob) {
     // The aim is judged on the flat: a man is within reach by his distance over the ground and within the cone by the
     // way the walker faces. The view is tilted down about 22 degrees when nothing moves it, and a cone 17.5 degrees
     // either side measured in three dimensions against a flat distance could then never hold anyone (Claude's hand play,
-    // 17 November 2026). The difference in height is checked on its own below.
+    // 17 November 2026). The difference in height is checked on its own below, and so is the barrel's tilt: the flame burns
+    // a man only when the barrel is aimed within 30 degrees of his chest (Kyle's try, 18 November 2026).
     const yaw = fighter.yaw || 0, direction = {x: Math.sin(yaw), z: Math.cos(yaw)}, gear = signatureFor('cinder');
     for (const actor of worldJob.actors) {
       if (!actor.brandAsh) continue;
@@ -1178,7 +1182,8 @@ export function brandCombatView(state, worldJob) {
       const distance = Math.hypot(dx, dz);
       if (distance > 0 && distance <= BRAND_RULE.handFlamerRadius &&
           Math.abs(actor.y - fighter.y) < 2 &&
-          (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2))
+          (dx * direction.x + dz * direction.z) / distance >= Math.cos(gear.cone / 2) &&
+          handFlameAimsAt(fighter, actor))
         handFlamerHits.push(actor.id);
     }
   }

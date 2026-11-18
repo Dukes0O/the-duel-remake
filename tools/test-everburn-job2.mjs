@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {BRAND_RULE, BRAND_LINES, brandPay, brandSentence, stepBrandAsh} from '../src/world/jobs/brand-rule.js';
+import {HAND_FLAME, handFlameAimsAt, handFlameMuzzle} from '../src/world/jobs/hand-flame.js';
 import {stepOnFoot} from '../src/world/jobs/steps/onfoot.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
 import {brandSites} from '../src/world/jobs/brand-sites.js';
@@ -58,7 +59,7 @@ closeState.fighterInput.fire=true;
 assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
 
 // Claude's hand play, 17 November: the flamer reaches a man by the flat distance and the way the walker faces, whatever
-// the tilt of the view. At the view's own resting tilt (about -0.39) a man 5 m dead ahead is burned back; one 30 degrees
+// the tilt of the view within 30 degrees of the man (below). At the view's own resting tilt (about -0.39) a man 5 m dead ahead is burned back; one 30 degrees
 // to the side is not; one at 6.5 m is not.
 {
   const world = {actors:[{id:'ahead',brandAsh:true,x:0,y:0,z:5},{id:'aside',brandAsh:true,x:2.5,y:0,z:4.33},
@@ -66,8 +67,23 @@ assert.equal(brandCombatView(closeState,closeWorld).brandSwing,true);
   const state = {status:'racing',onFoot:true,fighter:{x:0,y:0,z:0,yaw:0,pitch:-.39,flaming:true},
     fighterInput:{fire:true},footWeapons:{selected:'hand-flamer'},arena:{mode:'world-job',worldJob:world}};
   assert.deepEqual(brandCombatView(state,world),{brandSwing:false,handFlamerHits:['ahead']});
+  // Kyle's try, 18 November: the fire follows the barrel. Aimed no more than 30 degrees over the man's head or under his
+  // feet it burns him; aimed higher than that, as at a lamp overhead, it does not.
+  state.fighter.pitch=.38;
+  assert.deepEqual(brandCombatView(state,world).handFlamerHits,['ahead'],'a barrel 22 degrees up still burns the man ahead');
   state.fighter.pitch=.6;
-  assert.deepEqual(brandCombatView(state,world).handFlamerHits,['ahead'],'looking up changes nothing either');
+  assert.deepEqual(brandCombatView(state,world).handFlamerHits,[],'a barrel 34 degrees up burns nobody on the ground');
+  state.fighter.pitch=-.9;
+  assert.deepEqual(brandCombatView(state,world).handFlamerHits,[],'a barrel 52 degrees down burns the ground at the feet of the walker, not a man 5 m off');
+  assert.equal(handFlameAimsAt({x:0,y:0,z:0,pitch:0},{x:0,y:0,z:5}),true);
+  // The review of 18 November: the tilt is judged against the whole man (his head lies 2 degrees above the eye's level at
+  // 5 m, his feet 18 degrees below), so a level barrel burns a man at any distance, arm's length included.
+  for(const metres of [.5,.9,1.05,2])assert.equal(handFlameAimsAt({x:0,y:0,z:0,pitch:0},{x:0,y:0,z:metres}),true,'a level barrel burns a man '+metres+' m off');
+  const mouth=handFlameMuzzle({x:10,y:2,z:20,yaw:0,pitch:0});
+  assert.ok(Math.abs(mouth.x-(10-HAND_FLAME.muzzleRightMetres))<1e-9&&Math.abs(mouth.y-(2+HAND_FLAME.eyeMetres-HAND_FLAME.muzzleBelowMetres))<1e-9&&
+    Math.abs(mouth.z-(20+HAND_FLAME.muzzleAheadMetres))<1e-9,'the mouth of the barrel is ahead of the eye, to the right and below it');
+  const raised=handFlameMuzzle({x:0,y:0,z:0,yaw:0,pitch:Math.PI/3});
+  assert.ok(raised.y>mouth.y-2+.3,'the mouth rises with the barrel');
 }
 // Use the normal weapon step: no flame, rocket or repair on a brand click.
 closeWorld.actors[0].z=2;

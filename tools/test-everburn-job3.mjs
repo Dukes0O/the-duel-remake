@@ -813,6 +813,12 @@ factsState.footWeapons.selected='hand-flamer';
 Object.assign(factsState.fighter,{x:thiefAt.x,z:thiefAt.z-5,y:thiefAt.y??0,yaw:0,pitch:0,flaming:true});
 assert.equal(readFacts([]).flameContact,true);
 assert.equal(stepBellowsLoad({},readFacts([]),2).state.bellows,70);
+// Kyle's try, 18 November: the fire follows the barrel, so a barrel aimed well over the thief does not burn him.
+factsState.fighter.pitch=.7;
+assert.equal(readFacts([]).flameContact,false,'a barrel 40 degrees up does not burn the thief');
+factsState.fighter.pitch=-.39;
+assert.equal(readFacts([]).flameContact,true,'a barrel 22 degrees down still burns him');
+factsState.fighter.pitch=0;
 factsState.fighter.yaw=Math.PI;
 assert.equal(readFacts([]).flameContact,false);
 factsState.fighter.yaw=0;

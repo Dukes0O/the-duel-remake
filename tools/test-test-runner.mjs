@@ -158,13 +158,14 @@ for(const filter of [null,'reverse','core','no-such-runner-suite']){
   same(await plan([asset]),0,'presentation fallback plan succeeds');
   check(messages.includes(`Left to the night: ${suite} (picked by the change as a whole)`),'fallback alone names the change as a whole');
 }
-// The real dependency graph defers both Everburn drives for that file alone.
+// The real dependency graph defers both long drives for a file that both import. It was src/world/jobs/everburn.js until
+// 18 November 2026, when the gas run's Medium check lost its case for the old job 4 and with it that import.
 {
-  const file='src/world/jobs/everburn.js', deferred=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs'];
+  const file='src/world/jobs/gas-run.js', deferred=['tools/test-run-gas-medium.mjs','tools/test-everburn-easy.mjs'];
   const impacted=suitesForChanges(actual,[file]);
-  check(deferred.every(suite=>impacted.includes(suite)),'Everburn alone picks both long drives');
+  check(deferred.every(suite=>impacted.includes(suite)),'the gas run alone picks both long drives');
   check(deferred.every(suite=>!selectPlan(actual,{tier:'lane',affected:impacted}).some(task=>task.suite===suite)),
-    'Everburn lane defers both long drives');
+    'the gas run in a lane defers both long drives');
   const messages=[];
   same(await main(['--list','--tier','lane','--changed'],{getChanges:()=>[file],log:message=>messages.push(message)}),0,
     'Everburn lane plan succeeds');

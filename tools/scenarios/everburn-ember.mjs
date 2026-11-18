@@ -40,6 +40,13 @@ export async function run(c) {
   await c.waitFor('window.__qaApp.duel.state.status==="racing"', 'the job racing', 30000);
   await c.evaluate(`window.__qaApp.advance(0.3)`);
 
+  // The remake made the pot something Cinder hands over (EVERBURN-REMAKE): the car is stopped 5 m from her and the clock runs until the pot is loaded.
+  const cinder = await c.evaluate(`(()=>{const j=window.__qaApp.duel.state.arena.worldJob,step=j.job.steps[0],p=step.pickup.place.position,from=step.carStart,
+    dx=from.x-p.x,dz=from.z-p.z,length=Math.hypot(dx,dz)||1;return {x:p.x+dx/length*5,z:p.z+dz/length*5,tx:p.x,tz:p.z}})()`);
+  await place(c, cinder.x, cinder.z, cinder.tx, cinder.tz, 0);
+  await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<120&&!a.duel.state.arena.worldJob.job.stepState.loaded;i++)a.advance(0.1)})()`);
+  if (!(await held(c)).loaded) throw Error('Cinder did not load the pot');
+
   // 1. The start: the pot bright on the back of the car, the gauge full, the brazier beside the yard gate.
   await c.screenshot('1-start');
 
@@ -73,24 +80,29 @@ export async function run(c) {
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<80&&!a.duel.state.arena.worldJob.job.stepState.out;i++)a.advance(0.5)})()`);
   await key(c, 'keyUp', 'w', 'KeyW', 87);
   await c.evaluate(`window.__qaApp.advance(0.4)`);
-  await place(c, 36, -8, 0, 0, 25);
+  // The yard brazier stands where the yard's road leaves it (the game's own braziers, no longer at fixed spots); the pot goes out in sight of it.
+  const brazierAt = metres => c.evaluate(`(()=>{const j=window.__qaApp.duel.state.arena.worldJob,step=j.job.steps[0],b=step.braziers.find(x=>x.id==='yard-brazier').position,from=step.carStart,
+    dx=from.x-b.x,dz=from.z-b.z,length=Math.hypot(dx,dz)||1;return {x:b.x+dx/length*${metres},z:b.z+dz/length*${metres},tx:b.x,tz:b.z}})()`);
+  const farFromBrazier = await brazierAt(30);
+  await place(c, farFromBrazier.x, farFromBrazier.z, farFromBrazier.tx, farFromBrazier.tz, 25);
   await c.evaluate(`window.__qaApp.advance(0.2)`);
   await c.screenshot('4-out');
   const out = await held(c);
 
-  // 5. A scoop: rolling slowly into the brazier's ring lights the pot again.
-  await place(c, 26, -6, 0, 0, 16);
+  // 5. A scoop: stopping in the brazier's ring lights the pot again.
+  // The scoop needs the car stopped inside the brazier's ring for three seconds (EMBER_SCOOP).
+  const nearBrazier = await brazierAt(4);
+  await place(c, nearBrazier.x, nearBrazier.z, nearBrazier.tx, nearBrazier.tz, 0);
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<60&&a.duel.state.arena.worldJob.job.stepState.out;i++)a.advance(0.1)})()`);
   await c.evaluate(`window.__qaApp.advance(0.2)`);
   await c.screenshot('5-scoop');
   const scoop = await held(c);
 
-  // 6. The arrival: the results screen says how the ember arrived.
-  const gate = LAND.at('tin-town', -25, 70); // slice 2b: the gate's fence stands at -5 (it is solid now): the car starts on the road, in line with the opening
-  await place(c, gate.x, gate.z, town.x, town.z, 55);
-  await key(c, 'keyDown', 'w', 'KeyW', 87);
+  // 6. The arrival: the forge stands inside Tin Town (EVERBURN-REMAKE), and the car stops at it; the job then holds 9 seconds for the pot to be caught
+  // before the results screen says how the ember arrived.
+  const forge = LAND.at('tin-town', 25, 14);
+  await place(c, forge.x, forge.z - 2, forge.x, forge.z, 0);
   await c.evaluate(`(()=>{const a=window.__qaApp;for(let i=0;i<80&&a.duel.state.status!=='arena_result';i++)a.advance(0.25)})()`);
-  await key(c, 'keyUp', 'w', 'KeyW', 87);
   await c.waitFor('window.__qaApp.duel.state.status==="arena_result"', 'Hot Delivery result', 30000);
   await c.waitFor('document.querySelector(".result-panel")', 'the results screen');
   const text = await c.evaluate(`document.querySelector('.result-panel').innerText`);

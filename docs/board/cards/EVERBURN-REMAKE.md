@@ -1742,3 +1742,27 @@ tone as the Hand Flamer's sound in a job, if nothing else plays it.
 The separate reviewer found three real sound gaps: coasting wind/tyres remained audible on foot, noise recipes did not render the lamp hiss's rise, and automatic shift accents missed the engine fade. All three are cured with real-audio checks. The reviewer confirmed the fixes and found no remaining code fault. Audio/PCM passes 721 checks. No assertions were loosened for these cures.
 
 - Browser scenario picture count: four becomes five, adding a fixed half-lit mast lamp view that checks the progress bar, AT THE LAMP row and ring. The ending also checks that the new bar and ring are hidden. Every page expression parses separately with `new Function`; Claude runs the browser.
+### Part B built and reviewed (Claude, 18 November 2026)
+
+Built: the burst leaves the barrel's mouth and follows the barrel in the three town jobs (`src/world/jobs/hand-flame.js`
+holds the numbers); it thins over the outer 30 percent of its half angle and the last 15 percent of its reach; a man is
+burned only when the barrel is aimed no more than 30 degrees over his head or under his feet. Seen by hand in the game,
+level and aimed up.
+
+One separate Claude review (read only). Its real fault, cured: the tilt was first judged against a man's chest, so a
+level barrel could not burn a man nearer than 1.07 m; it is judged against the whole man now. Also cured from it: a burst from the barrel burns the ground only where its middle is within 1.6 m of it, level or tilted.
+
+Art pick (Claude): the soft edge is in the flame's one shader, so every burst in the game has it (the car's
+flamethrower and the crews' flamers too). Their sectors had the same hard sides. The fade is kept to the outer part so
+that the drawn burst still shows nearly all of the ground that burns.
+
+Changed assertions, reviewed (nothing loosened; each follows Kyle's finding 8): in `tools/test-everburn-job2.mjs`
+"looking up changes nothing either" (a barrel 34 degrees up burned a man 5 m ahead) became three checks: 22 degrees up
+burns him, 34 degrees up does not, 52 degrees down does not. `tools/test-everburn-job3.mjs` gained the same two for the
+thief.
+
+Left, small: in the view from overhead the barrel's tilt shows only by the reticle and by the burst itself (a cure that
+held the look level there needed the game's two most widely used files for one word each, which is not worth a whole
+tier; it gets its own small card if a player meets it); smoke and embers rise along a tilted burst's own up and not straight up; `worldJob.wonAtSec` and the
+branch of `furnaceSighting` that read it have no user since job 3 was remade (the janitor removes them with their
+check); no suite drives Slow Ride on Medium (the old case went with the old job; Easy is driven).
