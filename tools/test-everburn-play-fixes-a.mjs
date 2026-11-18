@@ -15,6 +15,8 @@ import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob} from '../src/world/jobs/job-engine.js';
 import {createHudScreen} from '../src/screen-hud.js';
 import {Duel} from '../src/game.js';
+import {COMBAT_TUNING} from '../src/wasteland-tuning.js';
+import {FIGHTER_RULES} from '../src/onfoot.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {EMBER_CAPTIONS} from '../src/story/ember-lines.js';
 import {worldJobHitTargets, reportWorldJobThingHit} from '../src/arena/modes/world-job.js';
@@ -108,7 +110,8 @@ const hud=duel.state; hud.status='racing'; hud.stageTimeSec=0;
 duel._storyCallout('A spoken story line', 2.2); update(hud);
 assert.equal(ui['callout-text'].textContent,'A spoken story line');
 hud.stageTimeSec=1; hud.crashFlash=1; hud.combatWrecking=true; hud.combatWreckTimer=2.9; update(hud);
-assert.equal(ui['callout-text'].textContent,'Car wrecked. Returning to open ground in 3 s.');
+assert.equal(ui['callout-text'].textContent,'Wrecked. Open ground in 3 s.');
+assert(captionSeconds(ui['callout-text'].textContent) <= COMBAT_TUNING.foot.parkedWreckSeconds);
 assert.equal(ui['callout-kicker'].textContent,'');
 assert.equal(classes.get('crash-callout'),true);
 hud.stageTimeSec=4; update(hud); hud.crashFlash=0; hud.combatWrecking=false; update(hud);
@@ -141,7 +144,8 @@ assert.equal(ui['callout-kicker'].textContent, '');
 delete rule.returnNotice;
 hud.onFoot = true; hud.fighter = {knockedDown:true};
 update(hud);
-assert.equal(ui['callout-text'].textContent,'Knocked down. Getting up beside your car.');
+assert.equal(ui['callout-text'].textContent,'Down. Getting up by your car.');
+assert(captionSeconds(ui['callout-text'].textContent) <= FIGHTER_RULES.knockdownSeconds);
 hud.onFoot = false; hud.fighter = null; update(hud);
 // A race and a Scrapdome event are exactly as before: a collision says COLLISION with its kicker.
 for (const kind of ['race','scrapdome']) {

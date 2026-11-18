@@ -2910,9 +2910,10 @@ export class App {
       }
       if (pointer.capture !== 'held') return;
       pointer.capture = null;
-      pointer.fire = pointer.aim = false;
+      this._footPointer.fire=this._footPointer.aim=false;
+      if (document.pointerLockElement || !footMouseActive(this.duel.state)) return;
       this._footPointerReleasedAt=performance.now();
-      if(!document.pointerLockElement && footMouseActive(this.duel.state))this.togglePause();
+      if(!this.duel.state.paused)this.togglePause();
     },{signal});
     if (typeof document !== 'undefined') document.addEventListener('pointerlockerror', () => {
       if (this._footPointer.capture === 'requesting') this._footPointer.capture = 'refused';

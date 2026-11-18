@@ -129,9 +129,9 @@ export function worldReturnNotice(state) {
   const job = state.arena.worldJob?.job;
   if (state.onFoot && state.fighter?.knockedDown) {
     return job?.stepState?.brandKnockdown && job.stepState.returnNotice
-      ? job.stepState.returnNotice.text : 'Knocked down. Getting up beside your car.';
+      ? job.stepState.returnNotice.text : 'Down. Getting up by your car.';
   }
-  if (state.combatWrecking) return 'Car wrecked. Returning to open ground in ' + Math.ceil(state.combatWreckTimer) + ' s.';
+  if (state.combatWrecking) return 'Wrecked. Open ground in ' + Math.ceil(state.combatWreckTimer) + ' s.';
   return job?.stepState?.returnNotice?.text ?? '';
 }
 export function createHudScreen({app, ui, text, time, clamp, credits, routeMap}) {
