@@ -670,3 +670,72 @@ for (const onFoot of [false, true]) {
 assert.equal(JSON.stringify([...memory]), restartSaved);
 restartApp.returnToMenu(); restartApp.dispose?.();
 console.log('PASS Run Him Down: restart places both cars on the clear wreck line, 150 m apart along it, preserving load, knocks and saves.');
+
+// Job 3.5: the existing rider mover waits for the rule's distance crossing,
+// then pursues and backs away after one ram. This is a rules check, no drive.
+const {updateBellowsRiders, applyBellowsRiderHit} = await import('../src/arena/modes/world-job.js');
+const {EMBER_RULE, emberLoss} = await import('../src/world/jobs/ember-rule.js');
+const ridersApp = new App(); ridersApp.audio.unlock = () => {};
+ridersApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+  'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+ridersApp.duel.state.wastelandGateDiscovered = true;
+assert(ridersApp.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+  car:'falcone_f42', playerId:ridersApp.player.id, seed:1989, opponents:[],
+  job:{...definition, steps:[restartedStep]}}));
+const ridersDuel = ridersApp.duel, ridersState = ridersDuel.state;
+const ridersJob = ridersState.arena.worldJob;
+ridersJob.actors = [];
+ridersJob.job.stepState = {};
+const ridersSaved = JSON.stringify([...memory]);
+updateBellowsRiders(ridersDuel, ridersJob, 1);
+assert.equal(ridersJob.actors.length, 0, 'Riders cannot start before the distance crossing.');
+ridersJob.job.stepState.ridersStarted = true;
+ridersState.onFoot = true;
+updateBellowsRiders(ridersDuel, ridersJob, 0);
+assert.equal(ridersJob.actors.length, 2);
+for (const actor of ridersJob.actors) {
+  for (const solid of SCABLANDS_SOLIDS) assert.equal(sweepObstacle(actor.position, actor.position,
+    solid, 0, {halfWidth:BELLOWS_RULE.thiefRadiusMetres, halfLength:BELLOWS_RULE.thiefRadiusMetres}), null, solid.id);
+}
+const waitingRiders = ridersJob.actors.map(actor => ({...actor.position}));
+updateBellowsRiders(ridersDuel, ridersJob, 1);
+assert.deepEqual(ridersJob.actors.map(actor => actor.position), waitingRiders, 'Riders do not ram a foot player.');
+// Put the car and a rider on open ground, facing a head-on meeting.
+const testAt = restartPlaces.player;
+const testPose = ridersDuel.course.nearest(testAt.x, testAt.z);
+ridersState.s = testPose.s; ridersState.lateral = testPose.lateral;
+ridersState.onFoot = false; ridersState.speedMph = 0;
+const rider = ridersJob.actors[0];
+rider.position = {...ridersDuel.course.groundAt(testPose.s, testPose.lateral)};
+rider.position.z += 4;
+ridersJob.actors[1].health = 0;
+updateBellowsRiders(ridersDuel, ridersJob, 1);
+assert.equal(rider.ramContact, true);
+assert(rider.ramRetreat);
+assert(ridersJob.riderHitKmh > 0);
+const armourBefore = ridersState.armor;
+const expectedHit = emberLoss(EMBER_RULE, {lostKmh:ridersJob.riderHitKmh,
+  difficulty:ridersState.cpuDifficulty}).hit;
+assert(expectedHit > 0);
+applyBellowsRiderHit(ridersDuel, ridersJob);
+assert(Math.abs(armourBefore - ridersState.armor - expectedHit) < 1e-8);
+ridersJob.riderHitKmh = 0;
+updateBellowsRiders(ridersDuel, ridersJob, 0.1);
+assert.equal(ridersJob.riderHitKmh, 0, 'The same meeting cannot charge twice.');
+assert.equal(applyBellowsRiderHit(ridersDuel, ridersJob), 0);
+for (const [difficulty, speed] of [['easy', 28], ['medium', 100], ['hard', 8]]) {
+  ridersState.cpuDifficulty = difficulty;
+  ridersJob.riderHitKmh = speed;
+  const before = ridersState.armor;
+  applyBellowsRiderHit(ridersDuel, ridersJob);
+  assert(Math.abs(before - ridersState.armor - emberLoss(EMBER_RULE,
+    {lostKmh:speed, difficulty}).hit) < 1e-8);
+}
+ridersJob.job.stepState.thiefStopped = true;
+const stoppedAt = {...rider.position};
+updateBellowsRiders(ridersDuel, ridersJob, 1);
+assert.deepEqual(rider.position, stoppedAt);
+assert.equal(rider.speed, 0);
+assert.equal(JSON.stringify([...memory]), ridersSaved);
+ridersApp.returnToMenu(); ridersApp.dispose?.();
+console.log('PASS Run Him Down: two clear furnace riders share pursuit, ram retreat and ember hit loss on armour, without save writes.');

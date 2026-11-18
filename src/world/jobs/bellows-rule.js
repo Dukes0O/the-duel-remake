@@ -25,6 +25,8 @@ export const BELLOWS_RULE = Object.freeze({
   ashSeconds: 6,
   ashAtRoadMetres: Object.freeze([800, 1600]),
   ridersFromFurnaceMetres: 400,
+  riderPostSideMetres: 6,
+  riderPostAheadMetres: 12,
   furnaceReachMetres: 30,
   restartLeadMetres: 150,
   endingSeconds: 9,

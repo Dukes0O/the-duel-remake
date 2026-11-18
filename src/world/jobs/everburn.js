@@ -14,7 +14,7 @@ import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.j
 import {yardPlan} from '../scablands-yard-look.js';
 import {brandSites} from './brand-sites.js';
 import {BRAND_LINES} from './brand-rule.js';
-import {bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
+import {BELLOWS_RULE, bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
 import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
@@ -142,6 +142,12 @@ export function buildEverburn(land) {
     roadWidthMetres:bellowsRoad.halfWidth * 2,
     wideExtraMetres:bellowsWrecks.wideExtraMetres,
   });
+  const bellowsRiders = path(...[-1, 1].map((side, index) => Object.freeze({
+    id:`bellows-furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
+    start:place(`bellows-rider-post-${index + 1}`, {
+      x:wingGap.position.x + side * BELLOWS_RULE.riderPostSideMetres,
+      z:wingGap.position.z + BELLOWS_RULE.riderPostAheadMetres}),
+  })));
   const prospector1 = place('prospector-1', at('boneyard', -24, 26)), survey1 = place('survey-flag-1', at('boneyard', 26, -4));
   const kitchen = place('auntie-kitchen', at('tin-town', 15, 4), 4), townSafeCorner = place('town-safe-corner', at('tin-town', 32, -30), 6);
   const valveRoom = place('mall-valve-room', at('dead-mall', -12, 0), 7);
@@ -181,7 +187,7 @@ export function buildEverburn(land) {
       resultLineId:'story.ember.cinder.10',
       easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
       steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
-        path:thiefPath}, path:thiefPath, bellowsRoute,
+        path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
         targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
         targetHealth:20, reward:'flamethrower',
         carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
