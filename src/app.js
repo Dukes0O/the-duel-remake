@@ -2666,9 +2666,10 @@ export class App {
     }
     if (context === 'foot') {
       this._resetKeyboardInput();
-      // In the view from overhead the walker's tilt cannot be seen, so the view is held level there: a mouse that had
-      // drifted up would otherwise aim the Hand Flamer over a man's head with nothing on screen to show it.
-      const foot={...footControlInput(this.keys,pad,this._footPointer),levelView:this.footCameraMode==='overhead'};
+      // In a job of the Scablands the Hand Flamer burns only where its barrel is aimed, and in the view from overhead the
+      // walker's tilt cannot be seen: a mouse that had drifted up would aim the flame over a man's head with nothing on
+      // screen to show it. So the look is held level there. In the arenas the view from overhead is as it was.
+      const foot={...footControlInput(this.keys,pad,this._footPointer),levelView:this.footCameraMode==='overhead'&&this.duel.state.arena?.mode==='world-job'};
       this.duel.setInput({throttle:0,brake:0,steer:0,boost:false,
         interact:foot.interact});
       this.duel.setFighterInput(foot);

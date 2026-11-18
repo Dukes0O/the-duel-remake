@@ -1734,8 +1734,9 @@ level and aimed up.
 
 One separate Claude review (read only). Its real fault, cured: the tilt was first judged against a man's chest, so a
 level barrel could not burn a man nearer than 1.07 m; it is judged against the whole man now. Also cured from it: the
-view from overhead cannot show a tilt, so the walker looks level there (`levelView`, set by the app for that view
-only); a burst from the barrel burns the ground only where its middle is within 1.6 m of it, level or tilted.
+view from overhead cannot show a tilt, so in a job of the Scablands the walker looks level there (`levelView`; the
+review's confirmation found that the flag was dropped on its way into the Duel, cured in `setFighterInput`, and that
+it should not level the arenas' weapons, so the app sets it in these jobs only); a burst from the barrel burns the ground only where its middle is within 1.6 m of it, level or tilted.
 
 Art pick (Claude): the soft edge is in the flame's one shader, so every burst in the game has it (the car's
 flamethrower and the crews' flamers too). Their sectors had the same hard sides. The fade is kept to the outer part so

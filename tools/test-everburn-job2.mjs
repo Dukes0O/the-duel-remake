@@ -111,6 +111,18 @@ toolDuel.state.footWeapons.selected='hand-flamer';
 closeWorld.actors[0].z=3;
 stepFootWeapons(toolDuel,1/120);
 assert.equal(toolDuel.state.fighter.flaming,true,'Farther away the same attack fires the flamer.');
+// The review of 18 November: the level look reaches the walker through the Duel's own input (it was dropped on the way).
+{
+  const before={...toolDuel.state.fighterInput},fighter=toolDuel.state.fighter;
+  fighter.pitch=.5;
+  assert.equal(toolDuel.setFighterInput({lookY:-40,levelView:true}),true);
+  assert.equal(toolDuel.state.fighterInput.levelView,true,'the Duel keeps the level look it is given');
+  applyFootLook(fighter,toolDuel.state.fighterInput);
+  assert.equal(fighter.pitch,0,'the walker looks level in the view from overhead');
+  toolDuel.setFighterInput({lookY:0,levelView:false});
+  assert.equal(toolDuel.state.fighterInput.levelView,false);
+  Object.assign(toolDuel.state.fighterInput,before);fighter.pitch=0;
+}
 closeWorld.actors[0].z=2;
 closeWorld.job.stepState.brandSeconds=0;
 assert.equal(brandSwingReady(closeState),false);
