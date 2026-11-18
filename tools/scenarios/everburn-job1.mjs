@@ -4,6 +4,7 @@ import {join} from 'node:path';
 import {EAST_ROAD, roadPointFrom} from '../../src/world/scablands-road.js';
 import {pointAlong} from '../../src/world/scablands-road-geometry.js';
 import {LAND} from '../../src/world/scablands-names.js';
+import {furnaceGlassRound} from '../../src/world/jobs/furnace-sightings.js';
 
 export function mapFailures(name, measurement, start = false, metBarricade = false) {
   if (measurement.map === null) return [`${name}: the large map is not open`];
@@ -81,6 +82,10 @@ export async function run(context) {
         app.onFrame?.(state, 0); render.renderFrame();
         const pointFor = item => {
           item.updateWorldMatrix(true, false);
+          if (options.groundPatch && item.geometry) {
+            item.geometry.computeBoundingSphere();
+            return item.localToWorld(item.geometry.boundingSphere.center.clone());
+          }
           const point=item.getWorldPosition(camera.position.clone());
           if (item.userData.plan?.gate) { point.x+=item.userData.plan.gate.x; point.z+=item.userData.plan.gate.z; point.y+=3; }
           return point;
@@ -181,6 +186,49 @@ export async function run(context) {
     await wait(context, `(() => { let cinder; window.__render.scene.traverse(node => { if (node.name === 'Cinder at the yard gate') cinder=node; }); return !!cinder?.getObjectByName('Cinder crew model'); })()`, 'Cinder model', 60000);
     await page(context, () => { for(let i=0;i<120;i++) window.__qaApp.advance(0.1); });
     await picture('3-cinder-pot','Cinder at the yard gate',{focus:true,dx:12,dy:6,dz:15,loaded:true,pot:true});
+    await page(context, point => {
+      const app = window.__qaApp, duel = app.duel, state = duel.state;
+      const pose = duel.course.nearest(point.x, point.z + 150);
+      state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+      state.speedMph = 0;
+      const angle = Math.atan2(0, -150) - duel.course.at(pose.s).heading;
+      state.headingError = Math.atan2(Math.sin(angle), Math.cos(angle));
+      state.arena.worldJob.clockSec = 0;
+      app.onFrame?.(state, 0); window.__render.renderFrame();
+    }, furnaceGlassRound()[0]);
+    await picture('glass-on-plates-from-150m', "The furnace's glass on the ground",
+      {focus:true,groundPatch:true,dy:8,dz:150,aimHeight:0,loaded:true});
+    await page(context, () => {
+      const app = window.__qaApp, duel = app.duel, state = duel.state;
+      const patch = state.arena.worldJob.job.steps[0].bedMist[0];
+      const pose = duel.course.nearest(patch.x, patch.z);
+      state.s = state.prevS = pose.s;
+      state.lateral = state.prevLateral = pose.lateral;
+      state.speedMph = 0;
+      app.onFrame?.(state, 0); window.__render.renderFrame();
+    });
+    await picture('bed-mist-from-60m', 'bed-mist-1',
+      {focus:true,groundPatch:true,dy:8,dz:60,aimHeight:0,loaded:true});
+    await page(context, () => {
+      const app = window.__qaApp, duel = app.duel, state = duel.state;
+      const job = state.arena.worldJob, plan = job.job.steps[0].bridgeAsh;
+      job.job.stepState.bridgeAsh = {started:true, elapsed:2};
+      const pose = duel.course.nearest(plan.x - plan.exitX * 150, plan.z - plan.exitZ * 150);
+      state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+      state.speedMph = 0;
+      app.onFrame?.(state, 0); window.__render.renderFrame();
+    });
+    await picture('bridge-ash-from-150m', 'Ash falling under the Girder Bridge',
+      {focus:true,dy:4,dz:150,aimHeight:0,loaded:true});
+    await page(context, () => {
+      const app = window.__qaApp, duel = app.duel, state = duel.state;
+      const post = state.arena.worldJob.job.steps[0].saltPost.position;
+      const pose = duel.course.nearest(post.x, post.z + 200);
+      state.s = state.prevS = pose.s; state.lateral = state.prevLateral = pose.lateral;
+      state.speedMph = 0;
+      app.onFrame?.(state, 0); window.__render.renderFrame();
+    });
+    await picture('salt-lean-to-from-200m', 'The salt lean-to', {focus:true,dy:6,dz:200,loaded:true});
     // The riders only exist after the pot has been collected.
     for (const distance of [250, 60]) {
       const road = pointAlong(EAST_ROAD.points, 900 - distance);
@@ -268,7 +316,7 @@ export async function run(context) {
     await picture('10-forge-alight','Hot Delivery forge fire',{forge:true,holdAt:8,aimHeight:0});
     await page(context, () => { window.__qaApp.advance(2); });
   } catch (error) { report.failures.push(`Scenario setup: ${error.message}`); }
-  for (const name of ['yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
+  for (const name of ['salt-lean-to-from-200m','glass-on-plates-from-150m','bed-mist-from-60m','bridge-ash-from-150m','yard-cinder-ring-from-start','rider-1-from-road','rider-2-from-road','scout-post-from-250m','scout-post-from-60m','camp-awake-at-fence-end','1-yard-start','2-map-start','3-cinder-pot','4-east-road-yard','5-halfway-barricade',
     '6-bridge-barricade','7-map-after-bridge','8-tin-town-gate','9-pot-in-air','10-forge-alight']) {
     if (!report.pictures.some(picture => picture.name === name)) report.failures.push(`${name}: no measurement was recorded`);
   }

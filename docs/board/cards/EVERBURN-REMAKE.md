@@ -878,14 +878,12 @@ of bright light, 60 m wide, walks over the ground on a fixed round of about fort
   behind a butte and they go home.
 - What the player does: watch the light, dash from butte to butte, 50 km/h on the rock.
 
-**The salt pan: race the salt riders to the Pipe.** Two Ash Men keep a lean-to at the salt works in the middle of the pan
-and watch for a glow. Cinder's reason holds: they take any fire they find.
-- They see the pot at 700 m (the pan is flat and the pot glows). A horn, and both set out to cut the car off.
-- On the pan they are as fast as the player; they gain only when the player turns or slows. They ram by the ember rule.
-- They will not drive onto the Pipe. The player must reach it far enough ahead to brake to 40 km/h for the crossing.
-  A lead of about four seconds is enough; less, and the last ram comes at the Pipe's mouth.
-- A player who passes wide of the salt works (about 1 km longer, in the wind) is seen later and starts the race ahead.
-- What the player does: choose the line across the pan, hold speed, judge the braking for the Pipe with two cars behind.
+**The salt pan: race the salt riders to the Ridge.** Two Ash Men keep the salt lean-to 400 m south of the way at its 3.0 km point.
+- They see the loaded pot at 700 m with clear sight. A horn, and both steer to cut the car off.
+- On the pan they match the player's pan top speed, less 5 km/h on Easy. They ram by the ember rule and back off.
+- They turn home within 650 m of the Ridge, when the car reaches that line, when it leaves the pan (roads on the pan count), or after 120 seconds.
+- Rook says: "Rook: Salt riders. They won't climb the Ridge. Get to it first."
+- A road line from 2.4 km must be caught; a north line passing the lean-to 900 m away must stay unseen or reach the Ridge line four seconds ahead.
 
 **The river bed: the cold is seen, and the bridge is passed from below.** No rider goes down into the bed; that stands.
 - **Cold mist** lies in the bed's hollows, drawn, in patches 30 to 50 m long. The pot cools five times as fast in a patch
@@ -894,7 +892,7 @@ and watch for a glow. Cinder's reason holds: they take any fire they find.
 - **Under the Girder Bridge** the Ash Men on the deck tip ash to smother the fire. A horn as the car comes within 300 m;
   then ash falls in each of the three gaps between the piers in turn, two seconds each, in a fixed order. Driving through
   falling ash takes 20 from the pot. The player watches one round and goes through the gap that has just emptied.
-- **Out at the Steps** the car comes up under the furnace's glass for the last 800 m, by the plates' rule.
+- **Out at the Steps** the furnace's glass sweeps the first 250 m after the Steps, by the plates' rule.
 - What the player does: read the mist, time the bridge, then one dash in the open.
 
 **The East Road (Kyle's 5).** By slice 6b a burning fence wakes its rider, who comes out through it. Kyle saw nobody, and
@@ -1007,6 +1005,47 @@ patch."), under 40 50. The flamethrower is kept either way, as now.
 
 **Job 4, Slow Ride,** is designed in the next section. Its lead-up is already in: Big Bess is met in job 1.
 
+## Slice 8 result (Codex built it; Claude designed, ruled and reviewed; 17 November 2026, night): merged, hidden
+
+**In:** the yard's brazier fills the pot to 100 at every stop and a wayside brazier lifts it to 60 once; a dead pot is
+told the nearest fire; Moss greets the car at Big Bess. The furnace's glass walks a forty-second round on the plates
+and past the Steps, "SEEN" rises only in its light and in the watch's sight, and at eight seconds the horn sends two
+riders who are lost after five seconds out of their sight and may come again. Two salt riders wait at a lean-to on the
+pan, see the pot at 700 m, steer to cut the car off and turn home 650 m from the Ridge. The river bed cools at the plain
+rate outside mist and five times inside it, and ash falls through three openings under the Girder Bridge in turn.
+
+**What changed from the design:** the salt riders give up at the Ridge and not at the Pipe (the road crosses the Pipe
+before the pan; Claude's mistake, found by Codex). The glass covers the first 250 m after the Steps, which is all the
+watch sees there. The cure for the sinking (part E) is not in: three ways of drawing creased ground finer each cost too
+much (up to a quarter of a second to place the ground and 20 ms a move in the Breaks, where nearly every cell has a
+crease). It moves to slice 10 with another cure: what stands on the land is drawn at the drawn ground.
+
+**Review:** one independent Codex review found five faults (salt riders that could start again after going home, a
+rider that could be stuck going home, mist that followed the driver and not the pot, SEEN that ran past eight, a removed
+check of the riders' descent). All five are cured, each with a check; Claude read the cures.
+
+**Changed assertions, reviewed by Claude (rule 18); none is loosened:**
+- The scoop's fixed +25 becomes the yard's fill to 100 and a wayside fill to 60 once: the design's part A.
+- The furnace's "more than 8 seconds in sight" becomes "8 seconds in the light", with the count falling outside it,
+  riders lost after 5 seconds out of their own sight (was 10 of the watch's), and a second pursuit allowed: part B.
+- The bed's cold factor 2 becomes 1 outside mist and 5 inside; the Wash-stop drive's fire band moved 35-to-37, then
+  7-to-9 after A, then 14-to-15 after D (measured 14.5): the same driver, new rules, the band no wider.
+- Waiting actors 2 become 4 (the salt pair). The salt road's proof drive, unchanged, is now rammed six times and
+  arrives with the pot out, where it arrived with 30 to 70. Kept as a check of contact and of the outage. That the salt
+  way can be finished is proved by rule (a line 900 m north of the lean-to is never seen) and is Claude's to drive.
+- Mist and lean-to places are checked against the moved river and the moved way exactly, in place of the straight-share
+  rule that fits places on a line. The pre-P4 sound hash leaves out the two new cues and is itself unchanged.
+
+**Checks:** Codex's lane tiers (the whole lane, then the files of the later parts and of the cures: 69 of 69 on the
+last), replay fingerprints (297 and 12) and world signatures (63) unchanged, the Easy drive 10 of 10. At the merge:
+`npm run build` and the browser scenario `everburn-job1` (20 pictures, no errors) on the merged result.
+
+**Not done, Claude's:** the four new scenario pictures do not show their subjects (the camera stays behind the car), so
+the looks are judged in the hand drive. The plain light, mist, ash and lean-to are to be redrawn. Every way is to be
+driven by hand with the sound on, the salt road first, before Kyle tries it.
+
+**Sound:** new `world.salt.horn` and `world.bridge.ash`, from the bank's recipes.
+
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
 Kyle asked on 17 November for the story's next pieces. This is the fourth: the gas for the forge. Jobs 2 and 3 left the
@@ -1070,5 +1109,61 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 8D2 uses the opening from the western deck abutment to the first pier, then the two openings between piers, in that order. The outer eastern bank stays clear. This gives the three ash falls without moving the bridge's existing supports. Ash tests and damage use the loaded car, including when the driver has stepped out.
+
+- Changed assertion for Claude's written review: `test-scablands-size` applied straight-share displacement to new `bed-mist-*` positions when Tin Town moved. The bed is a curve, so its changed tangent turns each sheet's side offset. Replace that assumption only for mist with checks that its centre lies exactly on the moved river at the prescribed Wash-to-Steps distance, its tangent matches that river segment, and its seeded side stays unchanged. No tolerance is widened and no mist is skipped.
+
+- The mist placement check also allows the sheet count to change with the river's length, while checking every new sheet is 30 to 50 m long and the aggregate still covers exactly 29% of the bed. All other named-position membership checks stay exact. The pre-P4 sound hash excludes only the new `world.bridge.ash` cue, just as it excludes this job's earlier new cues; the old hash stays `df5cf72de6db8a8f50273c78ae0e6dd349b6ed0ae32ff1ad37627ddbc8a725ba`.
+
+- Slice 8D2 uses three openings in deck order: the negative end's abutment to the first pier, then the two openings between piers. The fourth opening at the positive bank stays clear. Three piers give two inner openings, so this keeps the existing bridge and uses one bank opening rather than adding or moving a pier. The same rectangles drive the ash drawing and its cost.
+- Slice 8D3 needs a land decision. The final 800 m of the Steps-to-Tin Town approach is 3,014 to 3,813 m from the furnace watch, whose sight range is 1,400 m. Nine probes at 100 m spacing were all hidden even with a temporary 5,000 m sight range. Choose the intended 800 m stretch, or change the watch/land; extending the light alone cannot make the same SEEN rule expose the car there. No sight rule was changed.
+- Slice 8E reached its explicit cost stop. For yard, salt (2690,-2445), salt (2926,-2529), salt (3255,-2639), and the Breaks hill at `dead-mall` offset (-439,-1060), first-placement height calls before/after were 3721/36121, 5926/55855, 7396/55144, 9601/52583, 3721/91687. One-cell move calls were 61/601, 208/917, 208/721, 208/721, 61/1189. Fine cells before/after were 0/0, 45/411, 75/402, 120/358, 0/1134. First placement milliseconds before/after were 28/162, 48/311, 46/293, 52/260, 24/450. All salt windows and the Breaks exceeded the permitted extra 150 ms. The trial was removed; Claude must decide whether to accept the cost or change the cure. The ground assertion remains pending with that cure.
+
+- Slice 8C cannot meet the race-to-the-Pipe proof on the current way. From the yard the Salt Road crosses the Pipe before entering the pan, then continues by the Ridge to Tin Town. The pan is on the Pipe's far side, as `groundAreas` says. A post in the middle of that pan cannot catch an outbound car before a crossing it has already passed. Claude must choose a changed way or a different finish for this chase. Salt actor, lean-to and horn work waits; the pure interception rules stay ready. Slice 8D continues.
+
+- Slice 8A: the middle-screen outage caption names the nearest of all three fires, including undiscovered fires. The small chip still uses map knowledge as before.
+- Slice 8A: the repeatable relights from slice 7 stay. An out pot gets 100 at the yard or 60 on the way; relighting leaves a roadside fire's separate one-time scoop available. Moss can greet the car before pickup too.
+
 - A crossing can reveal its way from within 400 m with a clear line of sight, matching brazier discovery. Claude should review the distance during the drive.
 - Slice 7: Tin Town's door keeps its 20 m car approach trigger. It swings shut when the car leaves that area and opens on return. Its leaf stays solid at its drawn position throughout the 1.5-second swing. The existing gate cue sounds once when each swing starts.
+
+- Slice 8C follows the ruled 400 m south offset at the way's 3.0 km point. Its exact current position is (2004,-1795); the ruling's approximate (1851,-2166) lies on the way itself. The named way and offset govern placement.
+
+## Slice 8E cheaper cure trial, 17 November 2026
+The corner test is pure and cached by height function and grid. The window reuses its corners and one outer ring. Nine interior heights confirm a candidate; four divisions reuse them, eight divisions cover errors above 0.6 m. Scarps keep eight divisions. Refresh clears the caches. Threshold 0.4 m is chosen: neither 0.4 nor 0.2 misses a confirmed cell on the four way lines. Across the full five windows, misses at 0.4 / 0.2 are yard 0/0, salt1 0/0, salt2 0/0, salt3 0/0, Breaks 3/0.
+
+Measured seven placements and one-cell moves for each version, reporting median milliseconds after warming the land. Heights include the scene's river-depth correction. Fine counts are scarp / crease4 / crease8; before has only scarps. Places: yard; salt1 (2690,-2445); salt2 (2926,-2529); salt3 (3255,-2639); Breaks at dead-mall offset (-439,-1060).
+
+| Place | First heights before/after | Move heights before/after | First ms before/after | Move ms before/after | First fine before/after | Move fine before/after |
+| --- | --- | --- | --- | --- | --- | --- |
+| Yard | 3721/3965 | 61/63 | 16.63/29.51 | 0.46/3.02 | 0 / 0,0,0 | 0 / 0,0,0 |
+| Salt1 | 5926/15731 | 208/331 | 33.55/103.09 | 2.55/7.79 | 45 / 45,313,53 | 48 / 48,316,54 |
+| Salt2 | 7396/17420 | 208/228 | 41.93/112.09 | 2.69/7.55 | 75 / 75,262,65 | 78 / 78,262,65 |
+| Salt3 | 9601/18132 | 208/282 | 52.98/116.18 | 3.53/8.42 | 120 / 120,175,63 | 123 / 123,172,62 |
+| Breaks | 3721/30562 | 61/655 | 19.32/184.59 | 0.47/12.84 | 0 / 0,1036,95 | 0 / 0,1039,99 |
+
+**Stopped at the ruled cost gate.** All moves exceed the extra 2 ms limit. All three salt placements exceed the extra 60 ms limit, and the Breaks exceeds 150 ms. The code is kept in a commit marked trial. The ground survey remains a report, as Claude required measurement before the assertion. Claude must change the cost allowance or choose the next repair. This supersedes the earlier removed-trial stop; C and D3 are resolved by the evening rulings.
+
+### Slice 8 closing checks and remaining trial faults
+On 5a65f7af9 the lane since fa4e75e50 ran all 138 suites: 119 passed and 19 failed. All sixteen FFmpeg permission failures passed focused reruns with permission. The final salt-placement/initial-visibility fix tree passed 37 of its 39 affected suites. Its two failures are the unchanged size wall-clock limit and the scarp test, which walks fine meshes in blocks of 81 vertices and does not yet understand the trial's 25-vertex four-division cells. That assertion is not changed in a stopped trial. Mabel's check also fails: 100 cutting steps sample 1,305,214 heights against fewer than 6,000. Camera clearance and Scablands things pass with their existing tolerances. Replays remain 297 ordinary and 12 combat; all 63 world composition checks stay exact. Build completes in 2.53 seconds, with the existing large-chunk and dynamic-import warnings.
+The unasserted ground survey still finds four salt-way gaps above 0.3 m: (2916,-2520.04) 0.350 m; (2686.43,-2449.97) 0.368 m; (2691.17,-2451.55) 0.310 m; (2933.08,-2532.05) 0.317 m. Accepting the cost alone would not complete E. Claude must choose its next repair. No assertion or tolerance is changed for E.
+Changed assertion for Claude's review: the three new salt positions do not move by a straight share when Tin Town moves, because the way bends and the south offset turns. Their movement check now derives the moved way, its 3 km point, its normal and the 400 m offset, then checks both rider offsets with the same existing position comparison. All older position checks stay unchanged.
+The browser handover has the four requested light, lean-to/riders, mist and ash views; all 28 page and wait expressions parse in Node. Chrome was not started. Easy Hot Delivery finishes all ten seeds, each with 25.985185 fire and five rams. Bed drives stay unchanged at 14.509091 and 21.227953 fire, zero rams. The unchanged slower salt-road drive now meets six rams and arrives out; this is a changed outcome for review, not a changed driver. No switch or saved field changed.
+
+
+## Slice 8E third cure trial, 17 November 2026
+The third ruling is implemented as a trial: only the 24 by 24 near block searches for creases, all confirmed creases use eight divisions, distant scarps retain their former detail, and unchanged fine-cell sets keep their mesh. Standalone cell queries memoize the corner test with at most sixteen corner heights, in a bounded cache. Refresh invalidates touched answers. Rebuilt geometry forgets its old bounds so ray tests see the new mesh.
+Seven measured runs after one warm-up use the same land height plus river-depth correction as the scene. The baseline is before trial c53a1743f. Fine counts below are scarp / crease; moves are one cell east. No other heavy job ran in this lane.
+
+| Place | First calls before/after | Move calls before/after | First ms before/after | Move ms before/after | First fine before/after | Move fine before/after |
+| --- | --- | --- | --- | --- | --- | --- |
+| Yard | 3721/3721 | 61/61 | 17.22/19.88 | .44/2.24 | 0 / 0,0 | 0 / 0,0 |
+| Salt1 | 5926/10049 | 208/828 | 33.15/59.47 | 2.13/8.39 | 45 / 45,61 | 48 / 48,72 |
+| Salt2 | 7396/11644 | 208/275 | 40.96/68.73 | 2.71/5.62 | 75 / 75,63 | 78 / 78,60 |
+| Salt3 | 9601/11739 | 208/208 | 52.23/69.00 | 3.51/5.47 | 120 / 120,35 | 123 / 123,33 |
+| Breaks | 3721/23664 | 61/494 | 18.26/251.59 | .47/20.78 | 0 / 0,371 | 0 / 0,368 |
+
+**Stopped under the third ruling.** First placement exceeds the extra 25 ms at Salt1, Salt2 and the Breaks. Every move exceeds the extra 1.5 ms. Mabel's unchanged check fails at 41,357 calls, against fewer than 6,000. The caller is createDigNearGround's digUnderlayHeight during 100 cutting steps and changed-bounds refreshes: 266 distinct cells, 5,462 cell searches, 17 distinct fine cells and 496 fine-cell fills after initial placement. These counts were measured in a temporary probe; no assertion was changed. Claude must choose another method or change the cost and Mabel requirements. The survey remains a report because the cost gate did not pass.
+The hill/mesa mesh comparison in test-scablands-things now moves the window when a sample lies outside its near block, as the ruling permits. Every original point and tolerance stays. Parts A to D, switches, saves, world data and simulation remain untouched.
+
+The E trial is withdrawn to its own card under Claude's fourth ruling. Its trial code remains in commits c53a1743f, 855a158c7 and 3b006d41d of this branch's history.

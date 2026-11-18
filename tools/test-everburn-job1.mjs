@@ -11,14 +11,14 @@ import {createCombatHud} from '../src/combat-hud.js';
 import {arenaPauseScreen} from '../src/screen-arena.js';
 import {WEAPON_IDS} from '../src/weapon-upgrades.js';
 import {brazierSpotsFor, createBraziers, createCinderFigure} from '../src/world/ember-pot.js';
-import {LAND} from '../src/world/scablands-names.js';
+import {LAND, createLand, movedTable} from '../src/world/scablands-names.js';
 import {ROAD_NET, roadPointFrom} from '../src/world/scablands-road.js';
-import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
+import {createKnowledge, jobFacts, learn, drawSmallMap, drawBigMap, drawGlassRing, getLandPicture, smallView, wholeView, toScreen} from '../src/world/scablands-map.js';
 import {sees, HOT_DELIVERY_WAYS, WATCH, routeFor, nearestOnLine, sliceLine, sampleLine, pathLength} from '../src/world/scablands-ways.js';
-import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
+import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsFloorsAt} from '../src/world/scablands-ground.js';
 import {pushOutOfSolids, createJobSolidGrid, createSolidGrid, SCABLANDS_SOLIDS} from '../src/world/scablands-solids.js';
 import {FORGE, forgePlan, createForge} from '../src/world/forge-look.js';
-import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS} from '../src/world/scablands-regions.js';
+import {riverDepthAt, scablandsDriveAt, stepsWayFor, GROUND_AREAS, RIVER_LAND} from '../src/world/scablands-regions.js';
 import {createWorldJob, initializeWorldJob, stepWorldJob, worldJobHitTargets, roadRiderSight} from '../src/arena/modes/world-job.js';
 import {startFlamethrower, stepFlamethrowers, flameHitsSegment} from '../src/arsenal/flamethrower.js';
 import {Course} from '../src/course.js';
@@ -26,9 +26,15 @@ import {SCABLANDS_VENUE} from '../src/world/scablands.js';
 import {createScablandsScene} from '../src/world/scablands-scene.js';
 import {animateScene, syncScene} from '../src/scene-systems.js';
 import {yardPlan} from '../src/world/scablands-yard-look.js';
-import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, furnaceSighting, stepSkylineSight} from '../src/world/jobs/furnace-sightings.js';
+import {FURNACE_SKYLINE, FURNACE_PATIENCE_SECONDS, FURNACE_GLASS, furnaceSighting, stepSkylineSight,
+  furnaceGlassRound, hotDeliveryGlass, glassOnRound, stepGlassSeen, glassWarningDue, stepGlassPursuit, glassPursuitReady, beginGlassPursuit} from '../src/world/jobs/furnace-sightings.js';
 import {SOUND_BANK} from '../src/sound-bank.js';
+import {BRIDGE_ASH, bridgeAshFall, stepBridgeAsh, EMBER_RULE} from '../src/world/jobs/ember-rule.js';
+import {SALT_RIDERS, saltIntercept, saltRiderSpeed, saltRidersTurnHome,
+  BED_MIST, bedMistFor, bedColdFactor, inBedMist, bedMistCorners} from '../src/world/jobs/ember-rule.js';
 import {Duel} from '../src/game.js';
+import {arenaFloorSpeed} from '../src/arena/venues.js';
+import {CARS} from '../src/config.js';
 import {scablandsLanded} from '../src/sim-scablands.js';
 import {GROUND} from '../src/world/scablands-ground-rules.js';
 import {sightStretches, coverStretches, separatedCover, platesCoverLine, bedStepsRoute, driveToCinder, driveThroughYardGate, driveAlongRoad, drivePlatesShelter, drivePlatesRoughGround, driveMeasuredStretches, driveToBrazier, driveToForge} from './everburn-job1-drive.mjs';
@@ -42,6 +48,527 @@ import {markEmberRead, markEmberJob, EMBER_JOBS} from '../src/story/ember-save.j
 import {emberStoryProps} from '../src/story/ember-road.js';
 import {emberWallMarkup, emberNextUp} from '../src/story/ember-ui.js';
 import {arenaResultsScreen} from '../src/screen-arena.js';
+
+// Bridge ash follows the carry clock and charges once per fall, on the bed only.
+{
+  const plan = EVERBURN_JOBS[0].steps[0].bridgeAsh;
+  assert.equal(plan.gaps.length, 3);
+  assert.ok(SOUND_BANK['world.bridge.ash'].layers.length);
+  const away = {x:plan.x - plan.exitX * 301, z:plan.z - plan.exitZ * 301};
+  const facts = {car:away, loaded:true, inBed:true};
+  assert.equal(stepBridgeAsh({}, plan, facts, 1).state.started, undefined);
+  assert.equal(stepBridgeAsh({}, plan, {...facts, car:plan, inBed:false}, 1).state.started, undefined);
+  assert.equal(stepBridgeAsh({}, plan, {...facts, car:plan, loaded:false}, 1).state.started, undefined);
+  const car = plan.gaps[0];
+  const first = stepBridgeAsh({}, plan, {...facts, car}, .1);
+  assert.equal(first.loss, 20);
+  assert.equal(first.events[0].text, "Rook: They're on the bridge with ash. Watch the gaps and go through the one that has just emptied.");
+  assert.equal(first.events.filter(event => event.type === 'bridgeAshFall').length, 1);
+  assert.equal(stepBridgeAsh(first.state, plan, {...facts, car}, .1).loss, 0);
+  assert.equal(stepBridgeAsh(first.state, plan, {...facts, car, inBed:false}, .1).loss, 0);
+  for (let fall = 0; fall < 7; fall++) {
+    const state = {started:true, elapsed:fall * BRIDGE_ASH.fallSeconds};
+    assert.equal(bridgeAshFall(state, plan).fall, fall);
+    const under = plan.gaps[fall % 3];
+    const hit = stepBridgeAsh(state, plan, {...facts, car:under}, .01);
+    assert.equal(hit.loss, 20);
+    assert.equal(stepBridgeAsh(hit.state, plan, {...facts, car:under}, .01).loss, 0);
+    const other = plan.gaps[(fall + 1) % 3];
+    assert.equal(stepBridgeAsh(state, plan, {...facts, car:other}, .01).loss, 0);
+  }
+  const boundary = stepBridgeAsh({started:true, elapsed:1.9}, plan, {...facts, car:plan.gaps[1]}, .1);
+  assert.equal(boundary.events.filter(event => event.type === 'bridgeAshFall').length, 1);
+  const beyond = {x:plan.x + plan.exitX * 100.01, z:plan.z + plan.exitZ * 100.01};
+  const done = stepBridgeAsh(first.state, plan, {...facts, car:beyond}, .1);
+  assert.equal(done.state.done, true);
+  assert.equal(bridgeAshFall(done.state, plan), null);
+  assert.equal(stepBridgeAsh(done.state, plan, {...facts, car}, 1).loss, 0);
+  const step = {ember:{...EMBER_RULE, coldPerSecond:0}, bridgeAsh:plan,
+    destination:{x:1e6, z:1e6}};
+  const view = {player:{position:plan.gaps[1]}, carPosition:plan.gaps[0],
+    groundRegion:'road', carGroundRegion:'river-bed', onFoot:true};
+  const loaded = {loaded:true, ember:100};
+  const hit = stepCarry(step, loaded, view, .1);
+  assert.equal(hit.state.ember, 80, 'ash takes twenty from the loaded car while its driver is elsewhere');
+  assert.equal(stepCarry(step, hit.state, view, .1).state.ember, 80, 'the same fall costs only once');
+  assert.equal(stepCarry(step, loaded, {...view, carGroundRegion:'road'}, .1).state.ember, 100,
+    'the bed warning cannot start from the car on the deck');
+  const empty = stepCarry(step, {...hit.state, ember:0, out:true}, view, 1);
+  assert.ok(empty.state.bridgeAsh.elapsed > hit.state.bridgeAsh.elapsed, 'an out pot does not stop the ash clock');
+}
+
+// Cold is a place the player can steer around. The land seed fixes the patches.
+{
+  const patches = EVERBURN_JOBS[0].steps[0].bedMist;
+  assert.deepEqual(patches, bedMistFor(RIVER_LAND));
+  assert.notDeepEqual(patches, bedMistFor(RIVER_LAND, BED_MIST.seed + 1));
+  const span = Math.abs(RIVER_LAND.crossings.find(c => c.id === 'the-wash').along -
+    RIVER_LAND.crossings.find(c => c.id === 'the-steps').along);
+  const covered = patches.reduce((sum, patch) => sum + patch.length, 0) / span;
+  assert.ok(covered >= .25 && covered <= 1 / 3, 'a quarter to a third of the bed has mist');
+  for (const patch of patches) {
+    assert.ok(patch.length >= 30 && patch.length <= 50);
+    assert.equal(scablandsDriveAt(patch.x, patch.z).id, 'river-bed');
+    assert.equal(bedColdFactor(patch, patches), 5);
+    assert.ok(inBedMist(patch, patch));
+    assert.equal(bedMistCorners(patch).length, 4);
+    // A five-metre lane on the opposite side remains dry and free of solids.
+    for (let along = -patch.length / 2; along <= patch.length / 2; along += 1)
+      for (const across of [-2.5, 0, 2.5]) {
+        const offset = -patch.offset + across;
+        const centre = {x:patch.x - patch.tz * patch.offset, z:patch.z + patch.tx * patch.offset};
+        const point = {x:centre.x + patch.tx * along + patch.tz * offset,
+          z:centre.z + patch.tz * along - patch.tx * offset};
+        assert.equal(bedColdFactor(point, patches), 1, `${patch.id} leaves a dry lane`);
+        assert.equal(scablandsDriveAt(point.x, point.z).id, 'river-bed');
+        const pushed = pushOutOfSolids(point.x, point.z, .01, undefined,
+          scablandsSurfaceHeightAt(point.x, point.z));
+        assert.equal(pushed.hit, null, `${patch.id} leaves a solid-free lane`);
+      }
+    const step = EVERBURN_JOBS[0].steps[0];
+    const carry = (point, region = 'river-bed') => stepCarry(step, {loaded:true, ember:100},
+      {player:{position:point}, groundRegion:region}, 1).state.ember;
+    assert.ok(Math.abs((100 - carry(patch)) / step.ember.coldPerSecond - 5) < 1e-9);
+    assert.ok(Math.abs((100 - carry(patch, 'road')) / step.ember.coldPerSecond - 1) < 1e-9,
+      'a deck above mist does not cool like the bed');
+  }
+}
+
+// Cold follows the loaded car when its driver steps out or crosses a region boundary.
+{
+  const step = EVERBURN_JOBS[0].steps[0], mist = step.bedMist[0];
+  const dry = {x:LAND.yard.x, z:LAND.yard.z};
+  const loss = (carPosition, carGroundRegion, driver, groundRegion) => 100 - stepCarry(step,
+    {loaded:true, ember:100}, {carPosition, carGroundRegion, player:{position:driver},
+      groundRegion, onFoot:true, speedKmh:0}, 1).state.ember;
+  assert.ok(Math.abs(loss(mist, 'river-bed', dry, 'road') - step.ember.coldPerSecond * 5) < 1e-9,
+    'a car in mist stays cold while its driver stands outside');
+  assert.ok(Math.abs(loss(dry, 'road', mist, 'river-bed') - step.ember.coldPerSecond) < 1e-9,
+    'a driver in mist cannot chill a car on the road');
+  assert.ok(Math.abs(loss(dry, 'salt-pan', mist, 'river-bed') - step.ember.coldPerSecond * 1.5) < 1e-9,
+    'the pan factor follows the car region');
+  assert.ok(Math.abs(loss(dry, 'road', dry, 'salt-pan') - step.ember.coldPerSecond) < 1e-9,
+    'a driver on the pan cannot chill a car on the road');
+}
+
+// Salt riders lead a moving car, rather than steering to where it was.
+{
+  const rider = {x:0, z:0};
+  const cases = [
+    {car:{x:100, z:0}, velocity:{x:0, z:10}, speed:20},
+    {car:{x:100, z:0}, velocity:{x:-10, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:-20, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:0, z:0}, speed:10},
+    {car:{x:100, z:0}, velocity:{x:9.999999999, z:0}, speed:10},
+  ];
+  for (const {car, velocity, speed} of cases) {
+    const aim = saltIntercept(rider, car, velocity, speed);
+    assert.ok(aim.seconds >= 0 && aim.seconds !== null);
+    assert.ok(Math.abs(Math.hypot(aim.x, aim.z) - speed * aim.seconds) <
+      Math.max(1, speed * aim.seconds) * 1e-12, 'both arrive at the same point at the same time');
+    const shift = {x:731, z:-948};
+    const moved = saltIntercept(shift, {x:car.x + shift.x, z:car.z + shift.z}, velocity, speed);
+    assert.equal(moved.seconds, aim.seconds, 'the rule follows the land, without a fixed origin');
+    assert.ok(Math.abs(moved.x - shift.x - aim.x) < 1e-9);
+    assert.ok(Math.abs(moved.z - shift.z - aim.z) < 1e-9);
+  }
+  assert.equal(saltIntercept(rider, {x:100, z:0}, {x:-20, z:0}, 10).seconds,
+    100 / 30, 'choose the first of two future meetings');
+  for (const velocity of [{x:10, z:0}, {x:20, z:0}, {x:0, z:20}]) {
+    assert.deepEqual(saltIntercept(rider, {x:100, z:0}, velocity, 10),
+      {x:100, z:0, seconds:null}, 'without a future meeting chase the current place');
+  }
+  assert.deepEqual(saltIntercept(rider, {x:100, z:0}, {x:0, z:0}, 0),
+    {x:100, z:0, seconds:null});
+  assert.equal(saltIntercept(rider, rider, {x:20, z:0}, 10).seconds, 0);
+  for (const top of [40, 80, 120]) {
+    assert.equal(saltRiderSpeed(top, 'medium'), top / 3.6);
+    assert.equal(saltRiderSpeed(top, 'hard'), top / 3.6);
+    assert.equal(saltRiderSpeed(top, 'easy'), (top - 5) / 3.6);
+  }
+  assert.equal(saltRiderSpeed(3, 'easy'), 0);
+  const chase = {car:{x:1000, z:0}, rider:{x:1200, z:0}, ridge:rider,
+    onPan:true, chaseSeconds:119.9};
+  assert.equal(saltRidersTurnHome(chase), false);
+  assert.equal(saltRidersTurnHome({...chase, onPan:false}), true);
+  assert.equal(saltRidersTurnHome({...chase, chaseSeconds:SALT_RIDERS.chaseSeconds}), true);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:650, z:0}}), true);
+  assert.equal(saltRidersTurnHome({...chase, rider:{x:0, z:650}}), true);
+  assert.equal(saltRidersTurnHome({...chase, car:{x:650.01, z:0}}), false);
+}
+
+// The two salt lines are rule probes at fixed speed, with no steering driver.
+{
+  const step = EVERBURN_JOBS[0].steps[0], post = step.saltPost.position;
+  const route = routeFor(HOT_DELIVERY_WAYS[2].legs, {start:LAND.yard, destination:LAND.at('tin-town')});
+  const at = along => sliceLine(route, along, along + .01)[0];
+  const mid = at(3000), ahead = at(3001), length = Math.hypot(ahead.x - mid.x, ahead.z - mid.z);
+  const south = {x:-(ahead.z - mid.z) / length, z:(ahead.x - mid.x) / length};
+  assert.ok(Math.abs(Math.hypot(post.x - mid.x, post.z - mid.z) - 400) < 1e-8);
+  assert.equal(scablandsDriveAt(post.x, post.z).id, 'salt-pan');
+  assert.equal(pushOutOfSolids(post.x, post.z, 5).hit, null);
+  assert.ok(SOUND_BANK['world.salt.horn'].layers.length);
+  for (const difficulty of ['medium', 'easy']) for (const wide of [false, true]) {
+    const floor = arenaFloorSpeed(SCABLANDS_VENUE.scrapdome, CARS.falcone_f42.topSpeed);
+    const speed = floor * (wide ? 1.25 : 1) * 1.609344 / 3.6;
+    const riderSpeed = saltRiderSpeed(floor * 1.25 * 1.609344, difficulty);
+    const start = at(2400);
+    const line = wide ? [start, {x:start.x - south.x * 500, z:start.z - south.z * 500}, {x:mid.x - south.x * 500, z:mid.z - south.z * 500},
+      ...[4000, 5000, 6000].map(along => {const p = at(along); return {x:p.x - south.x * 500, z:p.z - south.z * 500};})] : sliceLine(route, 2400, 6500);
+    const riders = step.saltRiders.map(actor => ({...actor.start.position}));
+    let seen = null, caught = null, lead = Infinity, finish = null;
+    const dt = .025;
+    for (let t = 0; t < 120 && speed * t < pathLength(line) - 1; t += dt) {
+      const car = sliceLine(line, speed * t, speed * t + 1)[0];
+      const next = sliceLine(line, speed * t + 1, speed * t + 2)[0];
+      const span = Math.hypot(next.x - car.x, next.z - car.z);
+      if (Math.hypot(car.x - step.saltRidge.x, car.z - step.saltRidge.z) <= 650) {
+        finish = t; lead = Math.min(...riders.map(rider => Math.hypot(car.x - rider.x, car.z - rider.z) / riderSpeed)); break;
+      }
+      if (seen === null && riders.some(rider => sees(rider, car, {heightAt:scablandsSurfaceHeightAt,
+          eye:SALT_RIDERS.eye, target:1.5, step:SALT_RIDERS.sightStep, range:SALT_RIDERS.sightMetres})))
+        seen = {seconds:t, along:nearestOnLine(route, car.x, car.z).along};
+      if (seen !== null) for (const rider of riders) {
+        const aim = saltIntercept(rider, car, {x:(next.x - car.x) / span * speed, z:(next.z - car.z) / span * speed}, riderSpeed);
+        const distance = Math.hypot(aim.x - rider.x, aim.z - rider.z), travel = Math.min(distance, riderSpeed * dt);
+        rider.x += (aim.x - rider.x) / (distance || 1) * travel;
+        rider.z += (aim.z - rider.z) / (distance || 1) * travel;
+        if (caught === null && Math.hypot(car.x - rider.x, car.z - rider.z) <= 3)
+          caught = {seconds:t, along:nearestOnLine(route, car.x, car.z).along};
+      }
+    }
+    console.log('Salt rule proof:', JSON.stringify({difficulty, wide, seen, caught, finish, lead}));
+    assert.ok(finish !== null, 'the line reaches the Ridge boundary');
+    if (wide) assert.ok(seen === null || lead >= 4, 'the wide line has four seconds or stays unseen');
+    else assert.ok(caught !== null, 'the road line is caught before the Ridge boundary');
+  }
+}
+
+// The salt horn reveals both actors; each chase boundary sends both home.
+for (const reason of ['ridge-car', 'ridge-rider', 'off-pan', 'time']) {
+  const definition = EVERBURN_JOBS[0], step = definition.steps[0];
+  const world = createWorldJob(definition), events = [], captions = [];
+  let car = {...step.saltPost.position, z:step.saltPost.position.z - 50};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{mode:'world-job',worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, car:CARS.falcone_f42, seed:19, course:{def:SCABLANDS_VENUE,
+    nearest:() => ({s:0, lateral:0}), at:() => ({heading:0}), worldAt:() => car},
+    emit:event => events.push(event), _storyCallout:line => captions.push(line)};
+  initializeWorldJob(duel, definition);
+  const map = () => worldJobMapData(duel.course, state).marks.filter(mark => mark.kind === 'rider');
+  world.job.stepState = {loaded:false, ember:100};
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltWarned, undefined);
+  assert.equal(map().length, 0);
+  world.job.stepState.loaded = true;
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltWarned, true);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.salt.horn').length, 1);
+  assert.ok(captions.includes("Rook: Salt riders. They won't climb the Ridge. Get to it first."));
+  assert.equal(map().length, 2);
+  const riders = world.actors.filter(actor => actor.id.startsWith('salt-rider-'));
+  assert.ok(riders.every(actor => actor.pursuing && actor.renderCar === 'dusthawk_rally'));
+  if (reason === 'ridge-car') car = {...step.saltRidge};
+  if (reason === 'ridge-rider') riders[0].position = {...step.saltRidge, y:0};
+  if (reason === 'off-pan') car = {...LAND.yard};
+  if (reason === 'time') world.saltChaseSeconds = SALT_RIDERS.chaseSeconds;
+  stepWorldJob(duel, 0);
+  assert.equal(world.saltDone, true, reason);
+  assert.ok(riders.every((actor, index) => !actor.pursuing && (actor.returningToPost ||
+    Math.hypot(actor.position.x - step.saltRiders[index].start.position.x,
+      actor.position.z - step.saltRiders[index].start.position.z) <= 1)), reason);
+  stepWorldJob(duel, 0);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.salt.horn').length, 1);
+  for (const [index, rider] of riders.entries()) rider.position = {...step.saltRiders[index].start.position};
+  car = {...step.saltPost.position};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  stepWorldJob(duel, .1);
+  const homes = riders.map(rider => ({...rider.position}));
+  for (let i = 0; i < 20; i++) stepWorldJob(duel, .1);
+  assert.ok(riders.every(rider => !rider.pursuing && rider.speed === 0), 'finished salt riders stay home');
+  assert.deepEqual(riders.map(rider => rider.position), homes, 'a nearby car cannot restart salt pursuit');
+}
+
+// A salt rider blocked on its way home parks after one second and stays done.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const car = {...definition.steps[0].saltPost.position};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0,lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.saltDone = true;
+  world.saltWarned = true;
+  const rider = world.actors.find(actor => actor.id === 'salt-rider-1');
+  const home = definition.steps[0].saltRiders[0].start.position;
+  rider.position = {...home, x:home.x + 30, y:scablandsSurfaceHeightAt(home.x + 30, home.z)};
+  const start = {...rider.position};
+  const wall = {id:'salt-return-wall', shape:'box', x:start.x - 11.3, z:start.z, y:start.y,
+    halfX:10, halfZ:10, heading:0, height:10, minY:start.y - 10, maxY:start.y + 10};
+  world.solidGrid = createJobSolidGrid(createSolidGrid([wall]));
+  rider.returningToPost = true;
+  for (let i = 0; i < 9; i++) stepWorldJob(duel, .1);
+  assert.equal(rider.returningToPost, true, 'the rider tries for a full second');
+  stepWorldJob(duel, .2);
+  assert.equal(rider.returningToPost, false, 'one second against a solid ends the salt return');
+  assert.equal(rider.speed, 0);
+  const parked = {...rider.position};
+  for (let i = 0; i < 60; i++) stepWorldJob(duel, .1);
+  assert.deepEqual(rider.position, parked, 'the blocked salt rider stays where it stopped');
+  assert.equal(rider.pursuing, false);
+}
+
+// The job counts light exposure, not all time in the watch's view.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const captions = [], events = [];
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  let car = {...hotDeliveryGlass(world)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event),
+    _storyCallout:text => captions.push(text)};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  const tick = dt => {world.sightStep = 0; stepWorldJob(duel, dt);};
+  const line = "Rook: That light is the furnace's glass. Stay out of it, or get behind rock.";
+  assert.equal(scablandsDriveAt(car.x, car.z).id, 'scab-plates');
+  tick(2);
+  assert.equal(world.skylineSight.seenSeconds, 2);
+  assert.equal(captions.filter(text => text === line).length, 1);
+  tick(1);
+  assert.equal(captions.filter(text => text === line).length, 1, 'Rook says the warning once');
+  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  tick(1);
+  assert.equal(world.skylineSight.visible, true);
+  assert.equal(world.skylineSight.seenSeconds, 2, 'clear sight outside the light drains SEEN');
+  tick(10);
+  assert.equal(world.skylineSight.seenSeconds, 0);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 0,
+    'ten seconds in view outside the light cannot sound the horn');
+}
+
+// The ground and map read the same circle without advancing the job clock.
+{
+  const world = createWorldJob(EVERBURN_JOBS[0]);
+  world.clockSec = 7;
+  const before = JSON.stringify(world), glass = hotDeliveryGlass(world);
+  assert.deepEqual(glass, glassOnRound(furnaceGlassRound(), 7));
+  assert.equal(JSON.stringify(world), before, 'reading the light leaves the job unchanged');
+  const view = smallView(glass), arcs = [];
+  const ctx = {save(){}, restore(){}, beginPath(){}, stroke(){}, arc(...args){arcs.push(args);}};
+  drawGlassRing(ctx, view, glass);
+  const at = toScreen(view, glass.x, glass.z);
+  assert.deepEqual(arcs[0], [at.x, at.y, glass.radius * view.scale, 0, Math.PI * 2]);
+  world.job.done = true;
+  assert.equal(hotDeliveryGlass(world), null);
+  drawGlassRing(ctx, view, null);
+  assert.equal(arcs.length, 1, 'a finished job draws no ring');
+  const scene = createScablandsScene(new Course(SCABLANDS_VENUE, 19),
+    {openMarks:[], loadAsset:async () => ({scene:new THREE.Group()})});
+  world.job.done = false;
+  const state = {arena:{mode:'world-job', worldJob:world}};
+  syncScene(scene.group, state);
+  const patch = scene.group.getObjectByName("The furnace's glass on the ground");
+  assert.equal(patch.visible, true);
+  const mist = scene.group.getObjectByName('Cold mist in the river bed');
+  assert.equal(mist.visible, true);
+  const ashColumn = scene.group.getObjectByName('Ash falling under the Girder Bridge');
+  assert.equal(ashColumn.visible, false);
+  world.job.stepState.bridgeAsh = {started:true, elapsed:2};
+  syncScene(scene.group, state);
+  assert.equal(ashColumn.visible, true);
+  const ashPlan = world.job.steps[0].bridgeAsh, ashGap = ashPlan.gaps[1], floors = [];
+  assert.equal(ashColumn.position.x, ashGap.x);
+  assert.equal(ashColumn.position.z, ashGap.z);
+  const floorCount = scablandsFloorsAt(ashGap.x, ashGap.z, floors);
+  assert.equal(ashColumn.position.y - ashColumn.scale.y / 2, floors[floorCount - 1],
+    'the ash reaches the bed below the deck');
+  const heldAsh = ashColumn.position.clone();
+  animateScene(scene.group, 200);
+  syncScene(scene.group, state);
+  assert.deepEqual(ashColumn.position, heldAsh, 'drawing cannot advance the fall');
+  assert.equal(mist.children.length, world.job.steps[0].bedMist.length);
+  for (const [index, sheet] of mist.children.entries()) {
+    const corners = bedMistCorners(world.job.steps[0].bedMist[index]);
+    const vertices = sheet.geometry.attributes.position;
+    for (let i = 0; i < corners.length; i++) {
+      assert.ok(Math.abs(vertices.getX(i) - corners[i].x) < .001);
+      assert.ok(Math.abs(vertices.getZ(i) - corners[i].z) < .001);
+      assert.ok(Math.abs(vertices.getY(i) - scene.group.userData.drawnGroundHeightAt(corners[i].x, corners[i].z) - BED_MIST.drawLift) < .001);
+    }
+  }
+  const vertices = patch.geometry.attributes.position;
+  for (let index = 0; index < vertices.count; index++) {
+    const x = vertices.getX(index), z = vertices.getZ(index);
+    assert.ok(Math.hypot(x - glass.x, z - glass.z) <= glass.radius + .001);
+    assert.ok(Math.abs(vertices.getY(index) - scene.group.userData.drawnGroundHeightAt(x, z) - FURNACE_GLASS.drawLift) < .001,
+      'the bright sheet follows the drawn ground');
+  }
+  const positions = vertices.array.slice();
+  animateScene(scene.group, 200);
+  syncScene(scene.group, state);
+  assert.deepEqual(vertices.array, positions, 'animation time cannot move the job light');
+  world.clockSec += 3;
+  syncScene(scene.group, state);
+  assert.notDeepEqual(vertices.array, positions, 'the job clock moves the sheet');
+  world.job.done = true;
+  syncScene(scene.group, state);
+  assert.equal(patch.visible, false);
+  assert.equal(mist.visible, false);
+  assert.equal(ashColumn.visible, false);
+  scene.dispose();
+}
+
+// The land round crosses both the direct way's exposed ground and the
+// cover-to-cover line's openings. This checks geometry, without driving.
+{
+  const round = furnaceGlassRound(), closed = [...round, round[0]];
+  for (const point of round) assert.ok(stepSkylineSight({}, point, 0).visible,
+    'the light turns on ground visible from the watch');
+  const moved = createLand(movedTable(LAND.table, 'tin-town', 100, 50));
+  const movedRound = furnaceGlassRound(moved);
+  assert.notDeepEqual(movedRound, round, 'the round follows the named land');
+  assert.deepEqual(movedRound, FURNACE_GLASS.roundMarks.map(mark =>
+    moved.between(mark.from, mark.to, mark.share, 0, -mark.north)));
+  const route = routeFor(HOT_DELIVERY_WAYS.find(way => way.id === 'scab-plates').legs,
+    {start:LAND.yard, destination:LAND.at('tin-town')});
+  for (const line of [route, platesCoverLine(route, -40)]) {
+    const samples = sampleLine(line, 2).filter(point => point.along <= 3600);
+    const visible = point => stepSkylineSight({}, point, 0).visible;
+    const exposed = samples.filter(visible);
+    for (const point of exposed) assert.ok(nearestOnLine(closed, point.x, point.z).distance <= FURNACE_GLASS.glassRadius,
+      `the light crosses exposed ground at ${point.along.toFixed(0)} m`);
+    const gaps = sightStretches(samples, point => visible(point) ? 'open' : 'hidden')
+      .filter(run => run.visibility === 'open');
+    assert.ok(gaps.length > 0, 'there is exposed ground to cross');
+    const widest = gaps.reduce((a, b) => b.to - b.from > a.to - a.from ? b : a);
+    const crossingSeconds = (widest.to - widest.from + 2) / (FURNACE_GLASS.crossingKmh / 3.6);
+    const gap = exposed.filter(point => point.along >= widest.from && point.along <= widest.to);
+    // Two rounds include any dark interval that crosses the clock's wrap.
+    const tick = .01;
+    let dark = 0, longestDark = 0;
+    for (let index = 0; index < FURNACE_GLASS.roundSeconds * 2 / tick; index++) {
+      const glass = glassOnRound(round, index * tick);
+      const lit = gap.some(point => Math.hypot(point.x - glass.x, point.z - glass.z) <= glass.radius);
+      dark = lit ? 0 : dark + tick;
+      longestDark = Math.max(longestDark, dark);
+    }
+    // Discount the two sample edges instead of claiming unmeasured time.
+    assert.ok(longestDark - 2 * tick >= crossingSeconds + FURNACE_GLASS.crossingSpareSeconds,
+      'the widest cover gap can be crossed between passes with a second to spare');
+    console.log(`Glass crossing: ${(widest.to - widest.from + 2).toFixed(0)} m, ${crossingSeconds.toFixed(2)} s at 50 km/h, ${(longestDark - 2 * tick).toFixed(2)} s clear`);
+  }
+}
+
+// Slice 8B's clock and detection rules need no graphics or scripted drive.
+{
+  const world = createWorldJob(EVERBURN_JOBS[0]);
+  const model = () => worldHudModel({worldJob:world}).seen;
+  assert.equal(model(), null, 'SEEN is hidden before the first light exposure');
+  world.skylineSight = {seenSeconds:0};
+  assert.equal(model(), null, 'an empty SEEN bar is hidden');
+  world.skylineSight.seenSeconds = 0.01;
+  assert.deepEqual(model(), {value:0.01, max:FURNACE_PATIENCE_SECONDS}, 'the first exposure shows SEEN');
+  world.skylineSight.seenSeconds = 4;
+  assert.deepEqual(model(), {value:4, max:FURNACE_PATIENCE_SECONDS});
+  world.skylineSight.seenSeconds = 12;
+  assert.deepEqual(model(), {value:8, max:FURNACE_PATIENCE_SECONDS}, 'the drawn bar stops at full');
+  assert.equal(world.skylineSight.seenSeconds, 12, 'drawing never changes the rule count');
+  world.job.done = true;
+  assert.equal(model(), null, 'finishing the job hides SEEN');
+  world.job.done = false;
+  world.settled = true;
+  assert.equal(model(), null, 'settling the job hides SEEN');
+  world.settled = false;
+  world.definition = EVERBURN_JOBS[2];
+  assert.equal(model(), null, 'another job has no Hot Delivery SEEN bar');
+}
+{
+  const riders = [{id:'furnace-rider-1'}, {id:'furnace-rider-2'}], state = {};
+  assert.equal(glassPursuitReady(state, riders), true);
+  beginGlassPursuit(state);
+  assert.equal(glassPursuitReady(state, riders), false, 'the horn cannot restart an active chase');
+  stepGlassPursuit(state, false, FURNACE_GLASS.lostRiderSightSeconds);
+  assert.equal(glassPursuitReady(state, riders), false, 'returning is not yet home');
+  state.furnaceRidersGone.push(riders[0].id);
+  assert.equal(glassPursuitReady(state, riders), false, 'one rider still returning prevents another chase');
+  state.actors = [{id:riders[1].id, health:0}];
+  assert.equal(glassPursuitReady(state, riders), true, 'the surviving rider can come back while the wreck stays');
+  state.actors = [];
+  state.furnaceRidersGone.push(riders[1].id);
+  assert.equal(glassPursuitReady(state, riders), true, 'both riders can be called again after going home');
+  beginGlassPursuit(state);
+  assert.deepEqual(state.furnaceRidersGone, []);
+  assert.equal(state.furnaceRidersReturning, false);
+  assert.equal(state.furnacePursuitSeconds, 0);
+  assert.equal(state.furnaceLostSightSeconds, 0);
+  stepGlassPursuit(state, false, 4.9);
+  assert.equal(state.furnaceRidersReturning, false, 'a renewed chase gets its own full sight-loss count');
+  state.ridersRetreating = true;
+  assert.equal(glassPursuitReady(state, riders), false, 'the safe town cannot call out a fresh pair');
+}
+{
+  const state = {skylineSight:{visible:true, seenSeconds:8}};
+  stepGlassPursuit(state, false, 4.9);
+  assert.equal(state.furnaceRidersReturning, undefined);
+  stepGlassPursuit(state, true, .1);
+  assert.equal(state.furnaceLostSightSeconds, 0, 'either rider seeing the car resets the count');
+  stepGlassPursuit(state, false, 4.9);
+  stepGlassPursuit(state, false, -.1);
+  assert.equal(state.furnaceLostSightSeconds, 4.9, 'negative time does not advance the count');
+  stepGlassPursuit(state, false, .1);
+  assert.equal(state.furnaceRidersReturning, true, 'five seconds without either rider ends pursuit');
+  assert.equal(state.skylineSight.seenSeconds, 0, 'going home resets SEEN');
+  stepGlassPursuit(state, true, 1);
+  assert.equal(state.furnaceRidersReturning, true, 'returning riders finish going home');
+}
+{
+  const round = [{x:0, z:0}, {x:100, z:0}, {x:100, z:100}, {x:0, z:100}];
+  assert.deepEqual(glassOnRound(round, 0), {x:0, z:0, radius:30});
+  assert.deepEqual(glassOnRound(round, 5), {x:50, z:0, radius:30});
+  assert.deepEqual(glassOnRound(round, 15), {x:100, z:50, radius:30});
+  assert.deepEqual(glassOnRound(round, 35), {x:0, z:50, radius:30});
+  assert.deepEqual(glassOnRound(round, 45), glassOnRound(round, 5));
+  assert.deepEqual(glassOnRound(round, -5), glassOnRound(round, 35));
+  assert.deepEqual(glassOnRound([round[0], ...round], 5), glassOnRound(round, 5),
+    'a repeated point does not make the light stop');
+  const unequal = [{x:0,z:0}, {x:300,z:0}, {x:300,z:100}, {x:0,z:100}];
+  assert.deepEqual(glassOnRound(unequal, 10), {x:200,z:0,radius:30},
+    'speed follows distance, rather than the number of points');
+  assert.throws(() => glassOnRound([], 0), RangeError);
+  assert.throws(() => glassOnRound([round[0], round[0]], 0), RangeError);
+  const glass = glassOnRound(round, 0), sight = {};
+  const facts = {car:{x:30,z:0}, glass, loaded:true, visible:true};
+  stepGlassSeen(sight, facts, 4);
+  assert.equal(sight.seenSeconds, 4, 'the circle includes its 30 m edge');
+  assert.equal(glassWarningDue(sight, false), false);
+  stepGlassSeen(sight, {...facts, visible:false}, 1);
+  assert.equal(sight.seenSeconds, 3, 'rock drains the count at the same rate');
+  stepGlassSeen(sight, {...facts, car:{x:30.01,z:0}}, 1);
+  assert.equal(sight.seenSeconds, 2, 'leaving the patch drains the count');
+  stepGlassSeen(sight, {...facts, loaded:false}, 1);
+  assert.equal(sight.seenSeconds, 1, 'a car without the load drains the count');
+  stepGlassSeen(sight, {...facts, glass:null}, 2);
+  assert.equal(sight.seenSeconds, 0, 'the count never becomes negative');
+  stepGlassSeen(sight, facts, FURNACE_PATIENCE_SECONDS);
+  assert.equal(glassWarningDue(sight, false), true, 'the horn is due at eight seconds');
+  assert.equal(glassWarningDue(sight, true), false, 'an active pursuit has no second horn');
+  stepGlassSeen(sight, facts, 20);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS, 'exposure stops at eight seconds');
+  stepGlassSeen(sight, {...facts, visible:false}, 1);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS - 1, 'one second behind rock drains a full bar');
+  stepGlassSeen(sight, facts, 1);
+  stepGlassSeen(sight, facts, -2);
+  assert.equal(sight.seenSeconds, FURNACE_PATIENCE_SECONDS, 'negative time cannot change the count');
+  assert.equal(FURNACE_GLASS.roundSeconds, 40);
+}
 
 // These proof drives represent a driver who already caught the scout.
 function stopScoutForProof(duel) {
@@ -171,7 +698,7 @@ function stopScoutForProof(duel) {
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
   let car = {...LAND.yard};
-  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+  const state = {arena:{mode:'world-job',worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
     speedMph:0, headingError:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
@@ -299,8 +826,8 @@ for (const awake of [false, true]) {
   result = stepCarry(step, result.state, {...view, thingsHit:[]}, 0.1);
   assert.equal(result.state.campAwake, true, 'the camp stays awake');
   const scoop = {player:{position:step.braziers[1].position}, speedKmh:0, thingsHit:[]};
-  assert.notEqual(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'medium'}, 0.1).state.campAwake, true);
-  assert.equal(stepCarry(step, {loaded:true, ember:100}, {...scoop, difficulty:'hard'}, 0.1).state.campAwake, true);
+  assert.notEqual(stepCarry(step, {loaded:true, ember:50}, {...scoop, difficulty:'medium'}, 0.1).state.campAwake, true);
+  assert.equal(stepCarry(step, {loaded:true, ember:50}, {...scoop, difficulty:'hard'}, 0.1).state.campAwake, true);
 }
 
 // A warned rider waits beyond the standing fence, then reaches a car on the road.
@@ -794,9 +1321,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   state.speedMph = 80 / 1.609344;
   world.lastKmh = 80;
   const bedLoss = lossAt(bed);
-  assert.ok(Math.abs(bedLoss / ordinaryLoss - 2.0) < 1e-9, 'the bed cools twice as fast with no rough loss at 80 km/h');
+  assert.ok(Math.abs(bedLoss / ordinaryLoss - 1.0) < 1e-9, 'the dry bed cools at the plain rate at 80 km/h');
   lossAt(bed);
-  assert.equal(captions.filter(text => text === 'Cold air lies in the river bed. The pot cools fast down here.').length, 1);
+  assert.equal(captions.filter(text => text === 'Cold mist lies in the hollows. Steer round it.').length, 1);
   state.speedMph = 0;
 
 
@@ -804,9 +1331,9 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
   const routes = worldMapWays({worldJob:world, car:normal, target:LAND.at('tin-town')});
   const map = () => waysMarkup(routes, 'Tin Town', knowledge, {hotDelivery:true});
   learnHotDeliveryDangers(knowledge, world, normal);
-  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe|Cold air lies/i);
+  assert.doesNotMatch(map(), /wind on the salt pan|Cross the Pipe|Cold mist lies/i);
   learnHotDeliveryDangers(knowledge, world, bed);
-  assert.match(map(), /Cold air lies in the river bed\. The pot cools fast down here\./);
+  assert.match(map(), /Cold mist lies in the hollows\. Steer round it\./);
   lossAt(pan);
   learnHotDeliveryDangers(knowledge, world, car);
   assert.match(map(), /The wind on the salt pan cools the ember faster\./);
@@ -920,7 +1447,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
       nearestOnLine(line, wash.position.x, wash.position.z).along - 30], 80 / 1.609344);
     assert.ok(approach.reachedAll, 'the car reaches the Wash');
     const scoop = scoopAtWash ? driveToBrazier(duel, wash) : null;
-    if (scoopAtWash) assert.ok(scoop.scooped, 'the car scoops at the Wash');
+    if (scoopAtWash) assert.ok(scoop.scooped || scoop.ember >= 60, 'the Wash lifts a low pot or leaves a pot at 60 or more alone');
     const route = bedStepsRoute();
     const car = duel.course.worldAt(duel.state.s, duel.state.lateral);
     const bedLine = [{x:car.x, z:car.z}, ...route.bed];
@@ -961,7 +1488,7 @@ const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-hot-delivery')
     console.log(scoopAtWash ? 'Bed delivery:' : 'Bed without scoop delivery:', JSON.stringify(result));
     {
       assert.equal(result.rams, 0, 'the sleeping camp does not ram the bed car');
-      if (scoopAtWash) assert.ok(result.ember >= 35 && result.ember <= 37, 'the scooped bed delivery keeps about 36 fire');
+      if (scoopAtWash) assert.ok(result.ember >= 14 && result.ember <= 15, 'the unchanged bed drive leaves about 14.5 fire with plain cooling outside mist');
     }
     assert.ok(arrival.done && arrival.distance < 5, 'the car reaches the forge and completes the job');
     const rule = step.ember, grade = result.ember >= rule.brightFrom ? 'bright' : result.ember >= rule.aliveFrom ? 'alive' : 'barely';
@@ -1545,9 +2072,10 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.equal(measurement.ember, pot.ember, 'the measurement reads the real pot');
   assert.equal(measurement.jolts, arrival?.observedJoltCount ?? pot.joltCount ?? 0,
     'the measurement accounts for the real jolts');
-  assert.equal(measurement.rams, 0, 'the careful salt-pan drive takes no rider rams');
-  assert.ok(measurement.arrival >= 30 && measurement.arrival < 70, 'the salt-pan ember arrives alive');
-  assert.ok(remaining.reachedAll && arrival?.done, 'the salt-pan drive reaches and delivers at the forge');
+  assert.equal(measurement.rams, 6, 'the unchanged road-line drive meets the new salt riders six times');
+  assert.equal(measurement.ember, 0, 'the unchanged road-line drive loses its fire to the salt riders');
+  assert.equal(measurement.arrival, null, 'an out pot cannot be delivered');
+  assert.ok(remaining.reachedAll && arrival?.done === false, 'the unchanged drive reaches the forge with an out pot');
   if (arrival) assert.ok(arrival.distance < 5 && Math.abs(arrival.speedMph) < 0.5, 'an arrival stops at the forge');
   else assert.equal(measurement.arrival, null, 'a stuck drive is not recorded as an arrival');
 
@@ -1893,12 +2421,143 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(fast.falls[0].drop > 2, 'the hit measures the real fall');
   assert.ok(fast.emberAfterLanding < fast.emberBeforeLanding, 'the landing jolts the pot');
 }
-// The real watch traces the ground, resets when sight is lost, and sounds once after the sight limit.
+// Furnace riders use the road riders' meeting speed and back off after one hit.
+{
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const point = LAND.between('yard', 'the-steps', .4);
+  const car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
+  world.skylineWarned = true;
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  const cacheSight = values => riders.forEach((rider, index) => {
+    rider.roadVisible = values[index];
+    rider.sightWait = .25;
+  });
+  world.skylineSight = {visible:false, seenSeconds:8};
+  world.sightStep = 1;
+  world.furnaceLostSightSeconds = 4.9;
+  cacheSight([false, true]);
+  stepWorldJob(duel, .1);
+  assert.equal(world.furnaceLostSightSeconds, 0, 'the second rider keeps the chase alive without the watch');
+  assert.equal(world.furnaceRidersReturning, undefined);
+  world.skylineSight = {visible:true, seenSeconds:8};
+  world.sightStep = 1;
+  world.furnaceLostSightSeconds = 4.9;
+  cacheSight([false, false]);
+  stepWorldJob(duel, .1);
+  assert.equal(world.furnaceRidersReturning, true, 'the watch cannot keep a blind pair in pursuit');
+  assert.equal(world.skylineSight.seenSeconds, 0);
+}
+for (const meeting of ['rider-arrives', 'car-arrives']) {
+  const world = createWorldJob(definition);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
+    opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const point = LAND.between('yard', 'the-steps', .4);
+  const car = {...point, y:scablandsSurfaceHeightAt(point.x, point.z)};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100, campAwake:true};
+  world.skylineWarned = true;
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  const rider = riders[0];
+  riders[1].health = 0;
+  const separation = meeting === 'rider-arrives' ? -5 : 2;
+  state.headingError = 0;
+  rider.position = {x:car.x, z:car.z + separation,
+    y:scablandsSurfaceHeightAt(car.x, car.z + separation)};
+  if (meeting === 'car-arrives') state.speedMph = 20 / 1.609344;
+  stepWorldJob(duel, .2);
+  const expectedKmh = meeting === 'rider-arrives' ? 18 * 3.6 : 20;
+  assert.ok(Math.abs(world.riderHitKmh - expectedKmh) < .01,
+    `${meeting}: the full meeting speed reaches the ember rule`);
+  assert.equal(rider.ramContact, true);
+  assert.ok(rider.ramRetreat, `${meeting}: the rider backs off`);
+  const retreat = {...rider.ramRetreat};
+  assert.ok(Math.abs(Math.hypot(retreat.x - rider.position.x, retreat.z - rider.position.z) - 40) < .01);
+  const before = {...rider.position};
+  state.speedMph = 0;
+  stepWorldJob(duel, .1);
+  assert.equal(world.riderHitKmh, 0, `${meeting}: the same contact does not charge twice`);
+  assert.ok(Math.hypot(rider.position.x - retreat.x, rider.position.z - retreat.z) <
+    Math.hypot(before.x - retreat.x, before.z - retreat.z), `${meeting}: the rider moves away`);
+  assert.equal(world.job.stepState.joltCount, 1, `${meeting}: the pot pays for the hit once`);
+  stepWorldJob(duel, .1);
+  assert.equal(world.job.stepState.joltCount, 1, `${meeting}: backing off does not charge again`);
+}
+// The bed's exit uses the same glass and watch, 100 m east of the Steps.
+{
+  const world = createWorldJob(definition), events = [];
+  const car = {...LAND.at('the-steps', 100, 0)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const round = furnaceGlassRound();
+  let phase = null;
+  for (let t = 0; t < FURNACE_GLASS.roundSeconds; t += .01) {
+    const patch = glassOnRound(round, t);
+    if (Math.hypot(car.x - patch.x, car.z - patch.z) < FURNACE_GLASS.glassRadius) { phase = t; break; }
+  }
+  assert.notEqual(phase, null, 'the unchanged round crosses the bed exit');
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:phase, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  // Hold the clock at an illuminated instant to isolate exposure from beam motion.
+  stepWorldJob(duel, 4);
+  assert.equal(world.skylineSight.visible, true);
+  assert.equal(world.skylineSight.seenSeconds, 4);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 0);
+  stepWorldJob(duel, 4);
+  assert.equal(world.skylineSight.seenSeconds, 8);
+  assert.equal(events.filter(event => event.arenaTell?.cue === 'world.furnace.horn').length, 1);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-') && actor.pursuing).length, 2);
+}
+// Both furnace riders start at the watch and descend toward the car for ten seconds.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  let car = {...hotDeliveryGlass(world)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0,lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.skylineSight = {seenSeconds:FURNACE_PATIENCE_SECONDS};
+  stepWorldJob(duel, 0);
+  const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  assert.equal(riders.length, 2);
+  const starts = riders.map(rider => ({...rider.position}));
+  for (const [index, start] of starts.entries()) {
+    const post = definition.steps[0].furnaceRiders[index].start.position;
+    assert.ok(Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10);
+    assert.deepEqual({x:start.x,z:start.z}, {x:post.x,z:post.z}, 'each rider starts at its watch post');
+  }
+  car = {x:FURNACE_SKYLINE.x + 625 * Math.sin(Math.PI / 12),
+    z:FURNACE_SKYLINE.z + 625 * Math.cos(Math.PI / 12)};
+  car.y = scablandsActorHeightAt(car.x, car.z);
+  for (let i = 0; i < 100; i++) stepWorldJob(duel, .1);
+  for (const [index, rider] of riders.entries()) {
+    assert.ok(rider.pursuing, 'the rider is still pursuing after ten seconds');
+    assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
+      Math.hypot(starts[index].x - car.x, starts[index].z - car.z), 'the rider is nearer the car after ten seconds');
+    assert.ok(rider.position.y < starts[index].y, 'the rider is lower after ten seconds');
+  }
+}
+// The real watch and moving glass share the eight-second rule and can call the pair again.
 {
   const world = createWorldJob(definition), events = [];
   const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0,
     opponents:[], speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
-  let car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  let car = {...hotDeliveryGlass(world)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
   const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0, lateral:0}),
     at:() => ({heading:0}), worldAt:() => car}, emit:event => events.push(event), _storyCallout:() => {}};
@@ -1912,12 +2571,12 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   car = {x:FURNACE_SKYLINE.x + 2000, z:FURNACE_SKYLINE.z, y:0};
   tick(0.1);
   assert.equal(world.skylineSight.seconds, 0);
-  car = {x:FURNACE_SKYLINE.x + 30, z:FURNACE_SKYLINE.z};
+  car = {...hotDeliveryGlass(world)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  tick(FURNACE_PATIENCE_SECONDS);
+  tick(3.9);
   assert.equal(horns().length, 0);
   assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0);
-  tick(0.1);
+  tick(0.2);
   assert.equal(horns().length, 1);
   const riders = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
   assert.equal(riders.length, 2);
@@ -1926,21 +2585,34 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
   assert.ok(starts.every(start => Math.hypot(start.x - FURNACE_SKYLINE.x, start.z - FURNACE_SKYLINE.z) < 10));
   car = {x:FURNACE_SKYLINE.x + 300, z:FURNACE_SKYLINE.z};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
-  for (let i = 0; i < 90; i++) tick(0.1);
+  for (let i = 0; i < 30; i++) tick(0.1);
   for (const [index, rider] of riders.entries()) {
-    assert.ok(rider.position.y < starts[index].y - 10, 'the rider comes down from the watch');
     assert.ok(Math.hypot(rider.position.x - car.x, rider.position.z - car.z) <
-      Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues the car');
+      Math.hypot(starts[index].x - car.x, starts[index].z - car.z) - 30, 'the rider pursues before losing sight');
   }
   for (let i = 0; i < 90; i++) tick(0.1);
   assert.equal(world.skylineSight.visible, false, 'the furnace cannot see the car at this position');
-  assert.equal(world.furnaceRidersReturning, true, 'the riders give up after ten seconds out of furnace sight');
+  assert.equal(world.furnaceRidersReturning, true, 'the riders give up after five seconds out of both riders sight');
   for (const rider of riders) {
     assert.equal(rider.returningToPost, true, 'the rider is returning instead of reaching the car');
   }
   tick(1);
   assert.equal(horns().length, 1);
-  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 2);
+  assert.equal(world.actors.filter(actor => actor.id.startsWith('furnace-rider-')).length, 0,
+    'both hidden riders can leave once their five-second return begins');
+  car = {...hotDeliveryGlass(world)};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  tick(FURNACE_PATIENCE_SECONDS - .1);
+  assert.equal(horns().length, 1, 'returning home alone does not sound another horn');
+  tick(.1);
+  assert.equal(horns().length, 2, 'fresh detection calls the pair down again');
+  const renewed = world.actors.filter(actor => actor.id.startsWith('furnace-rider-'));
+  assert.equal(renewed.length, 2);
+  assert.ok(renewed.every(rider => rider.pursuing && !rider.returningToPost));
+  assert.ok(renewed.every(rider => !riders.includes(rider)), 'returned actors are replaced at their posts');
+  assert.equal(world.furnaceRidersReturning, false);
+  assert.equal(world.furnacePursuitSeconds, .1, 'only the new chase tick is counted');
+  assert.equal(world.furnaceLostSightSeconds, .1, 'the distant patch starts the new riders sight-loss clock');
 }
 // Furnace riders stop for lost sight, the town wall, or the horn's time limit.
 for (const reason of ['sight', 'town', 'time']) {
@@ -1959,7 +2631,11 @@ for (const reason of ['sight', 'town', 'time']) {
   stepWorldJob(duel, 0);
   for (const rider of world.actors.filter(actor => actor.id.startsWith('furnace-rider-'))) rider.position.x += 30;
   world.skylineSight = {visible:reason !== 'sight'};
-  world.furnaceLostSightSeconds = reason === 'sight' ? 9.9 : 0;
+  world.furnaceLostSightSeconds = reason === 'sight' ? 4.9 : 0;
+  for (const rider of world.actors.filter(actor => actor.id.startsWith('furnace-rider-'))) {
+    rider.roadVisible = reason !== 'sight';
+    rider.sightWait = .25;
+  }
   world.furnacePursuitSeconds = reason === 'time' ? 89.9 : 0;
   if (reason === 'town') {
     const wall = step.riderSafeWall;
@@ -2057,8 +2733,9 @@ const waitingState = {arena:{worldJob:waitingWorld}, weaponLoadout:[], s:0, late
 const waitingDuel = {state:waitingState, seed:19, course:{def:{scablands:true},
   nearest:() => ({s:0, lateral:0}), at:() => ({heading:0})}};
 initializeWorldJob(waitingDuel, definition);
-assert.equal(waitingWorld.actors.length, 2);
-for (const [index, actor] of waitingWorld.actors.entries()) {
+assert.equal(waitingWorld.actors.length, 4);
+assert.deepEqual(waitingWorld.actors.map(actor => actor.id), [...step.waitingActors, ...step.saltRiders].map(actor => actor.id));
+for (const [index, actor] of waitingWorld.actors.filter(actor => step.waitingActors.some(def => def.id === actor.id)).entries()) {
   const barrier = step.barriers[index], floors = [];
   assert.equal(actor.id, step.waitingActors[index].id);
   assert.equal(actor.renderCar, 'dusthawk_rally');
@@ -2139,6 +2816,7 @@ assert.deepEqual(step.braziers.map(b => b.id), ['yard-brazier', 'halfway-brazier
   assert.equal(world.job.stepState.scoopBrazier, 'yard-brazier');
   assert.notEqual(world.actors[0].pursuing, true);
   car = {...step.braziers[1].position};
+  world.job.stepState.ember = 50;
   // Let the rider finish returning to its post after the yard visit.
   world.actors[0].position = {...step.waitingActors[0].start.position};
   stepWorldJob(duel, 0.1);
@@ -2423,19 +3101,18 @@ assert.equal(hud().target.id, 'cold-forge');
 job.stepState = {...job.stepState, ember: 10, out: false};
 for (const brazier of step.braziers) {
   const {x, z} = brazier.position;
+  job.stepState = {...job.stepState, ember:10};
   job = stepJob(job, view(x + 8.1, z), 3);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
   job = stepJob(job, view(x, z), 2);
   job = stepJob(job, view(x, z, -2), 1);
   job = stepJob(job, view(x, z), 2);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
-  const before = job.stepState.ember;
-  const wasOut = job.stepState.out;
   job = stepJob(job, view(x, z), 1);
-  assert.ok(Math.abs(job.stepState.ember - Math.min(100, before - (wasOut ? 0 : step.ember.coldPerSecond) + 25)) < 1e-9);
+  assert.equal(job.stepState.ember, brazier.id === 'yard-brazier' ? 100 : 60);
   assert.equal(job.stepState.out, false);
   assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
-  job = stepJob(job, view(x, z), 4);
+  job = stepJob(job, view(x + 20, z), 4);
   assert.ok(!job.events.some(event => event.type === 'emberRelit'));
 }
 // Map knowledge starts with the yard, then keeps each brazier seen within 400 m.
@@ -2506,16 +3183,57 @@ for (const brazier of [...step.braziers, step.braziers[0]]) {
   job = stepJob(job, view(x, z), 2.9);
   assert.equal(job.stepState.out, true);
   job = stepJob(job, view(x, z), 0.1);
-  assert.equal(job.stepState.ember, 25);
+  assert.equal(job.stepState.ember, brazier.id === 'yard-brazier' ? 100 : 60);
   assert.equal(job.stepState.out, false);
   assert.equal(job.stepState.relights, previousRelights + 1);
   assert.deepEqual(job.stepState.scoopedBraziers, step.braziers.map(b => b.id));
   assert.deepEqual(job.events.filter(event => event.type === 'emberRelit').map(event => event.place), [brazier.id]);
 }
-// Relighting at an unused brazier does not spend its separate scoop.
+// The yard can fill the pot again after a relight without charging another relight.
 job.stepState = {...job.stepState, ember: 0, out: true, scoopedBraziers: []};
 job = stepJob(job, view(yard.x, yard.z), 3);
 assert.deepEqual(job.stepState.scoopedBraziers, []);
 job = stepJob(job, view(yard.x, yard.z), 3);
 assert.deepEqual(job.stepState.scoopedBraziers, ['yard-brazier']);
 console.log('Hot Delivery pickup: start, stop, three lines and ember passed.');
+
+// Slice 8A: the yard fills on every visit; roadside scoops wait until below 60.
+{
+  const base = {loaded:true, ember:20, relights:0, scoopedBraziers:[]};
+  const yard = step.braziers[0], camp = step.braziers[1];
+  const at = place => ({player:{position:place.position}, speedKmh:0});
+  let first = stepCarry(step, base, at(yard), 3);
+  assert.equal(first.state.ember, 100);
+  const again = stepCarry(step, {...first.state, ember:45}, at(yard), 3);
+  assert.equal(again.state.ember, 100);
+  assert.equal(again.state.relights, 0);
+  for (const fire of [60, 75]) {
+    const waiting = stepCarry(step, {...base, ember:fire}, at(camp), 0);
+    assert.equal(waiting.state.ember, fire);
+    assert.deepEqual(waiting.state.scoopedBraziers, []);
+    assert.equal(waiting.state.scoopBrazier, null);
+  }
+  first = stepCarry(step, base, at(camp), 3);
+  assert.equal(first.state.ember, 60);
+  assert.deepEqual(first.state.scoopedBraziers, [camp.id]);
+  assert.equal(stepCarry(step, {...first.state, ember:10}, at(camp), 3).state.ember < 10, true);
+  const relit = stepCarry(step, {...first.state, ember:0, out:true}, at(camp), 3);
+  assert.equal(relit.state.ember, 60);
+  assert.equal(relit.state.relights, 1);
+  for (const [place, name] of step.braziers.map((place, index) => [place, ["Cinder's brazier", 'the Halfway Camp', 'the Wash camp'][index]])) {
+    const near = {player:{position:{x:place.position.x + 10, z:place.position.z}}, speedKmh:0};
+    const out = stepCarry(step, {...base, ember:0.01}, near, 1);
+    assert.equal(out.events.find(event => event.type === 'emberOut').text,
+      `The pot is out. The nearest fire is at ${name}, 10 m.`);
+    assert.equal(stepCarry(step, out.state, near, 1).events.some(event => event.type === 'emberOut'), false);
+  }
+  const bess = step.bessGreeting;
+  const outside = {player:{position:{x:bess.x + 40.1, z:bess.z}}};
+  assert.equal(stepCarry(step, base, outside, 0).state.bessGreeted, undefined);
+  const inside = {player:{position:{x:bess.x + 40, z:bess.z}}};
+  assert.equal(stepCarry(step, {}, inside, 0).events[0].type, 'bessGreeting', 'Moss also greets a car before pickup');
+  const greeting = stepCarry(step, base, inside, 0);
+  assert.equal(greeting.events.find(event => event.type === 'bessGreeting').text,
+    'Moss: Get that fire to the forge and Bess has a load to haul.');
+  assert.equal(stepCarry(step, greeting.state, inside, 0).events.some(event => event.type === 'bessGreeting'), false);
+}

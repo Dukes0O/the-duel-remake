@@ -6,7 +6,10 @@
 // real one, so moving a place in the table moves every job that stands by it (tools/test-scablands-size.mjs).
 import {furnaceMarks} from './furnace-sightings.js';
 import {escortCarStart} from './steps/escort.js';
-import {EMBER_RULE} from './ember-rule.js';
+import {EMBER_RULE, SALT_RIDERS, bedMistFor, bridgeAshPlan} from './ember-rule.js';
+import {riverFor} from '../scablands-regions.js';
+import {bessRest} from '../boneyard-wrecks.js';
+import {HOT_DELIVERY_WAYS, routeFor, sliceLine} from '../scablands-ways.js';
 import {LAND} from '../scablands-names.js';
 import {tinTownGateFor} from '../tin-town-gate.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
@@ -124,6 +127,18 @@ export function buildEverburn(land) {
     id:`furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
     start:place(`furnace-rider-start-${index + 1}`, at('furnace-watch', offset, 0)),
   })));
+  const saltWay = routeFor(HOT_DELIVERY_WAYS.find(way => way.id === 'salt-pan').legs,
+    {start:land.yard, destination:at('tin-town'), land, net});
+  const saltLine = sliceLine(saltWay, SALT_RIDERS.postAlong, SALT_RIDERS.postAlong + 1);
+  const saltDx = saltLine[1].x - saltLine[0].x, saltDz = saltLine[1].z - saltLine[0].z;
+  const saltLength = Math.hypot(saltDx, saltDz);
+  const saltPost = place('salt-lean-to', {x:saltLine[0].x - saltDz / saltLength * SALT_RIDERS.postSide,
+    z:saltLine[0].z + saltDx / saltLength * SALT_RIDERS.postSide});
+  const saltRiders = path(...[-1, 1].map((side, index) => Object.freeze({
+    id:`salt-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
+    start:place(`salt-rider-start-${index + 1}`, {x:saltPost.position.x + side * SALT_RIDERS.riderOffset,
+      z:saltPost.position.z - SALT_RIDERS.riderOffset}),
+  })));
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
   // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
   const thiefPath = path(boneyard, planeRow, wingGap);
@@ -147,8 +162,12 @@ export function buildEverburn(land) {
         arrivalHold:Object.freeze({seconds:9, catchAt:5}),
         carStart:carStart(gateStart, place('east-gate', gatePoint)),
         pickup:Object.freeze({place:place('cinder', pickupAt, 6), figure:place('cinder-figure', cinderAt), radius:6, lines:Object.freeze(['story.ember.cinder.pickup.1', 'story.ember.cinder.pickup.2', 'story.ember.cinder.pickup.3'])}),
-        safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5, 'river-bed':2.0}), burnable:true, spillLineId:'story.ember.cinder.4',
-        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders, scout,
+        bessGreeting:bessRest(land), safePoints:path(safeRoad), braziers, ember:EMBER_RULE, coldRegions:Object.freeze({'salt-pan':1.5}),
+        bedMist:Object.freeze(bedMistFor(riverFor(land))),
+        bridgeAsh:Object.freeze(bridgeAshPlan(at('girder-bridge'), net, at('the-steps'))),
+        burnable:true, spillLineId:'story.ember.cinder.4',
+        barriers:path(ashBarricade1, ashBarricade2), waitingActors:ashRiders, furnaceRiders, scout, saltRiders,
+        saltPost:Object.freeze({...saltPost, name:'The salt lean-to'}), saltRidge:at('ridge'),
         riderSafeWall:Object.freeze({...tinTownGateFor(land).gate, radius:400, lineId:'story.ember.auntie-solder.retreat'}),
         // Old Smoke's furnace stands on the skyline until the pot is delivered (src/world/jobs/furnace-sightings.js).
         sayNear:[{place:place('furnace-skyline', marks.skyline), radius:260, lineId:'story.ember.cinder.24'},

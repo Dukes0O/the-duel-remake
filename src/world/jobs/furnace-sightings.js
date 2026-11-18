@@ -23,6 +23,124 @@ export function stepSkylineSight(state, car, dt, heightAt = scablandsSurfaceHeig
 
 export const FURNACE_PATIENCE_SECONDS = 8;
 
+// Hot Delivery's glass uses the job clock. Its closed round is supplied by the
+// named land plan; neither a renderer nor a wall clock advances these rules.
+export const FURNACE_GLASS = Object.freeze({
+  glassRadius: 30,
+  roundSeconds: 40,
+  captionMetres: 150,
+  lostRiderSightSeconds: 5,
+  riderEye: 1.5,
+  riderSightStep: 5,
+  pursuitSeconds: 90,
+  crossingKmh: 50,
+  crossingSpareSeconds: 1,
+  drawSegments: 48,
+  drawRings: 6,
+  drawLift: .08,
+  // Turning points stay in the watch's sight. Between them the moving beam
+  // passes behind rock; the same land sight rule blocks exposure there.
+  roundMarks: Object.freeze([
+    Object.freeze({from:'yard', to:'the-steps', share:.38, north:0}),
+    Object.freeze({from:'yard', to:'the-steps', share:.45, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.035, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.105, north:0}),
+    Object.freeze({from:'the-steps', to:'tin-town', share:.025, north:40}),
+    Object.freeze({from:'yard', to:'the-steps', share:.45, north:50}),
+    Object.freeze({from:'yard', to:'the-steps', share:.44, north:90}),
+    Object.freeze({from:'yard', to:'the-steps', share:.42, north:90}),
+    Object.freeze({from:'yard', to:'the-steps', share:.43, north:40}),
+  ]),
+});
+
+export function furnaceGlassRound(land = LAND) {
+  return FURNACE_GLASS.roundMarks.map(mark =>
+    land.between(mark.from, mark.to, mark.share, 0, -mark.north));
+}
+
+const platesGlassRound = furnaceGlassRound();
+// Every view reads the same job clock, including while paused. No view owns time.
+export function hotDeliveryGlass(worldJob) {
+  if (worldJob?.definition?.id !== 'everburn-hot-delivery' ||
+      worldJob.job?.done || worldJob.settled) return null;
+  return glassOnRound(platesGlassRound, worldJob.clockSec ?? 0);
+}
+
+export function glassOnRound(points, clockSeconds) {
+  if (points.length < 2) throw new RangeError('The glass needs a closed round.');
+  const lengths = points.map((point, index) => {
+    const next = points[(index + 1) % points.length];
+    return Math.hypot(next.x - point.x, next.z - point.z);
+  });
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  if (!(total > 0)) throw new RangeError('The glass round needs some length.');
+  const phase = ((clockSeconds % FURNACE_GLASS.roundSeconds) + FURNACE_GLASS.roundSeconds) % FURNACE_GLASS.roundSeconds;
+  let remaining = total * phase / FURNACE_GLASS.roundSeconds;
+  for (let index = 0; index < points.length; index++) {
+    const length = lengths[index];
+    if (length === 0) continue;
+    if (remaining < length) {
+      const from = points[index], to = points[(index + 1) % points.length];
+      const share = remaining / length;
+      return {x:from.x + (to.x - from.x) * share, z:from.z + (to.z - from.z) * share,
+        radius:FURNACE_GLASS.glassRadius};
+    }
+    remaining -= length;
+  }
+  return {...points[0], radius:FURNACE_GLASS.glassRadius};
+}
+
+// Sight and the moving patch are separate facts. Rock may hide a car even
+// inside the circle. A dark or unloaded pot never adds to the count.
+export function stepGlassSeen(state, {car, glass, loaded, visible}, dt) {
+  const illuminated = !!car && !!glass &&
+    Math.hypot(car.x - glass.x, car.z - glass.z) <= FURNACE_GLASS.glassRadius;
+  const seen = !!loaded && !!visible && illuminated;
+  const elapsed = Math.max(0, dt);
+  state.seenSeconds = Math.max(0, Math.min(FURNACE_PATIENCE_SECONDS,
+    (state.seenSeconds ?? 0) + (seen ? elapsed : -elapsed)));
+  state.inGlass = seen;
+  return state;
+}
+
+export function glassWarningDue(sight, warned) {
+  return !warned && sight.inGlass && sight.seenSeconds >= FURNACE_PATIENCE_SECONDS;
+}
+
+// A returning pair must finish leaving before another horn can call them.
+// Wrecks stay in the world; only the riders who went home can return.
+export function glassPursuitReady(state, riders) {
+  if (state.ridersRetreating) return false;
+  if (!state.skylineWarned) return true;
+  const gone = rider => state.furnaceRidersGone?.includes(rider.id);
+  return !!state.furnaceRidersReturning && riders.some(gone) &&
+    riders.every(rider => gone(rider) || state.actors?.some(actor => actor.id === rider.id && actor.health <= 0));
+}
+
+export function beginGlassPursuit(state) {
+  state.skylineWarned = true;
+  state.furnaceRidersReturning = false;
+  state.furnaceRidersGone = [];
+  state.furnaceLostSightSeconds = 0;
+  state.furnacePursuitSeconds = 0;
+}
+
+// Either rider can keep the chase alive. Once both lose the car, the same
+// job clock counts five seconds before they return. The watch is irrelevant.
+export function stepGlassPursuit(state, riderVisible, dt) {
+  if (state.furnaceRidersReturning) return state;
+  const elapsed = Math.max(0, dt);
+  state.furnacePursuitSeconds = (state.furnacePursuitSeconds ?? 0) + elapsed;
+  state.furnaceLostSightSeconds = riderVisible ? 0 :
+    (state.furnaceLostSightSeconds ?? 0) + elapsed;
+  if (state.furnaceLostSightSeconds >= FURNACE_GLASS.lostRiderSightSeconds ||
+      state.ridersRetreating || state.furnacePursuitSeconds >= FURNACE_GLASS.pursuitSeconds) {
+    state.furnaceRidersReturning = true;
+    if (state.skylineSight) state.skylineSight.seenSeconds = 0;
+  }
+  return state;
+}
+
 // Sound the warning once, after more than the allowed uninterrupted time in view.
 export function skylineWarningDue(sight, warned) {
   return !warned && sight.visible && sight.seconds > FURNACE_PATIENCE_SECONDS;
