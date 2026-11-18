@@ -3,13 +3,17 @@ import assert from 'node:assert/strict';
 import {EVERBURN_JOBS, REMADE_EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {ROAD_NET} from '../src/world/scablands-road.js';
 import {createJob, stepJob} from '../src/world/jobs/job-engine.js';
-import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks} from '../src/world/jobs/gas-load-rule.js';
+import {GAS_LOAD_RULE, GAS_LOAD_LINES, gasLoadBlocks, gasLoadRaids} from '../src/world/jobs/gas-load-rule.js';
 import {burnBarricades} from '../src/world/jobs/barricade.js';
 import {createKnowledge, jobFacts, learn} from '../src/world/scablands-map.js';
 import {alongPath, metresAtPlace} from '../src/world/jobs/steps/escort.js';
 import {stepEscort} from '../src/world/jobs/steps/escort.js';
 import {worldHudModel, drawGasGauge} from '../src/world/world-hud.js';
 import {Duel} from '../src/game.js';
+import {SOUND_BANK} from '../src/sound-bank.js';
+import {createGasLoadView} from '../src/world/gas-load-view.js';
+import {SOLID_GRID} from '../src/world/scablands-solids.js';
+import {worldJobMapData} from '../src/route-map.js';
 import {worldJobHitTargets} from '../src/arena/modes/world-job.js';
 
 const definition = EVERBURN_JOBS.find(job => job.id === 'everburn-slow-ride');
@@ -72,14 +76,14 @@ for (const onFoot of [true, false]) {
     assert.equal(JSON.stringify(worldJob), before, 'The gauge never changes the tank.');
   }
 }
-const oldEscort = {...step, gasLoad: false};
+const oldEscort = {...step, gasLoad: false, ambushes:[{id:'legacy', count:2, place:step.path[1]}]};
 const oldHud = worldHudModel({worldJob: {job: {steps: [oldEscort], stepIndex: 0, stepState: {}}, actors: [truck]}});
 assert.deepEqual(oldHud.truck, {value: 100, max: 100});
 assert.equal(oldHud.gas, null);
 assert.equal(worldHudModel().gas, null);
 const emptyHealth = {...truck, health: 0};
 const moving = stepEscort(step, {gasLoaded: true, gas: 73, holes: 1}, {actors: [emptyHealth]}, .1);
-assert.equal(moving.state.gas, 73);
+assert.equal(moving.state.gas, 72.95, 'An open hole drains gas while health is ignored.');
 assert.equal(moving.state.holes, 1);
 assert.equal(followSpeed(moving.requests), step.speed, 'The obsolete health rule cannot stop Slow Ride.');
 assert.equal(stepEscort(oldEscort, {}, {actors: [emptyHealth]}, .1).state.rested, true,
@@ -174,3 +178,81 @@ for (let tick = 0; tick < 481; tick++) {
 assert.ok(world.job.stepState.burntBarricades.includes(first.id));
 assert.equal(world.solidGrid.barricades.length, 1, 'The burnt block leaves the shared solid grid.');
 console.log('Slow Ride: shared car contacts, retreat, flame targets and solids checks passed.');
+
+const raidView = {difficulty:'medium', actors:[]};
+let raidState = {gas:100, holes:0};
+const raidTick = (share, seconds = 0) => {
+  const out = gasLoadRaids(step, raidState, raidView, truck, share, seconds);
+  raidState = out.state;
+  return out;
+};
+assert.equal(raidTick(.149).events.length, 0);
+for (const [index, raid] of step.gasRaids.entries()) {
+  assert.equal(raid.share, GAS_LOAD_RULE.raidShares[index]);
+  assert.equal(raid.side, index % 2 ? -1 : 1);
+  // Each post is named and on clear ground. Check all rider starts too.
+  assert.ok(raid.place.id);
+  assert.deepEqual(raidTick(raid.share).events, [{type:'gasRaid', id:raid.id}]);
+  assert.equal(raidTick(raid.share).events.length, 0, 'Each horn sounds once.');
+}
+raidView.actors = step.gasRaiders.map(def => ({id:def.id, health:100,
+  position:{...truck.position}}));
+let out = raidTick(1, 3);
+assert.equal(out.events.filter(event => event.type === 'gasLeak').length, 3);
+assert.equal(raidState.holes, 3, 'At most three holes open, however many riders reach her.');
+assert.equal(raidState.gas, 100, 'Gas starts leaking when the hole opens.');
+assert.equal(raidTick(1, 3).events.length, 0, 'A full set of holes emits no extra leak cue.');
+raidState = {gas:100, holes:0};
+raidView.difficulty = 'easy';
+raidView.actors = [{id:step.gasRaiders[0].id, health:100, position:{...truck.position}},
+  {id:step.gasRaiders[1].id, health:100, position:{...truck.position}}];
+assert.equal(raidTick(.15, 2.99).state.holes, 0);
+assert.equal(raidTick(.15, .01).state.holes, 1, 'Only one rider on Easy opens a hole.');
+assert.equal(raidTick(.15, 1).state.gas, 99.75, 'Easy loses a quarter gas per hole per second.');
+raidView.actors[0].drivenOff = true;
+assert.equal(raidTick(.15, 6).state.holes, 1, 'A rammed rider opens no more holes.');
+raidView.actors[0].health = 0;
+assert.equal(raidTick(.15, 6).state.holes, 1, 'A burnt rider opens no more holes.');
+console.log('Slow Ride: four raids, one horn each, hole clocks, limit, gas loss and defeated riders passed.');
+
+for (const def of step.gasRaiders) {
+  const point = def.start.position;
+  assert.equal(SOLID_GRID.near(point.x, point.z, point.x, point.z, 10).length, 0,
+    `${def.id} starts clear of solids.`);
+}
+const raidTruck = world.actors.find(actor => actor.id === step.actorId);
+world.job.stepState = {...world.job.stepState, gasRaids:[step.gasRaids[0].id]};
+duel.step(.01);
+const firstRider = world.actors.find(actor => actor.id === step.gasRaiders[0].id);
+assert.ok(firstRider?.renderCar, 'A raid uses a real car actor.');
+assert.equal(world.actors.some(actor => actor.id === step.gasRaiders[1].id), false,
+  'Easy spawns only one rider per raid.');
+assert.ok(worldJobMapData(duel.course, duel.state).marks.some(mark => mark.kind === 'rider' &&
+  mark.position === firstRider.position), 'The active rider is marked on the map.');
+const startGap = Math.hypot(firstRider.position.x - raidTruck.position.x, firstRider.position.z - raidTruck.position.z);
+for (let tick = 0; tick < 120; tick++) duel.step(1 / 120);
+assert.ok(Math.hypot(firstRider.position.x - raidTruck.position.x, firstRider.position.z - raidTruck.position.z) < startGap,
+  'The existing pursuit mover takes the rider toward Bess.');
+firstRider.position = {...raidTruck.position, x:raidTruck.position.x + 6};
+world.job.stepState.holeClocks = {[firstRider.id]:2.99};
+duel.step(.02);
+assert.equal(world.job.stepState.holes, 1, 'Real actor facts open a hole.');
+world.carContacts = [{actor:firstRider, kmh:20, nx:1, nz:0}];
+duel.step(.01);
+assert.ok(firstRider.ramRetreat, 'A raid rider uses the existing ram retreat.');
+const holesAfterRam = world.job.stepState.holes;
+for (let tick = 0; tick < 1100; tick++) duel.step(1 / 120);
+assert.equal(world.job.stepState.holes, holesAfterRam);
+assert.equal(firstRider.gasDrivenOff, true, 'A rammed rider never returns.');
+console.log('Slow Ride: clear posts, Easy car count, map, shared pursuit and permanent ram retreat passed.');
+
+assert.ok(SOUND_BANK['world.bess.leak'].layers.length);
+const drawing = createGasLoadView();
+const beforeDraw = JSON.stringify(world.job.stepState);
+drawing.update(world, () => 12);
+const leaks = drawing.group.getObjectByName('Tank holes and spray');
+assert.equal(leaks.children.filter(hole => hole.visible).length, world.job.stepState.holes);
+assert.equal(leaks.position.y, 12, 'Spray sits with the drawn tank floor.');
+assert.equal(drawing.group.getObjectByName('Plane wing gas hose').visible, false);
+assert.equal(JSON.stringify(world.job.stepState), beforeDraw, 'Drawing holes cannot drain gas.');
+console.log('Slow Ride: leak sound recipe and read-only hole drawing passed.');

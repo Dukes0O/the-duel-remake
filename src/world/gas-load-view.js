@@ -17,11 +17,38 @@ export function createGasLoadView() {
   const hose = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0x211e19}));
   hose.name = 'Plane wing gas hose';
   group.add(hose);
+  const leaks = new THREE.Group();
+  leaks.name = 'Tank holes and spray';
+  group.add(leaks);
+  const holes = Array.from({length:GAS_LOAD_RULE.maxHoles}, (_, index) => {
+    const mark = new THREE.Group();
+    mark.position.set(1.42, 2, (index - 1) * 1.1);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(.12, 8), new THREE.MeshBasicMaterial({color:0x171714, side:THREE.DoubleSide}));
+    hole.rotation.y = Math.PI / 2;
+    mark.add(hole);
+    const spray = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0), new THREE.Vector3(.9, -.7, .12)]),
+      new THREE.LineBasicMaterial({color:0xd4d2b2}));
+    mark.add(spray);
+    leaks.add(mark);
+    return mark;
+  });
   let placed = null;
   return {group, update(worldJob, groundAt) {
     const step = worldJob?.job?.steps?.[worldJob.job.stepIndex];
-    group.visible = Boolean(step?.gasLoad && !worldJob.job.stepState.gasLoaded);
+    group.visible = Boolean(step?.gasLoad);
     if (!group.visible) return;
+    const state = worldJob.job.stepState;
+    const meeting = !state.gasLoaded;
+    moss.visible = ring.visible = hose.visible = meeting;
+    const bess = worldJob.actors?.find(actor => actor.id === step.actorId);
+    leaks.visible = !!bess?.position;
+    if (leaks.visible) {
+      leaks.position.set(bess.position.x, groundAt(bess.position.x, bess.position.z), bess.position.z);
+      leaks.rotation.y = bess.heading ?? 0;
+      holes.forEach((hole, index) => {hole.visible = index < (state.holes ?? 0);});
+    }
+    if (!meeting) return;
     const at = step.meeting.position;
     moss.position.set(at.x, groundAt(at.x, at.z), at.z);
     ring.position.set(at.x, groundAt(at.x, at.z) + .08, at.z);

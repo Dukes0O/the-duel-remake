@@ -1194,6 +1194,8 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 12, Slow Ride raids: each post stands 400 m along the road normal, alternating right and left. All eight rider starts have no solid within 10 m. Riders aim 6 m beside Bess, on opposite sides when there are two; a rider within 12 m can work on her tank. Both distances are named constants. No extra player sentence is added.
+
 - Slice 12, Slow Ride load: the gauge says "100 / 100. 0 holes open." and uses "1 hole open." for one hole. Its spoken label says "Gas is 100 out of 100. 0 holes open." Numbers follow the tank. These are the extra words needed to name the hole count.
 - Slice 12, Slow Ride meeting: Bess starts at the Tin Road's Boneyard endpoint (23 m east, 4 m south of the named Boneyard), clear of the wrecks. Moss's stop ring is 6 m to her right, with a 6 m radius and the car stopped below 1 km/h. The car starts 60 m behind her on that road's line. The hose starts at the north wreck's east wing (13 m east, 32 m north of the Boneyard). This keeps her moving on the land's road from the first metre. No extra player sentence is added.
 

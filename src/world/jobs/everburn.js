@@ -78,6 +78,19 @@ export function buildEverburn(land) {
   const tinRoad = net.road('tin-road'), tinStart = tinRoad.points[0];
   const tinLength = tinRoad.points.slice(1).reduce((sum, point, index) => sum +
     Math.hypot(point.x - tinRoad.points[index].x, point.z - tinRoad.points[index].z), 0);
+  const slowRaids = path(...GAS_LOAD_RULE.raidShares.map((share, index) => {
+    const point = roadPointFrom(tinRoad, tinStart.x, tinStart.z, tinLength * share);
+    const ahead = roadPointFrom(tinRoad, tinStart.x, tinStart.z, tinLength * share + 1);
+    const heading = Math.atan2(ahead.x - point.x, ahead.z - point.z), side = index % 2 ? -1 : 1;
+    return Object.freeze({id:`bess-raid-${index + 1}`, share, side,
+      place:place(`bess-raid-post-${index + 1}`, {x:point.x + Math.cos(heading) * side * GAS_LOAD_RULE.raidSideMetres,
+        z:point.z - Math.sin(heading) * side * GAS_LOAD_RULE.raidSideMetres})});
+  }));
+  const slowRaiders = path(...slowRaids.flatMap(raid => Array.from({length:GAS_LOAD_RULE.raidCount}, (_, index) =>
+    Object.freeze({id:`${raid.id}-rider-${index + 1}`, raidId:raid.id, raidIndex:index, gasRaid:true,
+      stationSide:raid.side * (index ? -1 : 1), renderCar:'dusthawk_rally', health:100,
+      start:place(`${raid.id}-start-${index + 1}`, {...raid.place.position,
+        z:raid.place.position.z + index * GAS_LOAD_RULE.raidRiderSpacingMetres})}))));
   const slowBlocks = path(...GAS_LOAD_RULE.blockShares.map((share, index) => {
     const metres = tinLength * share;
     const point = roadPointFrom(tinRoad, tinStart.x, tinStart.z, metres);
@@ -244,11 +257,7 @@ export function buildEverburn(land) {
         path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),
         carStart:escortCarStart(slowRidePath, GAS_LOAD_RULE.carStartBehindMetres, GAS_LOAD_RULE.carStartSideMetres),
         speed:GAS_LOAD_RULE.speedKmh / 3.6, health:100, restLineId:'story.ember.moss.3', restartFrom:'last-marker', restSeconds:3, lentWeapon:'flamethrower', giveUpLineId:'story.ember.moss.10',
-        // Two ambushes of 2 raiders each (1 on Easy). See src/world/jobs/steps/escort.js. Both stand on her road: the first three
-        // quarters of the way from the Boneyard to the halfway camp (past the Wash), the second three quarters of the way from the camp to Tin
-        // Town (past the bridge). The flamethrower is lent, as in job 1.
-        ambushes:Object.freeze([Object.freeze({id:'ash-men-raid-1', place:place('ash-men-raid-1', between('the-wash', 'safe-road', .4)), count:2}),
-          Object.freeze({id:'ash-men-raid-2', place:place('ash-men-raid-2', {x: bridgeOut.position.x + (at('tin-town').x - bridgeOut.position.x) * .5, z: bridgeOut.position.z + (at('tin-town').z - bridgeOut.position.z) * .5}), count:2})]),
+        gasRaids:slowRaids, gasRaiders:slowRaiders,
         // The furnace paces her on the high ground while she is between 30% and 70% of her road.
         sayAtShare:[{share:.3, lineId:'story.ember.moss.4'}],
         // Moss's own start line; the job ends on Auntie Solder's result line, which it holds for as job 3 holds for Cinder's.

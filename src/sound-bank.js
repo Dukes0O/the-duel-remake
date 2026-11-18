@@ -654,6 +654,8 @@ export const SOUND_BANK = {
     layers:[tone(145, .9, .35, 'sawtooth', 0, 138), tone(217, .9, .2, 'triangle', 0, 207)]}),
   'world.bridge.ash': cue('impacts', {flag:'story-everburn', priority:70, limit:1, volume:.5,
     layers:[noise(800, 1.8, .3, 'lowpass'), tone(70, .4, .1, 'triangle', 0, 40)]}),
+  'world.bess.leak': cue('impacts', {flag:'story-everburn', priority:70, limit:3, volume:.5,
+    layers:[noise(2400, .6, .35, 'highpass'), tone(160, .12, .15, 'triangle', 0, 80)]}),
   'world.tintown.gate': cue('impacts', {priority: 70, limit: 1, volume: .5,
     layers: [{...noise(400, 1, .3, 'lowpass'), endFrequency:180}, tone(90, 1, .15, 'triangle', 0, 55)]}),
   'world.forge.catch': cue('impacts', {priority: 75, limit: 1, volume: .5,

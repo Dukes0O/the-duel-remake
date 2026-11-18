@@ -2,6 +2,17 @@
 import {burnBarricades} from './barricade.js';
 
 export const GAS_LOAD_RULE = Object.freeze({
+  raidShares: Object.freeze([.15, .4, .65, .9]),
+  raidSideMetres: 400,
+  raidCount: 2,
+  easyRaidCount: 1,
+  raidRiderSpacingMetres: 8,
+  stationSideMetres: 6,
+  stationRangeMetres: 12,
+  holeSeconds: 3,
+  maxHoles: 3,
+  leakPerSecond: .5,
+  easyLeakPerSecond: .25,
   start: 100,
   startHoles: 0,
   speedKmh: 32,
@@ -68,4 +79,40 @@ export function gasLoadMeeting(step, state, view) {
   }
   if (state.gasMeeting && !(state.lineQueue?.length) && !(state.lineRemaining > 0)) return null;
   return {state, complete: false, requests};
+}
+
+// Raiders are ordinary car actors. Only the tank and the raid clocks live here.
+export function gasLoadRaids(step, state, view, truck, share, dt) {
+  const seconds = Math.max(0, dt), requests = [], events = [];
+  const raids = [...(state.gasRaids ?? [])];
+  for (const raid of step.gasRaids ?? []) if (share >= raid.share && !raids.includes(raid.id)) {
+    raids.push(raid.id);
+    events.push({type:'gasRaid', id:raid.id});
+  }
+  const clocks = {...state.holeClocks};
+  let holes = state.holes ?? GAS_LOAD_RULE.startHoles;
+  const openings = [];
+  let leakingSeconds = holes * seconds;
+  for (const def of step.gasRaiders ?? []) {
+    const rider = view.actors?.find(actor => actor.id === def.id);
+    const active = raids.includes(def.raidId) && def.raidIndex <
+      (view.difficulty === 'easy' ? GAS_LOAD_RULE.easyRaidCount : GAS_LOAD_RULE.raidCount);
+    if (!active || !rider || rider.health <= 0 || rider.drivenOff ||
+        Math.hypot(rider.position.x - truck.position.x, rider.position.z - truck.position.z) > GAS_LOAD_RULE.stationRangeMetres) {
+      clocks[def.id] = 0;
+      continue;
+    }
+    const before = clocks[def.id] ?? 0;
+    for (let when = GAS_LOAD_RULE.holeSeconds - before; when <= seconds; when += GAS_LOAD_RULE.holeSeconds) openings.push(when);
+    clocks[def.id] = (before + seconds) % GAS_LOAD_RULE.holeSeconds;
+  }
+  for (const when of openings.sort((a, b) => a - b)) {
+    if (holes >= GAS_LOAD_RULE.maxHoles) break;
+    holes++;
+    leakingSeconds += seconds - when;
+    events.push({type:'gasLeak', actorId:step.actorId});
+  }
+  const rate = view.difficulty === 'easy' ? GAS_LOAD_RULE.easyLeakPerSecond : GAS_LOAD_RULE.leakPerSecond;
+  return {state:{...state, gasRaids:raids, holeClocks:clocks, holes,
+    gas:Math.max(0, (state.gas ?? GAS_LOAD_RULE.start) - rate * leakingSeconds)}, requests, events};
 }
