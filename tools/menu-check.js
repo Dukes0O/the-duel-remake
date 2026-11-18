@@ -62,6 +62,19 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
   app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};app._saveProfile();
   refreshRaceSetup();gateFound.disabled=true;panel.open=false;
 };panel.append(gateFound);
+// For a try by hand of a later job of the Everburn: a temporary player who has found the wasteland, read Hollis's note and
+// finished the jobs before it, so the Story Wall offers that job at once.
+const {EMBER_JOBS}=await import('../src/story/ember-save.js');
+const {EMBER_JOB_NAMES}=await import('../src/story/ember-road.js');
+for(const index of [1,2,3]){
+  const ready=document.createElement('button');ready.textContent=`Create temporary player ready for job ${index+1}: ${EMBER_JOB_NAMES[index]}`;ready.onclick=()=>{
+    if(app.duel.state.status!=='menu')return;
+    app.addPlayer(`Everburn ${index+1} QA`);
+    app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true},
+      story:{version:1,...app.profile.story,ember:{read:true,jobs:EMBER_JOBS.slice(0,index)}}};app._saveProfile();
+    refreshRaceSetup();ready.disabled=true;panel.open=false;
+  };panel.append(ready);
+}
 let frozenPaint=0;
 const mirror=document.createElement('button');mirror.textContent='Freeze rear-view traffic sample';mirror.onclick=()=>{
   if(app.duel.state.status!=='menu')return;
