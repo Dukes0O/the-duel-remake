@@ -13,6 +13,7 @@ import {EVERBURN_JOBS, EVERBURN_SIDE_JOBS} from '../src/world/jobs/everburn.js';
 import {furnaceDoorSpot, furnacePace, furnaceSpeed} from '../src/world/jobs/old-smoke.js';
 import {GAS_RUN_ROADS, fieldBattleJob, gasRunJob} from '../src/world/jobs/gas-run.js';
 import {BRAND_RULE} from '../src/world/jobs/brand-rule.js';
+import {bellowsRoadFacts} from '../src/world/jobs/bellows-rule.js';
 
 // SCABLANDS-LAND round 4: the limit was 720 s; the roads and the furnace's path are ten times as long (the chase alone is 1,042 s at child pace).
 const DT = 1 / 120, MAX_SECONDS = 3000;
@@ -390,6 +391,8 @@ function driveBellows(duel, step) {
   }
   const thief = world.actors.find(actor=>actor.id===step.targetId);
   if (!thief) return;
+  if (rule.knocks > 0 && drive.firstKnockRoadMetres == null)
+    drive.firstKnockRoadMetres = bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex).roadMetres;
   const gap = Math.hypot(car.x-thief.position.x,car.z-thief.position.z);
   if (rule.thiefStopped) {
     if (gap>6) moveTowardMarker(duel,thief.position);
@@ -596,7 +599,7 @@ for (const definition of jobs) {
       const walk = townWalks.get(result.duel);
       console.log(`Light the Town, seed ${seed}: brands ${walk?.brandsUsed}, smothered ${JSON.stringify(walk?.smothered)}`);
     }
-    if (definition.steps[0]?.bellows) console.log(`Run Him Down, seed ${seed}: knocks ${result.bellowsResult?.knocks ?? result.stepState.knocks}, bellows ${result.bellowsResult?.bellows ?? result.stepState.bellows}, loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}`);
+    if (definition.steps[0]?.bellows) console.log(`Run Him Down, seed ${seed}: knocks ${result.bellowsResult?.knocks ?? result.stepState.knocks}, bellows ${result.bellowsResult?.bellows ?? result.stepState.bellows}, loaded ${!!result.bellowsResult || !!result.stepState.bellowsLoaded}, first knock at ${bellowsDrives.get(result.duel)?.firstKnockRoadMetres?.toFixed(1) ?? 'none'} m of road`);
     if (result.won) finishes++;
     if ((seed === 1 || trialJobsOnly || selectedJob) && !result.won) {
       console.log(`Failed ${definition.name}, seed ${seed}`);
