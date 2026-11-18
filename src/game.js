@@ -61,6 +61,7 @@ import {warlordEnabled} from './warlords/index.js';
 import {initializeArenaJunk, stepArenaJunk} from './arena/arena-junk.js';
 import {ARENA_MODES, applyArenaArmor, createArenaEvent, placeActor, startingSlots, stepArenaEvent} from './arena/arena-event.js';
 import {initializeWorldJob} from './arena/modes/world-job.js';
+import {riderOpponentSpecs} from './arena/modes/road-riders.js';
 
 const UPGRADE_KEYS = ['engine', 'nitro', 'handling', 'tires', 'brakes', 'suspension', 'tank'];
 const FACTORY_MAX_UPGRADES = Object.freeze(Object.fromEntries(UPGRADE_KEYS.map(key => [key, 3])));
@@ -551,6 +552,12 @@ export class Duel {
           venueId !== 'salt-flats' || opponents.length !== 3)) ||
         opponents.length < (ambush || mode === 'world-job' ? 0 : 1) || opponents.length > maxOpponents ||
         opponents.some(spec => !CARS[spec?.car])) return false;
+    if (mode === 'world-job' && job.steps.some(step => step.kind === 'rider-fight')) {
+      if (!this.featureFlags.enabled('road-riders') || !venue.scablands) return false;
+      const riders = riderOpponentSpecs(job.steps, opponents);
+      if (!riders) return false;
+      opponents = [...opponents, ...riders];
+    }
     setScablandsOpenMarks([]);
     if (ambush) opponents = [{car: 'dusthawk_rally', brain: 'rammer',
       upgradeLevel: {easy: 0, medium: 1, hard: 2}[cpuDifficulty] ?? 1}];

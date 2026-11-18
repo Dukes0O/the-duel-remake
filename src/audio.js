@@ -521,6 +521,18 @@ export class EngineAudio {
     };
   }
 
+  _updateRiderNotes(state, course) {
+    if (!this.riderNotes?.size || !course || !this.context) return;
+    for (const note of this.riderNotes) {
+      const car = state.opponents.find(actor => actor.arenaId === note.sourceId && actor.roadRider);
+      if (!car) continue;
+      const hitPosition = point({course}, car);
+      const space = combatAudioSpace({hitPosition, combatHit:true}, state, course);
+      note.output.level.gain.value = space.gain;
+      note.output.panner.pan.value = space.pan;
+    }
+  }
+
   _balanceBlasts() {
     const now = this.context.currentTime;
     // Only fresh attacks add coherently. The four-second recording has a long,
@@ -1367,6 +1379,7 @@ export class EngineAudio {
     this.updateFightVoices(st);
     this.updateHiddenRoad(st);
     this._updateProjectiles(st, environment);
+    this._updateRiderNotes(st, environment.course);
     this._updateArsenalFields(st, environment);
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') { this._clearTurbo(); this._clearVehicleVoices(); return; }
@@ -2058,10 +2071,13 @@ export class EngineAudio {
         state,
         course,
       );
-      this._playCue(ev.arenaTell.cue || 'arena.tell', {
-        destination: output.level,
-        onEnd: output.disconnect,
-      });
+      const note = ev.arenaTell.sourceId ? {sourceId:ev.arenaTell.sourceId, output} : null;
+      const onEnd = note ? () => {
+        this.riderNotes?.delete(note);
+        output.disconnect();
+      } : output.disconnect;
+      const voice = this._playCue(ev.arenaTell.cue || 'arena.tell', {destination:output.level,onEnd});
+      if (note && voice) (this.riderNotes ??= new Set()).add(note);
     }
     if (ev.warlordWindow?.open && ev.warlordWindow.soundCue)
       this._playCue(ev.warlordWindow.soundCue);

@@ -62,6 +62,25 @@ const gateFound=document.createElement('button');gateFound.textContent='Create t
   app.profile={...app.profile,credits:50000,wasteland:{...app.profile.wasteland,version:1,discoveredGate:true}};app._saveProfile();
   refreshRaceSetup();gateFound.disabled=true;panel.open=false;
 };panel.append(gateFound);
+if (qaParams.has('road-riders-review')) {
+  const {washRiderJob}=await import('../src/world/jobs/wash-riders.js');
+  for (const difficulty of ['easy','medium','hard']) {
+    const button=document.createElement('button');
+    button.dataset.washFight=difficulty;
+    button.textContent='Fight at the Wash · '+difficulty;
+    button.onclick=()=>{
+      if (app.duel.state.status==='menu') {
+        if (!gateFound.disabled) gateFound.click();
+        app.visitWasteland();
+      }
+      app.cpuDifficulty=difficulty;
+      const started=app._startArenaFight({venueId:'scablands',mode:'world-job',opponents:0,job:washRiderJob()});
+      if (started) panel.open=false;
+      else note.textContent='Enter the Wasteland yard with the road-riders and story-everburn switches, then choose a fight.';
+    };
+    panel.append(button);
+  }
+}
 // For a try by hand of a later job of the Everburn: a temporary player who has found the wasteland, read Hollis's note and
 // finished the jobs before it, so the Story Wall offers that job at once.
 const {EMBER_JOBS}=await import('../src/story/ember-save.js');

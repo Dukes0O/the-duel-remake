@@ -1,3 +1,4 @@
+import {stepRiderJob} from './rider-rule.js';
 import { stepReach } from './steps/reach.js';
 import { stepCarry } from './steps/carry.js';
 import { stepChase } from './steps/chase.js';
@@ -14,7 +15,7 @@ import { stepDig } from './steps/dig.js';
 import { stepWhistle } from './steps/whistle.js';
 import { stepLines, stepLineTriggers } from './step-lines.js';
 
-const runners = { reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
+const runners = { 'rider-fight': stepRiderJob, reach: stepReach, carry: stepCarry, chase: stepChase, escort: stepEscort,
   onfoot: stepOnFoot, heist: stepHeist, rescue: stepRescue, defend: stepDefend, explore: stepExplore,
   board: stepBoard, drivetrain: stepDrivetrain, runaway: stepRunaway, dig: stepDig, whistle: stepWhistle };
 
@@ -57,6 +58,8 @@ export function stepJob(job, view = {}, dt = 0) {
   result.stepState = lined.state ?? result.stepState;
   result.events = lined.events ?? [];
   result.requests = lined.requests ?? [];
+  const riderResult=result.events.find(event=>event.type==='riderFight');
+  if (riderResult) result.storyMarks={...result.storyMarks,riderFight:riderResult};
   const stopRequest=result.requests.find(request=>request.type==='stopMark');
   if(stopRequest) {
     const marks={...(result.storyMarks?.stopMarks??{})},previous=marks[stopRequest.id];

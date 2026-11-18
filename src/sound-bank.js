@@ -674,6 +674,8 @@ export const SOUND_BANK = {
     layers: [{...noise(600, .5, .4, 'lowpass'), endFrequency: 1800, attack: .12}, tone(220, .4, .12, 'triangle', .05, 440)]}),
   'world.brand.out': cue('impacts', {priority: 78, limit: 1, volume: .6,
     layers: [{...noise(900, .6, .6, 'lowpass'), endFrequency: 200, attack: .02}, tone(180, .5, .2, 'sine', 0, 70)]}),
+  'rider.breaks-off': cue('vehicle', {flag:'road-riders', priority: 60, limit: 2, volume: .5,
+    layers: [tone(118, .55, .24, 'sawtooth', 0, 48), tone(62, .68, .17, 'triangle', .04, 32)]}),
   'world.ash.throw': cue('impacts', {priority: 70, limit: 2, volume: .5,
     layers: [{...noise(1800, .6, .45, 'bandpass'), endFrequency: 500, attack: .05}]}),
   'world.town.wake': cue('impacts', {priority: 75, limit: 1, volume: .5,

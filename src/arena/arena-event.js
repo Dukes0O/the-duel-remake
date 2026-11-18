@@ -223,7 +223,7 @@ function finish(duel, reason, winnerId = null) {
   state.status = 'arena_result';
   state.results = {arena: arena.result};
   const winner = arena.participants.find(p => p.id === placings[0]);
-  duel._callout(arena.mode === 'world-job' ? 'JOB COMPLETE / YOU WIN' : arena.mode === 'ambush-alley' ?
+  duel._callout(arena.mode === 'world-job' && reason === 'rider-fight-lost' ? 'THE RIDERS WON' : arena.mode === 'world-job' ? 'JOB COMPLETE / YOU WIN' : arena.mode === 'ambush-alley' ?
     winnerId === 'player' ? 'AMBUSH ALLEY / YOU WIN' : 'THE FORT FELL' : winner.id === 'player' ?
     arena.mode === 'warlord' ? 'WARLORD DUEL / YOU WIN' : arena.mode === 'fuel-run' ? 'FUEL RUN / YOU WIN' :
       arena.mode === 'bounty-hunt' ? 'BOUNTY HUNT / YOU WIN' :
@@ -351,7 +351,8 @@ export function stepArenaEvent(duel, dt) {
   }
   // A warlord's think may add or burst decoy cars: step a snapshot and skip any that left.
   for (const actor of [...state.opponents]) {
-    if (!state.opponents.includes(actor) || ambush && actor.finished) continue;
+    if (!state.opponents.includes(actor) || ambush && actor.finished || actor.roadRider?.phase === 'home') continue;
+    if (actor.roadRider?.phase === 'wrecked') { stepWreckedActor(duel, actor, dt); continue; }
     if (actor.combatWrecking) { if (stepWreckedActor(duel, actor, dt)) respawns.push(actor); continue; }
     const participant = arenaParticipant(duel, actor);
     if (actor.knock) {
@@ -368,7 +369,7 @@ export function stepArenaEvent(duel, dt) {
       containInArena(duel, actor, dt);
       continue;
     }
-    const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor) : null;
+    const goal = arena.mode === 'world-job' ? worldJobPilotGoal(duel, actor, dt) : null;
     const pilotGoal = goal || thinkBrain(duel, participant, actor, dt);
     if (warlordFight(duel, actor)?.motion?.(duel, actor, dt) === true) {
       containInArena(duel, actor, dt);
@@ -419,6 +420,10 @@ export function stepArenaEvent(duel, dt) {
   if (fuelDecision) { finish(duel, fuelDecision.reason, fuelDecision.winnerId); return; }
   if (ambushDecision) { finish(duel, ambushDecision.reason, ambushDecision.winnerId); return; }
   if (worldJobDecision) { finish(duel, worldJobDecision.reason, worldJobDecision.winnerId); return; }
-  if (!ambush) for (const actor of respawns) respawn(duel, arenaParticipant(duel, actor), actor);
+  if (!ambush) for (const actor of respawns) {
+    const fight = arena.worldJob?.riderFight;
+    if (actor.roadRider || actor === state && fight?.outcome === 'lost' && fight.index === arena.worldJob.job.stepIndex) continue;
+    respawn(duel, arenaParticipant(duel, actor), actor);
+  }
   stepClock(duel, dt);
 }

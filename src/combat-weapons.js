@@ -241,6 +241,7 @@ export function fireWeapon(duel, weapon, enemy = false, cpuActor = duel.state.ri
   if (state.onFoot && !enemy) return false;
   const combat = state.combat;
   const actor = enemy ? cpuActor : state;
+  if (enemy && actor?.roadRider && (actor.roadRider.phase !== 'fighting' || actor.roadRider.weapon !== weapon)) return false;
   let target = enemy ? (state.arena ? arenaTargetOf(duel, cpuActor) : state) : state.opponents.length > 1
     ? state.opponents.filter(opponent => !opponent.finished && !opponent.crushed &&
         !opponent.combatWrecking)

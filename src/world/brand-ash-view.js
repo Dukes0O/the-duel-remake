@@ -3,13 +3,14 @@
 import * as THREE from 'three';
 import {createOnFootFigures} from '../onfoot-figures.js';
 import {BRAND_RULE as R} from './jobs/brand-rule.js';
+import {RIDER_RULE} from './jobs/rider-rule.js';
 
-export function createBrandAshView() {
+export function createBrandAshView({road = false} = {}) {
   const group = new THREE.Group();
-  group.name = 'Town Ash Men';
+  group.name = road ? 'Road riders and ash sacks' : 'Town Ash Men';
   group.visible = false;
-  const capacity = R.ashWaves.reduce((sum, count) => sum + count, 0);
-  const figures = createOnFootFigures({capacity});
+  const capacity = road ? RIDER_RULE.maximumField : R.ashWaves.reduce((sum, count) => sum + count, 0);
+  const figures = createOnFootFigures({capacity:road ? capacity * RIDER_RULE.crewPerCar : capacity});
   group.add(figures.group);
   const ashShape = new THREE.SphereGeometry(R.ashDrawingRadius, 8, 6);
   const ashMaterial = new THREE.MeshStandardMaterial({color: 0xaaa291, roughness: 1});
@@ -29,21 +30,23 @@ export function createBrandAshView() {
   return {group, figures,
     update(worldJob, drawnShift) {
       const job = worldJob?.job, step = job?.steps?.[job.stepIndex];
-      group.visible = step?.brand === true;
-      const actors = group.visible ? (worldJob.actors ?? []).filter(actor => actor.brandAsh) : [];
+      const fight = worldJob?.riderFight;
+      group.visible = road ? Boolean(fight) : step?.brand === true;
+      const actors = group.visible ? (worldJob.actors ?? []).filter(actor => road ? actor.riderCrew : actor.brandAsh) : [];
       figures.update(actors, {active: group.visible, drawnShift});
       for (let index = 0; index < capacity; index++) {
-        const actor = actors[index], ash = job?.stepState?.brandAsh?.men?.[actor?.id]?.ash;
+        const actor = actors[index], ash = road ? fight?.ash?.[index] : job?.stepState?.brandAsh?.men?.[actor?.id]?.ash;
+        const source = road ? ash?.from : actor;
         const view = warnings[index];
-        view.warning.visible = Boolean(group.visible && actor && ash);
+        view.warning.visible = Boolean(group.visible && source && ash);
         if (!view.warning.visible) continue;
-        const share = THREE.MathUtils.clamp(1 - ash.remaining / R.throwWarningSeconds, 0, 1);
+        const share = THREE.MathUtils.clamp(1 - ash.remaining / (road ? RIDER_RULE.ashFlightSec : R.throwWarningSeconds), 0, 1);
         const target = ash.position;
-        const sourceShift=figures.drawnShiftAt(index),targetShift=drawnShift?.(target.x,target.z,target.y,undefined,view.mark)??0;
-        view.ash.position.set(THREE.MathUtils.lerp(actor.x, target.x, share),
-          THREE.MathUtils.lerp(actor.y + sourceShift + R.ashReleaseHeight, target.y + targetShift, share) +
+        const sourceShift=road ? drawnShift?.(source.x,source.z,source.y,undefined,view.ash) ?? 0 : figures.drawnShiftAt(index),targetShift=drawnShift?.(target.x,target.z,target.y,undefined,view.mark)??0;
+        view.ash.position.set(THREE.MathUtils.lerp(source.x, target.x, share),
+          THREE.MathUtils.lerp(source.y + sourceShift + R.ashReleaseHeight, target.y + targetShift, share) +
             Math.sin(share * Math.PI) * R.ashArcHeight,
-          THREE.MathUtils.lerp(actor.z, target.z, share));
+          THREE.MathUtils.lerp(source.z, target.z, share));
         view.mark.position.set(target.x, target.y + targetShift + R.ashMarkLift, target.z);
       }
     },

@@ -1068,7 +1068,7 @@ export function attachRenderer(host, app) {
       if(ghost.visible){const gp=vehicleGroundPoint(course,ghostPose.s,ghostPose.lateral),separation=Math.hypot(gp.x-pp.x,gp.z-pp.z);ghostStyle.opacity(.22*THREE.MathUtils.clamp((separation-2)/7,0,1));place(ghost,gp,ghostPose.headingError,wheelTravel(ghostPose.speedMph));ghost.position.y+=ghostPose.airHeight||0;const slope=groundSlope(course,ghostPose.s,ghostPose.lateral,ghostPose.headingError);ghost.rotation.x=slope.pitch;ghost.rotation.z=slope.roll;applyVehicleTerrainPose(ghost,course,ghostPose);}
     }
     if(!convoy)updateNpcVehicleDamage(rival,menu?null:st.rival,combatVehicleWear(st.rival,combatWearEnabled));
-    rival.visible = !menu && !!st.rival && Math.abs(visualGap(st.rival.s)) < 650 &&
+    rival.visible = !menu && !!st.rival && st.rival.roadRider?.phase !== 'home' && Math.abs(visualGap(st.rival.s)) < 650 &&
       !(st.rival.arenaRole === 'ambush-buggy' && !st.rival.ambushWave);
     if (rival.visible&&st.field)setCarShadows(rival,Math.abs(visualGap(st.rival.s))<FIELD_SHADOW_RANGE);
     for(const entry of worldJobVehicles){
@@ -1089,7 +1089,7 @@ export function attachRenderer(host, app) {
     extraOpponents.forEach(({mesh},index)=>{
       const actor=opponents[index+1];
       updateNpcVehicleDamage(mesh,menu?null:actor,combatVehicleWear(actor,combatWearEnabled));
-      mesh.visible=!menu&&!!actor&&Math.abs(visualGap(actor.s))<650;
+      mesh.visible=!menu&&!!actor&&actor.roadRider?.phase!=='home'&&Math.abs(visualGap(actor.s))<650;
       if(!mesh.visible)return;
       if(st.field)setCarShadows(mesh,Math.abs(visualGap(actor.s))<FIELD_SHADOW_RANGE);
       place(mesh,vehicleGroundPoint(course,actor.s,actor.lateral),actor.headingError||0,wheelTravel(actor.speedMph));
