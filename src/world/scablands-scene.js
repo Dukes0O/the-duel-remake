@@ -1001,7 +1001,7 @@ export function createScablandsScene(course,options={}){
       braziers.setYardPotLoaded(Boolean(emberStep?.pickup&&worldJob?.job?.stepState?.loaded));
       gasLoadView.update(worldJob,group.userData.drawnGroundHeightAt);
       barricades.forEach((rig,index)=>{
-        const barrier=emberStep?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
+        const barrier=(stepNow?.gasLoad?stepNow:emberStep)?.barriers?.[index],burnt=worldJob?.job?.stepState?.burntBarricades?.includes(barrier?.id);
         rig.visible=Boolean(barrier);rig.children[0].visible=!burnt;rig.children[1].visible=Boolean(burnt);
         if(barrier){const at=barrier.position;rig.position.set(at.x,at.y,at.z);rig.rotation.y=barrier.heading+Math.PI;}
       });

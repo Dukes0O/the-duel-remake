@@ -75,6 +75,24 @@ export function buildEverburn(land) {
   // follows every point of the land's own Tin Road to the south gate.
   const slowRidePath = path(...net.road('tin-road').points.map((point, index) => place(`bess-tin-road-${index}`, point)));
   const bessMeeting = place('moss-meeting', escortCarStart(slowRidePath, 0, GAS_LOAD_RULE.meetingSideMetres), GAS_LOAD_RULE.meetingRadiusMetres);
+  const tinRoad = net.road('tin-road'), tinStart = tinRoad.points[0];
+  const tinLength = tinRoad.points.slice(1).reduce((sum, point, index) => sum +
+    Math.hypot(point.x - tinRoad.points[index].x, point.z - tinRoad.points[index].z), 0);
+  const slowBlocks = path(...GAS_LOAD_RULE.blockShares.map((share, index) => {
+    const metres = tinLength * share;
+    const point = roadPointFrom(tinRoad, tinStart.x, tinStart.z, metres);
+    const ahead = roadPointFrom(tinRoad, tinStart.x, tinStart.z, metres + 1);
+    return Object.freeze({id:`bess-road-block-${index + 1}`, metres, car:index === 1,
+      position:Object.freeze({...point, y:scablandsSurfaceHeightAt(point.x, point.z)}),
+      heading:Math.atan2(ahead.x - point.x, ahead.z - point.z)});
+  }));
+  const slowBlockCars = path(...[slowBlocks[1], slowBlocks[2]].map((block, index) => {
+    const point = index === 0 ? block.position : roadPointFrom(tinRoad, tinStart.x, tinStart.z,
+      block.metres + GAS_LOAD_RULE.riderBehindMetres);
+    return Object.freeze({id:index === 0 ? block.id : 'bess-block-rider', gasBlockCar:index === 0,
+      gasBlockRider:index === 1, renderCar:'dusthawk_rally', health:100,
+      heading:block.heading + Math.PI / 2, start:place(`bess-block-car-${index}`, point)});
+  }));
   const furnaceRunBack = place('furnace-run-3', between('dead-mall', 'everburn', .485, 5.62, -18.9));
   // The well's post is solid. Start and finish outside it, on the sides reached by the two road pieces.
   const furnaceStart = place('furnace-well-start', at('everburn', -5, -10), 18);
@@ -221,6 +239,7 @@ export function buildEverburn(land) {
       easy:Object.freeze({truckHealth:100, raiderPressure:'low', breakdownRecovery:'one-rest-then-restart'}), lineId:'story.ember.moss.1',
       // No stand-in car: the Scablands scene draws Big Bess's own truck at this actor's spot.
       steps:[step('escort',{what:'Keep Big Bess safe on the drive to Tin Town.', gasLoad:true, meeting:bessMeeting,
+        blocks:slowBlocks, barriers:path(slowBlocks[0], slowBlocks[2]), waitingActors:slowBlockCars,
         hoseFrom:place('bess-plane-wing', at('boneyard', 13, -32)), actorId:'big-bess', actor:{id:'big-bess', renderCar:false, escort:true, health:100, speed:GAS_LOAD_RULE.speedKmh / 3.6,
         path:slowRidePath}, path:slowRidePath, destination:slowRidePath.at(-1),
         carStart:escortCarStart(slowRidePath, GAS_LOAD_RULE.carStartBehindMetres, GAS_LOAD_RULE.carStartSideMetres),

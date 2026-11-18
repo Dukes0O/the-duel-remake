@@ -1,4 +1,5 @@
 import {barricadeEnds} from '../../world/jobs/barricade.js';
+import {GAS_LOAD_RULE} from '../../world/jobs/gas-load-rule.js';
 import {createJob, stepJob} from '../../world/jobs/job-engine.js';
 import {createRaidZones, damageRaider} from '../../raiders.js';
 import {COMBAT_TUNING} from '../../wasteland-tuning.js';
@@ -293,7 +294,7 @@ export function prepareWorldJobControls(duel) {
 }
 
 function syncJobCarSolids(worldJob) {
-  if (worldJob.definition.id !== 'everburn-hot-delivery' && !worldJob.job.steps[worldJob.job.stepIndex]?.bellows) return;
+  if (worldJob.definition.id !== 'everburn-hot-delivery' && !worldJob.job.steps[worldJob.job.stepIndex]?.bellows && !worldJob.job.steps[worldJob.job.stepIndex]?.gasLoad) return;
   worldJob.solidGrid?.setCars(worldJob.actors.filter(actor => actor.renderCar && actor.position));
 }
 
@@ -302,6 +303,10 @@ function takeJobCarContacts(duel, worldJob) {
   for (const hit of worldJob.carContacts ?? []) {
     const rider = hit.actor;
     const step = worldJob.job.steps[worldJob.job.stepIndex];
+    if (step?.gasLoad) {
+      (worldJob.gasCarContacts ??= []).push({id:rider.id, kmh:hit.kmh});
+      if (step.waitingActors?.some(actor => actor.id === rider.id && actor.gasBlockCar) && hit.kmh < GAS_LOAD_RULE.hardKnockKmh) continue;
+    }
     if (step?.bellows && rider.id === step.targetId) continue;
     if (rider.health <= 0 || rider.ramContact || rider.ramRetreat) continue;
     rider.ramContact = true;
@@ -514,15 +519,27 @@ function stopScout(duel, worldJob, scout) {
 function pursueJobRider(duel, worldJob, actorDef, dt, bellowsRider = false) {
   const rider = worldJob.actors.find(actor => actor.id === actorDef.id);
   if (!rider) return;
+  const gasStep = worldJob.job.steps[worldJob.job.stepIndex];
+  const gasRider = gasStep?.gasLoad && (actorDef.gasBlockCar || actorDef.gasBlockRider);
+  if (gasRider) {
+    if (!worldJob.job.stepState.gasLoaded) return;
+    // A parked driver waits for his hard knock. A guard wakes only once.
+    if (actorDef.gasBlockCar && !worldJob.job.stepState.clearedBlocks?.includes(rider.id)) return;
+    const car = position(duel, duel.state);
+    if (actorDef.gasBlockRider && !rider.pursuing && !rider.ramRetreat &&
+        Math.hypot(car.x - rider.position.x, car.z - rider.position.z) > GAS_LOAD_RULE.blockRiderAlertMetres) return;
+    if (rider.gasDrivenOff) return;
+    if (rider.ramRetreat?.seconds >= 8) { rider.gasDrivenOff = true; rider.speed = 0; return; }
+  }
   const retreat = rider.ramRetreat;
   if (retreat) {
     retreat.seconds += Math.max(0, dt);
-    if (retreat.seconds >= 8) {
+    if (retreat.seconds >= 8 && !gasRider) {
       rider.ramRetreat = null;
       rider.ramContact = false;
     }
   }
-  if ((!worldJob.job.stepState.loaded && !bellowsRider) || duel.state.onFoot) return;
+  if ((!worldJob.job.stepState.loaded && !bellowsRider && !gasRider) || duel.state.onFoot) return;
   // A wreck stays where it fell, even if it was already returning to its post.
   if (rider.health <= 0) return;
   const car = position(duel, duel.state);
@@ -537,7 +554,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt, bellowsRider = false) {
     return;
   }
   const emberRider = roadRider || furnaceRider || saltRider;
-  const ramRider = emberRider || bellowsRider;
+  const ramRider = emberRider || bellowsRider || gasRider;
   const campRider = roadRider && actorDef.scoopAmbush;
   if (campRider && !worldJob.job.stepState.campAwake && !worldJob.ridersRetreating) {
     rider.speed = 0;
@@ -1442,7 +1459,7 @@ export function stepWorldJob(duel, dt) {
     worldJob.brazierKey = brazierKey;
     const grid = worldJob.solidGrid ??= createJobSolidGrid(duel.course.solidGrid);
     grid.setBraziers(currentStep?.ember ? brazierSpotsFor(currentStep) : []);
-    grid.setBarricades(currentStep?.ember ? currentStep.barriers ?? [] : []);
+    grid.setBarricades(currentStep?.ember || currentStep?.gasLoad ? currentStep.barriers ?? [] : []);
   }
   const trainBefore=worldJob.actors.find(actor=>actor.train)?.position;
   const previousRoofStage=worldJob.job.stepState.stage==='roof';
@@ -1480,7 +1497,8 @@ export function stepWorldJob(duel, dt) {
       !worldJob.job.stepState.scoutHome && !worldJob.job.stepState.scoutStopped;
     if (activeScout && hit.flame && actor.health > 0) {
       stopScout(duel, worldJob, actor);
-    } else if (actor && !(currentStep?.bellows && actor.id === currentStep.targetId) && Number.isFinite(hit.damage)) {
+    } else if (actor && !(currentStep?.bellows && actor.id === currentStep.targetId) &&
+        !(currentStep?.gasLoad && currentStep.waitingActors?.some(def => def.gasBlockCar && def.id === actor.id)) && Number.isFinite(hit.damage)) {
       actor.health = Math.max(0, actor.health - hit.damage);
       if (activeScout && actor.health <= 0) stopScout(duel, worldJob, actor);
     }
@@ -1519,6 +1537,7 @@ export function stepWorldJob(duel, dt) {
   }
   const carriedCar = position(duel, state);
   const view = {player: playerView, onFoot: !!state.onFoot,
+    ...(currentStep?.gasLoad ? {carContacts:worldJob.gasCarContacts ?? []} : {}),
     ...bellowsFacts,
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
@@ -1537,8 +1556,9 @@ export function stepWorldJob(duel, dt) {
   const previousStep = worldJob.job.stepIndex;
   const previousStepState = worldJob.job.stepState;
   const next = stepJob(worldJob.job, view, dt);
+  worldJob.gasCarContacts = [];
   worldJob.job = next;
-  if (next.events.some(event => event.type === 'burn') && currentStep?.ember) {
+  if (next.events.some(event => event.type === 'burn') && (currentStep?.ember || currentStep?.gasLoad)) {
     const burnt = next.stepState.burntBarricades ?? [];
     worldJob.solidGrid.setBarricades((currentStep.barriers ?? []).filter(barrier => !burnt.includes(barrier.id)));
   }

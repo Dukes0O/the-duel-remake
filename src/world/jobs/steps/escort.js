@@ -1,5 +1,5 @@
 import {pathShare} from '../furnace-sightings.js';
-import {GAS_LOAD_RULE, gasLoadMeeting} from '../gas-load-rule.js';
+import {GAS_LOAD_RULE, gasLoadMeeting, gasLoadBlocks} from '../gas-load-rule.js';
 
 // Raids on an escort (docs/board/cards/RUN-GAS.md, "Raids on an escort"). A step may carry `ambushes`: [{id, place, count}].
 //   - When the truck comes within AMBUSH_ALERT_METRES of an ambush's place, its raiders appear (a spawnWave request).
@@ -141,6 +141,13 @@ export function stepEscort(step, state, view, dt = 0) {
   // count as a successful escort.
   const requests = [{ type: 'follow', path: step.path, speed: step.speed }, { type: 'marker', place: step.destination }];
   if (!truck) return {state, complete: false, requests};
+  let blockEvents = [];
+  if (step.gasLoad) {
+    const blocks = gasLoadBlocks(step, state, view, pathShare(truck.position, truck.pathIndex, step.path).metres, dt);
+    state = blocks.state;
+    requests[0].speed = blocks.speed;
+    blockEvents = blocks.events;
+  }
   const ambushState = stepAmbushes(step, state, view, truck, requests);
   const complete = truck.atDestination === true || (truck.atDestination === undefined && truck.pathProgress >= 1);
   // A step with `arrival` closes with Moss's line for how Big Bess comes in (whole or hurt), then any extra lines it names.
@@ -155,5 +162,5 @@ export function stepEscort(step, state, view, dt = 0) {
   }
   const closingLines = arrival?.battle ? [...(ending === 'won' ? arrival.battle.wonLineIds : arrival.battle.arrivedLineIds)] :
     arrival ? [(truck.health ?? 0) >= arrival.hurtBelow ? arrival.wholeLineId : arrival.hurtLineId, ...(arrival.thenLineIds ?? [])] : null;
-  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, ...(closingLines ? {closingLines} : {}) };
+  return { state: {...state, ...ambushState, ...(ending ? {ending} : {})}, complete, requests, events: blockEvents, ...(closingLines ? {closingLines} : {}) };
 }
