@@ -78,10 +78,84 @@ on the laptop). For each scenario say which it is, with the evidence: the game i
 passes alone. Never change a tolerance or an assertion to make a check pass. Every corrected or removed assertion is
 written below, old and new, with the reason, for Claude's review before the merge (rule 18).
 
+## Helper results, 18 November 2026 (Sonnet helper)
+
+Each scenario was run alone with `--jobs 1`. Branch `worktree-agent-a121752c063a9d34e`, one commit for each of B and C.
+
+**B, all three were out of date and now pass alone.** `arena-steering`, `yard-home` and `heli-first-flight` named the Enzo as the
+car that travels only by air. Each now proves the refusal on the McMurtry Speirling, and shows that the Enzo is admitted.
+
+**C.**
+- `everburn`: out of date, passes alone. It wanted Lost Prospector on the notice board; no side job is remade yet.
+- `everburn-ember`: out of date, passes alone. It is the only scenario that photographs the pot's ember on rock, after a hit,
+  gone out at the yard brazier and after a scoop; the job 1 scenario takes other pictures. The checks on the ember's values are
+  unchanged. What had changed in the game: Cinder now hands the pot over (the car must stop by her first), the yard brazier
+  stands where the yard road leaves it, a scoop needs the car stopped for 3 seconds inside the brazier's ring, and the forge
+  is inside Tin Town and holds the car for 9 seconds before the result.
+- `everburn-frames`: out of date, passes alone. It reads Slow Ride's raids and Big Bess; both were remade, and the land has
+  hills and a camera that glides. Nothing in job 4's own scenario measures frame timing, so it stays. The pass is a headless run
+  and does not count under rule 8 (it needs a headed run alone, with the laptop's screen off); the headless p95 was 16.8 ms.
+- `everburn-side-jobs`, `everburn-well`: removed (both wait for jobs held back until each is remade).
+- `run-gas`, `field-battle`: the game is right, the checks were out of date. Big Bess drives at 9 m/s (measured: 540 m in 60 s)
+  on a road of 12,300 m. The first raid on the Boneyard road is 3,900 m down it (435 s) and the battle furnace comes out at 5,500 m
+  (608 s); both scenarios waited 200 s. Each now puts Big Bess on her road 60 m or 30 m short of that place (the way
+  `everburn-frames` does) and the rest runs as before. Both pass alone.
+
+**D.**
+- `machine-borer`: see "machine-borer" below.
+- `arsenal-wave1-audio`: passes alone twice. Written into QA-WAVE1-AUDIO-FLIGHT.
+
+### machine-borer
+
+Still failing alone, with exactly last night's six assertions (the two pictures `machine-borer-mouth-20m` and `machine-borer-mouth`: Mabel
+in the camera view, lining or portal in the camera view, centre not one flat colour). Everything else in the scenario passes (the
+faces, the inside view, the far mouth, the frame pace). The run takes about 10 minutes. Nothing was changed in the scenario.
+
+What the two pictures show: a flat sand colour, with a band of the hill's cracked ground along the top edge. Mabel, the tunnel and the
+mouth are not in them. Cause, measured: the scenario presses C once for this picture. Since commit `b14365aad` (16 November, "Clear
+Mabel's second view") the second view of every machine is the cab view, and for Mabel `src/machines/dig-game.js` (`updateBorerCamera`,
+the `cameraIndex === 1 && body` branch) raises the eye above the top of her model (`src/machines/camera.js`, `bounds.max.y + 0.25`).
+The old mouth camera in the same function (the `cameraIndex===1 && mouth` branch) can no longer be reached. In a debug run with
+Mabel 20 m into the tunnel the camera stood at height 6.5 m, 8 m above her head (height -1.5 m), and the ground surface above it
+was at 30.2 m: the camera is inside the rock, 24 m under the surface. So this is both: the check asks for a view the game no longer
+has, and the game's new second view is buried in rock whenever Mabel is cutting (a player who presses C while cutting sees a flat
+colour). The test that accompanied that commit (`tools/test-machine-view.mjs`) checks only that the eye clears Mabel's model, never
+that it is in the open. That is a fault a player would meet, so it was not hidden by changing the scenario. For Claude to decide: either
+cure the second view for Mabel (outside the mouth, or the inside-the-bore following view, while she is underground), after which this
+scenario proves it as written, or rule that the second view is the cab view and rewrite the two pictures to the cab view. The
+fault is in `src/machines/dig-game.js`, which is more than the small cure this card allowed, so it is reported only.
+
+Still open for Claude: the 'Everburn' remade jobs' own pages. `docs/board/cards/EVERBURN-REMAKE.md` (line 190, "browser scenarios
+`everburn-ember` and `everburn-well` pass") and several change notes and cards still name `everburn-well` and `everburn-side-jobs`.
+They are history, so they were left alone; the card EVERBURN-REMAKE does not yet say that each remade job and side job brings its
+own scenario. No tool or list in `tools/` names either removed scenario.
+
 ## Changed assertions, for Claude to review
 
 Claude's own, 18 November: the two removals in the full tier named under C. Each removed part checked a job that the
 remake replaced, and the remade job's own suite checks the same promise, so nothing is loosened.
+
+Helper, 18 November (each follows a decision or a remake; the refusal is still proved on the one car it applies to):
+
+1. `arena-steering`. Old: "Untransported Enzo must be refused by production arena admission", with the Enzo's name in the
+   message. New: the same assertions for the McMurtry Speirling (the car is added to the memory-only unlock list). Added: the
+   Enzo is admitted to the arena, and the yard is active again after it. Reason: EARNED-CARS-ANYWHERE (17 November).
+2. `yard-home`. Old: the yard visit with the Enzo is refused, with the Enzo's message and nothing changed. New: the same for
+   the McMurtry Speirling. Added: the Enzo's yard visit is admitted. Same reason.
+3. `heli-first-flight`. Old: the menu shows "travels only by air" and START is closed for the Enzo. New: the same for the
+   McMurtry Speirling. Old: with the Koenigsegg Jesko the note goes and START opens. New: the same with the Enzo (a medal car,
+   so this now also proves the decision). The Jesko step was only an example of "another car" and is covered by the Enzo.
+4. `everburn`. Old: "job 2 opens the notice board side jobs" (the wall shows the board and "Lost Prospector"). New, with jobs 1
+   and 2 done: the board is shown; it lists no side job and says "The next job is being made."; job 3 is the one open job.
+   Added, with jobs 1 to 4 done: job 5 reads "The next job is being made." and has no button. Reason: only jobs 1 to 4 are
+   remade (`REMADE_EVERBURN_JOBS`) and no side job is.
+5. `everburn-side-jobs`, `everburn-well`: removed whole, as this card ordered (they cannot pass until jobs 5 and 6 and the
+   side jobs are remade; each remade job brings its own scenario).
+6. `everburn-ember`, `everburn-frames`, `run-gas`, `field-battle`: no assertion changed. Only where the car, Big Bess and the
+   pot are put, and how long the game runs before the picture, changed. In `everburn-frames` the picture shows Big Bess, the
+   furnace and the raiders that stand on her (the old "all raiders in the picture" test, which named the first ambush's raiders, now
+   counts the raiders of Slow Ride's raids within 60 m of her; one stood on her in the run, the profile plays on the scenario's
+   default difficulty and the rule sends one raider to a raid on Easy, not checked).
 
 ## Claude answers
 
