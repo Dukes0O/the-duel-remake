@@ -1,5 +1,8 @@
+import {stepBellowsChase} from '../bellows-rule.js';
+
 const distance = (a, b) => Math.hypot((a?.x ?? 0) - (b?.x ?? 0), (a?.y ?? 0) - (b?.y ?? 0), (a?.z ?? 0) - (b?.z ?? 0));
 export function stepChase(step, state, view, dt = 0) {
+  if (step.bellows) return stepBellowsChase(step, state, view, dt);
   const target = (view.actors ?? []).find(actor => actor.id === step.targetId);
   // Not spawned yet: keep leading the player to the path, and nothing counts as caught.
   if (!target) return { state, complete: false, events: [], requests: [{ type: 'follow', path: step.path, speed: step.targetSpeed }, { type: 'marker', place: step.path?.[0] }] };

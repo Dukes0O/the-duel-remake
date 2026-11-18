@@ -1040,19 +1040,20 @@ for (const awake of [false, true]) {
 
 }
 
-// Completing Hot Delivery does not offer a story job that is still being made.
+// Completing Hot Delivery offers the checked Light the Town, with the same saved job ID.
 {
   let profile = markEmberRead(createProfile()).profile;
   profile = markEmberJob(profile, EMBER_JOBS[0]).profile;
   const props = emberStoryProps(profile, {available:true});
   const wall = emberWallMarkup(props);
-  assert.match(wall, /The next job is being made\./);
-  assert.doesNotMatch(wall, /data-ember-step="get-out-and-walk"/);
-  assert.deepEqual(emberNextUp(props), {text:'The next job is being made.', button:''});
+  assert.match(wall, /Light the Town/);
+  assert.match(wall, /data-ember-step="get-out-and-walk"/);
+  assert.match(emberNextUp(props).text,/^Next up: Light the Town\./);
+  assert.match(emberNextUp(props).button,/data-ember-step="get-out-and-walk"/);
   const screen = arenaResultsScreen({arena:{mode:'world-job', result:{winnerId:'player'},
     worldJob:{definition:EVERBURN_JOBS[0]}}}, {metric:()=>'', action:(label, id)=>`${id}:${label}|`, escapeHTML:String});
-  assert.match(screen.description, /The next job is being made\./);
-  assert.equal(screen.actions, 'arena-yard:BACK TO THE YARD|');
+  assert.doesNotMatch(screen.description, /The next job is being made\./);
+  assert.match(screen.actions,/ember-next-job:NEXT JOB: LIGHT THE TOWN/);
 }
 
 {
@@ -2289,6 +2290,17 @@ const step = definition.steps[0], pickup = step.pickup.place.position;
     const walk = node => {
       if (!node || typeof node !== 'object' || seen.has(node)) return;
       seen.add(node);
+      // The new job's hearth names the fire inside the solid forge. Its usable
+      // standing places are checked by job 2's own clearance/relight suite.
+      if (node.id === 'town-hearth') return;
+      if (node.id === 'hearth-front') {
+        assert.equal(pushOutOfSolids(node.position.x,node.position.z,.55).hit,null,
+          'the new hearth approach fits the existing fighter');
+        const fire=EVERBURN_JOBS[1].steps[0].hearth.position;
+        assert(Math.hypot(node.position.x-fire.x,node.position.z-fire.z)<=3,
+          'the usable hearth approach is inside the designed three-metre relight range');
+        return;
+      }
       const point = node.position ?? node;
       if (Number.isFinite(point?.x) && Number.isFinite(point?.z)) found.push({id: node.id ?? '(a point)', x: point.x, z: point.z});
       for (const value of Array.isArray(node) ? node : Object.values(node)) walk(value);

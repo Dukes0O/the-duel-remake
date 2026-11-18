@@ -186,14 +186,13 @@ for (const [name, job] of starts) {
   }
 }
 {
-  // Job 2 starts inside Tin Town's gate on open ground, facing the forge. Job 5 starts on the road 124 m short of the Dead Mall, facing it:
-  // it was 150 m, 9 m behind a pair of junk cars on the road; the new start is past them (the go-live round).
-  const job2 = start(EVERBURN_JOBS[1]), car2 = carAt(job2), forge = at(EVERBURN_JOBS[1].steps[0].places[0]);
-  // SCABLANDS-LAND round 4: the gate (25 m west, 62 m south of the town's centre) and the forge are worked out from Tin Town's place, not typed.
-  const gate = LAND.at('tin-town', -25, 62);
-  check(car2.z < gate.z && car2.z > TOWN.z + 25 && Math.abs(car2.x - gate.x) < 20, 'job 2: the car is inside Tin Town, just in from the gate');
-  check(facingAngle(car2, LAND.at('tin-town', 25, 14)) < .02, 'job 2: the car faces the forge');
-  check(Math.hypot(forge.x - car2.x, forge.z - car2.z) > 40, 'job 2: the first lamp is a walk from the car');
+  // Job 2 continues at job 1's forge bay, facing the hearth.
+  const job2=start(EVERBURN_JOBS[1]),car2=carAt(job2),townStep=EVERBURN_JOBS[1].steps[0];
+  const bay=EVERBURN_JOBS[0].steps[0].destination.position;
+  near(Math.hypot(car2.x-bay.x,car2.z-bay.z),0,.001,'job 2: the car starts in the forge bay where job 1 ends');
+  check(facingAngle(car2,townStep.hearth.position)<.02,'job 2: the car faces the hearth');
+  check(Math.hypot(townStep.places[0].position.x-car2.x,townStep.places[0].position.z-car2.z)>40,
+    'job 2: the pump lamp is a walk from the car');
   const job5 = start(EVERBURN_JOBS[4]), car5 = carAt(job5), mall = LAND.place('dead-mall');
   near(Math.hypot(car5.x - mall.x, car5.z - mall.z), 124, 2, 'job 5: the car starts 124 m short of the Dead Mall, past the junk cars on the road');
   // SCABLANDS-LAND round 4, slice 2a: the roads are the net of src/world/scablands-road.js. The Mall Road and the Mall to the Boneyard end and

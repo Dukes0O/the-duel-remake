@@ -25,6 +25,12 @@ import {createRiverField} from '../src/world/scablands-draw.js';
 import {riverDepthAt} from '../src/world/scablands-regions.js';
 
 const course=new Course(SCABLANDS_VENUE,1989);
+function addFolkFixture(root,path){
+  if(path!==SCABLANDS_ASSETS.folk)return;
+  const auntie=new THREE.Group();auntie.name='auntie-solder_root';
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.5,2,.4),new THREE.MeshStandardMaterial());
+  body.position.y=1;auntie.add(body);root.add(auntie);
+}
 const loaded=[];
 const scene=createScablandsScene(course,{loadAsset:async path=>{
   loaded.push(path);const root=new THREE.Group();root.name=path;
@@ -47,13 +53,23 @@ const scene=createScablandsScene(course,{loadAsset:async path=>{
       }
     }
   }
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await scene.ready,true,'all placed art loads');
 assert.ok(Math.abs(scene.group.getObjectByName('Shared body part 11').material.color.r-.42)<.001,
   'a material shared by many parts is tinted once, not once for every part');
 assert.equal(loaded.length,8,'each required art family loads once');
 assert.deepEqual(new Set(loaded),new Set(Object.values(SCABLANDS_ASSETS)),'only the shipped Scablands art families load');
+
+const townLampJob=EVERBURN_JOBS.find(job=>job.id==='everburn-get-out-and-walk');
+const townAuntie=scene.group.getObjectByName('Auntie Solder at the forge');
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:townLampJob,
+  job:{stepIndex:0,steps:townLampJob.steps,stepState:{}},actors:[]}}});
+assert.equal(townAuntie.visible,true,'the scene shows Auntie for Light the Town');
+assert.equal(townAuntie.children.length,1,'the scene installs the folk figure');
+assert.equal(townAuntie.position.x,townLampJob.steps[0].auntie.position.x);
+syncScene(scene.group,{});
+assert.equal(townAuntie.visible,false,'Auntie leaves the forge drawing outside job 2');
 
 const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
 
@@ -444,9 +460,9 @@ assert.equal(sightingState(1,hot).arena.worldJob.actors.length,0,'job 1: no furn
 // Job 3: until the thief is caught the furnace keeps its place; then it rolls from the Boneyard's far end 200 m west for 20 s and is gone.
 const run={stepIndex:0,steps:EVERBURN_JOBS[2].steps,done:false};
 syncScene(scene.group,sightingState(3,run,{clockSec:40}));
-assert.ok(rigAt().distanceTo(restAt)<.001&&rig.visible,'job 3: before the catch the furnace stays where it was');
-const rolling=seconds=>{syncScene(scene.group,sightingState(3,run,{clockSec:100+seconds,wonAtSec:100}));return rigAt();};
-assert.ok(Math.hypot(rolling(0).x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001,'job 3: it starts at the far end of the Boneyard as the thief is caught');
+assert.ok(Math.hypot(rigAt().x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001&&rig.visible,'job 3: the furnace waits at the wing gap from the start');
+const rolling=seconds=>{syncScene(scene.group,sightingState(3,run,{clockSec:100+seconds,bellowsLeavingAtSec:100}));return rigAt();};
+assert.ok(Math.hypot(rolling(0).x-FURNACE_LEAVING.from.x,rigAt().z-FURNACE_LEAVING.from.z)<.001,'job 3: it starts at the far end of the Boneyard when the bellows are collected');
 assert.ok(Math.abs(rig.rotation.y-Math.atan2(FURNACE_LEAVING.to.x-FURNACE_LEAVING.from.x,FURNACE_LEAVING.to.z-FURNACE_LEAVING.from.z))<.001,'job 3: it faces the way it rolls');
 assert.ok(Math.hypot(rolling(10).x-(FURNACE_LEAVING.from.x+FURNACE_LEAVING.to.x)/2,rigAt().z-(FURNACE_LEAVING.from.z+FURNACE_LEAVING.to.z)/2)<.001,'job 3: halfway through the 20 seconds it is halfway along');
 assert.ok(rolling(19.9).x<FURNACE_LEAVING.to.x+2&&rig.visible,'job 3: it is still rolling just before 20 seconds');
@@ -682,6 +698,24 @@ assert.ok(near.every(tile=>tile.material.userData.groundLook)&&far.material.user
   assert.ok(lowered<=scablandsSurfaceHeightAt(0,0)-.3,'the coarse ground stays under the land after an edit');
   resetScablandsGroundEdit();scene.group.userData.updateGroundView();
 }
+const townBrand=scene.group.getObjectByName('Carried town brand');
+syncScene(scene.group,{onFoot:true,fighter:{...townLampJob.steps[0].hearth.position,yaw:0},
+  arena:{mode:'world-job',worldJob:{definition:townLampJob,
+    job:{stepIndex:0,steps:townLampJob.steps,stepState:{brandsUsed:1,brandSeconds:90}},actors:[]}}});
+assert.equal(townBrand.visible,true,'the scene shows the carried load');
+assert.equal(townBrand.getObjectByName('Brand flame').visible,true,'the carried brand burns');
+const townAsh=scene.group.getObjectByName('Town Ash Men');
+const townAshAt=townLampJob.steps[0].hearth.position;
+syncScene(scene.group,{arena:{mode:'world-job',worldJob:{definition:townLampJob,
+  job:{stepIndex:0,steps:townLampJob.steps,stepState:{brandAsh:{men:{'town-ash-1-0':{
+    ash:{position:townAshAt,remaining:.5}}}}}},
+  actors:[{id:'town-ash-1-0',brandAsh:true,...townAshAt,yaw:0}]}}});
+assert.equal(townAsh.visible,true,'town foot opponents are connected to the scene');
+assert.equal(townAsh.getObjectByName('fighter-plates').count,12);
+assert.equal(townAsh.children[1].visible,true,'the scene shows the ash warning');
+syncScene(scene.group,{});
+assert.equal(townBrand.visible,false,'the brand leaves the scene outside job 2');
+assert.equal(townAsh.visible,false,'town opponents leave the scene outside job 2');
 scene.dispose();
 assert.equal(scene.group.children.length,0,'disposing the scene releases its presentation graph');
 // EVERBURN-WELL-ART: the game's model loader renames parts (a space becomes an underscore, a full stop is dropped).
@@ -698,7 +732,7 @@ const renamed=createScablandsScene(course,{loadAsset:async path=>{
       const vent=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({emissive:0xff8020,emissiveIntensity:2}));
       vent.name=loaderName(ventName);part.add(vent);}
   }
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await renamed.ready,true,'the art loads when parts carry the loader\'s names');
 const renamedRig=renamed.group.getObjectByName("Old Smoke's moving furnace rig");
@@ -715,13 +749,13 @@ const worn=createScablandsScene(course,{loadAsset:async path=>{
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace){
     for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-    return {scene:root};
+    addFolkFixture(root,path);return {scene:root};
   }
   const steel=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'plain steel',color:0x808080}));steel.name='steel';
   const lamp=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'forge lamp glass lit',color:0xffaa44,emissive:0xff8820,emissiveIntensity:2}));lamp.name='lamp';
   const person=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({name:'person cloth',color:0x806040}));person.name='person';
   root.add(path===SCABLANDS_ASSETS.folk?person:steel,...(path===SCABLANDS_ASSETS.folk?[]:[lamp]));
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await worn.ready,true,'the worn scene loads');
 const inverseOf=material=>{const shader={uniforms:{},vertexShader:'#include <common>\n#include <project_vertex>',fragmentShader:'#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>'};
@@ -764,7 +798,7 @@ const wellScene=createScablandsScene(course,{loadAsset:async path=>{
     const lamp=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),new THREE.MeshStandardMaterial({name:'lamp amber',color:0xd87624,emissive:0xd87624,emissiveIntensity:1.5}));lamp.name='ash-men-lamp-1-amber-lens';lamp.position.set(3,4,0);root.add(lamp);
   }
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await wellScene.ready,true,'the well scene loads');
 const wellLod=wellScene.group.getObjectByName('The Everburn detail LOD');
@@ -812,7 +846,7 @@ const wreckScene=createScablandsScene(course,{loadAsset:async path=>{
   if(path===SCABLANDS_ASSETS.boneyard)return realParse(path);
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await wreckScene.ready,true,'the Boneyard scene with its real model loads');
 wreckScene.group.updateMatrixWorld(true);
@@ -859,7 +893,7 @@ const propScene=createScablandsScene(course,{loadAsset:async path=>{
   if(path===SCABLANDS_ASSETS.kit)return realParse(path);
   const root=new THREE.Group();
   if(path===SCABLANDS_ASSETS.bess||path===SCABLANDS_ASSETS.furnace)for(const name of ['Big Bess gas truck',"Old Smoke's rolling furnace"]){const part=new THREE.Group();part.name=name;root.add(part);}
-  return {scene:root};
+  addFolkFixture(root,path);return {scene:root};
 }});
 assert.equal(await propScene.ready,true,'the scene with the real kit loads');
 propScene.group.updateMatrixWorld(true);

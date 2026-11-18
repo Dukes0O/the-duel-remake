@@ -32,18 +32,20 @@ const placeNames = picture.marks.places.map(place => place.name.replace(/^The /i
 function bigMapOf(definition, {index = 0} = {}) {
   const job = createJob(definition); job.stepState.index = index;
   const worldJob = {definition, job, actors: []}, state = {s: 0, lateral: 0, arena: {mode: 'world-job', worldJob}};
-  const model = worldHudModel({worldJob, player: {x: 0, z: 0}});
+  if (definition.steps[0]?.brand) Object.assign(job.stepState,{brandBriefed:true,brandSeconds:90,
+    lamps:index ? {pump:true} : {}});
+  const model = worldHudModel({worldJob, player: definition.steps[0]?.brand ? definition.steps[0].places[0].position : {x:0,z:0}});
   const {context, texts, arcs} = recorder(1400, 1000);
   drawBigMap(context, {picture, canvas: null, car: {x: 0, z: 0, heading: 0}, target: model.target, knowledge: createKnowledge(), actors: [], ways: []}, {width: 1400, height: 1000});
   return {model, texts, arcs, data: worldJobMapData(course, state)};
 }
-// ---- 1. Job 2: three lamps 7 m apart: the land keeps every name, and the marker is the next lamp --------------------------------------------------------
+// ---- 1. Job 2: three town lamps with the brand burning: the land keeps every name, and the marker is the next lamp --------------------------------------------------------
 {
   const job2 = EVERBURN_JOBS[1], first = bigMapOf(job2), second = bigMapOf(job2, {index: 1});
   const lamps = first.data.places.map(place => place.name);
   check(lamps.length === 3 && new Set(lamps).size === 3, 'job 2 has three places with three different names');
   for (const name of placeNames) check(first.texts.some(item => item.text === name), `${name} is named on the big map beside the lamps (no exemption: Tin Town is named too)`);
-  check(first.model.target && second.model.target && first.model.target.name !== second.model.target.name, 'the marker is the next lamp: it moves from one lamp to the next');
+  check(first.model.target && second.model.target && first.model.target.name !== second.model.target.name, 'the burning brand marker moves from the nearest dark lamp after it is lit');
   check(first.arcs.some(arc => arc.fill === '#ffce75'), 'the next lamp is marked in gold');
 }
 // ---- 2. A job with places far apart: the marker is the next find, and the land's names are as before ----------------------------------------------------------
