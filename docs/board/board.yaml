@@ -578,6 +578,56 @@ tasks:
     locks: []
     details: "docs/board/cards/WORLD-FAULTS-18-NOV.md"
 
+  - id: STORY-LEDGER
+    title: "The one ledger for the Wasteland: what the game remembers of a player's choices"
+    owner: "codex"
+    lane: "SIM"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/STORY-LEDGER.md"
+
+  - id: STORY-TALK
+    title: "The talk screen: lines, free questions, choices with their prices shown first"
+    owner: "codex"
+    lane: "UI"
+    size: "M"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/STORY-TALK.md"
+
+  - id: ROAD-RIDERS
+    title: "Riders on the open land fight back, crash and can be wrecked (Kyle: the cars don't fight back)"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["WORLD-FAULTS-18-NOV"]
+    locks: []
+    details: "docs/board/cards/ROAD-RIDERS.md"
+
+  - id: STORY-NIGHT-2
+    title: "Night 2, Strangers at the gate: the first chapter of Five Cold Nights a player can test"
+    owner: "codex"
+    lane: "SIM"
+    size: "L"
+    status: "ready"
+    needs: ["STORY-LEDGER", "STORY-TALK"]
+    locks: []
+    details: "docs/board/cards/STORY-NIGHT-2.md"
+
+  - id: STORY-FACES
+    title: "Six faces for the talk screen, drawn in code"
+    owner: "claude"
+    lane: "ART"
+    size: "S"
+    status: "ready"
+    needs: []
+    locks: []
+    details: "docs/board/cards/STORY-FACES.md"
+
   - id: EVERBURN-REMAKE
     title: "The Everburn is off for players until its jobs are worth playing (Kyle's play, 14 November)"
     owner: "claude"

@@ -44,3 +44,8 @@ ledger for the whole Wasteland, what each story reads and writes, crossings betw
 Kyle has not yet read those three sections or ruled on the four questions; the other nights are written on Claude's
 recommendations meanwhile. Day 3 is written in full as section 12. Owed next: Night 1, Day 4 and Night 5 in full; then the first cards for Codex (the
 talk screen, the ledger, riders who fight).
+
+**Kyle, 18 November 2026:** "ok, if we build something I can test, and you say it's night 2, then write the cards for
+Codex." Written the same day: STORY-LEDGER, STORY-TALK, ROAD-RIDERS, STORY-NIGHT-2 (Codex) and STORY-FACES (Claude).
+WORLD-FAULTS-18-NOV runs alongside. Order: the ledger and the talk screen together; then Night 2's slice A; the riders
+after the world's faults; then Night 2's slice B. Claude plays every branch by hand before Kyle tries it.
