@@ -1,0 +1,596 @@
+{
+  "schema": 1,
+  "date": "2026-11-18",
+  "source": "42f002f594345ed64dff25b57d1e3422e1f81d67",
+  "started": "2026-11-18T11:00:01.884Z",
+  "status": "failed",
+  "context": {
+    "operatorDeclaredIdleAwake": true,
+    "operatorDeclaredNoOtherGpuWorkload": true,
+    "displayPowerMeasured": false,
+    "processIsolationObserved": true
+  },
+  "stages": [
+    {
+      "id": "full",
+      "args": [
+        "tools/run-tests.mjs",
+        "--tier",
+        "full",
+        "--jobs",
+        "4",
+        "--keep-going",
+        "--json"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz/full.log",
+      "started": "2026-11-18T11:00:08.645Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 675,
+        "failed": 2,
+        "unrun": 0,
+        "total": 677
+      },
+      "failureNames": [
+        "full: tools/test-old-smoke.mjs",
+        "full: tools/test-run-gas-medium.mjs"
+      ],
+      "generatedReport": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz/full-tier.json",
+      "error": "Full tier suites failed.",
+      "finished": "2026-11-18T12:09:45.655Z"
+    },
+    {
+      "id": "frames",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--scenarios",
+        "frame-pacing,tremblant-snow,tremblant-views",
+        "--timing-only",
+        "--headed",
+        "--jobs",
+        "1",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-H2CNLO/source/.evidence/2026-11-18/FAC-03/night-IxzQiz/frames"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz/frames.log",
+      "started": "2026-11-18T12:09:45.655Z",
+      "passed": false,
+      "exitCode": 1,
+      "warnings": [
+        "Performance: full first-race load 5446.100000023842 ms exceeds 5000 ms (warning only)."
+      ],
+      "reports": [
+        {
+          "quality": "High",
+          "p95": 35.399999999999636,
+          "worldBuildMs": 319,
+          "constructionMs": 4207.399999976158
+        },
+        {
+          "quality": "Performance",
+          "p95": 18.19999999999891,
+          "worldBuildMs": 316,
+          "constructionMs": 5446.100000023842
+        }
+      ],
+      "measuredFailure": true,
+      "reportError": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "finished": "2026-11-18T12:11:34.640Z"
+    },
+    {
+      "id": "combat",
+      "args": [
+        "tools/combat-balance.mjs",
+        "--check"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz/combat.log",
+      "started": "2026-11-18T12:11:34.640Z",
+      "passed": true,
+      "exitCode": 0,
+      "finished": "2026-11-18T12:16:52.436Z"
+    },
+    {
+      "id": "browser",
+      "args": [
+        "tools/run-browser-scenarios.mjs",
+        "--changed-since",
+        "6492578072fb8396419a99c98533a66ba9772e7a",
+        "--jobs",
+        "4",
+        "--output-dir",
+        "C:/Users/kyleb/.codex/worktrees/wasteland-integration/full-check-H2CNLO/source/.evidence/2026-11-18/FAC-03/night-IxzQiz/browser"
+      ],
+      "log": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz/browser.log",
+      "started": "2026-11-18T12:16:52.436Z",
+      "passed": false,
+      "exitCode": 1,
+      "counts": {
+        "passed": 195,
+        "failed": 31,
+        "total": 226,
+        "leftForSaturday": 0
+      },
+      "failureNames": [
+        "browser: ardennes-views",
+        "browser: arena-steering",
+        "browser: arsenal-wave1-audio",
+        "browser: convoy-raid",
+        "browser: deep-frames",
+        "browser: eifel-c5-views",
+        "browser: eifel-scenery-views",
+        "browser: eifel-views",
+        "browser: everburn",
+        "browser: everburn-ember",
+        "browser: everburn-frames",
+        "browser: everburn-side-jobs",
+        "browser: everburn-well",
+        "browser: field-battle",
+        "browser: frame-pacing",
+        "browser: heli-first-flight",
+        "browser: kogane-c5-views",
+        "browser: kogane-finish",
+        "browser: kogane-night-light",
+        "browser: kogane-pass",
+        "browser: kogane-views",
+        "browser: machine-borer",
+        "browser: p4-panorama",
+        "browser: release-controls",
+        "browser: run-gas",
+        "browser: stavelot-stone",
+        "browser: story-kogane",
+        "browser: tollkeeper",
+        "browser: warlord-cards",
+        "browser: yard-home",
+        "browser: yeti"
+      ],
+      "passedNames": [
+        "arena-ambush-alley",
+        "arena-bounty-hunt",
+        "arena-feel",
+        "arena-fuel-look",
+        "arena-fuel-run",
+        "arena-junk-shove",
+        "arena-pit",
+        "arena-shove",
+        "armor-kit-purchase",
+        "armor-kit-visuals",
+        "armored-ram",
+        "arsenal-core",
+        "arsenal-core-audio",
+        "arsenal-wave1",
+        "arsenal-wave2",
+        "arsenal-wave2-audio",
+        "arsenal-wave3",
+        "arsenal-wave3-audio",
+        "art-source-current",
+        "art-source-hands",
+        "art-source-rustwall",
+        "audio-baseline",
+        "audio-listening",
+        "audio-moving",
+        "audio-race",
+        "audio-vehicles",
+        "blackiron",
+        "boarding",
+        "car-loadout-armory",
+        "career-archive",
+        "career-archive-missing",
+        "career-backup",
+        "career-backup-failure",
+        "career-origin-missing",
+        "career-restore",
+        "career-tab-isolation",
+        "career-writer-lock",
+        "collider-heights",
+        "combat-armor-frame-pacing",
+        "combat-armor-wreck",
+        "combat-audio",
+        "combat-effects",
+        "combat-field",
+        "combat-hud",
+        "combat-knockaway",
+        "combat-pickups2",
+        "combat-ramming",
+        "combat-results",
+        "convoy-frames",
+        "cpu-crews",
+        "crash-counter",
+        "crash-presentation",
+        "crew-fighters",
+        "crew-gear",
+        "crew-selection",
+        "crew-w-source-current",
+        "deep-achievements",
+        "deep-art",
+        "deep-explorer",
+        "deep-life",
+        "deep-log-pictures",
+        "deep-look",
+        "deep-ramp-2",
+        "deep-sirena",
+        "deep-vasca",
+        "drive-lesson-run",
+        "drive-lessons-view-2",
+        "earned-cars",
+        "easy-no-penalty",
+        "enzo-look",
+        "everburn-job1",
+        "everburn-job2",
+        "everburn-job3",
+        "everburn-job4",
+        "fight-voices",
+        "finish-deep",
+        "fire-finish",
+        "fire-view",
+        "first-person-gear",
+        "gatekeeper-audio",
+        "ghost-lifecycle",
+        "grand-prix",
+        "grand-prix-existing",
+        "grand-prix-pay",
+        "gunn",
+        "harbour-night",
+        "heli-continue",
+        "heli-finish",
+        "heli-jobs",
+        "heli-skin-view",
+        "hidden-road",
+        "hidden-road-arrival",
+        "hidden-road-discovery",
+        "lab-brian-faces",
+        "lab-classroom",
+        "lab-classroom-altitude",
+        "lab-classroom-braking",
+        "lab-classroom-downforce",
+        "lab-classroom-fire",
+        "lab-classroom-fuel",
+        "lab-classroom-gforce",
+        "lab-classroom-grip",
+        "lab-classroom-headings",
+        "lab-classroom-launch",
+        "lab-classroom-lift",
+        "lab-classroom-projectile",
+        "lab-classroom-rust",
+        "lab-classroom-strength",
+        "lab-classroom-suspension",
+        "lab-classroom-wax",
+        "lab-fan-view",
+        "lab-navigation",
+        "lab-polish",
+        "lab-restore",
+        "lab-tune-view",
+        "lab-view",
+        "lab-walk",
+        "lap-telemetry",
+        "lessons-v2-view",
+        "machine-borer-apprentice",
+        "machine-drill",
+        "machine-roads",
+        "map-finish",
+        "map-view",
+        "mclaren-f1-look",
+        "menu-front-door",
+        "muddy-hollow",
+        "new-warlords",
+        "onfoot-camera-choice",
+        "onfoot-controls-camera",
+        "onfoot-figures",
+        "onfoot-hints",
+        "onfoot-rpg-wrench",
+        "opponents",
+        "p4-audio",
+        "p4-daynight",
+        "p4-kits",
+        "p4-snow",
+        "pit-lane",
+        "polish-arena",
+        "polish-flame",
+        "preview-storage",
+        "qualifying",
+        "raider-ambush",
+        "raider-salvage",
+        "rescue-finish",
+        "rescue-view",
+        "rigged-fighter",
+        "roadside-destruction",
+        "rustwall",
+        "sal-art",
+        "sal-fight",
+        "salt-flats",
+        "scablands-hills",
+        "scablands-map",
+        "scablands-realism",
+        "scablands-regions",
+        "scablands-size",
+        "scablands-solid",
+        "scablands-things",
+        "scrapdome",
+        "scrapdome-review",
+        "seeker-rockets",
+        "ski-drop-trip",
+        "ski-finish",
+        "ski-view",
+        "skyline-audio",
+        "summit-finish-area",
+        "summit-ground-gaps",
+        "summit-run",
+        "team-room",
+        "team-room-photos",
+        "the-dig",
+        "titan-handling",
+        "town-homes",
+        "town-opens",
+        "town-wmap",
+        "town-world",
+        "track-kits",
+        "track-review",
+        "traffic-wreck-callout",
+        "tremblant-snow",
+        "tremblant-views",
+        "tunnel-trial",
+        "ufo-jump",
+        "vehicle-socket-poses",
+        "warlord-format",
+        "warlord-pay",
+        "warlord-reward",
+        "wasteland-beta",
+        "wasteland-career",
+        "water-road",
+        "weapon-audio",
+        "weapon-bar",
+        "wildlife-view"
+      ],
+      "validatedFailures": [
+        "arsenal-wave1-audio",
+        "deep-frames",
+        "everburn",
+        "everburn-frames",
+        "field-battle",
+        "frame-pacing",
+        "machine-borer",
+        "run-gas",
+        "yard-home"
+      ],
+      "error": "Browser scenarios failed.",
+      "finished": "2026-11-18T14:34:18.720Z"
+    }
+  ],
+  "failures": [
+    {
+      "name": "full: tools/test-old-smoke.mjs",
+      "error": "Full tier suites failed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "full: tools/test-run-gas-medium.mjs",
+      "error": "Full tier suites failed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: ardennes-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arena-steering",
+      "error": "Untransported Enzo must be refused by production arena admission\n\ntrue !== false\n",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: arsenal-wave1-audio",
+      "error": "Actual moving flight loop did not travel and retire once.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: convoy-raid",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: eifel-c5-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: eifel-scenery-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: eifel-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn",
+      "error": "Everburn screen facts failed: job 2 opens the notice board side jobs",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn-ember",
+      "error": "Timed out waiting for Hot Delivery result.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn-frames",
+      "error": "Browser evaluation failed: Uncaught TypeError: Cannot read properties of undefined (reading '0')\n    at <anonymous>:7:35\n    at <anonymous>:22:7",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn-side-jobs",
+      "error": "Timed out waiting for lost-prospector on the notice board.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: everburn-well",
+      "error": "Timed out waiting for job 6 on the wall.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: field-battle",
+      "error": "The furnace never came out",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: heli-first-flight",
+      "error": "Timed out waiting for the air-only note on the menu.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: kogane-c5-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: kogane-finish",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: kogane-night-light",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: kogane-pass",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: kogane-views",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: machine-borer",
+      "error": "Scenario failures:\n- machine-borer-mouth-20m: Mabel is in the camera view\n- machine-borer-mouth-20m: tunnel lining or portal is in the camera view\n- machine-borer-mouth-20m: picture centre is not a flat colour\n- machine-borer-mouth: Mabel is in the camera view\n- machine-borer-mouth: tunnel lining or portal is in the camera view\n- machine-borer-mouth: picture centre is not a flat colour",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: p4-panorama",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: release-controls",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: run-gas",
+      "error": "No raid appeared",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: stavelot-stone",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: story-kogane",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: tollkeeper",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: warlord-cards",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: yard-home",
+      "error": "Production Enzo yard refusal or isolation failed: {\"car\":\"ferrari_enzo\",\"admitted\":true,\"memoryOnly\":true,\"helicopterOn\":true,\"unlocked\":true,\"untransported\":true,\"status\":\"exploring\",\"visit\":true,\"journey\":true,\"sameOwner\":true,\"sameState\":true,\"sameCourse\":false,\"sameRun\":true,\"unchangedState\":false,\"unchangedFeatures\":false,\"unchangedProfile\":true,\"unchangedHeli\":true,\"unchangedStorage\":true}",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: yeti",
+      "error": null,
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "frames",
+      "error": "High: real eight-car night frames require delivered p95 <=18.5 ms, finite world build <1000 ms and finite full first-race load.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: deep-frames",
+      "error": "Deep frames require headed mode",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    },
+    {
+      "name": "browser: frame-pacing",
+      "error": "The original simple frame stage failed; no second measurement is allowed.",
+      "firstMerge": null,
+      "attribution": "Unknown: no previous green night."
+    }
+  ],
+  "compaction": {
+    "status": "disabled",
+    "reason": "Separate Kyle authorization required; no history rewrite this run."
+  },
+  "push": {
+    "status": "disabled",
+    "reason": "--no-push; no push authorized this run."
+  },
+  "lastGreen": null,
+  "lastGreenNight": null,
+  "evidence": "C:/Users/kyleb/.codex/worktrees/wasteland-integration/the-duel-remake/.evidence/2026-11-18/FAC-03/night-IxzQiz",
+  "finished": "2026-11-18T14:34:21.912Z",
+  "nowPassing": [
+    {
+      "stage": "browser",
+      "name": "p4-audio",
+      "since": "2026-11-05",
+      "card": "QA-P4-AUDIO-FRAME-GAP",
+      "cause": "Browser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#} Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#}\n    at demand (<anonymous>:#:#)\n    at close (<anonymous>:#:#)"
+    }
+  ],
+  "publication": {
+    "status": "prepared",
+    "paths": [
+      "docs/board/checks/night-2026-11-18.json",
+      "docs/board/checks/night-2026-11-18.md",
+      "docs/board/STATUS.md",
+      "docs/board/checks/standing-failures.json"
+    ]
+  }
+}

@@ -19,12 +19,5 @@
     "since": "2026-11-05",
     "card": "QA-STANDING-BROWSER",
     "cause": "The original simple frame stage failed; no second measurement is allowed."
-  },
-  {
-    "stage": "browser",
-    "name": "p4-audio",
-    "since": "2026-11-05",
-    "card": "QA-P4-AUDIO-FRAME-GAP",
-    "cause": "Browser evaluation failed: Uncaught (in promise) Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#} Error: Missing or duplicated native sample frames: mix {\"segment\":#,\"startFrame\":#,\"endFrame\":#,\"expected\":#,\"actual\":#,\"chunkFrame\":#,\"previousFrames\":[#,#,#,#],\"callbacks\":[#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#],\"witnessFirst\":#}\n    at demand (<anonymous>:#:#)\n    at close (<anonymous>:#:#)"
   }
 ]
