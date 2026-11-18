@@ -1654,3 +1654,73 @@ Seven measured runs after one warm-up use the same land height plus river-depth 
 The hill/mesa mesh comparison in test-scablands-things now moves the window when a sample lies outside its near block, as the ruling permits. Every original point and tolerance stays. Parts A to D, switches, saves, world data and simulation remain untouched.
 
 The E trial is withdrawn to its own card under Claude's fourth ruling. Its trial code remains in commits c53a1743f, 855a158c7 and 3b006d41d of this branch's history.
+
+
+## Slice 15: Kyle's try of job 2 (18 November 2026)
+
+Kyle played Light the Town on the private test page (High graphics, the app's own browser pane) and could not finish
+it. His findings, shortened, each with what Claude measured afterwards in his page and in the code:
+
+1. **"The car is idling in the background the entire time no matter where you go."** `src/audio.js` plays the engine at
+   one loudness whether the player is in the car or on foot.
+2. **"The flamethrower sound is a faint 'dunt' for a millisecond."** The Hand Flamer plays `crew.flamer.start`, a made
+   tone 0.3 s long. The car's flamethrower has recorded sounds (`weapon.flame.start`, `.loop`, `.end`).
+3. **"Once I got back in the car, I couldn't get out again."** Not yet reproduced. When Claude read his page he was on
+   foot again, and a walker could be made beside his car. Claude tries it by hand (out, in, out) before anyone cures it.
+4. **"There's the crashing sound of smashing a car, but you're just driving towards the gates and the terrain changes.
+   No damage is taken."** Ground that stops or throws back the car plays the sound of hitting a car.
+5. **"The people are pretty awkward."** Known; the figures are already owed by Claude.
+6. **"The flamethrower fire has hard edges."**
+7. **"There's no indication where to burn and light the mast lamp. You don't know how close you are to properly
+   lighting it."** Measured: after 159 s he had lit no lamp. He had a burning brand and stood where the screen read
+   "MAST LAMP 2 m" and "3 m", firing the flamer at the lamp. A lamp lights only when the walker stands still (under
+   0.1 m/s) within 2.0 m of the post for 2 s. Nothing shows that circle, the row rounds 2.4 m to "2 m", and nothing
+   shows progress.
+8. **"Aiming the weapon in the air but the fire doesn't come from it, it still shoots out below."** Slice 14 turned the
+   Hand Flamer's flame by heading only, so that a tilted view still burned men on the ground. The flame is drawn flat
+   while the barrel points up.
+
+### Rulings (Claude, design lead)
+
+**Lighting a lamp (finding 7).** The brand stays: it is the job's clock and what the ash throwers can take away.
+- `lampRadius` 2 becomes 3.5 m, and the standing-still condition goes (`standingSpeed` is removed). Two seconds inside
+  the circle with a burning brand lights the lamp; leaving the circle starts the count again. A sprint straight through
+  the circle is too short to light it, so no speed rule is needed.
+- While the brand burns, each dark lamp has a soft amber ring on the ground at 3.5 m, so the place to stand is seen.
+  Code-drawn, additive, no fog, disposed with the lamps (`src/world/brand-lamps.js`).
+- While the count runs, a bar under the crosshair fills over the 2 s with the words "LIGHTING THE MAST LAMP" (the
+  lamp's own name), and the top line reads "Stay by the lamp." The row for the nearest dark lamp reads "AT THE LAMP"
+  inside the circle, and metres to one decimal place under 10 m.
+- With the brand out, a walker inside a dark lamp's circle reads "The brand is out. Relight it at the hearth or a lit
+  lamp." in the top line.
+- Sound: the lamp's existing lighting cue plays when it lights; a quiet rising hiss plays while the bar fills. Name
+  both cues in the change note.
+
+**Sounds (findings 1, 2 and 4).**
+- On foot, the car's engine is heard at full loudness within 5 m of the car and fades evenly to nothing at 30 m. In
+  the car nothing changes.
+- The Hand Flamer plays the recorded start, the loop for as long as flame leaves the barrel, and the end, at the
+  loudness of the car's flamethrower heard from the driver's seat. It sounds whatever switches are on.
+- Ground alone never plays a car-crash sound. When ground stops or throws back the car with no damage, a low
+  suspension thump plays instead (an existing cue; name it). A hit on a solid thing or another car is unchanged.
+
+**The flame (findings 6 and 8).** The flame leaves the muzzle and follows the barrel. A man is burned when he is within
+range, the flame's heading passes him as now, and the barrel is aimed no more than 30 degrees above or below him. The
+flame's edges fade out; no hard outline.
+
+### Who builds what
+
+- **Part A, Codex** (rules, screen and sound; no browser needed): findings 1, 2, 4 and 7. Files: `src/world/jobs/brand-rule.js`,
+  `src/world/world-hud.js`, `src/combat-hud.js` (the bar and the row only), `src/world/brand-lamps.js` (the ring),
+  `src/audio.js`, `src/sound-bank.js`, and for finding 4 the place where the ground's stop asks for its sound (find it
+  and measure it first; the playbook's lesson of 17 November applies). Checks: `tools/test-everburn-job2.mjs` (the
+  lamp lights at 3.4 m while walking, not at 3.6 m, not on a sprint through; the count restarts on leaving; the line
+  with the brand out), `tools/test-world-hud.mjs`, `tools/test-combat-hud.mjs`, the audio suites that name the engine
+  and the flamer, `tools/test-everburn-easy.mjs`, every older suite that names job 2 or the Hand Flamer, the lane
+  tier and the build. Claude runs `everburn-job2` in the browser and plays the job by hand with sound at the merge.
+- **Part B, Claude** (drawing and its hit rule): findings 6 and 8, in the flame's drawing and
+  `src/arena/modes/world-job.js` (the Hand Flamer's direction only). Finding 3 by hand first.
+- Not in this slice: the figures (finding 5).
+
+**Removed** (name each on the change note's line): `standingSpeed`; the line "Hold still to light the lamp."; the made
+tone as the Hand Flamer's sound in a job, if nothing else plays it.
