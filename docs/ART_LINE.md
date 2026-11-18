@@ -282,6 +282,11 @@ the game.
   backwards, is this.
 - **Flat colour where a picture should be:** lost picture coordinates. Every
   layer is named `UVMap`, and each primitive has only `TEXCOORD_0`, with a range.
+- A joined home can have a healthy UV range even when an entire wall samples
+  one line of the picture. Compare the UV area of each triangle on the colour
+  texture's sampled channel with its area in square metres. Recover the original
+  island from a secondary channel where possible. A vertical wall needs a
+  horizontal coordinate that varies along that wall (Founding homes, 18 November).
 - **Text reads backwards** on a far side, whose coordinates run the other way.
   A sign is its own `slab`.
 - `metallicFactor` at most 0.3, since nothing is there to reflect.

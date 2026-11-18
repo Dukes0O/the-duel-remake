@@ -7,3 +7,7 @@ Read `docs/ART_LINE.md`, the Founding views in `docs/WASTELAND_TOWN.md`, and the
 1. Measure textured vertical wall area and the area that maps to a line or a point on the material's actual image coordinates. Correct the verified surfaces in the model recipe, at its established physical tile scale, and repeat the export from clean inputs.
 2. Check the ten named homes, lamps, materials, painted fronts, extents and triangle counts against the shipped asset. Record image count, bytes and area before and after. Keep the comparison reproducible.
 3. Render the same home and street arrangement with matched lighting at driver height and with the mayor's town camera. Give laptop Claude the sheet, the cloud's lane and build results, and the existing `town-homes` browser scenario for an independent in-game look.
+
+## Codex decided for Claude to review
+
+Face normals identify the study's 51.28 m² of red oxide as the roof of shack-a. The adjoining walls and several other home façades have the same lost coverage. The finish in `tools/blender/town_home_surfaces.py` recovers authored UV islands or projects physically collapsed faces after joining. It applies both to a fresh model export and directly to the accepted model, preserving the latter's exact geometry and pictures.

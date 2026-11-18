@@ -1,21 +1,30 @@
 """Build the ten original Wasteland town homes and their review renders.
 
 Run with Blender 4.5: blender -b --python tools/blender/town-homes.py -- --root . --render .evidence/DATE/TOWN-ART-HOMES
+For a UV-only rebuild of the accepted art, extract the round-six homes.glb from
+82e2caf5b and run: python tools/blender/town-homes.py -- --root . --surface-source /path/to/round-six.glb
 Footprints and coordinates are in game metres, X right, Y up, front -Z.
 """
 import argparse, json, math, random, sys, struct
 from pathlib import Path
 
 p=argparse.ArgumentParser();p.add_argument('--root',required=True);p.add_argument('--render',default='');p.add_argument('--paths-only',action='store_true')
+p.add_argument('--surface-source', type=Path, help='adapt the accepted home GLB without rebuilding its meshes or encoding its pictures')
 a=p.parse_args(sys.argv[sys.argv.index('--')+1:]);root=Path(a.root).resolve()
 out=root/'public/assets/models/wasteland/town/homes.glb';blend=root/'art-build/town/homes.blend'
 render=Path(a.render);render=render if render.is_absolute() else root/render
 if a.paths_only:
     print(json.dumps({'blend':[str(blend)],'glb':[str(out)],'evidence':[str(render)] if a.render else []}));raise SystemExit(0)
 
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from town_home_surfaces import restore_surfaces
+if a.surface_source:
+    print(json.dumps(restore_surfaces(a.surface_source, out)))
+    raise SystemExit(0)
+
 import bpy
 from mathutils import Vector
-sys.path.insert(0,str(Path(__file__).resolve().parent));import town_base as town
+import town_base as town
 bpy.ops.wm.read_factory_settings(use_empty=True);bpy.context.preferences.filepaths.save_version=0
 out.parent.mkdir(parents=True,exist_ok=True);blend.parent.mkdir(parents=True,exist_ok=True)
 texture_dir=root/'public/assets/models/wasteland/town/textures'
@@ -26,9 +35,11 @@ materials=town.make_materials({
     'faded-hand-paint':str(texture_dir/'faded-yellow-steel.jpg'),
     'patched-canvas':str(texture_dir/'patched-canvas.jpg'),
 })
-def photo_material(name, source, color=(1,1,1), metallic=0):
-    image=bpy.data.images.load(str(source),check_existing=False);image.scale(192,192)
-    image.filepath_raw=str(texture_dir/(name+'.jpg'));image.file_format='JPEG';image.save();image.pack()
+def photo_material(name, color=(1,1,1), metallic=0):
+    # These six finished 192 px tiles are the pictures already shipped in the
+    # homes. Pack their original bytes without recompressing the input JPEGs.
+    image=bpy.data.images.load(str(texture_dir/(name+'.jpg')),check_existing=False)
+    image.pack()
     mat=bpy.data.materials.new('Town / '+name);mat.diffuse_color=(*color,1);mat.use_nodes=True
     bsdf=mat.node_tree.nodes.get('Principled BSDF');bsdf.inputs['Metallic'].default_value=min(metallic,.29);bsdf.inputs['Roughness'].default_value=.9
     tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.image=image;tex.extension='REPEAT'
@@ -45,12 +56,12 @@ source_socket=canvas_link.from_socket;canvas.node_tree.links.remove(canvas_link)
 canvas_tint=canvas.node_tree.nodes.new('ShaderNodeRGB');canvas_tint.outputs[0].default_value=(.72,.66,.55,1)
 canvas_mix=canvas.node_tree.nodes.new('ShaderNodeMixRGB');canvas_mix.blend_type='MULTIPLY';canvas_mix.inputs[0].default_value=1
 canvas.node_tree.links.new(source_socket,canvas_mix.inputs[1]);canvas.node_tree.links.new(canvas_tint.outputs[0],canvas_mix.inputs[2]);canvas.node_tree.links.new(canvas_mix.outputs[0],canvas_bsdf.inputs['Base Color'])
-mat['paint-blue']=photo_material('paint-blue',texture_dir/'paint-blue.jpg',(.62,.72,.78))
-mat['container-white']=photo_material('container-white',texture_dir/'container-white.jpg',(.72,.70,.63))
-mat['tarp-blue']=photo_material('tarp-blue',texture_dir/'tarp-blue.jpg')
-mat['red-oxide']=photo_material('red-oxide',texture_dir/'rusted-corrugated-tin.jpg',(.78,.48,.38))
-mat['canvas-cream']=photo_material('canvas-cream',texture_dir/'canvas-patched-cream.jpg')
-mat['canvas-tan']=photo_material('canvas-tan',texture_dir/'canvas-patched-cream.jpg',(.78,.62,.44))
+mat['paint-blue']=photo_material('paint-blue',(.62,.72,.78))
+mat['container-white']=photo_material('container-white',(.72,.70,.63))
+mat['tarp-blue']=photo_material('tarp-blue')
+mat['red-oxide']=photo_material('red-oxide',(.78,.48,.38))
+mat['canvas-cream']=photo_material('canvas-cream')
+mat['canvas-tan']=photo_material('canvas-tan',(.78,.62,.44))
 mat['grey-tin']=materials['galvanised-tin']
 mat['paint-yellow']=materials['faded-hand-paint']
 mat['blue-painted']=mat['paint-blue']
@@ -571,6 +582,7 @@ for obj in list(bpy.context.scene.objects):
 bpy.context.view_layer.objects.active=root_obj
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 town.export_glb(out)
+restore_surfaces(out, out)
 blob=out.read_bytes();json_len=struct.unpack_from('<I',blob,12)[0];gltf=json.loads(blob[20:20+json_len])
 tris=sum(gltf['accessors'][prim['indices']]['count']//3 for mesh in gltf.get('meshes',[]) for prim in mesh['primitives'])
 node_names={node.get('name') for node in gltf.get('nodes',[])}
