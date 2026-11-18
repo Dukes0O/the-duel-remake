@@ -112,7 +112,7 @@ and hits, and is fed at braziers. What changes is that the ways are now a choice
 - *The Boneyard road* is long. Dot Mulligan's diner is on it, with a cold oven. Stop and light it and you arrive one
   ember short, late, and with the first friend on the ledger and a pie on the seat.
 
-**Day 3 in a little more detail.** Moss drives; you ride ahead, as in the gas load that exists (holes, the hose,
+**Day 3 in a little more detail** (and in full in section 12). Moss drives; you ride ahead, as in the gas load that exists (holes, the hose,
 blocks to burn, riders).
 - *The bridge* is the short road, and it is Ash ground. Clinker names the toll: one ember, put out in front of you.
   Pay it, and Bess crosses with little trouble and the feud cools. Refuse, and you fight Bess across.
@@ -568,3 +568,167 @@ The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alo
    ones are only tales, which is safer for a town built over years and less exciting to replay.
 
 Until Kyle rules, the other nights are written on these recommendations.
+
+## 12. A second chapter in full: Day 3, Bess goes for gas
+
+This is the day that holds "dig, or fight it out". Written on the recommendations of section 11.
+
+**People in it.** Moss and Big Bess, Cinder, Auntie Solder, Clinker, as they are. From the Long Dry: Captain Imre of
+the Deck Folk, who reports, and Odessa, the crew's mechanic, who is brisk and fond of machines. Rell and Dace, if they
+are friends. Rook, if his lost car was fetched.
+
+**Where things stand.** The example continues from section 4: 3 embers, the Walkers Friendly and owing a watch, the
+Ash Men Watching, Word on the road 1.
+
+**How long the run is.** The well is eleven kilometres off and Bess is slow, so the road is not driven end to end. It
+is played as three stretches of two or three minutes each, with the empty road between them passed over in a line of
+text: leaving the well, the crossing, and the last kilometre to the gate. About eight minutes of driving in all.
+
+### Scene 1. The forge yard, first light
+
+> **Moss:** She's fuelled, she's watered and she's sulking. Good morning.
+>
+> **Cinder:** A full tank home is a hundred of gas. A hundred of gas is five embers. Every hole they put in her is
+> an ember on the sand.
+>
+> **Auntie Solder:** Three in the store. So tonight it's two, whatever you do. Don't dawdle.
+>
+> **Moss:** Bess does twenty miles an hour, downhill, with a tailwind. Keep them off us.
+
+The map of the Scablands opens. Four ways are drawn on it, each with its price beside it.
+
+### You may ask before you choose. Asking is free
+
+| You ask | The answer | What it shows you |
+| --- | --- | --- |
+| Moss: "How is she on rough ground?" | **Moss:** She weeps. Every bump's a cupful. The ford is all bumps. | The ford costs gas, not fights |
+| Cinder: "What will they want at the bridge?" | **Cinder:** Clinker's on the bridge. He'll want a toll, and he won't want scrap. He'll want to watch something go out. | The toll is an ember |
+| Rell: "Can Bess cross your ford?" *(only if the Walkers are Friendly)* | **Rell:** By night. Slow. And you drive where Dace's lantern tells you and nowhere else. | No riders at the ford. A careful drive |
+| Odessa: "Could we go under them?" | **Odessa:** There's a boring machine rusting at the Dig. Mabel. She runs. Mostly. A day to start the cut. A day with no gas. Then it's your road for good and never theirs. | The dig costs a day and an ember, once |
+
+### The decision
+
+| | The way | The price, as shown |
+| --- | --- | --- |
+| 1 | The Girder Bridge | Short. The Ash Men's ground. A toll or a fight. Their feud moves with what you do |
+| 2 | The long road, by the ships | Long. Riders, by the feud. The Deck Folk are on it |
+| 3 | The South Ford, by night | Only with the Walkers. No riders. Bess will weep gas the whole way |
+| 4 | Under the mesa | No run today. Embers 3 to 2 tonight and none baked. A road under the Ash Men from tomorrow, for good |
+
+### 1. The Girder Bridge
+
+Leaving the well is the first stretch: nobody troubles you. The bridge is the second. There is ash heaped across it in
+two banks, men on the girders above with sacks, and Clinker standing in the middle of the road.
+
+> **Clinker:** That's a lot of gas for a small town. This is Old Smoke's bridge. Bridges cost.
+>
+> **Clinker:** One ember. Here. Where I can see it go out.
+>
+> **Moss:** *(on the radio)* He wants to watch it die. That's not a toll. That's a hobby.
+
+| | You do | What happens | Later |
+| --- | --- | --- | --- |
+| a | Pay. Cinder hands down the pot | Embers 3 to 2. Clinker tips the ember into a bucket of ash and watches it. **Clinker:** Grey. See? It all goes grey. The banks are dragged aside and Bess crosses untouched. The feud cools one step. Mark: "You paid the ash toll." | The toll is two next time. On the fifth night Old Smoke says: "You paid once. You'll pay again." |
+| b | Refuse, and fight Bess across | **The bridge, by car, about three minutes.** Burn the two ash banks, keep the riders off Bess, mind the men above: ash on a hole stops it being plugged. Bess comes over with what gas she still holds. The feud rises one step. **Clinker:** You'll want to cross again. I'll be here. I'm always here. | The Ash Men come over the wall a night sooner |
+| c | Turn back for the long road | You lose the light. The last kilometre is driven in the dark, where riders are hard to see | |
+
+**If Rook rides with Bess** (he does if you fetched his lost car):
+
+> **Rook:** Third gap from the left empties every nine seconds. I counted. I get bored.
+
+The gap is marked on the bridge. Fought across by that gap, Bess takes half the holes.
+
+### 2. The long road, by the ships
+
+The second stretch runs under the stranded ships. A lamp blinks from a rail high above the road.
+
+> **Captain Imre:** Ahoy the tanker. Deck Folk. Nothing to report. Sea's late.
+>
+> **Captain Imre:** Our galley has been cold since the spring. Two embers, and the ships' watch is yours. We see every
+> rider between here and the Ridge. There is nothing else to look at.
+
+| | You say | What happens |
+| --- | --- | --- |
+| a | "Two embers, by the fourth night. My word on it." | A promise goes on the ledger: "You promised Captain Imre two embers by the fourth night." The watch begins now: riders on this road are marked on your map before they reach you. The Deck Folk: Friendly. Break the promise and they are Cold, and the watch ends |
+| b | "One now, from the pot. That's all I can spare." | Embers 3 to 2. A daylight watch only. The Deck Folk: Strangers who think well of you |
+| c | "Not this trip, Captain." | **Captain Imre:** Understood. Logged. The Deck Folk: Strangers |
+
+Then the riders. How many raids depends on the feud: one at Watching, two at Raiding, three at Hunting. Each is three
+riders, and they fight: they ram Bess, they shoot at you, and they can wreck you. With the ships' watch they are on
+your map a full minute early. Without it, the first you know is the dust.
+
+### 3. The South Ford, by night
+
+Only if the Walkers are Friendly. You wait for dark at the Wash. Dace walks ahead of Bess with a lantern.
+
+> **Dace:** Where the lantern goes, it's hard ground. Where it doesn't, it's a hole with sand on top. I'm not being
+> funny. Follow the lantern.
+
+**The ford, by car, about two minutes, nobody against you.** You drive ahead of Bess at walking pace and Moss follows
+your tracks exactly. Keep to the lantern's line and she crosses. Leave it, and she drops a wheel and weeps gas until
+you have pulled her out. There are torches on the far bank, and for a moment they look like riders.
+
+> **Rell:** Put the flamer down. It's hot stones for your driver's feet. He looks perished.
+>
+> **Moss:** I'm marrying into this family.
+
+Bess comes home with no fight behind her, and with about three quarters of her gas at best: she weeps all the way.
+The watch the Walkers owed is counted as paid, unless you ask for it as well, which Rell allows once.
+
+### 4. Under the mesa: dig, or fight it out
+
+No run today. Odessa has Mabel on a trailer at the foot of the mesa north of the bridge by mid-morning.
+
+> **Odessa:** Forty metres by your own hand. After that she knows the way, and so does whoever's been watching you
+> work. That's how it's taught. Nobody learns a machine from being told.
+
+**The cut, at the machine's controls, about four minutes.** This is the boring machine as it is in the Dig: the head,
+the feed, the spoil to clear. You cut the first forty of a hundred and twenty metres. How straight and how steady you
+cut is what the apprentice learns.
+
+Then the question of who finishes it.
+
+| Who | When | What is said |
+| --- | --- | --- |
+| Dace | If he owes you, or kept the watch | **Dace:** I can hold a lever. I've been looking at how you do it. **Odessa:** He has, you know. It's unsettling. |
+| One of the Walkers | If they are Friendly and Dace is not yours | **Rell:** Hesp will do it. She raked salt in straight lines for twenty years. A hill's just slower salt. |
+| Nobody | If you have no such friend | **Odessa:** Then it's you and me, and it's two of your days, not one. |
+
+At dusk there is no gas, and Auntie Solder says the count.
+
+> **Auntie Solder:** Two embers. And a hole in a hill. I hope it's a very good hole.
+
+**The ledger.** Embers 2. Things made: a tunnel under the mesa, begun. An apprentice at the boring machine. The tunnel
+opens the evening after, if nothing stops the work.
+
+**What can stop the work.** If a scout got over your wall on the second night, or the feud is at Raiding or worse,
+the Ash Men may find the cut. Then, the next day, in the middle of whatever you chose to do, the radio:
+
+> **Dace:** There's grey men at the mouth. I've shut her down. I'm in the dark with a spanner. No hurry. Some hurry.
+
+The three answers, and their prices, are in section 8: go yourself, send friends, or tell him to cut his way out.
+
+### How the day closes, on every way that brought gas home
+
+The kiln is lit at the gate. The count rises while you watch.
+
+> **Cinder:** Eighty of gas. Four embers by dark. I'd have liked five. I'd have liked a lot of things.
+
+### How you can lose today
+
+- **Bess comes home nearly dry.** One ember baked, or none. Tomorrow opens with a night or two of fire in hand.
+- **Bess is stopped on the road.** She is towed in at dawn, empty. No embers are baked. And now the asking goes the
+  other way: with the store nearly bare, it is you at somebody else's fire. Who gives depends on what you gave.
+
+  > **Rell:** We've one left of yours. It was always going to come back. Don't make a face about it.
+
+  A player who gave nothing has nobody to ask, and goes into the fourth night with what is in the store.
+- **Your car is wrecked.** You ride home on Bess's running board. No car for the night's alarm, if there is one.
+- **You break your word to Captain Imre later.** The watch ends on the very night you most want it.
+
+### What today changes later
+
+- The feud, up or down, sets how many come over the wall on the fourth night.
+- The ships' watch, if you earned it, marks riders on every later run and on the last night.
+- A tunnel begun today is a road by the fifth day, and one more thing the Ash Men may learn of.
+- Whether you paid Clinker is the first thing Old Smoke says to you.

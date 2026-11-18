@@ -42,5 +42,5 @@ tie to the rest of the game (dig or fight it out, an apprentice to protect, watc
 such stories that intersect, and for integration between them. Sections 7 to 9 of the page are Claude's answer: one
 ledger for the whole Wasteland, what each story reads and writes, crossings between stories, and playing an act again.
 Kyle has not yet read those three sections or ruled on the four questions; the other nights are written on Claude's
-recommendations meanwhile. Owed next: Night 1, Day 3, Day 4 and Night 5 in full; then the first cards for Codex (the
+recommendations meanwhile. Day 3 is written in full as section 12. Owed next: Night 1, Day 4 and Night 5 in full; then the first cards for Codex (the
 talk screen, the ledger, riders who fight).
