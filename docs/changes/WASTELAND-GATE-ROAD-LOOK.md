@@ -1,0 +1,11 @@
+# WASTELAND-GATE-ROAD-LOOK
+
+- The Scablands realism preview puts interrupted impressions at Big Bess’s track width and a warm pool under the middle lamp on the last 48 m of East Road. Both share the existing road draw, photograph, relief and wear texture. The branch began at `271d2c4ea`.
+- **Source checks** passed on `d4089a983` for the plain, photo, gated and rotated inputs, plus all expressions sent by the laptop scenario. The original plain and ordinary photo shaders matched byte for byte. The production build at that head passed (815 modules, 9.44 s).
+- **Isolated render** compared 96 × 96 matched pixels per place in WebGL. It found 5,139 changed at the gate, 5,378 at 22 m and zero at 60 m, 16 m into town and 24 m to the side. The context reported zero errors.
+- **Driving fixture** uses the real Light the Town dusk, car and chase camera. At simulated 60 Hz the rule replay captured an 11.4° turn at 12.45 m, then the car under the lamp at 2.97 m. The laptop records the rendered game and its hardware frame times.
+- **Selected lane** at `d4089a983` passed 43/44 cloud suites after isolated retries of drawn feet (0.105 ms), map (30.0 ms longest slice) and size (all nine checks). All 297 replay checks passed. Pacific Canyon reproduced the identical original `271d2c4ea` hash difference (`09c48ae2` versus `8f2b1d5c`). The four selected laptop suites are `test-course-kit`, `test-earned-cars-ui`, `test-full-check` and `test-medals`.
+- **For Claude to run** use `node tools/run-browser-scenarios.mjs --scenarios tin-town-gate-road --jobs 1 --headed` in isolated baseline and feature worktrees. Copy just the feature scenario into the older baseline. Compare the five images, camera poses, matched buffer scales and moving p95 at the same display refresh.
+- Follow Bess toward the gate in daylight in Slow Ride. Run the normal busy escort `everburn-frames` separately, headed on Performance. Its delivered p95 limit is 18.5 ms. Record the independent look and hardware result on the reviewed head.
+- **Changed assertions** None. **Codex decided** to measure the wheel centres on the driving mesh (1.14 m front and 1.19 m rear each side) and use metre-scale gravel variation for gaps the driver can see.
+- **Removed** The grader’s broad ruts give way to the narrower impressions inside this gate approach. The trial reuses the current game events and saves.
