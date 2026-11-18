@@ -553,3 +553,57 @@ assert.equal(JSON.stringify([...memory]), savedBeforeEscape);
 escapeApp.returnToMenu(); escapeApp.dispose?.();
 console.log('PASS Run Him Down: stopped thief runs once through the existing foot mover and read-only figures.');
 console.log('PASS Run Him Down: arena mover blocks a driving pass only in the remade chase.');
+
+// The live bridge reads swept meetings, not closeness or weapon buttons.
+const {bellowsArenaFacts} = await import('../src/arena/modes/world-job.js');
+const factsApp = new App(); factsApp.audio.unlock = () => {};
+factsApp.duel.featureFlags = createFeatureFlags({storage:null, overrides:{
+  'hidden-road':true, 'story-everburn':true, arsenal:true, 'arsenal-wave3':true}});
+factsApp.duel.state.wastelandGateDiscovered = true;
+assert(factsApp.duel.startArenaEvent({venueId:'scablands', mode:'world-job',
+  car:'falcone_f42', playerId:factsApp.player.id, seed:1989, opponents:[], job:definition}));
+const factsDuel = factsApp.duel, factsState = factsDuel.state;
+const factsJob = factsState.arena.worldJob;
+const factsStep = {...definition.steps[0], bellows:true};
+const roadPlaces = factsStep.bellowsRoute.road;
+const thiefAt = {...roadPlaces[2].position};
+factsJob.actors = [{id:factsStep.targetId, position:thiefAt, pathIndex:3,
+  bellowsSolidContact:false, bellowsSolidImpactKmh:0}];
+factsState.onFoot = false;
+factsState.input.fire = true;
+const factsSaved = JSON.stringify([...memory]);
+const readFacts = hits => bellowsArenaFacts(factsDuel, factsJob, factsStep, hits).bellows;
+let measured = readFacts([]);
+assert.equal(measured.flameContact, false);
+assert.equal(measured.carContact, false);
+assert.equal(measured.meetingKmh, 0);
+assert.equal(measured.inBoneyard, false);
+assert(measured.roadMetres > 0);
+assert.equal(measured.sackPoints.length, 2);
+assert.equal(measured.roadWidthMetres, routeDefinition.roadWidthMetres);
+const thiefPose = factsDuel.course.nearest(thiefAt.x, thiefAt.z);
+assert.equal(measured.playerTopSpeedKmh,
+  factsDuel._drivingSurface(thiefPose.s, thiefPose.lateral).speedLimit * 1.609344);
+factsJob.carContacts = [{actor:factsJob.actors[0], kmh:31}, {actor:{id:'other'}, kmh:90}];
+const contactsBefore = JSON.stringify(factsJob.carContacts);
+measured = readFacts([{id:factsStep.targetId, flame:true}]);
+assert.equal(measured.flameContact, true);
+assert.equal(measured.carContact, true);
+assert.equal(measured.meetingKmh, 31);
+assert.equal(JSON.stringify(factsJob.carContacts), contactsBefore);
+assert.equal(readFacts([{id:'other', flame:true}]).flameContact, false);
+factsState.onFoot = true;
+assert.equal(readFacts([]).carContact, false, 'The parked car cannot ram while the player walks.');
+factsJob.actors[0].pathIndex = roadPlaces.length;
+factsJob.actors[0].position = {...factsStep.bellowsRoute.wrecks.at(-1).position};
+factsJob.actors[0].bellowsSolidContact = true;
+factsJob.actors[0].bellowsSolidImpactKmh = 22;
+measured = readFacts([]);
+assert.equal(measured.inBoneyard, true);
+assert.equal(measured.furnaceMetres, 0);
+assert.equal(measured.solidContact, true);
+assert.equal(measured.solidImpactKmh, 22);
+assert.deepEqual(bellowsArenaFacts(factsDuel, factsJob, definition.steps[0], []), {});
+assert.equal(JSON.stringify([...memory]), factsSaved);
+factsApp.returnToMenu(); factsApp.dispose?.();
+console.log('PASS Run Him Down: arena facts measure the authored road, surface speed, flame and swept impacts without save writes.');

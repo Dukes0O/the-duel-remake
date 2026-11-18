@@ -1,3 +1,5 @@
+import {nearestOnLine} from '../scablands-ways.js';
+
 // Run Him Down's load and meetings. These facts belong to one job, never a save.
 export const BELLOWS_RULE = Object.freeze({
   start: 100,
@@ -122,6 +124,33 @@ export function stepBellowsAsh(clouds, dt) {
 export function bellowsThiefSpeedKmh(playerTopSpeedKmh, inBoneyard) {
   return inBoneyard ? BELLOWS_RULE.boneyardSpeedKmh
     : Math.max(0, playerTopSpeedKmh - BELLOWS_RULE.roadSpeedBelowPlayerKmh);
+}
+
+// Measure against the authored road, not the nearest world road or the scene.
+export function bellowsRoadFacts(route, thief, car, pathIndex) {
+  const road = route.road.map(place => place.position ?? place);
+  const here = nearestOnLine(road, thief.x, thief.z);
+  const a = road[here.index], b = road[here.index + 1];
+  const span = Math.hypot(b.x - a.x, b.z - a.z);
+  const sackPoints = BELLOWS_RULE.ashAtRoadMetres.map(metres => {
+    let left = metres;
+    for (let index = 0; index + 1 < road.length; index++) {
+      const from = road[index], to = road[index + 1];
+      const length = Math.hypot(to.x - from.x, to.z - from.z);
+      if (left <= length || index + 2 === road.length) {
+        const share = length > 0 ? Math.min(1, left / length) : 0;
+        return {x:from.x + (to.x - from.x) * share, z:from.z + (to.z - from.z) * share,
+          heading:Math.atan2(to.x - from.x, to.z - from.z)};
+      }
+      left -= length;
+    }
+  });
+  return {roadMetres:here.along, roadWidthMetres:route.roadWidthMetres, sackPoints,
+    inBoneyard:pathIndex >= road.length,
+    behindMetres:span > 0 ? ((thief.x - car.x) * (b.x - a.x) +
+      (thief.z - car.z) * (b.z - a.z)) / span : Infinity,
+    furnaceMetres:Math.hypot(thief.x - (route.wrecks.at(-1).position ?? route.wrecks.at(-1)).x,
+      thief.z - (route.wrecks.at(-1).position ?? route.wrecks.at(-1)).z)};
 }
 
 // Coordinates relative to the thief's forward line. Negative along means

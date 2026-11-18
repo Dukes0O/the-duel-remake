@@ -26,7 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
-import {BELLOWS_RULE, bellowsBlockingMove} from '../../world/jobs/bellows-rule.js';
+import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
 import {resetFootWeaponUser} from '../../onfoot-weapons.js';
@@ -97,6 +97,26 @@ export function playBellowsEvent(duel, worldJob, step, event, carPosition) {
   const position = cloud ? {x:cloud.x, y:carPosition.y, z:cloud.z} : {...carPosition};
   duel.emit({arenaTell: {id:event.id ?? 'bellows-load', targetId:'player', seconds:0, cue, position}});
   return true;
+}
+
+// Consume no evidence here. The normal contact and hit paths clear their own
+// reports after the chase has read this step's real meetings and flame hits.
+export function bellowsArenaFacts(duel, worldJob, step, thingsHit) {
+  if (!step?.bellows || !step.bellowsRoute) return {};
+  const thief = worldJob.actors.find(actor => actor.id === step.targetId);
+  if (!thief?.position) return {};
+  const car = position(duel, duel.state);
+  const pose = duel.course.nearest(thief.position.x, thief.position.z);
+  const surface = duel._drivingSurface(pose.s, pose.lateral);
+  const contacts = duel.state.onFoot ? [] : (worldJob.carContacts ?? [])
+    .filter(hit => hit.actor.id === step.targetId);
+  return {bellows:{...bellowsRoadFacts(step.bellowsRoute, thief.position, car, thief.pathIndex ?? 0),
+    playerTopSpeedKmh:surface.speedLimit * MPH_TO_KMH,
+    flameContact:thingsHit.some(hit => (hit.actorId ?? hit.id) === step.targetId && hit.flame === true),
+    carContact:contacts.length > 0,
+    meetingKmh:Math.max(0, ...contacts.map(hit => hit.kmh)),
+    solidContact:thief.bellowsSolidContact === true,
+    solidImpactKmh:thief.bellowsSolidImpactKmh ?? 0}};
 }
 const FURNACE_ARROWS = Object.freeze({left: '<< LEFT DOOR OPENING', right: 'RIGHT DOOR OPENING >>',
   rear: 'REAR DOOR OPENING (BEHIND HIM)'});
@@ -268,7 +288,7 @@ export function prepareWorldJobControls(duel) {
 }
 
 function syncJobCarSolids(worldJob) {
-  if (worldJob.definition.id !== 'everburn-hot-delivery') return;
+  if (worldJob.definition.id !== 'everburn-hot-delivery' && !worldJob.job.steps[worldJob.job.stepIndex]?.bellows) return;
   worldJob.solidGrid?.setCars(worldJob.actors.filter(actor => actor.renderCar && actor.position));
 }
 
@@ -276,6 +296,8 @@ function syncJobCarSolids(worldJob) {
 function takeJobCarContacts(duel, worldJob) {
   for (const hit of worldJob.carContacts ?? []) {
     const rider = hit.actor;
+    const step = worldJob.job.steps[worldJob.job.stepIndex];
+    if (step?.bellows && rider.id === step.targetId) continue;
     if (rider.health <= 0 || rider.ramContact || rider.ramRetreat) continue;
     rider.ramContact = true;
     worldJob.riderHitKmh = Math.max(worldJob.riderHitKmh ?? 0, hit.kmh);
@@ -642,7 +664,8 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
   // The escorted truck obeys the ground and the solids a car does (src/world/scablands-movers.js): a step up ground too steep to grip is not taken, and she is
   // pushed out of a building. Every stopping place must be clear of solids.
   const chaseStep = worldJob.job.steps[worldJob.job.stepIndex];
-  if (chaseStep?.bellows && actor.id === chaseStep.targetId && !duel.state.onFoot && travel > 0) {
+  if (chaseStep?.bellows && actor.id === chaseStep.targetId && !duel.state.onFoot && travel > 0 &&
+      (!chaseStep.bellowsRoute || index < chaseStep.bellowsRoute.road.length)) {
     actor.position = bellowsBlockingMove(before, actor.position, path[Math.max(0, index - 1)], target,
       position(duel, duel.state), chaseStep.roadWidthMetres, dt);
   }
@@ -651,6 +674,16 @@ function updateJobActor(duel, worldJob, actorDef, dt) {
     actor.position.x = at.x; actor.position.z = at.z; actor.position.y = at.y;
     actor.hasFloorHeight = true;
     if (at.blocked) arrived = false;
+    if (chaseStep?.bellows && actor.id === chaseStep.targetId) {
+      actor.bellowsSolidContact = at.blocked === 'solid';
+      actor.bellowsSolidImpactKmh = at.blocked === 'solid' ? Math.max(0,
+        (follow.speed ?? 0) - (dt > 0 ? Math.hypot(at.x - before.x, at.z - before.z) / dt : 0)) * 3.6 : 0;
+    }
+  }
+  if (chaseStep?.bellows && actor.id === chaseStep.targetId && dt > 0) {
+    const dx = actor.position.x - before.x, dz = actor.position.z - before.z;
+    actor.speed = Math.hypot(dx, dz) / dt;
+    if (actor.speed > 0) actor.heading = Math.atan2(dx, dz);
   }
   if (arrived) {
     actor.pathIndex = Math.min(index + 1, path.length - 1);
@@ -1304,7 +1337,7 @@ export function stepWorldJob(duel, dt) {
       !worldJob.job.stepState.scoutHome && !worldJob.job.stepState.scoutStopped;
     if (activeScout && hit.flame && actor.health > 0) {
       stopScout(duel, worldJob, actor);
-    } else if (actor && Number.isFinite(hit.damage)) {
+    } else if (actor && !(currentStep?.bellows && actor.id === currentStep.targetId) && Number.isFinite(hit.damage)) {
       actor.health = Math.max(0, actor.health - hit.damage);
       if (activeScout && actor.health <= 0) stopScout(duel, worldJob, actor);
     }
@@ -1323,6 +1356,7 @@ export function stepWorldJob(duel, dt) {
     position: position(duel, actor), health: actor.armor}))];
   // The ember in the pot (src/world/jobs/ember-rule.js) reads how fast the car goes, the speed the ground under it is safe at (its region, src/world/scablands-regions.js), and the speed it shed in
   // this one step: a hit on a solid, a barricade or another car sheds a lot in a step, braking only a little. This only reads the car.
+  const bellowsFacts = bellowsArenaFacts(duel, worldJob, currentStep, thingsHit);
   takeJobCarContacts(duel, worldJob);
   const kmh = Math.abs(state.speedMph || 0) * MPH_TO_KMH;
   // A fall (src/sim-scablands.js) is a hit of its own size whatever speed the car had: the larger of the speed shed and the fall's size.
@@ -1340,6 +1374,7 @@ export function stepWorldJob(duel, dt) {
     duel._storyCallout('Cold air lies in the river bed. The pot cools fast down here.', 3);
   }
   const view = {player: playerView, onFoot: !!state.onFoot,
+    ...bellowsFacts,
     ...(currentStep?.brand ? brandCombatView(state, worldJob) : {}),
     ashMen: currentStep?.brand ? actors.filter(actor =>
       worldJob.actors.some(source => source.brandAsh && source.id === actor.id)) : [],
