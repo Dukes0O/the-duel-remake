@@ -30,6 +30,7 @@ export const BELLOWS_RULE = Object.freeze({
   furnaceReachMetres: 30,
   restartLeadMetres: 150,
   endingSeconds: 9,
+  closingAtSeconds: 5,
   loadRadiusMetres: 8,
   stoppedKmh: 1,
   thiefRunMps: 6,
@@ -276,14 +277,14 @@ export function stepBellowsPursuit(state, facts, dt = 0) {
   return {state: next, events, requests};
 }
 
-// Stopping the thief starts the hold. The player can still approach his car;
-// results wait for the load even when that approach takes longer than the hold.
+// Stopping the thief waits for collection. Only loading the bellows starts
+// the full ending, so the horn, departure and captions can all be seen.
 // Actor motion, the roof load and the horn follow these one-time requests.
 export function stepBellowsEnding(state, facts, dt = 0) {
   const events = [], requests = [];
   if (!state.thiefStopped) return {state, complete: false, events, requests};
   const next = {...state, endingElapsed: Math.min(BELLOWS_RULE.endingSeconds,
-    (state.endingElapsed ?? 0) + Math.max(0, dt))};
+    (state.bellowsLoaded ? (state.endingElapsed ?? 0) + Math.max(0, dt) : 0))};
   if (!state.thiefFled) {
     next.thiefFled = true;
     requests.push({type: 'bellowsThiefFlee'});
@@ -295,6 +296,10 @@ export function stepBellowsEnding(state, facts, dt = 0) {
     events.push({type: 'bellowsLoaded'});
     requests.push({type: 'bellowsFurnaceLeave'},
       {type: 'say', lineId: 'story.ember.cinder.22'});
+  }
+  if (next.bellowsLoaded && next.endingElapsed >= BELLOWS_RULE.closingAtSeconds && !state.bellowsClosing) {
+    next.bellowsClosing = true;
+    requests.push({type: 'say', lineId: 'story.ember.cinder.10'});
   }
   const complete = next.bellowsLoaded === true && next.endingElapsed >= BELLOWS_RULE.endingSeconds;
   if (complete && !state.bellowsArrived) {

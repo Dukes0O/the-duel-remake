@@ -212,15 +212,19 @@ assert.deepEqual(ending.requests, [{type: 'bellowsThiefFlee'}, {type: 'bellowsFu
   {type: 'say', lineId: 'story.ember.cinder.22'}]);
 ending = end(ending.state, {}, 8.99);
 assert.equal(ending.complete, false);
-assert.deepEqual(ending.requests, []);
+assert.deepEqual(ending.requests, [{type: 'say', lineId: 'story.ember.cinder.10'}]);
 ending = end(ending.state, {}, .01);
 assert.equal(ending.complete, true);
 assert.deepEqual(ending.events, [{type: 'bellowsArrived', bellows: 70, knocks: 3,
   pay: 80, sentence: 'The bellows will patch.'}]);
 assert.deepEqual(end(ending.state, {}, 10).events, []);
 const lateCollection = end(end(captured, {carGapMetres: 100}, 20).state);
-assert.equal(lateCollection.complete, true);
-assert.equal(lateCollection.events.filter(event => event.type === 'bellowsArrived').length, 1);
+assert.equal(lateCollection.complete, false);
+assert.equal(lateCollection.state.endingElapsed, 0);
+assert.equal(lateCollection.events.filter(event => event.type === 'bellowsArrived').length, 0);
+assert(lateCollection.requests.some(request => request.type === 'bellowsFurnaceLeave'));
+assert.equal(end(lateCollection.state, {}, 8.99).complete, false);
+assert.equal(end(lateCollection.state, {}, 9).complete, true);
 assert.deepEqual(end(Object.freeze(captured)), end(Object.freeze(captured)));
 console.log('PASS Run Him Down: theft escape, collection, furnace departure and nine-second ending.');
 
@@ -257,7 +261,8 @@ assert.equal(chase.done, false);
 assert.equal(chase.stepState.bellowsLoaded, true);
 assert.equal(chase.requests.find(request => request.type === 'follow').speed, 0);
 assert(chase.requests.some(request => request.type === 'bellowsThiefFlee'));
-chase = stepJob(chase, chaseView, 9);
+chase = stepJob(chase, chaseView, 5);
+chase = stepJob(chase, chaseView, 4);
 assert.equal(chase.done, true);
 assert(chase.events.some(event => event.type === 'bellowsArrived' && event.knocks === 3));
 assert(chase.events.some(event => event.type === 'done'));
@@ -804,7 +809,7 @@ assert(paidApp.duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'f
 const paidDuel=paidApp.duel, paidWorld=paidDuel.state.arena.worldJob;
 stepWorldJob(paidDuel,0);
 paidWorld.job.stepState={thiefStopped:true,thiefFled:true,bellowsLoaded:true,
-  endingElapsed:9,bellows:63,knocks:3,linesStarted:true,linesClosing:true};
+  endingElapsed:9,bellowsClosing:true,bellows:63,knocks:3,linesStarted:true,linesClosing:true};
 stepWorldJob(paidDuel,0);
 assert.deepEqual(paidWorld.bellowsResult,{bellows:63,knocks:3,pay:80,sentence:'The bellows will patch.'});
 assert.equal(paidWorld.job.done,true);
