@@ -7,7 +7,7 @@ import {forgePlan} from '../forge-look.js';
 import {tinTownGateFor} from '../tin-town-gate.js';
 import {scablandsSurfaceHeightAt} from '../scablands-ground.js';
 import {BRAND_RULE} from './brand-rule.js';
-import {pushOutOfSolids} from '../scablands-solids.js';
+import {pushOutOfSolids, SOLID_GRID} from '../scablands-solids.js';
 
 export function brandSites(land = LAND) {
   const slots = tinTownLayout(land).clusters.flatMap(cluster => cluster.slots);
@@ -118,4 +118,23 @@ export function brandAshAim(actor, goal, entries, grid) {
   }
   while(kept.route.length>1&&gap(actor,kept.route[0])<r.alleyReachMetres)kept.route.shift();
   return kept.route[0]??actor;
+}
+
+// Recovery reuses the checked hearth approach and clear points beside a post.
+export function brandRecoveryPose(step, place, grid = SOLID_GRID) {
+  const at = place.position ?? place;
+  const hearth = place.id === step.hearth.id;
+  const candidates = hearth ? [step.farWalk[0].position] :
+    Array.from({length: BRAND_RULE.recoveryDirections}, (_, index) => {
+      const angle = index * Math.PI * 2 / BRAND_RULE.recoveryDirections;
+      return {x: at.x + Math.sin(angle) * BRAND_RULE.recoveryLampMetres,
+        z: at.z + Math.cos(angle) * BRAND_RULE.recoveryLampMetres};
+    });
+  for (const point of candidates) {
+    const y = scablandsSurfaceHeightAt(point.x, point.z);
+    if ([SOLID_GRID, grid].some(solids => pushOutOfSolids(point.x, point.z,
+      BRAND_RULE.recoveryClearanceMetres, solids, y).hit)) continue;
+    return {...point, y, yaw: Math.atan2(at.x - point.x, at.z - point.z)};
+  }
+  throw new Error('Light the Town needs a clear place to get up.');
 }

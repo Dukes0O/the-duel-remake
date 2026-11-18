@@ -942,10 +942,10 @@ the sky goes from late afternoon to dusk.
 
 **The load, seen.** The player steps out and takes a brand from the hearth: a stick with fire on its end, seen in the
 hand, lighting the ground round the player. It burns for 90 seconds, shown as a bar. Burnt out, it is relit at the hearth
-or at any lamp already alight.
+or at any lamp already alight. The count starts at one and rises by one at each relight after it has gone out, been put out or been dropped in a knockdown.
 
 **Something to do.** Three lamps, each a glass lantern on a post that stands on the ground and reads as a lamp at first
-sight: at the pump (60 m from the forge), on the gate tower's walkway (up a ladder), and at the far wall (150 m, through
+sight: at the pump (60 m from the forge), at the foot of the gate tower, and at the far wall (150 m, through
 the alleys). A lamp is lit by holding the brand to it for two seconds.
 - **A lit lamp shows what the dark hid.** Its light falls on 25 m of ground. People come to their doors in it. It also
   shows Ash Men who came over the wall at dusk with sacks of ash: one after the first lamp, two after the second.

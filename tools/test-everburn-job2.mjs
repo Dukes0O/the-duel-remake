@@ -89,7 +89,12 @@ const down = {onFoot: true, difficulty: 'easy', fighter: {knockedDown: true}};
 const recovered = tick(lighting.state, down);
 assert.equal(recovered.requests[0].place.id, 'tower');
 assert.equal(recovered.state.lamps.tower, true);
-assert.equal(recovered.state.brandsUsed, 2);
+assert.equal(recovered.state.brandSeconds, 0);
+assert.equal(recovered.state.brandsUsed, 1);
+assert(recovered.events.some(event => event.type === 'brandOut'));
+const standingAgain = tick(recovered.state, foot(100));
+assert.equal(standingAgain.state.brandsUsed, 2);
+assert.equal(standingAgain.state.brandSeconds, 90);
 assert.equal(tick(recovered.state, down).requests.length, 0);
 assert.equal(tick(lighting.state, {...down, difficulty: 'medium'}).requests[0].place.id, 'hearth');
 
@@ -645,3 +650,20 @@ for(const lamp of actualStep.places) {
   assert(ash.state.men[actor.id].gone,`${lamp.id}: the driven-off smotherer must reach the wall through alleys`);
 }
 console.log('PASS Light the Town: pump, tower and far smotherers reach lamps and flee through town solids with the existing foot mover.');
+
+// Review cure: recovery uses the existing request handler and real town solids.
+const {applyBrandRequest} = await import('../src/arena/modes/world-job.js');
+for (const place of [sites.hearth, ...sites.lamps]) {
+  const fighter = {s:0, maxHealth:100, respawns:0, knockedDown:true};
+  const recoveryDuel = {state:{onFoot:true, fighter}, course:{nearest:()=>({s:0,lateral:0})}};
+  applyBrandRequest(recoveryDuel, {solidGrid:lampGrid, job:{steps:[actualStep],stepIndex:0}},
+    {type:'brandRecovery',place});
+  const at=place.position;
+  const radius=place===sites.hearth ? 3 : 2;
+  assert(Math.hypot(fighter.x-at.x,fighter.z-at.z)<=radius+1e-8);
+  assert.equal(pushOutOfSolids(fighter.x,fighter.z,.55,SOLID_GRID,fighter.y).hit,null);
+  assert.equal(pushOutOfSolids(fighter.x,fighter.z,.55,lampGrid,fighter.y).hit,null);
+  assert(Math.abs(fighter.yaw-Math.atan2(at.x-fighter.x,at.z-fighter.z))<1e-8);
+  assert.equal(fighter.knockedDown,false);
+}
+console.log('PASS Light the Town: clear hearth and lamp recovery, facing the fire.');

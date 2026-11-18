@@ -42,7 +42,9 @@ export const BRAND_RULE = Object.freeze({
   alleyReachMetres: 0.5,
   alleyRepathMetres: 4,
   alleyMarginMetres: 4,
-  recoveryOffset: 1,
+  recoveryLampMetres: 2,
+  recoveryClearanceMetres: 0.55,
+  recoveryDirections: 16,
   lampClearance: 1.5,
   postRadius: 0.15,
   postHeight: 2.4,
@@ -254,14 +256,18 @@ export function stepBrand(step, state, view, dt) {
       const last = lamps.find(lamp => lamp.id === state.lastLamp);
       requests.push({type: 'brandRecovery', place:
         view.difficulty === 'easy' && last ? last : step.hearth});
-      next.brandSeconds = rule.burnSeconds;
-      next.brandsUsed++;
-      events.push({type: 'brandCatch'});
+      next.brandSeconds = 0;
+      events.push({type: 'brandOut'});
     }
     next.brandKnockdown = true;
     next.lightingLamp = null;
     next.lightingSeconds = 0;
     return {state: next, complete: false, events, requests};
+  }
+  if (state.brandKnockdown) {
+    next.brandSeconds = rule.burnSeconds;
+    next.brandsUsed++;
+    events.push({type: 'brandCatch'});
   }
   next.brandKnockdown = false;
 

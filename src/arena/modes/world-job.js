@@ -26,7 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
-import {brandAshAim} from '../../world/jobs/brand-sites.js';
+import {brandAshAim, brandRecoveryPose} from '../../world/jobs/brand-sites.js';
 import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
@@ -1003,7 +1003,7 @@ function settleBattle(worldJob) {
 
 // Light the Town reuses a factory raider and the ordinary job foot mover.
 // These actors stay out of the roadside rocket zones: their rule throws ash.
-function applyBrandRequest(duel, worldJob, request) {
+export function applyBrandRequest(duel, worldJob, request) {
   if (request.type === 'spawnBrandAsh') {
     if (worldJob.actors.some(actor => actor.id === request.id)) return true;
     const at = request.from.position ?? request.from;
@@ -1034,10 +1034,11 @@ function applyBrandRequest(duel, worldJob, request) {
     const fighter = duel.state.onFoot && duel.state.fighter;
     if (!fighter) return true;
     const at = request.place.position ?? request.place;
-    const x = at.x + BRAND_RULE.recoveryOffset, z = at.z;
+    const step = worldJob.job.steps[worldJob.job.stepIndex];
+    const {x, z, yaw} = brandRecoveryPose(step, request.place, worldJob.solidGrid);
     const ground = duel.course.nearest(x, z, fighter.s);
     const y = scablandsActorHeightAt(x, z, at.y);
-    Object.assign(fighter, {x, y, z, s: ground.s, lateral: ground.lateral,
+    Object.assign(fighter, {x, y, z, yaw, s: ground.s, lateral: ground.lateral,
       groundY: y, airHeight: 0, verticalSpeed: 0, speed: 0,
       knockedDown: false, knockdownRemaining: 0, health: fighter.maxHealth,
       locomotion: 'idle', jumpHeld: false});
