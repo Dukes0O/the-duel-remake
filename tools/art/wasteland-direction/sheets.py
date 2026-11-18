@@ -58,7 +58,7 @@ def matches(evidence, dest):
     sheet = Image.new('RGB', (WIDTH, 1598), PAPER)
     draw = header(sheet, 'Big Bess at the south gate', 'Matched cameras    /    Blender Cycles')
     for y, left, right, ltitle, rtitle in (
-        (168, 'stock-road', 'trial-road', 'Driving view   ·   Stock materials', 'Lamp spill, wheel wear and body masks'),
+        (168, 'stock-road', 'trial-road', 'Driving view   ·   Stock materials', 'Lamp spill, wheel tracks and body masks'),
         (654, 'stock-cab', 'trial-cab', 'Parked beside the cab   ·   Stock materials', 'Same truck and camera, full trial'),
         (1140, 'stock-glass', 'paint-glass', 'Grazing view   ·   Stock glass', 'Body masks only, same lights and gravel'),
     ):

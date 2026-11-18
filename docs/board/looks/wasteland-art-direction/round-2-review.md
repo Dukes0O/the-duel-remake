@@ -8,7 +8,7 @@ Its model is approximate. The illustrated cab is taller, the tyres are larger an
 
 Open `tools/art/wasteland-direction/plate.html` from this checkout. Its three labelled views use crops of the retained review sheets. The register title, captions, vehicle measurements and controls remain HTML text. The radio group supports native keyboard selection and shows a focus ring. It works locally using the two JPEGs, local fonts and CSS. The study build also writes a standalone `big-bess.html` beside the raw renders.
 
-The default plate was typeset with WeasyPrint and visually checked in a one-page proof. An independent art reviewer checked the vehicle silhouette and caption, the three radio labels and their crop coordinates. Claude still needs to exercise Tab and the arrow keys in a browser and check readability at the laptop's actual viewport. This branch adds no Story Wall route or shipped game asset.
+The default plate was typeset with WeasyPrint and visually checked in a one-page proof. An independent art reviewer checked the vehicle silhouette and caption, the three radio labels and their crop coordinates. Claude still needs to exercise Tab and the arrow keys in a browser and check readability at the laptop's actual viewport. The HTML and art live in the study folders.
 
 ## Source and recipe
 
