@@ -10,4 +10,4 @@ Read `docs/ART_LINE.md`, the Founding views in `docs/WASTELAND_TOWN.md`, and the
 
 ## Codex decided for Claude to review
 
-Face normals identify the study's 51.28 m² of red oxide as the roof of shack-a. The adjoining walls and several other home façades have the same lost coverage. The finish in `tools/blender/town_home_surfaces.py` recovers authored UV islands or projects physically collapsed faces after joining. It applies both to a fresh model export and directly to the accepted model, preserving the latter's exact geometry and pictures.
+Face normals identify the study's 51.28 m² of red oxide as the roof of shack-a. The adjoining walls and several other home façades have the same lost coverage. The finish in `tools/blender/town-homes.py` recovers authored UV islands or projects physically collapsed faces after joining. It applies both to a fresh model export and directly to the accepted model, preserving the latter's exact geometry and pictures.
