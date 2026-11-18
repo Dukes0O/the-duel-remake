@@ -273,6 +273,38 @@ for (const reason of ['ridge-car', 'ridge-rider', 'off-pan', 'time']) {
   assert.deepEqual(riders.map(rider => rider.position), homes, 'a nearby car cannot restart salt pursuit');
 }
 
+// A salt rider blocked on its way home parks after one second and stays done.
+{
+  const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);
+  const car = {...definition.steps[0].saltPost.position};
+  car.y = scablandsSurfaceHeightAt(car.x, car.z);
+  const state = {arena:{worldJob:world}, weaponLoadout:[], s:0, lateral:0, opponents:[],
+    speedMph:0, stageTimeSec:0, input:{}, cpuDifficulty:'medium'};
+  const duel = {state, seed:19, course:{def:{scablands:true}, nearest:() => ({s:0,lateral:0}),
+    at:() => ({heading:0}), worldAt:() => car}, emit:() => {}, _storyCallout:() => {}};
+  initializeWorldJob(duel, definition);
+  world.job.stepState = {loaded:true, ember:100};
+  world.saltDone = true;
+  world.saltWarned = true;
+  const rider = world.actors.find(actor => actor.id === 'salt-rider-1');
+  const home = definition.steps[0].saltRiders[0].start.position;
+  rider.position = {...home, x:home.x + 30, y:scablandsSurfaceHeightAt(home.x + 30, home.z)};
+  const start = {...rider.position};
+  const wall = {id:'salt-return-wall', shape:'box', x:start.x - 11.3, z:start.z, y:start.y,
+    halfX:10, halfZ:10, heading:0, height:10, minY:start.y - 10, maxY:start.y + 10};
+  world.solidGrid = createJobSolidGrid(createSolidGrid([wall]));
+  rider.returningToPost = true;
+  for (let i = 0; i < 9; i++) stepWorldJob(duel, .1);
+  assert.equal(rider.returningToPost, true, 'the rider tries for a full second');
+  stepWorldJob(duel, .2);
+  assert.equal(rider.returningToPost, false, 'one second against a solid ends the salt return');
+  assert.equal(rider.speed, 0);
+  const parked = {...rider.position};
+  for (let i = 0; i < 60; i++) stepWorldJob(duel, .1);
+  assert.deepEqual(rider.position, parked, 'the blocked salt rider stays where it stopped');
+  assert.equal(rider.pursuing, false);
+}
+
 // The job counts light exposure, not all time in the watch's view.
 {
   const definition = EVERBURN_JOBS[0], world = createWorldJob(definition);

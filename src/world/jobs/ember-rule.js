@@ -127,6 +127,7 @@ export const SALT_RIDERS = Object.freeze({
   shelterHalfX:4, shelterHalfZ:3, shelterPostWidth:.5, shelterHeight:3,
   shelterRoofWidth:9, shelterRoofDepth:7, shelterRoofThickness:.2, shelterRoofSlope:.08,
   chaseSeconds:120,
+  returnStillSeconds:1,
   easySlowerKmh:5,
 });
 

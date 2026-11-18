@@ -516,7 +516,7 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
     const dx = home.x - rider.position.x, dz = home.z - rider.position.z;
     const distance = Math.hypot(dx, dz);
     rider.speed = 0;
-    if (roadRider && distance > 1 && !rider.returnStuck) {
+    if ((roadRider || saltRider) && distance > 1 && !rider.returnStuck) {
       rider.returnCheckDistance ??= distance;
       rider.returnCheckSeconds = (rider.returnCheckSeconds ?? 0) + Math.max(0, dt);
       if (rider.returnCheckSeconds >= 5) {
@@ -524,6 +524,10 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         rider.returnCheckDistance = distance;
         rider.returnCheckSeconds = 0;
       }
+    }
+    if (saltRider && rider.returnStuck) {
+      rider.returningToPost = false;
+      return;
     }
     // Check both ends before moving a stranded rider back to its post.
     if (roadRider && rider.returnStuck) {
@@ -544,6 +548,15 @@ function pursueJobRider(duel, worldJob, actorDef, dt) {
         {radius:1.3, grid:worldJob.solidGrid?.movers ?? worldJob.solidGrid, height:before.y});
       rider.position = {x:moved.x, y:moved.y, z:moved.z};
       rider.speed = Math.hypot(moved.x - before.x, moved.z - before.z) / dt;
+      if (saltRider) {
+        rider.returnStillSeconds = moved.blocked === 'solid' && rider.speed < 0.01
+          ? (rider.returnStillSeconds ?? 0) + dt : 0;
+        if (rider.returnStillSeconds >= SALT_RIDERS.returnStillSeconds) {
+          rider.returnStuck = true;
+          rider.returningToPost = false;
+          rider.speed = 0;
+        }
+      }
     }
     if (distance <= 1 && !worldJob.ridersRetreating) {
       rider.returningToPost = false;
