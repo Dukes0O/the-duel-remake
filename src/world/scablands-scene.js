@@ -134,6 +134,8 @@ export function makeCoarseGround(material,groundEdit=scablandsGroundEdit){
 // Cut a rectangle out of the ground's material: the rectangle is the detailed ground's window (the material is changed in place).
 function withHole(material,hole){
   const lookCompile=material.onBeforeCompile;
+  const groundKey=material.customProgramCacheKey.bind(material);
+  material.customProgramCacheKey=()=>groundKey()+'-near-window';
   material.onBeforeCompile=(shader,renderer)=>{
     lookCompile?.call(material,shader,renderer);
     shader.uniforms.uNearHole=hole;

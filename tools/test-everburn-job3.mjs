@@ -759,6 +759,42 @@ escapeApp.returnToMenu(); escapeApp.dispose?.();
 console.log('PASS Run Him Down: stopped thief runs once through the existing foot mover and read-only figures.');
 console.log('PASS Run Him Down: arena mover blocks a driving pass only in the remade chase.');
 
+// Follow the solid as the thief runs. Once he stops, a car can nose up to him.
+{
+  const {Duel} = await import('../src/game.js');
+  const {placeActor} = await import('../src/arena/arena-event.js');
+  const {moveJobRaiders} = await import('../src/arena/modes/world-job.js');
+  const duel = new Duel({seed:1989, featureFlags:{'hidden-road':true,'story-everburn':true,'scablands-realism':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert(duel.startArenaEvent({venueId:'scablands',mode:'world-job',car:'falcone_f42',seed:1989,opponents:[],job:definition}));
+  const state = duel.state, world = state.arena.worldJob;
+  Object.assign(state, {onFoot:false, fighter:null, status:'racing', countdown:0});
+  duel.step(1/120);
+  const placeCar = (x,z,heading,speedKmh) => {
+    const p = duel.course.nearest(x,z);
+    placeActor(duel,state,{...p,headingError:heading-duel.course.at(p.s).heading},speedKmh/1.609344);
+  };
+  // The parked car and a straight, empty stretch of real ground isolate this collision.
+  const parked = world.actors.find(actor => actor.id === definition.steps[0].targetId);
+  const road = duel.course.nearest(100,0);
+  parked.position = duel.course.groundAt(road.s,road.lateral);
+  placeCar(100,-12,0,0);
+  world.job.stepState.thiefStopped = true;
+  applyBellowsThiefFlee(duel,world,{type:'bellowsThiefFlee'});
+  const runner = world.actors.find(actor=>actor.bellowsThief), start = {...runner};
+  for(let n=0;n<60;n++) moveJobRaiders(duel,world,1/60);
+  assert.ok(Math.abs(Math.hypot(runner.x-start.x,runner.z-start.z)-BELLOWS_RULE.thiefRunMps)<1e-6,
+    'The thief can leave his own previous collider.');
+  const solid = world.solidGrid.near(runner.x,runner.z,runner.x,runner.z,2).find(item=>item.id===runner.id);
+  assert.deepEqual([solid.x,solid.minY,solid.z], [runner.x,runner.y,runner.z], 'The collider follows the thief on his floor.');
+  assert.equal(solid.verticalClearance, true, 'Actors on another floor can pass above or below him.');
+  runner.approachTarget = {x:runner.x,z:runner.z};
+  placeCar(runner.x+12,runner.z,-Math.PI/2,20);
+  for(let tick=0;tick<400;tick++){duel.setInput({throttle:1});duel.step(1/120);}
+  const car = duel.course.worldAt(state.s,state.lateral);
+  assert.ok(car.x>runner.x+2 && car.x<runner.x+4 && Math.abs(car.z-runner.z)<.1,'The car arrives and stops short of him.');
+}
+
 // The live bridge reads swept meetings, not closeness or weapon buttons.
 const {bellowsArenaFacts} = await import('../src/arena/modes/world-job.js');
 const factsApp = new App(); factsApp.audio.unlock = () => {};

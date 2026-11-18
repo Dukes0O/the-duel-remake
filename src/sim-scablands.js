@@ -35,7 +35,7 @@ function hitGround(duel, actor, impactMph, nx, nz) {
     applySceneryArmorDamage(duel, actor, impactMph);
     if (player && !actor.combatWrecking) duel._scrape(zone, impactMph);
   } else if (player && duel.state.invulnerableSec <= 0 && duel.state.impactTimer <= 0 && impactMph > 4) duel._scrape(zone, impactMph);
-  duel.emit({scablandsHit: {kind: 'climb', impactMph, player, cue: 'world.ground.scab-plates'}});
+  duel.emit({scablandsHit: {kind: 'climb', impactMph, player, cue: 'vehicle.landing'}});
 }
 
 // Only x and z are needed here. Read the same sampled frame as Course.worldAt, without making a frame or a position on each step.

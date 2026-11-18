@@ -639,7 +639,6 @@ export const SOUND_BANK = {
   'world.ground.flats': cue('vehicle', {filter: ['bandpass', 720], duration: .22, tail: .26, noiseVolume: .18, priority: 40, limit: 2, layers: [tone(145, .18, .04, 'triangle', 0, 80)]}),
   'world.ground.salt-pan': cue('vehicle', {filter: ['highpass', 1800], duration: .3, tail: .3, noiseVolume: .12, priority: 40, limit: 2, layers: [tone(1400, .12, .02, 'triangle', 0, 900)]}),
   'world.fence.snap': cue('impacts', {buffersFrom: 'vehicle.crash.recorded', volume: .45, priority: 40, limit: 2, farCutoff: 300, layers: [tone(180, .12, .08, 'triangle', 0, 80)]}),
-  'world.ground.scab-plates': cue('impacts', {buffersFrom: 'vehicle.crash.recorded', volume: 1.1, priority: 62, limit: 2, farCutoff: 1200, layers: [tone(70, .3, .16, 'sine', 0, 36)]}),
   'world.ground.river-bed': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.1, priority: 52, limit: 2, layers: [tone(110, .2, .05, 'sine', 0, 70)]}),
   'world.ground.river-soft': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 2, priority: 60, limit: 2, layers: [tone(90, .3, .08, 'sine', 0, 45)]}),
   'world.ground.sand': cue('vehicle', {buffersFrom: 'world.muddy-hollow-mud', volume: 1.3, priority: 52, limit: 2, layers: [tone(100, .25, .06, 'sine', 0, 60)]}),

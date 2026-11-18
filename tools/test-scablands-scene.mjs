@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {Course} from '../src/course.js';
 import {SCABLANDS_VENUE,SCABLANDS_LAYOUT} from '../src/world/scablands.js';
 import {ROAD_HALF_WIDTH} from '../src/world/scablands-road.js';
-import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
+import {TIN_TOWN_GATE, tinTownGateSolids} from '../src/world/tin-town-gate.js';
 import {SCABLANDS_PLACES} from '../src/world/scablands.js';
 import {EVERBURN_JOBS} from '../src/world/jobs/everburn.js';
 import {GAS_RUN_PATHS} from '../src/world/jobs/gas-run.js';
@@ -109,6 +109,19 @@ const places=new Map(SCABLANDS_PLACES.map(place=>[place.id,place]));
     placeWorldJobVehicle(car, actor, course);
     assert.ok(Math.abs(car.getWorldPosition(new THREE.Vector3()).y - at.y) < .05,
       'a job car stands at its own floor height');
+  }
+  const chase = EVERBURN_JOBS.find(job => job.id === 'everburn-run-him-down').steps[0];
+  let previous = chase.path[0].position;
+  for (const place of chase.path.slice(1)) {
+    const at = place.position, dx = at.x - previous.x, dz = at.z - previous.z;
+    const actor = {position:at, heading:Math.atan2(dx,dz)};
+    placeWorldJobVehicle(car, actor, course);
+    const nose = new THREE.Vector3(0,0,1).applyQuaternion(car.quaternion);
+    assert.ok(nose.dot(new THREE.Vector3(dx,0,dz).normalize()) > .99999, 'the thief faces the next stretch of road');
+    const turn = car.rotation.y;
+    placeWorldJobVehicle(car, {position:at}, course);
+    assert.equal(car.rotation.y,turn,'a stopped car keeps its heading');
+    previous = at;
   }
   scene.group.remove(car);
 }
@@ -603,6 +616,21 @@ const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
   for(let x=-699;x<=699;x+=7)for(const z of [-499,499]){const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);samples++;smallest=Math.min(smallest,nearHeight-farHeight);}
   for(let z=-499;z<=499;z+=7)for(const x of [-699,699]){const farHeight=heightOn([far],x,z),nearHeight=heightOn(near,x,z);assert.ok(farHeight!==null&&nearHeight!==null,`both grounds exist at ${x}, ${z}`);samples++;smallest=Math.min(smallest,nearHeight-farHeight);}
   assert.ok(samples>400&&smallest>0,`the coarse ground lies below the detailed ground along the hole's edge (closest ${smallest.toFixed(2)} m, ${samples} places)`);
+  // Tin Road's hollow has a horizon triangle over a metre above the car.
+  // Both materials must get their own program whatever order Three compiles them in.
+  const hollow = {x:5098.29, z:1666.11};
+  const pose = course.nearest(hollow.x, hollow.z);
+  syncScene(scene.group, {s:pose.s, lateral:pose.lateral});
+  scene.group.updateMatrixWorld(true);
+  const support = scablandsSurfaceHeightAt(hollow.x, hollow.z);
+  const carBase = support + scene.group.userData.drawnFeet.shift(hollow.x, hollow.z, support);
+  assert.ok(heightOn([far], hollow.x, hollow.z) - carBase > 1,
+    'the real horizon triangle would bury the car if it were visible here');
+  assert.ok(Math.abs(hollow.x - hole.x) < hole.z && Math.abs(hollow.z - hole.y) < hole.w,
+    'the car is inside the area discarded by the horizon material');
+  assert.notEqual(far.material.customProgramCacheKey(), nearWindow.material.customProgramCacheKey(),
+    'the horizon cannot reuse the near ground program which draws inside the window');
+  syncScene(scene.group, {s:0, lateral:0});
   const farAt=far.geometry.attributes.position;
   assert.ok(Math.abs(farAt.getY(0)-(scablandsSurfaceHeightAt(-SCABLANDS_LAYOUT.halfWidth,-SCABLANDS_LAYOUT.halfDepth)-.35))<.001,'the coarse ground stands 35 cm below the land');
 }
@@ -632,6 +660,14 @@ const roadPieces=roadsDraw.group.children.filter(mesh=>mesh.visible);
   assert.ok(lampMeshes.length>0&&lampMeshes.every(mesh=>mesh.material.emissiveIntensity>.3&&mesh.material.emissiveIntensity<1.5),'the gate\'s lamps glow a little');
   const fence=['left','right'].map(side=>boxIn(gate.getObjectByName(`Gate fence ${side}`)));
   assert.ok(fence.every(box=>box.max.x-box.min.x>=13.9&&box.max.x-box.min.x<=15.2),'each side of the gate has about 14 m of fence');
+  for (const part of tinTownGateSolids(LAND)) {
+    const name = part.id.replace('tin-town-gate-', 'Gate ').replace('-', ' ');
+    const shown = new THREE.Box3().setFromObject(gate.getObjectByName(name), true);
+    const allowance = .00001;
+    assert.ok(part.x - part.halfX >= shown.min.x - allowance && part.x + part.halfX <= shown.max.x + allowance &&
+      part.z - part.halfZ >= shown.min.z - allowance && part.z + part.halfZ <= shown.max.z + allowance,
+      `${name}: the collision footprint fits inside the drawn structure`);
+  }
   const beam=boxIn(gate.getObjectByName('Gate beam'));
   // The wear is drawn over every material that does not glow.
   const materials=[];gate.traverse(node=>{if(node.isMesh)materials.push(node.material);});

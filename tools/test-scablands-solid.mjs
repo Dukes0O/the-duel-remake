@@ -16,6 +16,7 @@ import {wrapHeading} from '../src/offroad-physics.js';
 import {ARENA_VENUES} from '../src/arena/venues.js';
 import {placeActor} from '../src/arena/arena-event.js';
 import {createFighter, stepFighter, FIGHTER_STEP_SECONDS} from '../src/onfoot.js';
+import {TIN_TOWN_GATE} from '../src/world/tin-town-gate.js';
 import {LAND} from '../src/world/scablands-names.js';
 import {ROAD_NET, EAST_ROAD, ROAD_HALF_WIDTH, roadPointFrom} from '../src/world/scablands-road.js';
 import {scablandsSurfaceHeightAt, scablandsActorHeightAt, scablandsActorFeet} from '../src/world/scablands-ground.js';
@@ -267,6 +268,49 @@ test('the bridge has a truss each side and the pipe a deck with a fall off the s
   // The Pipe: its deck is one car wide, and a car that leaves its side falls into the bed (the lip test above is this fall).
   const pipe = SCABLANDS_SOLIDS.find(solid => solid.id === 'the-pipe-pipeline');
   assert.ok(pipe.halfZ > 80 && pipe.height > 2, 'the pipeline beside its deck is solid');
+});
+
+function runHimDownDuel() {
+  const job = EVERBURN_JOBS.find(item => item.id === 'everburn-run-him-down');
+  const duel = new Duel({seed:1989, featureFlags:{'hidden-road':true, 'story-everburn':true, 'scablands-realism':true}});
+  duel.state.wastelandGateDiscovered = true;
+  assert.ok(duel.startArenaEvent({venueId:'scablands', mode:'world-job', car:'falcone_f42', seed:1989, opponents:[], job}));
+  Object.assign(duel.state, {onFoot:false, fighter:null, status:'racing', countdown:0});
+  return duel;
+}
+
+test('Run Him Down drives through the gate at 20, 40 and 60 km/h', () => {
+  const gate = TIN_TOWN_GATE;
+  for (const kmh of [20, 40, 60]) {
+    const duel = runHimDownDuel(), collisions = [];
+    duel.onChange((state, event) => { if (event.scablandsHit || event.crash) collisions.push(event); });
+    put(duel, gate.x, gate.z - 12, 0, kmh);
+    let crossingSpeed;
+    for (let tick = 0; tick < 1200 && where(duel).z < gate.z + 10; tick++) {
+      drive(duel, {x:gate.x, z:gate.z + 50}, kmh);
+      duel.step(1/120);
+      if (crossingSpeed === undefined && where(duel).z >= gate.z) crossingSpeed = kmhOf(duel);
+    }
+    assert.ok(where(duel).z >= gate.z + 10 && Math.abs(crossingSpeed - kmh) < 2, `clear at ${kmh} km/h`);
+    assert.deepEqual(collisions, []);
+  }
+});
+
+test('Run Him Down asks for a landing thump on the rocky shoulders of Tin Town and the Boneyard road', () => {
+  const duel = runHimDownDuel(), changes = [], gate = TIN_TOWN_GATE;
+  duel.onChange((state, event) => { if (event.groundChanged) changes.push(event.groundChanged); });
+  for (const [road, shoulder] of [
+    [[gate.x - 10, gate.z], [gate.x - 15, gate.z]], [[5192.89,1510.05], [5198.80,1529.16]],
+  ]) {
+    changes.length = 0;
+    for (const [x,z] of [road, shoulder]) {
+      put(duel, x, z, 0, 15);
+      duel.state.stageTimeSec += 1;
+      duel.step(1/120);
+    }
+    assert.equal(changes.at(-1)?.id, 'scab-plates');
+    assert.equal(changes.at(-1)?.cue, 'vehicle.landing');
+  }
 });
 
 // ---- 2. Solids: into a shack, a wreck, a gate post and a girder, head on and at a glance --------------------------------------------------------

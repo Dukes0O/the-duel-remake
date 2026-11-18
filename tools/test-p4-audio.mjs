@@ -29,7 +29,7 @@ const KOGANE_CUES = new Set(['ambience.kogane', 'ambience.kogane-night', 'landma
 const EMBER_CUES = new Set(['world.lamp.lighting', 'world.ember.spark', 'world.ember.out', 'world.ember.scoop', 'world.furnace.horn', 'world.ashmen.horn', 'world.tintown.gate', 'world.forge.catch', 'ambience.scablands',
   'world.gas.flash', 'world.bess.plug', 'world.bess.leak', 'world.bridge.ash', 'world.salt.horn', 'world.brand.catch', 'world.brand.out', 'world.ash.throw', 'world.town.wake', 'world.thief.ash', 'world.bellows.load']);
 // SCABLANDS-LAND round 4, slice 2a: one cue for each ground of the Scablands, new cues left out of the old pin as the ember's three were.
-const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'scab-plates', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));
+const GROUND_CUES = new Set(['road', 'flats', 'salt-pan', 'river-bed', 'river-soft', 'sand', 'wreck-fields', 'burn'].map(id => 'world.ground.' + id));
 // SCABLANDS-LAND realism step 3: a fence post knocked down by a car. One new cue, left out of the old pin as the ember's three were.
 const FENCE_CUES = new Set(['world.fence.snap']);
 
