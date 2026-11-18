@@ -2395,7 +2395,7 @@ for (const meeting of ['rider-arrives', 'car-arrives']) {
 // The bed's exit uses the same glass and watch, 100 m east of the Steps.
 {
   const world = createWorldJob(definition), events = [];
-  const car = LAND.at('the-steps', 100, 0);
+  const car = {...LAND.at('the-steps', 100, 0)};
   car.y = scablandsSurfaceHeightAt(car.x, car.z);
   const round = furnaceGlassRound();
   let phase = null;
