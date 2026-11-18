@@ -8,3 +8,6 @@ For Claude to run: browser `everburn-job2`, then the job by hand with sound.
 Removed: `standingSpeed`, its speed gate and ?Hold still to light the lamp.?
 Finding 1 measured before cure: `audio.js` engine targets (now 1430 onward) were identical at 0 / 30 m; coast main .190739, exhaust .012017.
 Engine distance check now covers every idle/load/coast/fallback main, exhaust and intake target, plus silent parked tyres and wind.
+Finding 2 before cure: `crew-gear/signature.js:278` emitted `crew.flamer.start`; real audio requested only that 0.3 s tone (`sound-bank.js:149`).
+Hand Flamer now reads barrel state, using `weapon.flame.start`, `.loop`, `.end` with a three-cue-only admission past the arsenal flag.
+Audio/PCM passes 707 checks on the flame change; the loop survives its recording length, ends once and clears on pause.

@@ -282,6 +282,41 @@ const { audio, context } = await makeAudio();
   check(audio.wind.gain.gain.value === 0 && audio.tires.gain.gain.value === 0 &&
     audio.samples.squeal.gain.gain.value === 0, 'parked car tyres and wind are silent on foot');
 }
+// Finding 2: the audio must follow actual barrel flame, even with all switches off.
+{
+  const {audio, context} = await makeAudio();
+  const st = state({mode: 'wasteland', maxArmor: 100, wastelandGateDiscovered: true, onFoot: true, speedMph: 0,
+    footWeapons: {selected: 'hand-flamer'}, fighter: {x: 0, y: 0, z: 0, flaming: true},
+    arena: {mode: 'world-job', worldJob: {}}});
+  const heard = [], play = audio._playCue.bind(audio);
+  audio._playCue = (id, options) => {heard.push(id); return play(id, options);};
+  audio.flags = {enabled: id => id === 'crew-gear'};
+  audio.event({crewGearCue: 'crew.flamer.start', hitPosition: st.fighter}, st);
+  console.log('Finding 2 original event cue requests:', heard);
+  heard.length = 0;
+  audio.flags = {enabled: () => false};
+  for (const suffix of ['start','loop','end']) {
+    const id = 'weapon.flame.' + suffix;
+    audio.cueBuffers[id] = await context.decodeAudioData(fs.readFileSync(new URL('../public/assets/audio/' + SOUND_BANK[id].files[0], import.meta.url)));
+  }
+  audio.update(st);
+  check(heard.includes('weapon.flame.start') && heard.includes('weapon.flame.loop'), 'world Hand Flamer starts recorded flame cues with switches off');
+  const loop = audio.worldHandFlamerVoice;
+  const source = context.nodes.findLast(node => node.loop && node.buffer === audio.cueBuffers['weapon.flame.loop']);
+  check(!!loop && !!source, 'Hand Flamer uses the actual recorded loop');
+  context.advance(5); audio.update(st);
+  check(!source.ended && audio.worldHandFlamerVoice === loop, 'recorded flame sustains beyond one recording without stacking');
+  st.fighter.flaming = false; audio.update(st);
+  audio.update(st);
+  check(heard.filter(id => id === 'weapon.flame.end').length === 1, 'out of fuel or released barrel flame ends once');
+  context.advance(.1);
+  check(source.ended && !audio.worldHandFlamerVoice, 'flame loop stops when flame stops');
+  check(audio._playCue('weapon.magnet.hum', {worldHandFlamer: true}) === null, 'Hand Flamer exception refuses other arsenal cues');
+  check(!audio.arsenalFieldVoices.size && !audio.worldHandFlamerVoice, 'flame admission does not enable other arsenal fields');
+  st.fighter.flaming = true; audio.update(st);
+  audio.setPaused(true);
+  check(!audio.worldHandFlamerVoice, 'pause clears the Hand Flamer loop');
+}
 // The actual output curve keeps quiet gain and leaves headroom for large hits.
 const outputCurve = audio.output.curve;
 const curveAt = value => outputCurve[Math.round((value + 1) * (outputCurve.length - 1) / 2)];

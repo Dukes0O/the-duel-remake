@@ -27,6 +27,7 @@ const ARSENAL_EVENT_CUES = new Set([
   'weapon.magnet.hum',
 ]);
 const ARSENAL_CORE_CUES = new Set(['weapon.smoke.deploy', 'weapon.oil.deploy', 'warlord.nitroSpent']);
+const HAND_FLAMER_CUES = new Set(['weapon.flame.start', 'weapon.flame.loop', 'weapon.flame.end']);
 const ARSENAL_WAVE_THREE_CUES = new Set([
   'weapon.mortar.fire', 'weapon.mortar.hit', 'weapon.tesla.charge',
   'weapon.tesla.pulse', 'weapon.decoy.deploy', 'weapon.decoy.burst', 'weapon.nitro.start',
@@ -462,23 +463,27 @@ export class EngineAudio {
     maxDuration = Infinity,
     onEnd = null,
     attack = 0.008,
+    loop = false,
   ) {
     const ctx = this.context,
       source = ctx.createBufferSource(),
       gain = ctx.createGain(),
       start = ctx.currentTime;
     source.buffer = buffer;
+    source.loop = loop;
     source.playbackRate.value = rate;
     const duration = Math.min(buffer.duration / rate, maxDuration);
     gain.gain.setValueAtTime(0, start);
     gain.gain.linearRampToValueAtTime(volume, start + attack);
-    gain.gain.setValueAtTime(volume, start + Math.max(0.009, duration - 0.035));
-    gain.gain.linearRampToValueAtTime(0, start + duration);
+    if (!loop) {
+      gain.gain.setValueAtTime(volume, start + Math.max(0.009, duration - 0.035));
+      gain.gain.linearRampToValueAtTime(0, start + duration);
+    }
     source.connect(gain);
     this._connect(gain, destination);
     source.start();
     if (Number.isFinite(maxDuration)) source.stop(start + duration + 0.01);
-    const voice = { source, gain, endAt: start + duration + 0.01 };
+    const voice = { source, gain, endAt: loop ? Infinity : start + duration + 0.01 };
     this.activeShots.add(voice);
     source.onended = () => {
       source.disconnect();
@@ -1063,7 +1068,7 @@ export class EngineAudio {
     });
   }
 
-  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false } = {}) {
+  _playCue(id, { destination, scale = 1, onEnd = null, crewShock = false, summitAttack = false, worldHandFlamer = false } = {}) {
     this._syncMixer();
     const def = bank(id);
     if (!def) throw Error('Unknown audio cue: ' + id);
@@ -1073,13 +1078,14 @@ export class EngineAudio {
     const admittedSnowman=id==='snowman.burst' && this.flags.enabled('snowmen');
     const admittedAvalanche=['avalanche.rumble','avalanche.slide'].includes(id) && this.flags.enabled('summit-run');
     const admittedAttack=id==='race.finish.flag' && summitAttack===true && this.flags.enabled('summit-run');
-    if (def.flag && !this.flags.enabled(def.flag) && !admittedShock && !admittedSnowman && !admittedAvalanche && !admittedAttack && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
+    const admittedFlamer = worldHandFlamer && HAND_FLAMER_CUES.has(id);
+    if (def.flag && !this.flags.enabled(def.flag) && !admittedFlamer && !admittedShock && !admittedSnowman && !admittedAvalanche && !admittedAttack && !(id==='yeti.roar'&&this.flags.enabled('yeti'))) return null;
     if (def.flag === 'arsenal-wave3' && !this.flags.enabled('arsenal')) return null;
     return this._runCue(
       id,
       () => {
         const buffer = this._cueBuffer(id);
-        if (buffer) this._sample(buffer, def.volume * scale);
+        if (buffer) this._sample(buffer, def.volume * scale, 1, undefined, Infinity, null, .008, admittedFlamer && def.loop === true);
         else
           for (const layer of def.layers || [])
             this._layer(
@@ -1212,6 +1218,7 @@ export class EngineAudio {
       this._clearProjectiles();
       this._clearArsenalFields();
       this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
     }
   }
@@ -1238,6 +1245,7 @@ export class EngineAudio {
       this._clearProjectiles();
       this._clearArsenalFields();
       this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
     }
   }
@@ -1307,6 +1315,28 @@ export class EngineAudio {
     this.lampLightingSeconds = 0;
   }
 
+  _clearWorldHandFlamer() {
+    this.worldHandFlamerVoice?.stop();
+    this.worldHandFlamerVoice = null;
+    this.worldHandFlamerFighter = null;
+  }
+
+  _updateWorldHandFlamer(state) {
+    const inJob = state.arena?.mode === 'world-job';
+    const audible = inJob && state.status === 'racing' && !state.paused && !this.muted && this.context?.state === 'running';
+    const fighter = audible && state.onFoot && state.footWeapons?.selected === 'hand-flamer' &&
+      !state.fighter?.knockedDown && state.fighter?.flaming ? state.fighter : null;
+    if (this.worldHandFlamerFighter && this.worldHandFlamerFighter !== fighter) {
+      this._clearWorldHandFlamer();
+      if (audible) this._playCue('weapon.flame.end', {worldHandFlamer: true});
+    }
+    if (fighter && !this.worldHandFlamerFighter && this.cueBuffers['weapon.flame.start'] && this.cueBuffers['weapon.flame.loop']) {
+      this._playCue('weapon.flame.start', {worldHandFlamer: true});
+      this.worldHandFlamerVoice = this._playCue('weapon.flame.loop', {worldHandFlamer: true});
+      this.worldHandFlamerFighter = fighter;
+    }
+  }
+
   _updateLampLighting(state) {
     const job = state.arena?.mode === 'world-job' && state.arena.worldJob?.job;
     const step = job?.steps?.[job.stepIndex], count = job?.stepState;
@@ -1324,6 +1354,7 @@ export class EngineAudio {
 
   update(st, environment = {}) {
     this._updateLampLighting(st);
+    this._updateWorldHandFlamer(st);
     this._syncGrandPrix(st);
     this._syncMixer(st);
     this.updateFightVoices(st);
@@ -1771,6 +1802,7 @@ export class EngineAudio {
       this._clearProjectiles();
       this._clearArsenalFields();
       this._clearLampLighting();
+      this._clearWorldHandFlamer();
       this.mixer?.stopAll();
       this._stopHiddenRoadVoices();
       this.hiddenRoadId = null;
@@ -1890,7 +1922,9 @@ export class EngineAudio {
           this.arsenalFieldVoices.delete(effect);
         }
     }
-    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue) {
+    const worldHandFlamerEvent = state?.arena?.mode === 'world-job' && !ev.enemy && !ev.actor &&
+      ['crew.flamer.start', 'crew.flamer.stop'].includes(ev.crewGearCue);
+    if (recordedAudio && this.flags.enabled('crew-gear') && ev.crewGearCue && !worldHandFlamerEvent) {
       const output = this._spatialOutput(
         {hitPosition: ev.hitPosition, combatHit: true}, state, course, this.buses.weapons,
       );
