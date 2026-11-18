@@ -940,10 +940,10 @@ the sky goes from late afternoon to dusk.
 
 **The load, seen.** The player steps out and takes a brand from the hearth: a stick with fire on its end, seen in the
 hand, lighting the ground round the player. It burns for 90 seconds, shown as a bar. Burnt out, it is relit at the hearth
-or at any lamp already alight.
+or at any lamp already alight. The count starts at one and rises by one at each relight after it has gone out, been put out or been dropped in a knockdown.
 
 **Something to do.** Three lamps, each a glass lantern on a post that stands on the ground and reads as a lamp at first
-sight: at the pump (60 m from the forge), on the gate tower's walkway (up a ladder), and at the far wall (150 m, through
+sight: at the pump (60 m from the forge), at the foot of the gate tower, and at the far wall (150 m, through
 the alleys). A lamp is lit by holding the brand to it for two seconds.
 - **A lit lamp shows what the dark hid.** Its light falls on 25 m of ground. People come to their doors in it. It also
   shows Ash Men who came over the wall at dusk with sacks of ash: one after the first lamp, two after the second.
@@ -977,9 +977,11 @@ more of meeting speed) stop him.
 he throws a sack of ash from his window: a grey cloud 30 m long lies on the road for six seconds and the player sees
 nothing inside it. Round it or through it blind.
 
-**In the Boneyard** he leaves the road and goes through the planes: under a wing, through a fuselage with both ends
-open, round the plane row. He knows the gaps and takes them at 60 km/h; a car that follows his line gets through, and one
-that cuts a corner meets a wreck. This is where a careful driver catches him.
+**In the Boneyard** he leaves the road at the plane row and follows a fixed line round the ends of the three wrecks' solid
+boxes, passing each end 2.5 m clear, with at least three turns of 40 degrees or more, at 60 km/h, and comes out at the wing
+gap. The whole line must fit the car with 1 m to spare on the wreck's side and stay that far from every other solid.
+A player may follow his line or go round wide. The rule check reports how much longer the wide way is. This is Claude's
+ruling of 17 November, evening; the wreck art and solids stay as they stand.
 
 **The danger that ends it.** Old Smoke's furnace stands at the Boneyard's far end, the wing gap, and is seen there from
 the plane row with its smoke. Two riders come out from it to meet him when he is 400 m from it and ram the player. If he
@@ -989,8 +991,12 @@ reaches the furnace the bellows are gone: the job starts again from the Boneyard
 car, seen. The furnace sounds its horn, turns and rolls away out of the far end. Cinder: "He was taking the bellows to the
 furnace. There it goes, out the far end." The job holds nine seconds for that, as job 1 holds for the forge.
 
-**A result that differs.** Paid by the bellows: 80 or more 120 scrap ("Those are good bellows."), 40 to 79 80 ("They will
-patch."), under 40 50. The flamethrower is kept either way, as now.
+**A result that differs.** Paid by the bellows: 80 or more 120 scrap, 40 to 79 80, under 40 50.
+At 80 or more Cinder's line 10 says "Those are good bellows...". At 40 to 79 the unvoiced caption is
+"Cinder: They will patch. Keep the flamethrower. You've earned it." Under 40 it is
+"Cinder: Scorched. Auntie can sew. Keep the flamethrower. You've earned it."
+The results sentences are "The bellows came back whole.", "The bellows will patch." and "The bellows are scorched."
+The flamethrower is kept in every case. The closing caption appears at five seconds after collection.
 
 **Sound cues:** `world.thief.ash` (a sack bursts), `world.bellows.load`; the furnace's horn stands.
 
@@ -1045,6 +1051,50 @@ the looks are judged in the hand drive. The plain light, mist, ash and lean-to a
 driven by hand with the sound on, the salt road first, before Kyle tries it.
 
 **Sound:** new `world.salt.horn` and `world.bridge.ash`, from the bank's recipes.
+
+## Slice 9 result (Codex built it; Claude designed, ruled, reviewed and began the hand play; 17 November 2026, night): merged, hidden
+
+**In:** job 2 "Light the Town" and job 3 "Run Him Down" as designed above, offered in story order behind the unchanged
+switches. Codex's choices that stand: the tower lamp at the tower's foot (a walker cannot climb); the thief rounds the
+ends of the three wreck boxes with six turns, and the wide way round is about 400 m longer; a knockdown costs a brand.
+
+**Review:** one independent Codex review found three faults (job 3's ending cut off when collection was slow, a
+knocked-down player getting up inside the forge's solid, Cinder praising scorched bellows). All three are cured, each
+with a check; Claude read the cures. Codex then merged slice 8 into the lane and settled the overlaps (139 of 139 on the
+lane tier, replays and world signatures unchanged, the Easy runs of jobs 1, 2 and 3 ten of ten each).
+
+**Changed assertions, reviewed by Claude (rule 18); none is loosened:** the next job's title (GET OUT AND WALK becomes
+LIGHT THE TOWN); job 2 offered after job 1 and job 3 after job 2, with the lock checks kept for jobs not yet remade;
+job 2's start (the forge bay facing the hearth, not the gate side), its marker (the nearest dark lamp while fire is
+carried), its lamp ids (pump, tower, far) and its two-second lighting; five old caption ids marked replaced; job 3's
+finish (three hard knocks, collection and a nine-second hold in place of health 0 and a 2.2-second close) and the
+furnace's place and leaving (the wing gap from the start, leaving at collection); the generic 1 m car clearance at the
+hearth replaced by the fire inside the forge with a .55 m clear approach for a walker; the Tin Road's nodes compared
+exactly after a move; the pre-P4 sound hash, itself unchanged, leaves out the six new cues.
+
+**At the merge:** `npm run build` and the browser scenarios `everburn-job1`, `everburn-job2`, `everburn-job3` pass on
+the merged result. The two new scenarios could not start as Codex wrote them (it cannot run a browser): a story job
+starts only from the yard, a fresh test player's story entry needs its version, and a job's actors exist only after its
+countdown. Claude cured the three in the scenarios.
+
+**Claude's hand play, begun (visible window, real keys, memory-only player):** both jobs start and run. Job 2: the bay,
+Auntie and her lines, stepping out, the brand at the hearth with its bar, two lamps lit by standing, an Ash Man over the
+wall after the first and two after the second. Job 3: on foot 60 m from the car, Auntie's cry, the bellows bar, the thief
+marked on the map. **Faults found, for slice 11 before Kyle tries either:**
+1. Job 3: the thief leaves at about 180 km/h while the player is on foot, and keeps the player's top speed less 5 km/h,
+   so the road's blocking and ash sacks happen far ahead of a player who can never close. He must stay in reach.
+2. Job 3: on foot the player holds the Longhorn RPG. Nothing says what a rocket does to the bellows.
+3. Job 2: nothing points to a lamp until its ring is in sight; the small map shows the whole town as one dot.
+4. Job 2: "They are at the pump lamp!" is said the moment an Ash Man comes over the wall, 130 m from the lamp.
+5. Job 2: the two Ash Men of the second group come over at the same point and walk inside each other.
+6. Job 2: swinging the brand needs the wrench chosen (key 1), which nothing tells the player; the flamer needs the
+   mouse. Claude's tool has no mouse, so driving an Ash Man off is not yet tried by hand.
+7. Both: the plain drawing (a yellow cone for the brand that fills the view, plain posts, no dusk, no lit windows) is
+   Claude's to redraw.
+Not yet played: driving off Ash Men, the third lamp and the ending of job 2; the whole chase of job 3.
+
+**Sound:** `world.brand.catch`, `world.brand.out`, `world.ash.throw`, `world.town.wake`, `world.thief.ash`,
+`world.bellows.load`, from the bank's recipes.
 
 ## Job 4 remade: Slow Ride (Claude's design, 17 November 2026, evening; not built)
 
@@ -1109,6 +1159,26 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, story wall: job 2 is "Light the Town" and its note is "Take a brand from the hearth. Light the three town lamps and drive off the Ash Men." Ash Men choose clear alley waypoints against the existing solids, then use the existing foot mover. They do not gain any speed, range or shorter smothering time.
+
+
+- Slice 9, job 3 guidance: "Stop the thief and bring back the bellows." The old generic closing-caption setting is removed from this job because collection already requests Cinder's line 22 and that setting paused the new nine-second ending. The load rule times the hold while the line is shown; Cinder's closing caption and the results sentence follow the bellows' condition.
+
+
+- Slice 9, job 3 restart: the 150 m lead is measured along the thief's clear wreck line. The player's car returns to the line's plane-row start, facing the first turn. If the player is still on foot, the existing fighter returns beside that car and remains on foot. The bellows, knocks, armour, riders and sacks already thrown are kept. Placement itself has no new sound; Cinder's designed restart caption explains it.
+
+- Slice 9, job 3 wide way: the measured alternative goes outside the whole wreck field, 100 m beyond its east, north and west box edges, then to the wing gap. It shares the thief line's endpoints and is 399.7 m longer. The thief rounds the east wreck's south end, north wreck's north end, then south wreck's south end, each 2.5 m clear; its road entry is the Tin Road's own Boneyard end.
+
+- Slice 9, job 3 blocking: sideways movement is at most 2 m/s, toward the passing car's position, bounded by the road width less the thief's 1.3 m collision radius. Both numbers are named in `BELLOWS_RULE`. The existing actor mover still resolves ground and solids. The thief does not react to the player walking; the 30 m rule applies to the player's car.
+
+- Slice 9, job 3 escape: the stopped thief steps out 3 m from his car, away from the player, then runs 60 m that way at 6 m/s through the existing job foot mover. Those distances and speed are named in `BELLOWS_RULE`. He stays outside shooting raid zones. No extra sound cue is added; collection still sounds `world.bellows.load` and the furnace horn.
+
+- Slice 9, job 3: the two sacks burst at 800 m and 1,600 m along the road from the town gate. Both distances are named in `BELLOWS_RULE.ashAtRoadMetres`. The stopped thief waits for collection. The nine-second ending starts when the bellows are loaded, with the horn, furnace departure and Cinder's line 22 at once, then the closing caption at five seconds.
+- Slice 9, job 3 route: Claude ruled on 17 November, evening, to round the ends of the existing solid wreck boxes, as the design above now says. No wreck drawing or solid changes are needed.
+- Slice 9, job 2 theft: the runner takes the clear south alley toward the gate at 6 m/s, starting at five seconds. The ending shows the start of his escape, with a plain brown load on his back. He is still running when the nine-second ending closes; reaching the gate is not a new condition for finishing.
+- Slice 9, job 2 guidance: "Stop beside Auntie Solder at the forge.", "Take a brand from the hearth.", "Carry the brand to a dark lamp.", "Hold still to light the lamp.", "Relight the brand at the hearth or a lit lamp." and "The brand is out." The arrow selects the nearest dark lamp while the brand burns and the nearest fire when it is out. Ash Men enter one metre inside a sheet of the town's own fence, clear of its solid.
+- Slice 9, job 2: the tower lamp stands at the watchtower's foot. The existing fighter has no ladder action; the town's ladders are scenery. Lamp sites come from the water-tower and watchtower slots in `tinTownLayout`; a clear 159.8 m alley route reaches the far lamp.
+- Slice 9, job 2: standing to light a lamp means a fighter speed of at most 0.1 m/s, kept as `BRAND_RULE.standingSpeed`. Additional result sentences are "You lit the town with two brands." and "You lit the town with N brands.", with the count in place of N.
 - Slice 8D2 uses the opening from the western deck abutment to the first pier, then the two openings between piers, in that order. The outer eastern bank stays clear. This gives the three ash falls without moving the bridge's existing supports. Ash tests and damage use the loaded car, including when the driver has stepped out.
 
 - Changed assertion for Claude's written review: `test-scablands-size` applied straight-share displacement to new `bed-mist-*` positions when Tin Town moved. The bed is a curve, so its changed tangent turns each sheet's side offset. Replace that assumption only for mist with checks that its centre lies exactly on the moved river at the prescribed Wash-to-Steps distance, its tangent matches that river segment, and its seeded side stays unchanged. No tolerance is widened and no mist is skipped.

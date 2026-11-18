@@ -15,10 +15,14 @@ import {tinTownGateFor} from '../tin-town-gate.js';
 import {ROAD_NET, roadNet, roadPointFrom} from '../scablands-road.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt} from '../scablands-ground.js';
 import {yardPlan} from '../scablands-yard-look.js';
+import {brandSites} from './brand-sites.js';
+import {BRAND_LINES} from './brand-rule.js';
+import {BELLOWS_RULE, BELLOWS_LINES, bellowsFootStart, bellowsWreckRoute} from './bellows-rule.js';
+import {boneyardWrecks} from '../boneyard-wrecks.js';
 
 const path = (...places) => Object.freeze(places);
 const step = (kind, fields) => Object.freeze({kind, ...fields});
-export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery'];
+export const REMADE_EVERBURN_JOBS = ['everburn-hot-delivery', 'everburn-get-out-and-walk', 'everburn-run-him-down'];
 
 export function buildEverburn(land) {
   const {at, between} = land;
@@ -54,9 +58,8 @@ export function buildEverburn(land) {
     .map(([dx, dz], index) => place(`everburn-well-raiders-${index + 1}`, at('everburn', dx, dz), 8)));
   // The Scablands' five named places, as the jobs define them (the big map marks and names them in every job).
   const SCABLANDS_PLACES = Object.freeze({yardGate: yard, tinTown, everburn: well, deadMall: mall, boneyard});
-  const forge = place('cold-forge', at('tin-town', 25, 14), 8), lamps = [
-    place('forge-lamp-1', at('tin-town', 18, 8), 3), place('forge-lamp-2', at('tin-town', 25, 10), 3), place('forge-lamp-3', at('tin-town', 32, 8), 3),
-  ];
+  const forge = place('cold-forge', at('tin-town', 25, 14), 8);
+  const townLights = brandSites(land);
 
   // Old Smoke's path: from the well round the open flats (leg 1, left door), through the Boneyard past the planes and up to
   // Tin Town's gate (leg 2, right door), then home along the road with the player behind it (leg 3, rear door, from the place
@@ -140,8 +143,25 @@ export function buildEverburn(land) {
       z:saltPost.position.z - SALT_RIDERS.riderOffset}),
   })));
   const planeRow = place('plane-row', at('boneyard', -144, 76)), wingGap = place('wing-gap', at('boneyard', -284, 166));
-  // Job 3's thief runs from the Boneyard past the plane row to the wing gap.
-  const thiefPath = path(boneyard, planeRow, wingGap);
+  // Job 3 follows the town road, then its own line around the wrecks. The
+  // road and wreck line share the Tin Road's real Boneyard endpoint.
+  const bellowsRoad = net.road('tin-road');
+  const bellowsWrecks = bellowsWreckRoute(boneyardWrecks(land), bellowsRoad.points[0], wingGap.position);
+  const bellowsRoute = Object.freeze({
+    road:path(place('thief-town-gate', tinTownGateFor(land).gate),
+      ...[...bellowsRoad.points].reverse().map((point, index) => place(`thief-road-${index}`, point))),
+    wrecks:path(...bellowsWrecks.line.map((point, index) => place(index === 0 ? 'plane-row' : `thief-wreck-${index}`, point))),
+    wide:path(...bellowsWrecks.wide.map((point, index) => place(`thief-wide-${index}`, point))),
+    roadWidthMetres:bellowsRoad.halfWidth * 2,
+    wideExtraMetres:bellowsWrecks.wideExtraMetres,
+  });
+  const thiefPath = path(...bellowsRoute.road, ...bellowsRoute.wrecks.slice(1));
+  const bellowsRiders = path(...[-1, 1].map((side, index) => Object.freeze({
+    id:`bellows-furnace-rider-${index + 1}`, renderCar:'dusthawk_rally', health:100,
+    start:place(`bellows-rider-post-${index + 1}`, {
+      x:wingGap.position.x + side * BELLOWS_RULE.riderPostSideMetres,
+      z:wingGap.position.z + BELLOWS_RULE.riderPostAheadMetres}),
+  })));
   const prospector1 = place('prospector-1', at('boneyard', -24, 26)), survey1 = place('survey-flag-1', at('boneyard', 26, -4));
   const kitchen = place('auntie-kitchen', at('tin-town', 15, 4), 4), townSafeCorner = place('town-safe-corner', at('tin-town', 32, -30), 6);
   const valveRoom = place('mall-valve-room', at('dead-mall', -12, 0), 7);
@@ -174,29 +194,26 @@ export function buildEverburn(land) {
           {place:ashBarricade1, radius:60, lineId:'story.ember.cinder.3'},
           {place:tinTown, radius:170, lineId:'story.ember.auntie-solder.1'}],
         unlock:'tin-town', lentWeapon:'flamethrower'})]}),
-    Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Get Out and Walk', kind:'on-foot',
-      resultLineId:'story.ember.auntie-solder.4',
-      easy:Object.freeze({markerRadius:3, knockedDownRecovery:'last-marker'}), lineId:'story.ember.auntie-solder.3',
-      steps:[step('onfoot',{what:'Get out and light the three lamps at the cold forge.', places:lamps.map((lamp,index)=>Object.freeze({...lamp, action:'light',
-        ...(index === 0 ? {lineId:'story.ember.cinder.6'} : {})})),
-        // The car starts inside Tin Town's gate on open ground (18 m in from the gate's posts, 30 m from the town's own model),
-        // facing the forge, not in the alley at the town's centre where the camera stood behind a pillar.
-        carStart:carStart(at('tin-town', -18, 44), forge),
-        radius:3, lentWeapon:'cinders-hand-flamer', requiresExit:true, returnToCar:tinTown,
-        unlock:'tin-town-notice-board', startLineId:'story.ember.auntie-solder.3', afterStartLineId:['story.ember.cinder.5']})]}),
+    Object.freeze({id:'everburn-get-out-and-walk', storyId:'everburn', number:2, name:'Light the Town', kind:'on-foot',
+      captions:Object.freeze(Object.fromEntries(Object.entries(BRAND_LINES).map(([id, text]) => [`brand.${id}`, text]))),
+      easy:Object.freeze({knockedDownRecovery:'last-marker'}),
+      steps:[step('onfoot',{what:'Carry the brand to a dark lamp.', brand:true, townEnding:true,
+        meeting:forge, auntie:townLights.auntie, hearth:townLights.hearth, places:townLights.lamps, ashEntries:townLights.ashEntries,
+        farWalk:townLights.farWalk, theftPath:townLights.theftPath, carStart:carStart(forge.position, townLights.hearth),
+        lentWeapon:'cinders-hand-flamer', requiresExit:true, unlock:'tin-town-notice-board'})]}),
     Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
       resultLineId:'story.ember.cinder.10',
-      easy:Object.freeze({targetSpeed:17, leashDistance:150, contactRadius:8}), lineId:'story.ember.auntie-solder.5',
-      steps:[step('chase',{what:'Catch the thief before he escapes the Boneyard.', targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
-        path:thiefPath}, path:thiefPath,
-        targetSpeed:17, leashDistance:150, contactRadius:8, leashLineId:'story.ember.cinder.9',
-        targetHealth:20, reward:'flamethrower',
-        // SCABLANDS-LAND round 4: the car starts on open ground 163 m from the Boneyard, facing it. (It had no start of its own: the arena put it on the oval, which on
-        // the first land happened to be 163 m from the Boneyard and is 4.7 km away now.)
-        carStart:carStart(at('boneyard', 119, -112), boneyard), startLineId:'story.ember.auntie-solder.5',
+      captions:Object.freeze(Object.fromEntries(Object.entries(BELLOWS_LINES).map(([id, text]) => [`bellows.${id}`, text]))),
+      lineId:'story.ember.auntie-solder.5',
+      steps:[step('chase',{what:'Stop the thief and bring back the bellows.', bellows:true, targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
+        path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,
+        roadWidthMetres:bellowsRoute.roadWidthMetres, reward:'flamethrower',
+        carStart:carStart(forge.position, place('town-gate', tinTownGateFor(land).gate)),
+        bellowsFootStart:bellowsFootStart(forge.position, townLights.lamps[2].position),
+        startLineId:'story.ember.auntie-solder.5',
         sayNear:[{place:planeRow, radius:70, lineId:'story.ember.cinder.8'}],
-        // The furnace rolls away as the thief is caught; the job holds for Cinder's line (the old won line was only an id).
-        closing:['story.ember.cinder.22']})]}),
+        // Collection requests Cinder's line while the bellows rule times its hold.
+      })]}),
     Object.freeze({id:'everburn-slow-ride', storyId:'everburn', number:4, name:'Slow Ride', kind:'escort',
       // What the results screen says when Big Bess is in Tin Town (EVERBURN-PLAY-FIXES): the screen's own words are a stand-in.
       resultLine:'The gas is in Tin Town and the forge is lit.',

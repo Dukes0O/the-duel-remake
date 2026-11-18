@@ -1,6 +1,7 @@
 import {SALT_RIDERS} from './jobs/ember-rule.js';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {SCABLANDS_LAYOUT, SCABLANDS_PLACES} from './scablands.js';
 import {scablandsSurfaceHeightAt, scablandsFloorsAt, scablandsActorFeet, scablandsGroundEdit, getScablandsOpenMarks, getScablandsTownLayout,
   onScablandsOpenMarksChanged} from './scablands-ground.js';
@@ -23,6 +24,12 @@ import {createScrapWear,createFlameMaterial,createSmokeMaterial,createGroundGlow
 import {createTinTownGate,TIN_TOWN_GATE,tinTownDoorPose} from './tin-town-gate.js';
 import {createTinTownShacks,createTinTownChimneySmoke} from './tin-town-shacks.js';
 import {createForge} from './forge-look.js';
+import {createBrandLamps} from './brand-lamps.js';
+import {createBrandAuntie} from './brand-auntie.js';
+import {createCarriedBrand} from './brand-carried.js';
+import {createBrandAshView} from './brand-ash-view.js';
+import {createBrandThief} from './brand-thief.js';
+import {createBellowsView} from './bellows-view.js';
 import {createEverburnFire,EVERBURN_DERRICK_TOP} from './everburn-fire.js';
 import {BONEYARD_WRECKS,BESS_REST} from './boneyard-wrecks.js';
 import {LAND} from './scablands-names.js';
@@ -629,6 +636,12 @@ export function createScablandsScene(course,options={}){
     saltShelter.add(lean);
   }
   const cinder=createCinderFigure();group.add(cinder);
+  const brandLamps=createBrandLamps();group.add(brandLamps.group);
+  const brandAuntie=createBrandAuntie();group.add(brandAuntie.group);
+  const carriedBrand=createCarriedBrand();group.add(carriedBrand.group);
+  const brandAshView=createBrandAshView();group.add(brandAshView.group);
+  const brandThief=createBrandThief();group.add(brandThief.group);
+  const bellowsView=createBellowsView(course);group.add(bellowsView.group);
   let cinderRequested=false;
   function requestCinder(){
     if(cinderRequested)return;
@@ -693,7 +706,8 @@ export function createScablandsScene(course,options={}){
         const source=vehiclePart[key]?findPart(asset.scene,vehiclePart[key]):asset.scene;
         if(!source)throw Error(`Scablands ${key} art is missing its ${place.id} model.`);
         // The people carry their own look, and the two trucks their own wear.
-        const model=source.clone(true);
+        const model=key==='folk'?cloneSkeleton(source):source.clone(true);
+        if(key==='folk')brandAuntie.install(model);
         // The well's flame is drawn in code (src/world/everburn-fire.js); the model's own flame solids are not drawn.
         if(key==='everburn'){
           const solids=[];model.traverse(node=>{if(/flame/i.test(node.name))solids.push(node);});
@@ -868,6 +882,12 @@ export function createScablandsScene(course,options={}){
         roads.update(here.x,here.z);gorge.update(here.x,here.z);crossings.update(here.x,here.z);stepsWay.update(here.x,here.z);
       }
       const worldJob=state?.arena?.mode==='world-job'?state.arena.worldJob:null;
+      brandLamps.update(worldJob);
+      brandAuntie.update(worldJob);
+      carriedBrand.update(state);
+      brandAshView.update(worldJob);
+      brandThief.update(worldJob);
+      bellowsView.update(state);
       const glass = hotDeliveryGlass(worldJob);
       glassPatch.visible = !!glass;
       if (glass) {
@@ -1053,7 +1073,7 @@ export function createScablandsScene(course,options={}){
       if(!yard.parent)group.add(yard);
       yard.traverse(node=>{for(const material of [].concat(node.material||[]))material.map?.dispose();});
     }
-    barricadeMaterial.map?.dispose();forge.dispose();
+    barricadeMaterial.map?.dispose();forge.dispose();brandLamps.dispose();brandAuntie.dispose();carriedBrand.dispose();brandAshView.dispose();brandThief.dispose();bellowsView.dispose();
     stopOpenMarkWatch();
     things?.dispose();tracks?.dispose();editedGround.dispose();digFx.dispose();digTexture?.dispose();whites?.dispose();tinTownGate.userData.dispose();riverField.texture.dispose();groundPhotos?.dispose();
     const geometries=new Set(),materials=new Set();

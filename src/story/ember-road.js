@@ -4,12 +4,12 @@ import {EMBER_JOBS, EMBER_FEUD_WORDS, EMBER_RUN_ROADS, emberOf, emberFeud, ember
 import {REMADE_EVERBURN_JOBS} from '../world/jobs/everburn.js';
 
 export const EMBER_JOB_NAMES = Object.freeze([
-  'Hot Delivery', 'Get Out and Walk', 'Run Him Down', 'Slow Ride',
+  'Hot Delivery', 'Light the Town', 'Run Him Down', 'Slow Ride',
   'The Key Under the Mall', 'The Everburn',
 ]);
 const JOB_NOTES = Object.freeze([
   'Carry Cinder’s ember pot to Tin Town. She lends you a flamethrower for the trip.',
-  'Hold F to get out. Light the three forge lamps with Cinder’s Hand Flamer.',
+  'Take a brand from the hearth. Light the three town lamps and drive off the Ash Men.',
   'Catch the thief through the Boneyard and bring back the bellows.',
   'Keep the Ash Men away from Big Bess on the road to Tin Town.',
   'Park outside the Dead Mall, take the valve key, and get back to your car.',

@@ -20,6 +20,7 @@ import {forgePlan} from './forge-look.js';
 import {everburnPropSolids} from './everburn-props.js';
 import {riverFor, stepsWayFor} from './scablands-regions.js';
 import {ROAD_NET, roadNet} from './scablands-road.js';
+import {BRAND_RULE} from './jobs/brand-rule.js';
 
 // A wheel's height: anything this tall or less is driven over, anything taller is solid.
 export const WHEEL_HEIGHT = .9;
@@ -205,6 +206,7 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
   const found = [];
   const grid = {
     people: [],
+    brandLamps: [],
     cars: [],
     braziers: [],
     barricades: [],
@@ -220,12 +222,19 @@ export function createJobSolidGrid(baseGrid = SOLID_GRID) {
       for (const solid of this.yard) found.push(solid);
       for (const solid of this.townGate) found.push(solid);
       for (const solid of this.people) found.push(solid);
+      for (const solid of this.brandLamps) found.push(solid);
       if (includeCars) for (const solid of this.cars) found.push(solid);
       return found;
     },
     setPeople(people) {
       this.people = people.map(({id, position}) => make({id, kind:'person', shape:'ellipse',
         x:position.x, z:position.z, halfX:.45, halfZ:.45, height:1.8}));
+    },
+    setBrandLamps(places) {
+      this.brandLamps = places.map(({id, position}) => make({id: `town-lamp-${id}`,
+        kind:'prop', shape:'ellipse', x:position.x, z:position.z, base:position.y,
+        halfX:BRAND_RULE.postRadius, halfZ:BRAND_RULE.postRadius,
+        height:BRAND_RULE.postHeight + BRAND_RULE.lanternHeight / 2}));
     },
     setCars(actors) {
       this.cars = actors.map(actor => ({...make({id:`job-car-${actor.id}`, kind:'vehicle',

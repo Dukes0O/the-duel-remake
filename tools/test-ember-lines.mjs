@@ -121,16 +121,23 @@ function lineIdsHeard(job, viewAt, seconds, dt = 0.1) {
   assert.ok(!edge.heard.includes('story.ember.cinder.24'), 'job 1: 270 m away is still too far');
 }
 {
-  // Job 3: the catch plays Cinder's line and the job waits for it; the thief rolling on does not undo the catch.
-  const thief = (health, gap) => ({player: {position: {x: 0, y: 0, z: 0}}, actors: [{id: 'ash-man-bellows-thief', position: {x: gap, y: 0, z: 0}, health}]});
-  const start = lineIdsHeard(createJob(EVERBURN_JOBS[2], 1), () => thief(20, 20), 10);
-  assert.ok(!start.heard.includes('story.ember.cinder.22') && !start.job.done, 'job 3: the line is not said before the catch');
-  const caught = lineIdsHeard(start.job, t => thief(t < 0.2 ? 0 : 20, t < 0.2 ? 5 : 90), 1);
-  assert.equal(caught.heard.filter(id => id === 'story.ember.cinder.22').length, 1, 'job 3: Cinder says it at the catch');
-  assert.equal(caught.job.done, false, 'job 3: the job waits while the line shows');
-  const after = lineIdsHeard(caught.job, () => thief(20, 90), 4);
-  assert.equal(after.job.done, true, 'job 3: it ends once the line is done, though the thief has rolled out of reach');
-  assert.ok(!after.heard.includes('story.ember.cinder.22'), 'job 3: the line is said once');
+  // Job 3: health alone cannot stop him. The third hard meeting stops him,
+  // collection plays Cinder's line, and the nine-second hold cannot be skipped.
+  const thief = () => ({onFoot:false,speedKmh:0,carPosition:{x:0,z:0},
+    player:{position:{x:0,y:0,z:0}},actors:[{id:'ash-man-bellows-thief',position:{x:5,y:0,z:0},health:0}]});
+  const start = lineIdsHeard(createJob(EVERBURN_JOBS[2],1),thief,10);
+  assert.ok(!start.heard.includes('story.ember.cinder.22') && !start.job.done,
+    'job 3: health loss alone cannot collect the bellows');
+  start.job.stepState.knocks=2;
+  const caught=lineIdsHeard(start.job,()=>({...thief(),bellows:{carContact:true,meetingKmh:20}}),1);
+  assert.equal(caught.heard.filter(id=>id==='story.ember.cinder.22').length,1,
+    'job 3: Cinder says it once at collection after the third knock');
+  assert.equal(caught.job.done,false,'job 3: the nine-second hold is still running');
+  const beforeNine=lineIdsHeard(caught.job,thief,6);
+  assert.equal(beforeNine.job.done,false,'job 3: seven seconds is too early to finish');
+  const after=lineIdsHeard(beforeNine.job,thief,5);
+  assert.equal(after.job.done,true,'job 3: collected bellows finish after nine seconds');
+  assert.ok(![...beforeNine.heard,...after.heard].includes('story.ember.cinder.22'),'job 3: she says it once');
 }
 {
   // Job 4: Moss speaks once, when Big Bess has gone 30% of her road.
