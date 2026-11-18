@@ -26,6 +26,7 @@ import {yardPlan} from '../../world/scablands-yard-look.js';
 import {brazierSpotsFor} from '../../world/ember-pot.js';
 import {TIN_TOWN_SWING_SECONDS} from '../../world/tin-town-gate.js';
 import {BRAND_RULE} from '../../world/jobs/brand-rule.js';
+import {brandAshAim} from '../../world/jobs/brand-sites.js';
 import {BELLOWS_RULE, bellowsBlockingMove, bellowsRoadFacts, bellowsRestartPlaces} from '../../world/jobs/bellows-rule.js';
 import {createFighter} from '../../onfoot.js';
 import {crewPerks} from '../../crew.js';
@@ -1017,7 +1018,12 @@ function applyBrandRequest(duel, worldJob, request) {
   }
   if (request.type === 'moveBrandAsh') {
     const actor = worldJob.actors.find(item => item.brandAsh && item.id === request.id);
-    if (actor) actor.approachTarget = {...(request.place.position ?? request.place)};
+    if (actor) {
+      const goal=request.place.position??request.place;
+      const step=worldJob.job.steps[worldJob.job.stepIndex];
+      actor.approachTarget={...brandAshAim(actor,goal,step.ashEntries??[],
+        worldJob.solidGrid?.movers??worldJob.solidGrid)};
+    }
     return true;
   }
   if (request.type === 'removeBrandAsh') {

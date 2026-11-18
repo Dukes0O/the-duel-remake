@@ -269,7 +269,9 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   assert.equal(ash.x, -100, 'he starts at the farthest wall');
   assert.equal(state.raids?.zones.length ?? 0, originalZones, 'he has no roadside rocket zone');
   stepWorldJob(duel, 0);
-  assert.deepEqual(ash.approachTarget, lamps[0].position, 'the rule sends him to the lit lamp');
+  assert.deepEqual(ash.brandAlley.goal,lamps[0].position,'the rule still targets the lit lamp');
+  assert(Math.hypot(ash.approachTarget.x-lamps[0].position.x,ash.approachTarget.z-lamps[0].position.z)<BRAND_RULE.smotherRadius,
+    'the route stops beside the solid lamp within its unchanged smothering radius');
   const before = ash.x;
   stepWorldJob(duel, .1);
   assert(ash.x > before, 'the ordinary foot mover carries out the request');
@@ -280,7 +282,7 @@ for (const exit of ['win', 'fail', 'quit to menu', 'leave during pause']) {
   assert.equal(worldJob.job.stepState.brandAsh.men[ash.id].fleeing, true,
     'the existing on-foot attack key drives him off without damage');
   assert.equal(ash.health, ash.maxHealth);
-  Object.assign(ash, {x: ash.approachTarget.x, z: ash.approachTarget.z});
+  Object.assign(ash,worldJob.job.stepState.brandAsh.men[ash.id].wall.position);
   stepWorldJob(duel, 0);
   assert(!worldJob.actors.includes(ash), 'a fleeing man is removed at the wall');
   // One swing per press; holding fire while changing range is no extra swing.

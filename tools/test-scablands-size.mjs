@@ -284,6 +284,12 @@ test('moving a place in a copy of the table moves everything that belongs to it,
         near({x: b.get(id)[0], z: b.get(id)[1]}, {x: camp.x + dz / length * 9, z: camp.z - dx / length * 9}, id);
         continue;
       }
+      // The new thief road is the land's Tin Road, including its curved joins.
+      const thiefRoad=/^thief-road-(\d+)$/.exec(id);
+      if(thiefRoad) {
+        near({x:b.get(id)[0],z:b.get(id)[1]},[...net.road('tin-road').points].reverse()[Number(thiefRoad[1])],id);
+        continue;
+      }
       const [mx, mz] = b.get(id), shift = [mx - x, mz - z];
       const share = Math.abs(delta[0]) > 0 ? shift[0] / delta[0] : 0;
       assert.ok(Math.abs(shift[1] - share * delta[1]) < 1e-6, `${moved}: ${id} moves along the way the place moved`);
@@ -294,7 +300,7 @@ test('moving a place in a copy of the table moves everything that belongs to it,
   }
   // The things named in the card, by name: all of Tin Town's follow Tin Town.
   const before = positionsOf(everything(LAND)), after = positionsOf(everything(createLand(movedTable(SCABLANDS_PLACES, 'tin-town', ...delta))));
-  for (const id of ['tin-town', 'tin-town-gate-front', 'forge-lamp-1', 'forge-lamp-2', 'forge-lamp-3', 'auntie-kitchen', 'town-safe-corner', 'south-road',
+  for (const id of ['tin-town', 'tin-town-gate-front', 'pump', 'tower', 'far', 'town-hearth', 'auntie-kitchen', 'town-safe-corner', 'south-road',
     'furnace-approach', 'tin-town-gate', 'tin-town-gate-approach', 'long-road-6', 'rail-tin-town', 'rail-east-run']) {
     assert.ok(before.has(id), `${id} exists`);
     assert.deepEqual([after.get(id)[0] - before.get(id)[0], after.get(id)[1] - before.get(id)[1]], delta, `${id} moves with Tin Town`);
@@ -388,6 +394,8 @@ test('the scene follows the player: the window moves, and a place is drawn and u
     const root = new THREE.Group();
     if (path === SCABLANDS_ASSETS.bess || path === SCABLANDS_ASSETS.furnace)
       for (const name of ['Big Bess gas truck', "Old Smoke's rolling furnace"]) { const part = new THREE.Group(); part.name = name; root.add(part); }
+    const auntie=new THREE.Group(); auntie.name='auntie-solder root';
+    auntie.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial())); root.add(auntie);
     return {scene: root};
   }});
   assert.equal(await scene.ready, true);

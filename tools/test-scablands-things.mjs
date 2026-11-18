@@ -666,6 +666,8 @@ test('the scene loads the trial only with its switch on', async () => {
       for (const name of ['Big Bess gas truck', "Old Smoke's rolling furnace"]) {
         const model = new THREE.Group(); model.name = name; root.add(model);
       }
+      const auntie=new THREE.Group(); auntie.name='auntie-solder root';
+      auntie.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshBasicMaterial())); root.add(auntie);
       return {scene: root};
     }});
     assert.equal(await scene.ready, true);

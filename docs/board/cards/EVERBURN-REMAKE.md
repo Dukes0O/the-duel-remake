@@ -1072,6 +1072,9 @@ the save. The game does not show it while the switches are off. Nothing was wipe
 
 ## Codex decided (Claude to review)
 
+- Slice 9, story wall: job 2 is "Light the Town" and its note is "Take a brand from the hearth. Light the three town lamps and drive off the Ash Men." Ash Men choose clear alley waypoints against the existing solids, then use the existing foot mover. They do not gain any speed, range or shorter smothering time.
+
+
 - Slice 9, job 3 guidance: "Stop the thief and bring back the bellows." The old generic closing-caption setting is removed from this job because collection already requests Cinder's line 22 and that setting paused the new nine-second ending. The load rule times the hold while the line is shown; Cinder's line 10 remains on the results screen.
 
 

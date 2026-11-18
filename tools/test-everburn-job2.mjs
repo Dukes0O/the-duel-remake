@@ -611,3 +611,37 @@ for (const [brandsUsed, pay, sentence] of [
   assert.equal(lost.description.includes(sentence), false);
 }
 console.log('PASS Light the Town: brand payment, result sentence, unchanged save shape and one payment per run.');
+
+// A rule/mover check, not a player walk: the smotherer must reach each lamp
+// from the wall point the rule chooses, then return to a wall when driven off.
+const {brandAshAim}=await import('../src/world/jobs/brand-sites.js');
+const {stepMover,FOOT_GRADE}=await import('../src/world/scablands-movers.js');
+for(const lamp of actualStep.places) {
+  const grid=createJobSolidGrid();grid.setBrandLamps(actualStep.places);
+  const view={onFoot:true,fighter:{position:lamp.position},lamps:{[lamp.id]:true},brandSeconds:90};
+  let ash=stepBrandAsh(actualStep,{},view,0);
+  const spawn=ash.requests.find(request=>request.type==='spawnBrandAsh');
+  const actor={id:spawn.id,...spawn.from.position};
+  let smothered=false;
+  const tick=(flee=false)=>{
+    ash=stepBrandAsh(actualStep,ash.state,{...view,ashMen:[{id:actor.id,position:{...actor}}],
+      handFlamerHits:flee?[actor.id]:[]},.1);
+    smothered ||= ash.smotheredLamps.includes(lamp.id);
+    const move=ash.requests.find(request=>request.type==='moveBrandAsh'&&request.id===actor.id);
+    if(move) {
+      const goal=move.place.position??move.place;
+      const target=brandAshAim(actor,goal,actualStep.ashEntries,grid.movers);
+      const distance=Math.hypot(target.x-actor.x,target.z-actor.z);
+      const share=Math.min(1,BRAND_RULE.ashWalkMps*.1/(distance||1));
+      const to={x:actor.x+(target.x-actor.x)*share,z:actor.z+(target.z-actor.z)*share};
+      Object.assign(actor,stepMover(actor,to,{radius:BRAND_RULE.ashRadiusMetres,grade:FOOT_GRADE,grid:grid.movers,height:actor.y}));
+    }
+  };
+  for(let i=0;i<1200&&!smothered;i++)tick();
+  assert(smothered,`${lamp.id}: the farthest-wall smotherer must reach the lamp through alleys`);
+  assert(ash.state.men[actor.id].smotherSeconds===0,'smothering still uses the rule clock');
+  tick(true);
+  for(let i=0;i<1200&&!ash.state.men[actor.id].gone;i++)tick();
+  assert(ash.state.men[actor.id].gone,`${lamp.id}: the driven-off smotherer must reach the wall through alleys`);
+}
+console.log('PASS Light the Town: pump, tower and far smotherers reach lamps and flee through town solids with the existing foot mover.');
