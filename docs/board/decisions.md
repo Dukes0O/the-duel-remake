@@ -1771,4 +1771,4 @@ Kyle: "go ahead with the first four audit changes".
 - Not decided: the audit's fifth change (one short note per card, which changes rule 5's wording) and a "Background" view
   in the Cockpit. Both wait for Kyle.
 - To reverse: Kyle says so.
-
+- **18 November 2026. Old Smoke can be made peace with.** Kyle: "Yes, peace possible." Five Cold Nights keeps its third ending, Shared fire, as `docs/story/five-cold-nights.md` section 15 writes it. The other three questions of section 11 (people leaving for good, the act's size, which telling stands) are still open.

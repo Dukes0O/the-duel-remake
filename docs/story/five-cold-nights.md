@@ -608,6 +608,7 @@ The faults of the world from Kyle's try (card WORLD-FAULTS-18-NOV) are cured alo
    nothing is lost for good.
 2. **May Old Smoke be someone you can make peace with,** as well as someone you can beat? The Long Dry already lets a
    beaten warlord make peace or be driven off. My recommendation: yes, and it is the hardest ending to earn.
+   **Ruled by Kyle, 18 November 2026: yes, peace is possible.** Section 15 stands as written.
 3. **Is this the right size?** Five nights, about an hour and a half of play in all, each night about fifteen minutes,
    then the next act. Longer is possible by adding nights; the ledger does not change.
 4. **When a story is told again, which telling stands?** My recommendation: the player says, at the end of the new
@@ -1222,8 +1223,8 @@ About twenty minutes: six of talk, four or five on the outing, four in the raid.
 
 ## 15. Night 5 in full: The Long Cold
 
-The last night of the act, and its four endings. Written on the recommendation of section 11 that Old Smoke can be
-somebody you make peace with.
+The last night of the act, and its four endings. Old Smoke can be somebody you make peace with (Kyle's ruling of
+18 November 2026, section 11).
 
 **People in it.** Everybody the ledger still holds. Old Smoke, who speaks slowly and is certain. Clinker. And one new
 voice who is given no name of his own: Clinker's boy, about ten, grey with ash to the eyebrows.
