@@ -212,7 +212,7 @@ assert.deepEqual(ending.requests, [{type: 'bellowsThiefFlee'}, {type: 'bellowsFu
   {type: 'say', lineId: 'story.ember.cinder.22'}]);
 ending = end(ending.state, {}, 8.99);
 assert.equal(ending.complete, false);
-assert.deepEqual(ending.requests, [{type: 'say', lineId: 'story.ember.cinder.10'}]);
+assert.deepEqual(ending.requests, [{type: 'say', lineId: 'bellows.patch'}]);
 ending = end(ending.state, {}, .01);
 assert.equal(ending.complete, true);
 assert.deepEqual(ending.events, [{type: 'bellowsArrived', bellows: 70, knocks: 3,
@@ -793,6 +793,14 @@ for (const [condition,pay,sentence] of [
   const screen = arenaResultsScreen({arena: finishedArena},
     {metric: () => '', action: () => '', escapeHTML: String});
   assert.equal(screen.description.split(sentence).length - 1, 1);
+  const closingId=condition>=80 ? 'story.ember.cinder.10' : condition>=40 ? 'bellows.patch' : 'bellows.scorched';
+  const closingText=condition>=80 ? 'Those are good bellows' : condition>=40
+    ? "Cinder: They will patch. Keep the flamethrower. You've earned it."
+    : "Cinder: Scorched. Auntie can sew. Keep the flamethrower. You've earned it.";
+  assert(screen.description.includes(closingText));
+  assert.equal(screen.description.includes('Those are good bellows'),condition>=80);
+  const closingTick=end({...captured,bellows:condition,bellowsLoaded:true,thiefFled:true}, {}, 5);
+  assert(closingTick.requests.some(request=>request.lineId===closingId));
   const lost = arenaResultsScreen({arena: {...finishedArena,
     result: {winnerId: 'raiders', reason: 'job-failed'}}},
   {metric: () => '', action: () => '', escapeHTML: String});

@@ -184,7 +184,7 @@ export function buildEverburn(land) {
         lentWeapon:'cinders-hand-flamer', requiresExit:true, unlock:'tin-town-notice-board'})]}),
     Object.freeze({id:'everburn-run-him-down', storyId:'everburn', number:3, name:'Run Him Down', kind:'chase',
       resultLineId:'story.ember.cinder.10',
-      captions:Object.freeze({'bellows.warning':BELLOWS_LINES.warning, 'bellows.restart':BELLOWS_LINES.restart}),
+      captions:Object.freeze(Object.fromEntries(Object.entries(BELLOWS_LINES).map(([id, text]) => [`bellows.${id}`, text]))),
       lineId:'story.ember.auntie-solder.5',
       steps:[step('chase',{what:'Stop the thief and bring back the bellows.', bellows:true, targetId:'ash-man-bellows-thief', actor:{id:'ash-man-bellows-thief', renderCar:'dusthawk_rally', health:20, speed:17,
         path:thiefPath}, path:thiefPath, bellowsRoute, bellowsRiders,

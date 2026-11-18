@@ -47,6 +47,8 @@ export const BELLOWS_RULE = Object.freeze({
 });
 
 export const BELLOWS_LINES = Object.freeze({
+  patch: "Cinder: They will patch. Keep the flamethrower. You've earned it.",
+  scorched: "Cinder: Scorched. Auntie can sew. Keep the flamethrower. You've earned it.",
   warning: 'Cinder: Not the flamethrower! Leather burns.',
   restart: "Cinder: He has reached the furnace. Again, from the Boneyard's edge.",
 });
@@ -118,6 +120,11 @@ export function bellowsRestartPlaces(route) {
 export function bellowsGrade(condition) {
   return condition >= BELLOWS_RULE.wholeFrom ? 'whole'
     : condition >= BELLOWS_RULE.patchFrom ? 'patch' : 'scorched';
+}
+
+export function bellowsClosingLineId(condition) {
+  return {whole: 'story.ember.cinder.10', patch: 'bellows.patch',
+    scorched: 'bellows.scorched'}[bellowsGrade(condition)];
 }
 
 export function bellowsPay(condition) {
@@ -299,7 +306,7 @@ export function stepBellowsEnding(state, facts, dt = 0) {
   }
   if (next.bellowsLoaded && next.endingElapsed >= BELLOWS_RULE.closingAtSeconds && !state.bellowsClosing) {
     next.bellowsClosing = true;
-    requests.push({type: 'say', lineId: 'story.ember.cinder.10'});
+    requests.push({type: 'say', lineId: bellowsClosingLineId(next.bellows)});
   }
   const complete = next.bellowsLoaded === true && next.endingElapsed >= BELLOWS_RULE.endingSeconds;
   if (complete && !state.bellowsArrived) {
